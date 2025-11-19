@@ -1,0 +1,62 @@
+/* src/assets/main.css */
+
+/* 基础重置 */
+body, html, #app {
+  margin: 0; padding: 0; width: 100%; height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #2c2c2c; color: #f0f0f0;
+}
+.hidden { display: none !important; }
+
+/* 技能库组件样式 (左侧) */
+.skill-item {
+  height: 50px; width: fit-content; padding: 0 20px;
+  display: flex; align-items: center; justify-content: center;
+  background-color: #4f4f4f; border: 1px solid #666;
+  box-sizing: border-box; border-radius: 4px;
+  cursor: grab; font-weight: bold; color: white;
+  user-select: none; -webkit-user-select: none;
+}
+.skill-item:hover { background-color: #5a5a5a; border-color: #999; }
+
+/* 留在原地的影子 */
+.lib-ghost-item { opacity: 0.5 !important; background-color: #333 !important; border: 1px solid #555 !important; }
+
+/* 拖在手里的克隆体 (蓝色长条) */
+.blue-drag-proxy {
+  width: calc(var(--duration) * 50px) !important; height: 50px !important;
+  background-color: #4a90e2 !important; border: 2px dashed #ffffff !important; opacity: 0.9 !important;
+  display: flex !important; align-items: center; justify-content: center;
+  border-radius: 0 !important; z-index: 99999 !important;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  pointer-events: none !important; /* 必须穿透，否则挡住下方判定 */
+  padding: 0 !important; white-space: nowrap !important; flex-direction: row !important; font-size: 14px !important;
+}
+
+/* 时间轴样式 (右侧) */
+.timeline-dragging-item {
+  background-color: #4a90e2 !important; opacity: 0.9; border: 2px dashed #fff; z-index: 9999;
+}
+
+/* 默认的占位符样式：保持隐形，不干扰布局 */
+.actions-container .skill-ghost {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* 物理填充层：给容器加一个看不见的底板，确保鼠标能点到容器 */
+body.is-dragging-from-library .actions-container::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: -1;
+  background-color: transparent;
+}
+
+/* 屏蔽现有元素干扰 */
+body.is-dragging-from-library .actions-container .action-item-wrapper {
+  pointer-events: none !important;
+}
+
+.sortable-fallback { z-index: 99999 !important; opacity: 1 !important; }
