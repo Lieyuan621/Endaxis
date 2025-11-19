@@ -1,0 +1,308 @@
+{
+  "ICON_DATABASE": {
+    "break": "/icons/break.png",
+    "armor_break": "/icons/armor_break.png",
+    "stagger": "/icons/stagger.png",
+    "knockdown": "/icons/knockdown.png",
+    "knockup": "/icons/knockup.png",
+    "blaze_attach": "/icons/blaze_attach.png",
+    "emag_attach": "/icons/emag_attach.png",
+    "cold_attach": "/icons/cold_attach.png",
+    "nature_attach": "/icons/nature_attach.png",
+    "blaze_burst": "/icons/blaze_burst.png",
+    "emag_burst": "/icons/emag_burst.png",
+    "cold_burst": "/icons/cold_burst.png",
+    "nature_burst": "/icons/nature_burst.png",
+    "burning": "/icons/burning.png",
+    "conductive": "/icons/conductive.png",
+    "frozen": "/icons/frozen.png",
+    "ice_shatter": "/icons/ice_shatter.png",
+    "corrosion": "/icons/corrosion.png",
+    "default": "/icons/default_icon.png"
+  },
+  "characterRoster": [
+    {
+      "id": "ENDMINISTRATOR",
+      "name": "管理员",
+      "rarity": 6,
+      "avatar": "/avatars/ENDMINISTRATOR.png",
+      "exclusive_buffs": [
+        {
+          "key": "crystallize",
+          "name": "结晶",
+          "path": "/icons/crystallization.png"
+        }
+      ],
+      "attack_duration": 2.5,
+      "attack_cooldown": 0,
+      "attack_spCost": 0,
+      "attack_spGain": 10,
+      "attack_allowed_types": [
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_cooldown": 0,
+      "skill_spCost": 30,
+      "skill_spGain": 0,
+      "skill_allowed_types": [
+        "stagger",
+        "ice_shatter",
+        "break"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "stagger",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spCost": 0,
+      "link_spGain": 0,
+      "link_allowed_types": [
+        "crystallize"
+      ],
+      "link_anomalies": [
+        {
+          "type": "crystallize",
+          "stacks": 1,
+          "duration": 4
+        }
+      ],
+      "ultimate_duration": 4,
+      "ultimate_cooldown": 0,
+      "ultimate_spCost": 80,
+      "ultimate_spGain": 0,
+      "ultimate_allowed_types": [
+        "default"
+      ],
+      "ultimate_anomalies": []
+    },
+    {
+      "id": "POGRANICHNIK",
+      "name": "骏卫",
+      "rarity": 6,
+      "avatar": "/avatars/POGRANICHNIK.png",
+      "exclusive_buffs": [],
+      "attack_duration": 3,
+      "attack_cooldown": 0,
+      "attack_spCost": 0,
+      "attack_spGain": 10,
+      "attack_allowed_types": [],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_cooldown": 0,
+      "skill_spCost": 30,
+      "skill_spGain": 0,
+      "skill_allowed_types": [],
+      "skill_anomalies": [],
+      "link_duration": 1,
+      "link_cooldown": 1,
+      "link_spCost": 0,
+      "link_spGain": 0,
+      "link_allowed_types": [],
+      "link_anomalies": [],
+      "ultimate_duration": 4,
+      "ultimate_cooldown": 20,
+      "ultimate_spCost": 80,
+      "ultimate_spGain": 0,
+      "ultimate_allowed_types": [],
+      "ultimate_anomalies": []
+    },
+    {
+      "id": "CHENQIANYU",
+      "name": "陈千语",
+      "rarity": 5,
+      "avatar": "/avatars/CHENQIANYU.png",
+      "exclusive_buffs": [],
+      "attack_duration": 2.5,
+      "attack_cooldown": 0,
+      "attack_spCost": 0,
+      "attack_spGain": 10,
+      "attack_allowed_types": [
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_cooldown": 0,
+      "skill_spCost": 30,
+      "skill_spGain": 0,
+      "skill_allowed_types": [
+        "break",
+        "knockup",
+        "ice_shatter"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "knockup",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 16,
+      "link_spCost": 0,
+      "link_spGain": 0,
+      "link_allowed_types": [
+        "knockup",
+        "break",
+        "ice_shatter"
+      ],
+      "link_anomalies": [
+        {
+          "type": "knockup",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "ultimate_duration": 5,
+      "ultimate_cooldown": 0,
+      "ultimate_spCost": 80,
+      "ultimate_spGain": 0,
+      "ultimate_allowed_types": [
+        "default"
+      ],
+      "ultimate_anomalies": []
+    },
+    {
+      "id": "ALESH",
+      "name": "阿列什",
+      "rarity": 5,
+      "avatar": "/avatars/ALESH.png",
+      "exclusive_buffs": [],
+      "attack_duration": 3,
+      "attack_cooldown": 3,
+      "attack_spCost": 0,
+      "attack_spGain": 10,
+      "attack_allowed_types": [],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_cooldown": 12,
+      "skill_spCost": 30,
+      "skill_spGain": 0,
+      "skill_allowed_types": [],
+      "skill_anomalies": [],
+      "link_duration": 1,
+      "link_cooldown": 1,
+      "link_spCost": 0,
+      "link_spGain": 0,
+      "link_allowed_types": [],
+      "link_anomalies": [],
+      "ultimate_duration": 4,
+      "ultimate_cooldown": 20,
+      "ultimate_spCost": 80,
+      "ultimate_spGain": 0,
+      "ultimate_allowed_types": [],
+      "ultimate_anomalies": []
+    },
+    {
+      "id": "ESTELLA",
+      "name": "埃特拉",
+      "rarity": 4,
+      "avatar": "/avatars/ESTELLA.png",
+      "exclusive_buffs": [],
+      "attack_duration": 3,
+      "attack_cooldown": 0,
+      "attack_spCost": 0,
+      "attack_spGain": 10,
+      "attack_allowed_types": [
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_cooldown": 0,
+      "skill_spCost": 25,
+      "skill_spGain": 0,
+      "skill_allowed_types": [
+        "cold_attach",
+        "frozen",
+        "cold_burst"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "cold_attach",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 16,
+      "link_spCost": 0,
+      "link_spGain": 0,
+      "link_allowed_types": [
+        "knockup",
+        "ice_shatter",
+        "break"
+      ],
+      "link_anomalies": [
+        {
+          "type": "knockup",
+          "stacks": 1,
+          "duration": 0
+        },
+        {
+          "type": "ice_shatter",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "ultimate_duration": 4,
+      "ultimate_cooldown": 0,
+      "ultimate_spCost": 80,
+      "ultimate_spGain": 0,
+      "ultimate_allowed_types": [
+        "default"
+      ],
+      "ultimate_anomalies": []
+    },
+    {
+      "id": "AKEKURI",
+      "name": "秋粟",
+      "rarity": 4,
+      "avatar": "/avatars/AKEKURI.png",
+      "exclusive_buffs": [],
+      "attack_duration": 3,
+      "attack_cooldown": 0,
+      "attack_spCost": 0,
+      "attack_spGain": 10,
+      "attack_allowed_types": [
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_cooldown": 0,
+      "skill_spCost": 30,
+      "skill_spGain": 0,
+      "skill_allowed_types": [
+        "blaze_burst",
+        "blaze_attach",
+        "burning"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "blaze_attach",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 2,
+      "link_cooldown": 16,
+      "link_spCost": 0,
+      "link_spGain": 0,
+      "link_allowed_types": [
+        "default"
+      ],
+      "link_anomalies": [],
+      "ultimate_duration": 4,
+      "ultimate_cooldown": 0,
+      "ultimate_spCost": 80,
+      "ultimate_spGain": 0,
+      "ultimate_allowed_types": [
+        "default"
+      ],
+      "ultimate_anomalies": []
+    }
+  ]
+}
