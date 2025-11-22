@@ -163,7 +163,7 @@ function onIconClick(evt, index) {
 
     <div class="action-item-content drag-handle">{{ action.name }}</div>
 
-    <div v-if="isSelected" class="delete-btn-modern" @click.stop="onDeleteClick" title="删除">
+    <div v-if="isSelected" class="delete-btn-modern" @click.stop="onDeleteClick" title="[delete]">
       <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>

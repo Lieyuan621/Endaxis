@@ -12,11 +12,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     // ===================================================================================
 
     // 这里是“兜底默认值”。
-    // 实际运行中，这些值会被 gamedata.json 里的 SYSTEM_CONSTANTS 覆盖。
     const systemConstants = ref({
         maxSp: 300,
         spRegenRate: 8,
-        skillSpCostDefault: 100
+        skillSpCostDefault: 100,
+        maxStagger: 100
     })
 
     const BASE_BLOCK_WIDTH = 50
@@ -112,23 +112,27 @@ export const useTimelineStore = defineStore('timeline', () => {
             if (suffix === 'attack' || suffix === 'execution') derivedElement = 'physical';
             if (suffix === 'link') derivedElement = null;
 
-            let defaults = { spCost: 0, spGain: 0, gaugeCost: 0, gaugeGain: 0 }
+            let defaults = { spCost: 0, spGain: 0, gaugeCost: 0, gaugeGain: 0 , stagger: 0 }
 
             if (suffix === 'attack') {
-                defaults.spGain = activeChar.attack_spGain || 0
+                defaults.spGain = activeChar.attack_spGain || 0;
+                defaults.stagger = activeChar.attack_stagger || 0
             } else if (suffix === 'skill') {
                 // 使用配置中的默认消耗值作为兜底
                 defaults.spCost = activeChar.skill_spCost || systemConstants.value.skillSpCostDefault;
                 defaults.spGain = activeChar.skill_spGain || activeChar.skill_spReply || 0;
                 defaults.gaugeGain = activeChar.skill_gaugeGain || 0;
                 defaults.teamGaugeGain = activeChar.skill_teamGaugeGain || 0;
+                defaults.stagger = activeChar.skill_stagger || 0
             } else if (suffix === 'link') {
                 defaults.spGain = activeChar.link_spGain || 0;
-                defaults.gaugeGain = activeChar.link_gaugeGain || 0
+                defaults.gaugeGain = activeChar.link_gaugeGain || 0;
+                defaults.stagger = activeChar.link_stagger || 0
             } else if (suffix === 'ultimate') {
                 defaults.gaugeCost = activeChar.ultimate_gaugeMax || 100;
                 defaults.spGain = activeChar.ultimate_spGain || activeChar.ultimate_spReply || 0;
-                defaults.gaugeGain = activeChar.ultimate_gaugeReply || 0
+                defaults.gaugeGain = activeChar.ultimate_gaugeReply || 0;
+                defaults.stagger = activeChar.ultimate_stagger || 0
             } else if (suffix === 'execution') {
                 defaults.spGain = activeChar.execution_spGain || 0;
             }
@@ -144,6 +148,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 spCost: merged.spCost, spGain: merged.spGain,
                 gaugeCost: merged.gaugeCost, gaugeGain: merged.gaugeGain,
                 teamGaugeGain: merged.teamGaugeGain,
+                stagger: merged.stagger,
                 allowedTypes: getAllowed(activeChar[`${suffix}_allowed_types`]),
                 physicalAnomaly: getAnomalies(activeChar[`${suffix}_anomalies`])
             }
@@ -225,6 +230,66 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         if (currentTime < TOTAL_DURATION) advanceTime(TOTAL_DURATION);
         return points
+    }
+
+    function calculateGlobalStaggerData() {
+        const { maxStagger } = systemConstants.value;
+        const events = []
+
+        tracks.value.forEach(track => {
+            if (!track.actions) return
+            track.actions.forEach(action => {
+                if (action.stagger > 0) events.push({ time: action.startTime + action.duration, change: action.stagger, type: 'gain' })
+                if (action.type === 'execution') events.push({ time: action.startTime, type: 'execution' })
+            })
+        })
+
+        events.sort((a, b) => {
+            if (a.time !== b.time) return a.time - b.time
+            if (a.type === 'gain' && b.type === 'execution') return -1
+            if (a.type === 'execution' && b.type === 'gain') return 1
+            return 0
+        })
+
+        const points = [];
+        const lockSegments = [];
+
+        let currentVal = 0;
+        let currentTime = 0;
+        let lockedUntil = -1;
+
+        points.push({ time: 0, val: 0 });
+
+        const advanceTime = (targetTime) => {
+            if (targetTime > currentTime) {
+                points.push({ time: targetTime, val: currentVal });
+                currentTime = targetTime;
+            }
+        }
+
+        events.forEach(ev => {
+            advanceTime(ev.time);
+
+            if (ev.type === 'execution') {
+                currentVal = 0;
+                const endLock = currentTime + 10;
+                lockedUntil = endLock;
+
+                lockSegments.push({ start: currentTime, end: endLock });
+            }
+            else if (ev.type === 'gain') {
+                if (currentTime >= lockedUntil) {
+                    currentVal += ev.change;
+                    if (currentVal > maxStagger) currentVal = maxStagger;
+                }
+            }
+
+            points.push({ time: currentTime, val: currentVal })
+        });
+
+        if (currentTime < TOTAL_DURATION) advanceTime(TOTAL_DURATION);
+
+        return { points, lockSegments }
     }
 
     function calculateGaugeData(trackId) {
@@ -391,7 +456,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         selectAction, updateAction, removeAction,
         cloneSkill, addSkillToTrack,
         setDraggingSkill, setDragOffset, setScrollLeft, setZoom,
-        calculateGlobalSpData, calculateGaugeData,
+        calculateGlobalSpData, calculateGaugeData, calculateGlobalStaggerData,
         updateTrackInitialGauge, updateTrackMaxGauge,
         startLinking, confirmLinking, cancelLinking, removeConnection,
         getColor,

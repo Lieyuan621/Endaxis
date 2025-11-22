@@ -77,10 +77,10 @@ function addNewCharacter() {
   const newChar = {
     id: newId, name: "新干员", rarity: 5, element: "physical", avatar: "/avatars/default.png", exclusive_buffs: [],
 
-    attack_duration: 2.5, attack_spGain: 15, attack_allowed_types: allGlobalEffects, attack_anomalies: [],
-    skill_duration: 2, skill_spCost: 100, skill_spGain: 0, skill_gaugeGain: 0, skill_teamGaugeGain: 6, skill_allowed_types: [], skill_anomalies: [],
-    link_duration: 1.5, link_cooldown: 15, link_spGain: 0, link_gaugeGain: 0, link_allowed_types: [], link_anomalies: [],
-    ultimate_duration: 3, ultimate_gaugeMax: 100, ultimate_spGain: 0, ultimate_gaugeReply: 0, ultimate_allowed_types: [], ultimate_anomalies: [],
+    attack_duration: 2.5, attack_spGain: 15, attack_stagger: 0, attack_allowed_types: allGlobalEffects, attack_anomalies: [],
+    skill_duration: 2, skill_spCost: 100, skill_spGain: 0, skill_stagger: 0, skill_gaugeGain: 0, skill_teamGaugeGain: 6, skill_allowed_types: [], skill_anomalies: [],
+    link_duration: 1.5, link_cooldown: 15, link_spGain: 0, link_stagger: 0, link_gaugeGain: 0, link_allowed_types: [], link_anomalies: [],
+    ultimate_duration: 3, ultimate_gaugeMax: 100, ultimate_spGain: 0, ultimate_stagger: 0, ultimate_gaugeReply: 0, ultimate_allowed_types: [], ultimate_anomalies: [],
     execution_duration: 1.5, execution_spGain: 20, execution_allowed_types: allGlobalEffects, execution_anomalies: []
   }
 
@@ -270,7 +270,8 @@ function addAnomaly(targetKey, skillType) {
           <div v-show="activeTab === 'attack'" class="form-section">
             <div class="form-row">
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.attack_duration"></div>
-              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.attack_spGain"></div>
+              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.attack_spGain"></div>
+              <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.attack_stagger"></div>
             </div>
 
             <div class="form-group"><label>允许挂载的状态</label>
@@ -312,9 +313,9 @@ function addAnomaly(targetKey, skillType) {
                 <select v-model="selectedChar.skill_element"><option :value="undefined">跟随干员</option><option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">{{ elm.label }}</option></select>
               </div>
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.skill_duration"></div>
-              <div class="form-group"><label>SP 消耗</label><input type="number" v-model.number="selectedChar.skill_spCost"></div>
-              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.skill_spGain"></div>
-
+              <div class="form-group"><label>技力消耗</label><input type="number" v-model.number="selectedChar.skill_spCost"></div>
+              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.skill_spGain"></div>
+              <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.skill_stagger"></div>
               <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.skill_gaugeGain"></div>
 
               <div class="form-group">
@@ -354,9 +355,8 @@ function addAnomaly(targetKey, skillType) {
             <div class="form-row">
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.link_duration"></div>
               <div class="form-group"><label>冷却时间</label><input type="number" v-model.number="selectedChar.link_cooldown"></div>
-
-              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.link_spGain"></div>
-
+              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.link_spGain"></div>
+              <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.link_stagger"></div>
               <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.link_gaugeGain"></div>
             </div>
 
@@ -393,8 +393,8 @@ function addAnomaly(targetKey, skillType) {
               </div>
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.ultimate_duration"></div>
 
-              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.ultimate_spGain"></div>
-
+              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.ultimate_spGain"></div>
+              <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.ultimate_stagger"></div>
               <div class="form-group"><label>充能消耗</label><input type="number" v-model.number="selectedChar.ultimate_gaugeMax"></div>
 
               <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.ultimate_gaugeReply"></div>
@@ -429,7 +429,7 @@ function addAnomaly(targetKey, skillType) {
           <div v-show="activeTab === 'execution'" class="form-section">
             <div class="form-row">
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.execution_duration"></div>
-              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.execution_spGain"></div>
+              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.execution_spGain"></div>
             </div>
 
             <div class="form-group"><label>允许挂载的状态</label>

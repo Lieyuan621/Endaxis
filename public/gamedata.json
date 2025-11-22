@@ -125,7 +125,8 @@
       "execution_anomalies": [],
       "skill_spGain": 0,
       "ultimate_spGain": 0,
-      "skill_teamGaugeGain": 6
+      "skill_teamGaugeGain": 6,
+      "link_stagger": 16
     },
     {
       "id": "POGRANICHNK",
@@ -1043,7 +1044,10 @@
       "execution_anomalies": [],
       "skill_spGain": 0,
       "ultimate_spGain": 0,
-      "skill_teamGaugeGain": 6
+      "skill_teamGaugeGain": 6,
+      "attack_stagger": 16,
+      "skill_stagger": 40,
+      "link_stagger": 32
     },
     {
       "id": "ALESH",
@@ -1120,7 +1124,9 @@
       "execution_anomalies": [],
       "skill_spGain": 30,
       "ultimate_spGain": 30,
-      "skill_teamGaugeGain": 6
+      "skill_teamGaugeGain": 6,
+      "skill_stagger": 12,
+      "link_stagger": 12
     },
     {
       "id": "ESTELLA",
@@ -1202,7 +1208,9 @@
       "execution_anomalies": [],
       "ultimate_spGain": 0,
       "skill_spGain": 0,
-      "skill_teamGaugeGain": 6
+      "skill_teamGaugeGain": 6,
+      "skill_stagger": 12,
+      "link_stagger": 24
     },
     {
       "id": "AKEKURI",

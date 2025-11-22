@@ -248,6 +248,11 @@ function removeEffect(index) {
         <input type="number" :value="selectedAction.duration" @input="e => updateActionProp('duration', Number(e.target.value))" step="0.1">
       </div>
 
+      <div class="form-group highlight-red" v-if="currentSkillType !== 'execution'">
+        <label>失衡值</label>
+        <input type="number" :value="selectedAction.stagger" @input="e => updateActionProp('stagger', Number(e.target.value))">
+      </div>
+
       <div class="form-group" v-if="currentSkillType === 'link'">
         <label>冷却时间</label>
         <input type="number" :value="selectedAction.cooldown" @input="e => updateActionProp('cooldown', Number(e.target.value))">
@@ -274,7 +279,7 @@ function removeEffect(index) {
       </div>
 
       <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
-        <label style="color: #ffd700;">队友充能</label>
+        <label>队友充能</label>
         <input type="number" :value="selectedAction.teamGaugeGain" @input="e => updateActionProp('teamGaugeGain', Number(e.target.value))">
       </div>
     </div>
@@ -372,6 +377,11 @@ function removeEffect(index) {
         <input type="number" :value="selectedLibrarySkill.duration" @input="e => updateLibraryProp('duration', Number(e.target.value))" min="0.5" step="0.5">
       </div>
 
+      <div class="form-group highlight-red" v-if="currentSkillType !== 'execution'">
+        <label>失衡值</label>
+        <input type="number" :value="selectedLibrarySkill.stagger" @input="e => updateLibraryProp('stagger', Number(e.target.value))">
+      </div>
+
       <div class="form-group" v-if="currentSkillType === 'link'">
         <label>冷却时间</label>
         <input type="number" :value="selectedLibrarySkill.cooldown" @input="e => updateLibraryProp('cooldown', Number(e.target.value))" min="0">
@@ -398,18 +408,14 @@ function removeEffect(index) {
       </div>
 
       <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
-        <label style="color: #ffd700;">队友充能</label>
+        <label>队友充能</label>
         <input type="number" :value="selectedLibrarySkill.teamGaugeGain" @input="e => updateLibraryProp('teamGaugeGain', Number(e.target.value))">
       </div>
-    </div>
-
-    <div class="info-box">
-      <p>💡 提示：点击左侧相同技能块可取消选中。</p>
     </div>
   </div>
 
   <div v-else class="properties-panel empty">
-    <p>请选中一个动作块或技能库图标</p>
+    <p>请选中一个动作或技能</p>
   </div>
 </template>
 
@@ -426,6 +432,7 @@ input:focus, select:focus { border-color: #ffd700; outline: none; }
 
 .highlight input { border-color: #ffd700; color: #ffd700; }
 .highlight-blue input { border-color: #00e5ff; color: #00e5ff; }
+.highlight-red input { border-color: #ff7875; color: #ff7875; }
 
 .link-btn { width: 100%; padding: 8px; margin-bottom: 10px; background-color: #444; color: #ffd700; border: 1px solid #ffd700; border-radius: 4px; cursor: pointer; font-weight: bold; }
 .link-btn:hover { background-color: #555; }

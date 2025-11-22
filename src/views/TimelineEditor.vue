@@ -9,6 +9,7 @@ import TimelineGrid from '../components/TimelineGrid.vue'
 import ActionLibrary from '../components/ActionLibrary.vue'
 import PropertiesPanel from '../components/PropertiesPanel.vue'
 import SpMonitor from '../components/SpMonitor.vue'
+import StaggerMonitor from '../components/StaggerMonitor.vue'
 
 const store = useTimelineStore()
 const fileInputRef = ref(null)
@@ -45,11 +46,6 @@ async function onFileSelected(event) {
 // 2. 长图导出逻辑 (Export Image)
 // ===================================================================================
 
-/**
- * 导出高清长图
- * 难点：HTML2Canvas 无法截取 overflow:hidden/scroll 内部的内容。
- * 策略：[Freeze] -> [Expand] -> [Patch] -> [Capture] -> [Restore]
- */
 async function exportAsImage() {
   // 配置导出参数
   const durationSeconds = store.TOTAL_DURATION + 5 // 多截 5s 留白
@@ -198,7 +194,7 @@ async function exportAsImage() {
 
 <template>
   <div v-if="store.isLoading" class="loading-screen">
-    正在加载游戏数据...
+    正在加载数据...
   </div>
 
   <div v-if="!store.isLoading" class="app-layout">
@@ -235,6 +231,9 @@ async function exportAsImage() {
       <div class="timeline-workspace">
         <div class="timeline-grid-container">
           <TimelineGrid/>
+        </div>
+        <div class="stagger-monitor-panel">
+          <StaggerMonitor/>
         </div>
         <div class="sp-monitor-panel">
           <SpMonitor/>
@@ -389,6 +388,20 @@ async function exportAsImage() {
   height: 140px;
   flex-shrink: 0;
   border-top: 2px solid #444;
+  z-index: 20;
+}
+/* 失衡条样式 */
+.stagger-monitor-panel {
+  height: 60px;
+  flex-shrink: 0;
+  border-top: 1px solid #444;
+  z-index: 20;
+}
+
+.sp-monitor-panel {
+  height: 140px;
+  flex-shrink: 0;
+  border-top: 1px solid #444;
   z-index: 20;
 }
 

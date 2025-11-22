@@ -54,9 +54,15 @@ const warningZones = computed(() => {
   }))
 })
 
-watch(() => store.timelineScrollLeft, (newVal) => {
-  if (scrollContainer.value) scrollContainer.value.scrollLeft = newVal
-})
+watch(
+    () => store.timelineScrollLeft,
+    (newVal) => {
+      if (scrollContainer.value) {
+        scrollContainer.value.scrollLeft = newVal
+      }
+    },
+    { flush: 'sync' }
+)
 </script>
 
 <template>
@@ -64,7 +70,7 @@ watch(() => store.timelineScrollLeft, (newVal) => {
 
     <div class="monitor-sidebar">
       <div class="info-group">
-        <div class="info-title">SP 趋势模拟</div>
+        <div class="info-title">技力趋势模拟</div>
         <div class="info-detail">初始: 200</div>
         <div class="info-detail">回复: 8/s</div>
       </div>
