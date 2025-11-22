@@ -14,6 +14,29 @@ const EFFECT_NAMES = {
   "default": "默认图标"
 }
 
+const GROUP_DEFINITIONS = [
+  {
+    label: ' 物理异常 ',
+    keys: ['break', 'armor_break', 'stagger', 'knockdown', 'knockup', 'ice_shatter']
+  },
+  {
+    label: ' 元素附着',
+    matcher: (key) => key.endsWith('_attach')
+  },
+  {
+    label: ' 元素爆发',
+    matcher: (key) => key.endsWith('_burst')
+  },
+  {
+    label: ' 异常状态 ',
+    keys: ['burning', 'conductive', 'frozen', 'corrosion']
+  },
+  {
+    label: ' 其他',
+    keys: ['default']
+  }
+]
+
 const editingEffectIndex = ref(null)
 
 // ===================================================================================
@@ -61,28 +84,73 @@ const iconOptions = computed(() => {
   const allGlobalKeys = Object.keys(store.iconDatabase);
   const allowed = selectedAction.value?.allowedTypes;
 
-  // 1. 过滤全局图标
-  const filteredGlobalKeys = (allowed && allowed.length > 0)
+  // 1. 预处理：筛选出当前允许显示的 Key
+  const availableKeys = (allowed && allowed.length > 0)
       ? allGlobalKeys.filter(key => allowed.includes(key) || key === 'default')
       : allGlobalKeys;
 
-  const globalOptions = filteredGlobalKeys.map(key => ({
-    label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]
-  }));
+  // 2. 构建分组数据
+  const groups = [];
 
-  // 2. 插入专属 Buff
-  let exclusiveOptions = [];
+  // --- A. 专属 Buff 组 (优先级最高) ---
   if (currentCharacter.value && currentCharacter.value.exclusive_buffs) {
-    exclusiveOptions = currentCharacter.value.exclusive_buffs.map(buff => ({
-      label: `★ ${buff.name}`, value: buff.key, path: buff.path
+    let exclusiveOpts = currentCharacter.value.exclusive_buffs.map(buff => ({
+      label: `★ ${buff.name}`,
+      value: buff.key,
+      path: buff.path
     }));
-    // 如果有 allowed 限制，也要过滤专属 buff
+    // 再次过滤 allowed
     if (allowed && allowed.length > 0) {
-      exclusiveOptions = exclusiveOptions.filter(opt => allowed.includes(opt.value));
+      exclusiveOpts = exclusiveOpts.filter(opt => allowed.includes(opt.value));
+    }
+    if (exclusiveOpts.length > 0) {
+      groups.push({ label: ' 专属效果 ', options: exclusiveOpts });
     }
   }
 
-  return [...exclusiveOptions, ...globalOptions];
+  // --- B. 全局分组 ---
+  // 用于记录已处理的 Key，避免重复
+  const processedKeys = new Set();
+
+  GROUP_DEFINITIONS.forEach(def => {
+    // 找出符合当前分组规则且在 availableKeys 里的 Key
+    const groupKeys = availableKeys.filter(key => {
+      if (processedKeys.has(key)) return false;
+      if (def.keys && def.keys.includes(key)) return true;
+      if (def.matcher && def.matcher(key)) return true;
+      return false;
+    });
+
+    if (groupKeys.length > 0) {
+      // 标记已处理
+      groupKeys.forEach(k => processedKeys.add(k));
+
+      //以此构建选项
+      groups.push({
+        label: def.label,
+        options: groupKeys.map(key => ({
+          label: EFFECT_NAMES[key] || key,
+          value: key,
+          path: store.iconDatabase[key]
+        }))
+      });
+    }
+  });
+
+  // --- C. 兜底 (如果有漏网之鱼) ---
+  const remainingKeys = availableKeys.filter(k => !processedKeys.has(k));
+  if (remainingKeys.length > 0) {
+    groups.push({
+      label: '其他',
+      options: remainingKeys.map(key => ({
+        label: EFFECT_NAMES[key] || key,
+        value: key,
+        path: store.iconDatabase[key]
+      }))
+    });
+  }
+
+  return groups;
 })
 
 // 计算相关连线 (用于显示列表和删除)
@@ -176,33 +244,38 @@ function removeEffect(index) {
 
     <div class="attribute-editor">
       <div class="form-group">
-        <label>持续时间 (Duration)</label>
+        <label>持续时间</label>
         <input type="number" :value="selectedAction.duration" @input="e => updateActionProp('duration', Number(e.target.value))" step="0.1">
       </div>
 
       <div class="form-group" v-if="currentSkillType === 'link'">
-        <label>冷却时间 (Cooldown)</label>
+        <label>冷却时间</label>
         <input type="number" :value="selectedAction.cooldown" @input="e => updateActionProp('cooldown', Number(e.target.value))">
       </div>
 
       <div class="form-group highlight" v-if="currentSkillType === 'skill'">
-        <label>技力消耗 (SP Cost)</label>
+        <label>技力消耗</label>
         <input type="number" :value="selectedAction.spCost" @input="e => updateActionProp('spCost', Number(e.target.value))">
       </div>
 
       <div class="form-group highlight-blue" v-if="currentSkillType === 'ultimate'">
-        <label>充能消耗 (Gauge Cost)</label>
+        <label>充能消耗</label>
         <input type="number" :value="selectedAction.gaugeCost" @input="e => updateActionProp('gaugeCost', Number(e.target.value))">
       </div>
 
       <div class="form-group highlight">
-        <label>技力回复/返还 (SP Gain)</label>
+        <label>技力回复</label>
         <input type="number" :value="selectedAction.spGain" @input="e => updateActionProp('spGain', Number(e.target.value))">
       </div>
 
       <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)">
-        <label>充能回复 (Gauge Gain)</label>
+        <label>自身充能</label>
         <input type="number" :value="selectedAction.gaugeGain" @input="e => updateActionProp('gaugeGain', Number(e.target.value))">
+      </div>
+
+      <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
+        <label style="color: #ffd700;">队友充能</label>
+        <input type="number" :value="selectedAction.teamGaugeGain" @input="e => updateActionProp('teamGaugeGain', Number(e.target.value))">
       </div>
     </div>
 
@@ -241,9 +314,33 @@ function removeEffect(index) {
       </div>
       <div class="form-row full-width">
         <label>类型</label>
-        <select :value="selectedAction.physicalAnomaly[editingEffectIndex].type" @change="e => updateEffectProp(editingEffectIndex, 'type', e.target.value)">
-          <option v-for="opt in iconOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-        </select>
+
+        <el-select
+            :model-value="selectedAction.physicalAnomaly[editingEffectIndex].type"
+            @update:model-value="(val) => updateEffectProp(editingEffectIndex, 'type', val)"
+            placeholder="选择状态"
+            filterable
+            size="small"
+            class="effect-select"
+        >
+          <el-option-group
+              v-for="group in iconOptions"
+              :key="group.label"
+              :label="group.label"
+          >
+            <el-option
+                v-for="item in group.options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+            >
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <img :src="item.path" style="width: 18px; height: 18px; object-fit: contain;" />
+                <span>{{ item.label }}</span>
+              </div>
+            </el-option>
+          </el-option-group>
+        </el-select>
       </div>
       <div class="form-row">
         <label>层数</label>
@@ -271,33 +368,38 @@ function removeEffect(index) {
 
     <div class="attribute-editor">
       <div class="form-group">
-        <label>持续时间 (Duration)</label>
+        <label>持续时间</label>
         <input type="number" :value="selectedLibrarySkill.duration" @input="e => updateLibraryProp('duration', Number(e.target.value))" min="0.5" step="0.5">
       </div>
 
       <div class="form-group" v-if="currentSkillType === 'link'">
-        <label>冷却时间 (Cooldown)</label>
+        <label>冷却时间</label>
         <input type="number" :value="selectedLibrarySkill.cooldown" @input="e => updateLibraryProp('cooldown', Number(e.target.value))" min="0">
       </div>
 
       <div class="form-group highlight" v-if="currentSkillType === 'skill'">
-        <label>技力消耗 (SP Cost)</label>
+        <label>技力消耗</label>
         <input type="number" :value="selectedLibrarySkill.spCost" @input="e => updateLibraryProp('spCost', Number(e.target.value))" min="0">
       </div>
 
       <div class="form-group highlight-blue" v-if="currentSkillType === 'ultimate'">
-        <label>充能消耗 (Gauge Cost)</label>
+        <label>充能消耗</label>
         <input type="number" :value="selectedLibrarySkill.gaugeCost" @input="e => updateLibraryProp('gaugeCost', Number(e.target.value))" min="0">
       </div>
 
       <div class="form-group highlight">
-        <label>技力回复/返还 (SP Gain)</label>
+        <label>技力回复</label>
         <input type="number" :value="selectedLibrarySkill.spGain" @input="e => updateLibraryProp('spGain', Number(e.target.value))" min="0">
       </div>
 
       <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)">
-        <label>充能回复 (Gauge Gain)</label>
+        <label>自身充能</label>
         <input type="number" :value="selectedLibrarySkill.gaugeGain" @input="e => updateLibraryProp('gaugeGain', Number(e.target.value))" min="0">
+      </div>
+
+      <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
+        <label style="color: #ffd700;">队友充能</label>
+        <input type="number" :value="selectedLibrarySkill.teamGaugeGain" @input="e => updateLibraryProp('teamGaugeGain', Number(e.target.value))">
       </div>
     </div>
 
@@ -369,6 +471,17 @@ input:focus, select:focus { border-color: #ffd700; outline: none; }
 .info-box { margin-top: 20px; font-size: 12px; color: #666; text-align: center; }
 .empty { display: flex; align-items: center; justify-content: center; color: #666; }
 .divider { border: 0; border-top: 1px solid #444; margin: 15px 0; }
+
+.effect-select {
+  width: 100%;
+}
+:deep(.el-select .el-input__wrapper) {
+  background-color: #222;
+  box-shadow: 0 0 0 1px #555 inset;
+}
+:deep(.el-select .el-input__inner) {
+  color: #eee;
+}
 
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }

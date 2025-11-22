@@ -10,11 +10,6 @@ import ActionLibrary from '../components/ActionLibrary.vue'
 import PropertiesPanel from '../components/PropertiesPanel.vue'
 import SpMonitor from '../components/SpMonitor.vue'
 
-/**
- * 视图：TimelineEditor (主工作台)
- * 作用：组合所有核心组件，提供全局控制 (缩放、保存、导出)。
- */
-
 const store = useTimelineStore()
 const fileInputRef = ref(null)
 

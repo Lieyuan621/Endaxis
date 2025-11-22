@@ -1,3 +1,4 @@
+// src/stores/timelineStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
@@ -7,32 +8,24 @@ const uid = () => Math.random().toString(36).substring(2, 9)
 export const useTimelineStore = defineStore('timeline', () => {
 
     // ===================================================================================
-    // 1. 常量定义 (Constants & Config)
+    // 1. 系统常量 (Single Source of Truth)
     // ===================================================================================
 
-    const SP_MAX = 300
-    const SP_REGEN_RATE = 8
+    // 这里是“兜底默认值”。
+    // 实际运行中，这些值会被 gamedata.json 里的 SYSTEM_CONSTANTS 覆盖。
+    const systemConstants = ref({
+        maxSp: 300,
+        spRegenRate: 8,
+        skillSpCostDefault: 100
+    })
+
     const BASE_BLOCK_WIDTH = 50
     const TOTAL_DURATION = 120
 
-    // 元素属性颜色映射表 (全局标准色)
+    // 元素属性颜色映射表
     const ELEMENT_COLORS = {
-        // --- 基础元素 ---
-        "blaze": "#ff4d4f",    // 灼热 (红)
-        "cold": "#00e5ff",     // 寒冷 (青)
-        "emag": "#ffd700",     // 电磁 (金黄)
-        "nature": "#52c41a",   // 自然 (绿)
-        "physical": "#e0e0e0", // 物理 (银灰)
-
-        // --- 动作类型 ---
-        "link": "#fdd900",     // 连携 (金)
-        "execution": "#a61d24",// 处决 (红灰)
-        "skill": "#ffffff",    // 战技 (白)
-        "ultimate": "#00e5ff", // 终结技 (青)
-        "attack": "#aaaaaa",   // 重击 (灰)
-        "default": "#8c8c8c",  // 未知
-
-        // --- 详细状态 (映射到基础色) ---
+        "blaze": "#ff4d4f", "cold": "#00e5ff", "emag": "#ffd700", "nature": "#52c41a", "physical": "#e0e0e0",
+        "link": "#fdd900", "execution": "#a61d24", "skill": "#ffffff", "ultimate": "#00e5ff", "attack": "#aaaaaa", "default": "#8c8c8c",
         'blaze_attach': '#ff4d4f', 'blaze_burst': '#ff7875', 'burning': '#f5222d',
         'cold_attach': '#00e5ff', 'cold_burst': '#40a9ff', 'frozen': '#1890ff', 'ice_shatter': '#bae7ff',
         'emag_attach': '#ffd700', 'emag_burst': '#fff566', 'conductive': '#ffec3d',
@@ -41,22 +34,16 @@ export const useTimelineStore = defineStore('timeline', () => {
         'knockdown': '#d9d9d9', 'knockup': '#ffffff',
     }
 
-    /**
-     * 获取颜色工具函数 (对外暴露)
-     */
-    const getColor = (key) => {
-        return ELEMENT_COLORS[key] || ELEMENT_COLORS.default
-    }
+    const getColor = (key) => ELEMENT_COLORS[key] || ELEMENT_COLORS.default
 
     // ===================================================================================
     // 2. 基础状态 (State)
     // ===================================================================================
 
-    const characterRoster = ref([])  // 干员数据库
+    const characterRoster = ref([])
     const isLoading = ref(true)
     const iconDatabase = ref({})
 
-    // 四条轨道数据结构
     const tracks = ref([
         { id: null, actions: [], initialGauge: 0, maxGaugeOverride: null },
         { id: null, actions: [], initialGauge: 0, maxGaugeOverride: null },
@@ -64,19 +51,18 @@ export const useTimelineStore = defineStore('timeline', () => {
         { id: null, actions: [], initialGauge: 0, maxGaugeOverride: null },
     ])
 
-    const connections = ref([])      // 连线数据
+    const connections = ref([])
 
-    // === 交互状态 (UI State) ===
-    const activeTrackId = ref(null)          // 当前选中的轨道 (用于左侧技能库显示)
-    const timelineScrollLeft = ref(0)        // 水平滚动位置 (用于同步 SP 监控)
-    const zoomLevel = ref(1.0)               // 全局缩放等级
-    const globalDragOffset = ref(0)          // 拖拽时的偏移量修正
-    const draggingSkillData = ref(null)      // 当前正在从库中拖拽的数据
-    const selectedActionId = ref(null)       // 当前选中的动作实例 ID
-    const selectedLibrarySkillId = ref(null) // 当前选中的库技能 ID
-    const characterOverrides = ref({})       // 针对具体技能的全局数值覆盖 (Save/Load 用)
+    // === 交互状态 ===
+    const activeTrackId = ref(null)
+    const timelineScrollLeft = ref(0)
+    const zoomLevel = ref(1.0)
+    const globalDragOffset = ref(0)
+    const draggingSkillData = ref(null)
+    const selectedActionId = ref(null)
+    const selectedLibrarySkillId = ref(null)
+    const characterOverrides = ref({})
 
-    // 连线状态机
     const isLinking = ref(false)
     const linkingSourceId = ref(null)
     const linkingEffectIndex = ref(null)
@@ -85,9 +71,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     // 3. 计算属性 (Getters)
     // ===================================================================================
 
-    /**
-     * 快速查找动作所在的轨道索引及引用
-     */
     const getActionPositionInfo = (instanceId) => {
         for (let i = 0; i < tracks.value.length; i++) {
             const track = tracks.value[i];
@@ -97,16 +80,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         return null;
     };
 
-    /**
-     * 获取指向目标 Action 的所有连线
-     */
-    const getIncomingConnections = (targetId) => {
-        return connections.value.filter(c => c.to === targetId);
-    };
+    const getIncomingConnections = (targetId) => connections.value.filter(c => c.to === targetId);
 
-    /**
-     * 获取指定干员的元素属性颜色
-     */
     const getCharacterElementColor = (characterId) => {
         const charInfo = characterRoster.value.find(c => c.id === characterId)
         if (!charInfo || !charInfo.element) return ELEMENT_COLORS.default
@@ -116,8 +91,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const timeBlockWidth = computed(() => BASE_BLOCK_WIDTH * zoomLevel.value)
 
     /**
-     * [核心逻辑] 生成当前选中干员的技能库列表
-     * 负责将 JSON 数据转换为标准化的技能对象，并注入属性颜色
+     * 生成当前选中干员的技能库列表
      */
     const activeSkillLibrary = computed(() => {
         const activeChar = characterRoster.value.find(c => c.id === activeTrackId.value)
@@ -133,56 +107,43 @@ export const useTimelineStore = defineStore('timeline', () => {
             const rawDuration = activeChar[`${suffix}_duration`] || 1
             const rawCooldown = activeChar[`${suffix}_cooldown`] || 0
 
-            // === 属性继承逻辑 ===
             let derivedElement = activeChar.element || 'physical';
-
-            // 1. 优先读取技能独立配置
-            if (activeChar[`${suffix}_element`]) {
-                derivedElement = activeChar[`${suffix}_element`];
-            }
-            // 2. 特殊类型强制规则
-            if (suffix === 'attack') derivedElement = 'physical';
-            if (suffix === 'execution') derivedElement = 'physical';
+            if (activeChar[`${suffix}_element`]) derivedElement = activeChar[`${suffix}_element`];
+            if (suffix === 'attack' || suffix === 'execution') derivedElement = 'physical';
             if (suffix === 'link') derivedElement = null;
 
-            // === 数值读取 ===
             let defaults = { spCost: 0, spGain: 0, gaugeCost: 0, gaugeGain: 0 }
 
             if (suffix === 'attack') {
                 defaults.spGain = activeChar.attack_spGain || 0
             } else if (suffix === 'skill') {
-                defaults.spCost = activeChar.skill_spCost || 100;
-                defaults.spGain = activeChar.skill_spReply || 0;
-                defaults.gaugeGain = activeChar.skill_gaugeGain || 0
+                // 使用配置中的默认消耗值作为兜底
+                defaults.spCost = activeChar.skill_spCost || systemConstants.value.skillSpCostDefault;
+                defaults.spGain = activeChar.skill_spGain || activeChar.skill_spReply || 0;
+                defaults.gaugeGain = activeChar.skill_gaugeGain || 0;
+                defaults.teamGaugeGain = activeChar.skill_teamGaugeGain || 0;
             } else if (suffix === 'link') {
                 defaults.spGain = activeChar.link_spGain || 0;
                 defaults.gaugeGain = activeChar.link_gaugeGain || 0
             } else if (suffix === 'ultimate') {
-                defaults.gaugeCost = activeChar.ultimate_gaugeMax || 1000;
-                defaults.spGain = activeChar.ultimate_spReply || 0;
+                defaults.gaugeCost = activeChar.ultimate_gaugeMax || 100;
+                defaults.spGain = activeChar.ultimate_spGain || activeChar.ultimate_spReply || 0;
                 defaults.gaugeGain = activeChar.ultimate_gaugeReply || 0
             } else if (suffix === 'execution') {
                 defaults.spGain = activeChar.execution_spGain || 0;
             }
 
             const merged = {
-                duration: rawDuration,
-                cooldown: rawCooldown,
-                ...defaults,
-                ...globalOverride
+                duration: rawDuration, cooldown: rawCooldown,
+                ...defaults, ...globalOverride
             }
 
             return {
-                id: globalId,
-                type: type,
-                name: name,
-                element: derivedElement,
-                duration: merged.duration,
-                cooldown: merged.cooldown,
-                spCost: merged.spCost,
-                spGain: merged.spGain,
-                gaugeCost: merged.gaugeCost,
-                gaugeGain: merged.gaugeGain,
+                id: globalId, type: type, name: name, element: derivedElement,
+                duration: merged.duration, cooldown: merged.cooldown,
+                spCost: merged.spCost, spGain: merged.spGain,
+                gaugeCost: merged.gaugeCost, gaugeGain: merged.gaugeGain,
+                teamGaugeGain: merged.teamGaugeGain,
                 allowedTypes: getAllowed(activeChar[`${suffix}_allowed_types`]),
                 physicalAnomaly: getAnomalies(activeChar[`${suffix}_anomalies`])
             }
@@ -197,9 +158,6 @@ export const useTimelineStore = defineStore('timeline', () => {
         ]
     })
 
-    /**
-     * 获取当前队伍的轨道信息 (绑定了干员详情)
-     */
     const teamTracksInfo = computed(() => tracks.value.map(track => {
         const charInfo = characterRoster.value.find(c => c.id === track.id)
         return { ...track, ...(charInfo || { name: '未知', avatar: '', rarity: 0 }) }
@@ -209,19 +167,19 @@ export const useTimelineStore = defineStore('timeline', () => {
     // 4. 业务逻辑 (Actions)
     // ===================================================================================
 
-    function setZoom(val) {
-        if (val < 0.2) val = 0.2; if (val > 3.0) val = 3.0; zoomLevel.value = val
-    }
+    function setZoom(val) { if (val < 0.2) val = 0.2; if (val > 3.0) val = 3.0; zoomLevel.value = val }
     function setDraggingSkill(skill) { draggingSkillData.value = skill }
     function setDragOffset(offset) { globalDragOffset.value = offset }
     function setScrollLeft(val) { timelineScrollLeft.value = val }
 
-    /**
-     * 计算全局 SP 曲线 (离散事件模拟)
-     */
+    // 计算全局 SP 曲线
+
     function calculateGlobalSpData() {
+        // 解构配置，确保使用的是最新读取到的值
+        const { maxSp, spRegenRate } = systemConstants.value;
+
         const events = []
-        // 1. 收集所有 SP 变动事件
+
         tracks.value.forEach(track => {
             if (!track.actions) return
             track.actions.forEach(action => {
@@ -229,29 +187,29 @@ export const useTimelineStore = defineStore('timeline', () => {
                 if (action.spGain > 0) events.push({ time: action.startTime + action.duration, change: action.spGain, type: 'gain' })
             })
         })
+
         events.sort((a, b) => a.time - b.time)
 
-        // 2. 模拟时间推进
-        const points = []; let currentSp = 200; let currentTime = 0;
+        const points = [];
+        let currentSp = 200; // 初始SP，这里如果需要配置也可以提取到 JSON
+        let currentTime = 0;
         points.push({ time: 0, sp: currentSp });
 
         const advanceTime = (targetTime) => {
             const timeDiff = targetTime - currentTime; if (timeDiff <= 0) return;
 
-            // 如果已经满 SP，直接推进时间
-            if (currentSp >= SP_MAX) {
-                currentTime = targetTime; points.push({ time: currentTime, sp: SP_MAX }); return;
+            if (currentSp >= maxSp) {
+                currentTime = targetTime; points.push({ time: currentTime, sp: maxSp }); return;
             }
 
-            const potentialGain = timeDiff * SP_REGEN_RATE;
+            const potentialGain = timeDiff * spRegenRate;
             const projectedSp = currentSp + potentialGain;
 
-            // 如果中间会溢出，记录溢出时刻点
-            if (projectedSp >= SP_MAX) {
-                const timeToMax = (SP_MAX - currentSp) / SP_REGEN_RATE;
-                points.push({ time: currentTime + timeToMax, sp: SP_MAX });
-                currentSp = SP_MAX; currentTime = targetTime;
-                points.push({ time: currentTime, sp: SP_MAX });
+            if (projectedSp >= maxSp) {
+                const timeToMax = (maxSp - currentSp) / spRegenRate;
+                points.push({ time: currentTime + timeToMax, sp: maxSp });
+                currentSp = maxSp; currentTime = targetTime;
+                points.push({ time: currentTime, sp: maxSp });
             } else {
                 currentSp = projectedSp; currentTime = targetTime;
                 points.push({ time: currentTime, sp: currentSp });
@@ -261,8 +219,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         events.forEach(ev => {
             advanceTime(ev.time);
             currentSp += ev.change;
-            // SP 溢出截断
-            if (currentSp > SP_MAX) currentSp = SP_MAX;
+            if (currentSp > maxSp) currentSp = maxSp; // 溢出截断
             points.push({ time: currentTime, sp: currentSp, type: ev.type })
         });
 
@@ -270,9 +227,6 @@ export const useTimelineStore = defineStore('timeline', () => {
         return points
     }
 
-    /**
-     * 计算单个轨道的充能曲线 (Gauge)
-     */
     function calculateGaugeData(trackId) {
         const track = tracks.value.find(t => t.id === trackId)
         if (!track) return []
@@ -284,9 +238,26 @@ export const useTimelineStore = defineStore('timeline', () => {
         const GAUGE_MAX = (track.maxGaugeOverride && track.maxGaugeOverride > 0) ? track.maxGaugeOverride : ((override && override.gaugeCost) ? override.gaugeCost : (charInfo.ultimate_gaugeMax || 100))
 
         const events = []
-        track.actions.forEach(action => {
-            if (action.gaugeCost > 0) events.push({ time: action.startTime, change: -action.gaugeCost })
-            if (action.gaugeGain > 0) events.push({ time: action.startTime + action.duration, change: action.gaugeGain })
+        tracks.value.forEach(sourceTrack => {
+            if (!sourceTrack.actions) return
+
+            sourceTrack.actions.forEach(action => {
+                // 情况 A: 自己的动作 (Self)
+                // 判断 sourceTrack.id 是否等于当前计算的目标 trackId
+                if (sourceTrack.id === trackId) {
+                    if (action.gaugeCost > 0) events.push({ time: action.startTime, change: -action.gaugeCost })
+                    if (action.gaugeGain > 0) events.push({ time: action.startTime + action.duration, change: action.gaugeGain })
+                }
+
+                // 情况 B: 队友的动作 (Team Support)
+                // 如果这个动作来源于别人，且带有 teamGaugeGain
+                if (sourceTrack.id !== trackId && action.teamGaugeGain > 0) {
+                    events.push({
+                        time: action.startTime + action.duration,
+                        change: action.teamGaugeGain
+                    })
+                }
+            })
         })
         events.sort((a, b) => a.time - b.time)
 
@@ -306,28 +277,23 @@ export const useTimelineStore = defineStore('timeline', () => {
         return points
     }
 
-    // === 数据持久化与交互 ===
+    // === 数据修改 ===
     function updateTrackMaxGauge(trackId, value) { const track = tracks.value.find(t => t.id === trackId); if (track) track.maxGaugeOverride = value }
     function updateTrackInitialGauge(trackId, value) { const track = tracks.value.find(t => t.id === trackId); if (track) track.initialGauge = value }
-
     function updateLibrarySkill(skillId, props) {
         if (!characterOverrides.value[skillId]) characterOverrides.value[skillId] = {}
         Object.assign(characterOverrides.value[skillId], props)
-        // 同步更新已放置的同类技能
         tracks.value.forEach(track => { if (!track.actions) return; track.actions.forEach(action => { if (action.id === skillId) { Object.assign(action, props) } }) })
     }
-
     const cloneSkill = (skill) => {
         const clonedAnomalies = skill.physicalAnomaly ? JSON.parse(JSON.stringify(skill.physicalAnomaly)) : [];
         return { ...skill, instanceId: `inst_${uid()}`, physicalAnomaly: clonedAnomalies }
     }
-
     function addSkillToTrack(trackId, skill, startTime) {
         const track = tracks.value.find(t => t.id === trackId); if (!track) return
         const newAction = cloneSkill(skill); newAction.startTime = startTime
         track.actions.push(newAction); track.actions.sort((a, b) => a.startTime - b.startTime)
     }
-
     function selectLibrarySkill(skillId) { selectedActionId.value = null; selectedLibrarySkillId.value = (selectedLibrarySkillId.value === skillId) ? null : skillId }
     function selectAction(instanceId) { selectedLibrarySkillId.value = null; selectedActionId.value = (instanceId === selectedActionId.value) ? null : instanceId }
     function updateAction(instanceId, newProperties) {
@@ -339,7 +305,6 @@ export const useTimelineStore = defineStore('timeline', () => {
         connections.value = connections.value.filter(c => c.from !== instanceId && c.to !== instanceId)
         if (selectedActionId.value === instanceId) selectedActionId.value = null
     }
-
     function selectTrack(trackId) { activeTrackId.value = trackId; selectedActionId.value = null; selectedLibrarySkillId.value = null; cancelLinking() }
     function changeTrackOperator(trackIndex, oldOperatorId, newOperatorId) {
         const track = tracks.value[trackIndex];
@@ -350,13 +315,24 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
     }
 
-    // === 外部 IO ===
+    // === 外部 IO (修正后) ===
     async function fetchGameData() {
         try {
             isLoading.value = true
             const response = await fetch('/gamedata.json')
             if (!response.ok) throw new Error('无法加载 gamedata.json')
+
+            // 1. 先解析 JSON
             const data = await response.json()
+
+            // 2. 再读取常量配置，覆盖 Store 中的默认值
+            if (data.SYSTEM_CONSTANTS) {
+                systemConstants.value.maxSp = data.SYSTEM_CONSTANTS.MAX_SP || 300
+                systemConstants.value.spRegenRate = data.SYSTEM_CONSTANTS.SP_REGEN_PER_SEC || 8
+                systemConstants.value.skillSpCostDefault = data.SYSTEM_CONSTANTS.SKILL_SP_COST_DEFAULT || 100
+            }
+
+            // 3. 处理干员列表
             const sortedRoster = data.characterRoster.sort((a, b) => (b.rarity || 0) - (a.rarity || 0));
             characterRoster.value = sortedRoster
             iconDatabase.value = data.ICON_DATABASE
@@ -388,7 +364,6 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (isLinking.value && linkingSourceId.value === selectedActionId.value && linkingEffectIndex.value === effectIndex) { cancelLinking(); return; }
         isLinking.value = true; linkingSourceId.value = selectedActionId.value; linkingEffectIndex.value = effectIndex;
     }
-
     function confirmLinking(targetId, targetEffectIndex = null) {
         if (!isLinking.value || !linkingSourceId.value) return cancelLinking();
         if (linkingSourceId.value === targetId) { cancelLinking(); return; }
@@ -396,12 +371,12 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (!exists) { connections.value.push({ id: `conn_${uid()}`, from: linkingSourceId.value, to: targetId, fromEffectIndex: linkingEffectIndex.value, toEffectIndex: targetEffectIndex }) }
         cancelLinking()
     }
-
     function cancelLinking() { isLinking.value = false; linkingSourceId.value = null; linkingEffectIndex.value = null; }
     function removeConnection(connId) { connections.value = connections.value.filter(c => c.id !== connId) }
 
     return {
         // State
+        systemConstants, // 暴露出来供组件调试用
         isLoading, characterRoster, iconDatabase, tracks, connections,
         activeTrackId, timelineScrollLeft, zoomLevel,
         globalDragOffset, draggingSkillData,

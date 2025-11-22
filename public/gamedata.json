@@ -39,13 +39,32 @@
           "path": "/icons/crystallization.png"
         }
       ],
-      "attack_duration": 2.5,
+      "attack_duration": 3.5,
       "attack_spGain": 15,
-      "attack_allowed_types": [],
+      "attack_allowed_types": [
+        "break",
+        "armor_break",
+        "ice_shatter",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "emag_attach",
+        "conductive",
+        "emag_burst",
+        "blaze_burst",
+        "burning",
+        "blaze_attach",
+        "default"
+      ],
       "attack_anomalies": [],
       "skill_duration": 2,
       "skill_spCost": 100,
-      "skill_spReply": 0,
       "skill_gaugeGain": 0,
       "skill_allowed_types": [
         "stagger",
@@ -75,7 +94,6 @@
       ],
       "ultimate_duration": 3,
       "ultimate_gaugeMax": 100,
-      "ultimate_spReply": 0,
       "ultimate_gaugeReply": 0,
       "ultimate_allowed_types": [
         "default"
@@ -83,7 +101,871 @@
       "ultimate_anomalies": [],
       "execution_duration": 1.5,
       "execution_spGain": 20,
-      "execution_allowed_types": [],
+      "execution_allowed_types": [
+        "default",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "blaze_burst",
+        "burning",
+        "blaze_attach",
+        "knockup",
+        "break",
+        "ice_shatter",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "knockdown",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "stagger",
+        "armor_break"
+      ],
+      "execution_anomalies": [],
+      "skill_spGain": 0,
+      "ultimate_spGain": 0,
+      "skill_teamGaugeGain": 6
+    },
+    {
+      "id": "POGRANICHNK",
+      "name": "骏卫",
+      "rarity": 6,
+      "element": "physical",
+      "avatar": "/avatars/POGRANICHNK.png",
+      "exclusive_buffs": [],
+      "attack_duration": 3,
+      "attack_spGain": 15,
+      "attack_allowed_types": [
+        "armor_break",
+        "break",
+        "ice_shatter",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_burst",
+        "burning",
+        "blaze_attach",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "emag_attach",
+        "conductive",
+        "emag_burst",
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_spCost": 100,
+      "skill_gaugeGain": 0,
+      "skill_allowed_types": [
+        "armor_break",
+        "break",
+        "ice_shatter"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "armor_break",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spGain": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [
+        "default"
+      ],
+      "link_anomalies": [],
+      "ultimate_duration": 3,
+      "ultimate_gaugeMax": 100,
+      "ultimate_gaugeReply": 0,
+      "ultimate_allowed_types": [
+        "default"
+      ],
+      "ultimate_anomalies": [],
+      "execution_duration": 1.5,
+      "execution_spGain": 20,
+      "execution_allowed_types": [
+        "burning",
+        "blaze_attach",
+        "blaze_burst",
+        "default",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "knockup",
+        "break",
+        "ice_shatter",
+        "knockdown",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "stagger",
+        "armor_break",
+        "emag_attach",
+        "conductive",
+        "emag_burst"
+      ],
+      "execution_anomalies": [],
+      "skill_spGain": 0,
+      "ultimate_spGain": 0,
+      "skill_teamGaugeGain": 6
+    },
+    {
+      "id": "ARDELIA",
+      "name": "艾尔黛拉",
+      "rarity": 6,
+      "element": "nature",
+      "avatar": "/avatars/ARDELIA.png",
+      "exclusive_buffs": [
+        {
+          "key": "physical_weakness",
+          "name": "物理易伤",
+          "path": "/icons/physical_weakness.png"
+        },
+        {
+          "key": "magic_weakness",
+          "name": "法术易伤",
+          "path": "/icons/magic_weakness.png"
+        }
+      ],
+      "attack_duration": 4,
+      "attack_spGain": 15,
+      "attack_allowed_types": [
+        "knockup",
+        "break",
+        "ice_shatter",
+        "knockdown",
+        "stagger",
+        "armor_break",
+        "emag_attach",
+        "conductive",
+        "emag_burst",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "blaze_burst",
+        "burning",
+        "blaze_attach",
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_spCost": 100,
+      "skill_gaugeGain": 0,
+      "skill_allowed_types": [
+        "physical_weakness",
+        "magic_weakness"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "physical_weakness",
+          "stacks": 1,
+          "duration": 0
+        },
+        {
+          "type": "magic_weakness",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spGain": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [
+        "corrosion",
+        "nature_attach",
+        "nature_burst"
+      ],
+      "link_anomalies": [
+        {
+          "type": "corrosion",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "ultimate_duration": 3,
+      "ultimate_gaugeMax": 100,
+      "ultimate_gaugeReply": 0,
+      "ultimate_allowed_types": [
+        "default"
+      ],
+      "ultimate_anomalies": [],
+      "execution_duration": 1.5,
+      "execution_spGain": 20,
+      "execution_allowed_types": [
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "default",
+        "corrosion",
+        "nature_attach",
+        "nature_burst",
+        "burning",
+        "blaze_attach",
+        "blaze_burst",
+        "knockup",
+        "break",
+        "ice_shatter",
+        "knockdown",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "stagger",
+        "armor_break"
+      ],
+      "execution_anomalies": [],
+      "skill_spGain": 0,
+      "ultimate_spGain": 0,
+      "skill_teamGaugeGain": 6
+    },
+    {
+      "id": "LASTRITE",
+      "name": "别礼",
+      "rarity": 6,
+      "element": "cold",
+      "avatar": "/avatars/LASTRITE.png",
+      "exclusive_buffs": [
+        {
+          "key": "cold_enchantment",
+          "name": "寒冷附魔",
+          "path": "/icons/cold_enchantment.png"
+        }
+      ],
+      "attack_duration": 4,
+      "attack_spGain": 15,
+      "attack_allowed_types": [
+        "default",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "blaze_burst",
+        "burning",
+        "blaze_attach",
+        "knockup",
+        "break",
+        "ice_shatter",
+        "knockdown",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "stagger",
+        "armor_break",
+        "cold_attach",
+        "frozen",
+        "cold_burst"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_spCost": 100,
+      "skill_gaugeGain": 0,
+      "skill_allowed_types": [
+        "cold_enchantment"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "cold_enchantment",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spGain": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [
+        "default"
+      ],
+      "link_anomalies": [],
+      "ultimate_duration": 3,
+      "ultimate_gaugeMax": 100,
+      "ultimate_gaugeReply": 0,
+      "ultimate_allowed_types": [
+        "default"
+      ],
+      "ultimate_anomalies": [],
+      "execution_duration": 1.5,
+      "execution_spGain": 20,
+      "execution_allowed_types": [
+        "default",
+        "burning",
+        "blaze_attach",
+        "blaze_burst",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "knockdown",
+        "break",
+        "ice_shatter",
+        "knockup",
+        "stagger",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "armor_break"
+      ],
+      "execution_anomalies": [],
+      "skill_spGain": 30,
+      "ultimate_spGain": 0,
+      "skill_teamGaugeGain": 6
+    },
+    {
+      "id": "GILBERTA",
+      "name": "洁尔佩塔",
+      "rarity": 6,
+      "element": "nature",
+      "avatar": "/avatars/GILBERTA.png",
+      "exclusive_buffs": [
+        {
+          "key": "slow",
+          "name": "减速",
+          "path": "/icons/slow.png"
+        },
+        {
+          "key": "magic_weakness",
+          "name": "法术易伤",
+          "path": "/icons/magic_weakness.png"
+        }
+      ],
+      "attack_duration": 4,
+      "attack_spGain": 15,
+      "attack_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion",
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_spCost": 100,
+      "skill_spGain": 0,
+      "skill_gaugeGain": 0,
+      "skill_teamGaugeGain": 6,
+      "skill_allowed_types": [
+        "corrosion",
+        "nature_attach",
+        "nature_burst"
+      ],
+      "skill_anomalies": [],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spGain": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [
+        "knockup",
+        "break",
+        "ice_shatter"
+      ],
+      "link_anomalies": [],
+      "ultimate_duration": 3,
+      "ultimate_gaugeMax": 100,
+      "ultimate_spGain": 0,
+      "ultimate_gaugeReply": 0,
+      "ultimate_allowed_types": [
+        "slow",
+        "magic_weakness",
+        "knockup",
+        "break",
+        "ice_shatter"
+      ],
+      "ultimate_anomalies": [
+        {
+          "type": "slow",
+          "stacks": 1,
+          "duration": 0
+        },
+        {
+          "type": "magic_weakness",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "execution_duration": 1.5,
+      "execution_spGain": 20,
+      "execution_allowed_types": [
+        "default",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "blaze_burst",
+        "burning",
+        "blaze_attach",
+        "knockup",
+        "break",
+        "ice_shatter",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "knockdown",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "stagger",
+        "armor_break"
+      ],
+      "execution_anomalies": []
+    },
+    {
+      "id": "YVONNE",
+      "name": "伊冯",
+      "rarity": 6,
+      "element": "cold",
+      "avatar": "/avatars/YVONNE.png",
+      "exclusive_buffs": [],
+      "attack_duration": 3.5,
+      "attack_spGain": 15,
+      "attack_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion",
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_spCost": 100,
+      "skill_spGain": 0,
+      "skill_gaugeGain": 0,
+      "skill_teamGaugeGain": 6,
+      "skill_allowed_types": [
+        "frozen",
+        "cold_attach",
+        "cold_burst"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "cold_attach",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spGain": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [
+        "cold_burst",
+        "frozen",
+        "cold_attach"
+      ],
+      "link_anomalies": [
+        {
+          "type": "cold_attach",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "ultimate_duration": 3,
+      "ultimate_gaugeMax": 100,
+      "ultimate_spGain": 0,
+      "ultimate_gaugeReply": 0,
+      "ultimate_allowed_types": [
+        "frozen",
+        "cold_attach",
+        "cold_burst"
+      ],
+      "ultimate_anomalies": [
+        {
+          "type": "cold_attach",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "execution_duration": 1.5,
+      "execution_spGain": 20,
+      "execution_allowed_types": [
+        "default",
+        "burning",
+        "blaze_attach",
+        "blaze_burst",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "knockup",
+        "break",
+        "ice_shatter",
+        "knockdown",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "stagger",
+        "armor_break"
+      ],
+      "execution_anomalies": []
+    },
+    {
+      "id": "LAEVATAIN",
+      "name": "莱万汀",
+      "rarity": 6,
+      "element": "blaze",
+      "avatar": "/avatars/LAEVATAIN.png",
+      "exclusive_buffs": [
+        {
+          "key": "magma",
+          "name": "熔火",
+          "path": "/icons/magma.png"
+        }
+      ],
+      "attack_duration": 3,
+      "attack_spGain": 15,
+      "attack_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion",
+        "default",
+        "magma"
+      ],
+      "attack_anomalies": [
+        {
+          "type": "magma",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "skill_duration": 2,
+      "skill_spCost": 100,
+      "skill_spGain": 0,
+      "skill_gaugeGain": 0,
+      "skill_teamGaugeGain": 6,
+      "skill_allowed_types": [
+        "magma",
+        "burning",
+        "blaze_attach",
+        "blaze_burst"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "magma",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spGain": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [
+        "magma"
+      ],
+      "link_anomalies": [
+        {
+          "type": "magma",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "ultimate_duration": 3,
+      "ultimate_gaugeMax": 100,
+      "ultimate_spGain": 0,
+      "ultimate_gaugeReply": 0,
+      "ultimate_allowed_types": [
+        "magma",
+        "blaze_burst",
+        "burning",
+        "blaze_attach"
+      ],
+      "ultimate_anomalies": [],
+      "execution_duration": 1.5,
+      "execution_spGain": 20,
+      "execution_allowed_types": [
+        "magma",
+        "default",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "blaze_burst",
+        "burning",
+        "blaze_attach",
+        "knockdown",
+        "break",
+        "ice_shatter",
+        "knockup",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "stagger",
+        "armor_break"
+      ],
+      "execution_anomalies": [
+        {
+          "type": "magma",
+          "stacks": 1,
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "id": "LIFENG",
+      "name": "黎风",
+      "rarity": 6,
+      "element": "physical",
+      "avatar": "/avatars/LIFENG.png",
+      "exclusive_buffs": [
+        {
+          "key": "combo",
+          "name": "连击",
+          "path": "/icons/combo.png"
+        },
+        {
+          "key": "physical_weakness",
+          "name": "物理易伤",
+          "path": "/icons/physical_weakness.png"
+        }
+      ],
+      "attack_duration": 3,
+      "attack_spGain": 15,
+      "attack_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion",
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_spCost": 100,
+      "skill_spGain": 0,
+      "skill_gaugeGain": 0,
+      "skill_teamGaugeGain": 6,
+      "skill_allowed_types": [
+        "knockdown",
+        "break",
+        "ice_shatter",
+        "physical_weakness"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "knockdown",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spGain": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [
+        "combo"
+      ],
+      "link_anomalies": [
+        {
+          "type": "combo",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "ultimate_duration": 3,
+      "ultimate_gaugeMax": 100,
+      "ultimate_spGain": 0,
+      "ultimate_gaugeReply": 0,
+      "ultimate_allowed_types": [
+        "knockdown",
+        "break",
+        "ice_shatter"
+      ],
+      "ultimate_anomalies": [
+        {
+          "type": "knockdown",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "execution_duration": 1.5,
+      "execution_spGain": 20,
+      "execution_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion",
+        "default"
+      ],
+      "execution_anomalies": []
+    },
+    {
+      "id": "EMBER",
+      "name": "余烬",
+      "rarity": 6,
+      "element": "blaze",
+      "avatar": "/avatars/EMBER.png",
+      "exclusive_buffs": [],
+      "attack_duration": 2.5,
+      "attack_spGain": 15,
+      "attack_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion",
+        "default"
+      ],
+      "attack_anomalies": [],
+      "skill_duration": 2,
+      "skill_spCost": 100,
+      "skill_spGain": 0,
+      "skill_gaugeGain": 0,
+      "skill_teamGaugeGain": 6,
+      "skill_allowed_types": [
+        "knockdown",
+        "break",
+        "ice_shatter"
+      ],
+      "skill_anomalies": [
+        {
+          "type": "knockdown",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "link_duration": 1.5,
+      "link_cooldown": 15,
+      "link_spGain": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [
+        "knockdown",
+        "break",
+        "ice_shatter"
+      ],
+      "link_anomalies": [
+        {
+          "type": "knockdown",
+          "stacks": 1,
+          "duration": 0
+        }
+      ],
+      "ultimate_duration": 3,
+      "ultimate_gaugeMax": 100,
+      "ultimate_spGain": 0,
+      "ultimate_gaugeReply": 0,
+      "ultimate_allowed_types": [
+        "default"
+      ],
+      "ultimate_anomalies": [],
+      "execution_duration": 1.5,
+      "execution_spGain": 20,
+      "execution_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion",
+        "default"
+      ],
       "execution_anomalies": []
     },
     {
@@ -95,11 +977,30 @@
       "exclusive_buffs": [],
       "attack_duration": 2.5,
       "attack_spGain": 15,
-      "attack_allowed_types": [],
+      "attack_allowed_types": [
+        "default",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "burning",
+        "blaze_attach",
+        "blaze_burst",
+        "knockup",
+        "break",
+        "ice_shatter",
+        "nature_attach",
+        "corrosion",
+        "nature_burst",
+        "knockdown",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "stagger",
+        "armor_break"
+      ],
       "attack_anomalies": [],
       "skill_duration": 2,
       "skill_spCost": 100,
-      "skill_spReply": 0,
       "skill_gaugeGain": 0,
       "skill_allowed_types": [
         "knockup",
@@ -131,7 +1032,6 @@
       ],
       "ultimate_duration": 3,
       "ultimate_gaugeMax": 100,
-      "ultimate_spReply": 0,
       "ultimate_gaugeReply": 0,
       "ultimate_allowed_types": [
         "default"
@@ -140,7 +1040,10 @@
       "execution_duration": 2.5,
       "execution_spGain": 30,
       "execution_allowed_types": [],
-      "execution_anomalies": []
+      "execution_anomalies": [],
+      "skill_spGain": 0,
+      "ultimate_spGain": 0,
+      "skill_teamGaugeGain": 6
     },
     {
       "id": "ALESH",
@@ -151,11 +1054,30 @@
       "exclusive_buffs": [],
       "attack_duration": 3,
       "attack_spGain": 10,
-      "attack_allowed_types": [],
+      "attack_allowed_types": [
+        "corrosion",
+        "nature_attach",
+        "nature_burst",
+        "burning",
+        "blaze_attach",
+        "blaze_burst",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "knockup",
+        "break",
+        "ice_shatter",
+        "knockdown",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "stagger",
+        "armor_break",
+        "default"
+      ],
       "attack_anomalies": [],
       "skill_duration": 2,
       "skill_spCost": 100,
-      "skill_spReply": 0,
       "skill_gaugeGain": 17,
       "skill_allowed_types": [
         "frozen",
@@ -171,7 +1093,7 @@
       ],
       "link_duration": 1,
       "link_cooldown": 5,
-      "link_spGain": 0,
+      "link_spGain": 10,
       "link_gaugeGain": 10,
       "link_allowed_types": [
         "default"
@@ -179,7 +1101,6 @@
       "link_anomalies": [],
       "ultimate_duration": 3,
       "ultimate_gaugeMax": 100,
-      "ultimate_spReply": 0,
       "ultimate_gaugeReply": 0,
       "ultimate_allowed_types": [
         "cold_burst",
@@ -196,7 +1117,10 @@
       "execution_duration": 1.5,
       "execution_spGain": 20,
       "execution_allowed_types": [],
-      "execution_anomalies": []
+      "execution_anomalies": [],
+      "skill_spGain": 30,
+      "ultimate_spGain": 30,
+      "skill_teamGaugeGain": 6
     },
     {
       "id": "ESTELLA",
@@ -207,11 +1131,30 @@
       "exclusive_buffs": [],
       "attack_duration": 2.5,
       "attack_spGain": 15,
-      "attack_allowed_types": [],
+      "attack_allowed_types": [
+        "corrosion",
+        "nature_attach",
+        "nature_burst",
+        "burning",
+        "blaze_attach",
+        "blaze_burst",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "knockdown",
+        "break",
+        "ice_shatter",
+        "knockup",
+        "stagger",
+        "armor_break",
+        "default"
+      ],
       "attack_anomalies": [],
       "skill_duration": 2,
       "skill_spCost": 100,
-      "skill_spReply": 0,
       "skill_gaugeGain": 0,
       "skill_allowed_types": [
         "cold_burst",
@@ -248,7 +1191,6 @@
       ],
       "ultimate_duration": 3,
       "ultimate_gaugeMax": 100,
-      "ultimate_spReply": 0,
       "ultimate_gaugeReply": 0,
       "ultimate_allowed_types": [
         "default"
@@ -257,7 +1199,10 @@
       "execution_duration": 1.5,
       "execution_spGain": 20,
       "execution_allowed_types": [],
-      "execution_anomalies": []
+      "execution_anomalies": [],
+      "ultimate_spGain": 0,
+      "skill_spGain": 0,
+      "skill_teamGaugeGain": 6
     },
     {
       "id": "AKEKURI",
@@ -268,11 +1213,30 @@
       "exclusive_buffs": [],
       "attack_duration": 2.5,
       "attack_spGain": 15,
-      "attack_allowed_types": [],
+      "attack_allowed_types": [
+        "corrosion",
+        "nature_attach",
+        "nature_burst",
+        "burning",
+        "blaze_attach",
+        "blaze_burst",
+        "conductive",
+        "emag_attach",
+        "emag_burst",
+        "cold_attach",
+        "frozen",
+        "cold_burst",
+        "ice_shatter",
+        "knockdown",
+        "break",
+        "knockup",
+        "stagger",
+        "armor_break",
+        "default"
+      ],
       "attack_anomalies": [],
       "skill_duration": 2,
       "skill_spCost": 100,
-      "skill_spReply": 0,
       "skill_gaugeGain": 0,
       "skill_allowed_types": [
         "blaze_attach",
@@ -296,7 +1260,6 @@
       "link_anomalies": [],
       "ultimate_duration": 3,
       "ultimate_gaugeMax": 100,
-      "ultimate_spReply": 0,
       "ultimate_gaugeReply": 0,
       "ultimate_allowed_types": [
         "default"
@@ -305,7 +1268,10 @@
       "execution_duration": 1.5,
       "execution_spGain": 20,
       "execution_allowed_types": [],
-      "execution_anomalies": []
+      "execution_anomalies": [],
+      "skill_spGain": 0,
+      "ultimate_spGain": 0,
+      "skill_teamGaugeGain": 6
     }
   ]
 }

@@ -4,24 +4,17 @@ import { useTimelineStore } from '../stores/timelineStore.js'
 import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-/**
- * 视图：DataEditor
- * 优化：
- * 1. UI 顺序调整：允许状态 -> 默认状态。
- * 2. 逻辑联动：默认状态的下拉框只显示已勾选的允许状态。
- */
-
 const store = useTimelineStore()
 const { characterRoster, iconDatabase } = storeToRefs(store)
 
 // === 1. 常量定义 ===
 
 const ELEMENTS = [
-  { label: '🔥 灼热 (Blaze)', value: 'blaze' },
-  { label: '❄️ 寒冷 (Cold)', value: 'cold' },
-  { label: '⚡ 电磁 (Emag)', value: 'emag' },
-  { label: '🌿 自然 (Nature)', value: 'nature' },
-  { label: '🛡️ 物理 (Physical)', value: 'physical' }
+  { label: ' 灼热 (Blaze)', value: 'blaze' },
+  { label: ' 寒冷 (Cold)', value: 'cold' },
+  { label: ' 电磁 (Emag)', value: 'emag' },
+  { label: ' 自然 (Nature)', value: 'nature' },
+  { label: ' 物理 (Physical)', value: 'physical' }
 ]
 
 const EFFECT_NAMES = {
@@ -78,14 +71,19 @@ function updateCharId(event) {
 
 function addNewCharacter() {
   const newId = `char_${Date.now()}`
+
+  const allGlobalEffects = [...effectKeys]
+
   const newChar = {
     id: newId, name: "新干员", rarity: 5, element: "physical", avatar: "/avatars/default.png", exclusive_buffs: [],
-    attack_duration: 2.5, attack_spGain: 15, attack_allowed_types: [], attack_anomalies: [],
-    skill_duration: 2, skill_spCost: 100, skill_spReply: 0, skill_gaugeGain: 0, skill_allowed_types: [], skill_anomalies: [],
+
+    attack_duration: 2.5, attack_spGain: 15, attack_allowed_types: allGlobalEffects, attack_anomalies: [],
+    skill_duration: 2, skill_spCost: 100, skill_spGain: 0, skill_gaugeGain: 0, skill_teamGaugeGain: 6, skill_allowed_types: [], skill_anomalies: [],
     link_duration: 1.5, link_cooldown: 15, link_spGain: 0, link_gaugeGain: 0, link_allowed_types: [], link_anomalies: [],
-    ultimate_duration: 3, ultimate_gaugeMax: 100, ultimate_spReply: 0, ultimate_gaugeReply: 0, ultimate_allowed_types: [], ultimate_anomalies: [],
-    execution_duration: 1.5, execution_spGain: 20, execution_allowed_types: [], execution_anomalies: []
+    ultimate_duration: 3, ultimate_gaugeMax: 100, ultimate_spGain: 0, ultimate_gaugeReply: 0, ultimate_allowed_types: [], ultimate_anomalies: [],
+    execution_duration: 1.5, execution_spGain: 20, execution_allowed_types: allGlobalEffects, execution_anomalies: []
   }
+
   characterRoster.value.unshift(newChar)
   selectedCharId.value = newId
   ElMessage.success('已添加新干员')
@@ -274,6 +272,38 @@ function addAnomaly(targetKey, skillType) {
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.attack_duration"></div>
               <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.attack_spGain"></div>
             </div>
+
+            <div class="form-group"><label>允许挂载的状态</label>
+              <div class="checkbox-grid">
+                <label v-for="key in effectKeys" :key="`attack_${key}`" class="cb-item">
+                  <input type="checkbox" :value="key" v-model="selectedChar.attack_allowed_types" @change="onCheckChange(selectedChar, 'attack', key)">
+                  {{ EFFECT_NAMES[key] }}
+                </label>
+                <label v-for="buff in selectedChar.exclusive_buffs" :key="`attack_${buff.key}`" class="cb-item exclusive">
+                  <input type="checkbox" :value="buff.key" v-model="selectedChar.attack_allowed_types">
+                  ★ {{ buff.name }}
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px;">
+              <label>默认附带状态 (Auto Anomalies)</label>
+              <div class="info-banner" v-if="getAvailableAnomalyOptions('attack').length === 0">请先在上方勾选允许的状态。</div>
+
+              <div v-for="(item, idx) in selectedChar.attack_anomalies" :key="idx" class="exclusive-row">
+                <select v-model="item.type" class="flex-grow">
+                  <option v-for="opt in getAvailableAnomalyOptions('attack')" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+                <input type="number" v-model.number="item.stacks" placeholder="层" style="width: 50px">
+                <input type="number" v-model.number="item.duration" placeholder="秒" step="0.1" style="width: 60px">
+                <button class="btn-icon" @click="selectedChar.attack_anomalies.splice(idx, 1)">×</button>
+              </div>
+              <button class="btn-small"
+                      @click="addAnomaly('attack_anomalies', 'attack')"
+                      :disabled="getAvailableAnomalyOptions('attack').length === 0">
+                + 添加默认状态
+              </button>
+            </div>
           </div>
 
           <div v-show="activeTab === 'skill'" class="form-section">
@@ -283,7 +313,14 @@ function addAnomaly(targetKey, skillType) {
               </div>
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.skill_duration"></div>
               <div class="form-group"><label>SP 消耗</label><input type="number" v-model.number="selectedChar.skill_spCost"></div>
-              <div class="form-group"><label>充能获取</label><input type="number" v-model.number="selectedChar.skill_gaugeGain"></div>
+              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.skill_spGain"></div>
+
+              <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.skill_gaugeGain"></div>
+
+              <div class="form-group">
+                <label>队友充能</label>
+                <input type="number" v-model.number="selectedChar.skill_teamGaugeGain">
+              </div>
             </div>
 
             <div class="form-group"><label>允许挂载的状态</label>
@@ -317,7 +354,10 @@ function addAnomaly(targetKey, skillType) {
             <div class="form-row">
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.link_duration"></div>
               <div class="form-group"><label>冷却时间</label><input type="number" v-model.number="selectedChar.link_cooldown"></div>
-              <div class="form-group"><label>充能获取</label><input type="number" v-model.number="selectedChar.link_gaugeGain"></div>
+
+              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.link_spGain"></div>
+
+              <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.link_gaugeGain"></div>
             </div>
 
             <div class="form-group"><label>允许挂载的状态</label>
@@ -352,7 +392,12 @@ function addAnomaly(targetKey, skillType) {
                 <select v-model="selectedChar.ultimate_element"><option :value="undefined">跟随干员</option><option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">{{ elm.label }}</option></select>
               </div>
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.ultimate_duration"></div>
+
+              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.ultimate_spGain"></div>
+
               <div class="form-group"><label>充能消耗</label><input type="number" v-model.number="selectedChar.ultimate_gaugeMax"></div>
+
+              <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.ultimate_gaugeReply"></div>
             </div>
 
             <div class="form-group"><label>允许挂载的状态</label>
@@ -386,6 +431,39 @@ function addAnomaly(targetKey, skillType) {
               <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.execution_duration"></div>
               <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.execution_spGain"></div>
             </div>
+
+            <div class="form-group"><label>允许挂载的状态</label>
+              <div class="checkbox-grid">
+                <label v-for="key in effectKeys" :key="`execution_${key}`" class="cb-item">
+                  <input type="checkbox" :value="key" v-model="selectedChar.execution_allowed_types" @change="onCheckChange(selectedChar, 'execution', key)">
+                  {{ EFFECT_NAMES[key] }}
+                </label>
+                <label v-for="buff in selectedChar.exclusive_buffs" :key="`execution_${buff.key}`" class="cb-item exclusive">
+                  <input type="checkbox" :value="buff.key" v-model="selectedChar.execution_allowed_types">
+                  ★ {{ buff.name }}
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px;">
+              <label>默认附带状态 (Auto Anomalies)</label>
+              <div class="info-banner" v-if="getAvailableAnomalyOptions('execution').length === 0">请先在上方勾选允许的状态。</div>
+
+              <div v-for="(item, idx) in selectedChar.execution_anomalies" :key="idx" class="exclusive-row">
+                <select v-model="item.type" class="flex-grow">
+                  <option v-for="opt in getAvailableAnomalyOptions('execution')" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+                <input type="number" v-model.number="item.stacks" placeholder="层" style="width: 50px">
+                <input type="number" v-model.number="item.duration" placeholder="秒" step="0.1" style="width: 60px">
+                <button class="btn-icon" @click="selectedChar.execution_anomalies.splice(idx, 1)">×</button>
+              </div>
+              <button class="btn-small"
+                      @click="addAnomaly('execution_anomalies', 'execution')"
+                      :disabled="getAvailableAnomalyOptions('execution').length === 0">
+                + 添加默认状态
+              </button>
+            </div>
+
           </div>
 
         </div>
