@@ -9,7 +9,7 @@ const props = defineProps({
 
 const store = useTimelineStore()
 const { iconDatabase } = storeToRefs(store)
-const isSelected = computed(() => store.selectedActionId === props.action.instanceId)
+const isSelected = computed(() => store.isActionSelected(props.action.instanceId))
 
 // ===================================================================================
 // 1. 样式计算 (Style Logic)
@@ -159,11 +159,11 @@ function onIconClick(evt, index) {
 </script>
 
 <template>
-  <div :id="`action-${action.instanceId}`" class="action-item-wrapper" :style="style" @click.stop>
+  <div :id="`action-${action.instanceId}`" class="action-item-wrapper" :style="style" @click.stop @dragstart.prevent>
 
     <div class="action-item-content drag-handle">{{ action.name }}</div>
 
-    <div v-if="isSelected" class="delete-btn-modern" @click.stop="onDeleteClick" title="[delete]">
+    <div v-if="isSelected" class="delete-btn-modern" @click.stop="onDeleteClick" title="删除 (Delete)">
       <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>

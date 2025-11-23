@@ -118,10 +118,6 @@ watch(
         <polygon :points="areaPoints" fill="url(#stagger-grad)"/>
         <polyline :points="polylinePoints" fill="none" :stroke="COLOR_STAGGER" stroke-width="2"/>
 
-        <line v-for="(seg, i) in fullSegments" :key="`full-${i}`"
-              :x1="seg.x1" :y1="PADDING_TOP" :x2="seg.x2" :y2="PADDING_TOP"
-              class="full-stagger-line" />
-
         <circle v-for="(p, idx) in chartData" :key="idx" :cx="p.time * store.timeBlockWidth" :cy="BASE_Y - (Math.min(p.val, maxVal) * scaleY)" r="2" :fill="COLOR_STAGGER"/>
       </svg>
     </div>
@@ -135,8 +131,6 @@ watch(
 .input-row { display: flex; align-items: center; gap: 5px; }
 .limit-input { width: 50px; background: #333; border: 1px solid #555; color: #fff; border-radius: 4px; padding: 2px 5px; font-size: 12px; }
 .chart-scroll-wrapper { overflow: hidden; position: relative; background: #252525; }
-.full-stagger-line { stroke: #ff4d4f; stroke-width: 3; stroke-linecap: round; animation: stagger-pulse 0.8s ease-in-out infinite alternate; }
-.full-stagger-line { stroke: #ff4d4f; stroke-width: 3; stroke-linecap: round; animation: stagger-pulse 0.8s ease-in-out infinite alternate; }
 @keyframes stagger-pulse {  0% { stroke-opacity: 0.6; stroke-width: 3; }  100% { stroke-opacity: 1; stroke-width: 5; } /* 只改变透明度和宽度，不加阴影 */ }
 .stun-bg-anim { animation: stun-flash 1.5s infinite alternate; }
 @keyframes stun-flash {  0% { fill-opacity: 0.6; }  100% { fill-opacity: 1; }  }

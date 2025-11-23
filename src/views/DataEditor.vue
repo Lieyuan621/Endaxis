@@ -288,7 +288,7 @@ function addAnomaly(targetKey, skillType) {
             </div>
 
             <div class="form-group" style="margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px;">
-              <label>默认附带状态 (Auto Anomalies)</label>
+              <label>默认附带状态</label>
               <div class="info-banner" v-if="getAvailableAnomalyOptions('attack').length === 0">请先在上方勾选允许的状态。</div>
 
               <div v-for="(item, idx) in selectedChar.attack_anomalies" :key="idx" class="exclusive-row">
