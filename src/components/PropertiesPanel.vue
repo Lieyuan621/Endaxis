@@ -64,7 +64,7 @@ const anomalyRows = computed({
     return selectedAction.value?.physicalAnomaly || []
   },
   set: (val) => {
-    store.updateAction(store.selectedActionId, { physicalAnomaly: val })
+    store.updateAction(store.selectedActionId, {physicalAnomaly: val})
   }
 })
 
@@ -75,14 +75,14 @@ function isEditing(r, c) {
 // 获取当前正在编辑的效果数据
 const editingEffectData = computed(() => {
   if (!editingIndexObj.value) return null
-  const { r, c } = editingIndexObj.value
+  const {r, c} = editingIndexObj.value
   return anomalyRows.value[r]?.[c]
 })
 
 // 计算当前编辑项的扁平索引 (用于连线定位)
 const currentFlatIndex = computed(() => {
   if (!editingIndexObj.value) return null
-  const { r, c } = editingIndexObj.value
+  const {r, c} = editingIndexObj.value
   let flatIndex = 0
   for (let i = 0; i < r; i++) {
     if (anomalyRows.value[i]) flatIndex += anomalyRows.value[i].length
@@ -94,28 +94,28 @@ const currentFlatIndex = computed(() => {
 // 更新特定效果属性
 function updateEffectProp(key, value) {
   if (!editingIndexObj.value) return
-  const { r, c } = editingIndexObj.value
+  const {r, c} = editingIndexObj.value
   const rows = JSON.parse(JSON.stringify(anomalyRows.value))
   if (rows[r] && rows[r][c]) {
     rows[r][c][key] = value
-    store.updateAction(store.selectedActionId, { physicalAnomaly: rows })
+    store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
   }
 }
 
 // 添加新行
 function addRow() {
   const rows = JSON.parse(JSON.stringify(anomalyRows.value))
-  rows.push([{ type: 'default', stacks: 1, duration: 0 }])
-  store.updateAction(store.selectedActionId, { physicalAnomaly: rows })
-  editingIndexObj.value = { r: rows.length - 1, c: 0 }
+  rows.push([{type: 'default', stacks: 1, duration: 0}])
+  store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
+  editingIndexObj.value = {r: rows.length - 1, c: 0}
 }
 
 // 在指定行追加效果
 function addEffectToRow(rowIndex) {
   const rows = JSON.parse(JSON.stringify(anomalyRows.value))
-  rows[rowIndex].push({ type: 'default', stacks: 1, duration: 0 })
-  store.updateAction(store.selectedActionId, { physicalAnomaly: rows })
-  editingIndexObj.value = { r: rowIndex, c: rows[rowIndex].length - 1 }
+  rows[rowIndex].push({type: 'default', stacks: 1, duration: 0})
+  store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
+  editingIndexObj.value = {r: rowIndex, c: rows[rowIndex].length - 1}
 }
 
 // 删除指定效果
@@ -145,7 +145,7 @@ const iconOptions = computed(() => {
       exclusiveOpts = exclusiveOpts.filter(opt => allowed.includes(opt.value));
     }
     if (exclusiveOpts.length > 0) {
-      groups.push({ label: ' 专属效果 ', options: exclusiveOpts });
+      groups.push({label: ' 专属效果 ', options: exclusiveOpts});
     }
   }
 
@@ -161,7 +161,7 @@ const iconOptions = computed(() => {
       groupKeys.forEach(k => processedKeys.add(k));
       groups.push({
         label: def.label,
-        options: groupKeys.map(key => ({ label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key] }))
+        options: groupKeys.map(key => ({label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]}))
       });
     }
   });
@@ -170,7 +170,7 @@ const iconOptions = computed(() => {
   if (remainingKeys.length > 0) {
     groups.push({
       label: '其他',
-      options: remainingKeys.map(key => ({ label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key] }))
+      options: remainingKeys.map(key => ({label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]}))
     });
   }
   return groups;
@@ -186,9 +186,12 @@ const relevantConnections = computed(() => {
         let otherActionName = '未知动作';
         for (const track of store.tracks) {
           const action = track.actions.find(a => a.instanceId === otherActionId)
-          if (action) { otherActionName = action.name; break; }
+          if (action) {
+            otherActionName = action.name;
+            break;
+          }
         }
-        return { id: conn.id, direction: isOutgoing ? '连向' : '来自', otherActionName, isOutgoing }
+        return {id: conn.id, direction: isOutgoing ? '连向' : '来自', otherActionName, isOutgoing}
       })
 })
 
@@ -206,12 +209,32 @@ function getIconPath(type) {
 
 function updateLibraryProp(key, value) {
   if (!selectedLibrarySkill.value) return
-  store.updateLibrarySkill(selectedLibrarySkill.value.id, { [key]: value })
+  store.updateLibrarySkill(selectedLibrarySkill.value.id, {[key]: value})
 }
 
 function updateActionProp(key, value) {
   if (!selectedAction.value) return;
-  store.updateAction(store.selectedActionId, { [key]: value });
+  store.updateAction(store.selectedActionId, {[key]: value});
+}
+
+// === 动作实例的充能联动 ===
+function updateActionGaugeWithLink(value) {
+  if (!selectedAction.value) return
+  store.updateAction(store.selectedActionId, {
+    gaugeGain: value,
+    // 联动更新队友充能，系数 0.5
+    teamGaugeGain: value * 0.5
+  })
+}
+
+// === 库技能的充能联动 ===
+function updateLibraryGaugeWithLink(value) {
+  if (!selectedLibrarySkill.value) return
+  store.updateLibrarySkill(selectedLibrarySkill.value.id, {
+    gaugeGain: value,
+    // 联动更新队友充能，系数 0.5
+    teamGaugeGain: value * 0.5
+  })
 }
 </script>
 
@@ -220,59 +243,72 @@ function updateActionProp(key, value) {
     <h3 class="panel-title">动作实例编辑</h3>
     <div class="type-tag">{{ selectedAction.name }} ({{ currentSkillType }})</div>
 
-    <button class="link-btn" @click.stop="store.startLinking()" :class="{ 'is-linking': store.isLinking && store.linkingEffectIndex === null }">
+    <button class="link-btn" @click.stop="store.startLinking()"
+            :class="{ 'is-linking': store.isLinking && store.linkingEffectIndex === null }">
       {{ (store.isLinking && store.linkingEffectIndex === null) ? '请点击目标动作块...' : '🔗 建立连线' }}
     </button>
 
     <div class="attribute-editor">
       <div class="form-group">
         <label>持续时间</label>
-        <input type="number" :value="selectedAction.duration" @input="e => updateActionProp('duration', Number(e.target.value))" step="0.1">
+        <input type="number" :value="selectedAction.duration"
+               @input="e => updateActionProp('duration', Number(e.target.value))" step="0.1">
       </div>
       <div class="form-group highlight-red" v-if="currentSkillType !== 'execution'">
         <label>失衡值</label>
-        <input type="number" :value="selectedAction.stagger" @input="e => updateActionProp('stagger', Number(e.target.value))">
+        <input type="number" :value="selectedAction.stagger"
+               @input="e => updateActionProp('stagger', Number(e.target.value))">
       </div>
       <div class="form-group" v-if="currentSkillType === 'link'">
         <label>冷却时间</label>
-        <input type="number" :value="selectedAction.cooldown" @input="e => updateActionProp('cooldown', Number(e.target.value))">
+        <input type="number" :value="selectedAction.cooldown"
+               @input="e => updateActionProp('cooldown', Number(e.target.value))">
       </div>
       <div class="form-group highlight" v-if="currentSkillType === 'link'">
         <label>触发窗口（仅为展示连携窗口）</label>
-        <input type="number" :value="selectedAction.triggerWindow || 0" @input="e => updateActionProp('triggerWindow', Number(e.target.value))" step="0.1" min="0">
+        <input type="number" :value="selectedAction.triggerWindow || 0"
+               @input="e => updateActionProp('triggerWindow', Number(e.target.value))" step="0.1" min="0">
       </div>
       <div class="form-group highlight" v-if="currentSkillType === 'skill'">
         <label>技力消耗</label>
-        <input type="number" :value="selectedAction.spCost" @input="e => updateActionProp('spCost', Number(e.target.value))">
+        <input type="number" :value="selectedAction.spCost"
+               @input="e => updateActionProp('spCost', Number(e.target.value))">
       </div>
       <div class="form-group highlight-blue" v-if="currentSkillType === 'ultimate'">
         <label>充能消耗</label>
-        <input type="number" :value="selectedAction.gaugeCost" @input="e => updateActionProp('gaugeCost', Number(e.target.value))">
+        <input type="number" :value="selectedAction.gaugeCost"
+               @input="e => updateActionProp('gaugeCost', Number(e.target.value))">
       </div>
       <div class="form-group highlight">
         <label>技力回复</label>
-        <input type="number" :value="selectedAction.spGain" @input="e => updateActionProp('spGain', Number(e.target.value))">
+        <input type="number" :value="selectedAction.spGain"
+               @input="e => updateActionProp('spGain', Number(e.target.value))">
       </div>
+
       <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)">
         <label>自身充能</label>
-        <input type="number" :value="selectedAction.gaugeGain" @input="e => updateActionProp('gaugeGain', Number(e.target.value))">
+        <input type="number" :value="selectedAction.gaugeGain"
+               @input="e => updateActionGaugeWithLink(Number(e.target.value))">
       </div>
+
       <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
         <label>队友充能</label>
-        <input type="number" :value="selectedAction.teamGaugeGain" @input="e => updateActionProp('teamGaugeGain', Number(e.target.value))">
+        <input type="number" :value="selectedAction.teamGaugeGain"
+               @input="e => updateActionProp('teamGaugeGain', Number(e.target.value))">
       </div>
     </div>
 
     <div v-if="relevantConnections.length > 0" class="connections-list-area">
       <div class="info-row"><label>现有连线</label></div>
-      <div v-for="conn in relevantConnections" :key="conn.id" class="connection-item" :class="{ 'is-outgoing': conn.isOutgoing, 'is-incoming': !conn.isOutgoing }">
+      <div v-for="conn in relevantConnections" :key="conn.id" class="connection-item"
+           :class="{ 'is-outgoing': conn.isOutgoing, 'is-incoming': !conn.isOutgoing }">
         <span class="conn-icon">{{ conn.isOutgoing ? '➔' : '←' }}</span>
         <span class="conn-text">{{ conn.direction }} {{ conn.otherActionName }}</span>
         <div class="delete-conn-btn" @click="store.removeConnection(conn.id)" title="断开连线">×</div>
       </div>
     </div>
 
-    <hr class="divider" />
+    <hr class="divider"/>
 
     <div class="info-row" style="margin-bottom: 5px;">
       <label>状态效果排布 (可二维拖拽)</label>
@@ -302,7 +338,7 @@ function updateActionProp(key, value) {
                 <div class="icon-wrapper"
                      :class="{ 'is-editing': isEditing(rowIndex, colIndex) }"
                      @click="editingIndexObj = { r: rowIndex, c: colIndex }">
-                  <img :src="getIconPath(effect.type)" class="mini-icon" />
+                  <img :src="getIconPath(effect.type)" class="mini-icon"/>
                   <div v-if="effect.stacks > 1" class="mini-stacks">{{ effect.stacks }}</div>
                 </div>
               </template>
@@ -313,7 +349,7 @@ function updateActionProp(key, value) {
         </template>
       </draggable>
 
-      <button class="add-effect-bar" @click="addRow"> + 添加新行 </button>
+      <button class="add-effect-bar" @click="addRow"> + 添加新行</button>
     </div>
 
     <div v-if="editingEffectData" class="effect-detail-editor">
@@ -332,7 +368,7 @@ function updateActionProp(key, value) {
           <el-option-group v-for="group in iconOptions" :key="group.label" :label="group.label">
             <el-option v-for="item in group.options" :key="item.value" :label="item.label" :value="item.value">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <img :src="item.path" style="width: 18px; height: 18px; object-fit: contain;" />
+                <img :src="item.path" style="width: 18px; height: 18px; object-fit: contain;"/>
                 <span>{{ item.label }}</span>
               </div>
             </el-option>
@@ -342,11 +378,13 @@ function updateActionProp(key, value) {
 
       <div class="form-row">
         <label>层数</label>
-        <input type="number" :value="editingEffectData.stacks" @input="e => updateEffectProp('stacks', Number(e.target.value))" min="1">
+        <input type="number" :value="editingEffectData.stacks"
+               @input="e => updateEffectProp('stacks', Number(e.target.value))" min="1">
       </div>
       <div class="form-row">
         <label>持续(s)</label>
-        <input type="number" :value="editingEffectData.duration" @input="e => updateEffectProp('duration', Number(e.target.value))" min="0" step="0.5">
+        <input type="number" :value="editingEffectData.duration"
+               @input="e => updateEffectProp('duration', Number(e.target.value))" min="0" step="0.5">
       </div>
 
       <div class="editor-footer">
@@ -367,14 +405,38 @@ function updateActionProp(key, value) {
       此修改将同步更新所有同类技能（全局生效）。
     </div>
     <div class="attribute-editor">
-      <div class="form-group"><label>持续时间</label><input type="number" :value="selectedLibrarySkill.duration" @input="e => updateLibraryProp('duration', Number(e.target.value))" min="0.5" step="0.5"></div>
-      <div class="form-group highlight-red" v-if="currentSkillType !== 'execution'"><label>失衡值</label><input type="number" :value="selectedLibrarySkill.stagger" @input="e => updateLibraryProp('stagger', Number(e.target.value))"></div>
-      <div class="form-group" v-if="currentSkillType === 'link'"><label>冷却时间</label><input type="number" :value="selectedLibrarySkill.cooldown" @input="e => updateLibraryProp('cooldown', Number(e.target.value))" min="0"></div>
-      <div class="form-group highlight" v-if="currentSkillType === 'skill'"><label>技力消耗</label><input type="number" :value="selectedLibrarySkill.spCost" @input="e => updateLibraryProp('spCost', Number(e.target.value))" min="0"></div>
-      <div class="form-group highlight-blue" v-if="currentSkillType === 'ultimate'"><label>充能消耗</label><input type="number" :value="selectedLibrarySkill.gaugeCost" @input="e => updateLibraryProp('gaugeCost', Number(e.target.value))" min="0"></div>
-      <div class="form-group highlight"><label>技力回复</label><input type="number" :value="selectedLibrarySkill.spGain" @input="e => updateLibraryProp('spGain', Number(e.target.value))" min="0"></div>
-      <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)"><label>自身充能</label><input type="number" :value="selectedLibrarySkill.gaugeGain" @input="e => updateLibraryProp('gaugeGain', Number(e.target.value))" min="0"></div>
-      <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'"><label>队友充能</label><input type="number" :value="selectedLibrarySkill.teamGaugeGain" @input="e => updateLibraryProp('teamGaugeGain', Number(e.target.value))"></div>
+      <div class="form-group"><label>持续时间</label><input type="number" :value="selectedLibrarySkill.duration"
+                                                            @input="e => updateLibraryProp('duration', Number(e.target.value))"
+                                                            min="0.5" step="0.5"></div>
+      <div class="form-group highlight-red" v-if="currentSkillType !== 'execution'"><label>失衡值</label><input
+          type="number" :value="selectedLibrarySkill.stagger"
+          @input="e => updateLibraryProp('stagger', Number(e.target.value))"></div>
+      <div class="form-group" v-if="currentSkillType === 'link'"><label>冷却时间</label><input type="number"
+                                                                                               :value="selectedLibrarySkill.cooldown"
+                                                                                               @input="e => updateLibraryProp('cooldown', Number(e.target.value))"
+                                                                                               min="0"></div>
+      <div class="form-group highlight" v-if="currentSkillType === 'skill'"><label>技力消耗</label><input type="number"
+                                                                                                          :value="selectedLibrarySkill.spCost"
+                                                                                                          @input="e => updateLibraryProp('spCost', Number(e.target.value))"
+                                                                                                          min="0"></div>
+      <div class="form-group highlight-blue" v-if="currentSkillType === 'ultimate'"><label>充能消耗</label><input
+          type="number" :value="selectedLibrarySkill.gaugeCost"
+          @input="e => updateLibraryProp('gaugeCost', Number(e.target.value))" min="0"></div>
+      <div class="form-group highlight"><label>技力回复</label><input type="number" :value="selectedLibrarySkill.spGain"
+                                                                      @input="e => updateLibraryProp('spGain', Number(e.target.value))"
+                                                                      min="0"></div>
+
+      <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)">
+        <label>自身充能 (联动队友)</label>
+        <input type="number" :value="selectedLibrarySkill.gaugeGain"
+               @input="e => updateLibraryGaugeWithLink(Number(e.target.value))" min="0">
+      </div>
+
+      <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
+        <label>队友充能</label>
+        <input type="number" :value="selectedLibrarySkill.teamGaugeGain"
+               @input="e => updateLibraryProp('teamGaugeGain', Number(e.target.value))">
+      </div>
     </div>
   </div>
 
@@ -469,9 +531,20 @@ input:focus, select:focus {
   outline: none;
 }
 
-.highlight input { border-color: #ffd700; color: #ffd700; }
-.highlight-blue input { border-color: #00e5ff; color: #00e5ff; }
-.highlight-red input { border-color: #ff7875; color: #ff7875; }
+.highlight input {
+  border-color: #ffd700;
+  color: #ffd700;
+}
+
+.highlight-blue input {
+  border-color: #00e5ff;
+  color: #00e5ff;
+}
+
+.highlight-red input {
+  border-color: #ff7875;
+  color: #ff7875;
+}
 
 /* ==========================================
    Buttons & Interactions
@@ -487,8 +560,16 @@ input:focus, select:focus {
   cursor: pointer;
   font-weight: bold;
 }
-.link-btn:hover { background-color: #555; }
-.link-btn.is-linking { background-color: #ffd700; color: #000; animation: pulse 1s infinite; }
+
+.link-btn:hover {
+  background-color: #555;
+}
+
+.link-btn.is-linking {
+  background-color: #ffd700;
+  color: #000;
+  animation: pulse 1s infinite;
+}
 
 .add-effect-bar {
   width: 100%;
@@ -506,7 +587,12 @@ input:focus, select:focus {
   justify-content: center;
   gap: 5px;
 }
-.add-effect-bar:hover { border-color: #ffd700; color: #ffd700; background-color: #3a3a3a; }
+
+.add-effect-bar:hover {
+  border-color: #ffd700;
+  color: #ffd700;
+  background-color: #3a3a3a;
+}
 
 .delete-btn-small {
   background: #d32f2f;
@@ -519,8 +605,16 @@ input:focus, select:focus {
   width: 100%;
 }
 
-.delete-conn-btn { cursor: pointer; color: #aaa; font-weight: bold; padding: 0 5px; }
-.delete-conn-btn:hover { color: #d32f2f; }
+.delete-conn-btn {
+  cursor: pointer;
+  color: #aaa;
+  font-weight: bold;
+  padding: 0 5px;
+}
+
+.delete-conn-btn:hover {
+  color: #d32f2f;
+}
 
 /* ==========================================
    Anomalies Grid Editor
@@ -552,7 +646,11 @@ input:focus, select:focus {
   font-size: 16px;
   padding: 0 4px;
 }
-.row-handle:active { cursor: grabbing; color: #ffd700; }
+
+.row-handle:active {
+  cursor: grabbing;
+  color: #ffd700;
+}
 
 .row-items-list {
   display: flex;
@@ -580,7 +678,12 @@ input:focus, select:focus {
   padding-bottom: 2px;
   transition: all 0.2s;
 }
-.add-to-row-btn:hover { border-color: #ffd700; color: #ffd700; background: #3a3a3a; }
+
+.add-to-row-btn:hover {
+  border-color: #ffd700;
+  color: #ffd700;
+  background: #3a3a3a;
+}
 
 .icon-wrapper {
   position: relative;
@@ -594,11 +697,35 @@ input:focus, select:focus {
   justify-content: center;
   cursor: pointer;
 }
-.icon-wrapper:hover { border-color: #999; background: #555; }
-.icon-wrapper.is-editing { border-color: #ffd700; background: #4a4a3a; box-shadow: 0 0 4px rgba(255, 215, 0, 0.3); }
 
-.mini-icon { width: 24px; height: 24px; object-fit: contain; }
-.mini-stacks { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.8); color: #fff; font-size: 9px; padding: 0 2px; line-height: 1; border-radius: 2px; }
+.icon-wrapper:hover {
+  border-color: #999;
+  background: #555;
+}
+
+.icon-wrapper.is-editing {
+  border-color: #ffd700;
+  background: #4a4a3a;
+  box-shadow: 0 0 4px rgba(255, 215, 0, 0.3);
+}
+
+.mini-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.mini-stacks {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 9px;
+  padding: 0 2px;
+  line-height: 1;
+  border-radius: 2px;
+}
 
 /* ==========================================
    Effect Detail Editor
@@ -636,11 +763,26 @@ input:focus, select:focus {
   flex-direction: column;
   margin-bottom: 8px;
 }
-.form-row.full-width { grid-column: 1 / -1; }
-.form-row label { font-size: 11px; color: #999; margin-bottom: 2px; }
-.form-row input, .form-row select { font-size: 12px; padding: 4px; }
 
-.editor-footer { display: flex; gap: 8px; }
+.form-row.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-row label {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 2px;
+}
+
+.form-row input, .form-row select {
+  font-size: 12px;
+  padding: 4px;
+}
+
+.editor-footer {
+  display: flex;
+  gap: 8px;
+}
 
 .effect-link-btn {
   flex-grow: 1;
@@ -652,11 +794,26 @@ input:focus, select:focus {
   cursor: pointer;
   border-radius: 4px;
 }
-.effect-link-btn.is-linking { background-color: #ffd700; color: #000; border-style: solid; animation: pulse 1s infinite; }
 
-.effect-select { width: 100%; }
-:deep(.el-select .el-input__wrapper) { background-color: #222; box-shadow: 0 0 0 1px #555 inset; }
-:deep(.el-select .el-input__inner) { color: #eee; }
+.effect-link-btn.is-linking {
+  background-color: #ffd700;
+  color: #000;
+  border-style: solid;
+  animation: pulse 1s infinite;
+}
+
+.effect-select {
+  width: 100%;
+}
+
+:deep(.el-select .el-input__wrapper) {
+  background-color: #222;
+  box-shadow: 0 0 0 1px #555 inset;
+}
+
+:deep(.el-select .el-input__inner) {
+  color: #eee;
+}
 
 /* ==========================================
    Connection List
@@ -671,13 +828,22 @@ input:focus, select:focus {
   margin-bottom: 5px;
   border-left: 3px solid transparent;
 }
-.connection-item.is-outgoing { border-left-color: #ffd700; }
-.connection-item.is-incoming { border-left-color: #00e5ff; }
+
+.connection-item.is-outgoing {
+  border-left-color: #ffd700;
+}
+
+.connection-item.is-incoming {
+  border-left-color: #00e5ff;
+}
 
 /* ==========================================
    Library Mode & Misc
    ========================================== */
-.library-mode .attribute-editor { border-color: #4a90e2; }
+.library-mode .attribute-editor {
+  border-color: #4a90e2;
+}
+
 .panel-desc {
   font-size: 12px;
   color: #aaa;
@@ -687,6 +853,26 @@ input:focus, select:focus {
   border-left: 2px solid #4a90e2;
 }
 
-@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>

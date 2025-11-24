@@ -73,7 +73,7 @@
       ],
       "skill_duration": 2,
       "skill_spCost": 100,
-      "skill_gaugeGain": 0,
+      "skill_gaugeGain": 16,
       "skill_allowed_types": [
         "stagger",
         "break",
@@ -149,8 +149,9 @@
       "execution_anomalies": [],
       "skill_spGain": 0,
       "ultimate_spGain": 0,
-      "skill_teamGaugeGain": 6,
-      "link_stagger": 16
+      "skill_teamGaugeGain": 0,
+      "link_stagger": 16,
+      "accept_team_gauge": true
     },
     {
       "id": "POGRANICHNK",
@@ -241,7 +242,8 @@
       "execution_anomalies": [],
       "skill_spGain": 0,
       "ultimate_spGain": 0,
-      "skill_teamGaugeGain": 6
+      "skill_teamGaugeGain": 6,
+      "accept_team_gauge": true
     },
     {
       "id": "ARDELIA",
@@ -357,7 +359,8 @@
       "execution_anomalies": [],
       "skill_spGain": 0,
       "ultimate_spGain": 0,
-      "skill_teamGaugeGain": 6
+      "skill_teamGaugeGain": 6,
+      "accept_team_gauge": true
     },
     {
       "id": "LASTRITE",
@@ -452,7 +455,8 @@
       "execution_anomalies": [],
       "skill_spGain": 30,
       "ultimate_spGain": 0,
-      "skill_teamGaugeGain": 6
+      "skill_teamGaugeGain": 6,
+      "accept_team_gauge": false
     },
     {
       "id": "GILBERTA",
@@ -565,7 +569,8 @@
         "stagger",
         "armor_break"
       ],
-      "execution_anomalies": []
+      "execution_anomalies": [],
+      "accept_team_gauge": true
     },
     {
       "id": "YVONNE",
@@ -676,7 +681,8 @@
         "stagger",
         "armor_break"
       ],
-      "execution_anomalies": []
+      "execution_anomalies": [],
+      "accept_team_gauge": true
     },
     {
       "id": "LAEVATAIN",
@@ -803,7 +809,8 @@
             "duration": 0
           }
         ]
-      ]
+      ],
+      "accept_team_gauge": true
     },
     {
       "id": "LIFENG",
@@ -924,7 +931,8 @@
         "corrosion",
         "default"
       ],
-      "execution_anomalies": []
+      "execution_anomalies": [],
+      "accept_team_gauge": true
     },
     {
       "id": "EMBER",
@@ -1025,7 +1033,8 @@
         "corrosion",
         "default"
       ],
-      "execution_anomalies": []
+      "execution_anomalies": [],
+      "accept_team_gauge": true
     },
     {
       "id": "CHENQIANYU",
@@ -1109,7 +1118,8 @@
       "skill_teamGaugeGain": 6,
       "attack_stagger": 16,
       "skill_stagger": 40,
-      "link_stagger": 32
+      "link_stagger": 32,
+      "accept_team_gauge": true
     },
     {
       "id": "ALESH",
@@ -1192,7 +1202,8 @@
       "ultimate_spGain": 30,
       "skill_teamGaugeGain": 6,
       "skill_stagger": 12,
-      "link_stagger": 12
+      "link_stagger": 12,
+      "accept_team_gauge": true
     },
     {
       "id": "ESTELLA",
@@ -1280,7 +1291,8 @@
       "skill_spGain": 0,
       "skill_teamGaugeGain": 6,
       "skill_stagger": 12,
-      "link_stagger": 24
+      "link_stagger": 24,
+      "accept_team_gauge": true
     },
     {
       "id": "AKEKURI",
@@ -1351,7 +1363,8 @@
       "execution_anomalies": [],
       "skill_spGain": 0,
       "ultimate_spGain": 0,
-      "skill_teamGaugeGain": 6
+      "skill_teamGaugeGain": 6,
+      "accept_team_gauge": true
     }
   ]
 }

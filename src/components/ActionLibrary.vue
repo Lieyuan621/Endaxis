@@ -185,7 +185,7 @@ function onNativeDragEnd() {
           <el-slider
               v-model="maxGaugeValue"
               :min="1"
-              :max="200"
+              :max="300"
               :step="1"
               :show-tooltip="false"
               size="small"
@@ -194,6 +194,7 @@ function onNativeDragEnd() {
           <el-input-number
               v-model="maxGaugeValue"
               :min="1"
+              :max="300"
               controls-position="right"
               size="small"
               class="gauge-input input-orange"

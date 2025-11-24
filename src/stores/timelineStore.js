@@ -547,15 +547,55 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     function calculateGaugeData(trackId) {
-        const track = tracks.value.find(t => t.id === trackId); if (!track) return [];
-        const charInfo = characterRoster.value.find(c => c.id === trackId); if (!charInfo) return [];
-        const libId = `${trackId}_ultimate`; const override = characterOverrides.value[libId];
+        const track = tracks.value.find(t => t.id === trackId);
+        if (!track) return [];
+
+        const charInfo = characterRoster.value.find(c => c.id === trackId);
+        if (!charInfo) return [];
+
+        // === 获取干员是否接受队友充能 (默认为 true) ===
+        const canAcceptTeamGauge = (charInfo.accept_team_gauge !== false);
+
+        const libId = `${trackId}_ultimate`;
+        const override = characterOverrides.value[libId];
         const GAUGE_MAX = (track.maxGaugeOverride && track.maxGaugeOverride > 0) ? track.maxGaugeOverride : ((override && override.gaugeCost) ? override.gaugeCost : (charInfo.ultimate_gaugeMax || 100));
+
         const events = [];
-        tracks.value.forEach(sourceTrack => { if (!sourceTrack.actions) return; sourceTrack.actions.forEach(action => { if (sourceTrack.id === trackId) { if (action.gaugeCost > 0) events.push({ time: action.startTime, change: -action.gaugeCost }); if (action.gaugeGain > 0) events.push({ time: action.startTime + action.duration, change: action.gaugeGain }); } if (sourceTrack.id !== trackId && action.teamGaugeGain > 0) { events.push({ time: action.startTime + action.duration, change: action.teamGaugeGain }); } }) });
-        events.sort((a, b) => a.time - b.time); const initialGauge = track.initialGauge || 0; let currentGauge = initialGauge > GAUGE_MAX ? GAUGE_MAX : initialGauge; const points = []; points.push({ time: 0, val: currentGauge, ratio: currentGauge / GAUGE_MAX });
-        events.forEach(ev => { points.push({ time: ev.time, val: currentGauge, ratio: currentGauge / GAUGE_MAX }); currentGauge += ev.change; if (currentGauge > GAUGE_MAX) currentGauge = GAUGE_MAX; if (currentGauge < 0) currentGauge = 0; points.push({ time: ev.time, val: currentGauge, ratio: currentGauge / GAUGE_MAX }); });
-        points.push({ time: TOTAL_DURATION, val: currentGauge, ratio: currentGauge / GAUGE_MAX }); return points;
+        tracks.value.forEach(sourceTrack => {
+            if (!sourceTrack.actions) return;
+            sourceTrack.actions.forEach(action => {
+                // 1. 自己的动作
+                if (sourceTrack.id === trackId) {
+                    if (action.gaugeCost > 0) events.push({ time: action.startTime, change: -action.gaugeCost });
+                    if (action.gaugeGain > 0) events.push({ time: action.startTime + action.duration, change: action.gaugeGain });
+                }
+
+                // 2. 队友的动作 (Team Gauge Gain)
+                if (sourceTrack.id !== trackId && action.teamGaugeGain > 0) {
+                    // === 判断是否接受队友充能 ===
+                    if (canAcceptTeamGauge) {
+                        events.push({ time: action.startTime + action.duration, change: action.teamGaugeGain });
+                    }
+                }
+            })
+        });
+
+        events.sort((a, b) => a.time - b.time);
+        const initialGauge = track.initialGauge || 0;
+        let currentGauge = initialGauge > GAUGE_MAX ? GAUGE_MAX : initialGauge;
+        const points = [];
+        points.push({ time: 0, val: currentGauge, ratio: currentGauge / GAUGE_MAX });
+
+        events.forEach(ev => {
+            points.push({ time: ev.time, val: currentGauge, ratio: currentGauge / GAUGE_MAX });
+            currentGauge += ev.change;
+            if (currentGauge > GAUGE_MAX) currentGauge = GAUGE_MAX;
+            if (currentGauge < 0) currentGauge = 0;
+            points.push({ time: ev.time, val: currentGauge, ratio: currentGauge / GAUGE_MAX });
+        });
+
+        points.push({ time: TOTAL_DURATION, val: currentGauge, ratio: currentGauge / GAUGE_MAX });
+        return points;
     }
 
     // === IO ===

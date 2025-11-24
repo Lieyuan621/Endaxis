@@ -10,11 +10,11 @@ const { characterRoster, iconDatabase } = storeToRefs(store)
 // === 1. 常量定义 ===
 
 const ELEMENTS = [
-  { label: ' 灼热 (Blaze)', value: 'blaze' },
-  { label: ' 寒冷 (Cold)', value: 'cold' },
-  { label: ' 电磁 (Emag)', value: 'emag' },
-  { label: ' 自然 (Nature)', value: 'nature' },
-  { label: ' 物理 (Physical)', value: 'physical' }
+  { label: '🔥 灼热 (Blaze)', value: 'blaze' },
+  { label: '❄️ 寒冷 (Cold)', value: 'cold' },
+  { label: '⚡ 电磁 (Emag)', value: 'emag' },
+  { label: '🌿 自然 (Nature)', value: 'nature' },
+  { label: '⚔️ 物理 (Physical)', value: 'physical' }
 ]
 
 const EFFECT_NAMES = {
@@ -75,6 +75,7 @@ function addNewCharacter() {
 
   const newChar = {
     id: newId, name: "新干员", rarity: 5, element: "physical", avatar: "/avatars/default.png", exclusive_buffs: [],
+    accept_team_gauge: true,
     attack_duration: 2.5, attack_spGain: 15, attack_stagger: 0, attack_allowed_types: allGlobalEffects, attack_anomalies: [],
     skill_duration: 2, skill_spCost: 100, skill_spGain: 0, skill_stagger: 0, skill_gaugeGain: 0, skill_teamGaugeGain: 6, skill_allowed_types: [], skill_anomalies: [],
     link_duration: 1.5, link_cooldown: 15, link_spGain: 0, link_stagger: 0, link_gaugeGain: 0, link_allowed_types: [], link_anomalies: [],
@@ -131,6 +132,15 @@ function onCheckChange(char, skillType, key) {
     physicalBase.forEach(baseItem => {
       if (!list.includes(baseItem)) list.push(baseItem);
     });
+  }
+}
+
+// === 新增：充能联动逻辑 (DataEditor) ===
+function onSkillGaugeInput(event) {
+  const val = Number(event.target.value)
+  if (selectedChar.value) {
+    // 联动更新队友充能，系数 0.5
+    selectedChar.value.skill_teamGaugeGain = val * 0.5
   }
 }
 
@@ -221,11 +231,11 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
   <div class="cms-layout">
     <aside class="cms-sidebar">
       <div class="sidebar-header">
-        <h2>干员列表</h2>
-        <button class="btn-add" @click="addNewCharacter">+ 新增</button>
+        <h2>干员数据</h2>
+        <button class="btn-add" @click="addNewCharacter">＋</button>
       </div>
       <div class="search-box">
-        <input v-model="searchQuery" placeholder="搜索干员..." />
+        <input v-model="searchQuery" placeholder="🔍 搜索干员 ID 或名称..." />
       </div>
       <div class="char-list">
         <div v-for="char in filteredRoster" :key="char.id"
@@ -239,8 +249,8 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
         </div>
       </div>
       <div class="sidebar-footer">
-        <button class="btn-save" @click="saveData">💾 下载数据</button>
-        <router-link to="/" class="btn-back">↩ 返回排轴</router-link>
+        <button class="btn-save" @click="saveData">💾 生成并下载 JSON</button>
+        <router-link to="/" class="btn-back">↩ 返回排轴器</router-link>
       </div>
     </aside>
 
@@ -249,11 +259,12 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
         <header class="panel-header">
           <div class="header-left">
             <img :src="selectedChar.avatar" class="avatar-large" />
-            <div>
-              <h1 class="edit-title">{{ selectedChar.name }} <span class="id-tag">{{ selectedChar.id }}</span></h1>
+            <div class="header-titles">
+              <h1 class="edit-title">{{ selectedChar.name }}</h1>
+              <span class="id-tag">{{ selectedChar.id }}</span>
             </div>
           </div>
-          <button class="btn-danger" @click="deleteCurrentCharacter">删除干员</button>
+          <button class="btn-danger" @click="deleteCurrentCharacter">删除此干员</button>
         </header>
 
         <div class="cms-tabs">
@@ -268,9 +279,10 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
         <div class="tab-content">
 
           <div v-show="activeTab === 'basic'" class="form-section">
-            <div class="form-row">
+            <h3 class="section-title">基本属性</h3>
+            <div class="form-grid">
               <div class="form-group"><label>名称</label><input v-model="selectedChar.name" type="text" /></div>
-              <div class="form-group"><label>ID (英文唯一)</label><input :value="selectedChar.id" @input="updateCharId" type="text" /></div>
+              <div class="form-group"><label>ID (Unique)</label><input :value="selectedChar.id" @input="updateCharId" type="text" /></div>
               <div class="form-group"><label>星级</label>
                 <select v-model.number="selectedChar.rarity"><option :value="6">6 ★</option><option :value="5">5 ★</option><option :value="4">4 ★</option></select>
               </div>
@@ -279,47 +291,64 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
                   <option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">{{ elm.label }}</option>
                 </select>
               </div>
+              <div class="form-group full-width"><label>头像路径 (Public Dir)</label><input v-model="selectedChar.avatar" type="text" /></div>
             </div>
-            <div class="form-group"><label>头像路径</label><input v-model="selectedChar.avatar" type="text" /></div>
-            <div class="form-group">
-              <label>专属 Buff</label>
-              <div v-for="(buff, idx) in selectedChar.exclusive_buffs" :key="idx" class="exclusive-row">
-                <input v-model="buff.key" placeholder="Key" /><input v-model="buff.name" placeholder="Name" /><input v-model="buff.path" placeholder="Path" class="flex-grow" />
-                <button class="btn-icon" @click="selectedChar.exclusive_buffs.splice(idx, 1)">×</button>
+
+            <h3 class="section-title">特殊机制</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>充能判定</label>
+                <div class="checkbox-wrapper" :class="{ 'is-checked': selectedChar.accept_team_gauge !== false }">
+                  <input
+                      type="checkbox"
+                      id="cb_accept_gauge"
+                      :checked="selectedChar.accept_team_gauge !== false"
+                      @change="e => selectedChar.accept_team_gauge = e.target.checked"
+                  >
+                  <label for="cb_accept_gauge">接受队友充能 (Team Gauge)</label>
+                </div>
               </div>
-              <button class="btn-small" @click="selectedChar.exclusive_buffs.push({key:'',name:'',path:''})">+ 添加</button>
+            </div>
+
+            <h3 class="section-title">专属效果 (Buffs)</h3>
+            <div class="exclusive-list">
+              <div v-for="(buff, idx) in selectedChar.exclusive_buffs" :key="idx" class="exclusive-row">
+                <input v-model="buff.key" placeholder="Key (e.g. magma)" />
+                <input v-model="buff.name" placeholder="显示名称" />
+                <input v-model="buff.path" placeholder="图标路径" class="flex-grow" />
+                <button class="btn-icon-del" @click="selectedChar.exclusive_buffs.splice(idx, 1)">×</button>
+              </div>
+              <button class="btn-small-add" @click="selectedChar.exclusive_buffs.push({key:'',name:'',path:''})">+ 添加专属效果</button>
             </div>
           </div>
 
           <div v-show="activeTab === 'attack'" class="form-section">
-            <div class="form-row">
-              <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.attack_duration"></div>
-              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.attack_spGain"></div>
-              <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.attack_stagger"></div>
+            <h3 class="section-title">数值配置</h3>
+            <div class="form-grid three-col">
+              <div class="form-group"><label>动作持续 (s)</label><input type="number" step="0.1" v-model.number="selectedChar.attack_duration"></div>
+              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.attack_spGain"></div>
+              <div class="form-group"><label>失衡值 (Stagger)</label><input type="number" v-model.number="selectedChar.attack_stagger"></div>
             </div>
 
-            <div class="form-group"><label>允许挂载的状态</label>
-              <div class="checkbox-grid">
-                <label v-for="key in effectKeys" :key="`attack_${key}`" class="cb-item">
-                  <input type="checkbox" :value="key" v-model="selectedChar.attack_allowed_types" @change="onCheckChange(selectedChar, 'attack', key)">
-                  {{ EFFECT_NAMES[key] }}
-                </label>
-                <label v-for="buff in selectedChar.exclusive_buffs" :key="`attack_${buff.key}`" class="cb-item exclusive">
-                  <input type="checkbox" :value="buff.key" v-model="selectedChar.attack_allowed_types">
-                  ★ {{ buff.name }}
-                </label>
-              </div>
+            <h3 class="section-title">效果池配置</h3>
+            <div class="checkbox-grid">
+              <label v-for="key in effectKeys" :key="`attack_${key}`" class="cb-item">
+                <input type="checkbox" :value="key" v-model="selectedChar.attack_allowed_types" @change="onCheckChange(selectedChar, 'attack', key)">
+                {{ EFFECT_NAMES[key] }}
+              </label>
+              <label v-for="buff in selectedChar.exclusive_buffs" :key="`attack_${buff.key}`" class="cb-item exclusive">
+                <input type="checkbox" :value="buff.key" v-model="selectedChar.attack_allowed_types">
+                ★ {{ buff.name }}
+              </label>
             </div>
 
-            <div class="form-group" style="margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px;">
-              <label>默认附带状态 (二维布局)</label>
-              <div class="info-banner" v-if="getAvailableAnomalyOptions('attack').length === 0">请先在上方勾选允许的状态。</div>
-
+            <div class="matrix-editor-area">
+              <h3 class="section-title">默认附带状态 (二维矩阵)</h3>
               <div class="anomalies-grid-editor">
                 <div v-for="(row, rIndex) in getAnomalyRows(selectedChar, 'attack')" :key="rIndex" class="editor-row">
                   <div v-for="(item, cIndex) in row" :key="cIndex" class="editor-card">
                     <div class="card-header">
-                      <span class="card-label">#{{rIndex+1}}-{{cIndex+1}}</span>
+                      <span class="card-label">R{{rIndex+1}}:C{{cIndex+1}}</span>
                       <button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'attack', rIndex, cIndex)">×</button>
                     </div>
                     <select v-model="item.type" class="card-input">
@@ -330,226 +359,276 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
                       <input type="number" v-model.number="item.duration" placeholder="秒" step="0.5" class="mini-input"><span class="unit">s</span>
                     </div>
                   </div>
-                  <button class="btn-add-col" @click="addAnomalyToRow(selectedChar, 'attack', rIndex)" title="在此行添加">+</button>
+                  <button class="btn-add-col" @click="addAnomalyToRow(selectedChar, 'attack', rIndex)">+</button>
                 </div>
-                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'attack')" :disabled="getAvailableAnomalyOptions('attack').length === 0">+ 添加新行</button>
+                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'attack')" :disabled="getAvailableAnomalyOptions('attack').length === 0">+ 新增效果行</button>
               </div>
             </div>
           </div>
 
           <div v-show="activeTab === 'skill'" class="form-section">
-            <div class="form-row">
+            <h3 class="section-title">数值配置</h3>
+            <div class="form-grid four-col">
               <div class="form-group"><label>属性 (可选)</label>
                 <select v-model="selectedChar.skill_element"><option :value="undefined">跟随干员</option><option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">{{ elm.label }}</option></select>
               </div>
-              <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.skill_duration"></div>
-              <div class="form-group"><label>技力消耗</label><input type="number" v-model.number="selectedChar.skill_spCost"></div>
-              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.skill_spGain"></div>
+              <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar.skill_duration"></div>
+              <div class="form-group"><label>SP 消耗</label><input type="number" v-model.number="selectedChar.skill_spCost"></div>
+              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.skill_spGain"></div>
               <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.skill_stagger"></div>
-              <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.skill_gaugeGain"></div>
+
+              <div class="form-group highlight-input">
+                <label>自身充能 (联动队友)</label>
+                <input type="number" v-model.number="selectedChar.skill_gaugeGain" @input="onSkillGaugeInput">
+              </div>
+
               <div class="form-group"><label>队友充能</label><input type="number" v-model.number="selectedChar.skill_teamGaugeGain"></div>
             </div>
 
-            <div class="form-group"><label>允许挂载的状态</label>
-              <div class="checkbox-grid">
-                <label v-for="key in effectKeys" :key="`skill_${key}`" class="cb-item"><input type="checkbox" :value="key" v-model="selectedChar.skill_allowed_types" @change="onCheckChange(selectedChar, 'skill', key)">{{ EFFECT_NAMES[key] }}</label>
-                <label v-for="buff in selectedChar.exclusive_buffs" :key="`skill_${buff.key}`" class="cb-item exclusive"><input type="checkbox" :value="buff.key" v-model="selectedChar.skill_allowed_types">★ {{ buff.name }}</label>
-              </div>
+            <h3 class="section-title">效果池配置</h3>
+            <div class="checkbox-grid">
+              <label v-for="key in effectKeys" :key="`skill_${key}`" class="cb-item"><input type="checkbox" :value="key" v-model="selectedChar.skill_allowed_types" @change="onCheckChange(selectedChar, 'skill', key)">{{ EFFECT_NAMES[key] }}</label>
+              <label v-for="buff in selectedChar.exclusive_buffs" :key="`skill_${buff.key}`" class="cb-item exclusive"><input type="checkbox" :value="buff.key" v-model="selectedChar.skill_allowed_types">★ {{ buff.name }}</label>
             </div>
 
-            <div class="form-group" style="margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px;">
-              <label>默认附带状态 (二维布局)</label>
-              <div class="info-banner" v-if="getAvailableAnomalyOptions('skill').length === 0">请先在上方勾选允许的状态。</div>
+            <div class="matrix-editor-area">
+              <h3 class="section-title">默认附带状态 (二维矩阵)</h3>
               <div class="anomalies-grid-editor">
                 <div v-for="(row, rIndex) in getAnomalyRows(selectedChar, 'skill')" :key="rIndex" class="editor-row">
                   <div v-for="(item, cIndex) in row" :key="cIndex" class="editor-card">
-                    <div class="card-header"><span class="card-label">#{{rIndex+1}}-{{cIndex+1}}</span><button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'skill', rIndex, cIndex)">×</button></div>
+                    <div class="card-header"><span class="card-label">R{{rIndex+1}}:C{{cIndex+1}}</span><button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'skill', rIndex, cIndex)">×</button></div>
                     <select v-model="item.type" class="card-input"><option v-for="opt in getAvailableAnomalyOptions('skill')" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select>
                     <div class="card-row"><input type="number" v-model.number="item.stacks" class="mini-input"><span class="unit">层</span><input type="number" v-model.number="item.duration" step="0.5" class="mini-input"><span class="unit">s</span></div>
                   </div>
                   <button class="btn-add-col" @click="addAnomalyToRow(selectedChar, 'skill', rIndex)">+</button>
                 </div>
-                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'skill')" :disabled="getAvailableAnomalyOptions('skill').length === 0">+ 添加新行</button>
+                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'skill')" :disabled="getAvailableAnomalyOptions('skill').length === 0">+ 新增效果行</button>
               </div>
             </div>
           </div>
 
           <div v-show="activeTab === 'link'" class="form-section">
-            <div class="form-row">
-              <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.link_duration"></div>
-              <div class="form-group"><label>冷却时间</label><input type="number" v-model.number="selectedChar.link_cooldown"></div>
-              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.link_spGain"></div>
+            <h3 class="section-title">数值配置</h3>
+            <div class="form-grid three-col">
+              <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar.link_duration"></div>
+              <div class="form-group"><label>CD (s)</label><input type="number" v-model.number="selectedChar.link_cooldown"></div>
+              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.link_spGain"></div>
               <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.link_stagger"></div>
               <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.link_gaugeGain"></div>
             </div>
 
-            <div class="form-group"><label>允许挂载的状态</label>
-              <div class="checkbox-grid">
-                <label v-for="key in effectKeys" :key="`link_${key}`" class="cb-item"><input type="checkbox" :value="key" v-model="selectedChar.link_allowed_types" @change="onCheckChange(selectedChar, 'link', key)">{{ EFFECT_NAMES[key] }}</label>
-                <label v-for="buff in selectedChar.exclusive_buffs" :key="`link_${buff.key}`" class="cb-item exclusive"><input type="checkbox" :value="buff.key" v-model="selectedChar.link_allowed_types">★ {{ buff.name }}</label>
-              </div>
+            <h3 class="section-title">效果池配置</h3>
+            <div class="checkbox-grid">
+              <label v-for="key in effectKeys" :key="`link_${key}`" class="cb-item"><input type="checkbox" :value="key" v-model="selectedChar.link_allowed_types" @change="onCheckChange(selectedChar, 'link', key)">{{ EFFECT_NAMES[key] }}</label>
+              <label v-for="buff in selectedChar.exclusive_buffs" :key="`link_${buff.key}`" class="cb-item exclusive"><input type="checkbox" :value="buff.key" v-model="selectedChar.link_allowed_types">★ {{ buff.name }}</label>
             </div>
 
-            <div class="form-group" style="margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px;">
-              <label>默认附带状态 (二维布局)</label>
-              <div class="info-banner" v-if="getAvailableAnomalyOptions('link').length === 0">请先在上方勾选允许的状态。</div>
+            <div class="matrix-editor-area">
+              <h3 class="section-title">默认附带状态 (二维矩阵)</h3>
               <div class="anomalies-grid-editor">
                 <div v-for="(row, rIndex) in getAnomalyRows(selectedChar, 'link')" :key="rIndex" class="editor-row">
                   <div v-for="(item, cIndex) in row" :key="cIndex" class="editor-card">
-                    <div class="card-header"><span class="card-label">#{{rIndex+1}}-{{cIndex+1}}</span><button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'link', rIndex, cIndex)">×</button></div>
+                    <div class="card-header"><span class="card-label">R{{rIndex+1}}:C{{cIndex+1}}</span><button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'link', rIndex, cIndex)">×</button></div>
                     <select v-model="item.type" class="card-input"><option v-for="opt in getAvailableAnomalyOptions('link')" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select>
                     <div class="card-row"><input type="number" v-model.number="item.stacks" class="mini-input"><span class="unit">层</span><input type="number" v-model.number="item.duration" step="0.5" class="mini-input"><span class="unit">s</span></div>
                   </div>
                   <button class="btn-add-col" @click="addAnomalyToRow(selectedChar, 'link', rIndex)">+</button>
                 </div>
-                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'link')" :disabled="getAvailableAnomalyOptions('link').length === 0">+ 添加新行</button>
+                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'link')" :disabled="getAvailableAnomalyOptions('link').length === 0">+ 新增效果行</button>
               </div>
             </div>
           </div>
 
           <div v-show="activeTab === 'ultimate'" class="form-section">
-            <div class="form-row">
+            <h3 class="section-title">数值配置</h3>
+            <div class="form-grid three-col">
               <div class="form-group"><label>属性 (可选)</label>
                 <select v-model="selectedChar.ultimate_element"><option :value="undefined">跟随干员</option><option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">{{ elm.label }}</option></select>
               </div>
-              <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.ultimate_duration"></div>
-              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.ultimate_spGain"></div>
+              <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar.ultimate_duration"></div>
+              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.ultimate_spGain"></div>
               <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.ultimate_stagger"></div>
               <div class="form-group"><label>充能消耗</label><input type="number" v-model.number="selectedChar.ultimate_gaugeMax"></div>
               <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar.ultimate_gaugeReply"></div>
             </div>
 
-            <div class="form-group"><label>允许挂载的状态</label>
-              <div class="checkbox-grid">
-                <label v-for="key in effectKeys" :key="`ultimate_${key}`" class="cb-item"><input type="checkbox" :value="key" v-model="selectedChar.ultimate_allowed_types" @change="onCheckChange(selectedChar, 'ultimate', key)">{{ EFFECT_NAMES[key] }}</label>
-                <label v-for="buff in selectedChar.exclusive_buffs" :key="`ultimate_${buff.key}`" class="cb-item exclusive"><input type="checkbox" :value="buff.key" v-model="selectedChar.ultimate_allowed_types">★ {{ buff.name }}</label>
-              </div>
+            <h3 class="section-title">效果池配置</h3>
+            <div class="checkbox-grid">
+              <label v-for="key in effectKeys" :key="`ultimate_${key}`" class="cb-item"><input type="checkbox" :value="key" v-model="selectedChar.ultimate_allowed_types" @change="onCheckChange(selectedChar, 'ultimate', key)">{{ EFFECT_NAMES[key] }}</label>
+              <label v-for="buff in selectedChar.exclusive_buffs" :key="`ultimate_${buff.key}`" class="cb-item exclusive"><input type="checkbox" :value="buff.key" v-model="selectedChar.ultimate_allowed_types">★ {{ buff.name }}</label>
             </div>
 
-            <div class="form-group" style="margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px;">
-              <label>默认附带状态 (二维布局)</label>
-              <div class="info-banner" v-if="getAvailableAnomalyOptions('ultimate').length === 0">请先在上方勾选允许的状态。</div>
+            <div class="matrix-editor-area">
+              <h3 class="section-title">默认附带状态 (二维矩阵)</h3>
               <div class="anomalies-grid-editor">
                 <div v-for="(row, rIndex) in getAnomalyRows(selectedChar, 'ultimate')" :key="rIndex" class="editor-row">
                   <div v-for="(item, cIndex) in row" :key="cIndex" class="editor-card">
-                    <div class="card-header"><span class="card-label">#{{rIndex+1}}-{{cIndex+1}}</span><button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'ultimate', rIndex, cIndex)">×</button></div>
+                    <div class="card-header"><span class="card-label">R{{rIndex+1}}:C{{cIndex+1}}</span><button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'ultimate', rIndex, cIndex)">×</button></div>
                     <select v-model="item.type" class="card-input"><option v-for="opt in getAvailableAnomalyOptions('ultimate')" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select>
                     <div class="card-row"><input type="number" v-model.number="item.stacks" class="mini-input"><span class="unit">层</span><input type="number" v-model.number="item.duration" step="0.5" class="mini-input"><span class="unit">s</span></div>
                   </div>
                   <button class="btn-add-col" @click="addAnomalyToRow(selectedChar, 'ultimate', rIndex)">+</button>
                 </div>
-                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'ultimate')" :disabled="getAvailableAnomalyOptions('ultimate').length === 0">+ 添加新行</button>
+                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'ultimate')" :disabled="getAvailableAnomalyOptions('ultimate').length === 0">+ 新增效果行</button>
               </div>
             </div>
           </div>
 
           <div v-show="activeTab === 'execution'" class="form-section">
-            <div class="form-row">
-              <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="selectedChar.execution_duration"></div>
-              <div class="form-group"><label>技力回复</label><input type="number" v-model.number="selectedChar.execution_spGain"></div>
+            <h3 class="section-title">数值配置</h3>
+            <div class="form-grid three-col">
+              <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar.execution_duration"></div>
+              <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.execution_spGain"></div>
             </div>
 
-            <div class="form-group"><label>允许挂载的状态</label>
-              <div class="checkbox-grid">
-                <label v-for="key in effectKeys" :key="`execution_${key}`" class="cb-item"><input type="checkbox" :value="key" v-model="selectedChar.execution_allowed_types" @change="onCheckChange(selectedChar, 'execution', key)">{{ EFFECT_NAMES[key] }}</label>
-                <label v-for="buff in selectedChar.exclusive_buffs" :key="`execution_${buff.key}`" class="cb-item exclusive"><input type="checkbox" :value="buff.key" v-model="selectedChar.execution_allowed_types">★ {{ buff.name }}</label>
-              </div>
+            <h3 class="section-title">效果池配置</h3>
+            <div class="checkbox-grid">
+              <label v-for="key in effectKeys" :key="`execution_${key}`" class="cb-item"><input type="checkbox" :value="key" v-model="selectedChar.execution_allowed_types" @change="onCheckChange(selectedChar, 'execution', key)">{{ EFFECT_NAMES[key] }}</label>
+              <label v-for="buff in selectedChar.exclusive_buffs" :key="`execution_${buff.key}`" class="cb-item exclusive"><input type="checkbox" :value="buff.key" v-model="selectedChar.execution_allowed_types">★ {{ buff.name }}</label>
             </div>
 
-            <div class="form-group" style="margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px;">
-              <label>默认附带状态 (二维布局)</label>
-              <div class="info-banner" v-if="getAvailableAnomalyOptions('execution').length === 0">请先在上方勾选允许的状态。</div>
+            <div class="matrix-editor-area">
+              <h3 class="section-title">默认附带状态 (二维矩阵)</h3>
               <div class="anomalies-grid-editor">
                 <div v-for="(row, rIndex) in getAnomalyRows(selectedChar, 'execution')" :key="rIndex" class="editor-row">
                   <div v-for="(item, cIndex) in row" :key="cIndex" class="editor-card">
-                    <div class="card-header"><span class="card-label">#{{rIndex+1}}-{{cIndex+1}}</span><button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'execution', rIndex, cIndex)">×</button></div>
+                    <div class="card-header"><span class="card-label">R{{rIndex+1}}:C{{cIndex+1}}</span><button class="btn-icon-del" @click="removeAnomaly(selectedChar, 'execution', rIndex, cIndex)">×</button></div>
                     <select v-model="item.type" class="card-input"><option v-for="opt in getAvailableAnomalyOptions('execution')" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select>
                     <div class="card-row"><input type="number" v-model.number="item.stacks" class="mini-input"><span class="unit">层</span><input type="number" v-model.number="item.duration" step="0.5" class="mini-input"><span class="unit">s</span></div>
                   </div>
                   <button class="btn-add-col" @click="addAnomalyToRow(selectedChar, 'execution', rIndex)">+</button>
                 </div>
-                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'execution')" :disabled="getAvailableAnomalyOptions('execution').length === 0">+ 添加新行</button>
+                <button class="btn-add-row" @click="addAnomalyRow(selectedChar, 'execution')" :disabled="getAvailableAnomalyOptions('execution').length === 0">+ 新增效果行</button>
               </div>
             </div>
           </div>
 
         </div>
       </div>
-      <div v-else class="empty-state">请从左侧选择干员</div>
+      <div v-else class="empty-state">请从左侧列表选择干员</div>
     </main>
   </div>
 </template>
 
 <style scoped>
-.cms-layout { display: flex; height: 100vh; background-color: #1e1e1e; color: #f0f0f0; overflow: hidden; font-family: sans-serif; }
-.cms-sidebar { width: 280px; background-color: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; }
-.sidebar-header { padding: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-.sidebar-header h2 { margin: 0; font-size: 18px; color: #ffd700; }
-.btn-add { background: #444; border: none; color: #fff; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
-.btn-add:hover { background: #555; }
-.search-box { padding: 10px; border-bottom: 1px solid #333; }
-.search-box input { width: 100%; padding: 8px; box-sizing: border-box; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px; }
+.cms-layout { display: flex; height: 100vh; background-color: #1e1e1e; color: #f0f0f0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; }
+
+/* Sidebar */
+.cms-sidebar { width: 300px; background-color: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-header { padding: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background: #2b2b2b; }
+.sidebar-header h2 { margin: 0; font-size: 16px; color: #ffd700; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.btn-add { background: #3a3a3a; border: 1px solid #555; color: #fff; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s; }
+.btn-add:hover { background: #ffd700; border-color: #ffd700; color: #000; }
+.search-box { padding: 10px; border-bottom: 1px solid #333; background: #252526; }
+.search-box input { width: 100%; padding: 8px 12px; box-sizing: border-box; background: #1e1e1e; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 13px; }
+.search-box input:focus { border-color: #666; outline: none; }
+
+/* Character List */
 .char-list { flex-grow: 1; overflow-y: auto; padding: 10px; }
-.char-item { display: flex; align-items: center; padding: 8px; border-radius: 6px; cursor: pointer; transition: background 0.2s; margin-bottom: 4px; }
-.char-item:hover { background-color: #333; }
-.char-item.active { background-color: #37373d; border-left: 3px solid #ffd700; }
-.avatar-small { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; background: #444; object-fit: cover; }
-.char-info { display: flex; flex-direction: column; }
-.char-name { font-weight: bold; font-size: 14px; }
+.char-item { display: flex; align-items: center; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; border: 1px solid transparent; }
+.char-item:hover { background-color: #2d2d2d; border-color: #444; }
+.char-item.active { background-color: #37373d; border-color: #ffd700; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+.avatar-small { width: 44px; height: 44px; border-radius: 6px; margin-right: 12px; background: #333; object-fit: cover; border: 1px solid #444; }
+.char-info { display: flex; flex-direction: column; justify-content: center; }
+.char-name { font-weight: bold; font-size: 14px; margin-bottom: 2px; }
 .char-meta { font-size: 12px; color: #888; }
-.rarity-6 { color: #ffd700; } .rarity-5 { color: #f0f0f0; }
-.sidebar-footer { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; }
-.btn-save { width: 100%; padding: 10px; background: #2e7d32; border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.rarity-6 { color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.2); }
+.rarity-5 { color: #f0f0f0; }
+
+/* Sidebar Footer */
+.sidebar-footer { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; background: #2b2b2b; }
+.btn-save { width: 100%; padding: 10px; background: #2e7d32; border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-save:hover { background: #388e3c; }
-.btn-back { text-align: center; color: #aaa; text-decoration: none; font-size: 12px; display: block; padding: 5px; }
-.btn-back:hover { color: #fff; }
-.cms-content { flex-grow: 1; overflow-y: auto; padding: 30px; background-color: #1e1e1e; }
-.editor-panel { max-width: 900px; margin: 0 auto; }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 20px; }
+.btn-back { text-align: center; color: #888; text-decoration: none; font-size: 13px; display: block; padding: 8px; border: 1px solid #444; border-radius: 4px; transition: all 0.2s; }
+.btn-back:hover { color: #fff; border-color: #666; background: #333; }
+
+/* Main Content */
+.cms-content { flex-grow: 1; overflow-y: auto; padding: 30px 40px; background-color: #1e1e1e; }
+.editor-panel { max-width: 1000px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+
+/* Header */
+.panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 20px; }
 .header-left { display: flex; align-items: center; gap: 20px; }
-.avatar-large { width: 80px; height: 80px; border-radius: 8px; background: #333; object-fit: cover; border: 2px solid #555; }
-.edit-title { margin: 0; font-size: 24px; }
-.id-tag { font-size: 14px; color: #666; font-weight: normal; margin-left: 10px; font-family: monospace; }
-.btn-danger { background: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-.cms-tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #444; }
-.cms-tabs button { background: #2d2d2d; border: none; color: #aaa; padding: 10px 20px; cursor: pointer; border-radius: 4px 4px 0 0; transition: all 0.2s; }
-.cms-tabs button:hover { background: #333; color: #fff; }
-.cms-tabs button.active { background: #37373d; color: #ffd700; font-weight: bold; border-bottom: 2px solid #ffd700; }
-.form-section { background: #252526; padding: 20px; border-radius: 8px; animation: fadeIn 0.2s ease; }
-.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-.form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-.form-group label { margin-bottom: 6px; color: #999; font-size: 12px; }
-.form-group input, .form-group select { background: #1e1e1e; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-size: 14px; }
-.form-group input:focus { border-color: #ffd700; outline: none; }
-.exclusive-row { display: flex; gap: 10px; margin-bottom: 10px; }
-.exclusive-row input { background: #1e1e1e; border: 1px solid #444; color: #fff; padding: 6px; border-radius: 4px; }
+.avatar-large { width: 80px; height: 80px; border-radius: 8px; background: #333; object-fit: cover; border: 2px solid #555; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+.header-titles { display: flex; flex-direction: column; gap: 5px; }
+.edit-title { margin: 0; font-size: 28px; font-weight: 700; color: #f0f0f0; }
+.id-tag { font-size: 14px; color: #666; font-family: 'Roboto Mono', monospace; background: #252526; padding: 2px 8px; border-radius: 4px; border: 1px solid #333; align-self: flex-start; }
+.btn-danger { background: #3a1a1a; color: #ff7875; border: 1px solid #5c2b2b; padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 13px; }
+.btn-danger:hover { background: #d32f2f; color: white; border-color: #d32f2f; }
+
+/* Tabs */
+.cms-tabs { display: flex; gap: 2px; margin-bottom: 20px; border-bottom: 2px solid #333; }
+.cms-tabs button { background: #252526; border: none; color: #888; padding: 12px 24px; cursor: pointer; border-radius: 6px 6px 0 0; transition: all 0.2s; font-weight: 500; font-size: 14px; }
+.cms-tabs button:hover { background: #2d2d2d; color: #ccc; }
+.cms-tabs button.active { background: #333; color: #ffd700; font-weight: bold; box-shadow: 0 -2px 0 #ffd700 inset; }
+
+/* Forms */
+.form-section { background: #252526; padding: 25px; border-radius: 0 0 8px 8px; margin-top: -22px; border: 1px solid #333; border-top: none; }
+.section-title { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #333; padding-bottom: 8px; margin: 30px 0 15px 0; }
+.section-title:first-child { margin-top: 0; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px 20px; }
+.form-grid.three-col { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.form-grid.four-col { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full-width { grid-column: 1 / -1; }
+.form-group label { margin-bottom: 8px; color: #aaa; font-size: 12px; font-weight: 500; }
+.form-group input, .form-group select { background: #1a1a1a; border: 1px solid #444; color: #f0f0f0; padding: 10px 12px; border-radius: 4px; font-size: 14px; transition: border-color 0.2s; }
+.form-group input:focus, .form-group select:focus { border-color: #ffd700; outline: none; background: #111; }
+.highlight-input input { border-color: #00e5ff; color: #00e5ff; }
+
+/* Special Checkbox */
+.checkbox-wrapper {
+  background: #1a1a1a; border: 1px solid #444; padding: 0 15px; border-radius: 4px; display: flex; align-items: center; height: 38px; cursor: pointer; transition: all 0.2s;
+}
+.checkbox-wrapper:hover { border-color: #666; }
+.checkbox-wrapper.is-checked { border-color: #ffd700; background: rgba(255, 215, 0, 0.05); }
+.checkbox-wrapper input { margin-right: 10px; cursor: pointer; width: 16px; height: 16px; accent-color: #ffd700; }
+.checkbox-wrapper label { margin: 0; cursor: pointer; color: #ccc; }
+
+/* Exclusive List */
+.exclusive-list { display: flex; flex-direction: column; gap: 10px; }
+.exclusive-row { display: flex; gap: 10px; align-items: center; }
+.exclusive-row input { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; font-size: 13px; }
 .flex-grow { flex-grow: 1; }
-.btn-icon { background: none; border: none; color: #666; cursor: pointer; font-size: 18px; }
-.btn-icon:hover { color: #d32f2f; }
-.btn-small { background: #333; border: 1px dashed #666; color: #aaa; padding: 6px 12px; cursor: pointer; border-radius: 4px; width: 100%; }
-.btn-small:hover { border-color: #ffd700; color: #ffd700; }
-.checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; background: #1e1e1e; padding: 15px; border-radius: 4px; border: 1px solid #333; }
-.cb-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ccc; cursor: pointer; user-select: none; }
+.btn-icon-del { width: 24px; height: 24px; background: #3a1a1a; border: 1px solid #5c2b2b; color: #ff7875; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s; }
+.btn-icon-del:hover { background: #d32f2f; color: white; border-color: #d32f2f; }
+.btn-small-add { background: #333; border: 1px dashed #666; color: #aaa; padding: 8px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 13px; transition: all 0.2s; }
+.btn-small-add:hover { border-color: #ffd700; color: #ffd700; background: #3a3a3a; }
+
+/* Checkbox Grid */
+.checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; background: #1a1a1a; padding: 15px; border-radius: 6px; border: 1px solid #333; margin-bottom: 20px; }
+.cb-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #bbb; cursor: pointer; user-select: none; padding: 5px; border-radius: 4px; transition: background 0.1s; }
+.cb-item:hover { background: #252526; }
+.cb-item input { accent-color: #ffd700; width: 16px; height: 16px; }
 .cb-item.exclusive { color: #ffd700; }
-.info-banner { background: rgba(255, 255, 255, 0.05); padding: 10px; border-left: 3px solid #888; color: #ccc; margin-bottom: 20px; font-size: 13px; }
-.empty-state { display: flex; justify-content: center; align-items: center; height: 300px; color: #666; }
 
-/* 二维编辑器样式 */
-.anomalies-grid-editor { display: flex; flex-direction: column; gap: 8px; background: #222; padding: 10px; border-radius: 6px; border: 1px solid #444; }
-.editor-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; background: #2a2a2a; padding: 8px; border-radius: 4px; border-left: 3px solid #666; }
-.editor-card { background: #333; border: 1px solid #555; border-radius: 4px; padding: 6px; width: 140px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+/* Matrix Editor */
+.matrix-editor-area { margin-top: 25px; border-top: 1px dashed #444; padding-top: 20px; }
+.anomalies-grid-editor { display: flex; flex-direction: column; gap: 10px; }
+.editor-row { display: flex; flex-wrap: wrap; gap: 10px; background: #1f1f1f; padding: 10px; border-radius: 6px; border: 1px solid #333; }
+.editor-card { background: #2b2b2b; border: 1px solid #444; border-radius: 6px; padding: 8px; width: 150px; display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s; }
+.editor-card:hover { border-color: #666; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-.card-label { font-size: 10px; color: #888; }
-.card-input { width: 100%; background: #222; border: 1px solid #444; color: #eee; font-size: 12px; padding: 2px; border-radius: 2px; }
-.card-row { display: flex; align-items: center; gap: 4px; }
-.mini-input { width: 40px !important; padding: 2px 4px !important; text-align: center; font-size: 12px; }
+.card-label { font-size: 11px; color: #666; font-family: monospace; }
+.card-input { width: 100%; background: #1a1a1a; border: 1px solid #333; color: #ddd; font-size: 12px; padding: 4px; border-radius: 3px; }
+.card-row { display: flex; align-items: center; gap: 5px; }
+.mini-input { width: 50px !important; padding: 4px !important; text-align: center; background: #1a1a1a; border: 1px solid #333; color: #ffd700; font-weight: bold; }
 .unit { font-size: 10px; color: #666; }
-.btn-icon-del { background: none; border: none; color: #666; cursor: pointer; font-size: 16px; line-height: 1; padding: 0; }
-.btn-icon-del:hover { color: #d32f2f; }
-.btn-add-col { width: 60px; height: 100%; min-height: 60px; background: #333; border: 1px dashed #555; color: #aaa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.btn-add-col:hover { border-color: #ffd700; color: #ffd700; }
-.btn-add-row { width: 100%; padding: 8px; background: #333; border: 1px dashed #666; color: #aaa; border-radius: 4px; cursor: pointer; }
-.btn-add-row:hover { border-color: #ffd700; color: #ffd700; background: #3a3a3a; }
+.btn-add-col { width: 40px; background: #252526; border: 1px dashed #444; color: #666; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all 0.2s; }
+.btn-add-col:hover { border-color: #ffd700; color: #ffd700; background: #2b2b2b; }
+.btn-add-row { width: 100%; padding: 10px; background: #252526; border: 1px dashed #444; color: #888; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+.btn-add-row:hover:not(:disabled) { border-color: #ffd700; color: #ffd700; background: #2b2b2b; }
+.btn-add-row:disabled { cursor: not-allowed; opacity: 0.5; }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.info-banner { background: rgba(50, 50, 50, 0.5); padding: 12px; border-left: 3px solid #666; color: #aaa; margin-bottom: 20px; font-size: 13px; border-radius: 0 4px 4px 0; }
+.empty-state { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 400px; color: #666; font-size: 16px; border: 2px dashed #333; border-radius: 8px; margin-top: 20px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #1e1e1e; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
