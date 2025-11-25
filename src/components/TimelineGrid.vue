@@ -54,6 +54,8 @@ const operationMarkers = computed(() => {
   store.tracks.forEach((track, index) => {
     const keyNum = index + 1
     track.actions.forEach(action => {
+
+      if ((action.triggerWindow || 0) < 0) return
       let label = '', isHold = false, customClass = ''
 
       if (action.type === 'skill') {
@@ -317,6 +319,8 @@ function onBoxMouseUp() {
 function onActionMouseDown(evt, track, action) {
   evt.stopPropagation()
   if (evt.button !== 0) return
+
+  wasSelectedOnPress.value = store.multiSelectedIds.has(action.instanceId)
 
   if (!store.multiSelectedIds.has(action.instanceId)) {
     store.selectAction(action.instanceId)

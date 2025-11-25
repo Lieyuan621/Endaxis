@@ -88,7 +88,7 @@ const calculatePoint = (nodeId, effectIndex, isSource) => {
     if (pos) return { x: pos.x, y: pos.y }
   }
 
-  if (!isSource && info.action.triggerWindow > 0) {
+  if (!isSource && info.action.triggerWindow && info.action.triggerWindow !== 0) {
     const dotPos = getTriggerDotPosition(nodeId, props.containerRef)
     if (dotPos) return { x: dotPos.x, y: dotPos.y }
   }
@@ -98,15 +98,11 @@ const calculatePoint = (nodeId, effectIndex, isSource) => {
     timePoint = info.action.startTime + info.action.duration
   } else {
     const window = info.action.triggerWindow || 0
-    timePoint = info.action.startTime - window
+    timePoint = info.action.startTime - Math.abs(window)
   }
 
   const x = timePoint * store.timeBlockWidth
   let y = getTrackCenterY(info.trackIndex)
-
-  if (!isSource && info.action.triggerWindow > 0) {
-    y += 29.25
-  }
 
   // 多线分散
   if (!isSource && effectIndex == null && info.action.triggerWindow <= 0) {

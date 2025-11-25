@@ -238,6 +238,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     function selectLibrarySkill(skillId) {
         selectedActionId.value = null;
+        multiSelectedIds.value.clear();
         selectedLibrarySkillId.value = (selectedLibrarySkillId.value === skillId) ? null : skillId
     }
 

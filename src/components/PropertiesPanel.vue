@@ -21,12 +21,7 @@ const GROUP_DEFINITIONS = [
   { label: ' 其他', keys: ['default'] }
 ]
 
-// 编辑索引改为对象 { r: rowIndex, c: colIndex }
 const editingIndexObj = ref(null)
-
-// ===================================================================================
-// 1. 选中对象获取 (Selection Logic)
-// ===================================================================================
 
 const selectedLibrarySkill = computed(() => {
   if (!store.selectedLibrarySkillId) return null
@@ -55,43 +50,24 @@ const currentSkillType = computed(() => {
   return 'unknown';
 });
 
-// ===================================================================================
-// 2. 异常状态逻辑 (二维数组)
-// ===================================================================================
-
 const anomalyRows = computed({
-  get: () => {
-    return selectedAction.value?.physicalAnomaly || []
-  },
-  set: (val) => {
-    store.updateAction(store.selectedActionId, {physicalAnomaly: val})
-  }
+  get: () => selectedAction.value?.physicalAnomaly || [],
+  set: (val) => store.updateAction(store.selectedActionId, {physicalAnomaly: val})
 })
-
-function isEditing(r, c) {
-  return editingIndexObj.value && editingIndexObj.value.r === r && editingIndexObj.value.c === c
-}
-
-// 获取当前正在编辑的效果数据
+function isEditing(r, c) { return editingIndexObj.value && editingIndexObj.value.r === r && editingIndexObj.value.c === c }
 const editingEffectData = computed(() => {
   if (!editingIndexObj.value) return null
   const {r, c} = editingIndexObj.value
   return anomalyRows.value[r]?.[c]
 })
-
-// 计算当前编辑项的扁平索引 (用于连线定位)
 const currentFlatIndex = computed(() => {
   if (!editingIndexObj.value) return null
   const {r, c} = editingIndexObj.value
   let flatIndex = 0
-  for (let i = 0; i < r; i++) {
-    if (anomalyRows.value[i]) flatIndex += anomalyRows.value[i].length
-  }
+  for (let i = 0; i < r; i++) { if (anomalyRows.value[i]) flatIndex += anomalyRows.value[i].length }
   flatIndex += c
   return flatIndex
 })
-
-// 更新特定效果属性
 function updateEffectProp(key, value) {
   if (!editingIndexObj.value) return
   const {r, c} = editingIndexObj.value
@@ -101,54 +77,33 @@ function updateEffectProp(key, value) {
     store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
   }
 }
-
-// 添加新行
 function addRow() {
   const rows = JSON.parse(JSON.stringify(anomalyRows.value))
   rows.push([{type: 'default', stacks: 1, duration: 0}])
   store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
   editingIndexObj.value = {r: rows.length - 1, c: 0}
 }
-
-// 在指定行追加效果
 function addEffectToRow(rowIndex) {
   const rows = JSON.parse(JSON.stringify(anomalyRows.value))
   rows[rowIndex].push({type: 'default', stacks: 1, duration: 0})
   store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
   editingIndexObj.value = {r: rowIndex, c: rows[rowIndex].length - 1}
 }
-
-// 删除指定效果
 function removeEffect(r, c) {
   store.removeAnomaly(store.selectedActionId, r, c);
   editingIndexObj.value = null;
 }
 
-// ===================================================================================
-// 3. 图标与连线数据准备
-// ===================================================================================
-
 const iconOptions = computed(() => {
   const allGlobalKeys = Object.keys(store.iconDatabase);
   const allowed = selectedAction.value?.allowedTypes;
-  const availableKeys = (allowed && allowed.length > 0)
-      ? allGlobalKeys.filter(key => allowed.includes(key) || key === 'default')
-      : allGlobalKeys;
-
+  const availableKeys = (allowed && allowed.length > 0) ? allGlobalKeys.filter(key => allowed.includes(key) || key === 'default') : allGlobalKeys;
   const groups = [];
-
   if (currentCharacter.value && currentCharacter.value.exclusive_buffs) {
-    let exclusiveOpts = currentCharacter.value.exclusive_buffs.map(buff => ({
-      label: `★ ${buff.name}`, value: buff.key, path: buff.path
-    }));
-    if (allowed && allowed.length > 0) {
-      exclusiveOpts = exclusiveOpts.filter(opt => allowed.includes(opt.value));
-    }
-    if (exclusiveOpts.length > 0) {
-      groups.push({label: ' 专属效果 ', options: exclusiveOpts});
-    }
+    let exclusiveOpts = currentCharacter.value.exclusive_buffs.map(buff => ({ label: `★ ${buff.name}`, value: buff.key, path: buff.path }));
+    if (allowed && allowed.length > 0) exclusiveOpts = exclusiveOpts.filter(opt => allowed.includes(opt.value));
+    if (exclusiveOpts.length > 0) groups.push({label: ' 专属效果 ', options: exclusiveOpts});
   }
-
   const processedKeys = new Set();
   GROUP_DEFINITIONS.forEach(def => {
     const groupKeys = availableKeys.filter(key => {
@@ -159,42 +114,28 @@ const iconOptions = computed(() => {
     });
     if (groupKeys.length > 0) {
       groupKeys.forEach(k => processedKeys.add(k));
-      groups.push({
-        label: def.label,
-        options: groupKeys.map(key => ({label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]}))
-      });
+      groups.push({ label: def.label, options: groupKeys.map(key => ({label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]})) });
     }
   });
-
   const remainingKeys = availableKeys.filter(k => !processedKeys.has(k));
   if (remainingKeys.length > 0) {
-    groups.push({
-      label: '其他',
-      options: remainingKeys.map(key => ({label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]}))
-    });
+    groups.push({ label: '其他', options: remainingKeys.map(key => ({label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]})) });
   }
   return groups;
 })
-
 const relevantConnections = computed(() => {
   if (!store.selectedActionId) return []
-  return store.connections
-      .filter(c => c.from === store.selectedActionId || c.to === store.selectedActionId)
-      .map(conn => {
-        const isOutgoing = conn.from === store.selectedActionId
-        const otherActionId = isOutgoing ? conn.to : conn.from
-        let otherActionName = '未知动作';
-        for (const track of store.tracks) {
-          const action = track.actions.find(a => a.instanceId === otherActionId)
-          if (action) {
-            otherActionName = action.name;
-            break;
-          }
-        }
-        return {id: conn.id, direction: isOutgoing ? '连向' : '来自', otherActionName, isOutgoing}
-      })
+  return store.connections.filter(c => c.from === store.selectedActionId || c.to === store.selectedActionId).map(conn => {
+    const isOutgoing = conn.from === store.selectedActionId
+    const otherActionId = isOutgoing ? conn.to : conn.from
+    let otherActionName = '未知动作';
+    for (const track of store.tracks) {
+      const action = track.actions.find(a => a.instanceId === otherActionId)
+      if (action) { otherActionName = action.name; break; }
+    }
+    return {id: conn.id, direction: isOutgoing ? '连向' : '来自', otherActionName, isOutgoing}
+  })
 })
-
 function getIconPath(type) {
   if (currentCharacter.value && currentCharacter.value.exclusive_buffs) {
     const exclusive = currentCharacter.value.exclusive_buffs.find(b => b.key === type);
@@ -203,38 +144,47 @@ function getIconPath(type) {
   return store.iconDatabase[type] || store.iconDatabase['default'] || ''
 }
 
-// ===================================================================================
-// 4. 基础更新操作
-// ===================================================================================
-
 function updateLibraryProp(key, value) {
   if (!selectedLibrarySkill.value) return
   store.updateLibrarySkill(selectedLibrarySkill.value.id, {[key]: value})
 }
-
 function updateActionProp(key, value) {
   if (!selectedAction.value) return;
   store.updateAction(store.selectedActionId, {[key]: value});
 }
-
-// === 动作实例的充能联动 ===
 function updateActionGaugeWithLink(value) {
   if (!selectedAction.value) return
-  store.updateAction(store.selectedActionId, {
-    gaugeGain: value,
-    // 联动更新队友充能，系数 0.5
-    teamGaugeGain: value * 0.5
-  })
+  store.updateAction(store.selectedActionId, { gaugeGain: value, teamGaugeGain: value * 0.5 })
 }
-
-// === 库技能的充能联动 ===
 function updateLibraryGaugeWithLink(value) {
   if (!selectedLibrarySkill.value) return
-  store.updateLibrarySkill(selectedLibrarySkill.value.id, {
-    gaugeGain: value,
-    // 联动更新队友充能，系数 0.5
-    teamGaugeGain: value * 0.5
-  })
+  store.updateLibrarySkill(selectedLibrarySkill.value.id, { gaugeGain: value, teamGaugeGain: value * 0.5 })
+}
+
+// ===================================================================================
+// 自定义时间条多条逻辑
+// ===================================================================================
+
+const customBarsList = computed(() => {
+  return selectedAction.value?.customBars || []
+})
+
+function addCustomBar() {
+  const newList = [...customBarsList.value]
+  newList.push({ text: '', duration: 1, offset: 0 })
+  store.updateAction(store.selectedActionId, { customBars: newList })
+}
+
+function removeCustomBar(index) {
+  const newList = [...customBarsList.value]
+  newList.splice(index, 1)
+  store.updateAction(store.selectedActionId, { customBars: newList })
+}
+
+function updateCustomBarItem(index, key, value) {
+  const newList = [...customBarsList.value]
+  newList[index] = { ...newList[index], [key]: value }
+  store.updateAction(store.selectedActionId, { customBars: newList })
 }
 </script>
 
@@ -267,7 +217,7 @@ function updateLibraryGaugeWithLink(value) {
       <div class="form-group highlight" v-if="currentSkillType === 'link'">
         <label>触发窗口（仅为展示连携窗口）</label>
         <input type="number" :value="selectedAction.triggerWindow || 0"
-               @input="e => updateActionProp('triggerWindow', Number(e.target.value))" step="0.1" min="0">
+               @input="e => updateActionProp('triggerWindow', Number(e.target.value))" step="0.1">
       </div>
       <div class="form-group highlight" v-if="currentSkillType === 'skill'">
         <label>技力消耗</label>
@@ -295,6 +245,48 @@ function updateLibraryGaugeWithLink(value) {
         <label>队友充能</label>
         <input type="number" :value="selectedAction.teamGaugeGain"
                @input="e => updateActionProp('teamGaugeGain', Number(e.target.value))">
+      </div>
+
+      <hr class="divider"/>
+
+      <div class="form-group highlight-cyan" style="border: 1px dashed #00e5ff; padding: 8px; border-radius: 4px; background: rgba(0, 229, 255, 0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label style="color: #00e5ff; font-weight: bold; margin: 0;">自定义时间条</label>
+          <button class="add-bar-btn" @click="addCustomBar" title="添加一条">+</button>
+        </div>
+
+        <div v-if="customBarsList.length === 0" style="color: #666; font-size: 12px; text-align: center; padding: 10px;">
+          暂无时间条，点击右上角添加
+        </div>
+
+        <div v-for="(bar, index) in customBarsList" :key="index" class="custom-bar-item">
+          <div class="bar-header">
+            <span class="bar-index">#{{ index + 1 }}</span>
+            <button class="remove-bar-btn" @click="removeCustomBar(index)">×</button>
+          </div>
+
+          <div style="margin-bottom: 6px;">
+            <input type="text" :value="bar.text"
+                   @input="e => updateCustomBarItem(index, 'text', e.target.value)"
+                   placeholder="显示文本"
+                   style="border-color: #00e5ff; width: 100%;">
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1;">
+              <input type="number" :value="bar.duration"
+                     @input="e => updateCustomBarItem(index, 'duration', Number(e.target.value))"
+                     step="0.5" placeholder="时长"
+                     style="border-color: #00e5ff; width: 100%;">
+            </div>
+            <div style="flex: 1;">
+              <input type="number" :value="bar.offset"
+                     @input="e => updateCustomBarItem(index, 'offset', Number(e.target.value))"
+                     step="0.1" placeholder="偏移"
+                     style="border-color: #00e5ff; width: 100%;">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -425,13 +417,11 @@ function updateLibraryGaugeWithLink(value) {
       <div class="form-group highlight"><label>技力回复</label><input type="number" :value="selectedLibrarySkill.spGain"
                                                                       @input="e => updateLibraryProp('spGain', Number(e.target.value))"
                                                                       min="0"></div>
-
       <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)">
         <label>自身充能 (联动队友)</label>
         <input type="number" :value="selectedLibrarySkill.gaugeGain"
                @input="e => updateLibraryGaugeWithLink(Number(e.target.value))" min="0">
       </div>
-
       <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
         <label>队友充能</label>
         <input type="number" :value="selectedLibrarySkill.teamGaugeGain"
@@ -875,4 +865,41 @@ input:focus, select:focus {
     transform: translateY(0);
   }
 }
+
+.add-bar-btn {
+  background: #00e5ff;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  font-size: 16px;
+  padding-bottom: -2px;
+}
+.add-bar-btn:hover { background: #fff; }
+
+.custom-bar-item {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  border-left: 2px solid #00e5ff;
+}
+
+.bar-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+}
+.bar-index { font-size: 10px; color: #00e5ff; font-family: monospace; }
+
+.remove-bar-btn {
+  background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 0; line-height: 1;
+}
+.remove-bar-btn:hover { color: #ff7875; }
 </style>
