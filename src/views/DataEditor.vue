@@ -305,15 +305,15 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
                       :checked="selectedChar.accept_team_gauge !== false"
                       @change="e => selectedChar.accept_team_gauge = e.target.checked"
                   >
-                  <label for="cb_accept_gauge">接受队友充能 (Team Gauge)</label>
+                  <label for="cb_accept_gauge">接受队友充能</label>
                 </div>
               </div>
             </div>
 
-            <h3 class="section-title">专属效果 (Buffs)</h3>
+            <h3 class="section-title">专属效果</h3>
             <div class="exclusive-list">
               <div v-for="(buff, idx) in selectedChar.exclusive_buffs" :key="idx" class="exclusive-row">
-                <input v-model="buff.key" placeholder="Key (e.g. magma)" />
+                <input v-model="buff.key" placeholder="Key" />
                 <input v-model="buff.name" placeholder="显示名称" />
                 <input v-model="buff.path" placeholder="图标路径" class="flex-grow" />
                 <button class="btn-icon-del" @click="selectedChar.exclusive_buffs.splice(idx, 1)">×</button>
@@ -327,7 +327,7 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
             <div class="form-grid three-col">
               <div class="form-group"><label>动作持续 (s)</label><input type="number" step="0.1" v-model.number="selectedChar.attack_duration"></div>
               <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.attack_spGain"></div>
-              <div class="form-group"><label>失衡值 (Stagger)</label><input type="number" v-model.number="selectedChar.attack_stagger"></div>
+              <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.attack_stagger"></div>
             </div>
 
             <h3 class="section-title">效果池配置</h3>
@@ -377,7 +377,7 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
               <div class="form-group"><label>SP 回复</label><input type="number" v-model.number="selectedChar.skill_spGain"></div>
               <div class="form-group"><label>失衡值</label><input type="number" v-model.number="selectedChar.skill_stagger"></div>
 
-              <div class="form-group highlight-input">
+              <div class="form-group">
                 <label>自身充能 (联动队友)</label>
                 <input type="number" v-model.number="selectedChar.skill_gaugeGain" @input="onSkillGaugeInput">
               </div>
