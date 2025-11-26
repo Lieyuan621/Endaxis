@@ -152,7 +152,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const teamTracksInfo = computed(() => tracks.value.map(track => {
         const charInfo = characterRoster.value.find(c => c.id === track.id)
-        return { ...track, ...(charInfo || { name: '未知', avatar: '', rarity: 0 }) }
+        return { ...track, ...(charInfo || { name: '请选择干员', avatar: '', rarity: 0 }) }
     }))
 
     const activeSkillLibrary = computed(() => {
@@ -676,7 +676,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     async function fetchGameData() {
         try {
             isLoading.value = true
-            const response = await fetch('/gamedata.json')
+            const response = await fetch(import.meta.env.BASE_URL + 'gamedata.json')
             if (!response.ok) throw new Error('无法加载 gamedata.json')
             const data = await response.json()
             if (data.SYSTEM_CONSTANTS) {

@@ -45,6 +45,14 @@ const selectedChar = computed(() => {
   return characterRoster.value.find(c => c.id === selectedCharId.value)
 })
 
+// 获取星级颜色辅助函数
+function getRarityColor(rarity) {
+  if (rarity === 6) return '#FFD700'
+  if (rarity === 5) return '#ffc400'
+  if (rarity === 4) return '#d8b4fe'
+  return '#666'
+}
+
 // === 3. 生命周期 ===
 
 onMounted(async () => {
@@ -254,10 +262,16 @@ function setRowDelay(char, skillType, rowIndex, val) {
         <div v-for="char in filteredRoster" :key="char.id"
              class="char-item" :class="{ active: char.id === selectedCharId }"
              @click="selectChar(char.id)">
-          <img :src="char.avatar" class="avatar-small" @error="e=>e.target.src='/avatars/default.png'" />
+
+          <div class="avatar-wrapper-small" :class="`rarity-${char.rarity}-border`">
+            <img :src="char.avatar" @error="e=>e.target.src='/avatars/default.png'" />
+          </div>
+
           <div class="char-info">
             <span class="char-name">{{ char.name }}</span>
-            <span class="char-meta" :class="`rarity-${char.rarity}`">{{ char.rarity }}★ {{ char.element }}</span>
+            <span class="char-meta" :class="`rarity-${char.rarity}`">
+        {{ char.rarity }}★ {{ char.element }}
+      </span>
           </div>
         </div>
       </div>
@@ -271,7 +285,8 @@ function setRowDelay(char, skillType, rowIndex, val) {
       <div v-if="selectedChar" class="editor-panel">
         <header class="panel-header">
           <div class="header-left">
-            <img :src="selectedChar.avatar" class="avatar-large" />
+            <img :src="selectedChar.avatar" class="avatar-large"
+                 :style="{ borderColor: getRarityColor(selectedChar.rarity) }" />
             <div class="header-titles">
               <h1 class="edit-title">{{ selectedChar.name }}</h1>
               <span class="id-tag">{{ selectedChar.id }}</span>
@@ -430,12 +445,53 @@ function setRowDelay(char, skillType, rowIndex, val) {
 .char-item { display: flex; align-items: center; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; border: 1px solid transparent; }
 .char-item:hover { background-color: #2d2d2d; border-color: #444; }
 .char-item.active { background-color: #37373d; border-color: #ffd700; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
-.avatar-small { width: 44px; height: 44px; border-radius: 6px; margin-right: 12px; background: #333; object-fit: cover; border: 1px solid #444; }
+
+.avatar-wrapper-small {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  margin-right: 12px;
+  background: #333;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #444;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.avatar-wrapper-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rarity-6-border {
+  border: 2px solid transparent;
+  background: linear-gradient(#2b2b2b, #2b2b2b) padding-box,
+  linear-gradient(135deg, #FFD700, #FF8C00, #FF4500) border-box;
+  box-shadow: 0 0 6px rgba(255, 140, 0, 0.3);
+}
+
+.rarity-5-border { border-color: #ffc400; }
+
+.rarity-4-border { border-color: #d8b4fe; }
+
+
 .char-info { display: flex; flex-direction: column; justify-content: center; }
-.char-name { font-weight: bold; font-size: 14px; margin-bottom: 2px; }
-.char-meta { font-size: 12px; color: #888; }
-.rarity-6 { color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.2); }
-.rarity-5 { color: #f0f0f0; }
+.char-name { font-weight: bold; font-size: 14px; margin-bottom: 2px; color: #f0f0f0; }
+
+.char-meta { font-size: 12px; font-weight: bold; }
+
+.rarity-6 {
+  background: linear-gradient(45deg, #FFD700, #FF8C00, #FF4500);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.rarity-5 { color: #f59e0b; }
+.rarity-4 { color: #a855f7; }
+.rarity-3, .rarity-2, .rarity-1 { color: #888; }
 
 /* Sidebar Footer */
 .sidebar-footer { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; background: #2b2b2b; }
@@ -451,7 +507,12 @@ function setRowDelay(char, skillType, rowIndex, val) {
 /* Header */
 .panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 20px; }
 .header-left { display: flex; align-items: center; gap: 20px; }
-.avatar-large { width: 80px; height: 80px; border-radius: 8px; background: #333; object-fit: cover; border: 2px solid #555; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+.avatar-large {
+  width: 80px; height: 80px; border-radius: 8px; background: #333; object-fit: cover;
+  border: 3px solid #555;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: border-color 0.2s;
+}
 .header-titles { display: flex; flex-direction: column; gap: 5px; }
 .edit-title { margin: 0; font-size: 28px; font-weight: 700; color: #f0f0f0; }
 .id-tag { font-size: 14px; color: #666; font-family: 'Roboto Mono', monospace; background: #252526; padding: 2px 8px; border-radius: 4px; border: 1px solid #333; align-self: flex-start; }

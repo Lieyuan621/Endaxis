@@ -5,6 +5,7 @@ import ActionItem from './ActionItem.vue'
 import ActionConnector from './ActionConnector.vue'
 import GaugeOverlay from './GaugeOverlay.vue'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 
 const store = useTimelineStore()
 
@@ -45,16 +46,109 @@ const boxStart = ref({ x: 0, y: 0 })
 const boxRect = ref({ left: 0, top: 0, width: 0, height: 0 })
 
 // ===================================================================================
-// 2. 核心逻辑：操作轴计算 (Operation Axis with Clustering)
+// 干员选择弹窗逻辑
+// ===================================================================================
+
+const isSelectorVisible = ref(false)
+const targetTrackIndex = ref(null)
+const searchQuery = ref('')
+const filterElement = ref('ALL')
+
+const ELEMENT_FILTERS = [
+  { label: '全部', value: 'ALL', color: '#888' },
+  { label: '物理', value: 'physical', color: '#e0e0e0' },
+  { label: '灼热', value: 'blaze', color: '#ff4d4f' },
+  { label: '寒冷', value: 'cold', color: '#00e5ff' },
+  { label: '电磁', value: 'emag', color: '#ffd700' },
+  { label: '自然', value: 'nature', color: '#52c41a' }
+]
+
+function openCharacterSelector(index) {
+  targetTrackIndex.value = index
+  searchQuery.value = ''
+  filterElement.value = 'ALL'
+  isSelectorVisible.value = true
+}
+
+function confirmCharacterSelection(charId) {
+  if (targetTrackIndex.value !== null) {
+    const oldId = store.tracks[targetTrackIndex.value].id
+    store.changeTrackOperator(targetTrackIndex.value, oldId, charId)
+  }
+  isSelectorVisible.value = false
+}
+
+function removeOperator() {
+  if (targetTrackIndex.value !== null) {
+    const track = store.tracks[targetTrackIndex.value]
+    // 直接置空
+    track.id = null
+    track.actions = [] // 同时清空该轨道的动作，防止残留
+
+    // 提交历史记录 (Store 暴露了 commitState)
+    store.commitState()
+
+    // 如果当前选中的就是这个轨道，取消选中状态
+    if (store.activeTrackId === null) {
+      // 已经是 null 了不用动，或者根据需求重置
+    }
+  }
+  isSelectorVisible.value = false
+}
+
+// 1. 先进行基础筛选（搜索 + 元素）
+const filteredListFlat = computed(() => {
+  let list = store.characterRoster
+
+  if (filterElement.value !== 'ALL') {
+    list = list.filter(c => c.element === filterElement.value)
+  }
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(c => c.name.toLowerCase().includes(q))
+  }
+
+  // 基础排序
+  return list.sort((a, b) => (b.rarity || 0) - (a.rarity || 0))
+})
+
+// 2. 将筛选结果按星级分组
+const rosterByRarity = computed(() => {
+  const groups = {}
+
+  filteredListFlat.value.forEach(char => {
+    const r = char.rarity || 1
+    if (!groups[r]) groups[r] = []
+    groups[r].push(char)
+  })
+
+  // 获取所有存在的星级，降序排列 (6, 5, 4...)
+  const levels = Object.keys(groups).map(Number).sort((a, b) => b - a)
+
+  return levels.map(level => ({
+    level: level,
+    list: groups[level]
+  }))
+})
+
+// 获取星级基础颜色 (用于 style 绑定)
+function getRarityBaseColor(rarity) {
+  if (rarity === 6) return '#FFD700' // 兜底色
+  if (rarity === 5) return '#ffc400' // 金色
+  if (rarity === 4) return '#d8b4fe' // 紫色
+  return '#a0a0a0'
+}
+
+// ===================================================================================
+// 2. 核心逻辑：操作轴计算
 // ===================================================================================
 
 const operationMarkers = computed(() => {
-  // 1. 生成原始数据
   let rawMarkers = []
   store.tracks.forEach((track, index) => {
     const keyNum = index + 1
     track.actions.forEach(action => {
-
       if ((action.triggerWindow || 0) < 0) return
       let label = '', isHold = false, customClass = ''
 
@@ -74,30 +168,24 @@ const operationMarkers = computed(() => {
         width: isHold ? null : 24,
         right: (action.startTime * TIME_BLOCK_WIDTH.value) + (isHold ? (action.duration * TIME_BLOCK_WIDTH.value) : 24),
         label, isHold, customClass,
-        // 样式占位符
         top: 0, height: 14, fontSize: 9
       })
     })
   })
 
-  // 按位置排序
   rawMarkers.sort((a, b) => a.left - b.left)
 
-  // 2. 聚类与动态布局
   const finalMarkers = []
   let cluster = []
   let clusterMaxRight = -1
 
-  // 处理单个簇的函数
   const processCluster = (group) => {
     if (group.length === 0) return
-
-    // A. 计算内部堆叠层级
     const levels = []
     group.forEach(m => {
       let placed = false
       for (let i = 0; i < levels.length; i++) {
-        if (levels[i] + 1 <= m.left) { // 1px 间隙
+        if (levels[i] + 1 <= m.left) {
           m.rowIndex = i
           levels[i] = m.right
           placed = true
@@ -111,21 +199,11 @@ const operationMarkers = computed(() => {
     })
 
     const depth = levels.length
-
-    // B. 根据层数决定高度 (动态压缩算法)
     let h, step, fs
-    if (depth <= 2) {
-      // 宽松模式
-      h = 14; step = 16; fs = 9;
-    } else if (depth === 3) {
-      // 紧凑模式
-      h = 12; step = 13; fs = 9;
-    } else {
-      // 极限模式 (4层及以上)
-      h = 10; step = 10; fs = 8;
-    }
+    if (depth <= 2) { h = 14; step = 16; fs = 9; }
+    else if (depth === 3) { h = 12; step = 13; fs = 9; }
+    else { h = 10; step = 10; fs = 8; }
 
-    // C. 应用样式
     group.forEach(m => {
       m.height = h
       m.top = m.rowIndex * step
@@ -134,7 +212,6 @@ const operationMarkers = computed(() => {
     })
   }
 
-  // 遍历并分组
   rawMarkers.forEach(m => {
     if (cluster.length === 0) {
       cluster.push(m)
@@ -151,32 +228,14 @@ const operationMarkers = computed(() => {
     }
   })
   processCluster(cluster)
-
   return finalMarkers
 })
 
 // ===================================================================================
-// 3. 辅助计算属性
+// 3. 辅助计算属性 & 4. 事件处理
 // ===================================================================================
 
 const timeBlocks = computed(() => Array.from({length: store.TOTAL_DURATION}, (_, i) => i + 1))
-
-const groupedCharacters = computed(() => {
-  const groups = {}
-  store.characterRoster.forEach(char => {
-    const rarity = char.rarity || 0
-    if (!groups[rarity]) groups[rarity] = []
-    groups[rarity].push(char)
-  })
-  return Object.keys(groups).sort((a, b) => b - a).map(rarity => ({
-    label: rarity > 0 ? `${rarity} ★` : '未知星级',
-    options: groups[rarity]
-  }))
-})
-
-// ===================================================================================
-// 4. 事件处理与工具函数
-// ===================================================================================
 
 function forceSvgUpdate() { svgRenderKey.value++ }
 
@@ -195,17 +254,13 @@ function calculateTimeFromEvent(evt) {
   const activeOffset = store.globalDragOffset || 0
   const mouseXInTrack = (mouseX - activeOffset) - trackRect.left + scrollLeft
   const rawTime = mouseXInTrack / TIME_BLOCK_WIDTH.value
-  const step = store.snapStep // 0.5 或 0.1
-
-  // 算法：比如 step是0.1，则 *10 取整再 /10
+  const step = store.snapStep
   const inverse = 1 / step
   let startTime = Math.round(rawTime * inverse) / inverse
-
   if (startTime < 0) startTime = 0
   return startTime
 }
 
-// 滚动同步
 function syncRulerScroll() {
   if (timeRulerWrapperRef.value && tracksContentRef.value) {
     const left = tracksContentRef.value.scrollLeft
@@ -226,27 +281,18 @@ function syncVerticalScroll() {
 // ===================================================================================
 
 const cachedSpData = computed(() => store.calculateGlobalSpData())
-
 const currentSpValue = computed(() => {
   const time = cursorX.value / TIME_BLOCK_WIDTH.value
   const points = cachedSpData.value
-
   if (!points || points.length === 0) return store.systemConstants.initialSp
-
-  // 遍历寻找当前时间所在的区间
   for (let i = 0; i < points.length - 1; i++) {
-    const p1 = points[i]
-    const p2 = points[i+1]
-
+    const p1 = points[i]; const p2 = points[i+1]
     if (time >= p1.time && time < p2.time) {
-      // 线性插值计算当前时刻的精确 SP
       const progress = (time - p1.time) / (p2.time - p1.time)
       const val = p1.sp + (p2.sp - p1.sp) * progress
       return Math.floor(val)
     }
   }
-
-  // 如果超出最后时间点，取最后一个值
   return Math.floor(points[points.length - 1].sp)
 })
 
@@ -254,19 +300,13 @@ function onGridMouseMove(evt) {
   if (!tracksContentRef.value) return
   const rect = tracksContentRef.value.getBoundingClientRect()
   const scrollLeft = tracksContentRef.value.scrollLeft
-
-  // 更新像素坐标 (辅助线)
   cursorX.value = (evt.clientX - rect.left) + scrollLeft
   isCursorVisible.value = true
-
-  // 更新逻辑时间
   const exactTime = cursorX.value / TIME_BLOCK_WIDTH.value
   store.setCursorTime(Math.round(exactTime * 10) / 10)
 }
-
 function onGridMouseLeave() { isCursorVisible.value = false }
 
-// 框选逻辑
 function onContentMouseDown(evt) {
   if (store.isBoxSelectMode) {
     evt.stopPropagation(); evt.preventDefault()
@@ -289,10 +329,8 @@ function onBoxMouseMove(evt) {
   const rect = tracksContentRef.value.getBoundingClientRect()
   const currentX = evt.clientX - rect.left + tracksContentRef.value.scrollLeft
   const currentY = evt.clientY - rect.top + tracksContentRef.value.scrollTop
-
   const left = Math.min(boxStart.value.x, currentX)
   const top = Math.min(boxStart.value.y, currentY)
-
   boxRect.value = {
     left, top,
     width: Math.abs(currentX - boxStart.value.x),
@@ -304,7 +342,6 @@ function onBoxMouseUp() {
   isBoxSelecting.value = false
   window.removeEventListener('mousemove', onBoxMouseMove)
   window.removeEventListener('mouseup', onBoxMouseUp)
-
   const box = boxRect.value
   const selection = {
     left: box.width > 0 ? box.left : box.left + box.width,
@@ -312,10 +349,8 @@ function onBoxMouseUp() {
     right: box.width > 0 ? box.left + box.width : box.left,
     bottom: box.height > 0 ? box.top + box.height : box.top
   }
-  // 坐标标准化
   if (selection.left > selection.right) [selection.left, selection.right] = [selection.right, selection.left]
   if (selection.top > selection.bottom) [selection.top, selection.bottom] = [selection.bottom, selection.top]
-
   const foundIds = []
   store.tracks.forEach((track, trackIndex) => {
     const trackEl = document.getElementById(`track-row-${trackIndex}`)
@@ -324,57 +359,34 @@ function onBoxMouseUp() {
     const containerRect = tracksContentRef.value.getBoundingClientRect()
     const trackRelativeTop = (trackRect.top - containerRect.top) + tracksContentRef.value.scrollTop
     const trackRelativeBottom = trackRelativeTop + trackRect.height
-
     if (trackRelativeBottom < selection.top || trackRelativeTop > selection.bottom) return
-
     track.actions.forEach(action => {
       const startPixel = action.startTime * TIME_BLOCK_WIDTH.value
       const endPixel = (action.startTime + action.duration) * TIME_BLOCK_WIDTH.value
-      if (startPixel < selection.right && endPixel > selection.left) {
-        foundIds.push(action.instanceId)
-      }
+      if (startPixel < selection.right && endPixel > selection.left) foundIds.push(action.instanceId)
     })
   })
-
-  if (foundIds.length > 0) {
-    store.setMultiSelection(foundIds)
-    ElMessage.success(`选中了 ${foundIds.length} 个动作`)
-  } else {
-    store.clearSelection()
-  }
+  if (foundIds.length > 0) { store.setMultiSelection(foundIds); ElMessage.success(`选中了 ${foundIds.length} 个动作`) }
+  else { store.clearSelection() }
   boxRect.value = { left: 0, top: 0, width: 0, height: 0 }
 }
 
-// 动作拖拽逻辑
 function onActionMouseDown(evt, track, action) {
   evt.stopPropagation()
   if (evt.button !== 0) return
-
   wasSelectedOnPress.value = store.multiSelectedIds.has(action.instanceId)
-
-  if (!store.multiSelectedIds.has(action.instanceId)) {
-    store.selectAction(action.instanceId)
-  }
-
-  isMouseDown.value = true
-  isDragStarted.value = false
-  movingActionId.value = action.instanceId
-  movingTrackId.value = track.id
-  initialMouseX.value = evt.clientX
-  initialMouseY.value = evt.clientY
-
+  if (!store.multiSelectedIds.has(action.instanceId)) store.selectAction(action.instanceId)
+  isMouseDown.value = true; isDragStarted.value = false
+  movingActionId.value = action.instanceId; movingTrackId.value = track.id
+  initialMouseX.value = evt.clientX; initialMouseY.value = evt.clientY
   dragStartTimes.clear()
   store.tracks.forEach(t => {
     t.actions.forEach(a => {
-      if (store.multiSelectedIds.has(a.instanceId)) {
-        dragStartTimes.set(a.instanceId, a.startTime)
-      }
+      if (store.multiSelectedIds.has(a.instanceId)) dragStartTimes.set(a.instanceId, a.startTime)
     })
   })
-
   const rect = evt.currentTarget.getBoundingClientRect()
   store.setDragOffset(evt.clientX - rect.left)
-
   window.addEventListener('mousemove', onWindowMouseMove)
   window.addEventListener('mouseup', onWindowMouseUp)
   window.addEventListener('blur', onWindowMouseUp)
@@ -383,27 +395,20 @@ function onActionMouseDown(evt, track, action) {
 function onWindowMouseMove(evt) {
   if (!isMouseDown.value) return
   if (evt.buttons === 0) { onWindowMouseUp(evt); return }
-
   const target = evt.target
   const isForm = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
   const isSidebar = target && (target.closest('.properties-sidebar') || target.closest('.action-library'))
   if (isForm || isSidebar) { onWindowMouseUp(evt); return }
-
   if (!isDragStarted.value) {
     const dist = Math.sqrt(Math.pow(evt.clientX - initialMouseX.value, 2) + Math.pow(evt.clientY - initialMouseY.value, 2))
     if (dist > dragThreshold) isDragStarted.value = true; else return
   }
-
   const newLeaderTime = calculateTimeFromEvent(evt)
   const leaderOriginalTime = dragStartTimes.get(movingActionId.value)
   if (leaderOriginalTime === undefined) return
-
   const timeDelta = newLeaderTime - leaderOriginalTime
   let isValidMove = true
-  for (const [id, originalTime] of dragStartTimes) {
-    if (originalTime + timeDelta < 0) { isValidMove = false; break }
-  }
-
+  for (const [id, originalTime] of dragStartTimes) { if (originalTime + timeDelta < 0) { isValidMove = false; break } }
   if (isValidMove) {
     let hasChanged = false
     store.tracks.forEach(t => {
@@ -412,10 +417,7 @@ function onWindowMouseMove(evt) {
         if (store.multiSelectedIds.has(a.instanceId)) {
           const original = dragStartTimes.get(a.instanceId)
           const targetTime = Math.max(0, original + timeDelta)
-          if (a.startTime !== targetTime) {
-            a.startTime = targetTime
-            trackChanged = true; hasChanged = true
-          }
+          if (a.startTime !== targetTime) { a.startTime = targetTime; trackChanged = true; hasChanged = true }
         }
       })
       if (trackChanged) t.actions.sort((a, b) => a.startTime - b.startTime)
@@ -430,9 +432,7 @@ function onWindowMouseUp(evt) {
     if (!isDragStarted.value && movingActionId.value) {
       if (store.isLinking) store.confirmLinking(movingActionId.value)
       else if (store.cancelLinking) store.cancelLinking()
-    } else if (_wasDragging) {
-      store.commitState()
-    }
+    } else if (_wasDragging) { store.commitState() }
   } catch (error) { console.error("MouseUp Error:", error) } finally {
     dragStartTimes.clear()
     isMouseDown.value = false; isDragStarted.value = false; movingActionId.value = null; movingTrackId.value = null
@@ -444,23 +444,14 @@ function onWindowMouseUp(evt) {
 }
 
 function captureClick(e) { e.stopPropagation(); e.preventDefault() }
-
 function onTrackDrop(track, evt) {
-  const skill = store.draggingSkillData;
-  if (!skill || store.activeTrackId !== track.id) return
+  const skill = store.draggingSkillData; if (!skill || store.activeTrackId !== track.id) return
   const startTime = calculateTimeFromEvent(evt)
   store.addSkillToTrack(track.id, skill, startTime)
   nextTick(() => forceSvgUpdate())
 }
-
-function onTrackDragOver(evt) {
-  evt.preventDefault(); evt.dataTransfer.dropEffect = 'copy'
-}
-
-function onActionClick(action) {
-  if (!isDragStarted.value && wasSelectedOnPress.value && store.selectedActionId === action.instanceId) store.selectAction(action.instanceId)
-}
-
+function onTrackDragOver(evt) { evt.preventDefault(); evt.dataTransfer.dropEffect = 'copy' }
+function onActionClick(action) { if (!isDragStarted.value && wasSelectedOnPress.value && store.selectedActionId === action.instanceId) store.selectAction(action.instanceId) }
 function onBackgroundClick(event) {
   if (!event || event.target === tracksContentRef.value || event.target.classList.contains('track-row') || event.target.classList.contains('time-block')) {
     store.cancelLinking(); store.selectTrack(null)
@@ -468,43 +459,17 @@ function onBackgroundClick(event) {
 }
 
 function handleKeyDown(event) {
-  // 如果正在输入文字（如在 DataEditor），忽略
   const target = event.target
   if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
-
   const hasSelection = store.selectedActionId || store.multiSelectedIds.size > 0
   if (!hasSelection) return
-
-  // 删除逻辑
-  if (event.key === 'Delete') {
-    event.preventDefault()
-    const count = store.removeCurrentSelection()
-    if (count > 0) ElMessage.success(`已删除 ${count} 个动作`)
-  }
-
-  // === 微调逻辑 ===
-  // 向左微调 0.1s
-  if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') {
-    event.preventDefault()
-    store.nudgeSelection(-0.1)
-  }
-  // 向右微调 0.1s
-  if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') {
-    event.preventDefault()
-    store.nudgeSelection(0.1)
-  }
+  if (event.key === 'Delete') { event.preventDefault(); const count = store.removeCurrentSelection(); if (count > 0) ElMessage.success(`已删除 ${count} 个动作`) }
+  if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') { event.preventDefault(); store.nudgeSelection(-0.1) }
+  if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') { event.preventDefault(); store.nudgeSelection(0.1) }
 }
 
-// ===================================================================================
-// 6. 生命周期
-// ===================================================================================
-
-watch(() => store.timeBlockWidth, () => {
-  nextTick(() => { forceSvgUpdate(); updateScrollbarHeight() })
-})
-watch(() => [store.tracks, store.connections], () => {
-  setTimeout(() => { forceSvgUpdate() }, 50)
-}, {deep: true})
+watch(() => store.timeBlockWidth, () => { nextTick(() => { forceSvgUpdate(); updateScrollbarHeight() }) })
+watch(() => [store.tracks, store.connections], () => { setTimeout(() => { forceSvgUpdate() }, 50) }, {deep: true})
 
 onMounted(() => {
   if (tracksContentRef.value) {
@@ -516,18 +481,11 @@ onMounted(() => {
   }
   window.addEventListener('keydown', handleKeyDown)
 })
-
 onUnmounted(() => {
   if (tracksContentRef.value) {
-    tracksContentRef.value.removeEventListener('scroll', syncRulerScroll)
-    tracksContentRef.value.removeEventListener('scroll', syncVerticalScroll)
-    if (resizeObserver) resizeObserver.disconnect()
+    tracksContentRef.value.removeEventListener('scroll', syncRulerScroll); tracksContentRef.value.removeEventListener('scroll', syncVerticalScroll); if (resizeObserver) resizeObserver.disconnect()
   }
-  window.removeEventListener('keydown', handleKeyDown)
-  window.removeEventListener('mousemove', onWindowMouseMove)
-  window.removeEventListener('mouseup', onWindowMouseUp)
-  window.removeEventListener('mousemove', onBoxMouseMove)
-  window.removeEventListener('mouseup', onBoxMouseUp)
+  window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('mousemove', onWindowMouseMove); window.removeEventListener('mouseup', onWindowMouseUp); window.removeEventListener('mousemove', onBoxMouseMove); window.removeEventListener('mouseup', onBoxMouseUp)
 })
 </script>
 
@@ -566,18 +524,10 @@ onUnmounted(() => {
           <span v-if="(block - 1) % 5 === 0" class="tick-label">{{ block - 1 }}s</span>
         </div>
       </div>
-
       <div class="operation-layer">
-        <div v-for="op in operationMarkers" :key="op.id"
-             class="key-cap"
+        <div v-for="op in operationMarkers" :key="op.id" class="key-cap"
              :class="[op.customClass, { 'is-hold': op.isHold }]"
-             :style="{
-               left: `${op.left}px`,
-               top: `${op.top}px`,
-               width: op.width ? `${op.width}px` : 'auto',
-               height: `${op.height}px`,
-               fontSize: `${op.fontSize}px`
-             }">
+             :style="{ left: `${op.left}px`, top: `${op.top}px`, width: op.width ? `${op.width}px` : 'auto', height: `${op.height}px`, fontSize: `${op.fontSize}px` }">
           <span class="key-text">{{ op.label }}</span>
         </div>
       </div>
@@ -588,61 +538,135 @@ onUnmounted(() => {
       <div v-for="(track, index) in store.teamTracksInfo" :key="index" class="track-info"
            @click.stop="store.selectTrack(track.id)"
            :class="{ 'is-active': track.id && track.id === store.activeTrackId }">
-        <img v-if="track.id" :src="track.avatar" class="avatar-image" :alt="track.name"/>
-        <div v-else class="avatar-placeholder"></div>
-        <el-select :model-value="track.id" @change="(newId) => store.changeTrackOperator(index, track.id, newId)"
-                   placeholder="选择干员" class="character-select" @click.stop>
-          <el-option-group v-for="group in groupedCharacters" :key="group.label" :label="group.label">
-            <el-option v-for="character in group.options" :key="character.id" :label="character.name"
-                       :value="character.id"/>
-          </el-option-group>
-        </el-select>
+
+        <div class="char-select-trigger">
+          <div class="trigger-avatar-box" @click.stop="openCharacterSelector(index)" title="点击更换干员">
+            <img v-if="track.id" :src="track.avatar" class="avatar-image" :alt="track.name"/>
+            <div v-else class="avatar-placeholder"></div>
+
+            <div class="avatar-change-hint" v-if="track.id">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 1 20.49 15"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="trigger-info" @click="!track.id && openCharacterSelector(index)">
+            <span class="trigger-name">{{ track.name || '请选择干员' }}</span>
+          </div>
+        </div>
+
       </div>
     </div>
 
     <div class="tracks-content-scroller" ref="tracksContentRef" @mousedown="onContentMouseDown"
          @mousemove="onGridMouseMove" @mouseleave="onGridMouseLeave">
 
-      <div class="cursor-guide" :style="{ left: `${cursorX}px` }"
-           v-show="isCursorVisible && store.showCursorGuide && !store.isBoxSelectMode">
-        <div class="guide-time-label">
-          {{ (cursorX / TIME_BLOCK_WIDTH).toFixed(1) }}s
-        </div>
-        <div class="guide-sp-label">
-          SP: {{ currentSpValue }}
-        </div>
+      <div class="cursor-guide" :style="{ left: `${cursorX}px` }" v-show="isCursorVisible && store.showCursorGuide && !store.isBoxSelectMode">
+        <div class="guide-time-label">{{ (cursorX / TIME_BLOCK_WIDTH).toFixed(1) }}s</div>
+        <div class="guide-sp-label">SP: {{ currentSpValue }}</div>
       </div>
-      <div v-if="isBoxSelecting" class="selection-box-overlay"
-           :style="{ left: `${boxRect.left}px`, top: `${boxRect.top}px`, width: `${boxRect.width}px`, height: `${boxRect.height}px` }"></div>
+
+      <div v-if="isBoxSelecting" class="selection-box-overlay" :style="{ left: `${boxRect.left}px`, top: `${boxRect.top}px`, width: `${boxRect.width}px`, height: `${boxRect.height}px` }"></div>
 
       <div class="tracks-content">
         <svg class="connections-svg">
           <template v-if="tracksContentRef">
-            <ActionConnector v-for="conn in store.connections" :key="conn.id" :connection="conn"
-                             :container-ref="tracksContentRef" :render-key="svgRenderKey"/>
+            <ActionConnector v-for="conn in store.connections" :key="conn.id" :connection="conn" :container-ref="tracksContentRef" :render-key="svgRenderKey"/>
           </template>
         </svg>
 
         <div v-for="(track, index) in store.tracks" :key="index" class="track-row" :id="`track-row-${index}`"
-             :class="{ 'is-active-drop': track.id === store.activeTrackId }" @dragover="onTrackDragOver"
-             @drop="onTrackDrop(track, $event)">
+             :class="{ 'is-active-drop': track.id === store.activeTrackId }" @dragover="onTrackDragOver" @drop="onTrackDrop(track, $event)">
           <div class="track-lane">
-            <div v-for="block in timeBlocks" :key="block" class="time-block"
-                 :style="{ width: `${TIME_BLOCK_WIDTH}px` }"></div>
+            <div v-for="block in timeBlocks" :key="block" class="time-block" :style="{ width: `${TIME_BLOCK_WIDTH}px` }"></div>
             <GaugeOverlay v-if="track.id" :track-id="track.id"/>
             <div class="actions-container">
               <ActionItem v-for="action in track.actions" :key="action.instanceId" :action="action"
-                          @mousedown="onActionMouseDown($event, track, action)" @click.stop="onActionClick(action)"
+                          @mousedown="onActionMouseDown($event, track, action)"
+                          @click.stop="onActionClick(action)"
                           :class="{ 'is-moving': isDragStarted && movingActionId === action.instanceId }"/>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <el-dialog v-model="isSelectorVisible" title="更换干员" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
+      <div class="selector-header">
+        <div class="header-left-group">
+          <el-input
+              v-model="searchQuery"
+              placeholder="搜索干员名称..."
+              :prefix-icon="Search"
+              clearable
+              style="width: 180px"
+          />
+
+          <button class="remove-btn" @click="removeOperator" title="清空当前轨道">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            卸下
+          </button>
+        </div>
+
+        <div class="element-filters">
+          <button
+              v-for="elm in ELEMENT_FILTERS"
+              :key="elm.value"
+              class="filter-btn"
+              :class="{ active: filterElement === elm.value }"
+              :style="{ '--btn-color': elm.color }"
+              @click="filterElement = elm.value"
+          >
+            {{ elm.label }}
+          </button>
+        </div>
+      </div>
+
+    <div class="roster-scroll-container">
+      <template v-for="group in rosterByRarity" :key="group.level">
+        <div class="rarity-header" :class="`header-rarity-${group.level}`">
+          <span class="rarity-label" :style="{ color: getRarityBaseColor(group.level) }">{{ group.level }} ★</span>
+          <div class="rarity-line" :style="{ backgroundColor: getRarityBaseColor(group.level) }"></div>
+        </div>
+
+        <div class="roster-grid">
+          <div v-for="char in group.list" :key="char.id" class="roster-card"
+               :class="[
+                 { 'is-selected': store.tracks.some(t => t.id === char.id) },
+                 `rarity-${char.rarity}-style`
+               ]"
+               @click="confirmCharacterSelection(char.id)">
+            <div
+                class="card-avatar-wrapper"
+                :style="char.rarity === 6 ? {} : { borderColor: getRarityBaseColor(char.rarity) }"
+            >
+              <img :src="char.avatar" loading="lazy" />
+              <div class="element-badge" :style="{ background: store.getColor(char.element) }"></div>
+            </div>
+            <div class="card-name">{{ char.name }}</div>
+            <div v-if="store.tracks.some(t => t.id === char.id)" class="in-team-tag">已上场</div>
+          </div>
+        </div>
+      </template>
+
+      <div v-if="rosterByRarity.length === 0" class="empty-roster">
+        没有找到匹配的干员
+      </div>
+    </div>
+  </el-dialog>
   </div>
 </template>
 
 <style scoped>
+/* ==========================================================================
+   1. Grid Layout Structure
+   ========================================================================== */
 .timeline-grid-layout {
   display: grid;
   grid-template-columns: 180px 1fr;
@@ -652,10 +676,9 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* ============================
-   Header Components (Row 1)
-   ============================ */
-
+/* ==========================================================================
+   2. Corner Placeholder (Top-Left)
+   ========================================================================== */
 .corner-placeholder {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
@@ -670,17 +693,17 @@ onUnmounted(() => {
 }
 
 .guide-toggle-btn {
-  background: none;
-  border: 1px solid #555;
-  color: #777;
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 4px;
-  width: 26px;
-  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  background: none;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #777;
+  cursor: pointer;
   transition: all 0.2s;
 }
 
@@ -695,6 +718,9 @@ onUnmounted(() => {
   background: rgba(255, 215, 0, 0.1);
 }
 
+/* ==========================================================================
+   3. Time Ruler (Top-Right)
+   ========================================================================== */
 .time-ruler-wrapper {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
@@ -706,7 +732,6 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* 刻度尺区域 */
 .time-ruler-track {
   display: flex;
   flex-direction: row;
@@ -744,10 +769,9 @@ onUnmounted(() => {
   font-size: 11px;
 }
 
-/* ============================
-   Sidebar & Content (Row 2)
-   ============================ */
-
+/* ==========================================================================
+   4. Sidebar Tracks Header (Left Column)
+   ========================================================================== */
 .tracks-header-sticky {
   grid-column: 1 / 2;
   grid-row: 2 / 3;
@@ -769,7 +793,6 @@ onUnmounted(() => {
   align-items: center;
   background: #3a3a3a;
   padding-left: 8px;
-  cursor: pointer;
   transition: background 0.2s;
 }
 
@@ -778,50 +801,127 @@ onUnmounted(() => {
   border-right: 3px solid #ffd700;
 }
 
+.char-select-trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 10px;
+}
+
+.trigger-avatar-box {
+  position: relative;
+  margin-right: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .avatar-image {
+  display: block;
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #555;
-  margin-right: 8px;
   object-fit: cover;
+  border: 2px solid #555;
+  transition: border-color 0.2s;
 }
 
 .avatar-placeholder {
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 50%;
   background: #444;
   border: 2px dashed #666;
-  margin-right: 8px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.character-select {
+.avatar-placeholder:hover {
+  border-color: #ffd700;
+  background: #555;
+}
+
+.avatar-placeholder::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 2px;
+  background-color: #888;
+  border-radius: 1px;
+  transition: background-color 0.2s;
+}
+
+.avatar-placeholder::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 16px;
+  background-color: #888;
+  border-radius: 1px;
+  transition: background-color 0.2s;
+}
+
+.avatar-placeholder:hover::before,
+.avatar-placeholder:hover::after {
+  background-color: #ffd700;
+}
+
+.avatar-change-hint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.trigger-avatar-box:hover .avatar-change-hint {
+  opacity: 1;
+}
+
+.trigger-avatar-box:hover .avatar-image {
+  border-color: #ffd700;
+}
+
+.trigger-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   flex-grow: 1;
-  width: 0;
+  height: 100%;
+  cursor: default;
 }
 
-/* El-select 样式覆盖 */
-.character-select :deep(.el-input__wrapper) {
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0;
+.track-info:not(.is-active) .trigger-info {
+  cursor: pointer;
 }
 
-.character-select :deep(.el-input__inner) {
+.trigger-name {
   color: #f0f0f0;
-  font-size: 16px;
   font-weight: bold;
+  font-size: 14px;
+  user-select: none;
 }
 
-.character-select :deep(.el-select__caret) {
-  display: none;
-}
-
-.track-info:hover .character-select :deep(.el-select__caret) {
-  display: inline-block;
-}
-
+/* ==========================================================================
+   5. Main Content Scroller
+   ========================================================================== */
 .tracks-content-scroller {
   grid-column: 2 / 3;
   grid-row: 2 / 3;
@@ -854,16 +954,8 @@ onUnmounted(() => {
   box-shadow: 0 0 6px #ffd700;
 }
 
-.guide-labels-container {
-  position: absolute;
-  top: 0;
-  left: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .guide-time-label {
+  width: fit-content;
   color: #ffffff;
   font-size: 10px;
   font-weight: bold;
@@ -872,10 +964,10 @@ onUnmounted(() => {
   border-radius: 0 4px 4px 0;
   white-space: nowrap;
   line-height: 1;
-  width: fit-content;
 }
 
 .guide-sp-label {
+  width: fit-content;
   color: #ffd700;
   font-size: 10px;
   font-weight: bold;
@@ -884,7 +976,6 @@ onUnmounted(() => {
   border-radius: 0 4px 4px 0;
   white-space: nowrap;
   line-height: 1;
-  width: fit-content;
   text-shadow: 0 0 2px rgba(255, 215, 0, 0.5);
 }
 
@@ -894,19 +985,19 @@ onUnmounted(() => {
   pointer-events: none;
   background: transparent;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.9) 60%, transparent 60%),
-  linear-gradient(to right, rgba(255, 255, 255, 0.9) 60%, transparent 60%),
-  linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 60%, transparent 60%),
-  linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 60%, transparent 60%);
+  background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.9) 60%, transparent 60%),
+      linear-gradient(to right, rgba(255, 255, 255, 0.9) 60%, transparent 60%),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 60%, transparent 60%),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 60%, transparent 60%);
   background-position: top, bottom, left, right;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
   background-size: 10px 1px, 10px 1px, 1px 10px, 1px 10px;
 }
 
-/* ============================
-   Track Rows & Action Items
-   ============================ */
-
+/* ==========================================================================
+   6. Track Rows & Actions
+   ========================================================================== */
 .track-row {
   position: relative;
   flex: 1;
@@ -964,10 +1055,9 @@ onUnmounted(() => {
   overflow: visible;
 }
 
-/* ============================
-   Operation Layer
-   ============================ */
-
+/* ==========================================================================
+   7. Operation Layer (Key Markers)
+   ========================================================================== */
 .operation-layer {
   position: absolute;
   top: 4px;
@@ -980,15 +1070,15 @@ onUnmounted(() => {
 
 .key-cap {
   position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #444;
   border: 1px solid #666;
   border-radius: 2px;
   color: #fff;
   font-weight: bold;
   font-family: Consolas, Monaco, monospace;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   box-shadow: 0 1px 1px rgba(0,0,0,0.5);
   white-space: nowrap;
   opacity: 0.95;
@@ -1011,20 +1101,256 @@ onUnmounted(() => {
 }
 
 .key-cap.is-hold {
+  justify-content: center;
+  padding: 0 4px;
   background: #3a3a3a;
   border: 1px solid #888;
   border-radius: 2px;
-  justify-content: center;
-  padding: 0 4px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.5);
   white-space: nowrap;
 }
 
 .key-cap.is-hold .key-text {
+  margin: 0;
+  padding: 0;
   background: transparent;
   color: #fff;
-  padding: 0;
-  margin: 0;
   font-size: 9px;
+}
+
+/* ==========================================================================
+   8. Character Selector Dialog
+   ========================================================================== */
+.selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.header-left-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remove-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  height: 32px;
+  background: rgba(255, 77, 79, 0.1);
+  border: 1px solid rgba(255, 77, 79, 0.3);
+  color: #ff7875;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.remove-btn:hover {
+  background: rgba(255, 77, 79, 0.2);
+  border-color: #ff7875;
+  transform: translateY(-1px);
+}
+
+.remove-btn:active {
+  transform: translateY(0);
+}
+
+.element-filters {
+  display: flex;
+  gap: 5px;
+}
+
+.filter-btn {
+  --btn-color: #888;
+  padding: 4px 12px;
+  background: #333;
+  border: 1px solid #555;
+  color: #aaa;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  border-color: var(--btn-color);
+  color: var(--btn-color);
+}
+
+.filter-btn.active {
+  background: var(--btn-color);
+  border-color: var(--btn-color);
+  color: #000;
+  font-weight: bold;
+}
+
+.roster-scroll-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0 5px;
+}
+
+.rarity-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 5px 0;
+}
+
+.rarity-header:first-child {
+  margin-top: 0;
+}
+
+.rarity-label {
+  font-size: 16px;
+  font-weight: 900;
+  font-style: italic;
+}
+
+.rarity-line {
+  flex: 1;
+  height: 1px;
+  opacity: 0.3;
+}
+
+.header-rarity-6 .rarity-label {
+  background: linear-gradient(45deg, #FFD700, #FF8C00, #FF4500);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent !important;
+}
+
+.header-rarity-6 .rarity-line {
+  background: linear-gradient(90deg, #FFD700, transparent) !important;
+  opacity: 0.8;
+}
+
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.roster-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.roster-card:hover {
+  transform: translateY(-3px);
+}
+
+.card-avatar-wrapper {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #555;
+  background: #222;
+  transition: border-color 0.2s;
+}
+
+.card-avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.element-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+}
+
+.card-name {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #444;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.in-team-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  color: #ffd700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.empty-roster {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+}
+
+.rarity-6-style .card-avatar-wrapper {
+  border-width: 2px;
+  border-style: solid;
+  border-color: transparent;
+  background: linear-gradient(#222, #222) padding-box, linear-gradient(135deg, #FFD700, #FF8C00, #FF4500) border-box;
+  box-shadow: 0 0 8px rgba(255, 165, 0, 0.4);
+}
+
+.rarity-6-style:hover .card-avatar-wrapper {
+  box-shadow: 0 0 12px rgba(255, 165, 0, 0.7);
+}
+
+/* ==========================================================================
+   9. Element Plus Overrides (Dark Mode)
+   ========================================================================== */
+:deep(.char-selector-dialog) {
+  background: #f5f5f5;
+}
+
+:deep(.char-selector-dialog .el-dialog__title) {
+  color: #f0f0f0;
+}
+
+:deep(.char-selector-dialog .el-dialog__body) {
+  padding-top: 10px;
+}
+
+:deep(.char-selector-dialog .el-input__wrapper) {
+  background-color: #333;
+  box-shadow: 0 0 0 1px #555 inset;
+}
+
+:deep(.char-selector-dialog .el-input__inner) {
+  color: white;
 }
 </style>
