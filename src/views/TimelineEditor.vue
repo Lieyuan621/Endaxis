@@ -84,8 +84,6 @@ async function processExport() {
   backupStyle(workspaceEl); backupStyle(timelineMain); backupStyle(gridLayout); backupStyle(tracksContent)
   scrollers.forEach(el => backupStyle(el))
 
-  const hiddenSelects = []; const tempLabels = []
-
   try {
     // 1. 强制滚动回零
     store.setScrollLeft(0)
@@ -114,47 +112,10 @@ async function processExport() {
       })
     }
 
-    // 4. 替换下拉框为纯文本 (因为截图库无法完美渲染原生select)
-    const rows = document.querySelectorAll('.track-info')
-    store.teamTracksInfo.forEach((info, index) => {
-      const row = rows[index]
-      if (!row) return
-
-      const originalRowStyle = row.style.cssText
-      styleMap.set(row, originalRowStyle)
-
-      // 移除边框，防止截图时出现虚线框
-      row.style.borderTop = '2px solid transparent'
-      row.style.borderBottom = '2px solid transparent'
-      row.style.boxSizing = 'border-box'
-
-      const select = row.querySelector('.character-select')
-      if (select) {
-        select.style.display = 'none'
-        hiddenSelects.push(select)
-
-        const label = document.createElement('div')
-        label.innerText = info.name || '未选择'
-        Object.assign(label.style, {
-          color: '#f0f0f0',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          height: '50px',
-          lineHeight: '50px',
-          paddingLeft: '10px',
-          flexGrow: '1',
-          marginTop: '15px',
-          fontFamily: 'sans-serif'
-        })
-        row.appendChild(label)
-        tempLabels.push(label)
-      }
-    })
-
     // 等待渲染刷新
     await new Promise(resolve => setTimeout(resolve, 400))
 
-    // 5. 开始截图
+    // 4. 开始截图
     const canvas = await html2canvas(workspaceEl, {
       backgroundColor: '#282828',
       scale: 1.5, // 提高清晰度
@@ -165,7 +126,7 @@ async function processExport() {
       logging: false
     })
 
-    // 6. 下载
+    // 5. 下载
     const link = document.createElement('a')
     link.download = userFilename
     link.href = canvas.toDataURL('image/png')
@@ -176,9 +137,7 @@ async function processExport() {
     console.error(error)
     ElMessage.error('导出失败：' + error.message)
   } finally {
-    // 7. 恢复现场
-    tempLabels.forEach(el => el.remove())
-    hiddenSelects.forEach(el => el.style.display = '')
+    // 6. 恢复现场
     styleMap.forEach((cssText, el) => el.style.cssText = cssText)
     store.setScrollLeft(originalScrollLeft)
     loading.close()
