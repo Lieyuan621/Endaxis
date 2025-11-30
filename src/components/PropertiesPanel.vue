@@ -10,6 +10,8 @@ const EFFECT_NAMES = {
   "blaze_attach": "灼热附着", "emag_attach": "电磁附着", "cold_attach": "寒冷附着", "nature_attach": "自然附着",
   "blaze_burst": "灼热爆发", "emag_burst": "电磁爆发", "cold_burst": "寒冷爆发", "nature_burst": "自然爆发",
   "burning": "燃烧", "conductive": "导电", "frozen": "冻结", "ice_shatter": "碎冰", "corrosion": "腐蚀",
+  "consumed": "被消耗",
+  "logic_tick": "分段判定",
   "default": "默认图标"
 }
 
@@ -18,7 +20,7 @@ const GROUP_DEFINITIONS = [
   { label: ' 元素附着', matcher: (key) => key.endsWith('_attach') },
   { label: ' 元素爆发', matcher: (key) => key.endsWith('_burst') },
   { label: ' 异常状态 ', keys: ['burning', 'conductive', 'frozen', 'corrosion'] },
-  { label: ' 其他', keys: ['default'] }
+  { label: ' 其他', keys: ['default', 'consumed', 'logic_tick'] }
 ]
 
 const editingIndexObj = ref(null)
@@ -112,7 +114,7 @@ function updateRowDelay(rowIndex, value) {
 const iconOptions = computed(() => {
   const allGlobalKeys = Object.keys(store.iconDatabase);
   const allowed = selectedAction.value?.allowedTypes;
-  const availableKeys = (allowed && allowed.length > 0) ? allGlobalKeys.filter(key => allowed.includes(key) || key === 'default') : allGlobalKeys;
+  const availableKeys = (allowed && allowed.length > 0) ? allGlobalKeys.filter(key => allowed.includes(key) || key === 'default' || key === 'consumed' || key === 'logic_tick') : allGlobalKeys;
   const groups = [];
   if (currentCharacter.value && currentCharacter.value.exclusive_buffs) {
     let exclusiveOpts = currentCharacter.value.exclusive_buffs.map(buff => ({ label: `★ ${buff.name}`, value: buff.key, path: buff.path }));
@@ -401,9 +403,17 @@ function updateCustomBarItem(index, key, value) {
                @input="e => updateEffectProp('stacks', Number(e.target.value))" min="1">
       </div>
       <div class="form-row">
-        <label>持续(s)</label>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+          <label>持续(s)</label>
+          <label style="font-size: 10px; color: #888; display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none;">
+            <input type="checkbox" :checked="editingEffectData.hideDuration"
+                   @change="e => updateEffectProp('hideDuration', e.target.checked)"
+                   style="width: 12px; height: 12px; margin: 0; vertical-align: middle;">
+            隐藏时长条
+          </label>
+        </div>
         <input type="number" :value="editingEffectData.duration"
-               @input="e => updateEffectProp('duration', Number(e.target.value))" min="0" step="0.5">
+               @input="e => updateEffectProp('duration', Number(e.target.value))" min="0" step="0.1">
       </div>
 
       <div class="form-row-group" style="display: flex; gap: 10px; margin-bottom: 8px;">

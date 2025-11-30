@@ -30,9 +30,13 @@ const EFFECT_NAMES = {
   "blaze_attach": "灼热附着", "emag_attach": "电磁附着", "cold_attach": "寒冷附着", "nature_attach": "自然附着",
   "blaze_burst": "灼热爆发", "emag_burst": "电磁爆发", "cold_burst": "寒冷爆发", "nature_burst": "自然爆发",
   "burning": "燃烧", "conductive": "导电", "frozen": "冻结", "ice_shatter": "碎冰", "corrosion": "腐蚀",
+  "consumed": "被消耗",
+  "logic_tick": "分段判定",
   "default": "默认图标"
 }
-const effectKeys = Object.keys(EFFECT_NAMES)
+
+const HIDDEN_CHECKBOX_KEYS = ['default', 'consumed', 'logic_tick']
+const effectKeys = Object.keys(EFFECT_NAMES).filter(key => !HIDDEN_CHECKBOX_KEYS.includes(key))
 
 // === 2. 状态与计算属性 ===
 
@@ -221,7 +225,12 @@ function onVariantCheckChange(variant, key) {
 // 获取变体可用的状态选项 (受 allowedTypes 限制)
 function getVariantAvailableOptions(variant) {
   const allowedList = variant.allowedTypes || []
-  return allowedList.map(key => {
+
+  // 创建一个 Set，合并原有的 allowedList 和 强制显示的选项
+  // 这样无论上面勾没勾，这里都会有
+  const combinedKeys = new Set([...allowedList, 'default', 'logic_tick', 'consumed'])
+
+  return Array.from(combinedKeys).map(key => {
     if (EFFECT_NAMES[key]) {
       return { label: EFFECT_NAMES[key], value: key }
     }
@@ -333,7 +342,9 @@ function saveData() {
 function getAvailableAnomalyOptions(skillType) {
   if (!selectedChar.value) return []
   const allowedList = selectedChar.value[`${skillType}_allowed_types`] || []
-  return allowedList.map(key => {
+  const combinedKeys = new Set([...allowedList, 'default', 'logic_tick', 'consumed'])
+
+  return Array.from(combinedKeys).map(key => {
     if (EFFECT_NAMES[key]) {
       return { label: EFFECT_NAMES[key], value: key }
     }
@@ -603,6 +614,11 @@ function setRowDelay(char, skillType, rowIndex, val) {
                         <input type="number" v-model.number="item.duration" placeholder="秒" step="0.5" class="mini-input"><span class="unit">s</span>
                       </div>
 
+                      <div style="display: flex; align-items: center; justify-content: flex-end; margin: 2px 0;">
+                        <label style="font-size: 9px; color: #888; display: flex; align-items: center; gap: 3px; cursor: pointer; user-select: none;">
+                          <input type="checkbox" v-model="item.hideDuration" style="width: 11px; height: 11px; margin: 0; accent-color: #666;"> 隐藏时长条
+                        </label>
+                      </div>
                       <div class="card-row" style="margin-top: 4px; border-top: 1px dashed #444; padding-top: 4px;">
                         <input type="number" v-model.number="item.sp" placeholder="技力" class="mini-input highlight-sp" title="此段回复技力"><span class="unit">回复技力</span>
                         <input type="number" v-model.number="item.stagger" placeholder="失衡" class="mini-input highlight-stagger" title="此段造成失衡"><span class="unit">失衡值</span>
@@ -687,6 +703,12 @@ function setRowDelay(char, skillType, rowIndex, val) {
                       <div class="card-row">
                         <input type="number" v-model.number="item.stacks" placeholder="层" class="mini-input"><span class="unit">层</span>
                         <input type="number" v-model.number="item.duration" placeholder="秒" step="0.5" class="mini-input"><span class="unit">s</span>
+                      </div>
+
+                      <div style="display: flex; align-items: center; justify-content: flex-end; margin: 2px 0;">
+                        <label style="font-size: 9px; color: #888; display: flex; align-items: center; gap: 3px; cursor: pointer; user-select: none;">
+                          <input type="checkbox" v-model="item.hideDuration" style="width: 11px; height: 11px; margin: 0; accent-color: #666;"> 隐藏时长条
+                        </label>
                       </div>
                       <div class="card-row" style="margin-top: 4px; border-top: 1px dashed #444; padding-top: 4px;">
                         <input type="number" v-model.number="item.sp" placeholder="技力" class="mini-input highlight-sp" title="此段回复技力"><span class="unit">回复技力</span>

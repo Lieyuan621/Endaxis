@@ -226,12 +226,16 @@ function onIconClick(evt, index) { evt.stopPropagation(); if (store.isLinking) {
     <div v-if="!isGhostMode" class="anomalies-overlay">
       <div v-for="(item, index) in renderableAnomalies" :key="`${item.rowIndex}-${item.colIndex}`"
            class="anomaly-wrapper" :style="item.style">
-        <div :id="`anomaly-${action.instanceId}-${index}`" class="anomaly-icon-box"
+        <div :id="`anomaly-${action.instanceId}-${index}`"
+             class="anomaly-icon-box"
+             :class="{ 'is-logic-tick': item.data.type === 'logic_tick' }"
              @mousedown.stop="onIconClick($event, index)" @click.stop>
+
           <img :src="getIconPath(item.data.type)" class="anomaly-icon"/>
+
           <div v-if="item.data.stacks > 1" class="anomaly-stacks">{{ item.data.stacks }}</div>
         </div>
-        <div class="anomaly-duration-bar" v-if="item.data.duration > 0"
+        <div class="anomaly-duration-bar" v-if="item.data.duration > 0 && !item.data.hideDuration"
              :style="{ width: `${item.barWidth}px`, backgroundColor: getEffectColor(item.data.type) }">
           <div class="striped-bg"></div>
           <span class="duration-text">{{ item.data.duration }}s</span>
@@ -320,6 +324,33 @@ function onIconClick(evt, index) { evt.stopPropagation(); if (store.isLinking) {
   background-color: #69c0ff;
   top: 50%;
   transform: translateY(-50%);
+}
+
+/* 逻辑节点 */
+.anomaly-icon-box.is-logic-tick {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ffd700;
+  border: none;
+  margin-top: 6px;
+  box-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
+}
+
+/* 隐藏逻辑节点内部的图片 */
+.anomaly-icon-box.is-logic-tick .anomaly-icon {
+  display: none;
+}
+
+/* 隐藏逻辑节点的层数文字 (一般分段判定不需要层数) */
+.anomaly-icon-box.is-logic-tick .anomaly-stacks {
+  display: none;
+}
+
+/* 鼠标悬停时稍微放大，方便选中编辑 */
+.anomaly-icon-box.is-logic-tick:hover {
+  transform: scale(1.5);
+  background-color: #fff;
 }
 
 /* === 触发窗口 === */
