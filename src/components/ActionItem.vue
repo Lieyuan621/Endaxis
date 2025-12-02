@@ -146,8 +146,11 @@ const renderableAnomalies = computed(() => {
   const BAR_MARGIN = 2
 
   const resultRows = []
+
+  // 获取从本动作出发的所有连线
   const myConnections = store.connections.filter(c => c.from === props.action.instanceId)
-  let globalFlatIndex = 0
+
+  let globalFlatIndex = 0 // 这个仅用于生成唯一的 key 或 id，不再用于匹配连线
 
   rows.forEach((row, rowIndex) => {
     const startDelay = rowDelays[rowIndex] || 0
@@ -161,8 +164,14 @@ const renderableAnomalies = computed(() => {
       let displayDuration = effect.duration
       let isConsumed = false
 
-      // 检查连线消耗逻辑
-      const conn = myConnections.find(c => c.fromEffectIndex === myEffectIndex)
+      let conn = null
+      if (effect._id) {
+        conn = myConnections.find(c => c.fromEffectId === effect._id)
+      }
+      if (!conn) {
+        conn = myConnections.find(c => !c.fromEffectId && c.fromEffectIndex === myEffectIndex)
+      }
+
       if (conn && conn.isConsumption) {
         const targetTrack = store.tracks.find(t => t.actions.some(a => a.instanceId === conn.to))
         const targetAction = targetTrack?.actions.find(a => a.instanceId === conn.to)
@@ -170,7 +179,6 @@ const renderableAnomalies = computed(() => {
         if (targetAction) {
           const myAbsStartTime = props.action.startTime + currentDurationOffset
 
-          // 获取用户设置的提前量，默认为 0
           const offset = conn.consumptionOffset || 0
 
           const consumptionTime = targetAction.startTime - offset
@@ -185,7 +193,6 @@ const renderableAnomalies = computed(() => {
         }
       }
 
-      // 计算最终显示宽度
       let finalBarWidth = displayDuration > 0 ? (displayDuration * widthUnit) : 0
       if (finalBarWidth > 0) {
         finalBarWidth = Math.max(0, finalBarWidth - ICON_SIZE)
@@ -205,11 +212,10 @@ const renderableAnomalies = computed(() => {
         },
         barWidth: finalBarWidth,
         isConsumed,
-        displayDuration, // 传递对齐后的时长给模板
+        displayDuration,
         originalDuration: effect.duration
       }
 
-      // 布局游标累加（始终基于原始时长，保持后续元素位置不动）
       currentDurationOffset += effect.duration
       const originalBarRenderWidth = Math.max(0, originalDurationWidth - ICON_SIZE - BAR_MARGIN)
       const spaceTaken = ICON_SIZE + (originalDurationWidth > 0 ? (BAR_MARGIN + originalBarRenderWidth) : 0) + GAP
