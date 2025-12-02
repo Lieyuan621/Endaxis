@@ -37,13 +37,14 @@ const initialMouseY = ref(0)
 const dragThreshold = 5
 const wasSelectedOnPress = ref(false)
 const dragStartTimes = new Map()
+const hadAnomalySelection = ref(false)
 
-// === 边缘自动滚动相关状态 (New) ===
-const autoScrollSpeed = ref(0) // 滚动的速度 (像素/帧)
-let autoScrollRaf = null       // requestAnimationFrame 的 ID
-let lastMouseX = 0             // 记录最后一次鼠标X坐标
-const SCROLL_ZONE = 50         // 距离边缘多少像素开始滚动
-const MAX_SCROLL_SPEED = 15    // 最大滚动速度
+// === 边缘自动滚动相关状态 ===
+const autoScrollSpeed = ref(0)
+let autoScrollRaf = null
+let lastMouseX = 0
+const SCROLL_ZONE = 50
+const MAX_SCROLL_SPEED = 15
 
 let resizeObserver = null
 
@@ -156,7 +157,6 @@ const operationMarkers = computed(() => {
   })
 
   rawMarkers.sort((a, b) => a.left - b.left)
-  // ... (省略具体的堆叠计算逻辑，保持原样) ...
   const finalMarkers = []
   let cluster = []
   let clusterMaxRight = -1
@@ -232,7 +232,7 @@ function syncVerticalScroll() {
 }
 
 // ===================================================================================
-// 5. 鼠标与拖拽逻辑 (含边缘自动滚动)
+// 5. 鼠标与拖拽逻辑
 // ===================================================================================
 
 const cachedSpData = computed(() => store.calculateGlobalSpData())
@@ -297,7 +297,6 @@ function onBoxMouseUp() {
   isBoxSelecting.value = false
   window.removeEventListener('mousemove', onBoxMouseMove)
   window.removeEventListener('mouseup', onBoxMouseUp)
-  // ... (框选计算逻辑保持不变) ...
   const box = boxRect.value
   const selection = {
     left: box.width > 0 ? box.left : box.left + box.width,
@@ -331,25 +330,33 @@ function onActionMouseDown(evt, track, action) {
   evt.stopPropagation()
   if (store.isLinking) return
   if (evt.button !== 0) return
+
   wasSelectedOnPress.value = store.multiSelectedIds.has(action.instanceId)
-  if (!store.multiSelectedIds.has(action.instanceId)) store.selectAction(action.instanceId)
+  hadAnomalySelection.value = (store.selectedAnomalyIndex !== null)
+
+  if (!store.multiSelectedIds.has(action.instanceId) || hadAnomalySelection.value) {
+    store.selectAction(action.instanceId)
+  }
+
   isMouseDown.value = true; isDragStarted.value = false
   movingActionId.value = action.instanceId; movingTrackId.value = track.id
   initialMouseX.value = evt.clientX; initialMouseY.value = evt.clientY
+
   dragStartTimes.clear()
   store.tracks.forEach(t => {
     t.actions.forEach(a => {
       if (store.multiSelectedIds.has(a.instanceId)) dragStartTimes.set(a.instanceId, a.startTime)
     })
   })
+
   const rect = evt.currentTarget.getBoundingClientRect()
   store.setDragOffset(evt.clientX - rect.left)
+
   window.addEventListener('mousemove', onWindowMouseMove)
   window.addEventListener('mouseup', onWindowMouseUp)
   window.addEventListener('blur', onWindowMouseUp)
 }
 
-// === 核心逻辑提取：更新拖拽位置 ===
 function updateDragPosition(clientX) {
   if (!isDragStarted.value || !movingActionId.value) return
 
@@ -392,24 +399,15 @@ function updateDragPosition(clientX) {
   }
 }
 
-// === 核心逻辑提取：执行自动滚动 ===
 function performAutoScroll() {
   if (autoScrollSpeed.value === 0 || !tracksContentRef.value) {
     cancelAnimationFrame(autoScrollRaf)
     autoScrollRaf = null
     return
   }
-
-  // 1. 执行滚动
   tracksContentRef.value.scrollLeft += autoScrollSpeed.value
-
-  // 2. 同步标尺
   syncRulerScroll()
-
-  // 3. 滚动改变了 scrollLeft，需要用“上一次的鼠标位置”重新计算动作块的新时间
   updateDragPosition(lastMouseX)
-
-  // 4. 循环
   autoScrollRaf = requestAnimationFrame(performAutoScroll)
 }
 
@@ -421,46 +419,36 @@ function onWindowMouseMove(evt) {
   const isSidebar = target && (target.closest('.properties-sidebar') || target.closest('.action-library'))
   if (isForm || isSidebar) { onWindowMouseUp(evt); return }
 
-  // 拖拽阈值检测
   if (!isDragStarted.value) {
     const dist = Math.sqrt(Math.pow(evt.clientX - initialMouseX.value, 2) + Math.pow(evt.clientY - initialMouseY.value, 2))
     if (dist > dragThreshold) isDragStarted.value = true; else return
   }
 
-  // === 边缘自动滚动检测 ===
-  lastMouseX = evt.clientX // 更新全局鼠标位置
+  lastMouseX = evt.clientX
   if (tracksContentRef.value) {
     const rect = tracksContentRef.value.getBoundingClientRect()
-    // 左边缘检测
     if (evt.clientX < rect.left + SCROLL_ZONE) {
       const ratio = 1 - (Math.max(0, evt.clientX - rect.left) / SCROLL_ZONE)
       autoScrollSpeed.value = -Math.max(2, ratio * MAX_SCROLL_SPEED) // 最小速度2，最大15
     }
-    // 右边缘检测
     else if (evt.clientX > rect.right - SCROLL_ZONE) {
       const ratio = 1 - (Math.max(0, rect.right - evt.clientX) / SCROLL_ZONE)
       autoScrollSpeed.value = Math.max(2, ratio * MAX_SCROLL_SPEED)
     }
-    // 中间区域
     else {
       autoScrollSpeed.value = 0
     }
-
-    // 启动循环
     if (autoScrollSpeed.value !== 0 && !autoScrollRaf) {
       performAutoScroll()
     }
   }
 
-  // 如果没有在自动滚动，则手动更新位置
-  // (实际上如果正在自动滚动，updateDragPosition 会被 RAF 调用；这里为了流畅性，可以双重调用或者仅在非滚动时调用)
   if (autoScrollSpeed.value === 0) {
     updateDragPosition(evt.clientX)
   }
 }
 
 function onWindowMouseUp(evt) {
-  // === 停止自动滚动 ===
   autoScrollSpeed.value = 0
   if (autoScrollRaf) {
     cancelAnimationFrame(autoScrollRaf)
@@ -470,8 +458,13 @@ function onWindowMouseUp(evt) {
   const _wasDragging = isDragStarted.value
   try {
     if (!isDragStarted.value && movingActionId.value) {
-      if (store.isLinking) store.confirmLinking(movingActionId.value)
-      else if (store.cancelLinking) store.cancelLinking()
+      if (store.isLinking) {
+        store.confirmLinking(movingActionId.value)
+      } else {
+        if (wasSelectedOnPress.value && !hadAnomalySelection.value) {
+          store.selectAction(movingActionId.value)
+        }
+      }
     } else if (_wasDragging) { store.commitState() }
   } catch (error) { console.error("MouseUp Error:", error) } finally {
     dragStartTimes.clear()

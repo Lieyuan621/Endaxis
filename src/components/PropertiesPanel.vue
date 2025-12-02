@@ -1,9 +1,13 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
 import draggable from 'vuedraggable'
 
 const store = useTimelineStore()
+
+// ===================================================================================
+// 1. 常量与配置
+// ===================================================================================
 
 const EFFECT_NAMES = {
   "break": "破防", "armor_break": "碎甲", "stagger": "猛击", "knockdown": "倒地", "knockup": "击飞",
@@ -22,13 +26,17 @@ const GROUP_DEFINITIONS = [
   { label: ' 其他', keys: ['default', 'logic_tick'] }
 ]
 
-const editingIndexObj = ref(null)
+// ===================================================================================
+// 2. 核心状态计算 (基于 Store)
+// ===================================================================================
 
+// 当前选中的技能库模板
 const selectedLibrarySkill = computed(() => {
   if (!store.selectedLibrarySkillId) return null
   return store.activeSkillLibrary.find(s => s.id === store.selectedLibrarySkillId)
 })
 
+// 当前选中的时间轴动作实例
 const selectedAction = computed(() => {
   if (!store.selectedActionId) return null
   for (const track of store.tracks) {
@@ -38,61 +46,113 @@ const selectedAction = computed(() => {
   return null
 })
 
+// 当前动作所属干员信息
 const currentCharacter = computed(() => {
-  if (!selectedAction.value) return null;
-  const track = store.tracks.find(t => t.actions.some(a => a.instanceId === store.selectedActionId));
-  if (!track) return null;
-  return store.characterRoster.find(c => c.id === track.id);
+  if (!selectedAction.value) return null
+  const track = store.tracks.find(t => t.actions.some(a => a.instanceId === store.selectedActionId))
+  if (!track) return null
+  return store.characterRoster.find(c => c.id === track.id)
 })
 
+// 当前技能类型 (attack/skill/link/ultimate)
 const currentSkillType = computed(() => {
-  if (selectedLibrarySkill.value) return selectedLibrarySkill.value.type;
-  if (selectedAction.value) return selectedAction.value.type;
-  return 'unknown';
-});
+  if (selectedLibrarySkill.value) return selectedLibrarySkill.value.type
+  if (selectedAction.value) return selectedAction.value.type
+  return 'unknown'
+})
 
+// 异常状态矩阵 (支持双向绑定以响应拖拽)
 const anomalyRows = computed({
   get: () => selectedAction.value?.physicalAnomaly || [],
-  set: (val) => store.updateAction(store.selectedActionId, {physicalAnomaly: val})
+  set: (val) => store.updateAction(store.selectedActionId, { physicalAnomaly: val })
 })
-function isEditing(r, c) { return editingIndexObj.value && editingIndexObj.value.r === r && editingIndexObj.value.c === c }
+
+const currentSelectedCoords = computed(() => {
+  if (!store.selectedActionId || !store.selectedAnomalyId) return null
+  // 需要在 store 中实现 getAnomalyIndexById 方法
+  return store.getAnomalyIndexById(store.selectedActionId, store.selectedAnomalyId)
+})
+
+// 获取当前正在编辑的效果数据
 const editingEffectData = computed(() => {
-  if (!editingIndexObj.value) return null
-  const {r, c} = editingIndexObj.value
-  return anomalyRows.value[r]?.[c]
+  const coords = currentSelectedCoords.value
+  if (!coords) return null
+  return anomalyRows.value[coords.rowIndex]?.[coords.colIndex]
 })
+
+// 计算当前选中项的 Flat Index (用于连线定位)
 const currentFlatIndex = computed(() => {
-  if (!editingIndexObj.value) return null
-  const {r, c} = editingIndexObj.value
+  const coords = currentSelectedCoords.value
+  if (!coords) return null
   let flatIndex = 0
-  for (let i = 0; i < r; i++) { if (anomalyRows.value[i]) flatIndex += anomalyRows.value[i].length }
-  flatIndex += c
+  for (let i = 0; i < coords.rowIndex; i++) {
+    if (anomalyRows.value[i]) flatIndex += anomalyRows.value[i].length
+  }
+  flatIndex += coords.colIndex
   return flatIndex
 })
-function updateEffectProp(key, value) {
-  if (!editingIndexObj.value) return
-  const {r, c} = editingIndexObj.value
-  const rows = JSON.parse(JSON.stringify(anomalyRows.value))
-  if (rows[r] && rows[r][c]) {
-    rows[r][c][key] = value
-    store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
+
+// 判断指定格子是否处于选中状态
+function isEditing(r, c) {
+  const coords = currentSelectedCoords.value
+  return coords && coords.rowIndex === r && coords.colIndex === c
+}
+
+// ===================================================================================
+// 3. 数据操作逻辑
+// ===================================================================================
+
+function toggleEditEffect(r, c) {
+  const effect = anomalyRows.value[r]?.[c]
+  if (!effect) return
+
+  // 数据兜底：确保有 ID
+  if (!effect._id) effect._id = Math.random().toString(36).substring(2, 9)
+
+  if (store.selectedAnomalyId === effect._id) {
+    store.selectedAnomalyId = null
+  } else {
+    // 调用 store 的方法选中，它会更新 store.selectedAnomalyId
+    store.selectAnomaly(store.selectedActionId, r, c)
   }
 }
+
+function updateEffectProp(key, value) {
+  const coords = currentSelectedCoords.value
+  if (!coords) return
+  const { rowIndex, colIndex } = coords
+  const rows = JSON.parse(JSON.stringify(anomalyRows.value))
+  if (rows[rowIndex] && rows[rowIndex][colIndex]) {
+    rows[rowIndex][colIndex][key] = value
+    store.updateAction(store.selectedActionId, { physicalAnomaly: rows })
+  }
+}
+
 function addRow() {
-  const rows = JSON.parse(JSON.stringify(anomalyRows.value))
-  rows.push([{type: 'default', stacks: 1, duration: 0}])
-  store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
-  editingIndexObj.value = {r: rows.length - 1, c: 0}
+  store.addAnomalyRow(selectedAction.value, currentSkillType.value)
+  // 选中新行第一个 (直接操作 Store ID)
+  const newRows = selectedAction.value.physicalAnomaly
+  if (newRows && newRows.length > 0) {
+    const lastRowIndex = newRows.length - 1
+    const newEffect = newRows[lastRowIndex][0]
+    if (newEffect) store.selectedAnomalyId = newEffect._id
+  }
 }
+
 function addEffectToRow(rowIndex) {
-  const rows = JSON.parse(JSON.stringify(anomalyRows.value))
-  rows[rowIndex].push({type: 'default', stacks: 1, duration: 0})
-  store.updateAction(store.selectedActionId, {physicalAnomaly: rows})
-  editingIndexObj.value = {r: rowIndex, c: rows[rowIndex].length - 1}
+  store.addAnomalyToRow(selectedAction.value, currentSkillType.value, rowIndex)
+  // 选中新添加的图标 (直接操作 Store ID)
+  const row = selectedAction.value.physicalAnomaly[rowIndex]
+  if (row) {
+    const newEffect = row[row.length - 1]
+    if (newEffect) store.selectedAnomalyId = newEffect._id
+  }
 }
+
 function removeEffect(r, c) {
-  store.removeAnomaly(store.selectedActionId, r, c);
-  editingIndexObj.value = null;
+  store.removeAnomaly(store.selectedActionId, r, c)
+  // 删除后 ID 自动失效，computed 变为 null
+  store.selectedAnomalyId = null
 }
 
 function getRowDelay(rowIndex) {
@@ -109,40 +169,61 @@ function updateRowDelay(rowIndex, value) {
   store.updateAction(store.selectedActionId, { anomalyRowDelays: currentDelays })
 }
 
+// ===================================================================================
+// 4. 图标与连线资源管理
+// ===================================================================================
+
 const iconOptions = computed(() => {
-  const allGlobalKeys = Object.keys(store.iconDatabase);
-  const allowed = selectedAction.value?.allowedTypes;
-  const availableKeys = (allowed && allowed.length > 0) ? allGlobalKeys.filter(key => allowed.includes(key) || key === 'default' || key === 'logic_tick') : allGlobalKeys;
-  const groups = [];
+  const allGlobalKeys = Object.keys(store.iconDatabase)
+  const allowed = selectedAction.value?.allowedTypes
+  const availableKeys = (allowed && allowed.length > 0)
+      ? allGlobalKeys.filter(key => allowed.includes(key) || key === 'default' || key === 'logic_tick')
+      : allGlobalKeys
+
+  const groups = []
+
+  // 专属效果组
   if (currentCharacter.value && currentCharacter.value.exclusive_buffs) {
-    let exclusiveOpts = currentCharacter.value.exclusive_buffs.map(buff => ({ label: `★ ${buff.name}`, value: buff.key, path: buff.path }));
-    if (allowed && allowed.length > 0) exclusiveOpts = exclusiveOpts.filter(opt => allowed.includes(opt.value));
-    if (exclusiveOpts.length > 0) groups.push({label: ' 专属效果 ', options: exclusiveOpts});
+    let exclusiveOpts = currentCharacter.value.exclusive_buffs.map(buff => ({
+      label: `★ ${buff.name}`, value: buff.key, path: buff.path
+    }))
+    if (allowed && allowed.length > 0) exclusiveOpts = exclusiveOpts.filter(opt => allowed.includes(opt.value))
+    if (exclusiveOpts.length > 0) groups.push({ label: ' 专属效果 ', options: exclusiveOpts })
   }
-  const processedKeys = new Set();
+
+  const processedKeys = new Set()
   GROUP_DEFINITIONS.forEach(def => {
     const groupKeys = availableKeys.filter(key => {
-      if (processedKeys.has(key)) return false;
-      if (def.keys && def.keys.includes(key)) return true;
-      if (def.matcher && def.matcher(key)) return true;
-      return false;
-    });
+      if (processedKeys.has(key)) return false
+      if (def.keys && def.keys.includes(key)) return true
+      if (def.matcher && def.matcher(key)) return true
+      return false
+    })
     if (groupKeys.length > 0) {
-      groupKeys.forEach(k => processedKeys.add(k));
-      groups.push({ label: def.label, options: groupKeys.map(key => ({label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]})) });
+      groupKeys.forEach(k => processedKeys.add(k))
+      groups.push({
+        label: def.label,
+        options: groupKeys.map(key => ({
+          label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]
+        }))
+      })
     }
-  });
-  const remainingKeys = availableKeys.filter(k => !processedKeys.has(k));
+  })
+
+  const remainingKeys = availableKeys.filter(k => !processedKeys.has(k))
   if (remainingKeys.length > 0) {
-    groups.push({ label: '其他', options: remainingKeys.map(key => ({label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]})) });
+    groups.push({
+      label: '其他',
+      options: remainingKeys.map(key => ({
+        label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]
+      }))
+    })
   }
-  return groups;
+  return groups
 })
 
 function getIconPath(type, actionContext = null) {
-
   if (store.iconDatabase[type]) return store.iconDatabase[type]
-
   if (actionContext) {
     const track = store.tracks.find(t => t.actions.some(a => a.instanceId === actionContext.instanceId))
     if (track) {
@@ -153,15 +234,14 @@ function getIconPath(type, actionContext = null) {
       }
     }
   }
-
   if (currentCharacter.value && currentCharacter.value.exclusive_buffs) {
-    const exclusive = currentCharacter.value.exclusive_buffs.find(b => b.key === type);
-    if (exclusive) return exclusive.path;
+    const exclusive = currentCharacter.value.exclusive_buffs.find(b => b.key === type)
+    if (exclusive) return exclusive.path
   }
-
   return store.iconDatabase['default'] || ''
 }
 
+// 相关连线查询逻辑
 const relevantConnections = computed(() => {
   if (!store.selectedActionId) return []
 
@@ -182,20 +262,42 @@ const relevantConnections = computed(() => {
           }
         }
 
-        const myEffectIndex = isOutgoing ? conn.fromEffectIndex : conn.toEffectIndex
+        // 获取我方图标
         let myIconPath = null
-        if (myEffectIndex !== null && selectedAction.value) {
-          const allEffects = (selectedAction.value.physicalAnomaly || []).flat()
-          const effect = allEffects[myEffectIndex]
-          if (effect) myIconPath = getIconPath(effect.type, selectedAction.value)
+        if (selectedAction.value) {
+          const myEffectId = isOutgoing ? conn.fromEffectId : conn.toEffectId
+          let realIndex = -1
+          if (myEffectId) realIndex = store.findEffectIndexById(selectedAction.value, myEffectId)
+          // 兜底兼容
+          if (realIndex === -1) {
+            const storedIdx = isOutgoing ? conn.fromEffectIndex : conn.toEffectIndex
+            if (storedIdx !== null) realIndex = storedIdx
+          }
+
+          if (realIndex !== -1) {
+            const allEffects = (selectedAction.value.physicalAnomaly || []).flat()
+            const effect = allEffects[realIndex]
+            if (effect) myIconPath = getIconPath(effect.type, selectedAction.value)
+          }
         }
 
-        const otherEffectIndex = isOutgoing ? conn.toEffectIndex : conn.fromEffectIndex
+        // 获取对方图标
         let otherIconPath = null
-        if (otherEffectIndex !== null && otherAction) {
-          const allEffects = (otherAction.physicalAnomaly || []).flat()
-          const effect = allEffects[otherEffectIndex]
-          if (effect) otherIconPath = getIconPath(effect.type, otherAction)
+        if (otherAction) {
+          const otherEffectId = isOutgoing ? conn.toEffectId : conn.fromEffectId
+          let realIndex = -1
+          if (otherEffectId) realIndex = store.findEffectIndexById(otherAction, otherEffectId)
+          // 兜底兼容
+          if (realIndex === -1) {
+            const storedIdx = isOutgoing ? conn.toEffectIndex : conn.fromEffectIndex
+            if (storedIdx !== null) realIndex = storedIdx
+          }
+
+          if (realIndex !== -1) {
+            const allEffects = (otherAction.physicalAnomaly || []).flat()
+            const effect = allEffects[realIndex]
+            if (effect) otherIconPath = getIconPath(effect.type, otherAction)
+          }
         }
 
         return {
@@ -210,57 +312,50 @@ const relevantConnections = computed(() => {
       })
 })
 
+// ===================================================================================
+// 5. 属性更新通用方法
+// ===================================================================================
+
 function updateLibraryProp(key, value) {
   if (!selectedLibrarySkill.value) return
-  store.updateLibrarySkill(selectedLibrarySkill.value.id, {[key]: value})
+  store.updateLibrarySkill(selectedLibrarySkill.value.id, { [key]: value })
 }
 
 function updateActionProp(key, value) {
-  if (!selectedAction.value) return;
-  store.updateAction(store.selectedActionId, {[key]: value});
+  if (!selectedAction.value) return
+  store.updateAction(store.selectedActionId, { [key]: value })
 }
 
 function updateActionGaugeWithLink(value) {
   if (!selectedAction.value) return
-  store.updateAction(store.selectedActionId, {gaugeGain: value, teamGaugeGain: value * 0.5})
+  store.updateAction(store.selectedActionId, { gaugeGain: value, teamGaugeGain: value * 0.5 })
 }
 
 function updateLibraryGaugeWithLink(value) {
   if (!selectedLibrarySkill.value) return
-  store.updateLibrarySkill(selectedLibrarySkill.value.id, {gaugeGain: value, teamGaugeGain: value * 0.5})
+  store.updateLibrarySkill(selectedLibrarySkill.value.id, { gaugeGain: value, teamGaugeGain: value * 0.5 })
 }
 
-const customBarsList = computed(() => {
-  return selectedAction.value?.customBars || []
-})
+const customBarsList = computed(() => selectedAction.value?.customBars || [])
 
 function addCustomBar() {
   const newList = [...customBarsList.value]
-  newList.push({text: '', duration: 1, offset: 0})
-  store.updateAction(store.selectedActionId, {customBars: newList})
+  newList.push({ text: '', duration: 1, offset: 0 })
+  store.updateAction(store.selectedActionId, { customBars: newList })
 }
 
 function removeCustomBar(index) {
   const newList = [...customBarsList.value]
   newList.splice(index, 1)
-  store.updateAction(store.selectedActionId, {customBars: newList})
+  store.updateAction(store.selectedActionId, { customBars: newList })
 }
 
 function updateCustomBarItem(index, key, value) {
   const newList = [...customBarsList.value]
-  newList[index] = {...newList[index], [key]: value}
-  store.updateAction(store.selectedActionId, {customBars: newList})
+  newList[index] = { ...newList[index], [key]: value }
+  store.updateAction(store.selectedActionId, { customBars: newList })
 }
 
-watch(
-    () => store.selectedAnomalyIndex,
-    (newVal) => {
-      if (newVal) {
-        editingIndexObj.value = {r: newVal.rowIndex, c: newVal.colIndex}
-      }
-    },
-    {immediate: true, deep: true}
-)
 </script>
 
 <template>
@@ -338,20 +433,21 @@ watch(
             <button class="remove-bar-btn" @click="removeCustomBar(index)">×</button>
           </div>
           <div style="margin-bottom: 6px;">
-            <input type="text" :value="bar.text"
-                   @input="e => updateCustomBarItem(index, 'text', e.target.value)"
+            <input type="text" :value="bar.text" @input="e => updateCustomBarItem(index, 'text', e.target.value)"
                    placeholder="显示文本" style="border-color: #00e5ff; width: 100%;">
           </div>
           <div style="display: flex; gap: 6px;">
             <div style="flex: 1;">
               <input type="number" :value="bar.duration"
-                     @input="e => updateCustomBarItem(index, 'duration', Number(e.target.value))"
-                     step="0.5" placeholder="时长" style="border-color: #00e5ff; width: 100%;">
+                     @input="e => updateCustomBarItem(index, 'duration', Number(e.target.value))" step="0.5"
+                     placeholder="时长"
+                     style="border-color: #00e5ff; width: 100%;">
             </div>
             <div style="flex: 1;">
               <input type="number" :value="bar.offset"
-                     @input="e => updateCustomBarItem(index, 'offset', Number(e.target.value))"
-                     step="0.1" placeholder="偏移" style="border-color: #00e5ff; width: 100%;">
+                     @input="e => updateCustomBarItem(index, 'offset', Number(e.target.value))" step="0.1"
+                     placeholder="偏移"
+                     style="border-color: #00e5ff; width: 100%;">
             </div>
           </div>
         </div>
@@ -393,8 +489,7 @@ watch(
         </div>
 
         <div class="conn-controls">
-          <div v-if="conn.isOutgoing && conn.rawConnection.fromEffectIndex != null"
-               class="consume-toggle"
+          <div v-if="conn.isOutgoing && conn.rawConnection.fromEffectIndex != null" class="consume-toggle"
                :class="{ 'is-active': conn.rawConnection.isConsumption }"
                @click="store.updateConnection(conn.id, { isConsumption: !conn.rawConnection.isConsumption })"
                title="切换：状态是否被此动作消耗？">
@@ -404,14 +499,10 @@ watch(
 
           <div v-if="conn.rawConnection.isConsumption" class="offset-input-wrapper" title="消耗提前量 (秒)">
             <span class="offset-label">提前</span>
-            <input
-                type="number"
-                class="mini-offset-input"
-                :value="conn.rawConnection.consumptionOffset || 0"
-                @input="e => store.updateConnection(conn.id, { consumptionOffset: Number(e.target.value) })"
-                step="0.1"
-                min="0"
-            />
+            <input type="number" class="mini-offset-input" :value="conn.rawConnection.consumptionOffset || 0"
+                   @input="e => store.updateConnection(conn.id, { consumptionOffset: Number(e.target.value) })"
+                   step="0.1"
+                   min="0"/>
             <span class="offset-label">s</span>
           </div>
 
@@ -427,39 +518,21 @@ watch(
     </div>
 
     <div class="anomalies-editor-container">
-      <draggable
-          v-model="anomalyRows"
-          item-key="rowIndex"
-          class="rows-container"
-          handle=".row-handle"
-          :animation="200"
-      >
+      <draggable v-model="anomalyRows" item-key="rowIndex" class="rows-container" handle=".row-handle" :animation="200">
         <template #item="{ element: row, index: rowIndex }">
           <div class="anomaly-editor-row">
             <div class="row-handle">⋮</div>
             <div class="row-delay-input" title="该行起始延迟 (秒)">
               <span class="delay-icon">↦</span>
-              <input
-                  type="number"
-                  :value="getRowDelay(rowIndex)"
-                  @input="e => updateRowDelay(rowIndex, Number(e.target.value))"
-                  step="0.1"
-                  min="0"
-                  class="delay-num"
-              />
+              <input type="number" :value="getRowDelay(rowIndex)"
+                     @input="e => updateRowDelay(rowIndex, Number(e.target.value))" step="0.1" min="0"
+                     class="delay-num"/>
             </div>
-            <draggable
-                :list="row"
-                item-key="type"
-                class="row-items-list"
-                :group="{ name: 'effects' }"
-                :animation="150"
-                @change="() => store.updateAction(store.selectedActionId, { physicalAnomaly: anomalyRows })"
-            >
+            <draggable :list="row" item-key="_id" class="row-items-list" :group="{ name: 'effects' }" :animation="150"
+                       @change="() => store.updateAction(store.selectedActionId, { physicalAnomaly: anomalyRows })">
               <template #item="{ element: effect, index: colIndex }">
-                <div class="icon-wrapper"
-                     :class="{ 'is-editing': isEditing(rowIndex, colIndex) }"
-                     @click="editingIndexObj = { r: rowIndex, c: colIndex }">
+                <div class="icon-wrapper" :class="{ 'is-editing': isEditing(rowIndex, colIndex) }"
+                     @click="toggleEditEffect(rowIndex, colIndex)">
                   <img :src="getIconPath(effect.type)" class="mini-icon"/>
                   <div v-if="effect.stacks > 1" class="mini-stacks">{{ effect.stacks }}</div>
                 </div>
@@ -472,19 +545,16 @@ watch(
       <button class="add-effect-bar" @click="addRow"> + 添加新行</button>
     </div>
 
-    <div v-if="editingEffectData" class="effect-detail-editor">
+    <div v-if="editingEffectData && currentSelectedCoords" class="effect-detail-editor">
       <div class="editor-header">
-        <span>编辑 R{{ editingIndexObj.r + 1 }} : C{{ editingIndexObj.c + 1 }}</span>
-        <button class="close-btn" @click="editingIndexObj = null">×</button>
+        <span>编辑 R{{ currentSelectedCoords.rowIndex + 1 }} : C{{ currentSelectedCoords.colIndex + 1 }}</span>
+        <button class="close-btn" @click="store.selectedAnomalyId = null">×</button>
       </div>
 
       <div class="form-row full-width">
         <label>类型</label>
-        <el-select
-            :model-value="editingEffectData.type"
-            @update:model-value="(val) => updateEffectProp('type', val)"
-            placeholder="选择状态" filterable size="small" class="effect-select"
-        >
+        <el-select :model-value="editingEffectData.type" @update:model-value="(val) => updateEffectProp('type', val)"
+                   placeholder="选择状态" filterable size="small" class="effect-select">
           <el-option-group v-for="group in iconOptions" :key="group.label" :label="group.label">
             <el-option v-for="item in group.options" :key="item.value" :label="item.label" :value="item.value">
               <div style="display: flex; align-items: center; gap: 8px;">
@@ -532,12 +602,13 @@ watch(
       </div>
 
       <div class="editor-footer">
-        <button class="effect-link-btn"
-                @click.stop="store.startLinking(currentFlatIndex)"
+        <button class="effect-link-btn" @click.stop="store.startLinking(currentFlatIndex)"
                 :class="{ 'is-linking': store.isLinking && store.linkingEffectIndex === currentFlatIndex }">
           🔗 连线
         </button>
-        <button class="delete-btn-small" @click="removeEffect(editingIndexObj.r, editingIndexObj.c)">删除此效果</button>
+        <button class="delete-btn-small"
+                @click="removeEffect(currentSelectedCoords.rowIndex, currentSelectedCoords.colIndex)">删除此效果
+        </button>
       </div>
     </div>
   </div>
@@ -550,25 +621,25 @@ watch(
     </div>
     <div class="attribute-editor">
       <div class="form-group"><label>持续时间</label><input type="number" :value="selectedLibrarySkill.duration"
-          @input="e => updateLibraryProp('duration', Number(e.target.value))"
-          min="0.5" step="0.5"></div>
+                                                            @input="e => updateLibraryProp('duration', Number(e.target.value))"
+                                                            min="0.5" step="0.5"></div>
       <div class="form-group highlight-red" v-if="currentSkillType !== 'execution'"><label>失衡值</label><input
           type="number" :value="selectedLibrarySkill.stagger"
           @input="e => updateLibraryProp('stagger', Number(e.target.value))"></div>
       <div class="form-group" v-if="currentSkillType === 'link'"><label>冷却时间</label><input type="number"
-          :value="selectedLibrarySkill.cooldown"
-          @input="e => updateLibraryProp('cooldown', Number(e.target.value))"
-          min="0"></div>
+                                                                                               :value="selectedLibrarySkill.cooldown"
+                                                                                               @input="e => updateLibraryProp('cooldown', Number(e.target.value))"
+                                                                                               min="0"></div>
       <div class="form-group highlight" v-if="currentSkillType === 'skill'"><label>技力消耗</label><input type="number"
-          :value="selectedLibrarySkill.spCost"
-          @input="e => updateLibraryProp('spCost', Number(e.target.value))"
-          min="0"></div>
+                                                                                                          :value="selectedLibrarySkill.spCost"
+                                                                                                          @input="e => updateLibraryProp('spCost', Number(e.target.value))"
+                                                                                                          min="0"></div>
       <div class="form-group highlight-blue" v-if="currentSkillType === 'ultimate'"><label>充能消耗</label><input
           type="number" :value="selectedLibrarySkill.gaugeCost"
           @input="e => updateLibraryProp('gaugeCost', Number(e.target.value))" min="0"></div>
       <div class="form-group highlight"><label>技力回复</label><input type="number" :value="selectedLibrarySkill.spGain"
-          @input="e => updateLibraryProp('spGain', Number(e.target.value))"
-          min="0"></div>
+                                                                      @input="e => updateLibraryProp('spGain', Number(e.target.value))"
+                                                                      min="0"></div>
       <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)">
         <label>自身充能 (联动队友)</label>
         <input type="number" :value="selectedLibrarySkill.gaugeGain"
@@ -652,7 +723,8 @@ watch(
   color: #bbb;
 }
 
-input, select {
+input,
+select {
   width: 100%;
   box-sizing: border-box;
   background: #222;
@@ -662,7 +734,8 @@ input, select {
   border-radius: 4px;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
   border-color: #ffd700;
   outline: none;
 }
@@ -901,7 +974,8 @@ input:focus, select:focus {
   margin-bottom: 2px;
 }
 
-.form-row input, .form-row select {
+.form-row input,
+.form-row select {
   font-size: 12px;
   padding: 4px;
 }
@@ -1034,7 +1108,9 @@ input:focus, select:focus {
   height: auto !important;
 }
 
-.mini-offset-input:focus { outline: none; }
+.mini-offset-input:focus {
+  outline: none;
+}
 
 .consume-toggle {
   display: flex;
@@ -1083,9 +1159,11 @@ input:focus, select:focus {
   0% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
+
   100% {
     opacity: 1;
   }
@@ -1096,6 +1174,7 @@ input:focus, select:focus {
     opacity: 0;
     transform: translateY(-5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1191,7 +1270,8 @@ input:focus, select:focus {
   outline: none;
 }
 
-.delay-num::-webkit-outer-spin-button, .delay-num::-webkit-inner-spin-button {
+.delay-num::-webkit-outer-spin-button,
+.delay-num::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
