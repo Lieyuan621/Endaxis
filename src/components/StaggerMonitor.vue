@@ -1,6 +1,7 @@
 <script setup>
 import { computed, watch, ref } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
+import CustomNumberInput from './CustomNumberInput.vue'
 
 const store = useTimelineStore()
 const scrollContainer = ref(null)
@@ -76,7 +77,7 @@ watch(
   <div class="stagger-monitor-layout">
     <div class="monitor-sidebar">
       <div class="sidebar-header"><span class="title-text">失衡积累</span></div>
-      <div class="input-row"><label>上限</label><input type="number" v-model.number="maxVal" class="limit-input"></div>
+      <div class="input-row"><label>上限</label><CustomNumberInput v-model="maxVal" max-width="65px" /></div>
     </div>
 
     <div class="chart-scroll-wrapper" ref="scrollContainer">
@@ -127,9 +128,9 @@ watch(
 <style scoped>
 .stagger-monitor-layout { display: grid; grid-template-columns: 180px 1fr; width: 100%; height: 100%; background: #222; border-top: 1px solid #444; box-sizing: border-box; }
 .monitor-sidebar { background-color: #2a2a2a; border-right: 1px solid #444; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; color: #ccc; font-size: 12px; }
-.title-text { font-weight: bold; color: #ff7875; }
+.title-text, .input-row { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.title-text { font-weight: bold; color: #ff7875; margin-right: 5px; }
 .input-row { display: flex; align-items: center; gap: 5px; }
-.limit-input { width: 50px; background: #333; border: 1px solid #555; color: #fff; border-radius: 4px; padding: 2px 5px; font-size: 12px; }
 .chart-scroll-wrapper { overflow: hidden; position: relative; background: #252525; }
 @keyframes stagger-pulse {  0% { stroke-opacity: 0.6; stroke-width: 3; }  100% { stroke-opacity: 1; stroke-width: 5; } /* 只改变透明度和宽度，不加阴影 */ }
 .stun-bg-anim { animation: stun-flash 1.5s infinite alternate; }

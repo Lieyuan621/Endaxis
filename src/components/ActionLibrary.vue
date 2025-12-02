@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
+import CustomNumberInput from './CustomNumberInput.vue'
 
 const store = useTimelineStore()
 
@@ -163,12 +164,11 @@ function onNativeDragEnd() {
               size="small"
               class="gauge-slider"
           />
-          <el-input-number
+          <CustomNumberInput
               v-model="initialGaugeValue"
               :min="0"
               :max="maxGaugeValue"
-              controls-position="right"
-              size="small"
+              active-color="#ffd700"
               class="gauge-input"
           />
         </div>
@@ -191,13 +191,12 @@ function onNativeDragEnd() {
               size="small"
               class="gauge-slider slider-orange"
           />
-          <el-input-number
+          <CustomNumberInput
               v-model="maxGaugeValue"
               :min="1"
               :max="300"
-              controls-position="right"
-              size="small"
-              class="gauge-input input-orange"
+              active-color="#ffd700"
+              class="gauge-input"
           />
         </div>
       </div>
@@ -244,9 +243,6 @@ function onNativeDragEnd() {
 :deep(.el-slider__runway) { background-color: #555; }
 :deep(.el-slider__bar) { background-color: #00e5ff; }
 :deep(.el-slider__button) { border-color: #00e5ff; background-color: #222; width: 14px; height: 14px; }
-:deep(.el-input__wrapper) { background-color: #222; box-shadow: 0 0 0 1px #555 inset; }
-:deep(.el-input__inner) { color: #f0f0f0; }
-:deep(.el-input-number__decrease), :deep(.el-input-number__increase) { background-color: #333; border-color: #555; color: #aaa; }
 
 .slider-orange { --el-slider-main-bg-color: #ffd700; }
 :deep(.slider-orange .el-slider__bar) { background-color: #ffd700; }

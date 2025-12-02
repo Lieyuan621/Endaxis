@@ -1,6 +1,7 @@
 <script setup>
 import { computed, watch, ref } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
+import CustomNumberInput from './CustomNumberInput.vue'
 
 const store = useTimelineStore()
 const scrollContainer = ref(null)
@@ -74,13 +75,12 @@ watch(
 
         <div class="input-row">
           <label>初始</label>
-          <input
-              type="number"
-              v-model.number="store.systemConstants.initialSp"
-              class="sp-input"
-              min="0"
-              max="300"
-          >
+          <CustomNumberInput
+              v-model="store.systemConstants.initialSp"
+              :min="0"
+              :max="300"
+              max-width="65px"
+          />
         </div>
 
         <div class="info-detail">回复: {{ store.systemConstants.spRegenRate }}/s</div>
@@ -189,20 +189,9 @@ watch(
   gap: 5px;
 }
 
-.sp-input {
-  width: 50px;
-  background: #333;
-  border: 1px solid #555;
-  color: #fff;
-  border-radius: 4px;
-  padding: 2px 5px;
-  font-size: 12px;
-}
-
-.sp-input:focus {
-  outline: none;
-  border-color: #666;
-  background: #000;
+.input-row label { 
+  white-space: nowrap; 
+  text-overflow: ellipsis; 
 }
 
 .info-detail {

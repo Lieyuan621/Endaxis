@@ -2,12 +2,18 @@
 import { computed, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
 import draggable from 'vuedraggable'
+import CustomNumberInput from './CustomNumberInput.vue'
 
 const store = useTimelineStore()
 
 // ===================================================================================
 // 1. 常量与配置
 // ===================================================================================
+const attributeColors = {
+  highlight: '#ffd700',
+  'highlight-red': '#ff7875',
+  'highlight-blue': '#00e5ff',
+}
 
 const EFFECT_NAMES = {
   "break": "破防", "armor_break": "碎甲", "stagger": "猛击", "knockdown": "倒地", "knockup": "击飞",
@@ -371,48 +377,55 @@ function updateCustomBarItem(index, key, value) {
     <div class="attribute-editor">
       <div class="form-group">
         <label>持续时间</label>
-        <input type="number" :value="selectedAction.duration"
-               @input="e => updateActionProp('duration', Number(e.target.value))" step="0.1">
+        <CustomNumberInput :model-value="selectedAction.duration"
+               @update:model-value="val => updateActionProp('duration', val)" :step="0.1" :min="0" :activeColor="attributeColors.highlight" text-align="left"/>
       </div>
-      <div class="form-group highlight-red" v-if="currentSkillType !== 'execution'">
+      <div class="form-group" v-if="currentSkillType !== 'execution'">
         <label>失衡值</label>
-        <input type="number" :value="selectedAction.stagger"
-               @input="e => updateActionProp('stagger', Number(e.target.value))">
+        <CustomNumberInput :model-value="selectedAction.stagger"
+               @update:model-value="val => updateActionProp('stagger', val)"
+               :border-color="attributeColors['highlight-red']" text-align="left"/>
       </div>
       <div class="form-group" v-if="currentSkillType === 'link'">
         <label>冷却时间</label>
-        <input type="number" :value="selectedAction.cooldown"
-               @input="e => updateActionProp('cooldown', Number(e.target.value))">
+        <CustomNumberInput :model-value="selectedAction.cooldown"
+               @update:model-value="val => updateActionProp('cooldown', val)" :min="0" :activeColor="attributeColors.highlight" text-align="left"/>
       </div>
-      <div class="form-group highlight" v-if="currentSkillType === 'link'">
+      <div class="form-group" v-if="currentSkillType === 'link'">
         <label>触发窗口</label>
-        <input type="number" :value="selectedAction.triggerWindow || 0"
-               @input="e => updateActionProp('triggerWindow', Number(e.target.value))" step="0.1">
+        <CustomNumberInput :model-value="selectedAction.triggerWindow || 0"
+               @update:model-value="val => updateActionProp('triggerWindow', val)" :step="0.1" :min="0"
+               :border-color="attributeColors.highlight" text-align="left"/>
       </div>
-      <div class="form-group highlight" v-if="currentSkillType === 'skill'">
+      <div class="form-group" v-if="currentSkillType === 'skill'">
         <label>技力消耗</label>
-        <input type="number" :value="selectedAction.spCost"
-               @input="e => updateActionProp('spCost', Number(e.target.value))">
+        <CustomNumberInput :model-value="selectedAction.spCost"
+               @update:model-value="val => updateActionProp('spCost', val)" :min="0"
+               :border-color="attributeColors.highlight" text-align="left"/>
       </div>
-      <div class="form-group highlight-blue" v-if="currentSkillType === 'ultimate'">
+      <div class="form-group" v-if="currentSkillType === 'ultimate'">
         <label>充能消耗</label>
-        <input type="number" :value="selectedAction.gaugeCost"
-               @input="e => updateActionProp('gaugeCost', Number(e.target.value))">
+        <CustomNumberInput :model-value="selectedAction.gaugeCost"
+               @update:model-value="val => updateActionProp('gaugeCost', val)" :min="0"
+               :border-color="attributeColors['highlight-blue']" text-align="left"/>
       </div>
-      <div class="form-group highlight">
+      <div class="form-group">
         <label>技力回复</label>
-        <input type="number" :value="selectedAction.spGain"
-               @input="e => updateActionProp('spGain', Number(e.target.value))">
+        <CustomNumberInput :model-value="selectedAction.spGain"
+               @update:model-value="val => updateActionProp('spGain', val)" :min="0"
+               :border-color="attributeColors.highlight" text-align="left"/>
       </div>
-      <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)">
+      <div class="form-group" v-if="!['attack', 'execution'].includes(currentSkillType)">
         <label>自身充能</label>
-        <input type="number" :value="selectedAction.gaugeGain"
-               @input="e => updateActionGaugeWithLink(Number(e.target.value))">
+        <CustomNumberInput :model-value="selectedAction.gaugeGain"
+               @update:model-value="val => updateActionGaugeWithLink(val)" :min="0"
+               :border-color="attributeColors['highlight-blue']" text-align="left"/>
       </div>
-      <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
+      <div class="form-group" v-if="currentSkillType === 'skill'">
         <label>队友充能</label>
-        <input type="number" :value="selectedAction.teamGaugeGain"
-               @input="e => updateActionProp('teamGaugeGain', Number(e.target.value))">
+        <CustomNumberInput :model-value="selectedAction.teamGaugeGain"
+               @update:model-value="val => updateActionProp('teamGaugeGain', val)" :min="0"
+               :border-color="attributeColors['highlight-blue']" text-align="left"/>
       </div>
 
       <hr class="divider"/>
@@ -438,16 +451,14 @@ function updateCustomBarItem(index, key, value) {
           </div>
           <div style="display: flex; gap: 6px;">
             <div style="flex: 1;">
-              <input type="number" :value="bar.duration"
-                     @input="e => updateCustomBarItem(index, 'duration', Number(e.target.value))" step="0.5"
-                     placeholder="时长"
-                     style="border-color: #00e5ff; width: 100%;">
+              <CustomNumberInput :model-value="bar.duration"
+                     @update:model-value="val => updateCustomBarItem(index, 'duration', val)"
+                     :step="0.5" :min="0" :border-color="attributeColors['highlight-blue']" style="width: 100%;" text-align="left"/>
             </div>
             <div style="flex: 1;">
-              <input type="number" :value="bar.offset"
-                     @input="e => updateCustomBarItem(index, 'offset', Number(e.target.value))" step="0.1"
-                     placeholder="偏移"
-                     style="border-color: #00e5ff; width: 100%;">
+              <CustomNumberInput :model-value="bar.offset"
+                     @update:model-value="val => updateCustomBarItem(index, 'offset', val)"
+                     :step="0.1" :min="0" :border-color="attributeColors['highlight-blue']" style="width: 100%;" text-align="left"/>
             </div>
           </div>
         </div>
@@ -499,10 +510,14 @@ function updateCustomBarItem(index, key, value) {
 
           <div v-if="conn.rawConnection.isConsumption" class="offset-input-wrapper" title="消耗提前量 (秒)">
             <span class="offset-label">提前</span>
-            <input type="number" class="mini-offset-input" :value="conn.rawConnection.consumptionOffset || 0"
-                   @input="e => store.updateConnection(conn.id, { consumptionOffset: Number(e.target.value) })"
-                   step="0.1"
-                   min="0"/>
+            <CustomNumberInput
+                class="mini-offset-input"
+                :model-value="conn.rawConnection.consumptionOffset || 0"
+                @update:model-value="val => store.updateConnection(conn.id, { consumptionOffset: val })"
+                :step="0.1"
+                :min="0"
+                text-align="left"
+            />
             <span class="offset-label">s</span>
           </div>
 
@@ -523,10 +538,16 @@ function updateCustomBarItem(index, key, value) {
           <div class="anomaly-editor-row">
             <div class="row-handle">⋮</div>
             <div class="row-delay-input" title="该行起始延迟 (秒)">
-              <span class="delay-icon">↦</span>
-              <input type="number" :value="getRowDelay(rowIndex)"
-                     @input="e => updateRowDelay(rowIndex, Number(e.target.value))" step="0.1" min="0"
-                     class="delay-num"/>
+              <CustomNumberInput
+                  :model-value="getRowDelay(rowIndex)"
+                  @update:model-value="val => updateRowDelay(rowIndex, val)"
+                  :step="0.1"
+                  :min="0"
+                  class="delay-num"
+                  text-align="left"
+              >
+                <template #prepend><span class="delay-icon">↦</span></template>
+              </CustomNumberInput>
             </div>
             <draggable :list="row" item-key="_id" class="row-items-list" :group="{ name: 'effects' }" :animation="150"
                        @change="() => store.updateAction(store.selectedActionId, { physicalAnomaly: anomalyRows })">
@@ -568,8 +589,9 @@ function updateCustomBarItem(index, key, value) {
 
       <div class="form-row">
         <label>层数</label>
-        <input type="number" :value="editingEffectData.stacks"
-               @input="e => updateEffectProp('stacks', Number(e.target.value))" min="1">
+        <CustomNumberInput :model-value="editingEffectData.stacks"
+               @update:model-value="val => updateEffectProp('stacks', val)" :min="1" text-align="left"
+               :activeColor="attributeColors.highlight"/>
       </div>
       <div class="form-row">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
@@ -582,22 +604,23 @@ function updateCustomBarItem(index, key, value) {
             隐藏时长条
           </label>
         </div>
-        <input type="number" :value="editingEffectData.duration"
-               @input="e => updateEffectProp('duration', Number(e.target.value))" min="0" step="0.1">
+        <CustomNumberInput :model-value="editingEffectData.duration"
+               @update:model-value="val => updateEffectProp('duration', val)" :min="0" :step="0.1" text-align="left"
+               :activeColor="attributeColors.highlight"/>
       </div>
 
       <div class="form-row-group" style="display: flex; gap: 10px; margin-bottom: 8px;">
         <div class="form-row" style="flex: 1;">
           <label style="color: #ffd700;">技力回复</label>
-          <input type="number" :value="editingEffectData.sp || 0"
-                 @input="e => updateEffectProp('sp', Number(e.target.value))"
-                 style="border-color: #ffd700; color: #ffd700;">
+          <CustomNumberInput :model-value="editingEffectData.sp || 0"
+                 @update:model-value="val => updateEffectProp('sp', val)"
+                 :border-color="attributeColors.highlight" text-align="left"/>
         </div>
         <div class="form-row" style="flex: 1;">
           <label style="color: #ff7875;">失衡值</label>
-          <input type="number" :value="editingEffectData.stagger || 0"
-                 @input="e => updateEffectProp('stagger', Number(e.target.value))"
-                 style="border-color: #ff7875; color: #ff7875;">
+          <CustomNumberInput :model-value="editingEffectData.stagger || 0"
+                 @update:model-value="val => updateEffectProp('stagger', val)"
+                 :border-color="attributeColors['highlight-red']" text-align="left"/>
         </div>
       </div>
 
@@ -620,35 +643,35 @@ function updateCustomBarItem(index, key, value) {
       此修改将同步更新所有同类技能（全局生效）。
     </div>
     <div class="attribute-editor">
-      <div class="form-group"><label>持续时间</label><input type="number" :value="selectedLibrarySkill.duration"
-                                                            @input="e => updateLibraryProp('duration', Number(e.target.value))"
-                                                            min="0.5" step="0.5"></div>
-      <div class="form-group highlight-red" v-if="currentSkillType !== 'execution'"><label>失衡值</label><input
-          type="number" :value="selectedLibrarySkill.stagger"
-          @input="e => updateLibraryProp('stagger', Number(e.target.value))"></div>
-      <div class="form-group" v-if="currentSkillType === 'link'"><label>冷却时间</label><input type="number"
-                                                                                               :value="selectedLibrarySkill.cooldown"
-                                                                                               @input="e => updateLibraryProp('cooldown', Number(e.target.value))"
-                                                                                               min="0"></div>
-      <div class="form-group highlight" v-if="currentSkillType === 'skill'"><label>技力消耗</label><input type="number"
-                                                                                                          :value="selectedLibrarySkill.spCost"
-                                                                                                          @input="e => updateLibraryProp('spCost', Number(e.target.value))"
-                                                                                                          min="0"></div>
-      <div class="form-group highlight-blue" v-if="currentSkillType === 'ultimate'"><label>充能消耗</label><input
-          type="number" :value="selectedLibrarySkill.gaugeCost"
-          @input="e => updateLibraryProp('gaugeCost', Number(e.target.value))" min="0"></div>
-      <div class="form-group highlight"><label>技力回复</label><input type="number" :value="selectedLibrarySkill.spGain"
-                                                                      @input="e => updateLibraryProp('spGain', Number(e.target.value))"
-                                                                      min="0"></div>
-      <div class="form-group highlight-blue" v-if="!['attack', 'execution'].includes(currentSkillType)">
+      <div class="form-group"><label>持续时间</label><CustomNumberInput :model-value="selectedLibrarySkill.duration"
+          @update:model-value="val => updateLibraryProp('duration', val)"
+          :min="0.5" :step="0.5" text-align="left"/></div>
+      <div class="form-group" v-if="currentSkillType !== 'execution'"><label>失衡值</label><CustomNumberInput
+          :model-value="selectedLibrarySkill.stagger"
+          @update:model-value="val => updateLibraryProp('stagger', val)" :border-color="attributeColors['highlight-red']" text-align="left"/></div>
+      <div class="form-group" v-if="currentSkillType === 'link'"><label>冷却时间</label><CustomNumberInput
+          :model-value="selectedLibrarySkill.cooldown"
+          @update:model-value="val => updateLibraryProp('cooldown', val)"
+          :min="0" text-align="left"/></div>
+      <div class="form-group" v-if="currentSkillType === 'skill'"><label>技力消耗</label><CustomNumberInput
+          :model-value="selectedLibrarySkill.spCost"
+          @update:model-value="val => updateLibraryProp('spCost', val)"
+          :min="0" :border-color="attributeColors.highlight" text-align="left"/></div>
+      <div class="form-group" v-if="currentSkillType === 'ultimate'"><label>充能消耗</label><CustomNumberInput
+          :model-value="selectedLibrarySkill.gaugeCost"
+          @update:model-value="val => updateLibraryProp('gaugeCost', val)" :min="0" :border-color="attributeColors['highlight-blue']" text-align="left"/></div>
+      <div class="form-group"><label>技力回复</label><CustomNumberInput :model-value="selectedLibrarySkill.spGain"
+          @update:model-value="val => updateLibraryProp('spGain', val)"
+          :min="0" :border-color="attributeColors.highlight" text-align="left"/></div>
+      <div class="form-group" v-if="!['attack', 'execution'].includes(currentSkillType)">
         <label>自身充能 (联动队友)</label>
-        <input type="number" :value="selectedLibrarySkill.gaugeGain"
-               @input="e => updateLibraryGaugeWithLink(Number(e.target.value))" min="0">
+        <CustomNumberInput :model-value="selectedLibrarySkill.gaugeGain"
+               @update:model-value="val => updateLibraryGaugeWithLink(val)" :min="0" :border-color="attributeColors['highlight-blue']" text-align="left"/>
       </div>
-      <div class="form-group highlight-blue" v-if="currentSkillType === 'skill'">
+      <div class="form-group" v-if="currentSkillType === 'skill'">
         <label>队友充能</label>
-        <input type="number" :value="selectedLibrarySkill.teamGaugeGain"
-               @input="e => updateLibraryProp('teamGaugeGain', Number(e.target.value))">
+        <CustomNumberInput :model-value="selectedLibrarySkill.teamGaugeGain"
+               @update:model-value="val => updateLibraryProp('teamGaugeGain', val)" :min="0" :border-color="attributeColors['highlight-blue']" text-align="left"/>
       </div>
     </div>
   </div>
@@ -732,27 +755,6 @@ select {
   border: 1px solid #555;
   padding: 6px;
   border-radius: 4px;
-}
-
-input:focus,
-select:focus {
-  border-color: #ffd700;
-  outline: none;
-}
-
-.highlight input {
-  border-color: #ffd700;
-  color: #ffd700;
-}
-
-.highlight-blue input {
-  border-color: #00e5ff;
-  color: #00e5ff;
-}
-
-.highlight-red input {
-  border-color: #ff7875;
-  color: #ff7875;
 }
 
 .link-btn {
@@ -1240,10 +1242,6 @@ select:focus {
 .row-delay-input {
   display: flex;
   align-items: center;
-  margin-right: 6px;
-  background: #222;
-  border: 1px solid #555;
-  border-radius: 3px;
   padding: 0 2px;
   height: 22px;
 }
@@ -1251,19 +1249,19 @@ select:focus {
 .delay-icon {
   color: #888;
   font-size: 10px;
-  margin-right: 2px;
   user-select: none;
 }
 
 .delay-num {
-  width: 30px !important;
-  border: none !important;
-  background: transparent !important;
-  padding: 0 !important;
   height: 100% !important;
   font-size: 11px !important;
-  text-align: center;
   color: #ffd700 !important;
+}
+
+:deep(.delay-num .value-display) {
+  width: 20px !important;
+  min-width: 20px !important;
+  padding: 0 4px !important;
 }
 
 .delay-num:focus {
