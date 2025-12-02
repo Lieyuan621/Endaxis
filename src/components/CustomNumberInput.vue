@@ -219,7 +219,7 @@ function increment() {
   display: flex;
   flex-direction: column;
   height: 100%;
-  border-left: 1px solid var(--default-border-color);
+  border-left: 1px solid #555;
   flex-shrink: 0;
   transition: border-color 0.2s;
 }
