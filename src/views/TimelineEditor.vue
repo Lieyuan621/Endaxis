@@ -269,8 +269,8 @@ function handleGlobalKeydown(e) {
   if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return
   if (e.ctrlKey && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); store.undo(); ElMessage.info({ message: '已撤销', duration: 800 }); return }
   if ((e.ctrlKey && (e.key === 'y' || e.key === 'Y')) || (e.ctrlKey && e.shiftKey && (e.key === 'z' || e.key === 'Z'))) { e.preventDefault(); store.redo(); ElMessage.info({message: '已重做', duration: 800}); return }
-  if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) { e.preventDefault(); store.copySelection(); ElMessage.success({message: '已复制', duration: 1000}); return }
-  if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) { e.preventDefault(); store.pasteSelection(); ElMessage.success({message: '已粘贴', duration: 1000}); return }
+  if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) { e.preventDefault(); store.copySelection(); ElMessage.success({message: '已复制', duration: 800}); return }
+  if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) { e.preventDefault(); store.pasteSelection(); ElMessage.success({message: '已粘贴', duration: 800}); return }
   if (e.ctrlKey && (e.key === 'g' || e.key === 'G')) { e.preventDefault(); store.toggleCursorGuide(); ElMessage.info({ message: store.showCursorGuide ? '辅助线：开启' : '辅助线：隐藏', duration: 1500 }); return }
   if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); store.toggleBoxSelectMode(); ElMessage.info({ message: store.isBoxSelectMode ? '框选模式：开启' : '框选模式：关闭', duration: 1500 }); return }
   if (e.altKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); store.toggleSnapStep(); ElMessage.info({ message: `吸附精度：${store.snapStep}s`,  duration: 1000 }); return }
@@ -364,14 +364,47 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 
         <div class="header-controls">
           <input type="file" ref="fileInputRef" style="display: none" accept=".json" @change="onFileSelected" />
-          <button class="control-btn info-btn" @click="aboutDialogVisible = true" title="查看教程与项目信息">ℹ️ 关于</button>
+
+          <button class="control-btn info-btn" @click="aboutDialogVisible = true" title="查看教程与项目信息">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            关于
+          </button>
+
           <div class="divider-vertical"></div>
-          <button class="control-btn danger-btn" @click="handleReset" title="清空所有内容">🗑️ 重置</button>
+
+          <button class="control-btn danger-btn" @click="handleReset" title="清空所有内容">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            重置
+          </button>
+
           <div class="divider-vertical"></div>
-          <button class="control-btn export-img-btn" @click="openExportDialog" title="导出为PNG长图">📷 导出图片</button>
+
+          <button class="control-btn export-img-btn" @click="openExportDialog" title="导出为PNG长图">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            导出图片
+          </button>
+
           <div class="divider-vertical"></div>
-          <button class="control-btn load-btn" @click="triggerImport" title="导入 .json 项目文件">📂 加载</button>
-          <button class="control-btn save-btn" @click="store.exportProject" title="保存为 .json 文件">💾 保存</button>
+
+          <button class="control-btn load-btn" @click="triggerImport" title="导入 .json 项目文件">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            加载
+          </button>
+
+          <button class="control-btn save-btn" @click="store.exportProject" title="保存为 .json 文件">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            保存
+          </button>
         </div>
       </header>
 
@@ -491,12 +524,13 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 
 /* Buttons */
 .control-btn { padding: 6px 14px; border: 1px solid #555; background-color: #444; color: #f0f0f0; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease; font-weight: 500; }
+.control-btn svg { flex-shrink: 0; display: block; }
 .control-btn:hover { background-color: #555; border-color: #777; transform: translateY(-1px); }
 .control-btn:active { transform: translateY(1px); }
 .save-btn:hover { border-color: #4CAF50; color: #4CAF50; background-color: rgba(76, 175, 80, 0.1); }
 .load-btn:hover { border-color: #4a90e2; color: #4a90e2; background-color: rgba(74, 144, 226, 0.1); }
 .export-img-btn:hover { border-color: #e6a23c; color: #e6a23c; background-color: rgba(230, 162, 60, 0.1); }
-.danger-btn:hover { border-color: #ff7875; color: #ff7875; background-color: rgba(255, 77, 79, 0.1); }
+.danger-btn:hover { border-color: #a61d24; color: #a61d24; background-color: rgba(255, 77, 79, 0.1); }
 .info-btn:hover { border-color: #00e5ff; color: #00e5ff; background-color: rgba(0, 229, 255, 0.1); }
 
 /* Workspace & Panels */

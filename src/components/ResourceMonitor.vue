@@ -204,7 +204,14 @@ watch(() => store.timelineScrollLeft, (newVal) => {
 
       <div v-for="(w, idx) in spWarningZones" :key="idx" class="warning-tag"
            :style="{ left: w.left + 'px', top: (BASE_Y_SP + 5) + 'px', color: COLOR_SP_WARN }">
-        ⚠️不足
+        <span class="warn-icon">
+          <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </span>
+        不足
       </div>
     </div>
   </div>
@@ -253,7 +260,7 @@ watch(() => store.timelineScrollLeft, (newVal) => {
 }
 
 .chart-scroll-wrapper { overflow: hidden; position: relative; background: #252525; }
-.warning-tag { position: absolute; font-size: 10px; background: rgba(0,0,0,0.8); padding: 2px 4px; border-radius: 4px; transform: translateX(-50%); pointer-events: none; z-index: 5; }
+.warning-tag { position: absolute; font-size: 10px; background: rgba(0,0,0,0.8); padding: 2px 4px; border-radius: 4px; transform: translateX(-50%); pointer-events: none; z-index: 5; display: flex; align-items: center; gap: 2px; }
 
 .stun-bg-anim { animation: stun-flash 1.5s infinite alternate; }
 @keyframes stun-flash { 0% { fill-opacity: 0.6; } 100% { fill-opacity: 1; } }

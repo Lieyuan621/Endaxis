@@ -7,22 +7,22 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const store = useTimelineStore()
 const { characterRoster, iconDatabase } = storeToRefs(store)
 
-// === 1. 常量定义 ===
+// === 常量定义 ===
 
 const ELEMENTS = [
-  { label: '🔥 灼热 (Blaze)', value: 'blaze' },
-  { label: '❄️ 寒冷 (Cold)', value: 'cold' },
-  { label: '⚡ 电磁 (Emag)', value: 'emag' },
-  { label: '🌿 自然 (Nature)', value: 'nature' },
-  { label: '⚔️ 物理 (Physical)', value: 'physical' }
+  { label: '灼热 (Blaze)', value: 'blaze' },
+  { label: '寒冷 (Cold)', value: 'cold' },
+  { label: '电磁 (Emag)', value: 'emag' },
+  { label: '自然 (Nature)', value: 'nature' },
+  { label: '物理 (Physical)', value: 'physical' }
 ]
 
 const VARIANT_TYPES = [
-  { label: '⚔️ 重击 (Attack)', value: 'attack' },
-  { label: '⚡ 战技 (Skill)', value: 'skill' },
-  { label: '🔗 连携 (Link)', value: 'link' },
-  { label: '🌟 终结技 (Ultimate)', value: 'ultimate' },
-  { label: '☠️ 处决 (Execution)', value: 'execution' }
+  { label: '重击 (Attack)', value: 'attack' },
+  { label: '战技 (Skill)', value: 'skill' },
+  { label: '连携 (Link)', value: 'link' },
+  { label: '终结技 (Ultimate)', value: 'ultimate' },
+  { label: '处决 (Execution)', value: 'execution' }
 ]
 
 const EFFECT_NAMES = {
@@ -36,7 +36,7 @@ const EFFECT_NAMES = {
 const HIDDEN_CHECKBOX_KEYS = ['default']
 const effectKeys = Object.keys(EFFECT_NAMES).filter(key => !HIDDEN_CHECKBOX_KEYS.includes(key))
 
-// === 2. 状态与计算属性 ===
+// === 状态与计算属性 ===
 
 const searchQuery = ref('')
 const selectedCharId = ref(null)
@@ -55,7 +55,7 @@ const selectedChar = computed(() => {
   return characterRoster.value.find(c => c.id === selectedCharId.value)
 })
 
-// === 3. 生命周期 ===
+// === 生命周期 ===
 
 onMounted(async () => {
   if (characterRoster.value.length === 0) {
@@ -66,7 +66,7 @@ onMounted(async () => {
   }
 })
 
-// === 4. 操作方法 ===
+// === 操作方法 ===
 
 function selectChar(id) {
   selectedCharId.value = id
@@ -371,7 +371,7 @@ function saveData() {
         <button class="btn-add" @click="addNewCharacter">＋</button>
       </div>
       <div class="search-box">
-        <input v-model="searchQuery" placeholder="🔍 搜索干员 ID 或名称..." />
+        <input v-model="searchQuery" placeholder="搜索干员 ID 或名称..." />
       </div>
       <div class="char-list">
         <div v-for="char in filteredRoster" :key="char.id"
@@ -413,13 +413,65 @@ function saveData() {
         </header>
 
         <div class="cms-tabs">
-          <button :class="{ active: activeTab === 'basic' }" @click="activeTab = 'basic'">基础信息</button>
-          <button :class="{ active: activeTab === 'attack' }" @click="activeTab = 'attack'">⚔️ 重击</button>
-          <button :class="{ active: activeTab === 'skill' }" @click="activeTab = 'skill'">⚡ 战技</button>
-          <button :class="{ active: activeTab === 'link' }" @click="activeTab = 'link'">🔗 连携</button>
-          <button :class="{ active: activeTab === 'ultimate' }" @click="activeTab = 'ultimate'">🌟 终结技</button>
-          <button :class="{ active: activeTab === 'execution' }" @click="activeTab = 'execution'">☠️ 处决</button>
-          <button :class="{ active: activeTab === 'variants' }" @click="activeTab = 'variants'">✨ 变体</button>
+          <button :class="{ active: activeTab === 'basic' }" @click="activeTab = 'basic'">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            基础信息
+          </button>
+
+          <button :class="{ active: activeTab === 'attack' }" @click="activeTab = 'attack'">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 17.5L3 6V3h3l11.5 11.5"></path>
+              <path d="M13 19l6-6"></path>
+              <path d="M16 16l4 4"></path>
+              <path d="M19 21l2-2"></path>
+            </svg>
+            重击
+          </button>
+
+          <button :class="{ active: activeTab === 'skill' }" @click="activeTab = 'skill'">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            战技
+          </button>
+
+          <button :class="{ active: activeTab === 'link' }" @click="activeTab = 'link'">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            连携
+          </button>
+
+          <button :class="{ active: activeTab === 'ultimate' }" @click="activeTab = 'ultimate'">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            终结技
+          </button>
+
+          <button :class="{ active: activeTab === 'execution' }" @click="activeTab = 'execution'">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="22" y1="12" x2="18" y2="12"></line>
+              <line x1="6" y1="12" x2="2" y2="12"></line>
+              <line x1="12" y1="6" x2="12" y2="2"></line>
+              <line x1="12" y1="22" x2="12" y2="18"></line>
+            </svg>
+            处决
+          </button>
+
+          <button :class="{ active: activeTab === 'variants' }" @click="activeTab = 'variants'">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            变体
+          </button>
         </div>
 
         <div class="tab-content">
@@ -432,9 +484,12 @@ function saveData() {
               <div class="form-group"><label>星级</label>
                 <select v-model.number="selectedChar.rarity"><option :value="6">6 ★</option><option :value="5">5 ★</option><option :value="4">4 ★</option></select>
               </div>
-              <div class="form-group"><label>元素属性</label>
+              <div class="form-group">
+                <label>元素属性</label>
                 <select v-model="selectedChar.element">
-                  <option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">{{ elm.label }}</option>
+                  <option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">
+                    {{ elm.label }}
+                  </option>
                 </select>
               </div>
               <div class="form-group full-width"><label>头像路径 (Public Dir)</label><input v-model="selectedChar.avatar" type="text" /></div>
@@ -591,7 +646,10 @@ function saveData() {
                   <label>技能属性</label>
                   <select v-model="selectedChar[`${type}_element`]">
                     <option :value="undefined">默认 (跟随干员)</option>
-                    <option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">{{ elm.label }}</option>
+
+                    <option v-for="elm in ELEMENTS" :key="elm.value" :value="elm.value">
+                      {{ elm.label }}
+                    </option>
                   </select>
                 </div>
 
@@ -747,9 +805,11 @@ function saveData() {
 
 /* Tabs */
 .cms-tabs { display: flex; gap: 2px; margin-bottom: 20px; border-bottom: 2px solid #333; }
-.cms-tabs button { background: #252526; border: none; color: #888; padding: 12px 24px; cursor: pointer; border-radius: 6px 6px 0 0; transition: all 0.2s; font-weight: 500; font-size: 14px; }
+.cms-tabs button { background: #252526; border: none; color: #888; padding: 10px 18px; cursor: pointer; border-radius: 6px 6px 0 0; transition: all 0.2s; font-weight: 500; font-size: 13px; display: flex; align-items: center; gap: 6px; border-bottom: 2px solid transparent; }
 .cms-tabs button:hover { background: #2d2d2d; color: #ccc; }
-.cms-tabs button.active { background: #333; color: #ffd700; font-weight: bold; box-shadow: 0 -2px 0 #ffd700 inset; }
+.cms-tabs button.active { background: #333; color: #ffd700; font-weight: bold; border-bottom-color: #ffd700; box-shadow: none; }
+.cms-tabs button svg { flex-shrink: 0; opacity: 0.7; transition: opacity 0.2s; }
+.cms-tabs button.active svg { opacity: 1; }
 
 /* Forms */
 .form-section { background: #252526; padding: 25px; border-radius: 0 0 8px 8px; margin-top: -22px; border: 1px solid #333; border-top: none; }
@@ -805,7 +865,7 @@ function saveData() {
   border: 1px solid #444;
   border-radius: 6px;
   padding: 8px;
-  width: 170px; /* 稍微加宽 */
+  width: 170px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -836,7 +896,6 @@ function saveData() {
   margin-bottom: 4px;
 }
 
-/* 属性网格布局 */
 .card-props-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

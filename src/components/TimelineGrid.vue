@@ -4,6 +4,7 @@ import { useTimelineStore } from '../stores/timelineStore.js'
 import ActionItem from './ActionItem.vue'
 import ActionConnector from './ActionConnector.vue'
 import GaugeOverlay from './GaugeOverlay.vue'
+import ContextMenu from './ContextMenu.vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 
@@ -234,8 +235,14 @@ function syncVerticalScroll() {
   }
 }
 
+function onActionContextMenu(evt, action) {
+  if (!store.multiSelectedIds.has(action.instanceId)) {
+    store.selectAction(action.instanceId)
+  }
+  store.openContextMenu(evt, action.instanceId)
+}
 // ===================================================================================
-// 5. 鼠标与拖拽逻辑
+// 鼠标与拖拽逻辑
 // ===================================================================================
 
 const cachedSpData = computed(() => store.calculateGlobalSpData())
@@ -360,12 +367,7 @@ const alignGuide = ref({
 })
 
 function updateAlignGuide(evt, action, element) {
-
-  hoveredContext.value = {
-    action,
-    element,
-    clientX: evt.clientX
-  }
+  hoveredContext.value = { action, element, clientX: evt.clientX }
 
   if (!isAltDown.value || !store.selectedActionId || store.selectedActionId === action.instanceId) {
     alignGuide.value.visible = false
@@ -374,8 +376,6 @@ function updateAlignGuide(evt, action, element) {
 
   const rect = element.getBoundingClientRect()
   const containerRect = tracksContentRef.value.getBoundingClientRect()
-
-  // 计算相对于 scroller 内容的坐标
   const relLeft = rect.left - containerRect.left + tracksContentRef.value.scrollLeft
   const relTop = rect.top - containerRect.top + tracksContentRef.value.scrollTop
 
@@ -387,29 +387,33 @@ function updateAlignGuide(evt, action, element) {
   let label = ''
   let type = ''
   let color = ''
+  let iconKey = ''
 
-  // 判定模式
   if (!isShift) {
     // 磁吸模式 (Snap)
     type = 'snap'
-    color = '#00e5ff'
+    color = '#00e5ff' // 蓝
     if (isClickLeft) {
       guideX = relLeft
-      label = '⏮️ 接在前方'
+      label = '接前方'
+      iconKey = 'snap-left'
     } else {
       guideX = relLeft + rect.width
-      label = '⏭️ 接在后方'
+      label = '接后方'
+      iconKey = 'snap-right'
     }
   } else {
     // 对齐模式 (Align)
     type = 'align'
-    color = '#ff00ff'
+    color = '#ff00ff' // 紫
     if (isClickLeft) {
       guideX = relLeft
-      label = '⬅️ 左对齐'
+      label = '左对齐'
+      iconKey = 'align-left'
     } else {
       guideX = relLeft + rect.width
-      label = '➡️ 右对齐'
+      label = '右对齐'
+      iconKey = 'align-right'
     }
   }
 
@@ -419,6 +423,7 @@ function updateAlignGuide(evt, action, element) {
     top: relTop,
     height: rect.height,
     label,
+    iconKey,
     type,
     color,
     targetRect: { left: relLeft, top: relTop, width: rect.width, height: rect.height }
@@ -438,10 +443,37 @@ function recalcAlignGuide() {
   }
 }
 
+function onBackgroundContextMenu(evt) {
+  evt.preventDefault()
+
+  if (isBoxSelecting.value || isDragStarted.value) return
+
+  const trackRect = tracksContentRef.value.getBoundingClientRect()
+  const scrollLeft = tracksContentRef.value.scrollLeft
+
+  const mouseX = evt.clientX
+  const mouseXInTrack = mouseX - trackRect.left + scrollLeft
+  const rawTime = mouseXInTrack / TIME_BLOCK_WIDTH.value
+
+  let clickTime = Math.round(rawTime * 10) / 10
+  if (clickTime < 0) clickTime = 0
+
+  store.openContextMenu(evt, null, clickTime)
+}
+
 function onActionMouseDown(evt, track, action) {
   evt.stopPropagation()
 
-  // 1. 处理对齐操作 (Alt + Click)
+  // 锁定检查
+  if (action.isLocked) {
+    if (evt.button === 0) { // 左键点击虽然不能拖，但可以选择
+      store.selectAction(action.instanceId)
+      ElMessage.warning({ message: '该动作已锁定位置', duration: 1000, grouping: true })
+      return
+    }
+  }
+
+  // 处理对齐操作 (Alt + Click)
   if (isAltDown.value) {
     if (store.selectedActionId && store.selectedActionId !== action.instanceId) {
       const rect = evt.currentTarget.getBoundingClientRect()
@@ -453,11 +485,11 @@ function onActionMouseDown(evt, track, action) {
       let msg = ''
 
       if (!isShift) {
-        if (isClickLeft) { alignMode = 'RL'; msg = '⏮️ 已拼接至前方' }
-        else { alignMode = 'LR'; msg = '⏭️ 已拼接至后方' }
+        if (isClickLeft) { alignMode = 'RL'; msg = '已拼接至前方' }
+        else { alignMode = 'LR'; msg = '已拼接至后方' }
       } else {
-        if (isClickLeft) { alignMode = 'LL'; msg = '⬅️ 左对齐' }
-        else { alignMode = 'RR'; msg = '➡️ 右对齐' }
+        if (isClickLeft) { alignMode = 'LL'; msg = '已左对齐' }
+        else { alignMode = 'RR'; msg = '已右对齐' }
       }
 
       const success = store.alignActionToTarget(action.instanceId, alignMode)
@@ -471,7 +503,7 @@ function onActionMouseDown(evt, track, action) {
     return
   }
 
-  // 2. 正常选择与拖拽逻辑
+  // 正常选择与拖拽逻辑
   if (store.isLinking) return
   if (evt.button !== 0) return
 
@@ -522,6 +554,7 @@ function updateDragPosition(clientX) {
       let trackChanged = false
       t.actions.forEach(a => {
         if (store.multiSelectedIds.has(a.instanceId)) {
+          if (a.isLocked) return
           const original = dragStartTimes.get(a.instanceId)
           const targetTime = Math.max(0, original + timeDelta)
           if (a.startTime !== targetTime) { a.startTime = targetTime; trackChanged = true; hasChanged = true }
@@ -638,12 +671,8 @@ function handleKeyDown(event) {
   if (event.key === 'Delete' || event.key === 'Backspace') {
     event.preventDefault();
     const result = store.removeCurrentSelection();
-    if (result.total > 0) {
-      let msg = '已删除 '
-      if (result.actionCount > 0 && result.connCount > 0) msg += `${result.actionCount} 个动作和 ${result.connCount} 条连线`
-      else if (result.actionCount > 0) msg += `${result.actionCount} 个动作`
-      else msg += `${result.connCount} 条连线`
-      ElMessage.success({ message: msg, duration: 1000 })
+    if (result && result.total > 0) {
+      ElMessage.success({ message: '已删除', duration: 800 })
     }
   }
   if (store.selectedActionId || store.multiSelectedIds.size > 0) {
@@ -783,7 +812,7 @@ onUnmounted(() => {
     </div>
 
     <div class="tracks-content-scroller" ref="tracksContentRef" @mousedown="onContentMouseDown"
-         @mousemove="onGridMouseMove" @mouseleave="onGridMouseLeave">
+         @mousemove="onGridMouseMove" @mouseleave="onGridMouseLeave" @contextmenu="onBackgroundContextMenu">
 
       <div class="cursor-guide" :style="{ left: `${cursorX}px` }" v-show="isCursorVisible && store.showCursorGuide && !store.isBoxSelectMode">
         <div class="guide-time-label">{{ (cursorX / TIME_BLOCK_WIDTH).toFixed(1) }}s</div>
@@ -809,17 +838,29 @@ onUnmounted(() => {
         <div class="guide-float-label"
              :style="{
                left: `${alignGuide.x}px`,
-               top: `${alignGuide.top - 24}px`,
+               top: `${alignGuide.top - 28}px`,
                backgroundColor: alignGuide.color,
                '--arrow-color': alignGuide.color
              }">
-          {{ alignGuide.label }}
+
+          <span class="guide-icon">
+            <svg v-if="alignGuide.iconKey === 'snap-left'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline><line x1="21" y1="4" x2="21" y2="20"></line></svg>
+
+            <svg v-if="alignGuide.iconKey === 'snap-right'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><polyline points="12 5 19 12 12 19"></polyline><line x1="3" y1="4" x2="3" y2="20"></line></svg>
+
+            <svg v-if="alignGuide.iconKey === 'align-left'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="18" x2="3" y2="18"></line><line x1="6" y1="2" x2="6" y2="22"></line></svg>
+
+            <svg v-if="alignGuide.iconKey === 'align-right'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="18" x2="3" y2="18"></line><line x1="18" y1="2" x2="18" y2="22"></line></svg>
+          </span>
+
+          <span class="guide-text">{{ alignGuide.label }}</span>
         </div>
       </div>
 
       <div v-if="isBoxSelecting" class="selection-box-overlay" :style="{ left: `${boxRect.left}px`, top: `${boxRect.top}px`, width: `${boxRect.width}px`, height: `${boxRect.height}px` }"></div>
 
       <div class="tracks-content">
+        <ContextMenu />
         <svg class="connections-svg">
           <template v-if="tracksContentRef">
             <ActionConnector v-for="conn in store.connections" :key="conn.id" :connection="conn" :container-ref="tracksContentRef" :render-key="svgRenderKey"/>
@@ -833,11 +874,12 @@ onUnmounted(() => {
             <GaugeOverlay v-if="track.id" :track-id="track.id"/>
             <div class="actions-container">
               <ActionItem v-for="action in track.actions" :key="action.instanceId" :action="action"
-                  @mousedown="onActionMouseDown($event, track, action)"
-                  @mousemove="updateAlignGuide($event, action, $el.querySelector(`#action-${action.instanceId}`))"
-                  @mouseleave="hideAlignGuide"
-                  @click.stop="onActionClick(action)"
-                  :class="{ 'is-moving': isDragStarted && movingActionId === action.instanceId }"
+                @mousedown="onActionMouseDown($event, track, action)"
+                @mousemove="updateAlignGuide($event, action, $el.querySelector(`#action-${action.instanceId}`))"
+                @mouseleave="hideAlignGuide"
+                @click.stop="onActionClick(action)"
+                @contextmenu.prevent.stop="onActionContextMenu($event, action)"
+                :class="{ 'is-moving': isDragStarted && store.isActionSelected(action.instanceId) }"
               />
             </div>
           </div>
@@ -1646,7 +1688,7 @@ onUnmounted(() => {
 .guide-float-label {
   --arrow-color: transparent;
   position: absolute;
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 20px;
   color: #000;
   font-weight: 800;
@@ -1659,6 +1701,9 @@ onUnmounted(() => {
   z-index: 2002;
   border: 1px solid rgba(255, 255, 255, 0.3);
   transition: left 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.15s ease-out;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .guide-float-label::after {
@@ -1670,6 +1715,15 @@ onUnmounted(() => {
   border-width: 4px;
   border-style: solid;
   border-color: var(--arrow-color) transparent transparent transparent;
+}
+
+.guide-icon {
+  display: flex;
+  align-items: center;
+}
+
+.guide-text {
+  line-height: 1;
 }
 
 </style>

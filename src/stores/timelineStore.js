@@ -6,7 +6,7 @@ const uid = () => Math.random().toString(36).substring(2, 9)
 export const useTimelineStore = defineStore('timeline', () => {
 
     // ===================================================================================
-    // 1. 系统配置与常量
+    // 系统配置与常量
     // ===================================================================================
 
     const systemConstants = ref({
@@ -37,7 +37,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const getColor = (key) => ELEMENT_COLORS[key] || ELEMENT_COLORS.default
 
     // ===================================================================================
-    // 2. 核心数据状态
+    // 核心数据状态
     // ===================================================================================
 
     const isLoading = ref(true)
@@ -59,7 +59,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const characterOverrides = ref({})
 
     // ===================================================================================
-    // 3. 交互状态
+    // 交互状态
     // ===================================================================================
 
     const activeTrackId = ref(null)
@@ -90,7 +90,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const isActionSelected = (id) => selectedActionId.value === id || multiSelectedIds.value.has(id)
 
     // ===================================================================================
-    // 4. 历史记录 (Undo/Redo)
+    // 历史记录 (Undo/Redo)
     // ===================================================================================
 
     const historyStack = ref([])
@@ -136,7 +136,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     // ===================================================================================
-    // 5. 方案管理逻辑 (Scenarios)
+    // 方案管理逻辑 (Scenarios)
     // ===================================================================================
 
     function _createSnapshot() {
@@ -251,7 +251,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     // ===================================================================================
-    // 6. 辅助计算 (Getters & Helpers)
+    // 辅助计算 (Getters & Helpers)
     // ===================================================================================
 
     const timeBlockWidth = computed(() => BASE_BLOCK_WIDTH)
@@ -408,7 +408,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     })
 
     // ===================================================================================
-    // 7. 实体操作 (CRUD)
+    // 实体操作 (CRUD)
     // ===================================================================================
 
     function setScrollLeft(val) { timelineScrollLeft.value = val }
@@ -540,11 +540,17 @@ export const useTimelineStore = defineStore('timeline', () => {
         return { actionCount, connCount, total: actionCount + connCount }
     }
 
-    function pasteSelection() {
+    function pasteSelection(targetStartTime = null) {
         if (!clipboard.value) return
         const { actions, connections: clipConns, baseTime } = clipboard.value
         const idMap = new Map()
-        let timeDelta = (cursorCurrentTime.value >= 0) ? (cursorCurrentTime.value - baseTime) : 2.0
+
+        let timeDelta = 0
+        if (targetStartTime !== null) {
+            timeDelta = targetStartTime - baseTime
+        } else {
+            timeDelta = (cursorCurrentTime.value >= 0) ? (cursorCurrentTime.value - baseTime) : 1.0
+        }
 
         actions.forEach(item => {
             const track = tracks.value[item.trackIndex]
@@ -557,11 +563,12 @@ export const useTimelineStore = defineStore('timeline', () => {
                     row.forEach(eff => eff._id = uid())
                 })
             }
-            const newAction = { ...clonedAction, instanceId: newId, startTime: Math.max(0, item.data.startTime + timeDelta) }
+            const newStartTime = Math.max(0, item.data.startTime + timeDelta)
+
+            const newAction = { ...clonedAction, instanceId: newId, startTime: newStartTime }
             track.actions.push(newAction)
             track.actions.sort((a, b) => a.startTime - b.startTime)
         })
-
         clipConns.forEach(conn => {
             const newFrom = idMap.get(conn.from)
             const newTo = idMap.get(conn.to)
@@ -569,6 +576,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 connections.value.push({ ...conn, id: `conn_${uid()}`, from: newFrom, to: newTo })
             }
         })
+
         clearSelection()
         setMultiSelection(Array.from(idMap.values()))
         commitState()
@@ -728,6 +736,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             let trackChanged = false
             track.actions.forEach(action => {
                 if (targets.has(action.instanceId)) {
+                    if (action.isLocked) return
                     let newTime = Math.round((action.startTime + delta) * 10) / 10
                     if (newTime < 0) newTime = 0
                     if (action.startTime !== newTime) { action.startTime = newTime; trackChanged = true; hasChanged = true }
@@ -766,6 +775,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (!sourceInfo || !targetInfo) return false
 
         const sourceAction = sourceInfo.action
+        if (sourceAction.isLocked) return false
         const targetAction = targetInfo.action
 
         const tStart = targetAction.startTime
@@ -806,7 +816,60 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     // ===================================================================================
-    // 8. 监控数据计算 (Monitor Data)
+    // 右键菜单状态
+    // ===================================================================================
+    const contextMenu = ref({
+        visible: false,
+        x: 0,
+        y: 0,
+        targetId: null,
+        time: 0
+    })
+
+    function openContextMenu(evt, instanceId = null, time = 0) {
+        contextMenu.value = {
+            visible: true,
+            x: evt.clientX,
+            y: evt.clientY,
+            targetId: instanceId,
+            time: time
+        }
+    }
+
+    function closeContextMenu() {
+        contextMenu.value.visible = false
+    }
+
+    // ===================================================================================
+    // 动作属性切换 (锁定/静音/改色)
+    // ===================================================================================
+
+    function toggleActionLock(instanceId) {
+        const info = getActionPositionInfo(instanceId)
+        if (info) {
+            info.action.isLocked = !info.action.isLocked
+            commitState()
+        }
+    }
+
+    function toggleActionDisable(instanceId) {
+        const info = getActionPositionInfo(instanceId)
+        if (info) {
+            info.action.isDisabled = !info.action.isDisabled
+            commitState()
+        }
+    }
+
+    function setActionColor(instanceId, color) {
+        const info = getActionPositionInfo(instanceId)
+        if (info) {
+            info.action.customColor = color
+            commitState()
+        }
+    }
+
+    // ===================================================================================
+    // 监控数据计算 (Monitor Data)
     // ===================================================================================
 
     function calculateGlobalStaggerData() {
@@ -820,6 +883,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         tracks.value.forEach(track => {
             if (!track.actions) return
             track.actions.forEach(action => {
+                if (action.isDisabled) return
                 if (action.stagger > 0) events.push({ time: action.startTime + action.duration, change: action.stagger, type: 'gain' })
                 if (action.damageTicks) {
                     action.damageTicks.forEach(tick => {
@@ -882,6 +946,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         tracks.value.forEach(track => {
             if (!track.actions) return
             track.actions.forEach(action => {
+                if (action.isDisabled) return
                 if (action.spCost > 0) events.push({ time: action.startTime, valChange: -action.spCost, type: 'cost' })
                 if (['skill'].includes(action.type)) {
                     const lockTime = 0.5;
@@ -956,6 +1021,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         tracks.value.forEach(sourceTrack => {
             if (!sourceTrack.actions) return;
             sourceTrack.actions.forEach(action => {
+                if (action.isDisabled) return
                 if (sourceTrack.id === trackId) {
                     if (action.gaugeCost > 0) events.push({ time: action.startTime, change: -action.gaugeCost });
                     if (action.gaugeGain > 0) {
@@ -986,7 +1052,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     // ===================================================================================
-    // 9. 持久化与数据加载 (Persistence)
+    // 持久化与数据加载 (Persistence)
     // ===================================================================================
 
     const STORAGE_KEY = 'endaxis_autosave'
@@ -1144,6 +1210,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
         removeAnomaly, initAutoSave, loadFromBrowser, resetProject, selectedConnectionId, selectConnection, selectAnomaly, getAnomalyIndexById,
         findEffectIndexById, alignActionToTarget,
+        contextMenu, openContextMenu, closeContextMenu,
+        toggleActionLock, toggleActionDisable, setActionColor,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
     }
 })

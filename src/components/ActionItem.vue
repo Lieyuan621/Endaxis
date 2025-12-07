@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
-import { storeToRefs } from 'pinia'
 
 const props = defineProps({
   action: { type: Object, required: true }
@@ -40,7 +39,7 @@ const style = computed(() => {
   const finalWidth = width < 2 ? 2 : width
   const color = themeColor.value
 
-  const baseStyle = {
+  const layoutStyle = {
     position: 'absolute',
     top: '0',
     height: '100%',
@@ -50,9 +49,21 @@ const style = computed(() => {
     zIndex: isSelected.value ? 20 : 10,
   }
 
+  if (props.action.isDisabled) {
+    return {
+      ...layoutStyle,
+      border: `2px dashed #555`,
+      backgroundColor: `rgba(40,40,40, 0.3)`,
+      color: '#777',
+      opacity: 0.6,
+      backdropFilter: 'none',
+      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.5) 5px, rgba(0,0,0,0.5) 10px)'
+    }
+  }
+
   if (isGhostMode.value) {
     return {
-      ...baseStyle,
+      ...layoutStyle,
       border: 'none',
       backgroundColor: 'transparent',
       boxShadow: 'none',
@@ -62,7 +73,7 @@ const style = computed(() => {
   }
 
   return {
-    ...baseStyle,
+    ...layoutStyle,
     border: `2px dashed ${isSelected.value ? '#ffffff' : color}`,
     backgroundColor: hexToRgba(color, 0.15),
     backdropFilter: 'blur(4px)',
@@ -243,7 +254,6 @@ const renderableAnomalies = computed(() => {
   return resultRows.flat()
 })
 
-function onDeleteClick() { store.removeAction(props.action.instanceId) }
 function onIconClick(evt, item, flatIndex) {
   evt.stopPropagation()
   if (store.isLinking) {
@@ -256,15 +266,6 @@ function onIconClick(evt, item, flatIndex) {
 
 <template>
   <div :id="`action-${action.instanceId}`" class="action-item-wrapper" @mouseenter="store.setHoveredAction(action.instanceId)" @mouseleave="store.setHoveredAction(null)":style="style" @click.stop @dragstart.prevent>
-
-    <div v-if="!isGhostMode" class="action-item-content drag-handle">{{ action.name }}</div>
-
-    <div v-if="isSelected" class="delete-btn-modern" @click.stop="onDeleteClick" title="删除 (Delete)">
-      <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </div>
 
     <div v-if="!isGhostMode && action.cooldown > 0" class="cd-bar-container" :style="cdStyle">
       <div class="cd-line" :style="{ backgroundColor: themeColor }"></div>
@@ -305,6 +306,22 @@ function onIconClick(evt, item, flatIndex) {
       <div class="tw-dot"></div>
       <div class="tw-separator"></div>
     </div>
+
+    <div v-if="action.isLocked" class="status-icon lock-icon" title="位置已锁定">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+    </div>
+
+    <div v-if="action.isDisabled" class="status-icon mute-icon" title="已禁用：不参与计算">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+      </svg>
+    </div>
+
+    <div v-if="!isGhostMode" class="action-item-content drag-handle">{{ action.name }}</div>
 
     <div v-if="!isGhostMode" class="anomalies-overlay">
       <div v-for="(item, index) in renderableAnomalies" :key="`${item.rowIndex}-${item.colIndex}`"
@@ -376,6 +393,21 @@ function onIconClick(evt, item, flatIndex) {
 .anomaly-stacks {
   position: absolute; bottom: -2px; right: -2px; background: rgba(0, 0, 0, 0.8);
   color: #ffd700; font-size: 8px; padding: 0 2px; line-height: 1; border-radius: 2px;
+}
+
+.status-icon {
+  position: absolute;
+  top: 2px;
+  font-size: 10px;
+  z-index: 25;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
+  pointer-events: none;
+}
+.lock-icon {
+  left: 2px;
+}
+.mute-icon {
+  right: 2px;
 }
 
 /* 伤害节点样式 */
@@ -489,11 +521,4 @@ function onIconClick(evt, item, flatIndex) {
 .tw-separator { position: absolute; right: 0; top: -2px; width: 1px; height: 8px; background-color: var(--tw-color); transform: translateX(50%); }
 .tw-dot { position: absolute; left: 0; top: 50%; width: 1px; height: 8px; background-color: var(--tw-color); border-radius: 0; z-index: 6; transform: translate(-50%, -50%); }
 
-.delete-btn-modern {
-  position: absolute; top: -8px; right: -8px; width: 18px; height: 18px;
-  background-color: #333; border: 1px solid #666; color: #ccc; border-radius: 4px;
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-  z-index: 30; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); transition: all 0.2s ease;
-}
-.delete-btn-modern:hover { background-color: #d32f2f; border-color: #d32f2f; color: white; transform: scale(1.1); }
 </style>
