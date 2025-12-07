@@ -14,7 +14,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         initialSp: 200,
         spRegenRate: 8,
         skillSpCostDefault: 100,
-        maxStagger: 100
+        maxStagger: 100,
+        staggerNodeCount: 0,
+        staggerNodeDuration: 2,
+        staggerBreakDuration: 10
     })
 
     const BASE_BLOCK_WIDTH = 50
@@ -197,7 +200,9 @@ export const useTimelineStore = defineStore('timeline', () => {
                 initialSp: 200,
                 spRegenRate: 8,
                 skillSpCostDefault: 100,
-                maxStagger: 100
+                staggerNodeCount: 0,
+                staggerNodeDuration: 2,
+                staggerBreakDuration: 10
             }
         }
 
@@ -802,7 +807,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     // ===================================================================================
 
     function calculateGlobalStaggerData() {
-        const { maxStagger } = systemConstants.value;
+        const {
+            maxStagger,
+            staggerNodeCount,
+            staggerNodeDuration,
+            staggerBreakDuration
+        } = systemConstants.value;
         const events = []
         tracks.value.forEach(track => {
             if (!track.actions) return
@@ -830,18 +840,37 @@ export const useTimelineStore = defineStore('timeline', () => {
             })
         })
         events.sort((a, b) => a.time - b.time)
-        const points = []; const lockSegments = []; let currentVal = 0; let currentTime = 0; let lockedUntil = -1; points.push({ time: 0, val: 0 });
+        const points = []; const lockSegments = []; const nodeSegments = []; let currentVal = 0; let currentTime = 0; let lockedUntil = -1; const nodeStep = maxStagger / (staggerNodeCount + 1); const hasNodes = staggerNodeCount > 0; points.push({ time: 0, val: 0 });
         const advanceTime = (targetTime) => { if (targetTime > currentTime) { points.push({ time: targetTime, val: currentVal }); currentTime = targetTime; } }
         events.forEach(ev => {
-            advanceTime(ev.time);
+            advanceTime(ev.time)
             if (currentTime >= lockedUntil) {
-                currentVal += ev.change;
-                if (currentVal >= maxStagger) { currentVal = 0; const endLock = currentTime + 10; lockedUntil = endLock; lockSegments.push({ start: currentTime, end: endLock }); points.push({ time: currentTime, val: 0 }); }
+                const prevVal = currentVal
+                currentVal += ev.change
+                if (currentVal >= maxStagger) {
+                    currentVal = 0
+                    const endLock = currentTime + staggerBreakDuration
+                    lockedUntil = endLock
+                    lockSegments.push({ start: currentTime, end: endLock })
+                    points.push({ time: currentTime, val: 0 })
+                }
+                else if (hasNodes) {
+                    const prevNodeIdx = Math.floor(prevVal / nodeStep)
+                    const currNodeIdx = Math.floor(currentVal / nodeStep)
+
+                    if (currNodeIdx > prevNodeIdx) {
+                        nodeSegments.push({
+                            start: currentTime,
+                            end: currentTime + staggerNodeDuration,
+                            thresholdVal: currNodeIdx * nodeStep
+                        })
+                    }
+                }
             }
             points.push({ time: currentTime, val: currentVal })
-        });
-        if (currentTime < TOTAL_DURATION) advanceTime(TOTAL_DURATION);
-        return { points, lockSegments }
+        })
+        if (currentTime < TOTAL_DURATION) advanceTime(TOTAL_DURATION)
+        return { points, lockSegments, nodeSegments, nodeStep }
     }
 
     function calculateGlobalSpData() {
@@ -851,7 +880,11 @@ export const useTimelineStore = defineStore('timeline', () => {
             if (!track.actions) return
             track.actions.forEach(action => {
                 if (action.spCost > 0) events.push({ time: action.startTime, valChange: -action.spCost, type: 'cost' })
-                if (action.type === 'skill') { events.push({ time: action.startTime, lockChange: 1, type: 'lock_start' }); events.push({ time: action.startTime + 0.5, lockChange: -1, type: 'lock_end' }) }
+                if (['skill'].includes(action.type)) {
+                    const lockTime = 0.5;
+                    events.push({ time: action.startTime, lockChange: 1, type: 'lock_start' });
+                    events.push({ time: action.startTime + lockTime, lockChange: -1, type: 'lock_end' })
+                }
                 if (action.spGain > 0) events.push({ time: action.startTime + action.duration, valChange: action.spGain, type: 'gain' })
                 if (action.damageTicks) {
                     action.damageTicks.forEach(tick => {

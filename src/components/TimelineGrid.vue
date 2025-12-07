@@ -254,6 +254,21 @@ const currentSpValue = computed(() => {
   return Math.floor(points[points.length - 1].sp)
 })
 
+const cachedStaggerData = computed(() => store.calculateGlobalStaggerData().points)
+const currentStaggerValue = computed(() => {
+  const time = cursorX.value / TIME_BLOCK_WIDTH.value
+  const points = cachedStaggerData.value
+  if (!points || points.length === 0) return 0
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i]
+    const p2 = points[i+1]
+    if (time >= p1.time && time < p2.time) {
+      return Math.floor(p1.val)
+    }
+  }
+  return Math.floor(points[points.length - 1].val)
+})
+
 function onGridMouseMove(evt) {
   if (!tracksContentRef.value) return
   const rect = tracksContentRef.value.getBoundingClientRect()
@@ -773,6 +788,7 @@ onUnmounted(() => {
       <div class="cursor-guide" :style="{ left: `${cursorX}px` }" v-show="isCursorVisible && store.showCursorGuide && !store.isBoxSelectMode">
         <div class="guide-time-label">{{ (cursorX / TIME_BLOCK_WIDTH).toFixed(1) }}s</div>
         <div class="guide-sp-label">技力: {{ currentSpValue }}</div>
+        <div class="guide-stagger-label">失衡: {{ currentStaggerValue }}</div>
       </div>
 
       <div v-if="alignGuide.visible" class="align-guide-layer">
@@ -1178,10 +1194,23 @@ onUnmounted(() => {
   font-weight: bold;
   font-family: monospace;
   padding: 2px 4px;
-  border-radius: 0 4px 4px 0;
   white-space: nowrap;
   line-height: 1;
   text-shadow: 0 0 2px rgba(255, 215, 0, 0.5);
+}
+
+.guide-stagger-label {
+  width: fit-content;
+  color: #ff7875;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: monospace;
+  padding: 2px 4px;
+  border-radius: 0 4px 4px 0;
+  white-space: nowrap;
+  line-height: 1;
+  text-shadow: 0 0 2px rgba(255, 120, 117, 0.5);
+  margin-top: 1px;
 }
 
 .selection-box-overlay {

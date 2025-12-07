@@ -8,7 +8,6 @@ const props = defineProps({
 })
 
 const store = useTimelineStore()
-const { iconDatabase } = storeToRefs(store)
 const isSelected = computed(() => store.isActionSelected(props.action.instanceId))
 
 // 幽灵模式：triggerWindow < 0 时仅显示逻辑点，不显示实体框
@@ -188,7 +187,6 @@ const renderableAnomalies = computed(() => {
         const targetAction = targetTrack?.actions.find(a => a.instanceId === conn.to)
 
         if (targetAction) {
-          // 计算视觉上的绝对开始时间 (动作开始时间 + 状态偏移时间)
           const visualAbsStartTime = props.action.startTime + offsetTime
 
           const offset = conn.consumptionOffset || 0
@@ -207,7 +205,6 @@ const renderableAnomalies = computed(() => {
       // 计算时长条的像素宽度
       let finalBarWidth = displayDuration > 0 ? (displayDuration * widthUnit) : 0
       if (finalBarWidth > 0) {
-        // 减去图标宽度，剩余的才是条的宽度
         finalBarWidth = Math.max(0, finalBarWidth - ICON_SIZE)
       }
       if (finalBarWidth > 0) {
@@ -281,7 +278,7 @@ function onIconClick(evt, item, flatIndex) {
       <div v-for="(tick, idx) in renderableTicks" :key="idx"
            class="damage-tick-wrapper"
            :style="tick.style"
-           :title="`时间: ${tick.data.offset}s\n失衡: ${tick.data.stagger || 0}\nSP: ${tick.data.sp || 0}`">
+           :title="`时间: ${tick.data.offset}s\n失衡值: ${tick.data.stagger || 0}\n技力回复: ${tick.data.sp || 0}`">
         <div class="tick-marker"></div>
       </div>
     </div>

@@ -8,8 +8,7 @@ import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
 import TimelineGrid from '../components/TimelineGrid.vue'
 import ActionLibrary from '../components/ActionLibrary.vue'
 import PropertiesPanel from '../components/PropertiesPanel.vue'
-import SpMonitor from '../components/SpMonitor.vue'
-import StaggerMonitor from '../components/StaggerMonitor.vue'
+import ResourceMonitor from '../components/ResourceMonitor.vue'
 
 const store = useTimelineStore()
 
@@ -378,8 +377,7 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 
       <div class="timeline-workspace">
         <div class="timeline-grid-container"><TimelineGrid/></div>
-        <div class="stagger-monitor-panel"><StaggerMonitor/></div>
-        <div class="sp-monitor-panel"><SpMonitor/></div>
+        <div class="resource-monitor-panel"><ResourceMonitor/></div>
       </div>
     </main>
 
@@ -504,8 +502,7 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 /* Workspace & Panels */
 .timeline-workspace { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
 .timeline-grid-container { flex-grow: 1; overflow: hidden; min-height: 0; }
-.stagger-monitor-panel { height: 60px; flex-shrink: 0; border-top: 1px solid #444; z-index: 20; background: #252525; }
-.sp-monitor-panel { height: 140px; flex-shrink: 0; border-top: 1px solid #444; z-index: 20; background: #252525; }
+.resource-monitor-panel { height: 200px; flex-shrink: 0; border-top: 1px solid #444; z-index: 20; background: #252525; }
 
 /* Loading */
 .loading-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #18181c; z-index: 9999; display: flex; align-items: center; justify-content: center; color: #888; font-size: 14px; }
@@ -527,7 +524,6 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 .link-label { color: #aaa; margin-right: 5px; }
 .highlight-link { color: #00e5ff; text-decoration: none; border-bottom: 1px dashed rgba(0, 229, 255, 0.5); transition: all 0.2s; }
 .highlight-link:hover { color: #fff; border-bottom-style: solid; }
-.notice-text { background: rgba(255, 255, 255, 0.05); padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #aaa; }
 
 /* Dark Mode Adapter for Element Plus Dialog */
 :deep(.el-dialog) { background-color: #2b2b2b; border: 1px solid #444; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }

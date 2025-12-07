@@ -92,8 +92,6 @@
             "type": "stagger",
             "stacks": 2,
             "duration": 0,
-            "sp": 0,
-            "stagger": 0,
             "offset": 0.4
           }
         ]
@@ -121,8 +119,6 @@
             "type": "crystallization",
             "stacks": 1,
             "duration": 4,
-            "sp": 0,
-            "stagger": 0,
             "offset": 0.8
           }
         ]
@@ -239,8 +235,6 @@
             "type": "armor_break",
             "stacks": 1,
             "duration": 0,
-            "sp": 5,
-            "stagger": 10,
             "offset": 1.4
           }
         ]
@@ -293,40 +287,30 @@
             "type": "steel_oath",
             "stacks": 5,
             "duration": 0,
-            "sp": 0,
-            "stagger": 10,
             "offset": 0
           },
           {
             "type": "steel_oath",
             "stacks": 4,
             "duration": 0,
-            "sp": 7.5,
-            "stagger": 0,
             "offset": 0
           },
           {
             "type": "steel_oath",
             "stacks": 3,
             "duration": 0,
-            "sp": 7.5,
-            "stagger": 0,
             "offset": 0
           },
           {
             "type": "steel_oath",
             "stacks": 2,
             "duration": 0,
-            "sp": 7.5,
-            "stagger": 0,
             "offset": 0
           },
           {
             "type": "steel_oath",
             "stacks": 1,
             "duration": 0,
-            "sp": 30,
-            "stagger": 15,
             "offset": 0
           }
         ]
@@ -432,16 +416,12 @@
           {
             "type": "physical_weakness",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           },
           {
             "type": "magic_weakness",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -475,8 +455,6 @@
             "type": "corrosion",
             "stacks": 1,
             "duration": 10,
-            "sp": 0,
-            "stagger": 0,
             "offset": 2.6
           }
         ]
@@ -587,9 +565,7 @@
           {
             "type": "cold_enchantment",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -716,9 +692,7 @@
           {
             "type": "nature_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -746,9 +720,7 @@
           {
             "type": "knockup",
             "stacks": 2,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -780,23 +752,17 @@
           {
             "type": "slow",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           },
           {
             "type": "magic_weakness",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           },
           {
             "type": "nature_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -890,9 +856,7 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -920,9 +884,7 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -949,9 +911,7 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1074,9 +1034,7 @@
           {
             "type": "magma_1",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1105,9 +1063,7 @@
           {
             "type": "magma_1",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1138,30 +1094,22 @@
           {
             "type": "magma_1",
             "stacks": 1,
-            "duration": 3.5,
-            "sp": 0,
-            "stagger": 0
+            "duration": 3.5
           },
           {
             "type": "magma_2",
             "stacks": 1,
-            "duration": 3.5,
-            "sp": 0,
-            "stagger": 0
+            "duration": 3.5
           },
           {
             "type": "magma_3",
             "stacks": 1,
-            "duration": 3.5,
-            "sp": 0,
-            "stagger": 0
+            "duration": 3.5
           },
           {
             "type": "magma_4",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1272,8 +1220,6 @@
             "type": "knockdown",
             "stacks": 2,
             "duration": 0,
-            "sp": 0,
-            "stagger": 0,
             "offset": 1.9
           }
         ],
@@ -1309,8 +1255,6 @@
             "type": "combo",
             "stacks": 1,
             "duration": 20,
-            "sp": 0,
-            "stagger": 0,
             "offset": 1.6
           }
         ]
@@ -1339,16 +1283,12 @@
             "type": "knockdown",
             "stacks": 1,
             "duration": 2,
-            "stagger": 5,
-            "sp": 0,
             "hideDuration": true
           },
           {
             "type": "knockdown",
             "stacks": 1,
             "duration": 1.9,
-            "stagger": 5,
-            "sp": 0,
             "hideDuration": true
           }
         ]
@@ -1441,9 +1381,7 @@
           {
             "type": "knockdown",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1471,9 +1409,7 @@
           {
             "type": "knockdown",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1593,9 +1529,7 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1730,9 +1664,7 @@
           {
             "type": "frozen",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1851,16 +1783,12 @@
           {
             "type": "emag_attach",
             "stacks": 1,
-            "duration": 1.7,
-            "sp": 0,
-            "stagger": 0
+            "duration": 1.7
           },
           {
             "type": "conductive",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -1976,9 +1904,7 @@
           {
             "type": "default",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -2076,8 +2002,6 @@
             "type": "knockup",
             "stacks": 2,
             "duration": 0,
-            "stagger": 10,
-            "sp": 0,
             "offset": 1.5
           }
         ]
@@ -2107,8 +2031,6 @@
             "type": "stagger",
             "stacks": 4,
             "duration": 0,
-            "sp": 0,
-            "stagger": 15,
             "offset": 1.76
           }
         ]
@@ -2141,16 +2063,12 @@
             "type": "knockup",
             "stacks": 1,
             "duration": 1.1,
-            "sp": 0,
-            "stagger": 0,
             "offset": 1.5
           },
           {
             "type": "knockdown",
             "stacks": 2,
             "duration": 0,
-            "sp": 0,
-            "stagger": 0,
             "offset": 2.7
           }
         ],
@@ -2159,8 +2077,6 @@
             "type": "prep_ingredients",
             "stacks": 1,
             "duration": 0,
-            "sp": 0,
-            "stagger": 0,
             "offset": 0.5
           }
         ]
@@ -2253,9 +2169,7 @@
           {
             "type": "blaze_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -2283,9 +2197,7 @@
           {
             "type": "blaze_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -2403,9 +2315,7 @@
           {
             "type": "emag_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -2433,9 +2343,7 @@
           {
             "type": "conductive",
             "stacks": 1,
-            "duration": 8.75,
-            "sp": 0,
-            "stagger": 0
+            "duration": 8.75
           }
         ]
       ],
@@ -2541,8 +2449,6 @@
             "type": "knockup",
             "stacks": 2,
             "duration": 0,
-            "stagger": 10,
-            "sp": 0,
             "offset": 0.4
           }
         ]
@@ -2572,8 +2478,6 @@
             "type": "knockup",
             "stacks": 2,
             "duration": 0,
-            "sp": 10,
-            "stagger": 10,
             "offset": 0.56
           }
         ]
@@ -2598,16 +2502,6 @@
             "type": "default",
             "stacks": 1,
             "duration": 0,
-            "sp": 0,
-            "stagger": 15,
-            "offset": 0
-          },
-          {
-            "type": "default",
-            "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 20,
             "offset": 0
           }
         ]
@@ -2699,9 +2593,7 @@
           {
             "type": "frozen",
             "stacks": 1,
-            "duration": 5,
-            "sp": 0,
-            "stagger": 0
+            "duration": 5
           }
         ]
       ],
@@ -2741,9 +2633,7 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -3165,9 +3055,7 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -3192,16 +3080,12 @@
           {
             "type": "knockup",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           },
           {
             "type": "ice_shatter",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
@@ -3304,9 +3188,7 @@
           {
             "type": "blaze_attach",
             "stacks": 1,
-            "duration": 0,
-            "sp": 0,
-            "stagger": 0
+            "duration": 0
           }
         ]
       ],
