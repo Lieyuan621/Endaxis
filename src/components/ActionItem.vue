@@ -79,6 +79,14 @@ const cdStyle = computed(() => {
   return { width: `${width}px`, bottom: '-8px', left: '-2px', opacity: 0.6 }
 })
 
+// 强化时间样式
+const enhancementStyle = computed(() => {
+  const widthUnit = store.timeBlockWidth
+  const time = props.action.enhancementTime || 0
+  const width = time > 0 ? time * widthUnit : 0
+  return { width: `${width}px`, bottom: '-8px', left: 'calc(100% + 2px)', opacity: 0.8 }
+})
+
 // 触发窗口样式
 const triggerWindowStyle = computed(() => {
   const widthUnit = store.timeBlockWidth
@@ -262,6 +270,16 @@ function onIconClick(evt, item, flatIndex) {
       <div class="cd-line" :style="{ backgroundColor: themeColor }"></div>
       <span class="cd-text" :style="{ color: themeColor }">{{ action.cooldown }}s</span>
       <div class="cd-end-mark" :style="{ backgroundColor: themeColor }"></div>
+    </div>
+
+    <div v-if="!isGhostMode && action.type === 'ultimate' && (action.enhancementTime || 0) > 0"
+         class="cd-bar-container"
+         :style="enhancementStyle">
+
+      <div class="cd-line" style="background-color: #b37feb;"></div>
+      <span class="cd-text" style="color: #b37feb;">{{ action.enhancementTime }}s</span>
+      <div class="cd-end-mark" style="background-color: #b37feb;"></div>
+
     </div>
 
     <template v-if="!isGhostMode">

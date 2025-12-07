@@ -232,7 +232,7 @@ function updateActionProp(key, value) {
 }
 
 function updateActionGaugeWithLink(value) {
-  commitUpdate({ gaugeGain: value, teamGaugeGain: value * 0.5 })
+  commitUpdate({ gaugeGain: value, teamGaugeGain: value })
 }
 
 function addDamageTick() {
@@ -440,7 +440,7 @@ const relevantConnections = computed(() => {
           <CustomNumberInput :model-value="targetData.gaugeCost" @update:model-value="val => updateActionProp('gaugeCost', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
         </div>
 
-        <div class="form-group compact" v-if="!['attack', 'execution'].includes(currentSkillType)">
+        <div class="form-group compact" v-if="!['execution'].includes(currentSkillType)">
           <label>自身充能</label>
           <CustomNumberInput :model-value="targetData.gaugeGain" @update:model-value="val => updateActionGaugeWithLink(val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
         </div>
@@ -449,6 +449,10 @@ const relevantConnections = computed(() => {
           <label>队友充能</label>
           <CustomNumberInput :model-value="targetData.teamGaugeGain" @update:model-value="val => updateActionProp('teamGaugeGain', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
         </div>
+
+        <div class="form-group compact" v-if="currentSkillType === 'ultimate'">
+          <label>强化时间(s)</label>
+          <CustomNumberInput :model-value="targetData.enhancementTime || 0" @update:model-value="val => updateActionProp('enhancementTime', val)" :step="0.5" :min="0" activeColor="#b37feb" border-color="#b37feb" text-align="center"/></div>
       </div>
     </div>
 

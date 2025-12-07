@@ -338,7 +338,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 ? JSON.parse(JSON.stringify(activeChar[`${suffix}_damage_ticks`]))
                 : []
 
-            let defaults = { spCost: 0, gaugeCost: 0, gaugeGain: 0, teamGaugeGain: 0 }
+            let defaults = { spCost: 0, gaugeCost: 0, gaugeGain: 0, teamGaugeGain: 0, enhancementTime: 0 }
 
             if (suffix === 'skill') {
                 defaults.spCost = activeChar.skill_spCost || systemConstants.value.skillSpCostDefault;
@@ -349,6 +349,9 @@ export const useTimelineStore = defineStore('timeline', () => {
             } else if (suffix === 'ultimate') {
                 defaults.gaugeCost = activeChar.ultimate_gaugeMax || 100
                 defaults.gaugeGain = activeChar.ultimate_gaugeReply || 0
+                defaults.enhancementTime = activeChar.ultimate_enhancementTime || 0
+            } else if (suffix === 'attack') {
+                defaults.gaugeGain = activeChar.attack_gaugeGain || 0
             }
 
             const merged = { duration: rawDuration, cooldown: rawCooldown, ...defaults, ...globalOverride }
@@ -933,12 +936,41 @@ export const useTimelineStore = defineStore('timeline', () => {
         const canAcceptTeamGauge = (charInfo.accept_team_gauge !== false);
         const libId = `${trackId}_ultimate`; const override = characterOverrides.value[libId];
         const GAUGE_MAX = (track.maxGaugeOverride && track.maxGaugeOverride > 0) ? track.maxGaugeOverride : ((override && override.gaugeCost) ? override.gaugeCost : (charInfo.ultimate_gaugeMax || 100));
+        const blockWindows = []
+        if (track.actions) {
+            track.actions.forEach(action => {
+                if (action.type === 'ultimate') {
+                    const start = action.startTime
+                    const end = start + Number(action.duration || 0) + Number(action.enhancementTime || 0)
+                    if (end > start) {
+                        blockWindows.push({ start, end })
+                    }
+                }
+            })
+        }
+        const isBlocked = (time) => {
+            const epsilon = 0.0001
+            return blockWindows.some(w => time > w.start + epsilon && time < w.end - epsilon)
+        }
         const events = [];
         tracks.value.forEach(sourceTrack => {
             if (!sourceTrack.actions) return;
             sourceTrack.actions.forEach(action => {
-                if (sourceTrack.id === trackId) { if (action.gaugeCost > 0) events.push({ time: action.startTime, change: -action.gaugeCost }); if (action.gaugeGain > 0) events.push({ time: action.startTime + action.duration, change: action.gaugeGain }); }
-                if (sourceTrack.id !== trackId && action.teamGaugeGain > 0 && canAcceptTeamGauge) events.push({ time: action.startTime + action.duration, change: action.teamGaugeGain });
+                if (sourceTrack.id === trackId) {
+                    if (action.gaugeCost > 0) events.push({ time: action.startTime, change: -action.gaugeCost });
+                    if (action.gaugeGain > 0) {
+                        const triggerTime = action.startTime + action.duration
+                        if (!isBlocked(triggerTime)) {
+                            events.push({ time: triggerTime, change: action.gaugeGain });
+                        }
+                    }
+                }
+                if (sourceTrack.id !== trackId && action.teamGaugeGain > 0 && canAcceptTeamGauge) {
+                    const triggerTime = action.startTime + action.duration
+                    if (!isBlocked(triggerTime)) {
+                        events.push({ time: triggerTime, change: action.teamGaugeGain });
+                    }
+                }
             })
         });
         events.sort((a, b) => a.time - b.time);

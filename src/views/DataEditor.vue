@@ -88,7 +88,7 @@ function addNewCharacter() {
     accept_team_gauge: true,
 
     // 初始化各类动作属性
-    attack_duration: 2.5, attack_allowed_types: allGlobalEffects, attack_anomalies: [], attack_damage_ticks: [],
+    attack_duration: 2.5, attack_gaugeGain: 0, attack_allowed_types: allGlobalEffects, attack_anomalies: [], attack_damage_ticks: [],
     skill_duration: 2, skill_spCost: 100, skill_gaugeGain: 0, skill_teamGaugeGain: 0, skill_allowed_types: [], skill_anomalies: [], skill_damage_ticks: [],
     link_duration: 1.5, link_cooldown: 15, link_gaugeGain: 0, link_allowed_types: [], link_anomalies: [], link_damage_ticks: [],
     ultimate_duration: 3, ultimate_gaugeMax: 100, ultimate_gaugeReply: 0, ultimate_allowed_types: [], ultimate_anomalies: [], ultimate_damage_ticks: [],
@@ -341,7 +341,7 @@ function removeVariantDamageTick(variant, index) {
 function onSkillGaugeInput(event) {
   const val = Number(event.target.value)
   if (selectedChar.value) {
-    selectedChar.value.skill_teamGaugeGain = val * 0.5
+    selectedChar.value.skill_teamGaugeGain = val
   }
 }
 
@@ -597,6 +597,8 @@ function saveData() {
 
                 <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar[`${type}_duration`]"></div>
 
+                <div class="form-group" v-if="type === 'attack'"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeGain`]"></div>
+
                 <div class="form-group" v-if="type === 'skill'"><label>技力消耗</label><input type="number" v-model.number="selectedChar[`${type}_spCost`]"></div>
                 <div class="form-group" v-if="type === 'skill'"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeGain`]" @input="onSkillGaugeInput"></div>
                 <div class="form-group" v-if="type === 'skill'"><label>队友充能</label><input type="number" v-model.number="selectedChar[`${type}_teamGaugeGain`]"></div>
@@ -606,6 +608,7 @@ function saveData() {
 
                 <div class="form-group" v-if="type === 'ultimate'"><label>充能消耗</label><input type="number" v-model.number="selectedChar[`${type}_gaugeMax`]"></div>
                 <div class="form-group" v-if="type === 'ultimate'"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeReply`]"></div>
+                <div class="form-group" v-if="type === 'ultimate'"><label>强化时间 (s)</label><input type="number" step="0.5" v-model.number="selectedChar[`${type}_enhancementTime`]"></div>
               </div>
 
               <h3 class="section-title">伤害判定点</h3>
