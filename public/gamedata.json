@@ -1,9 +1,4 @@
 {
-  "SYSTEM_CONSTANTS": {
-    "MAX_SP": 300,
-    "SP_REGEN_PER_SEC": 8,
-    "SKILL_SP_COST_DEFAULT": 100
-  },
   "ICON_DATABASE": {
     "break": "/Endaxis/icons/break.png",
     "armor_break": "/Endaxis/icons/armor_break.png",
@@ -2110,7 +2105,8 @@
         "corrosion"
       ],
       "execution_anomalies": [],
-      "variants": []
+      "variants": [],
+      "attack_gaugeGain": 0
     },
     {
       "id": "WULFGARD",
@@ -2485,7 +2481,7 @@
       "link_anomaly_delays": [
         0.6
       ],
-      "ultimate_duration": 0.5,
+      "ultimate_duration": 2,
       "ultimate_gaugeMax": 70,
       "ultimate_gaugeReply": 0,
       "ultimate_damage_ticks": [
@@ -2496,16 +2492,7 @@
         }
       ],
       "ultimate_allowed_types": [],
-      "ultimate_anomalies": [
-        [
-          {
-            "type": "default",
-            "stacks": 1,
-            "duration": 0,
-            "offset": 0
-          }
-        ]
-      ],
+      "ultimate_anomalies": [],
       "execution_duration": 2.5,
       "execution_damage_ticks": [
         {
@@ -2535,7 +2522,8 @@
         "armor_break"
       ],
       "execution_anomalies": [],
-      "accept_team_gauge": true
+      "accept_team_gauge": true,
+      "ultimate_enhancementTime": 0
     },
     {
       "id": "ALESH",

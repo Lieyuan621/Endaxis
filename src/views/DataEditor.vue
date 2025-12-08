@@ -348,7 +348,6 @@ function onSkillGaugeInput(event) {
 function saveData() {
   characterRoster.value.sort((a, b) => (b.rarity || 0) - (a.rarity || 0));
   const dataToSave = {
-    SYSTEM_CONSTANTS: { MAX_SP: 300, SP_REGEN_PER_SEC: 8, SKILL_SP_COST_DEFAULT: 100 },
     ICON_DATABASE: iconDatabase.value,
     characterRoster: characterRoster.value
   }

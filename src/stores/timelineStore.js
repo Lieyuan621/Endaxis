@@ -1131,7 +1131,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     async function fetchGameData() {
         try {
             isLoading.value = true; const response = await fetch(import.meta.env.BASE_URL + 'gamedata.json'); if (!response.ok) throw new Error('Failed'); const data = await response.json();
-            if (data.SYSTEM_CONSTANTS) { systemConstants.value.maxSp = data.SYSTEM_CONSTANTS.MAX_SP || 300; systemConstants.value.spRegenRate = data.SYSTEM_CONSTANTS.SP_REGEN_PER_SEC || 8; systemConstants.value.skillSpCostDefault = data.SYSTEM_CONSTANTS.SKILL_SP_COST_DEFAULT || 100; }
             characterRoster.value = data.characterRoster.sort((a, b) => (b.rarity || 0) - (a.rarity || 0)); iconDatabase.value = data.ICON_DATABASE; historyStack.value = []; historyIndex.value = -1; commitState();
         } catch (error) { console.error("Load failed:", error) } finally { isLoading.value = false }
     }
