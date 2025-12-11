@@ -629,11 +629,25 @@ export const useTimelineStore = defineStore('timeline', () => {
                 toEffectIndex: targetEffectIndex,
                 fromEffectId: linkingSourceEffectId.value,
                 toEffectId: toEffectId,
-                isConsumption: false
+                isConsumption: false,
+                sourcePort: 'right',
+                targetPort: 'left'
             })
             commitState()
         }
         cancelLinking()
+    }
+
+    function updateConnectionPort(connectionId, portType, direction) {
+        const conn = connections.value.find(c => c.id === connectionId)
+        if (conn) {
+            if (portType === 'source') {
+                conn.sourcePort = direction
+            } else if (portType === 'target') {
+                conn.targetPort = direction
+            }
+            commitState()
+        }
     }
 
     function cancelLinking() {
@@ -1312,7 +1326,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         teamTracksInfo, activeSkillLibrary, timeBlockWidth, ELEMENT_COLORS, getActionPositionInfo, getIncomingConnections, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
         fetchGameData, exportProject, importProject, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction, removeAction,
         addSkillToTrack, setDraggingSkill, setDragOffset, setScrollLeft, calculateGlobalSpData, calculateCdReduction, calculateGaugeData, calculateGlobalStaggerData, updateTrackInitialGauge, updateTrackMaxGauge,
-        startLinking, confirmLinking, cancelLinking, removeConnection, updateConnection, getColor, toggleCursorGuide, toggleBoxSelectMode, setCursorTime, toggleSnapStep, nudgeSelection,
+        startLinking, confirmLinking, cancelLinking, removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleBoxSelectMode, setCursorTime, toggleSnapStep, nudgeSelection,
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
         removeAnomaly, initAutoSave, loadFromBrowser, resetProject, selectedConnectionId, selectConnection, selectAnomaly, getAnomalyIndexById,
         findEffectIndexById, alignActionToTarget,

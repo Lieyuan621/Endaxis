@@ -105,8 +105,10 @@ const enhancementStyle = computed(() => {
 const triggerWindowStyle = computed(() => {
   const widthUnit = store.timeBlockWidth
   const rawWindow = props.action.triggerWindow || 0
-  if (rawWindow === 0) return { display: 'none' }
   const snappedWindow = Math.round(Math.abs(rawWindow) * 10) / 10
+  if (rawWindow === 0 || snappedWindow === 0) {
+    return { display: 'none' }
+  }
   const width = snappedWindow * widthUnit
   const color = themeColor.value
   return { '--tw-width': `${width}px`, '--tw-color': color, right: 'calc(100% + 2px)' }

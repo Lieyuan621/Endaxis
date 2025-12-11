@@ -63,28 +63,6 @@ const resolveColor = (info, effectIndex, effectId) => {
   return store.getColor(action.type)
 }
 
-const getDomPosition = (elementId, containerEl, isSource) => {
-  const el = document.getElementById(elementId)
-  if (!el || !containerEl) return null
-  const rect = el.getBoundingClientRect()
-  const containerRect = containerEl.getBoundingClientRect()
-  const offsetX = isSource ? rect.right : rect.left
-  const x = (offsetX - containerRect.left) + containerEl.scrollLeft
-  const y = (rect.top - containerRect.top) + (rect.height / 2) + containerEl.scrollTop
-  return { x, y }
-}
-const getEffectIconPosition = (instanceId, effectIndex, containerEl) => {
-  const domId = `anomaly-${instanceId}-${effectIndex}`
-  const el = document.getElementById(domId)
-  if (!el || !containerEl) return null
-  const rect = el.getBoundingClientRect()
-  const containerRect = containerEl.getBoundingClientRect()
-  const scrollLeft = containerEl.scrollLeft
-  const scrollTop = containerEl.scrollTop
-  const relativeLeft = (rect.left - containerRect.left) + scrollLeft
-  const relativeTop = (rect.top - containerRect.top) + scrollTop
-  return { left: relativeLeft, right: relativeLeft + rect.width, centerY: relativeTop + (rect.height / 2) }
-}
 const getTriggerDotPosition = (instanceId, containerEl) => {
   const actionEl = document.getElementById(`action-${instanceId}`)
   if (!actionEl) return null
@@ -97,91 +75,131 @@ const getTriggerDotPosition = (instanceId, containerEl) => {
   return { x, y }
 }
 
+function onContextMenu(evt) {
+  if (store.selectedConnectionId !== props.connection.id) {
+    store.selectConnection(props.connection.id)
+  }
+  store.openContextMenu(evt, props.connection.id)
+}
+
+const PORT_DIRECTIONS = {
+  'top':          { x: 0.5, y: 0,   cx: 0,  cy: -1 },
+  'bottom':       { x: 0.5, y: 1,   cx: 0,  cy: 1 },
+  'left':         { x: 0,   y: 0.5, cx: -1, cy: 0 },
+  'right':        { x: 1,   y: 0.5, cx: 1,  cy: 0 },
+  'top-left':     { x: 0,   y: 0,   cx: -1, cy: -1 },
+  'top-right':    { x: 1,   y: 0,   cx: 1,  cy: -1 },
+  'bottom-left':  { x: 0,   y: 1,   cx: -1, cy: 1 },
+  'bottom-right': { x: 1,   y: 1,   cx: 1,  cy: 1 },
+}
+
+const getElementRectRelative = (domId, containerEl) => {
+  const el = document.getElementById(domId)
+  if (!el || !containerEl) return null
+  const rect = el.getBoundingClientRect()
+  const containerRect = containerEl.getBoundingClientRect()
+  return {
+    left: (rect.left - containerRect.left) + containerEl.scrollLeft,
+    top: (rect.top - containerRect.top) + containerEl.scrollTop,
+    width: rect.width,
+    height: rect.height
+  }
+}
+
 const calculatePoint = (nodeId, effectIndex, isSource, connection = null) => {
   const info = store.getActionPositionInfo(nodeId)
   if (!info) return null
 
+  const rawTw = info.action.triggerWindow || 0
+  const hasTriggerWindow = Math.abs(Number(rawTw)) > 0.001
+
+  if (!isSource && hasTriggerWindow && effectIndex == null) {
+    const dotPos = getTriggerDotPosition(nodeId, props.containerRef)
+    if (dotPos) {
+      return { x: dotPos.x, y: dotPos.y, dir: PORT_DIRECTIONS.left }
+    }
+  }
+
+  let targetDomId = null
   let realEffectIndex = effectIndex
+
   if (connection) {
     const targetId = isSource ? connection.fromEffectId : connection.toEffectId
     realEffectIndex = resolveRealIndex(info.action, effectIndex, targetId)
   }
 
-  if (isSource && connection && connection.isConsumption) {
-    if (realEffectIndex !== null && realEffectIndex !== undefined) {
-      const domId = `transfer-${nodeId}-${realEffectIndex}`
-      const domPos = getDomPosition(domId, props.containerRef, true)
-      if (domPos) return { x: domPos.x, y: domPos.y }
-    }
-    return null
+  if (isSource && connection && connection.isConsumption && realEffectIndex != null) {
+    targetDomId = `transfer-${nodeId}-${realEffectIndex}`
+  }
+  else if (realEffectIndex != null) {
+    targetDomId = `anomaly-${nodeId}-${realEffectIndex}`
+  }
+  else {
+    targetDomId = `action-${nodeId}`
   }
 
-  if (realEffectIndex !== undefined && realEffectIndex !== null) {
-    const iconPos = getEffectIconPosition(nodeId, realEffectIndex, props.containerRef)
-    if (iconPos) {
-      const y = iconPos.centerY
-      if (isSource) return { x: iconPos.right, y }
-      else return { x: iconPos.left, y }
-    }
-    const domId = `anomaly-${nodeId}-${realEffectIndex}`
-    const pos = getDomPosition(domId, props.containerRef, isSource)
-    if (pos) return { x: pos.x, y: pos.y }
-  }
+  if (targetDomId) {
+    const rect = getElementRectRelative(targetDomId, props.containerRef)
 
-  const rawTw = info.action.triggerWindow || 0
-  const hasTriggerWindow = Math.abs(Number(rawTw)) > 0.001
+    if (rect) {
+      const userPort = isSource ? connection?.sourcePort : connection?.targetPort
+      const defaultPort = isSource ? 'right' : 'left'
+      const dirKey = userPort || defaultPort
 
-  if (!isSource && hasTriggerWindow) {
-    const dotPos = getTriggerDotPosition(nodeId, props.containerRef)
-    if (dotPos) return { x: dotPos.x, y: dotPos.y }
-  }
+      const config = PORT_DIRECTIONS[dirKey] || PORT_DIRECTIONS[defaultPort]
 
-  let timePoint = 0
-  if (isSource) {
-    timePoint = info.action.startTime + info.action.duration
-  } else {
-    const offset = hasTriggerWindow ? Math.abs(Number(rawTw)) : 0
-    timePoint = info.action.startTime - offset
-  }
-
-  const x = timePoint * store.timeBlockWidth
-  let y = getTrackCenterY(info.trackIndex)
-
-  if (!isSource && realEffectIndex == null && !hasTriggerWindow) {
-    const incoming = store.getIncomingConnections(nodeId)
-    const generalIncoming = incoming.filter(c => c.toEffectIndex == null)
-
-    generalIncoming.sort((a, b) => {
-      const infoA = store.getActionPositionInfo(a.from); const infoB = store.getActionPositionInfo(b.from);
-      if (!infoA || !infoB) return 0;
-      if (infoA.trackIndex !== infoB.trackIndex) return infoA.trackIndex - infoB.trackIndex;
-      if (infoA.action.startTime !== infoB.action.startTime) return infoA.action.startTime - infoB.action.startTime;
-      return a.id.localeCompare(b.id);
-    })
-
-    const myIndex = generalIncoming.findIndex(c => c.id === props.connection.id)
-    if (myIndex !== -1 && generalIncoming.length > 1) {
-      y += (myIndex - (generalIncoming.length - 1) / 2) * 6
+      return {
+        x: rect.left + (rect.width * config.x),
+        y: rect.top + (rect.height * config.y),
+        dir: config
+      }
     }
   }
-  return { x, y }
+
+  const timePoint = isSource ? info.action.startTime + info.action.duration : info.action.startTime
+  return {
+    x: timePoint * store.timeBlockWidth,
+    y: getTrackCenterY(info.trackIndex),
+    dir: isSource ? PORT_DIRECTIONS.right : PORT_DIRECTIONS.left
+  }
 }
 
 const pathInfo = computed(() => {
   const _trigger = props.renderKey
   const conn = props.connection
-  const fromInfo = store.getActionPositionInfo(conn.from)
-  const toInfo = store.getActionPositionInfo(conn.to)
-  if (!fromInfo || !toInfo) return null
+
   const start = calculatePoint(conn.from, conn.fromEffectIndex, true, conn)
   const end = calculatePoint(conn.to, conn.toEffectIndex, false, conn)
+
   if (!start || !end) return null
-  const colorStart = resolveColor(fromInfo, conn.fromEffectIndex, conn.fromEffectId)
-  const colorEnd = resolveColor(toInfo, conn.toEffectIndex, conn.toEffectId)
+
+  const colorStart = resolveColor(store.getActionPositionInfo(conn.from), conn.fromEffectIndex, conn.fromEffectId)
+  const colorEnd = resolveColor(store.getActionPositionInfo(conn.to), conn.toEffectIndex, conn.toEffectId)
+
   const dx = Math.abs(end.x - start.x)
-  const controlDist = Math.max(50, Math.min(dx * 0.6, 200))
-  const d = `M ${start.x} ${start.y} C ${start.x + controlDist} ${start.y}, ${end.x - controlDist} ${end.y}, ${end.x} ${end.y}`
-  return { d, startPoint: { x: start.x, y: start.y }, endPoint: { x: end.x, y: end.y }, colors: { start: colorStart, end: colorEnd } }
+  const dy = Math.abs(end.y - start.y)
+  const dist = Math.sqrt(dx*dx + dy*dy)
+
+  const tension = Math.min(150, Math.max(40, dist * 0.4))
+
+  const c1 = {
+    x: start.x + (start.dir.cx * tension),
+    y: start.y + (start.dir.cy * tension)
+  }
+
+  const c2 = {
+    x: end.x + (end.dir.cx * tension),
+    y: end.y + (end.dir.cy * tension)
+  }
+
+  const d = `M ${start.x} ${start.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${end.x} ${end.y}`
+
+  return {
+    d,
+    startPoint: { x: start.x, y: start.y },
+    endPoint: { x: end.x, y: end.y },
+    colors: { start: colorStart, end: colorEnd }
+  }
 })
 </script>
 
@@ -191,6 +209,7 @@ const pathInfo = computed(() => {
       class="connector-group"
       :class="{ 'is-selected': isSelected, 'is-dimmed': isDimmed, 'is-highlighted': isRelatedToHover }"
       @click="onSelectClick"
+      @contextmenu.prevent.stop="onContextMenu"
   >
     <defs>
       <linearGradient :id="gradientId" gradientUnits="userSpaceOnUse" :x1="pathInfo.startPoint.x" :y1="pathInfo.startPoint.y" :x2="pathInfo.endPoint.x" :y2="pathInfo.endPoint.y">

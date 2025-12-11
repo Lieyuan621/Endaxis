@@ -1079,6 +1079,11 @@
           "key": "magma_4",
           "name": "熔火4",
           "path": "/Endaxis/icons/magma_4.png"
+        },
+        {
+          "key": "magma_0",
+          "name": "熔火0",
+          "path": "/Endaxis/icons/magma_0.png"
         }
       ],
       "attack_duration": 3.3,
@@ -1111,7 +1116,8 @@
         "conductive",
         "frozen",
         "ice_shatter",
-        "corrosion"
+        "corrosion",
+        "magma_0"
       ],
       "attack_anomalies": [],
       "skill_duration": 1,
@@ -1131,7 +1137,8 @@
         "magma_1",
         "magma_2",
         "magma_3",
-        "magma_4"
+        "magma_4",
+        "magma_0"
       ],
       "skill_anomalies": [
         [
@@ -1160,7 +1167,8 @@
         "magma_1",
         "magma_2",
         "magma_3",
-        "magma_4"
+        "magma_4",
+        "magma_0"
       ],
       "link_anomalies": [
         [
@@ -1191,7 +1199,8 @@
         "magma_4",
         "blaze_attach",
         "burning",
-        "blaze_burst"
+        "blaze_burst",
+        "magma_0"
       ],
       "ultimate_anomalies": [
         [
@@ -1250,7 +1259,8 @@
         "frozen",
         "cold_burst",
         "stagger",
-        "armor_break"
+        "armor_break",
+        "magma_0"
       ],
       "execution_anomalies": [],
       "accept_team_gauge": true,
@@ -1267,7 +1277,8 @@
             "magma_4",
             "blaze_attach",
             "blaze_burst",
-            "burning"
+            "burning",
+            "magma_0"
           ],
           "physicalAnomaly": [],
           "damageTicks": [
@@ -1290,7 +1301,8 @@
             "magma_1",
             "magma_2",
             "magma_3",
-            "magma_4"
+            "magma_4",
+            "magma_0"
           ],
           "physicalAnomaly": [
             [
@@ -1324,7 +1336,8 @@
             "magma_1",
             "magma_2",
             "magma_3",
-            "magma_4"
+            "magma_4",
+            "magma_0"
           ],
           "physicalAnomaly": [
             [

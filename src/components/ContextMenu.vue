@@ -83,6 +83,32 @@ function handleColor(color) {
   store.setActionColor(store.contextMenu.targetId, color)
   close()
 }
+
+const targetConnection = computed(() => {
+  if (!store.contextMenu.targetId) return null
+  return store.connections.find(c => c.id === store.contextMenu.targetId)
+})
+
+const BASE_ARROW_PATH = 'M12 21 L12 3 M12 3 L5 10 M12 3 L19 10'
+
+const DIRECTION_OPTS = [
+  { val: 'top-left',     label: '左上', rotate: -45 },
+  { val: 'top',          label: '上方', rotate: 0 },
+  { val: 'top-right',    label: '右上', rotate: 45 },
+  { val: 'left',         label: '左侧', rotate: -90 },
+  { val: null,           label: '中心', isSpacer: true },
+  { val: 'right',        label: '右侧', rotate: 90 },
+  { val: 'bottom-left',  label: '左下', rotate: -135 },
+  { val: 'bottom',       label: '下方', rotate: 180 },
+  { val: 'bottom-right', label: '右下', rotate: 135 },
+]
+
+function handleSetPort(type, direction) {
+  if (targetConnection.value && direction) {
+    store.updateConnectionPort(targetConnection.value.id, type, direction)
+    close()
+  }
+}
 </script>
 
 <template>
@@ -162,6 +188,70 @@ function handleColor(color) {
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </div>
+      </div>
+    </template>
+
+    <template v-if="targetConnection">
+      <div class="menu-header">连线设置</div>
+
+      <div class="menu-item has-submenu">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 9V5 M12 15V19 M9 12H5 M15 12H19"/></svg>
+        </span>
+        <span class="label">设置 出点</span>
+        <span class="arrow">▶</span>
+
+        <div class="submenu-grid">
+          <div v-for="(opt, i) in DIRECTION_OPTS" :key="i"
+               class="grid-item"
+               :class="{
+                 'is-active': (targetConnection.sourcePort || 'right') === opt.val,
+                 'spacer': opt.isSpacer
+               }"
+               @click="!opt.isSpacer && handleSetPort('source', opt.val)"
+               :title="opt.label">
+            <svg v-if="!opt.isSpacer"
+                 viewBox="0 0 24 24" width="16" height="16"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round"
+                 :style="{ transform: `rotate(${opt.rotate}deg)` }"> <path :d="BASE_ARROW_PATH" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-item has-submenu">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M12 12h.01"/></svg>
+        </span>
+        <span class="label">设置 入点</span>
+        <span class="arrow">▶</span>
+
+        <div class="submenu-grid">
+          <div v-for="(opt, i) in DIRECTION_OPTS" :key="i"
+               class="grid-item"
+               :class="{
+                 'is-active': (targetConnection.targetPort || 'left') === opt.val,
+                 'spacer': opt.isSpacer
+               }"
+               @click="!opt.isSpacer && handleSetPort('target', opt.val)"
+               :title="opt.label">
+            <svg v-if="!opt.isSpacer"
+                 viewBox="0 0 24 24" width="16" height="16"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round"
+                 :style="{ transform: `rotate(${opt.rotate}deg)` }">
+              <path :d="BASE_ARROW_PATH" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="menu-item delete-item" @click="handleDelete">
+        <span class="icon"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></span>
+        <span class="label">删除</span>
+        <span class="shortcut-hint">Delete</span>
       </div>
     </template>
 
@@ -306,5 +396,61 @@ function handleColor(color) {
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+.menu-item.has-submenu {
+  position: relative;
+  justify-content: space-between;
+}
+
+.menu-item .arrow {
+  font-size: 10px;
+  color: #666;
+  margin-left: 10px;
+}
+
+.submenu-grid {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: -4px;
+  background: #2b2b2b;
+  border: 1px solid #444;
+  border-radius: 6px;
+  box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+  padding: 4px;
+  grid-template-columns: repeat(3, 30px);
+  grid-template-rows: repeat(3, 30px);
+  gap: 2px;
+  z-index: 100;
+}
+
+.menu-item.has-submenu:hover .submenu-grid {
+  display: grid;
+}
+
+.grid-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #888;
+  transition: all 0.1s;
+}
+
+.grid-item:hover {
+  background: #444;
+  color: #fff;
+}
+
+.grid-item.is-active {
+  background: #ffd700;
+  color: #000;
+}
+
+.grid-item.spacer {
+  cursor: default;
+  pointer-events: none;
 }
 </style>

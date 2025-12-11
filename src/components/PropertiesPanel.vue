@@ -32,6 +32,17 @@ const GROUP_DEFINITIONS = [
   { label: ' 其他', keys: ['default'] }
 ]
 
+const PORT_OPTIONS = [
+  { label: '右', value: 'right' },
+  { label: '左', value: 'left' },
+  { label: '上', value: 'top' },
+  { label: '下', value: 'bottom' },
+  { label: '右上', value: 'top-right' },
+  { label: '右下', value: 'bottom-right' },
+  { label: '左上', value: 'top-left' },
+  { label: '左下', value: 'bottom-left' }
+]
+
 // ===================================================================================
 // 2. 核心状态计算
 // ===================================================================================
@@ -396,6 +407,11 @@ const relevantConnections = computed(() => {
         }
       })
 })
+
+function updateConnPort(connId, type, event) {
+  const val = event.target.value
+  store.updateConnectionPort(connId, type, val)
+}
 </script>
 
 <template>
@@ -604,32 +620,65 @@ const relevantConnections = computed(() => {
              :class="{ 'outgoing': conn.isOutgoing, 'incoming': !conn.isOutgoing }">
 
           <div class="conn-vis">
-            <div class="node left">
-              <img v-if="conn.isOutgoing && conn.myIconPath" :src="conn.myIconPath" class="icon-s" />
-              <span v-else class="text-s">{{ conn.isOutgoing ? '本动作' : conn.otherActionName }}</span>
+            <div class="node">
+              <img v-if="conn.isOutgoing ? conn.myIconPath : conn.otherIconPath"
+                   :src="conn.isOutgoing ? conn.myIconPath : conn.otherIconPath" class="icon-s"/>
+              <span class="text-s">{{ conn.isOutgoing ? (targetData.name || '本动作') : conn.otherActionName }}</span>
             </div>
-            <div class="arrow">➔</div>
+            <span class="arrow">→</span>
             <div class="node right">
-              <img v-if="!conn.isOutgoing && conn.myIconPath" :src="conn.myIconPath" class="icon-s" />
-              <span v-else class="text-s">{{ conn.isOutgoing ? conn.otherActionName : '本动作' }}</span>
+              <span class="text-s">{{ conn.isOutgoing ? conn.otherActionName : (targetData.name || '本动作') }}</span>
+              <img v-if="conn.isOutgoing ? conn.otherIconPath : conn.myIconPath"
+                   :src="conn.isOutgoing ? conn.otherIconPath : conn.myIconPath" class="icon-s"/>
             </div>
           </div>
 
-          <div class="conn-tools">
-            <div v-if="conn.isOutgoing && conn.rawConnection.fromEffectIndex != null" class="consume-tag"
-                 :class="{ 'active': conn.rawConnection.isConsumption }"
-                 @click="store.updateConnection(conn.id, { isConsumption: !conn.rawConnection.isConsumption })">
-              被消耗
+          <div class="conn-row-ports">
+            <div class="port-config">
+              <div class="port-select-wrapper" title="出点位置">
+                <span class="port-label">出</span>
+                <select class="mini-select"
+                        :value="conn.rawConnection.sourcePort || 'right'"
+                        @change="(e) => updateConnPort(conn.id, 'source', e)">
+                  <option v-for="opt in PORT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+              </div>
+              <span class="port-arrow">→</span>
+              <div class="port-select-wrapper" title="入点位置">
+                <span class="port-label">入</span>
+                <select class="mini-select"
+                        :value="conn.rawConnection.targetPort || 'left'"
+                        @change="(e) => updateConnPort(conn.id, 'target', e)">
+                  <option v-for="opt in PORT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+              </div>
             </div>
+          </div>
 
-            <div v-if="conn.rawConnection.isConsumption" class="offset-mini">
-              <span>提前</span>
-              <CustomNumberInput :model-value="conn.rawConnection.consumptionOffset || 0" @update:model-value="val => store.updateConnection(conn.id, { consumptionOffset: val })" :step="0.1" style="width: 65px; height: 22px;"/>
-            </div>
+          <div class="conn-row-actions">
+            <template v-if="conn.isOutgoing && conn.rawConnection.fromEffectIndex != null">
+              <div class="consume-tag"
+                   :class="{ 'active': conn.rawConnection.isConsumption }"
+                   @click="store.updateConnection(conn.id, { isConsumption: !conn.rawConnection.isConsumption })">
+                {{ conn.rawConnection.isConsumption ? '被消耗' : '消耗' }}
+              </div>
+
+              <div v-if="conn.rawConnection.isConsumption" class="offset-mini">
+                <span style="color: #666; font-size: 10px; margin-right: 4px; white-space: nowrap;">提前</span>
+                <CustomNumberInput
+                    :model-value="conn.rawConnection.consumptionOffset || 0"
+                    @update:model-value="val => store.updateConnection(conn.id, { consumptionOffset: val })"
+                    :step="0.1" :min="0" :max="10"
+                    active-color="#ffd700"
+                    style="width: 70px;"
+                />
+              </div>
+            </template>
 
             <div class="spacer"></div>
             <button class="btn-del-conn" @click="store.removeConnection(conn.id)">×</button>
           </div>
+
         </div>
       </div>
     </div>
@@ -642,91 +691,50 @@ const relevantConnections = computed(() => {
 </template>
 
 <style scoped>
-/* Reset & Base */
-.properties-panel {
-  padding: 12px;
-  color: #e0e0e0;
-  background-color: #2b2b2b;
-  height: 100%;
-  box-sizing: border-box;
-  overflow-y: auto;
-  font-size: 13px;
-}
-
-/* Header */
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #444;
-  padding-bottom: 10px;
-}
+/* Base & Layout */
+.properties-panel { padding: 12px; color: #e0e0e0; background-color: #2b2b2b; height: 100%; box-sizing: border-box; overflow-y: auto; font-size: 13px; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
 .panel-title { margin: 0; color: #ffd700; font-size: 16px; font-weight: bold; display: flex; flex-direction: column; gap: 4px; }
 .mode-badge { font-size: 10px; color: #888; font-weight: normal; background: #333; padding: 2px 4px; border-radius: 2px; width: fit-content; }
 .type-badge { font-size: 10px; background: #444; padding: 2px 6px; border-radius: 4px; color: #aaa; text-transform: uppercase; }
 
 /* Sections */
-.section-container {
-  margin-bottom: 15px;
-  background: #333;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #444;
-}
+.section-container { margin-bottom: 15px; background: #333; border-radius: 6px; overflow: hidden; border: 1px solid #444; }
 .section-container.no-border { background: transparent; border: none; overflow: visible; }
 .section-container.border-red { border-left: 3px solid #ff7875; }
 .section-container.border-blue { border-left: 3px solid #00e5ff; }
-
-.section-label {
-  font-size: 12px; font-weight: bold; color: #888; margin-bottom: 8px; display: block;
-}
-
-/* Grid Layout for Attributes */
-.attribute-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 10px;
-}
-.form-group.compact label { font-size: 10px; color: #999; margin-bottom: 2px; display: block; }
-
-/* Accordion Headers */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
-  background: rgba(0,0,0,0.2);
-  cursor: pointer;
-  transition: background 0.2s;
-}
+.section-label { font-size: 12px; font-weight: bold; color: #888; margin-bottom: 8px; display: block; }
+.section-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(0,0,0,0.2); cursor: pointer; transition: background 0.2s; }
 .section-header:hover { background: rgba(0,0,0,0.4); }
+.section-content { padding: 8px; background: rgba(0,0,0,0.1); border-top: 1px solid #444; }
+.attribute-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+.form-group.compact label { font-size: 10px; color: #999; margin-bottom: 2px; display: block; }
 .header-left label { font-size: 12px; font-weight: bold; cursor: pointer; }
 .header-right { display: flex; align-items: center; }
-.icon-btn-add {
-  background: #ff7875; color: #000; border: none; width: 18px; height: 18px;
-  border-radius: 2px; font-weight: bold; line-height: 1; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; padding: 0;
-}
+.empty-hint { font-size: 12px; color: #555; text-align: center; padding: 10px; font-style: italic; }
+
+/* Buttons & Inputs */
+.icon-btn-add { background: #ff7875; color: #000; border: none; width: 18px; height: 18px; border-radius: 2px; font-weight: bold; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
 .icon-btn-add.cyan { background: #00e5ff; }
+.remove-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 16px; line-height: 1; padding: 0; }
+.remove-btn:hover { color: #fff; }
+.simple-input { background: transparent; border: none; border-bottom: 1px solid #555; color: #ccc; width: 100%; font-size: 12px; padding: 0 0 2px 0; }
+.simple-input:focus { outline: none; border-color: #00e5ff; }
+.action-btn { flex: 1; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 12px; border: 1px solid; background: transparent; }
+.action-btn.link-style { border-color: #ffd700; color: #ffd700; }
+.action-btn.link-style:hover { background: rgba(255, 215, 0, 0.1); }
+.action-btn.link-style.is-linking { background: #ffd700; color: #000; }
+.action-btn.delete-style { border-color: #ff4d4f; color: #ff4d4f; }
+.action-btn.delete-style:hover { background: rgba(255, 77, 79, 0.1); }
 
-.section-content { padding: 8px; background: rgba(0,0,0,0.1); border-top: 1px solid #444; }
-
-/* Tick Items */
+/* Ticks & Anomalies List */
 .tick-item { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #444; }
 .tick-item:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
 .tick-header { display: flex; justify-content: space-between; margin-bottom: 4px; align-items: center; }
 .tick-idx { font-size: 10px; color: #ff7875; font-family: monospace; }
 .blue-theme .tick-idx { color: #00e5ff; }
-.remove-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 16px; line-height: 1; padding: 0; }
-.remove-btn:hover { color: #fff; }
 .tick-row { display: flex; gap: 6px; }
 .tick-col label { font-size: 9px; color: #777; display: block; margin-bottom: 1px; }
-.simple-input { background: transparent; border: none; border-bottom: 1px solid #555; color: #ccc; width: 100%; font-size: 12px; padding: 0 0 2px 0; }
-.simple-input:focus { outline: none; border-color: #00e5ff; }
-
-/* Anomalies Matrix */
 .anomalies-editor-container { background: #252525; padding: 8px; border-radius: 4px; border: 1px solid #444; }
 .anomaly-editor-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; background: #2f2f2f; padding: 2px; border-radius: 4px; }
 .row-handle { color: #555; cursor: grab; padding: 0 2px; }
@@ -735,7 +743,6 @@ const relevantConnections = computed(() => {
 .add-to-row-btn:hover { color: #ffd700; border-color: #ffd700; }
 .add-effect-bar { width: 100%; background: #333; border: 1px dashed #444; color: #777; font-size: 11px; padding: 4px; cursor: pointer; margin-top: 4px; border-radius: 2px; }
 .add-effect-bar:hover { border-color: #888; color: #ccc; }
-
 .icon-wrapper { width: 28px; height: 28px; background: #3a3a3a; border: 1px solid #555; border-radius: 3px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
 .icon-wrapper:hover { border-color: #999; background: #444; }
 .icon-wrapper.is-editing { border-color: #ffd700; box-shadow: 0 0 0 1px #ffd700; z-index: 5; }
@@ -750,37 +757,20 @@ const relevantConnections = computed(() => {
 .editor-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .full-width-col { grid-column: 1 / -1; }
 .editor-grid label { font-size: 10px; color: #888; display: block; margin-bottom: 2px; }
-
 .effect-select-dark { width: 100%; }
 :deep(.effect-select-dark .el-input__wrapper) { background-color: #111; box-shadow: none; border: 1px solid #444; }
 .opt-row { display: flex; align-items: center; gap: 6px; }
 .opt-row img { width: 16px; height: 16px; }
-
 .editor-actions { display: flex; gap: 8px; }
-.action-btn { flex: 1; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 12px; border: 1px solid; background: transparent; }
-.action-btn.link-style { border-color: #ffd700; color: #ffd700; }
-.action-btn.link-style:hover { background: rgba(255, 215, 0, 0.1); }
-.action-btn.link-style.is-linking { background: #ffd700; color: #000; }
-.action-btn.delete-style { border-color: #ff4d4f; color: #ff4d4f; }
-.action-btn.delete-style:hover { background: rgba(255, 77, 79, 0.1); }
 
-/* Connections Zone */
+/* Connection Cards - Optimized */
 .connection-header-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.main-link-btn {
-  background: transparent; border: 1px dashed #ffd700; color: #ffd700;
-  padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;
-  transition: all 0.2s;
-}
+.main-link-btn { background: transparent; border: 1px dashed #ffd700; color: #ffd700; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
 .main-link-btn:hover { background: rgba(255, 215, 0, 0.1); }
 .main-link-btn.is-linking { background: #ffd700; color: #000; border-style: solid; animation: pulse 1s infinite; }
-
-.connection-card {
-  background: #222; border-left: 3px solid #666; margin-bottom: 6px; border-radius: 2px;
-  padding: 6px; display: flex; flex-direction: column; gap: 4px;
-}
+.connection-card { background: #222; border-left: 3px solid #666; margin-bottom: 6px; border-radius: 4px; padding: 6px 8px; display: flex; flex-direction: column; gap: 6px; }
 .connection-card.outgoing { border-left-color: #ffd700; }
 .connection-card.incoming { border-left-color: #00e5ff; }
-
 .conn-vis { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #ccc; }
 .node { display: flex; align-items: center; gap: 4px; width: 45%; overflow: hidden; }
 .node.right { justify-content: flex-end; }
@@ -788,28 +778,23 @@ const relevantConnections = computed(() => {
 .text-s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .arrow { color: #666; font-size: 10px; }
 
-.conn-tools { display: flex; align-items: center; gap: 6px; margin-top: 2px; padding-top: 4px; border-top: 1px solid #333; }
-.consume-tag {
-  font-size: 10px;
-  padding: 0 8px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  color: #888;
-  cursor: pointer;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  transition: all 0.2s;
-  background-color: rgba(255, 255, 255, 0.05);
-}
+/* Connection Tools Rows */
+.conn-row-ports { padding-top: 4px; border-top: 1px solid #333; display: flex; justify-content: flex-start; }
+.conn-row-actions { display: flex; align-items: center; gap: 8px; height: 24px; }
+.port-config { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 4px; border: 1px solid #444; width: 100%; box-sizing: border-box; justify-content: center; }
+.port-select-wrapper { display: flex; align-items: center; gap: 2px; }
+.port-label { font-size: 9px; color: #666; font-weight: bold; }
+.mini-select { background: transparent; border: none; color: #ccc; font-size: 10px; width: 40px; appearance: none; cursor: pointer; padding: 0; text-align: center; font-family: sans-serif; }
+.mini-select:hover { color: #fff; text-decoration: underline; }
+.mini-select:focus { outline: none; background: #333; }
+.mini-select::-ms-expand { display: none; }
+.port-arrow { color: #555; font-size: 9px; margin: 0 2px; }
+.consume-tag { font-size: 10px; padding: 0 8px; border: 1px solid #444; border-radius: 4px; color: #888; cursor: pointer; height: 22px; line-height: 20px; transition: all 0.2s; background-color: rgba(255, 255, 255, 0.05); }
 .consume-tag.active { border-color: #ffd700; color: #ffd700; background: rgba(255,215,0,0.1); font-weight: bold; }
 .offset-mini { display: flex; align-items: center; gap: 2px; font-size: 9px; color: #666; }
+.btn-del-conn { background: none; border: none; color: #555; cursor: pointer; font-size: 16px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+.btn-del-conn:hover { background: #333; color: #ff4d4f; }
 .spacer { flex: 1; }
-.btn-del-conn { background: none; border: none; color: #555; cursor: pointer; font-size: 14px; line-height: 1; }
-.btn-del-conn:hover { color: #ff4d4f; }
-.empty-hint { font-size: 12px; color: #555; text-align: center; padding: 10px; font-style: italic; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
