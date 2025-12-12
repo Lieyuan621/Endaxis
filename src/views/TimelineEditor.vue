@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref, nextTick, computed, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
+import { useShareProject } from '@/composables/useShareProject.js'
 import html2canvas from 'html2canvas'
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
 
@@ -11,6 +12,7 @@ import PropertiesPanel from '../components/PropertiesPanel.vue'
 import ResourceMonitor from '../components/ResourceMonitor.vue'
 
 const store = useTimelineStore()
+const { generateShareLink } = useShareProject()
 
 // === 方案管理逻辑 ===
 const editingScenarioId = ref(null)
@@ -394,7 +396,9 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 
           <button class="control-btn load-btn" @click="triggerImport" title="导入 .json 项目文件">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
             加载
           </button>
@@ -404,6 +408,18 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
             </svg>
             保存
+          </button>
+
+          
+          <button class="control-btn share-btn" @click="generateShareLink" title="生成分享链接 (复制到剪贴板)">
+             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            分享
           </button>
         </div>
       </header>
@@ -550,6 +566,7 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 .export-img-btn:hover { border-color: #e6a23c; color: #e6a23c; background-color: rgba(230, 162, 60, 0.1); }
 .danger-btn:hover { border-color: #a61d24; color: #a61d24; background-color: rgba(255, 77, 79, 0.1); }
 .info-btn:hover { border-color: #00e5ff; color: #00e5ff; background-color: rgba(0, 229, 255, 0.1); }
+.share-btn:hover { border-color: #722ed1; color: #722ed1; background-color: rgba(114, 46, 209, 0.1); }
 
 /* Workspace & Panels */
 .timeline-workspace { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }

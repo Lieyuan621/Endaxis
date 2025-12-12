@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { executeFetch } from '@/api/fetchStrategy.js'
+import LZString from 'lz-string'
 
 const uid = () => Math.random().toString(36).substring(2, 9)
 
@@ -1276,7 +1277,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
     }
 
-    function exportProject() {
+    function getProjectData() {
         const listToExport = JSON.parse(JSON.stringify(scenarioList.value))
         const currentSc = listToExport.find(s => s.id === activeScenarioId.value)
         if (currentSc) {
@@ -1287,13 +1288,17 @@ export const useTimelineStore = defineStore('timeline', () => {
             }
         }
 
-        const projectData = {
+        return {
             timestamp: Date.now(),
             version: '1.0.0',
             scenarioList: listToExport,
             activeScenarioId: activeScenarioId.value,
             systemConstants: systemConstants.value
         };
+    }
+
+    function exportProject() {
+        const projectData = getProjectData();
 
         const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
@@ -1303,35 +1308,94 @@ export const useTimelineStore = defineStore('timeline', () => {
         URL.revokeObjectURL(link.href)
     }
 
+    function exportShareString() {
+        const projectData = getProjectData();
+        const jsonString = JSON.stringify(projectData);
+        return LZString.compressToEncodedURIComponent(jsonString);
+    }
+
+    function importShareString(compressedStr) {
+        try {
+            const jsonString = LZString.decompressFromEncodedURIComponent(compressedStr);
+            if (!jsonString) return false;
+
+            const data = JSON.parse(jsonString);
+            return mergeProjectData(data);
+        } catch (e) {
+            console.error("Import share string failed:", e);
+            return false;
+        }
+    }
+
+    function mergeProjectData(data) {
+        try {
+            if (!data.scenarioList || !Array.isArray(data.scenarioList)) return false
+
+            const newActiveId = ref(null)
+
+            data.scenarioList.forEach(sc => {
+                const newId = `sc_${uid()}`
+                const newSc = {
+                    ...sc,
+                    id: newId,
+                    name: `${sc.name} (Share)`
+                }
+
+                scenarioList.value.push(newSc)
+                if (!newActiveId.value) newActiveId.value = newId
+            })
+
+            if (newActiveId.value) {
+                switchScenario(newActiveId.value)
+            }
+
+            commitState()
+            return true
+        } catch (err) {
+            console.error("Merge project data failed:", err)
+            return false
+        }
+    }
+
+    function loadProjectData(data) {
+        try {
+            if (data.systemConstants) { systemConstants.value = { ...systemConstants.value, ...data.systemConstants }; }
+
+            if (data.scenarioList) {
+                scenarioList.value = data.scenarioList
+                const validId = data.scenarioList.find(s => s.id === data.activeScenarioId) ? data.activeScenarioId : data.scenarioList[0].id
+                activeScenarioId.value = validId
+
+                const currentSc = scenarioList.value.find(s => s.id === activeScenarioId.value)
+                if (currentSc && currentSc.data) {
+                    _loadSnapshot(currentSc.data)
+                } else {
+                    tracks.value = [{ id: null, actions: [] }, { id: null, actions: [] }, { id: null, actions: [] }, { id: null, actions: [] }];
+                    connections.value = [];
+                    characterOverrides.value = {};
+                }
+            }
+
+            clearSelection();
+            historyStack.value = [];
+            historyIndex.value = -1;
+            commitState();
+            return true;
+        } catch (err) {
+            console.error("Load project data failed:", err)
+            return false
+        }
+    }
+
     async function importProject(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-
-                    if (data.systemConstants) { systemConstants.value = { ...systemConstants.value, ...data.systemConstants }; }
-
-                    if (data.scenarioList) {
-                        scenarioList.value = data.scenarioList
-                        const validId = data.scenarioList.find(s => s.id === data.activeScenarioId) ? data.activeScenarioId : data.scenarioList[0].id
-                        activeScenarioId.value = validId
-
-                        const currentSc = scenarioList.value.find(s => s.id === activeScenarioId.value)
-                        if (currentSc && currentSc.data) {
-                            _loadSnapshot(currentSc.data)
-                        } else {
-                            tracks.value = [{ id: null, actions: [] }, { id: null, actions: [] }, { id: null, actions: [] }, { id: null, actions: [] }];
-                            connections.value = [];
-                            characterOverrides.value = {};
-                        }
-                    }
-
-                    clearSelection();
-                    historyStack.value = [];
-                    historyIndex.value = -1;
-                    commitState();
-                    resolve(true)
+                    const success = loadProjectData(data);
+                    if (success) resolve(true);
+                    else reject(new Error("Invalid data structure"));
                 } catch (err) { reject(err) }
             };
             reader.readAsText(file)
@@ -1344,7 +1408,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         selectedActionId, selectedLibrarySkillId, multiSelectedIds, clipboard, isLinking, linkingSourceId, linkingEffectIndex, linkingSourceEffectId, showCursorGuide, isBoxSelectMode, cursorCurrentTime, snapStep,
         selectedAnomalyId, setSelectedAnomalyId,
         teamTracksInfo, activeSkillLibrary, timeBlockWidth, ELEMENT_COLORS, getActionPositionInfo, getIncomingConnections, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
-        fetchGameData, exportProject, importProject, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction, removeAction,
+        fetchGameData, exportProject, importProject, exportShareString, importShareString, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction, removeAction,
         addSkillToTrack, setDraggingSkill, setDragOffset, setScrollLeft, calculateGlobalSpData, calculateCdReduction, calculateGaugeData, calculateGlobalStaggerData, updateTrackInitialGauge, updateTrackMaxGauge,
         startLinking, confirmLinking, cancelLinking, removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleBoxSelectMode, setCursorTime, toggleSnapStep, nudgeSelection,
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
