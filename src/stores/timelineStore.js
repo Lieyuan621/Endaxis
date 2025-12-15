@@ -46,7 +46,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const BASE_BLOCK_WIDTH = 50
     const TOTAL_DURATION = 120
-    const MAX_SCENARIOS = 114514
+    const MAX_SCENARIOS = 14
 
     const ELEMENT_COLORS = {
         "blaze": "#ff4d4f", "cold": "#00e5ff", "emag": "#ffd700", "nature": "#52c41a", "physical": "#e0e0e0",

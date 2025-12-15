@@ -1332,7 +1332,7 @@
         {
           "key": "combo",
           "name": "连击",
-          "path": "/Endaxis/icons/combo.png"
+          "path": "/Endaxis/icons/icon_term_ba_combo.png"
         },
         {
           "key": "physical_weakness",
@@ -2155,7 +2155,7 @@
         {
           "key": "prep_ingredients",
           "name": "备料",
-          "path": "/Endaxis/icons/prep_ingredients.png"
+          "path": "/Endaxis/icons/icon_battle_dapan_buff.png"
         }
       ],
       "accept_team_gauge": true,
