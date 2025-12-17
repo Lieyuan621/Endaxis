@@ -34,7 +34,7 @@ const isCursorVisible = ref(false)
 // Drag State
 const isMouseDown = ref(false)
 const isDragStarted = ref(false)
-const movingActionId = ref(null)
+const movingAction = ref(null)
 const movingTrackId = ref(null)
 const initialMouseX = ref(0)
 const initialMouseY = ref(0)
@@ -44,7 +44,10 @@ const dragStartTimes = new Map()
 const hadAnomalySelection = ref(false)
 const isAltDown = ref(false)
 const isShiftDown = ref(false)
+const isCtrlDown = ref(false)
 const hoveredContext = ref(null)
+const snapCandidates = ref([])
+const snapTargetTime = ref(null)
 
 // === 边缘自动滚动相关状态 ===
 const autoScrollSpeed = ref(0)
@@ -216,11 +219,15 @@ function calculateTimeFromEvent(evt) {
   const activeOffset = store.globalDragOffset || 0
   const mouseXInTrack = (mouseX - activeOffset) - trackRect.left + scrollLeft
   const rawTime = mouseXInTrack / TIME_BLOCK_WIDTH.value
-  const step = store.snapStep
-  const inverse = 1 / step
-  let startTime = Math.round(rawTime * inverse) / inverse
+  let startTime = rawTime
   if (startTime < 0) startTime = 0
   return startTime
+}
+
+function quantized(time) {
+  const step = store.snapStep
+  const inverse = 1 / step
+  return Math.round(time * inverse) / inverse
 }
 
 function syncRulerScroll() {
@@ -446,6 +453,23 @@ function recalcAlignGuide() {
   }
 }
 
+function buildSnapCandidates(actionId) {
+    const candidates = []
+
+    for (const action of store.actionMap.values()) {
+        if (action.id === actionId) {
+          continue
+        }
+        if (action.node.triggerWindow && action.node.triggerWindow > 0) {
+          candidates.push(action.node.startTime - action.node.triggerWindow)
+        }
+        candidates.push(action.node.startTime)
+        candidates.push(action.node.startTime + action.node.duration)
+    }
+
+    return candidates.toSorted((a, b) => a - b)
+}
+
 function onBackgroundContextMenu(evt) {
   evt.preventDefault()
 
@@ -522,10 +546,11 @@ function onActionMouseDown(evt, track, action) {
 
     isMouseDown.value = true;
     isDragStarted.value = false
-    movingActionId.value = action.instanceId;
+    movingAction.value = action;
     movingTrackId.value = track.id
     initialMouseX.value = clientX;
     initialMouseY.value = clientY
+    snapCandidates.value = buildSnapCandidates(action.instanceId)
 
     dragStartTimes.clear()
     store.tracks.forEach(t => {
@@ -542,15 +567,101 @@ function onActionMouseDown(evt, track, action) {
   }, 0)
 }
 
+function binSearchClosest(arr, target) {
+  if (arr.length === 0) return null;
+  if (arr.length === 1) return arr[0];
+
+  let left = 0;
+  let right = arr.length - 1;
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    if (arr[mid] === target) return arr[mid];
+    if (arr[mid] < target) {
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  if (right < 0) return arr[0];
+  if (left >= arr.length) return arr[arr.length - 1];
+
+  const valRight = arr[right];
+  const valLeft = arr[left];
+
+  if (Math.abs(target - valRight) <= Math.abs(target - valLeft)) {
+    return valRight;
+  } else {
+    return valLeft;
+  }
+}
+
+function getSnapTime(leadTime, duration) {
+  if (store.multiSelectedIds.size > 1 || isCtrlDown.value) {
+    return {
+      snapped: false,
+      time: quantized(leadTime)
+    }
+  }
+  const leadCandidate = binSearchClosest(snapCandidates.value, leadTime)
+  const tailCandidate = binSearchClosest(snapCandidates.value, leadTime + duration)
+
+  const leadDist = leadCandidate !== null 
+    ? Math.abs(leadCandidate - leadTime) 
+    : Infinity
+    
+  const tailDist = tailCandidate !== null 
+    ? Math.abs(tailCandidate - (leadTime + duration)) 
+    : Infinity
+
+  const bestDist = Math.min(leadDist, tailDist)
+  
+  if (bestDist <= store.snapStep) {
+    if (leadDist <= tailDist) {
+      return {
+        snapped: true,
+        align: 'L',
+        time: leadCandidate
+      }
+    } 
+    else {
+      return {
+        snapped: true,
+        align: 'R',
+        time: tailCandidate - duration
+      }
+    }
+  }
+
+  return {
+    snapped: false,
+    time: quantized(leadTime)
+  }
+}
+
 function updateDragPosition(clientX) {
-  if (!isDragStarted.value || !movingActionId.value) return
+  if (!isDragStarted.value || !movingAction.value) return
 
   const fakeEvent = { clientX: clientX }
-  const newLeaderTime = calculateTimeFromEvent(fakeEvent)
-  const leaderOriginalTime = dragStartTimes.get(movingActionId.value)
+  const leadTime = calculateTimeFromEvent(fakeEvent)
+  
+  const { snapped, time: snapTarget, align } = getSnapTime(leadTime, movingAction.value.duration)
+
+  if (snapped) {
+    if (align === 'R') {
+      snapTargetTime.value = snapTarget + movingAction.value.duration
+    } else {
+      snapTargetTime.value = snapTarget
+    }
+  } else {
+    snapTargetTime.value = null
+  }
+  const leaderOriginalTime = dragStartTimes.get(movingAction.value.instanceId)
+
   if (leaderOriginalTime === undefined) return
 
-  const timeDelta = newLeaderTime - leaderOriginalTime
+  const timeDelta = snapTarget - leaderOriginalTime
 
   let isValidMove = true
   for (const [id, originalTime] of dragStartTimes) {
@@ -636,16 +747,18 @@ function onWindowMouseUp(evt) {
 
   const _wasDragging = isDragStarted.value
   try {
-    if (!isDragStarted.value && movingActionId.value) {
+    if (!isDragStarted.value && movingAction.value) {
       if (store.selectedAnomalyId) {
         store.setSelectedAnomalyId(null)
       } else if (wasSelectedOnPress.value) {
-        store.selectAction(movingActionId.value)
+        store.selectAction(movingAction.value.instanceId)
       }
     } else if (_wasDragging) { store.commitState() }
   } catch (error) { console.error("MouseUp Error:", error) } finally {
     dragStartTimes.clear()
-    isMouseDown.value = false; isDragStarted.value = false; movingActionId.value = null; movingTrackId.value = null
+    isMouseDown.value = false; isDragStarted.value = false; movingAction.value = null; movingTrackId.value = null
+    snapTargetTime.value = null
+    snapCandidates.value = []
     window.removeEventListener('mousemove', onWindowMouseMove)
     window.removeEventListener('mouseup', onWindowMouseUp)
     window.removeEventListener('blur', onWindowMouseUp)
@@ -656,7 +769,7 @@ function onWindowMouseUp(evt) {
 function captureClick(e) { e.stopPropagation(); e.preventDefault() }
 function onTrackDrop(track, evt) {
   const skill = store.draggingSkillData; if (!skill || store.activeTrackId !== track.id) return
-  const startTime = calculateTimeFromEvent(evt)
+  const startTime = quantized(calculateTimeFromEvent(evt))
   store.addSkillToTrack(track.id, skill, startTime)
   nextTick(() => forceSvgUpdate())
 }
@@ -697,11 +810,15 @@ function handleGlobalKeyUp(e) {
     isShiftDown.value = false;
     recalcAlignGuide()
   }
+  if (e.key === 'Control') {
+    isCtrlDown.value = false
+  }
 }
 
 function resetModifierKeys() {
   isAltDown.value = false
   isShiftDown.value = false
+  isCtrlDown.value = false
   hideAlignGuide()
 }
 
@@ -714,6 +831,9 @@ function handleGlobalKeyDownWrapper(e) {
   if (e.key === 'Shift') {
     isShiftDown.value = true
     recalcAlignGuide()
+  }
+  if (e.key === 'Control') {
+    isCtrlDown.value = true
   }
   handleKeyDown(e)
 }
@@ -827,6 +947,10 @@ onUnmounted(() => {
         <div class="guide-time-label">{{ (cursorX / TIME_BLOCK_WIDTH).toFixed(1) }}s</div>
         <div class="guide-sp-label">技力: {{ currentSpValue }}</div>
         <div class="guide-stagger-label">失衡: {{ currentStaggerValue }}</div>
+      </div>
+
+
+      <div class="snap-guide" v-if="snapTargetTime" :style="{ left: `${snapTargetTime * TIME_BLOCK_WIDTH}px` }">
       </div>
 
       <div v-if="alignGuide.visible" class="align-guide-layer">
@@ -1224,6 +1348,16 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 5;
   box-shadow: 0 0 6px #ffd700;
+}
+
+.snap-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(163, 33, 249, 0.8);
+  pointer-events: none;
+  z-index: 5;
 }
 
 .guide-time-label {
