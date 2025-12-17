@@ -307,7 +307,10 @@ const cachedSpData = computed(() => store.calculateGlobalSpData())
 const currentSpValue = computed(() => {
   const time = cursorX.value / TIME_BLOCK_WIDTH.value
   const points = cachedSpData.value
-  if (!points || points.length === 0) return store.systemConstants.initialSp
+  if (!points || points.length === 0) {
+    const val = Number(store.systemConstants.initialSp)
+    return isNaN(val) ? 200 : val
+  }
   for (let i = 0; i < points.length - 1; i++) {
     const p1 = points[i]; const p2 = points[i+1]
     if (time >= p1.time && time < p2.time) {

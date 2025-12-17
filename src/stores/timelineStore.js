@@ -1200,7 +1200,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
 
         const points = []
-        let currentSp = Number(initialSp) || 200
+        const parsedInit = Number(initialSp)
+        let currentSp = isNaN(parsedInit) ? 200 : parsedInit
         let prevTime = 0
 
         for (let i = 0; i < sortedTimes.length; i++) {
@@ -1451,6 +1452,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         systemConstants.value = { ...DEFAULT_SYSTEM_CONSTANTS };
 
+        activeEnemyId.value = 'custom';
         // 重置方案
         scenarioList.value = [{ id: 'default_sc', name: '方案 1', data: null }];
         activeScenarioId.value = 'default_sc';
@@ -1502,7 +1504,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                 tracks: tracks.value,
                 connections: connections.value,
                 characterOverrides: characterOverrides.value,
-                activeEnemyId: activeEnemyId.value
+                activeEnemyId: activeEnemyId.value,
+                cycleBoundaries: cycleBoundaries.value
             }
         }
 
