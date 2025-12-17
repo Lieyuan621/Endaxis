@@ -60,6 +60,55 @@ const isBoxSelecting = ref(false)
 const boxStart = ref({ x: 0, y: 0 })
 const boxRect = ref({ left: 0, top: 0, width: 0, height: 0 })
 
+const draggingTrackOrderIndex = ref(null)
+const reorderDropTargetIndex = ref(null)
+
+function onReorderDragStart(evt, index) {
+  draggingTrackOrderIndex.value = index
+  evt.dataTransfer.effectAllowed = 'move'
+  
+  const trackInfoEl = evt.target.closest('.track-info')
+  if (trackInfoEl) {
+    const rect = trackInfoEl.getBoundingClientRect()
+    const offsetX = evt.clientX - rect.left
+    const offsetY = evt.clientY - rect.top
+    evt.dataTransfer.setDragImage(trackInfoEl, offsetX, offsetY)
+  }
+}
+
+function onReorderDragOver(evt, index) {
+  if (draggingTrackOrderIndex.value === null) return
+  evt.preventDefault() // Allow drop
+  evt.dataTransfer.dropEffect = 'move'
+  reorderDropTargetIndex.value = index
+}
+
+function onReorderDrop(evt, targetIndex) {
+  evt.preventDefault()
+  if (draggingTrackOrderIndex.value !== null && draggingTrackOrderIndex.value !== targetIndex) {
+    store.moveTrack(draggingTrackOrderIndex.value, targetIndex)
+  }
+  resetReorderState()
+}
+
+function onReorderDragEnd() {
+  resetReorderState()
+}
+
+function resetReorderState() {
+  draggingTrackOrderIndex.value = null
+  reorderDropTargetIndex.value = null
+}
+
+function moveTrackUp(index) {
+  if (index > 0) store.moveTrack(index, index - 1)
+}
+
+function moveTrackDown(index) {
+  if (index < store.tracks.length - 1) store.moveTrack(index, index + 1)
+}
+
+
 // ===================================================================================
 // 干员选择弹窗逻辑
 // ===================================================================================
@@ -797,7 +846,28 @@ onUnmounted(() => {
          :style="{ paddingBottom: `${20 + scrollbarHeight}px` }">
       <div v-for="(track, index) in store.teamTracksInfo" :key="index" class="track-info"
            @click.stop="store.selectTrack(track.id)"
-           :class="{ 'is-active': track.id && track.id === store.activeTrackId }">
+           :class="{ 
+             'is-active': track.id && track.id === store.activeTrackId,
+             'is-reorder-target': reorderDropTargetIndex === index && draggingTrackOrderIndex !== index,
+             'is-reorder-source': draggingTrackOrderIndex === index
+           }"
+           @dragover="onReorderDragOver($event, index)"
+           @drop="onReorderDrop($event, index)"
+           @dragend="onReorderDragEnd">
+
+        <div class="track-controls">
+           <div class="reorder-btn arrow-btn up-btn" @click.stop="moveTrackUp(index)" :class="{ disabled: index === 0 }" title="上移">
+              <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none"><polyline points="18 15 12 9 6 15"></polyline></svg>
+           </div>
+           
+           <div class="drag-handle" draggable="true" @dragstart="onReorderDragStart($event, index)">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><circle cx="8" cy="4" r="2"></circle><circle cx="8" cy="12" r="2"></circle><circle cx="8" cy="20" r="2"></circle><circle cx="16" cy="4" r="2"></circle><circle cx="16" cy="12" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
+           </div>
+
+           <div class="reorder-btn arrow-btn down-btn" @click.stop="moveTrackDown(index)" :class="{ disabled: index === store.tracks.length - 1 }" title="下移">
+              <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>
+           </div>
+        </div>
 
         <div class="char-select-trigger">
           <div class="trigger-avatar-box" @click.stop="openCharacterSelector(index)" title="点击更换干员">
@@ -1066,6 +1136,7 @@ onUnmounted(() => {
   background: #3a3a3a;
   padding-left: 8px;
   transition: background 0.2s;
+  border: 1px solid transparent;
 }
 
 .track-info.is-active {
@@ -1401,6 +1472,61 @@ onUnmounted(() => {
   background: transparent;
   color: #fff;
   font-size: 9px;
+}
+
+.track-info.is-reorder-target {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.track-info.is-reorder-source {
+  opacity: 0.5;
+}
+
+.track-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+  gap: 2px;
+  color: #888;
+}
+
+.reorder-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: inherit;
+}
+
+.reorder-btn:hover {
+  background-color: #444;
+  color: #ccc;
+}
+
+.reorder-btn.disabled {
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.drag-handle {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 /* ==========================================================================

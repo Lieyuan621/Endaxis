@@ -761,6 +761,18 @@ export const useTimelineStore = defineStore('timeline', () => {
         return { actionCount, connCount, total: actionCount + connCount }
     }
 
+    function moveTrack(fromIndex, toIndex) {
+        if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= tracks.value.length || toIndex >= tracks.value.length) {
+            return
+        }
+
+        const temp = tracks.value[fromIndex]
+        tracks.value[fromIndex] = tracks.value[toIndex]
+        tracks.value[toIndex] = temp
+
+        commitState()
+    }
+
     function pasteSelection(targetStartTime = null) {
         if (!clipboard.value) return
         const { actions, connections: clipConns, baseTime } = clipboard.value
@@ -1565,6 +1577,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleBoxSelectMode, setCursorTime, setCursorPosition, toggleSnapStep, nudgeSelection,
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
         removeAnomaly, initAutoSave, loadFromBrowser, resetProject, selectedConnectionId, selectConnection, selectAnomaly, getAnomalyIndexById,
+        findEffectIndexById, alignActionToTarget, getDomNodeIdByNodeId, moveTrack,
         findEffectIndexById, alignActionToTarget, getDomNodeIdByNodeId,
         connectionMap,
         actionMap,
