@@ -14,7 +14,7 @@ const connectionHandler = useDragConnection()
 
 const isSelected = computed(() => store.isActionSelected(props.action.instanceId))
 
-// 幽灵模式：triggerWindow < 0 时仅显示逻辑点，不显示实体框
+// 幽灵模式：触发窗口 < 0 时仅显示逻辑点，不显示实体框
 const isGhostMode = computed(() => (props.action.triggerWindow || 0) < 0)
 
 // 计算主题色

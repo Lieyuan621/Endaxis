@@ -160,7 +160,8 @@
       "execution_anomalies": [],
       "accept_team_gauge": true,
       "variants": [],
-      "ultimate_animationTime": 1.5
+      "ultimate_animationTime": 1.5,
+      "ultimate_enhancementTime": 0
     },
     {
       "id": "POGRANICHNK",
@@ -401,7 +402,8 @@
         }
       ],
       "ultimate_enhancementTime": 0,
-      "ultimate_animationTime": 2.5
+      "ultimate_animationTime": 2.5,
+      "attack_gaugeGain": 0
     },
     {
       "id": "ARDELIA",
@@ -552,7 +554,8 @@
       "execution_anomalies": [],
       "accept_team_gauge": true,
       "ultimate_enhancementTime": 0,
-      "ultimate_animationTime": 2.7
+      "ultimate_animationTime": 2.7,
+      "attack_gaugeGain": 0
     },
     {
       "id": "LASTRITE",
@@ -668,7 +671,8 @@
       "execution_anomalies": [],
       "accept_team_gauge": false,
       "ultimate_enhancementTime": 0,
-      "ultimate_animationTime": 2.9
+      "ultimate_animationTime": 2.9,
+      "attack_gaugeGain": 0
     },
     {
       "id": "GILBERTA",
@@ -839,7 +843,8 @@
       "execution_anomalies": [],
       "accept_team_gauge": true,
       "ultimate_enhancementTime": 0,
-      "ultimate_animationTime": 0.5
+      "ultimate_animationTime": 0.5,
+      "attack_gaugeGain": 0
     },
     {
       "id": "YVONNE",

@@ -65,9 +65,6 @@ function hexToRgba(hex, alpha) {
   return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + alpha + ')'
 }
 
-/**
- * 获取技能的主题色 (与 ActionItem 逻辑保持一致)
- */
 function getSkillThemeColor(skill) {
   // 1. 特殊类型优先
   if (skill.type === 'link') return store.getColor('link')
