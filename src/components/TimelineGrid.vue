@@ -691,6 +691,8 @@ function onSwitchMarkerMouseDown(evt, id) {
   evt.preventDefault()
   if (evt.button !== 0) return
 
+  store.setDragOffset(0)
+
   wasSwitchSelectedOnPress.value = (store.selectedSwitchEventId === id)
 
   if (!wasSwitchSelectedOnPress.value) {
@@ -2096,19 +2098,18 @@ onUnmounted(() => {
   transition: none;
 }
 .tag-avatar {
-  width: 24px; height: 24px; border-radius: 50%; border: 2px solid #ffd700;
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d3adff;
   background: #222; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 .tag-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .tag-time {
   font-size: 9px;
-  color: #ffd700;
+  color: #d3adff;
   font-weight: bold;
-  background: transparent; /* 改为透明 */
+  background: transparent;
   padding: 0 2px;
   border-radius: 2px;
   margin-top: 2px;
-  /* 如果觉得透明后文字不清晰，可以加个文字阴影 */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 .switch-tag.is-selected .tag-avatar {

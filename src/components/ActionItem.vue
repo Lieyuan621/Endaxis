@@ -407,7 +407,6 @@ function handleEffectDrop(effectId) {
       <div v-if="animationTimeWidth > 0"
            class="animation-phase-overlay"
            :style="{ width: `${animationTimeWidth}px` }">
-        <div class="anim-shimmer"></div>
       </div>
     </div>
 
@@ -633,25 +632,5 @@ function handleEffectDrop(effectId) {
   overflow: hidden;
   border-right: 1px solid rgba(255, 255, 255, 0.3);
   z-index: 1;
-}
-
-.anim-shimmer {
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 300%;
-  height: 100%;
-  background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.25) 50%,
-      transparent
-  );
-  animation: shimmer-swipe 3s infinite ease-in-out;
-}
-
-@keyframes shimmer-swipe {
-  from { transform: translateX(0); }
-  to { transform: translateX(50%); }
 }
 </style>

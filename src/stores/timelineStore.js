@@ -981,6 +981,9 @@ export const useTimelineStore = defineStore('timeline', () => {
             if (actionIdsToDelete.size > 0) {
                 connections.value = connections.value.filter(conn => !actionIdsToDelete.has(conn.from) && !actionIdsToDelete.has(conn.to));
             }
+            if (oldOperatorId) {
+                switchEvents.value = switchEvents.value.filter(s => s.characterId !== oldOperatorId);
+            }
             track.id = newOperatorId;
             track.actions = [];
             if (activeTrackId.value === oldOperatorId) activeTrackId.value = newOperatorId;
@@ -992,9 +995,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     function clearTrack(trackIndex) {
         const track = tracks.value[trackIndex];
         if (!track) return;
+        const oldOperatorId = track.id;
         const actionIdsToDelete = new Set(track.actions.map(a => a.instanceId));
         if (actionIdsToDelete.size > 0) {
             connections.value = connections.value.filter(conn => !actionIdsToDelete.has(conn.from) && !actionIdsToDelete.has(conn.to));
+        }
+        if (oldOperatorId) {
+            switchEvents.value = switchEvents.value.filter(s => s.characterId !== oldOperatorId);
         }
         track.id = null;
         track.actions = [];
