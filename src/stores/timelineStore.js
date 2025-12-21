@@ -1485,7 +1485,6 @@ export const useTimelineStore = defineStore('timeline', () => {
             const eventsNow = instantEvents.filter(e => Math.abs(e.time - now) < 0.0001);
             if (eventsNow.length > 0) {
                 eventsNow.forEach(e => currentSp += e.change);
-                if (currentSp < 0) currentSp = 0;
                 if (currentSp > maxSp) currentSp = maxSp;
                 points.push({ time: now, sp: currentSp });
             }
