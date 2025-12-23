@@ -269,9 +269,13 @@ const operationMarkers = computed(() => {
 
 const getTrackLaneStyle = computed(() => {
   const w = TIME_BLOCK_WIDTH.value
+  const totalWidth = store.TOTAL_DURATION * w
+
   return {
+    width: `${totalWidth}px`,
     backgroundImage: `linear-gradient(to right, transparent calc(100% - 1px), rgba(255, 255, 255, 0.08) 100%)`,
-    backgroundSize: `${w}px 100%`
+    backgroundSize: `${w}px 100%`,
+    backgroundRepeat: 'repeat-x'
   }
 })
 
@@ -1821,7 +1825,9 @@ onUnmounted(() => {
 .track-row {
   position: relative;
   flex: 1;
-  min-height: 60px;
+  min-height: 50px;
+  width: fit-content;
+  min-width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1835,7 +1841,6 @@ onUnmounted(() => {
 .track-lane {
   position: relative;
   height: 50px;
-  width: 100%;
   display: flex;
   background: rgba(255, 255, 255, 0.02);
   border-top: 2px solid transparent;
