@@ -45,6 +45,17 @@ const PORT_OPTIONS = [
   { label: '左下', value: 'bottom-left' }
 ]
 
+const getFullTypeName = (type) => {
+  const map = {
+    'attack': '重击',
+    'skill': '战技',
+    'link': '连携',
+    'ultimate': '终结技',
+    'execution': '处决'
+  }
+  return map[type] || '技能'
+}
+
 // ===================================================================================
 // 2. 核心状态计算
 // ===================================================================================
@@ -435,15 +446,22 @@ function handleStartConnection(id) {
 <template>
   <div v-if="targetData" class="properties-panel">
     <div class="panel-header">
-      <h3 class="panel-title">
-        {{ targetData.name }}
-        <span v-if="isLibraryMode" class="mode-badge">此处更改会全局生效</span>
-      </h3>
-      <div class="type-badge">{{ targetData.type }}</div>
+      <div class="header-main-row">
+        <div class="left-group">
+          <div class="header-icon-bar"></div>
+          <h3 class="char-name">{{ targetData.name }}</h3>
+          <span v-if="isLibraryMode" class="mode-badge">全局模式</span>
+        </div>
+
+        <div class="right-group">
+          <div class="skill-type-minimal">{{ getFullTypeName(targetData.type) }}</div>
+        </div>
+      </div>
+      <div class="header-divider"></div>
     </div>
 
-    <div class="section-container">
-      <div class="section-label">基础属性</div>
+    <div class="section-container tech-style">
+      <div class="panel-tag-mini">基础属性</div>
       <div class="attribute-grid">
         <div class="form-group compact">
           <label>持续时间(s)</label>
@@ -710,14 +728,25 @@ function handleStartConnection(id) {
 
 <style scoped>
 /* Base & Layout */
-.properties-panel { padding: 12px; color: #e0e0e0; background-color: #2b2b2b; height: 100%; box-sizing: border-box; overflow-y: auto; font-size: 13px; }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
-.panel-title { margin: 0; color: #ffd700; font-size: 16px; font-weight: bold; display: flex; flex-direction: column; gap: 4px; }
-.mode-badge { font-size: 10px; color: #888; font-weight: normal; background: #333; padding: 2px 4px; border-radius: 2px; width: fit-content; }
-.type-badge { font-size: 10px; background: #444; padding: 2px 6px; border-radius: 4px; color: #aaa; text-transform: uppercase; }
+.properties-panel { padding: 20px; background-color: #252525; display: flex; flex-direction: column; gap: 20px; height: 100%; box-sizing: border-box; overflow-y: auto; font-size: 13px; color: #e0e0e0; transition: background-color 0.3s ease; }
+.panel-header { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
+.header-main-row { display: flex; justify-content: space-between; align-items: center; }
+.left-group { display: flex; align-items: center; gap: 8px; }
+.header-icon-bar { width: 4px; height: 18px; background-color: #ffd700; }
+.char-name { margin: 0; color: #fff; font-size: 18px; font-weight: bold; }
+.mode-badge { font-size: 10px; color: #888; background: #333; padding: 1px 4px; border-radius: 2px; }
+.skill-type-minimal { font-size: 11px; color: #666; background: rgba(255, 255, 255, 0.05); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); letter-spacing: 1px; }
+.header-divider { height: 2px; background: linear-gradient(90deg, #ffd700 0%, transparent 100%); opacity: 0.3; margin-top: 3px; }
 
 /* Sections */
-.section-container { margin-bottom: 15px; background: #333; border-radius: 6px; overflow: hidden; border: 1px solid #444; }
+.section-container { margin-bottom: 0; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+.section-container.tech-style { background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%) !important; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1) !important; border-left: 3px solid rgba(255, 255, 255, 0.2) !important;border-radius: 4px; padding: 16px 10px 10px 10px; position: relative; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); overflow: visible; }
+.panel-tag-mini { position: absolute; right: 0; top: -12px; background: #1a1a1a; border: 1px solid #444; border-bottom: none; font-size: 10px; color: #aaa; padding: 2px 10px; font-family: 'Inter', sans-serif; letter-spacing: 1px; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%); z-index: 5; }
+.section-container.tech-style::before { content: ""; position: absolute; bottom: 4px; right: 4px; width: 10px; height: 10px; border-right: 1px solid rgba(255,255,255,0.3); border-bottom: 1px solid rgba(255,255,255,0.3); pointer-events: none; }
+.tech-style .section-label { display: none; }
+.tech-style .form-group.compact label { font-size: 11px !important; color: rgba(255, 255, 255, 0.5) !important; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px !important; font-family: 'Inter', sans-serif; display: block; }
+.tech-style .attribute-grid { gap: 16px 12px !important; padding: 12px 8px !important; }
+
 .section-container.no-border { background: transparent; border: none; overflow: visible; }
 .section-container.border-red { border-left: 3px solid #ff7875; }
 .section-container.border-blue { border-left: 3px solid #00e5ff; }

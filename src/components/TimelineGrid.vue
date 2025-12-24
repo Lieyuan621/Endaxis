@@ -2085,7 +2085,7 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(23, 23, 23, 0.55);
   backdrop-filter: blur(8px);
   padding: 5px 0;
 }
@@ -2103,7 +2103,7 @@ onUnmounted(() => {
 .rarity-line {
   flex: 1;
   height: 1px;
-  opacity: 0.3;
+  opacity: 0.15;
 }
 
 .header-rarity-6 .rarity-label {
@@ -2115,7 +2115,7 @@ onUnmounted(() => {
 
 .header-rarity-6 .rarity-line {
   background: linear-gradient(90deg, #FFD700, transparent) !important;
-  opacity: 0.8;
+  opacity: 0.4;
 }
 
 .roster-grid {

@@ -245,7 +245,7 @@ function onNativeDragEnd() {
 .header-icon-bar { width: 4px; height: 18px; background-color: #ffd700; }
 .char-name { margin: 0; color: #fff; font-size: 18px; letter-spacing: 1px; }
 .header-sub { font-size: 10px; color: #555; font-family: 'Roboto Mono', monospace; }
-.header-divider { height: 1px; background: linear-gradient(90deg, #ffd700 0%, transparent 100%); opacity: 0.3; margin-top: 5px; }
+.header-divider { height: 2px; background: linear-gradient(90deg, #ffd700 0%, transparent 100%); opacity: 0.3; margin-top: 5px; }
 
 /* 参数面板 */
 .gauge-settings-panel {
