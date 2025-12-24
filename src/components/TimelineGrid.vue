@@ -680,9 +680,7 @@ function onBackgroundContextMenu(evt) {
 
   const snap = store.snapStep
   let clickTime = Math.round(rawTime / snap) * snap
-  store.openContextMenu(evt, null, Math.round(clickTime * 1000) / 1000)
-  if (clickTime < 0) clickTime = 0
-
+  clickTime = Math.round(Math.max(0, clickTime) * 1000) / 1000
   store.openContextMenu(evt, null, clickTime)
 }
 
@@ -842,6 +840,7 @@ function onWindowMouseMove(evt) {
     }
     let newTime = calculateTimeFromEvent(evt, store.snapStep)
     if (newTime > store.TOTAL_DURATION) newTime = store.TOTAL_DURATION
+    newTime = Math.round(newTime * 1000) / 1000
     store.updateSwitchEvent(draggingSwitchEventId.value, newTime)
     return
   }
@@ -856,6 +855,7 @@ function onWindowMouseMove(evt) {
     }
     let newTime = calculateTimeFromEvent(evt, store.snapStep)
     if (newTime > store.TOTAL_DURATION) newTime = store.TOTAL_DURATION
+    newTime = Math.round(newTime * 1000) / 1000
     store.updateCycleBoundary(draggingCycleBoundaryId.value, newTime)
     return
   }
@@ -1200,7 +1200,7 @@ onUnmounted(() => {
            :style="{ left: `${boundary.time * TIME_BLOCK_WIDTH}px` }"
            @mousedown="onCycleLineMouseDown($event, boundary.id)">
 
-        <div class="cycle-label-time">{{ boundary.time }}s</div>
+        <div class="cycle-label-time">{{ store.formatTimeLabel(boundary.time) }}</div>
         <div class="cycle-label-text">循环分界线</div>
         <div class="cycle-hit-area"></div>
       </div>
@@ -1277,7 +1277,7 @@ onUnmounted(() => {
                 <div class="tag-avatar">
                   <img :src="store.characterRoster.find(c => c.id === sw.characterId)?.avatar" />
                 </div>
-                <div class="tag-time">{{ sw.time }}s</div>
+                <div class="tag-time">{{ store.formatTimeLabel(sw.time) }}</div>
               </div>
             </div>
           </div>

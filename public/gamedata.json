@@ -161,7 +161,8 @@
       "accept_team_gauge": true,
       "variants": [],
       "ultimate_animationTime": 1.5,
-      "ultimate_enhancementTime": 0
+      "ultimate_enhancementTime": 0,
+      "attack_gaugeGain": 0
     },
     {
       "id": "POGRANICHNK",
@@ -395,6 +396,33 @@
               "offset": 2.3,
               "stagger": 9,
               "sp": 13
+            }
+          ],
+          "cooldown": 18,
+          "gaugeGain": 10
+        },
+        {
+          "id": "v_1766424867630",
+          "name": "连携4",
+          "type": "link",
+          "duration": 2.4,
+          "allowedTypes": [],
+          "physicalAnomaly": [],
+          "damageTicks": [
+            {
+              "offset": 0.76,
+              "sp": 5,
+              "stagger": 3
+            },
+            {
+              "offset": 1.38,
+              "stagger": 4,
+              "sp": 7
+            },
+            {
+              "offset": 2.3,
+              "stagger": 9,
+              "sp": 23
             }
           ],
           "cooldown": 18,
@@ -2003,12 +2031,14 @@
           {
             "type": "emag_attach",
             "stacks": 1,
-            "duration": 1.7
+            "duration": 1.9,
+            "offset": 2.1
           },
           {
             "type": "conductive",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "offset": 4
           }
         ]
       ],
@@ -3153,7 +3183,7 @@
       ],
       "link_allowed_types": [],
       "link_anomalies": [],
-      "ultimate_duration": 3,
+      "ultimate_duration": 1.4,
       "ultimate_gaugeMax": 90,
       "ultimate_gaugeReply": 0,
       "ultimate_damage_ticks": [
