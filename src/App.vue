@@ -56,7 +56,7 @@ body.is-lib-dragging .action-item-wrapper {
   transition: none !important;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.5) !important;
   border-color: #ffd700 !important;
-  transform: scale(1.02);
+  transform: scale(1);
 }
 
 ::-webkit-scrollbar {

@@ -288,7 +288,7 @@ function onNativeDragEnd() {
 }
 .setting-group { display: flex; flex-direction: column; gap: 8px; }
 .setting-info { display: flex; justify-content: space-between; align-items: baseline; }
-.label { font-size: 11px;color: rgba(255, 255, 255, 0.5);text-transform: uppercase;letter-spacing: 0.5px; }
+.label { font-size: 11px;color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 1px; }
 .value { font-family: 'Roboto Mono', monospace; font-weight: bold; font-size: 15px; }
 .cyan { color: #00e5ff; }
 .gold { color: #ffd700; }
