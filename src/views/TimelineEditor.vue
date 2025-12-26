@@ -14,6 +14,9 @@ import ResourceMonitor from '../components/ResourceMonitor.vue'
 const store = useTimelineStore()
 const { copyShareCode, importFromCode } = useShareProject()
 
+const watermarkEl = ref(null)
+const watermarkSubText = ref('Created by Endaxis')
+
 // === 方案管理逻辑 ===
 const editingScenarioId = ref(null)
 const renameInputRef = ref(null)
@@ -167,7 +170,8 @@ function openExportDialog() {
 async function processExport() {
   exportDialogVisible.value = false
   const userDuration = exportForm.value.duration
-  let userFilename = exportForm.value.filename || 'Endaxis_Export'
+  let rawFilename = exportForm.value.filename || 'Endaxis_Export'
+  let userFilename = rawFilename
   if (!userFilename.toLowerCase().endsWith('.png')) userFilename += '.png'
 
   const durationSeconds = userDuration
@@ -200,6 +204,12 @@ async function processExport() {
   try {
     store.setScrollLeft(0)
     scrollers.forEach(el => el.scrollLeft = 0)
+
+    watermarkSubText.value = rawFilename.replace(/\.png$/i, '')
+    if (watermarkEl.value) {
+      watermarkEl.value.style.display = 'block'
+    }
+
     await new Promise(resolve => setTimeout(resolve, 100))
 
     if (timelineMain) { timelineMain.style.width = `${totalWidth}px`; timelineMain.style.overflow = 'visible'; }
@@ -245,6 +255,9 @@ async function processExport() {
     ElMessage.error('导出失败：' + error.message)
   } finally {
     styleMap.forEach((cssText, el) => el.style.cssText = cssText)
+    if (watermarkEl.value) {
+      watermarkEl.value.style.display = 'none'
+    }
     store.setScrollLeft(originalScrollLeft)
     loading.close()
   }
@@ -450,6 +463,11 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
       <div class="timeline-workspace">
         <div class="timeline-grid-container"><TimelineGrid/></div>
         <div class="resource-monitor-panel"><ResourceMonitor/></div>
+
+        <div class="export-watermark" ref="watermarkEl">
+          Endaxis
+          <span class="watermark-sub">{{ watermarkSubText }}</span>
+        </div>
       </div>
     </main>
 
@@ -627,7 +645,7 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 .share-btn:hover { border-color: #722ed1; color: #722ed1; background-color: rgba(114, 46, 209, 0.1); }
 
 /* Workspace & Panels */
-.timeline-workspace { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+.timeline-workspace { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 .timeline-grid-container { flex-grow: 1; overflow: hidden; min-height: 0; }
 .resource-monitor-panel { height: 200px; flex-shrink: 0; border-top: 1px solid #444; z-index: 20; background: #252525; }
 
@@ -670,6 +688,27 @@ onUnmounted(() => { window.removeEventListener('keydown', handleGlobalKeydown) }
 }
 :deep(.el-textarea__inner:focus) {
   box-shadow: 0 0 0 1px #ffd700 inset;
+}
+/* === 水印样式 === */
+.export-watermark {
+  display: none;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  text-align: right;
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.watermark-sub {
+  display: block;
+  font-size: 12px;
+  opacity: 0.7;
 }
 /* Dark Mode Adapter for Element Plus Dialog */
 :deep(.el-dialog) { background-color: #2b2b2b; border: 1px solid #444; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }

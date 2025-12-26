@@ -192,7 +192,7 @@ const onDragTarget = (evt) => {
   <ConnectionPath
     v-if="coordinateInfo"
     :id="connection.id"
-    :start-point="coordinateInfo.startPoint"
+    :is-consumption="connection.isConsumption"  :start-point="coordinateInfo.startPoint"
     :end-point="coordinateInfo.endPoint"
     :start-direction="coordinateInfo.startDirection"
     :end-direction="coordinateInfo.endDirection"

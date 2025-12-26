@@ -273,9 +273,10 @@ const getTrackLaneStyle = computed(() => {
 
   return {
     width: `${totalWidth}px`,
-    backgroundImage: `linear-gradient(to right, transparent calc(100% - 1px), rgba(255, 255, 255, 0.08) 100%)`,
+    backgroundImage: `linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 0)`,
     backgroundSize: `${w}px 100%`,
-    backgroundRepeat: 'repeat-x'
+    backgroundRepeat: 'repeat-x',
+    imageRendering: 'auto'
   }
 })
 
@@ -1255,7 +1256,7 @@ onUnmounted(() => {
 
         <div v-for="(track, index) in store.tracks" :key="index" class="track-row" :id="`track-row-${index}`"
              :class="{ 'is-active-drop': track.id === store.activeTrackId,'is-last-track': index === store.tracks.length - 1 }" @dragover="onTrackDragOver" @drop="onTrackDrop(track, $event)">
-          <div class="track-lane" :style="getTrackLaneStyle"> <GaugeOverlay v-if="track.id" :track-id="track.id"/>
+          <div class="track-lane" :style="getTrackLaneStyle">
             <GaugeOverlay v-if="track.id" :track-id="track.id"/>
             <div class="actions-container">
               <ActionItem v-for="action in track.actions" :key="action.instanceId" :action="action"
