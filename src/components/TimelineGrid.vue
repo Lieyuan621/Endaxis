@@ -1482,6 +1482,10 @@ onUnmounted(() => {
   transition: transform 0.1s;
 }
 
+body.capture-mode .davinci-range {
+  opacity: 0;
+}
+
 .davinci-range::-webkit-slider-thumb:hover {
   transform: scale(1.3);
   background: #fff;

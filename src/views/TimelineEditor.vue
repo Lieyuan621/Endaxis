@@ -4,6 +4,7 @@ import { useTimelineStore } from '../stores/timelineStore.js'
 import { useShareProject } from '@/composables/useShareProject.js'
 import html2canvas from 'html2canvas'
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
+import { snapdom } from '@zumer/snapdom';
 
 // 组件引入
 import TimelineGrid from '../components/TimelineGrid.vue'
@@ -190,16 +191,23 @@ async function processExport() {
 
   const originalScrollLeft = store.timelineScrollLeft
 
-  const workspaceEl = document.querySelector('.timeline-workspace')
+  document.body.classList.add('capture-mode')
+
   const timelineMain = document.querySelector('.timeline-main')
+  const workspaceEl = document.querySelector('.timeline-workspace')
   const gridLayout = document.querySelector('.timeline-grid-layout')
   const scrollers = document.querySelectorAll('.tracks-content-scroller, .chart-scroll-wrapper, .timeline-grid-container')
   const tracksContent = document.querySelector('.tracks-content')
+  const settingsScrollArea = document.querySelector('.settings-scroll-area')
+  const mainPaths = document.querySelectorAll('path.main-path');
+  const pathHoverZones = document.querySelectorAll('path.hover-zone');
 
   const styleMap = new Map()
   const backupStyle = (el) => { if (el) styleMap.set(el, el.style.cssText) }
-  backupStyle(workspaceEl); backupStyle(timelineMain); backupStyle(gridLayout); backupStyle(tracksContent)
+  backupStyle(workspaceEl); backupStyle(timelineMain); backupStyle(gridLayout); backupStyle(tracksContent); backupStyle(settingsScrollArea)
   scrollers.forEach(el => backupStyle(el))
+  mainPaths.forEach(el => backupStyle(el))
+  pathHoverZones.forEach(el => backupStyle(el))
 
   try {
     store.setScrollLeft(0)
@@ -232,28 +240,38 @@ async function processExport() {
       })
     }
 
+    if (settingsScrollArea) {
+      settingsScrollArea.style.overflow = 'visible'
+    }
+
+    mainPaths.forEach(path => {
+      const computed = window.getComputedStyle(path);
+      path.style.strokeDasharray = computed.strokeDasharray;
+      path.style.stroke = computed.stroke;
+      path.style.strokeWidth = computed.strokeWidth;
+    })
+
+    pathHoverZones.forEach(path => {
+      path.style.display = 'none'
+    })
+
     await new Promise(resolve => setTimeout(resolve, 400))
 
-    const canvas = await html2canvas(workspaceEl, {
-      backgroundColor: '#282828',
+    const capture = await snapdom(workspaceEl, {
       scale: 1.5,
       width: totalWidth,
       height: workspaceEl.scrollHeight + 20,
-      windowWidth: totalWidth,
-      useCORS: true,
-      logging: false
     })
 
-    const link = document.createElement('a')
-    link.download = userFilename
-    link.href = canvas.toDataURL('image/png')
-    link.click()
+    await capture.download({ format: 'png', filename: userFilename });
+
     ElMessage.success(`长图已导出：${userFilename}`)
 
   } catch (error) {
     console.error(error)
     ElMessage.error('导出失败：' + error.message)
   } finally {
+    document.body.classList.remove('capture-mode')
     styleMap.forEach((cssText, el) => el.style.cssText = cssText)
     if (watermarkEl.value) {
       watermarkEl.value.style.display = 'none'
