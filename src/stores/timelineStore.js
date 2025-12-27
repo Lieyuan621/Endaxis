@@ -910,8 +910,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 })
             }
             const newStartTime = Math.max(0, item.data.startTime + timeDelta)
-
-            const newAction = { ...clonedAction, instanceId: newId, startTime: newStartTime }
+            const newAction = { ...clonedAction,  instanceId: newId,  startTime: newStartTime,  logicalStartTime: newStartTime }
             track.actions.push(newAction)
             track.actions.sort((a, b) => a.startTime - b.startTime)
         })
@@ -1309,6 +1308,11 @@ export const useTimelineStore = defineStore('timeline', () => {
             track.actions.forEach(action => {
                 if (!excludeSet.has(action.instanceId) && action.startTime >= triggerTime) {
                     action.startTime += amount;
+                    if (action.logicalStartTime !== undefined) {
+                        action.logicalStartTime += amount;
+                    } else {
+                        action.logicalStartTime = action.startTime;
+                    }
                 }
             });
             track.actions.sort((a, b) => a.startTime - b.startTime);
@@ -1322,6 +1326,11 @@ export const useTimelineStore = defineStore('timeline', () => {
             track.actions.forEach(action => {
                 if (!excludeSet.has(action.instanceId) && action.startTime >= triggerTime) {
                     action.startTime = Math.max(0, action.startTime - amount);
+                    if (action.logicalStartTime !== undefined) {
+                        action.logicalStartTime = Math.max(0, action.logicalStartTime - amount);
+                    } else {
+                        action.logicalStartTime = action.startTime;
+                    }
                 }
             });
             track.actions.sort((a, b) => a.startTime - b.startTime);

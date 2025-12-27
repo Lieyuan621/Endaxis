@@ -681,7 +681,7 @@ function handleStartConnection(id) {
 
           <button class="main-link-btn" @click.stop="handleStartConnection(store.selectedActionId)" :class="{ 'is-linking': connectionHandler.isDragging.value && connectionHandler.state.value.sourceId === store.selectedActionId }">
             <span class="plus-icon"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
-            {{ (connectionHandler.isDragging.value) ? '选择目标技能' : '新建连线' }}
+            {{ (connectionHandler.isDragging.value) ? '选择目标' : '新建连线' }}
           </button>
         </div>
 
@@ -852,9 +852,10 @@ function handleStartConnection(id) {
 
 /* Connection Cards - Optimized */
 .connection-header-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.main-link-btn { min-width: 80px; justify-content: center; background: rgba(255, 215, 0, 0.1) !important; border: 1px solid rgba(255, 215, 0, 0.4) !important; color: #ffd700 !important; padding: 6px 12px !important; font-size: 11px !important; clip-path: polygon(0 0, 92% 0, 100% 25%, 100% 100%, 8% 100%, 0 75%); }
+.main-link-btn { display: flex; align-items: center; gap: 6px; min-width: 80px; justify-content: center; background: rgba(255, 215, 0, 0.1) !important; border: 1px solid rgba(255, 215, 0, 0.4) !important; color: #ffd700 !important; padding: 6px 12px !important; font-size: 11px !important; clip-path: polygon(0 0, 92% 0, 100% 25%, 100% 100%, 8% 100%, 0 75%); }
 .main-link-btn:hover { background: rgba(255, 215, 0, 0.2) !important; border-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); transform: translateY(-1px); }
 .main-link-btn.is-linking { background: #ffd700; color: #000; border-style: solid; animation: pulse 1s infinite; }
+.plus-icon { display: flex; align-items: center; }
 .connections-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .link-ctrl-deco { display: flex; align-items: center; gap: 8px; opacity: 0.8; flex-shrink: 0; min-width: 65px; }
 .link-ctrl-deco .ctrl-bar { width: 3px; height: 20px; background: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); flex-shrink: 0; }
@@ -886,8 +887,10 @@ function handleStartConnection(id) {
 .mini-select:hover { color: #ffd700; }
 .mini-select option { background: #2a2a2a; color: #eee; }
 .port-arrow { font-size: 8px; color: #444; letter-spacing: -1px; font-weight: bold; }
-.consume-tag { font-size: 10px; padding: 0 6px; border: 1px solid rgba(255, 255, 255, 0.1); color: #888; cursor: pointer; height: 22px; line-height: 22px; transition: all 0.2s; background-color: rgba(255, 255, 255, 0.02) !important; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; justify-content: center; clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%); }
+.consume-tag { font-size: 10px; padding: 0 6px; border: 1px solid rgba(255, 255, 255, 0.1); color: #888; cursor: pointer; height: 22px; line-height: 22px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); background-color: rgba(255, 255, 255, 0.02) !important; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; justify-content: center; clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%); }
+.consume-tag:hover { background-color: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 215, 0, 0.4); color: #eee; transform: translateY(-1px); }
 .consume-tag.active { background-color: rgba(255, 215, 0, 0.1) !important; border-color: #ffd700 !important; color: #ffd700; font-weight: bold; }
+.consume-tag.active:hover { background-color: rgba(255, 215, 0, 0.2) !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); color: #fff; }
 .offset-mini { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 .btn-del-conn { background: rgba(255, 77, 79, 0.1) !important; border: 1px solid rgba(255, 77, 79, 0.2) !important; color: #ff4d4f !important; font-size: 12px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 2px; cursor: pointer; transition: all 0.2s; opacity: 0.6; }
 .btn-del-conn:hover { opacity: 1; background: #ff4d4f !important; color: #fff !important; }
