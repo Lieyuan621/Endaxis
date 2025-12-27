@@ -121,7 +121,12 @@ const calculatePoint = (nodeId, effectIndex, isSource, connection = null, effect
   }
 
   if (isSource && connection && connection.isConsumption && realEffectIndex != null) {
-    targetDomId = `transfer-${nodeId}-${realEffectIndex}`
+    const transferId = `transfer-${nodeId}-${realEffectIndex}`
+    if (document.getElementById(transferId)) {
+      targetDomId = transferId
+    } else {
+      targetDomId = `anomaly-${nodeId}-${realEffectIndex}`
+    }
   } else if (realEffectIndex != null) {
     targetDomId = `anomaly-${nodeId}-${realEffectIndex}`
   } else {

@@ -94,12 +94,6 @@ const fullSegments = computed(() => {
         </filter>
       </defs>
 
-      <polygon
-          :points="areaData"
-          :fill="`url(#${gradientId})`"
-          class="no-events"
-      />
-
       <polyline
           :points="pathData"
           fill="none"

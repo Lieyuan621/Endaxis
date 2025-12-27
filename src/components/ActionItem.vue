@@ -87,11 +87,27 @@ const style = computed(() => {
     return {
       ...layoutStyle,
       border: `1.5px solid ${color}`,
-      borderTop: `4px solid ${color}`,
-      background: `linear-gradient(to bottom, ${hexToRgba(color, 0.4)}, ${hexToRgba(color, 0.15)})`,
-      boxShadow: `0 0 12px ${hexToRgba(color, 0.5)}`,
-      zIndex: isSelected.value ? 30 : 25,
-      borderRadius: '4px'
+      borderTop: `5px solid ${color}`,
+      background: `radial-gradient(circle at center,
+      ${hexToRgba(color, 0.5)} 0%,
+      ${hexToRgba(color, 0.2)} 70%,
+      ${hexToRgba(color, 0.1)} 100%)`,
+      boxShadow: `0 0 15px ${hexToRgba(color, 0.5)}`,
+      zIndex: isSelected.value ? 40 : 25,
+      borderRadius: '4px',
+    }
+  }
+
+  if (props.action.type === 'link' && !props.action.isDisabled) {
+    return {
+      ...layoutStyle,
+      border: `1.5px solid ${color}`,
+      borderRadius: '2px',
+      backgroundColor: hexToRgba(color, 0.15),
+      boxShadow: isSelected.value ? `0 0 8px ${color}` : 'none',
+      backdropFilter: 'blur(4px)',
+      color: isSelected.value ? '#ffffff' : color,
+      zIndex: isSelected.value ? 30 : 20
     }
   }
 
@@ -489,9 +505,9 @@ function handleEffectDrop(effectId) {
         </div>
 
         <div class="anomaly-duration-bar"
-             v-if="(item.displayDuration > 0 || item.data.duration > 0) && !item.data.hideDuration"
-             :style="{ width: `${item.barWidth}px`, backgroundColor: getEffectColor(item.data.type) }"
-             :class="{ 'is-consumed-bar': item.isConsumed }">
+           v-if="!item.data.hideDuration"
+           :style="{width: `${item.barWidth}px`,backgroundColor: getEffectColor(item.data.type),display: (item.displayDuration > 0 || item.data.duration > 0 || item.isConsumed) ? 'flex' : 'none'}"
+           :class="{ 'is-consumed-bar': item.isConsumed }">
 
           <div class="striped-bg"></div>
           <span class="duration-text">
