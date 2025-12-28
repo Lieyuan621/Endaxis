@@ -228,7 +228,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     const isBoxSelectMode = ref(false)
     const clipboard = ref(null)
 
+    const isCapturing = ref(false)
+
     const hoveredActionId = ref(null)
+
+    function setIsCapturing(val) { isCapturing.value = val }
 
     const isActionSelected = (id) => selectedActionId.value === id || multiSelectedIds.value.has(id)
 
@@ -910,7 +914,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 })
             }
             const newStartTime = Math.max(0, item.data.startTime + timeDelta)
-            const newAction = { ...clonedAction,  instanceId: newId,  startTime: newStartTime,  logicalStartTime: newStartTime }
+            const newAction = { ...clonedAction, instanceId: newId, startTime: newStartTime, logicalStartTime: newStartTime }
             track.actions.push(newAction)
             track.actions.sort((a, b) => a.startTime - b.startTime)
         })
@@ -1877,7 +1881,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return {
         MAX_SCENARIOS,
         systemConstants, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, timelineScrollLeft, globalDragOffset, draggingSkillData,
-        selectedActionId, selectedLibrarySkillId, multiSelectedIds, clipboard, showCursorGuide, isBoxSelectMode, cursorCurrentTime, cursorPosition, snapStep,
+        selectedActionId, selectedLibrarySkillId, multiSelectedIds, clipboard, isCapturing, setIsCapturing, showCursorGuide, isBoxSelectMode, cursorCurrentTime, cursorPosition, snapStep,
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,
         teamTracksInfo, activeSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getActionPositionInfo, getIncomingConnections, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
         fetchGameData, exportProject, importProject, exportShareString, importShareString, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction,
@@ -1891,7 +1895,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         contextMenu, openContextMenu, closeContextMenu,
         switchEvents, selectedSwitchEventId, addSwitchEvent, updateSwitchEvent, selectSwitchEvent,
         toggleActionLock, toggleActionDisable, setActionColor,
-        globalExtensions, getShiftedEndTime,  refreshAllActionShifts, getActionById,
+        globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById,
         enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
     }

@@ -280,9 +280,38 @@ const getTrackLaneStyle = computed(() => {
   }
 })
 
-const dynamicTicks = computed(() => {
+function getViewWindow({ bufferPx = 0 } = {}) {
   const width = TIME_BLOCK_WIDTH.value;
   const totalSeconds = store.TOTAL_DURATION;
+
+  if (!tracksContentRef.value || store.isCapturing) {
+    return {
+      startPx: 0,
+      endPx: totalSeconds * width,
+      startTime: 0,
+      endTime: totalSeconds
+    }
+  }
+
+  const rect = tracksContentRef.value.getBoundingClientRect();
+  const scrollLeft = store.timelineScrollLeft;
+
+  const startPx = Math.max(scrollLeft - bufferPx, 0);
+  const endPx = Math.min(scrollLeft + rect.width + bufferPx, totalSeconds * width);
+
+  return {
+    startPx,
+    endPx,
+    startTime: Math.floor(startPx / width),
+    endTime: Math.ceil(endPx / width)
+  }
+}
+
+const dynamicTicks = computed(() => {
+  const width = TIME_BLOCK_WIDTH.value;
+    
+  const viewWindow = getViewWindow({ bufferPx: 0 });
+
   const ticks = [];
 
   let subDivision = 1;
@@ -291,9 +320,10 @@ const dynamicTicks = computed(() => {
   else if (width >= 100) subDivision = 2;
   else subDivision = 1;
 
-  const totalSteps = totalSeconds * subDivision;
+  const startStep = viewWindow.startTime * subDivision;
+  const endStep = viewWindow.endTime * subDivision;
 
-  for (let i = 0; i <= totalSteps; i++) {
+  for (let i = startStep; i <= endStep; i++) {
     const t = i / subDivision;
     let type = '';
     let label = '';
@@ -367,13 +397,22 @@ function calculateTimeFromEvent(evt, fixedStep = null) {
   return startTime
 }
 
+let isSyncing = false
+
 function syncRulerScroll() {
-  if (timeRulerWrapperRef.value && tracksContentRef.value) {
-    const left = tracksContentRef.value.scrollLeft
-    timeRulerWrapperRef.value.scrollLeft = left
-    store.setScrollLeft(left)
+  if (isSyncing) {
+    return
   }
-  forceSvgUpdate()
+  isSyncing = true
+  requestAnimationFrame(() => {
+    if (timeRulerWrapperRef.value && tracksContentRef.value) {
+      const left = tracksContentRef.value.scrollLeft
+      timeRulerWrapperRef.value.scrollLeft = left
+      store.setScrollLeft(left)
+    }
+    forceSvgUpdate()
+    isSyncing = false
+  })
 }
 
 function syncVerticalScroll() {
