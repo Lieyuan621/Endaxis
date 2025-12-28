@@ -2,7 +2,6 @@
 import { onMounted, onUnmounted, ref, nextTick, computed, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
 import { useShareProject } from '@/composables/useShareProject.js'
-import html2canvas from 'html2canvas'
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
 import { snapdom } from '@zumer/snapdom';
 
