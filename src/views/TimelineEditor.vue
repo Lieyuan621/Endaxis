@@ -190,7 +190,6 @@ async function processExport() {
 
   const originalScrollLeft = store.timelineScrollLeft
 
-  document.body.classList.add('capture-mode')
 
   const timelineMain = document.querySelector('.timeline-main')
   const workspaceEl = document.querySelector('.timeline-workspace')
@@ -210,6 +209,8 @@ async function processExport() {
 
   try {
     store.setScrollLeft(0)
+    store.setIsCapturing(true)
+    document.body.classList.add('capture-mode')
     scrollers.forEach(el => el.scrollLeft = 0)
 
     watermarkSubText.value = rawFilename.replace(/\.png$/i, '')
@@ -271,6 +272,7 @@ async function processExport() {
     ElMessage.error('导出失败：' + error.message)
   } finally {
     document.body.classList.remove('capture-mode')
+    store.setIsCapturing(false)
     styleMap.forEach((cssText, el) => el.style.cssText = cssText)
     if (watermarkEl.value) {
       watermarkEl.value.style.display = 'none'
