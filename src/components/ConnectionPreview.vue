@@ -5,7 +5,7 @@ import ConnectionPath from './ConnectionPath.vue'
 import { useDragConnection } from '@/composables/useDragConnection.js'
 import { PORT_DIRECTIONS } from '@/utils/layoutUtils.js'
 
-const props = defineProps({ containerRef: { type: Object, required: false } })
+const props = defineProps({})
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
 
@@ -16,25 +16,17 @@ const startPoint = computed(() => {
     return null
   }
 
-  const container = props.containerRef.getBoundingClientRect()
-
-  const scrollX = props.containerRef.scrollLeft
-  const scrollY = props.containerRef.scrollTop
+  const scrollX = store.timelineScrollLeft
+  const scrollY = store.timelineScrollTop
 
   return {
-    x: (state.startPoint.x - container.left) + scrollX,
-    y: (state.startPoint.y - container.top) + scrollY,
+    x: (state.startPoint.x - store.timelineRect.left) + scrollX,
+    y: (state.startPoint.y - store.timelineRect.top) + scrollY,
     dir: PORT_DIRECTIONS[state.sourcePort]
   }
 })
 
 const mousePoint = computed(() => {
-  if (!props.containerRef) {
-    return { x: 0, y: 0, dir: { cx: 0, cy: 0 } }
-  }
-
-  const container = props.containerRef.getBoundingClientRect()
-
   let rawX = store.cursorPosition.x
   let rawY = store.cursorPosition.y
 
@@ -45,8 +37,8 @@ const mousePoint = computed(() => {
     rawY = snapState.snapPos.y
   }
 
-  const x = (rawX - container.left) + props.containerRef.scrollLeft
-  const y = (rawY - container.top) + props.containerRef.scrollTop
+  const x = (rawX - store.timelineRect.left) + store.timelineScrollLeft
+  const y = (rawY - store.timelineRect.top) + store.timelineScrollTop
 
   const dir = PORT_DIRECTIONS[snapState.targetPort ?? 'left']
 

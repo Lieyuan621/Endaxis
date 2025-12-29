@@ -293,11 +293,11 @@ function getViewWindow({ bufferPx = 0 } = {}) {
     }
   }
 
-  const rect = tracksContentRef.value.getBoundingClientRect();
+  const timelineWidth = store.timelineRect.width;
   const scrollLeft = store.timelineScrollLeft;
 
   const startPx = Math.max(scrollLeft - bufferPx, 0);
-  const endPx = Math.min(scrollLeft + rect.width + bufferPx, totalSeconds * width);
+  const endPx = Math.min(scrollLeft + timelineWidth + bufferPx, totalSeconds * width);
 
   return {
     startPx,
@@ -380,8 +380,8 @@ function updateScrollbarHeight() {
 }
 
 function calculateTimeFromEvent(evt, fixedStep = null) {
-  const trackRect = tracksContentRef.value.getBoundingClientRect()
-  const scrollLeft = tracksContentRef.value.scrollLeft
+  const trackRect = store.timelineRect
+  const scrollLeft = store.timelineScrollLeft
   const mouseX = evt.clientX
   const activeOffset = store.globalDragOffset || 0
   const mouseXInTrack = (mouseX - activeOffset) - trackRect.left + scrollLeft
@@ -397,27 +397,42 @@ function calculateTimeFromEvent(evt, fixedStep = null) {
   return startTime
 }
 
-let isSyncing = false
+watch(() => store.timelineScrollLeft, () => {
+  if (tracksContentRef.value) {
+    tracksContentRef.value.scrollLeft = store.timelineScrollLeft
+  }
+  if (timeRulerWrapperRef.value) {
+    timeRulerWrapperRef.value.scrollLeft = store.timelineScrollLeft
+  }
+  forceSvgUpdate()
+})
+
+watch(() => store.timelineScrollTop, () => {
+  if (tracksHeaderRef.value) {
+    tracksHeaderRef.value.scrollTop = store.timelineScrollTop
+  }
+})
+
+let ticking = false
 
 function syncRulerScroll() {
-  if (isSyncing) {
-    return
-  }
-  isSyncing = true
-  requestAnimationFrame(() => {
-    if (timeRulerWrapperRef.value && tracksContentRef.value) {
+  if (tracksContentRef.value) {
+    if (ticking) return
+    ticking = true
+    requestAnimationFrame(() => {
       const left = tracksContentRef.value.scrollLeft
-      timeRulerWrapperRef.value.scrollLeft = left
       store.setScrollLeft(left)
-    }
-    forceSvgUpdate()
-    isSyncing = false
-  })
+      ticking = false
+    })
+  }
 }
 
 function syncVerticalScroll() {
-  if (tracksHeaderRef.value && tracksContentRef.value) {
-    tracksHeaderRef.value.scrollTop = tracksContentRef.value.scrollTop
+  if (tracksContentRef.value) {
+    requestAnimationFrame(() => {
+      const top = tracksContentRef.value.scrollTop
+      store.setScrollTop(top)
+    })
   }
 }
 
@@ -466,10 +481,9 @@ const currentStaggerValue = computed(() => {
 })
 
 function onGridMouseMove(evt) {
-  if (!tracksContentRef.value) return
   store.setCursorPosition(evt.clientX, evt.clientY)
-  const rect = tracksContentRef.value.getBoundingClientRect()
-  const scrollLeft = tracksContentRef.value.scrollLeft
+  const rect = store.timelineRect
+  const scrollLeft = store.timelineScrollLeft
   cursorX.value = Math.round((evt.clientX - rect.left) + scrollLeft)
   isCursorVisible.value = true
   const exactTime = cursorX.value / TIME_BLOCK_WIDTH.value
@@ -481,10 +495,10 @@ function onContentMouseDown(evt) {
   if (store.isBoxSelectMode) {
     evt.stopPropagation(); evt.preventDefault()
     isBoxSelecting.value = true
-    const rect = tracksContentRef.value.getBoundingClientRect()
+    const rect = store.timelineRect
     boxStart.value = {
-      x: evt.clientX - rect.left + tracksContentRef.value.scrollLeft,
-      y: evt.clientY - rect.top + tracksContentRef.value.scrollTop
+      x: evt.clientX - rect.left + store.timelineScrollLeft,
+      y: evt.clientY - rect.top + store.timelineScrollTop
     }
     boxRect.value = { left: boxStart.value.x, top: boxStart.value.y, width: 0, height: 0 }
     window.addEventListener('mousemove', onBoxMouseMove)
@@ -516,9 +530,9 @@ function onCycleLineMouseDown(evt, boundaryId) {
 
 function onBoxMouseMove(evt) {
   if (!isBoxSelecting.value) return
-  const rect = tracksContentRef.value.getBoundingClientRect()
-  const currentX = evt.clientX - rect.left + tracksContentRef.value.scrollLeft
-  const currentY = evt.clientY - rect.top + tracksContentRef.value.scrollTop
+  const rect = store.timelineRect
+  const currentX = evt.clientX - rect.left + store.timelineScrollLeft
+  const currentY = evt.clientY - rect.top + store.timelineScrollTop
   const left = Math.min(boxStart.value.x, currentX)
   const top = Math.min(boxStart.value.y, currentY)
   boxRect.value = {
@@ -546,8 +560,8 @@ function onBoxMouseUp() {
     const trackEl = document.getElementById(`track-row-${trackIndex}`)
     if (!trackEl) return
     const trackRect = trackEl.getBoundingClientRect()
-    const containerRect = tracksContentRef.value.getBoundingClientRect()
-    const trackRelativeTop = (trackRect.top - containerRect.top) + tracksContentRef.value.scrollTop
+    const containerRect = store.timelineRect
+    const trackRelativeTop = (trackRect.top - containerRect.top) + store.timelineScrollTop
     const trackRelativeBottom = trackRelativeTop + trackRect.height
     if (trackRelativeBottom < selection.top || trackRelativeTop > selection.bottom) return
     track.actions.forEach(action => {
@@ -571,17 +585,14 @@ const zoomValue = computed({
 })
 
 function adjustZoom(delta, anchorTime = null) {
-  const scroller = tracksContentRef.value
-  if (!scroller) return
-
   const oldWidth = store.timeBlockWidth
 
   if (anchorTime === null) {
-    const viewportCenterX = scroller.scrollLeft + scroller.clientWidth / 2
+    const viewportCenterX = store.timelineScrollLeft + store.timelineRect.width / 2
     anchorTime = viewportCenterX / oldWidth
   }
 
-  const anchorOffsetInViewport = (anchorTime * oldWidth) - scroller.scrollLeft
+  const anchorOffsetInViewport = (anchorTime * oldWidth) - store.timelineScrollLeft
 
   const newVal = oldWidth + delta
   store.setBaseBlockWidth(newVal)
@@ -591,7 +602,7 @@ function adjustZoom(delta, anchorTime = null) {
   const newScrollLeft = (anchorTime * newWidth) - anchorOffsetInViewport
 
   nextTick(() => {
-    scroller.scrollLeft = newScrollLeft
+    store.timelineScrollLeft = newScrollLeft
     syncRulerScroll()
     forceSvgUpdate()
   })
@@ -600,12 +611,10 @@ function handleWheel(e) {
   if (e.ctrlKey) {
     e.preventDefault()
 
-    if (!tracksContentRef.value) return
-
-    const rect = tracksContentRef.value.getBoundingClientRect()
+    const rect = store.timelineRect
     const mouseXInViewport = e.clientX - rect.left
 
-    const timeAtMouse = (mouseXInViewport + tracksContentRef.value.scrollLeft) / store.timeBlockWidth
+    const timeAtMouse = (mouseXInViewport + store.timelineScrollLeft) / store.timeBlockWidth
 
     const zoomSpeed = 0.15
     const direction = e.deltaY < 0 ? 1 : -1
@@ -639,9 +648,9 @@ function updateAlignGuide(evt, action, element) {
   }
 
   const rect = element.getBoundingClientRect()
-  const containerRect = tracksContentRef.value.getBoundingClientRect()
-  const relLeft = rect.left - containerRect.left + tracksContentRef.value.scrollLeft
-  const relTop = rect.top - containerRect.top + tracksContentRef.value.scrollTop
+  const containerRect = store.timelineRect
+  const relLeft = rect.left - containerRect.left + store.timelineScrollLeft
+  const relTop = rect.top - containerRect.top + store.timelineScrollTop
 
   const clickX = evt.clientX - rect.left
   const isClickLeft = clickX < (rect.width / 2)
@@ -711,8 +720,8 @@ function onBackgroundContextMenu(evt) {
 
   if (isBoxSelecting.value || isDragStarted.value) return
 
-  const trackRect = tracksContentRef.value.getBoundingClientRect()
-  const scrollLeft = tracksContentRef.value.scrollLeft
+  const trackRect = store.timelineRect
+  const scrollLeft = store.timelineScrollLeft
 
   const mouseX = evt.clientX
   const mouseXInTrack = mouseX - trackRect.left + scrollLeft
@@ -792,8 +801,8 @@ function onActionMouseDown(evt, track, action) {
       })
     })
 
-    const trackRect = tracksContentRef.value.getBoundingClientRect()
-    const scrollLeft = tracksContentRef.value.scrollLeft
+    const trackRect = store.timelineRect
+    const scrollLeft = store.timelineScrollLeft
     initialMouseX.value = (clientX - trackRect.left + scrollLeft) / TIME_BLOCK_WIDTH.value
 
     store.setDragOffset(offset)
@@ -807,8 +816,8 @@ function onActionMouseDown(evt, track, action) {
 function updateDragPosition(clientX) {
   if (!isDragStarted.value || !movingActionId.value) return;
 
-  const rect = tracksContentRef.value.getBoundingClientRect();
-  const scrollLeft = tracksContentRef.value.scrollLeft;
+  const rect = store.timelineRect;
+  const scrollLeft = store.timelineScrollLeft;
 
   const currentMouseLogicTime = (clientX - rect.left + scrollLeft) / TIME_BLOCK_WIDTH.value;
 
@@ -836,12 +845,12 @@ function updateDragPosition(clientX) {
 }
 
 function performAutoScroll() {
-  if (autoScrollSpeed.value === 0 || !tracksContentRef.value) {
+  if (autoScrollSpeed.value === 0) {
     cancelAnimationFrame(autoScrollRaf)
     autoScrollRaf = null
     return
   }
-  tracksContentRef.value.scrollLeft += autoScrollSpeed.value
+  store.timelineScrollLeft += autoScrollSpeed.value
   syncRulerScroll()
   updateDragPosition(lastMouseX)
   autoScrollRaf = requestAnimationFrame(performAutoScroll)
@@ -913,7 +922,7 @@ function onWindowMouseMove(evt) {
 
   lastMouseX = evt.clientX
   if (tracksContentRef.value) {
-    const rect = tracksContentRef.value.getBoundingClientRect()
+    const rect = store.timelineRect
     if (evt.clientX < rect.left + SCROLL_ZONE) {
       const ratio = 1 - (Math.max(0, evt.clientX - rect.left) / SCROLL_ZONE)
       autoScrollSpeed.value = -Math.max(2, ratio * MAX_SCROLL_SPEED)
@@ -1085,7 +1094,10 @@ onMounted(() => {
     tracksContentRef.value.addEventListener('scroll', syncRulerScroll)
     tracksContentRef.value.addEventListener('scroll', syncVerticalScroll)
     tracksContentRef.value.addEventListener('wheel', handleWheel, { passive: false })
-    resizeObserver = new ResizeObserver(() => { forceSvgUpdate(); updateScrollbarHeight() })
+    resizeObserver = new ResizeObserver(([entry]) => { 
+      const rect = entry.target.getBoundingClientRect()
+      store.setTimelineRect(rect.width, rect.height, rect.top, rect.right, rect.bottom, rect.left)
+      forceSvgUpdate(); updateScrollbarHeight() })
     resizeObserver.observe(tracksContentRef.value)
     updateScrollbarHeight()
   }
@@ -1289,7 +1301,7 @@ onUnmounted(() => {
         <svg class="connections-svg">
           <template v-if="tracksContentRef">
             <ActionConnector v-for="conn in store.connections" :key="conn.id" :connection="conn" :container-ref="tracksContentRef" :render-key="svgRenderKey"/>
-            <ConnectionPreview v-if="connectionHandler.isDragging" :container-ref="tracksContentRef" />
+            <ConnectionPreview v-if="connectionHandler.isDragging" />
           </template>
         </svg>
 
