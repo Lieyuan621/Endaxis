@@ -84,7 +84,7 @@ function onContextMenu(evt) {
 }
 
 const getElementRectRelative = (domId, nodeId) => {
-  if (domId.startsWith('anomaly')) {
+  if (domId.startsWith('anomaly') || domId.startsWith('transfer')) {
     const el = document.getElementById(domId)
     if (!el) {
       return null

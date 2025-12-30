@@ -9,6 +9,7 @@ import ContextMenu from './ContextMenu.vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { useDragConnection } from '@/composables/useDragConnection.js'
+import { watchEffect } from 'vue'
 
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
@@ -1090,6 +1091,7 @@ const activeFreezeRegions = computed(() => {
 
 watch(() => store.timeBlockWidth, () => { nextTick(() => { forceSvgUpdate(); updateScrollbarHeight() }) })
 watch(() => [store.tracks, store.connections], () => { nextTick(() => { forceSvgUpdate() }) }, { deep: true })
+watchEffect(() => { store.updateActionRects() })
 
 onMounted(() => {
   if (tracksContentRef.value) {
@@ -1098,39 +1100,40 @@ onMounted(() => {
     tracksContentRef.value.addEventListener('wheel', handleWheel, { passive: false })
     const tracksResizeObserver = new ResizeObserver(([entry]) => { 
       const rect = entry.target.getBoundingClientRect()
+
+      trackLaneRefs.value.forEach(ref => {
+        const idx = ref.dataset.trackIndex
+        const id = ref.dataset.trackId
+        const rect = ref.getBoundingClientRect()
+        const style = window.getComputedStyle(ref)
+        // 排除border
+        let borderTop = parseInt(style.borderTopWidth)
+        let borderBottom = parseInt(style.borderBottomWidth)
+
+        if (Number.isNaN(borderTop)) borderTop = 0
+        if (Number.isNaN(borderBottom)) borderBottom = 0
+          
+        const data = {
+          top: rect.top + borderTop,
+          bottom: rect.bottom - borderBottom,
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          height: rect.height - borderTop - borderBottom
+        }
+        store.setTrackLaneRect(id, data)
+        store.setTrackLaneRect(idx, data)
+      })
+
       store.setTimelineRect(rect.width, rect.height, rect.top, rect.right, rect.bottom, rect.left)
-      forceSvgUpdate(); updateScrollbarHeight() })
+      store.updateActionRects(); forceSvgUpdate(); updateScrollbarHeight(); 
+    })
+
     tracksResizeObserver.observe(tracksContentRef.value)
     resizeObserver.push(tracksResizeObserver)
     updateScrollbarHeight()
   }
-  trackLaneRefs.value.forEach(ref => {
-    const idx = ref.dataset.trackIndex
-    const id = ref.dataset.trackId
-    const observer = new ResizeObserver(([entry]) => {
-      const rect = entry.target.getBoundingClientRect()
-      const style = window.getComputedStyle(entry.target)
-      // 排除border
-      let borderTop = parseInt(style.borderTopWidth)
-      let borderBottom = parseInt(style.borderBottomWidth)
 
-      if (Number.isNaN(borderTop)) borderTop = 0
-      if (Number.isNaN(borderBottom)) borderBottom = 0
-      
-      const data = {
-        top: rect.top + borderTop,
-        bottom: rect.bottom - borderBottom,
-        left: rect.left,
-        right: rect.right,
-        width: rect.width,
-        height: rect.height - borderTop - borderBottom
-      }
-      store.setTrackLaneRect(id, data)
-      store.setTrackLaneRect(idx, data)
-    })
-    observer.observe(ref)
-    resizeObserver.push(observer)
-  })
   window.addEventListener('keydown', handleGlobalKeyDownWrapper)
   window.addEventListener('keyup', handleGlobalKeyUp)
   window.addEventListener('blur', resetModifierKeys)
@@ -1343,8 +1346,6 @@ onUnmounted(() => {
             <GaugeOverlay v-if="track.id" :track-id="track.id"/>
             <div class="actions-container">
               <ActionItem v-for="action in track.actions" :key="action.instanceId" :action="action"
-                :height="TRACK_HEIGHT"
-                :trackIndex="index"
                 @mousedown="onActionMouseDown($event, track, action)"
                 @mousemove="updateAlignGuide($event, action, $el.querySelector(`#action-${action.instanceId}`))"
                 @mouseleave="hideAlignGuide"

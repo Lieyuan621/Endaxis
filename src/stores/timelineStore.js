@@ -1144,6 +1144,31 @@ export const useTimelineStore = defineStore('timeline', () => {
         return false
     }
 
+    function updateActionRects() {
+        actionMap.value.forEach(action => {
+            const widthUnit = timeBlockWidth.value
+            const left = (action.node.startTime || 0) * widthUnit
+            const width = action.node.duration * widthUnit
+            const finalWidth = width < 2 ? 2 : width
+            const trackRect = trackLaneRects.value[action.trackId]
+
+            let y = 0
+            if (trackRect) {
+                y = trackRect.top
+            }
+
+            const rect = {
+                left,
+                width: finalWidth,
+                right: left + finalWidth,
+                height: trackRect?.height ?? 0,
+                top: y - timelineRect.value.top,
+            }
+
+            setNodeRect(action.id, rect)
+        })
+    }
+
     function toTimelineSpace(viewX, viewY) {
         return {
             x: viewX - timelineRect.value.left + timelineScrollLeft.value,
@@ -1903,7 +1928,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     return {
-        MAX_SCENARIOS, toTimelineSpace, toViewportSpace,
+        MAX_SCENARIOS, toTimelineSpace, toViewportSpace, updateActionRects,
         systemConstants, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, timelineScrollLeft, timelineScrollTop, timelineRect, trackLaneRects, nodeRects, globalDragOffset, draggingSkillData,
         selectedActionId, selectedLibrarySkillId, multiSelectedIds, clipboard, isCapturing, setIsCapturing, showCursorGuide, isBoxSelectMode, cursorCurrentTime, cursorPosition, snapStep,
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,

@@ -8,8 +8,6 @@ import { watchEffect } from 'vue'
 
 const props = defineProps({
   action: { type: Object, required: true },
-  height: { type: Number, required: true },
-  trackIndex: { type: Number, required: true }
 })
 
 const store = useTimelineStore()
@@ -60,29 +58,12 @@ const themeColor = computed(() => {
 })
 
 // 主体样式计算
-const rect = computed(() => {
-  const widthUnit = store.timeBlockWidth
-  const left = (props.action.startTime || 0) * widthUnit
-  const width = shiftedDuration.value * widthUnit
-  const finalWidth = width < 2 ? 2 : width
-  const trackRect = store.trackLaneRects[props.trackIndex]
-
-  let y = 0
-  if (trackRect) {
-    y = trackRect.top
-  }
-
-  return {
-    left,
-    width: finalWidth,
-    right: left + finalWidth,
-    height: props.height,
-    top: y - store.timelineRect.top,
-  }
-})
-
 const style = computed(() => {
-  const { left, width, height } = rect.value
+  const rect = store.nodeRects[props.action.instanceId]
+  if (!rect) {
+    return {}
+  }
+  const { left, width, height } = rect
   const color = themeColor.value
 
   const layoutStyle = {
@@ -379,10 +360,6 @@ const isActionValidConnectionTarget = computed(() => {
   return connectionHandler.isNodeValid(props.action.instanceId)
 })
 
-watchEffect(() => {
-  store.setNodeRect(props.action.instanceId, rect.value)
-})
-
 function onIconClick(evt, item, flatIndex) {
   evt.stopPropagation()
   store.selectAnomaly(props.action.instanceId, item.rowIndex, item.colIndex)
@@ -518,7 +495,7 @@ function handleEffectDrop(effectId) {
                      :isDragging="connectionHandler.isDragging.value"
                      :disabled="!isActionValidConnectionTarget"
                      :canStart="connectionHandler.toolEnabled.value"
-                     :rect="rect"
+                     :rect="store.nodeRects[action.instanceId]"
                      v-if="showPorts"
                      :color="themeColor" />
 
