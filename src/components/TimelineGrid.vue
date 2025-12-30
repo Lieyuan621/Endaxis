@@ -1080,6 +1080,30 @@ function handleGlobalKeyDownWrapper(e) {
   handleKeyDown(e)
 }
 
+function updateTrackRects() {
+  trackLaneRefs.value.forEach(ref => {
+    const idx = ref.dataset.trackIndex
+    const rect = ref.getBoundingClientRect()
+    const style = window.getComputedStyle(ref)
+    // 排除border
+    let borderTop = parseInt(style.borderTopWidth)
+    let borderBottom = parseInt(style.borderBottomWidth)
+
+    if (Number.isNaN(borderTop)) borderTop = 0
+    if (Number.isNaN(borderBottom)) borderBottom = 0
+      
+    const data = {
+      top: rect.top + borderTop,
+      bottom: rect.bottom - borderBottom,
+      left: rect.left,
+      right: rect.right,
+      width: rect.width,
+      height: rect.height - borderTop - borderBottom
+    }
+    store.setTrackLaneRect(idx, data)
+  })
+}
+
 const activeFreezeRegions = computed(() => {
   const selectedIds = store.multiSelectedIds
   const hoveredId = store.hoveredActionId
@@ -1101,29 +1125,7 @@ onMounted(() => {
     const tracksResizeObserver = new ResizeObserver(([entry]) => { 
       const rect = entry.target.getBoundingClientRect()
 
-      trackLaneRefs.value.forEach(ref => {
-        const idx = ref.dataset.trackIndex
-        const id = ref.dataset.trackId
-        const rect = ref.getBoundingClientRect()
-        const style = window.getComputedStyle(ref)
-        // 排除border
-        let borderTop = parseInt(style.borderTopWidth)
-        let borderBottom = parseInt(style.borderBottomWidth)
-
-        if (Number.isNaN(borderTop)) borderTop = 0
-        if (Number.isNaN(borderBottom)) borderBottom = 0
-          
-        const data = {
-          top: rect.top + borderTop,
-          bottom: rect.bottom - borderBottom,
-          left: rect.left,
-          right: rect.right,
-          width: rect.width,
-          height: rect.height - borderTop - borderBottom
-        }
-        store.setTrackLaneRect(id, data)
-        store.setTrackLaneRect(idx, data)
-      })
+      updateTrackRects()
 
       store.setTimelineRect(rect.width, rect.height, rect.top, rect.right, rect.bottom, rect.left)
       store.updateActionRects(); forceSvgUpdate(); updateScrollbarHeight(); 

@@ -1,10 +1,9 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
 import { useDragConnection } from '../composables/useDragConnection.js'
 import ActionLinkPorts from './ActionLinkPorts.vue'
 import { getRectPos } from '@/utils/layoutUtils.js'
-import { watchEffect } from 'vue'
 
 const props = defineProps({
   action: { type: Object, required: true },
@@ -144,15 +143,6 @@ const style = computed(() => {
     color: isSelected.value ? '#ffffff' : color,
     boxShadow: isSelected.value ? `0 0 10px ${color}` : 'none'
   }
-})
-
-const shiftedDuration = computed(() => {
-  const end = store.getShiftedEndTime(
-      props.action.startTime,
-      props.action.duration,
-      props.action.instanceId
-  );
-  return end - props.action.startTime
 })
 
 // 冷却条样式
