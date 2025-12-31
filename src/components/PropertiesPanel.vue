@@ -761,12 +761,13 @@ function handleStartConnection(id) {
 /* Base & Layout */
 .properties-panel { padding: 20px; background-color: #252525; display: flex; flex-direction: column; gap: 20px; height: 100%; box-sizing: border-box; overflow-y: auto; font-size: 13px; color: #e0e0e0; transition: background-color 0.3s ease; scrollbar-width: thin; scrollbar-color: #444 transparent; }
 .panel-header { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
-.header-main-row { display: flex; justify-content: space-between; align-items: center; }
-.left-group { display: flex; align-items: center; gap: 8px; }
+.header-main-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; overflow: hidden; }
+.left-group { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
 .header-icon-bar { width: 4px; height: 18px; background-color: #ffd700; }
-.char-name { margin: 0; color: #fff; font-size: 18px; font-weight: bold; }
+.char-name { margin: 0; color: #fff; font-size: 18px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mode-badge { font-size: 10px; color: #888; background: #333; padding: 1px 4px; border-radius: 2px; }
 .skill-type-minimal { font-size: 11px; color: #666; background: rgba(255, 255, 255, 0.05); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); letter-spacing: 1px; }
+.mode-badge, .skill-type-minimal { flex-shrink: 0; white-space: nowrap; }
 .header-divider { height: 2px; background: linear-gradient(90deg, #ffd700 0%, transparent 100%); opacity: 0.3; margin-top: 3px; }
 
 /* Sections */

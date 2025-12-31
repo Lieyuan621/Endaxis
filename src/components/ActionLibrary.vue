@@ -25,6 +25,27 @@ const getFullTypeName = (type) => {
   return map[type] || '技能'
 }
 
+// 图标路径
+const WEAPON_ICON_MAP = {
+  'sword': '/icons/icon_attack_sword.png',
+  'claym': '/icons/icon_attack_claym.png',
+  'lance': '/icons/icon_attack_lance.png',
+  'pistol': '/icons/icon_attack_pistol.png',
+  'funnel': '/icons/icon_attack_funnel.png'
+}
+
+const currentWeaponIcon = computed(() => {
+  const wType = activeCharacter.value?.weapon || 'sword'
+  return WEAPON_ICON_MAP[wType] || WEAPON_ICON_MAP['sword']
+})
+
+function getSkillDisplayIcon(skill) {
+  if (['attack', 'execution'].includes(skill.type)) {
+    return currentWeaponIcon.value
+  }
+  return skill.icon || ''
+}
+
 // === 充能设置逻辑 ===
 const maxGaugeValue = computed({
   get: () => {
@@ -212,15 +233,17 @@ function onNativeDragEnd() {
           >
             <div class="card-edge"></div>
             <div class="card-body">
-              <div class="skill-meta">
-                <span v-if="!skill.name.includes(getFullTypeName(skill.type))" class="skill-type">{{ getFullTypeName(skill.type) }}</span>
+              <div class="skill-meta"><span v-if="!skill.name.includes(getFullTypeName(skill.type))" class="skill-type">{{ getFullTypeName(skill.type) }}</span>
                 <span v-else class="skill-type-empty"></span>
-                <span class="skill-time">{{ skill.duration }}S</span>
+                <span class="skill-time">{{ skill.duration }}s</span>
               </div>
               <div class="skill-name">{{ skill.name }}</div>
             </div>
-            <div class="card-bg-deco"></div>
-          </div>
+
+            <div class="card-bg-deco" v-if="getSkillDisplayIcon(skill)">
+              <img :src="getSkillDisplayIcon(skill)" class="weapon-icon-inner" />
+            </div>
+            <div v-else class="card-bg-deco-empty"></div> </div>
         </div>
       </div>
     </div>
@@ -347,27 +370,62 @@ function onNativeDragEnd() {
   background-color: var(--accent-color);
   box-shadow: 2px 0 10px var(--accent-color);
 }
-.card-body {
-  padding: 8px 12px 8px 16px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  z-index: 2;
-  position: relative;
-}
-.skill-meta { display: flex; justify-content: space-between; align-items: center; }
-.skill-type { font-size: 9px; color: #888; font-weight: bold; }
-.skill-time { font-size: 9px; color: #555; font-family: monospace; }
-.skill-name { font-size: 13px; color: #fff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.card-body { padding: 10px 12px 10px 16px; height: 100%; display: flex; flex-direction: column; justify-content: center; box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1); }
+
+.skill-meta { display: flex; align-items: center; margin-bottom: 2px; }
+.skill-type { font-size: 9px; color: var(--accent-color); filter: brightness(0.8); font-weight: bold; text-transform: uppercase; opacity: 0.6; }
+.skill-time { position: absolute; top: 5px; right: 21px; width: 38px; display: flex; align-items: center; gap: 4px; font-family: 'Roboto Mono', 'Consolas', monospace; font-size: 10px; font-weight: 500; color: rgba(255, 255, 255, 0.45); z-index: 3; }
+.skill-time::before { content: ''; width: 1px; height: 8px; background: var(--accent-color); opacity: 0.4; }
+.skill-name { font-size: 13px; color: rgba(255, 255, 255, 0.9); font-weight: bold; margin-top: 2px; padding-right: 65px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .card-bg-deco {
-  position: absolute; right: -5px; bottom: -5px;
-  width: 30px; height: 30px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, transparent 20%, var(--accent-color) 100%);
+  opacity: 0.6;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.weapon-icon-inner {
+  width: 28px;
+  height: 28px;
+  filter: brightness(1.2) drop-shadow(0 0 5px var(--accent-color));
+  opacity: 0.9;
+  margin-right: 2px;
+  margin-bottom: 2px;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.skill-card:hover .card-bg-deco {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+.skill-card:hover .weapon-icon-inner {
+  filter: brightness(1.5) drop-shadow(0 0 8px #fff);
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.card-bg-deco-empty {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 15px;
+  height: 15px;
   background: var(--accent-color);
-  opacity: 0.05;
-  transform: rotate(45deg);
+  opacity: 0.2;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
 }
 
 /* Slider 自定义 */

@@ -8,7 +8,7 @@
 
 **项目已部署，点击下方链接即可直接使用：**
 
-👉 **[https://lieyuan.top/Endaxis/](https://lieyuan.top/Endaxis/)**
+👉 **[https://lieyuan.top](https://lieyuan.top)**
 
 ## 目前所能实现的效果
 
@@ -66,4 +66,4 @@ npm install
 npm run dev
 ```
 
-启动后访问 `http://localhost:5173/Endaxis` 即可看到排轴器界面。
+启动后访问 `http://localhost:5173` 即可看到排轴器界面。

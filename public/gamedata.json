@@ -160,7 +160,8 @@
       "variants": [],
       "ultimate_animationTime": 1.5,
       "ultimate_enhancementTime": 0,
-      "attack_gaugeGain": 0
+      "attack_gaugeGain": 0,
+      "weapon": "sword"
     },
     {
       "id": "POGRANICHNK",
@@ -449,7 +450,8 @@
       ],
       "ultimate_enhancementTime": 0,
       "ultimate_animationTime": 2.5,
-      "attack_gaugeGain": 0
+      "attack_gaugeGain": 0,
+      "weapon": "sword"
     },
     {
       "id": "ARDELIA",
@@ -605,7 +607,8 @@
       "accept_team_gauge": true,
       "ultimate_enhancementTime": 0,
       "ultimate_animationTime": 2.7,
-      "attack_gaugeGain": 0
+      "attack_gaugeGain": 0,
+      "weapon": "funnel"
     },
     {
       "id": "LASTRITE",
@@ -717,7 +720,8 @@
       "accept_team_gauge": false,
       "ultimate_enhancementTime": 0,
       "ultimate_animationTime": 2.9,
-      "attack_gaugeGain": 0
+      "attack_gaugeGain": 0,
+      "weapon": "claym"
     },
     {
       "id": "GILBERTA",
@@ -893,7 +897,8 @@
       "accept_team_gauge": true,
       "ultimate_enhancementTime": 0,
       "ultimate_animationTime": 0.5,
-      "attack_gaugeGain": 0
+      "attack_gaugeGain": 0,
+      "weapon": "funnel"
     },
     {
       "id": "YVONNE",
@@ -1070,7 +1075,8 @@
         }
       ],
       "ultimate_enhancementTime": 0,
-      "ultimate_animationTime": 2
+      "ultimate_animationTime": 2,
+      "weapon": "pistol"
     },
     {
       "id": "LAEVATAIN",
@@ -1376,11 +1382,14 @@
           ],
           "spCost": 100,
           "gaugeGain": 0,
-          "teamGaugeGain": 0
+          "teamGaugeGain": 0,
+          "icon": "\\avatars\\LAEVATAIN/icon_skill_laevat_02.png"
         }
       ],
       "ultimate_enhancementTime": 15,
-      "ultimate_animationTime": 2
+      "ultimate_animationTime": 2,
+      "weapon": "sword",
+      "skill_icon": "\\avatars\\LAEVATAIN/icon_skill_laevat_01.png"
     },
     {
       "id": "LIFENG",
@@ -1610,7 +1619,8 @@
         }
       ],
       "ultimate_enhancementTime": 0,
-      "ultimate_animationTime": 1.9
+      "ultimate_animationTime": 1.9,
+      "weapon": "lance"
     },
     {
       "id": "EMBER",
@@ -1740,7 +1750,8 @@
       "execution_anomalies": [],
       "accept_team_gauge": true,
       "ultimate_enhancementTime": 0,
-      "ultimate_animationTime": 1.7
+      "ultimate_animationTime": 1.7,
+      "weapon": "claym"
     },
     {
       "id": "XAIHI",
@@ -1855,7 +1866,8 @@
       ],
       "execution_anomalies": [],
       "ultimate_enhancementTime": 0,
-      "ultimate_animationTime": 1.5
+      "ultimate_animationTime": 1.5,
+      "weapon": "funnel"
     },
     {
       "id": "SNOWSHINE",

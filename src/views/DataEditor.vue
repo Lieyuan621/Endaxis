@@ -34,6 +34,14 @@ const EFFECT_NAMES = {
   "default": "默认图标"
 }
 
+const WEAPON_TYPES = [
+  { label: '单手剑 (Sword)', value: 'sword' },
+  { label: '双手剑 (Claymore)', value: 'claym' },
+  { label: '长柄武器 (Lance)', value: 'lance' },
+  { label: '手铳 (Pistol)', value: 'pistol' },
+  { label: '施术单元 (Funnel)', value: 'funnel' }
+]
+
 const ENEMY_TIERS = store.ENEMY_TIERS
 const TIER_WEIGHTS = { 'boss': 4, 'champion': 3, 'elite': 2, 'normal': 1 }
 const HIDDEN_CHECKBOX_KEYS = ['default']
@@ -167,14 +175,14 @@ function addNewCharacter() {
   const allGlobalEffects = [...effectKeys]
 
   const newChar = {
-    id: newId, name: "新干员", rarity: 5, element: "physical", avatar: "/avatars/default.png", exclusive_buffs: [],
+    id: newId, name: "新干员", rarity: 5, element: "physical", weapon: "sword", avatar: "/avatars/default.png", exclusive_buffs: [],
     accept_team_gauge: true,
 
     // 初始化各类动作属性
     attack_duration: 2.5, attack_gaugeGain: 0, attack_allowed_types: allGlobalEffects, attack_anomalies: [], attack_damage_ticks: [],
-    skill_duration: 2, skill_spCost: 100, skill_gaugeGain: 0, skill_teamGaugeGain: 0, skill_allowed_types: [], skill_anomalies: [], skill_damage_ticks: [],
-    link_duration: 1.5, link_cooldown: 15, link_gaugeGain: 0, link_allowed_types: [], link_anomalies: [], link_damage_ticks: [],
-    ultimate_duration: 3, ultimate_gaugeMax: 100, ultimate_gaugeReply: 0, ultimate_enhancementTime: 0, ultimate_allowed_types: [], ultimate_anomalies: [], ultimate_damage_ticks: [], ultimate_animationTime: 1.5,
+    skill_duration: 2, skill_spCost: 100, skill_gaugeGain: 0, skill_teamGaugeGain: 0, skill_allowed_types: [], skill_anomalies: [], skill_damage_ticks: [], skill_icon: "",
+    link_duration: 1.5, link_cooldown: 15, link_gaugeGain: 0, link_allowed_types: [], link_anomalies: [], link_damage_ticks: [], link_icon: "",
+    ultimate_duration: 3, ultimate_gaugeMax: 100, ultimate_gaugeReply: 0, ultimate_enhancementTime: 0, ultimate_allowed_types: [], ultimate_anomalies: [], ultimate_damage_ticks: [], ultimate_animationTime: 1.5, ultimate_icon: "",
     execution_duration: 1.5, execution_allowed_types: allGlobalEffects, execution_anomalies: [], execution_damage_ticks: [],
 
     variants: []
@@ -296,6 +304,7 @@ function getSnapshotFromBase(char, type) {
   const snapshot = {
     duration: char[`${type}_duration`] || 1,
     element: char[`${type}_element`],
+    icon: char[`${type}_icon`] || "",
     allowedTypes: char[`${type}_allowed_types`] ? [...char[`${type}_allowed_types`]] : [],
     physicalAnomaly: char[`${type}_anomalies`] ? JSON.parse(JSON.stringify(char[`${type}_anomalies`])) : [],
     damageTicks: char[`${type}_damage_ticks`] ? JSON.parse(JSON.stringify(char[`${type}_damage_ticks`])) : []
@@ -683,6 +692,14 @@ function saveData() {
                   </option>
                 </select>
               </div>
+              <div class="form-group">
+                <label>武器类型</label>
+                <select v-model="selectedChar.weapon">
+                  <option v-for="wpn in WEAPON_TYPES" :key="wpn.value" :value="wpn.value">
+                    {{ wpn.label }}
+                  </option>
+                </select>
+              </div>
               <div class="form-group full-width"><label>头像路径 (Public Dir)</label><input v-model="selectedChar.avatar" type="text" /></div>
             </div>
 
@@ -740,6 +757,10 @@ function saveData() {
                 <div class="form-group">
                   <label>唯一标识 (ID后缀)</label>
                   <input v-model="variant.id" placeholder="英文key, 如 s1_enhanced" />
+                </div>
+                <div class="form-group" v-if="['skill', 'link', 'ultimate'].includes(variant.type)">
+                  <label>变体专属图标路径</label>
+                  <input v-model="variant.icon" placeholder="留空则继承基础图标" type="text"/>
                 </div>
 
                 <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="variant.duration"></div>
@@ -845,6 +866,8 @@ function saveData() {
                     </option>
                   </select>
                 </div>
+
+                <div class="form-group" v-if="['skill', 'link', 'ultimate'].includes(type)"><label>自定义图标路径</label><input v-model="selectedChar[`${type}_icon`]" type="text"/></div>
 
                 <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar[`${type}_duration`]"></div>
 

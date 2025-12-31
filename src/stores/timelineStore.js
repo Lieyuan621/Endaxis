@@ -581,7 +581,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 defaults.gaugeGain = activeChar.attack_gaugeGain || 0
             }
 
-            const merged = { duration: rawDuration, cooldown: rawCooldown, ...defaults, ...globalOverride }
+            const merged = { duration: rawDuration, cooldown: rawCooldown, icon: activeChar[`${suffix}_icon`] || "", ...defaults, ...globalOverride }
 
             const specificElement = activeChar[`${suffix}_element`]
             const derivedElement = specificElement || activeChar.element || 'physical'
