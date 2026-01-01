@@ -578,7 +578,7 @@ watch(() => store.timelineScrollLeft, (newVal) => {
   grid-column: 2 / 3;
   width: 100%;
   height: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
   position: relative;
   background: #18181c;
 }
