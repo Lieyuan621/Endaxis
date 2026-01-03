@@ -76,15 +76,14 @@ body.is-lib-dragging .action-item-wrapper {
   transform: scale(1);
 }
 
+/* 滚动条样式 */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
@@ -92,12 +91,46 @@ body.is-lib-dragging .action-item-wrapper {
   background-clip: padding-box;
   transition: background 0.3s ease;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
-
 ::-webkit-scrollbar-thumb:active {
   background: rgba(255, 255, 255, 0.4);
+}
+
+/* Switch 开关样式 */
+.el-switch {
+  height: 24px;
+}
+.el-switch__core {
+  border-radius: 0 !important;
+  border: 1px solid #444 !important;
+  background-color: #1a1a1c !important;
+  height: 20px !important;
+}
+.el-switch.is-checked .el-switch__core {
+  background-color: rgba(255, 215, 0, 0.2) !important;
+  border-color: #ffd700 !important;
+}
+.el-switch__core .el-switch__action {
+  border-radius: 0 !important;
+  background-color: #888 !important;
+  width: 12px !important;
+  height: 12px !important;
+  left: 3px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.el-switch.is-checked .el-switch__core .el-switch__action {
+  background-color: #ffd700 !important;
+  left: calc(100% - 15px) !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+.el-switch__label {
+  color: #888 !important;
+  font-weight: bold !important;
+  font-size: 12px !important;
+}
+.el-switch__label.is-active {
+  color: #ffd700 !important;
 }
 </style>
