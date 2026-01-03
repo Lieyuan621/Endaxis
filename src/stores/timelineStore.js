@@ -1147,6 +1147,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     function updateActionRects() {
+        const ACTION_BORDER = 2
+        const LINE_GAP = 6
+        const LINE_HEIGHT = 2
+
         actionMap.value.forEach(action => {
             const end = getShiftedEndTime(action.node.startTime, action.node.duration, action.id)
             const shiftedWidth = end - action.node.startTime
@@ -1169,7 +1173,51 @@ export const useTimelineStore = defineStore('timeline', () => {
                 top: y - timelineRect.value.top,
             }
 
-            setNodeRect(action.id, rect)
+            // 计算触发窗口布局
+            const rawTw = action.node.triggerWindow || 0
+            const snappedWindow = Math.round(Math.abs(rawTw) * 10) / 10
+            let triggerWindowLayout = null
+
+            // 相对动作底部的位移
+            const barYRelative = ACTION_BORDER + LINE_GAP - LINE_HEIGHT / 2
+            const leftEdge = -ACTION_BORDER
+            const rightEdge = leftEdge + finalWidth + ACTION_BORDER
+
+            // 相对时间轴的位移
+            // rect.top 包含一个 ACTION_BORDER，所以这里要减去
+            const barY = rect.top + rect.height + barYRelative - ACTION_BORDER
+
+            if (snappedWindow > 0) {
+                const twWidth = snappedWindow * widthUnit
+
+                const triggerBarRight = rect.left + leftEdge
+                const triggerBarLeft = triggerBarRight - twWidth
+
+                triggerWindowLayout = {
+                    rect: {
+                        left: triggerBarLeft,
+                        right: triggerBarRight,
+                        top: barY,
+                        height: LINE_HEIGHT,
+                        width: twWidth
+                    },
+                    localTransform: `translate(${leftEdge - twWidth}px, ${barYRelative}px)`,
+                    hasWindow: true
+                }
+            } else {
+                triggerWindowLayout = { hasWindow: false }
+            }
+
+            setNodeRect(action.id, {
+                rect,
+                bar: {
+                    top: barY,
+                    relativeY: barYRelative,
+                    leftEdge,
+                    rightEdge
+                },
+                triggerWindow: triggerWindowLayout
+            })
         })
     }
 
@@ -1192,7 +1240,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         const widthUnit = timeBlockWidth.value
 
         actionMap.value.forEach(action => {
-            const actionRect = nodeRects.value[action.id]
+            const actionRect = nodeRects.value[action.id]?.rect
 
             if (!actionRect) return
 
