@@ -63,19 +63,6 @@ const resolveColor = (info, effectIndex, effectId) => {
   return store.getColor(action.type)
 }
 
-const getTriggerDotPosition = (instanceId) => {
-  const actionEl = document.getElementById(`action-${instanceId}`)
-  if (!actionEl) return null
-  const dotEl = actionEl.querySelector('.tw-dot')
-  if (!dotEl) return null
-  const rect = dotEl.getBoundingClientRect()
-  
-  const centerViewX = rect.left + rect.width / 2
-  const centerViewY = rect.top + rect.height / 2
-  
-  return store.toTimelineSpace(centerViewX, centerViewY)
-}
-
 function onContextMenu(evt) {
   if (store.selectedConnectionId !== props.connection.id) {
     store.selectConnection(props.connection.id)
@@ -85,10 +72,11 @@ function onContextMenu(evt) {
 
 const getElementRectRelative = (nodeId, isAction) => {
   if (isAction) {
-    const rect = store.nodeRects[nodeId]
-    if (!rect) {
+    const layout = store.nodeRects[nodeId]
+    if (!layout || !layout.rect) {
       return null
     }
+    const rect = layout.rect
 
     return {
       left: rect.left,
@@ -120,10 +108,15 @@ const calculatePoint = (nodeId, isSource, connection = null, effectId = null) =>
   const rawTw = info.action.triggerWindow || 0
   const hasTriggerWindow = Math.abs(Number(rawTw)) > 0.001
 
-  if (!isSource && hasTriggerWindow) {
-    const dotPos = getTriggerDotPosition(nodeId)
-    if (dotPos) {
-      return { x: dotPos.x, y: dotPos.y, dir: PORT_DIRECTIONS.left }
+
+  if (!isSource && hasTriggerWindow && !effectId) {
+    const layout = store.nodeRects[nodeId]
+    if (layout && layout.triggerWindow && layout.triggerWindow.hasWindow) {
+      return { 
+        x: layout.triggerWindow.rect.left, 
+        y: layout.triggerWindow.rect.top, 
+        dir: PORT_DIRECTIONS.left 
+      }
     }
   }
 

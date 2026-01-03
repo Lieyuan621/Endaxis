@@ -56,13 +56,15 @@ const themeColor = computed(() => {
   return store.getColor('default')
 })
 
+const actionLayout = computed(() => store.nodeRects[props.action.instanceId])
+
 // 主体样式计算
 const style = computed(() => {
-  const rect = store.nodeRects[props.action.instanceId]
-  if (!rect) {
+  const layout = actionLayout.value
+  if (!layout || !layout.rect) {
     return {}
   }
-  const { left, width, height } = rect
+  const { left, width, height } = layout.rect
   const color = themeColor.value
 
   const layoutStyle = {
@@ -147,37 +149,59 @@ const style = computed(() => {
 
 // 冷却条样式
 const cdStyle = computed(() => {
+  const layout = actionLayout.value
+
+  if (!layout) {
+    return { display: 'none' }
+  }
+
   const widthUnit = store.timeBlockWidth
   const rawCd = props.action.cooldown || 0
+
   if (rawCd <= 0) return { display: 'none' }
+
   const width = rawCd * widthUnit
   return {
     width: `${width}px`,
-    bottom: '-8px',
-    left: '-2px',
+    transform: `translate(${layout.bar.leftEdge}px, ${layout.bar.relativeY}px)`,
     opacity: 0.6
   }
 })
 
 // 强化时间样式
 const enhancementStyle = computed(() => {
+  const layout = actionLayout.value
+
+  if (!layout) {
+    return { display: 'none' }
+  }
+
   const widthUnit = store.timeBlockWidth
   const time = props.action.enhancementTime || 0
   const width = time > 0 ? time * widthUnit : 0
-  return { width: `${width}px`, bottom: '-8px', left: 'calc(100% + 2px)', opacity: 0.8 }
+
+  return { 
+    width: `${width}px`, 
+    transform: `translate(${layout.bar.rightEdge}px, ${layout.bar.relativeY}px)`,
+    opacity: 0.8 
+  }
 })
 
 // 触发窗口样式
 const triggerWindowStyle = computed(() => {
-  const widthUnit = store.timeBlockWidth
-  const rawWindow = props.action.triggerWindow || 0
-  const snappedWindow = Math.round(Math.abs(rawWindow) * 10) / 10
-  if (rawWindow === 0 || snappedWindow === 0) {
+  const layout = actionLayout.value
+
+  if (!layout || !layout.triggerWindow || !layout.triggerWindow.hasWindow) {
     return { display: 'none' }
   }
-  const width = snappedWindow * widthUnit
+
+  const width = layout.triggerWindow.rect.width
   const color = themeColor.value
-  return { '--tw-width': `${width}px`, '--tw-color': color, right: 'calc(100% + 2px)' }
+  return { 
+    '--tw-width': `${width}px`, 
+    '--tw-color': color, 
+    transform: layout.triggerWindow.localTransform
+  }
 })
 
 // 自定义时间条
@@ -205,7 +229,7 @@ const customBarsToRender = computed(() => {
     const bottomOffset = -24 - (index * 16)
 
     return {
-      style: { width: `${width}px`, left: `${left}px`, bottom: `${bottomOffset}px`, position: 'absolute', pointerEvents: 'none', opacity: 0.6, zIndex: 5 - index },
+      style: { width: `${width}px`, left: `${left}px`, bottom: `${bottomOffset}px`, pointerEvents: 'none', opacity: 0.6, zIndex: 5 - index },
       text: bar.text, originalDuration, extensionAmount,
       displayDuration: Number(shiftedDuration.toFixed(1))
     }
@@ -283,9 +307,6 @@ const renderableAnomalies = computed(() => {
   if (raw.length === 0) return []
   const rows = Array.isArray(raw[0]) ? raw : [raw]
   const resultRows = []
-  
-  const parentRect = store.nodeRects[props.action.instanceId]
-  if (!parentRect) return []
 
   let globalFlatIndex = 0
 
@@ -383,7 +404,7 @@ function handleEffectDrop(effectId) {
 </script>
 
 <template>
-  <div :id="`action-${action.instanceId}`" ref="actionElRef" class="action-item-wrapper"
+  <div :id="`action-${action.instanceId}`" ref="actionElRef" class="action-item-wrapper" :data-id="action.instanceId"
        :class="{ 'is-link-target-invalid': !isActionValidConnectionTarget && connectionSourceActionId !== action.instanceId }"
        @mouseenter="store.setHoveredAction(action.instanceId)"
        @mouseleave="store.setHoveredAction(null)"
@@ -392,7 +413,7 @@ function handleEffectDrop(effectId) {
        @dragstart.prevent>
 
 
-    <div v-if="!isGhostMode && action.cooldown > 0" class="cd-bar-container" :style="cdStyle">
+    <div v-if="!isGhostMode && action.cooldown > 0" class="cd-bar-container bottom-bar" :style="cdStyle">
       <div class="cd-line" :style="{ backgroundColor: themeColor }"></div>
 
       <span class="cd-text" :style="{ color: themeColor }">{{ store.formatTimeLabel(action.cooldown) }}</span>
@@ -406,7 +427,7 @@ function handleEffectDrop(effectId) {
     </div>
 
     <div v-if="!isGhostMode && action.type === 'ultimate' && (action.enhancementTime || 0) > 0"
-         class="cd-bar-container"
+         class="cd-bar-container bottom-bar"
          :style="enhancementStyle">
 
       <div class="cd-line" style="background-color: #b37feb;"></div>
@@ -417,7 +438,7 @@ function handleEffectDrop(effectId) {
 
     <template v-if="!isGhostMode">
       <div v-for="(barItem, idx) in customBarsToRender" :key="idx"
-           class="custom-blue-bar" :style="barItem.style">
+           class="custom-blue-bar bottom-bar" :style="barItem.style">
         <div class="cb-line"></div>
         <div class="cb-end-mark"></div>
         <span v-if="barItem.text" class="cb-label">{{ barItem.text }}</span>
@@ -438,7 +459,7 @@ function handleEffectDrop(effectId) {
       </div>
     </div>
 
-    <div v-if="action.triggerWindow && action.triggerWindow !== 0" class="trigger-window-bar" :style="triggerWindowStyle">
+    <div v-if="action.triggerWindow && action.triggerWindow !== 0" class="trigger-window-bar bottom-bar" :style="triggerWindowStyle">
       <div class="tw-dot"></div>
       <div class="tw-separator"></div>
     </div>
@@ -476,13 +497,13 @@ function handleEffectDrop(effectId) {
                      :isDragging="connectionHandler.isDragging.value"
                      :disabled="!isActionValidConnectionTarget"
                      :canStart="connectionHandler.toolEnabled.value"
-                     :rect="store.nodeRects[action.instanceId]"
+                     :rect="store.nodeRects[action.instanceId]?.rect"
                      v-if="showPorts"
                      :color="themeColor" />
 
     <div v-if="!isGhostMode" class="anomalies-overlay">
       <div v-for="(item, index) in renderableAnomalies" :key="`${item.rowIndex}-${item.colIndex}`"
-           class="anomaly-wrapper" :style="item.style">
+           class="anomaly-wrapper" :style="item.style" :data-id="item.effectId">
 
         <div :id="item.effectId"
              class="anomaly-icon-box"
@@ -671,13 +692,18 @@ function handleEffectDrop(effectId) {
 }
 
 /* === 其他样式 === */
+.bottom-bar { 
+  bottom: 0;
+  left: 0;
+  position: absolute;
+ }
 
-.cd-bar-container { position: absolute; height: 4px; display: flex; align-items: center; pointer-events: none; }
+.cd-bar-container { position: absolute; height: 2px; display: flex; align-items: center; pointer-events: none; }
 .cd-line { flex-grow: 1; height: 2px; }
 .cd-text { position: absolute; left: 0; top: 4px; font-size: 10px; font-weight: bold; line-height: 1; }
 .cd-end-mark { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 1px; height: 8px; }
 
-.custom-blue-bar { height: 4px; display: flex; align-items: center; color: #69c0ff; z-index: 5; }
+.custom-blue-bar { height: 2px; display: flex; align-items: center; color: #69c0ff; z-index: 5; }
 .cb-line { flex-grow: 1; height: 2px; background-color: #69c0ff; }
 .cb-label {
   position: absolute; right: 100%; margin-right: 6px; top: 50%; transform: translateY(-50%);
@@ -689,7 +715,7 @@ function handleEffectDrop(effectId) {
 
 .trigger-window-bar {
   position: absolute; --tw-width: 0px; --tw-color: transparent;
-  width: var(--tw-width); height: 4px; bottom: -8px; right: 100%;
+  width: var(--tw-width); height: 2px;
   display: flex; align-items: center; pointer-events: auto; cursor: pointer; z-index: 5;
 }
 .trigger-window-bar::after { content: ''; position: absolute; top: -4px; bottom: -4px; left: 0; right: 0; background: transparent; }
