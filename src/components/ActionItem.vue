@@ -388,16 +388,14 @@ function handleEffectDragStart(event, effectId) {
 }
 
 function handleEffectSnap(event, effectId) {
-  if (connectionSourceActionId.value !== props.action.instanceId) {
-    if (!connectionHandler.isNodeValid(effectId)) {
-      return
-    }
-    const effectLayout = store.effectLayouts.get(effectId)
-    if (!effectLayout) return
-    const rect = effectLayout.rect
-    const timelinePoint = getRectPos(rect, 'left')
-    connectionHandler.snapTo(effectId, 'left', timelinePoint)
+  if (!connectionHandler.isNodeValid(effectId)) {
+    return
   }
+  const effectLayout = store.effectLayouts.get(effectId)
+  if (!effectLayout) return
+  const rect = effectLayout.rect
+  const timelinePoint = getRectPos(rect, 'left')
+  connectionHandler.snapTo(effectId, 'left', timelinePoint)
 }
 
 function handleEffectDrop(effectId) {
