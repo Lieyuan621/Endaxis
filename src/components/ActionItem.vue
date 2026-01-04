@@ -380,20 +380,24 @@ function handleEffectDragStart(event, effectId) {
   if (!connectionHandler.toolEnabled.value || connectionHandler.isDragging.value) {
     return
   }
-  const rect = event.target.getBoundingClientRect()
-  const viewportPoint = getRectPos(rect, 'right')
-  const timelinePoint = store.toTimelineSpace(viewportPoint.x, viewportPoint.y)
+  const effectLayout = store.effectLayouts.get(effectId)
+  if (!effectLayout) return
+  const rect = effectLayout.rect
+  const timelinePoint = getRectPos(rect, 'right')
   connectionHandler.newConnectionFrom(timelinePoint, effectId, 'right')
 }
 
 function handleEffectSnap(event, effectId) {
-  if (!connectionHandler.isNodeValid(effectId)) {
-    return;
+  if (connectionSourceActionId.value !== props.action.instanceId) {
+    if (!connectionHandler.isNodeValid(effectId)) {
+      return
+    }
+    const effectLayout = store.effectLayouts.get(effectId)
+    if (!effectLayout) return
+    const rect = effectLayout.rect
+    const timelinePoint = getRectPos(rect, 'left')
+    connectionHandler.snapTo(effectId, 'left', timelinePoint)
   }
-  const rect = event.target.getBoundingClientRect()
-  const viewportPoint = getRectPos(rect, 'left')
-  const timelinePoint = store.toTimelineSpace(viewportPoint.x, viewportPoint.y)
-  connectionHandler.snapTo(effectId, 'left', timelinePoint)
 }
 
 function handleEffectDrop(effectId) {
