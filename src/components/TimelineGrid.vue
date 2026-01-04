@@ -677,7 +677,7 @@ function updateAlignGuide(evt, action) {
 
   const actionLayout = store.getNodeRect(action.instanceId)
   if (!actionLayout) return
-  
+
   const rect = actionLayout.rect
   const relLeft = rect.left
   const relTop = rect.top
@@ -773,10 +773,15 @@ function onActionMouseDown(evt, track, action) {
     }
   }
 
+  const actionLayout = store.getNodeRect(action.instanceId)
+  if (!actionLayout) return
+
+  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY)
+
   if (isAltDown.value) {
     if (store.selectedActionId && store.selectedActionId !== action.instanceId) {
-      const rect = evt.currentTarget.getBoundingClientRect()
-      const clickX = evt.clientX - rect.left
+      const rect = actionLayout.rect
+      const clickX = mousePos.x - rect.left
       const isClickLeft = clickX < (rect.width / 2)
       const isShift = isShiftDown.value
 
@@ -805,9 +810,7 @@ function onActionMouseDown(evt, track, action) {
   if (connectionHandler.isDragging.value) return
   if (evt.button !== 0) return
 
-  const clientX = evt.clientX
-  const rect = evt.currentTarget.getBoundingClientRect()
-  const offset = clientX - rect.left
+  const offset = mousePos.x - actionLayout.rect.left
 
   setTimeout(() => {
     wasSelectedOnPress.value = store.multiSelectedIds.has(action.instanceId)
@@ -831,9 +834,7 @@ function onActionMouseDown(evt, track, action) {
       })
     })
 
-    const trackRect = store.timelineRect
-    const scrollLeft = store.timelineScrollLeft
-    initialMouseX.value = (clientX - trackRect.left + scrollLeft) / TIME_BLOCK_WIDTH.value
+    initialMouseX.value = mousePos.x / TIME_BLOCK_WIDTH.value
 
     store.setDragOffset(offset)
 
