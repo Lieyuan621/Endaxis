@@ -145,7 +145,6 @@ function onNativeDragStart(evt, skill) {
   evt.dataTransfer.setDragImage(ghost, 10, 25);
   evt.dataTransfer.effectAllowed = 'copy';
 
-  store.setDragOffset(0);
   store.setDraggingSkill(skill);
   document.body.classList.add('is-lib-dragging');
 

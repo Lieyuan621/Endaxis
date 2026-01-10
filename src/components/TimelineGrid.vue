@@ -30,7 +30,6 @@ const trackLaneRefs = ref([])
 // Render State
 const svgRenderKey = ref(0)
 const scrollbarHeight = ref(0)
-const cursorX = ref(0)
 const isCursorVisible = ref(false)
 
 // Drag State
@@ -274,9 +273,20 @@ const operationMarkers = computed(() => {
 // 辅助计算属性 & 事件处理
 // ===================================================================================
 
+const totalWidthComputed = computed(() => {
+  return store.TOTAL_DURATION * TIME_BLOCK_WIDTH.value
+})
+
+const transformStyle = computed(() => {
+  return {
+    transform: `translateX(${-store.timelineShift}px)`,
+    willChange: 'transform'
+  }
+})
+
 const getTrackLaneStyle = computed(() => {
   const w = TIME_BLOCK_WIDTH.value
-  const totalWidth = store.TOTAL_DURATION * w
+  const totalWidth = totalWidthComputed.value
 
   return {
     width: `${totalWidth}px`,
@@ -301,7 +311,7 @@ function getViewWindow({ bufferPx = 0 } = {}) {
   }
 
   const timelineWidth = store.timelineRect.width;
-  const scrollLeft = store.timelineScrollLeft;
+  const scrollLeft = store.timelineShift;
 
   const startPx = Math.max(scrollLeft - bufferPx, 0);
   const endPx = Math.min(scrollLeft + timelineWidth + bufferPx, totalSeconds * width);
@@ -408,11 +418,7 @@ function updateScrollbarHeight() {
 }
 
 function calculateTimeFromEvent(evt, fixedStep = null) {
-  const trackRect = store.timelineRect
-  const scrollLeft = store.timelineScrollLeft
-  const mouseX = evt.clientX
-  const activeOffset = store.globalDragOffset || 0
-  const mouseXInTrack = (mouseX - activeOffset) - trackRect.left + scrollLeft
+  const mouseXInTrack = store.toTimelineSpace(evt.clientX, evt.clientY).x
 
   const rawTime = mouseXInTrack / TIME_BLOCK_WIDTH.value
 
@@ -425,44 +431,40 @@ function calculateTimeFromEvent(evt, fixedStep = null) {
   return startTime
 }
 
-watch(() => store.timelineScrollLeft, () => {
-  if (tracksContentRef.value) {
-    tracksContentRef.value.scrollLeft = store.timelineScrollLeft
-  }
-  if (timeRulerWrapperRef.value) {
-    timeRulerWrapperRef.value.scrollLeft = store.timelineScrollLeft
-  }
-  forceSvgUpdate()
-})
-
-watch(() => store.timelineScrollTop, () => {
-  if (tracksHeaderRef.value) {
-    tracksHeaderRef.value.scrollTop = store.timelineScrollTop
-  }
-})
+const fakeScrollbarRef = ref(null)
 
 let ticking = false
-
-function syncRulerScroll() {
-  if (tracksContentRef.value) {
-    if (ticking) return
-    ticking = true
-    requestAnimationFrame(() => {
-      const left = tracksContentRef.value.scrollLeft
-      store.setScrollLeft(left)
-      ticking = false
-    })
-  }
+function onFakeScroll(e) {
+  if (ticking) return
+  ticking = true
+  store.setTimelineShift(e.target.scrollLeft)
+  requestAnimationFrame(() => {
+    ticking = false
+  })
 }
+
+watch(() => store.timelineShift, (val) => {
+  if (fakeScrollbarRef.value) {
+    fakeScrollbarRef.value.scrollLeft = val
+  }
+})
+
+watch(() => store.timelineScrollTop, (val) => {
+  if (tracksHeaderRef.value) {
+    tracksHeaderRef.value.scrollTop = val
+  }
+  if (tracksContentRef.value && Math.abs(tracksContentRef.value.scrollTop - val) > 1) {
+    tracksContentRef.value.scrollTop = val
+  }
+})
 
 function syncVerticalScroll() {
   if (tracksContentRef.value) {
-    requestAnimationFrame(() => {
-      const top = tracksContentRef.value.scrollTop
-      store.setScrollTop(top)
-    })
+    const top = tracksContentRef.value.scrollTop
+    store.setScrollTop(top)
   }
 }
+
 
 function onActionContextMenu(evt, action) {
   if (!store.multiSelectedIds.has(action.instanceId)) {
@@ -476,7 +478,7 @@ function onActionContextMenu(evt, action) {
 
 const cachedSpData = computed(() => store.calculateGlobalSpData())
 const currentSpValue = computed(() => {
-  const time = cursorX.value / TIME_BLOCK_WIDTH.value
+  const time = store.cursorPosTimeline.x / TIME_BLOCK_WIDTH.value
   const points = cachedSpData.value
   if (!points || points.length === 0) {
     const val = Number(store.systemConstants.initialSp)
@@ -495,7 +497,7 @@ const currentSpValue = computed(() => {
 
 const cachedStaggerData = computed(() => store.calculateGlobalStaggerData().points)
 const currentStaggerValue = computed(() => {
-  const time = cursorX.value / TIME_BLOCK_WIDTH.value
+  const time = store.cursorPosTimeline.x / TIME_BLOCK_WIDTH.value
   const points = cachedStaggerData.value
   if (!points || points.length === 0) return 0
   for (let i = 0; i < points.length - 1; i++) {
@@ -510,12 +512,7 @@ const currentStaggerValue = computed(() => {
 
 function onGridMouseMove(evt) {
   store.setCursorPosition(evt.clientX, evt.clientY)
-  const rect = store.timelineRect
-  const scrollLeft = store.timelineScrollLeft
-  cursorX.value = Math.round((evt.clientX - rect.left) + scrollLeft)
   isCursorVisible.value = true
-  const exactTime = cursorX.value / TIME_BLOCK_WIDTH.value
-  store.setCursorTime(Math.round(exactTime * 1000) / 1000)
 }
 function onGridMouseLeave() { isCursorVisible.value = false }
 
@@ -523,11 +520,7 @@ function onContentMouseDown(evt) {
   if (store.isBoxSelectMode) {
     evt.stopPropagation(); evt.preventDefault()
     isBoxSelecting.value = true
-    const rect = store.timelineRect
-    boxStart.value = {
-      x: evt.clientX - rect.left + store.timelineScrollLeft,
-      y: evt.clientY - rect.top + store.timelineScrollTop
-    }
+    boxStart.value = store.toTimelineSpace(evt.clientX, evt.clientY)
     boxRect.value = { left: boxStart.value.x, top: boxStart.value.y, width: 0, height: 0 }
     window.addEventListener('mousemove', onBoxMouseMove)
     window.addEventListener('mouseup', onBoxMouseUp)
@@ -545,7 +538,6 @@ function onCycleLineMouseDown(evt, boundaryId) {
     store.selectCycleBoundary(boundaryId)
   }
 
-  store.setDragOffset(0)
   draggingCycleBoundaryId.value = boundaryId
   initialMouseX.value = evt.clientX
   initialMouseY.value = evt.clientY
@@ -558,15 +550,13 @@ function onCycleLineMouseDown(evt, boundaryId) {
 
 function onBoxMouseMove(evt) {
   if (!isBoxSelecting.value) return
-  const rect = store.timelineRect
-  const currentX = evt.clientX - rect.left + store.timelineScrollLeft
-  const currentY = evt.clientY - rect.top + store.timelineScrollTop
-  const left = Math.min(boxStart.value.x, currentX)
-  const top = Math.min(boxStart.value.y, currentY)
+  const current = store.toTimelineSpace(evt.clientX, evt.clientY)
+  const left = Math.min(boxStart.value.x, current.x)
+  const top = Math.min(boxStart.value.y, current.y)
   boxRect.value = {
     left, top,
-    width: Math.abs(currentX - boxStart.value.x),
-    height: Math.abs(currentY - boxStart.value.y)
+    width: Math.abs(current.x - boxStart.value.x),
+    height: Math.abs(current.y - boxStart.value.y)
   }
 }
 
@@ -616,11 +606,11 @@ function adjustZoom(delta, anchorTime = null) {
   const oldWidth = store.timeBlockWidth
 
   if (anchorTime === null) {
-    const viewportCenterX = store.timelineScrollLeft + store.timelineRect.width / 2
+    const viewportCenterX = store.timelineShift + store.timelineRect.width / 2
     anchorTime = viewportCenterX / oldWidth
   }
 
-  const anchorOffsetInViewport = (anchorTime * oldWidth) - store.timelineScrollLeft
+  const anchorOffsetInViewport = (anchorTime * oldWidth) - store.timelineShift
 
   const newVal = oldWidth + delta
   store.setBaseBlockWidth(newVal)
@@ -630,25 +620,42 @@ function adjustZoom(delta, anchorTime = null) {
   const newScrollLeft = (anchorTime * newWidth) - anchorOffsetInViewport
 
   nextTick(() => {
-    store.timelineScrollLeft = newScrollLeft
-    syncRulerScroll()
-    forceSvgUpdate()
+    store.setTimelineShift(Math.max(0, newScrollLeft))
   })
 }
 function handleWheel(e) {
   if (e.ctrlKey) {
     e.preventDefault()
 
-    const rect = store.timelineRect
-    const mouseXInViewport = e.clientX - rect.left
-
-    const timeAtMouse = (mouseXInViewport + store.timelineScrollLeft) / store.timeBlockWidth
+    const timeAtMouse = store.cursorCurrentTime
 
     const zoomSpeed = 0.15
     const direction = e.deltaY < 0 ? 1 : -1
     const delta = Math.round(store.timeBlockWidth * zoomSpeed * direction)
 
     adjustZoom(delta, timeAtMouse)
+  }
+}
+
+function handleTrackWheel(e) {
+  if (ticking) return
+
+  ticking = true
+  requestAnimationFrame(() => {
+    ticking = false
+  })
+
+  if (e.ctrlKey) {
+    handleWheel(e); return
+  }
+
+  if (Math.abs(e.deltaX) > 0 || e.shiftKey) {
+    e.preventDefault()
+    let delta = e.deltaX
+    if (e.shiftKey && delta === 0) delta = e.deltaY
+
+    const newLeft = store.timelineShift + delta
+    store.setTimelineShift(Math.min(Math.max(0, newLeft), totalWidthComputed.value - store.timelineRect.width ))
   }
 }
 
@@ -750,12 +757,8 @@ function onBackgroundContextMenu(evt) {
 
   if (isBoxSelecting.value || isDragStarted.value) return
 
-  const trackRect = store.timelineRect
-  const scrollLeft = store.timelineScrollLeft
-
-  const mouseX = evt.clientX
-  const mouseXInTrack = mouseX - trackRect.left + scrollLeft
-  const rawTime = mouseXInTrack / TIME_BLOCK_WIDTH.value
+  const cursorPos = store.toTimelineSpace(evt.clientX, evt.clientY)
+  const rawTime = cursorPos.x / TIME_BLOCK_WIDTH.value
 
   const snap = store.snapStep
   let clickTime = Math.round(rawTime / snap) * snap
@@ -834,9 +837,7 @@ function onActionMouseDown(evt, track, action) {
       })
     })
 
-    initialMouseX.value = mousePos.x / TIME_BLOCK_WIDTH.value
-
-    store.setDragOffset(offset)
+    initialMouseX.value = evt.clientX
 
     window.addEventListener('mousemove', onWindowMouseMove)
     window.addEventListener('mouseup', onWindowMouseUp)
@@ -847,12 +848,8 @@ function onActionMouseDown(evt, track, action) {
 function updateDragPosition(clientX) {
   if (!isDragStarted.value || !movingActionId.value) return;
 
-  const rect = store.timelineRect;
-  const scrollLeft = store.timelineScrollLeft;
-
-  const currentMouseLogicTime = (clientX - rect.left + scrollLeft) / TIME_BLOCK_WIDTH.value;
-
-  const delta = currentMouseLogicTime - initialMouseX.value;
+  const delta = clientX - initialMouseX.value;
+  const deltaTime = delta / TIME_BLOCK_WIDTH.value
 
   const selectedIds = store.multiSelectedIds;
   const snap = store.snapStep;
@@ -861,7 +858,7 @@ function updateDragPosition(clientX) {
     t.actions.forEach(a => {
       if (selectedIds.has(a.instanceId) && !a.isLocked) {
         const orgLogical = dragStartTimes.get(a.instanceId);
-        const targetTime = orgLogical + delta;
+        const targetTime = orgLogical + deltaTime;
 
         let snappedTime = Math.round(targetTime / snap) * snap;
 
@@ -881,8 +878,7 @@ function performAutoScroll() {
     autoScrollRaf = null
     return
   }
-  store.timelineScrollLeft += autoScrollSpeed.value
-  syncRulerScroll()
+  store.timelineShift += autoScrollSpeed.value
   updateDragPosition(lastMouseX)
   autoScrollRaf = requestAnimationFrame(performAutoScroll)
 }
@@ -891,8 +887,6 @@ function onSwitchMarkerMouseDown(evt, id) {
   evt.stopPropagation()
   evt.preventDefault()
   if (evt.button !== 0) return
-
-  store.setDragOffset(0)
 
   wasSwitchSelectedOnPress.value = (store.selectedSwitchEventId === id)
 
@@ -1147,9 +1141,8 @@ watchEffect(() => { store.updateActionRects() })
 
 onMounted(() => {
   if (tracksContentRef.value) {
-    tracksContentRef.value.addEventListener('scroll', syncRulerScroll)
     tracksContentRef.value.addEventListener('scroll', syncVerticalScroll)
-    tracksContentRef.value.addEventListener('wheel', handleWheel, { passive: false })
+
     const tracksResizeObserver = new ResizeObserver(([entry]) => { 
       const rect = entry.target.getBoundingClientRect()
 
@@ -1171,8 +1164,9 @@ onMounted(() => {
 })
 onUnmounted(() => {
   if (tracksContentRef.value) {
-    tracksContentRef.value.removeEventListener('scroll', syncRulerScroll); tracksContentRef.value.removeEventListener('scroll', syncVerticalScroll);
-    tracksContentRef.value.removeEventListener('wheel', handleWheel)
+    // tracksContentRef.value.removeEventListener('scroll', syncRulerScroll);
+    tracksContentRef.value.removeEventListener('scroll', syncVerticalScroll);
+    // tracksContentRef.value.removeEventListener('wheel', handleWheel)
   }
   resizeObserver.forEach(obs => obs.disconnect())
   resizeObserver = []
@@ -1255,7 +1249,8 @@ onUnmounted(() => {
     </div>
 
     <div class="time-ruler-wrapper" ref="timeRulerWrapperRef" @click="store.selectTrack(null)">
-      <div v-show="showGameTime" class="time-ruler-track game-time" :style="{ width: `${store.TOTAL_DURATION * TIME_BLOCK_WIDTH}px` }">
+      <div class="ruler-content-container" :style="transformStyle">
+      <div v-show="showGameTime" class="time-ruler-track game-time" :style="{ width: `${totalWidthComputed}px` }">
         <div v-for="(ext, idx) in store.globalExtensions"
              :key="idx"
              class="freeze-region-dim timeline"
@@ -1271,7 +1266,7 @@ onUnmounted(() => {
            <span v-if="tick.label" class="tick-label">{{ tick.label }}</span>
         </div>
       </div>
-      <div class="time-ruler-track" :style="{ width: `${store.TOTAL_DURATION * TIME_BLOCK_WIDTH}px` }">
+      <div class="time-ruler-track" :style="{ width: `${totalWidthComputed}px` }">
         <div v-for="tick in dynamicTicks.realTicks"
              :key="tick.time"
              class="tick-line"
@@ -1286,6 +1281,7 @@ onUnmounted(() => {
              :style="{ left: `${op.left}px`, top: `${op.top}px`, width: op.width ? `${op.width}px` : 'auto', height: `${op.height}px`, fontSize: `${op.fontSize}px` }">
           <span class="key-text">{{ op.label }}</span>
         </div>
+      </div>
       </div>
     </div>
 
@@ -1337,123 +1333,129 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="tracks-content-scroller" ref="tracksContentRef" @mousedown="onContentMouseDown"
+    <div class="tracks-content-viewport" ref="tracksContentRef" @mousedown="onContentMouseDown" @wheel="handleTrackWheel"
          @mousemove="onGridMouseMove" @mouseleave="onGridMouseLeave" @contextmenu="onBackgroundContextMenu">
 
-      <div class="cursor-guide"
-           :style="{ left: `${cursorX}px` }"
-           v-show="isCursorVisible && store.showCursorGuide && !store.isBoxSelectMode">
+      <div class="tracks-content-scroller" :style="transformStyle">
+        <div class="cursor-guide"
+             :style="{ left: `${store.cursorPosTimeline.x}px` }"
+             v-show="isCursorVisible && store.showCursorGuide && !store.isBoxSelectMode">
 
-        <div class="guide-time-label">
-          {{ store.formatTimeLabel(store.cursorCurrentTime) }}
+          <div class="guide-time-label">
+            {{ store.formatTimeLabel(store.cursorCurrentTime) }}
+          </div>
+
+          <div class="guide-sp-label">技力: {{ currentSpValue }}</div>
+          <div class="guide-stagger-label">失衡: {{ currentStaggerValue }}</div>
         </div>
 
-        <div class="guide-sp-label">技力: {{ currentSpValue }}</div>
-        <div class="guide-stagger-label">失衡: {{ currentStaggerValue }}</div>
-      </div>
+        <div v-for="boundary in store.cycleBoundaries"
+             :key="boundary.id"
+             class="cycle-guide"
+             :class="{ 'is-selected': boundary.id === store.selectedCycleBoundaryId }"
+             :style="{ left: `${boundary.time * TIME_BLOCK_WIDTH}px` }"
+             @mousedown="onCycleLineMouseDown($event, boundary.id)">
 
-      <div v-for="boundary in store.cycleBoundaries"
-           :key="boundary.id"
-           class="cycle-guide"
-           :class="{ 'is-selected': boundary.id === store.selectedCycleBoundaryId }"
-           :style="{ left: `${boundary.time * TIME_BLOCK_WIDTH}px` }"
-           @mousedown="onCycleLineMouseDown($event, boundary.id)">
-
-        <div class="cycle-label-time">{{ store.formatTimeLabel(boundary.time) }}</div>
-        <div class="cycle-label-text">循环分界线</div>
-        <div class="cycle-hit-area"></div>
-      </div>
-
-      <div v-if="alignGuide.visible" class="align-guide-layer">
-        <div class="target-highlight-box"
-             :style="{
-               left: `${alignGuide.targetRect.left}px`,
-               top: `${alignGuide.targetRect.top}px`,
-               width: `${alignGuide.targetRect.width}px`,
-               height: `${alignGuide.targetRect.height}px`,
-               color: alignGuide.color
-             }">
+          <div class="cycle-label-time">{{ store.formatTimeLabel(boundary.time) }}</div>
+          <div class="cycle-label-text">循环分界线</div>
+          <div class="cycle-hit-area"></div>
         </div>
 
-        <div class="guide-line-vertical"
-             :style="{ left: `${alignGuide.x}px`, color: alignGuide.color }">
+        <div v-if="alignGuide.visible" class="align-guide-layer">
+          <div class="target-highlight-box"
+               :style="{
+                 left: `${alignGuide.targetRect.left}px`,
+                 top: `${alignGuide.targetRect.top}px`,
+                 width: `${alignGuide.targetRect.width}px`,
+                 height: `${alignGuide.targetRect.height}px`,
+                 color: alignGuide.color
+               }">
+          </div>
+
+          <div class="guide-line-vertical"
+               :style="{ left: `${alignGuide.x}px`, color: alignGuide.color }">
+          </div>
+
+          <div class="guide-float-label"
+               :style="{
+                 left: `${alignGuide.x}px`,
+                 top: `${alignGuide.top - 28}px`,
+                 backgroundColor: alignGuide.color,
+                 '--arrow-color': alignGuide.color
+               }">
+
+            <span class="guide-icon">
+              <svg v-if="alignGuide.iconKey === 'snap-left'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline><line x1="21" y1="4" x2="21" y2="20"></line></svg>
+
+              <svg v-if="alignGuide.iconKey === 'snap-right'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><polyline points="12 5 19 12 12 19"></polyline><line x1="3" y1="4" x2="3" y2="20"></line></svg>
+
+              <svg v-if="alignGuide.iconKey === 'align-left'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="18" x2="3" y2="18"></line><line x1="6" y1="2" x2="6" y2="22"></line></svg>
+
+              <svg v-if="alignGuide.iconKey === 'align-right'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="18" x2="3" y2="18"></line><line x1="18" y1="2" x2="18" y2="22"></line></svg>
+            </span>
+
+            <span class="guide-text">{{ alignGuide.label }}</span>
+          </div>
         </div>
 
-        <div class="guide-float-label"
-             :style="{
-               left: `${alignGuide.x}px`,
-               top: `${alignGuide.top - 28}px`,
-               backgroundColor: alignGuide.color,
-               '--arrow-color': alignGuide.color
-             }">
+        <div v-if="isBoxSelecting" class="selection-box-overlay" :style="{ left: `${boxRect.left}px`, top: `${boxRect.top}px`, width: `${boxRect.width}px`, height: `${boxRect.height}px` }"></div>
 
-          <span class="guide-icon">
-            <svg v-if="alignGuide.iconKey === 'snap-left'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline><line x1="21" y1="4" x2="21" y2="20"></line></svg>
+        <div class="tracks-content">
+          <ContextMenu />
+          <svg class="connections-svg">
+            <template v-if="tracksContentRef">
+              <ActionConnector v-for="conn in store.connections" :key="conn.id" :connection="conn" :render-key="svgRenderKey"/>
+              <ConnectionPreview v-if="connectionHandler.isDragging" />
+            </template>
+          </svg>
 
-            <svg v-if="alignGuide.iconKey === 'snap-right'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><polyline points="12 5 19 12 12 19"></polyline><line x1="3" y1="4" x2="3" y2="20"></line></svg>
+          <div v-for="(track, index) in store.tracks" :key="index" class="track-row" :id="`track-row-${index}`" :style="{ '--track-height': `${TRACK_HEIGHT}px` }"
+               :class="{ 'is-active-drop': track.id === store.activeTrackId,'is-last-track': index === store.tracks.length - 1 }" @dragover="onTrackDragOver" @drop="onTrackDrop(track, $event)">
+            <div class="track-lane" :style="getTrackLaneStyle" ref="trackLaneRefs" :data-track-index="index" :data-track-id="track.id">
+              <GaugeOverlay v-if="track.id" :track-id="track.id"/>
+              <div class="actions-container">
+                <ActionItem v-for="action in track.actions" :key="action.instanceId" :action="action"
+                  @mousedown="onActionMouseDown($event, track, action)"
+                  @mousemove="updateAlignGuide($event, action, $el.querySelector(`#action-${action.instanceId}`))"
+                  @mouseleave="hideAlignGuide"
+                  @contextmenu.prevent.stop="onActionContextMenu($event, action)"
+                  :class="{ 'is-moving': isDragStarted && store.isActionSelected(action.instanceId) }"
+                />
+              </div>
+              <div class="switch-marker-layer">
+                <div v-for="sw in store.switchEvents.filter(s => s.characterId === track.id)"
+                     :key="sw.id"
+                     class="switch-tag"
+                     :class="{ 'is-selected': sw.id === store.selectedSwitchEventId, 'is-dragging': sw.id === draggingSwitchEventId }"
+                     :style="{ left: `${sw.time * TIME_BLOCK_WIDTH}px` }"
+                     @mousedown.stop="onSwitchMarkerMouseDown($event, sw.id)">
 
-            <svg v-if="alignGuide.iconKey === 'align-left'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="18" x2="3" y2="18"></line><line x1="6" y1="2" x2="6" y2="22"></line></svg>
-
-            <svg v-if="alignGuide.iconKey === 'align-right'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="18" x2="3" y2="18"></line><line x1="18" y1="2" x2="18" y2="22"></line></svg>
-          </span>
-
-          <span class="guide-text">{{ alignGuide.label }}</span>
-        </div>
-      </div>
-
-      <div v-if="isBoxSelecting" class="selection-box-overlay" :style="{ left: `${boxRect.left}px`, top: `${boxRect.top}px`, width: `${boxRect.width}px`, height: `${boxRect.height}px` }"></div>
-
-      <div class="tracks-content">
-        <ContextMenu />
-        <svg class="connections-svg">
-          <template v-if="tracksContentRef">
-            <ActionConnector v-for="conn in store.connections" :key="conn.id" :connection="conn" :render-key="svgRenderKey"/>
-            <ConnectionPreview v-if="connectionHandler.isDragging" />
-          </template>
-        </svg>
-
-        <div v-for="(track, index) in store.tracks" :key="index" class="track-row" :id="`track-row-${index}`" :style="{ '--track-height': `${TRACK_HEIGHT}px` }"
-             :class="{ 'is-active-drop': track.id === store.activeTrackId,'is-last-track': index === store.tracks.length - 1 }" @dragover="onTrackDragOver" @drop="onTrackDrop(track, $event)">
-          <div class="track-lane" :style="getTrackLaneStyle" ref="trackLaneRefs" :data-track-index="index" :data-track-id="track.id">
-            <GaugeOverlay v-if="track.id" :track-id="track.id"/>
-            <div class="actions-container">
-              <ActionItem v-for="action in track.actions" :key="action.instanceId" :action="action"
-                @mousedown="onActionMouseDown($event, track, action)"
-                @mousemove="updateAlignGuide($event, action, $el.querySelector(`#action-${action.instanceId}`))"
-                @mouseleave="hideAlignGuide"
-                @contextmenu.prevent.stop="onActionContextMenu($event, action)"
-                :class="{ 'is-moving': isDragStarted && store.isActionSelected(action.instanceId) }"
-              />
-            </div>
-            <div class="switch-marker-layer">
-              <div v-for="sw in store.switchEvents.filter(s => s.characterId === track.id)"
-                   :key="sw.id"
-                   class="switch-tag"
-                   :class="{ 'is-selected': sw.id === store.selectedSwitchEventId, 'is-dragging': sw.id === draggingSwitchEventId }"
-                   :style="{ left: `${sw.time * TIME_BLOCK_WIDTH}px` }"
-                   @mousedown.stop="onSwitchMarkerMouseDown($event, sw.id)">
-
-                <div class="tag-avatar">
-                  <img :src="store.characterRoster.find(c => c.id === sw.characterId)?.avatar" />
+                  <div class="tag-avatar">
+                    <img :src="store.characterRoster.find(c => c.id === sw.characterId)?.avatar" />
+                  </div>
+                  <div class="tag-time">{{ store.formatTimeLabel(sw.time) }}</div>
                 </div>
-                <div class="tag-time">{{ store.formatTimeLabel(sw.time) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="global-freeze-layer">
+            <div v-for="(ext, idx) in activeFreezeRegions"
+                 :key="idx"
+                 class="freeze-region-dim"
+                 :style="{
+                 left: `${ext.time * TIME_BLOCK_WIDTH}px`,
+                 width: `${ext.amount * TIME_BLOCK_WIDTH}px`}">
+              <div class="freeze-duration-label">
+                {{ store.formatTimeLabel(ext.amount) }}
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="global-freeze-layer">
-          <div v-for="(ext, idx) in activeFreezeRegions"
-               :key="idx"
-               class="freeze-region-dim"
-               :style="{
-               left: `${ext.time * TIME_BLOCK_WIDTH}px`,
-               width: `${ext.amount * TIME_BLOCK_WIDTH}px`}">
-            <div class="freeze-duration-label">
-              {{ store.formatTimeLabel(ext.amount) }}
-            </div>
-          </div>
-        </div>
+      <div class="timeline-horizontal-scrollbar" ref="fakeScrollbarRef" @scroll="onFakeScroll">
+        <div class="scrollbar-spacer" :style="{ width: `${totalWidthComputed}px` }"></div>
       </div>
     </div>
 
@@ -1730,7 +1732,11 @@ body.capture-mode .davinci-range {
   overflow: hidden;
   z-index: 6;
   user-select: none;
+}
+
+.ruler-content-container {
   position: relative;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -1965,15 +1971,37 @@ body.capture-mode .davinci-range {
 /* ==========================================================================
    5. Main Content Scroller
    ========================================================================== */
-.tracks-content-scroller {
+.tracks-content-viewport {
   grid-column: 2 / 3;
   grid-row: 2 / 3;
   width: 100%;
   height: 100%;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
   background: #18181c;
 }
+
+.tracks-content-scroller {
+  height: 100%;
+}
+
+.timeline-horizontal-scrollbar {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  width: 100%;
+  height: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.timeline-horizontal-scrollbar:hover { opacity: 1; }
+.scrollbar-spacer { height: 1px; }
 
 .tracks-content {
   position: relative;
@@ -1984,6 +2012,12 @@ body.capture-mode .davinci-range {
   padding: 20px 0;
   height: 100%;
   box-sizing: border-box;
+}
+
+.tracks-content-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .cursor-guide {

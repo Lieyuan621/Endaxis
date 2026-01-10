@@ -10,7 +10,6 @@ const store = useTimelineStore()
 const { enemyDatabase, enemyCategories } = storeToRefs(store)
 const ENEMY_TIERS = store.ENEMY_TIERS
 const TIER_WEIGHTS = { 'boss': 4, 'champion': 3, 'elite': 2, 'normal': 1 }
-const scrollContainer = ref(null)
 
 // === 布局常量 ===
 const TOTAL_HEIGHT = 200
@@ -168,9 +167,12 @@ const spWarningZones = computed(() => spData.value.filter(p => p.sp < 0).map(p =
   sp: p.sp
 })))
 
-watch(() => store.timelineScrollLeft, (newVal) => {
-  if (scrollContainer.value) scrollContainer.value.scrollLeft = newVal
-}, { flush: 'sync' })
+const transformStyle = computed(() => {
+  return {
+    transform: `translateX(${-store.timelineShift}px)`,
+    willChange: 'transform'
+  }
+})
 </script>
 
 <template>
@@ -233,84 +235,86 @@ watch(() => store.timelineScrollLeft, (newVal) => {
       </div>
     </div>
 
-    <div class="chart-scroll-wrapper" ref="scrollContainer">
-      <svg class="chart-svg" :height="TOTAL_HEIGHT" :width="store.TOTAL_DURATION * store.timeBlockWidth">
-        <defs>
-          <linearGradient id="stagger-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" :stop-color="COLOR_STAGGER" stop-opacity="0.5"/>
-            <stop offset="100%" :stop-color="COLOR_STAGGER" stop-opacity="0.1"/>
-          </linearGradient>
-          <linearGradient id="sp-fill-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.3"/>
-            <stop offset="100%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.05"/>
-          </linearGradient>
+    <div class="chart-scroll-wrapper">
+      <div :style="transformStyle">
+        <svg class="chart-svg" :height="TOTAL_HEIGHT" :width="store.TOTAL_DURATION * store.timeBlockWidth">
+          <defs>
+            <linearGradient id="stagger-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" :stop-color="COLOR_STAGGER" stop-opacity="0.5"/>
+              <stop offset="100%" :stop-color="COLOR_STAGGER" stop-opacity="0.1"/>
+            </linearGradient>
+            <linearGradient id="sp-fill-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.3"/>
+              <stop offset="100%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.05"/>
+            </linearGradient>
 
-          <pattern id="stun-pattern" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <rect width="10" height="10" fill="#ff9c6e" fill-opacity="0.1"/>
-            <rect width="2" height="10" transform="translate(0,0)" fill="#ffd591" fill-opacity="0.6"></rect>
-          </pattern>
+            <pattern id="stun-pattern" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="10" height="10" fill="#ff9c6e" fill-opacity="0.1"/>
+              <rect width="2" height="10" transform="translate(0,0)" fill="#ffd591" fill-opacity="0.6"></rect>
+            </pattern>
 
-          <pattern id="node-stripe-pattern" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <rect width="8" height="8" fill="#fa8c16" fill-opacity="0.05"/>
-            <rect width="2" height="8" transform="translate(0,0)" fill="#fa8c16" fill-opacity="0.5"></rect>
-          </pattern>
-        </defs>
+            <pattern id="node-stripe-pattern" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="8" height="8" fill="#fa8c16" fill-opacity="0.05"/>
+              <rect width="2" height="8" transform="translate(0,0)" fill="#fa8c16" fill-opacity="0.5"></rect>
+            </pattern>
+          </defs>
 
-        <line v-for="i in gridLinesCount" :key="`grid-${i}`"
-              :x1="i * 5 * store.timeBlockWidth" y1="0"
-              :x2="i * 5 * store.timeBlockWidth" :y2="TOTAL_HEIGHT"
-              stroke="#333" stroke-width="1" stroke-dasharray="2"/>
+          <line v-for="i in gridLinesCount" :key="`grid-${i}`"
+                :x1="i * 5 * store.timeBlockWidth" y1="0"
+                :x2="i * 5 * store.timeBlockWidth" :y2="TOTAL_HEIGHT"
+                stroke="#333" stroke-width="1" stroke-dasharray="2"/>
 
-        <g class="layer-stagger">
-          <line x1="0" :y1="PADDING_TOP_STAGGER" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="PADDING_TOP_STAGGER"
-                :stroke="COLOR_LIMIT" stroke-width="1" stroke-dasharray="4"/>
-          <line x1="0" :y1="BASE_Y_STAGGER" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_STAGGER"
-                :stroke="COLOR_LIMIT" stroke-width="1" stroke-dasharray="4" opacity="0.6"/>
+          <g class="layer-stagger">
+            <line x1="0" :y1="PADDING_TOP_STAGGER" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="PADDING_TOP_STAGGER"
+                  :stroke="COLOR_LIMIT" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="0" :y1="BASE_Y_STAGGER" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_STAGGER"
+                  :stroke="COLOR_LIMIT" stroke-width="1" stroke-dasharray="4" opacity="0.6"/>
 
-          <g v-for="(zone, i) in nodeZones" :key="`node-${i}`">
-            <rect :x="zone.x" :y="PADDING_TOP_STAGGER" :width="zone.width" :height="BASE_Y_STAGGER - PADDING_TOP_STAGGER"
-                  fill="url(#node-stripe-pattern)" class="node-bar-anim" />
+            <g v-for="(zone, i) in nodeZones" :key="`node-${i}`">
+              <rect :x="zone.x" :y="PADDING_TOP_STAGGER" :width="zone.width" :height="BASE_Y_STAGGER - PADDING_TOP_STAGGER"
+                    fill="url(#node-stripe-pattern)" class="node-bar-anim" />
+            </g>
+
+            <g v-for="(zone, i) in lockZones" :key="`lock-${i}`">
+              <rect :x="zone.x" :y="PADDING_TOP_STAGGER" :width="zone.width" :height="BASE_Y_STAGGER - PADDING_TOP_STAGGER" fill="url(#stun-pattern)" class="stun-bg-anim" />
+              <text :x="zone.x + zone.width / 2" :y="(BASE_Y_STAGGER + PADDING_TOP_STAGGER) / 2 + 4" fill="#fff" font-size="12" font-weight="900" text-anchor="middle" style="text-shadow: 0 0 2px #ff7a45; letter-spacing: 1px;">WEAK</text>
+            </g>
+
+            <polygon :points="staggerArea" fill="url(#stagger-grad)"/>
+            <polyline :points="staggerPolyline" fill="none" :stroke="COLOR_STAGGER" stroke-width="2"/>
+            <circle v-for="(p, idx) in staggerPoints" :key="idx" :cx="p.time * store.timeBlockWidth"
+                    :cy="BASE_Y_STAGGER - (Math.min(p.val, store.systemConstants.maxStagger) * scaleY_Stagger)" r="2" :fill="COLOR_STAGGER"/>
           </g>
 
-          <g v-for="(zone, i) in lockZones" :key="`lock-${i}`">
-            <rect :x="zone.x" :y="PADDING_TOP_STAGGER" :width="zone.width" :height="BASE_Y_STAGGER - PADDING_TOP_STAGGER" fill="url(#stun-pattern)" class="stun-bg-anim" />
-            <text :x="zone.x + zone.width / 2" :y="(BASE_Y_STAGGER + PADDING_TOP_STAGGER) / 2 + 4" fill="#fff" font-size="12" font-weight="900" text-anchor="middle" style="text-shadow: 0 0 2px #ff7a45; letter-spacing: 1px;">WEAK</text>
+          <line x1="0" :y1="STAGGER_HEIGHT" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="STAGGER_HEIGHT" stroke="#444" stroke-width="2"/>
+
+          <g class="layer-sp">
+            <line x1="0" :y1="BASE_Y_SP - (300 * scaleY_SP)" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_SP - (300 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
+            <line x1="0" :y1="BASE_Y_SP - (200 * scaleY_SP)" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_SP - (200 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
+            <line x1="0" :y1="BASE_Y_SP - (100 * scaleY_SP)" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_SP - (100 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
+            <line x1="0" :y1="BASE_Y_SP" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_SP" stroke="#aaa" stroke-width="2"/>
+
+            <text x="5" :y="BASE_Y_SP - (300 * scaleY_SP) + 12" fill="#888" font-size="10">MAX(300)</text>
+            <text x="5" :y="BASE_Y_SP + 12" fill="#666" font-size="10">0</text>
+
+            <rect x="0" :y="BASE_Y_SP" :width="store.TOTAL_DURATION * store.timeBlockWidth" :height="TOTAL_HEIGHT - BASE_Y_SP" :fill="`${COLOR_SP_WARN}26`"/>
+            <polygon :points="spArea" fill="url(#sp-fill-gradient)"/>
+            <polyline :points="spPolyline" fill="none" :stroke="COLOR_SP_MAIN" stroke-width="2" stroke-linejoin="round"/>
+
+            <circle v-for="(p, idx) in spData" :key="idx" :cx="p.time * store.timeBlockWidth" :cy="BASE_Y_SP - (p.sp * scaleY_SP)" r="2" :fill="p.sp < 0 ? COLOR_SP_WARN : COLOR_SP_MAIN" />
           </g>
-
-          <polygon :points="staggerArea" fill="url(#stagger-grad)"/>
-          <polyline :points="staggerPolyline" fill="none" :stroke="COLOR_STAGGER" stroke-width="2"/>
-          <circle v-for="(p, idx) in staggerPoints" :key="idx" :cx="p.time * store.timeBlockWidth"
-                  :cy="BASE_Y_STAGGER - (Math.min(p.val, store.systemConstants.maxStagger) * scaleY_Stagger)" r="2" :fill="COLOR_STAGGER"/>
-        </g>
-
-        <line x1="0" :y1="STAGGER_HEIGHT" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="STAGGER_HEIGHT" stroke="#444" stroke-width="2"/>
-
-        <g class="layer-sp">
-          <line x1="0" :y1="BASE_Y_SP - (300 * scaleY_SP)" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_SP - (300 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
-          <line x1="0" :y1="BASE_Y_SP - (200 * scaleY_SP)" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_SP - (200 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
-          <line x1="0" :y1="BASE_Y_SP - (100 * scaleY_SP)" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_SP - (100 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
-          <line x1="0" :y1="BASE_Y_SP" :x2="store.TOTAL_DURATION * store.timeBlockWidth" :y2="BASE_Y_SP" stroke="#aaa" stroke-width="2"/>
-
-          <text x="5" :y="BASE_Y_SP - (300 * scaleY_SP) + 12" fill="#888" font-size="10">MAX(300)</text>
-          <text x="5" :y="BASE_Y_SP + 12" fill="#666" font-size="10">0</text>
-
-          <rect x="0" :y="BASE_Y_SP" :width="store.TOTAL_DURATION * store.timeBlockWidth" :height="TOTAL_HEIGHT - BASE_Y_SP" :fill="`${COLOR_SP_WARN}26`"/>
-          <polygon :points="spArea" fill="url(#sp-fill-gradient)"/>
-          <polyline :points="spPolyline" fill="none" :stroke="COLOR_SP_MAIN" stroke-width="2" stroke-linejoin="round"/>
-
-          <circle v-for="(p, idx) in spData" :key="idx" :cx="p.time * store.timeBlockWidth" :cy="BASE_Y_SP - (p.sp * scaleY_SP)" r="2" :fill="p.sp < 0 ? COLOR_SP_WARN : COLOR_SP_MAIN" />
-        </g>
-      </svg>
-      <div v-for="(w, idx) in spWarningZones" :key="idx" class="warning-tag"
-           :style="{ left: w.left + 'px', top: (BASE_Y_SP + 5) + 'px', color: COLOR_SP_WARN }">
-        <span class="warn-icon">
-          <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-        </span>
-        不足
+        </svg>
+        <div v-for="(w, idx) in spWarningZones" :key="idx" class="warning-tag"
+            :style="{ left: w.left + 'px', top: (BASE_Y_SP + 5) + 'px', color: COLOR_SP_WARN }">
+          <span class="warn-icon">
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </span>
+          不足
+        </div>
       </div>
     </div>
 

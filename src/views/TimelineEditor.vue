@@ -265,7 +265,7 @@ async function processExport() {
     background: 'rgba(0, 0, 0, 0.9)'
   })
 
-  const originalScrollLeft = store.timelineScrollLeft
+  const originalShift = store.timelineShift
 
 
   const timelineMain = document.querySelector('.timeline-main')
@@ -285,7 +285,7 @@ async function processExport() {
   pathHoverZones.forEach(el => backupStyle(el))
 
   try {
-    store.setScrollLeft(0)
+    store.setTimelineShift(0)
     store.setIsCapturing(true)
     document.body.classList.add('capture-mode')
     scrollers.forEach(el => el.scrollLeft = 0)
@@ -371,7 +371,7 @@ async function processExport() {
     if (watermarkEl.value) {
       watermarkEl.value.style.display = 'none'
     }
-    store.setScrollLeft(originalScrollLeft)
+    store.setTimelineShift(originalShift)
     loading.close()
   }
 }
