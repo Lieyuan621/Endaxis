@@ -456,64 +456,10 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const timeBlockWidth = computed(() => BASE_BLOCK_WIDTH.value)
 
-    function getDomNodeIdByNodeId(id, { isTransfer = false } = {}) {
-        const node = resolveNode(id)
-
-        let elementId = null
-        if (node.type === 'action') {
-            elementId = `action-${node.id}`
-        } else if (node.type === 'effect') {
-            elementId = isTransfer ? `${node.id}_transfer` : node.id
-        }
-
-        if (!elementId) {
-            return null
-        }
-
-        return elementId
-    }
-
-    const getActionPositionInfo = (instanceId) => {
-        for (let i = 0; i < tracks.value.length; i++) {
-            const track = tracks.value[i];
-            const action = track.actions.find(a => a.instanceId === instanceId);
-            if (action) return { trackIndex: i, action };
-        }
-        return null;
-    }
-
-    const findEffectIndexById = (action, effectId) => {
-        if (!action || !action.physicalAnomaly || !effectId) return -1
-        let current = 0
-        for (const row of action.physicalAnomaly) {
-            for (const effect of row) {
-                if (effect._id === effectId) return current
-                current++
-            }
-        }
-        return -1
-    }
-
     const ensureEffectId = (effect) => {
         if (!effect._id) effect._id = uid()
         return effect._id
     }
-
-    const getAnomalyIndexById = (actionId, effectId) => {
-        if (!actionId || !effectId) return null
-        const track = tracks.value.find(t => t.actions.some(a => a.instanceId === actionId))
-        const action = track?.actions.find(a => a.instanceId === actionId)
-        if (!action || !action.physicalAnomaly) return null
-
-        for (let r = 0; r < action.physicalAnomaly.length; r++) {
-            const row = action.physicalAnomaly[r]
-            const c = row.findIndex(e => e._id === effectId)
-            if (c !== -1) return { rowIndex: r, colIndex: c }
-        }
-        return null
-    }
-
-    const getIncomingConnections = (targetId) => connections.value.filter(c => c.to === targetId)
 
     const getCharacterElementColor = (characterId) => {
         const charInfo = characterRoster.value.find(c => c.id === characterId)
@@ -1103,14 +1049,14 @@ export const useTimelineStore = defineStore('timeline', () => {
         const sourceId = selectedActionId.value
         if (!sourceId || sourceId === targetInstanceId) return false
 
-        const sourceInfo = getActionPositionInfo(sourceId)
-        const targetInfo = getActionPositionInfo(targetInstanceId)
+        const sourceInfo = getActionById(sourceId)
+        const targetInfo = getActionById(targetInstanceId)
 
         if (!sourceInfo || !targetInfo) return false
 
-        const sourceAction = sourceInfo.action
+        const sourceAction = sourceInfo.node
         if (sourceAction.isLocked) return false
-        const targetAction = targetInfo.action
+        const targetAction = targetInfo.node
 
         const tStart = targetAction.startTime
         const tEnd = targetAction.startTime + targetAction.duration
@@ -1389,25 +1335,25 @@ export const useTimelineStore = defineStore('timeline', () => {
     // ===================================================================================
 
     function toggleActionLock(instanceId) {
-        const info = getActionPositionInfo(instanceId)
+        const info = getActionById(instanceId)
         if (info) {
-            info.action.isLocked = !info.action.isLocked
+            info.node.isLocked = !info.node.isLocked
             commitState()
         }
     }
 
     function toggleActionDisable(instanceId) {
-        const info = getActionPositionInfo(instanceId)
+        const info = getActionById(instanceId)
         if (info) {
-            info.action.isDisabled = !info.action.isDisabled
+            info.node.isDisabled = !info.node.isDisabled
             commitState()
         }
     }
 
     function setActionColor(instanceId, color) {
-        const info = getActionPositionInfo(instanceId)
+        const info = getActionById(instanceId)
         if (info) {
-            info.action.customColor = color
+            info.node.customColor = color
             commitState()
         }
     }
@@ -2163,19 +2109,19 @@ export const useTimelineStore = defineStore('timeline', () => {
         systemConstants, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, timelineScrollLeft, timelineScrollTop, timelineRect, trackLaneRects, nodeRects, globalDragOffset, draggingSkillData,
         selectedActionId, selectedLibrarySkillId, multiSelectedIds, clipboard, isCapturing, setIsCapturing, showCursorGuide, isBoxSelectMode, cursorCurrentTime, cursorPosition, snapStep,
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,
-        teamTracksInfo, activeSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getActionPositionInfo, getIncomingConnections, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
+        teamTracksInfo, activeSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
         fetchGameData, exportProject, importProject, exportShareString, importShareString, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction,
         addSkillToTrack, setDraggingSkill, setDragOffset, setScrollLeft, setScrollTop, setTimelineRect, setTrackLaneRect, setNodeRect, calculateGlobalSpData, calculateGaugeData, calculateGlobalStaggerData, updateTrackInitialGauge, updateTrackMaxGauge,
         removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleBoxSelectMode, setCursorTime, setCursorPosition, toggleSnapStep, nudgeSelection,
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
-        removeAnomaly, initAutoSave, loadFromBrowser, resetProject, selectedConnectionId, selectConnection, selectAnomaly, getAnomalyIndexById,
-        findEffectIndexById, alignActionToTarget, getDomNodeIdByNodeId, moveTrack,
+        removeAnomaly, initAutoSave, loadFromBrowser, resetProject, selectedConnectionId, selectConnection, selectAnomaly,
+        alignActionToTarget, moveTrack,
         connectionMap, actionMap, effectsMap, getConnectionById, resolveNode, getNodesOfConnection, enableConnectionTool, connectionDragState, connectionSnapState, validConnectionTargetIds, createConnection, toggleConnectionTool,
         cycleBoundaries, selectedCycleBoundaryId, addCycleBoundary, updateCycleBoundary, selectCycleBoundary,
         contextMenu, openContextMenu, closeContextMenu,
         switchEvents, selectedSwitchEventId, addSwitchEvent, updateSwitchEvent, selectSwitchEvent,
         toggleActionLock, toggleActionDisable, setActionColor,
-        globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById,
+        globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById, getEffectById,
         enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
         effectLayouts, getNodeRect,

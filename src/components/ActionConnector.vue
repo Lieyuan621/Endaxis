@@ -25,33 +25,21 @@ const isDimmed = computed(() => {
   return store.hoveredActionId && !isRelatedToHover.value && !isSelected.value && !connectionHandler.isDragging.value
 })
 
-const resolveRealIndex = (action, storedIndex, effectId) => {
-  if (!action) return storedIndex
-  if (effectId) {
-    const freshIndex = store.findEffectIndexById(action, effectId)
-    if (freshIndex !== -1) return freshIndex
-  }
-  return storedIndex
-}
-
 const getTrackCenterY = (trackIndex) => {
-  const rowEl = document.getElementById(`track-row-${trackIndex}`)
-  if (rowEl) return rowEl.offsetTop + (rowEl.offsetHeight / 2)
-  return 20 + trackIndex * 80
+  const trackRect = store.trackLaneRects[trackIndex]
+  return trackRect.top + (trackRect.height / 2)
 }
 
-const resolveColor = (info, effectIndex, effectId) => {
-  if (!info || !info.action) return store.getColor('default')
-  const { action, trackIndex } = info
-  const realIdx = resolveRealIndex(action, effectIndex, effectId)
-  if (realIdx !== undefined && realIdx !== null) {
-    const raw = action.physicalAnomaly || []
-    if (raw.length === 0) return store.getColor('default')
-    const flatList = Array.isArray(raw[0]) ? raw.flat() : raw
-    const effect = flatList[realIdx]
-    if (effect && effect.type) return store.getColor(effect.type)
+const resolveColor = (info, effectId) => {
+  if (!info) return store.getColor('default')
+  const { node:action, trackIndex } = info
+
+  if (effectId) {
+    const effect = store.getEffectById(effectId)
+    if (effect) return store.getColor(effect.node.type)
     return store.getColor('default')
   }
+
   if (action.type === 'link') return store.getColor('link')
   if (action.type === 'execution') return store.getColor('execution')
   if (action.type === 'attack') return store.getColor('physical')
@@ -70,7 +58,7 @@ function onContextMenu(evt) {
   store.openContextMenu(evt, props.connection.id)
 }
 
-const getElementRectRelative = (nodeId, isAction) => {
+const getNodeRectRelative = (nodeId, isAction) => {
   if (isAction) {
     const layout = store.nodeRects[nodeId]
     if (!layout || !layout.rect) {
@@ -102,10 +90,11 @@ const getElementRectRelative = (nodeId, isAction) => {
 }
 
 const calculatePoint = (nodeId, isSource, connection = null, effectId = null) => {
-  const info = store.getActionPositionInfo(nodeId)
+  const info = store.getActionById(nodeId)
   if (!info) return null
 
-  const rawTw = info.action.triggerWindow || 0
+  const action = info.node
+  const rawTw = action.triggerWindow || 0
   const hasTriggerWindow = Math.abs(Number(rawTw)) > 0.001
 
 
@@ -122,24 +111,24 @@ const calculatePoint = (nodeId, isSource, connection = null, effectId = null) =>
 
   const isGhostMode = rawTw < 0
 
-  let targetDomId = null
+  let rectNodeId = null
 
   let isAction = false
   if (isSource && connection && connection.isConsumption && effectId != null) {
-    targetDomId = `${effectId}_transfer`
+    rectNodeId = `${effectId}_transfer`
   } else if (effectId != null) {
     if (isGhostMode) {
-     targetDomId = nodeId 
+     rectNodeId = nodeId 
     } else {
-      targetDomId = effectId
+      rectNodeId = effectId
     }
   } else {
-    targetDomId = nodeId
+    rectNodeId = nodeId
     isAction = true
   }
   
-  if (targetDomId) {
-    const rect = getElementRectRelative(targetDomId, isAction)
+  if (rectNodeId) {
+    const rect = getNodeRectRelative(rectNodeId, isAction)
 
     if (rect) {
       const userPort = isSource ? connection?.sourcePort : connection?.targetPort
@@ -156,7 +145,7 @@ const calculatePoint = (nodeId, isSource, connection = null, effectId = null) =>
     }
   }
 
-  const timePoint = isSource ? info.action.startTime + info.action.duration : info.action.startTime
+  const timePoint = isSource ? action.startTime + action.duration : action.startTime
   return {
     x: timePoint * store.timeBlockWidth,
     y: getTrackCenterY(info.trackIndex),
@@ -173,8 +162,8 @@ const coordinateInfo = computed(() => {
 
   if (!start || !end) return null
 
-  const colorStart = resolveColor(store.getActionPositionInfo(conn.from), conn.fromEffectIndex, conn.fromEffectId)
-  const colorEnd = resolveColor(store.getActionPositionInfo(conn.to), conn.toEffectIndex, conn.toEffectId)
+  const colorStart = resolveColor(store.getActionById(conn.from), conn.fromEffectId)
+  const colorEnd = resolveColor(store.getActionById(conn.to), conn.toEffectId)
 
   return {
     startPoint: { x: start.x, y: start.y },

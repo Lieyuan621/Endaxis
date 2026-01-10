@@ -12,8 +12,8 @@ const menuStyle = computed(() => ({
 
 const targetAction = computed(() => {
   if (!store.contextMenu.targetId) return null
-  const info = store.getActionPositionInfo(store.contextMenu.targetId)
-  return info ? info.action : null
+  const info = store.getActionById(store.contextMenu.targetId)
+  return info ? info.node : null
 })
 
 function close() {

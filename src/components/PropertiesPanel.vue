@@ -380,30 +380,18 @@ const relevantConnections = computed(() => {
         let myIconPath = null
         if (targetData.value) {
           const myEffectId = isOutgoing ? conn.fromEffectId : conn.toEffectId
-          let realIndex = -1
-          if (myEffectId) realIndex = store.findEffectIndexById(targetData.value, myEffectId)
-          if (realIndex === -1 && (isOutgoing ? conn.fromEffectIndex : conn.toEffectIndex) !== null) {
-            realIndex = isOutgoing ? conn.fromEffectIndex : conn.toEffectIndex
-          }
-          if (realIndex !== -1) {
-            const allEffects = (targetData.value.physicalAnomaly || []).flat()
-            const effect = allEffects[realIndex]
-            if (effect) myIconPath = getIconPath(effect.type, myCharId)
+          const myEffect = store.getEffectById(myEffectId)
+          if (myEffect) {
+            myIconPath = getIconPath(myEffect.node.type, myCharId)
           }
         }
 
         let otherIconPath = null
         if (otherAction) {
           const otherEffectId = isOutgoing ? conn.toEffectId : conn.fromEffectId
-          let realIndex = -1
-          if (otherEffectId) realIndex = store.findEffectIndexById(otherAction, otherEffectId)
-          if (realIndex === -1 && (isOutgoing ? conn.toEffectIndex : conn.fromEffectIndex) !== null) {
-            realIndex = isOutgoing ? conn.toEffectIndex : conn.fromEffectIndex
-          }
-          if (realIndex !== -1) {
-            const allEffects = (otherAction.physicalAnomaly || []).flat()
-            const effect = allEffects[realIndex]
-            if (effect) otherIconPath = getIconPath(effect.type, otherCharId)
+          const otherEffect = store.getEffectById(otherEffectId)
+          if (otherEffect) {
+            otherIconPath = getIconPath(otherEffect.node.type, otherCharId)
           }
         }
 
@@ -424,21 +412,28 @@ function updateConnPort(connId, type, event) {
   store.updateConnectionPort(connId, type, val)
 }
 
-function handleStartConnection(id) {
+function handleStartConnection(id, type) {
   if (connectionHandler.isDragging.value) {
     connectionHandler.cancelDrag()
     return
   }
 
-  const domNodeId = store.getDomNodeIdByNodeId(id)
-  const domNode = document.getElementById(domNodeId)
+  let rect;
 
-  if (!domNode) {
+  if (type === 'action') {
+    const actionLayout = store.getNodeRect(id)
+    rect = actionLayout.rect
+  } else {
+    const effectLayout = store.effectLayouts.get(id)
+    rect = effectLayout.rect
+  }
+
+  if (!rect) {
     return
   }
 
-  const viewPoint = getRectPos(domNode.getBoundingClientRect(), 'right')
-  connectionHandler.newConnectionFrom(store.toTimelineSpace(viewPoint.x, viewPoint.y), id, 'right')
+  const point = getRectPos(rect, 'right')
+  connectionHandler.newConnectionFrom(point, id, 'right')
 }
 </script>
 
@@ -657,7 +652,7 @@ function handleStartConnection(id) {
           </div>
 
           <div class="editor-actions">
-            <button v-if="!isLibraryMode" class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent" @click.stop="handleStartConnection(activeAnomalyId)"
+            <button v-if="!isLibraryMode" class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent" @click.stop="handleStartConnection(activeAnomalyId, 'effect')"
                     :class="{ 'is-linking': connectionHandler.isDragging.value && connectionHandler.state.value.sourceId === activeAnomalyId }">
               连线
             </button>
@@ -680,7 +675,7 @@ function handleStartConnection(id) {
 
           <div class="spacer"></div>
 
-          <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent" @click.stop="handleStartConnection(store.selectedActionId)" :class="{ 'is-linking': connectionHandler.isDragging.value && connectionHandler.state.value.sourceId === store.selectedActionId }">
+          <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent" @click.stop="handleStartConnection(store.selectedActionId, 'action')" :class="{ 'is-linking': connectionHandler.isDragging.value && connectionHandler.state.value.sourceId === store.selectedActionId }">
             <span class="plus-icon"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
             {{ (connectionHandler.isDragging.value) ? '选择目标' : '新建连线' }}
           </button>
