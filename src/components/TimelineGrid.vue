@@ -1149,7 +1149,7 @@ onMounted(() => {
       updateTrackRects()
 
       store.setTimelineRect(rect.width, rect.height, rect.top, rect.right, rect.bottom, rect.left)
-      store.updateActionRects(); forceSvgUpdate(); updateScrollbarHeight(); 
+      forceSvgUpdate(); updateScrollbarHeight();
     })
 
     tracksResizeObserver.observe(tracksContentRef.value)

@@ -212,7 +212,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     const timelineRect = ref({ width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 })
 
     const trackLaneRects = ref({})
-    const nodeRects = ref({})
 
     const showCursorGuide = ref(false)
     const cursorPosition = ref({ x: 0, y: 0 })
@@ -1093,7 +1092,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         return false
     }
 
-    function updateActionRects() {
+    const nodeRects = computed(() => {
+        const rects = {}
         const ACTION_BORDER = 2
         const LINE_GAP = 6
         const LINE_HEIGHT = 2
@@ -1155,7 +1155,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 triggerWindowLayout = { hasWindow: false }
             }
 
-            setNodeRect(action.id, {
+            rects[action.id] = {
                 rect,
                 bar: {
                     top: barY,
@@ -1164,9 +1164,11 @@ export const useTimelineStore = defineStore('timeline', () => {
                     rightEdge
                 },
                 triggerWindow: triggerWindowLayout
-            })
+            }
         })
-    }
+
+        return rects
+    })
 
     const effectLayouts = computed(() => {
         const layoutMap = new Map()
@@ -2111,7 +2113,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     return {
-        MAX_SCENARIOS, toTimelineSpace, toViewportSpace, updateActionRects, toGameTime, toRealTime,
+        MAX_SCENARIOS, toTimelineSpace, toViewportSpace, toGameTime, toRealTime,
         systemConstants, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, timelineScrollTop, timelineShift, timelineRect, trackLaneRects, nodeRects, draggingSkillData,
         selectedActionId, selectedLibrarySkillId, multiSelectedIds, clipboard, isCapturing, setIsCapturing, showCursorGuide, isBoxSelectMode, cursorPosTimeline, cursorCurrentTime, cursorPosition, snapStep,
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,
