@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { onMounted, onUnmounted, ref, nextTick, computed, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
 import { useShareProject } from '@/composables/useShareProject.js'
@@ -242,6 +242,22 @@ function openExportDialog() {
   exportForm.value.filename = `Endaxis_Timeline_${dateStr}`
   exportForm.value.duration = 60
   exportDialogVisible.value = true
+}
+
+function handleExportJson() {
+  let rawFilename = exportForm.value.filename || 'Endaxis_Export'
+  rawFilename = rawFilename.trim()
+  if (rawFilename.toLowerCase().endsWith('.png')) {
+    rawFilename = rawFilename.slice(0, -4)
+  }
+  if (!rawFilename) {
+    rawFilename = 'Endaxis_Export'
+  }
+  let userFilename = rawFilename
+  if (!userFilename.toLowerCase().endsWith('.json')) {
+    userFilename += '.json'
+  }
+  store.exportProject({ filename: userFilename })
 }
 
 async function processExport() {
@@ -547,11 +563,13 @@ onUnmounted(() => {
 
           <div class="divider-vertical"></div>
 
-          <button class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-orange" @click="openExportDialog" title="导出为PNG长图">
+          <button class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-orange" @click="openExportDialog" title="导出">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>
+              <path d="M14 3h7v7"></path>
+              <path d="M10 14L21 3"></path>
+              <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7"></path>
             </svg>
-            导出图片
+            导出
           </button>
 
           <div class="project-btn-group">
@@ -562,13 +580,6 @@ onUnmounted(() => {
                 <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
               加载
-            </button>
-
-            <button class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-success group-item" @click="store.exportProject" title="保存为 .json 文件">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
-              </svg>
-              保存
             </button>
 
             <button class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-purple group-item" @click="copyShareCode" title="复制当前方案的分享码">
@@ -604,7 +615,7 @@ onUnmounted(() => {
 
     <aside class="properties-sidebar"><PropertiesPanel/></aside>
 
-    <el-dialog v-model="exportDialogVisible" title="导出长图设置" width="420px" align-center class="custom-dialog">
+    <el-dialog v-model="exportDialogVisible" title="导出设置" width="420px" align-center class="custom-dialog">
       <div class="export-form">
         <div class="form-item"><label>文件名称</label><el-input v-model="exportForm.filename" placeholder="请输入文件名" size="large"/></div>
         <div class="form-item"><label>导出时长 (秒)</label><el-input-number v-model="exportForm.duration" :min="10" :max="store.TOTAL_DURATION" :step="10" size="large" style="width: 100%;"/><div class="hint">最大支持 {{ store.TOTAL_DURATION }}s</div></div>
@@ -612,7 +623,8 @@ onUnmounted(() => {
       <template #footer>
         <span class="dialog-footer">
           <button type="button" class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted" @click="exportDialogVisible = false">取消</button>
-          <button type="button" class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold" @click="processExport">开始导出</button>
+          <button type="button" class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-success" @click="handleExportJson">导出 JSON</button>
+          <button type="button" class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold" @click="processExport">导出图片</button>
         </span>
       </template>
     </el-dialog>

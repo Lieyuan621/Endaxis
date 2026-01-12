@@ -2035,13 +2035,16 @@ export const useTimelineStore = defineStore('timeline', () => {
         };
     }
 
-    function exportProject() {
+    function exportProject({ filename } = {}) {
         const projectData = getProjectData();
 
         const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `endaxis_project_${new Date().toISOString().slice(0, 10)}.json`;
+        const baseName = filename && filename.trim()
+            ? filename.trim()
+            : `endaxis_project_${new Date().toISOString().slice(0, 10)}.json`;
+        link.download = baseName.toLowerCase().endsWith('.json') ? baseName : `${baseName}.json`;
         link.click();
         URL.revokeObjectURL(link.href)
     }

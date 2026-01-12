@@ -315,14 +315,14 @@
 
 .ea-btn--fill-success {
   --ea-btn-accent: var(--ea-success);
-  --ea-btn-color: #fff;
-  --ea-btn-color-hover: #fff;
+  --ea-btn-color: #111;
+  --ea-btn-color-hover: #111;
 }
 
 .ea-btn--fill-danger {
   --ea-btn-accent: var(--ea-danger-dark);
-  --ea-btn-color: #fff;
-  --ea-btn-color-hover: #fff;
+  --ea-btn-color: #111;
+  --ea-btn-color-hover: #111;
 }
 
 .ea-btn--fill-gold,
