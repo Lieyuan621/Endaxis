@@ -80,6 +80,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const characterRoster = ref([])
     const iconDatabase = ref({})
     const enemyDatabase = ref([])
+    const weaponDatabase = ref([])
     const activeEnemyId = ref('custom')
     const enemyCategories = ref([])
     const cycleBoundaries = ref([])
@@ -96,6 +97,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         maxGaugeOverride: null,
         gaugeEfficiency: 100,
         originiumArtsPower: 0,
+        weaponId: null,
         linkCdReduction: 0,
     })
 
@@ -227,6 +229,14 @@ export const useTimelineStore = defineStore('timeline', () => {
         const track = tracks.value.find(t => t.id === trackId);
         if (track) {
             track.linkCdReduction = clampPercent(value);
+            commitState();
+        }
+    }
+
+    function updateTrackWeapon(trackId, weaponId) {
+        const track = tracks.value.find(t => t.id === trackId);
+        if (track) {
+            track.weaponId = weaponId || null;
             commitState();
         }
     }
@@ -1008,6 +1018,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 switchEvents.value = switchEvents.value.filter(s => s.characterId !== oldOperatorId);
             }
             track.id = newOperatorId;
+            track.weaponId = null;
             track.actions = [];
             if (activeTrackId.value === oldOperatorId) activeTrackId.value = newOperatorId;
             if (selectedActionId.value && actionIdsToDelete.has(selectedActionId.value)) clearSelection();
@@ -1027,6 +1038,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             switchEvents.value = switchEvents.value.filter(s => s.characterId !== oldOperatorId);
         }
         track.id = null;
+        track.weaponId = null;
         track.actions = [];
         if (selectedActionId.value && actionIdsToDelete.has(selectedActionId.value)) clearSelection();
         commitState();
@@ -2049,20 +2061,23 @@ export const useTimelineStore = defineStore('timeline', () => {
 
             const data = await executeFetch()
 
-            if (data) {
-                if (data.characterRoster) {
-                    characterRoster.value = data.characterRoster.sort((a, b) => (b.rarity || 0) - (a.rarity || 0))
-                }
-                if (data.ICON_DATABASE) {
-                    iconDatabase.value = data.ICON_DATABASE
-                }
-                if (data.enemyDatabase) {
-                    enemyDatabase.value = data.enemyDatabase
-                }
-                if (data.enemyCategories) {
-                    enemyCategories.value = data.enemyCategories
-                }
+        if (data) {
+            if (data.characterRoster) {
+                characterRoster.value = data.characterRoster.sort((a, b) => (b.rarity || 0) - (a.rarity || 0))
             }
+            if (data.ICON_DATABASE) {
+                iconDatabase.value = data.ICON_DATABASE
+            }
+            if (data.enemyDatabase) {
+                enemyDatabase.value = data.enemyDatabase
+            }
+            if (data.enemyCategories) {
+                enemyCategories.value = data.enemyCategories
+            }
+            if (data.weaponDatabase) {
+                weaponDatabase.value = data.weaponDatabase
+            }
+        }
 
             historyStack.value = []
             historyIndex.value = -1
@@ -2195,7 +2210,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,
         teamTracksInfo, activeSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
         fetchGameData, exportProject, importProject, exportShareString, importShareString, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction,
-        addSkillToTrack, setDraggingSkill, setTimelineShift, setScrollTop, setTimelineRect, setTrackLaneRect, setNodeRect, calculateGlobalSpData, calculateGaugeData, calculateGlobalStaggerData, updateTrackInitialGauge, updateTrackMaxGauge, updateTrackOriginiumArtsPower, updateTrackLinkCdReduction,
+        addSkillToTrack, setDraggingSkill, setTimelineShift, setScrollTop, setTimelineRect, setTrackLaneRect, setNodeRect, calculateGlobalSpData, calculateGaugeData, calculateGlobalStaggerData, updateTrackInitialGauge, updateTrackMaxGauge, updateTrackOriginiumArtsPower, updateTrackLinkCdReduction, updateTrackWeapon,
         removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleBoxSelectMode, setCursorPosition, toggleSnapStep, nudgeSelection,
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
         removeAnomaly, initAutoSave, loadFromBrowser, resetProject, selectedConnectionId, selectConnection, selectAnomaly,
@@ -2208,6 +2223,6 @@ export const useTimelineStore = defineStore('timeline', () => {
         globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById, getEffectById,
         enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
-        effectLayouts, getNodeRect,
+        effectLayouts, getNodeRect, weaponDatabase,
     }
 })

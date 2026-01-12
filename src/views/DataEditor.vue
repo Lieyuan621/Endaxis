@@ -6,24 +6,24 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { executeSave } from '@/api/saveStrategy.js'
 
 const store = useTimelineStore()
-const { characterRoster, iconDatabase, enemyDatabase, enemyCategories } = storeToRefs(store)
+const { characterRoster, iconDatabase, enemyDatabase, enemyCategories, weaponDatabase } = storeToRefs(store)
 
 // === 常量定义 ===
 
 const ELEMENTS = [
-  { label: '灼热 (Blaze)', value: 'blaze' },
-  { label: '寒冷 (Cold)', value: 'cold' },
-  { label: '电磁 (Emag)', value: 'emag' },
-  { label: '自然 (Nature)', value: 'nature' },
-  { label: '物理 (Physical)', value: 'physical' }
+  { label: '灼热', value: 'blaze' },
+  { label: '寒冷', value: 'cold' },
+  { label: '电磁', value: 'emag' },
+  { label: '自然', value: 'nature' },
+  { label: '物理', value: 'physical' }
 ]
 
 const VARIANT_TYPES = [
-  { label: '重击 (Attack)', value: 'attack' },
-  { label: '战技 (Skill)', value: 'skill' },
-  { label: '连携 (Link)', value: 'link' },
-  { label: '终结技 (Ultimate)', value: 'ultimate' },
-  { label: '处决 (Execution)', value: 'execution' }
+  { label: '重击', value: 'attack' },
+  { label: '战技', value: 'skill' },
+  { label: '连携', value: 'link' },
+  { label: '终结技', value: 'ultimate' },
+  { label: '处决', value: 'execution' }
 ]
 
 const EFFECT_NAMES = {
@@ -35,11 +35,11 @@ const EFFECT_NAMES = {
 }
 
 const WEAPON_TYPES = [
-  { label: '单手剑 (Sword)', value: 'sword' },
-  { label: '双手剑 (Claymore)', value: 'claym' },
-  { label: '长柄武器 (Lance)', value: 'lance' },
-  { label: '手铳 (Pistol)', value: 'pistol' },
-  { label: '施术单元 (Funnel)', value: 'funnel' }
+  { label: '单手剑', value: 'sword' },
+  { label: '双手剑', value: 'claym' },
+  { label: '长柄武器', value: 'lance' },
+  { label: '手铳', value: 'pistol' },
+  { label: '施术单元', value: 'funnel' }
 ]
 
 const ENEMY_TIERS = store.ENEMY_TIERS
@@ -49,10 +49,11 @@ const effectKeys = Object.keys(EFFECT_NAMES).filter(key => !HIDDEN_CHECKBOX_KEYS
 
 // === 状态与计算属性 ===
 
-const editingMode = ref('character') // 'character' | 'enemy'
+const editingMode = ref('character') // 'character' | 'enemy' | 'weapon'
 const searchQuery = ref('')
 const selectedCharId = ref(null)
 const selectedEnemyId = ref(null)
+const selectedWeaponId = ref(null)
 const activeTab = ref('basic')
 const newCategoryName = ref('')
 
@@ -106,6 +107,27 @@ const groupedEnemies = computed(() => {
   return result
 })
 
+const filteredWeapons = computed(() => {
+  let list = weaponDatabase.value || []
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(w => (w.name || '').toLowerCase().includes(q) || (w.id || '').toLowerCase().includes(q))
+  }
+  const order = { sword: 1, claym: 2, lance: 3, pistol: 4, funnel: 5 }
+  return list
+      .sort((a, b) => (order[a.type] || 99) - (order[b.type] || 99))
+      .sort((a, b) => (b.rarity || 0) - (a.rarity || 0))
+})
+
+const groupedWeapons = computed(() => {
+  const groups = WEAPON_TYPES.map(t => ({ name: t.label.split(' ')[0], key: t.value, list: [] }))
+  filteredWeapons.value.forEach(w => {
+    const grp = groups.find(g => g.key === w.type) || groups[groups.length - 1]
+    grp.list.push(w)
+  })
+  return groups.filter(g => g.list.length > 0)
+})
+
 const selectedChar = computed(() => {
   return characterRoster.value.find(c => c.id === selectedCharId.value)
 })
@@ -113,6 +135,13 @@ const selectedChar = computed(() => {
 const selectedEnemy = computed(() => {
   return enemyDatabase.value.find(e => e.id === selectedEnemyId.value)
 })
+
+const selectedWeapon = computed(() => {
+  return weaponDatabase.value.find(w => w.id === selectedWeaponId.value)
+})
+
+const collapsedEnemyGroups = ref(new Set())
+const collapsedWeaponGroups = ref(new Set())
 
 // === 生命周期 ===
 
@@ -128,6 +157,12 @@ watch(enemyDatabase, (newList) => {
   }
 }, { immediate: true })
 
+watch(weaponDatabase, (newList) => {
+  if (newList && newList.length > 0 && !selectedWeaponId.value) {
+    selectedWeaponId.value = newList[0].id
+  }
+}, { immediate: true })
+
 // === 操作方法 ===
 
 function setMode(mode) {
@@ -138,6 +173,8 @@ function setMode(mode) {
     selectedEnemyId.value = enemyDatabase.value[0].id
   } else if (mode === 'character' && characterRoster.value && characterRoster.value.length > 0 && !selectedCharId.value) {
     selectedCharId.value = characterRoster.value[0].id
+  } else if (mode === 'weapon' && weaponDatabase.value && weaponDatabase.value.length > 0 && !selectedWeaponId.value) {
+    selectedWeaponId.value = weaponDatabase.value[0].id
   }
 }
 
@@ -148,6 +185,10 @@ function selectChar(id) {
 
 function selectEnemy(id) {
   selectedEnemyId.value = id
+}
+
+function selectWeapon(id) {
+  selectedWeaponId.value = id
 }
 
 function updateEnemyId(event) {
@@ -168,6 +209,16 @@ function updateCharId(event) {
   }
   if (selectedChar.value) selectedChar.value.id = newId
   selectedCharId.value = newId
+}
+
+function updateWeaponId(event) {
+  const newId = event.target.value
+  if (!newId) {
+    event.target.value = selectedWeapon.value.id
+    return
+  }
+  if (selectedWeapon.value) selectedWeapon.value.id = newId
+  selectedWeaponId.value = newId
 }
 
 function addNewCharacter() {
@@ -193,21 +244,6 @@ function addNewCharacter() {
   ElMessage.success('已添加新干员')
 }
 
-function addEnemyCategory() {
-  const val = newCategoryName.value.trim()
-  if (val && !enemyCategories.value.includes(val)) {
-    enemyCategories.value.push(val)
-    newCategoryName.value = ''
-    ElMessage.success(`已添加分类: ${val}`)
-  }
-}
-function removeEnemyCategory(cat) {
-  ElMessageBox.confirm(`确定删除分类 "${cat}" 吗？这不会删除该分类下的敌人。`, '提示').then(() => {
-    const idx = enemyCategories.value.indexOf(cat)
-    if (idx !== -1) enemyCategories.value.splice(idx, 1)
-  })
-}
-
 function addNewEnemy() {
   const newId = `enemy_${Date.now()}`
   const newEnemy = {
@@ -226,6 +262,22 @@ function addNewEnemy() {
   enemyDatabase.value.push(newEnemy)
   selectedEnemyId.value = newId
   ElMessage.success('已添加新敌人')
+}
+
+function addNewWeapon() {
+  const newId = `wp_${Date.now()}`
+  const newWeapon = {
+    id: newId,
+    name: '新武器',
+    type: 'sword',
+    rarity: 3,
+    duration: 0,
+    icon: '/weapons/default.png'
+  }
+  if (!weaponDatabase.value) weaponDatabase.value = []
+  weaponDatabase.value.push(newWeapon)
+  selectedWeaponId.value = newId
+  ElMessage.success('已添加新武器')
 }
 
 function deleteCurrentCharacter() {
@@ -255,6 +307,38 @@ function deleteCurrentEnemy() {
       ElMessage.success('删除成功')
     }
   }).catch(() => {})
+}
+
+function deleteCurrentWeapon() {
+  if (!selectedWeapon.value) return
+  ElMessageBox.confirm(`确定要删除武器 "${selectedWeapon.value.name}" 吗？`, '警告', {
+    confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning'
+  }).then(() => {
+    const idx = weaponDatabase.value.findIndex(w => w.id === selectedWeaponId.value)
+    if (idx !== -1) {
+      weaponDatabase.value.splice(idx, 1)
+      selectedWeaponId.value = weaponDatabase.value.length > 0 ? weaponDatabase.value[0].id : null
+      ElMessage.success('删除成功')
+    }
+  }).catch(() => {})
+}
+
+function toggleEnemyGroup(name) {
+  const set = collapsedEnemyGroups.value
+  if (set.has(name)) set.delete(name); else set.add(name)
+}
+
+function isEnemyGroupCollapsed(name) {
+  return collapsedEnemyGroups.value.has(name)
+}
+
+function toggleWeaponGroup(name) {
+  const set = collapsedWeaponGroups.value
+  if (set.has(name)) set.delete(name); else set.add(name)
+}
+
+function isWeaponGroupCollapsed(name) {
+  return collapsedWeaponGroups.value.has(name)
 }
 
 function quickAddCategory() {
@@ -360,10 +444,10 @@ function onVariantTypeChange(variant) {
   const newStats = getSnapshotFromBase(selectedChar.value, variant.type)
   Object.assign(variant, newStats)
 
-  if (variant.name === '新强化动作' || variant.name.includes('强化')) {
+  if (variant.name === '新强化技能' || variant.name.startsWith('强化')) {
     const typeObj = VARIANT_TYPES.find(t => t.value === variant.type)
     if (typeObj) {
-      const labelName = typeObj.label.split(' ')[1]
+      const labelName = typeObj.label
       variant.name = `强化${labelName}`
     }
   }
@@ -605,7 +689,8 @@ function saveData() {
     ICON_DATABASE: iconDatabase.value,
     characterRoster: characterRoster.value,
     enemyDatabase: enemyDatabase.value,
-    enemyCategories: enemyCategories.value
+    enemyCategories: enemyCategories.value,
+    weaponDatabase: weaponDatabase.value
   }
   executeSave(dataToSave)
 }
@@ -622,6 +707,12 @@ function saveData() {
           @click="setMode('character')"
         >干员</button>
         <button
+            class="ea-btn ea-btn--glass-cut"
+            :class="{ 'is-active': editingMode === 'weapon' }"
+            :style="{ '--ea-btn-accent': 'var(--ea-blue)' }"
+            @click="setMode('weapon')"
+        >武器</button>
+        <button
           class="ea-btn ea-btn--glass-cut"
           :class="{ 'is-active': editingMode === 'enemy' }"
           :style="{ '--ea-btn-accent': 'var(--ea-danger-soft)' }"
@@ -630,8 +721,16 @@ function saveData() {
       </div>
 
       <div class="sidebar-header">
-        <h2>{{ editingMode === 'character' ? '干员数据' : '敌人数据' }}</h2>
-        <button class="ea-btn ea-btn--icon ea-btn--icon-28 ea-btn--icon-plus" @click="editingMode === 'character' ? addNewCharacter() : addNewEnemy()">＋</button>
+        <h2>
+          {{
+            editingMode === 'character'
+              ? '干员数据'
+              : editingMode === 'enemy'
+                ? '敌人数据'
+                : '武器数据'
+          }}
+        </h2>
+        <button class="ea-btn ea-btn--icon ea-btn--icon-28 ea-btn--icon-plus" @click="editingMode === 'character' ? addNewCharacter() : (editingMode === 'enemy' ? addNewEnemy() : addNewWeapon())">＋</button>
       </div>
       <div class="search-box">
         <input v-model="searchQuery" placeholder="搜索 ID 或名称..." />
@@ -648,36 +747,41 @@ function saveData() {
 
           <div class="char-info">
             <span class="char-name">{{ char.name }}</span>
-            <span class="char-meta" :class="`rarity-${char.rarity}`">
-              {{ char.rarity }}★ {{ char.element }}
-            </span>
+              <span class="char-meta" :class="`rarity-${char.rarity}`">
+                {{ char.rarity }}★ {{ ELEMENTS.find(e=>e.value===char.element)?.label || char.element || '' }}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div v-else class="char-list">
+      <div v-else-if="editingMode === 'enemy'" class="char-list">
 
         <div v-for="group in groupedEnemies" :key="group.name" class="enemy-group">
-          <div class="group-title">
-            {{ group.name }}
-            <span class="group-count">({{ group.list.length }})</span>
+          <div class="group-title" @click="toggleEnemyGroup(group.name)" style="cursor: pointer; display:flex; align-items:center; justify-content:space-between;">
+            <span>{{ group.name }}</span>
+            <span class="group-meta">
+              <span class="group-count">({{ group.list.length }})</span>
+              <el-icon class="toggle-arrow" :class="{ 'is-rotated': !isEnemyGroupCollapsed(group.name) }"><ArrowRight /></el-icon>
+            </span>
           </div>
 
-          <div v-for="enemy in group.list" :key="enemy.id"
-               class="char-item"
-               :class="{ active: enemy.id === selectedEnemyId }"
-               :style="{ borderLeftColor: ENEMY_TIERS.find(t=>t.value===enemy.tier)?.color }"
-               @click="selectEnemy(enemy.id)">
+          <div v-if="!isEnemyGroupCollapsed(group.name)">
+            <div v-for="enemy in group.list" :key="enemy.id"
+                 class="char-item"
+                :class="{ active: enemy.id === selectedEnemyId }"
+                :style="{ borderLeftColor: ENEMY_TIERS.find(t=>t.value===enemy.tier)?.color }"
+                @click="selectEnemy(enemy.id)">
 
-            <div class="avatar-wrapper-small" :style="{ borderColor: ENEMY_TIERS.find(t=>t.value===enemy.tier)?.color }">
-              <img :src="enemy.avatar" @error="e=>e.target.src='/avatars/default_enemy.png'" />
-            </div>
+              <div class="avatar-wrapper-small" :style="{ borderColor: ENEMY_TIERS.find(t=>t.value===enemy.tier)?.color }">
+                <img :src="enemy.avatar" @error="e=>e.target.src='/avatars/default_enemy.png'" />
+              </div>
 
-            <div class="char-info">
-              <span class="char-name">{{ enemy.name }}</span>
-              <span class="char-meta" style="color:#aaa">
-                {{ enemy.maxStagger }} / {{ enemy.staggerNodeCount }}
-              </span>
+              <div class="char-info">
+                <span class="char-name">{{ enemy.name }}</span>
+                <span class="char-meta" style="color:#aaa">
+                  {{ enemy.maxStagger }} / {{ enemy.staggerNodeCount }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -686,6 +790,43 @@ function saveData() {
           暂无匹配的敌人
         </div>
 
+      </div>
+
+      <div v-else-if="editingMode === 'weapon'" class="char-list">
+        <div v-for="group in groupedWeapons" :key="group.key" class="enemy-group">
+          <div class="group-title" @click="toggleWeaponGroup(group.name)" style="cursor: pointer; display:flex; align-items:center; justify-content:space-between;">
+            <span>{{ group.name }}</span>
+            <span class="group-meta">
+              <span class="group-count">({{ group.list.length }})</span>
+              <el-icon class="toggle-arrow" :class="{ 'is-rotated': !isWeaponGroupCollapsed(group.name) }"><ArrowRight /></el-icon>
+            </span>
+          </div>
+
+          <div v-if="!isWeaponGroupCollapsed(group.name)">
+            <div v-for="weapon in group.list" :key="weapon.id"
+                 class="char-item"
+                 :class="{ active: weapon.id === selectedWeaponId }"
+                 @click="selectWeapon(weapon.id)">
+              <div class="avatar-wrapper-small" :class="`rarity-${Math.max(3, weapon.rarity || 3)}-border`" style="display:flex;align-items:center;justify-content:center; overflow:hidden;">
+                <img
+                    :key="weapon.icon || weapon.id"
+                    :src="weapon.icon || '/weapons/default.png'"
+                    @error="e=>e.target.src='/weapons/default.png'"
+                    style="width:100%;height:100%;object-fit:cover;" />
+              </div>
+              <div class="char-info">
+                <span class="char-name">{{ weapon.name }}</span>
+                <span class="char-meta" :class="`rarity-${Math.max(3, weapon.rarity || 3)}`">
+                  {{ Math.max(3, weapon.rarity || 3) }}★ {{ (WEAPON_TYPES.find(w=>w.value===weapon.type)?.label || weapon.type || '未知') }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="filteredWeapons.length === 0" class="empty-hint">
+          暂无武器，点击上方添加
+        </div>
       </div>
 
       <div class="sidebar-footer">
@@ -1163,6 +1304,53 @@ function saveData() {
         </div>
       </div>
 
+      <div v-else-if="editingMode === 'weapon' && selectedWeapon" class="editor-panel">
+        <header class="panel-header">
+          <div class="header-left">
+            <div class="avatar-wrapper-large" :class="`rarity-${Math.max(3, selectedWeapon.rarity || 3)}-border`" style="display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff; overflow:hidden;">
+              <img
+                  :key="selectedWeapon.icon || selectedWeapon.id"
+                  :src="selectedWeapon.icon || '/weapons/default.png'"
+                  @error="e=>e.target.src='/weapons/default.png'"
+                  style="width:100%; height:100%; object-fit:cover;" />
+            </div>
+            <div class="header-titles">
+              <h1 class="edit-title">{{ selectedWeapon.name }}</h1>
+              <span class="id-tag">{{ selectedWeapon.id }}</span>
+            </div>
+          </div>
+          <button class="ea-btn ea-btn--md ea-btn--fill-danger" @click="deleteCurrentWeapon">删除此武器</button>
+        </header>
+
+        <div class="form-section">
+          <h3 class="section-title">基础信息</h3>
+          <div class="form-grid three-col">
+            <div class="form-group"><label>名称</label><input v-model="selectedWeapon.name" type="text" /></div>
+            <div class="form-group"><label>ID (Unique)</label><input :value="selectedWeapon.id" @input="updateWeaponId" type="text" /></div>
+            <div class="form-group">
+              <label>星级</label>
+              <el-select v-model="selectedWeapon.rarity" size="large" style="width: 100%">
+                <el-option :value="6" label="6 ★" />
+                <el-option :value="5" label="5 ★" />
+                <el-option :value="4" label="4 ★" />
+                <el-option :value="3" label="3 ★" />
+              </el-select>
+            </div>
+            <div class="form-group">
+              <label>类型</label>
+              <el-select v-model="selectedWeapon.type" size="large" style="width: 100%">
+                <el-option v-for="wpn in WEAPON_TYPES" :key="wpn.value" :label="wpn.label" :value="wpn.value" />
+              </el-select>
+            </div>
+            <div class="form-group full-width"><label>图标路径</label><input v-model="selectedWeapon.icon" type="text" /></div>
+            <div class="form-group full-width">
+              <label>持续时间 (s，若有BUFF)</label>
+              <input type="number" min="0" step="0.1" v-model.number="selectedWeapon.duration">
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-else class="empty-state">请从左侧列表选择条目</div>
     </main>
   </div>
@@ -1196,9 +1384,12 @@ function saveData() {
   outline: none;
   background-color: #1f1f24;
 }
-.enemy-group { margin-bottom: 15px; }
-.group-title { font-size: 11px; color: #888; font-weight: bold; text-transform: uppercase; padding: 4px 8px; background: #2b2b2b; border-radius: 4px; margin-bottom: 6px; display: flex; justify-content: space-between; }
-.group-count { color: #555; }
+.enemy-group { margin-bottom: 15px; border: 1px solid #2b2b2b; border-radius: 6px; padding: 6px; background: #1a1a1a; }
+.group-title { font-size: 11px; color: #ccc; font-weight: bold; text-transform: uppercase; padding: 6px 8px; background: #242424; border-radius: 4px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; column-gap: 8px; }
+.group-meta { display: flex; align-items: center; gap: 8px; }
+.group-count { color: #999; font-size: 12px; }
+.toggle-arrow { transition: transform 0.2s; }
+.toggle-arrow.is-rotated { transform: rotate(90deg); }
 .add-cat-row input { flex: 1; background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; }
 
 /* Character List */
@@ -1209,6 +1400,7 @@ function saveData() {
 .empty-hint { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
 
 .avatar-wrapper-small { width: 44px; height: 44px; border-radius: 6px; margin-right: 12px; background: #333; position: relative; overflow: hidden; border: 2px solid #444; flex-shrink: 0; box-sizing: border-box; }
+.avatar-wrapper-small[class*="rarity-6-border"] { border: 2px solid transparent; background: linear-gradient(#2b2b2b, #2b2b2b) padding-box, linear-gradient(135deg, #FFD700, #FF8C00, #FF4500) border-box; box-shadow: 0 0 6px rgba(255, 140, 0, 0.3); }
 .avatar-wrapper-small img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .char-info { display: flex; flex-direction: column; justify-content: center; }
 .char-name { font-weight: bold; font-size: 14px; margin-bottom: 2px; color: #f0f0f0; }
@@ -1217,6 +1409,15 @@ function saveData() {
 .rarity-5 { color: #ffc400; }
 .rarity-4 { color: #d8b4fe; }
 .rarity-3, .rarity-2, .rarity-1 { color: #888; }
+.char-meta.rarity-6 {
+  background: linear-gradient(45deg, #FFD700, #FF8C00, #FF4500);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.char-meta.rarity-5 { color: #ffc400; }
+.char-meta.rarity-4 { color: #d8b4fe; }
+.char-meta.rarity-3, .char-meta.rarity-2, .char-meta.rarity-1 { color: #aaa; }
 
 /* Sidebar Footer */
 .sidebar-footer { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; background: #2b2b2b; }
@@ -1262,6 +1463,23 @@ function saveData() {
   transition: box-shadow 0.2s, background-color 0.2s;
 }
 .form-group input:focus {
+  box-shadow: 0 0 0 1px #ffd700 inset;
+  outline: none;
+  background: #1f1f24;
+}
+.ea-textarea {
+  width: 100%;
+  background: #16161a;
+  border: none;
+  box-shadow: 0 0 0 1px #333 inset;
+  color: #f0f0f0;
+  padding: 10px 12px;
+  border-radius: 0;
+  font-size: 14px;
+  transition: box-shadow 0.2s, background-color 0.2s;
+  resize: vertical;
+}
+.ea-textarea:focus {
   box-shadow: 0 0 0 1px #ffd700 inset;
   outline: none;
   background: #1f1f24;

@@ -123,6 +123,9 @@ const isSelectorVisible = ref(false)
 const targetTrackIndex = ref(null)
 const searchQuery = ref('')
 const filterElement = ref('ALL')
+const isWeaponSelectorVisible = ref(false)
+const weaponTargetIndex = ref(null)
+const weaponSearchQuery = ref('')
 
 const isGameTimeCollapsed = ref(true)
 const showGameTime = computed(() => !isGameTimeCollapsed.value || store.isCapturing)
@@ -159,6 +162,33 @@ function removeOperator() {
   isSelectorVisible.value = false
 }
 
+function openWeaponSelector(index) {
+  if (!store.tracks[index] || !store.tracks[index].id) return
+  weaponTargetIndex.value = index
+  weaponSearchQuery.value = ''
+  isWeaponSelectorVisible.value = true
+}
+
+function confirmWeaponSelection(weaponId) {
+  if (weaponTargetIndex.value !== null) {
+    const track = store.tracks[weaponTargetIndex.value]
+    if (track && track.id) {
+      store.updateTrackWeapon(track.id, weaponId)
+    }
+  }
+  isWeaponSelectorVisible.value = false
+}
+
+function removeWeapon() {
+  if (weaponTargetIndex.value !== null) {
+    const track = store.tracks[weaponTargetIndex.value]
+    if (track && track.id) {
+      store.updateTrackWeapon(track.id, null)
+    }
+  }
+  isWeaponSelectorVisible.value = false
+}
+
 const filteredListFlat = computed(() => {
   let list = store.characterRoster
   if (filterElement.value !== 'ALL') {
@@ -187,6 +217,52 @@ function getRarityBaseColor(rarity) {
   if (rarity === 5) return '#ffc400'
   if (rarity === 4) return '#d8b4fe'
   return '#a0a0a0'
+}
+
+const weaponCandidates = computed(() => {
+  if (weaponTargetIndex.value === null) return []
+  const track = store.tracks[weaponTargetIndex.value]
+  if (!track || !track.id) return []
+  const char = store.characterRoster.find(c => c.id === track.id)
+  const requiredType = char?.weapon
+  let list = store.weaponDatabase || []
+  if (requiredType) list = list.filter(w => w.type === requiredType)
+  if (weaponSearchQuery.value) {
+    const q = weaponSearchQuery.value.toLowerCase()
+    list = list.filter(w => (w.name || '').toLowerCase().includes(q))
+  }
+  return [...list].sort((a, b) => (b.rarity || 0) - (a.rarity || 0))
+})
+
+const weaponRosterByRarity = computed(() => {
+  const groups = {}
+  weaponCandidates.value.forEach(weapon => {
+    const rarity = getWeaponRarity(weapon)
+    if (!groups[rarity]) groups[rarity] = []
+    groups[rarity].push(weapon)
+  })
+  const levels = Object.keys(groups).map(Number).sort((a, b) => b - a)
+  return levels.map(level => ({ level, list: groups[level] }))
+})
+
+const currentWeaponForDialog = computed(() => {
+  if (weaponTargetIndex.value === null) return null
+  return getWeaponForTrack(store.tracks[weaponTargetIndex.value])
+})
+
+function getWeaponForTrack(track) {
+  if (!track || !track.weaponId) return null
+  return store.weaponDatabase.find(w => w.id === track.weaponId) || null
+}
+
+function getWeaponRarity(weapon) {
+  return Math.max(3, weapon?.rarity || 3)
+}
+
+function isWeaponEquipped(weaponId) {
+  if (weaponTargetIndex.value === null) return false
+  const track = store.tracks[weaponTargetIndex.value]
+  return !!track && track.weaponId === weaponId
 }
 
 // ===================================================================================
@@ -1313,16 +1389,24 @@ onUnmounted(() => {
         </div>
 
         <div class="char-select-trigger">
-          <div class="trigger-avatar-box" @click.stop="openCharacterSelector(index)" title="点击更换干员">
-            <img v-if="track.id" :src="track.avatar" class="avatar-image" :alt="track.name"/>
-            <div v-else class="avatar-placeholder"></div>
-            <div class="avatar-change-hint" v-if="track.id">
-              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21.5 2v6h-6"></path>
-                <path d="M21.5 8A10 10 0 0 0 3 8"></path>
-                <path d="M2.5 22v-6h6"></path>
-                <path d="M2.5 16A10 10 0 0 0 21 16"></path>
-              </svg>
+          <div class="trigger-avatar-wrapper">
+            <div class="trigger-avatar-box" @click.stop="openCharacterSelector(index)" title="点击更换干员">
+              <img v-if="track.id" :src="track.avatar" class="avatar-image" :alt="track.name"/>
+              <div v-else class="avatar-placeholder"></div>
+              <div class="avatar-change-hint" v-if="track.id">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6"></path>
+                  <path d="M21.5 8A10 10 0 0 0 3 8"></path>
+                  <path d="M2.5 22v-6h6"></path>
+                  <path d="M2.5 16A10 10 0 0 0 21 16"></path>
+                </svg>
+              </div>
+            </div>
+            <div v-if="track.id" class="weapon-slot-compact" @click.stop="openWeaponSelector(index)" title="选择武器">
+              <div class="weapon-box" :class="getWeaponForTrack(track) ? '' : 'weapon-empty'">
+                <img v-if="getWeaponForTrack(track)?.icon" :src="getWeaponForTrack(track).icon" @error="e=>e.target.style.display='none'" />
+                <div v-else class="weapon-placeholder"></div>
+              </div>
             </div>
           </div>
           <div class="trigger-info" @click="!track.id && openCharacterSelector(index)">
@@ -1494,6 +1578,38 @@ onUnmounted(() => {
         </template>
         <div v-if="rosterByRarity.length === 0" class="empty-roster">没有找到匹配的干员</div>
       </div>
+    </el-dialog>
+
+    <el-dialog v-model="isWeaponSelectorVisible" title="选择武器" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
+      <div class="selector-header">
+        <div class="header-left-group">
+          <el-input v-model="weaponSearchQuery" placeholder="搜索武器名称..." :prefix-icon="Search" clearable style="width: 180px" />
+          <button class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift" :disabled="!currentWeaponForDialog" @click="removeWeapon" title="卸下当前武器">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            卸下
+          </button>
+        </div>
+      </div>
+      <div class="roster-scroll-container">
+        <template v-for="group in weaponRosterByRarity" :key="group.level">
+          <div class="rarity-header" :class="`header-rarity-${group.level}`" :style="{ color: getRarityBaseColor(group.level) }">
+            <span class="rarity-label">{{ group.level }} ★</span>
+          <div class="rarity-line"></div>
+        </div>
+        <div class="roster-grid">
+          <div v-for="weapon in group.list" :key="weapon.id" class="roster-card" :class="[`rarity-${getWeaponRarity(weapon)}-style`]" @click="confirmWeaponSelection(weapon.id)">
+            <div class="card-avatar-wrapper" :style="getWeaponRarity(weapon) === 6 ? {} : { borderColor: getRarityBaseColor(getWeaponRarity(weapon)) }">
+              <img :src="weapon.icon || '/weapons/default.png'" loading="lazy" />
+            </div>
+            <div class="card-name">{{ weapon.name }}</div>
+            <div v-if="isWeaponEquipped(weapon.id)" class="in-team-tag weapon-equipped">已装备</div>
+          </div>
+        </div>
+      </template>
+      <div v-if="weaponRosterByRarity.length === 0" class="empty-roster">没有找到匹配的武器</div>
+    </div>
     </el-dialog>
   </div>
 </template>
@@ -1836,7 +1952,7 @@ body.capture-mode .davinci-range {
 
 .track-info {
   flex: 1;
-  min-height: 60px;
+  min-height: 110px;
   display: flex;
   align-items: center;
   background: #3a3a3a;
@@ -1968,6 +2084,30 @@ body.capture-mode .davinci-range {
   user-select: none;
 }
 
+.trigger-avatar-wrapper { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; width: 70px; }
+.weapon-slot-compact { cursor: pointer; position: absolute; top: 36px; left: -8px; }
+.weapon-box { width: 32px; height: 32px; border-radius: 6px; background: #444; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid #555; box-sizing: border-box; transition: border-color 0.2s, background 0.2s; position: relative; }
+.weapon-box.weapon-empty { border: 2px dashed #666; }
+.weapon-slot-compact:hover .weapon-box { border-color: #ffd700; background: #555; box-shadow: none; }
+.weapon-box img { width: 100%; height: 100%; object-fit: cover; }
+.weapon-placeholder { width: 100%; height: 100%; position: relative; }
+.weapon-placeholder::before,
+.weapon-placeholder::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: #888;
+  border-radius: 1px;
+  transition: background 0.2s;
+}
+.weapon-placeholder::before { width: 16px; height: 2px; transform: translate(-50%, -50%); }
+.weapon-placeholder::after { width: 2px; height: 16px; transform: translate(-50%, -50%); }
+.weapon-slot-compact:hover .weapon-placeholder::before,
+.weapon-slot-compact:hover .weapon-placeholder::after {
+  background: #ffd700;
+}
+
 /* ==========================================================================
    5. Main Content Scroller
    ========================================================================== */
@@ -2012,12 +2152,6 @@ body.capture-mode .davinci-range {
   padding: 20px 0;
   height: 100%;
   box-sizing: border-box;
-}
-
-.tracks-content-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
 }
 
 .cursor-guide {
@@ -2441,6 +2575,10 @@ body.capture-mode .davinci-range {
 .in-team-tag::before {
   content: 'FIELDED';
   margin-bottom: 2px;
+}
+
+.in-team-tag.weapon-equipped::before {
+  content: 'EQUIPPED';
 }
 
 .empty-roster {

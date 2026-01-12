@@ -39,7 +39,8 @@
         {
           "offset": 3.7,
           "sp": 20,
-          "stagger": 18
+          "stagger": 18,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -71,7 +72,8 @@
         {
           "offset": 0.4,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -85,7 +87,8 @@
             "type": "stagger",
             "stacks": 2,
             "duration": 0,
-            "offset": 0.4
+            "offset": 0.4,
+            "_id": "zqa9wpe"
           }
         ]
       ],
@@ -100,7 +103,8 @@
         {
           "offset": 0.8,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -112,7 +116,8 @@
             "type": "endmin_debuff",
             "stacks": 1,
             "duration": 4,
-            "offset": 0.8
+            "offset": 0.8,
+            "_id": "4b1lhjx"
           }
         ]
       ],
@@ -126,7 +131,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 25
+          "stagger": 25,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -189,7 +195,8 @@
         {
           "offset": 3.3,
           "sp": 20,
-          "stagger": 18
+          "stagger": 18,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -220,7 +227,8 @@
         {
           "offset": 1.4,
           "sp": 5,
-          "stagger": 5
+          "stagger": 5,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -235,7 +243,8 @@
             "type": "armor_break",
             "stacks": 1,
             "duration": 0,
-            "offset": 1.4
+            "offset": 1.4,
+            "_id": "huucf6j"
           }
         ]
       ],
@@ -250,17 +259,20 @@
         {
           "offset": 0.76,
           "sp": 5,
-          "stagger": 3
+          "stagger": 3,
+          "boundEffects": []
         },
         {
           "offset": 1.38,
           "stagger": 4,
-          "sp": 7
+          "sp": 7,
+          "boundEffects": []
         },
         {
           "offset": 2.3,
           "stagger": 9,
-          "sp": 13
+          "sp": 13,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -277,27 +289,32 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         },
         {
           "offset": 0,
           "stagger": 0,
-          "sp": 0
+          "sp": 0,
+          "boundEffects": []
         },
         {
           "offset": 0,
           "stagger": 0,
-          "sp": 0
+          "sp": 0,
+          "boundEffects": []
         },
         {
           "offset": 0,
           "stagger": 0,
-          "sp": 0
+          "sp": 0,
+          "boundEffects": []
         },
         {
           "offset": 0,
           "stagger": 0,
-          "sp": 0
+          "sp": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -310,31 +327,36 @@
             "type": "pograni_buff",
             "stacks": 5,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "m9q4vrs"
           },
           {
             "type": "pograni_buff",
             "stacks": 4,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "dy0miki"
           },
           {
             "type": "pograni_buff",
             "stacks": 3,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "jnrk1xi"
           },
           {
             "type": "pograni_buff",
             "stacks": 2,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "vv7yqfc"
           },
           {
             "type": "pograni_buff",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "vkah20e"
           }
         ]
       ],
@@ -379,7 +401,8 @@
             {
               "offset": 0.76,
               "sp": 5,
-              "stagger": 3
+              "stagger": 3,
+              "boundEffects": []
             }
           ],
           "cooldown": 18,
@@ -399,12 +422,14 @@
             {
               "offset": 0.76,
               "sp": 5,
-              "stagger": 3
+              "stagger": 3,
+              "boundEffects": []
             },
             {
               "offset": 1.38,
               "stagger": 4,
-              "sp": 7
+              "sp": 7,
+              "boundEffects": []
             }
           ],
           "cooldown": 18,
@@ -424,17 +449,20 @@
             {
               "offset": 0.76,
               "sp": 5,
-              "stagger": 3
+              "stagger": 3,
+              "boundEffects": []
             },
             {
               "offset": 1.38,
               "stagger": 4,
-              "sp": 7
+              "sp": 7,
+              "boundEffects": []
             },
             {
               "offset": 2.3,
               "stagger": 9,
-              "sp": 13
+              "sp": 13,
+              "boundEffects": []
             }
           ],
           "cooldown": 18,
@@ -454,17 +482,20 @@
             {
               "offset": 0.76,
               "sp": 5,
-              "stagger": 3
+              "stagger": 3,
+              "boundEffects": []
             },
             {
               "offset": 1.38,
               "stagger": 4,
-              "sp": 7
+              "sp": 7,
+              "boundEffects": []
             },
             {
               "offset": 2.3,
               "stagger": 9,
-              "sp": 23
+              "sp": 23,
+              "boundEffects": []
             }
           ],
           "cooldown": 18,
@@ -503,7 +534,8 @@
         {
           "offset": 4.3,
           "sp": 18,
-          "stagger": 18
+          "stagger": 18,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -534,7 +566,8 @@
         {
           "offset": 1.3,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -547,7 +580,8 @@
             "type": "spell_vulnerable",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "zgepk82"
           }
         ],
         [
@@ -555,7 +589,8 @@
             "type": "physical_vulnerable",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "x3w50lk"
           }
         ]
       ],
@@ -570,12 +605,14 @@
         {
           "offset": 0.8,
           "stagger": 0,
-          "sp": 0
+          "sp": 0,
+          "boundEffects": []
         },
         {
           "offset": 2.6,
           "stagger": 10,
-          "sp": 0
+          "sp": 0,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -589,7 +626,8 @@
             "type": "corrosion",
             "stacks": 1,
             "duration": 10,
-            "offset": 2.6
+            "offset": 2.6,
+            "_id": "gfmw370"
           }
         ]
       ],
@@ -603,7 +641,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -658,7 +697,8 @@
         {
           "offset": 0,
           "sp": 20,
-          "stagger": 25
+          "stagger": 25,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -695,7 +735,8 @@
             "type": "lastrite_buff",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "wi0g4uk"
           }
         ]
       ],
@@ -707,7 +748,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 15
+          "stagger": 15,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [],
@@ -719,7 +761,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -779,7 +822,8 @@
         {
           "offset": 0,
           "sp": 16,
-          "stagger": 16
+          "stagger": 16,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -810,7 +854,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -823,7 +868,8 @@
           {
             "type": "nature_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "4epihyj"
           }
         ]
       ],
@@ -838,7 +884,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 5
+          "stagger": 5,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -851,7 +898,8 @@
           {
             "type": "knockup",
             "stacks": 2,
-            "duration": 0
+            "duration": 0,
+            "_id": "rf28nuz"
           }
         ]
       ],
@@ -865,7 +913,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -881,7 +930,8 @@
             "type": "affix_slow",
             "stacks": 1,
             "duration": 5,
-            "offset": 0
+            "offset": 0,
+            "_id": "i0pv4fq"
           }
         ],
         [
@@ -889,7 +939,8 @@
             "type": "spell_vulnerable",
             "stacks": 1,
             "duration": 5,
-            "offset": 0
+            "offset": 0,
+            "_id": "lybx0u9"
           }
         ],
         [
@@ -897,7 +948,8 @@
             "type": "nature_attach",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "qse77jj"
           }
         ]
       ],
@@ -948,7 +1000,8 @@
         {
           "offset": 0,
           "sp": 17,
-          "stagger": 17
+          "stagger": 17,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -979,7 +1032,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -992,7 +1046,8 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "gee3uz8"
           }
         ]
       ],
@@ -1007,7 +1062,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -1020,7 +1076,8 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "k8ha3dm"
           }
         ]
       ],
@@ -1034,7 +1091,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -1047,7 +1105,8 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "zukzaah"
           }
         ]
       ],
@@ -1094,7 +1153,8 @@
               {
                 "type": "cold_attach",
                 "stacks": 1,
-                "duration": 0
+                "duration": 0,
+                "_id": "uic8lvd"
               }
             ]
           ],
@@ -1102,7 +1162,8 @@
             {
               "offset": 0,
               "sp": 0,
-              "stagger": 10
+              "stagger": 10,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
@@ -1156,7 +1217,8 @@
         {
           "offset": 0,
           "sp": 20,
-          "stagger": 18
+          "stagger": 18,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -1192,7 +1254,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -1211,7 +1274,8 @@
             "type": "magma_1",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "z0ys5wy"
           }
         ]
       ],
@@ -1226,7 +1290,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -1242,7 +1307,8 @@
             "type": "magma_1",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "jdyz6ci"
           }
         ]
       ],
@@ -1256,7 +1322,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -1275,25 +1342,29 @@
             "type": "magma_1",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "23cq1m2"
           },
           {
             "type": "magma_2",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "d7tti3g"
           },
           {
             "type": "magma_3",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "raif2tp"
           },
           {
             "type": "magma_4",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "uvg4hky"
           }
         ]
       ],
@@ -1350,7 +1421,8 @@
             {
               "offset": 0,
               "sp": 22,
-              "stagger": 24
+              "stagger": 24,
+              "boundEffects": []
             }
           ]
         },
@@ -1374,7 +1446,8 @@
               {
                 "type": "magma_4",
                 "stacks": 1,
-                "duration": 0
+                "duration": 0,
+                "_id": "smnowml"
               }
             ]
           ],
@@ -1382,7 +1455,8 @@
             {
               "offset": 0,
               "sp": 0,
-              "stagger": 20
+              "stagger": 20,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
@@ -1410,7 +1484,8 @@
               {
                 "type": "magma_1",
                 "stacks": 1,
-                "duration": 0
+                "duration": 0,
+                "_id": "epkve96"
               }
             ]
           ],
@@ -1418,7 +1493,8 @@
             {
               "offset": 0,
               "sp": 0,
-              "stagger": 10
+              "stagger": 10,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
@@ -1448,7 +1524,8 @@
                 "type": "magma_4",
                 "stacks": 1,
                 "duration": 0,
-                "offset": 0
+                "offset": 0,
+                "_id": "q2o6pc9"
               }
             ]
           ],
@@ -1456,7 +1533,8 @@
             {
               "offset": 0,
               "sp": 0,
-              "stagger": 30
+              "stagger": 30,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
@@ -1494,7 +1572,8 @@
         {
           "offset": 3.2,
           "sp": 21,
-          "stagger": 19
+          "stagger": 19,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -1525,7 +1604,8 @@
         {
           "offset": 1.9,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -1540,7 +1620,8 @@
             "type": "knockdown",
             "stacks": 2,
             "duration": 0,
-            "offset": 1.9
+            "offset": 1.9,
+            "_id": "khsni9o"
           }
         ],
         [
@@ -1548,7 +1629,8 @@
             "type": "physical_vulnerable",
             "stacks": 1,
             "duration": 10,
-            "offset": 1.9
+            "offset": 1.9,
+            "_id": "nx0mh4g"
           }
         ]
       ],
@@ -1563,7 +1645,8 @@
         {
           "offset": 1.6,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -1575,7 +1658,8 @@
             "type": "combo",
             "stacks": 1,
             "duration": 20,
-            "offset": 1.6
+            "offset": 1.6,
+            "_id": "rk5enby"
           }
         ]
       ],
@@ -1589,12 +1673,14 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 5
+          "stagger": 5,
+          "boundEffects": []
         },
         {
           "offset": 2,
           "stagger": 5,
-          "sp": 0
+          "sp": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -1608,13 +1694,15 @@
             "type": "knockdown",
             "stacks": 1,
             "duration": 2,
-            "hideDuration": true
+            "hideDuration": true,
+            "_id": "dftx2lj"
           },
           {
             "type": "knockdown",
             "stacks": 1,
             "duration": 1.9,
-            "hideDuration": true
+            "hideDuration": true,
+            "_id": "glkyop9"
           }
         ]
       ],
@@ -1659,19 +1747,22 @@
                 "type": "knockdown",
                 "stacks": 1,
                 "duration": 0,
-                "offset": 0
+                "offset": 0,
+                "_id": "2267g7y"
               },
               {
                 "type": "knockdown",
                 "stacks": 1,
                 "duration": 0,
-                "offset": 2
+                "offset": 2,
+                "_id": "6s7t8hd"
               },
               {
                 "type": "knockdown",
                 "stacks": 1,
                 "duration": 0,
-                "offset": 3.9
+                "offset": 3.9,
+                "_id": "qij25x3"
               }
             ]
           ],
@@ -1679,17 +1770,20 @@
             {
               "offset": 0,
               "sp": 0,
-              "stagger": 5
+              "stagger": 5,
+              "boundEffects": []
             },
             {
               "offset": 2,
               "stagger": 5,
-              "sp": 0
+              "sp": 0,
+              "boundEffects": []
             },
             {
               "offset": 3.9,
               "stagger": 5,
-              "sp": 0
+              "sp": 0,
+              "boundEffects": []
             }
           ],
           "gaugeCost": 90,
@@ -1718,7 +1812,8 @@
         {
           "offset": 0,
           "sp": 28,
-          "stagger": 25
+          "stagger": 25,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -1749,7 +1844,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -1762,7 +1858,8 @@
           {
             "type": "knockdown",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "48p1bap"
           }
         ]
       ],
@@ -1777,7 +1874,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -1790,7 +1888,8 @@
           {
             "type": "knockdown",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "4vguv4b"
           }
         ]
       ],
@@ -1804,7 +1903,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -1853,7 +1953,8 @@
         {
           "offset": 0,
           "sp": 15,
-          "stagger": 15
+          "stagger": 15,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -1884,7 +1985,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [],
@@ -1897,7 +1999,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -1910,7 +2013,8 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "uacfsvo"
           }
         ]
       ],
@@ -1924,7 +2028,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -1972,7 +2077,8 @@
         {
           "offset": 0,
           "sp": 25,
-          "stagger": 23
+          "stagger": 23,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -2003,7 +2109,8 @@
         {
           "offset": 0,
           "sp": 35,
-          "stagger": 20
+          "stagger": 20,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -2020,7 +2127,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [],
@@ -2032,7 +2140,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -2045,7 +2154,8 @@
           {
             "type": "frozen",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "4ou6yn9"
           }
         ]
       ],
@@ -2101,7 +2211,8 @@
         {
           "offset": 0,
           "sp": 17,
-          "stagger": 16
+          "stagger": 16,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -2132,7 +2243,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [],
@@ -2145,7 +2257,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 5
+          "stagger": 5,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [],
@@ -2157,7 +2270,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -2171,13 +2285,15 @@
             "type": "emag_attach",
             "stacks": 1,
             "duration": 1.9,
-            "offset": 2.1
+            "offset": 2.1,
+            "_id": "pjo8rk5"
           },
           {
             "type": "conductive",
             "stacks": 1,
             "duration": 0,
-            "offset": 4
+            "offset": 4,
+            "_id": "a9j5izi"
           }
         ]
       ],
@@ -2223,7 +2339,8 @@
             {
               "offset": 0,
               "sp": 0,
-              "stagger": 10
+              "stagger": 10,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
@@ -2256,7 +2373,8 @@
         {
           "offset": 0,
           "sp": 19,
-          "stagger": 17
+          "stagger": 17,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -2287,7 +2405,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 30
+          "stagger": 30,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -2304,7 +2423,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -2316,7 +2436,8 @@
             "type": "Thunderlances",
             "stacks": 3,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "u4et5cu"
           }
         ]
       ],
@@ -2327,7 +2448,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -2339,7 +2461,8 @@
             "type": "Thunderlances EX",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "0e8kj85"
           }
         ]
       ],
@@ -2389,7 +2512,8 @@
             {
               "offset": 0,
               "sp": 0,
-              "stagger": 30
+              "stagger": 30,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
@@ -2417,7 +2541,8 @@
         {
           "offset": 3.5,
           "sp": 21,
-          "stagger": 20
+          "stagger": 20,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -2448,7 +2573,8 @@
         {
           "offset": 1.5,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -2462,7 +2588,8 @@
             "type": "knockup",
             "stacks": 2,
             "duration": 0,
-            "offset": 1.5
+            "offset": 1.5,
+            "_id": "u1eh47y"
           }
         ]
       ],
@@ -2477,7 +2604,8 @@
         {
           "offset": 1.76,
           "sp": 0,
-          "stagger": 15
+          "stagger": 15,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -2491,7 +2619,8 @@
             "type": "stagger",
             "stacks": 4,
             "duration": 0,
-            "offset": 1.76
+            "offset": 1.76,
+            "_id": "r58y37u"
           }
         ]
       ],
@@ -2502,12 +2631,14 @@
         {
           "offset": 1.5,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         },
         {
           "offset": 2.7,
           "stagger": 0,
-          "sp": 0
+          "sp": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -2523,13 +2654,15 @@
             "type": "knockup",
             "stacks": 1,
             "duration": 1.1,
-            "offset": 1.5
+            "offset": 1.5,
+            "_id": "vyen6bq"
           },
           {
             "type": "knockdown",
             "stacks": 2,
             "duration": 0,
-            "offset": 2.7
+            "offset": 2.7,
+            "_id": "lzwjaou"
           }
         ],
         [
@@ -2537,7 +2670,8 @@
             "type": "dapan_buff",
             "stacks": 1,
             "duration": 0,
-            "offset": 0
+            "offset": 0,
+            "_id": "zpdszes"
           }
         ]
       ],
@@ -2586,7 +2720,8 @@
         {
           "offset": 0,
           "sp": 18,
-          "stagger": 18
+          "stagger": 18,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -2617,7 +2752,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 5
+          "stagger": 5,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -2630,7 +2766,8 @@
           {
             "type": "blaze_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "ukuwp86"
           }
         ]
       ],
@@ -2645,7 +2782,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -2658,7 +2796,8 @@
           {
             "type": "blaze_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "1944zas"
           }
         ]
       ],
@@ -2672,7 +2811,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -2685,7 +2825,8 @@
           {
             "type": "burning",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "mvoxwl3"
           }
         ]
       ],
@@ -2724,7 +2865,8 @@
             {
               "offset": 0,
               "sp": 0,
-              "stagger": 10
+              "stagger": 10,
+              "boundEffects": []
             }
           ],
           "spCost": 75,
@@ -2753,7 +2895,8 @@
         {
           "offset": 0,
           "sp": 15,
-          "stagger": 15
+          "stagger": 15,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -2784,7 +2927,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -2797,7 +2941,8 @@
           {
             "type": "emag_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "ein5itj"
           }
         ]
       ],
@@ -2812,7 +2957,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -2825,7 +2971,8 @@
           {
             "type": "conductive",
             "stacks": 1,
-            "duration": 8.75
+            "duration": 8.75,
+            "_id": "ufb12al"
           }
         ]
       ],
@@ -2839,7 +2986,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -2886,7 +3034,8 @@
         {
           "offset": 3.2,
           "sp": 18,
-          "stagger": 16
+          "stagger": 16,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -2917,7 +3066,10 @@
         {
           "offset": 0.4,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": [
+            "ovn2n9y"
+          ]
         }
       ],
       "skill_allowed_types": [
@@ -2931,7 +3083,8 @@
             "type": "knockup",
             "stacks": 2,
             "duration": 0,
-            "offset": 0.4
+            "offset": 0.4,
+            "_id": "ovn2n9y"
           }
         ]
       ],
@@ -2946,7 +3099,10 @@
         {
           "offset": 0.56,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": [
+            "0eap175"
+          ]
         }
       ],
       "link_allowed_types": [
@@ -2960,7 +3116,8 @@
             "type": "knockup",
             "stacks": 2,
             "duration": 0,
-            "offset": 0.56
+            "offset": 0.56,
+            "_id": "0eap175"
           }
         ]
       ],
@@ -2974,7 +3131,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -3022,7 +3180,8 @@
         {
           "offset": 0,
           "sp": 19,
-          "stagger": 17
+          "stagger": 17,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -3053,7 +3212,8 @@
         {
           "offset": 0,
           "sp": 30,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -3066,7 +3226,8 @@
           {
             "type": "frozen",
             "stacks": 1,
-            "duration": 5
+            "duration": 5,
+            "_id": "e0qgk36"
           }
         ]
       ],
@@ -3081,7 +3242,8 @@
         {
           "offset": 0,
           "sp": 10,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [],
@@ -3093,7 +3255,8 @@
         {
           "offset": 0,
           "sp": 30,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -3106,7 +3269,8 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "fls5qmc"
           }
         ]
       ],
@@ -3157,7 +3321,8 @@
               {
                 "type": "frozen",
                 "stacks": 1,
-                "duration": 5
+                "duration": 5,
+                "_id": "mdyy0w0"
               }
             ]
           ],
@@ -3165,7 +3330,8 @@
             {
               "offset": 0,
               "sp": 30,
-              "stagger": 10
+              "stagger": 10,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
@@ -3187,7 +3353,8 @@
         {
           "offset": 0,
           "sp": 25,
-          "stagger": 22
+          "stagger": 22,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -3218,7 +3385,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 20
+          "stagger": 20,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -3250,7 +3418,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [],
@@ -3262,7 +3431,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -3310,7 +3480,8 @@
         {
           "offset": 0,
           "sp": 15,
-          "stagger": 15
+          "stagger": 15,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -3341,7 +3512,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [],
@@ -3354,7 +3526,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [],
@@ -3366,7 +3539,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -3430,7 +3604,8 @@
         {
           "offset": 0,
           "sp": 15,
-          "stagger": 15
+          "stagger": 15,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -3461,7 +3636,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -3473,7 +3649,8 @@
             "type": "antal_buff",
             "stacks": 1,
             "duration": 60,
-            "offset": 2
+            "offset": 2,
+            "_id": "wfb8wtw"
           }
         ]
       ],
@@ -3485,7 +3662,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -3510,7 +3688,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [
@@ -3523,7 +3702,8 @@
             "type": "pulse_enhance",
             "stacks": 1,
             "duration": 12,
-            "offset": 1.4
+            "offset": 1.4,
+            "_id": "o2x1k9o"
           }
         ],
         [
@@ -3531,7 +3711,8 @@
             "type": "fire_enhance",
             "stacks": 1,
             "duration": 12,
-            "offset": 1.4
+            "offset": 1.4,
+            "_id": "4gd5h35"
           }
         ]
       ],
@@ -3577,7 +3758,8 @@
         {
           "offset": 0,
           "sp": 19,
-          "stagger": 17
+          "stagger": 17,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -3608,7 +3790,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -3621,7 +3804,8 @@
           {
             "type": "cold_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "crb1yuu"
           }
         ]
       ],
@@ -3633,7 +3817,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [
@@ -3646,12 +3831,14 @@
           {
             "type": "knockup",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "mr5sdao"
           },
           {
             "type": "ice_shatter",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "dblcris"
           }
         ]
       ],
@@ -3662,7 +3849,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -3710,7 +3898,8 @@
         {
           "offset": 0,
           "sp": 19,
-          "stagger": 17
+          "stagger": 17,
+          "boundEffects": []
         }
       ],
       "attack_allowed_types": [
@@ -3741,7 +3930,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "skill_allowed_types": [
@@ -3754,7 +3944,8 @@
           {
             "type": "blaze_attach",
             "stacks": 1,
-            "duration": 0
+            "duration": 0,
+            "_id": "s5610of"
           }
         ]
       ],
@@ -3766,7 +3957,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 10
+          "stagger": 10,
+          "boundEffects": []
         }
       ],
       "link_allowed_types": [],
@@ -3778,7 +3970,8 @@
         {
           "offset": 0,
           "sp": 0,
-          "stagger": 0
+          "stagger": 0,
+          "boundEffects": []
         }
       ],
       "ultimate_allowed_types": [],
@@ -3882,5 +4075,23 @@
     "裂地者",
     "沧贼",
     "野外生物"
+  ],
+  "weaponDatabase": [
+    {
+      "id": "wpn_sword_0021",
+      "name": "宏愿",
+      "type": "sword",
+      "rarity": 6,
+      "duration": 0,
+      "icon": "/weapons/sword/wpn_sword_0021.png"
+    },
+    {
+      "id": "wpn_sword_0003",
+      "name": "塔尔11",
+      "type": "sword",
+      "rarity": 3,
+      "duration": 0,
+      "icon": "/weapons/sword/wpn_sword_0003.png"
+    }
   ]
 }
