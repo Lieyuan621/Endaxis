@@ -3,10 +3,11 @@ import { ref, computed, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
 import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowRight } from '@element-plus/icons-vue'
 import { executeSave } from '@/api/saveStrategy.js'
 
 const store = useTimelineStore()
-const { characterRoster, iconDatabase, enemyDatabase, enemyCategories, weaponDatabase } = storeToRefs(store)
+const { characterRoster, iconDatabase, enemyDatabase, enemyCategories, weaponDatabase, equipmentDatabase, equipmentCategories, equipmentCategoryConfigs } = storeToRefs(store)
 
 // === 常量定义 ===
 
@@ -42,6 +43,26 @@ const WEAPON_TYPES = [
   { label: '施术单元', value: 'funnel' }
 ]
 
+const EQUIPMENT_SLOTS = [
+  { label: '护甲', value: 'armor' },
+  { label: '护手', value: 'gloves' },
+  { label: '配件', value: 'accessory' }
+]
+
+const EQUIPMENT_LEVELS = [70, 50, 36, 20, 10]
+const EQUIPMENT_LEVEL_COLORS = {
+  70: '#ffd700',
+  50: '#b37feb',
+  36: '#4a90e2',
+  20: '#95de64',
+  10: '#888888'
+}
+
+function getEquipmentLevelColor(level) {
+  const key = Number(level)
+  return EQUIPMENT_LEVEL_COLORS[key] || '#555'
+}
+
 const ENEMY_TIERS = store.ENEMY_TIERS
 const TIER_WEIGHTS = { 'boss': 4, 'champion': 3, 'elite': 2, 'normal': 1 }
 const HIDDEN_CHECKBOX_KEYS = ['default']
@@ -49,11 +70,12 @@ const effectKeys = Object.keys(EFFECT_NAMES).filter(key => !HIDDEN_CHECKBOX_KEYS
 
 // === 状态与计算属性 ===
 
-const editingMode = ref('character') // 'character' | 'enemy' | 'weapon'
+const editingMode = ref('character') // 'character' | 'enemy' | 'weapon' | 'equipment'
 const searchQuery = ref('')
 const selectedCharId = ref(null)
 const selectedEnemyId = ref(null)
 const selectedWeaponId = ref(null)
+const selectedEquipmentId = ref(null)
 const activeTab = ref('basic')
 
 const filteredRoster = computed(() => {
@@ -130,6 +152,44 @@ const groupedWeapons = computed(() => {
   return groups.filter(g => g.list.length > 0)
 })
 
+const filteredEquipment = computed(() => {
+  let list = equipmentDatabase.value || []
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(e => (e.name || '').toLowerCase().includes(q) || (e.id || '').toLowerCase().includes(q))
+  }
+  const slotOrder = { armor: 1, gloves: 2, accessory: 3 }
+  return [...list].sort((a, b) => {
+    const catDiff = (a.category || '').localeCompare(b.category || '')
+    if (catDiff !== 0) return catDiff
+    const levelDiff = (Number(b.level) || 0) - (Number(a.level) || 0)
+    if (levelDiff !== 0) return levelDiff
+    const slotDiff = (slotOrder[a.slot] || 99) - (slotOrder[b.slot] || 99)
+    if (slotDiff !== 0) return slotDiff
+    return (a.name || '').localeCompare(b.name || '')
+  })
+})
+
+const groupedEquipment = computed(() => {
+  const groups = {}
+  ;(equipmentCategories.value || []).forEach(cat => { groups[cat] = [] })
+  groups['未分类'] = []
+
+  filteredEquipment.value.forEach(eq => {
+    const cat = eq.category
+    if (cat && groups[cat]) groups[cat].push(eq)
+    else groups['未分类'].push(eq)
+  })
+
+  const result = []
+  ;(equipmentCategories.value || []).forEach(cat => {
+    if (groups[cat].length > 0) result.push({ name: cat, list: groups[cat] })
+  })
+  if (groups['未分类'].length > 0) result.push({ name: '未分类', list: groups['未分类'] })
+
+  return result
+})
+
 const selectedChar = computed(() => {
   return characterRoster.value.find(c => c.id === selectedCharId.value)
 })
@@ -142,8 +202,13 @@ const selectedWeapon = computed(() => {
   return weaponDatabase.value.find(w => w.id === selectedWeaponId.value)
 })
 
+const selectedEquipment = computed(() => {
+  return equipmentDatabase.value.find(e => e.id === selectedEquipmentId.value)
+})
+
 const collapsedEnemyGroups = ref(new Set())
 const collapsedWeaponGroups = ref(new Set())
+const collapsedEquipmentGroups = ref(new Set())
 
 // === 生命周期 ===
 
@@ -165,6 +230,20 @@ watch(weaponDatabase, (newList) => {
   }
 }, { immediate: true })
 
+watch(equipmentDatabase, (newList) => {
+  if (newList && newList.length > 0 && !selectedEquipmentId.value) {
+    selectedEquipmentId.value = newList[0].id
+  }
+}, { immediate: true })
+
+watch(() => selectedEquipment.value?.category, (newCat) => {
+  if (!newCat) return
+  if (newCat && !equipmentCategories.value.includes(newCat)) {
+    equipmentCategories.value.push(newCat)
+  }
+  ensureEquipmentCategoryConfig(newCat)
+}, { immediate: true })
+
 // === 操作方法 ===
 
 function setMode(mode) {
@@ -177,6 +256,8 @@ function setMode(mode) {
     selectedCharId.value = characterRoster.value[0].id
   } else if (mode === 'weapon' && weaponDatabase.value && weaponDatabase.value.length > 0 && !selectedWeaponId.value) {
     selectedWeaponId.value = weaponDatabase.value[0].id
+  } else if (mode === 'equipment' && equipmentDatabase.value && equipmentDatabase.value.length > 0 && !selectedEquipmentId.value) {
+    selectedEquipmentId.value = equipmentDatabase.value[0].id
   }
 }
 
@@ -191,6 +272,10 @@ function selectEnemy(id) {
 
 function selectWeapon(id) {
   selectedWeaponId.value = id
+}
+
+function selectEquipment(id) {
+  selectedEquipmentId.value = id
 }
 
 function updateEnemyId(event) {
@@ -221,6 +306,16 @@ function updateWeaponId(event) {
   }
   if (selectedWeapon.value) selectedWeapon.value.id = newId
   selectedWeaponId.value = newId
+}
+
+function updateEquipmentId(event) {
+  const newId = event.target.value
+  if (!newId) {
+    event.target.value = selectedEquipment.value.id
+    return
+  }
+  if (selectedEquipment.value) selectedEquipment.value.id = newId
+  selectedEquipmentId.value = newId
 }
 
 function addNewCharacter() {
@@ -283,6 +378,28 @@ function addNewWeapon() {
   ElMessage.success('已添加新武器')
 }
 
+function addNewEquipment() {
+  const newId = `eq_${Date.now()}`
+  const category = equipmentCategories.value?.[0] || ''
+  const newEquipment = {
+    id: newId,
+    name: '新装备',
+    category,
+    slot: 'armor',
+    level: 70,
+    icon: '/equipment/default.webp'
+  }
+  if (!equipmentDatabase.value) equipmentDatabase.value = []
+  equipmentDatabase.value.push(newEquipment)
+  selectedEquipmentId.value = newId
+
+  if (category && !equipmentCategoryConfigs.value?.[category]) {
+    equipmentCategoryConfigs.value[category] = { setBonus: { duration: 0 } }
+  }
+
+  ElMessage.success('已添加新装备')
+}
+
 function deleteCurrentCharacter() {
   if (!selectedChar.value) return
   ElMessageBox.confirm(`确定要删除干员 "${selectedChar.value.name}" 吗？`, '警告', {
@@ -326,6 +443,20 @@ function deleteCurrentWeapon() {
   }).catch(() => {})
 }
 
+function deleteCurrentEquipment() {
+  if (!selectedEquipment.value) return
+  ElMessageBox.confirm(`确定要删除装备 "${selectedEquipment.value.name}" 吗？`, '警告', {
+    confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning'
+  }).then(() => {
+    const idx = equipmentDatabase.value.findIndex(e => e.id === selectedEquipmentId.value)
+    if (idx !== -1) {
+      equipmentDatabase.value.splice(idx, 1)
+      selectedEquipmentId.value = equipmentDatabase.value.length > 0 ? equipmentDatabase.value[0].id : null
+      ElMessage.success('删除成功')
+    }
+  }).catch(() => {})
+}
+
 function toggleEnemyGroup(name) {
   const set = collapsedEnemyGroups.value
   if (set.has(name)) set.delete(name); else set.add(name)
@@ -344,6 +475,15 @@ function isWeaponGroupCollapsed(name) {
   return collapsedWeaponGroups.value.has(name)
 }
 
+function toggleEquipmentGroup(name) {
+  const set = collapsedEquipmentGroups.value
+  if (set.has(name)) set.delete(name); else set.add(name)
+}
+
+function isEquipmentGroupCollapsed(name) {
+  return collapsedEquipmentGroups.value.has(name)
+}
+
 function quickAddCategory() {
   ElMessageBox.prompt('请输入新的分类名称', '新建分类', {
     confirmButtonText: '添加',
@@ -360,6 +500,58 @@ function quickAddCategory() {
       }
       ElMessage.success(`已添加并选中: ${val}`)
     } else if (enemyCategories.value.includes(val)) {
+      ElMessage.warning('该分类已存在')
+    }
+  }).catch(() => {})
+}
+
+function ensureEquipmentCategoryConfig(category) {
+  if (!category) return
+  if (!equipmentCategoryConfigs.value) equipmentCategoryConfigs.value = {}
+  if (!equipmentCategoryConfigs.value[category]) {
+    equipmentCategoryConfigs.value[category] = { setBonus: { duration: 0 } }
+    return
+  }
+  if (!equipmentCategoryConfigs.value[category].setBonus) {
+    equipmentCategoryConfigs.value[category].setBonus = { duration: 0 }
+    return
+  }
+  if (equipmentCategoryConfigs.value[category].setBonus.duration === undefined) {
+    equipmentCategoryConfigs.value[category].setBonus.duration = 0
+  }
+}
+
+function getCategorySetBonusDuration(category) {
+  ensureEquipmentCategoryConfig(category)
+  const raw = equipmentCategoryConfigs.value?.[category]?.setBonus?.duration
+  const num = Number(raw)
+  return Number.isFinite(num) ? Math.max(0, num) : 0
+}
+
+function setCategorySetBonusDuration(category, value) {
+  ensureEquipmentCategoryConfig(category)
+  const num = Number(value)
+  equipmentCategoryConfigs.value[category].setBonus.duration = Number.isFinite(num) ? Math.max(0, num) : 0
+}
+
+function quickAddEquipmentCategory() {
+  ElMessageBox.prompt('请输入新的装备分类名称', '新建装备分类', {
+    confirmButtonText: '添加',
+    cancelButtonText: '取消',
+    inputPattern: /\S+/,
+    inputErrorMessage: '分类名称不能为空'
+  }).then(({ value }) => {
+    const val = value.trim()
+    if (val && !equipmentCategories.value.includes(val)) {
+      equipmentCategories.value.push(val)
+      if (!equipmentCategoryConfigs.value[val]) {
+        equipmentCategoryConfigs.value[val] = { setBonus: { duration: 0 } }
+      }
+      if (selectedEquipment.value) {
+        selectedEquipment.value.category = val
+      }
+      ElMessage.success(`已添加并选中: ${val}`)
+    } else if (equipmentCategories.value.includes(val)) {
       ElMessage.warning('该分类已存在')
     }
   }).catch(() => {})
@@ -693,7 +885,10 @@ function saveData() {
     characterRoster: characterRoster.value,
     enemyDatabase: enemyDatabase.value,
     enemyCategories: enemyCategories.value,
-    weaponDatabase: weaponDatabase.value
+    weaponDatabase: weaponDatabase.value,
+    equipmentDatabase: equipmentDatabase.value,
+    equipmentCategories: equipmentCategories.value,
+    equipmentCategoryConfigs: equipmentCategoryConfigs.value
   }
   executeSave(dataToSave)
 }
@@ -716,6 +911,12 @@ function saveData() {
             @click="setMode('weapon')"
         >武器</button>
         <button
+            class="ea-btn ea-btn--glass-cut"
+            :class="{ 'is-active': editingMode === 'equipment' }"
+            :style="{ '--ea-btn-accent': 'var(--ea-success)' }"
+            @click="setMode('equipment')"
+        >装备</button>
+        <button
           class="ea-btn ea-btn--glass-cut"
           :class="{ 'is-active': editingMode === 'enemy' }"
           :style="{ '--ea-btn-accent': 'var(--ea-danger-soft)' }"
@@ -730,10 +931,12 @@ function saveData() {
               ? '干员数据'
               : editingMode === 'enemy'
                 ? '敌人数据'
-                : '武器数据'
+                : editingMode === 'weapon'
+                  ? '武器数据'
+                  : '装备数据'
           }}
         </h2>
-        <button class="ea-btn ea-btn--icon ea-btn--icon-28 ea-btn--icon-plus" @click="editingMode === 'character' ? addNewCharacter() : (editingMode === 'enemy' ? addNewEnemy() : addNewWeapon())">＋</button>
+        <button class="ea-btn ea-btn--icon ea-btn--icon-28 ea-btn--icon-plus" @click="editingMode === 'character' ? addNewCharacter() : (editingMode === 'enemy' ? addNewEnemy() : (editingMode === 'weapon' ? addNewWeapon() : addNewEquipment()))">＋</button>
       </div>
       <div class="search-box">
         <input v-model="searchQuery" placeholder="搜索 ID 或名称..." />
@@ -772,7 +975,6 @@ function saveData() {
             <div v-for="enemy in group.list" :key="enemy.id"
                  class="char-item"
                 :class="{ active: enemy.id === selectedEnemyId }"
-                :style="{ borderLeftColor: ENEMY_TIERS.find(t=>t.value===enemy.tier)?.color }"
                 @click="selectEnemy(enemy.id)">
 
               <div class="avatar-wrapper-small" :style="{ borderColor: ENEMY_TIERS.find(t=>t.value===enemy.tier)?.color }">
@@ -829,6 +1031,43 @@ function saveData() {
 
         <div v-if="filteredWeapons.length === 0" class="empty-hint">
           暂无武器，点击上方添加
+        </div>
+      </div>
+
+      <div v-else-if="editingMode === 'equipment'" class="char-list">
+        <div v-for="group in groupedEquipment" :key="group.name" class="enemy-group">
+          <div class="group-title" @click="toggleEquipmentGroup(group.name)" style="cursor: pointer; display:flex; align-items:center; justify-content:space-between;">
+            <span>{{ group.name }}</span>
+            <span class="group-meta">
+              <span class="group-count">({{ group.list.length }})</span>
+              <el-icon class="toggle-arrow" :class="{ 'is-rotated': !isEquipmentGroupCollapsed(group.name) }"><ArrowRight /></el-icon>
+            </span>
+          </div>
+
+          <div v-if="!isEquipmentGroupCollapsed(group.name)">
+            <div v-for="eq in group.list" :key="eq.id"
+                 class="char-item"
+                 :class="{ active: eq.id === selectedEquipmentId }"
+                 @click="selectEquipment(eq.id)">
+              <div class="avatar-wrapper-small" :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderColor: getEquipmentLevelColor(eq.level) }">
+                <img
+                    :key="eq.icon || eq.id"
+                    :src="eq.icon || '/icons/default_icon.webp'"
+                    @error="e=>e.target.src='/icons/default_icon.webp'"
+                    style="width:100%;height:100%;object-fit:cover;" />
+              </div>
+              <div class="char-info">
+                <span class="char-name">{{ eq.name }}</span>
+                <span class="char-meta" :style="{ color: getEquipmentLevelColor(eq.level) }">
+                  {{ (EQUIPMENT_SLOTS.find(s=>s.value===eq.slot)?.label || eq.slot || '未知') }} · Lv{{ eq.level || 0 }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="filteredEquipment.length === 0" class="empty-hint">
+          暂无装备，点击上方添加
         </div>
       </div>
 
@@ -1251,7 +1490,7 @@ function saveData() {
       <div v-else-if="editingMode === 'enemy' && selectedEnemy" class="editor-panel">
         <header class="panel-header">
           <div class="header-left">
-            <div class="avatar-wrapper-large" style="border-color: #ff4d4f">
+            <div class="avatar-wrapper-large" :style="{ borderColor: ENEMY_TIERS.find(t=>t.value===selectedEnemy.tier)?.color || '#ff4d4f' }">
               <img :src="selectedEnemy.avatar" @error="e=>e.target.src='/avatars/default_enemy.webp'" />
             </div>
             <div class="header-titles">
@@ -1281,17 +1520,13 @@ function saveData() {
             </div>
 
             <div class="form-group">
-              <label>分类</label>
-              <div style="display: flex; gap: 5px;">
-                <el-select v-model="selectedEnemy.category" size="large" style="flex-grow: 1;">
-                  <el-option v-for="cat in enemyCategories" :key="cat" :label="cat" :value="cat" />
-                </el-select>
-                <button
-                    class="ea-btn ea-btn--icon ea-btn--icon-38 ea-btn--icon-plus"
-                    @click="quickAddCategory"
-                    title="新建分类"
-                >+</button>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <label>分类</label>
+                <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect" title="新增分类" @click.prevent="quickAddCategory">＋</button>
               </div>
+              <el-select v-model="selectedEnemy.category" size="large" style="width: 100%">
+                <el-option v-for="cat in enemyCategories" :key="cat" :label="cat" :value="cat" />
+              </el-select>
             </div>
             <div class="form-group full-width"><label>头像路径</label><input v-model="selectedEnemy.avatar" /></div>
           </div>
@@ -1303,6 +1538,75 @@ function saveData() {
             <div class="form-group"><label style="color:#ff7875">踉跄时长 (s)</label><input type="number" step="0.1" v-model.number="selectedEnemy.staggerNodeDuration"></div>
             <div class="form-group"><label style="color:#ff7875">失衡时长 (s)</label><input type="number" step="0.5" v-model.number="selectedEnemy.staggerBreakDuration"></div>
             <div class="form-group"><label style="color:#ffd700">处决回复技力</label><input type="number" v-model.number="selectedEnemy.executionRecovery"></div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="editingMode === 'equipment' && selectedEquipment" class="editor-panel">
+        <header class="panel-header">
+          <div class="header-left">
+            <div class="avatar-wrapper-large" :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderColor: getEquipmentLevelColor(selectedEquipment.level) }">
+              <img
+                  :key="selectedEquipment.icon || selectedEquipment.id"
+                  :src="selectedEquipment.icon || '/icons/default_icon.webp'"
+                  @error="e=>e.target.src='/icons/default_icon.webp'"
+                  style="width:100%; height:100%; object-fit:cover;" />
+            </div>
+            <div class="header-titles">
+              <h1 class="edit-title">{{ selectedEquipment.name }}</h1>
+              <span class="id-tag">{{ selectedEquipment.id }}</span>
+            </div>
+          </div>
+          <button class="ea-btn ea-btn--md ea-btn--fill-danger" @click="deleteCurrentEquipment">删除此装备</button>
+        </header>
+
+        <div class="form-section">
+          <h3 class="section-title">基础信息</h3>
+          <div class="form-grid three-col">
+            <div class="form-group"><label>名称</label><input v-model="selectedEquipment.name" type="text" /></div>
+            <div class="form-group"><label>ID (Unique)</label><input :value="selectedEquipment.id" @input="updateEquipmentId" type="text" /></div>
+            <div class="form-group">
+              <label>部位</label>
+              <el-select v-model="selectedEquipment.slot" size="large" style="width: 100%">
+                <el-option v-for="s in EQUIPMENT_SLOTS" :key="s.value" :label="s.label" :value="s.value" />
+              </el-select>
+            </div>
+            <div class="form-group">
+              <label>等级</label>
+              <el-select v-model="selectedEquipment.level" size="large" style="width: 100%">
+                <el-option v-for="lv in EQUIPMENT_LEVELS" :key="lv" :label="`Lv${lv}`" :value="lv" />
+              </el-select>
+            </div>
+            <div class="form-group">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <label>分类</label>
+                <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect" title="新增分类" @click.prevent="quickAddEquipmentCategory">＋</button>
+              </div>
+              <el-select v-model="selectedEquipment.category" size="large" style="width: 100%">
+                <el-option v-for="cat in equipmentCategories" :key="cat" :label="cat" :value="cat" />
+              </el-select>
+            </div>
+            <div class="form-group full-width"><label>图标路径</label><input v-model="selectedEquipment.icon" type="text" /></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">三件套（套装 BUFF）</h3>
+          <div class="form-grid three-col">
+            <div class="form-group">
+              <label>BUFF 名称（固定等于分类名）</label>
+              <input :value="selectedEquipment.category || ''" disabled />
+            </div>
+            <div class="form-group">
+              <label>持续时间 (s)</label>
+              <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  :value="getCategorySetBonusDuration(selectedEquipment.category)"
+                  @input="setCategorySetBonusDuration(selectedEquipment.category, $event.target.value)"
+              />
+            </div>
           </div>
         </div>
       </div>

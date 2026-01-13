@@ -4126,5 +4126,109 @@
       "duration": 15,
       "icon": "/weapons/funnel/wpn_funnel_0004.webp"
     }
-  ]
+  ],
+  "equipmentDatabase": [
+    {
+      "id": "item_equip_t4_suit_phy01_edc_03",
+      "name": "点剑火石",
+      "category": "点剑",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/item_equip_t4_suit_phy01_edc_03.webp"
+    },
+    {
+      "id": "item_equip_t4_suit_phy01_body_02",
+      "name": "点剑重装甲",
+      "category": "点剑",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/item_equip_t4_suit_phy01_body_02.webp"
+    },
+    {
+      "id": "item_equip_t4_suit_phy01_hand_01",
+      "name": "点剑战术手套",
+      "category": "点剑",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/item_equip_t4_suit_phy01_hand_01.webp"
+    },
+    {
+      "id": "item_equip_t4_suit_phy01_hand_02",
+      "name": "点剑战术手甲",
+      "category": "点剑",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/item_equip_t4_suit_phy01_hand_02.webp"
+    }
+  ],
+  "equipmentCategories": [
+    "武陵",
+    "四号谷地",
+    "集成重型",
+    "集成轻型",
+    "重装信徒",
+    "巡行信使",
+    "蚀电屏蔽",
+    "蚀电防护",
+    "阿伯莉遗声",
+    "天灾防护",
+    "点剑"
+  ],
+  "equipmentCategoryConfigs": {
+    "武陵": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "四号谷地": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "集成重型": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "集成轻型": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "重装信徒": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "巡行信使": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "蚀电屏蔽": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "蚀电防护": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "阿伯莉遗声": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "天灾防护": {
+      "setBonus": {
+        "duration": 0
+      }
+    },
+    "点剑": {
+      "setBonus": {
+        "duration": 0
+      }
+    }
+  }
 }

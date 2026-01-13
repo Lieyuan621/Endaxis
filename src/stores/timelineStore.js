@@ -82,6 +82,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     const iconDatabase = ref({})
     const enemyDatabase = ref([])
     const weaponDatabase = ref([])
+    const equipmentDatabase = ref([])
+    const equipmentCategories = ref([])
+    const equipmentCategoryConfigs = ref({})
     const activeEnemyId = ref('custom')
     const enemyCategories = ref([])
     const cycleBoundaries = ref([])
@@ -99,6 +102,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         gaugeEfficiency: 100,
         originiumArtsPower: 0,
         weaponId: null,
+        equipArmorId: null,
+        equipGlovesId: null,
+        equipAccessory1Id: null,
+        equipAccessory2Id: null,
         linkCdReduction: 0,
     })
 
@@ -244,9 +251,23 @@ export const useTimelineStore = defineStore('timeline', () => {
                 selectedLibrarySkillId.value = null;
                 selectedLibrarySource.value = 'character';
             }
-            weaponStatuses.value = weaponStatuses.value.filter(s => s.trackId !== track.id);
+            weaponStatuses.value = weaponStatuses.value.filter(s => !(s.trackId === track.id && (!s.type || s.type === 'weapon')));
             commitState();
         }
+    }
+
+    function updateTrackEquipment(trackId, slotKey, equipmentId) {
+        const track = tracks.value.find(t => t.id === trackId);
+        if (!track) return;
+
+        const normalizedId = equipmentId || null
+
+        if (slotKey === 'armor') track.equipArmorId = normalizedId
+        else if (slotKey === 'gloves') track.equipGlovesId = normalizedId
+        else if (slotKey === 'accessory1') track.equipAccessory1Id = normalizedId
+        else if (slotKey === 'accessory2') track.equipAccessory2Id = normalizedId
+
+        commitState()
     }
 
     // ===================================================================================
@@ -555,6 +576,55 @@ export const useTimelineStore = defineStore('timeline', () => {
         return weaponDatabase.value.find(w => w.id === weaponId)
     }
 
+    const getEquipmentById = (equipmentId) => {
+        if (!equipmentId) return null
+        return equipmentDatabase.value.find(e => e.id === equipmentId) || null
+    }
+
+    const getEquipmentCategoryConfig = (category) => {
+        if (!category) return null
+        return equipmentCategoryConfigs.value?.[category] || null
+    }
+
+    const getTrackEquipmentIds = (trackId) => {
+        const track = tracks.value.find(t => t.id === trackId)
+        if (!track) return []
+        return [track.equipArmorId, track.equipGlovesId, track.equipAccessory1Id, track.equipAccessory2Id].filter(Boolean)
+    }
+
+    const getActiveSetBonusCategories = (trackId) => {
+        const ids = getTrackEquipmentIds(trackId)
+        const counts = new Map()
+        for (const id of ids) {
+            const eq = getEquipmentById(id)
+            const cat = eq?.category
+            if (!cat) continue
+            counts.set(cat, (counts.get(cat) || 0) + 1)
+        }
+        return [...counts.entries()].filter(([, count]) => count >= 3).map(([cat]) => cat)
+    }
+
+    const getSetBonusDuration = (category) => {
+        const cfg = getEquipmentCategoryConfig(category)
+        const duration = cfg?.setBonus?.duration
+        const num = Number(duration)
+        return Number.isFinite(num) ? Math.max(0, num) : 0
+    }
+
+    const getSetBonusIcon = (trackId, category) => {
+        const track = tracks.value.find(t => t.id === trackId)
+        if (!track || !category) return ''
+
+        const equippedIds = [track.equipArmorId, track.equipGlovesId, track.equipAccessory1Id, track.equipAccessory2Id].filter(Boolean)
+        for (const id of equippedIds) {
+            const eq = getEquipmentById(id)
+            if (eq?.category === category && eq?.icon) return eq.icon
+        }
+
+        const fallback = equipmentDatabase.value.find(e => e.category === category && e.icon)
+        return fallback?.icon || ''
+    }
+
     const teamTracksInfo = computed(() => tracks.value.map(track => {
         const charInfo = characterRoster.value.find(c => c.id === track.id)
         return { ...track, ...(charInfo || { name: '请选择干员', avatar: '', rarity: 0 }) }
@@ -748,6 +818,23 @@ export const useTimelineStore = defineStore('timeline', () => {
             if (weightA !== weightB) return weightA - weightB
             return 0
         })
+    })
+
+    const activeSetBonusLibrary = computed(() => {
+        if (!activeTrackId.value) return []
+        const categories = getActiveSetBonusCategories(activeTrackId.value)
+        if (!categories.length) return []
+
+        return categories.map(cat => ({
+            id: `setlib_${activeTrackId.value}_${cat}`,
+            name: cat,
+            type: 'set',
+            librarySource: 'set',
+            setCategory: cat,
+            duration: getSetBonusDuration(cat),
+            icon: getSetBonusIcon(activeTrackId.value, cat),
+            customColor: '#2dd4bf'
+        }))
     })
 
     function applyEnemyPreset(enemyId) {
@@ -973,6 +1060,25 @@ export const useTimelineStore = defineStore('timeline', () => {
         commitState()
     }
 
+    function addSetBonusStatus(trackId, setCategory, startTime) {
+        if (!trackId || !setCategory) return
+        const durationVal = getSetBonusDuration(setCategory)
+        const newStatus = {
+            id: `wstatus_${uid()}`,
+            trackId,
+            setCategory,
+            name: setCategory,
+            icon: getSetBonusIcon(trackId, setCategory),
+            color: '#2dd4bf',
+            startTime: startTime,
+            logicalStartTime: startTime,
+            duration: durationVal > 0 ? durationVal : 0,
+            type: 'set'
+        }
+        weaponStatuses.value.push(newStatus)
+        commitState()
+    }
+
     function removeCurrentSelection() {
         if (selectedWeaponStatusId.value) {
             const before = weaponStatuses.value.length
@@ -1179,6 +1285,10 @@ export const useTimelineStore = defineStore('timeline', () => {
             }
             track.id = newOperatorId;
             track.weaponId = null;
+            track.equipArmorId = null;
+            track.equipGlovesId = null;
+            track.equipAccessory1Id = null;
+            track.equipAccessory2Id = null;
             track.actions = [];
             if (activeTrackId.value === oldOperatorId) activeTrackId.value = newOperatorId;
             if (selectedActionId.value && actionIdsToDelete.has(selectedActionId.value)) clearSelection();
@@ -1200,6 +1310,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
         track.id = null;
         track.weaponId = null;
+        track.equipArmorId = null;
+        track.equipGlovesId = null;
+        track.equipAccessory1Id = null;
+        track.equipAccessory2Id = null;
         track.actions = [];
         if (selectedActionId.value && actionIdsToDelete.has(selectedActionId.value)) clearSelection();
         commitState();
@@ -2243,6 +2357,21 @@ export const useTimelineStore = defineStore('timeline', () => {
             if (data.weaponDatabase) {
                 weaponDatabase.value = data.weaponDatabase
             }
+            if (data.equipmentDatabase) {
+                equipmentDatabase.value = data.equipmentDatabase
+            } else {
+                equipmentDatabase.value = []
+            }
+            if (data.equipmentCategories) {
+                equipmentCategories.value = data.equipmentCategories
+            } else {
+                equipmentCategories.value = []
+            }
+            if (data.equipmentCategoryConfigs) {
+                equipmentCategoryConfigs.value = data.equipmentCategoryConfigs
+            } else {
+                equipmentCategoryConfigs.value = {}
+            }
         }
 
             historyStack.value = []
@@ -2398,5 +2527,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
         effectLayouts, getNodeRect, weaponDatabase, weaponOverrides, weaponStatuses, activeWeapon, getWeaponById, isWeaponSkillId, addWeaponStatus,
+        equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, getEquipmentById, updateTrackEquipment,
+        activeSetBonusLibrary, addSetBonusStatus, getActiveSetBonusCategories,
     }
 })

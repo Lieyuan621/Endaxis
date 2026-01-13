@@ -12,13 +12,27 @@ const activeCharacter = computed(() => {
 })
 const activeWeapon = computed(() => activeTrack.value?.weaponId ? store.getWeaponById(activeTrack.value.weaponId) : null)
 const hasActiveCharacter = computed(() => !!(activeTrack.value && activeCharacter.value))
+const hasAnyEquipmentEquipped = computed(() => {
+  const t = activeTrack.value
+  if (!t) return false
+  return !!(t.equipArmorId || t.equipGlovesId || t.equipAccessory1Id || t.equipAccessory2Id)
+})
 
 const activeCharacterName = computed(() => activeCharacter.value ? activeCharacter.value.name : '未选择干员')
 const activeWeaponName = computed(() => activeWeapon.value ? activeWeapon.value.name : '未装备武器')
 const activeLibraryTab = ref('character')
 const hasWeaponLibrary = computed(() => store.activeWeaponSkillLibrary.length > 0)
-const currentLibrary = computed(() => activeLibraryTab.value === 'weapon' ? store.activeWeaponSkillLibrary : store.activeSkillLibrary)
-const activeLibraryTitle = computed(() => activeLibraryTab.value === 'weapon' ? activeWeaponName.value : activeCharacterName.value)
+const hasSetLibrary = computed(() => store.activeSetBonusLibrary.length > 0)
+const currentLibrary = computed(() => {
+  if (activeLibraryTab.value === 'weapon') return store.activeWeaponSkillLibrary
+  if (activeLibraryTab.value === 'set') return store.activeSetBonusLibrary
+  return store.activeSkillLibrary
+})
+const activeLibraryTitle = computed(() => {
+  if (activeLibraryTab.value === 'weapon') return `${activeCharacterName.value} · ${activeWeaponName.value}`
+  if (activeLibraryTab.value === 'set') return `${activeCharacterName.value} · 装备`
+  return activeCharacterName.value
+})
 
 // 技能类型完整名称映射
 const getFullTypeName = (type) => {
@@ -28,7 +42,8 @@ const getFullTypeName = (type) => {
     'link': '连携',
     'ultimate': '终结技',
     'execution': '处决',
-    'weapon': '武器'
+    'weapon': '武器',
+    'set': '套装'
   }
   return map[type] || '技能'
 }
@@ -50,6 +65,9 @@ const currentWeaponIcon = computed(() => {
 function getSkillDisplayIcon(skill) {
   if (skill.librarySource === 'weapon') {
     return skill.icon || activeWeapon.value?.icon || ''
+  }
+  if (skill.librarySource === 'set') {
+    return skill.icon || ''
   }
   if (['attack', 'execution'].includes(skill.type)) {
     return currentWeaponIcon.value
@@ -116,7 +134,7 @@ const originiumArtsPowerValue = computed({
 const localSkills = ref([])
 
 function onSkillClick(skillId) {
-  store.selectLibrarySkill(skillId, activeLibraryTab.value === 'weapon' ? 'weapon' : 'character')
+  store.selectLibrarySkill(skillId, activeLibraryTab.value)
 }
 
 watch(
@@ -147,6 +165,12 @@ watch(activeWeapon, (weapon) => {
   }
 })
 
+watch(hasAnyEquipmentEquipped, (hasAny) => {
+  if (!hasAny && activeLibraryTab.value === 'set') {
+    activeLibraryTab.value = 'character'
+  }
+})
+
 watch(hasActiveCharacter, (val) => {
   if (!val) {
     activeLibraryTab.value = 'character'
@@ -156,6 +180,9 @@ watch(hasActiveCharacter, (val) => {
 watch(() => store.selectedLibrarySource, (src) => {
   if (src === 'weapon' && hasWeaponLibrary.value) {
     activeLibraryTab.value = 'weapon'
+  }
+  if (src === 'set') {
+    activeLibraryTab.value = 'set'
   }
   if (src === 'character') {
     activeLibraryTab.value = 'character'
@@ -189,14 +216,14 @@ function formatDurationLabel(val) {
 }
 
 function onNativeDragStart(evt, skill) {
-  const isWeaponSkill = (skill.librarySource === 'weapon')
+  const isIconDrag = (skill.librarySource === 'weapon' || skill.librarySource === 'set' || skill.type === 'weapon' || skill.type === 'set')
   const ghost = document.createElement('div');
   ghost.id = 'custom-drag-ghost';
 
   const duration = Number(skill.duration) || 0;
   const themeColor = getSkillThemeColor(skill);
 
-  if (isWeaponSkill) {
+  if (isIconDrag) {
     const safeColor = themeColor || '#ccc'
     const iconBox = document.createElement('div')
     iconBox.style.width = '20px'
@@ -253,10 +280,11 @@ function onNativeDragStart(evt, skill) {
   }
   evt.dataTransfer.effectAllowed = 'copy';
 
+  const libSource = skill.librarySource || activeLibraryTab.value || 'character'
   const payload = {
     ...skill,
-    librarySource: skill.librarySource || (activeLibraryTab.value === 'weapon' ? 'weapon' : 'character'),
-    weaponId: skill.weaponId || activeWeapon.value?.id || null
+    librarySource: libSource,
+    weaponId: libSource === 'weapon' ? (skill.weaponId || activeWeapon.value?.id || null) : null
   }
 
   store.setDraggingSkill(payload);
@@ -296,6 +324,14 @@ function onNativeDragEnd() {
           title="需要为当前干员选择武器"
           @click="activeLibraryTab = 'weapon'">
           武器
+        </button>
+        <button
+          class="lib-tab"
+          :class="{ active: hasActiveCharacter && activeLibraryTab === 'set' }"
+          :disabled="!hasActiveCharacter || !hasAnyEquipmentEquipped"
+          title="需要先装备任意装备"
+          @click="activeLibraryTab = 'set'">
+          装备
         </button>
       </div>
       <div class="header-divider"></div>
@@ -370,9 +406,23 @@ function onNativeDragEnd() {
 
     <div v-if="hasActiveCharacter" class="skill-section">
       <div class="section-title-box">
-        <span class="section-title">{{ activeLibraryTab === 'weapon' ? '武器BUFF库' : '干员技能库' }}</span>
+        <span class="section-title">
+          {{
+            activeLibraryTab === 'weapon'
+              ? '武器BUFF库'
+              : activeLibraryTab === 'set'
+                ? '套装BUFF库'
+                : '干员技能库'
+          }}
+        </span>
         <span class="section-hint">
-          {{ activeLibraryTab === 'weapon' ? '拖拽武器BUFF到轨道，拖拽位置即为开始时间' : '点击编辑基础数值 / 拖拽排轴' }}
+          {{
+            activeLibraryTab === 'weapon'
+              ? '拖拽武器BUFF到轨道，拖拽位置即为开始时间'
+              : activeLibraryTab === 'set'
+                ? '拖拽BUFF到轨道，拖拽位置即为开始时间'
+                : '点击编辑基础数值 / 拖拽排轴'
+          }}
         </span>
       </div>
       <div v-if="localSkills.length > 0" class="skill-grid">
@@ -380,7 +430,7 @@ function onNativeDragEnd() {
             v-for="skill in localSkills"
             :key="skill.id"
             class="skill-card"
-            :class="{ 'is-selected': store.selectedLibrarySkillId === skill.id && store.selectedLibrarySource === (activeLibraryTab === 'weapon' ? 'weapon' : 'character') }"
+            :class="{ 'is-selected': store.selectedLibrarySkillId === skill.id && store.selectedLibrarySource === activeLibraryTab }"
             :style="{ '--accent-color': getSkillThemeColor(skill) }"
             draggable="true"
             @dragstart="onNativeDragStart($event, skill)"

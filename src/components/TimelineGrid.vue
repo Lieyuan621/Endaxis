@@ -130,6 +130,21 @@ const filterElement = ref('ALL')
 const isWeaponSelectorVisible = ref(false)
 const weaponTargetIndex = ref(null)
 const weaponSearchQuery = ref('')
+const isEquipmentSelectorVisible = ref(false)
+const equipmentTargetIndex = ref(null)
+const equipmentSlotKey = ref('armor') // 'armor' | 'gloves' | 'accessory1' | 'accessory2'
+const equipmentSearchQuery = ref('')
+const equipmentCategoryFilter = ref('ALL')
+const equipmentLevelFilter = ref('ALL')
+
+const EQUIPMENT_LEVELS = [70, 50, 36, 20, 10]
+const EQUIPMENT_LEVEL_COLORS = {
+  70: '#ffd700',
+  50: '#b37feb',
+  36: '#4a90e2',
+  20: '#95de64',
+  10: '#888888'
+}
 
 const isGameTimeCollapsed = ref(true)
 const showGameTime = computed(() => !isGameTimeCollapsed.value || store.isCapturing)
@@ -191,6 +206,36 @@ function removeWeapon() {
     }
   }
   isWeaponSelectorVisible.value = false
+}
+
+function openEquipmentSelector(index, slotKey) {
+  if (!store.tracks[index] || !store.tracks[index].id) return
+  equipmentTargetIndex.value = index
+  equipmentSlotKey.value = slotKey
+  equipmentSearchQuery.value = ''
+  equipmentCategoryFilter.value = 'ALL'
+  equipmentLevelFilter.value = 'ALL'
+  isEquipmentSelectorVisible.value = true
+}
+
+function confirmEquipmentSelection(equipmentId) {
+  if (equipmentTargetIndex.value !== null) {
+    const track = store.tracks[equipmentTargetIndex.value]
+    if (track && track.id) {
+      store.updateTrackEquipment(track.id, equipmentSlotKey.value, equipmentId)
+    }
+  }
+  isEquipmentSelectorVisible.value = false
+}
+
+function removeEquipment() {
+  if (equipmentTargetIndex.value !== null) {
+    const track = store.tracks[equipmentTargetIndex.value]
+    if (track && track.id) {
+      store.updateTrackEquipment(track.id, equipmentSlotKey.value, null)
+    }
+  }
+  isEquipmentSelectorVisible.value = false
 }
 
 const filteredListFlat = computed(() => {
@@ -269,9 +314,109 @@ function isWeaponEquipped(weaponId) {
   return !!track && track.weaponId === weaponId
 }
 
+function getEquipmentForTrack(track, slotKey) {
+  if (!track) return null
+  let eqId = null
+  if (slotKey === 'armor') eqId = track.equipArmorId
+  else if (slotKey === 'gloves') eqId = track.equipGlovesId
+  else if (slotKey === 'accessory1') eqId = track.equipAccessory1Id
+  else if (slotKey === 'accessory2') eqId = track.equipAccessory2Id
+  return store.getEquipmentById(eqId)
+}
+
+const equipmentSlotType = computed(() => {
+  if (equipmentSlotKey.value === 'accessory1' || equipmentSlotKey.value === 'accessory2') return 'accessory'
+  return equipmentSlotKey.value
+})
+
+const equipmentSlotLabel = computed(() => {
+  if (equipmentSlotKey.value === 'armor') return '护甲'
+  if (equipmentSlotKey.value === 'gloves') return '护手'
+  if (equipmentSlotKey.value === 'accessory1') return '配件 1'
+  if (equipmentSlotKey.value === 'accessory2') return '配件 2'
+  return '装备'
+})
+
+const equipmentCandidates = computed(() => {
+  if (equipmentTargetIndex.value === null) return []
+  const track = store.tracks[equipmentTargetIndex.value]
+  if (!track || !track.id) return []
+
+  let list = store.equipmentDatabase || []
+  list = list.filter(e => e.slot === equipmentSlotType.value)
+
+  if (equipmentCategoryFilter.value !== 'ALL') {
+    if (equipmentCategoryFilter.value === '__UNCAT__') {
+      const known = new Set(store.equipmentCategories || [])
+      list = list.filter(e => !e.category || !known.has(e.category))
+    } else {
+      list = list.filter(e => e.category === equipmentCategoryFilter.value)
+    }
+  }
+
+  if (equipmentLevelFilter.value !== 'ALL') {
+    const targetLv = Number(equipmentLevelFilter.value)
+    list = list.filter(e => Number(e.level) === targetLv)
+  }
+
+  if (equipmentSearchQuery.value) {
+    const q = equipmentSearchQuery.value.toLowerCase()
+    list = list.filter(e => (e.name || '').toLowerCase().includes(q) || (e.id || '').toLowerCase().includes(q))
+  }
+
+  return [...list].sort((a, b) => {
+    const lvDiff = (Number(b.level) || 0) - (Number(a.level) || 0)
+    if (lvDiff !== 0) return lvDiff
+    return (a.name || '').localeCompare(b.name || '')
+  })
+})
+
+const equipmentRosterByLevel = computed(() => {
+  const groups = {}
+  equipmentCandidates.value.forEach(eq => {
+    const level = Number(eq.level) || 0
+    if (!groups[level]) groups[level] = []
+    groups[level].push(eq)
+  })
+  const levels = Object.keys(groups).map(Number).sort((a, b) => b - a)
+  return levels.map(level => ({ level, list: groups[level] }))
+})
+
+const currentEquipmentForDialog = computed(() => {
+  if (equipmentTargetIndex.value === null) return null
+  return getEquipmentForTrack(store.tracks[equipmentTargetIndex.value], equipmentSlotKey.value)
+})
+
+function getEquipmentLevelColor(level) {
+  const key = Number(level)
+  return EQUIPMENT_LEVEL_COLORS[key] || '#888'
+}
+
+function isEquipmentEquipped(equipmentId) {
+  if (equipmentTargetIndex.value === null) return false
+  const track = store.tracks[equipmentTargetIndex.value]
+  const current = getEquipmentForTrack(track, equipmentSlotKey.value)
+  return !!current && current.id === equipmentId
+}
+
 const weaponStatusesByTrack = computed(() => {
   const map = new Map()
   store.weaponStatuses.forEach(status => {
+    if (status.type === 'set') return
+    const idx = store.tracks.findIndex(t => t.id === status.trackId)
+    if (idx === -1) return
+    const arr = map.get(status.trackId) || []
+    arr.push(status)
+    map.set(status.trackId, arr)
+  })
+  map.forEach(arr => arr.sort((a, b) => a.startTime - b.startTime))
+  return map
+})
+
+const setStatusesByTrack = computed(() => {
+  const map = new Map()
+  store.weaponStatuses.forEach(status => {
+    if (status.type !== 'set') return
     const idx = store.tracks.findIndex(t => t.id === status.trackId)
     if (idx === -1) return
     const arr = map.get(status.trackId) || []
@@ -1235,6 +1380,11 @@ function onWindowMouseUp(event) {
 function captureClick(e) { e.stopPropagation(); e.preventDefault() }
 function onTrackDrop(track, evt) {
   const skill = store.draggingSkillData; if (!skill || store.activeTrackId !== track.id) return
+  if (skill.librarySource === 'set' || skill.type === 'set') {
+    const startTime = calculateTimeFromEvent(evt)
+    store.addSetBonusStatus(track.id, skill.setCategory || skill.name, startTime)
+    return
+  }
   if (skill.librarySource === 'weapon' || skill.type === 'weapon') {
     if (!track.weaponId || (skill.weaponId && skill.weaponId !== track.weaponId)) return
     const startTime = calculateTimeFromEvent(evt)
@@ -1532,6 +1682,26 @@ onUnmounted(() => {
                 <div v-else class="weapon-placeholder"></div>
               </div>
             </div>
+            <div v-if="track.id" class="equip-slots-compact">
+              <div class="equip-grid">
+                <div class="equip-box" :class="getEquipmentForTrack(track, 'armor') ? '' : 'equip-empty'" @click.stop="openEquipmentSelector(index, 'armor')" title="护甲">
+                  <img v-if="getEquipmentForTrack(track, 'armor')?.icon" :src="getEquipmentForTrack(track, 'armor').icon" @error="e=>e.target.style.display='none'" />
+                  <div v-else class="equip-placeholder"></div>
+                </div>
+                <div class="equip-box" :class="getEquipmentForTrack(track, 'gloves') ? '' : 'equip-empty'" @click.stop="openEquipmentSelector(index, 'gloves')" title="护手">
+                  <img v-if="getEquipmentForTrack(track, 'gloves')?.icon" :src="getEquipmentForTrack(track, 'gloves').icon" @error="e=>e.target.style.display='none'" />
+                  <div v-else class="equip-placeholder"></div>
+                </div>
+                <div class="equip-box" :class="getEquipmentForTrack(track, 'accessory1') ? '' : 'equip-empty'" @click.stop="openEquipmentSelector(index, 'accessory1')" title="配件 1">
+                  <img v-if="getEquipmentForTrack(track, 'accessory1')?.icon" :src="getEquipmentForTrack(track, 'accessory1').icon" @error="e=>e.target.style.display='none'" />
+                  <div v-else class="equip-placeholder"></div>
+                </div>
+                <div class="equip-box" :class="getEquipmentForTrack(track, 'accessory2') ? '' : 'equip-empty'" @click.stop="openEquipmentSelector(index, 'accessory2')" title="配件 2">
+                  <img v-if="getEquipmentForTrack(track, 'accessory2')?.icon" :src="getEquipmentForTrack(track, 'accessory2').icon" @error="e=>e.target.style.display='none'" />
+                  <div v-else class="equip-placeholder"></div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="trigger-info" @click="!track.id && openCharacterSelector(index)">
             <span class="trigger-name">{{ track.name || '请选择干员' }}</span>
@@ -1661,6 +1831,23 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
+              <div class="set-status-layer">
+                <div
+                  v-for="status in setStatusesByTrack.get(track.id) || []"
+                  :key="status.id"
+                  class="weapon-status-item"
+                  :class="{ 'is-selected': status.id === store.selectedWeaponStatusId, 'is-dragging': status.id === draggingWeaponStatusId }"
+                  :style="{ left: `${getWeaponStatusLeft(status)}px` }"
+                >
+                  <div class="weapon-status-icon-box" @mousedown.stop="onWeaponStatusMouseDown($event, status)">
+                    <img v-if="status.icon" :src="status.icon" @error="e=>e.target.style.display='none'" />
+                  </div>
+                  <div class="weapon-status-bar" :style="getWeaponStatusBarStyle(status)">
+                    <div class="striped-bg"></div>
+                    <span class="duration-text">{{ getWeaponStatusDurationLabel(status) }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1751,6 +1938,47 @@ onUnmounted(() => {
       </template>
       <div v-if="weaponRosterByRarity.length === 0" class="empty-roster">没有找到匹配的武器</div>
     </div>
+    </el-dialog>
+
+    <el-dialog v-model="isEquipmentSelectorVisible" :title="`选择装备 - ${equipmentSlotLabel}`" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
+      <div class="selector-header">
+        <div class="header-left-group">
+          <el-input v-model="equipmentSearchQuery" placeholder="搜索装备名称/ID..." :prefix-icon="Search" clearable style="width: 180px" />
+          <button class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift" :disabled="!currentEquipmentForDialog" @click="removeEquipment" title="卸下当前装备">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            卸下
+          </button>
+        </div>
+        <div class="element-filters">
+          <button class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentCategoryFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentCategoryFilter = 'ALL'">全部分类</button>
+          <button class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentCategoryFilter === '__UNCAT__' }" :style="{ '--ea-btn-accent': '#888' }" @click="equipmentCategoryFilter = '__UNCAT__'">未分类</button>
+          <button v-for="cat in store.equipmentCategories" :key="`eqcat_${cat}`" class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentCategoryFilter === cat }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentCategoryFilter = cat">{{ cat }}</button>
+        </div>
+        <div class="element-filters">
+          <button class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentLevelFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentLevelFilter = 'ALL'">全部等级</button>
+          <button v-for="lv in EQUIPMENT_LEVELS" :key="`eqlv_${lv}`" class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentLevelFilter === lv }" :style="{ '--ea-btn-accent': getEquipmentLevelColor(lv) }" @click="equipmentLevelFilter = lv">Lv{{ lv }}</button>
+        </div>
+      </div>
+      <div class="roster-scroll-container">
+        <template v-for="group in equipmentRosterByLevel" :key="group.level">
+          <div class="rarity-header" :style="{ color: getEquipmentLevelColor(group.level) }">
+            <span class="rarity-label">Lv{{ group.level }}</span>
+            <div class="rarity-line"></div>
+          </div>
+          <div class="roster-grid">
+            <div v-for="eq in group.list" :key="eq.id" class="roster-card" @click="confirmEquipmentSelection(eq.id)">
+              <div class="card-avatar-wrapper" :style="{ borderColor: getEquipmentLevelColor(eq.level) }">
+                <img :src="eq.icon || '/icons/default_icon.webp'" loading="lazy" />
+              </div>
+              <div class="card-name">{{ eq.name }}</div>
+              <div v-if="isEquipmentEquipped(eq.id)" class="in-team-tag weapon-equipped">已装备</div>
+            </div>
+          </div>
+        </template>
+        <div v-if="equipmentRosterByLevel.length === 0" class="empty-roster">没有找到匹配的装备</div>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -2249,6 +2477,58 @@ body.capture-mode .davinci-range {
   background: #ffd700;
 }
 
+.equip-slots-compact {
+  position: absolute;
+  top: 34px;
+  right: -6px;
+  pointer-events: auto;
+}
+
+.equip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 16px);
+  grid-template-rows: repeat(2, 16px);
+  gap: 2px;
+  padding: 0;
+}
+
+.equip-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #444;
+  border: 2px solid #555;
+  box-sizing: border-box;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.equip-box.equip-empty {
+  border: 2px dashed #666;
+  background: #444;
+}
+
+.equip-box:hover {
+  border-color: #2dd4bf;
+  background: #555;
+  box-shadow: none;
+}
+
+.equip-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.equip-placeholder {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
 /* ==========================================================================
    5. Main Content Scroller
    ========================================================================== */
@@ -2365,7 +2645,7 @@ body.capture-mode .davinci-range {
   position: relative;
   flex: 1;
   min-height: var(--track-height);
-  padding-bottom: 30px;
+  padding-bottom: 60px;
   width: fit-content;
   min-width: 100%;
   display: flex;
@@ -2560,7 +2840,9 @@ body.capture-mode .davinci-range {
 
 .element-filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+  max-width: 100%;
 }
 .roster-scroll-container {
   max-height: 400px;
@@ -2922,6 +3204,15 @@ body.capture-mode .davinci-range {
   position: absolute;
   left: 0;
   top: calc(100% + 8px);
+  height: 22px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.set-status-layer {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 32px);
   height: 22px;
   width: 100%;
   pointer-events: none;
