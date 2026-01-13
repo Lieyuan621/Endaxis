@@ -4075,23 +4075,5 @@
     "裂地者",
     "沧贼",
     "野外生物"
-  ],
-  "weaponDatabase": [
-    {
-      "id": "wpn_sword_0021",
-      "name": "宏愿",
-      "type": "sword",
-      "rarity": 6,
-      "duration": 20,
-      "icon": "/weapons/sword/wpn_sword_0021.webp"
-    },
-    {
-      "id": "wpn_sword_0003",
-      "name": "塔尔11",
-      "type": "sword",
-      "rarity": 3,
-      "duration": 0,
-      "icon": "/weapons/sword/wpn_sword_0003.webp"
-    }
   ]
 }
