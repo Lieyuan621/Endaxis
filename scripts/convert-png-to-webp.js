@@ -3,12 +3,18 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 
-const PROJECT_ROOT = process.cwd();
-const SRC_DIR = path.join(PROJECT_ROOT, 'src');
-const PUBLIC_DIR = path.join(PROJECT_ROOT, 'public');
+const __dirname = import.meta.dirname;
+const PROJECT_ROOT = path.resolve(__dirname, '../');
+const SRC_DIR = path.resolve(PROJECT_ROOT, 'src');
+const PUBLIC_DIR = path.resolve(PROJECT_ROOT, 'public');
 
-const TARGET_DIRS = [SRC_DIR, PUBLIC_DIR];
+// 图片目录
+const IMAGE_DIRS = [PUBLIC_DIR]
 
+// 代码目录
+const FILE_DIRS = [SRC_DIR, PUBLIC_DIR];
+
+// 代码文件扩展名
 const TEXT_EXTENSIONS = new Set([
     '.vue',
     '.js',
@@ -22,6 +28,12 @@ const TEXT_EXTENSIONS = new Set([
     '.md',
 ]);
 
+function concatArr(src, dst) {
+    for (const item of src) {
+        dst.push(item);
+    }
+}
+
 async function getFiles(dir) {
     const dirents = await fs.readdir(dir, { withFileTypes: true });
     const files = await Promise.all(
@@ -30,17 +42,25 @@ async function getFiles(dir) {
             return dirent.isDirectory() ? getFiles(res) : res;
         })
     );
-    return Array.prototype.concat(...files);
+    const result = [];
+    for (const file of files) {
+        if (Array.isArray(file)) {
+            concatArr(file, result);
+        } else {
+            result.push(file);
+        }
+    }
+    return result;
 }
 
 async function convertImages() {
     console.log('Starting PNG to WebP conversion...');
 
     const allFiles = [];
-    for (const dir of TARGET_DIRS) {
+    for (const dir of IMAGE_DIRS) {
         try {
             const files = await getFiles(dir);
-            allFiles.push(...files);
+            concatArr(files, allFiles);
         } catch (err) {
             if (err.code !== 'ENOENT') {
                 console.error(`Error reading directory ${dir}:`, err);
@@ -64,18 +84,26 @@ async function convertImages() {
         const webpPath = path.join(p.dir, p.name + '.webp');
 
         try {
-            await sharp(pngPath)
+            const stats = await fs.stat(pngPath);
+            const info = await sharp(pngPath)
                 .webp({
                     lossless: true
                 })
                 .toFile(webpPath);
 
-            console.log(`Converted: ${p.base} -> ${p.name}.webp`);
+            const oldSize = `${stats.size >> 10}KB`;
+            const newSize = `${info.size >> 10}KB`;
+            const reduction = ((stats.size - info.size) / stats.size * 100).toFixed(1) + '%';
+
+            console.log(`Converted: ${p.base} (${oldSize}) -> ${p.name}.webp (${newSize}) [-${reduction}]`);
             conversions.push({
                 base: p.base,
                 name: p.name,
                 fullPath: pngPath
             });
+
+            // 删除源文件
+            await fs.unlink(pngPath);
         } catch (err) {
             console.error(`Failed to convert ${pngPath}:`, err);
         }
@@ -90,10 +118,10 @@ async function updateReferences(conversions) {
     console.log('Updating references in code...');
 
     const allFiles = [];
-    for (const dir of TARGET_DIRS) {
+    for (const dir of FILE_DIRS) {
         try {
             const files = await getFiles(dir);
-            allFiles.push(...files);
+            concatArr(files, allFiles);
         } catch (err) {
             //
         }
