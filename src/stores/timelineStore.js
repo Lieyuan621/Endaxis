@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { watchThrottled } from '@vueuse/core'
 import { executeFetch } from '@/api/fetchStrategy.js'
 import { compressGzip, decompressGzip } from '@/utils/gzipUtils'
+import { CORE_STATS, createDefaultStats } from '@/utils/coreStats.js'
 
 const uid = () => Math.random().toString(36).substring(2, 9)
 
@@ -85,6 +86,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     const equipmentDatabase = ref([])
     const equipmentCategories = ref([])
     const equipmentCategoryConfigs = ref({})
+    const misc = ref({
+        modifierDefs: [],
+        weaponCommonModifiers: {}
+    })
     const activeEnemyId = ref('custom')
     const enemyCategories = ref([])
     const cycleBoundaries = ref([])
@@ -94,6 +99,11 @@ export const useTimelineStore = defineStore('timeline', () => {
         { id: 'default_sc', name: '方案 1', data: null }
     ])
 
+    watchThrottled([weaponDatabase, misc], () => {
+        if (isLoading.value) return
+        syncAllWeaponModifiers()
+    }, { deep: true, throttle: 600 })
+
     const createEmptyTrack = () => ({
         id: null,
         actions: [],
@@ -102,6 +112,11 @@ export const useTimelineStore = defineStore('timeline', () => {
         gaugeEfficiency: 100,
         originiumArtsPower: 0,
         weaponId: null,
+        weaponCommon1Tier: 1,
+        weaponCommon2Tier: 1,
+        weaponBuffTier: 1,
+        weaponAppliedDeltas: {},
+        stats: createDefaultStats(),
         equipArmorId: null,
         equipGlovesId: null,
         equipAccessory1Id: null,
@@ -224,6 +239,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         const track = tracks.value.find(t => t.id === trackId);
         if (track) {
             track.gaugeEfficiency = value;
+            if (!track.stats) track.stats = createDefaultStats()
+            track.stats.ult_charge_eff = Number(value) || 0
             commitState();
         }
     }
@@ -232,6 +249,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         const track = tracks.value.find(t => t.id === trackId);
         if (track) {
             track.originiumArtsPower = value;
+            if (!track.stats) track.stats = createDefaultStats()
+            track.stats.originium_arts_power = Number(value) || 0
             commitState();
         }
     }
@@ -240,6 +259,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         const track = tracks.value.find(t => t.id === trackId);
         if (track) {
             track.linkCdReduction = clampPercent(value);
+            if (!track.stats) track.stats = createDefaultStats()
+            track.stats.link_cd_reduction = Number(track.linkCdReduction) || 0
             commitState();
         }
     }
@@ -253,8 +274,21 @@ export const useTimelineStore = defineStore('timeline', () => {
                 selectedLibrarySource.value = 'character';
             }
             weaponStatuses.value = weaponStatuses.value.filter(s => !(s.trackId === track.id && (!s.type || s.type === 'weapon')));
+            syncTrackWeaponModifiers(trackId)
             commitState();
         }
+    }
+
+    function updateTrackWeaponTier(trackId, part, tier) {
+        const track = tracks.value.find(t => t.id === trackId)
+        if (!track) return
+        const nextTier = clampTier9(tier)
+        if (part === 'common1') track.weaponCommon1Tier = nextTier
+        else if (part === 'common2') track.weaponCommon2Tier = nextTier
+        else if (part === 'buff') track.weaponBuffTier = nextTier
+        else return
+        syncTrackWeaponModifiers(trackId)
+        commitState()
     }
 
     function updateTrackEquipment(trackId, slotKey, equipmentId) {
@@ -416,6 +450,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
         cycleBoundaries.value = data.cycleBoundaries ? JSON.parse(JSON.stringify(data.cycleBoundaries)) : []
         switchEvents.value = data.switchEvents ? JSON.parse(JSON.stringify(data.switchEvents)) : []
+        syncAllWeaponModifiers()
         clearSelection()
     }
 
@@ -560,13 +595,46 @@ export const useTimelineStore = defineStore('timeline', () => {
         return num;
     }
 
+    const clampTier9 = (val) => {
+        const num = Math.round(Number(val))
+        if (!Number.isFinite(num)) return 1
+        if (num < 1) return 1
+        if (num > 9) return 9
+        return num
+    }
+
+    const normalizeArray9 = (arr) => {
+        const list = Array.isArray(arr) ? arr.slice(0, 9) : []
+        while (list.length < 9) list.push(0)
+        return list.map(v => Number(v) || 0)
+    }
+
     const normalizeTrack = (track) => {
         if (!track) return createEmptyTrack()
-        return {
+        const merged = {
             ...createEmptyTrack(),
             ...track,
             actions: track.actions || []
         }
+
+        const baseStats = createDefaultStats()
+        const hasIncomingStats = track.stats && typeof track.stats === 'object'
+        merged.stats = { ...baseStats, ...(hasIncomingStats ? track.stats : {}) }
+
+        if (!hasIncomingStats) {
+            const eff = Number(track.gaugeEfficiency)
+            if (Number.isFinite(eff)) merged.stats.ult_charge_eff = eff
+            const link = Number(track.linkCdReduction)
+            if (Number.isFinite(link)) merged.stats.link_cd_reduction = link
+            const arts = Number(track.originiumArtsPower)
+            if (Number.isFinite(arts)) merged.stats.originium_arts_power = arts
+        }
+
+        merged.gaugeEfficiency = Number(merged.stats.ult_charge_eff) || 0
+        merged.linkCdReduction = clampPercent(merged.stats.link_cd_reduction)
+        merged.originiumArtsPower = Number(merged.stats.originium_arts_power) || 0
+
+        return merged
     }
 
     const normalizeTracks = (list = []) => list.map(t => normalizeTrack(t))
@@ -579,6 +647,141 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const getWeaponById = (weaponId) => {
         return weaponDatabase.value.find(w => w.id === weaponId)
+    }
+
+    const getModifierLabel = (modifierId) => {
+        const found = (misc.value?.modifierDefs || []).find(d => d.id === modifierId)
+        if (found?.label) return found.label
+        const core = CORE_STATS.find(s => s.id === modifierId)
+        return core?.label || modifierId || ''
+    }
+
+    const normalizeWeaponCommonSlots = (slots) => {
+        const list = Array.isArray(slots) ? slots.slice(0, 2) : []
+        while (list.length < 2) list.push({})
+        return list.map(s => ({
+            modifierId: typeof s?.modifierId === 'string' && s.modifierId.trim()
+                ? s.modifierId.trim()
+                : (typeof s?.key === 'string' && s.key.trim() ? s.key.trim() : null),
+            size: (s?.size === 'large' || s?.size === 'medium' || s?.size === 'small') ? s.size : 'small'
+        }))
+    }
+
+    const normalizeWeaponBuffBonuses = (bonuses) => {
+        if (!Array.isArray(bonuses)) return []
+        return bonuses.map(b => ({
+            modifierId: typeof b?.modifierId === 'string' && b.modifierId.trim()
+                ? b.modifierId.trim()
+                : (typeof b?.key === 'string' && b.key.trim() ? b.key.trim() : null),
+            values: normalizeArray9(b?.values)
+        })).filter(b => b.modifierId)
+    }
+
+    const normalizeWeaponCommonModifiersTable = (table) => {
+        const safe = (table && typeof table === 'object') ? table : {}
+        const out = {}
+        for (const [key, entry] of Object.entries(safe)) {
+            if (!key) continue
+            out[key] = {
+                small: normalizeArray9(entry?.small),
+                medium: normalizeArray9(entry?.medium),
+                large: normalizeArray9(entry?.large)
+            }
+        }
+        return out
+    }
+
+    const normalizeModifierDefs = (defs) => {
+        const list = Array.isArray(defs) ? defs : []
+        const seen = new Set()
+        const out = []
+        for (const def of list) {
+            const id = typeof def?.id === 'string' ? def.id.trim()
+                : (typeof def?.key === 'string' ? def.key.trim() : '')
+            if (!id || seen.has(id)) continue
+            const unit = def?.unit === 'percent' || def?.unit === 'flat' ? def.unit : 'flat'
+            out.push({ id, label: def?.label || id, unit, note: def?.note, domainTags: def?.domainTags })
+            seen.add(id)
+        }
+        return out
+    }
+
+    const computeWeaponDeltasForTrack = (track) => {
+        const deltas = {}
+        if (!track?.weaponId) return deltas
+
+        const weapon = getWeaponById(track.weaponId)
+        if (!weapon) return deltas
+
+        const slots = normalizeWeaponCommonSlots(weapon.commonSlots)
+        const table = normalizeWeaponCommonModifiersTable(misc.value?.weaponCommonModifiers)
+
+        const commonTiers = [clampTier9(track.weaponCommon1Tier), clampTier9(track.weaponCommon2Tier)]
+        for (let i = 0; i < 2; i++) {
+            const slot = slots[i]
+            if (!slot?.modifierId) continue
+            const entry = table[slot.modifierId]
+            if (!entry) continue
+            const ladder = entry[slot.size]
+            const val = Number(ladder?.[commonTiers[i] - 1]) || 0
+            if (val !== 0) deltas[slot.modifierId] = (deltas[slot.modifierId] || 0) + val
+        }
+
+        const buffTier = clampTier9(track.weaponBuffTier)
+        const bonuses = normalizeWeaponBuffBonuses(weapon.buffBonuses)
+        for (const b of bonuses) {
+            const val = Number(b.values[buffTier - 1]) || 0
+            if (val !== 0) deltas[b.modifierId] = (deltas[b.modifierId] || 0) + val
+        }
+
+        const filtered = {}
+        const stats = track?.stats && typeof track.stats === 'object' ? track.stats : {}
+        for (const [modifierId, val] of Object.entries(deltas)) {
+            if (!(modifierId in stats)) continue
+            filtered[modifierId] = val
+        }
+        return filtered
+    }
+
+    const applyWeaponDeltasToTrack = (track, newDeltas) => {
+        const old = (track.weaponAppliedDeltas && typeof track.weaponAppliedDeltas === 'object')
+            ? track.weaponAppliedDeltas
+            : {}
+
+        if (!track.stats) track.stats = createDefaultStats()
+
+        const keys = new Set([...Object.keys(old), ...Object.keys(newDeltas || {})])
+        for (const modifierId of keys) {
+            if (!(modifierId in track.stats)) continue
+            const prev = Number(old[modifierId]) || 0
+            const next = Number(newDeltas?.[modifierId]) || 0
+            const diff = next - prev
+            if (diff === 0) continue
+            const current = Number(track.stats[modifierId]) || 0
+            track.stats[modifierId] = current + diff
+        }
+
+        track.weaponAppliedDeltas = { ...(newDeltas || {}) }
+
+        track.gaugeEfficiency = Number(track.stats.ult_charge_eff) || 0
+        track.linkCdReduction = clampPercent(track.stats.link_cd_reduction)
+        track.originiumArtsPower = Number(track.stats.originium_arts_power) || 0
+    }
+
+    function syncTrackWeaponModifiers(trackId) {
+        if (!trackId) return
+        const track = tracks.value.find(t => t.id === trackId)
+        if (!track) return
+        const newDeltas = computeWeaponDeltasForTrack(track)
+        applyWeaponDeltasToTrack(track, newDeltas)
+    }
+
+    function syncAllWeaponModifiers({ commit = false } = {}) {
+        for (const track of tracks.value) {
+            if (!track?.id) continue
+            syncTrackWeaponModifiers(track.id)
+        }
+        if (commit) commitState()
     }
 
     const getEquipmentById = (equipmentId) => {
@@ -1339,12 +1542,16 @@ export const useTimelineStore = defineStore('timeline', () => {
                 switchEvents.value = switchEvents.value.filter(s => s.characterId !== oldOperatorId);
                 weaponStatuses.value = weaponStatuses.value.filter(s => s.trackId !== oldOperatorId);
             }
-            track.id = newOperatorId;
             track.weaponId = null;
+            syncTrackWeaponModifiers(oldOperatorId)
+            track.id = newOperatorId;
             track.equipArmorId = null;
             track.equipGlovesId = null;
             track.equipAccessory1Id = null;
             track.equipAccessory2Id = null;
+            track.weaponCommon1Tier = 1
+            track.weaponCommon2Tier = 1
+            track.weaponBuffTier = 1
             track.actions = [];
             if (activeTrackId.value === oldOperatorId) activeTrackId.value = newOperatorId;
             if (selectedActionId.value && actionIdsToDelete.has(selectedActionId.value)) clearSelection();
@@ -1364,12 +1571,16 @@ export const useTimelineStore = defineStore('timeline', () => {
             switchEvents.value = switchEvents.value.filter(s => s.characterId !== oldOperatorId);
             weaponStatuses.value = weaponStatuses.value.filter(s => s.trackId !== oldOperatorId);
         }
-        track.id = null;
         track.weaponId = null;
+        if (oldOperatorId) syncTrackWeaponModifiers(oldOperatorId)
+        track.id = null;
         track.equipArmorId = null;
         track.equipGlovesId = null;
         track.equipAccessory1Id = null;
         track.equipAccessory2Id = null;
+        track.weaponCommon1Tier = 1
+        track.weaponCommon2Tier = 1
+        track.weaponBuffTier = 1
         track.actions = [];
         if (selectedActionId.value && actionIdsToDelete.has(selectedActionId.value)) clearSelection();
         commitState();
@@ -2414,7 +2625,11 @@ export const useTimelineStore = defineStore('timeline', () => {
                 enemyCategories.value = data.enemyCategories
             }
             if (data.weaponDatabase) {
-                weaponDatabase.value = data.weaponDatabase
+                weaponDatabase.value = (data.weaponDatabase || []).map(w => ({
+                    ...w,
+                    commonSlots: normalizeWeaponCommonSlots(w.commonSlots),
+                    buffBonuses: normalizeWeaponBuffBonuses(w.buffBonuses),
+                }))
             }
             if (data.equipmentDatabase) {
                 equipmentDatabase.value = data.equipmentDatabase
@@ -2430,6 +2645,12 @@ export const useTimelineStore = defineStore('timeline', () => {
                 equipmentCategoryConfigs.value = data.equipmentCategoryConfigs
             } else {
                 equipmentCategoryConfigs.value = {}
+            }
+            if (data.misc) {
+                misc.value = {
+                    modifierDefs: normalizeModifierDefs(data.misc?.modifierDefs),
+                    weaponCommonModifiers: normalizeWeaponCommonModifiersTable(data.misc?.weaponCommonModifiers),
+                }
             }
         }
 
@@ -2575,6 +2796,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         teamTracksInfo, activeSkillLibrary, activeWeaponSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
         fetchGameData, exportProject, importProject, exportShareString, importShareString, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction, updateWeaponStatus,
         addSkillToTrack, setDraggingSkill, setTimelineShift, setScrollTop, setTimelineRect, setTrackLaneRect, setNodeRect, calculateGlobalSpData, calculateGaugeData, calculateGlobalStaggerData, updateTrackInitialGauge, updateTrackMaxGauge, updateTrackOriginiumArtsPower, updateTrackLinkCdReduction, updateTrackWeapon,
+        updateTrackWeaponTier, syncAllWeaponModifiers, getModifierLabel,
         removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleBoxSelectMode, setCursorPosition, toggleSnapStep, nudgeSelection,
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
         removeAnomaly, initAutoSave, loadFromBrowser, resetProject, selectedConnectionId, selectConnection, selectAnomaly,
@@ -2591,5 +2813,6 @@ export const useTimelineStore = defineStore('timeline', () => {
         equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, getEquipmentById, updateTrackEquipment,
         equipmentCategoryOverrides, updateEquipmentCategoryOverride,
         activeSetBonusLibrary, addSetBonusStatus, getActiveSetBonusCategories,
+        misc,
     }
 })

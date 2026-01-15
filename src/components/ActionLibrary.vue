@@ -129,6 +129,50 @@ const originiumArtsPowerValue = computed({
   }
 })
 
+// === 武器词条等级选择（每段 1-9）===
+const weaponCommon1TierValue = computed({
+  get: () => activeTrack.value ? (activeTrack.value.weaponCommon1Tier ?? 1) : 1,
+  set: (val) => {
+    if (store.activeTrackId) {
+      store.updateTrackWeaponTier(store.activeTrackId, 'common1', val)
+    }
+  }
+})
+
+const weaponCommon2TierValue = computed({
+  get: () => activeTrack.value ? (activeTrack.value.weaponCommon2Tier ?? 1) : 1,
+  set: (val) => {
+    if (store.activeTrackId) {
+      store.updateTrackWeaponTier(store.activeTrackId, 'common2', val)
+    }
+  }
+})
+
+const weaponBuffTierValue = computed({
+  get: () => activeTrack.value ? (activeTrack.value.weaponBuffTier ?? 1) : 1,
+  set: (val) => {
+    if (store.activeTrackId) {
+      store.updateTrackWeaponTier(store.activeTrackId, 'buff', val)
+    }
+  }
+})
+
+function formatSlotLabel(slot) {
+  const modifierId = slot?.modifierId || slot?.key
+  if (!modifierId) return '（无）'
+  const sizeLabel = slot.size === 'large' ? '大' : (slot.size === 'medium' ? '中' : '小')
+  return `${store.getModifierLabel(modifierId)} · ${sizeLabel}`
+}
+
+const weaponSlot1Label = computed(() => formatSlotLabel(activeWeapon.value?.commonSlots?.[0]))
+const weaponSlot2Label = computed(() => formatSlotLabel(activeWeapon.value?.commonSlots?.[1]))
+const weaponBuffKeysLabel = computed(() => {
+  const list = Array.isArray(activeWeapon.value?.buffBonuses) ? activeWeapon.value.buffBonuses : []
+  const ids = list.map(b => b?.modifierId || b?.key).filter(Boolean)
+  if (ids.length === 0) return '（无）'
+  return ids.map(k => store.getModifierLabel(k)).join('、')
+})
+
 // === 技能列表逻辑 ===
 const localSkills = ref([])
 
@@ -403,6 +447,47 @@ function onNativeDragEnd() {
       </div>
     </div>
 
+    <div v-if="activeTrack && activeCharacter && activeLibraryTab === 'weapon' && activeWeapon" class="gauge-settings-panel">
+      <div class="panel-tag">武器数值</div>
+
+      <div class="setting-group">
+        <div class="setting-info stacked-layout">
+          <span class="label">通用词条 1</span>
+          <span class="value">{{ weaponSlot1Label }}</span>
+        </div>
+        <div class="setting-controls">
+          <el-slider v-model="weaponCommon1TierValue" :min="1" :max="9" :step="1" :show-tooltip="false" size="small" class="tech-slider white-theme" />
+          <CustomNumberInput v-model="weaponCommon1TierValue" :min="1" :max="9" suffix="级" class="tech-input" />
+        </div>
+      </div>
+
+      <div class="group-divider"></div>
+
+      <div class="setting-group">
+        <div class="setting-info stacked-layout">
+          <span class="label">通用词条 2</span>
+          <span class="value">{{ weaponSlot2Label }}</span>
+        </div>
+        <div class="setting-controls">
+          <el-slider v-model="weaponCommon2TierValue" :min="1" :max="9" :step="1" :show-tooltip="false" size="small" class="tech-slider white-theme" />
+          <CustomNumberInput v-model="weaponCommon2TierValue" :min="1" :max="9" suffix="级" class="tech-input" />
+        </div>
+      </div>
+
+      <div class="group-divider"></div>
+
+      <div class="setting-group">
+        <div class="setting-info stacked-layout">
+          <span class="label">{{ activeWeapon.buffName || '专属 BUFF' }}</span>
+          <span class="value">{{ weaponBuffKeysLabel }}</span>
+        </div>
+        <div class="setting-controls">
+          <el-slider v-model="weaponBuffTierValue" :min="1" :max="9" :step="1" :show-tooltip="false" size="small" class="tech-slider white-theme" />
+          <CustomNumberInput v-model="weaponBuffTierValue" :min="1" :max="9" suffix="级" class="tech-input" />
+        </div>
+      </div>
+    </div>
+
     <div v-if="hasActiveCharacter" class="skill-section">
       <div class="section-title-box">
         <span class="section-title">
@@ -546,6 +631,9 @@ function onNativeDragEnd() {
 .tech-input { width: 150px; }
 .group-divider { height: 1px;background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%); }
 
+.setting-info.stacked-layout { flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 2px; }
+.setting-info.stacked-layout .label { color: rgba(255, 255, 255, 0.4); font-size: 10px; line-height: 1; margin-left: 1px; }
+.setting-info.stacked-layout .value { font-size: 11px !important; line-height: 1.3; color: #e0e0e0; word-break: break-all; white-space: normal; text-align: left; }
 /* 技能卡片列表 */
 .skill-section { display: flex; flex-direction: column; gap: 15px; }
 .section-title-box { display: flex; flex-direction: column; border-left: 2px solid #444; padding-left: 10px; }
@@ -668,4 +756,6 @@ function onNativeDragEnd() {
 .green-theme :deep(.el-slider__bar) { background-color: #52c41a; }
 .purple-theme { color: #b37feb; }
 .purple-theme :deep(.el-slider__bar) { background-color: #b37feb; }
+.white-theme { color: #ffffff; }
+.white-theme :deep(.el-slider__bar) { background-color: #ffffff; }
 </style>

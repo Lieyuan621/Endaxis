@@ -5,9 +5,11 @@ import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { executeSave } from '@/api/saveStrategy.js'
+import { CORE_STATS } from '@/utils/coreStats.js'
+import draggable from 'vuedraggable'
 
 const store = useTimelineStore()
-const { characterRoster, iconDatabase, enemyDatabase, enemyCategories, weaponDatabase, equipmentDatabase, equipmentCategories, equipmentCategoryConfigs } = storeToRefs(store)
+const { characterRoster, iconDatabase, enemyDatabase, enemyCategories, weaponDatabase, equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, misc } = storeToRefs(store)
 
 // === 常量定义 ===
 
@@ -70,12 +72,15 @@ const effectKeys = Object.keys(EFFECT_NAMES).filter(key => !HIDDEN_CHECKBOX_KEYS
 
 // === 状态与计算属性 ===
 
-const editingMode = ref('character') // 'character' | 'enemy' | 'weapon' | 'equipment'
+const editingMode = ref('character') // 'character' | 'enemy' | 'weapon' | 'equipment' | 'misc'
 const searchQuery = ref('')
 const selectedCharId = ref(null)
 const selectedEnemyId = ref(null)
 const selectedWeaponId = ref(null)
 const selectedEquipmentId = ref(null)
+const miscSection = ref('stats') // 'stats' | 'weapon_table' | 'equipment_categories' | 'enemy_categories'
+const newEquipmentCategoryName = ref('')
+const newEnemyCategoryName = ref('')
 const activeTab = ref('basic')
 
 const filteredRoster = computed(() => {
@@ -206,6 +211,14 @@ const selectedEquipment = computed(() => {
   return equipmentDatabase.value.find(e => e.id === selectedEquipmentId.value)
 })
 
+const modifierDefs = computed(() => misc.value?.modifierDefs || [])
+const weaponCommonModifiers = computed(() => misc.value?.weaponCommonModifiers || {})
+
+const availableCoreStatsToAdd = computed(() => {
+  const existing = new Set((modifierDefs.value || []).map(d => d.id))
+  return CORE_STATS.filter(s => !existing.has(s.id))
+})
+
 const collapsedEnemyGroups = ref(new Set())
 const collapsedWeaponGroups = ref(new Set())
 const collapsedEquipmentGroups = ref(new Set())
@@ -230,6 +243,31 @@ watch(weaponDatabase, (newList) => {
   }
 }, { immediate: true })
 
+watch(selectedWeapon, (w) => {
+  if (!w) return
+  if (!Array.isArray(w.commonSlots)) {
+    w.commonSlots = [
+      { modifierId: null, size: 'small' },
+      { modifierId: null, size: 'small' }
+    ]
+  } else {
+    while (w.commonSlots.length < 2) w.commonSlots.push({ modifierId: null, size: 'small' })
+    w.commonSlots = w.commonSlots.slice(0, 2).map(s => ({
+      modifierId: (typeof s?.modifierId === 'string' && s.modifierId.trim())
+        ? s.modifierId.trim()
+        : ((typeof s?.key === 'string' && s.key.trim()) ? s.key.trim() : null),
+      size: (s?.size === 'large' || s?.size === 'medium' || s?.size === 'small') ? s.size : 'small'
+    }))
+  }
+  if (!Array.isArray(w.buffBonuses)) w.buffBonuses = []
+  w.buffBonuses = w.buffBonuses.map(b => ({
+    modifierId: (typeof b?.modifierId === 'string' && b.modifierId.trim())
+      ? b.modifierId.trim()
+      : ((typeof b?.key === 'string' && b.key.trim()) ? b.key.trim() : null),
+    values: normalizeArray9(b?.values)
+  }))
+}, { immediate: true })
+
 watch(equipmentDatabase, (newList) => {
   if (newList && newList.length > 0 && !selectedEquipmentId.value) {
     selectedEquipmentId.value = newList[0].id
@@ -238,9 +276,6 @@ watch(equipmentDatabase, (newList) => {
 
 watch(() => selectedEquipment.value?.category, (newCat) => {
   if (!newCat) return
-  if (newCat && !equipmentCategories.value.includes(newCat)) {
-    equipmentCategories.value.push(newCat)
-  }
   ensureEquipmentCategoryConfig(newCat)
 }, { immediate: true })
 
@@ -258,7 +293,57 @@ function setMode(mode) {
     selectedWeaponId.value = weaponDatabase.value[0].id
   } else if (mode === 'equipment' && equipmentDatabase.value && equipmentDatabase.value.length > 0 && !selectedEquipmentId.value) {
     selectedEquipmentId.value = equipmentDatabase.value[0].id
+  } else if (mode === 'misc') {
+    miscSection.value = 'stats'
   }
+}
+
+function handleAddNew() {
+  if (editingMode.value === 'character') return addNewCharacter()
+  if (editingMode.value === 'enemy') return addNewEnemy()
+  if (editingMode.value === 'weapon') return addNewWeapon()
+  if (editingMode.value === 'equipment') return addNewEquipment()
+}
+
+function ensureMiscRoot() {
+  if (!misc.value) {
+    misc.value = { modifierDefs: [], weaponCommonModifiers: {} }
+  }
+  if (!misc.value.modifierDefs) misc.value.modifierDefs = []
+  if (!misc.value.weaponCommonModifiers) misc.value.weaponCommonModifiers = {}
+}
+
+function normalizeArray9(arr) {
+  const list = Array.isArray(arr) ? arr.slice(0, 9) : []
+  while (list.length < 9) list.push(0)
+  return list.map(v => Number(v) || 0)
+}
+
+function normalizeModifierDefs(defs) {
+  const list = Array.isArray(defs) ? defs : []
+  const seen = new Set()
+  const out = []
+  for (const def of list) {
+    const id = typeof def?.id === 'string' ? def.id.trim() : (typeof def?.key === 'string' ? def.key.trim() : '')
+    if (!id || seen.has(id)) continue
+    const unit = def?.unit === 'percent' || def?.unit === 'flat' ? def.unit : 'flat'
+    out.push({ id, label: (def?.label || id).toString(), unit, note: def?.note, domainTags: def?.domainTags })
+    seen.add(id)
+  }
+  return out
+}
+
+function ensureWeaponCommonEntry(key) {
+  if (!key) return null
+  ensureMiscRoot()
+  if (!misc.value.weaponCommonModifiers[key]) {
+    misc.value.weaponCommonModifiers[key] = {
+      small: Array(9).fill(0),
+      medium: Array(9).fill(0),
+      large: Array(9).fill(0),
+    }
+  }
+  return misc.value.weaponCommonModifiers[key]
 }
 
 function selectChar(id) {
@@ -370,7 +455,12 @@ function addNewWeapon() {
     type: 'sword',
     rarity: 3,
     duration: 0,
-    icon: '/weapons/default.webp'
+    icon: '/weapons/default.webp',
+    commonSlots: [
+      { modifierId: null, size: 'small' },
+      { modifierId: null, size: 'small' }
+    ],
+    buffBonuses: []
   }
   if (!weaponDatabase.value) weaponDatabase.value = []
   weaponDatabase.value.push(newWeapon)
@@ -398,6 +488,124 @@ function addNewEquipment() {
   }
 
   ElMessage.success('已添加新装备')
+}
+
+function addCoreModifierDef(statId) {
+  if (!statId) return
+  ensureMiscRoot()
+  if (modifierDefs.value.some(d => d.id === statId)) return
+  const core = CORE_STATS.find(s => s.id === statId)
+  const newDef = { id: statId, label: core ? `${core.label}提升` : '新属性', unit: core?.unit || 'flat' }
+  misc.value.modifierDefs.push(newDef)
+  ensureWeaponCommonEntry(statId)
+  if (miscSection.value === 'weapon_table') {
+    selectedWeaponTableModifierId.value = statId
+  }
+}
+
+function removeModifierDef(id) {
+  if (!id) return
+  ElMessageBox.confirm('确定要移除此属性吗？已配置到武器的引用会被清空。', '提示', {
+    confirmButtonText: '移除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    const idx = misc.value.modifierDefs.findIndex(d => d.id === id)
+    if (idx !== -1) misc.value.modifierDefs.splice(idx, 1)
+
+    if (misc.value.weaponCommonModifiers && misc.value.weaponCommonModifiers[id]) {
+      delete misc.value.weaponCommonModifiers[id]
+    }
+
+    for (const w of weaponDatabase.value || []) {
+      if (Array.isArray(w.commonSlots)) {
+        w.commonSlots.forEach(slot => { if ((slot?.modifierId || slot?.key) === id) slot.modifierId = null })
+      }
+      if (Array.isArray(w.buffBonuses)) {
+        w.buffBonuses = w.buffBonuses.filter(b => (b?.modifierId || b?.key) !== id)
+      }
+    }
+
+  }).catch(() => {})
+}
+
+function addEquipmentCategory() {
+  const name = (newEquipmentCategoryName.value || '').trim()
+  if (!name) {
+    ElMessage.warning('分类名称不能为空')
+    return
+  }
+  if (equipmentCategories.value.includes(name)) {
+    ElMessage.warning('该分类已存在')
+    return
+  }
+  equipmentCategories.value.push(name)
+  if (!equipmentCategoryConfigs.value?.[name]) {
+    equipmentCategoryConfigs.value[name] = { setBonus: { duration: 0 } }
+  }
+  newEquipmentCategoryName.value = ''
+  ElMessage.success(`已添加分类：${name}`)
+}
+
+function deleteEquipmentCategory(name) {
+  if (!name) return
+  ElMessageBox.confirm(`确定要删除装备分类 "${name}" 吗？该分类下的装备会变为未分类。`, '警告', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    for (const eq of equipmentDatabase.value || []) {
+      if (eq.category === name) eq.category = ''
+    }
+    const idx = equipmentCategories.value.indexOf(name)
+    if (idx !== -1) equipmentCategories.value.splice(idx, 1)
+    if (equipmentCategoryConfigs.value?.[name]) delete equipmentCategoryConfigs.value[name]
+  }).catch(() => {})
+}
+
+function addEnemyCategory() {
+  const name = (newEnemyCategoryName.value || '').trim()
+  if (!name) {
+    ElMessage.warning('分类名称不能为空')
+    return
+  }
+  if (enemyCategories.value.includes(name)) {
+    ElMessage.warning('该分类已存在')
+    return
+  }
+  enemyCategories.value.push(name)
+  newEnemyCategoryName.value = ''
+  ElMessage.success(`已添加分类：${name}`)
+}
+
+function deleteEnemyCategory(name) {
+  if (!name) return
+  ElMessageBox.confirm(`确定要删除敌人分类 "${name}" 吗？该分类下的敌人会变为未分类。`, '警告', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    for (const enemy of enemyDatabase.value || []) {
+      if (enemy.category === name) enemy.category = ''
+    }
+    const idx = enemyCategories.value.indexOf(name)
+    if (idx !== -1) enemyCategories.value.splice(idx, 1)
+  }).catch(() => {})
+}
+
+function addWeaponBuffBonusRow() {
+  if (!selectedWeapon.value) return
+  if (!Array.isArray(selectedWeapon.value.buffBonuses)) selectedWeapon.value.buffBonuses = []
+  selectedWeapon.value.buffBonuses.push({
+    modifierId: null,
+    values: Array(9).fill(0)
+  })
+}
+
+function removeWeaponBuffBonusRow(index) {
+  if (!selectedWeapon.value) return
+  if (!Array.isArray(selectedWeapon.value.buffBonuses)) return
+  selectedWeapon.value.buffBonuses.splice(index, 1)
 }
 
 function deleteCurrentCharacter() {
@@ -484,27 +692,6 @@ function isEquipmentGroupCollapsed(name) {
   return collapsedEquipmentGroups.value.has(name)
 }
 
-function quickAddCategory() {
-  ElMessageBox.prompt('请输入新的分类名称', '新建分类', {
-    confirmButtonText: '添加',
-    cancelButtonText: '取消',
-    inputPattern: /\S+/,
-    inputErrorMessage: '分类名称不能为空'
-  }).then(({ value }) => {
-    const val = value.trim()
-    if (val && !enemyCategories.value.includes(val)) {
-      enemyCategories.value.push(val)
-      // 自动选中新添加的分类
-      if (selectedEnemy.value) {
-        selectedEnemy.value.category = val
-      }
-      ElMessage.success(`已添加并选中: ${val}`)
-    } else if (enemyCategories.value.includes(val)) {
-      ElMessage.warning('该分类已存在')
-    }
-  }).catch(() => {})
-}
-
 function ensureEquipmentCategoryConfig(category) {
   if (!category) return
   if (!equipmentCategoryConfigs.value) equipmentCategoryConfigs.value = {}
@@ -534,28 +721,6 @@ function setCategorySetBonusDuration(category, value) {
   equipmentCategoryConfigs.value[category].setBonus.duration = Number.isFinite(num) ? Math.max(0, num) : 0
 }
 
-function quickAddEquipmentCategory() {
-  ElMessageBox.prompt('请输入新的装备分类名称', '新建装备分类', {
-    confirmButtonText: '添加',
-    cancelButtonText: '取消',
-    inputPattern: /\S+/,
-    inputErrorMessage: '分类名称不能为空'
-  }).then(({ value }) => {
-    const val = value.trim()
-    if (val && !equipmentCategories.value.includes(val)) {
-      equipmentCategories.value.push(val)
-      if (!equipmentCategoryConfigs.value[val]) {
-        equipmentCategoryConfigs.value[val] = { setBonus: { duration: 0 } }
-      }
-      if (selectedEquipment.value) {
-        selectedEquipment.value.category = val
-      }
-      ElMessage.success(`已添加并选中: ${val}`)
-    } else if (equipmentCategories.value.includes(val)) {
-      ElMessage.warning('该分类已存在')
-    }
-  }).catch(() => {})
-}
 // === 判定点逻辑 (Damage Ticks) ===
 function getDamageTicks(char, type) {
   if (!char) return []
@@ -880,6 +1045,46 @@ function saveData() {
     }
   }
 
+  // Normalize weapon optional fields
+  for (const weapon of weaponDatabase.value || []) {
+    if (!Array.isArray(weapon.commonSlots)) {
+      weapon.commonSlots = [
+        { modifierId: null, size: 'small' },
+        { modifierId: null, size: 'small' }
+      ]
+    }
+    while (weapon.commonSlots.length < 2) weapon.commonSlots.push({ modifierId: null, size: 'small' })
+    weapon.commonSlots = weapon.commonSlots.slice(0, 2).map(s => ({
+      modifierId: (typeof s?.modifierId === 'string' && s.modifierId.trim())
+        ? s.modifierId.trim()
+        : ((typeof s?.key === 'string' && s.key.trim()) ? s.key.trim() : null),
+      size: (s?.size === 'large' || s?.size === 'medium' || s?.size === 'small') ? s.size : 'small'
+    }))
+
+    if (!Array.isArray(weapon.buffBonuses)) weapon.buffBonuses = []
+    weapon.buffBonuses = weapon.buffBonuses.map(b => ({
+      modifierId: (typeof b?.modifierId === 'string' && b.modifierId.trim())
+        ? b.modifierId.trim()
+        : ((typeof b?.key === 'string' && b.key.trim()) ? b.key.trim() : null),
+      values: normalizeArray9(b?.values)
+    })).filter(b => b.modifierId)
+  }
+
+  // Normalize misc fields
+  ensureMiscRoot()
+  misc.value.modifierDefs = normalizeModifierDefs(misc.value.modifierDefs)
+  const normalizedCommon = {}
+  for (const def of misc.value.modifierDefs) {
+    const entry = misc.value.weaponCommonModifiers?.[def.id]
+    if (!entry) continue
+    normalizedCommon[def.id] = {
+      small: normalizeArray9(entry.small),
+      medium: normalizeArray9(entry.medium),
+      large: normalizeArray9(entry.large),
+    }
+  }
+  misc.value.weaponCommonModifiers = normalizedCommon
+
   const dataToSave = {
     ICON_DATABASE: iconDatabase.value,
     characterRoster: characterRoster.value,
@@ -888,7 +1093,8 @@ function saveData() {
     weaponDatabase: weaponDatabase.value,
     equipmentDatabase: equipmentDatabase.value,
     equipmentCategories: equipmentCategories.value,
-    equipmentCategoryConfigs: equipmentCategoryConfigs.value
+    equipmentCategoryConfigs: equipmentCategoryConfigs.value,
+    misc: misc.value
   }
   executeSave(dataToSave)
 }
@@ -922,6 +1128,12 @@ function saveData() {
           :style="{ '--ea-btn-accent': 'var(--ea-danger-soft)' }"
           @click="setMode('enemy')"
         >敌人</button>
+        <button
+          class="ea-btn ea-btn--glass-cut"
+          :class="{ 'is-active': editingMode === 'misc' }"
+          :style="{ '--ea-btn-accent': 'var(--ea-purple)' }"
+          @click="setMode('misc')"
+        >杂项</button>
       </div>
 
       <div class="sidebar-header">
@@ -933,12 +1145,18 @@ function saveData() {
                 ? '敌人数据'
                 : editingMode === 'weapon'
                   ? '武器数据'
-                  : '装备数据'
+                  : editingMode === 'equipment'
+                    ? '装备数据'
+                    : '杂项'
           }}
         </h2>
-        <button class="ea-btn ea-btn--icon ea-btn--icon-28 ea-btn--icon-plus" @click="editingMode === 'character' ? addNewCharacter() : (editingMode === 'enemy' ? addNewEnemy() : (editingMode === 'weapon' ? addNewWeapon() : addNewEquipment()))">＋</button>
+        <button
+          v-if="editingMode !== 'misc'"
+          class="ea-btn ea-btn--icon ea-btn--icon-28 ea-btn--icon-plus"
+          @click="handleAddNew"
+        >＋</button>
       </div>
-      <div class="search-box">
+      <div v-if="editingMode !== 'misc'" class="search-box">
         <input v-model="searchQuery" placeholder="搜索 ID 或名称..." />
       </div>
 
@@ -1068,6 +1286,33 @@ function saveData() {
 
         <div v-if="filteredEquipment.length === 0" class="empty-hint">
           暂无装备，点击上方添加
+        </div>
+      </div>
+
+      <div v-else-if="editingMode === 'misc'" class="char-list">
+        <div class="char-item" :class="{ active: miscSection === 'stats' }" @click="miscSection = 'stats'">
+          <div class="char-info">
+            <span class="char-name">所有属性</span>
+            <span class="char-meta" style="color:#aaa">排序 / 快速添加</span>
+          </div>
+        </div>
+        <div class="char-item" :class="{ active: miscSection === 'weapon_table' }" @click="miscSection = 'weapon_table'">
+          <div class="char-info">
+            <span class="char-name">武器词条数值</span>
+            <span class="char-meta" style="color:#aaa">1–9 级 / 大中小</span>
+          </div>
+        </div>
+        <div class="char-item" :class="{ active: miscSection === 'equipment_categories' }" @click="miscSection = 'equipment_categories'">
+          <div class="char-info">
+            <span class="char-name">装备分类</span>
+            <span class="char-meta" style="color:#aaa">增删 / 排序</span>
+          </div>
+        </div>
+        <div class="char-item" :class="{ active: miscSection === 'enemy_categories' }" @click="miscSection = 'enemy_categories'">
+          <div class="char-info">
+            <span class="char-name">敌人分类</span>
+            <span class="char-meta" style="color:#aaa">增删 / 排序</span>
+          </div>
         </div>
       </div>
 
@@ -1522,9 +1767,9 @@ function saveData() {
             <div class="form-group">
               <div style="display:flex; align-items:center; justify-content:space-between;">
                 <label>分类</label>
-                <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect" title="新增分类" @click.prevent="quickAddCategory">＋</button>
               </div>
               <el-select v-model="selectedEnemy.category" size="large" style="width: 100%">
+                <el-option :value="''" label="未分类" />
                 <el-option v-for="cat in enemyCategories" :key="cat" :label="cat" :value="cat" />
               </el-select>
             </div>
@@ -1580,9 +1825,9 @@ function saveData() {
             <div class="form-group">
               <div style="display:flex; align-items:center; justify-content:space-between;">
                 <label>分类</label>
-                <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect" title="新增分类" @click.prevent="quickAddEquipmentCategory">＋</button>
               </div>
               <el-select v-model="selectedEquipment.category" size="large" style="width: 100%">
+                <el-option :value="''" label="未分类" />
                 <el-option v-for="cat in equipmentCategories" :key="cat" :label="cat" :value="cat" />
               </el-select>
             </div>
@@ -1608,6 +1853,180 @@ function saveData() {
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      <div v-else-if="editingMode === 'misc'" class="editor-panel">
+        <header class="panel-header">
+          <div class="header-left">
+            <div class="header-titles">
+              <h1 class="edit-title">
+                {{
+                  miscSection === 'stats'
+                    ? '所有属性'
+                    : miscSection === 'weapon_table'
+                      ? '武器词条数值'
+                      : miscSection === 'equipment_categories'
+                        ? '装备分类'
+                        : '敌人分类'
+                }}
+              </h1>
+              <span class="id-tag">杂项</span>
+            </div>
+          </div>
+        </header>
+
+        <div v-if="miscSection === 'stats'" class="form-section">
+          <div class="info-banner">
+            这里只维护“已适配”的属性；武器/装备数值只有配置到这些属性上才会生效。
+          </div>
+
+          <div v-if="availableCoreStatsToAdd.length > 0" style="margin-top: 18px;">
+            <h3 class="section-title">快速添加（已适配属性）</h3>
+            <div style="display:flex; flex-wrap: wrap; gap: 10px;">
+              <button
+                  v-for="s in availableCoreStatsToAdd"
+                  :key="s.id"
+                  class="ea-btn ea-btn--glass-cut"
+                  :style="{ '--ea-btn-accent': s.unit === 'percent' ? 'var(--ea-gold)' : 'var(--ea-purple)' }"
+                  @click="addCoreModifierDef(s.id)"
+              >{{ s.label }}提升</button>
+            </div>
+          </div>
+
+          <h3 class="section-title" style="margin-top: 18px;">属性列表（可拖拽排序）</h3>
+
+          <div v-if="misc.modifierDefs.length === 0" class="empty-hint">
+            暂无属性，请使用上方“快速添加”
+          </div>
+
+          <draggable v-model="misc.modifierDefs" :item-key="(item) => item.id" handle=".drag-handle" :animation="150">
+            <template #item="{ element }">
+              <div class="editor-row" style="align-items:center;">
+                <div class="drag-handle" style="cursor: grab; color:#666; font-family: monospace;">≡</div>
+                <div class="flex-grow">
+                  <div class="form-grid" style="grid-template-columns: 1fr 160px 110px; gap: 12px; align-items:end;">
+                    <div class="form-group">
+                      <label>名称</label>
+                      <input v-model="element.label" type="text" />
+                    </div>
+                    <div class="form-group">
+                      <label>单位</label>
+                      <div class="unit-badge" :class="element.unit">
+                        {{ element.unit === 'percent' ? '百分比 (%)' : '固定数值' }}
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>操作</label>
+                      <button class="ea-btn ea-btn--md ea-btn--fill-danger" @click="removeModifierDef(element.id)">移除</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </draggable>
+        </div>
+
+        <div v-else-if="miscSection === 'weapon_table'" class="form-section">
+          <h3 class="section-title">武器词条数值表</h3>
+          <div class="info-banner">
+            此处配置属性在不同等级（1-9级）和不同幅度（大/中/小）下的具体数值。<br>
+          </div>
+
+          <div v-if="modifierDefs.length === 0" class="empty-hint">
+            暂无属性，请先在“所有属性”中添加。
+          </div>
+
+          <div class="weapon-table-list">
+            <div v-for="def in modifierDefs" :key="def.id" class="stat-table-card">
+              <div class="stat-header">
+                <div class="stat-title-group">
+                  <span class="stat-name">{{ def.label }}</span>
+                  <span class="stat-unit-badge" :class="def.unit">
+            {{ def.unit === 'percent' ? '百分比 (%)' : '固定数值' }}
+          </span>
+                </div>
+                <div class="stat-id">ID: {{ def.id }}</div>
+              </div>
+
+              <div class="stat-body" v-if="ensureWeaponCommonEntry(def.id)">
+                <div class="matrix-grid">
+                  <div class="matrix-cell header-corner">等级</div>
+                  <div v-for="lv in 9" :key="`h-${lv}`" class="matrix-cell header-level">{{ lv }}</div>
+
+                  <div class="matrix-cell row-label large">大</div>
+                  <div v-for="i in 9" :key="`l-${i}`" class="matrix-cell">
+                    <input
+                        type="number"
+                        :step="def.unit === 'percent' ? 0.1 : 1"
+                        v-model.number="misc.weaponCommonModifiers[def.id].large[i - 1]"
+                        class="matrix-input"
+                    />
+                  </div>
+
+                  <div class="matrix-cell row-label medium">中</div>
+                  <div v-for="i in 9" :key="`m-${i}`" class="matrix-cell">
+                    <input
+                        type="number"
+                        :step="def.unit === 'percent' ? 0.1 : 1"
+                        v-model.number="misc.weaponCommonModifiers[def.id].medium[i - 1]"
+                        class="matrix-input"
+                    />
+                  </div>
+
+                  <div class="matrix-cell row-label small">小</div>
+                  <div v-for="i in 9" :key="`s-${i}`" class="matrix-cell">
+                    <input
+                        type="number"
+                        :step="def.unit === 'percent' ? 0.1 : 1"
+                        v-model.number="misc.weaponCommonModifiers[def.id].small[i - 1]"
+                        class="matrix-input"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="miscSection === 'equipment_categories'" class="form-section">
+          <h3 class="section-title">装备分类（增删 / 排序）</h3>
+          <div class="info-banner">删除分类后，该分类下装备会变为未分类（分类为空）。</div>
+
+          <div class="add-cat-row" style="display:flex; gap: 10px; margin-bottom: 12px;">
+            <input v-model="newEquipmentCategoryName" placeholder="输入新分类名..." />
+            <button class="ea-btn ea-btn--md ea-btn--fill-success" @click="addEquipmentCategory">添加</button>
+          </div>
+
+          <draggable v-model="equipmentCategories" :item-key="(item) => item" handle=".drag-handle" :animation="150">
+            <template #item="{ element }">
+              <div class="editor-row" style="align-items:center;">
+                <div class="drag-handle" style="cursor: grab; color:#666; font-family: monospace;">≡</div>
+                <div class="flex-grow" style="color:#ddd;">{{ element }}</div>
+                <button class="ea-btn ea-btn--md ea-btn--fill-danger" @click="deleteEquipmentCategory(element)">删除</button>
+              </div>
+            </template>
+          </draggable>
+        </div>
+
+        <div v-else-if="miscSection === 'enemy_categories'" class="form-section">
+          <h3 class="section-title">敌人分类（增删 / 排序）</h3>
+          <div class="info-banner">删除分类后，该分类下敌人会变为未分类（分类为空）。</div>
+
+          <div class="add-cat-row" style="display:flex; gap: 10px; margin-bottom: 12px;">
+            <input v-model="newEnemyCategoryName" placeholder="输入新分类名..." />
+            <button class="ea-btn ea-btn--md ea-btn--fill-success" @click="addEnemyCategory">添加</button>
+          </div>
+
+          <draggable v-model="enemyCategories" :item-key="(item) => item" handle=".drag-handle" :animation="150">
+            <template #item="{ element }">
+              <div class="editor-row" style="align-items:center;">
+                <div class="drag-handle" style="cursor: grab; color:#666; font-family: monospace;">≡</div>
+                <div class="flex-grow" style="color:#ddd;">{{ element }}</div>
+                <button class="ea-btn ea-btn--md ea-btn--fill-danger" @click="deleteEnemyCategory(element)">删除</button>
+              </div>
+            </template>
+          </draggable>
         </div>
       </div>
 
@@ -1664,6 +2083,129 @@ function saveData() {
             </div>
           </div>
         </div>
+
+        <div class="form-section">
+          <h3 class="section-title">武器数值</h3>
+          <div class="info-banner">
+            前两段为通用词条：选“属性项 + 大/中/小”。第三段为该武器专属：可添加多条属性，并为 1–9 级单独填数值。
+          </div>
+
+          <div class="weapon-seg">
+            <div class="weapon-seg-title">
+              <span class="seg-bar"></span>
+              <span>通用词条</span>
+            </div>
+            <div class="form-grid" style="grid-template-columns: 1fr 160px; gap: 14px; align-items: end;">
+              <div class="form-group">
+                <label>属性项</label>
+                <el-select
+                    v-model="selectedWeapon.commonSlots[0].modifierId"
+                    size="large"
+                    style="width: 100%"
+                    placeholder="请选择"
+                >
+                  <el-option :value="null" label="（无）" />
+                  <el-option v-for="def in modifierDefs" :key="def.id" :label="def.label" :value="def.id" />
+                </el-select>
+              </div>
+              <div class="form-group">
+                <label>幅度</label>
+                <el-select v-model="selectedWeapon.commonSlots[0].size" size="large" style="width: 100%">
+                  <el-option value="large" label="大" />
+                  <el-option value="medium" label="中" />
+                  <el-option value="small" label="小" />
+                </el-select>
+              </div>
+            </div>
+          </div>
+
+          <div class="weapon-seg">
+            <div class="weapon-seg-title">
+              <span class="seg-bar"></span>
+              <span>通用词条</span>
+            </div>
+            <div class="form-grid" style="grid-template-columns: 1fr 160px; gap: 14px; align-items: end;">
+              <div class="form-group">
+                <label>属性项</label>
+                <el-select
+                    v-model="selectedWeapon.commonSlots[1].modifierId"
+                    size="large"
+                    style="width: 100%"
+                    placeholder="请选择"
+                >
+                  <el-option :value="null" label="（无）" />
+                  <el-option v-for="def in modifierDefs" :key="def.id" :label="def.label" :value="def.id" />
+                </el-select>
+              </div>
+              <div class="form-group">
+                <label>幅度</label>
+                <el-select v-model="selectedWeapon.commonSlots[1].size" size="large" style="width: 100%">
+                  <el-option value="large" label="大" />
+                  <el-option value="medium" label="中" />
+                  <el-option value="small" label="小" />
+                </el-select>
+              </div>
+            </div>
+          </div>
+
+          <div class="weapon-seg">
+            <div class="weapon-seg-title">
+              <span class="seg-bar"></span>
+              <span>专属 BUFF</span>
+            </div>
+            <div class="info-banner">
+              当前先按常驻属性处理（与前两段同样加减）；未来可能扩展为“仅在持续时间内生效”。
+            </div>
+
+            <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px; margin-bottom: 12px;">
+              <div style="color:#aaa; font-size: 13px;">
+                BUFF 名称：<span style="color:#ffd700; font-weight:700;">{{ selectedWeapon.buffName || '（未填写）' }}</span>
+              </div>
+              <button class="ea-btn ea-btn--md ea-btn--glass-rect" :style="{ '--ea-btn-accent': 'var(--ea-purple)' }" @click="addWeaponBuffBonusRow">＋ 添加属性</button>
+            </div>
+
+            <div v-if="selectedWeapon.buffBonuses && selectedWeapon.buffBonuses.length > 0" class="matrix-editor-area">
+              <div
+                v-for="(bonus, idx) in selectedWeapon.buffBonuses"
+                :key="idx"
+                class="editor-row"
+                style="align-items: flex-start;"
+              >
+                <div style="display:flex; flex-direction: column; gap: 10px; width: 100%;">
+                  <div class="form-grid" style="grid-template-columns: 1fr 140px; gap: 12px; align-items:end;">
+                    <div class="form-group">
+                      <label>属性项</label>
+                      <el-select
+                          v-model="bonus.modifierId"
+                          size="large"
+                          style="width: 100%"
+                          placeholder="请选择"
+                      >
+                        <el-option :value="null" label="（无）" />
+                        <el-option v-for="def in modifierDefs" :key="def.id" :label="def.label" :value="def.id" />
+                      </el-select>
+                    </div>
+                    <div class="form-group">
+                      <label>操作</label>
+                      <button class="ea-btn ea-btn--md ea-btn--fill-danger" @click="removeWeaponBuffBonusRow(idx)">删除</button>
+                    </div>
+                  </div>
+
+                  <div class="form-grid" style="grid-template-columns: repeat(9, minmax(60px, 1fr)); gap: 10px;">
+                    <div v-for="lv in 9" :key="lv" class="form-group">
+                      <label style="text-align:center;">{{ lv }}级</label>
+                      <input type="number" step="0.01" v-model.number="bonus.values[lv - 1]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="empty-hint" style="margin-top: 10px;">
+              未添加任何专属属性
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-else class="empty-state">请从左侧列表选择条目</div>
@@ -1676,8 +2218,9 @@ function saveData() {
 
 /* Sidebar */
 .cms-sidebar { width: 300px; background-color: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; flex-shrink: 0; }
-.sidebar-tabs { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #1e1e1e; border-bottom: 1px solid #333; }
-.sidebar-tabs .ea-btn { flex: 1; justify-content: center; height: 34px; }
+.sidebar-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; background: #1e1e1e; border-bottom: 1px solid #333; }
+.sidebar-tabs .ea-btn { flex: 1 1 90px; min-width: 90px; justify-content: center; height: 34px; padding: 0 10px; font-size: 12px; }
+.sidebar-tabs .ea-btn--glass-cut { clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
 
 .sidebar-header { padding: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background: #2b2b2b; }
 .sidebar-header h2 { margin: 0; font-size: 16px; color: #ffd700; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
@@ -1762,6 +2305,10 @@ function saveData() {
 .form-section { background: #252526; padding: 25px; border-radius: 0 0 8px 8px; margin-top: -22px; border: 1px solid #333; border-top: none; }
 .section-title { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #333; padding-bottom: 8px; margin: 30px 0 15px 0; }
 .section-title:first-child { margin-top: 0; }
+.weapon-seg { margin-top: 16px; }
+.weapon-seg:first-child { margin-top: 10px; }
+.weapon-seg-title { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: #ddd; margin-bottom: 10px; }
+.weapon-seg-title .seg-bar { width: 4px; height: 18px; background-color: #ffd700; flex-shrink: 0; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px 20px; }
 .form-grid.three-col { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .form-group { display: flex; flex-direction: column; }
@@ -1831,6 +2378,153 @@ function saveData() {
 :deep(.card-select .el-input__wrapper) { padding: 0 8px; min-height: 24px; }
 :deep(.card-select .el-input__inner) { font-size: 12px; height: 24px; line-height: 24px; }
 
+.unit-badge {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #666;
+  font-size: 13px;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.unit-badge.percent {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.05);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+.unit-badge.flat {
+  color: #b37feb;
+  background: rgba(179, 127, 235, 0.05);
+  border-color: rgba(179, 127, 235, 0.2);
+}
+
+.weapon-table-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.stat-table-card {
+  background: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.stat-header {
+  background: #2b2b2b;
+  padding: 8px 15px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-name {
+  font-weight: bold;
+  color: #f0f0f0;
+  font-size: 14px;
+}
+
+.stat-unit-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #333;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.stat-unit-badge.percent {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.stat-id {
+  font-family: monospace;
+  font-size: 11px;
+  color: #555;
+}
+
+.stat-body {
+  padding: 15px;
+  overflow-x: auto;
+}
+
+.matrix-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(9, minmax(50px, 1fr));
+  gap: 1px;
+  background: #333;
+  border: 1px solid #333;
+}
+
+.matrix-cell {
+  background: #16161a;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+}
+
+.matrix-cell.header-corner {
+  background: #252526;
+  color: #888;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.matrix-cell.header-level {
+  background: #252526;
+  color: #aaa;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.matrix-cell.row-label {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.matrix-cell.row-label.large { color: #ff7875; border-left: 3px solid #ff7875; }
+.matrix-cell.row-label.medium { color: #ffd700; border-left: 3px solid #ffd700; }
+.matrix-cell.row-label.small { color: #69c0ff; border-left: 3px solid #69c0ff; }
+
+.matrix-input {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  color: #fff !important;
+  text-align: center;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+  padding: 0 !important;
+  height: 100%;
+  box-shadow: none !important;
+}
+
+.matrix-input:focus {
+  color: #ffd700 !important;
+  font-weight: bold;
+}
+
+.matrix-cell:focus-within {
+  background: #2a2a30;
+}
 /* === 卡片样式 === */
 .editor-card {
   background: #2b2b2b;
