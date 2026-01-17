@@ -2686,7 +2686,7 @@ body.capture-mode .davinci-range {
 .track-row.is-active-drop .track-lane {
   border-top: 2px dashed #c0c0c0;
   border-bottom: 2px dashed #c0c0c0;
-  z-index: 20;
+  z-index: 1;
 }
 
 .actions-container {
@@ -3256,6 +3256,7 @@ body.capture-mode .davinci-range {
   overflow: hidden;
   pointer-events: auto;
   cursor: grab;
+  z-index: 10;
 }
 
 .weapon-status-icon-box:active {

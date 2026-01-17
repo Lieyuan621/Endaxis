@@ -82,6 +82,10 @@ const style = computed(() => {
   const { left, width, height } = layout.rect
   const color = themeColor.value
 
+  const priorityBase = isSelected.value ? 10000 : 100;
+  const timeWeight = Math.floor((props.action.startTime || 0) * 10);
+  const finalZIndex = priorityBase + timeWeight;
+
   const layoutStyle = {
     position: 'absolute',
     top: '0',
@@ -89,7 +93,7 @@ const style = computed(() => {
     left: `${left}px`,
     width: `${width}px`,
     boxSizing: 'border-box',
-    zIndex: isSelected.value ? 20 : 10,
+    zIndex: finalZIndex,
   }
 
   if (isGhostMode.value) {
@@ -121,7 +125,6 @@ const style = computed(() => {
       ${hexToRgba(color, 0.2)} 70%,
       ${hexToRgba(color, 0.1)} 100%)`,
       boxShadow: `0 0 15px ${hexToRgba(color, 0.5)}`,
-      zIndex: isSelected.value ? 40 : 25,
       borderRadius: '2px',
       padding: '0 6px',
     }
@@ -136,7 +139,6 @@ const style = computed(() => {
       boxShadow: isSelected.value ? `0 0 8px ${color}` : 'none',
       backdropFilter: 'blur(4px)',
       color: isSelected.value ? '#ffffff' : color,
-      zIndex: isSelected.value ? 30 : 20
     }
   }
 
@@ -570,7 +572,7 @@ function handleEffectDrop(effectId) {
   transition: background-color 0.2s, box-shadow 0.2s, filter 0.2s;
   font-weight: bold; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
-.action-item-wrapper:hover { filter: brightness(1.2); z-index: 50 !important; }
+.action-item-wrapper:hover { filter: brightness(1.2); }
 
 /* === 异常状态层 === */
 .anomalies-overlay { position: absolute; top: 0; left: -1px; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
