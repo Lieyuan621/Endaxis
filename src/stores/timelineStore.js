@@ -1412,6 +1412,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (!clipboard.value) return
         const { actions, connections: clipConns, baseTime } = clipboard.value
         const idMap = new Map()
+        const globalEffectIdMap = new Map()
 
         let timeDelta = 0
         if (targetStartTime !== null) {
@@ -1427,7 +1428,6 @@ export const useTimelineStore = defineStore('timeline', () => {
             idMap.set(item.data.instanceId, newId)
             const clonedAction = JSON.parse(JSON.stringify(item.data))
 
-            const effectIdMap = new Map()
             if (clonedAction.physicalAnomaly && clonedAction.physicalAnomaly.length > 0) {
                 const anomalyRows = Array.isArray(clonedAction.physicalAnomaly?.[0]) ? clonedAction.physicalAnomaly : [clonedAction.physicalAnomaly]
                 anomalyRows.forEach(row => {
@@ -1437,14 +1437,14 @@ export const useTimelineStore = defineStore('timeline', () => {
                         const oldId = effect._id
                         const newEffectId = uid()
                         effect._id = newEffectId
-                        if (oldId) effectIdMap.set(oldId, newEffectId)
+                        if (oldId) globalEffectIdMap.set(oldId, newEffectId)
                     })
                 })
             }
-            if (effectIdMap.size > 0 && clonedAction.damageTicks) {
+            if (globalEffectIdMap.size > 0 && clonedAction.damageTicks) {
                 clonedAction.damageTicks.forEach(tick => {
                     if (!tick || !Array.isArray(tick.boundEffects) || tick.boundEffects.length === 0) return
-                    tick.boundEffects = tick.boundEffects.map(id => effectIdMap.get(id) || id)
+                    tick.boundEffects = tick.boundEffects.map(id => globalEffectIdMap.get(id) || id)
                 })
             }
             const newStartTime = Math.max(0, item.data.startTime + timeDelta)
@@ -1456,7 +1456,21 @@ export const useTimelineStore = defineStore('timeline', () => {
             const newFrom = idMap.get(conn.from)
             const newTo = idMap.get(conn.to)
             if (newFrom && newTo) {
-                connections.value.push({ ...conn, id: `conn_${uid()}`, from: newFrom, to: newTo })
+                const newConn = {
+                    ...conn,
+                    id: `conn_${uid()}`,
+                    from: newFrom,
+                    to: newTo
+                }
+
+                if (conn.fromEffectId && globalEffectIdMap.has(conn.fromEffectId)) {
+                    newConn.fromEffectId = globalEffectIdMap.get(conn.fromEffectId)
+                }
+
+                if (conn.toEffectId && globalEffectIdMap.has(conn.toEffectId)) {
+                    newConn.toEffectId = globalEffectIdMap.get(conn.toEffectId)
+                }
+                connections.value.push(newConn)
             }
         })
 
