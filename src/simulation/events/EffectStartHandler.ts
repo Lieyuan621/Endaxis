@@ -2,7 +2,7 @@ import type { EventHandler } from "@/simulation/events/EventHandler.ts";
 import type { EffectStartEvent } from "@/simulation/events/event.types.ts";
 import type { SimulationContext } from "@/simulation/engine/SimulationContext.ts";
 import { Effect } from "@/simulation/effects/types";
-import { ReactionRegistry } from "@/mechanics/reactions";
+import { ReactionRegistry } from "@/simulation/mechanics/reactions";
 
 export class EffectStartHandler implements EventHandler<EffectStartEvent> {
   handle(event: EffectStartEvent, ctx: SimulationContext) {

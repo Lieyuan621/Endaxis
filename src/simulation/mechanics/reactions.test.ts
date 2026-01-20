@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ReactionRegistry } from "./reactions";
-import { Effect, type EffectTag } from "../simulation/effects/types";
+import { Effect, type EffectTag } from "../effects/types";
 import { EffectManager } from "@/simulation/state/EffectManager";
 
 describe("ReactionRegistry", () => {
