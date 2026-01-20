@@ -1,6 +1,7 @@
 import type { BaseGameState } from "@/simulation/state/BaseGameState.ts";
 import type { EnemySnapshot, EnemyConfig } from "@/simulation/state/types.ts";
 import type { SimulationEngine } from "../engine/SimulationEngine";
+import { EffectManager } from "./EffectManager";
 
 export class EnemyState implements BaseGameState<EnemySnapshot> {
   private stagger: number = 0;
@@ -12,10 +13,14 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
   private currentTime: number = 0;
 
   // effectId -> type
-  private activeEffects: Map<string, string> = new Map();
+  public effects: EffectManager;
 
-  constructor(readonly config: EnemyConfig, private engine: SimulationEngine) {
+  constructor(
+    readonly config: EnemyConfig,
+    private engine: SimulationEngine,
+  ) {
     this.nodeStep = this.config.maxStagger / (this.config.staggerNodeCount + 1);
+    this.effects = new EffectManager();
   }
 
   isLocked(currentTime: number): boolean {
@@ -28,7 +33,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
 
   addStagger(
     amount: number,
-    currentTime: number
+    currentTime: number,
   ): {
     broken: boolean;
     breakEnd?: number;
@@ -82,26 +87,6 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
 
   advanceTime(_dt: number, currentTime: number) {
     this.currentTime = currentTime;
-  }
-
-  addEffect(effectId: string, type: string) {
-    this.activeEffects.set(effectId, type);
-  }
-
-  removeEffect(id: string) {
-    this.activeEffects.delete(id);
-  }
-
-  hasEffectId(id: string): boolean {
-    return this.activeEffects.has(id);
-  }
-
-  getEffectType(id: string): string | undefined {
-    return this.activeEffects.get(id);
-  }
-
-  hasEffectType(type: string): boolean {
-    return this.activeEffects.values().some((t) => t === type);
   }
 
   snapshot(): EnemySnapshot {

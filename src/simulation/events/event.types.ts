@@ -1,4 +1,5 @@
 import type { ActionType, ResolvedDamageTick } from "../compiler/types";
+import type { EffectSnapshot } from "../effects/types";
 
 export type SimEventType = SimEvent["type"];
 type SimBaseEvent<Name extends string, Data = {}> = {
@@ -59,17 +60,17 @@ export type SpRegenPauseEvent = SimBaseEvent<
 export type EffectStartEvent = SimBaseEvent<
   "EFFECT_START",
   {
-    effectId: string;
+    actorId: string;
+    actionId?: string;
     targetId: string;
-    type: string;
+    effect: EffectSnapshot;
   }
 >;
 export type EffectEndEvent = SimBaseEvent<
   "EFFECT_END",
   {
-    effectId: string;
-    targetId: string;
-    type: string;
+    effectInstanceId: string;
+    type: "consumption" | "expiration";
   }
 >;
 export type StaggerChangeEvent = SimBaseEvent<
@@ -81,6 +82,7 @@ export type StaggerChangeEvent = SimBaseEvent<
     targetId: string;
   }
 >;
+
 export type SimEvent =
   | ActionStartEvent
   | ActionEndEvent
@@ -90,11 +92,13 @@ export type SimEvent =
   | EffectStartEvent
   | EffectEndEvent
   | StaggerChangeEvent;
+
 export type SimLogEntryBase<Name extends string, Data = {}> = {
   type: Name;
   time: number;
   payload: Data;
 };
+
 export type SimLogEntry =
   | SimLogEntryBase<
       "SP_REGEN_PAUSE",
@@ -158,9 +162,23 @@ export type SimLogEntry =
   | SimLogEntryBase<
       "EFFECT_START",
       {
-        effectId: string;
+        effectSnapshot: EffectSnapshot;
         targetId: string;
-        type: string;
+      }
+    >
+  | SimLogEntryBase<
+      "REACTION_OCCURRED",
+      {
+        reactionName: string;
+        actorId: string;
+      }
+    >
+  | SimLogEntryBase<
+      "EFFECT_APPLIED",
+      {
+        name: string;
+        tags: any[];
+        targetId: string;
       }
     >
   | SimLogEntryBase<
@@ -168,6 +186,6 @@ export type SimLogEntry =
       {
         effectId: string;
         targetId: string;
-        type: string;
+        type: "consumption" | "expiration";
       }
     >;

@@ -1,12 +1,14 @@
 import type { TeamConfig, EnemyConfig, ActorSnapshot } from "./state/types.ts";
 import { createEngine } from "./engine/createEngine.ts";
 import type { ResolvedTimeline } from "./compiler/types.ts";
+import { SCNEARIO_EFFECT_TYPE_MAP } from "./effects/scenarioAdapter.ts";
+import { AfflictionEffectMap } from "./effects/afflictionEffectMap.ts";
 
 export function simulate(
   timeline: ResolvedTimeline,
   teamConfig: TeamConfig,
   enemyConfig: EnemyConfig,
-  actors: ActorSnapshot[]
+  actors: ActorSnapshot[],
 ) {
   const engine = createEngine(teamConfig, enemyConfig, actors, timeline);
 
@@ -51,23 +53,27 @@ export function simulate(
       });
     });
 
-    action.effects.forEach((effect) => {
+    action.effects.forEach((resolvedEffect) => {
+      const tag =
+        SCNEARIO_EFFECT_TYPE_MAP[
+          resolvedEffect.node.type as keyof typeof SCNEARIO_EFFECT_TYPE_MAP
+        ];
+
+      if (!tag) {
+        return;
+      }
+
+      const effect = AfflictionEffectMap[tag];
+      effect.startTime = resolvedEffect.realStartTime;
+
       engine.enqueue({
         type: "EFFECT_START",
-        time: effect.realStartTime,
+        time: effect.startTime,
         payload: {
-          effectId: effect.uniqueId,
+          actorId: action.trackId,
+          actionId: action.id,
           targetId: "boss",
-          type: effect.node.type,
-        },
-      });
-      engine.enqueue({
-        type: "EFFECT_END",
-        time: effect.realStartTime + effect.realDuration,
-        payload: {
-          effectId: effect.uniqueId,
-          targetId: "boss",
-          type: effect.node.type,
+          effect: effect.snapshot(),
         },
       });
     });

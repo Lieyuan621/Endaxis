@@ -8,18 +8,19 @@ import type {
 import { TeamState } from "@/simulation/state/TeamState.ts";
 import { EnemyState } from "@/simulation/state/EnemyState.ts";
 import type { SimulationEngine } from "../engine/SimulationEngine";
+import { ActorState } from "./ActorState";
 
 export class GameState implements BaseGameState<GameSnapshot> {
   team: TeamState;
   enemy: EnemyState;
-  private actors: Map<string, ActorSnapshot> = new Map();
+  private actors: Map<string, ActorState> = new Map();
   private currentTime: number = 0;
   private initialSnapshot: GameSnapshot;
 
   constructor(
     teamConfig: TeamConfig,
     enemyConfig: EnemyConfig,
-    _engine: SimulationEngine
+    _engine: SimulationEngine,
   ) {
     this.team = new TeamState(teamConfig, _engine);
     this.enemy = new EnemyState(enemyConfig, _engine);
@@ -32,11 +33,11 @@ export class GameState implements BaseGameState<GameSnapshot> {
     this.enemy.advanceTime(deltaTime, this.currentTime);
   }
 
-  setActor(actor: ActorSnapshot) {
-    this.actors.set(actor.id, actor);
+  setActor(actorSnapshot: ActorSnapshot) {
+    this.actors.set(actorSnapshot.id, new ActorState(actorSnapshot));
   }
 
-  getActor(id: string): ActorSnapshot {
+  getActor(id: string): ActorState {
     const actor = this.actors.get(id);
     if (!actor) {
       throw new Error(`Actor ${id} not found`);

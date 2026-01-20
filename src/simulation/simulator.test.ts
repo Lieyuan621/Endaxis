@@ -9,7 +9,7 @@ import { formatSimLogEntry } from "./formatSimLogEntry";
 describe("SimulationEngine Integration", () => {
   it("should match SP snapshot", () => {
     const { timeline, teamConfig, enemyConfig, actors } = compileScenario(
-      simulatorFixture1.scenario
+      simulatorFixture1.scenario,
     );
 
     const result = simulate(timeline, teamConfig, enemyConfig, actors);
@@ -20,7 +20,7 @@ describe("SimulationEngine Integration", () => {
 
     const projection = projectSpSeries(
       result.simLog,
-      result.state.getInitialSnapshot()
+      result.state.getInitialSnapshot(),
     );
 
     expect(projection).toMatchSnapshot();
@@ -35,7 +35,7 @@ describe("SimulationEngine Integration", () => {
           staggerNodeDuration: 2,
           staggerNodeCount: 0,
         },
-      }
+      },
     );
 
     const result = simulate(timeline, teamConfig, enemyConfig, actors);
@@ -43,7 +43,7 @@ describe("SimulationEngine Integration", () => {
     const projection = projectStaggerSeries(
       result.simLog,
       result.state.getInitialSnapshot(),
-      enemyConfig
+      enemyConfig,
     );
 
     expect(projection.nodeStep).toBe(125);

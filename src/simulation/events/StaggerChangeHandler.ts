@@ -20,7 +20,7 @@ export class StaggerChangeHandler implements EventHandler<StaggerChangeEvent> {
     const actor = ctx.state.getActor(sourceId);
 
     const staggerCtx: StaggerContext = {
-      source: actor,
+      source: actor.snapshotData,
       target: ctx.state.enemy,
       baseValue: stagger,
       tags: [],

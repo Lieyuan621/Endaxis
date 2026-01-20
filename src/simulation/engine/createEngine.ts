@@ -18,13 +18,13 @@ export function createEngine(
   teamConfig: TeamConfig,
   enemyConfig: EnemyConfig,
   actors: ActorSnapshot[],
-  timeline: ResolvedTimeline
+  timeline: ResolvedTimeline,
 ) {
   const engine = new SimulationEngine(
     timeline,
     teamConfig,
     enemyConfig,
-    actors
+    actors,
   );
 
   engine.registerHandler("DAMAGE_TICK", new DamageHandler());

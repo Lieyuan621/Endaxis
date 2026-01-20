@@ -4,16 +4,21 @@ import type { SimulationContext } from "@/simulation/engine/SimulationContext.ts
 
 export class EffectEndHandler implements EventHandler<EffectEndEvent> {
   handle(event: EffectEndEvent, ctx: SimulationContext) {
-    const { effectId } = event.payload;
+    const { effectInstanceId } = event.payload;
 
-    ctx.state.enemy.removeEffect(effectId);
+    const removed = ctx.state.enemy.effects.remove(effectInstanceId);
+
+    if (!removed) {
+      // 状态已经被移除
+      return;
+    }
 
     ctx.simLog({
       type: "EFFECT_END",
       time: event.time,
       payload: {
-        effectId: event.payload.effectId,
-        targetId: event.payload.targetId,
+        effectId: removed.effect.id,
+        targetId: "",
         type: event.payload.type,
       },
     });

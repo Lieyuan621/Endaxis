@@ -2,7 +2,7 @@ import type { CalculationResult, StaggerContext } from "./type";
 
 export type ModifierFn<TContext> = (
   ctx: TContext,
-  receipt: CalculationResult
+  receipt: CalculationResult,
 ) => void;
 
 export class CalculationPipeline<TContext> {
@@ -37,11 +37,11 @@ export class CalculationPipeline<TContext> {
 
 export const OriginiumArtsModifier: ModifierFn<StaggerContext> = (
   ctx,
-  result
+  result,
 ) => {
   const hasKnock =
-    ctx.target.hasEffectType("knockup") ||
-    ctx.target.hasEffectType("knockdown");
+    ctx.target.effects.hasTag("PHYSICAL_LIFT") ||
+    ctx.target.effects.hasTag("PHYSICAL_KNOCK_DOWN");
 
   if (!hasKnock) return;
 

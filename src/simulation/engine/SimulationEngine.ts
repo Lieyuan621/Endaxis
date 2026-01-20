@@ -26,7 +26,7 @@ export class SimulationEngine {
     private timeline: ResolvedTimeline,
     teamConfig: TeamConfig,
     enemyConfig: EnemyConfig,
-    private actors: ActorSnapshot[]
+    private actors: ActorSnapshot[],
   ) {
     this.state = new GameState(teamConfig, enemyConfig, this);
 
@@ -41,7 +41,7 @@ export class SimulationEngine {
 
   registerHandler<E extends SimEvent>(
     type: E["type"],
-    handler: EventHandler<E>
+    handler: EventHandler<E>,
   ) {
     this.handlers.set(type, handler);
   }
