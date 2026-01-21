@@ -13,6 +13,7 @@ const uid = () => Math.random().toString(36).substring(2, 9)
 const ATTACK_SEGMENT_COUNT = 5
 const COLLAPSED_PREP_PX = 18
 const MIN_PREP_DURATION = 0.5
+const EQUIPMENT_REFINE_MAX_TIER = 3
 
 function shiftSnapshotTimes(snapshot, delta) {
     const d = Number(delta) || 0
@@ -245,7 +246,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     const equipmentCategoryConfigs = ref({})
     const misc = ref({
         modifierDefs: [],
-        weaponCommonModifiers: {}
+        weaponCommonModifiers: {},
+        equipmentTemplates: {
+            armor: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
+            gloves: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
+            accessory: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
+        }
     })
     const activeEnemyId = ref('custom')
     const enemyCategories = ref([])
@@ -261,6 +267,11 @@ export const useTimelineStore = defineStore('timeline', () => {
         syncAllWeaponModifiers()
     }, { deep: true, throttle: 600 })
 
+    watchThrottled([equipmentDatabase], () => {
+        if (isLoading.value) return
+        syncAllEquipmentModifiers()
+    }, { deep: true, throttle: 600 })
+
     const createEmptyTrack = () => ({
         id: null,
         actions: [],
@@ -273,11 +284,16 @@ export const useTimelineStore = defineStore('timeline', () => {
         weaponCommon2Tier: 1,
         weaponBuffTier: 1,
         weaponAppliedDeltas: {},
+        equipmentAppliedDeltas: {},
         stats: createDefaultStats(),
         equipArmorId: null,
         equipGlovesId: null,
         equipAccessory1Id: null,
         equipAccessory2Id: null,
+        equipArmorRefineTier: 0,
+        equipGlovesRefineTier: 0,
+        equipAccessory1RefineTier: 0,
+        equipAccessory2RefineTier: 0,
         linkCdReduction: 0,
     })
 
@@ -459,7 +475,31 @@ export const useTimelineStore = defineStore('timeline', () => {
         else if (slotKey === 'accessory1') track.equipAccessory1Id = normalizedId
         else if (slotKey === 'accessory2') track.equipAccessory2Id = normalizedId
 
+        const eq = getEquipmentById(normalizedId)
+        if (!eq || Number(eq.level) !== 70) {
+            updateTrackEquipmentTier(trackId, slotKey, 0, { commit: false })
+        }
+
+        syncTrackEquipmentModifiers(trackId)
         commitState()
+    }
+
+    function updateTrackEquipmentTier(trackId, slotKey, tier, { commit = true } = {}) {
+        const track = tracks.value.find(t => t.id === trackId)
+        if (!track) return
+
+        const next = clampEquipmentRefineTier(tier)
+        const eq = getEquipmentById(getEquipmentIdForSlot(track, slotKey))
+        const enforced = (eq && Number(eq.level) === 70) ? next : 0
+
+        if (slotKey === 'armor') track.equipArmorRefineTier = enforced
+        else if (slotKey === 'gloves') track.equipGlovesRefineTier = enforced
+        else if (slotKey === 'accessory1') track.equipAccessory1RefineTier = enforced
+        else if (slotKey === 'accessory2') track.equipAccessory2RefineTier = enforced
+        else return
+
+        syncTrackEquipmentModifiers(trackId)
+        if (commit) commitState()
     }
 
     // ===================================================================================
@@ -626,6 +666,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         cycleBoundaries.value = incoming.cycleBoundaries ? JSON.parse(JSON.stringify(incoming.cycleBoundaries)) : []
         switchEvents.value = incoming.switchEvents ? JSON.parse(JSON.stringify(incoming.switchEvents)) : []
         syncAllWeaponModifiers()
+        syncAllEquipmentModifiers()
         clearSelection()
     }
 
@@ -783,6 +824,20 @@ export const useTimelineStore = defineStore('timeline', () => {
         return num
     }
 
+    const clampEquipmentRefineTier = (val) => {
+        const num = Math.round(Number(val))
+        if (!Number.isFinite(num)) return 0
+        if (num < 0) return 0
+        if (num > EQUIPMENT_REFINE_MAX_TIER) return EQUIPMENT_REFINE_MAX_TIER
+        return num
+    }
+
+    const normalizeArray4 = (arr) => {
+        const list = Array.isArray(arr) ? arr.slice(0, 4) : []
+        while (list.length < 4) list.push(0)
+        return list.map(v => Number(v) || 0)
+    }
+
     const normalizeArray9 = (arr) => {
         const list = Array.isArray(arr) ? arr.slice(0, 9) : []
         while (list.length < 9) list.push(0)
@@ -800,6 +855,14 @@ export const useTimelineStore = defineStore('timeline', () => {
         const baseStats = createDefaultStats()
         const hasIncomingStats = track.stats && typeof track.stats === 'object'
         merged.stats = { ...baseStats, ...(hasIncomingStats ? track.stats : {}) }
+
+        if (!merged.weaponAppliedDeltas || typeof merged.weaponAppliedDeltas !== 'object') merged.weaponAppliedDeltas = {}
+        if (!merged.equipmentAppliedDeltas || typeof merged.equipmentAppliedDeltas !== 'object') merged.equipmentAppliedDeltas = {}
+
+        merged.equipArmorRefineTier = clampEquipmentRefineTier(merged.equipArmorRefineTier)
+        merged.equipGlovesRefineTier = clampEquipmentRefineTier(merged.equipGlovesRefineTier)
+        merged.equipAccessory1RefineTier = clampEquipmentRefineTier(merged.equipAccessory1RefineTier)
+        merged.equipAccessory2RefineTier = clampEquipmentRefineTier(merged.equipAccessory2RefineTier)
 
         if (!hasIncomingStats) {
             const eff = Number(track.gaugeEfficiency)
@@ -869,6 +932,128 @@ export const useTimelineStore = defineStore('timeline', () => {
             }
         }
         return out
+    }
+
+    const normalizeEquipmentAffixes = (level, affixesLike) => {
+        const safe = (affixesLike && typeof affixesLike === 'object') ? affixesLike : {}
+        const is70 = Number(level) === 70
+        const size = is70 ? 4 : 1
+
+        const normalizePrimary = (input) => {
+            const raw = (input && typeof input === 'object') ? input : {}
+            const modifierId = typeof raw.modifierId === 'string' && raw.modifierId.trim()
+                ? raw.modifierId.trim()
+                : (typeof raw.key === 'string' && raw.key.trim() ? raw.key.trim() : null)
+            const vals = is70 ? normalizeArray4(raw.values) : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0]
+            return {
+                modifierId: modifierId || null,
+                values: vals.slice(0, size)
+            }
+        }
+
+        const normalizeAdapter = (input) => {
+            const raw = (input && typeof input === 'object') ? input : {}
+            const ids = Array.isArray(raw.modifierIds) ? raw.modifierIds : (raw.modifierId ? [raw.modifierId] : [])
+            const cleaned = []
+            for (const id of ids) {
+                if (typeof id !== 'string') continue
+                const trimmed = id.trim()
+                if (!trimmed) continue
+                if (!cleaned.includes(trimmed)) cleaned.push(trimmed)
+            }
+            const vals = is70 ? normalizeArray4(raw.values) : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0]
+            return {
+                modifierIds: cleaned,
+                values: vals.slice(0, size)
+            }
+        }
+
+        return {
+            primary1: normalizePrimary(safe.primary1),
+            primary2: normalizePrimary(safe.primary2),
+            adapter: normalizeAdapter(safe.adapter)
+        }
+    }
+
+    const normalizeEquipmentDatabase = (list) => {
+        const safe = Array.isArray(list) ? list : []
+        return safe.map(eq => {
+            const base = { ...(eq || {}) }
+            const is70 = Number(base.level) === 70
+            const legacy = base.affixes70 && typeof base.affixes70 === 'object' ? base.affixes70 : null
+            const affixesInput = (base.affixes && typeof base.affixes === 'object') ? base.affixes : (legacy || null)
+            if (affixesInput) {
+                base.affixes = normalizeEquipmentAffixes(base.level, affixesInput)
+                if (!is70) {
+                    base.affixes.primary1.values = base.affixes.primary1.values.slice(0, 1)
+                    base.affixes.primary2.values = base.affixes.primary2.values.slice(0, 1)
+                    base.affixes.adapter.values = base.affixes.adapter.values.slice(0, 1)
+                }
+            }
+            return base
+        })
+    }
+
+    const normalizeEquipmentTemplates = (templatesLike, fallback = null) => {
+        const safe = (templatesLike && typeof templatesLike === 'object') ? templatesLike : {}
+        const fb = (fallback && typeof fallback === 'object') ? fallback : {}
+
+        const normalizeOne = (input, fbInput) => {
+            const raw = (input && typeof input === 'object') ? input : {}
+            const fbRaw = (fbInput && typeof fbInput === 'object') ? fbInput : {}
+            return {
+                primary1: normalizeArray4(raw.primary1 ?? fbRaw.primary1),
+                primary2: normalizeArray4(raw.primary2 ?? fbRaw.primary2),
+                primary1Single: normalizeArray4(raw.primary1Single ?? fbRaw.primary1Single),
+            }
+        }
+
+        return {
+            armor: normalizeOne(safe.armor, fb.armor),
+            gloves: normalizeOne(safe.gloves, fb.gloves),
+            accessory: normalizeOne(safe.accessory, fb.accessory),
+        }
+    }
+
+    const normalizeEquipmentMiscConfig = (incoming) => {
+        const safe = (incoming && typeof incoming === 'object') ? incoming : {}
+
+        if (safe.equipmentTemplates) {
+            return { equipmentTemplates: normalizeEquipmentTemplates(safe.equipmentTemplates) }
+        }
+
+        const hasLegacyDeltas = Array.isArray(safe.equipmentRefineDeltas)
+        const hasLegacyDefaults = !!(safe.equipment70SlotDefaults && typeof safe.equipment70SlotDefaults === 'object' && Object.keys(safe.equipment70SlotDefaults).length > 0)
+
+        if (!hasLegacyDeltas && !hasLegacyDefaults) {
+            return {
+                equipmentTemplates: normalizeEquipmentTemplates({
+                    armor: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
+                    gloves: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
+                    accessory: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
+                })
+            }
+        }
+
+        // legacy migration from equipmentRefineDeltas + equipment70SlotDefaults
+        const legacyDeltas = normalizeArray4(safe.equipmentRefineDeltas)
+        legacyDeltas[0] = 0
+        const legacyDefaults = (safe.equipment70SlotDefaults && typeof safe.equipment70SlotDefaults === 'object') ? safe.equipment70SlotDefaults : {}
+
+        const buildFromLegacy = (slotKey, baseFallback) => {
+            const raw = (legacyDefaults[slotKey] && typeof legacyDefaults[slotKey] === 'object') ? legacyDefaults[slotKey] : {}
+            const p1 = Number(raw.primary1 ?? baseFallback.primary1) || 0
+            const p2 = Number(raw.primary2 ?? baseFallback.primary2) || 0
+            const p1s = Number(raw.primary1Single ?? baseFallback.primary1Single) || 0
+            const ladder = (base) => [0, 1, 2, 3].map(t => (Number(base) || 0) + (Number(legacyDeltas[t]) || 0))
+            return { primary1: ladder(p1), primary2: ladder(p2), primary1Single: ladder(p1s) }
+        }
+
+        const gloves = buildFromLegacy('gloves', { primary1: 65, primary2: 43, primary1Single: 65 })
+        const accessory = buildFromLegacy('accessory', { primary1: 32, primary2: 21, primary1Single: 32 })
+        const armor = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
+
+        return { equipmentTemplates: normalizeEquipmentTemplates({ armor, gloves, accessory }) }
     }
 
     const normalizeModifierDefs = (defs) => {
@@ -967,6 +1152,128 @@ export const useTimelineStore = defineStore('timeline', () => {
     const getEquipmentById = (equipmentId) => {
         if (!equipmentId) return null
         return equipmentDatabase.value.find(e => e.id === equipmentId) || null
+    }
+
+    const getEquipmentIdForSlot = (track, slotKey) => {
+        if (!track) return null
+        if (slotKey === 'armor') return track.equipArmorId
+        if (slotKey === 'gloves') return track.equipGlovesId
+        if (slotKey === 'accessory1') return track.equipAccessory1Id
+        if (slotKey === 'accessory2') return track.equipAccessory2Id
+        return null
+    }
+
+    const getEquipmentRefineTierForSlot = (track, slotKey) => {
+        if (!track) return 0
+        if (slotKey === 'armor') return clampEquipmentRefineTier(track.equipArmorRefineTier)
+        if (slotKey === 'gloves') return clampEquipmentRefineTier(track.equipGlovesRefineTier)
+        if (slotKey === 'accessory1') return clampEquipmentRefineTier(track.equipAccessory1RefineTier)
+        if (slotKey === 'accessory2') return clampEquipmentRefineTier(track.equipAccessory2RefineTier)
+        return 0
+    }
+
+    const computeEquipmentDeltasForTrack = (track) => {
+        const deltas = {}
+        if (!track?.id) return deltas
+
+        const slotKeys = ['armor', 'gloves', 'accessory1', 'accessory2']
+        for (const slotKey of slotKeys) {
+            const equipmentId = getEquipmentIdForSlot(track, slotKey)
+            if (!equipmentId) continue
+            const eq = getEquipmentById(equipmentId)
+            if (!eq) continue
+            const is70 = Number(eq.level) === 70
+            const tier = is70 ? getEquipmentRefineTierForSlot(track, slotKey) : 0
+            const affixes = eq.affixes ? normalizeEquipmentAffixes(eq.level, eq.affixes) : null
+            if (!affixes) continue
+
+            const pick = (values) => {
+                if (!Array.isArray(values) || values.length === 0) return 0
+                const idx = is70 ? tier : 0
+                return Number(values[idx] ?? values[0]) || 0
+            }
+
+            if (affixes.primary1?.modifierId) {
+                const v = pick(affixes.primary1.values)
+                if (v !== 0) deltas[affixes.primary1.modifierId] = (deltas[affixes.primary1.modifierId] || 0) + v
+            }
+
+            if (affixes.primary2?.modifierId) {
+                const v = pick(affixes.primary2.values)
+                if (v !== 0) deltas[affixes.primary2.modifierId] = (deltas[affixes.primary2.modifierId] || 0) + v
+            }
+
+            const adapterIds = Array.isArray(affixes.adapter?.modifierIds) ? affixes.adapter.modifierIds : []
+            if (adapterIds.length > 0) {
+                const v = pick(affixes.adapter.values)
+                if (v !== 0) {
+                    for (const id of adapterIds) {
+                        if (!id) continue
+                        deltas[id] = (deltas[id] || 0) + v
+                    }
+                }
+            }
+        }
+
+        const filtered = {}
+        const stats = track?.stats && typeof track.stats === 'object' ? track.stats : {}
+        for (const [modifierId, val] of Object.entries(deltas)) {
+            if (!(modifierId in stats)) continue
+            filtered[modifierId] = val
+        }
+        return filtered
+    }
+
+    const applyEquipmentDeltasToTrack = (track, newDeltas) => {
+        const old = (track.equipmentAppliedDeltas && typeof track.equipmentAppliedDeltas === 'object')
+            ? track.equipmentAppliedDeltas
+            : {}
+
+        if (!track.stats) track.stats = createDefaultStats()
+
+        const keys = new Set([...Object.keys(old), ...Object.keys(newDeltas || {})])
+        for (const modifierId of keys) {
+            if (!(modifierId in track.stats)) continue
+            const prev = Number(old[modifierId]) || 0
+            const next = Number(newDeltas?.[modifierId]) || 0
+            const diff = next - prev
+            if (diff === 0) continue
+            const current = Number(track.stats[modifierId]) || 0
+            track.stats[modifierId] = current + diff
+        }
+
+        track.equipmentAppliedDeltas = { ...(newDeltas || {}) }
+    }
+
+    function syncTrackEquipmentModifiers(trackId) {
+        if (!trackId) return
+        const track = tracks.value.find(t => t.id === trackId)
+        if (!track) return
+        // Enforce: only Lv70 equipment can keep refine tiers
+        const slotRules = [
+            { slotKey: 'armor', id: track.equipArmorId, tierKey: 'equipArmorRefineTier' },
+            { slotKey: 'gloves', id: track.equipGlovesId, tierKey: 'equipGlovesRefineTier' },
+            { slotKey: 'accessory1', id: track.equipAccessory1Id, tierKey: 'equipAccessory1RefineTier' },
+            { slotKey: 'accessory2', id: track.equipAccessory2Id, tierKey: 'equipAccessory2RefineTier' },
+        ]
+        for (const s of slotRules) {
+            const eq = getEquipmentById(s.id)
+            if (!eq || Number(eq.level) !== 70) {
+                track[s.tierKey] = 0
+            } else {
+                track[s.tierKey] = clampEquipmentRefineTier(track[s.tierKey])
+            }
+        }
+        const newDeltas = computeEquipmentDeltasForTrack(track)
+        applyEquipmentDeltasToTrack(track, newDeltas)
+    }
+
+    function syncAllEquipmentModifiers({ commit = false } = {}) {
+        for (const track of tracks.value) {
+            if (!track?.id) continue
+            syncTrackEquipmentModifiers(track.id)
+        }
+        if (commit) commitState()
     }
 
     const getEquipmentCategoryConfig = (category) => {
@@ -1827,11 +2134,16 @@ export const useTimelineStore = defineStore('timeline', () => {
             }
             track.weaponId = null;
             syncTrackWeaponModifiers(oldOperatorId)
-            track.id = newOperatorId;
             track.equipArmorId = null;
             track.equipGlovesId = null;
             track.equipAccessory1Id = null;
             track.equipAccessory2Id = null;
+            track.equipArmorRefineTier = 0
+            track.equipGlovesRefineTier = 0
+            track.equipAccessory1RefineTier = 0
+            track.equipAccessory2RefineTier = 0
+            syncTrackEquipmentModifiers(oldOperatorId)
+            track.id = newOperatorId;
             track.weaponCommon1Tier = 1
             track.weaponCommon2Tier = 1
             track.weaponBuffTier = 1
@@ -1856,11 +2168,16 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
         track.weaponId = null;
         if (oldOperatorId) syncTrackWeaponModifiers(oldOperatorId)
-        track.id = null;
         track.equipArmorId = null;
         track.equipGlovesId = null;
         track.equipAccessory1Id = null;
         track.equipAccessory2Id = null;
+        track.equipArmorRefineTier = 0
+        track.equipGlovesRefineTier = 0
+        track.equipAccessory1RefineTier = 0
+        track.equipAccessory2RefineTier = 0
+        if (oldOperatorId) syncTrackEquipmentModifiers(oldOperatorId)
+        track.id = null;
         track.weaponCommon1Tier = 1
         track.weaponCommon2Tier = 1
         track.weaponBuffTier = 1
@@ -3211,7 +3528,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 }))
             }
             if (data.equipmentDatabase) {
-                equipmentDatabase.value = data.equipmentDatabase
+                equipmentDatabase.value = normalizeEquipmentDatabase(data.equipmentDatabase)
             } else {
                 equipmentDatabase.value = []
             }
@@ -3226,9 +3543,18 @@ export const useTimelineStore = defineStore('timeline', () => {
                 equipmentCategoryConfigs.value = {}
             }
             if (data.misc) {
+                const eqCfg = normalizeEquipmentMiscConfig(data.misc)
                 misc.value = {
                     modifierDefs: normalizeModifierDefs(data.misc?.modifierDefs),
                     weaponCommonModifiers: normalizeWeaponCommonModifiersTable(data.misc?.weaponCommonModifiers),
+                    equipmentTemplates: eqCfg.equipmentTemplates,
+                }
+            } else {
+                const eqCfg = normalizeEquipmentMiscConfig(null)
+                misc.value = {
+                    modifierDefs: [],
+                    weaponCommonModifiers: {},
+                    equipmentTemplates: eqCfg.equipmentTemplates,
                 }
             }
         }
@@ -3401,7 +3727,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
         effectLayouts, getNodeRect, weaponDatabase, weaponOverrides, weaponStatuses, activeWeapon, getWeaponById, isWeaponSkillId, addWeaponStatus,
-        equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, getEquipmentById, updateTrackEquipment,
+        equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, getEquipmentById, updateTrackEquipment, updateTrackEquipmentTier, syncAllEquipmentModifiers,
         equipmentCategoryOverrides, updateEquipmentCategoryOverride,
         activeSetBonusLibrary, addSetBonusStatus, getActiveSetBonusCategories,
         misc,

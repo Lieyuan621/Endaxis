@@ -157,6 +157,45 @@ const weaponBuffTierValue = computed({
   }
 })
 
+function getEquipmentForSlot(slotKey) {
+  const t = activeTrack.value
+  if (!t) return null
+  let id = null
+  if (slotKey === 'armor') id = t.equipArmorId
+  else if (slotKey === 'gloves') id = t.equipGlovesId
+  else if (slotKey === 'accessory1') id = t.equipAccessory1Id
+  else if (slotKey === 'accessory2') id = t.equipAccessory2Id
+  return store.getEquipmentById(id)
+}
+
+const equipArmor = computed(() => getEquipmentForSlot('armor'))
+const equipGloves = computed(() => getEquipmentForSlot('gloves'))
+const equipAccessory1 = computed(() => getEquipmentForSlot('accessory1'))
+const equipAccessory2 = computed(() => getEquipmentForSlot('accessory2'))
+
+const equipArmorTierValue = computed({
+  get: () => activeTrack.value ? (activeTrack.value.equipArmorRefineTier ?? 0) : 0,
+  set: (val) => { if (store.activeTrackId) store.updateTrackEquipmentTier(store.activeTrackId, 'armor', val) }
+})
+const equipGlovesTierValue = computed({
+  get: () => activeTrack.value ? (activeTrack.value.equipGlovesRefineTier ?? 0) : 0,
+  set: (val) => { if (store.activeTrackId) store.updateTrackEquipmentTier(store.activeTrackId, 'gloves', val) }
+})
+const equipAccessory1TierValue = computed({
+  get: () => activeTrack.value ? (activeTrack.value.equipAccessory1RefineTier ?? 0) : 0,
+  set: (val) => { if (store.activeTrackId) store.updateTrackEquipmentTier(store.activeTrackId, 'accessory1', val) }
+})
+const equipAccessory2TierValue = computed({
+  get: () => activeTrack.value ? (activeTrack.value.equipAccessory2RefineTier ?? 0) : 0,
+  set: (val) => { if (store.activeTrackId) store.updateTrackEquipmentTier(store.activeTrackId, 'accessory2', val) }
+})
+
+function formatEquipValue(eq) {
+  if (!eq) return '未装备'
+  const lv = Number(eq.level) || 0
+  return `${eq.name || eq.id || ''}${lv ? ` · Lv${lv}` : ''}`
+}
+
 function formatSlotLabel(slot) {
   const modifierId = slot?.modifierId || slot?.key
   if (!modifierId) return '（无）'
@@ -505,6 +544,69 @@ function onNativeDragEnd() {
         <div class="setting-controls">
           <el-slider v-model="weaponBuffTierValue" :min="1" :max="9" :step="1" :show-tooltip="false" size="small" class="tech-slider white-theme" />
           <CustomNumberInput v-model="weaponBuffTierValue" :min="1" :max="9" suffix="级" class="tech-input" />
+        </div>
+      </div>
+    </div>
+
+    <div v-if="activeTrack && activeCharacter && activeLibraryTab === 'set'" class="gauge-settings-panel">
+      <div class="panel-tag">装备精锻</div>
+
+      <div v-if="equipArmor" class="setting-group">
+        <div class="setting-info stacked-layout">
+          <span class="label">护甲</span>
+          <span class="value">{{ formatEquipValue(equipArmor) }}</span>
+        </div>
+        <div class="setting-controls" v-if="Number(equipArmor.level) === 70">
+          <el-slider v-model="equipArmorTierValue" :min="0" :max="3" :step="1" :show-tooltip="false" size="small" class="tech-slider white-theme" />
+          <CustomNumberInput v-model="equipArmorTierValue" :min="0" :max="3" suffix="级" class="tech-input" />
+        </div>
+        <div class="setting-controls" v-else>
+          <span class="value" style="color:#666; font-size: 12px;">非 Lv70 无精锻</span>
+        </div>
+      </div>
+
+      <div v-if="equipArmor && equipGloves" class="group-divider"></div>
+      <div v-if="equipGloves" class="setting-group">
+        <div class="setting-info stacked-layout">
+          <span class="label">护手</span>
+          <span class="value">{{ formatEquipValue(equipGloves) }}</span>
+        </div>
+        <div class="setting-controls" v-if="Number(equipGloves.level) === 70">
+          <el-slider v-model="equipGlovesTierValue" :min="0" :max="3" :step="1" :show-tooltip="false" size="small" class="tech-slider white-theme" />
+          <CustomNumberInput v-model="equipGlovesTierValue" :min="0" :max="3" suffix="级" class="tech-input" />
+        </div>
+        <div class="setting-controls" v-else>
+          <span class="value" style="color:#666; font-size: 12px;">非 Lv70 无精锻</span>
+        </div>
+      </div>
+
+      <div v-if="(equipArmor || equipGloves) && equipAccessory1" class="group-divider"></div>
+      <div v-if="equipAccessory1" class="setting-group">
+        <div class="setting-info stacked-layout">
+          <span class="label">配件 1</span>
+          <span class="value">{{ formatEquipValue(equipAccessory1) }}</span>
+        </div>
+        <div class="setting-controls" v-if="Number(equipAccessory1.level) === 70">
+          <el-slider v-model="equipAccessory1TierValue" :min="0" :max="3" :step="1" :show-tooltip="false" size="small" class="tech-slider white-theme" />
+          <CustomNumberInput v-model="equipAccessory1TierValue" :min="0" :max="3" suffix="级" class="tech-input" />
+        </div>
+        <div class="setting-controls" v-else>
+          <span class="value" style="color:#666; font-size: 12px;">非 Lv70 无精锻</span>
+        </div>
+      </div>
+
+      <div v-if="(equipArmor || equipGloves || equipAccessory1) && equipAccessory2" class="group-divider"></div>
+      <div v-if="equipAccessory2" class="setting-group">
+        <div class="setting-info stacked-layout">
+          <span class="label">配件 2</span>
+          <span class="value">{{ formatEquipValue(equipAccessory2) }}</span>
+        </div>
+        <div class="setting-controls" v-if="Number(equipAccessory2.level) === 70">
+          <el-slider v-model="equipAccessory2TierValue" :min="0" :max="3" :step="1" :show-tooltip="false" size="small" class="tech-slider white-theme" />
+          <CustomNumberInput v-model="equipAccessory2TierValue" :min="0" :max="3" suffix="级" class="tech-input" />
+        </div>
+        <div class="setting-controls" v-else>
+          <span class="value" style="color:#666; font-size: 12px;">非 Lv70 无精锻</span>
         </div>
       </div>
     </div>

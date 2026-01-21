@@ -78,7 +78,7 @@ const selectedCharId = ref(null)
 const selectedEnemyId = ref(null)
 const selectedWeaponId = ref(null)
 const selectedEquipmentId = ref(null)
-const miscSection = ref('stats') // 'stats' | 'weapon_table' | 'equipment_categories' | 'enemy_categories'
+const miscSection = ref('stats') // 'stats' | 'weapon_table' | 'equipment_table' | 'equipment_categories' | 'enemy_categories'
 const newEquipmentCategoryName = ref('')
 const newEnemyCategoryName = ref('')
 const activeTab = ref('basic')
@@ -230,16 +230,7 @@ const filteredEquipment = computed(() => {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(e => (e.name || '').toLowerCase().includes(q) || (e.id || '').toLowerCase().includes(q))
   }
-  const slotOrder = { armor: 1, gloves: 2, accessory: 3 }
-  return [...list].sort((a, b) => {
-    const catDiff = (a.category || '').localeCompare(b.category || '')
-    if (catDiff !== 0) return catDiff
-    const levelDiff = (Number(b.level) || 0) - (Number(a.level) || 0)
-    if (levelDiff !== 0) return levelDiff
-    const slotDiff = (slotOrder[a.slot] || 99) - (slotOrder[b.slot] || 99)
-    if (slotDiff !== 0) return slotDiff
-    return (a.name || '').localeCompare(b.name || '')
-  })
+  return list
 })
 
 const groupedEquipment = computed(() => {
@@ -326,8 +317,52 @@ const selectedEquipment = computed(() => {
   return equipmentDatabase.value.find(e => e.id === selectedEquipmentId.value)
 })
 
+const equipmentAffixEditorMounted = ref(false)
+let equipmentAffixMountTimer = null
+
+const selectedEquipmentAffixes = computed(() => {
+  if (!selectedEquipment.value) return null
+  if (!equipmentAffixEditorMounted.value) return null
+  return selectedEquipment.value.affixes || null
+})
+
+const equipmentAffixColumns = computed(() => {
+  const eq = selectedEquipment.value
+  const is70 = Number(eq?.level) === 70
+  return is70
+    ? [
+        { label: '初始', index: 0 },
+        { label: '精锻1', index: 1 },
+        { label: '精锻2', index: 2 },
+        { label: '精锻3', index: 3 },
+      ]
+    : [{ label: '初始', index: 0 }]
+})
+
 const modifierDefs = computed(() => misc.value?.modifierDefs || [])
 const weaponCommonModifiers = computed(() => misc.value?.weaponCommonModifiers || {})
+
+const PRIMARY_STAT_IDS = ['strength', 'agility', 'intellect', 'will']
+const primaryStatOptions = computed(() => {
+  const coreMap = new Map(CORE_STATS.map(s => [s.id, s]))
+  return PRIMARY_STAT_IDS.map(id => ({ value: id, label: coreMap.get(id)?.label || id }))
+})
+
+const equipmentModifierOptions = computed(() => {
+  const map = new Map()
+  for (const s of CORE_STATS) {
+    map.set(s.id, { id: s.id, label: s.label, unit: s.unit })
+  }
+  for (const d of (modifierDefs.value || [])) {
+    if (!d?.id) continue
+    map.set(d.id, { id: d.id, label: d.label || d.id, unit: d.unit })
+  }
+  return [...map.values()].sort((a, b) => (a.label || '').localeCompare(b.label || ''))
+})
+
+const equipmentModifierOptionsV2 = computed(() => {
+  return equipmentModifierOptions.value.map(o => ({ value: o.id, label: o.label }))
+})
 
 const availableCoreStatsToAdd = computed(() => {
   const existing = new Set((modifierDefs.value || []).map(d => d.id))
@@ -339,6 +374,22 @@ const collapsedWeaponGroups = ref(new Set())
 const collapsedEquipmentGroups = ref(new Set())
 
 // === 生命周期 ===
+
+function scheduleEquipmentAffixEditorMount() {
+  if (equipmentAffixEditorMounted.value) return
+  if (equipmentAffixMountTimer) return
+
+  const start = () => {
+    equipmentAffixMountTimer = null
+    equipmentAffixEditorMounted.value = true
+  }
+
+  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+    equipmentAffixMountTimer = window.requestIdleCallback(start, { timeout: 800 })
+  } else {
+    equipmentAffixMountTimer = setTimeout(start, 200)
+  }
+}
 
 watch(characterRoster, (newList) => {
   if (newList && newList.length > 0 && !selectedCharId.value) {
@@ -367,6 +418,10 @@ watch(weaponDatabase, (newList) => {
     selectedWeaponId.value = newList[0].id
   }
 }, { immediate: true })
+
+watch(editingMode, (mode) => {
+  if (mode === 'equipment') scheduleEquipmentAffixEditorMount()
+})
 
 watch(selectedWeapon, (w) => {
   if (!w) return
@@ -397,6 +452,11 @@ watch(equipmentDatabase, (newList) => {
   if (newList && newList.length > 0 && !selectedEquipmentId.value) {
     selectedEquipmentId.value = newList[0].id
   }
+}, { immediate: true })
+
+watch([selectedEquipment, equipmentAffixEditorMounted], ([eq, mounted]) => {
+  if (!mounted || !eq) return
+  ensureEquipmentAffixes(eq)
 }, { immediate: true })
 
 watch(() => selectedEquipment.value?.category, (newCat) => {
@@ -432,15 +492,25 @@ function handleAddNew() {
 
 function ensureMiscRoot() {
   if (!misc.value) {
-    misc.value = { modifierDefs: [], weaponCommonModifiers: {} }
+    misc.value = { modifierDefs: [], weaponCommonModifiers: {}, equipmentTemplates: {} }
   }
   if (!misc.value.modifierDefs) misc.value.modifierDefs = []
   if (!misc.value.weaponCommonModifiers) misc.value.weaponCommonModifiers = {}
+  if (!misc.value.equipmentTemplates || typeof misc.value.equipmentTemplates !== 'object') misc.value.equipmentTemplates = {}
+  if (!misc.value.equipmentTemplates.armor) misc.value.equipmentTemplates.armor = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
+  if (!misc.value.equipmentTemplates.gloves) misc.value.equipmentTemplates.gloves = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
+  if (!misc.value.equipmentTemplates.accessory) misc.value.equipmentTemplates.accessory = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
 }
 
 function normalizeArray9(arr) {
   const list = Array.isArray(arr) ? arr.slice(0, 9) : []
   while (list.length < 9) list.push(0)
+  return list.map(v => Number(v) || 0)
+}
+
+function normalizeArray4(arr) {
+  const list = Array.isArray(arr) ? arr.slice(0, 4) : []
+  while (list.length < 4) list.push(0)
   return list.map(v => Number(v) || 0)
 }
 
@@ -456,6 +526,132 @@ function normalizeModifierDefs(defs) {
     seen.add(id)
   }
   return out
+}
+
+function normalizeEquipmentAffixes(level, affixes) {
+  const safe = (affixes && typeof affixes === 'object') ? affixes : {}
+  const is70 = Number(level) === 70
+
+  const normalizePrimary = (input, { defaultId = null } = {}) => {
+    const raw = (input && typeof input === 'object') ? input : {}
+    const modifierId = typeof raw.modifierId === 'string' && raw.modifierId.trim()
+      ? raw.modifierId.trim()
+      : (typeof raw.key === 'string' && raw.key.trim() ? raw.key.trim() : defaultId)
+
+    const values = is70 ? normalizeArray4(raw.values) : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0]
+    return { modifierId: modifierId || null, values }
+  }
+
+  const normalizeAdapter = (input) => {
+    const raw = (input && typeof input === 'object') ? input : {}
+    const ids = Array.isArray(raw.modifierIds) ? raw.modifierIds : (raw.modifierId ? [raw.modifierId] : [])
+    const cleaned = []
+    for (const id of ids) {
+      if (typeof id !== 'string') continue
+      const trimmed = id.trim()
+      if (!trimmed) continue
+      if (!cleaned.includes(trimmed)) cleaned.push(trimmed)
+    }
+    const values = is70 ? normalizeArray4(raw.values) : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0]
+    return { modifierIds: cleaned, values }
+  }
+
+  return {
+    primary1: normalizePrimary(safe.primary1),
+    primary2: normalizePrimary(safe.primary2),
+    adapter: normalizeAdapter(safe.adapter),
+  }
+}
+
+function ensureEquipmentAffixes(eq) {
+  if (!eq) return null
+  const is70 = Number(eq.level) === 70
+  const targetLen = is70 ? 4 : 1
+
+  const ensureValues = (values, fillFrom = 0) => {
+    const out = Array.isArray(values) ? values.slice() : []
+    const base = Number(out[0] ?? fillFrom) || 0
+    if (out.length === 0) out.push(base)
+    if (out.length > targetLen) return out.slice(0, targetLen).map(v => Number(v) || 0)
+    while (out.length < targetLen) out.push(base)
+    return out.map(v => Number(v) || 0)
+  }
+
+  if (!eq.affixes || typeof eq.affixes !== 'object') {
+    const legacy = (eq.affixes70 && typeof eq.affixes70 === 'object') ? eq.affixes70 : null
+    const normalized = normalizeEquipmentAffixes(eq.level, legacy || null)
+    eq.affixes = normalized
+    return eq.affixes
+  }
+
+  if (!eq.affixes.primary1 || typeof eq.affixes.primary1 !== 'object') eq.affixes.primary1 = { modifierId: null, values: [] }
+  if (!eq.affixes.primary2 || typeof eq.affixes.primary2 !== 'object') eq.affixes.primary2 = { modifierId: null, values: [] }
+  if (!eq.affixes.adapter || typeof eq.affixes.adapter !== 'object') eq.affixes.adapter = { modifierIds: [], values: [] }
+
+  eq.affixes.primary1.modifierId = (typeof eq.affixes.primary1.modifierId === 'string' && eq.affixes.primary1.modifierId.trim())
+    ? eq.affixes.primary1.modifierId.trim()
+    : null
+  eq.affixes.primary2.modifierId = (typeof eq.affixes.primary2.modifierId === 'string' && eq.affixes.primary2.modifierId.trim())
+    ? eq.affixes.primary2.modifierId.trim()
+    : null
+
+  if (!Array.isArray(eq.affixes.adapter.modifierIds)) eq.affixes.adapter.modifierIds = []
+  eq.affixes.adapter.modifierIds = eq.affixes.adapter.modifierIds
+    .filter(v => typeof v === 'string' && v.trim())
+    .map(v => v.trim())
+
+  eq.affixes.primary1.values = ensureValues(eq.affixes.primary1.values, 0)
+  eq.affixes.primary2.values = ensureValues(eq.affixes.primary2.values, 0)
+  eq.affixes.adapter.values = ensureValues(eq.affixes.adapter.values, 0)
+
+  return eq.affixes
+}
+
+function ensureEquipmentTemplate(slotKey) {
+  ensureMiscRoot()
+  const mapKey = slotKey === 'armor' ? 'armor' : (slotKey === 'gloves' ? 'gloves' : (slotKey === 'accessory' ? 'accessory' : null))
+  if (!mapKey) return null
+  return misc.value.equipmentTemplates?.[mapKey] || null
+}
+
+async function applyEquipmentTemplate(eq) {
+  if (!eq || Number(eq.level) !== 70) return
+  const t = ensureEquipmentTemplate(eq.slot)
+  if (!t) return
+  const aff = ensureEquipmentAffixes(eq)
+  if (!aff) return
+
+  const hasSecond = !!aff.primary2?.modifierId
+  const templateValues = hasSecond
+    ? [...normalizeArray4(t.primary1), ...normalizeArray4(t.primary2)]
+    : normalizeArray4(t.primary1Single)
+
+  const templateHasNonZero = templateValues.some(v => (Number(v) || 0) !== 0)
+  if (!templateHasNonZero) {
+    const currentValues = hasSecond
+      ? [...normalizeArray4(aff.primary1.values), ...normalizeArray4(aff.primary2.values)]
+      : normalizeArray4(aff.primary1.values)
+    const currentHasNonZero = currentValues.some(v => (Number(v) || 0) !== 0)
+    if (currentHasNonZero) {
+      try {
+        await ElMessageBox.confirm('模板数值全为 0，会清空当前数值，是否继续？', '提示', {
+          confirmButtonText: '继续',
+          cancelButtonText: '取消',
+          type: 'warning',
+        })
+      } catch {
+        return
+      }
+    }
+  }
+
+  if (hasSecond) {
+    aff.primary1.values = normalizeArray4(t.primary1)
+    aff.primary2.values = normalizeArray4(t.primary2)
+  } else {
+    aff.primary1.values = normalizeArray4(t.primary1Single)
+    aff.primary2.values = [0, 0, 0, 0]
+  }
 }
 
 function ensureWeaponCommonEntry(key) {
@@ -1332,6 +1528,29 @@ function saveData() {
   }
   misc.value.weaponCommonModifiers = normalizedCommon
 
+  if (!misc.value.equipmentTemplates || typeof misc.value.equipmentTemplates !== 'object') misc.value.equipmentTemplates = {}
+  for (const key of ['armor', 'gloves', 'accessory']) {
+    if (!misc.value.equipmentTemplates[key]) {
+      misc.value.equipmentTemplates[key] = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
+    }
+    const t = misc.value.equipmentTemplates[key]
+    t.primary1 = normalizeArray4(t.primary1)
+    t.primary2 = normalizeArray4(t.primary2)
+    t.primary1Single = normalizeArray4(t.primary1Single)
+  }
+
+  for (const eq of equipmentDatabase.value || []) {
+    if (!eq) continue
+    if (eq.affixes || eq.affixes70) {
+      ensureEquipmentAffixes(eq)
+    }
+    if (Number(eq.level) !== 70 && eq.affixes) {
+      eq.affixes.primary1.values = [Number(eq.affixes.primary1.values?.[0]) || 0]
+      eq.affixes.primary2.values = [Number(eq.affixes.primary2.values?.[0]) || 0]
+      eq.affixes.adapter.values = [Number(eq.affixes.adapter.values?.[0]) || 0]
+    }
+  }
+
   const dataToSave = {
     ICON_DATABASE: iconDatabase.value,
     characterRoster: characterRoster.value,
@@ -1413,17 +1632,18 @@ function saveData() {
              @click="selectChar(char.id)">
 
           <div class="avatar-wrapper-small" :class="`rarity-${char.rarity}-border`">
-            <img :src="char.avatar" @error="e=>e.target.src='/avatars/default.webp'" />
+            <img :src="char.avatar" loading="lazy" decoding="async" @error="e=>e.target.src='/avatars/default.webp'" />
           </div>
 
           <div class="char-info">
             <span class="char-name">{{ char.name }}</span>
-              <span class="char-meta" :class="`rarity-${char.rarity}`">
-                {{ char.rarity }}★ {{ ELEMENTS.find(e=>e.value===char.element)?.label || char.element || '' }}
-              </span>
-            </div>
+            <span class="char-meta" :class="`rarity-${char.rarity}`">
+              {{ char.rarity }}★ {{ ELEMENTS.find(e=>e.value===char.element)?.label || char.element || '' }}
+            </span>
           </div>
         </div>
+
+      </div>
 
       <div v-else-if="editingMode === 'enemy'" class="char-list">
 
@@ -1443,7 +1663,7 @@ function saveData() {
                 @click="selectEnemy(enemy.id)">
 
               <div class="avatar-wrapper-small" :style="{ borderColor: ENEMY_TIERS.find(t=>t.value===enemy.tier)?.color }">
-                <img :src="enemy.avatar" @error="e=>e.target.src='/avatars/default_enemy.webp'" />
+                <img :src="enemy.avatar" loading="lazy" decoding="async" @error="e=>e.target.src='/avatars/default_enemy.webp'" />
               </div>
 
               <div class="char-info">
@@ -1481,6 +1701,8 @@ function saveData() {
                 <img
                     :key="weapon.icon || weapon.id"
                     :src="weapon.icon || '/weapons/default.webp'"
+                    loading="lazy"
+                    decoding="async"
                     @error="e=>e.target.src='/weapons/default.webp'"
                     style="width:100%;height:100%;object-fit:cover;" />
               </div>
@@ -1509,7 +1731,7 @@ function saveData() {
             </span>
           </div>
 
-          <div v-if="!isEquipmentGroupCollapsed(group.name)">
+          <div v-show="!isEquipmentGroupCollapsed(group.name)">
             <div v-for="eq in group.list" :key="eq.id"
                  class="char-item"
                  :class="{ active: eq.id === selectedEquipmentId }"
@@ -1518,6 +1740,8 @@ function saveData() {
                 <img
                     :key="eq.icon || eq.id"
                     :src="eq.icon || '/icons/default_icon.webp'"
+                    loading="lazy"
+                    decoding="async"
                     @error="e=>e.target.src='/icons/default_icon.webp'"
                     style="width:100%;height:100%;object-fit:cover;" />
               </div>
@@ -1547,6 +1771,12 @@ function saveData() {
           <div class="char-info">
             <span class="char-name">武器词条数值</span>
             <span class="char-meta" style="color:#aaa">1–9 级 / 大中小</span>
+          </div>
+        </div>
+        <div class="char-item" :class="{ active: miscSection === 'equipment_table' }" @click="miscSection = 'equipment_table'">
+          <div class="char-info">
+            <span class="char-name">装备词条模板</span>
+            <span class="char-meta" style="color:#aaa">护甲/护手/配件</span>
           </div>
         </div>
         <div class="char-item" :class="{ active: miscSection === 'equipment_categories' }" @click="miscSection = 'equipment_categories'">
@@ -2132,6 +2362,67 @@ function saveData() {
             </div>
           </div>
         </div>
+
+        <div class="form-section">
+          <h3 class="section-title">装备词条数值</h3>
+          <div class="info-banner">
+            Lv70 装备支持“初始 / 精锻1 / 精锻2 / 精锻3”四档；非 Lv70 仅支持“初始数值”。主词条 2 可为空；适配词条可多选（用于寒冷+电磁等组合）。
+          </div>
+
+          <div v-if="Number(selectedEquipment.level) === 70" class="attack-seg-toolbar" style="margin-bottom: 12px;">
+            <div class="attack-seg-meta" style="justify-content: space-between;">
+              <span class="meta-item">可精锻属性：4 档</span>
+              <button class="ea-btn ea-btn--glass-cut ea-btn--sm" @click="applyEquipmentTemplate(selectedEquipment)">套用部位模板（仅数值）</button>
+            </div>
+          </div>
+
+          <div v-if="selectedEquipmentAffixes" class="matrix-grid" :style="{ gridTemplateColumns: `140px 200px repeat(${equipmentAffixColumns.length}, 1fr)` }">
+            <div class="matrix-cell header-corner">词条</div>
+            <div class="matrix-cell header-level">属性</div>
+            <div v-for="col in equipmentAffixColumns" :key="`eq_col_${col.index}`" class="matrix-cell header-level">{{ col.label }}</div>
+
+            <div class="matrix-cell row-label large">主词条</div>
+            <div class="matrix-cell">
+              <el-select v-model="selectedEquipmentAffixes.primary1.modifierId" size="small" style="width: 100%" :teleported="true" placeholder="请选择">
+                <el-option :value="null" label="（无）" />
+                <el-option v-for="opt in primaryStatOptions" :key="`p1_${opt.value}`" :label="opt.label" :value="opt.value" />
+              </el-select>
+            </div>
+            <div v-for="col in equipmentAffixColumns" :key="`p1v_${col.index}`" class="matrix-cell">
+              <input type="number" step="0.1" v-model.number="selectedEquipmentAffixes.primary1.values[col.index]" class="matrix-input" />
+            </div>
+
+            <div class="matrix-cell row-label medium">副词条</div>
+            <div class="matrix-cell">
+              <el-select v-model="selectedEquipmentAffixes.primary2.modifierId" size="small" style="width: 100%" :teleported="true" placeholder="请选择">
+                <el-option :value="null" label="（无）" />
+                <el-option v-for="opt in primaryStatOptions" :key="`p2_${opt.value}`" :label="opt.label" :value="opt.value" />
+              </el-select>
+            </div>
+            <div v-for="col in equipmentAffixColumns" :key="`p2v_${col.index}`" class="matrix-cell">
+              <input type="number" step="0.1" v-model.number="selectedEquipmentAffixes.primary2.values[col.index]" class="matrix-input" />
+            </div>
+
+            <div class="matrix-cell row-label small">属性加成</div>
+            <div class="matrix-cell" style="overflow: visible;">
+              <el-select-v2
+                  v-model="selectedEquipmentAffixes.adapter.modifierIds"
+                  multiple
+                  filterable
+                  collapse-tags
+                  collapse-tags-tooltip
+                  size="small"
+                  style="width: 100%"
+                  :teleported="true"
+                  :options="equipmentModifierOptionsV2"
+                  placeholder="请选择"
+              />
+            </div>
+            <div v-for="col in equipmentAffixColumns" :key="`adv_${col.index}`" class="matrix-cell">
+              <input type="number" step="0.1" v-model.number="selectedEquipmentAffixes.adapter.values[col.index]" class="matrix-input" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="editingMode === 'misc'" class="editor-panel">
@@ -2144,6 +2435,8 @@ function saveData() {
                     ? '所有属性'
                     : miscSection === 'weapon_table'
                       ? '武器词条数值'
+                      : miscSection === 'equipment_table'
+                        ? '装备词条模板'
                       : miscSection === 'equipment_categories'
                         ? '装备分类'
                         : '敌人分类'
@@ -2260,6 +2553,52 @@ function saveData() {
                         v-model.number="misc.weaponCommonModifiers[def.id].small[i - 1]"
                         class="matrix-input"
                     />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="miscSection === 'equipment_table'" class="form-section">
+          <h3 class="section-title">Lv70 装备词条数值模板</h3>
+          <div class="info-banner">
+            这里维护护甲/护手/配件三种“数值模板”，在装备编辑页（Lv70）可一键套用到主词条数值（不包含词条类型）。
+          </div>
+
+          <div class="weapon-table-list">
+            <div v-for="slotKey in ['armor','gloves','accessory']" :key="`eqtpl_${slotKey}`" class="stat-table-card">
+              <div class="stat-header">
+                <div class="stat-title-group">
+                  <span class="stat-name">
+                    {{ slotKey === 'armor' ? '护甲' : (slotKey === 'gloves' ? '护手' : '配件') }}
+                  </span>
+                  <span class="stat-unit-badge flat">数值</span>
+                </div>
+                <div class="stat-id">模板</div>
+              </div>
+
+              <div class="stat-body" v-if="ensureEquipmentTemplate(slotKey)">
+                <div class="matrix-grid" style="grid-template-columns: 80px repeat(4, minmax(60px, 1fr));">
+                  <div class="matrix-cell header-corner">词条</div>
+                  <div class="matrix-cell header-level">初始</div>
+                  <div class="matrix-cell header-level">精锻1</div>
+                  <div class="matrix-cell header-level">精锻2</div>
+                  <div class="matrix-cell header-level">精锻3</div>
+
+                  <div class="matrix-cell row-label large">主词条</div>
+                  <div v-for="i in 4" :key="`t_${slotKey}_p1_${i}`" class="matrix-cell">
+                    <input type="number" step="0.1" v-model.number="misc.equipmentTemplates[slotKey].primary1[i - 1]" class="matrix-input" />
+                  </div>
+
+                  <div class="matrix-cell row-label medium">副词条</div>
+                  <div v-for="i in 4" :key="`t_${slotKey}_p2_${i}`" class="matrix-cell">
+                    <input type="number" step="0.1" v-model.number="misc.equipmentTemplates[slotKey].primary2[i - 1]" class="matrix-input" />
+                  </div>
+
+                  <div class="matrix-cell row-label small">主词条(单)</div>
+                  <div v-for="i in 4" :key="`t_${slotKey}_p1s_${i}`" class="matrix-cell">
+                    <input type="number" step="0.1" v-model.number="misc.equipmentTemplates[slotKey].primary1Single[i - 1]" class="matrix-input" />
                   </div>
                 </div>
               </div>

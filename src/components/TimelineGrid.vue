@@ -146,6 +146,7 @@ const EQUIPMENT_LEVEL_COLORS = {
   20: '#95de64',
   10: '#888888'
 }
+const EQUIPMENT_REFINE_TIERS = [0, 1, 2, 3]
 
 const isGameTimeCollapsed = ref(true)
 const showGameTime = computed(() => !isGameTimeCollapsed.value || store.isCapturing)
@@ -325,6 +326,15 @@ function getEquipmentForTrack(track, slotKey) {
   return store.getEquipmentById(eqId)
 }
 
+function getEquipmentTierForTrack(track, slotKey) {
+  if (!track) return 0
+  if (slotKey === 'armor') return Number(track.equipArmorRefineTier) || 0
+  if (slotKey === 'gloves') return Number(track.equipGlovesRefineTier) || 0
+  if (slotKey === 'accessory1') return Number(track.equipAccessory1RefineTier) || 0
+  if (slotKey === 'accessory2') return Number(track.equipAccessory2RefineTier) || 0
+  return 0
+}
+
 const equipmentSlotType = computed(() => {
   if (equipmentSlotKey.value === 'accessory1' || equipmentSlotKey.value === 'accessory2') return 'accessory'
   return equipmentSlotKey.value
@@ -387,6 +397,20 @@ const currentEquipmentForDialog = computed(() => {
   if (equipmentTargetIndex.value === null) return null
   return getEquipmentForTrack(store.tracks[equipmentTargetIndex.value], equipmentSlotKey.value)
 })
+
+const currentEquipmentTierForDialog = computed(() => {
+  if (equipmentTargetIndex.value === null) return 0
+  const track = store.tracks[equipmentTargetIndex.value]
+  if (!track) return 0
+  return getEquipmentTierForTrack(track, equipmentSlotKey.value)
+})
+
+function setCurrentEquipmentTierForDialog(tier) {
+  if (equipmentTargetIndex.value === null) return
+  const track = store.tracks[equipmentTargetIndex.value]
+  if (!track?.id) return
+  store.updateTrackEquipmentTier(track.id, equipmentSlotKey.value, tier)
+}
 
 function getEquipmentLevelColor(level) {
   const key = Number(level)
@@ -2105,6 +2129,12 @@ onUnmounted(() => {
             </svg>
             卸下
           </button>
+          <div v-if="currentEquipmentForDialog?.level === 70" class="equipment-tier-picker">
+            <span class="tier-label">精锻</span>
+            <el-select :model-value="currentEquipmentTierForDialog" @update:model-value="setCurrentEquipmentTierForDialog" size="small" style="width: 92px">
+              <el-option v-for="t in EQUIPMENT_REFINE_TIERS" :key="`tier_${t}`" :label="t === 0 ? '初始' : `精${t}`" :value="t" />
+            </el-select>
+          </div>
         </div>
         <div class="element-filters">
           <button class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentCategoryFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentCategoryFilter = 'ALL'">全部分类</button>
@@ -2924,6 +2954,19 @@ body.capture-mode .davinci-range {
 .equip-placeholder::after { width: 2px; height: 12px; transform: translate(-50%, -50%); }
 .equip-box:hover .equip-placeholder::before,
 .equip-box:hover .equip-placeholder::after { background: #2dd4bf; }
+
+.equipment-tier-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.equipment-tier-picker .tier-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 700;
+  user-select: none;
+}
 
 .gear-hint-row { height: 22px; }
 
