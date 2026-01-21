@@ -270,7 +270,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     watchThrottled([equipmentDatabase], () => {
         if (isLoading.value) return
         syncAllEquipmentModifiers()
-    }, { deep: true, throttle: 600 })
+    }, { deep: true, throttle: 80 })
 
     const createEmptyTrack = () => ({
         id: null,
@@ -1243,6 +1243,9 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
 
         track.equipmentAppliedDeltas = { ...(newDeltas || {}) }
+        track.gaugeEfficiency = Number(track.stats.ult_charge_eff) || 0
+        track.linkCdReduction = clampPercent(track.stats.link_cd_reduction)
+        track.originiumArtsPower = Number(track.stats.originium_arts_power) || 0
     }
 
     function syncTrackEquipmentModifiers(trackId) {

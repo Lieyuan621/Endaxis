@@ -505,6 +505,7 @@ function onNativeDragEnd() {
           <CustomNumberInput v-model="originiumArtsPowerValue" :min="0" :max="200" :step="1" active-color="#b37feb" class="tech-input" />
         </div>
       </div>
+
     </div>
 
     <div v-if="activeTrack && activeCharacter && activeLibraryTab === 'weapon' && activeWeapon" class="gauge-settings-panel">
@@ -774,6 +775,7 @@ function onNativeDragEnd() {
 .setting-info.stacked-layout { flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 2px; }
 .setting-info.stacked-layout .label { color: rgba(255, 255, 255, 0.4); font-size: 10px; line-height: 1; margin-left: 1px; }
 .setting-info.stacked-layout .value { font-size: 11px !important; line-height: 1.3; color: #e0e0e0; word-break: break-all; white-space: normal; text-align: left; }
+
 /* 技能卡片列表 */
 .skill-section { display: flex; flex-direction: column; gap: 15px; }
 .section-title-box { display: flex; flex-direction: column; border-left: 2px solid #444; padding-left: 10px; }

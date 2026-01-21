@@ -2366,7 +2366,7 @@ function saveData() {
         <div class="form-section">
           <h3 class="section-title">装备词条数值</h3>
           <div class="info-banner">
-            Lv70 装备支持“初始 / 精锻1 / 精锻2 / 精锻3”四档；非 Lv70 仅支持“初始数值”。主词条 2 可为空；适配词条可多选（用于寒冷+电磁等组合）。
+            Lv70 装备支持“初始 / 精锻1 / 精锻2 / 精锻3”四档；非 Lv70 仅支持“初始数值”。副词条可为空；适配词条可多选（用于寒冷+电磁等组合）。
           </div>
 
           <div v-if="Number(selectedEquipment.level) === 70" class="attack-seg-toolbar" style="margin-bottom: 12px;">
