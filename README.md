@@ -8,7 +8,7 @@
 
 **项目已部署，点击下方链接即可直接使用：**
 
-👉 **[https://lieyuan.top](https://lieyuan.top)**
+👉 **<https://www.end-axis.com/>**
 
 ## 目前所能实现的效果
 
