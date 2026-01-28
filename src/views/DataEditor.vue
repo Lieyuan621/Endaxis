@@ -83,6 +83,7 @@ const newEquipmentCategoryName = ref('')
 const newEnemyCategoryName = ref('')
 const activeTab = ref('basic')
 const attackSegmentIndex = ref(0)
+const variantAttackSegmentIndexList = ref([])
 
 const ATTACK_SEGMENT_COUNT = 5
 
@@ -147,6 +148,167 @@ function ensureAttackSegments(char) {
     if (seg.element !== undefined && typeof seg.element !== 'string') delete seg.element
     if (seg.icon !== undefined && typeof seg.icon !== 'string') delete seg.icon
   }
+}
+
+function syncVariantAttackSegmentIndexList() {
+  const len = selectedChar.value?.variants?.length || 0
+  const prev = Array.isArray(variantAttackSegmentIndexList.value) ? variantAttackSegmentIndexList.value : []
+  const next = prev.slice(0, len).map(v => {
+    const n = Number(v)
+    if (!Number.isFinite(n)) return 0
+    return Math.min(Math.max(Math.floor(n), 0), ATTACK_SEGMENT_COUNT - 1)
+  })
+  while (next.length < len) next.push(0)
+  variantAttackSegmentIndexList.value = next
+}
+
+function deepClone(val) {
+  return val ? JSON.parse(JSON.stringify(val)) : val
+}
+
+function createVariantAttackSegment(seed = {}, fallbackSeg = null) {
+  const raw = (seed && typeof seed === 'object') ? seed : {}
+  const fb = (fallbackSeg && typeof fallbackSeg === 'object') ? fallbackSeg : {}
+
+  const allowedTypesRaw = raw.allowedTypes ?? fb.allowedTypes
+  const physicalAnomalyRaw = raw.physicalAnomaly ?? fb.physicalAnomaly
+  const damageTicksRaw = raw.damageTicks ?? fb.damageTicks
+
+  const out = {
+    duration: Number(raw.duration ?? fb.duration) || 0,
+    gaugeGain: Number(raw.gaugeGain ?? fb.gaugeGain) || 0,
+    allowedTypes: Array.isArray(allowedTypesRaw) ? [...allowedTypesRaw] : [],
+    physicalAnomaly: deepClone(physicalAnomalyRaw) || [],
+    damageTicks: deepClone(damageTicksRaw) || [],
+  }
+
+  const element = raw.element ?? fb.element
+  if (element !== undefined) out.element = element
+  const icon = raw.icon ?? fb.icon
+  if (icon !== undefined) out.icon = icon
+
+  normalizeDamageTicks(out.damageTicks)
+  ensureEffectIds(out.physicalAnomaly)
+
+  return out
+}
+
+function sanitizeVariantAttackSegmentInPlace(seg) {
+  if (!seg || typeof seg !== 'object') return false
+  seg.duration = Number(seg.duration) || 0
+  seg.gaugeGain = Number(seg.gaugeGain) || 0
+  if (!Array.isArray(seg.allowedTypes)) seg.allowedTypes = []
+  if (!Array.isArray(seg.physicalAnomaly)) seg.physicalAnomaly = []
+  if (!Array.isArray(seg.damageTicks)) seg.damageTicks = []
+  if (seg.element !== undefined && typeof seg.element !== 'string') delete seg.element
+  if (seg.icon !== undefined && typeof seg.icon !== 'string') delete seg.icon
+  return true
+}
+
+function buildVariantAttackSegmentsFromBase(char) {
+  if (!char) {
+    return Array.from({ length: ATTACK_SEGMENT_COUNT }, () => createVariantAttackSegment({ duration: 0 }))
+  }
+
+  ensureAttackSegments(char)
+
+  const baseList = Array.isArray(char.attack_segments) ? char.attack_segments : []
+  const mapped = baseList.slice(0, ATTACK_SEGMENT_COUNT).map((seg) => createVariantAttackSegment({
+    duration: Number(seg?.duration) || 0,
+    gaugeGain: Number(seg?.gaugeGain) || 0,
+    allowedTypes: Array.isArray(seg?.allowed_types) ? [...seg.allowed_types] : [],
+    physicalAnomaly: deepClone(seg?.anomalies) || [],
+    damageTicks: deepClone(seg?.damage_ticks) || [],
+    element: seg?.element,
+    icon: seg?.icon
+  }))
+
+  const fallback = mapped[0] || null
+  while (mapped.length < ATTACK_SEGMENT_COUNT) mapped.push(createVariantAttackSegment({ duration: 0 }, fallback))
+  return mapped
+}
+
+function ensureVariantAttackSegments(variant, char, { force = false } = {}) {
+  if (!variant || variant.type !== 'attack') return
+
+  if (force || !Array.isArray(variant.attackSegments)) {
+    variant.attackSegments = buildVariantAttackSegmentsFromBase(char)
+    return
+  }
+
+  if (variant.attackSegments.length > ATTACK_SEGMENT_COUNT) {
+    variant.attackSegments.length = ATTACK_SEGMENT_COUNT
+  }
+
+  const fallback = variant.attackSegments[0] || null
+  while (variant.attackSegments.length < ATTACK_SEGMENT_COUNT) {
+    variant.attackSegments.push(createVariantAttackSegment({ duration: 0 }, fallback))
+  }
+
+  for (let i = 0; i < variant.attackSegments.length; i++) {
+    const ok = sanitizeVariantAttackSegmentInPlace(variant.attackSegments[i])
+    if (!ok) {
+      variant.attackSegments[i] = createVariantAttackSegment({ duration: 0 }, fallback)
+    }
+  }
+}
+
+function getVariantAttackTotalDuration(variant) {
+  if (!variant || variant.type !== 'attack') return 0
+  ensureVariantAttackSegments(variant, selectedChar.value)
+  const segs = Array.isArray(variant.attackSegments) ? variant.attackSegments : []
+  const total = segs.reduce((acc, s) => acc + (Number(s?.duration) || 0), 0)
+  return Math.round(total * 1000) / 1000
+}
+
+function getVariantAttackSegIndex(variantIdx) {
+  const raw = variantAttackSegmentIndexList.value?.[variantIdx]
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return 0
+  return Math.min(Math.max(Math.floor(n), 0), ATTACK_SEGMENT_COUNT - 1)
+}
+
+function getVariantAllowedTypesRef(variant, variantIdx) {
+  if (!variant) return []
+  if (variant.type === 'attack') {
+    ensureVariantAttackSegments(variant, selectedChar.value)
+    const idx = getVariantAttackSegIndex(variantIdx)
+    const seg = variant.attackSegments?.[idx]
+    if (!seg.allowedTypes) seg.allowedTypes = []
+    return seg.allowedTypes
+  }
+  if (!variant.allowedTypes) variant.allowedTypes = []
+  return variant.allowedTypes
+}
+
+function getVariantPhysicalAnomalyRef(variant, variantIdx) {
+  if (!variant) return []
+  if (variant.type === 'attack') {
+    ensureVariantAttackSegments(variant, selectedChar.value)
+    const idx = getVariantAttackSegIndex(variantIdx)
+    const seg = variant.attackSegments?.[idx]
+    if (!seg.physicalAnomaly) seg.physicalAnomaly = []
+    ensureEffectIds(seg.physicalAnomaly)
+    return seg.physicalAnomaly
+  }
+  if (!variant.physicalAnomaly) variant.physicalAnomaly = []
+  ensureEffectIds(variant.physicalAnomaly)
+  return variant.physicalAnomaly
+}
+
+function getVariantDamageTicksRef(variant, variantIdx) {
+  if (!variant) return []
+  if (variant.type === 'attack') {
+    ensureVariantAttackSegments(variant, selectedChar.value)
+    const idx = getVariantAttackSegIndex(variantIdx)
+    const seg = variant.attackSegments?.[idx]
+    if (!seg.damageTicks) seg.damageTicks = []
+    normalizeDamageTicks(seg.damageTicks)
+    return seg.damageTicks
+  }
+  if (!variant.damageTicks) variant.damageTicks = []
+  normalizeDamageTicks(variant.damageTicks)
+  return variant.damageTicks
 }
 
 
@@ -404,6 +566,12 @@ watch(selectedCharId, () => {
   for (const seg of selectedChar.value.attack_segments || []) {
     normalizeDamageTicks(seg.damage_ticks)
     ensureEffectIds(seg.anomalies)
+  }
+  syncVariantAttackSegmentIndexList()
+  if (selectedChar.value.variants) {
+    selectedChar.value.variants.forEach(v => {
+      if (v?.type === 'attack') ensureVariantAttackSegments(v, selectedChar.value)
+    })
   }
 })
 
@@ -1107,14 +1275,9 @@ function normalizeDamageTicks(list = []) {
 
 function getSnapshotFromBase(char, type) {
   if (type === 'attack') {
-    ensureAttackSegments(char)
-    const baseSeg = (char.attack_segments || [])[0] || {}
-    return {
-      duration: Number(baseSeg.duration) || 0,
-      allowedTypes: Array.isArray(baseSeg.allowed_types) ? [...baseSeg.allowed_types] : [],
-      physicalAnomaly: baseSeg.anomalies ? JSON.parse(JSON.stringify(baseSeg.anomalies)) : [],
-      damageTicks: baseSeg.damage_ticks ? JSON.parse(JSON.stringify(baseSeg.damage_ticks)) : []
-    }
+    const attackSegments = buildVariantAttackSegmentsFromBase(char)
+    const totalDuration = attackSegments.reduce((acc, s) => acc + (Number(s?.duration) || 0), 0)
+    return { duration: totalDuration, attackSegments }
   }
 
   // 基础数值
@@ -1157,18 +1320,30 @@ function addVariant() {
     type: defaultType,
     ...baseStats
   })
+  syncVariantAttackSegmentIndexList()
 }
 
 function removeVariant(idx) {
   if (selectedChar.value.variants) {
     selectedChar.value.variants.splice(idx, 1)
   }
+  syncVariantAttackSegmentIndexList()
 }
 
-function onVariantTypeChange(variant) {
+function onVariantTypeChange(variant, variantIdx) {
   if (!selectedChar.value) return
   const newStats = getSnapshotFromBase(selectedChar.value, variant.type)
   Object.assign(variant, newStats)
+
+  if (variant.type === 'attack') {
+    ensureVariantAttackSegments(variant, selectedChar.value, { force: true })
+    syncVariantAttackSegmentIndexList()
+    if (variantIdx !== undefined && variantIdx !== null) {
+      variantAttackSegmentIndexList.value[variantIdx] = 0
+    }
+  } else {
+    delete variant.attackSegments
+  }
 
   if (variant.name === '新强化技能' || variant.name.startsWith('强化')) {
     const typeObj = VARIANT_TYPES.find(t => t.value === variant.type)
@@ -1181,9 +1356,8 @@ function onVariantTypeChange(variant) {
 
 // === 变体Checkbox逻辑 ===
 
-function onVariantCheckChange(variant, key) {
-  if (!variant.allowedTypes) variant.allowedTypes = []
-  const list = variant.allowedTypes
+function onVariantCheckChange(variant, variantIdx, key) {
+  const list = getVariantAllowedTypesRef(variant, variantIdx)
   const isChecked = list.includes(key)
   handleGroupCheck(list, isChecked, key)
 }
@@ -1250,8 +1424,8 @@ function ensureEffectIds(rows) {
   })
 }
 
-function getVariantAvailableOptions(variant) {
-  const allowedList = variant.allowedTypes || []
+function getVariantAvailableOptions(variant, variantIdx) {
+  const allowedList = getVariantAllowedTypesRef(variant, variantIdx)
   const combinedKeys = new Set([...allowedList, 'default'])
   return buildOptions(combinedKeys)
 }
@@ -1311,9 +1485,10 @@ function getBindingOptions(skillType) {
   return buildBindingOptionsFromAnomalies(raw)
 }
 
-function getVariantBindingOptions(variant) {
+function getVariantBindingOptions(variant, variantIdx) {
   if (!variant) return []
-  return buildBindingOptionsFromAnomalies(variant.physicalAnomaly)
+  const raw = getVariantPhysicalAnomalyRef(variant, variantIdx)
+  return buildBindingOptionsFromAnomalies(raw)
 }
 
 // === 二维数组通用处理逻辑 ===
@@ -1397,41 +1572,43 @@ function removeAnomaly(char, skillType, rowIndex, colIndex) {
 }
 
 // 变体里的矩阵操作
-function addVariantRow(variant) {
-  if (!variant.physicalAnomaly) variant.physicalAnomaly = []
-  const defaultType = (variant.allowedTypes && variant.allowedTypes.length > 0) ? variant.allowedTypes[0] : 'default'
-  variant.physicalAnomaly.push([createEffect(defaultType)])
+function addVariantRow(variant, variantIdx) {
+  const anomalies = getVariantPhysicalAnomalyRef(variant, variantIdx)
+  const allowedTypes = getVariantAllowedTypesRef(variant, variantIdx)
+  const defaultType = (allowedTypes && allowedTypes.length > 0) ? allowedTypes[0] : 'default'
+  anomalies.push([createEffect(defaultType)])
 }
 
-function addVariantEffect(variant, rowIndex) {
-  if (variant.physicalAnomaly && variant.physicalAnomaly[rowIndex]) {
-    const defaultType = (variant.allowedTypes && variant.allowedTypes.length > 0) ? variant.allowedTypes[0] : 'default'
-    variant.physicalAnomaly[rowIndex].push(createEffect(defaultType))
+function addVariantEffect(variant, variantIdx, rowIndex) {
+  const anomalies = getVariantPhysicalAnomalyRef(variant, variantIdx)
+  const allowedTypes = getVariantAllowedTypesRef(variant, variantIdx)
+  if (anomalies && anomalies[rowIndex]) {
+    const defaultType = (allowedTypes && allowedTypes.length > 0) ? allowedTypes[0] : 'default'
+    anomalies[rowIndex].push(createEffect(defaultType))
   }
 }
 
-function removeVariantEffect(variant, rowIndex, colIndex) {
-  if (variant.physicalAnomaly && variant.physicalAnomaly[rowIndex]) {
-    variant.physicalAnomaly[rowIndex].splice(colIndex, 1)
-    if (variant.physicalAnomaly[rowIndex].length === 0) {
-      variant.physicalAnomaly.splice(rowIndex, 1)
+function removeVariantEffect(variant, variantIdx, rowIndex, colIndex) {
+  const anomalies = getVariantPhysicalAnomalyRef(variant, variantIdx)
+  if (anomalies && anomalies[rowIndex]) {
+    anomalies[rowIndex].splice(colIndex, 1)
+    if (anomalies[rowIndex].length === 0) {
+      anomalies.splice(rowIndex, 1)
     }
   }
 }
 
-function getVariantTicks(variant) {
-  if (!variant.damageTicks) variant.damageTicks = []
-  normalizeDamageTicks(variant.damageTicks)
-  return variant.damageTicks
+function getVariantTicks(variant, variantIdx) {
+  return getVariantDamageTicksRef(variant, variantIdx)
 }
 
 // 变体里的判定点操作
-function addVariantDamageTick(variant) {
-  const ticks = getVariantTicks(variant)
+function addVariantDamageTick(variant, variantIdx) {
+  const ticks = getVariantTicks(variant, variantIdx)
   ticks.push({ offset: 0, stagger: 0, sp: 0, boundEffects: [] })
 }
-function removeVariantDamageTick(variant, index) {
-  const ticks = getVariantTicks(variant)
+function removeVariantDamageTick(variant, variantIdx, index) {
+  const ticks = getVariantTicks(variant, variantIdx)
   ticks.splice(index, 1)
 }
 
@@ -1468,9 +1645,20 @@ function normalizeCharacterForSave(char) {
 
   if (char.variants) {
     char.variants.forEach(variant => {
-      if (!variant.damageTicks) variant.damageTicks = []
-      normalizeDamageTicks(variant.damageTicks)
-      ensureEffectIds(variant.physicalAnomaly)
+      if (variant?.type === 'attack') {
+        ensureVariantAttackSegments(variant, char)
+        for (const seg of variant.attackSegments || []) {
+          if (!seg.damageTicks) seg.damageTicks = []
+          normalizeDamageTicks(seg.damageTicks)
+          ensureEffectIds(seg.physicalAnomaly)
+          if (!Array.isArray(seg.allowedTypes)) seg.allowedTypes = []
+        }
+      } else {
+        if (!variant.damageTicks) variant.damageTicks = []
+        normalizeDamageTicks(variant.damageTicks)
+        ensureEffectIds(variant.physicalAnomaly)
+        if (!Array.isArray(variant.allowedTypes)) variant.allowedTypes = []
+      }
     })
   }
 }
@@ -1960,7 +2148,7 @@ function saveData() {
                 </div>
                 <div class="form-group">
                   <label>动作类型 (切换重置)</label>
-                  <el-select v-model="variant.type" size="large" style="width: 100%" @change="onVariantTypeChange(variant)">
+                  <el-select v-model="variant.type" size="large" style="width: 100%" @change="onVariantTypeChange(variant, idx)">
                     <el-option v-for="t in VARIANT_TYPES" :key="t.value" :label="t.label" :value="t.value" />
                   </el-select>
                 </div>
@@ -1973,7 +2161,22 @@ function saveData() {
                   <input v-model="variant.icon" type="text"/>
                 </div>
 
-                <div class="form-group"><label>持续时间</label><input type="number" step="0.1" v-model.number="variant.duration"></div>
+                <div class="form-group" v-if="variant.type !== 'attack'"><label>持续时间</label><input type="number" step="0.1" v-model.number="variant.duration"></div>
+
+                <template v-if="variant.type === 'attack'">
+                  <div class="form-group">
+                    <label>重击分段</label>
+                    <el-select v-model="variantAttackSegmentIndexList[idx]" size="large" style="width: 100%">
+                      <el-option v-for="i in ATTACK_SEGMENT_COUNT" :key="`vseg_${idx}_${i}`" :label="`第${i}段`" :value="i - 1" />
+                    </el-select>
+                  </div>
+                  <div class="form-group"><label>总时长 (s)</label><input type="number" :value="getVariantAttackTotalDuration(variant)" disabled></div>
+                  <div class="form-group"><label>本段时长 (s)</label><input type="number" step="0.1" v-model.number="variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].duration"></div>
+                  <div class="form-group"><label>本段自身充能</label><input type="number" v-model.number="variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].gaugeGain"></div>
+                  <div class="form-group full-width">
+                    <button class="ea-btn ea-btn--block ea-btn--dashed-muted" @click="ensureVariantAttackSegments(variant, selectedChar, { force: true })">从基础重击重新深拷贝 5 段</button>
+                  </div>
+                </template>
 
                 <div class="form-group" v-if="variant.type === 'skill'"><label>技力消耗</label><input type="number" v-model.number="variant.spCost"></div>
                 <div class="form-group" v-if="variant.type === 'skill'"><label>自身充能</label><input type="number" v-model.number="variant.gaugeGain"></div>
@@ -1990,8 +2193,8 @@ function saveData() {
 
               <div class="ticks-editor-area" style="margin-top: 10px;">
                 <label style="font-size: 12px; color: #aaa; font-weight: bold; display: block; margin-bottom: 5px;">伤害判定点</label>
-                <div v-if="getVariantTicks(variant).length === 0" class="empty-ticks-hint">暂无判定点</div>
-                <div v-for="(tick, tIdx) in getVariantTicks(variant)" :key="tIdx" class="tick-row">
+                <div v-if="getVariantTicks(variant, idx).length === 0" class="empty-ticks-hint">暂无判定点</div>
+                <div v-for="(tick, tIdx) in getVariantTicks(variant, idx)" :key="tIdx" class="tick-row">
                   <div class="tick-top">
                     <div class="tick-idx">HIT {{ tIdx + 1 }}</div>
                     <div class="tick-inputs">
@@ -1999,7 +2202,7 @@ function saveData() {
                       <div class="t-group"><label style="color:#ff7875">失衡值</label><input type="number" v-model.number="tick.stagger" class="mini-input"></div>
                       <div class="t-group"><label style="color:#ffd700">回复技力</label><input type="number" v-model.number="tick.sp" class="mini-input"></div>
                     </div>
-                    <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeVariantDamageTick(variant, tIdx)">×</button>
+                    <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeVariantDamageTick(variant, idx, tIdx)">×</button>
                   </div>
                   <div class="tick-binding">
                     <label>绑定状态</label>
@@ -2011,37 +2214,49 @@ function saveData() {
                         size="small"
                         class="tick-select"
                         placeholder="选择要绑定的状态"
-                        :disabled="getVariantBindingOptions(variant).length === 0"
+                        :disabled="getVariantBindingOptions(variant, idx).length === 0"
                     >
-                      <el-option v-for="opt in getVariantBindingOptions(variant)" :key="opt.value" :label="opt.label" :value="opt.value" />
+                      <el-option v-for="opt in getVariantBindingOptions(variant, idx)" :key="opt.value" :label="opt.label" :value="opt.value" />
                     </el-select>
                   </div>
                 </div>
-                <button class="ea-btn ea-btn--block ea-btn--lg ea-btn--dashed-panel ea-btn--radius-6" style="margin-top: 5px;" @click="addVariantDamageTick(variant)">+ 添加判定点</button>
+                <button class="ea-btn ea-btn--block ea-btn--lg ea-btn--dashed-panel ea-btn--radius-6" style="margin-top: 5px;" @click="addVariantDamageTick(variant, idx)">+ 添加判定点</button>
               </div>
 
               <div class="checkbox-grid" style="margin-top: 15px;">
-                <label v-for="key in effectKeys" :key="`v_${variant.id}_${key}`" class="cb-item">
-                  <input type="checkbox" :value="key" v-model="variant.allowedTypes" @change="onVariantCheckChange(variant, key)">
-                  {{ EFFECT_NAMES[key] }}
-                </label>
-                <label v-for="buff in selectedChar.exclusive_buffs" :key="`v_${variant.id}_${buff.key}`" class="cb-item exclusive">
-                  <input type="checkbox" :value="buff.key" v-model="variant.allowedTypes">
-                  ★ {{ buff.name }}
-                </label>
+                <template v-if="variant.type === 'attack'">
+                  <label v-for="key in effectKeys" :key="`v_${variant.id}_${key}`" class="cb-item">
+                    <input type="checkbox" :value="key" v-model="variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].allowedTypes" @change="onVariantCheckChange(variant, idx, key)">
+                    {{ EFFECT_NAMES[key] }}
+                  </label>
+                  <label v-for="buff in selectedChar.exclusive_buffs" :key="`v_${variant.id}_${buff.key}`" class="cb-item exclusive">
+                    <input type="checkbox" :value="buff.key" v-model="variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].allowedTypes" @change="onVariantCheckChange(variant, idx, buff.key)">
+                    ★ {{ buff.name }}
+                  </label>
+                </template>
+                <template v-else>
+                  <label v-for="key in effectKeys" :key="`v_${variant.id}_${key}`" class="cb-item">
+                    <input type="checkbox" :value="key" v-model="variant.allowedTypes" @change="onVariantCheckChange(variant, idx, key)">
+                    {{ EFFECT_NAMES[key] }}
+                  </label>
+                  <label v-for="buff in selectedChar.exclusive_buffs" :key="`v_${variant.id}_${buff.key}`" class="cb-item exclusive">
+                    <input type="checkbox" :value="buff.key" v-model="variant.allowedTypes" @change="onVariantCheckChange(variant, idx, buff.key)">
+                    ★ {{ buff.name }}
+                  </label>
+                </template>
               </div>
 
               <div class="matrix-editor-area" style="margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;">
                 <label style="font-size: 12px; color: #aaa; margin-bottom: 8px; display: block; font-weight: bold;">附加异常状态</label>
                 <div class="anomalies-grid-editor">
-                  <div v-for="(row, rIndex) in (variant.physicalAnomaly || [])" :key="rIndex" class="editor-row">
+                  <div v-for="(row, rIndex) in (variant.type === 'attack' ? (variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].physicalAnomaly || []) : (variant.physicalAnomaly || []))" :key="rIndex" class="editor-row">
                     <div v-for="(item, cIndex) in row" :key="cIndex" class="editor-card">
                       <div class="card-header">
                         <span class="card-label">R{{rIndex+1}}:C{{cIndex+1}}</span>
-                        <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeVariantEffect(variant, rIndex, cIndex)">×</button>
+                        <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeVariantEffect(variant, idx, rIndex, cIndex)">×</button>
                       </div>
                       <el-select v-model="item.type" size="small" class="card-select full-width-mb" style="width: 100%">
-                        <el-option v-for="opt in getVariantAvailableOptions(variant)" :key="opt.value" :label="opt.label" :value="opt.value" />
+                        <el-option v-for="opt in getVariantAvailableOptions(variant, idx)" :key="opt.value" :label="opt.label" :value="opt.value" />
                       </el-select>
 
                       <div class="card-props-grid">
@@ -2069,9 +2284,9 @@ function saveData() {
                       </div>
 
                     </div>
-                    <button class="ea-btn ea-btn--icon ea-btn--icon-40 ea-btn--icon-plus" @click="addVariantEffect(variant, rIndex)">+</button>
+                    <button class="ea-btn ea-btn--icon ea-btn--icon-40 ea-btn--icon-plus" @click="addVariantEffect(variant, idx, rIndex)">+</button>
                   </div>
-                  <button class="ea-btn ea-btn--block ea-btn--lg ea-btn--dashed-panel ea-btn--radius-6" @click="addVariantRow(variant)" :disabled="getVariantAvailableOptions(variant).length === 0">+ 新增效果行</button>
+                  <button class="ea-btn ea-btn--block ea-btn--lg ea-btn--dashed-panel ea-btn--radius-6" @click="addVariantRow(variant, idx)" :disabled="getVariantAvailableOptions(variant, idx).length === 0">+ 新增效果行</button>
                 </div>
               </div>
             </div>

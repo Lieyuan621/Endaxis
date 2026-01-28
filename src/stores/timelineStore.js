@@ -1482,6 +1482,69 @@ export const useTimelineStore = defineStore('timeline', () => {
             return { groupSkill, segmentSkills }
         }
 
+        const createVariantAttackLibrary = (variant) => {
+            const groupId = `${activeChar.id}_variant_${variant.id}`
+            const groupOverrideRaw = characterOverrides.value[groupId] || {}
+            const { duration: _ignoredDuration, ...groupOverride } = (groupOverrideRaw && typeof groupOverrideRaw === 'object') ? groupOverrideRaw : {}
+
+            const derivedElement = variant.element || activeChar.attack_element || activeChar.element || 'physical'
+
+            const segmentSkills = (variant.attackSegments || []).slice(0, ATTACK_SEGMENT_COUNT).map((seg, idx) => {
+                const segId = `${groupId}_seg${idx + 1}`
+                const segOverride = characterOverrides.value[segId] || {}
+                const mergedOverride = { ...groupOverride, ...(segOverride && typeof segOverride === 'object' ? segOverride : {}) }
+
+                const rawDuration = Number(seg?.duration) || 0
+                const rawTicks = seg?.damageTicks ? JSON.parse(JSON.stringify(seg.damageTicks)) : []
+                const rawAnomalies = seg?.physicalAnomaly ? JSON.parse(JSON.stringify(seg.physicalAnomaly)) : []
+                const rawAllowed = Array.isArray(seg?.allowedTypes) ? [...seg.allowedTypes] : []
+
+                const merged = {
+                    id: segId,
+                    type: 'attack',
+                    name: `${variant.name || '强化重击'} ${idx + 1}`,
+                    librarySource: 'character',
+                    element: seg?.element || derivedElement,
+                    icon: seg?.icon || '',
+                    duration: rawDuration,
+                    cooldown: 0,
+                    gaugeGain: Number(seg?.gaugeGain) || 0,
+                    ...mergedOverride,
+                }
+
+                const finalDamageTicks = mergedOverride.damageTicks || rawTicks
+                const finalAnomalies = mergedOverride.physicalAnomaly || rawAnomalies
+                const finalAllowedTypes = mergedOverride.allowedTypes || rawAllowed
+
+                return {
+                    ...merged,
+                    kind: 'attack_segment',
+                    attackSegmentIndex: idx + 1,
+                    hiddenInLibraryGrid: true,
+                    damageTicks: finalDamageTicks,
+                    allowedTypes: finalAllowedTypes,
+                    physicalAnomaly: finalAnomalies,
+                }
+            })
+
+            const enabledSegments = segmentSkills.filter(s => (Number(s.duration) || 0) > 0)
+            const totalDuration = enabledSegments.reduce((acc, s) => acc + (Number(s.duration) || 0), 0)
+
+            const groupSkill = {
+                id: groupId,
+                type: 'attack',
+                name: variant.name || '强化重击',
+                librarySource: 'character',
+                element: derivedElement,
+                duration: totalDuration,
+                kind: 'attack_group',
+                attackSegments: enabledSegments,
+                attackSegmentsAll: segmentSkills,
+            }
+
+            return { groupSkill, segmentSkills }
+        }
+
         const createVariantSkill = (variant) => {
             const globalId = `${activeChar.id}_variant_${variant.id}`
             const globalOverride = characterOverrides.value[globalId] || {}
@@ -1514,9 +1577,19 @@ export const useTimelineStore = defineStore('timeline', () => {
             createBaseSkill('ultimate', 'ultimate', '终结技')
         ]
 
-        const variantSkills = (activeChar.variants || []).map(v => createVariantSkill(v))
+        const variantSkills = []
+        const variantAttackSegmentSkills = []
+        for (const v of (activeChar.variants || [])) {
+            if (v?.type === 'attack' && Array.isArray(v.attackSegments)) {
+                const { groupSkill, segmentSkills } = createVariantAttackLibrary(v)
+                variantSkills.push(groupSkill)
+                variantAttackSegmentSkills.push(...segmentSkills)
+            } else {
+                variantSkills.push(createVariantSkill(v))
+            }
+        }
 
-        const allSkills = [...standardSkills, ...variantSkills, ...attackSegmentSkills];
+        const allSkills = [...standardSkills, ...variantSkills, ...attackSegmentSkills, ...variantAttackSegmentSkills];
 
         return allSkills.sort((a, b) => {
             const weightA = TYPE_ORDER[a.type] || 99;
