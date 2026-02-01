@@ -30,10 +30,10 @@ const displayLabel = computed(() => {
 
   if (props.action.kind === 'attack_segment') {
     const total = Number(props.action.attackSequenceTotal) || 0
-    const idx = Number(props.action.attackSequenceIndex) || Number(props.action.attackSegmentIndex) || 0
+    const idx = Number(props.action.attackSequenceIndex) || 0
 
-    if (idx > 0) {
-      if (total > 0 && idx === total) {
+    if (total > 0 && idx > 0) {
+      if (idx === total) {
         const groupName = props.action.attackGroupName || (name ? name.replace(/\s*\d+\s*$/, '') : '重击')
         return `${groupName}${suffix}`
       }
@@ -199,6 +199,29 @@ const cdStyle = computed(() => {
 })
 
 // 强化时间样式
+const enhancementMetrics = computed(() => {
+  const layout = actionLayout.value
+  if (!layout) return { widthPx: 0, extensionAmount: 0 }
+
+  const start = Number(props.action.startTime) || 0
+  const end = store.getShiftedEndTime(start, props.action.duration || 0, props.action.instanceId)
+  const time = Number(props.action.enhancementTime) || 0
+  if (time <= 0) return { widthPx: 0, extensionAmount: 0 }
+
+  const ultimateMetrics = (props.action.type === 'ultimate')
+      ? store.getUltimateEnhancementMetrics?.(props.action.instanceId)
+      : null
+
+  const finalEnd = ultimateMetrics?.finalEnd || store.getShiftedEndTime(end, time, props.action.instanceId)
+  const baseDuration = ultimateMetrics?.baseDuration ?? time
+
+  const shiftedEnhDuration = finalEnd - end
+  const extensionAmount = Math.round((shiftedEnhDuration - baseDuration) * 1000) / 1000
+  const widthPx = store.timeToPx(finalEnd) - store.timeToPx(end)
+
+  return { widthPx, extensionAmount }
+})
+
 const enhancementStyle = computed(() => {
   const layout = actionLayout.value
 
@@ -206,10 +229,7 @@ const enhancementStyle = computed(() => {
     return { display: 'none' }
   }
 
-  const start = Number(props.action.startTime) || 0
-  const end = store.getShiftedEndTime(start, props.action.duration || 0, props.action.instanceId)
-  const time = props.action.enhancementTime || 0
-  const width = time > 0 ? (store.timeToPx(end + time) - store.timeToPx(end)) : 0
+  const width = enhancementMetrics.value.widthPx
 
   return { 
     width: `${width}px`, 
@@ -470,7 +490,12 @@ function handleEffectDrop(effectId) {
          :style="enhancementStyle">
 
       <div class="cd-line" style="background-color: #b37feb;"></div>
-      <span class="cd-text" style="color: #b37feb;">{{ store.formatTimeLabel(action.enhancementTime) }}</span>
+      <span class="cd-text" style="color: #b37feb;">
+        {{ store.formatTimeLabel(action.enhancementTime) }}
+        <span v-if="enhancementMetrics.extensionAmount > 0" class="extension-label">
+          (+{{ store.formatTimeLabel(enhancementMetrics.extensionAmount) }})
+        </span>
+      </span>
       <div class="cd-end-mark" style="background-color: #b37feb;"></div>
 
     </div>

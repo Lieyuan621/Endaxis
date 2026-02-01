@@ -15,6 +15,48 @@ const COLLAPSED_PREP_PX = 18
 const MIN_PREP_DURATION = 0.5
 const EQUIPMENT_REFINE_MAX_TIER = 3
 
+const createOwnSkillLinkEnhancer = ({ linkSubtract = 0.0 } = {}) => {
+    return ({ track, enhStart, baseDuration, ultimateAction, getShiftedEndTime }) => {
+        const epsilon = 0.0001
+        const processed = new Set()
+        let extraDuration = 0
+
+        let guard = 0
+        while (guard++ < 200) {
+            const currentEnd = getShiftedEndTime(enhStart, baseDuration + extraDuration, ultimateAction.instanceId)
+
+            let foundAny = false
+            for (const a of (track?.actions || [])) {
+                if (!a || a.isDisabled || (a.triggerWindow || 0) < 0) continue
+                if (a.type !== 'skill' && a.type !== 'link') continue
+                if (processed.has(a.instanceId)) continue
+
+                const t = Number(a.startTime) || 0
+                if (t + epsilon < enhStart) continue
+                if (t >= currentEnd - epsilon) continue
+
+                let delta = Number(a.duration) || 0
+                if (a.type === 'link') {
+                    delta = Math.max(0, delta - linkSubtract)
+                }
+                processed.add(a.instanceId)
+
+                if (delta <= 0) continue
+                extraDuration += delta
+                foundAny = true
+            }
+
+            if (!foundAny) break
+        }
+
+        return extraDuration
+    }
+}
+
+const ULTIMATE_ENHANCEMENT_EXTENDERS = {
+    ['LAEVATAIN']: createOwnSkillLinkEnhancer({ linkSubtract: 0.5 }),
+}
+
 function shiftSnapshotTimes(snapshot, delta) {
     const d = Number(delta) || 0
     if (!snapshot || !Number.isFinite(d) || d === 0) return snapshot
@@ -3019,6 +3061,61 @@ export const useTimelineStore = defineStore('timeline', () => {
         return currentTimeLimit;
     }
 
+    const ultimateEnhancementMetricsMap = computed(() => {
+        const map = new Map()
+
+        const getMetrics = (trackId, action) => {
+            if (!action || action.type !== 'ultimate') return null
+            const baseDuration = Number(action.enhancementTime) || 0
+            if (baseDuration <= 0) return null
+
+            const start = Number(action.startTime) || 0
+            const enhStart = getShiftedEndTime(start, Number(action.duration) || 0, action.instanceId)
+
+            let extraDuration = 0
+
+            const extender = ULTIMATE_ENHANCEMENT_EXTENDERS[trackId]
+            if (typeof extender === 'function') {
+                const track = tracks.value.find(t => t.id === trackId)
+                if (track) {
+                    extraDuration = extender({
+                        track,
+                        enhStart,
+                        baseDuration,
+                        ultimateAction: action,
+                        getShiftedEndTime,
+                    })
+                }
+            }
+
+            const finalEnd = getShiftedEndTime(enhStart, baseDuration + extraDuration, action.instanceId)
+            const shiftedEnhDuration = finalEnd - enhStart
+            const extensionAmount = Math.round((shiftedEnhDuration - baseDuration) * 1000) / 1000
+
+            return {
+                enhStart,
+                baseDuration,
+                finalEnd,
+                extensionAmount: Math.max(0, extensionAmount),
+            }
+        }
+
+        for (const track of tracks.value) {
+            if (!track?.id || !Array.isArray(track.actions)) continue
+            for (const action of track.actions) {
+                const metrics = getMetrics(track.id, action)
+                if (!metrics) continue
+                map.set(action.instanceId, metrics)
+            }
+        }
+
+        return map
+    })
+
+    function getUltimateEnhancementMetrics(actionInstanceId) {
+        return ultimateEnhancementMetricsMap.value.get(actionInstanceId) || null
+    }
+
     function toGameTime(realTimeS) {
         if (useNewCompiler.value) {
             return timeContext.value.toGameTime(realTimeS);
@@ -3375,11 +3472,19 @@ export const useTimelineStore = defineStore('timeline', () => {
                     const animT = Number(action.animationTime || 0);
                     const enhT = Number(action.enhancementTime || 0);
 
-                    const end = snap(getShiftedEndTime(
-                        action.startTime,
-                        animT + enhT,
-                        action.instanceId
-                    ));
+                    let end = null
+                    if (typeof ULTIMATE_ENHANCEMENT_EXTENDERS[trackId] === 'function' && enhT > 0) {
+                        const metrics = getUltimateEnhancementMetrics(action.instanceId)
+                        if (metrics?.finalEnd) end = snap(metrics.finalEnd)
+                    }
+
+                    if (!end) {
+                        end = snap(getShiftedEndTime(
+                            action.startTime,
+                            animT + enhT,
+                            action.instanceId
+                        ));
+                    }
 
                     blockWindows.push({ start, end, sourceId: action.instanceId });
                 }
@@ -3843,15 +3948,16 @@ export const useTimelineStore = defineStore('timeline', () => {
         switchEvents, selectedSwitchEventId, addSwitchEvent, updateSwitchEvent, selectSwitchEvent, selectWeaponStatus,
         toggleActionLock, toggleActionDisable, setActionColor,
         globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById, getEffectById,
+        getUltimateEnhancementMetrics,
         enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
         effectLayouts, getNodeRect, weaponDatabase, weaponOverrides, weaponStatuses, activeWeapon, getWeaponById, isWeaponSkillId, addWeaponStatus,
-        equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, getEquipmentById, updateTrackEquipment, updateTrackEquipmentTier, syncAllEquipmentModifiers,
+        equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, getEquipmentById, updateTrackEquipment, updateTrackEquipmentTier,
         equipmentCategoryOverrides, updateEquipmentCategoryOverride,
         activeSetBonusLibrary, addSetBonusStatus, getActiveSetBonusCategories,
         misc,
         prepDuration, prepExpanded, viewDuration, prepZoneWidthPx, totalTimelineWidthPx,
-        timeToPx, pxToTime, toBattleTime, formatAxisTimeLabel, togglePrepExpanded, setPrepDuration,
+        timeToPx, pxToTime, formatAxisTimeLabel, togglePrepExpanded, setPrepDuration,
         useNewCompiler, compiledTimeline, spSeries, staggerSeries
     }
 })
