@@ -6,6 +6,7 @@ import CustomNumberInput from './CustomNumberInput.vue'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { useDragConnection } from '@/composables/useDragConnection.js'
 import { getRectPos } from '@/utils/layoutUtils.js'
+import { buildEffectBindingOptions } from '@/utils/effectBindingOptions.js'
 
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
@@ -318,23 +319,21 @@ const availableEffectOptions = computed(() => {
   const rowsRaw = targetData.value.physicalAnomaly
   if (!rowsRaw || rowsRaw.length === 0) return []
   const rows = Array.isArray(rowsRaw[0]) ? rowsRaw : [rowsRaw]
-  const seen = new Set()
-  const options = []
 
   rows.forEach(row => {
     row.forEach(effect => {
       if (!effect._id) effect._id = Math.random().toString(36).substring(2, 9)
-      if (seen.has(effect._id)) return
-      seen.add(effect._id)
-      options.push({
-        value: effect._id,
-        label: EFFECT_NAMES[effect.type] || effect.type || 'Unknown',
-        type: effect.type || 'unknown'
-      })
     })
   })
 
-  return options
+  const getEffectName = (type) => {
+    if (EFFECT_NAMES[type]) return EFFECT_NAMES[type]
+    const exclusive = currentCharacter.value?.exclusive_buffs?.find(b => b.key === type)
+    if (exclusive?.name) return exclusive.name
+    return type || 'Unknown'
+  }
+
+  return buildEffectBindingOptions(rowsRaw, { getEffectName })
 })
 
 const customBarsList = computed(() => targetData.value?.customBars || [])
@@ -608,6 +607,7 @@ function handleStartConnection(id, type) {
                       multiple
                       collapse-tags
                       collapse-tags-tooltip
+                      popper-class="ea-tick-binding-popper"
                       placeholder="选择要绑定的状态"
                       size="small"
                       class="tick-select"
@@ -619,7 +619,11 @@ function handleStartConnection(id, type) {
                         :label="opt.label"
                         :value="opt.value"
                     >
-                      <span class="option-tag">{{ opt.label }}</span>
+                      <div class="binding-option">
+                        <img :src="getIconPath(opt.type)" class="binding-option__icon" />
+                        <span class="binding-option__label">{{ opt.label }}</span>
+                        <span class="binding-option__hint">{{ opt.hint }}</span>
+                      </div>
                     </el-option>
                   </el-select>
                 </div>
@@ -887,7 +891,10 @@ function handleStartConnection(id, type) {
 .tick-col label { font-size: 9px !important; color: rgba(255, 255, 255, 0.3) !important; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px !important; }
 .tick-col.full-width { flex: 1; }
 .tick-select { width: 100%; }
-.option-tag { color: #e0e0e0; }
+.binding-option { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.binding-option__icon { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; background: #111; box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset; flex: 0 0 auto; }
+.binding-option__label { font-size: 12px; color: #e6e6e6; }
+.binding-option__hint { font-size: 11px; color: rgba(255, 255, 255, 0.35); margin-left: 4px; white-space: nowrap; opacity: 0.95; }
 .anomalies-editor-container { padding: 8px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.05); }
 .anomaly-editor-row { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; background: rgba(255, 255, 255, 0.02); padding: 6px; border: 1px solid rgba(255, 255, 255, 0.05); border-left: 3px solid rgba(255, 255, 255, 0.15); border-radius: 2px; position: relative; transition: all 0.2s; clip-path: polygon(0 0, 100% 0, 100% 85%, 98% 100%, 0 100%); }
 .anomaly-editor-row:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.1); }

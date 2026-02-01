@@ -6,6 +6,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { executeSave } from '@/api/saveStrategy.js'
 import { CORE_STATS } from '@/utils/coreStats.js'
+import { buildEffectBindingOptions } from '@/utils/effectBindingOptions.js'
 import draggable from 'vuedraggable'
 
 const store = useTimelineStore()
@@ -1424,6 +1425,19 @@ function ensureEffectIds(rows) {
   })
 }
 
+function getEffectDisplayName(type) {
+  if (EFFECT_NAMES[type]) return EFFECT_NAMES[type]
+  const exclusive = selectedChar.value?.exclusive_buffs?.find(b => b.key === type)
+  if (exclusive?.name) return exclusive.name
+  return type || 'Unknown'
+}
+
+function getEffectIconPath(type) {
+  const exclusive = selectedChar.value?.exclusive_buffs?.find(b => b.key === type)
+  if (exclusive?.path) return exclusive.path
+  return iconDatabase.value?.[type] || iconDatabase.value?.default || ''
+}
+
 function getVariantAvailableOptions(variant, variantIdx) {
   const allowedList = getVariantAllowedTypesRef(variant, variantIdx)
   const combinedKeys = new Set([...allowedList, 'default'])
@@ -1457,19 +1471,7 @@ function buildOptions(keysSet) {
 function buildBindingOptionsFromAnomalies(raw) {
   if (!raw || raw.length === 0) return []
   ensureEffectIds(raw)
-  const rows = Array.isArray(raw[0]) ? raw : [raw]
-  const seen = new Set()
-  const options = []
-
-  rows.forEach(row => {
-    row.forEach(effect => {
-      if (!effect || !effect._id || seen.has(effect._id)) return
-      seen.add(effect._id)
-      options.push({ value: effect._id, label: EFFECT_NAMES[effect.type] || effect.type || 'Unknown' })
-    })
-  })
-
-  return options
+  return buildEffectBindingOptions(raw, { getEffectName: (type) => getEffectDisplayName(type) })
 }
 
 function getBindingOptions(skillType) {
@@ -2211,12 +2213,19 @@ function saveData() {
                         multiple
                         collapse-tags
                         collapse-tags-tooltip
+                        popper-class="ea-tick-binding-popper"
                         size="small"
                         class="tick-select"
                         placeholder="选择要绑定的状态"
                         :disabled="getVariantBindingOptions(variant, idx).length === 0"
                     >
-                      <el-option v-for="opt in getVariantBindingOptions(variant, idx)" :key="opt.value" :label="opt.label" :value="opt.value" />
+                      <el-option v-for="opt in getVariantBindingOptions(variant, idx)" :key="opt.value" :label="opt.label" :value="opt.value">
+                        <div class="binding-option">
+                          <img :src="getEffectIconPath(opt.type)" class="binding-option__icon" />
+                          <span class="binding-option__label">{{ opt.label }}</span>
+                          <span class="binding-option__hint">{{ opt.hint }}</span>
+                        </div>
+                      </el-option>
                     </el-select>
                   </div>
                 </div>
@@ -2371,12 +2380,19 @@ function saveData() {
                         multiple
                         collapse-tags
                         collapse-tags-tooltip
+                        popper-class="ea-tick-binding-popper"
                         size="small"
                         class="tick-select"
                         placeholder="选择要绑定的状态"
                         :disabled="getBindingOptions(type).length === 0"
                     >
-                      <el-option v-for="opt in getBindingOptions(type)" :key="opt.value" :label="opt.label" :value="opt.value" />
+                      <el-option v-for="opt in getBindingOptions(type)" :key="opt.value" :label="opt.label" :value="opt.value">
+                        <div class="binding-option">
+                          <img :src="getEffectIconPath(opt.type)" class="binding-option__icon" />
+                          <span class="binding-option__label">{{ opt.label }}</span>
+                          <span class="binding-option__hint">{{ opt.hint }}</span>
+                        </div>
+                      </el-option>
                     </el-select>
                   </div>
                 </div>
@@ -3464,6 +3480,12 @@ function saveData() {
 .tick-select { width: 100%; }
 :deep(.tick-binding label) { font-size: 12px; color: #ccc; font-weight: 600; letter-spacing: 0.2px; }
 :deep(.tick-select .el-input__wrapper) { background: #16161a; box-shadow: 0 0 0 1px #333 inset; }
+
+.binding-option { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.binding-option__icon { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; background: #111; box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset; flex: 0 0 auto; }
+.binding-option__label { font-size: 12px; color: #e6e6e6; }
+.binding-option__hint { font-size: 11px; color: #9aa0a6; margin-left: 4px; white-space: nowrap; opacity: 0.95; }
+
 .empty-ticks-hint { color: #666; font-size: 12px; text-align: center; padding: 10px; font-style: italic; }
 
 .info-banner { background: rgba(50, 50, 50, 0.5); padding: 12px; border-left: 3px solid #666; color: #aaa; margin-bottom: 20px; font-size: 13px; border-radius: 0 4px 4px 0; }
