@@ -37,6 +37,7 @@ const activeLibraryTitle = computed(() => {
 const getFullTypeName = (type) => {
   const map = {
     'attack': '重击',
+    'dodge': '闪避',
     'skill': '战技',
     'link': '连携',
     'ultimate': '终结技',
@@ -68,7 +69,7 @@ function getSkillDisplayIcon(skill) {
   if (skill.librarySource === 'set') {
     return skill.icon || ''
   }
-  if (['attack', 'execution'].includes(skill.type)) {
+  if (['attack', 'dodge', 'execution'].includes(skill.type)) {
     return currentWeaponIcon.value
   }
   return skill.icon || ''
@@ -285,6 +286,7 @@ function getSkillThemeColor(skill) {
   if (skill.type === 'link') return store.getColor('link')
   if (skill.type === 'execution') return store.getColor('execution')
   if (skill.type === 'attack') return store.getColor('physical')
+  if (skill.type === 'dodge') return store.getColor('dodge')
   if (skill.element) return store.getColor(skill.element)
   if (activeCharacter.value?.element) return store.getColor(activeCharacter.value.element)
   return store.getColor('default')

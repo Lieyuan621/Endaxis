@@ -49,6 +49,7 @@ const PORT_OPTIONS = [
 const getFullTypeName = (type) => {
   const map = {
     'attack': '重击',
+    'dodge': '闪避',
     'skill': '战技',
     'link': '连携',
     'ultimate': '终结技',
@@ -546,7 +547,7 @@ function handleStartConnection(id, type) {
             <CustomNumberInput :model-value="targetData.gaugeCost" @update:model-value="val => updateActionProp('gaugeCost', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
           </div>
 
-          <div class="form-group compact" v-if="!['execution','weapon','set'].includes(currentSkillType)">
+          <div class="form-group compact" v-if="!['execution','dodge','weapon','set'].includes(currentSkillType)">
             <label>自身充能</label>
             <CustomNumberInput :model-value="targetData.gaugeGain" @update:model-value="val => updateActionProp('gaugeGain', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
           </div>
@@ -562,7 +563,7 @@ function handleStartConnection(id, type) {
         </div>
       </div>
 
-      <div v-if="!isWeaponLibraryMode && !isWeaponStatusMode && !isSetLibraryMode" class="section-container tech-style border-red" @click="isTicksExpanded = !isTicksExpanded" style="cursor: pointer;">
+      <div v-if="!isWeaponLibraryMode && !isWeaponStatusMode && !isSetLibraryMode && currentSkillType !== 'dodge'" class="section-container tech-style border-red" @click="isTicksExpanded = !isTicksExpanded" style="cursor: pointer;">
         <div class="panel-tag-mini red">伤害判定点 ({{ (targetData.damageTicks || []).length }})</div>
 
         <div class="section-header-tech">
@@ -668,7 +669,7 @@ function handleStartConnection(id, type) {
         </div>
       </div>
 
-      <div v-if="!isWeaponLibraryMode && !isWeaponStatusMode && !isSetLibraryMode" class="section-container tech-style">
+      <div v-if="!isWeaponLibraryMode && !isWeaponStatusMode && !isSetLibraryMode && currentSkillType !== 'dodge'" class="section-container tech-style">
         <div class="panel-tag-mini">状态效果与排布</div>
         <div class="anomalies-editor-container" style="background: transparent; border-color: rgba(255,255,255,0.1); margin-top: 10px;">
           <draggable v-model="anomalyRows" item-key="rowIndex" class="rows-container" handle=".row-handle" :animation="200">

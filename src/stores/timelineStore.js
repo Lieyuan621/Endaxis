@@ -257,7 +257,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const ELEMENT_COLORS = {
         "blaze": "#ff4d4f", "cold": "#00e5ff", "emag": "#ffbf00", "nature": "#52c41a", "physical": "#e0e0e0",
-        "link": "#fdd900", "execution": "#a61d24", "skill": "#ffffff", "ultimate": "#00e5ff", "attack": "#aaaaaa", "default": "#8c8c8c",
+        "link": "#fdd900", "execution": "#a61d24", "dodge": "#69c0ff", "skill": "#ffffff", "ultimate": "#00e5ff", "attack": "#aaaaaa", "default": "#8c8c8c",
         'blaze_attach': '#ff4d4f', 'blaze_burst': '#ff7875', 'burning': '#f5222d',
         'cold_attach': '#00e5ff', 'cold_burst': '#40a9ff', 'frozen': '#1890ff', 'ice_shatter': '#bae7ff',
         'emag_attach': '#ffd700', 'emag_burst': '#fff566', 'conductive': '#ffec3d',
@@ -1405,10 +1405,11 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         const TYPE_ORDER = {
             'attack': 1,
-            'execution': 2,
-            'skill': 3,
-            'link': 4,
-            'ultimate': 5
+            'dodge': 2,
+            'execution': 3,
+            'skill': 4,
+            'link': 5,
+            'ultimate': 6
         }
 
         const getAnomalies = (list) => list || []
@@ -1623,8 +1624,28 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         const { groupSkill: attackGroupSkill, segmentSkills: attackSegmentSkills } = createAttackLibrary()
 
+        const createDodgeSkill = () => {
+            const globalId = `${activeChar.id}_dodge`
+            const globalOverride = characterOverrides.value[globalId] || {}
+
+            const rawDuration = Number(activeChar.dodge_duration)
+            const duration = Number.isFinite(rawDuration) ? Math.max(0, rawDuration) : 0.5
+
+            return {
+                id: globalId,
+                type: 'dodge',
+                name: '闪避',
+                librarySource: 'character',
+                duration,
+                damageTicks: [],
+                physicalAnomaly: [],
+                ...globalOverride,
+            }
+        }
+
         const standardSkills = [
             attackGroupSkill,
+            createDodgeSkill(),
             createBaseSkill('execution', 'execution', '处决'),
             createBaseSkill('skill', 'skill', '战技'),
             createBaseSkill('link', 'link', '连携'),

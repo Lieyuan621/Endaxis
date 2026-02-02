@@ -48,7 +48,9 @@ function getActionColor(action) {
   if (action.type === 'link') return store.getColor('link')
   if (action.type === 'execution') return store.getColor('execution')
   if (action.type === 'attack') return store.getColor('physical')
+  if (action.type === 'dodge') return store.getColor('dodge')
   if (action.element) return store.getColor(action.element)
+  return store.getColor('default')
 }
 
 function getColors() {

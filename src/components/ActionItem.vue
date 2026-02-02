@@ -12,7 +12,7 @@ const props = defineProps({
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
 const TYPE_SHORTHAND = {
-  'attack': 'A', 'execution': 'X', 'skill': 'C', 'link': 'E', 'ultimate': 'U'
+  'attack': 'A', 'dodge': 'D', 'execution': 'X', 'skill': 'C', 'link': 'E', 'ultimate': 'U'
 }
 
 const isVariant = computed(() => {
@@ -27,6 +27,10 @@ const displayLabel = computed(() => {
   const width = secWidth.value
 
   const suffix = isVariant.value ? '*' : ''
+
+  if (type === 'dodge') {
+    return `${TYPE_SHORTHAND[type] || '?'}${suffix}`
+  }
 
   if (props.action.kind === 'attack_segment') {
     const total = Number(props.action.attackSequenceTotal) || 0
@@ -56,6 +60,7 @@ const themeColor = computed(() => {
   if (props.action.type === 'link') return store.getColor('link')
   if (props.action.type === 'execution') return store.getColor('execution')
   if (props.action.type === 'attack') return store.getColor('attack')
+  if (props.action.type === 'dodge') return store.getColor('dodge')
   if (props.action.element) return store.getColor(props.action.element)
 
   let charId = null

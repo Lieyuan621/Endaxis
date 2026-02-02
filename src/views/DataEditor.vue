@@ -914,6 +914,7 @@ function addNewCharacter() {
     link_duration: 1.5, link_cooldown: 15, link_gaugeGain: 0, link_allowed_types: [], link_anomalies: [], link_damage_ticks: [], link_icon: "",
     ultimate_duration: 3, ultimate_gaugeMax: 100, ultimate_gaugeReply: 0, ultimate_enhancementTime: 0, ultimate_allowed_types: [], ultimate_anomalies: [], ultimate_damage_ticks: [], ultimate_animationTime: 1.5, ultimate_icon: "",
     execution_duration: 1.5, execution_allowed_types: allGlobalEffects, execution_anomalies: [], execution_damage_ticks: [],
+    dodge_duration: 0.5,
 
     variants: []
   }
@@ -1623,6 +1624,14 @@ function onSkillGaugeInput(event) {
 }
 
 function normalizeCharacterForSave(char) {
+  if (char.dodge_duration === '' || char.dodge_duration === null) {
+    delete char.dodge_duration
+  } else if (char.dodge_duration !== undefined) {
+    const dodgeVal = Number(char.dodge_duration)
+    if (Number.isFinite(dodgeVal)) char.dodge_duration = Math.max(0, dodgeVal)
+    else delete char.dodge_duration
+  }
+
   const skillTypes = ['skill', 'link', 'ultimate', 'execution']
   skillTypes.forEach(type => {
     const tickKey = `${type}_damage_ticks`
@@ -2065,6 +2074,14 @@ function saveData() {
             处决
           </button>
 
+          <button :class="{ active: activeTab === 'dodge' }" @click="activeTab = 'dodge'">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12c3-6 6-6 9 0s6 6 9 0"></path>
+              <path d="M3 12c3 6 6 6 9 0s6-6 9 0"></path>
+            </svg>
+            闪避
+          </button>
+
           <button :class="{ active: activeTab === 'variants' }" @click="activeTab = 'variants'">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
@@ -2304,7 +2321,7 @@ function saveData() {
             <button class="ea-btn ea-btn--block ea-btn--lg ea-btn--dashed-panel ea-btn--radius-6" @click="addVariant" style="margin-top: 20px;">+ 添加新变体动作</button>
           </div>
 
-          <template v-for="type in ['attack', 'skill', 'link', 'ultimate', 'execution']" :key="type">
+          <template v-for="type in ['attack', 'skill', 'link', 'ultimate', 'execution', 'dodge']" :key="type">
             <div v-show="activeTab === type" class="form-section">
               <h3 class="section-title">数值配置</h3>
 
@@ -2359,7 +2376,8 @@ function saveData() {
                 </div>
               </div>
 
-              <h3 class="section-title">伤害判定点</h3>
+              <template v-if="type !== 'dodge'">
+                <h3 class="section-title">伤害判定点</h3>
               <div class="ticks-editor-area">
                 <div v-if="getDamageTicks(selectedChar, type).length === 0" class="empty-ticks-hint">
                   暂无判定点，请点击下方按钮添加
@@ -2466,6 +2484,7 @@ function saveData() {
                   <button class="ea-btn ea-btn--block ea-btn--lg ea-btn--dashed-panel ea-btn--radius-6" @click="addAnomalyRow(selectedChar, type)" :disabled="getAvailableAnomalyOptions(type).length === 0">+ 新增效果行</button>
                 </div>
               </div>
+              </template>
             </div>
           </template>
 
