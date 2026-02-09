@@ -1,5 +1,7 @@
 {
   "name": "test-cloudflare-page-dev",
   "compatibility_date": "2026-02-09",
-  "directory": "./dist"
+  "assets": {
+    "directory": "./dist"
+  }
 }
