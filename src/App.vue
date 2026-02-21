@@ -1,12 +1,11 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useTimelineStore } from './stores/timelineStore.js'
-import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { getElementPlusLocale } from '@/i18n/elementPlusLocale.js'
 
 const store = useTimelineStore()
-const { t, locale } = useI18n({ useScope: 'global' })
+const { locale } = useI18n({ useScope: 'global' })
 const elementLocale = computed(() => getElementPlusLocale(locale.value))
 
 onMounted(async () => {
@@ -14,10 +13,7 @@ onMounted(async () => {
   await store.fetchGameData()
 
   // 2. 尝试读取浏览器缓存
-  const hasAutoSave = store.loadFromBrowser()
-  if (hasAutoSave) {
-    ElMessage.success(t('app.restoreProgress'))
-  }
+  store.loadFromBrowser()
 
   // 3. 无论是否读取成功，都开启监听以进行后续的自动保存
   store.initAutoSave()
