@@ -78,7 +78,7 @@ const pathData = computed(() => {
 
     <path :d="pathData" fill="none" :stroke="colors.end" stroke-width="12" class="hover-zone"
       :class="{ 'is-preview': isPreview, 'is-selectable': isSelectable }">
-      <title>左键选中后按 Delete 删除</title>
+      <title>{{ $t('connection.deleteHint') }}</title>
     </path>
 
     <g class="path-group">

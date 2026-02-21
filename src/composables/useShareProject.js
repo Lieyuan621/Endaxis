@@ -1,8 +1,10 @@
 import { useTimelineStore } from '@/stores/timelineStore'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 
 export function useShareProject() {
     const store = useTimelineStore()
+    const { t } = useI18n({ useScope: 'global' })
 
     // 1. 复制分享码
     async function copyShareCode() {
@@ -12,17 +14,17 @@ export function useShareProject() {
 
             // 写入剪贴板
             await navigator.clipboard.writeText(shareStr)
-            ElMessage.success('分享码已复制到剪贴板！可发给好友导入。')
+            ElMessage.success(t('timeline.share.copied'))
         } catch (e) {
             console.error(e)
-            ElMessage.error('分享码生成失败: ' + e.message)
+            ElMessage.error(t('timeline.share.copyFailed', { msg: e?.message || '' }))
         }
     }
 
     // 2. 解析导入分享码
     function importFromCode(code) {
         if (!code) {
-            ElMessage.warning('请输入分享码')
+            ElMessage.warning(t('timeline.share.inputRequired'))
             return false
         }
 
@@ -30,10 +32,10 @@ export function useShareProject() {
         const success = store.importShareString(code)
 
         if (success) {
-            ElMessage.success('成功导入分享的方案！')
+            ElMessage.success(t('timeline.share.imported'))
             return true
         } else {
-            ElMessage.error('分享码格式错误或数据损坏')
+            ElMessage.error(t('timeline.share.importFailed'))
             return false
         }
     }

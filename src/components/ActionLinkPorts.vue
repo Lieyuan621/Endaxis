@@ -151,7 +151,7 @@ const ports = [
             :style="{ '--background-color': color }"
             :class="['link-port', p.class, `port-${p.side}`, { 'active': activePort === p.side }, { 'disabled': disabled }]"
             @mousedown.stop.prevent="onPortMouseDown($event, p)" @mouseenter.stop="onPortMouseEnter($event, p)"
-            @mouseleave.stop="onPortMouseLeave" @mouseup.stop="onPortMouseUp" title="拖拽连线">
+            @mouseleave.stop="onPortMouseLeave" @mouseup.stop="onPortMouseUp" :title="$t('connection.dragToConnect')">
         </div>
     </div>
 </template>

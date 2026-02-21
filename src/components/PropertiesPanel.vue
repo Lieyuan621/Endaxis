@@ -7,9 +7,11 @@ import { ArrowRight } from '@element-plus/icons-vue'
 import { useDragConnection } from '@/composables/useDragConnection.js'
 import { getRectPos } from '@/utils/layoutUtils.js'
 import { buildEffectBindingOptions } from '@/utils/effectBindingOptions.js'
+import { useI18n } from 'vue-i18n'
 
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
+const { t } = useI18n({ useScope: 'global' })
 // ===================================================================================
 // 1. 常量与配置
 // ===================================================================================
@@ -19,45 +21,36 @@ const HIGHLIGHT_COLORS = {
   blue: '#00e5ff',
 }
 
-const EFFECT_NAMES = {
-  "break": "破防", "armor_break": "碎甲", "stagger": "猛击", "knockdown": "倒地", "knockup": "击飞",
-  "blaze_attach": "灼热附着", "emag_attach": "电磁附着", "cold_attach": "寒冷附着", "nature_attach": "自然附着",
-  "blaze_burst": "灼热爆发", "emag_burst": "电磁爆发", "cold_burst": "寒冷爆发", "nature_burst": "自然爆发",
-  "burning": "燃烧", "conductive": "导电", "frozen": "冻结", "ice_shatter": "碎冰", "corrosion": "腐蚀",
-  "default": "默认图标"
+function getEffectDisplayName(type) {
+  if (!type) return t('common.unknown')
+  const key = `effects.name.${type}`
+  const out = t(key)
+  return out === key ? type : out
 }
 
-const GROUP_DEFINITIONS = [
-  { label: ' 物理异常 ', keys: ['break', 'armor_break', 'stagger', 'knockdown', 'knockup', 'ice_shatter'] },
-  { label: ' 元素附着', matcher: (key) => key.endsWith('_attach') },
-  { label: ' 元素爆发', matcher: (key) => key.endsWith('_burst') },
-  { label: ' 异常状态 ', keys: ['burning', 'conductive', 'frozen', 'corrosion'] },
-  { label: ' 其他', keys: ['default'] }
-]
+const GROUP_DEFINITIONS = computed(() => [
+  { label: t('effects.group.physical'), keys: ['break', 'armor_break', 'stagger', 'knockdown', 'knockup', 'ice_shatter'] },
+  { label: t('effects.group.attach'), matcher: (key) => key.endsWith('_attach') },
+  { label: t('effects.group.burst'), matcher: (key) => key.endsWith('_burst') },
+  { label: t('effects.group.status'), keys: ['burning', 'conductive', 'frozen', 'corrosion'] },
+  { label: t('effects.group.other'), keys: ['default'] }
+])
 
-const PORT_OPTIONS = [
-  { label: '右', value: 'right' },
-  { label: '左', value: 'left' },
-  { label: '上', value: 'top' },
-  { label: '下', value: 'bottom' },
-  { label: '右上', value: 'top-right' },
-  { label: '右下', value: 'bottom-right' },
-  { label: '左上', value: 'top-left' },
-  { label: '左下', value: 'bottom-left' }
-]
+const PORT_OPTIONS = computed(() => [
+  { label: t('connection.port.right'), value: 'right' },
+  { label: t('connection.port.left'), value: 'left' },
+  { label: t('connection.port.top'), value: 'top' },
+  { label: t('connection.port.bottom'), value: 'bottom' },
+  { label: t('connection.port.topRight'), value: 'top-right' },
+  { label: t('connection.port.bottomRight'), value: 'bottom-right' },
+  { label: t('connection.port.topLeft'), value: 'top-left' },
+  { label: t('connection.port.bottomLeft'), value: 'bottom-left' },
+])
 
-const getFullTypeName = (type) => {
-  const map = {
-    'attack': '重击',
-    'dodge': '闪避',
-    'skill': '战技',
-    'link': '连携',
-    'ultimate': '终结技',
-    'execution': '处决',
-    'weapon': '武器',
-    'set': '套装'
-  }
-  return map[type] || '技能'
+function getFullTypeName(type) {
+  const key = `skillType.${type}`
+  const out = t(key)
+  return out === key ? t('skillType.unknown') : out
 }
 
 // ===================================================================================
@@ -328,10 +321,12 @@ const availableEffectOptions = computed(() => {
   })
 
   const getEffectName = (type) => {
-    if (EFFECT_NAMES[type]) return EFFECT_NAMES[type]
+    const key = `effects.name.${type}`
+    const translated = t(key)
+    if (translated !== key) return translated
     const exclusive = currentCharacter.value?.exclusive_buffs?.find(b => b.key === type)
     if (exclusive?.name) return exclusive.name
-    return type || 'Unknown'
+    return type || t('common.unknown')
   }
 
   return buildEffectBindingOptions(rowsRaw, { getEffectName })
@@ -375,11 +370,11 @@ const iconOptions = computed(() => {
       label: `★ ${buff.name}`, value: buff.key, path: buff.path
     }))
     if (allowed && allowed.length > 0) exclusiveOpts = exclusiveOpts.filter(opt => allowed.includes(opt.value))
-    if (exclusiveOpts.length > 0) groups.push({ label: ' 专属效果 ', options: exclusiveOpts })
+    if (exclusiveOpts.length > 0) groups.push({ label: t('effects.group.exclusive'), options: exclusiveOpts })
   }
 
   const processedKeys = new Set()
-  GROUP_DEFINITIONS.forEach(def => {
+  GROUP_DEFINITIONS.value.forEach(def => {
     const groupKeys = availableKeys.filter(key => {
       if (processedKeys.has(key)) return false
       if (def.keys && def.keys.includes(key)) return true
@@ -391,7 +386,7 @@ const iconOptions = computed(() => {
       groups.push({
         label: def.label,
         options: groupKeys.map(key => ({
-          label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]
+          label: getEffectDisplayName(key), value: key, path: store.iconDatabase[key]
         }))
       })
     }
@@ -400,9 +395,9 @@ const iconOptions = computed(() => {
   const remainingKeys = availableKeys.filter(k => !processedKeys.has(k))
   if (remainingKeys.length > 0) {
     groups.push({
-      label: '其他',
+      label: t('effects.group.other'),
       options: remainingKeys.map(key => ({
-        label: EFFECT_NAMES[key] || key, value: key, path: store.iconDatabase[key]
+        label: getEffectDisplayName(key), value: key, path: store.iconDatabase[key]
       }))
     })
   }
@@ -435,7 +430,7 @@ const relevantConnections = computed(() => {
         const otherActionWrap = store.getActionById(otherActionId)
         const otherAction = otherActionWrap?.node
         const otherCharId = otherActionWrap?.trackId
-        const otherActionName = otherAction?.name || '未知技能'
+        const otherActionName = otherAction?.name || t('common.unknownSkill')
 
         let myIconPath = null
         if (targetData.value) {
@@ -457,7 +452,7 @@ const relevantConnections = computed(() => {
 
         return {
           id: conn.id,
-          direction: isOutgoing ? '连向' : '来自',
+          direction: isOutgoing ? t('connection.direction.to') : t('connection.direction.from'),
           isOutgoing,
           rawConnection: conn,
           otherActionName,
@@ -505,9 +500,9 @@ function handleStartConnection(id, type) {
         <div class="left-group">
           <div class="header-icon-bar"></div>
           <h3 class="char-name">
-            {{ targetData ? targetData.name : '未选中技能' }}
+            {{ targetData ? targetData.name : t('propertiesPanel.noSelection') }}
           </h3>
-          <span v-if="targetData && isLibraryMode" class="mode-badge">全局模式</span>
+          <span v-if="targetData && isLibraryMode" class="mode-badge">{{ t('propertiesPanel.globalMode') }}</span>
         </div>
 
         <div class="right-group">
@@ -519,57 +514,57 @@ function handleStartConnection(id, type) {
       <div class="header-divider"></div>
     </div>
 
-    <div v-if="targetData" class="scrollable-content">
-      <div class="section-container tech-style">
-        <div class="panel-tag-mini">基础属性</div>
-        <div class="attribute-grid">
-          <div class="form-group compact">
-            <label>持续时间(s)</label>
-            <CustomNumberInput :model-value="targetData.duration" @update:model-value="val => updateActionProp('duration', val)" :step="0.1" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
-          </div>
-          <div class="form-group compact" v-if="currentSkillType === 'link'">
-            <label>冷却时间(s)</label>
-            <CustomNumberInput :model-value="targetData.cooldown" @update:model-value="val => updateActionProp('cooldown', val)" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
-          </div>
+      <div v-if="targetData" class="scrollable-content">
+        <div class="section-container tech-style">
+          <div class="panel-tag-mini">{{ t('propertiesPanel.sections.basic') }}</div>
+          <div class="attribute-grid">
+            <div class="form-group compact">
+              <label>{{ t('propertiesPanel.labels.durationS') }}</label>
+              <CustomNumberInput :model-value="targetData.duration" @update:model-value="val => updateActionProp('duration', val)" :step="0.1" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
+            </div>
+            <div class="form-group compact" v-if="currentSkillType === 'link'">
+              <label>{{ t('propertiesPanel.labels.cooldownS') }}</label>
+              <CustomNumberInput :model-value="targetData.cooldown" @update:model-value="val => updateActionProp('cooldown', val)" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
+            </div>
 
-          <div class="form-group compact" v-if="currentSkillType === 'link' && !isLibraryMode">
-            <label>触发窗口(s)</label>
-            <CustomNumberInput :model-value="targetData.triggerWindow || 0" @update:model-value="val => updateActionProp('triggerWindow', val)" :step="0.1" :border-color="HIGHLIGHT_COLORS.default" text-align="center"/>
-          </div>
+            <div class="form-group compact" v-if="currentSkillType === 'link' && !isLibraryMode">
+              <label>{{ t('propertiesPanel.labels.triggerWindowS') }}</label>
+              <CustomNumberInput :model-value="targetData.triggerWindow || 0" @update:model-value="val => updateActionProp('triggerWindow', val)" :step="0.1" :border-color="HIGHLIGHT_COLORS.default" text-align="center"/>
+            </div>
 
-          <div class="form-group compact" v-if="currentSkillType === 'skill'">
-            <label>技力消耗</label>
-            <CustomNumberInput :model-value="targetData.spCost" @update:model-value="val => updateActionProp('spCost', val)" :min="0" :border-color="HIGHLIGHT_COLORS.default" text-align="center"/>
-          </div>
+            <div class="form-group compact" v-if="currentSkillType === 'skill'">
+              <label>{{ t('propertiesPanel.labels.spCost') }}</label>
+              <CustomNumberInput :model-value="targetData.spCost" @update:model-value="val => updateActionProp('spCost', val)" :min="0" :border-color="HIGHLIGHT_COLORS.default" text-align="center"/>
+            </div>
 
-          <div class="form-group compact" v-if="currentSkillType === 'ultimate'">
-            <label>充能消耗</label>
-            <CustomNumberInput :model-value="targetData.gaugeCost" @update:model-value="val => updateActionProp('gaugeCost', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
-          </div>
+            <div class="form-group compact" v-if="currentSkillType === 'ultimate'">
+              <label>{{ t('propertiesPanel.labels.gaugeCost') }}</label>
+              <CustomNumberInput :model-value="targetData.gaugeCost" @update:model-value="val => updateActionProp('gaugeCost', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
+            </div>
 
-          <div class="form-group compact" v-if="!['execution','dodge','weapon','set'].includes(currentSkillType)">
-            <label>自身充能</label>
-            <CustomNumberInput :model-value="targetData.gaugeGain" @update:model-value="val => updateActionProp('gaugeGain', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
-          </div>
+            <div class="form-group compact" v-if="!['execution','dodge','weapon','set'].includes(currentSkillType)">
+              <label>{{ t('propertiesPanel.labels.gaugeGain') }}</label>
+              <CustomNumberInput :model-value="targetData.gaugeGain" @update:model-value="val => updateActionProp('gaugeGain', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
+            </div>
 
-          <div class="form-group compact" v-if="currentSkillType === 'skill'">
-            <label>队友充能</label>
-            <CustomNumberInput :model-value="targetData.teamGaugeGain" @update:model-value="val => updateActionProp('teamGaugeGain', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
-          </div>
+            <div class="form-group compact" v-if="currentSkillType === 'skill'">
+              <label>{{ t('propertiesPanel.labels.teamGaugeGain') }}</label>
+              <CustomNumberInput :model-value="targetData.teamGaugeGain" @update:model-value="val => updateActionProp('teamGaugeGain', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
+            </div>
 
-          <div class="form-group compact" v-if="currentSkillType === 'ultimate'">
-            <label>强化时间(s)</label>
-            <CustomNumberInput :model-value="targetData.enhancementTime || 0" @update:model-value="val => updateActionProp('enhancementTime', val)" :step="0.5" :min="0" activeColor="#b37feb" border-color="#b37feb" text-align="center"/></div>
+            <div class="form-group compact" v-if="currentSkillType === 'ultimate'">
+              <label>{{ t('propertiesPanel.labels.enhancementTimeS') }}</label>
+              <CustomNumberInput :model-value="targetData.enhancementTime || 0" @update:model-value="val => updateActionProp('enhancementTime', val)" :step="0.5" :min="0" activeColor="#b37feb" border-color="#b37feb" text-align="center"/></div>
+          </div>
         </div>
-      </div>
 
       <div v-if="!isWeaponLibraryMode && !isWeaponStatusMode && !isSetLibraryMode && currentSkillType !== 'dodge'" class="section-container tech-style border-red" @click="isTicksExpanded = !isTicksExpanded" style="cursor: pointer;">
-        <div class="panel-tag-mini red">伤害判定点 ({{ (targetData.damageTicks || []).length }})</div>
+        <div class="panel-tag-mini red">{{ t('propertiesPanel.damage.title') }} ({{ (targetData.damageTicks || []).length }})</div>
 
         <div class="section-header-tech">
           <div class="module-deco">
-            <span class="module-code">判定系统</span>
-            <span class="module-label">失衡: {{ totalStagger }} | 技力: {{ totalSpGain }}</span>
+            <span class="module-code">{{ t('propertiesPanel.damage.system') }}</span>
+            <span class="module-label">{{ t('propertiesPanel.damage.stagger') }}: {{ totalStagger }} | {{ t('propertiesPanel.damage.sp') }}: {{ totalSpGain }}</span>
           </div>
           <div class="spacer"></div>
           <button class="ea-btn ea-btn--icon ea-btn--icon-22 ea-btn--icon-plus ea-btn--icon-plus-red" @click.stop="addDamageTick">
@@ -579,7 +574,7 @@ function handleStartConnection(id, type) {
         </div>
 
         <div v-if="isTicksExpanded" class="section-content-tech" @click.stop>
-          <div v-if="!targetData.damageTicks || targetData.damageTicks.length === 0" class="empty-hint">暂无判定点</div>
+          <div v-if="!targetData.damageTicks || targetData.damageTicks.length === 0" class="empty-hint">{{ t('propertiesPanel.damage.empty') }}</div>
             <div v-for="(tick, index) in (targetData.damageTicks || [])" :key="index" class="tick-item red-theme">
               <div class="tick-header">
                 <span class="tick-idx">HIT {{ index + 1 }}</span>
@@ -587,21 +582,21 @@ function handleStartConnection(id, type) {
               </div>
               <div class="tick-row">
                 <div class="tick-col">
-                  <label>触发时间</label>
+                  <label>{{ t('propertiesPanel.damage.tickTime') }}</label>
                   <CustomNumberInput :model-value="tick.offset" @update:model-value="val => updateDamageTick(index, 'offset', val)" :step="0.1" :min="0" border-color="#ff7875" />
                 </div>
                 <div class="tick-col">
-                  <label>失衡值</label>
+                  <label>{{ t('propertiesPanel.damage.tickStagger') }}</label>
                   <CustomNumberInput :model-value="tick.stagger" @update:model-value="val => updateDamageTick(index, 'stagger', val)" :step="1" :min="0" border-color="#ff7875" text-align="center"/>
                 </div>
                 <div class="tick-col">
-                  <label>技力回复</label>
+                  <label>{{ t('propertiesPanel.damage.tickSpGain') }}</label>
                   <CustomNumberInput :model-value="tick.sp || 0" @update:model-value="val => updateDamageTick(index, 'sp', val)" :step="1" :min="0" border-color="#ffd700" text-align="center"/>
                 </div>
               </div>
               <div class="tick-row binding-row">
                 <div class="tick-col full-width">
-                  <label>绑定状态图标</label>
+                  <label>{{ t('propertiesPanel.damage.bindEffects') }}</label>
                   <el-select
                       :model-value="tick.boundEffects || []"
                       @update:model-value="val => updateDamageTick(index, 'boundEffects', val)"
@@ -609,7 +604,7 @@ function handleStartConnection(id, type) {
                       collapse-tags
                       collapse-tags-tooltip
                       popper-class="ea-tick-binding-popper"
-                      placeholder="选择要绑定的状态"
+                      :placeholder="t('propertiesPanel.damage.bindPlaceholder')"
                       size="small"
                       class="tick-select"
                       :disabled="availableEffectOptions.length === 0"
@@ -634,12 +629,12 @@ function handleStartConnection(id, type) {
       </div>
 
       <div v-if="!isWeaponLibraryMode && !isWeaponStatusMode && !isSetLibraryMode" class="section-container tech-style border-blue" @click="isBarsExpanded = !isBarsExpanded" style="cursor: pointer;">
-        <div class="panel-tag-mini blue">自定义时间条 ({{ customBarsList.length }})</div>
+        <div class="panel-tag-mini blue">{{ t('propertiesPanel.bars.title') }} ({{ customBarsList.length }})</div>
 
         <div class="section-header-tech">
           <div class="module-deco">
-            <span class="module-code">时序系统</span>
-            <span class="module-label">活跃条目: {{ customBarsList.length }}</span>
+            <span class="module-code">{{ t('propertiesPanel.bars.system') }}</span>
+            <span class="module-label">{{ t('propertiesPanel.bars.activeItems') }}: {{ customBarsList.length }}</span>
           </div>
           <div class="spacer"></div>
           <button class="ea-btn ea-btn--icon ea-btn--icon-22 ea-btn--icon-plus ea-btn--icon-plus-cyan" @click.stop="addCustomBar">
@@ -649,19 +644,19 @@ function handleStartConnection(id, type) {
         </div>
 
         <div v-if="isBarsExpanded" class="section-content-tech" @click.stop>
-          <div v-if="customBarsList.length === 0" class="empty-hint">暂无时间条</div>
+          <div v-if="customBarsList.length === 0" class="empty-hint">{{ t('propertiesPanel.bars.empty') }}</div>
             <div v-for="(bar, index) in customBarsList" :key="index" class="tick-item blue-theme">
               <div class="tick-header">
-                <input type="text" :value="bar.text" @input="e => updateCustomBarItem(index, 'text', e.target.value)" placeholder="条目名称" class="simple-input">
+                <input type="text" :value="bar.text" @input="e => updateCustomBarItem(index, 'text', e.target.value)" :placeholder="t('propertiesPanel.bars.namePlaceholder')" class="simple-input">
                 <button type="button" class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeCustomBar(index)">×</button>
               </div>
               <div class="tick-row">
                 <div class="tick-col">
-                  <label>触发时间(s)</label>
+                  <label>{{ t('propertiesPanel.bars.offsetS') }}</label>
                   <CustomNumberInput :model-value="bar.offset" @update:model-value="val => updateCustomBarItem(index, 'offset', val)" :step="0.1" :min="0" border-color="#00e5ff" />
                 </div>
                 <div class="tick-col">
-                  <label>持续时间(s)</label>
+                  <label>{{ t('propertiesPanel.bars.durationS') }}</label>
                   <CustomNumberInput :model-value="bar.duration" @update:model-value="val => updateCustomBarItem(index, 'duration', val)" :step="0.5" :min="0" border-color="#00e5ff" />
                 </div>
             </div>
@@ -670,7 +665,7 @@ function handleStartConnection(id, type) {
       </div>
 
       <div v-if="!isWeaponLibraryMode && !isWeaponStatusMode && !isSetLibraryMode && currentSkillType !== 'dodge'" class="section-container tech-style">
-        <div class="panel-tag-mini">状态效果与排布</div>
+        <div class="panel-tag-mini">{{ t('propertiesPanel.effects.title') }}</div>
         <div class="anomalies-editor-container" style="background: transparent; border-color: rgba(255,255,255,0.1); margin-top: 10px;">
           <draggable v-model="anomalyRows" item-key="rowIndex" class="rows-container" handle=".row-handle" :animation="200">
             <template #item="{ element: row, index: rowIndex }">
@@ -686,7 +681,7 @@ function handleStartConnection(id, type) {
                     </div>
                   </template>
                 </draggable>
-                <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--icon-plus" @click="addEffectToRow(rowIndex)" title="追加">
+                <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--icon-plus" @click="addEffectToRow(rowIndex)" :title="t('propertiesPanel.effects.addEffect')">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -700,22 +695,23 @@ function handleStartConnection(id, type) {
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>添加新状态行</span>
+            <span>{{ t('propertiesPanel.effects.addRow') }}</span>
           </button>
         </div>
 
         <div v-if="editingEffectData && currentSelectedCoords" class="effect-detail-editor-embedded">
           <div class="editor-arrow"></div>
           <div class="editor-header-mini">
-            <div class="header-tag"></div> <span>编辑 [ 行{{ currentSelectedCoords.rowIndex + 1 }} : 列{{ currentSelectedCoords.colIndex + 1 }} ]</span>
+            <div class="header-tag"></div>
+            <span>{{ t('propertiesPanel.effects.editing', { row: currentSelectedCoords.rowIndex + 1, col: currentSelectedCoords.colIndex + 1 }) }}</span>
             <div class="spacer"></div>
-            <button class="close-btn" @click="isLibraryMode ? (localSelectedAnomalyId = null) : store.setSelectedAnomalyId(null)">关闭</button>
+            <button class="close-btn" @click="isLibraryMode ? (localSelectedAnomalyId = null) : store.setSelectedAnomalyId(null)">{{ t('common.close') }}</button>
           </div>
 
           <div class="editor-grid">
             <div class="full-width-col">
-              <label>类型</label>
-              <el-select :model-value="editingEffectData.type" @update:model-value="(val) => updateEffectProp('type', val)" placeholder="选择状态" filterable size="small" class="effect-select-dark">
+              <label>{{ t('common.type') }}</label>
+              <el-select :model-value="editingEffectData.type" @update:model-value="(val) => updateEffectProp('type', val)" :placeholder="t('propertiesPanel.effects.selectPlaceholder')" filterable size="small" class="effect-select-dark">
                 <el-option-group v-for="group in iconOptions" :key="group.label" :label="group.label">
                   <el-option v-for="item in group.options" :key="item.value" :label="item.label" :value="item.value">
                     <div class="opt-row">
@@ -727,15 +723,15 @@ function handleStartConnection(id, type) {
             </div>
 
             <div>
-              <label>触发时间</label>
+              <label>{{ t('common.triggerTime') }}</label>
               <CustomNumberInput :model-value="editingEffectData.offset || 0" @update:model-value="val => updateEffectProp('offset', val)" :step="0.1" :min="0" :activeColor="HIGHLIGHT_COLORS.default"/>
             </div>
             <div>
-              <label>层数</label>
+              <label>{{ t('common.stacks') }}</label>
               <CustomNumberInput :model-value="editingEffectData.stacks" @update:model-value="val => updateEffectProp('stacks', val)" :min="1" :activeColor="HIGHLIGHT_COLORS.default"/>
             </div>
             <div>
-              <label>持续时间</label>
+              <label>{{ t('common.duration') }}</label>
               <CustomNumberInput :model-value="editingEffectData.duration" @update:model-value="val => updateEffectProp('duration', val)" :min="0" :step="0.5" :activeColor="HIGHLIGHT_COLORS.default"/>
             </div>
           </div>
@@ -743,22 +739,22 @@ function handleStartConnection(id, type) {
           <div class="editor-actions">
             <button v-if="!isLibraryMode" class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent" @click.stop="handleStartConnection(activeAnomalyId, 'effect')"
                     :class="{ 'is-linking': connectionHandler.isDragging.value && connectionHandler.state.value.sourceId === activeAnomalyId }">
-              连线
+              {{ t('connection.connect') }}
             </button>
-            <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeEffect(currentSelectedCoords.rowIndex, currentSelectedCoords.colIndex)">删除</button>
+            <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeEffect(currentSelectedCoords.rowIndex, currentSelectedCoords.colIndex)">{{ t('common.delete') }}</button>
           </div>
         </div>
       </div>
 
       <div v-if="!isLibraryMode && !isWeaponLibraryMode && !isWeaponStatusMode" class="section-container tech-style">
-        <div class="panel-tag-mini">技能连线关系</div>
+        <div class="panel-tag-mini">{{ t('propertiesPanel.connections.title') }}</div>
 
         <div class="connection-header-group">
           <div class="link-ctrl-deco">
             <div class="ctrl-bar"></div>
             <div class="ctrl-info">
-              <span class="ctrl-label">连线控制系统</span>
-              <span class="ctrl-count">当前连线: {{ relevantConnections.length }}</span>
+              <span class="ctrl-label">{{ t('propertiesPanel.connections.system') }}</span>
+              <span class="ctrl-count">{{ t('propertiesPanel.connections.currentCount') }}: {{ relevantConnections.length }}</span>
             </div>
           </div>
 
@@ -766,11 +762,11 @@ function handleStartConnection(id, type) {
 
           <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent" @click.stop="handleStartConnection(store.selectedActionId, 'action')" :class="{ 'is-linking': connectionHandler.isDragging.value && connectionHandler.state.value.sourceId === store.selectedActionId }">
             <span class="plus-icon"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
-            {{ (connectionHandler.isDragging.value) ? '选择目标' : '新建连线' }}
+            {{ (connectionHandler.isDragging.value) ? t('propertiesPanel.connections.chooseTarget') : t('propertiesPanel.connections.new') }}
           </button>
         </div>
 
-        <div v-if="relevantConnections.length === 0" class="empty-hint">无连线</div>
+        <div v-if="relevantConnections.length === 0" class="empty-hint">{{ t('propertiesPanel.connections.empty') }}</div>
 
         <div class="connections-list">
           <div v-for="conn in relevantConnections" :key="conn.id" class="connection-card"
@@ -779,13 +775,13 @@ function handleStartConnection(id, type) {
             <div class="conn-vis">
               <div class="node">
                 <img v-if="conn.isOutgoing ? conn.myIconPath : conn.otherIconPath" :src="conn.isOutgoing ? conn.myIconPath : conn.otherIconPath" class="icon-s"/>
-                <span class="text-s">{{ conn.isOutgoing ? (targetData.name || '本技能') : conn.otherActionName }}</span>
+                <span class="text-s">{{ conn.isOutgoing ? (targetData.name || t('propertiesPanel.connections.thisSkill')) : conn.otherActionName }}</span>
               </div>
               <div class="direction-tag" :class="conn.isOutgoing ? 'to' : 'from'">
                 {{ conn.direction }}
               </div>
               <div class="node right">
-                <span class="text-s">{{ conn.isOutgoing ? conn.otherActionName : (targetData.name || '本技能') }}</span>
+                <span class="text-s">{{ conn.isOutgoing ? conn.otherActionName : (targetData.name || t('propertiesPanel.connections.thisSkill')) }}</span>
                 <img v-if="conn.isOutgoing ? conn.otherIconPath : conn.myIconPath" :src="conn.isOutgoing ? conn.otherIconPath : conn.myIconPath" class="icon-s"/>
               </div>
             </div>
@@ -793,14 +789,14 @@ function handleStartConnection(id, type) {
             <div class="conn-row-ports">
               <div class="port-config">
                 <div class="port-select-wrapper">
-                  <span class="port-label">出</span>
+                  <span class="port-label">{{ t('propertiesPanel.connections.outPort') }}</span>
                   <select class="mini-select" :value="conn.rawConnection.sourcePort || 'right'" @change="(e) => updateConnPort(conn.id, 'source', e)">
                     <option v-for="opt in PORT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                   </select>
                 </div>
                 <span class="port-arrow">>></span>
                 <div class="port-select-wrapper">
-                  <span class="port-label">入</span>
+                  <span class="port-label">{{ t('propertiesPanel.connections.inPort') }}</span>
                   <select class="mini-select" :value="conn.rawConnection.targetPort || 'left'" @change="(e) => updateConnPort(conn.id, 'target', e)">
                     <option v-for="opt in PORT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                   </select>
@@ -811,13 +807,13 @@ function handleStartConnection(id, type) {
             <div class="conn-row-actions">
               <template v-if="conn.isOutgoing && conn.rawConnection.fromEffectIndex != null">
                 <div class="ea-btn ea-btn--glass-rect ea-btn--glass-rect-tag ea-btn--accent-gold ea-btn--glass-rect-hover-accent"
-                     :class="{ 'active': conn.rawConnection.isConsumption }"
-                     @click="store.updateConnection(conn.id, { isConsumption: !conn.rawConnection.isConsumption })">
-                  {{ conn.rawConnection.isConsumption ? '被消耗' : '消耗' }}
+                 :class="{ 'active': conn.rawConnection.isConsumption }"
+                 @click="store.updateConnection(conn.id, { isConsumption: !conn.rawConnection.isConsumption })">
+                  {{ conn.rawConnection.isConsumption ? t('propertiesPanel.connections.consumed') : t('propertiesPanel.connections.consume') }}
                 </div>
 
                 <div v-if="conn.rawConnection.isConsumption" class="offset-mini">
-                  <span style="color: #666; font-size: 10px; margin-right: 2px; white-space: nowrap;">提前</span>
+                  <span style="color: #666; font-size: 10px; margin-right: 2px; white-space: nowrap;">{{ t('propertiesPanel.connections.offset') }}</span>
                   <CustomNumberInput
                       :model-value="conn.rawConnection.consumptionOffset || 0"
                       @update:model-value="val => store.updateConnection(conn.id, { consumptionOffset: val })"

@@ -1,0 +1,487 @@
+{
+  "app": {
+    "name": "Endaxis",
+    "restoreProgress": "已恢复上次的进度"
+  },
+  "common": {
+    "about": "关于",
+    "cancel": "取消",
+    "close": "关闭",
+    "copy": "复制",
+    "delete": "删除",
+    "default": "默认",
+    "export": "导出",
+    "all": "全部",
+    "language": "Language",
+    "load": "加载",
+    "moveDown": "下移",
+    "moveUp": "上移",
+    "new": "新",
+    "noneParen": "（无）",
+    "off": "关闭",
+    "old": "旧",
+    "on": "开启",
+    "paste": "粘贴",
+    "receive": "接收",
+    "reset": "重置",
+    "type": "类型",
+    "triggerTime": "触发时间",
+    "stacks": "层数",
+    "duration": "持续时间",
+    "unequip": "卸下",
+    "uncategorized": "未分类",
+    "unknown": "未知",
+    "unknownSkill": "未知技能",
+    "levelSuffix": "级",
+    "size": {
+      "large": "大",
+      "medium": "中",
+      "small": "小"
+    },
+    "warning": "警告"
+  },
+  "locale": {
+    "en": "English",
+    "ru": "Русский",
+    "zhCN": "简体中文"
+  },
+  "timeline": {
+    "about": {
+      "friendMap": "终末地互动地图",
+      "friendOne": "终末地一图流",
+      "friendsTitle": "友情链接",
+      "resourceRepo": "项目仓库",
+      "resourceText": "文本教程",
+      "resourceVideo": "视频教程",
+      "resourcesTitle": "相关资源",
+      "startUsing": "开始使用",
+      "systemInfoTitle": "系统信息",
+      "welcome": "欢迎使用 ENDAXIS"
+    },
+    "export": {
+      "copyCode": "复制数据码",
+      "dialogTitle": "导出设置",
+      "durationHintMax": "最大支持 {max}s",
+      "durationLabel": "导出时长 (秒)",
+      "exportImage": "导出图片",
+      "exportJson": "导出 JSON",
+      "failed": "导出失败：{msg}",
+      "filenameLabel": "文件名称",
+      "filenamePlaceholder": "请输入文件名",
+      "imageExported": "长图已导出：{filename}",
+      "rendering": "正在渲染前 {seconds} 秒的长图..."
+    },
+    "header": {
+      "aboutTooltip": "查看教程与项目信息",
+      "languageTooltip": "Language",
+      "loadTooltip": "导入 .json 项目文件或 .png 图片",
+      "receiveTooltip": "粘贴数据码导入项目",
+      "resetTooltip": "清空所有内容"
+    },
+    "import": {
+      "dialogAlert": "警告：导入将覆盖当前所有工程数据，建议先保存。",
+      "dialogConfirm": "确认覆盖并导入",
+      "dialogHint": "请粘贴数据码：",
+      "dialogPlaceholder": "在此粘贴长字符串...",
+      "dialogTitle": "导入项目",
+      "dropHint": "释放文件以导入",
+      "failed": "加载失败：{msg}",
+      "pngNoData": "该图片未包含有效的 Endaxis 项目数据",
+      "pngSuccess": "从图片加载项目成功！",
+      "projectLoaded": "项目加载成功！"
+    },
+    "share": {
+      "copied": "分享码已复制到剪贴板！可发给好友导入。",
+      "copyFailed": "分享码生成失败：{msg}",
+      "inputRequired": "请输入分享码",
+      "imported": "成功导入分享的方案！",
+      "importFailed": "分享码格式错误或数据损坏"
+    },
+    "attack": {
+      "enhancedAttack": "强化重击"
+    },
+    "loading": "正在加载资源...",
+    "reset": {
+      "confirm": "确定要清空当前所有进度吗？这将清空所有方案数据。",
+      "confirmButton": "确定清空",
+      "done": "项目已重置"
+    },
+    "scenario": {
+      "addTooltip": "新建方案",
+      "defaultName": "方案 {index}",
+      "copySuffix": "副本",
+      "deleteConfirm": "确定要删除该方案吗？此操作无法撤销。",
+      "deleteTitle": "删除方案",
+      "deleteTooltip": "删除当前方案",
+      "deleted": "方案已删除",
+      "duplicateTooltip": "复制当前方案",
+      "duplicated": "方案已复制",
+      "limit": "方案数量已达上限 ({max})",
+      "renameTooltip": "重命名当前方案",
+      "unnamed": "未命名方案"
+    },
+    "shortcut": {
+      "boxSelectOff": "框选模式：关闭",
+      "boxSelectOn": "框选模式：开启",
+      "connectionTool": "连接工具：{state}",
+      "copied": "已复制",
+      "cursorGuideOff": "辅助线：隐藏",
+      "cursorGuideOn": "辅助线：开启",
+      "pasted": "已粘贴",
+      "redo": "已重做",
+      "snapMode01": "0.1s",
+      "snapModeFrame": "1帧 (1/60s)",
+      "snapPrecision": "吸附精度：{mode}",
+      "undo": "已撤销"
+    }
+  },
+  "timelineGrid": {
+    "action": {
+      "locked": "该动作已锁定位置"
+    },
+    "alignGuide": {
+      "alignLeft": "左对齐",
+      "alignRight": "右对齐",
+      "snapBack": "接后方",
+      "snapFront": "接前方"
+    },
+    "alignResult": {
+      "alignedLeft": "已左对齐",
+      "alignedRight": "已右对齐",
+      "snappedBack": "已拼接至后方",
+      "snappedFront": "已拼接至前方",
+      "unchanged": "位置未改变"
+    },
+    "cursor": {
+      "sp": "技力",
+      "stagger": "失衡"
+    },
+    "cycleBoundary": "循环分界线",
+    "prep": {
+      "title": "战前准备",
+      "expand": "点击展开",
+      "collapseTitle": "收起战前准备区",
+      "setDurationTitle": "设置战前准备时长"
+    },
+    "ruler": {
+      "gameTimeCollapseTitle": "游戏时间（点击折叠）",
+      "realTimeTitle": "现实时间",
+      "gameTimeExpandTitle": "展开游戏时间轴"
+    },
+    "elementFilter": {
+      "all": "全部",
+      "blaze": "灼热",
+      "cold": "寒冷",
+      "emag": "电磁",
+      "nature": "自然",
+      "physical": "物理"
+    },
+    "equipmentDialog": {
+      "allCategories": "全部分类",
+      "allLevels": "全部等级",
+      "empty": "没有找到匹配的装备",
+      "refine": "精锻",
+      "refineBase": "初始",
+      "refineTier": "精{tier}",
+      "searchPlaceholder": "搜索装备名称/ID...",
+      "title": "选择装备 - {slot}",
+      "uncategorized": "未分类",
+      "unequipTooltip": "卸下当前装备"
+    },
+    "equipmentSlot": {
+      "accessory1": "配件 1",
+      "accessory2": "配件 2",
+      "armor": "护甲",
+      "equipment": "装备",
+      "gloves": "护手"
+    },
+    "operatorDialog": {
+      "clearTrack": "清空当前轨道",
+      "empty": "没有找到匹配的干员",
+      "inTeam": "已上场",
+      "searchPlaceholder": "搜索干员名称...",
+      "title": "更换干员"
+    },
+    "selection": {
+      "deleted": "已删除",
+      "selectedCount": "选中了 {count} 个动作"
+    },
+    "toolbar": {
+      "boxSelect": "框选 (Ctrl+B)",
+      "compilerToggle": "新编译器 (Ctrl+G)",
+      "connectionTool": "连线工具 (Alt+L)",
+      "cursorGuide": "辅助线 (Ctrl+G)",
+      "snapPrecision": "吸附精度 (Alt+S)"
+    },
+    "track": {
+      "changeOperatorTooltip": "点击更换干员",
+      "operatorAlreadyInUse": "该干员已在另一条轨道上！",
+      "selectOperator": "请选择干员",
+      "selectWeaponTooltip": "选择武器",
+      "setBonusActive": "已激活套装效果"
+    },
+    "weaponDialog": {
+      "empty": "没有找到匹配的武器",
+      "equipped": "已装备",
+      "searchPlaceholder": "搜索武器名称...",
+      "title": "选择武器",
+      "unequipTooltip": "卸下当前武器"
+    }
+  },
+  "actionLibrary": {
+    "fallback": {
+      "noEquip": "未装备",
+      "noOperator": "未选择干员",
+      "noWeapon": "未装备武器"
+    },
+    "panels": {
+      "operatorStats": "干员数值",
+      "weaponStats": "武器数值",
+      "equipmentRefine": "装备精锻"
+    },
+    "labels": {
+      "initialCharge": "初始充能",
+      "maxCharge": "充能上限",
+      "chargeEfficiency": "充能效率",
+      "linkCdReduction": "连携技冷却缩减",
+      "originiumArtsPower": "源石技艺强度",
+      "commonSlot1": "通用词条 1",
+      "commonSlot2": "通用词条 2",
+      "exclusiveBuff": "专属 BUFF",
+      "armor": "护甲",
+      "gloves": "护手",
+      "accessory1": "配件 1",
+      "accessory2": "配件 2"
+    },
+    "section": {
+      "weaponBuffLibrary": "武器 BUFF 库",
+      "setBuffLibrary": "套装 BUFF 库",
+      "operatorSkillLibrary": "干员技能库"
+    },
+    "hints": {
+      "noRefineNon70": "非 Lv70 无精锻",
+      "dragWeaponBuff": "拖拽武器 BUFF 到轨道，拖拽位置即为开始时间",
+      "dragSetBuff": "拖拽 BUFF 到轨道，拖拽位置即为开始时间",
+      "clickOrDrag": "点击编辑基础数值 / 拖拽排轴"
+    },
+    "suffix": {
+      "equipment": "装备"
+    },
+    "tabs": {
+      "operator": "干员",
+      "set": "装备",
+      "setNeedEquip": "需要先装备任意装备",
+      "weapon": "武器",
+      "weaponNeedSelect": "需要为当前干员选择武器"
+    }
+  },
+  "skillType": {
+    "attack": "重击",
+    "dodge": "闪避",
+    "execution": "处决",
+    "skill": "战技",
+    "link": "连携",
+    "ultimate": "终结技",
+    "weapon": "武器",
+    "set": "套装",
+    "unknown": "技能"
+  },
+  "enemyTier": {
+    "normal": "普通",
+    "elite": "进阶",
+    "champion": "精英",
+    "boss": "领袖"
+  },
+  "weapon": {
+    "skill": "武器技能",
+    "effect": "武器效果"
+  },
+  "contextMenu": {
+    "lockPosition": "锁定位置",
+    "unlockPosition": "解锁位置",
+    "disableCalc": "禁用 (不计算)",
+    "enableCalc": "启用 (计算)",
+    "color": "颜色",
+    "connectionSettings": "连线设置",
+    "setSourcePort": "设置 出点",
+    "setTargetPort": "设置 入点",
+    "globalOps": "全局操作",
+    "addCycleBoundary": "添加循环分界线",
+    "addSwitchEvent": "在此处切人..."
+  },
+  "connection": {
+    "connect": "连线",
+    "dragToConnect": "拖拽连线",
+    "deleteHint": "左键选中后按 Delete 删除",
+    "direction": {
+      "to": "连向",
+      "from": "来自"
+    },
+    "port": {
+      "right": "右",
+      "left": "左",
+      "top": "上",
+      "bottom": "下",
+      "topRight": "右上",
+      "bottomRight": "右下",
+      "topLeft": "左上",
+      "bottomLeft": "左下"
+    },
+    "portPosition": {
+      "topLeft": "左上",
+      "top": "上方",
+      "topRight": "右上",
+      "left": "左侧",
+      "center": "中心",
+      "right": "右侧",
+      "bottomLeft": "左下",
+      "bottom": "下方",
+      "bottomRight": "右下"
+    }
+  },
+  "effects": {
+    "group": {
+      "exclusive": "专属效果",
+      "physical": "物理异常",
+      "attach": "元素附着",
+      "burst": "元素爆发",
+      "status": "异常状态",
+      "other": "其他"
+    },
+    "name": {
+      "break": "破防",
+      "armor_break": "碎甲",
+      "stagger": "猛击",
+      "knockdown": "倒地",
+      "knockup": "击飞",
+      "blaze_attach": "灼热附着",
+      "emag_attach": "电磁附着",
+      "cold_attach": "寒冷附着",
+      "nature_attach": "自然附着",
+      "blaze_burst": "灼热爆发",
+      "emag_burst": "电磁爆发",
+      "cold_burst": "寒冷爆发",
+      "nature_burst": "自然爆发",
+      "burning": "燃烧",
+      "conductive": "导电",
+      "frozen": "冻结",
+      "ice_shatter": "碎冰",
+      "corrosion": "腐蚀",
+      "default": "默认图标"
+    }
+  },
+  "propertiesPanel": {
+    "noSelection": "未选中技能",
+    "globalMode": "全局模式",
+    "sections": {
+      "basic": "基础属性"
+    },
+    "labels": {
+      "durationS": "持续时间(s)",
+      "cooldownS": "冷却时间(s)",
+      "triggerWindowS": "触发窗口(s)",
+      "spCost": "技力消耗",
+      "gaugeCost": "充能消耗",
+      "gaugeGain": "自身充能",
+      "teamGaugeGain": "队友充能",
+      "enhancementTimeS": "强化时间(s)"
+    },
+    "damage": {
+      "title": "伤害判定点",
+      "system": "判定系统",
+      "stagger": "失衡",
+      "sp": "技力",
+      "empty": "暂无判定点",
+      "tickTime": "触发时间",
+      "tickStagger": "失衡值",
+      "tickSpGain": "技力回复",
+      "bindEffects": "绑定状态图标",
+      "bindPlaceholder": "选择要绑定的状态"
+    },
+    "bars": {
+      "title": "自定义时间条",
+      "system": "时序系统",
+      "activeItems": "活跃条目",
+      "empty": "暂无时间条",
+      "namePlaceholder": "条目名称",
+      "offsetS": "触发时间(s)",
+      "durationS": "持续时间(s)"
+    },
+    "effects": {
+      "title": "状态效果与排布",
+      "addEffect": "追加",
+      "addRow": "添加新状态行",
+      "editing": "编辑 [ 行{row} : 列{col} ]",
+      "selectPlaceholder": "选择状态"
+    },
+    "connections": {
+      "title": "技能连线关系",
+      "system": "连线控制系统",
+      "currentCount": "当前连线",
+      "chooseTarget": "选择目标",
+      "new": "新建连线",
+      "empty": "无连线",
+      "thisSkill": "本技能",
+      "outPort": "出",
+      "inPort": "入",
+      "consume": "消耗",
+      "consumed": "被消耗",
+      "offset": "提前"
+    }
+  },
+  "resourceMonitor": {
+    "sections": {
+      "enemy": "敌人属性",
+      "team": "队伍属性"
+    },
+    "labels": {
+      "maxStagger": "失衡上限",
+      "staggerNodes": "失衡节点",
+      "nodeDuration": "踉跄时长",
+      "breakDuration": "失衡时长",
+      "executionRecovery": "处决回复",
+      "initialSp": "初始技力",
+      "spPerSecond": "回复 / 秒"
+    },
+    "sp": {
+      "insufficient": "不足"
+    },
+    "enemy": {
+      "custom": "自定义敌人",
+      "unknown": "未知敌人",
+      "clickToChange": "点击更换敌人",
+      "dialogTitle": "选择敌人",
+      "searchPlaceholder": "搜索敌人...",
+      "specialGroup": "特殊",
+      "customDesc": "手动调整属性数值",
+      "desc": "上限:{max} | 节点:{nodes}",
+      "empty": "未找到相关敌人"
+    }
+  },
+  "stats": {
+    "primary_ability": "主能力",
+    "secondary_ability": "副能力",
+    "strength": "力量",
+    "agility": "敏捷",
+    "intellect": "智识",
+    "will": "意志",
+    "attack": "攻击",
+    "hp": "生命",
+    "crit_rate": "暴击率",
+    "blaze_dmg": "灼热伤害",
+    "emag_dmg": "电磁伤害",
+    "cold_dmg": "寒冷伤害",
+    "nature_dmg": "自然伤害",
+    "healing_effect": "治疗效果",
+    "physical_dmg": "物理伤害",
+    "arts_dmg": "法术伤害",
+    "originium_arts_power": "源石技艺强度",
+    "ult_charge_eff": "终结技充能效率",
+    "link_cd_reduction": "连携冷却缩减"
+  },
+  "actionItem": {
+    "tickTooltip": "时间: {time}\n失衡值: {stagger}\n技力回复: {sp}",
+    "lockedTitle": "位置已锁定",
+    "disabledTitle": "已禁用：不参与计算"
+  }
+}

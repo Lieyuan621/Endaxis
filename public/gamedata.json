@@ -473,35 +473,35 @@
             "type": "pograni_buff",
             "stacks": 1,
             "duration": 0,
-            "offset": 0,
+            "offset": 2.53,
             "_id": "m9q4vrs"
           },
           {
             "type": "pograni_buff",
             "stacks": 2,
             "duration": 0,
-            "offset": 0,
+            "offset": 2.53,
             "_id": "dy0miki"
           },
           {
             "type": "pograni_buff",
             "stacks": 3,
             "duration": 0,
-            "offset": 0,
+            "offset": 2.53,
             "_id": "jnrk1xi"
           },
           {
             "type": "pograni_buff",
             "stacks": 4,
             "duration": 0,
-            "offset": 0,
+            "offset": 2.53,
             "_id": "vv7yqfc"
           },
           {
             "type": "pograni_buff",
             "stacks": 5,
             "duration": 0,
-            "offset": 0,
+            "offset": 2.53,
             "_id": "vkah20e"
           }
         ]
@@ -1759,7 +1759,7 @@
         {
           "offset": 2,
           "sp": 0,
-          "stagger": 0,
+          "stagger": 20,
           "boundEffects": [
             "i0pv4fq",
             "lybx0u9",
@@ -8144,15 +8144,6 @@
             "_id": "crb1yuu",
             "offset": 0.7
           }
-        ],
-        [
-          {
-            "_id": "1aphc8y",
-            "type": "cold_burst",
-            "stacks": 1,
-            "duration": 0,
-            "offset": 0
-          }
         ]
       ],
       "skill_teamGaugeGain": 6.5,
@@ -8868,7 +8859,7 @@
           "size": "large"
         },
         {
-          "modifierId": "attack",
+          "modifierId": "crit_rate",
           "size": "large"
         }
       ],
@@ -9107,7 +9098,7 @@
           "size": "medium"
         },
         {
-          "modifierId": "arts_dmg",
+          "modifierId": "ult_charge_eff",
           "size": "medium"
         }
       ],
@@ -10212,30 +10203,32 @@
       "icon": "/equipment/item_equip_t4_suit_usp02_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
           "values": [
-            0,
-            0,
-            0,
-            0
+            20.5,
+            22.6,
+            24.6,
+            26.7
           ]
         }
       }
@@ -10249,30 +10242,32 @@
       "icon": "/equipment/item_equip_t4_suit_usp02_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
-            0,
-            0,
-            0,
-            0
+            20,
+            22,
+            24,
+            26
           ]
         }
       }
@@ -10362,30 +10357,32 @@
       "icon": "/equipment/item_equip_t4_suit_usp02_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
           "values": [
-            0,
-            0,
-            0,
-            0
+            20.5,
+            22.6,
+            24.6,
+            26.7
           ]
         }
       }
@@ -10436,30 +10433,32 @@
       "icon": "/equipment/item_equip_t4_suit_burst01_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
           "values": [
-            0,
-            0,
-            0,
-            0
+            12.3,
+            13.6,
+            14.8,
+            16
           ]
         }
       }
@@ -11768,30 +11767,32 @@
       "icon": "/equipment/item_equip_t4_suit_attri01_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
           "values": [
-            0,
-            0,
-            0,
-            0
+            12.3,
+            13.6,
+            14.8,
+            16
           ]
         }
       }
@@ -15396,16 +15397,16 @@
     "equipmentTemplates": {
       "armor": {
         "primary1": [
-          0,
-          0,
-          0,
-          0
+          87,
+          95,
+          104,
+          113
         ],
         "primary2": [
-          0,
-          0,
-          0,
-          0
+          58,
+          63,
+          69,
+          75
         ],
         "primary1Single": [
           0,
@@ -15416,16 +15417,16 @@
       },
       "gloves": {
         "primary1": [
-          0,
-          0,
-          0,
-          0
+          65,
+          71,
+          78,
+          84
         ],
         "primary2": [
-          0,
-          0,
-          0,
-          0
+          43,
+          47,
+          51,
+          55
         ],
         "primary1Single": [
           0,

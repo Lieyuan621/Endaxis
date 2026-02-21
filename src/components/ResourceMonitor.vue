@@ -4,8 +4,10 @@ import { useTimelineStore } from '../stores/timelineStore.js'
 import { storeToRefs } from 'pinia'
 import CustomNumberInput from './CustomNumberInput.vue'
 import { Search } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 
 const store = useTimelineStore()
+const { t } = useI18n({ useScope: 'global' })
 
 const { enemyDatabase, enemyCategories } = storeToRefs(store)
 const ENEMY_TIERS = store.ENEMY_TIERS
@@ -34,15 +36,17 @@ const COLOR_SP_MAIN = '#ffd700'
 const COLOR_SP_WARN = '#ff4d4f'
 
 // === 敌人选择器逻辑 ===
+const CATEGORY_ALL = '__ALL__'
+const CATEGORY_UNCATEGORIZED = '__UNCAT__'
 const isEnemySelectorVisible = ref(false)
 const enemySearchQuery = ref('')
-const activeCategoryTab = ref('ALL')
+const activeCategoryTab = ref(CATEGORY_ALL)
 
 const activeEnemyInfo = computed(() => {
   if (store.activeEnemyId === 'custom') {
-    return { name: '自定义敌人', avatar: '', isCustom: true }
+    return { name: t('resourceMonitor.enemy.custom'), avatar: '', isCustom: true }
   }
-  return store.enemyDatabase.find(e => e.id === store.activeEnemyId) || { name: '未知敌人', avatar: '' }
+  return store.enemyDatabase.find(e => e.id === store.activeEnemyId) || { name: t('resourceMonitor.enemy.unknown'), avatar: '' }
 })
 
 const groupedEnemyList = computed(() => {
@@ -55,8 +59,8 @@ const groupedEnemyList = computed(() => {
 
   const groups = {}
 
-  const targetCategories = (activeCategoryTab.value === 'ALL')
-      ? [...enemyCategories.value, '未分类']
+  const targetCategories = (activeCategoryTab.value === CATEGORY_ALL)
+      ? [...enemyCategories.value, CATEGORY_UNCATEGORIZED]
       : [activeCategoryTab.value]
 
   targetCategories.forEach(cat => { groups[cat] = [] })
@@ -64,7 +68,7 @@ const groupedEnemyList = computed(() => {
   list.forEach(enemy => {
     let cat = enemy.category
     if (!cat || !enemyCategories.value.includes(cat)) {
-      cat = '未分类'
+      cat = CATEGORY_UNCATEGORIZED
     }
 
     if (groups[cat]) {
@@ -78,7 +82,11 @@ const groupedEnemyList = computed(() => {
     const enemyList = groups[cat]
     if (enemyList && enemyList.length > 0) {
       enemyList.sort((a, b) => (TIER_WEIGHTS[b.tier] || 0) - (TIER_WEIGHTS[a.tier] || 0))
-      result.push({ name: cat, list: enemyList })
+      result.push({
+        id: cat,
+        name: cat === CATEGORY_UNCATEGORIZED ? t('common.uncategorized') : cat,
+        list: enemyList
+      })
     }
   })
 
@@ -92,7 +100,9 @@ function getTierColor(tierValue) {
 
 function getTierLabel(tierValue) {
   const tier = ENEMY_TIERS.find(t => t.value === tierValue)
-  return tier ? tier.label.split(' ')[0] : ''
+  if (!tier) return ''
+  if (tier.labelKey) return t(tier.labelKey)
+  return tier.label || ''
 }
 
 function selectEnemy(id) {
@@ -206,52 +216,52 @@ const transformStyle = computed(() => {
           <div v-else class="custom-avatar-placeholder">?</div>
           <div class="scan-line"></div>
         </div>
-        <div class="enemy-info-col">
-          <div class="enemy-name">{{ activeEnemyInfo.name }}</div>
-          <div class="click-hint">点击更换敌人</div>
-        </div>
-      </div>
-
-      <div class="settings-scroll-area">
-        <div class="section-container tech-style border-red">
-          <div class="panel-tag-mini red">敌人属性</div>
-          <div class="attribute-grid-mini">
-            <div class="control-row-mini">
-              <label>失衡上限</label>
-              <CustomNumberInput v-model="store.systemConstants.maxStagger" :min="1" active-color="#ff7875" class="standard-input" />
-            </div>
-            <div class="control-row-mini">
-              <label>失衡节点</label>
-              <CustomNumberInput v-model="store.systemConstants.staggerNodeCount" :min="0" class="standard-input" />
-            </div>
-            <div class="control-row-mini">
-              <label>踉跄时长</label>
-              <CustomNumberInput v-model="store.systemConstants.staggerNodeDuration" :step="0.1" active-color="#ff7875" class="standard-input" />
-            </div>
-            <div class="control-row-mini">
-              <label>失衡时长</label>
-              <CustomNumberInput v-model="store.systemConstants.staggerBreakDuration" :step="0.5" active-color="#ff7875" class="standard-input" />
-            </div>
-            <div class="control-row-mini">
-              <label>处决回复</label>
-              <CustomNumberInput v-model="store.systemConstants.executionRecovery" :min="0" class="standard-input" />
-            </div>
+          <div class="enemy-info-col">
+            <div class="enemy-name">{{ activeEnemyInfo.name }}</div>
+            <div class="click-hint">{{ t('resourceMonitor.enemy.clickToChange') }}</div>
           </div>
         </div>
 
-        <div class="section-container tech-style border-gold">
-          <div class="panel-tag-mini gold">队伍属性</div>
-          <div class="attribute-grid-mini">
-            <div class="control-row-mini">
-              <label>初始技力</label>
-              <CustomNumberInput v-model="store.systemConstants.initialSp" :min="0" :max="300" active-color="#ffd700" class="standard-input" />
-            </div>
-            <div class="control-row-mini">
-              <label>回复 / 秒</label>
-              <CustomNumberInput v-model="store.systemConstants.spRegenRate" :step="0.5" :min="0" active-color="#ffd700" class="standard-input" />
+        <div class="settings-scroll-area">
+          <div class="section-container tech-style border-red">
+            <div class="panel-tag-mini red">{{ t('resourceMonitor.sections.enemy') }}</div>
+            <div class="attribute-grid-mini">
+              <div class="control-row-mini">
+                <label>{{ t('resourceMonitor.labels.maxStagger') }}</label>
+                <CustomNumberInput v-model="store.systemConstants.maxStagger" :min="1" active-color="#ff7875" class="standard-input" />
+              </div>
+              <div class="control-row-mini">
+                <label>{{ t('resourceMonitor.labels.staggerNodes') }}</label>
+                <CustomNumberInput v-model="store.systemConstants.staggerNodeCount" :min="0" class="standard-input" />
+              </div>
+              <div class="control-row-mini">
+                <label>{{ t('resourceMonitor.labels.nodeDuration') }}</label>
+                <CustomNumberInput v-model="store.systemConstants.staggerNodeDuration" :step="0.1" active-color="#ff7875" class="standard-input" />
+              </div>
+              <div class="control-row-mini">
+                <label>{{ t('resourceMonitor.labels.breakDuration') }}</label>
+                <CustomNumberInput v-model="store.systemConstants.staggerBreakDuration" :step="0.5" active-color="#ff7875" class="standard-input" />
+              </div>
+              <div class="control-row-mini">
+                <label>{{ t('resourceMonitor.labels.executionRecovery') }}</label>
+                <CustomNumberInput v-model="store.systemConstants.executionRecovery" :min="0" class="standard-input" />
+              </div>
             </div>
           </div>
-        </div>
+
+          <div class="section-container tech-style border-gold">
+            <div class="panel-tag-mini gold">{{ t('resourceMonitor.sections.team') }}</div>
+            <div class="attribute-grid-mini">
+              <div class="control-row-mini">
+                <label>{{ t('resourceMonitor.labels.initialSp') }}</label>
+                <CustomNumberInput v-model="store.systemConstants.initialSp" :min="0" :max="300" active-color="#ffd700" class="standard-input" />
+              </div>
+              <div class="control-row-mini">
+                <label>{{ t('resourceMonitor.labels.spPerSecond') }}</label>
+                <CustomNumberInput v-model="store.systemConstants.spRegenRate" :step="0.5" :min="0" active-color="#ffd700" class="standard-input" />
+              </div>
+            </div>
+          </div>
       </div>
     </div>
 
@@ -336,23 +346,23 @@ const transformStyle = computed(() => {
               <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
           </span>
-          不足
+          {{ t('resourceMonitor.sp.insufficient') }}
         </div>
       </div>
     </div>
 
-    <el-dialog v-model="isEnemySelectorVisible" title="选择敌人" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
+    <el-dialog v-model="isEnemySelectorVisible" :title="t('resourceMonitor.enemy.dialogTitle')" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
       <div class="selector-header">
-        <el-input v-model="enemySearchQuery" placeholder="搜索敌人..." :prefix-icon="Search" clearable style="width: 100%" />
+        <el-input v-model="enemySearchQuery" :placeholder="t('resourceMonitor.enemy.searchPlaceholder')" :prefix-icon="Search" clearable style="width: 100%" />
       </div>
 
       <div class="category-tabs">
         <button
             class="ea-btn ea-btn--glass-cut"
-            :class="{ 'is-active': activeCategoryTab === 'ALL' }"
+            :class="{ 'is-active': activeCategoryTab === CATEGORY_ALL }"
             :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
-            @click="activeCategoryTab = 'ALL'"
-        >全部</button>
+            @click="activeCategoryTab = CATEGORY_ALL"
+        >{{ t('common.all') }}</button>
         <button
             v-for="cat in enemyCategories"
             :key="cat"
@@ -367,9 +377,9 @@ const transformStyle = computed(() => {
 
       <div class="enemy-list-grid">
 
-        <div v-if="activeCategoryTab === 'ALL' && !enemySearchQuery" class="enemy-group-section">
+        <div v-if="activeCategoryTab === CATEGORY_ALL && !enemySearchQuery" class="enemy-group-section">
           <div class="group-header">
-            特殊 <span class="count">(1)</span>
+            {{ t('resourceMonitor.enemy.specialGroup') }} <span class="count">(1)</span>
           </div>
           <div class="group-items">
             <div class="enemy-card"
@@ -381,14 +391,14 @@ const transformStyle = computed(() => {
             </div>
 
               <div class="enemy-info">
-                <div class="name">自定义敌人</div>
-                <div class="desc">手动调整属性数值</div>
+                <div class="name">{{ t('resourceMonitor.enemy.custom') }}</div>
+                <div class="desc">{{ t('resourceMonitor.enemy.customDesc') }}</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-for="group in groupedEnemyList" :key="group.name" class="enemy-group-section">
+        <div v-for="group in groupedEnemyList" :key="group.id" class="enemy-group-section">
           <div class="group-header">
             {{ group.name }}
             <span class="count">({{ group.list.length }})</span>
@@ -412,14 +422,14 @@ const transformStyle = computed(() => {
                 <div class="name" :style="{ color: enemy.tier === 'boss' ? '#ff4d4f' : '#f0f0f0' }">
                   {{ enemy.name }}
                 </div>
-                <div class="desc">上限:{{enemy.maxStagger}} | 节点:{{enemy.staggerNodeCount}}</div>
+                <div class="desc">{{ t('resourceMonitor.enemy.desc', { max: enemy.maxStagger, nodes: enemy.staggerNodeCount }) }}</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="groupedEnemyList.length === 0 && !(activeCategoryTab === 'ALL' && !enemySearchQuery)" class="empty-state">
-          未找到相关敌人
+        <div v-if="groupedEnemyList.length === 0 && !(activeCategoryTab === CATEGORY_ALL && !enemySearchQuery)" class="empty-state">
+          {{ t('resourceMonitor.enemy.empty') }}
         </div>
 
       </div>

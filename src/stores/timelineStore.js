@@ -8,6 +8,14 @@ import { compileScenario } from '@/simulation/compiler/compileScenario'
 import { simulate } from '@/simulation/simulator'
 import { projectSpSeries } from '@/simulation/projection/projectSpSeries'
 import { projectStaggerSeries } from '@/simulation/projection/projectStaggerSeries'
+import { i18n } from '@/i18n'
+
+const tr = (key, params) => i18n.global.t(key, params)
+const getI18nSkillType = (type) => {
+    const key = `skillType.${type}`
+    const out = tr(key)
+    return out === key ? tr('skillType.unknown') : out
+}
 
 const uid = () => Math.random().toString(36).substring(2, 9)
 const ATTACK_SEGMENT_COUNT = 5
@@ -269,10 +277,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     const getColor = (key) => ELEMENT_COLORS[key] || ELEMENT_COLORS.default
 
     const ENEMY_TIERS = [
-        { label: '普通', value: 'normal', color: '#a0a0a0' },
-        { label: '进阶', value: 'elite', color: '#52c41a' },
-        { label: '精英', value: 'champion', color: '#d8b4fe' },
-        { label: '领袖', value: 'boss', color: '#ff4d4f' }
+        { labelKey: 'enemyTier.normal', label: '普通', value: 'normal', color: '#a0a0a0' },
+        { labelKey: 'enemyTier.elite', label: '进阶', value: 'elite', color: '#52c41a' },
+        { labelKey: 'enemyTier.champion', label: '精英', value: 'champion', color: '#d8b4fe' },
+        { labelKey: 'enemyTier.boss', label: '领袖', value: 'boss', color: '#ff4d4f' }
     ]
     // ===================================================================================
     // 核心数据状态
@@ -301,7 +309,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const activeScenarioId = ref('default_sc')
     const scenarioList = ref([
-        { id: 'default_sc', name: '方案 1', data: null }
+        { id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null }
     ])
 
     watchThrottled([weaponDatabase, misc], () => {
@@ -782,7 +790,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (currentScenario) currentScenario.data = _createSnapshot()
 
         const newId = `sc_${uid()}`
-        const newName = `方案 ${scenarioList.value.length + 1}`
+        const newName = tr('timeline.scenario.defaultName', { index: scenarioList.value.length + 1 })
 
         const emptySnapshot = {
             tracks: [{ id: null, actions: [] }, { id: null, actions: [] }, { id: null, actions: [] }, { id: null, actions: [] }],
@@ -815,7 +823,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (!source) return
 
         const newId = `sc_${uid()}`
-        const newName = `${source.name} (副本)`
+        const newName = `${source.name} (${tr('timeline.scenario.copySuffix')})`
         const newData = JSON.parse(JSON.stringify(source.data || _createSnapshot()))
 
         scenarioList.value.push({ id: newId, name: newName, data: newData })
@@ -938,6 +946,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         const found = (misc.value?.modifierDefs || []).find(d => d.id === modifierId)
         if (found?.label) return found.label
         const core = CORE_STATS.find(s => s.id === modifierId)
+        if (core?.labelKey) {
+            const translated = tr(core.labelKey)
+            if (translated !== core.labelKey) return translated
+        }
         return core?.label || modifierId || ''
     }
 
@@ -1381,7 +1393,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const teamTracksInfo = computed(() => tracks.value.map(track => {
         const charInfo = characterRoster.value.find(c => c.id === track.id)
-        return { ...track, ...(charInfo || { name: '请选择干员', avatar: '', rarity: 0 }) }
+        return { ...track, ...(charInfo || { name: tr('timelineGrid.track.selectOperator'), avatar: '', rarity: 0 }) }
     }))
 
     const activeWeapon = computed(() => {
@@ -1400,6 +1412,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
 
     const activeSkillLibrary = computed(() => {
+        i18n.global.locale.value
         const activeChar = characterRoster.value.find(c => c.id === activeTrackId.value)
         if (!activeChar) return []
 
@@ -1468,7 +1481,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             const { duration: _ignoredDuration, ...groupOverride } = (groupOverrideRaw && typeof groupOverrideRaw === 'object') ? groupOverrideRaw : {}
 
             const derivedElement = activeChar.attack_element || activeChar.element || 'physical'
-            const attackGroupName = '重击'
+            const attackGroupName = getI18nSkillType('attack')
 
             const segmentSkills = (activeChar.attack_segments || []).slice(0, ATTACK_SEGMENT_COUNT).map((seg, idx) => {
                 const segId = `${groupId}_seg${idx + 1}`
@@ -1537,7 +1550,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             const { duration: _ignoredDuration, ...groupOverride } = (groupOverrideRaw && typeof groupOverrideRaw === 'object') ? groupOverrideRaw : {}
 
             const derivedElement = variant.element || activeChar.attack_element || activeChar.element || 'physical'
-            const attackGroupName = variant.name || '强化重击'
+            const attackGroupName = variant.name || tr('timeline.attack.enhancedAttack')
 
             const segmentSkills = (variant.attackSegments || []).slice(0, ATTACK_SEGMENT_COUNT).map((seg, idx) => {
                 const segId = `${groupId}_seg${idx + 1}`
@@ -1634,7 +1647,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             return {
                 id: globalId,
                 type: 'dodge',
-                name: '闪避',
+                name: getI18nSkillType('dodge'),
                 librarySource: 'character',
                 duration,
                 damageTicks: [],
@@ -1646,10 +1659,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         const standardSkills = [
             attackGroupSkill,
             createDodgeSkill(),
-            createBaseSkill('execution', 'execution', '处决'),
-            createBaseSkill('skill', 'skill', '战技'),
-            createBaseSkill('link', 'link', '连携'),
-            createBaseSkill('ultimate', 'ultimate', '终结技')
+            createBaseSkill('execution', 'execution', getI18nSkillType('execution')),
+            createBaseSkill('skill', 'skill', getI18nSkillType('skill')),
+            createBaseSkill('link', 'link', getI18nSkillType('link')),
+            createBaseSkill('ultimate', 'ultimate', getI18nSkillType('ultimate'))
         ]
 
         const variantSkills = []
@@ -1688,6 +1701,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const isWeaponSkillId = (id) => typeof id === 'string' && id.startsWith('weaponlib_')
 
     const activeWeaponSkillLibrary = computed(() => {
+        i18n.global.locale.value
         const weapon = activeWeapon.value
         if (!weapon) return []
 
@@ -1697,7 +1711,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             ? weapon.skills
             : [{
                 id: 'core',
-                name: weapon.buffName || weapon.name || '武器技能',
+                name: weapon.buffName || weapon.name || tr('weapon.skill'),
                 type: 'weapon',
                 duration: weapon.duration ?? 0,
                 icon: weapon.icon || '/weapons/default.webp',
@@ -1715,7 +1729,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
             const baseSkill = {
                 id: libId,
-                name: raw.name || weapon.buffName || weapon.name || '武器技能',
+                name: raw.name || weapon.buffName || weapon.name || tr('weapon.skill'),
                 type: raw.type || 'weapon',
                 librarySource: 'weapon',
                 weaponId: weapon.id,
@@ -1993,7 +2007,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
             const attackGroupInstanceId = `atkgrp_${uid()}`
             const attackSequenceTotal = segments.length
-            const attackGroupName = skill.name || '重击'
+            const attackGroupName = skill.name || getI18nSkillType('attack')
             let cursor = startTime
 
             for (let i = 0; i < segments.length; i++) {
@@ -2023,7 +2037,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 }
                 newAction.attackGroupName = (typeof skill.attackGroupName === 'string' && skill.attackGroupName.trim())
                     ? skill.attackGroupName.trim()
-                    : ((typeof skill.name === 'string' && skill.name.trim()) ? skill.name.trim().replace(/\s*\d+\s*$/, '') : '重击')
+                    : ((typeof skill.name === 'string' && skill.name.trim()) ? skill.name.trim().replace(/\s*\d+\s*$/, '') : getI18nSkillType('attack'))
             }
             track.actions.push(newAction)
             track.actions.sort((a, b) => a.startTime - b.startTime)
@@ -2049,7 +2063,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             trackId,
             weaponId: skill.weaponId || null,
             skillId: skill.id,
-            name: skill.name || '武器效果',
+            name: skill.name || tr('weapon.effect'),
             icon: skill.icon || '',
             color: skill.customColor || '#b37feb',
             startTime: startTime,
@@ -2305,7 +2319,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     function changeTrackOperator(trackIndex, oldOperatorId, newOperatorId) {
         const track = tracks.value[trackIndex];
         if (track) {
-            if (tracks.value.some((t, i) => i !== trackIndex && t.id === newOperatorId)) { alert('该干员已在另一条轨道上！'); return; }
+            if (tracks.value.some((t, i) => i !== trackIndex && t.id === newOperatorId)) { alert(tr('timelineGrid.track.operatorAlreadyInUse')); return; }
             const actionIdsToDelete = new Set(track.actions.map(a => a.instanceId));
             if (actionIdsToDelete.size > 0) {
                 connections.value = connections.value.filter(conn => !actionIdsToDelete.has(conn.from) && !actionIdsToDelete.has(conn.to));
@@ -3735,7 +3749,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         activeEnemyId.value = 'custom';
         // 重置方案
-        scenarioList.value = [{ id: 'default_sc', name: '方案 1', data: null }];
+        scenarioList.value = [{ id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null }];
         activeScenarioId.value = 'default_sc';
 
         clearSelection();
@@ -3879,7 +3893,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             const data = JSON.parse(jsonString);
             return loadProjectData(data);
         } catch (e) {
-            console.error("导入分享码失败:", e);
+            console.error("Import share code failed:", e);
             return false;
         }
     }

@@ -4,6 +4,7 @@ import { useTimelineStore } from '../stores/timelineStore.js'
 import { useDragConnection } from '../composables/useDragConnection.js'
 import ActionLinkPorts from './ActionLinkPorts.vue'
 import { getRectPos } from '@/utils/layoutUtils.js'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   action: { type: Object, required: true },
@@ -11,6 +12,7 @@ const props = defineProps({
 
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
+const { t } = useI18n({ useScope: 'global' })
 const TYPE_SHORTHAND = {
   'attack': 'A', 'dodge': 'D', 'execution': 'X', 'skill': 'C', 'link': 'E', 'ultimate': 'U'
 }
@@ -38,7 +40,7 @@ const displayLabel = computed(() => {
 
     if (total > 0 && idx > 0) {
       if (idx === total) {
-        const groupName = props.action.attackGroupName || (name ? name.replace(/\s*\d+\s*$/, '') : '重击')
+        const groupName = props.action.attackGroupName || (name ? name.replace(/\s*\d+\s*$/, '') : t('skillType.attack'))
         return `${groupName}${suffix}`
       }
       return `A${idx}${suffix}`
@@ -75,6 +77,15 @@ const themeColor = computed(() => {
 })
 
 const actionLayout = computed(() => store.nodeRects[props.action.instanceId])
+
+function getDamageTickTitle(tick) {
+  if (!tick) return ''
+  return t('actionItem.tickTooltip', {
+    time: store.formatTimeLabel(tick.data?.offset),
+    stagger: tick.data?.stagger || 0,
+    sp: tick.data?.sp || 0,
+  })
+}
 
 // 连携冷却计算
 const effectiveCooldown = computed(() => {
@@ -523,7 +534,7 @@ function handleEffectDrop(effectId) {
       <div v-for="(tick, idx) in renderableTicks" :key="idx"
            class="damage-tick-wrapper"
            :style="tick.style"
-           :title="`时间: ${store.formatTimeLabel(tick.data.offset)}\n失衡值: ${tick.data.stagger || 0}\n技力回复: ${tick.data.sp || 0}`">
+           :title="getDamageTickTitle(tick)">
         <div class="tick-marker"></div>
       </div>
     </div>
@@ -533,14 +544,14 @@ function handleEffectDrop(effectId) {
       <div class="tw-separator"></div>
     </div>
 
-    <div v-if="action.isLocked" class="status-icon lock-icon" title="位置已锁定">
+    <div v-if="action.isLocked" class="status-icon lock-icon" :title="t('actionItem.lockedTitle')">
       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
       </svg>
     </div>
 
-    <div v-if="action.isDisabled" class="status-icon mute-icon" title="已禁用：不参与计算">
+    <div v-if="action.isDisabled" class="status-icon mute-icon" :title="t('actionItem.disabledTitle')">
       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>

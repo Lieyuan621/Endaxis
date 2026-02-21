@@ -30,8 +30,17 @@
 - **构建工具**: [Vite](https://vitejs.dev/)
 - **状态管理**: [Pinia](https://pinia.vuejs.org/)
 - **UI 组件库**: [Element Plus](https://element-plus.org/)
+- **国际化**: [vue-i18n](https://vue-i18n.intlify.dev/)
 - **拖拽库**: [Vue.Draggable](https://github.com/SortableJS/vue.draggable.next)
 - **样式**: CSS Grid + CSS Variables
+
+## 🌍 i18n（基础配置）
+
+目前项目已完成 vue-i18n + Element Plus 语言包的基础接入（见 `src/i18n/index.js`）。
+
+- 默认语言：`zh-CN`
+- 语言持久化：`localStorage` key 为 `endaxis_locale`
+- 翻译文件：`src/i18n/locales/zh-CN.json`
 
 ## 🔧 开发者工具
 
@@ -53,7 +62,7 @@
 
 ### 环境要求
 
-- Node.js (推荐 v16+)
+- Node.js (`^20.19.0 || >=22.12.0`)
 - npm 或 yarn
 
 ### 安装依赖
