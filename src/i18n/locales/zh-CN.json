@@ -96,6 +96,16 @@
       "imported": "成功导入分享的方案！",
       "importFailed": "分享码格式错误或数据损坏"
     },
+    "mobile": {
+      "title": "时间轴（移动端）",
+      "time": "时间",
+      "import": "导入",
+      "importing": "导入中...",
+      "more": "更多",
+      "aboutMobileTag": "移动端提示",
+      "aboutMobileAlert": "安卓端为只读模式：支持查看与导入分享码；需要编辑请使用 PC 端。",
+      "aboutNoticeEmpty": "暂无公告内容"
+    },
     "attack": {
       "enhancedAttack": "强化重击"
     },
