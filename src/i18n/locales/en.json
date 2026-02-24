@@ -97,14 +97,33 @@
       "importFailed": "分享码格式错误或数据损坏"
     },
     "mobile": {
-      "title": "时间轴（移动端）",
       "time": "时间",
       "import": "导入",
       "importing": "导入中...",
       "more": "更多",
       "aboutMobileTag": "移动端提示",
       "aboutMobileAlert": "安卓端为只读模式：支持查看与导入分享码；需要编辑请使用 PC 端。",
-      "aboutNoticeEmpty": "暂无公告内容"
+      "aboutNoticeEmpty": "暂无公告内容",
+      "loadout": {
+        "title": "干员配装",
+        "openAria": "查看 {name} 配装",
+        "weapon": "武器",
+        "equipment": "装备",
+        "none": "未装备",
+        "slot": {
+          "armor": "护甲",
+          "gloves": "手套",
+          "accessory1": "饰品 1",
+          "accessory2": "饰品 2"
+        }
+      },
+      "actionInfo": {
+        "title": "技能信息",
+        "notFound": "未找到该技能（可能已切换方案或数据已更新）",
+        "start": "开始时间",
+        "end": "结束时间",
+        "duration": "持续时间"
+      }
     },
     "attack": {
       "enhancedAttack": "强化重击"

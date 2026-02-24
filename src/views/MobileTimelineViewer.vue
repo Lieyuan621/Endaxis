@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElAlert, ElDialog, ElInput, ElMessage, ElButton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElMessageBox } from 'element-plus'
 import { useTimelineStore } from '@/stores/timelineStore.js'
 import { useI18n } from 'vue-i18n'
@@ -7,6 +7,12 @@ import { setLocale } from '@/i18n'
 
 const store = useTimelineStore()
 const { t, locale } = useI18n({ useScope: 'global' })
+
+const loadoutOpen = ref(false)
+const loadoutTrackIndex = ref(null)
+
+const actionInfoOpen = ref(false)
+const selectedActionId = ref(null)
 
 const importVisible = ref(false)
 const shareCode = ref('')
@@ -74,8 +80,12 @@ const prepDuration = computed(() => Math.max(0, Number(store.prepDuration) || 0)
 const battleStartYPx = computed(() => Math.max(0, Math.round(timeToY(prepDuration.value))))
 const prepHeightPx = computed(() => battleStartYPx.value)
 
-onMounted(() => {
+function enforceMobilePrepExpanded() {
   store.prepExpanded = true
+}
+
+onMounted(() => {
+  enforceMobilePrepExpanded()
   try {
     document?.body?.classList?.add('endaxis-mobile-viewer')
   } catch {
@@ -139,6 +149,7 @@ function handleReset() {
       confirmButtonText: t('timeline.reset.confirmButton'),
       cancelButtonText: t('common.cancel'),
       type: 'warning',
+      lockScroll: false,
     },
   ).then(() => {
     store.resetProject()
@@ -171,6 +182,27 @@ function getTrackAvatar(track) {
   return found?.avatar || '/avatars/default.webp'
 }
 
+function withBaseUrl(input) {
+  const s = String(input || '').trim()
+  if (!s) return ''
+
+  if (/^https?:\/\//i.test(s)) return s
+
+  const baseUrl = import.meta.env.BASE_URL || '/'
+  const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+
+  if (s.startsWith('/')) return `${base}${s}`
+  return `${base}/${s}`
+}
+
+function onAssetError(evt) {
+  try {
+    evt.target.src = withBaseUrl('/avatars/default.webp')
+  } catch {
+    // ignore
+  }
+}
+
 function getTrackName(track) {
   const id = track?.id
   const roster = Array.isArray(store.characterRoster) ? store.characterRoster : []
@@ -178,11 +210,100 @@ function getTrackName(track) {
   return found?.name || (id || t('common.unknown'))
 }
 
+function openLoadout(index) {
+  const i = Number(index)
+  if (!Number.isFinite(i) || i < 0 || i >= tracks.value.length) return
+
+  const track = tracks.value[i]
+  if (!track?.id) return
+
+  loadoutTrackIndex.value = i
+  loadoutOpen.value = true
+}
+
+const selectedTrack = computed(() => {
+  const i = Number(loadoutTrackIndex.value)
+  if (!Number.isFinite(i)) return null
+  return tracks.value[i] || null
+})
+
+const selectedWeapon = computed(() => {
+  const id = selectedTrack.value?.weaponId
+  if (!id || typeof store.getWeaponById !== 'function') return null
+  return store.getWeaponById(id) || null
+})
+
+function formatSlotLabel(slot) {
+  void locale.value
+  const modifierId = slot?.modifierId || slot?.key
+  if (!modifierId) return t('common.noneParen')
+  const sizeLabel = slot.size === 'large'
+    ? t('common.size.large')
+    : (slot.size === 'medium' ? t('common.size.medium') : t('common.size.small'))
+  return `${store.getModifierLabel(modifierId)} · ${sizeLabel}`
+}
+
+function formatTierLabel(val) {
+  const n = Number(val)
+  if (!Number.isFinite(n)) return '-'
+  return `${n}${t('common.levelSuffix')}`
+}
+
+const selectedWeaponSlot1Label = computed(() => formatSlotLabel(selectedWeapon.value?.commonSlots?.[0]))
+const selectedWeaponSlot2Label = computed(() => formatSlotLabel(selectedWeapon.value?.commonSlots?.[1]))
+const selectedWeaponBuffKeysLabel = computed(() => {
+  void locale.value
+  const list = Array.isArray(selectedWeapon.value?.buffBonuses) ? selectedWeapon.value.buffBonuses : []
+  const ids = list.map(b => b?.modifierId || b?.key).filter(Boolean)
+  if (ids.length === 0) return t('common.noneParen')
+  return ids.map(k => store.getModifierLabel(k)).join('、')
+})
+
+const equipmentSlots = computed(() => {
+  void locale.value
+  const track = selectedTrack.value
+  if (!track) return []
+
+  const resolve = (slotKey, id, refineTier) => {
+    const item = (typeof store.getEquipmentById === 'function') ? store.getEquipmentById(id) : null
+    const level = item?.level !== undefined ? Number(item.level) : null
+    const is70 = level === 70
+    return {
+      slotKey,
+      slotLabel: t(`timeline.mobile.loadout.slot.${slotKey}`),
+      id: id || null,
+      item,
+      level: Number.isFinite(level) ? level : null,
+      refineTier: is70 ? (Number(refineTier) || 0) : null,
+    }
+  }
+
+  return [
+    resolve('armor', track.equipArmorId, track.equipArmorRefineTier),
+    resolve('gloves', track.equipGlovesId, track.equipGlovesRefineTier),
+    resolve('accessory1', track.equipAccessory1Id, track.equipAccessory1RefineTier),
+    resolve('accessory2', track.equipAccessory2Id, track.equipAccessory2RefineTier),
+  ]
+})
+
 function getTypeLabel(action) {
   const type = action?.type || 'unknown'
   const key = `skillType.${type}`
   const out = t(key)
   return out === key ? String(type) : out
+}
+
+function formatSec(val) {
+  const n = Number(val)
+  if (!Number.isFinite(n)) return '-'
+  return (Math.round(n * 1000) / 1000).toFixed(3).replace(/\.?0+$/, '')
+}
+
+function formatAxisLabel(viewTime) {
+  if (typeof store.formatAxisTimeLabel === 'function') {
+    return store.formatAxisTimeLabel(viewTime)
+  }
+  return `${formatSec(viewTime)}s`
 }
 
 function getActionColor(action) {
@@ -232,6 +353,48 @@ function getVisibleActions(track) {
     return true
   })
 }
+
+function openActionInfo(instanceId) {
+  const id = String(instanceId || '').trim()
+  if (!id) return
+  selectedActionId.value = id
+  actionInfoOpen.value = true
+}
+
+const resolvedAction = computed(() => {
+  const id = String(selectedActionId.value || '').trim()
+  if (!id) return null
+
+  const timeline = store.compiledTimeline
+  const map = timeline?.actionMap
+  if (!map || typeof map.get !== 'function') return null
+  return map.get(id) || null
+})
+
+const resolvedActionEndTime = computed(() => {
+  if (!resolvedAction.value) return null
+  return (Number(resolvedAction.value.realStartTime) || 0) + (Number(resolvedAction.value.realDuration) || 0)
+})
+
+const resolvedOperator = computed(() => {
+  const id = resolvedAction.value?.trackId
+  if (!id) return null
+  const roster = Array.isArray(store.characterRoster) ? store.characterRoster : []
+  const found = roster.find((c) => c && c.id === id)
+  return {
+    id,
+    name: found?.name || id,
+    avatar: found?.avatar || '/avatars/default.webp',
+  }
+})
+
+watch(() => store.compiledTimeline, () => {
+  if (!actionInfoOpen.value) return
+  if (!resolvedAction.value) {
+    actionInfoOpen.value = false
+    selectedActionId.value = null
+  }
+})
 
 const gridStyle = computed(() => {
   const secPx = pxPerSecond.value
@@ -382,6 +545,11 @@ const operationLayout = computed(() => {
   }
 })
 
+watch(activeScenarioId, async () => {
+  await nextTick()
+  enforceMobilePrepExpanded()
+})
+
 async function doImport() {
   const code = String(shareCode.value || '').trim()
   if (!code) {
@@ -396,6 +564,8 @@ async function doImport() {
       ElMessage.error(t('timeline.share.importFailed'))
       return
     }
+
+    enforceMobilePrepExpanded()
     ElMessage.success(t('timeline.share.imported'))
     importVisible.value = false
   } catch (e) {
@@ -411,7 +581,6 @@ async function doImport() {
     <div class="mobile-topbar">
       <div class="mobile-topbar-title">
         <div class="mobile-topbar-kicker">ENDAXIS</div>
-        <div class="mobile-topbar-main">{{ t('timeline.mobile.title') }}</div>
       </div>
       <div class="mobile-topbar-actions">
         <el-select
@@ -506,9 +675,16 @@ async function doImport() {
       <div class="mobile-tracks-header">
         <div class="mobile-time-head">{{ t('timeline.mobile.time') }}</div>
         <div v-for="(track, idx) in tracks" :key="idx" class="mobile-track-head">
-          <div class="mobile-avatar">
-            <img :src="getTrackAvatar(track)" :alt="getTrackName(track)" />
-          </div>
+          <button
+            type="button"
+            class="mobile-avatar mobile-avatar-btn"
+            :class="{ 'is-disabled': !track?.id }"
+            :disabled="!track?.id"
+            :aria-label="t('timeline.mobile.loadout.openAria', { name: getTrackName(track) })"
+            @click.stop="openLoadout(idx)"
+          >
+            <img :src="withBaseUrl(getTrackAvatar(track))" :alt="getTrackName(track)" @error="onAssetError" />
+          </button>
         </div>
       </div>
 
@@ -556,6 +732,8 @@ async function doImport() {
                 :key="action.instanceId"
                 class="mobile-action-block"
                 :style="getActionStyle(action)"
+                :class="{ 'is-info-target': actionInfoOpen && selectedActionId === action.instanceId }"
+                @click.stop="openActionInfo(action.instanceId)"
               >
                 <span class="mobile-action-text">{{ getTypeLabel(action) }}</span>
               </div>
@@ -564,6 +742,165 @@ async function doImport() {
         </div>
       </div>
     </div>
+
+    <el-drawer
+      v-model="actionInfoOpen"
+      direction="btt"
+      size="85%"
+      :with-header="false"
+      :append-to-body="true"
+      :lock-scroll="false"
+      :close-on-click-modal="false"
+      class="mobile-actioninfo-drawer"
+    >
+      <div class="m-drawer">
+        <div class="m-drawer__header">
+          <div class="m-drawer__title">{{ t('timeline.mobile.actionInfo.title') }}</div>
+          <button
+            type="button"
+            class="ea-btn ea-btn--icon ea-btn--icon-38 ea-btn--glass-rect ea-btn--radius-6 m-drawer__close"
+            :aria-label="t('common.close')"
+            @click="actionInfoOpen = false"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="m-drawer__content">
+          <div v-if="resolvedAction" class="tech-style border-gold section-container actioninfo-hero">
+            <div class="actioninfo-hero__top">
+              <div class="actioninfo-hero__avatar">
+                <img :src="withBaseUrl(resolvedOperator?.avatar)" :alt="resolvedOperator?.name || ''" @error="onAssetError" />
+              </div>
+              <div class="actioninfo-hero__meta">
+                <div class="actioninfo-hero__name">{{ resolvedAction?.node?.name || resolvedAction?.node?.id || t('common.unknown') }}</div>
+                <div class="actioninfo-hero__sub">
+                  <span class="mono">{{ resolvedOperator?.name || resolvedAction.trackId }}</span>
+                  <span class="dot">·</span>
+                  <span class="mono">{{ getTypeLabel(resolvedAction.node) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="actioninfo-hero__time">
+              <div class="time-chip">
+                <div class="time-chip__label">{{ t('timeline.mobile.actionInfo.start') }}</div>
+                <div class="time-chip__val mono">{{ formatAxisLabel(resolvedAction.realStartTime) }}</div>
+              </div>
+              <div class="time-chip">
+                <div class="time-chip__label">{{ t('timeline.mobile.actionInfo.end') }}</div>
+                <div class="time-chip__val mono">{{ formatAxisLabel(resolvedActionEndTime) }}</div>
+              </div>
+              <div class="time-chip">
+                <div class="time-chip__label">{{ t('timeline.mobile.actionInfo.duration') }}</div>
+                <div class="time-chip__val mono">{{ formatSec(resolvedAction.realDuration) }}s</div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="tech-style">
+            {{ t('timeline.mobile.actionInfo.notFound') }}
+          </div>
+
+        </div>
+      </div>
+    </el-drawer>
+
+    <el-drawer
+      v-model="loadoutOpen"
+      direction="btt"
+      size="85%"
+      :with-header="false"
+      :append-to-body="true"
+      :lock-scroll="false"
+      :close-on-click-modal="false"
+      class="mobile-loadout-drawer"
+    >
+      <div class="m-drawer">
+        <div class="m-drawer__header">
+          <div class="m-drawer__title">{{ t('timeline.mobile.loadout.title') }}</div>
+          <button
+            type="button"
+            class="ea-btn ea-btn--icon ea-btn--icon-38 ea-btn--glass-rect ea-btn--radius-6 m-drawer__close"
+            :aria-label="t('common.close')"
+            @click="loadoutOpen = false"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="m-drawer__content">
+          <div v-if="selectedTrack" class="loadout-header tech-style border-gold">
+            <div class="loadout-operator">
+              <div class="loadout-operator__avatar">
+                <img :src="withBaseUrl(getTrackAvatar(selectedTrack))" :alt="getTrackName(selectedTrack)" @error="onAssetError" />
+              </div>
+              <div class="loadout-operator__meta">
+                <div class="loadout-operator__name">{{ getTrackName(selectedTrack) }}</div>
+                <div class="loadout-operator__sub">{{ selectedTrack.id }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-field">
+            <div class="m-label">{{ t('timeline.mobile.loadout.weapon') }}</div>
+            <div class="loadout-item tech-style">
+              <div class="loadout-item__icon">
+                <img :src="withBaseUrl(selectedWeapon?.icon || '/avatars/default.webp')" :alt="selectedWeapon?.name || ''" @error="onAssetError" />
+              </div>
+              <div class="loadout-item__main">
+                <div class="loadout-item__title">
+                  {{ selectedWeapon?.name || t('timeline.mobile.loadout.none') }}
+                </div>
+                <div class="loadout-item__sub loadout-weapon-sub" v-if="selectedTrack && selectedWeapon">
+                  <div class="loadout-weapon-line">
+                    <span class="loadout-weapon-name">{{ selectedWeaponSlot1Label }}</span>
+                    <span class="loadout-weapon-tier mono">{{ formatTierLabel(selectedTrack.weaponCommon1Tier) }}</span>
+                  </div>
+                  <div class="loadout-weapon-line">
+                    <span class="loadout-weapon-name">{{ selectedWeaponSlot2Label }}</span>
+                    <span class="loadout-weapon-tier mono">{{ formatTierLabel(selectedTrack.weaponCommon2Tier) }}</span>
+                  </div>
+                  <div class="loadout-weapon-line">
+                    <span class="loadout-weapon-name">
+                      {{ selectedWeapon?.buffName || t('actionLibrary.labels.exclusiveBuff') }}：{{ selectedWeaponBuffKeysLabel }}
+                    </span>
+                    <span class="loadout-weapon-tier mono">{{ formatTierLabel(selectedTrack.weaponBuffTier) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-field">
+            <div class="m-label">{{ t('timeline.mobile.loadout.equipment') }}</div>
+            <div class="loadout-eq-list">
+              <div v-for="slot in equipmentSlots" :key="slot.slotKey" class="loadout-item tech-style">
+                <div class="loadout-item__icon">
+                  <img :src="withBaseUrl(slot.item?.icon || '/avatars/default.webp')" :alt="slot.item?.name || ''" @error="onAssetError" />
+                </div>
+                <div class="loadout-item__main">
+                  <div class="loadout-item__title">
+                    <span class="slot-label">{{ slot.slotLabel }}</span>
+                    <span class="title-main">{{ slot.item?.name || t('timeline.mobile.loadout.none') }}</span>
+                  </div>
+                  <div class="loadout-item__sub" v-if="slot.item">
+                    <span class="mono">Lv{{ slot.level ?? '-' }}</span>
+                    <template v-if="slot.refineTier !== null">
+                      <span class="dot">·</span>
+                      <span class="mono">+{{ slot.refineTier }}</span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-drawer>
 
     <el-dialog
       v-model="importVisible"
@@ -690,28 +1027,16 @@ async function doImport() {
 
 .mobile-topbar-title {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
   min-width: 0;
 }
 
 .mobile-topbar-kicker {
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 2px;
   color: rgba(0, 229, 255, 0.85);
   font-weight: 900;
   line-height: 1;
-}
-
-.mobile-topbar-main {
-  font-size: 12px;
-  letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.86);
-  font-weight: 800;
-  line-height: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .mobile-primary-btn {
@@ -1243,5 +1568,309 @@ async function doImport() {
 
 :global(body.endaxis-mobile-viewer.el-popup-parent--hidden) {
   padding-right: 0 !important;
+}
+
+:global(.mobile-loadout-drawer),
+:global(.mobile-actioninfo-drawer) {
+  background: #18181c !important;
+}
+
+:global(.mobile-loadout-drawer .el-drawer__body),
+:global(.mobile-actioninfo-drawer .el-drawer__body) {
+  padding: 0 !important;
+  background: #18181c !important;
+}
+
+.m-drawer {
+  padding: 0;
+  box-sizing: border-box;
+  height: 100%;
+  overflow-y: auto;
+  background: #18181c;
+}
+
+.m-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 14px 12px 10px 12px;
+  background: #18181c;
+  border-bottom: 0;
+}
+
+.m-drawer__title {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.m-drawer__close {
+  flex-shrink: 0;
+}
+
+.m-drawer__content {
+  padding: 12px 12px calc(16px + env(safe-area-inset-bottom)) 12px;
+  box-sizing: border-box;
+}
+
+.m-field {
+  margin-bottom: 14px;
+}
+
+.m-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.mobile-avatar-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  line-height: 0;
+}
+
+.mobile-avatar-btn:not(.is-disabled) {
+  cursor: pointer;
+}
+
+.mobile-avatar-btn.is-disabled {
+  opacity: 0.55;
+}
+
+.mobile-action-block {
+  cursor: pointer;
+}
+
+.mobile-action-block.is-info-target {
+  outline: 1px solid rgba(255, 215, 0, 0.85);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.14);
+}
+
+.actioninfo-hero {
+  margin-bottom: 14px;
+}
+
+.actioninfo-hero__top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actioninfo-hero__avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 215, 0, 0.22);
+  background: rgba(255, 215, 0, 0.06);
+  overflow: hidden;
+}
+
+.actioninfo-hero__avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.actioninfo-hero__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.actioninfo-hero__name {
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.15;
+}
+
+.actioninfo-hero__sub {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.actioninfo-hero__time {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.time-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.time-chip__label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 900;
+}
+
+.time-chip__val {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.loadout-header {
+  margin-bottom: 14px;
+}
+
+.loadout-operator {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.loadout-operator__avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 215, 0, 0.22);
+  background: rgba(255, 215, 0, 0.06);
+  overflow: hidden;
+}
+
+.loadout-operator__avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.loadout-operator__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.loadout-operator__name {
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.15;
+}
+
+.loadout-operator__sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
+
+.loadout-eq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.loadout-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+
+.loadout-item__icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.loadout-item__icon img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.loadout-item__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loadout-item__title {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.loadout-item__sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.loadout-weapon-sub {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.loadout-weapon-line {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.loadout-weapon-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.loadout-weapon-tier {
+  flex: 0 0 auto;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
+
+.dot {
+  opacity: 0.35;
+}
+
+.slot-label {
+  color: rgba(255, 215, 0, 0.88);
+}
+
+.title-main {
+  min-width: 0;
+  word-break: break-word;
 }
 </style>
