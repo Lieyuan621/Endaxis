@@ -949,6 +949,7 @@ onUnmounted(() => {
   line-height: 1.6;
   margin: 0;
   font-family: "Inter", "Source Sans Pro", sans-serif;
+  white-space: pre-line;
 }
 
 /* 链接网格 */

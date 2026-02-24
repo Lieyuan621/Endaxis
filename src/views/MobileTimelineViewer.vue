@@ -1535,8 +1535,10 @@ async function doImport() {
   padding: 2px 10px;
   font-family: sans-serif;
   letter-spacing: 1px;
+  clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
   z-index: 2;
 }
+.panel-tag-mini.blue { color: #00e5ff; border-color: rgba(0, 229, 255, 0.2); }
 .panel-tag-mini.gold { color: #ffd700; border-color: rgba(255, 215, 0, 0.2); }
 
 .section-content-tech {
@@ -1549,6 +1551,7 @@ async function doImport() {
   font-size: 12px;
   line-height: 1.6;
   margin: 0;
+  white-space: pre-line;
 }
 
 :deep(.el-textarea__inner) {
