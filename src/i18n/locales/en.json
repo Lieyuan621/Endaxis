@@ -10,18 +10,18 @@
     "delete": "Delete",
     "default": "Default",
     "export": "Export",
-    "all": "All",
+    "all": "all",
     "language": "Language",
     "load": "Load",
     "moveDown": "Move down",
     "moveUp": "Move up",
-    "new": "New",
-    "noneParen": "(None)",
-    "off": "Off",
-    "old": "Old",
-    "on": "On",
+    "new": "new",
+    "noneParen": "(none)",
+    "off": "off",
+    "old": "old",
+    "on": "on",
     "paste": "Paste",
-    "receive": "Receive",
+    "receive": "Import",
     "reset": "Reset",
     "type": "Type",
     "triggerTime": "Trigger time",
@@ -31,11 +31,11 @@
     "uncategorized": "Uncategorized",
     "unknown": "Unknown",
     "unknownSkill": "Unknown skill",
-    "levelSuffix": " Lv",
+    "levelSuffix": "lvl",
     "size": {
-      "large": "Large",
-      "medium": "Medium",
-      "small": "Small"
+      "large": "L",
+      "medium": "M",
+      "small": "S"
     },
     "warning": "Warning"
   },
@@ -47,54 +47,54 @@
   "timeline": {
     "about": {
       "friendMap": "Endfield Interactive Map",
-      "friendOne": "Endfield One-Page Guide",
-      "friendsTitle": "Links",
-      "resourceRepo": "Repository",
-      "resourceText": "Text Guide",
-      "resourceVideo": "Video Guide",
-      "resourcesTitle": "Resources",
-      "startUsing": "Get started",
-      "systemInfoTitle": "System Info",
-      "welcome": "Welcome to ENDAXIS"
+      "friendOne": "EndField Yituliu",
+      "friendsTitle": "Friendly Links",
+      "resourceRepo": "Project Warehouse",
+      "resourceText": "Text Tutorial",
+      "resourceVideo": "Video tutorial",
+      "resourcesTitle": "Related Resources",
+      "startUsing": "Start using",
+      "systemInfoTitle": "System Information",
+      "welcome": "Welcome to ENDAXIS!"
     },
     "export": {
-      "copyCode": "Copy code",
+      "copyCode": "Copy Data Code",
       "dialogTitle": "Export Settings",
-      "durationHintMax": "Max {max}s supported",
-      "durationLabel": "Export duration (s)",
-      "exportImage": "Export image",
+      "durationHintMax": "Maximum support {max}s",
+      "durationLabel": "Export Duration (seconds)",
+      "exportImage": "Export Image",
       "exportJson": "Export JSON",
       "failed": "Export failed: {msg}",
-      "filenameLabel": "File name",
-      "filenamePlaceholder": "Enter a file name",
-      "imageExported": "Image exported: {filename}",
-      "rendering": "Rendering a long image for the first {seconds} seconds..."
+      "filenameLabel": "File Name",
+      "filenamePlaceholder": "Please enter file name",
+      "imageExported": "Timeline image exported: {filename}",
+      "rendering": "Rendering timeline image for the first {seconds} seconds..."
     },
     "header": {
-      "aboutTooltip": "View help and project info",
+      "aboutTooltip": "View tutorial and project info",
       "languageTooltip": "Language",
-      "loadTooltip": "Import a .json project file or .png image",
-      "receiveTooltip": "Paste a code to import the project",
-      "resetTooltip": "Clear everything"
+      "loadTooltip": "Import .json project file or .png image",
+      "receiveTooltip": "Paste data code to import project",
+      "resetTooltip": "Clear all content"
     },
     "import": {
-      "dialogAlert": "Warning: Import will overwrite all current project data. Consider saving first.",
-      "dialogConfirm": "Overwrite and import",
-      "dialogHint": "Paste the code:",
-      "dialogPlaceholder": "Paste the long string here...",
+      "dialogAlert": "Warning: Importing will overwrite all current project data. It is recommended to save first.",
+      "dialogConfirm": "Confirm overwrite and import",
+      "dialogHint": "Please paste the data code:",
+      "dialogPlaceholder": "Paste long string here...",
       "dialogTitle": "Import Project",
-      "dropHint": "Drop the file to import",
-      "failed": "Load failed: {msg}",
-      "pngNoData": "This image does not contain valid Endaxis project data",
-      "pngSuccess": "Project loaded from image!",
+      "dropHint": "Drag file to import",
+      "failed": "Loading failed: {msg}",
+      "pngNoData": "This image does not contain valid ENDAXIS project data",
+      "pngSuccess": "Successfully loaded project from image!",
       "projectLoaded": "Project loaded successfully!"
     },
     "share": {
-      "copied": "Code copied to clipboard! Send it to a friend to import.",
-      "copyFailed": "Failed to generate code: {msg}",
-      "inputRequired": "Please enter a code",
-      "imported": "Imported shared scenario successfully!",
-      "importFailed": "Invalid code format or corrupted data"
+      "copied": "Share code copied to clipboard! You can send it to friends to import.",
+      "copyFailed": "Failed to generate share code: {msg}",
+      "inputRequired": "Please enter the share code",
+      "imported": "Successfully imported shared plan!",
+      "importFailed": "Invalid share code format or corrupted data"
     },
     "mobile": {
       "time": "Time",
@@ -130,91 +130,91 @@
     },
     "loading": "Loading resources...",
     "reset": {
-      "confirm": "Are you sure you want to clear all progress? This will erase all scenario data.",
-      "confirmButton": "Clear",
-      "done": "Project reset"
+      "confirm": "Are you sure you want to clear all current progress? This will clear all plan data.",
+      "confirmButton": "Confirm Clear",
+      "done": "Project has been reset"
     },
     "scenario": {
-      "addTooltip": "New scenario",
-      "defaultName": "Scenario {index}",
+      "addTooltip": "New Project",
+      "defaultName": "Project {index}",
       "copySuffix": "Copy",
-      "deleteConfirm": "Delete this scenario? This cannot be undone.",
-      "deleteTitle": "Delete Scenario",
-      "deleteTooltip": "Delete current scenario",
-      "deleted": "Scenario deleted",
-      "duplicateTooltip": "Duplicate current scenario",
-      "duplicated": "Scenario duplicated",
-      "limit": "Scenario limit reached ({max})",
-      "renameTooltip": "Rename current scenario",
-      "unnamed": "Unnamed scenario"
+      "deleteConfirm": "Are you sure you want to delete this project? This action cannot be undone.",
+      "deleteTitle": "Delete project",
+      "deleteTooltip": "Delete current project",
+      "deleted": "The project has been deleted",
+      "duplicateTooltip": "Copy current project",
+      "duplicated": "The project was copied",
+      "limit": "Maximum number of projects reached ({max})",
+      "renameTooltip": "Rename current project",
+      "unnamed": "Unnamed project"
     },
     "shortcut": {
-      "boxSelectOff": "Box select: Off",
-      "boxSelectOn": "Box select: On",
-      "connectionTool": "Connection tool: {state}",
+      "boxSelectOff": "Box Select Mode: Off",
+      "boxSelectOn": "Box Select Mode: On",
+      "connectionTool": "Connection Tool: {state}",
       "copied": "Copied",
-      "cursorGuideOff": "Guide line: Hidden",
-      "cursorGuideOn": "Guide line: On",
+      "cursorGuideOff": "Guide Lines: Hidden",
+      "cursorGuideOn": "Guide Lines: Enabled",
       "pasted": "Pasted",
-      "redo": "Redone",
+      "redo": "Redo",
       "snapMode01": "0.1s",
-      "snapModeFrame": "1 frame (1/60s)",
-      "snapPrecision": "Snap precision: {mode}",
-      "undo": "Undone"
+      "snapModeFrame": "1 Frame (1/60s)",
+      "snapPrecision": "Snap Precision: {mode}",
+      "undo": "Undo"
     }
   },
   "timelineGrid": {
     "action": {
-      "locked": "This action is locked in place"
+      "locked": "This action is locked"
     },
     "alignGuide": {
-      "alignLeft": "Align left",
-      "alignRight": "Align right",
-      "snapBack": "Snap to back",
-      "snapFront": "Snap to front"
+      "alignLeft": "Align Left",
+      "alignRight": "Align Right",
+      "snapBack": "Snap to Back",
+      "snapFront": "Snap to Front"
     },
     "alignResult": {
-      "alignedLeft": "Aligned left",
-      "alignedRight": "Aligned right",
-      "snappedBack": "Snapped to back",
-      "snappedFront": "Snapped to front",
+      "alignedLeft": "Aligned Left",
+      "alignedRight": "Aligned Right",
+      "snappedBack": "Snapped to Back",
+      "snappedFront": "Snapped to Front",
       "unchanged": "Position unchanged"
     },
     "cursor": {
       "sp": "SP",
       "stagger": "Stagger"
     },
-    "cycleBoundary": "Cycle boundary",
+    "cycleBoundary": "Cycle Boundary",
     "prep": {
-      "title": "Pre-battle",
-      "expand": "Tap to expand",
-      "collapseTitle": "Collapse pre-battle area",
-      "setDurationTitle": "Set pre-battle duration"
+      "title": "Pre-battle Preparation",
+      "expand": "Click to Expand",
+      "collapseTitle": "Collapse Pre-battle Preparation Area",
+      "setDurationTitle": "Set Pre-battle Preparation Duration"
     },
     "ruler": {
-      "gameTimeCollapseTitle": "Game time (tap to collapse)",
-      "realTimeTitle": "Real time",
-      "gameTimeExpandTitle": "Expand game timeline"
+      "gameTimeCollapseTitle": "Game Time (Click to Collapse)",
+      "realTimeTitle": "Real Time",
+      "gameTimeExpandTitle": "Expand Game Timeline"
     },
     "elementFilter": {
       "all": "All",
-      "blaze": "Blaze",
-      "cold": "Cold",
-      "emag": "Electromagnetic",
+      "blaze": "Heat",
+      "cold": "Cryo",
+      "emag": "Electric",
       "nature": "Nature",
       "physical": "Physical"
     },
     "equipmentDialog": {
-      "allCategories": "All categories",
-      "allLevels": "All levels",
+      "allCategories": "All Categories",
+      "allLevels": "All Levels",
       "empty": "No matching equipment found",
-      "refine": "Refine",
-      "refineBase": "Base",
-      "refineTier": "Refine {tier}",
-      "searchPlaceholder": "Search by equipment name/ID...",
-      "title": "Select equipment - {slot}",
+      "refine": "Artificing",
+      "refineBase": "No Artificing",
+      "refineTier": "Artifice {tier}",
+      "searchPlaceholder": "Search equipment name/ID...",
+      "title": "Select Equipment - {slot}",
       "uncategorized": "Uncategorized",
-      "unequipTooltip": "Unequip current equipment"
+      "unequipTooltip": "Unequip current item"
     },
     "equipmentSlot": {
       "accessory1": "Accessory 1",
@@ -224,15 +224,15 @@
       "gloves": "Gloves"
     },
     "operatorDialog": {
-      "clearTrack": "Clear current track",
+      "clearTrack": "Clear Current Track",
       "empty": "No matching operator found",
-      "inTeam": "In team",
-      "searchPlaceholder": "Search operator name...",
-      "title": "Change operator"
+      "inTeam": "In Team",
+      "searchPlaceholder": "Search by name...",
+      "title": "Change Operator"
     },
     "selection": {
       "deleted": "Deleted",
-      "selectedCount": "Selected {count} actions"
+      "selectedCount": "{count} actions selected"
     },
     "toolbar": {
       "boxSelect": "Box select (Ctrl+B)",
@@ -242,9 +242,9 @@
       "snapPrecision": "Snap precision (Alt+S)"
     },
     "track": {
-      "changeOperatorTooltip": "Tap to change operator",
-      "operatorAlreadyInUse": "This operator is already used on another track!",
-      "selectOperator": "Select an operator",
+      "changeOperatorTooltip": "Click to change operator",
+      "operatorAlreadyInUse": "This operator is already on another track!",
+      "selectOperator": "Select OP",
       "selectWeaponTooltip": "Select weapon",
       "setBonusActive": "Set bonus active"
     },
@@ -252,29 +252,29 @@
       "empty": "No matching weapon found",
       "equipped": "Equipped",
       "searchPlaceholder": "Search weapon name...",
-      "title": "Select weapon",
+      "title": "Select Weapon",
       "unequipTooltip": "Unequip current weapon"
     }
   },
   "actionLibrary": {
     "fallback": {
-      "noEquip": "Not equipped",
-      "noOperator": "No operator selected",
-      "noWeapon": "No weapon equipped"
+      "noEquip": "No Equipment",
+      "noOperator": "No OP ",
+      "noWeapon": "No Weapon Equipped"
     },
     "panels": {
       "operatorStats": "Operator Stats",
       "weaponStats": "Weapon Stats",
-      "equipmentRefine": "Equipment Refine"
+      "equipmentRefine": "Equipment Artificing"
     },
     "labels": {
-      "initialCharge": "Initial charge",
-      "maxCharge": "Max charge",
-      "chargeEfficiency": "Charge efficiency",
-      "linkCdReduction": "Link skill cooldown reduction",
-      "originiumArtsPower": "Originium Arts Power",
-      "commonSlot1": "Common Slot 1",
-      "commonSlot2": "Common Slot 2",
+      "initialCharge": "Initial Charge",
+      "maxCharge": "Max Charge",
+      "chargeEfficiency": "Charge Efficiency",
+      "linkCdReduction": "Combo CD Reduction",
+      "originiumArtsPower": "Arts Intensity",
+      "commonSlot1": "Attribute 1",
+      "commonSlot2": "Attribute 2",
       "exclusiveBuff": "Exclusive Buff",
       "armor": "Armor",
       "gloves": "Gloves",
@@ -287,28 +287,28 @@
       "operatorSkillLibrary": "Operator Skill Library"
     },
     "hints": {
-      "noRefineNon70": "No refine below Lv70",
-      "dragWeaponBuff": "Drag weapon buffs to the timeline; the drop position becomes the start time",
-      "dragSetBuff": "Drag buffs to the timeline; the drop position becomes the start time",
-      "clickOrDrag": "Click to edit base stats / Drag to build timeline"
+      "noRefineNon70": "No Artificing below Lv70",
+      "dragWeaponBuff": "Drag weapon buff to track. Drop position = start time",
+      "dragSetBuff": "Drag buff to track. Drop position = start time",
+      "clickOrDrag": "Click to edit base values / Drag to arrange timeline"
     },
     "suffix": {
       "equipment": "Equipment"
     },
     "tabs": {
-      "operator": "Operator",
-      "set": "Equipment",
-      "setNeedEquip": "Equip any equipment first",
-      "weapon": "Weapon",
-      "weaponNeedSelect": "Select a weapon for the current operator"
+      "operator": "OP",
+      "set": "SET",
+      "setNeedEquip": "Equip any gear first",
+      "weapon": "WPN",
+      "weaponNeedSelect": "Select a weapon for current operator"
     }
   },
   "skillType": {
-    "attack": "Attack",
+    "attack": "Final Strike",
     "dodge": "Dodge",
-    "execution": "Execution",
+    "execution": "Finisher",
     "skill": "Skill",
-    "link": "Link",
+    "link": "Combo",
     "ultimate": "Ultimate",
     "weapon": "Weapon",
     "set": "Set",
@@ -316,8 +316,8 @@
   },
   "enemyTier": {
     "normal": "Normal",
-    "elite": "Advanced",
-    "champion": "Elite",
+    "elite": "Elite",
+    "champion": "Champion",
     "boss": "Boss"
   },
   "weapon": {
@@ -325,191 +325,191 @@
     "effect": "Weapon Effect"
   },
   "contextMenu": {
-    "lockPosition": "Lock position",
-    "unlockPosition": "Unlock position",
-    "disableCalc": "Disable (exclude from calc)",
-    "enableCalc": "Enable (include in calc)",
+    "lockPosition": "Lock Position",
+    "unlockPosition": "Unlock Position",
+    "disableCalc": "Disable (Exclude from calculation)",
+    "enableCalc": "Enable (Include in calculation)",
     "color": "Color",
-    "connectionSettings": "Connection settings",
-    "setSourcePort": "Set source port",
-    "setTargetPort": "Set target port",
-    "globalOps": "Global actions",
-    "addCycleBoundary": "Add cycle boundary",
-    "addSwitchEvent": "Switch operator here..."
+    "connectionSettings": "Connection Settings",
+    "setSourcePort": "Set Output Point",
+    "setTargetPort": "Set Input Point",
+    "globalOps": "Global Operations",
+    "addCycleBoundary": "Add Cycle Boundary",
+    "addSwitchEvent": "Switch Character Here..."
   },
   "connection": {
     "connect": "Connect",
-    "dragToConnect": "Drag to connect",
-    "deleteHint": "Select with left click, then press Delete to remove",
+    "dragToConnect": "Drag to Connect",
+    "deleteHint": "Select with left click and press Delete to remove",
     "direction": {
-      "to": "To",
-      "from": "From"
+      "to": "to",
+      "from": "from"
     },
     "port": {
-      "right": "Right",
-      "left": "Left",
-      "top": "Top",
-      "bottom": "Bottom",
-      "topRight": "Top right",
-      "bottomRight": "Bottom right",
-      "topLeft": "Top left",
-      "bottomLeft": "Bottom left"
+      "right": "R",
+      "left": "L",
+      "top": "T",
+      "bottom": "B",
+      "topRight": "TR",
+      "bottomRight": "BR",
+      "topLeft": "TL",
+      "bottomLeft": "BL"
     },
     "portPosition": {
-      "topLeft": "Top left",
+      "topLeft": "Top Left",
       "top": "Top",
-      "topRight": "Top right",
+      "topRight": "Top Right",
       "left": "Left",
       "center": "Center",
       "right": "Right",
-      "bottomLeft": "Bottom left",
+      "bottomLeft": "Bottom Left",
       "bottom": "Bottom",
-      "bottomRight": "Bottom right"
+      "bottomRight": "Bottom Right"
     }
   },
   "effects": {
     "group": {
-      "exclusive": "Exclusive",
-      "physical": "Physical Status",
-      "attach": "Elemental Infusion",
-      "burst": "Elemental Burst",
+      "exclusive": "Exclusive Effects",
+      "physical": "Physical status",
+      "attach": "Arts Infliction",
+      "burst": "Arts Burst",
       "status": "Status Effects",
       "other": "Other"
     },
     "name": {
-      "break": "Break",
-      "armor_break": "Armor Break",
-      "stagger": "Stagger",
-      "knockdown": "Knockdown",
-      "knockup": "Knock-up",
-      "blaze_attach": "Blaze Infusion",
-      "emag_attach": "EM Infusion",
-      "cold_attach": "Cold Infusion",
-      "nature_attach": "Nature Infusion",
-      "blaze_burst": "Blaze Burst",
-      "emag_burst": "EM Burst",
-      "cold_burst": "Cold Burst",
+      "break": "Vulnerability",
+      "armor_break": "Breach",
+      "stagger": "Crush",
+      "knockdown": "Knock Down",
+      "knockup": "Lift",
+      "blaze_attach": "Heat Infliction",
+      "emag_attach": "Electric Infliction",
+      "cold_attach": "Cryo Infliction",
+      "nature_attach": "Nature Infliction",
+      "blaze_burst": "Heat Burst",
+      "emag_burst": "Electric Burst",
+      "cold_burst": "Cryo Burst",
       "nature_burst": "Nature Burst",
-      "burning": "Burning",
-      "conductive": "Conductive",
-      "frozen": "Frozen",
-      "ice_shatter": "Ice Shatter",
+      "burning": "Combustion",
+      "conductive": "Electrification",
+      "frozen": "Solidification",
+      "ice_shatter": "Shatter",
       "corrosion": "Corrosion",
-      "default": "Default icon"
+      "default": "Default Icon"
     }
   },
   "propertiesPanel": {
     "noSelection": "No skill selected",
-    "globalMode": "Global mode",
+    "globalMode": "Global Mode",
     "sections": {
-      "basic": "Basic"
+      "basic": "Basic Attributes"
     },
     "labels": {
-      "durationS": "Duration (s)",
-      "cooldownS": "Cooldown (s)",
-      "triggerWindowS": "Trigger window (s)",
-      "spCost": "SP cost",
-      "gaugeCost": "Charge cost",
-      "gaugeGain": "Self charge gain",
-      "teamGaugeGain": "Team charge gain",
-      "enhancementTimeS": "Enhancement time (s)"
+      "durationS": "Duration(s)",
+      "cooldownS": "CD(s)",
+      "triggerWindowS": "Trigger Window(s)",
+      "spCost": "SP Cost",
+      "gaugeCost": "Charge Cost",
+      "gaugeGain": "SP Gain",
+      "teamGaugeGain": "Team SP",
+      "enhancementTimeS": "Enhancement Time (s)"
     },
     "damage": {
-      "title": "Damage ticks",
-      "system": "Tick system",
+      "title": "Damage Points",
+      "system": "Trigger System",
       "stagger": "Stagger",
       "sp": "SP",
-      "empty": "No ticks",
+      "empty": "No points",
       "tickTime": "Time",
       "tickStagger": "Stagger",
-      "tickSpGain": "SP gain",
-      "bindEffects": "Bind status icons",
-      "bindPlaceholder": "Select statuses to bind"
+      "tickSpGain": "SP",
+      "bindEffects": "Bind Status Icon",
+      "bindPlaceholder": "Select status to bind"
     },
     "bars": {
-      "title": "Custom time bars",
-      "system": "Timeline system",
-      "activeItems": "Active items",
-      "empty": "No bars",
-      "namePlaceholder": "Item name",
-      "offsetS": "Trigger time (s)",
+      "title": "Custom Time Bars",
+      "system": "Timing System",
+      "activeItems": "Active Entries",
+      "empty": "No time bars",
+      "namePlaceholder": "Entry Name",
+      "offsetS": "Trigger Time (s)",
       "durationS": "Duration (s)"
     },
     "effects": {
-      "title": "Status effects & layout",
+      "title": "Status Effects & Layout",
       "addEffect": "Add",
-      "addRow": "Add new row",
-      "editing": "Editing [ Row {row} : Col {col} ]",
-      "selectPlaceholder": "Select status"
+      "addRow": "Add",
+      "editing": "Editing [{row}:{col}]",
+      "selectPlaceholder": "Select Status"
     },
     "connections": {
-      "title": "Skill connections",
-      "system": "Connection control system",
-      "currentCount": "Current connections",
-      "chooseTarget": "Choose target",
-      "new": "New connection",
+      "title": "Skill Connections",
+      "system": "Connections",
+      "currentCount": "count",
+      "chooseTarget": "Target",
+      "new": "Add",
       "empty": "No connections",
-      "thisSkill": "This skill",
-      "outPort": "Out",
-      "inPort": "In",
+      "thisSkill": "This Skill",
+      "outPort": "out",
+      "inPort": "in",
       "consume": "Consume",
       "consumed": "Consumed",
-      "offset": "Early"
+      "offset": "Offset"
     }
   },
   "resourceMonitor": {
     "sections": {
-      "enemy": "Enemy stats",
-      "team": "Team stats"
+      "enemy": "Enemy Attributes",
+      "team": "Team Attributes"
     },
     "labels": {
-      "maxStagger": "Max stagger",
-      "staggerNodes": "Stagger nodes",
-      "nodeDuration": "Stumble duration",
-      "breakDuration": "Stagger duration",
-      "executionRecovery": "Execution recovery",
+      "maxStagger": "Max Stagger",
+      "staggerNodes": "Stagger Nodes",
+      "nodeDuration": "Node duration",
+      "breakDuration": "Break duration",
+      "executionRecovery": "Finisher recovery",
       "initialSp": "Initial SP",
-      "spPerSecond": "Regen / sec"
+      "spPerSecond": "SP/sec."
     },
     "sp": {
-      "insufficient": "Insufficient"
+      "insufficient": "不足"
     },
     "enemy": {
-      "custom": "Custom enemy",
-      "unknown": "Unknown enemy",
+      "custom": "Custom Enemy",
+      "unknown": "Unknown Enemy",
       "clickToChange": "Click to change enemy",
-      "dialogTitle": "Select enemy",
-      "searchPlaceholder": "Search enemies...",
+      "dialogTitle": "Select Enemy",
+      "searchPlaceholder": "Search enemy...",
       "specialGroup": "Special",
-      "customDesc": "Adjust stats manually",
+      "customDesc": "Manually adjust attribute values",
       "desc": "Max:{max} | Nodes:{nodes}",
-      "empty": "No enemies found"
+      "empty": "No matching enemies found"
     }
   },
   "stats": {
-    "primary_ability": "Primary Ability",
-    "secondary_ability": "Secondary Ability",
+    "primary_ability": "Main Attribute",
+    "secondary_ability": "Sec. Attribute",
     "strength": "Strength",
     "agility": "Agility",
     "intellect": "Intellect",
     "will": "Will",
     "attack": "Attack",
     "hp": "HP",
-    "crit_rate": "Crit Rate",
-    "blaze_dmg": "Blaze DMG",
-    "emag_dmg": "EM DMG",
-    "cold_dmg": "Cold DMG",
+    "crit_rate": "Critical Rate",
+    "blaze_dmg": "Heat DMG",
+    "emag_dmg": "Electric DMG",
+    "cold_dmg": "Cryo DMG",
     "nature_dmg": "Nature DMG",
-    "healing_effect": "Healing Effect",
+    "healing_effect": "Treatment Efficiency",
     "physical_dmg": "Physical DMG",
     "arts_dmg": "Arts DMG",
-    "originium_arts_power": "Originium Arts Power",
-    "ult_charge_eff": "Ultimate charge efficiency",
-    "link_cd_reduction": "Link cooldown reduction"
+    "originium_arts_power": "Arts Intensity",
+    "ult_charge_eff": "Ultimate Gain Eff.",
+    "link_cd_reduction": "Combo CD reduction"
   },
   "actionItem": {
-    "tickTooltip": "Time: {time}\nStagger: {stagger}\nSP gain: {sp}",
-    "lockedTitle": "Position locked",
-    "disabledTitle": "Disabled: excluded from calculation"
+    "tickTooltip": "Time: {time}\nStagger: {stagger}\nSP: {sp}",
+    "lockedTitle": "Locked",
+    "disabledTitle": "Disabled"
   }
 }
