@@ -166,7 +166,7 @@ const style = computed(() => {
       borderRadius: '2px',
       backgroundColor: hexToRgba(color, 0.15),
       boxShadow: isSelected.value ? `0 0 8px ${color}` : 'none',
-      backdropFilter: 'blur(4px)',
+      backdropFilter: store.isCapturing ? 'none' : 'blur(4px)',
       color: isSelected.value ? '#ffffff' : color,
     }
   }
@@ -187,7 +187,7 @@ const style = computed(() => {
     ...layoutStyle,
     border: borderStyle,
     backgroundColor: hexToRgba(color, 0.15),
-    backdropFilter: 'blur(4px)',
+    backdropFilter: store.isCapturing ? 'none' : 'blur(4px)',
     color: isSelected.value ? '#ffffff' : color,
     boxShadow: isSelected.value ? `0 0 10px ${color}` : 'none'
   }
@@ -398,9 +398,9 @@ const renderableAnomalies = computed(() => {
         rowIndex, 
         colIndex, 
         flatIndex: myEffectIndex,
-        style: { 
-            transform: layout.localTransform, 
-            zIndex: 15 + rowIndex
+        style: {
+          transform: layout.localTransform,
+          zIndex: 15 + rowIndex,
         },
         barWidth: layout.barData.width, 
         isConsumed: layout.barData.isConsumed, 
