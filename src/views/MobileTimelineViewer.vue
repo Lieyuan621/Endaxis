@@ -973,7 +973,7 @@ async function doImport() {
           <div class="panel-tag-mini">{{ t('timeline.about.systemInfoTitle') }}</div>
           <div class="section-content-tech">
             <p v-if="aboutAnnouncement.systemInfoP1" class="tech-p">{{ aboutAnnouncement.systemInfoP1 }}</p>
-            <p v-if="aboutAnnouncement.systemInfoP2" class="tech-p" style="margin-top: 6px;">{{ aboutAnnouncement.systemInfoP2 }}</p>
+            <p v-if="aboutAnnouncement.systemInfoP2" class="tech-p" style="margin-top: 6px;" v-html="aboutAnnouncement.systemInfoP2"></p>
             <p v-if="!aboutAnnouncement.systemInfoP1 && !aboutAnnouncement.systemInfoP2" class="tech-p">{{ t('timeline.mobile.aboutNoticeEmpty') }}</p>
           </div>
         </div>
