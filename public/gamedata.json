@@ -4129,6 +4129,522 @@
       ]
     },
     {
+      "id": "TANGTANG",
+      "name": "汤汤",
+      "rarity": 6,
+      "element": "cold",
+      "weapon": "pistol",
+      "avatar": "/avatars/TANGTANG/TANGTANG.webp",
+      "exclusive_buffs": [],
+      "accept_team_gauge": true,
+      "attack_segments": [
+        {
+          "duration": 0.67,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": []
+        },
+        {
+          "duration": 0.25,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": []
+        },
+        {
+          "duration": 0.8,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": []
+        },
+        {
+          "duration": 1,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": []
+        },
+        {
+          "duration": 1,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": [
+            {
+              "offset": 1,
+              "stagger": 0,
+              "sp": 18,
+              "boundEffects": []
+            }
+          ]
+        }
+      ],
+      "skill_duration": 1.867,
+      "skill_spCost": 100,
+      "skill_gaugeGain": 0,
+      "skill_teamGaugeGain": 0,
+      "skill_allowed_types": [
+        "cold_attach",
+        "frozen",
+        "cold_burst"
+      ],
+      "skill_anomalies": [
+        [
+          {
+            "_id": "0gbmca2",
+            "type": "cold_attach",
+            "stacks": 1,
+            "duration": 0,
+            "offset": 1
+          }
+        ]
+      ],
+      "skill_damage_ticks": [
+        {
+          "offset": 1,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": [
+            "0gbmca2"
+          ]
+        }
+      ],
+      "skill_icon": "",
+      "link_duration": 1.65,
+      "link_cooldown": 13,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [],
+      "link_anomalies": [],
+      "link_damage_ticks": [
+        {
+          "offset": 0.95,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        }
+      ],
+      "link_icon": "",
+      "ultimate_duration": 2.9,
+      "ultimate_gaugeMax": 100,
+      "ultimate_gaugeReply": 0,
+      "ultimate_enhancementTime": 0,
+      "ultimate_allowed_types": [],
+      "ultimate_anomalies": [],
+      "ultimate_damage_ticks": [
+        {
+          "offset": 2.8,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        }
+      ],
+      "ultimate_animationTime": 2.73,
+      "ultimate_icon": "",
+      "execution_duration": 1.5,
+      "execution_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion"
+      ],
+      "execution_anomalies": [],
+      "execution_damage_ticks": [],
+      "dodge_duration": 0.5,
+      "variants": []
+    },
+    {
+      "id": "ROSSI",
+      "name": "洛茜",
+      "rarity": 6,
+      "element": "physical",
+      "weapon": "sword",
+      "avatar": "/avatars/ROSSI/ROSSI.webp",
+      "exclusive_buffs": [],
+      "accept_team_gauge": true,
+      "attack_segments": [
+        {
+          "duration": 2.83,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": []
+        },
+        {
+          "duration": 0.75,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": [
+            {
+              "offset": 0.75,
+              "stagger": 0,
+              "sp": 18,
+              "boundEffects": []
+            }
+          ]
+        },
+        {
+          "duration": 0,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": []
+        },
+        {
+          "duration": 0,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": []
+        },
+        {
+          "duration": 0,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion"
+          ],
+          "anomalies": [],
+          "damage_ticks": []
+        }
+      ],
+      "skill_duration": 1.75,
+      "skill_spCost": 100,
+      "skill_gaugeGain": 0,
+      "skill_teamGaugeGain": 0,
+      "skill_allowed_types": [
+        "knockup",
+        "break",
+        "ice_shatter"
+      ],
+      "skill_anomalies": [
+        [
+          {
+            "_id": "po2hqi8",
+            "type": "knockup",
+            "stacks": 1,
+            "duration": 0,
+            "offset": 1.6
+          }
+        ]
+      ],
+      "skill_damage_ticks": [
+        {
+          "offset": 1.6,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": [
+            "po2hqi8"
+          ]
+        }
+      ],
+      "skill_icon": "",
+      "link_duration": 1.3,
+      "link_cooldown": 0,
+      "link_gaugeGain": 0,
+      "link_allowed_types": [],
+      "link_anomalies": [],
+      "link_damage_ticks": [],
+      "link_icon": "",
+      "ultimate_duration": 5,
+      "ultimate_gaugeMax": 100,
+      "ultimate_gaugeReply": 0,
+      "ultimate_enhancementTime": 0,
+      "ultimate_allowed_types": [
+        "blaze_burst",
+        "burning",
+        "blaze_attach"
+      ],
+      "ultimate_anomalies": [
+        [
+          {
+            "_id": "35u8nuo",
+            "type": "blaze_burst",
+            "stacks": 1,
+            "duration": 0,
+            "offset": 5
+          }
+        ]
+      ],
+      "ultimate_damage_ticks": [
+        {
+          "offset": 5,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": [
+            "35u8nuo"
+          ]
+        }
+      ],
+      "ultimate_animationTime": 2.05,
+      "ultimate_icon": "",
+      "execution_duration": 1.5,
+      "execution_allowed_types": [
+        "break",
+        "armor_break",
+        "stagger",
+        "knockdown",
+        "knockup",
+        "blaze_attach",
+        "emag_attach",
+        "cold_attach",
+        "nature_attach",
+        "blaze_burst",
+        "emag_burst",
+        "cold_burst",
+        "nature_burst",
+        "burning",
+        "conductive",
+        "frozen",
+        "ice_shatter",
+        "corrosion"
+      ],
+      "execution_anomalies": [],
+      "execution_damage_ticks": [],
+      "dodge_duration": 0.5,
+      "variants": [
+        {
+          "id": "v_1772384921148",
+          "name": "二段连携",
+          "type": "link",
+          "duration": 3.05,
+          "icon": "",
+          "allowedTypes": [
+            "knockup",
+            "break",
+            "ice_shatter"
+          ],
+          "physicalAnomaly": [
+            [
+              {
+                "_id": "o709hoq",
+                "type": "knockup",
+                "stacks": 2,
+                "duration": 0,
+                "offset": 2.3
+              }
+            ]
+          ],
+          "damageTicks": [
+            {
+              "offset": 2.3,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": [
+                "o709hoq"
+              ]
+            }
+          ],
+          "cooldown": 15,
+          "gaugeGain": 0
+        }
+      ],
+      "ultimate_element": "blaze"
+    },
+    {
       "id": "XAIHI",
       "name": "赛希",
       "rarity": 5,
@@ -5410,9 +5926,15 @@
       "skill_gaugeGain": 6.5,
       "skill_damage_ticks": [
         {
-          "offset": 1.43,
+          "offset": 0.27,
           "sp": 0,
+          "stagger": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 1.43,
           "stagger": 10,
+          "sp": 0,
           "boundEffects": [
             "u1eh47y"
           ]
@@ -8777,7 +9299,7 @@
     {
       "id": "eny_0007_mimicw",
       "name": "潜地虬兽",
-      "avatar": "/Icon_Enemy/adventure_eny_0007_mimicw.webp",
+      "avatar": "/Icon_Enemy/eny_0007_mimicw.webp",
       "maxStagger": 160,
       "staggerNodeCount": 0,
       "staggerNodeDuration": 2,
@@ -8789,7 +9311,7 @@
     {
       "id": "eny_0018_lbtough",
       "name": "碾骨行刑人",
-      "avatar": "/Icon_Enemy/adventure_eny_0018_lbtough.webp",
+      "avatar": "/Icon_Enemy/eny_0018_lbtough.webp",
       "maxStagger": 320,
       "staggerNodeCount": 1,
       "staggerNodeDuration": 2,
@@ -8797,6 +9319,306 @@
       "executionRecovery": 50,
       "category": "裂地者",
       "tier": "champion"
+    },
+    {
+      "id": "eny_0021_agmelee",
+      "name": "大角天使",
+      "avatar": "/Icon_Enemy/eny_0021_agmelee.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0023_aghornb",
+      "name": "刚角天使",
+      "avatar": "/Icon_Enemy/eny_0023_aghornb.webp",
+      "maxStagger": 160,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 10,
+      "executionRecovery": 35,
+      "category": "天使",
+      "tier": "elite"
+    },
+    {
+      "id": "eny_0025_agrange",
+      "name": "钉刺天使",
+      "avatar": "/Icon_Enemy/eny_0025_agrange.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0027_agscorp",
+      "name": "重刺天使",
+      "avatar": "/Icon_Enemy/eny_0027_agscorp.webp",
+      "maxStagger": 140,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7,
+      "executionRecovery": 35,
+      "category": "天使",
+      "tier": "elite"
+    },
+    {
+      "id": "eny_0063_agmelee2",
+      "name": "大角天使α",
+      "avatar": "/Icon_Enemy/eny_0063_agmelee2.webp",
+      "maxStagger": 90,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0064_agrange2",
+      "name": "钉刺天使α",
+      "avatar": "/Icon_Enemy/eny_0064_agrange2.webp",
+      "maxStagger": 90,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0069_aghornb2",
+      "name": "刚角天使α",
+      "avatar": "/Icon_Enemy/eny_0069_aghornb2.webp",
+      "maxStagger": 200,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7.5,
+      "executionRecovery": 35,
+      "category": "天使",
+      "tier": "elite"
+    },
+    {
+      "id": "eny_0070_agscorp2",
+      "name": "重刺天使α",
+      "avatar": "/Icon_Enemy/eny_0070_agscorp2.webp",
+      "maxStagger": 180,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7.5,
+      "executionRecovery": 35,
+      "category": "天使",
+      "tier": "elite"
+    },
+    {
+      "id": "eny_0039_agcanno",
+      "name": "岗哨天使",
+      "avatar": "/Icon_Enemy/eny_0039_agcanno.webp",
+      "maxStagger": 200,
+      "staggerNodeCount": 1,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "天使",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0058_agdisk",
+      "name": "肖像天使",
+      "avatar": "/Icon_Enemy/eny_0058_agdisk.webp",
+      "maxStagger": 340,
+      "staggerNodeCount": 1,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "天使",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0076_agfly",
+      "name": "仿生翅天使",
+      "avatar": "/Icon_Enemy/eny_0076_agfly.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0101_agfly2",
+      "name": "仿生翅天使α",
+      "avatar": "/Icon_Enemy/eny_0101_agfly2.webp",
+      "maxStagger": 180,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7.5,
+      "executionRecovery": 35,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0077_agshield",
+      "name": "跂步晶城",
+      "avatar": "/Icon_Enemy/eny_0077_agshield.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 1,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 10,
+      "executionRecovery": 50,
+      "category": "天使",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0087_wgslime",
+      "name": "浊流天使",
+      "avatar": "/Icon_Enemy/eny_0087_wgslime.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0088_wgthorns",
+      "name": "晶锥天使",
+      "avatar": "/Icon_Enemy/eny_0088_wgthorns.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0089_wgreflec",
+      "name": "棱镜天使",
+      "avatar": "/Icon_Enemy/eny_0089_wgreflec.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0091_wgshoal",
+      "name": "潮行天使",
+      "avatar": "/Icon_Enemy/eny_0091_wgshoal.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 1,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "天使",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0090_wgabyss",
+      "name": "破潮之像",
+      "avatar": "/Icon_Enemy/eny_0090_wgabyss.webp",
+      "maxStagger": 640,
+      "staggerNodeCount": 1,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 13,
+      "executionRecovery": 50,
+      "category": "天使",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0105_wgslime2",
+      "name": "浊流天使δ",
+      "avatar": "/Icon_Enemy/eny_0105_wgslime2.webp",
+      "maxStagger": 90,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0106_wgthorns2",
+      "name": "晶锥天使δ",
+      "avatar": "/Icon_Enemy/eny_0106_wgthorns2.webp",
+      "maxStagger": 90,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "天使",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0061_palecore",
+      "name": "白垩核心",
+      "avatar": "/Icon_Enemy/eny_0061_palecore.webp",
+      "maxStagger": 200,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 24,
+      "executionRecovery": 100,
+      "category": "天使",
+      "tier": "boss"
+    },
+    {
+      "id": "eny_0062_paletent",
+      "name": "白垩附肢",
+      "avatar": "/Icon_Enemy/eny_0062_paletent.webp",
+      "maxStagger": 0,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 100,
+      "category": "天使",
+      "tier": "boss"
+    },
+    {
+      "id": "eny_0052_palesent",
+      "name": "白垩界卫",
+      "avatar": "/Icon_Enemy/eny_0052_palesent.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 2,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 11,
+      "executionRecovery": 100,
+      "category": "天使",
+      "tier": "boss"
+    },
+    {
+      "id": "eny_0029_lbmob",
+      "name": "碾骨劫掠者",
+      "avatar": "/Icon_Enemy/eny_0029_lbmob.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0033_lbhunt",
+      "name": "碾骨伏击射手",
+      "avatar": "/Icon_Enemy/eny_0033_lbhunt.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
     }
   ],
   "enemyCategories": [
@@ -10035,6 +10857,86 @@
       "commonSlots": [
         {
           "modifierId": "primary_ability",
+          "size": "small"
+        },
+        {
+          "modifierId": null,
+          "size": "small"
+        }
+      ],
+      "buffBonuses": []
+    },
+    {
+      "id": "wpn_sword_0017",
+      "name": "光荣记忆",
+      "buffName": "",
+      "type": "sword",
+      "rarity": 6,
+      "duration": 0,
+      "icon": "/weapons/sword/wpn_sword_0017.webp",
+      "commonSlots": [
+        {
+          "modifierId": null,
+          "size": "small"
+        },
+        {
+          "modifierId": null,
+          "size": "small"
+        }
+      ],
+      "buffBonuses": []
+    },
+    {
+      "id": "wpn_pistol_0007",
+      "name": "望乡",
+      "buffName": "",
+      "type": "pistol",
+      "rarity": 6,
+      "duration": 0,
+      "icon": "/weapons/pistol/wpn_pistol_0007.webp",
+      "commonSlots": [
+        {
+          "modifierId": null,
+          "size": "small"
+        },
+        {
+          "modifierId": null,
+          "size": "small"
+        }
+      ],
+      "buffBonuses": []
+    },
+    {
+      "id": "wpn_pistol_0011",
+      "name": "落草",
+      "buffName": "",
+      "type": "pistol",
+      "rarity": 6,
+      "duration": 0,
+      "icon": "/weapons/pistol/wpn_pistol_0011.webp",
+      "commonSlots": [
+        {
+          "modifierId": null,
+          "size": "small"
+        },
+        {
+          "modifierId": null,
+          "size": "small"
+        }
+      ],
+      "buffBonuses": []
+    },
+    {
+      "id": "wpn_sword_0022",
+      "name": "狼之绯",
+      "buffName": "",
+      "type": "sword",
+      "rarity": 6,
+      "duration": 0,
+      "icon": "/weapons/sword/wpn_sword_0022.webp",
+      "commonSlots": [
+        {
+          "modifierId": null,
           "size": "small"
         },
         {

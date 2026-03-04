@@ -461,9 +461,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     function updateTrackGaugeEfficiency(trackId, value) {
         const track = tracks.value.find(t => t.id === trackId);
         if (track) {
-            track.gaugeEfficiency = value;
-            if (!track.stats) track.stats = createDefaultStats()
-            track.stats.ult_charge_eff = Number(value) || 0
+            const cleanValue = Math.round(Number(value) * 1000) / 1000;
+
+            track.gaugeEfficiency = cleanValue;
+            if (!track.stats) track.stats = createDefaultStats();
+            track.stats.ult_charge_eff = cleanValue;
             commitState();
         }
     }

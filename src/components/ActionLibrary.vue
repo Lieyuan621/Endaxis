@@ -93,14 +93,16 @@ const initialGaugeValue = computed({
 const gaugeEfficiencyValue = computed({
   get: () => {
     if (!activeTrack.value) return 100;
-    return activeTrack.value.gaugeEfficiency ?? 100;
+    const rawVal = activeTrack.value.gaugeEfficiency ?? 100;
+    return Math.round(rawVal * 1000) / 1000;
   },
   set: (val) => {
     if (store.activeTrackId) {
-      store.updateTrackGaugeEfficiency(store.activeTrackId, val)
+      const cleanVal = Math.round(val * 1000) / 1000;
+      store.updateTrackGaugeEfficiency(store.activeTrackId, cleanVal);
     }
   }
-})
+});
 
 const linkCdReductionValue = computed({
   get: () => {
