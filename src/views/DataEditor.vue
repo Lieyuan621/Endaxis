@@ -507,6 +507,143 @@ const modifierDefs = computed(() => misc.value?.modifierDefs || [])
 const weaponCommonModifiers = computed(() => misc.value?.weaponCommonModifiers || {})
 
 const PRIMARY_STAT_IDS = ['strength', 'agility', 'intellect', 'will']
+const DOMAIN_WEAPON = 'weapon'
+const DOMAIN_EQUIPMENT_ADAPTER = 'equipmentAdapter'
+const UNIT_OPTIONS = [
+  { value: 'flat', label: '固定数值' },
+  { value: 'percent', label: '百分比 (%)' },
+]
+
+function normalizeUnit(unit) {
+  return unit === 'percent' || unit === 'flat' ? unit : null
+}
+
+function getModifierLabelById(modifierId) {
+  if (!modifierId) return ''
+  const fromDefs = (modifierDefs.value || []).find(d => d?.id === modifierId)
+  if (fromDefs?.label) return fromDefs.label
+  const core = CORE_STATS.find(s => s.id === modifierId)
+  return core?.label || modifierId
+}
+
+const allModifierOptions = computed(() => {
+  const map = new Map()
+  for (const s of CORE_STATS) {
+    map.set(s.id, { id: s.id, label: s.label || s.id, source: 'core' })
+  }
+  for (const d of (modifierDefs.value || [])) {
+    if (!d?.id) continue
+    map.set(d.id, { id: d.id, label: d.label || d.id, source: 'custom' })
+  }
+  return [...map.values()].sort((a, b) => (a.label || '').localeCompare(b.label || ''))
+})
+
+function collectWeaponReferencedModifierIds() {
+  const out = new Set()
+  for (const w of (weaponDatabase.value || [])) {
+    for (const slot of (w?.commonSlots || [])) {
+      const id = typeof slot?.modifierId === 'string' ? slot.modifierId.trim() : (typeof slot?.key === 'string' ? slot.key.trim() : '')
+      if (id) out.add(id)
+    }
+    for (const b of (w?.buffBonuses || [])) {
+      const id = typeof b?.modifierId === 'string' ? b.modifierId.trim() : (typeof b?.key === 'string' ? b.key.trim() : '')
+      if (id) out.add(id)
+    }
+  }
+  for (const id of Object.keys(weaponCommonModifiers.value || {})) {
+    if (id) out.add(id)
+  }
+  return out
+}
+
+function collectEquipmentAdapterReferencedModifierIds() {
+  const out = new Set()
+  for (const eq of (equipmentDatabase.value || [])) {
+    const entries = eq?.affixes?.adapter?.entries
+    if (!Array.isArray(entries)) continue
+    for (const ent of entries) {
+      const id = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : (typeof ent?.key === 'string' ? ent.key.trim() : '')
+      if (id) out.add(id)
+    }
+  }
+  const table = misc.value?.equipmentAdapterTable
+  if (table && typeof table === 'object') {
+    for (const id of Object.keys(table)) {
+      if (id) out.add(id)
+    }
+  }
+  return out
+}
+
+function ensureDomainConfigRoot() {
+  ensureMiscRoot()
+  if (!misc.value.domainConfig || typeof misc.value.domainConfig !== 'object') misc.value.domainConfig = {}
+  if (!misc.value.domainConfig[DOMAIN_WEAPON]) misc.value.domainConfig[DOMAIN_WEAPON] = { enabled: [], units: {} }
+  if (!misc.value.domainConfig[DOMAIN_EQUIPMENT_ADAPTER]) misc.value.domainConfig[DOMAIN_EQUIPMENT_ADAPTER] = { enabled: [], units: {} }
+
+  for (const domain of [DOMAIN_WEAPON, DOMAIN_EQUIPMENT_ADAPTER]) {
+    const cfg = misc.value.domainConfig[domain]
+    if (!cfg || typeof cfg !== 'object') continue
+    if (!Array.isArray(cfg.enabled)) cfg.enabled = []
+    if (!cfg.units || typeof cfg.units !== 'object') cfg.units = {}
+  }
+}
+
+function getDomainEnabledIds(domain) {
+  const cfg = misc.value?.domainConfig?.[domain]
+  const enabledRaw = Array.isArray(cfg?.enabled) ? cfg.enabled : []
+  const optionSet = new Set(allModifierOptions.value.map(o => o.id))
+
+  const fallbackRefSet = domain === DOMAIN_WEAPON
+    ? collectWeaponReferencedModifierIds()
+    : collectEquipmentAdapterReferencedModifierIds()
+
+  const merged = enabledRaw.length > 0 ? enabledRaw : [...fallbackRefSet]
+  const seen = new Set()
+  const cleaned = []
+  for (const idLike of merged) {
+    const id = typeof idLike === 'string' ? idLike.trim() : ''
+    if (!id) continue
+    if (!optionSet.has(id)) continue
+    if (domain === DOMAIN_EQUIPMENT_ADAPTER && PRIMARY_STAT_IDS.includes(id)) continue
+    if (seen.has(id)) continue
+    seen.add(id)
+    cleaned.push(id)
+  }
+  return cleaned
+}
+
+function getDomainUnit(domain, modifierId) {
+  const u = misc.value?.domainConfig?.[domain]?.units?.[modifierId]
+  return normalizeUnit(u) || 'flat'
+}
+
+function setDomainUnit(domain, modifierId, unit) {
+  ensureDomainConfigRoot()
+  const normalized = normalizeUnit(unit)
+  if (!normalized) return
+  misc.value.domainConfig[domain].units[modifierId] = normalized
+}
+
+const weaponEnabledIds = computed(() => getDomainEnabledIds(DOMAIN_WEAPON))
+const equipmentAdapterEnabledIds = computed(() => getDomainEnabledIds(DOMAIN_EQUIPMENT_ADAPTER))
+
+const weaponEnabledDefs = computed(() => {
+  return weaponEnabledIds.value.map(id => ({ id, label: getModifierLabelById(id), unit: getDomainUnit(DOMAIN_WEAPON, id) }))
+})
+
+const equipmentAdapterEnabledDefs = computed(() => {
+  return equipmentAdapterEnabledIds.value.map(id => ({ id, label: getModifierLabelById(id), unit: getDomainUnit(DOMAIN_EQUIPMENT_ADAPTER, id) }))
+})
+
+const weaponEnabledOptions = computed(() => {
+  return weaponEnabledDefs.value.map(d => ({ value: d.id, label: d.label || d.id }))
+})
+
+const equipmentAdapterEnabledOptions = computed(() => {
+  return equipmentAdapterEnabledDefs.value.map(d => ({ value: d.id, label: d.label || d.id }))
+})
+
 const primaryStatOptions = computed(() => {
   const coreMap = new Map(CORE_STATS.map(s => [s.id, s]))
   return PRIMARY_STAT_IDS.map(id => ({ value: id, label: coreMap.get(id)?.label || id }))
@@ -515,11 +652,11 @@ const primaryStatOptions = computed(() => {
 const equipmentModifierOptions = computed(() => {
   const map = new Map()
   for (const s of CORE_STATS) {
-    map.set(s.id, { id: s.id, label: s.label, unit: s.unit })
+    map.set(s.id, { id: s.id, label: s.label })
   }
   for (const d of (modifierDefs.value || [])) {
     if (!d?.id) continue
-    map.set(d.id, { id: d.id, label: d.label || d.id, unit: d.unit })
+    map.set(d.id, { id: d.id, label: d.label || d.id })
   }
   return [...map.values()].sort((a, b) => (a.label || '').localeCompare(b.label || ''))
 })
@@ -527,6 +664,8 @@ const equipmentModifierOptions = computed(() => {
 const equipmentModifierOptionsV2 = computed(() => {
   return equipmentModifierOptions.value.map(o => ({ value: o.id, label: o.label }))
 })
+
+const equipmentAdapterModifierOptionsV2 = computed(() => equipmentAdapterEnabledOptions.value)
 
 const availableCoreStatsToAdd = computed(() => {
   const existing = new Set((modifierDefs.value || []).map(d => d.id))
@@ -536,6 +675,136 @@ const availableCoreStatsToAdd = computed(() => {
 const collapsedEnemyGroups = ref(new Set())
 const collapsedWeaponGroups = ref(new Set())
 const collapsedEquipmentGroups = ref(new Set())
+
+// === 词条域管理（武器/装备属性加成） ===
+const domainManagerOpen = ref(false)
+const domainManagerDomain = ref(DOMAIN_WEAPON)
+const domainManagerSearch = ref('')
+const domainManagerSelectedIds = ref([])
+const domainManagerUnits = ref({})
+
+const domainManagerTitle = computed(() => {
+  return domainManagerDomain.value === DOMAIN_WEAPON
+    ? '管理词条（武器）'
+    : '管理词条（装备·属性加成）'
+})
+
+const domainManagerSelectedMeta = computed(() => {
+  const ids = Array.isArray(domainManagerSelectedIds.value) ? domainManagerSelectedIds.value : []
+  return ids.map(id => ({
+    id,
+    label: getModifierLabelById(id),
+    unit: normalizeUnit(domainManagerUnits.value?.[id]) || null,
+  }))
+})
+
+const domainManagerAvailableMeta = computed(() => {
+  const selected = new Set(domainManagerSelectedIds.value || [])
+  const q = String(domainManagerSearch.value || '').trim().toLowerCase()
+  const domain = domainManagerDomain.value
+
+  return allModifierOptions.value
+    .filter((opt) => {
+      if (selected.has(opt.id)) return false
+      if (domain === DOMAIN_EQUIPMENT_ADAPTER && PRIMARY_STAT_IDS.includes(opt.id)) return false
+      if (!q) return true
+      return opt.id.toLowerCase().includes(q) || String(opt.label || '').toLowerCase().includes(q)
+    })
+})
+
+const domainManagerCanConfirm = computed(() => {
+  const ids = Array.isArray(domainManagerSelectedIds.value) ? domainManagerSelectedIds.value : []
+  if (ids.length === 0) return true
+  return ids.every(id => !!normalizeUnit(domainManagerUnits.value?.[id]))
+})
+
+function openDomainManager(domain) {
+  const nextDomain = domain === DOMAIN_EQUIPMENT_ADAPTER ? DOMAIN_EQUIPMENT_ADAPTER : DOMAIN_WEAPON
+  try {
+    ensureDomainConfigRoot()
+    domainManagerDomain.value = nextDomain
+    domainManagerSearch.value = ''
+
+    const enabled = getDomainEnabledIds(nextDomain)
+    const units = { ...(misc.value?.domainConfig?.[nextDomain]?.units || {}) }
+    for (const id of enabled) {
+      if (!(id in units)) units[id] = null
+      units[id] = normalizeUnit(units[id]) || null
+    }
+
+    domainManagerSelectedIds.value = enabled.slice()
+    domainManagerUnits.value = units
+  } catch (e) {
+    console.error('openDomainManager failed:', e)
+    domainManagerDomain.value = nextDomain
+    domainManagerSearch.value = ''
+    domainManagerSelectedIds.value = []
+    domainManagerUnits.value = {}
+    ElMessage.error('打开管理词条失败：请查看控制台报错')
+  } finally {
+    domainManagerOpen.value = true
+  }
+}
+
+function closeDomainManager() {
+  domainManagerOpen.value = false
+}
+
+function addDomainModifier(id) {
+  const modifierId = typeof id === 'string' ? id.trim() : ''
+  if (!modifierId) return
+  if (domainManagerSelectedIds.value.includes(modifierId)) return
+  domainManagerSelectedIds.value.push(modifierId)
+  if (!(modifierId in domainManagerUnits.value)) {
+    domainManagerUnits.value[modifierId] = null
+  } else {
+    domainManagerUnits.value[modifierId] = normalizeUnit(domainManagerUnits.value[modifierId])
+  }
+}
+
+function removeDomainModifier(id) {
+  const modifierId = typeof id === 'string' ? id.trim() : ''
+  if (!modifierId) return
+  domainManagerSelectedIds.value = (domainManagerSelectedIds.value || []).filter(v => v !== modifierId)
+  if (domainManagerUnits.value && typeof domainManagerUnits.value === 'object') {
+    delete domainManagerUnits.value[modifierId]
+  }
+}
+
+function applyDomainManager() {
+  if (!domainManagerCanConfirm.value) return
+  const domain = domainManagerDomain.value
+  const nextEnabled = (domainManagerSelectedIds.value || []).slice()
+  const nextUnitsRaw = domainManagerUnits.value || {}
+
+  const prevEnabled = getDomainEnabledIds(domain)
+  const prevSet = new Set(prevEnabled)
+  const nextSet = new Set(nextEnabled)
+
+  const removed = prevEnabled.filter(id => !nextSet.has(id))
+  const added = nextEnabled.filter(id => !prevSet.has(id))
+
+  if (domain === DOMAIN_WEAPON) {
+    for (const id of removed) cleanupWeaponDomainModifier(id)
+    for (const id of added) ensureWeaponCommonEntry(id)
+  } else if (domain === DOMAIN_EQUIPMENT_ADAPTER) {
+    for (const id of removed) cleanupEquipmentAdapterDomainModifier(id)
+    for (const id of added) ensureEquipmentAdapterTableEntry(id)
+  }
+
+  ensureDomainConfigRoot()
+  misc.value.domainConfig[domain].enabled = nextEnabled
+
+  const unitsNext = {}
+  for (const id of nextEnabled) {
+    const u = normalizeUnit(nextUnitsRaw?.[id])
+    if (!u) continue
+    unitsNext[id] = u
+  }
+  misc.value.domainConfig[domain].units = unitsNext
+
+  closeDomainManager()
+}
 
 // === 生命周期 ===
 
@@ -662,11 +931,13 @@ function handleAddNew() {
 
 function ensureMiscRoot() {
   if (!misc.value) {
-    misc.value = { modifierDefs: [], weaponCommonModifiers: {}, equipmentTemplates: {} }
+    misc.value = { modifierDefs: [], weaponCommonModifiers: {}, equipmentTemplates: {}, equipmentAdapterTable: {}, domainConfig: {} }
   }
   if (!misc.value.modifierDefs) misc.value.modifierDefs = []
   if (!misc.value.weaponCommonModifiers) misc.value.weaponCommonModifiers = {}
   if (!misc.value.equipmentTemplates || typeof misc.value.equipmentTemplates !== 'object') misc.value.equipmentTemplates = {}
+  if (!misc.value.equipmentAdapterTable || typeof misc.value.equipmentAdapterTable !== 'object') misc.value.equipmentAdapterTable = {}
+  if (!misc.value.domainConfig || typeof misc.value.domainConfig !== 'object') misc.value.domainConfig = {}
   if (!misc.value.equipmentTemplates.armor) misc.value.equipmentTemplates.armor = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
   if (!misc.value.equipmentTemplates.gloves) misc.value.equipmentTemplates.gloves = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
   if (!misc.value.equipmentTemplates.accessory) misc.value.equipmentTemplates.accessory = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
@@ -691,8 +962,7 @@ function normalizeModifierDefs(defs) {
   for (const def of list) {
     const id = typeof def?.id === 'string' ? def.id.trim() : (typeof def?.key === 'string' ? def.key.trim() : '')
     if (!id || seen.has(id)) continue
-    const unit = def?.unit === 'percent' || def?.unit === 'flat' ? def.unit : 'flat'
-    out.push({ id, label: (def?.label || id).toString(), unit, note: def?.note, domainTags: def?.domainTags })
+    out.push({ id, label: (def?.label || id).toString(), note: def?.note, domainTags: def?.domainTags })
     seen.add(id)
   }
   return out
@@ -701,6 +971,7 @@ function normalizeModifierDefs(defs) {
 function normalizeEquipmentAffixes(level, affixes) {
   const safe = (affixes && typeof affixes === 'object') ? affixes : {}
   const is70 = Number(level) === 70
+  const size = is70 ? 4 : 1
 
   const normalizePrimary = (input, { defaultId = null } = {}) => {
     const raw = (input && typeof input === 'object') ? input : {}
@@ -714,16 +985,49 @@ function normalizeEquipmentAffixes(level, affixes) {
 
   const normalizeAdapter = (input) => {
     const raw = (input && typeof input === 'object') ? input : {}
-    const ids = Array.isArray(raw.modifierIds) ? raw.modifierIds : (raw.modifierId ? [raw.modifierId] : [])
-    const cleaned = []
-    for (const id of ids) {
-      if (typeof id !== 'string') continue
-      const trimmed = id.trim()
-      if (!trimmed) continue
-      if (!cleaned.includes(trimmed)) cleaned.push(trimmed)
+    const baseVals = is70 ? normalizeArray4(raw.values) : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0]
+    const baseValues = baseVals.slice(0, size)
+
+    const entriesRaw = Array.isArray(raw.entries) ? raw.entries : null
+    let entries = []
+
+    if (entriesRaw) {
+      entries = entriesRaw.map((e) => {
+        const ent = (e && typeof e === 'object') ? e : {}
+        const modifierId = typeof ent.modifierId === 'string' && ent.modifierId.trim()
+          ? ent.modifierId.trim()
+          : (typeof ent.key === 'string' && ent.key.trim() ? ent.key.trim() : null)
+        const vals = is70 ? normalizeArray4(ent.values) : [Number(Array.isArray(ent.values) ? ent.values[0] : ent.value) || 0]
+        return { modifierId: modifierId || null, values: vals.slice(0, size) }
+      })
+    } else {
+      const ids = Array.isArray(raw.modifierIds) ? raw.modifierIds : (raw.modifierId ? [raw.modifierId] : [])
+      const cleaned = []
+      for (const id of ids) {
+        if (typeof id !== 'string') continue
+        const trimmed = id.trim()
+        if (!trimmed) continue
+        if (!cleaned.includes(trimmed)) cleaned.push(trimmed)
+      }
+      entries = cleaned.map((modifierId) => ({ modifierId, values: [...baseValues] }))
     }
-    const values = is70 ? normalizeArray4(raw.values) : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0]
-    return { modifierIds: cleaned, values }
+
+    const seen = new Set()
+    const cleanedEntries = []
+    for (const ent of entries) {
+      const modifierId = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : ''
+      if (!modifierId) continue
+      if (seen.has(modifierId)) continue
+      const vals = is70 ? normalizeArray4(ent.values) : [Number(Array.isArray(ent.values) ? ent.values[0] : ent.value) || 0]
+      cleanedEntries.push({ modifierId, values: vals.slice(0, size) })
+      seen.add(modifierId)
+    }
+
+    return {
+      entries: cleanedEntries,
+      modifierIds: cleanedEntries.map(e => e.modifierId),
+      values: baseValues,
+    }
   }
 
   return {
@@ -756,7 +1060,7 @@ function ensureEquipmentAffixes(eq) {
 
   if (!eq.affixes.primary1 || typeof eq.affixes.primary1 !== 'object') eq.affixes.primary1 = { modifierId: null, values: [] }
   if (!eq.affixes.primary2 || typeof eq.affixes.primary2 !== 'object') eq.affixes.primary2 = { modifierId: null, values: [] }
-  if (!eq.affixes.adapter || typeof eq.affixes.adapter !== 'object') eq.affixes.adapter = { modifierIds: [], values: [] }
+  if (!eq.affixes.adapter || typeof eq.affixes.adapter !== 'object') eq.affixes.adapter = { entries: [], modifierIds: [], values: [] }
 
   eq.affixes.primary1.modifierId = (typeof eq.affixes.primary1.modifierId === 'string' && eq.affixes.primary1.modifierId.trim())
     ? eq.affixes.primary1.modifierId.trim()
@@ -765,14 +1069,45 @@ function ensureEquipmentAffixes(eq) {
     ? eq.affixes.primary2.modifierId.trim()
     : null
 
-  if (!Array.isArray(eq.affixes.adapter.modifierIds)) eq.affixes.adapter.modifierIds = []
-  eq.affixes.adapter.modifierIds = eq.affixes.adapter.modifierIds
-    .filter(v => typeof v === 'string' && v.trim())
-    .map(v => v.trim())
+  const adapter = eq.affixes.adapter
+  if (!Array.isArray(adapter.entries)) adapter.entries = []
+
+  if (adapter.entries.length === 0) {
+    const ids = Array.isArray(adapter.modifierIds) ? adapter.modifierIds : []
+    const baseValues = ensureValues(adapter.values, 0)
+    adapter.entries = ids
+      .filter(v => typeof v === 'string' && v.trim())
+      .map(v => ({ modifierId: v.trim(), values: baseValues.slice() }))
+  }
+
+  const seen = new Set()
+  adapter.entries = adapter.entries
+    .map((e) => {
+      const raw = (e && typeof e === 'object') ? e : {}
+      const modifierId = typeof raw.modifierId === 'string' && raw.modifierId.trim()
+        ? raw.modifierId.trim()
+        : (typeof raw.key === 'string' && raw.key.trim() ? raw.key.trim() : null)
+      return {
+        modifierId: modifierId || null,
+        values: ensureValues(raw.values, 0),
+      }
+    })
+    .filter((e) => {
+      if (!e.modifierId) return false
+      if (seen.has(e.modifierId)) return false
+      seen.add(e.modifierId)
+      return true
+    })
+
+  adapter.entries.forEach((e) => {
+    e.values = ensureValues(e.values, 0)
+  })
+
+  adapter.modifierIds = adapter.entries.map(e => e.modifierId)
+  adapter.values = ensureValues(adapter.values, 0)
 
   eq.affixes.primary1.values = ensureValues(eq.affixes.primary1.values, 0)
   eq.affixes.primary2.values = ensureValues(eq.affixes.primary2.values, 0)
-  eq.affixes.adapter.values = ensureValues(eq.affixes.adapter.values, 0)
 
   return eq.affixes
 }
@@ -781,7 +1116,76 @@ function ensureEquipmentTemplate(slotKey) {
   ensureMiscRoot()
   const mapKey = slotKey === 'armor' ? 'armor' : (slotKey === 'gloves' ? 'gloves' : (slotKey === 'accessory' ? 'accessory' : null))
   if (!mapKey) return null
-  return misc.value.equipmentTemplates?.[mapKey] || null
+
+  if (!misc.value.equipmentTemplates || typeof misc.value.equipmentTemplates !== 'object') misc.value.equipmentTemplates = {}
+  if (!misc.value.equipmentTemplates[mapKey]) {
+    misc.value.equipmentTemplates[mapKey] = {
+      primary1: [0, 0, 0, 0],
+      primary2: [0, 0, 0, 0],
+      primary1Single: [0, 0, 0, 0],
+    }
+  }
+
+  return misc.value.equipmentTemplates[mapKey]
+}
+
+function ensureEquipmentAdapterTableEntry(modifierId) {
+  if (!modifierId) return null
+  ensureMiscRoot()
+  if (!misc.value.equipmentAdapterTable || typeof misc.value.equipmentAdapterTable !== 'object') misc.value.equipmentAdapterTable = {}
+
+  if (!misc.value.equipmentAdapterTable[modifierId]) {
+    misc.value.equipmentAdapterTable[modifierId] = {
+      armorSingle: [0, 0, 0, 0],
+      armorDual: [0, 0, 0, 0],
+      glovesSingle: [0, 0, 0, 0],
+      glovesDual: [0, 0, 0, 0],
+      accessorySingle: [0, 0, 0, 0],
+      accessoryDual: [0, 0, 0, 0],
+    }
+  }
+
+  return misc.value.equipmentAdapterTable[modifierId]
+}
+
+function getEquipmentAdapterTemplateValues(modifierId, slotKey, hasSecond) {
+  if (!modifierId) return null
+  const t = misc.value?.equipmentAdapterTable?.[modifierId]
+  if (!t) return null
+
+  const slot = slotKey === 'armor' ? 'armor'
+    : (slotKey === 'gloves' ? 'gloves'
+      : (slotKey === 'accessory' ? 'accessory' : null))
+  if (!slot) return null
+
+  const key = `${slot}${hasSecond ? 'Dual' : 'Single'}`
+  const vals = t[key]
+  if (!Array.isArray(vals)) return null
+  return normalizeArray4(vals)
+}
+
+function addEquipmentAdapterEntry(eq) {
+  if (!eq) return
+  const aff = ensureEquipmentAffixes(eq)
+  if (!aff) return
+  if (!aff.adapter || typeof aff.adapter !== 'object') aff.adapter = { entries: [], modifierIds: [], values: [] }
+  if (!Array.isArray(aff.adapter.entries)) aff.adapter.entries = []
+  aff.adapter.entries.push({ modifierId: null, values: Number(eq.level) === 70 ? [0, 0, 0, 0] : [0] })
+}
+
+function removeEquipmentAdapterEntry(eq, index) {
+  if (!eq) return
+  const aff = ensureEquipmentAffixes(eq)
+  const list = aff?.adapter?.entries
+  if (!Array.isArray(list)) return
+  const idx = Number(index)
+  if (!Number.isFinite(idx) || idx < 0 || idx >= list.length) return
+  list.splice(idx, 1)
+  if (eq?.affixes?.adapter) {
+    eq.affixes.adapter.modifierIds = Array.isArray(eq.affixes.adapter.entries)
+      ? eq.affixes.adapter.entries.map(e => e?.modifierId).filter(Boolean)
+      : []
+  }
 }
 
 async function applyEquipmentTemplate(eq) {
@@ -792,15 +1196,23 @@ async function applyEquipmentTemplate(eq) {
   if (!aff) return
 
   const hasSecond = !!aff.primary2?.modifierId
+
+  const entries = Array.isArray(aff.adapter?.entries) ? aff.adapter.entries : []
+  const adapterTemplatesToApply = entries.map((ent) => {
+    const id = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : ''
+    if (!id) return null
+    return getEquipmentAdapterTemplateValues(id, eq.slot, hasSecond)
+  }).filter(Boolean)
+
   const templateValues = hasSecond
-    ? [...normalizeArray4(t.primary1), ...normalizeArray4(t.primary2)]
-    : normalizeArray4(t.primary1Single)
+    ? [...normalizeArray4(t.primary1), ...normalizeArray4(t.primary2), ...adapterTemplatesToApply.flat()]
+    : [...normalizeArray4(t.primary1Single), ...adapterTemplatesToApply.flat()]
 
   const templateHasNonZero = templateValues.some(v => (Number(v) || 0) !== 0)
   if (!templateHasNonZero) {
     const currentValues = hasSecond
-      ? [...normalizeArray4(aff.primary1.values), ...normalizeArray4(aff.primary2.values)]
-      : normalizeArray4(aff.primary1.values)
+      ? [...normalizeArray4(aff.primary1.values), ...normalizeArray4(aff.primary2.values), ...(entries.map(e => normalizeArray4(e?.values)).flat())]
+      : [...normalizeArray4(aff.primary1.values), ...(entries.map(e => normalizeArray4(e?.values)).flat())]
     const currentHasNonZero = currentValues.some(v => (Number(v) || 0) !== 0)
     if (currentHasNonZero) {
       try {
@@ -821,6 +1233,20 @@ async function applyEquipmentTemplate(eq) {
   } else {
     aff.primary1.values = normalizeArray4(t.primary1Single)
     aff.primary2.values = [0, 0, 0, 0]
+  }
+
+  for (const ent of entries) {
+    const id = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : ''
+    if (!id) continue
+    const tpl = getEquipmentAdapterTemplateValues(id, eq.slot, hasSecond)
+    if (!tpl) continue
+    ent.values = tpl
+  }
+
+  if (eq?.affixes?.adapter) {
+    eq.affixes.adapter.modifierIds = Array.isArray(eq.affixes.adapter.entries)
+      ? eq.affixes.adapter.entries.map(e => e?.modifierId).filter(Boolean)
+      : []
   }
 }
 
@@ -993,7 +1419,7 @@ function addCoreModifierDef(statId) {
   ensureMiscRoot()
   if (modifierDefs.value.some(d => d.id === statId)) return
   const core = CORE_STATS.find(s => s.id === statId)
-  const newDef = { id: statId, label: core ? `${core.label}提升` : '新属性', unit: core?.unit || 'flat' }
+  const newDef = { id: statId, label: core ? `${core.label}提升` : '新属性' }
   misc.value.modifierDefs.push(newDef)
   ensureWeaponCommonEntry(statId)
   if (miscSection.value === 'weapon_table') {
@@ -1001,9 +1427,61 @@ function addCoreModifierDef(statId) {
   }
 }
 
+function cleanupWeaponDomainModifier(id) {
+  if (!id) return
+  ensureMiscRoot()
+  if (misc.value.weaponCommonModifiers && misc.value.weaponCommonModifiers[id]) {
+    delete misc.value.weaponCommonModifiers[id]
+  }
+
+  for (const w of weaponDatabase.value || []) {
+    if (Array.isArray(w.commonSlots)) {
+      w.commonSlots.forEach(slot => {
+        const cur = slot?.modifierId || slot?.key
+        if (cur === id) slot.modifierId = null
+      })
+    }
+    if (Array.isArray(w.buffBonuses)) {
+      w.buffBonuses = w.buffBonuses.filter(b => (b?.modifierId || b?.key) !== id)
+    }
+  }
+}
+
+function cleanupEquipmentAdapterDomainModifier(id) {
+  if (!id) return
+  ensureMiscRoot()
+  if (misc.value.equipmentAdapterTable && misc.value.equipmentAdapterTable[id]) {
+    delete misc.value.equipmentAdapterTable[id]
+  }
+
+  for (const eq of equipmentDatabase.value || []) {
+    if (!eq || !eq.affixes || typeof eq.affixes !== 'object') continue
+    const adapter = eq.affixes.adapter
+    if (!adapter || typeof adapter !== 'object') continue
+
+    if (Array.isArray(adapter.entries)) {
+      adapter.entries = adapter.entries.filter(e => (e?.modifierId || e?.key) !== id)
+    }
+    if (Array.isArray(adapter.modifierIds)) {
+      adapter.modifierIds = adapter.modifierIds.filter(v => v !== id)
+    }
+  }
+}
+
+function removeFromDomainConfig(domain, id) {
+  if (!domain || !id) return
+  ensureDomainConfigRoot()
+  const cfg = misc.value.domainConfig?.[domain]
+  if (!cfg) return
+  cfg.enabled = Array.isArray(cfg.enabled) ? cfg.enabled.filter(v => v !== id) : []
+  if (cfg.units && typeof cfg.units === 'object') {
+    delete cfg.units[id]
+  }
+}
+
 function removeModifierDef(id) {
   if (!id) return
-  ElMessageBox.confirm('确定要移除此属性吗？已配置到武器的引用会被清空。', '提示', {
+  ElMessageBox.confirm('确定要移除此属性吗？已配置到武器/装备的引用会被清空。', '提示', {
     confirmButtonText: '移除',
     cancelButtonText: '取消',
     type: 'warning'
@@ -1011,18 +1489,11 @@ function removeModifierDef(id) {
     const idx = misc.value.modifierDefs.findIndex(d => d.id === id)
     if (idx !== -1) misc.value.modifierDefs.splice(idx, 1)
 
-    if (misc.value.weaponCommonModifiers && misc.value.weaponCommonModifiers[id]) {
-      delete misc.value.weaponCommonModifiers[id]
-    }
+    cleanupWeaponDomainModifier(id)
+    cleanupEquipmentAdapterDomainModifier(id)
 
-    for (const w of weaponDatabase.value || []) {
-      if (Array.isArray(w.commonSlots)) {
-        w.commonSlots.forEach(slot => { if ((slot?.modifierId || slot?.key) === id) slot.modifierId = null })
-      }
-      if (Array.isArray(w.buffBonuses)) {
-        w.buffBonuses = w.buffBonuses.filter(b => (b?.modifierId || b?.key) !== id)
-      }
-    }
+    removeFromDomainConfig(DOMAIN_WEAPON, id)
+    removeFromDomainConfig(DOMAIN_EQUIPMENT_ADAPTER, id)
 
   }).catch(() => {})
 }
@@ -1717,10 +2188,11 @@ function saveData() {
   ensureMiscRoot()
   misc.value.modifierDefs = normalizeModifierDefs(misc.value.modifierDefs)
   const normalizedCommon = {}
-  for (const def of misc.value.modifierDefs) {
-    const entry = misc.value.weaponCommonModifiers?.[def.id]
+  for (const id of weaponEnabledIds.value || []) {
+    ensureWeaponCommonEntry(id)
+    const entry = misc.value.weaponCommonModifiers?.[id]
     if (!entry) continue
-    normalizedCommon[def.id] = {
+    normalizedCommon[id] = {
       small: normalizeArray9(entry.small),
       medium: normalizeArray9(entry.medium),
       large: normalizeArray9(entry.large),
@@ -1739,6 +2211,61 @@ function saveData() {
     t.primary1Single = normalizeArray4(t.primary1Single)
   }
 
+  if (!misc.value.equipmentAdapterTable || typeof misc.value.equipmentAdapterTable !== 'object') misc.value.equipmentAdapterTable = {}
+  const normalizedEqAdapterTable = {}
+  for (const modifierId of equipmentAdapterEnabledIds.value || []) {
+    ensureEquipmentAdapterTableEntry(modifierId)
+    const raw = (misc.value.equipmentAdapterTable?.[modifierId] && typeof misc.value.equipmentAdapterTable[modifierId] === 'object')
+      ? misc.value.equipmentAdapterTable[modifierId]
+      : {}
+    normalizedEqAdapterTable[modifierId] = {
+      armorSingle: normalizeArray4(raw.armorSingle),
+      armorDual: normalizeArray4(raw.armorDual),
+      glovesSingle: normalizeArray4(raw.glovesSingle),
+      glovesDual: normalizeArray4(raw.glovesDual),
+      accessorySingle: normalizeArray4(raw.accessorySingle),
+      accessoryDual: normalizeArray4(raw.accessoryDual),
+    }
+  }
+  misc.value.equipmentAdapterTable = normalizedEqAdapterTable
+
+  ensureDomainConfigRoot()
+  const optionSet = new Set(allModifierOptions.value.map(o => o.id))
+  for (const domain of [DOMAIN_WEAPON, DOMAIN_EQUIPMENT_ADAPTER]) {
+    const cfg = misc.value.domainConfig[domain]
+    const rawEnabled = Array.isArray(cfg.enabled) ? cfg.enabled : []
+    const seen = new Set()
+    const cleanedEnabled = []
+    for (const idLike of rawEnabled) {
+      const id = typeof idLike === 'string' ? idLike.trim() : ''
+      if (!id) continue
+      if (!optionSet.has(id)) continue
+      if (domain === DOMAIN_EQUIPMENT_ADAPTER && PRIMARY_STAT_IDS.includes(id)) continue
+      if (seen.has(id)) continue
+      seen.add(id)
+      cleanedEnabled.push(id)
+    }
+    cfg.enabled = cleanedEnabled
+
+    const unitsRaw = (cfg.units && typeof cfg.units === 'object') ? cfg.units : {}
+    const cleanedUnits = {}
+    const missingUnitIds = []
+    for (const id of cleanedEnabled) {
+      const u = normalizeUnit(unitsRaw[id])
+      if (!u) {
+        missingUnitIds.push(id)
+        continue
+      }
+      cleanedUnits[id] = u
+    }
+    cfg.units = cleanedUnits
+
+    if (missingUnitIds.length > 0) {
+      ElMessage.error(`域“${domain}”存在未设置单位的词条：${missingUnitIds.join(', ')}。请先在“管理词条”里为每条选择单位后再保存。`)
+      return
+    }
+  }
+
   for (const eq of equipmentDatabase.value || []) {
     if (!eq) continue
     if (eq.affixes || eq.affixes70) {
@@ -1747,7 +2274,15 @@ function saveData() {
     if (Number(eq.level) !== 70 && eq.affixes) {
       eq.affixes.primary1.values = [Number(eq.affixes.primary1.values?.[0]) || 0]
       eq.affixes.primary2.values = [Number(eq.affixes.primary2.values?.[0]) || 0]
-      eq.affixes.adapter.values = [Number(eq.affixes.adapter.values?.[0]) || 0]
+      if (eq.affixes.adapter) {
+        eq.affixes.adapter.values = [Number(eq.affixes.adapter.values?.[0]) || 0]
+        if (Array.isArray(eq.affixes.adapter.entries)) {
+          eq.affixes.adapter.entries.forEach((e) => {
+            if (!e || typeof e !== 'object') return
+            e.values = [Number(e.values?.[0]) || 0]
+          })
+        }
+      }
     }
   }
 
@@ -2617,13 +3152,22 @@ function saveData() {
         <div class="form-section">
           <h3 class="section-title">装备词条数值</h3>
           <div class="info-banner">
-            Lv70 装备支持“初始 / 精锻1 / 精锻2 / 精锻3”四档；非 Lv70 仅支持“初始数值”。副词条可为空；适配词条可多选（用于寒冷+电磁等组合）。
+            Lv70 装备支持“初始 / 精锻1 / 精锻2 / 精锻3”四档；非 Lv70 仅支持“初始数值”。副词条可为空；属性加成可添加多条（每条一个属性）。
           </div>
 
           <div v-if="Number(selectedEquipment.level) === 70" class="attack-seg-toolbar" style="margin-bottom: 12px;">
             <div class="attack-seg-meta" style="justify-content: space-between;">
               <span class="meta-item">可精锻属性：4 档</span>
               <button class="ea-btn ea-btn--glass-cut ea-btn--sm" @click="applyEquipmentTemplate(selectedEquipment)">套用部位模板（仅数值）</button>
+            </div>
+          </div>
+
+          <div class="attack-seg-toolbar" style="margin-bottom: 12px;" v-if="selectedEquipmentAffixes">
+            <div class="attack-seg-meta" style="justify-content: space-between;">
+              <span class="meta-item">属性加成：{{ (selectedEquipmentAffixes.adapter?.entries?.length || 0) }} 条</span>
+              <div style="display:flex; gap: 10px; align-items:center;">
+                <button class="ea-btn ea-btn--glass-cut ea-btn--sm" @click="addEquipmentAdapterEntry(selectedEquipment)">添加属性加成</button>
+              </div>
             </div>
           </div>
 
@@ -2654,24 +3198,28 @@ function saveData() {
               <input type="number" step="0.1" v-model.number="selectedEquipmentAffixes.primary2.values[col.index]" class="matrix-input" />
             </div>
 
-            <div class="matrix-cell row-label small">属性加成</div>
-            <div class="matrix-cell" style="overflow: visible;">
-              <el-select-v2
-                  v-model="selectedEquipmentAffixes.adapter.modifierIds"
-                  multiple
-                  filterable
-                  collapse-tags
-                  collapse-tags-tooltip
-                  size="small"
-                  style="width: 100%"
-                  :teleported="true"
-                  :options="equipmentModifierOptionsV2"
-                  placeholder="请选择"
-              />
-            </div>
-            <div v-for="col in equipmentAffixColumns" :key="`adv_${col.index}`" class="matrix-cell">
-              <input type="number" step="0.1" v-model.number="selectedEquipmentAffixes.adapter.values[col.index]" class="matrix-input" />
-            </div>
+            <template v-if="selectedEquipmentAffixes.adapter?.entries?.length">
+              <template v-for="(ent, idx) in selectedEquipmentAffixes.adapter.entries" :key="`ad_${idx}`">
+                <div class="matrix-cell row-label small">属性加成</div>
+                <div class="matrix-cell" style="overflow: visible;">
+                  <div style="display:flex; gap: 8px; align-items:center;">
+                    <el-select-v2
+                        v-model="ent.modifierId"
+                        filterable
+                        size="small"
+                        style="width: 100%"
+                        :teleported="true"
+                        :options="equipmentAdapterModifierOptionsV2"
+                        placeholder="请选择"
+                    />
+                    <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeEquipmentAdapterEntry(selectedEquipment, idx)">×</button>
+                  </div>
+                </div>
+                <div v-for="col in equipmentAffixColumns" :key="`adv_${idx}_${col.index}`" class="matrix-cell">
+                  <input type="number" :step="getDomainUnit(DOMAIN_EQUIPMENT_ADAPTER, ent.modifierId) === 'percent' ? 0.1 : 1" v-model.number="ent.values[col.index]" class="matrix-input" />
+                </div>
+              </template>
+            </template>
           </div>
         </div>
       </div>
@@ -2710,7 +3258,6 @@ function saveData() {
                   v-for="s in availableCoreStatsToAdd"
                   :key="s.id"
                   class="ea-btn ea-btn--glass-cut"
-                  :style="{ '--ea-btn-accent': s.unit === 'percent' ? 'var(--ea-gold)' : 'var(--ea-purple)' }"
                   @click="addCoreModifierDef(s.id)"
               >{{ s.label }}提升</button>
             </div>
@@ -2727,16 +3274,10 @@ function saveData() {
               <div class="editor-row" style="align-items:center;">
                 <div class="drag-handle" style="cursor: grab; color:#666; font-family: monospace;">≡</div>
                 <div class="flex-grow">
-                  <div class="form-grid" style="grid-template-columns: 1fr 160px 110px; gap: 12px; align-items:end;">
+                  <div class="form-grid" style="grid-template-columns: 1fr 110px; gap: 12px; align-items:end;">
                     <div class="form-group">
                       <label>名称</label>
                       <input v-model="element.label" type="text" />
-                    </div>
-                    <div class="form-group">
-                      <label>单位</label>
-                      <div class="unit-badge" :class="element.unit">
-                        {{ element.unit === 'percent' ? '百分比 (%)' : '固定数值' }}
-                      </div>
                     </div>
                     <div class="form-group">
                       <label>操作</label>
@@ -2750,17 +3291,20 @@ function saveData() {
         </div>
 
         <div v-else-if="miscSection === 'weapon_table'" class="form-section">
-          <h3 class="section-title">武器词条数值表</h3>
+          <h3 class="section-title" style="display:flex; align-items:center; justify-content:space-between; gap: 12px;">
+            <span>武器词条数值表</span>
+            <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--glass-rect-hover-accent ea-btn--radius-6" :style="{ '--ea-btn-accent': 'var(--ea-purple)' }" @click.stop="openDomainManager(DOMAIN_WEAPON)">管理词条</button>
+          </h3>
           <div class="info-banner">
             此处配置属性在不同等级（1-9级）和不同幅度（大/中/小）下的具体数值。<br>
           </div>
 
-          <div v-if="modifierDefs.length === 0" class="empty-hint">
-            暂无属性，请先在“所有属性”中添加。
+          <div v-if="weaponEnabledDefs.length === 0" class="empty-hint">
+            暂无已选择词条，请先点击上方“管理词条”添加。
           </div>
 
           <div class="weapon-table-list">
-            <div v-for="def in modifierDefs" :key="def.id" class="stat-table-card">
+            <div v-for="def in weaponEnabledDefs" :key="def.id" class="stat-table-card">
               <div class="stat-header">
                 <div class="stat-title-group">
                   <span class="stat-name">{{ def.label }}</span>
@@ -2824,7 +3368,7 @@ function saveData() {
                   <span class="stat-name">
                     {{ slotKey === 'armor' ? '护甲' : (slotKey === 'gloves' ? '护手' : '配件') }}
                   </span>
-                  <span class="stat-unit-badge flat">数值</span>
+                  <span class="stat-unit-badge flat">固定数值</span>
                 </div>
                 <div class="stat-id">模板</div>
               </div>
@@ -2850,6 +3394,72 @@ function saveData() {
                   <div class="matrix-cell row-label small">主词条(单)</div>
                   <div v-for="i in 4" :key="`t_${slotKey}_p1s_${i}`" class="matrix-cell">
                     <input type="number" step="0.1" v-model.number="misc.equipmentTemplates[slotKey].primary1Single[i - 1]" class="matrix-input" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="section-title" style="margin-top: 18px; display:flex; align-items:center; justify-content:space-between; gap: 12px;">
+            <span>装备属性加成数值表（按属性）</span>
+            <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--glass-rect-hover-accent ea-btn--radius-6" :style="{ '--ea-btn-accent': 'var(--ea-purple)' }" @click.stop="openDomainManager(DOMAIN_EQUIPMENT_ADAPTER)">管理词条（属性加成）</button>
+          </h3>
+          <div class="info-banner">
+            这里为“属性加成”里的每个属性单独配置数值模板，并区分：护甲/护手/配件 × 单词条/双词条（双词条指装备存在副词条）。
+          </div>
+
+          <div v-if="equipmentAdapterEnabledDefs.length === 0" class="empty-hint">
+            暂无已选择词条，请先点击上方“管理词条（属性加成）”添加。
+          </div>
+
+          <div class="weapon-table-list">
+            <div v-for="def in equipmentAdapterEnabledDefs" :key="`eqad_${def.id}`" class="stat-table-card">
+              <div class="stat-header">
+                <div class="stat-title-group">
+                  <span class="stat-name">{{ def.label }}</span>
+                  <span class="stat-unit-badge" :class="def.unit">
+                    {{ def.unit === 'percent' ? '百分比 (%)' : '固定数值' }}
+                  </span>
+                </div>
+                <div class="stat-id">ID: {{ def.id }}</div>
+              </div>
+
+              <div class="stat-body" v-if="ensureEquipmentAdapterTableEntry(def.id)">
+                <div class="matrix-grid" style="grid-template-columns: 120px repeat(4, minmax(60px, 1fr));">
+                  <div class="matrix-cell header-corner">部位</div>
+                  <div class="matrix-cell header-level">初始</div>
+                  <div class="matrix-cell header-level">精锻1</div>
+                  <div class="matrix-cell header-level">精锻2</div>
+                  <div class="matrix-cell header-level">精锻3</div>
+
+                  <div class="matrix-cell row-label large">护甲(单)</div>
+                  <div v-for="i in 4" :key="`ad_${def.id}_as_${i}`" class="matrix-cell">
+                    <input type="number" :step="def.unit === 'percent' ? 0.1 : 1" v-model.number="misc.equipmentAdapterTable[def.id].armorSingle[i - 1]" class="matrix-input" />
+                  </div>
+
+                  <div class="matrix-cell row-label medium">护甲(双)</div>
+                  <div v-for="i in 4" :key="`ad_${def.id}_ad_${i}`" class="matrix-cell">
+                    <input type="number" :step="def.unit === 'percent' ? 0.1 : 1" v-model.number="misc.equipmentAdapterTable[def.id].armorDual[i - 1]" class="matrix-input" />
+                  </div>
+
+                  <div class="matrix-cell row-label large">护手(单)</div>
+                  <div v-for="i in 4" :key="`ad_${def.id}_gs_${i}`" class="matrix-cell">
+                    <input type="number" :step="def.unit === 'percent' ? 0.1 : 1" v-model.number="misc.equipmentAdapterTable[def.id].glovesSingle[i - 1]" class="matrix-input" />
+                  </div>
+
+                  <div class="matrix-cell row-label medium">护手(双)</div>
+                  <div v-for="i in 4" :key="`ad_${def.id}_gd_${i}`" class="matrix-cell">
+                    <input type="number" :step="def.unit === 'percent' ? 0.1 : 1" v-model.number="misc.equipmentAdapterTable[def.id].glovesDual[i - 1]" class="matrix-input" />
+                  </div>
+
+                  <div class="matrix-cell row-label large">配件(单)</div>
+                  <div v-for="i in 4" :key="`ad_${def.id}_xs_${i}`" class="matrix-cell">
+                    <input type="number" :step="def.unit === 'percent' ? 0.1 : 1" v-model.number="misc.equipmentAdapterTable[def.id].accessorySingle[i - 1]" class="matrix-input" />
+                  </div>
+
+                  <div class="matrix-cell row-label medium">配件(双)</div>
+                  <div v-for="i in 4" :key="`ad_${def.id}_xd_${i}`" class="matrix-cell">
+                    <input type="number" :step="def.unit === 'percent' ? 0.1 : 1" v-model.number="misc.equipmentAdapterTable[def.id].accessoryDual[i - 1]" class="matrix-input" />
                   </div>
                 </div>
               </div>
@@ -2973,7 +3583,7 @@ function saveData() {
                     placeholder="请选择"
                 >
                   <el-option :value="null" label="（无）" />
-                  <el-option v-for="def in modifierDefs" :key="def.id" :label="def.label" :value="def.id" />
+                  <el-option v-for="def in weaponEnabledDefs" :key="def.id" :label="def.label" :value="def.id" />
                 </el-select>
               </div>
               <div class="form-group">
@@ -3002,7 +3612,7 @@ function saveData() {
                     placeholder="请选择"
                 >
                   <el-option :value="null" label="（无）" />
-                  <el-option v-for="def in modifierDefs" :key="def.id" :label="def.label" :value="def.id" />
+                  <el-option v-for="def in weaponEnabledDefs" :key="def.id" :label="def.label" :value="def.id" />
                 </el-select>
               </div>
               <div class="form-group">
@@ -3050,7 +3660,7 @@ function saveData() {
                           placeholder="请选择"
                       >
                         <el-option :value="null" label="（无）" />
-                        <el-option v-for="def in modifierDefs" :key="def.id" :label="def.label" :value="def.id" />
+                        <el-option v-for="def in weaponEnabledDefs" :key="def.id" :label="def.label" :value="def.id" />
                       </el-select>
                     </div>
                     <div class="form-group">
@@ -3078,11 +3688,85 @@ function saveData() {
 
       <div v-else class="empty-state">请从左侧列表选择条目</div>
     </main>
+
+    <el-dialog v-model="domainManagerOpen" :title="domainManagerTitle" width="820px" :lock-scroll="false">
+      <div class="info-banner" style="margin-top: 0;">
+        上方为未选择词条，下方为已选择词条；点击可移动。已选择词条必须设置单位，否则无法保存。
+      </div>
+
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+        <div class="form-section" style="margin: 0;">
+          <h3 class="section-title" style="margin-top: 0;">未选择</h3>
+          <div class="search-box" style="margin: 0 0 10px 0;">
+            <input v-model="domainManagerSearch" placeholder="搜索 ID 或名称..." />
+          </div>
+
+          <div style="max-height: 360px; overflow: auto; border: 1px solid #333; background: #1a1a1a; padding: 10px;">
+            <button
+              v-for="opt in domainManagerAvailableMeta"
+              :key="`dm_av_${opt.id}`"
+              type="button"
+              class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--glass-rect-hover-accent ea-btn--radius-6"
+              :style="{ '--ea-btn-accent': 'var(--ea-purple)' }"
+              style="width: 100%; justify-content: space-between; margin-bottom: 8px;"
+              @click="addDomainModifier(opt.id)"
+            >
+              <span style="text-align:left; overflow:hidden; text-overflow: ellipsis; white-space: nowrap;">{{ opt.label }}</span>
+              <span style="opacity: 0.7; font-family: monospace;">{{ opt.id }}</span>
+            </button>
+
+            <div v-if="domainManagerAvailableMeta.length === 0" class="empty-hint" style="margin: 6px 0 0 0;">
+              无可添加项
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section" style="margin: 0;">
+          <h3 class="section-title" style="margin-top: 0;">已选择</h3>
+
+          <div style="max-height: 360px; overflow: auto; border: 1px solid #333; background: #1a1a1a; padding: 10px;">
+            <draggable v-model="domainManagerSelectedIds" :item-key="(id) => id" handle=".drag-handle" :animation="150">
+              <template #item="{ element: id }">
+                <div class="editor-row" style="align-items:center; gap: 10px;">
+                  <div class="drag-handle" style="cursor: grab; color:#666; font-family: monospace;">≡</div>
+                  <div class="flex-grow" style="min-width: 0;">
+                    <div style="display:flex; gap: 10px; align-items:center; justify-content:space-between;">
+                      <div style="min-width: 0;">
+                        <div style="color:#ddd; overflow:hidden; text-overflow: ellipsis; white-space: nowrap;">{{ getModifierLabelById(id) }}</div>
+                        <div style="opacity:0.7; font-family: monospace; font-size: 12px;">{{ id }}</div>
+                      </div>
+                      <div style="display:flex; gap: 8px; align-items:center;">
+                        <el-select v-model="domainManagerUnits[id]" size="small" style="width: 140px" placeholder="选择单位">
+                          <el-option v-for="u in UNIT_OPTIONS" :key="u.value" :value="u.value" :label="u.label" />
+                        </el-select>
+                        <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeDomainModifier(id)">×</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </draggable>
+
+            <div v-if="(domainManagerSelectedIds || []).length === 0" class="empty-hint" style="margin: 6px 0 0 0;">
+              暂无已选择词条
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div style="display:flex; justify-content:flex-end; gap: 10px;">
+          <button class="ea-btn ea-btn--md ea-btn--outline-muted" @click="closeDomainManager">取消</button>
+          <button class="ea-btn ea-btn--md ea-btn--fill-success" :disabled="!domainManagerCanConfirm" @click="applyDomainManager">保存</button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
 .cms-layout { display: flex; height: 100vh; background-color: #1e1e1e; color: #f0f0f0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; }
+.cms-layout :deep(.ea-btn) { --ea-btn-radius: 0px; }
 
 /* Sidebar */
 .cms-sidebar { width: 300px; background-color: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; flex-shrink: 0; }
@@ -3515,7 +4199,10 @@ function saveData() {
 .attack-seg-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .attack-seg-toolbar .ea-btn--sm { height: 30px; padding: 0 10px; font-size: 12px; }
 .attack-seg-toolbar .ea-btn.active { box-shadow: 0 0 0 1px #ffd700 inset, 0 0 14px rgba(255, 215, 0, 0.15); }
-.attack-seg-toolbar .ea-btn--glass-cut { clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
+.attack-seg-toolbar .ea-btn--glass-cut { clip-path: none; }
+
+.ea-btn--glass-cut { clip-path: none; }
+.sidebar-tabs .ea-btn--glass-cut { clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
 .attack-seg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: #aaa; font-size: 12px; }
 .attack-seg-meta .meta-item { color: #ccc; font-weight: 600; }
 

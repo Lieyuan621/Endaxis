@@ -301,7 +301,9 @@ export const useTimelineStore = defineStore('timeline', () => {
             armor: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
             gloves: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
             accessory: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
-        }
+        },
+        equipmentAdapterTable: {},
+        domainConfig: {}
     })
     const activeEnemyId = ref('custom')
     const enemyCategories = ref([])
@@ -990,6 +992,57 @@ export const useTimelineStore = defineStore('timeline', () => {
         return out
     }
 
+    const normalizeEquipmentAdapterTable = (table) => {
+        const safe = (table && typeof table === 'object') ? table : {}
+        const out = {}
+        const normalizeOne = (entry) => {
+            const raw = (entry && typeof entry === 'object') ? entry : {}
+            return {
+                armorSingle: normalizeArray4(raw.armorSingle),
+                armorDual: normalizeArray4(raw.armorDual),
+                glovesSingle: normalizeArray4(raw.glovesSingle),
+                glovesDual: normalizeArray4(raw.glovesDual),
+                accessorySingle: normalizeArray4(raw.accessorySingle),
+                accessoryDual: normalizeArray4(raw.accessoryDual),
+            }
+        }
+        for (const [key, entry] of Object.entries(safe)) {
+            if (!key) continue
+            out[key] = normalizeOne(entry)
+        }
+        return out
+    }
+
+    const normalizeDomainConfig = (incoming) => {
+        const safe = (incoming && typeof incoming === 'object') ? incoming : {}
+        const normalizeDomain = (domainLike) => {
+            const raw = (domainLike && typeof domainLike === 'object') ? domainLike : {}
+            const enabledRaw = Array.isArray(raw.enabled) ? raw.enabled : []
+            const enabled = []
+            const seen = new Set()
+            for (const idLike of enabledRaw) {
+                const id = typeof idLike === 'string' ? idLike.trim() : ''
+                if (!id) continue
+                if (seen.has(id)) continue
+                seen.add(id)
+                enabled.push(id)
+            }
+            const unitsRaw = (raw.units && typeof raw.units === 'object') ? raw.units : {}
+            const units = {}
+            for (const [id, unit] of Object.entries(unitsRaw)) {
+                if (!id) continue
+                if (unit !== 'flat' && unit !== 'percent') continue
+                units[id] = unit
+            }
+            return { enabled, units }
+        }
+
+        return {
+            weapon: normalizeDomain(safe.weapon),
+            equipmentAdapter: normalizeDomain(safe.equipmentAdapter)
+        }
+    }
+
     const normalizeEquipmentAffixes = (level, affixesLike) => {
         const safe = (affixesLike && typeof affixesLike === 'object') ? affixesLike : {}
         const is70 = Number(level) === 70
@@ -1009,18 +1062,48 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         const normalizeAdapter = (input) => {
             const raw = (input && typeof input === 'object') ? input : {}
-            const ids = Array.isArray(raw.modifierIds) ? raw.modifierIds : (raw.modifierId ? [raw.modifierId] : [])
-            const cleaned = []
-            for (const id of ids) {
-                if (typeof id !== 'string') continue
-                const trimmed = id.trim()
-                if (!trimmed) continue
-                if (!cleaned.includes(trimmed)) cleaned.push(trimmed)
+            const baseVals = is70 ? normalizeArray4(raw.values) : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0]
+            const baseValues = baseVals.slice(0, size)
+
+            const entriesRaw = Array.isArray(raw.entries) ? raw.entries : null
+            let entries = []
+
+            if (entriesRaw) {
+                entries = entriesRaw.map((e) => {
+                    const ent = (e && typeof e === 'object') ? e : {}
+                    const modifierId = typeof ent.modifierId === 'string' && ent.modifierId.trim()
+                        ? ent.modifierId.trim()
+                        : (typeof ent.key === 'string' && ent.key.trim() ? ent.key.trim() : null)
+                    const vals = is70 ? normalizeArray4(ent.values) : [Number(Array.isArray(ent.values) ? ent.values[0] : ent.value) || 0]
+                    return { modifierId: modifierId || null, values: vals.slice(0, size) }
+                })
+            } else {
+                const ids = Array.isArray(raw.modifierIds) ? raw.modifierIds : (raw.modifierId ? [raw.modifierId] : [])
+                const cleaned = []
+                for (const id of ids) {
+                    if (typeof id !== 'string') continue
+                    const trimmed = id.trim()
+                    if (!trimmed) continue
+                    if (!cleaned.includes(trimmed)) cleaned.push(trimmed)
+                }
+                entries = cleaned.map((modifierId) => ({ modifierId, values: [...baseValues] }))
             }
-            const vals = is70 ? normalizeArray4(raw.values) : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0]
+
+            const seen = new Set()
+            const cleanedEntries = []
+            for (const ent of entries) {
+                const modifierId = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : ''
+                if (!modifierId) continue
+                if (seen.has(modifierId)) continue
+                const vals = is70 ? normalizeArray4(ent.values) : [Number(Array.isArray(ent.values) ? ent.values[0] : ent.value) || 0]
+                cleanedEntries.push({ modifierId, values: vals.slice(0, size) })
+                seen.add(modifierId)
+            }
+
             return {
-                modifierIds: cleaned,
-                values: vals.slice(0, size)
+                entries: cleanedEntries,
+                modifierIds: cleanedEntries.map(e => e.modifierId),
+                values: baseValues
             }
         }
 
@@ -1044,6 +1127,11 @@ export const useTimelineStore = defineStore('timeline', () => {
                     base.affixes.primary1.values = base.affixes.primary1.values.slice(0, 1)
                     base.affixes.primary2.values = base.affixes.primary2.values.slice(0, 1)
                     base.affixes.adapter.values = base.affixes.adapter.values.slice(0, 1)
+                    if (Array.isArray(base.affixes.adapter.entries)) {
+                        base.affixes.adapter.entries.forEach(e => {
+                            if (Array.isArray(e?.values)) e.values = e.values.slice(0, 1)
+                        })
+                    }
                 }
             }
             return base
@@ -1074,8 +1162,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     const normalizeEquipmentMiscConfig = (incoming) => {
         const safe = (incoming && typeof incoming === 'object') ? incoming : {}
 
-        if (safe.equipmentTemplates) {
-            return { equipmentTemplates: normalizeEquipmentTemplates(safe.equipmentTemplates) }
+        if (safe.equipmentTemplates || safe.equipmentAdapterTable) {
+            return {
+                equipmentTemplates: normalizeEquipmentTemplates(safe.equipmentTemplates),
+                equipmentAdapterTable: normalizeEquipmentAdapterTable(safe.equipmentAdapterTable),
+                domainConfig: normalizeDomainConfig(safe.domainConfig)
+            }
         }
 
         const hasLegacyDeltas = Array.isArray(safe.equipmentRefineDeltas)
@@ -1087,11 +1179,12 @@ export const useTimelineStore = defineStore('timeline', () => {
                     armor: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
                     gloves: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
                     accessory: { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] },
-                })
+                }),
+                equipmentAdapterTable: {},
+                domainConfig: normalizeDomainConfig(null)
             }
         }
 
-        // legacy migration from equipmentRefineDeltas + equipment70SlotDefaults
         const legacyDeltas = normalizeArray4(safe.equipmentRefineDeltas)
         legacyDeltas[0] = 0
         const legacyDefaults = (safe.equipment70SlotDefaults && typeof safe.equipment70SlotDefaults === 'object') ? safe.equipment70SlotDefaults : {}
@@ -1109,7 +1202,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         const accessory = buildFromLegacy('accessory', { primary1: 32, primary2: 21, primary1Single: 32 })
         const armor = { primary1: [0, 0, 0, 0], primary2: [0, 0, 0, 0], primary1Single: [0, 0, 0, 0] }
 
-        return { equipmentTemplates: normalizeEquipmentTemplates({ armor, gloves, accessory }) }
+        return { equipmentTemplates: normalizeEquipmentTemplates({ armor, gloves, accessory }), equipmentAdapterTable: {}, domainConfig: normalizeDomainConfig(null) }
     }
 
     const normalizeModifierDefs = (defs) => {
@@ -1120,8 +1213,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             const id = typeof def?.id === 'string' ? def.id.trim()
                 : (typeof def?.key === 'string' ? def.key.trim() : '')
             if (!id || seen.has(id)) continue
-            const unit = def?.unit === 'percent' || def?.unit === 'flat' ? def.unit : 'flat'
-            out.push({ id, label: def?.label || id, unit, note: def?.note, domainTags: def?.domainTags })
+            out.push({ id, label: def?.label || id, note: def?.note, domainTags: def?.domainTags })
             seen.add(id)
         }
         return out
@@ -1259,13 +1351,24 @@ export const useTimelineStore = defineStore('timeline', () => {
                 if (v !== 0) deltas[affixes.primary2.modifierId] = (deltas[affixes.primary2.modifierId] || 0) + v
             }
 
-            const adapterIds = Array.isArray(affixes.adapter?.modifierIds) ? affixes.adapter.modifierIds : []
-            if (adapterIds.length > 0) {
-                const v = pick(affixes.adapter.values)
-                if (v !== 0) {
-                    for (const id of adapterIds) {
-                        if (!id) continue
-                        deltas[id] = (deltas[id] || 0) + v
+            const entries = Array.isArray(affixes.adapter?.entries) ? affixes.adapter.entries : []
+            if (entries.length > 0) {
+                for (const ent of entries) {
+                    const id = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : ''
+                    if (!id) continue
+                    const v = pick(ent.values)
+                    if (v === 0) continue
+                    deltas[id] = (deltas[id] || 0) + v
+                }
+            } else {
+                const adapterIds = Array.isArray(affixes.adapter?.modifierIds) ? affixes.adapter.modifierIds : []
+                if (adapterIds.length > 0) {
+                    const v = pick(affixes.adapter.values)
+                    if (v !== 0) {
+                        for (const id of adapterIds) {
+                            if (!id) continue
+                            deltas[id] = (deltas[id] || 0) + v
+                        }
                     }
                 }
             }
@@ -3809,6 +3912,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                     modifierDefs: normalizeModifierDefs(data.misc?.modifierDefs),
                     weaponCommonModifiers: normalizeWeaponCommonModifiersTable(data.misc?.weaponCommonModifiers),
                     equipmentTemplates: eqCfg.equipmentTemplates,
+                    equipmentAdapterTable: eqCfg.equipmentAdapterTable,
+                    domainConfig: eqCfg.domainConfig,
                 }
             } else {
                 const eqCfg = normalizeEquipmentMiscConfig(null)
@@ -3816,6 +3921,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                     modifierDefs: [],
                     weaponCommonModifiers: {},
                     equipmentTemplates: eqCfg.equipmentTemplates,
+                    equipmentAdapterTable: eqCfg.equipmentAdapterTable,
+                    domainConfig: eqCfg.domainConfig,
                 }
             }
         }
