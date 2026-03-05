@@ -572,23 +572,6 @@ const transformStyle = computed(() => {
 .section-container.border-red { border-left-color: #ff7875; }
 .section-container.border-gold { border-left-color: #ffd700; }
 
-.panel-tag-mini {
-  position: absolute;
-  right: 0; top: -11px;
-  background: #1a1a1a;
-  border: 1px solid #444;
-  border-bottom: none;
-  font-size: 9px;
-  color: #888;
-  padding: 1px 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-}
-
-.panel-tag-mini.red { color: #ff7875; border-color: rgba(255, 120, 117, 0.4); }
-.panel-tag-mini.gold { color: #ffd700; border-color: rgba(255, 215, 0, 0.4); }
-
 .attribute-grid-mini {
   display: flex;
   flex-direction: column;

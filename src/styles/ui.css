@@ -13,6 +13,29 @@
   --ea-purple: #722ed1;
 }
 
+.panel-tag-mini {
+  position: absolute;
+  right: 0;
+  top: -12px;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-bottom: none;
+  font-size: 10px;
+  color: #888;
+  padding: 2px 10px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+  z-index: 5;
+}
+
+.panel-tag-mini.gold { color: var(--ea-gold); border-color: rgba(255, 215, 0, 0.25); }
+.panel-tag-mini.blue { color: var(--ea-info); border-color: rgba(0, 229, 255, 0.25); }
+.panel-tag-mini.red { color: var(--ea-danger-soft); border-color: rgba(255, 120, 117, 0.35); }
+.panel-tag-mini.black { color: rgba(255, 255, 255, 0.9); border-color: rgba(255, 255, 255, 0.22); background: rgba(10, 10, 12, 0.9); }
+.panel-tag-mini.white { color: rgba(255, 255, 255, 0.9); border-color: rgba(255, 255, 255, 0.22); background: rgba(10, 10, 12, 0.9); }
+
 .ea-btn {
   --ea-btn-bg: #3a3a3a;
   --ea-btn-border: #555;

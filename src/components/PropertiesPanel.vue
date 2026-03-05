@@ -861,9 +861,6 @@ function handleStartConnection(id, type) {
 .module-code { font-size: 10px; font-weight: 900; font-family: 'Inter', sans-serif; color: currentColor; letter-spacing: 1px; }
 .module-label { font-size: 9px; color: rgba(255, 255, 255, 0.7); transform: none; opacity: 1; margin-top: 2px; white-space: nowrap; }
 .section-header-tech { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; height: 26px; padding: 0 4px; }
-.panel-tag-mini { position: absolute; right: 0; top: -12px; background: #1a1a1a; border: 1px solid #444; border-bottom: none; font-size: 10px; color: #aaa; padding: 2px 10px; font-family: 'Inter', sans-serif; letter-spacing: 1px; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%); z-index: 5; }
-.panel-tag-mini.red { color: #ff7875; border-color: rgba(255, 120, 117, 0.4); }
-.panel-tag-mini.blue { color: #00e5ff; border-color: rgba(0, 229, 255, 0.4); }
 .toggle-arrow { color: #666; font-size: 14px; transition: transform 0.2s; }
 .section-content-tech { margin-top: 10px; animation: fadeIn 0.2s ease; }
 .tech-style .form-group.compact label { font-size: 11px !important; color: rgba(255, 255, 255, 0.5) !important; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px !important; font-family: 'Inter', sans-serif; display: block; }

@@ -1417,24 +1417,6 @@ async function doImport() {
   margin-top: 4px;
 }
 
-.panel-tag-mini {
-  position: absolute;
-  right: 0;
-  top: -12px;
-  background: #1a1a1a;
-  border: 1px solid #444;
-  border-bottom: none;
-  font-size: 10px;
-  color: #888;
-  padding: 2px 10px;
-  font-family: sans-serif;
-  letter-spacing: 1px;
-  clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-  z-index: 2;
-}
-.panel-tag-mini.blue { color: #00e5ff; border-color: rgba(0, 229, 255, 0.2); }
-.panel-tag-mini.gold { color: #ffd700; border-color: rgba(255, 215, 0, 0.2); }
-
 .section-content-tech {
   display: flex;
   flex-direction: column;
