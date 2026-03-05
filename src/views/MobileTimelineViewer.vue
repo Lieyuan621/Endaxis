@@ -14,17 +14,9 @@ const loadoutTrackIndex = ref(null)
 const actionInfoOpen = ref(false)
 const selectedActionId = ref(null)
 
-const importVisible = ref(false)
-const shareCode = ref('')
-const importing = ref(false)
-
-const aboutVisible = ref(false)
-const aboutLoaded = ref(false)
-const aboutAnnouncement = ref({
-  subtitle: '',
-  systemInfoP1: '',
-  systemInfoP2: '',
-})
+  const importVisible = ref(false)
+  const shareCode = ref('')
+  const importing = ref(false)
 
 const scenarioList = computed(() => (Array.isArray(store.scenarioList) ? store.scenarioList : []))
 const activeScenarioId = computed({
@@ -101,42 +93,6 @@ onUnmounted(() => {
   }
 })
 
-async function loadAboutAnnouncement() {
-  try {
-    const baseUrl = import.meta.env.BASE_URL || '/'
-    const url = baseUrl.endsWith('/') ? `${baseUrl}announcement.json` : `${baseUrl}/announcement.json`
-
-    const res = await fetch(url, { cache: 'no-store' })
-    if (!res.ok) return false
-
-    const json = await res.json()
-    const next = (json && typeof json === 'object' && json.default && typeof json.default === 'object')
-      ? json.default
-      : json
-
-    if (next && typeof next === 'object') {
-      aboutAnnouncement.value = {
-        ...aboutAnnouncement.value,
-        ...(typeof next.subtitle === 'string' ? { subtitle: next.subtitle } : {}),
-        ...(typeof next.systemInfoP1 === 'string' ? { systemInfoP1: next.systemInfoP1 } : {}),
-        ...(typeof next.systemInfoP2 === 'string' ? { systemInfoP2: next.systemInfoP2 } : {}),
-      }
-    }
-
-    aboutLoaded.value = true
-    return true
-  } catch {
-    return false
-  }
-}
-
-async function openAbout() {
-  aboutVisible.value = true
-  if (!aboutLoaded.value) {
-    await loadAboutAnnouncement()
-  }
-}
-
 function changeLocale(next) {
   locale.value = setLocale(next)
 }
@@ -158,10 +114,6 @@ function handleReset() {
 }
 
 function handleMoreCommand(command) {
-  if (command === 'about') {
-    openAbout()
-    return
-  }
   if (command === 'import') {
     importVisible.value = true
     return
@@ -627,15 +579,6 @@ async function doImport() {
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="about">
-                <div class="mobile-menu-item">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
-                  </svg>
-                  <span>{{ t('common.about') }}</span>
-                </div>
-              </el-dropdown-item>
-
               <el-dropdown-item divided disabled>
                 <div class="mobile-menu-item">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -938,49 +881,6 @@ async function doImport() {
           <button type="button" class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold" :disabled="importing" @click="doImport">
             {{ importing ? t('timeline.mobile.importing') : t('timeline.import.dialogConfirm') }}
           </button>
-        </span>
-      </template>
-    </el-dialog>
-
-    <el-dialog
-      v-model="aboutVisible"
-      width="92%"
-      align-center
-      class="custom-dialog"
-      :append-to-body="true"
-      :lock-scroll="false"
-      :close-on-click-modal="false"
-    >
-      <template #header>
-        <div class="module-deco header-type">
-          <span class="module-code">{{ t('common.about') }}</span>
-          <span v-if="aboutAnnouncement.subtitle" class="module-label">{{ aboutAnnouncement.subtitle }}</span>
-        </div>
-      </template>
-
-      <div class="about-container">
-        <div class="section-container tech-style border-gold">
-          <div class="panel-tag-mini gold">{{ t('timeline.mobile.aboutMobileTag') }}</div>
-          <el-alert
-            :title="t('timeline.mobile.aboutMobileAlert')"
-            type="warning"
-            show-icon
-            :closable="false"
-          />
-        </div>
-
-        <div class="section-container tech-style no-margin">
-          <div class="panel-tag-mini">{{ t('timeline.about.systemInfoTitle') }}</div>
-          <div class="section-content-tech">
-            <p v-if="aboutAnnouncement.systemInfoP1" class="tech-p">{{ aboutAnnouncement.systemInfoP1 }}</p>
-            <p v-if="aboutAnnouncement.systemInfoP2" class="tech-p" style="margin-top: 6px;" v-html="aboutAnnouncement.systemInfoP2"></p>
-            <p v-if="!aboutAnnouncement.systemInfoP1 && !aboutAnnouncement.systemInfoP2" class="tech-p">{{ t('timeline.mobile.aboutNoticeEmpty') }}</p>
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <span class="dialog-footer">
-          <button type="button" class="ea-btn ea-btn--md ea-btn--lift ea-btn--fill-gold" @click="aboutVisible = false">{{ t('timeline.about.startUsing') }}</button>
         </span>
       </template>
     </el-dialog>
@@ -1479,12 +1379,6 @@ async function doImport() {
   justify-content: flex-end;
   gap: 10px;
   width: 100%;
-}
-
-.about-container {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
 }
 
 .section-container {

@@ -1,8 +1,0 @@
-{
-  "version": "2026-3-2-update",
-  "default": {
-    "subtitle": "终末地排轴工具 v1.0.2",
-    "systemInfoP1": "本工具为《明日方舟：终末地》玩家自制作品，旨在提供可视化的排轴规划环境。",
-    "systemInfoP2": "目前大部分干员数据已填充完成。\n新增移动端适配，目前仅可读。\n临时增加<span style='color: #ff4d4f;'>洛茜</span>和<span style='color: #00e5ff;'>汤汤</span>的占位数据以供脑测。"
-  }
-}

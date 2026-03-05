@@ -3,7 +3,6 @@
     "name": "Endaxis"
   },
   "common": {
-    "about": "关于",
     "cancel": "取消",
     "close": "关闭",
     "copy": "复制",
@@ -45,18 +44,6 @@
     "zhCN": "简体中文"
   },
   "timeline": {
-    "about": {
-      "friendMap": "终末地互动地图",
-      "friendOne": "终末地一图流",
-      "friendsTitle": "友情链接",
-      "resourceRepo": "项目仓库",
-      "resourceText": "文本教程",
-      "resourceVideo": "视频教程",
-      "resourcesTitle": "相关资源",
-      "startUsing": "开始使用",
-      "systemInfoTitle": "系统信息",
-      "welcome": "欢迎使用 ENDAXIS"
-    },
     "export": {
       "copyCode": "复制数据码",
       "dialogTitle": "导出设置",
@@ -71,7 +58,6 @@
       "rendering": "正在渲染前 {seconds} 秒的长图..."
     },
     "header": {
-      "aboutTooltip": "查看教程与项目信息",
       "languageTooltip": "切换语言",
       "loadTooltip": "导入 .json 项目文件或 .png 图片",
       "receiveTooltip": "粘贴数据码导入项目",
@@ -101,9 +87,6 @@
       "import": "导入",
       "importing": "导入中...",
       "more": "更多",
-      "aboutMobileTag": "移动端提示",
-      "aboutMobileAlert": "安卓端为只读模式：支持查看与导入分享码；需要编辑请使用 PC 端。",
-      "aboutNoticeEmpty": "暂无公告内容",
       "loadout": {
         "title": "干员配装",
         "openAria": "查看 {name} 配装",
