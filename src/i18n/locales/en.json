@@ -503,6 +503,12 @@
     "healing_effect": "Treatment Efficiency",
     "physical_dmg": "Physical DMG",
     "arts_dmg": "Arts DMG",
+    "attack_dmg_bonus": "Normal Attack DMG Bonus",
+    "skill_dmg_bonus": "Skill DMG Bonus",
+    "link_dmg_bonus": "Combo DMG Bonus",
+    "ultimate_dmg_bonus": "Ultimate DMG Bonus",
+    "all_skill_dmg_bonus": "All Skills DMG Bonus",
+    "broken_dmg_bonus": "DMG Bonus vs Broken Targets",
     "originium_arts_power": "Arts Intensity",
     "ult_charge_eff": "Ultimate Gain Eff.",
     "link_cd_reduction": "Combo CD reduction"

@@ -503,6 +503,12 @@
     "healing_effect": "Эффективность лечения",
     "physical_dmg": "Физический УРН",
     "arts_dmg": "УРН искусств",
+    "attack_dmg_bonus": "Бонус урона обычной атаки",
+    "skill_dmg_bonus": "Бонус урона навыка",
+    "link_dmg_bonus": "Бонус урона комбонавыка",
+    "ultimate_dmg_bonus": "Бонус урона ульты",
+    "all_skill_dmg_bonus": "Бонус урона всех навыков",
+    "broken_dmg_bonus": "Бонус урона по цели в состоянии слома",
     "originium_arts_power": "Сила искусств",
     "ult_charge_eff": "Скорость накопления суперэнергии",
     "link_cd_reduction": "КД комбонавыка"

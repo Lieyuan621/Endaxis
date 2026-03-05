@@ -503,6 +503,12 @@
     "healing_effect": "治疗效果",
     "physical_dmg": "物理伤害",
     "arts_dmg": "法术伤害",
+    "attack_dmg_bonus": "普通攻击伤害加成",
+    "skill_dmg_bonus": "战技伤害加成",
+    "link_dmg_bonus": "连携技伤害加成",
+    "ultimate_dmg_bonus": "终结技伤害加成",
+    "all_skill_dmg_bonus": "所有技能伤害加成",
+    "broken_dmg_bonus": "对失衡目标伤害加成",
     "originium_arts_power": "源石技艺强度",
     "ult_charge_eff": "终结技充能效率",
     "link_cd_reduction": "连携冷却缩减"
