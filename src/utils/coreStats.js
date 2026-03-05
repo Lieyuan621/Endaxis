@@ -10,6 +10,7 @@ export const CORE_STATS = [
   { id: 'attack', labelKey: 'stats.attack', label: '攻击', default: 0 },
   { id: 'hp', labelKey: 'stats.hp', label: '生命', default: 0 },
   { id: 'crit_rate', labelKey: 'stats.crit_rate', label: '暴击率', default: 0 },
+  { id: 'crit_dmg', labelKey: 'stats.crit_dmg', label: '暴击伤害', default: 0 },
 
   { id: 'blaze_dmg', labelKey: 'stats.blaze_dmg', label: '灼热伤害', default: 0 },
   { id: 'emag_dmg', labelKey: 'stats.emag_dmg', label: '电磁伤害', default: 0 },

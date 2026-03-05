@@ -150,6 +150,98 @@ const EQUIPMENT_LEVEL_COLORS = {
 }
 const EQUIPMENT_REFINE_TIERS = [0, 1, 2, 3]
 
+const EQUIPMENT_PRIMARY_STAT_IDS = ['strength', 'agility', 'intellect', 'will']
+const EQUIPMENT_PRIMARY_STAT_ICON_MAP = {
+  strength: '/icons/icon_attribute_str.webp',
+  agility: '/icons/icon_attribute_agi.webp',
+  intellect: '/icons/icon_attribute_wisd.webp',
+  will: '/icons/icon_attribute_will.webp',
+}
+
+const EQUIPMENT_BONUS_STAT_ORDER = [
+  'attack_dmg_bonus',
+  'skill_dmg_bonus',
+  'link_dmg_bonus',
+  'ultimate_dmg_bonus',
+  'broken_dmg_bonus',
+  'crit_rate',
+  'crit_dmg',
+  'hp',
+  'healing_effect',
+  'physical_dmg',
+  'originium_arts_power',
+  'ult_charge_eff',
+]
+
+const EQUIPMENT_BONUS_STAT_ICON_MAP = {
+  attack_dmg_bonus: '/icons/icon_normal_atk_efficiency.webp',
+  skill_dmg_bonus: '/icons/icon_normal_skill_efficiency.webp',
+  link_dmg_bonus: '/icons/icon_comboskill_cooldown_scalar.webp',
+  ultimate_dmg_bonus: '/icons/icon_ultimate_skill_efficiency.webp',
+  broken_dmg_bonus: '/icons/icon_attr_damage_to_broken_unit_increase.webp',
+  crit_rate: '/icons/icon_attribute_criticalRate.webp',
+  crit_dmg: '/icons/icon_attribute_criticalDamageIncrease.webp',
+  hp: '/icons/icon_attribute_maxHp.webp',
+  healing_effect: '/icons/icon_heal_output_increase.webp',
+  physical_dmg: '/icons/icon_physical_damage_increase.webp',
+  originium_arts_power: '/icons/icon_originium_arts.webp',
+  ult_charge_eff: '/icons/icon_ultimate_sp_gain_scalar.webp',
+}
+
+function hasNonZeroValue(values) {
+  if (!Array.isArray(values)) return false
+  return values.some(v => (Number(v) || 0) !== 0)
+}
+
+function getEquipmentPrimaryAffixIconStack(eq) {
+  const out = []
+  const aff = eq?.affixes
+  if (!aff || typeof aff !== 'object') return out
+  const seen = new Set()
+
+  const push = (entry) => {
+    const modifierId = typeof entry?.modifierId === 'string' ? entry.modifierId.trim() : ''
+    if (!modifierId) return
+    if (!EQUIPMENT_PRIMARY_STAT_IDS.includes(modifierId)) return
+    if (!hasNonZeroValue(entry?.values)) return
+    const src = EQUIPMENT_PRIMARY_STAT_ICON_MAP[modifierId]
+    if (!src) return
+    out.push({ modifierId, src, title: t(`stats.${modifierId}`) })
+    seen.add(modifierId)
+  }
+
+  push(aff.primary1)
+  push(aff.primary2)
+
+  const adapterEntries = Array.isArray(aff.adapter?.entries) ? aff.adapter.entries : []
+  if (adapterEntries.length > 0) {
+    const hasEntry = (statId) => adapterEntries.find((e) => {
+      const modifierId = typeof e?.modifierId === 'string' ? e.modifierId.trim() : ''
+      if (modifierId !== statId) return false
+      return hasNonZeroValue(e?.values)
+    })
+
+    for (const statId of EQUIPMENT_BONUS_STAT_ORDER) {
+      if (seen.has(statId)) continue
+      const found = hasEntry(statId)
+      if (!found) continue
+      out.push({ modifierId: statId, src: EQUIPMENT_BONUS_STAT_ICON_MAP[statId] || null, title: t(`stats.${statId}`) })
+      seen.add(statId)
+    }
+
+    for (const ent of adapterEntries) {
+      const modifierId = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : ''
+      if (!modifierId) continue
+      if (seen.has(modifierId)) continue
+      if (!hasNonZeroValue(ent?.values)) continue
+      out.push({ modifierId, src: EQUIPMENT_BONUS_STAT_ICON_MAP[modifierId] || null, title: t(`stats.${modifierId}`) })
+      seen.add(modifierId)
+    }
+  }
+
+  return out
+}
+
 const isGameTimeCollapsed = ref(true)
 const showGameTime = computed(() => !isGameTimeCollapsed.value || store.isCapturing)
 const gridRowHeight = computed(() => showGameTime.value ? '60px' : '48px')
@@ -2175,6 +2267,25 @@ onUnmounted(() => {
           <div class="roster-grid">
             <div v-for="eq in group.list" :key="eq.id" class="roster-card" @click="confirmEquipmentSelection(eq.id)">
               <div class="card-avatar-wrapper" :style="{ borderColor: getEquipmentLevelColor(eq.level) }">
+                <div class="eq-affix-icon-stack">
+                  <div
+                    v-for="icon in getEquipmentPrimaryAffixIconStack(eq)"
+                    :key="`eq_affix_${eq.id}_${icon.modifierId}`"
+                    class="eq-affix-icon-cell"
+                    :class="{ 'has-img': !!icon.src }"
+                    :title="icon.title"
+                  >
+                    <span class="eq-affix-icon-dot" aria-hidden="true"></span>
+                    <img
+                      v-if="icon.src"
+                      class="eq-affix-icon-img"
+                      :src="icon.src"
+                      loading="lazy"
+                      @load="e=>e.target.closest('.eq-affix-icon-cell')?.classList.remove('img-failed')"
+                      @error="e=>e.target.closest('.eq-affix-icon-cell')?.classList.add('img-failed')"
+                    />
+                  </div>
+                </div>
                 <img :src="eq.icon || '/icons/default_icon.webp'" loading="lazy" />
               </div>
               <div class="card-name">{{ eq.name }}</div>
@@ -3421,10 +3532,55 @@ body.capture-mode .davinci-range {
   overflow: hidden;
 }
 
-.card-avatar-wrapper img {
+.card-avatar-wrapper > img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.eq-affix-icon-stack {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.eq-affix-icon-cell {
+  position: relative;
+  width: 14px;
+  height: 14px;
+}
+
+.eq-affix-icon-dot {
+  position: absolute;
+  inset: 4px;
+  opacity: 1;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: transparent;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.55);
+  transition: opacity 120ms ease;
+}
+
+.eq-affix-icon-cell.has-img:not(.img-failed) .eq-affix-icon-dot {
+  opacity: 0;
+}
+
+.eq-affix-icon-cell.has-img.img-failed .eq-affix-icon-img {
+  display: none;
+}
+
+.eq-affix-icon-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
 }
 
 .element-badge {

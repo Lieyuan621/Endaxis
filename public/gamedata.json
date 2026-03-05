@@ -10975,6 +10975,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11012,6 +11013,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11049,6 +11051,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11086,6 +11089,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11123,6 +11127,17 @@
           ]
         },
         "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                20.5,
+                22.6,
+                24.6,
+                26.7
+              ]
+            }
+          ],
           "modifierIds": [
             "ult_charge_eff"
           ],
@@ -11162,6 +11177,17 @@
           ]
         },
         "adapter": {
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                20,
+                22,
+                24,
+                26
+              ]
+            }
+          ],
           "modifierIds": [
             "originium_arts_power"
           ],
@@ -11201,6 +11227,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11238,6 +11265,17 @@
           ]
         },
         "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                24.6,
+                27.1,
+                29.6,
+                32.1
+              ]
+            }
+          ],
           "modifierIds": [
             "ult_charge_eff"
           ],
@@ -11277,6 +11315,17 @@
           ]
         },
         "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                20.5,
+                22.6,
+                24.6,
+                26.7
+              ]
+            }
+          ],
           "modifierIds": [
             "ult_charge_eff"
           ],
@@ -11316,6 +11365,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11353,6 +11403,17 @@
           ]
         },
         "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                12.3,
+                13.6,
+                14.8,
+                16
+              ]
+            }
+          ],
           "modifierIds": [
             "ult_charge_eff"
           ],
@@ -11392,6 +11453,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11429,6 +11491,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11466,6 +11529,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11503,6 +11567,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11540,6 +11605,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11577,6 +11643,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11614,6 +11681,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11651,6 +11719,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11688,6 +11757,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11725,6 +11795,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11762,6 +11833,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11799,6 +11871,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11836,6 +11909,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11873,6 +11947,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11910,6 +11985,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11947,6 +12023,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -11984,6 +12061,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12021,6 +12099,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12058,6 +12137,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12095,6 +12175,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12132,6 +12213,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12169,6 +12251,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12206,6 +12289,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12243,6 +12327,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12280,6 +12365,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12317,6 +12403,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12336,25 +12423,38 @@
       "icon": "/equipment/item_equip_t4_suit_atb01_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "ultimate_dmg_bonus",
+              "values": [
+                25.9,
+                28.5,
+                31.1,
+                33.6
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ultimate_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12373,25 +12473,38 @@
       "icon": "/equipment/item_equip_t4_suit_atb01_body_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12410,25 +12523,38 @@
       "icon": "/equipment/item_equip_t4_suit_atb01_body_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "secondary_ability",
+              "values": [
+                10.4,
+                11.4,
+                12.4,
+                13.5
+              ]
+            }
+          ],
+          "modifierIds": [
+            "secondary_ability"
+          ],
           "values": [
             0,
             0,
@@ -12447,25 +12573,38 @@
       "icon": "/equipment/item_equip_t4_suit_atb01_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                34.5,
+                38,
+                41.4,
+                44.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12484,25 +12623,48 @@
       "icon": "/equipment/item_equip_t4_suit_atb01_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "cold_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            },
+            {
+              "modifierId": "emag_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "cold_dmg",
+            "emag_dmg"
+          ],
           "values": [
             0,
             0,
@@ -12521,25 +12683,38 @@
       "icon": "/equipment/item_equip_t4_suit_atb01_edc_04.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "secondary_ability",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "secondary_ability"
+          ],
           "values": [
             0,
             0,
@@ -12576,6 +12751,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12613,6 +12789,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12650,6 +12827,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12687,6 +12865,17 @@
           ]
         },
         "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                12.3,
+                13.6,
+                14.8,
+                16
+              ]
+            }
+          ],
           "modifierIds": [
             "ult_charge_eff"
           ],
@@ -12726,6 +12915,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12763,6 +12953,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12800,6 +12991,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12837,6 +13029,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12874,6 +13067,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12911,6 +13105,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12948,6 +13143,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -12985,6 +13181,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13022,6 +13219,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13059,6 +13257,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13096,6 +13295,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13133,6 +13333,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13170,6 +13371,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13207,6 +13409,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13244,6 +13447,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13281,6 +13485,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13318,6 +13523,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13355,6 +13561,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13392,6 +13599,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -13423,6 +13631,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13451,6 +13660,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13479,6 +13689,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13507,6 +13718,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13535,6 +13747,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13563,6 +13776,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13591,6 +13805,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13619,6 +13834,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13647,6 +13863,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13675,6 +13892,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13703,6 +13921,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13731,6 +13950,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13759,6 +13979,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13787,6 +14008,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13815,6 +14037,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13843,6 +14066,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13871,6 +14095,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13899,6 +14124,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13927,6 +14153,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13955,6 +14182,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -13983,6 +14211,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14011,6 +14240,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14039,6 +14269,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14067,6 +14298,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14095,6 +14327,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14123,6 +14356,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14151,6 +14385,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14179,6 +14414,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14207,6 +14443,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14235,6 +14472,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14263,6 +14501,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14291,6 +14530,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14319,6 +14559,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14347,6 +14588,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14375,6 +14617,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14403,6 +14646,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14431,6 +14675,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14459,6 +14704,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14487,6 +14733,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14515,6 +14762,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14543,6 +14791,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14571,6 +14820,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14599,6 +14849,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14627,6 +14878,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14655,6 +14907,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14683,6 +14936,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14711,6 +14965,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14739,6 +14994,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14767,6 +15023,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14795,6 +15052,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14823,6 +15081,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14851,6 +15110,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14879,6 +15139,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14907,6 +15168,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14935,6 +15197,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14963,6 +15226,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -14991,6 +15255,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15019,6 +15284,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15047,6 +15313,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15075,6 +15342,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15103,6 +15371,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15131,6 +15400,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15159,6 +15429,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15187,6 +15458,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15215,6 +15487,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15243,6 +15516,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0
@@ -15259,12 +15533,12 @@
       "icon": "/equipment/item_equip_t4_parts_wuling01_edc_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "primary2": {
@@ -15277,6 +15551,17 @@
           ]
         },
         "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                25.7,
+                28.3,
+                30.9,
+                33.4
+              ]
+            }
+          ],
           "modifierIds": [
             "ult_charge_eff"
           ],
@@ -15316,6 +15601,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -15353,6 +15639,7 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
           "values": [
             0,
@@ -15390,7 +15677,108 @@
           ]
         },
         "adapter": {
+          "entries": [],
           "modifierIds": [],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atb01_edc_01",
+      "name": "拓荒通信器",
+      "category": "拓荒",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/item_equip_t4_suit_atb01_edc_01.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "agility",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atb01_body_04",
+      "name": "拓荒护甲·壹型",
+      "category": "拓荒",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/item_equip_t4_suit_atb01_body_04.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "agility",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -15535,98 +15923,103 @@
     "modifierDefs": [
       {
         "id": "primary_ability",
-        "label": "主能力提升",
-        "unit": "flat"
+        "label": "主能力提升"
       },
       {
         "id": "secondary_ability",
-        "label": "副能力提升",
-        "unit": "percent"
+        "label": "副能力提升"
       },
       {
         "id": "strength",
-        "label": "力量提升",
-        "unit": "flat"
+        "label": "力量提升"
       },
       {
         "id": "agility",
-        "label": "敏捷提升",
-        "unit": "flat"
+        "label": "敏捷提升"
       },
       {
         "id": "intellect",
-        "label": "智识提升",
-        "unit": "flat"
+        "label": "智识提升"
       },
       {
         "id": "will",
-        "label": "意志提升",
-        "unit": "flat"
+        "label": "意志提升"
       },
       {
         "id": "attack",
-        "label": "攻击提升",
-        "unit": "percent"
+        "label": "攻击提升"
       },
       {
         "id": "hp",
-        "label": "生命提升",
-        "unit": "percent"
+        "label": "生命提升"
       },
       {
         "id": "crit_rate",
-        "label": "暴击率提升",
-        "unit": "percent"
+        "label": "暴击率提升"
       },
       {
         "id": "blaze_dmg",
-        "label": "灼热伤害提升",
-        "unit": "percent"
+        "label": "灼热伤害提升"
       },
       {
         "id": "emag_dmg",
-        "label": "电磁伤害提升",
-        "unit": "percent"
+        "label": "电磁伤害提升"
       },
       {
         "id": "cold_dmg",
-        "label": "寒冷伤害提升",
-        "unit": "percent"
+        "label": "寒冷伤害提升"
       },
       {
         "id": "nature_dmg",
-        "label": "自然伤害提升",
-        "unit": "percent"
+        "label": "自然伤害提升"
       },
       {
         "id": "healing_effect",
-        "label": "治疗效果提升",
-        "unit": "percent"
+        "label": "治疗效果提升"
       },
       {
         "id": "physical_dmg",
-        "label": "物理伤害提升",
-        "unit": "percent"
+        "label": "物理伤害提升"
       },
       {
         "id": "arts_dmg",
-        "label": "法术伤害提升",
-        "unit": "percent"
+        "label": "法术伤害提升"
       },
       {
         "id": "originium_arts_power",
-        "label": "源石技艺强度提升",
-        "unit": "flat"
+        "label": "源石技艺强度提升"
       },
       {
         "id": "ult_charge_eff",
-        "label": "终结技充能效率提升",
-        "unit": "percent"
+        "label": "终结技充能效率提升"
       },
       {
         "id": "link_cd_reduction",
-        "label": "连携冷却缩减提升",
-        "unit": "percent"
+        "label": "连携冷却缩减提升"
+      },
+      {
+        "id": "attack_dmg_bonus",
+        "label": "普通攻击伤害加成提升"
+      },
+      {
+        "id": "skill_dmg_bonus",
+        "label": "战技伤害加成提升"
+      },
+      {
+        "id": "link_dmg_bonus",
+        "label": "连携技伤害加成提升"
+      },
+      {
+        "id": "ultimate_dmg_bonus",
+        "label": "终结技伤害加成提升"
+      },
+      {
+        "id": "all_skill_dmg_bonus",
+        "label": "所有技能伤害加成提升"
+      },
+      {
+        "id": "broken_dmg_bonus",
+        "label": "对失衡目标伤害加成提升"
       }
     ],
     "weaponCommonModifiers": {
@@ -15663,41 +16056,6 @@
           81,
           92,
           109
-        ]
-      },
-      "secondary_ability": {
-        "small": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "medium": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "large": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
         ]
       },
       "strength": {
@@ -16259,41 +16617,6 @@
           39.3,
           46.4
         ]
-      },
-      "link_cd_reduction": {
-        "small": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "medium": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "large": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ]
       }
     },
     "equipmentTemplates": {
@@ -16351,11 +16674,541 @@
           27
         ],
         "primary1Single": [
+          43,
+          47,
+          51,
+          55
+        ]
+      }
+    },
+    "equipmentAdapterTable": {
+      "primary_ability": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
           0,
           0,
           0,
           0
         ]
+      },
+      "secondary_ability": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          10.4,
+          11.4,
+          12.4,
+          13.5
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          20.7,
+          22.8,
+          24.8,
+          26.9
+        ]
+      },
+      "crit_rate": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "originium_arts_power": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "ult_charge_eff": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          12.3,
+          13.6,
+          14.8,
+          16
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "attack_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "skill_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          20.7,
+          22.8,
+          24.8,
+          26.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          34.5,
+          38,
+          41.4,
+          44.9
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "link_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          41.4,
+          45.5,
+          49.7,
+          53.8
+        ]
+      },
+      "ultimate_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          25.9,
+          28.5,
+          31.1,
+          33.6
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "broken_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cold_dmg": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          23,
+          25.3,
+          27.6,
+          29.9
+        ]
+      },
+      "emag_dmg": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          23,
+          25.3,
+          27.6,
+          29.9
+        ]
+      }
+    },
+    "domainConfig": {
+      "weapon": {
+        "enabled": [
+          "primary_ability",
+          "agility",
+          "strength",
+          "intellect",
+          "attack",
+          "will",
+          "crit_rate",
+          "physical_dmg",
+          "arts_dmg",
+          "emag_dmg",
+          "blaze_dmg",
+          "cold_dmg",
+          "nature_dmg",
+          "hp",
+          "healing_effect",
+          "originium_arts_power",
+          "ult_charge_eff"
+        ],
+        "units": {
+          "primary_ability": "flat",
+          "agility": "flat",
+          "strength": "flat",
+          "intellect": "flat",
+          "attack": "percent",
+          "will": "flat",
+          "crit_rate": "percent",
+          "physical_dmg": "percent",
+          "arts_dmg": "percent",
+          "emag_dmg": "percent",
+          "blaze_dmg": "percent",
+          "cold_dmg": "percent",
+          "nature_dmg": "percent",
+          "hp": "percent",
+          "healing_effect": "percent",
+          "originium_arts_power": "flat",
+          "ult_charge_eff": "percent"
+        }
+      },
+      "equipmentAdapter": {
+        "enabled": [
+          "primary_ability",
+          "secondary_ability",
+          "crit_rate",
+          "originium_arts_power",
+          "ult_charge_eff",
+          "attack_dmg_bonus",
+          "skill_dmg_bonus",
+          "link_dmg_bonus",
+          "ultimate_dmg_bonus",
+          "broken_dmg_bonus",
+          "cold_dmg",
+          "emag_dmg"
+        ],
+        "units": {
+          "primary_ability": "percent",
+          "secondary_ability": "percent",
+          "crit_rate": "percent",
+          "originium_arts_power": "flat",
+          "ult_charge_eff": "percent",
+          "attack_dmg_bonus": "percent",
+          "skill_dmg_bonus": "percent",
+          "link_dmg_bonus": "percent",
+          "ultimate_dmg_bonus": "percent",
+          "broken_dmg_bonus": "percent",
+          "cold_dmg": "percent",
+          "emag_dmg": "percent"
+        }
       }
     }
   }

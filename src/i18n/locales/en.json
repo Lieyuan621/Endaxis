@@ -496,6 +496,7 @@
     "attack": "Attack",
     "hp": "HP",
     "crit_rate": "Critical Rate",
+    "crit_dmg": "Critical DMG",
     "blaze_dmg": "Heat DMG",
     "emag_dmg": "Electric DMG",
     "cold_dmg": "Cryo DMG",
