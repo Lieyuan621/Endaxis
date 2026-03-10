@@ -165,7 +165,8 @@
     },
     "cursor": {
       "sp": "技力",
-      "stagger": "失衡"
+      "stagger": "失衡",
+      "gauge": "充能"
     },
     "cycleBoundary": "循环分界线",
     "prep": {

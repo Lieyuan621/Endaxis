@@ -165,7 +165,8 @@
     },
     "cursor": {
       "sp": "ОН",
-      "stagger": "Ошеломление"
+      "stagger": "Ошеломление",
+      "gauge": "Заряд"
     },
     "cycleBoundary": "Граница цикла",
     "prep": {

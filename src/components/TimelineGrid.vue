@@ -11,6 +11,7 @@ import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { useDragConnection } from '@/composables/useDragConnection.js'
 import { useI18n } from 'vue-i18n'
+import { snapMs } from '@/utils/precision.js'
 
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
@@ -579,7 +580,7 @@ function getWeaponStatusDurationLabel(status) {
   const baseDuration = Math.max(0, Number(status.duration) || 0)
   const shiftedEnd = store.getShiftedEndTime(start, baseDuration, status.id)
   const finalDuration = Math.max(0, shiftedEnd - start)
-  const extensionAmount = Math.round((finalDuration - baseDuration) * 1000) / 1000
+  const extensionAmount = snapMs(finalDuration - baseDuration)
   if (extensionAmount > 0) {
     return `${store.formatTimeLabel(baseDuration)} (+${store.formatTimeLabel(extensionAmount)})`
   }
@@ -970,6 +971,73 @@ const currentStaggerValue = computed(() => {
   return Math.floor(points[points.length - 1].val)
 })
 
+function getStepPointAtTime(points, time) {
+  if (!points || points.length === 0) return null
+
+  let lo = 0
+  let hi = points.length - 1
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    if ((Number(points[mid].time) || 0) <= time) lo = mid + 1
+    else hi = mid - 1
+  }
+
+  return points[Math.max(0, hi)] || null
+}
+
+function toMutedRgba(color, alpha = 0.78) {
+  const c = String(color || '').trim()
+  if (!c) return `rgba(255,255,255,${alpha})`
+
+  if (c.startsWith('#')) {
+    const hex = c.slice(1)
+    const expanded = (hex.length === 3)
+      ? hex.split('').map(ch => ch + ch).join('')
+      : hex
+
+    if (expanded.length === 6) {
+      const r = parseInt(expanded.slice(0, 2), 16)
+      const g = parseInt(expanded.slice(2, 4), 16)
+      const b = parseInt(expanded.slice(4, 6), 16)
+      if ([r, g, b].every(Number.isFinite)) return `rgba(${r},${g},${b},${alpha})`
+    }
+  }
+
+  return c
+}
+
+const cursorGaugeRows = computed(() => {
+  const time = snapMs(store.cursorCurrentTime)
+  const rows = []
+
+  for (const track of store.teamTracksInfo) {
+    if (!track?.id) continue
+
+    const points = store.gaugeSeriesByTrackId.get(track.id) || []
+    const point = getStepPointAtTime(points, time)
+    const val = snapMs(point?.val ?? 0)
+
+    const max = store.getTrackGaugeMax(track.id)
+    const baseColor = store.getCharacterElementColor(track.id)
+    const isFull = max > 0 && val >= max - 1e-9
+    const colorMuted = toMutedRgba(baseColor, 0.78)
+    const colorFull = toMutedRgba(baseColor, 1)
+
+    rows.push({
+      id: track.id,
+      name: track.name,
+      isFull,
+      color: isFull ? colorFull : colorMuted,
+      colorMuted,
+      colorFull,
+      val,
+      max,
+    })
+  }
+
+  return rows
+})
+
 function onGridMouseMove(evt) {
   store.setCursorPosition(evt.clientX, evt.clientY)
   isCursorVisible.value = true
@@ -1223,7 +1291,7 @@ function onBackgroundContextMenu(evt) {
 
   const snap = store.snapStep
   let clickTime = Math.round(rawTime / snap) * snap
-  clickTime = Math.round(Math.max(0, clickTime) * 1000) / 1000
+  clickTime = snapMs(Math.max(0, clickTime))
   store.openContextMenu(evt, null, clickTime)
 }
 
@@ -1325,7 +1393,7 @@ function updateDragPosition(clientX) {
 
         let snappedTime = Math.round(targetTime / snap) * snap;
 
-        a.logicalStartTime = Math.max(0, Math.round(snappedTime * 1000) / 1000);
+        a.logicalStartTime = Math.max(0, snapMs(snappedTime));
       }
     });
   });
@@ -1406,7 +1474,7 @@ function onWindowMouseMove(evt) {
     }
     let newTime = calculateTimeFromEvent(evt, store.snapStep)
     if (newTime > store.viewDuration) newTime = store.viewDuration
-    newTime = Math.round(newTime * 1000) / 1000
+    newTime = snapMs(newTime)
     store.updateSwitchEvent(draggingSwitchEventId.value, newTime)
     return
   }
@@ -1418,7 +1486,7 @@ function onWindowMouseMove(evt) {
     let newTime = calculateTimeFromEvent(evt, store.snapStep) - weaponStatusDragOffset.value
     if (newTime > store.viewDuration) newTime = store.viewDuration
     if (newTime < 0) newTime = 0
-    newTime = Math.round(newTime * 1000) / 1000
+    newTime = snapMs(newTime)
     const status = store.weaponStatuses.find(s => s.id === draggingWeaponStatusId.value)
     if (status) {
       status.startTime = newTime
@@ -1437,7 +1505,7 @@ function onWindowMouseMove(evt) {
     }
     let newTime = calculateTimeFromEvent(evt, store.snapStep)
     if (newTime > store.viewDuration) newTime = store.viewDuration
-    newTime = Math.round(newTime * 1000) / 1000
+    newTime = snapMs(newTime)
     store.updateCycleBoundary(draggingCycleBoundaryId.value, newTime)
     return
   }
@@ -1987,6 +2055,20 @@ onUnmounted(() => {
 
           <div class="guide-sp-label">{{ t('timelineGrid.cursor.sp') }}: {{ currentSpValue }}</div>
           <div class="guide-stagger-label">{{ t('timelineGrid.cursor.stagger') }}: {{ currentStaggerValue }}</div>
+
+          <div v-if="cursorGaugeRows.length" class="guide-gauge-panel">
+            <div class="guide-gauge-title">{{ t('timelineGrid.cursor.gauge') }}</div>
+            <div class="guide-gauge-grid">
+              <div v-for="row in cursorGaugeRows" :key="row.id" class="guide-gauge-grid-row">
+                <span class="guide-gauge-name" :class="{ 'is-full': row.isFull }" :style="{ color: row.color, '--row-color': row.color }">{{ row.name }}</span>
+                <span class="guide-gauge-value" :class="{ 'is-full': row.isFull }">
+                  <span class="guide-gauge-current" :style="{ color: row.color }">{{ row.val }}</span>
+                  <span class="guide-gauge-sep">/</span>
+                  <span class="guide-gauge-max">{{ row.max }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div v-for="boundary in store.cycleBoundaries"
@@ -3211,6 +3293,66 @@ body.capture-mode .davinci-range {
   line-height: 1;
   text-shadow: 0 0 2px rgba(255, 120, 117, 0.5);
   margin-top: 1px;
+}
+
+.guide-gauge-panel {
+  width: fit-content;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: monospace;
+  padding: 2px 4px;
+  border-radius: 0 4px 4px 0;
+  white-space: nowrap;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.guide-gauge-title {
+  color: #00e5ff;
+  text-shadow: 0 0 2px rgba(0, 229, 255, 0.45);
+  margin-bottom: 2px;
+}
+
+.guide-gauge-grid {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+.guide-gauge-grid-row {
+  display: contents;
+}
+
+.guide-gauge-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 6px;
+  border-left: 2px solid var(--row-color);
+}
+
+.guide-gauge-value {
+  opacity: 0.95;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.guide-gauge-name.is-full {
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.18);
+}
+
+.guide-gauge-value.is-full .guide-gauge-current {
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.18);
+}
+
+.guide-gauge-sep {
+  opacity: 0.55;
+  padding: 0 4px;
+}
+
+.guide-gauge-max {
+  color: rgba(170, 170, 170, 0.92);
 }
 
 .selection-box-overlay {

@@ -35,7 +35,7 @@ const gradientId = computed(() => `gauge-grad-${props.trackId}`)
 // 获取原始充能数据点序列
 const gaugePoints = computed(() => {
   if (!props.trackId) return []
-  return store.calculateGaugeData(props.trackId)
+  return store.gaugeSeriesByTrackId.get(props.trackId) || []
 })
 
 const pathData = computed(() => {

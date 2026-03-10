@@ -165,7 +165,8 @@
     },
     "cursor": {
       "sp": "SP",
-      "stagger": "Stagger"
+      "stagger": "Stagger",
+      "gauge": "Gauge"
     },
     "cycleBoundary": "Cycle Boundary",
     "prep": {
