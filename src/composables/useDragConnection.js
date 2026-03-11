@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 export function useDragConnection() {
     const store = useTimelineStore()
 
-    const { connectionDragState, connectionSnapState, enableConnectionTool, validConnectionTargetIds, actionMap, effectsMap, connections, toggleConnectionTool } = storeToRefs(store)
+    const { connectionDragState, connectionSnapState, enableConnectionTool, validConnectionTargetIds, actionMap, effectsMap, statusMap, connections, toggleConnectionTool } = storeToRefs(store)
     const isDragging = computed(() => {
         return connectionDragState.value.isDragging
     })
@@ -40,6 +40,12 @@ export function useDragConnection() {
         for (const effect of effectsMap.value.values()) {
             if (validateConnection(sourceId, effect.id)) {
                 validSet.add(effect.id)
+            }
+        }
+
+        for (const status of statusMap.value.values()) {
+            if (validateConnection(sourceId, status.id)) {
+                validSet.add(status.id)
             }
         }
 
@@ -95,57 +101,35 @@ export function useDragConnection() {
             return false
         }
 
-        let from = null
-        let to = null
-        let fromEffectIndex = null
-        let toEffectIndex = null
-        let fromEffectId = null
-        let toEffectId = null
-
-        let fromActionId = null
-        let toActionId = null
-
-        if (fromNode.type === 'action') {
-            from = fromNode.id
-            fromActionId = fromNode.id
-        } else if (fromNode.type === 'effect') {
-            from = fromNode.actionId
-            fromEffectId = fromNode.id
-            fromEffectIndex = fromNode.flatIndex
-            fromActionId = fromNode.actionId
+        const getEndpointId = (conn, side) => {
+            if (!conn) return null
+            if (side === 'from') return conn.fromNodeId || conn.fromEffectId || conn.from || null
+            return conn.toNodeId || conn.toEffectId || conn.to || null
         }
 
-        if (toNode.type === 'action') {
-            to = toNode.id
-            toActionId = toNode.id
-        } else if (toNode.type === 'effect') {
-            to = toNode.actionId
-            toEffectId = toNode.id
-            toEffectIndex = toNode.flatIndex
-            toActionId = toNode.actionId
-        }
+        const fromNodeId = fromNode.id
+        const toNodeId = toNode.id
 
-        if (fromId === toId) {
-            return false
-        }
-
-        const exists = connections.value.some(c =>
-            c.from === from && c.to === to &&
-            (c.fromEffectId ? c.fromEffectId === fromEffectId : c.fromEffectIndex === fromEffectIndex) &&
-            (c.toEffectId ? c.toEffectId === toEffectId : c.toEffectIndex === toEffectIndex)
-        )
+        const exists = connections.value.some(c => (
+            getEndpointId(c, 'from') === fromNodeId &&
+            getEndpointId(c, 'to') === toNodeId
+        ))
 
         if (exists) {
             return false
         }
 
         return {
-            from,
-            to,
-            fromEffectIndex,
-            toEffectIndex,
-            fromEffectId,
-            toEffectId,
+            fromNodeId,
+            toNodeId,
+            fromNodeType: fromNode.type,
+            toNodeType: toNode.type,
+            from: fromNode.type === 'action' ? fromNode.id : (fromNode.type === 'effect' ? fromNode.actionId : null),
+            to: toNode.type === 'action' ? toNode.id : (toNode.type === 'effect' ? toNode.actionId : null),
+            fromEffectId: fromNode.type === 'effect' ? fromNode.id : null,
+            toEffectId: toNode.type === 'effect' ? toNode.id : null,
+            fromEffectIndex: fromNode.type === 'effect' ? fromNode.flatIndex : null,
+            toEffectIndex: toNode.type === 'effect' ? toNode.flatIndex : null,
         }
     }
 

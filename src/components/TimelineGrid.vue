@@ -12,6 +12,7 @@ import { Search } from '@element-plus/icons-vue'
 import { useDragConnection } from '@/composables/useDragConnection.js'
 import { useI18n } from 'vue-i18n'
 import { snapMs } from '@/utils/precision.js'
+import { getRectPos } from '@/utils/layoutUtils.js'
 
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
@@ -556,11 +557,29 @@ function getWeaponStatusLeft(status) {
   return store.timeToPx(start)
 }
 
-function getWeaponStatusBarStyle(status) {
+function getWeaponStatusTiming(status) {
   const start = Number(status.startTime) || 0
   const rawDuration = Number(status.duration) || 0
   const shiftedEnd = store.getShiftedEndTime(start, rawDuration, status.id)
-  const finalDuration = Math.max(0, shiftedEnd - start)
+  const baseFinalDuration = Math.max(0, shiftedEnd - start)
+
+  let finalDuration = baseFinalDuration
+  let isConsumed = false
+
+  const cutTime = store.statusConsumptionTimeById.get(status.id)
+  if (Number.isFinite(cutTime)) {
+    const cutDuration = cutTime - start
+    if (cutDuration >= 0 && cutDuration < finalDuration - 0.0001) {
+      finalDuration = Math.max(0, cutDuration)
+      isConsumed = true
+    }
+  }
+
+  return { start, rawDuration, finalDuration, baseFinalDuration, isConsumed }
+}
+
+function getWeaponStatusBarStyle(status) {
+  const { start, rawDuration, finalDuration } = getWeaponStatusTiming(status)
   let width = finalDuration > 0 ? (store.timeToPx(start + finalDuration) - store.timeToPx(start)) : 0
   if (width > 0) {
     const ICON_SIZE = 20
@@ -576,15 +595,53 @@ function getWeaponStatusBarStyle(status) {
 }
 
 function getWeaponStatusDurationLabel(status) {
-  const start = Number(status.startTime) || 0
-  const baseDuration = Math.max(0, Number(status.duration) || 0)
-  const shiftedEnd = store.getShiftedEndTime(start, baseDuration, status.id)
-  const finalDuration = Math.max(0, shiftedEnd - start)
+  const { rawDuration, finalDuration, isConsumed } = getWeaponStatusTiming(status)
+  const baseDuration = Math.max(0, rawDuration)
+  if (isConsumed) {
+    return store.formatTimeLabel(finalDuration)
+  }
   const extensionAmount = snapMs(finalDuration - baseDuration)
-  if (extensionAmount > 0) {
+  if (extensionAmount > 0.0001) {
     return `${store.formatTimeLabel(baseDuration)} (+${store.formatTimeLabel(extensionAmount)})`
   }
   return store.formatTimeLabel(baseDuration)
+}
+
+function isWeaponStatusConsumed(status) {
+  return getWeaponStatusTiming(status).isConsumed
+}
+
+function handleWeaponStatusIconMouseDown(evt, status) {
+  if (connectionHandler.toolEnabled.value) {
+    evt.stopPropagation()
+    evt.preventDefault()
+    if (connectionHandler.isDragging.value) return
+    if (evt.button !== 0) return
+
+    store.selectWeaponStatus(status.id)
+
+    const rect = store.statusNodeRects.get(status.id)?.rect
+    if (!rect) return
+    const timelinePoint = getRectPos(rect, 'right')
+    connectionHandler.newConnectionFrom(timelinePoint, status.id, 'right')
+    return
+  }
+
+  onWeaponStatusMouseDown(evt, status)
+}
+
+function handleWeaponStatusSnap(statusId) {
+  if (!connectionHandler.isDragging.value) return
+  if (!connectionHandler.isNodeValid(statusId)) return
+  const rect = store.statusNodeRects.get(statusId)?.rect
+  if (!rect) return
+  const timelinePoint = getRectPos(rect, 'left')
+  connectionHandler.snapTo(statusId, 'left', timelinePoint)
+}
+
+function handleWeaponStatusDrop(statusId) {
+  if (!connectionHandler.isDragging.value) return
+  connectionHandler.endDrag(statusId, 'left')
 }
 
 // ===================================================================================
@@ -2195,12 +2252,24 @@ onUnmounted(() => {
                   :class="{ 'is-selected': status.id === store.selectedWeaponStatusId, 'is-dragging': status.id === draggingWeaponStatusId }"
                   :style="{ left: `${getWeaponStatusLeft(status)}px` }"
                 >
-                  <div class="weapon-status-icon-box" @mousedown.stop="onWeaponStatusMouseDown($event, status)">
+                  <div class="weapon-status-icon-box"
+                       :class="{ 'is-connect-mode': connectionHandler.toolEnabled.value, 'is-linking': connectionHandler.isDragging.value, 'is-link-target-valid': connectionHandler.isNodeValid(status.id) }"
+                       @mousedown.stop="handleWeaponStatusIconMouseDown($event, status)"
+                       @mouseenter="handleWeaponStatusSnap(status.id)"
+                       @mouseup="handleWeaponStatusDrop(status.id)"
+                       @mouseleave="connectionHandler.clearSnap()">
                     <img v-if="status.icon" :src="status.icon" @error="e=>e.target.style.display='none'" />
                   </div>
-                  <div class="weapon-status-bar" :style="getWeaponStatusBarStyle(status)">
+                  <div class="weapon-status-bar" :style="getWeaponStatusBarStyle(status)" :class="{ 'is-consumed-bar': isWeaponStatusConsumed(status) }">
                     <div class="striped-bg"></div>
                     <span class="duration-text">{{ getWeaponStatusDurationLabel(status) }}</span>
+
+                    <div v-if="isWeaponStatusConsumed(status)"
+                         :id="`${status.id}_transfer`"
+                         class="transfer-node-wrapper">
+                      <div class="transfer-node"></div>
+                      <div class="transfer-line"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2212,12 +2281,24 @@ onUnmounted(() => {
                   :class="{ 'is-selected': status.id === store.selectedWeaponStatusId, 'is-dragging': status.id === draggingWeaponStatusId }"
                   :style="{ left: `${getWeaponStatusLeft(status)}px` }"
                 >
-                  <div class="weapon-status-icon-box" @mousedown.stop="onWeaponStatusMouseDown($event, status)">
+                  <div class="weapon-status-icon-box"
+                       :class="{ 'is-connect-mode': connectionHandler.toolEnabled.value, 'is-linking': connectionHandler.isDragging.value, 'is-link-target-valid': connectionHandler.isNodeValid(status.id) }"
+                       @mousedown.stop="handleWeaponStatusIconMouseDown($event, status)"
+                       @mouseenter="handleWeaponStatusSnap(status.id)"
+                       @mouseup="handleWeaponStatusDrop(status.id)"
+                       @mouseleave="connectionHandler.clearSnap()">
                     <img v-if="status.icon" :src="status.icon" @error="e=>e.target.style.display='none'" />
                   </div>
-                  <div class="weapon-status-bar" :style="getWeaponStatusBarStyle(status)">
+                  <div class="weapon-status-bar" :style="getWeaponStatusBarStyle(status)" :class="{ 'is-consumed-bar': isWeaponStatusConsumed(status) }">
                     <div class="striped-bg"></div>
                     <span class="duration-text">{{ getWeaponStatusDurationLabel(status) }}</span>
+
+                    <div v-if="isWeaponStatusConsumed(status)"
+                         :id="`${status.id}_transfer`"
+                         class="transfer-node-wrapper">
+                      <div class="transfer-node"></div>
+                      <div class="transfer-line"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -4020,8 +4101,26 @@ body.capture-mode .davinci-range {
   z-index: 10;
 }
 
+.weapon-status-icon-box.is-connect-mode {
+  cursor: crosshair;
+}
+
+.weapon-status-icon-box.is-linking {
+  cursor: crosshair;
+}
+
+.weapon-status-icon-box.is-linking.is-link-target-valid {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+}
+
 .weapon-status-icon-box:active {
   cursor: grabbing;
+}
+
+.weapon-status-icon-box.is-connect-mode:active,
+.weapon-status-icon-box.is-linking:active {
+  cursor: crosshair;
 }
 
 .weapon-status-item.is-selected .weapon-status-icon-box {
@@ -4047,6 +4146,10 @@ body.capture-mode .davinci-range {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   z-index: 1;
   margin-left: 2px;
+}
+
+.weapon-status-bar.is-consumed-bar {
+  opacity: 0.82;
 }
 
 .weapon-status-bar .striped-bg {
@@ -4077,6 +4180,44 @@ body.capture-mode .davinci-range {
   line-height: 1;
   font-family: sans-serif;
   white-space: nowrap;
+}
+
+.transfer-node-wrapper {
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.transfer-node {
+  width: 6px;
+  height: 6px;
+  background-color: #fff;
+  border: 1px solid #ffd700;
+  transform: rotate(45deg);
+  box-shadow: 0 0 4px #ffd700, 0 0 8px rgba(255, 215, 0, 0.6);
+  position: relative;
+  z-index: 2;
+}
+
+.transfer-line {
+  position: absolute;
+  width: 2px;
+  height: 14px;
+  background-color: #fff;
+  border-radius: 1px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 :global(body.is-dragging) {
   user-select: none !important;

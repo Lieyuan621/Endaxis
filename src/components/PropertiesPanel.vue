@@ -417,49 +417,108 @@ function getIconPath(type, charId = null) {
 }
 
 const relevantConnections = computed(() => {
-  if (isLibraryMode.value || !store.selectedActionId) return []
-  const myActionWrap = store.getActionById(store.selectedActionId)
-  const myCharId = myActionWrap?.trackId
+  if (isLibraryMode.value) return []
+
+  const selectedStatusId = store.selectedWeaponStatusId
+  const selectedActionId = store.selectedActionId
+
+  if (!selectedStatusId && !selectedActionId) return []
+
+  const getEndpointId = (conn, side) => {
+    if (!conn) return null
+    if (side === 'from') return conn.fromNodeId || conn.fromEffectId || conn.from || null
+    return conn.toNodeId || conn.toEffectId || conn.to || null
+  }
+
+  const matchesSelectedAction = (nodeWrap, actionId) => {
+    if (!nodeWrap || !actionId) return false
+    if (nodeWrap.type === 'action') return nodeWrap.id === actionId
+    if (nodeWrap.type === 'effect') return nodeWrap.actionId === actionId
+    return false
+  }
+
+  const matchesSelectedStatus = (nodeWrap, statusId) => {
+    if (!nodeWrap || !statusId) return false
+    return nodeWrap.type === 'status' && nodeWrap.id === statusId
+  }
 
   return store.connections
-      .filter(c => c.from === store.selectedActionId || c.to === store.selectedActionId)
-      .map(conn => {
-        const isOutgoing = conn.from === store.selectedActionId
-        const otherActionId = isOutgoing ? conn.to : conn.from
+    .map(conn => {
+      const fromId = getEndpointId(conn, 'from')
+      const toId = getEndpointId(conn, 'to')
+      if (!fromId || !toId) return null
 
-        const otherActionWrap = store.getActionById(otherActionId)
-        const otherAction = otherActionWrap?.node
-        const otherCharId = otherActionWrap?.trackId
-        const otherActionName = otherAction?.name || t('common.unknownSkill')
+      const fromNode = store.resolveNode(fromId)
+      const toNode = store.resolveNode(toId)
+      if (!fromNode || !toNode) return null
 
-        let myIconPath = null
-        if (targetData.value) {
-          const myEffectId = isOutgoing ? conn.fromEffectId : conn.toEffectId
-          const myEffect = store.getEffectById(myEffectId)
-          if (myEffect) {
-            myIconPath = getIconPath(myEffect.node.type, myCharId)
-          }
-        }
+      let isOutgoing = false
+      let isRelevant = false
 
-        let otherIconPath = null
-        if (otherAction) {
-          const otherEffectId = isOutgoing ? conn.toEffectId : conn.fromEffectId
-          const otherEffect = store.getEffectById(otherEffectId)
-          if (otherEffect) {
-            otherIconPath = getIconPath(otherEffect.node.type, otherCharId)
-          }
-        }
+      if (selectedActionId) {
+        const fromMatch = matchesSelectedAction(fromNode, selectedActionId)
+        const toMatch = matchesSelectedAction(toNode, selectedActionId)
+        isRelevant = fromMatch || toMatch
+        isOutgoing = fromMatch && !toMatch
+        if (fromMatch && toMatch) isOutgoing = true
+      } else if (selectedStatusId) {
+        const fromMatch = matchesSelectedStatus(fromNode, selectedStatusId)
+        const toMatch = matchesSelectedStatus(toNode, selectedStatusId)
+        isRelevant = fromMatch || toMatch
+        isOutgoing = fromMatch && !toMatch
+        if (fromMatch && toMatch) isOutgoing = true
+      }
 
-        return {
-          id: conn.id,
-          direction: isOutgoing ? t('connection.direction.to') : t('connection.direction.from'),
-          isOutgoing,
-          rawConnection: conn,
-          otherActionName,
-          myIconPath,
-          otherIconPath
-        }
-      })
+      if (!isRelevant) return null
+
+      const otherNode = isOutgoing ? toNode : fromNode
+
+      let otherActionName = t('common.unknownSkill')
+      if (otherNode.type === 'action') {
+        otherActionName = otherNode.node?.name || t('common.unknownSkill')
+      } else if (otherNode.type === 'effect') {
+        otherActionName = getEffectDisplayName(otherNode.node?.type) || t('common.unknown')
+      } else if (otherNode.type === 'status') {
+        otherActionName = otherNode.node?.name || t('weapon.effect')
+      }
+
+      const getCharIdByNode = (node) => {
+        if (!node) return null
+        if (node.type === 'action') return node.trackId
+        if (node.type === 'effect') return store.getActionById(node.actionId)?.trackId || null
+        if (node.type === 'status') return node.trackId
+        return null
+      }
+
+      const myNode = isOutgoing ? fromNode : toNode
+      const myCharId = getCharIdByNode(myNode)
+      const otherCharId = getCharIdByNode(otherNode)
+
+      let myIconPath = null
+      if (myNode.type === 'effect') {
+        myIconPath = getIconPath(myNode.node?.type, myCharId)
+      } else if (myNode.type === 'status') {
+        myIconPath = myNode.node?.icon || null
+      }
+
+      let otherIconPath = null
+      if (otherNode.type === 'effect') {
+        otherIconPath = getIconPath(otherNode.node?.type, otherCharId)
+      } else if (otherNode.type === 'status') {
+        otherIconPath = otherNode.node?.icon || null
+      }
+
+      return {
+        id: conn.id,
+        direction: isOutgoing ? t('connection.direction.to') : t('connection.direction.from'),
+        isOutgoing,
+        rawConnection: conn,
+        otherActionName,
+        myIconPath,
+        otherIconPath
+      }
+    })
+    .filter(Boolean)
 })
 
 function updateConnPort(connId, type, event) {
@@ -467,20 +526,21 @@ function updateConnPort(connId, type, event) {
   store.updateConnectionPort(connId, type, val)
 }
 
-function handleStartConnection(id, type) {
+function handleStartConnection(id, type = null) {
   if (connectionHandler.isDragging.value) {
     connectionHandler.cancelDrag()
     return
   }
 
-  let rect;
+  const resolvedType = type || store.resolveNode(id)?.type
 
-  if (type === 'action') {
-    const actionLayout = store.getNodeRect(id)
-    rect = actionLayout.rect
-  } else {
-    const effectLayout = store.effectLayouts.get(id)
-    rect = effectLayout.rect
+  let rect = null
+  if (resolvedType === 'action') {
+    rect = store.nodeRects?.[id]?.rect || null
+  } else if (resolvedType === 'effect') {
+    rect = store.effectLayouts.get(id)?.rect || null
+  } else if (resolvedType === 'status') {
+    rect = store.statusNodeRects.get(id)?.rect || null
   }
 
   if (!rect) {
@@ -746,7 +806,7 @@ function handleStartConnection(id, type) {
         </div>
       </div>
 
-      <div v-if="!isLibraryMode && !isWeaponLibraryMode && !isWeaponStatusMode" class="section-container tech-style">
+      <div v-if="!isLibraryMode && !isWeaponLibraryMode" class="section-container tech-style">
         <div class="panel-tag-mini">{{ t('propertiesPanel.connections.title') }}</div>
 
         <div class="connection-header-group">
@@ -760,7 +820,11 @@ function handleStartConnection(id, type) {
 
           <div class="spacer"></div>
 
-          <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent" @click.stop="handleStartConnection(store.selectedActionId, 'action')" :class="{ 'is-linking': connectionHandler.isDragging.value && connectionHandler.state.value.sourceId === store.selectedActionId }">
+          <button
+            class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent"
+            @click.stop="handleStartConnection(store.selectedWeaponStatusId || store.selectedActionId)"
+            :class="{ 'is-linking': connectionHandler.isDragging.value && connectionHandler.state.value.sourceId === (store.selectedWeaponStatusId || store.selectedActionId) }"
+          >
             <span class="plus-icon"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></span>
             {{ (connectionHandler.isDragging.value) ? t('propertiesPanel.connections.chooseTarget') : t('propertiesPanel.connections.new') }}
           </button>
@@ -805,7 +869,7 @@ function handleStartConnection(id, type) {
             </div>
 
             <div class="conn-row-actions">
-              <template v-if="conn.isOutgoing && conn.rawConnection.fromEffectIndex != null">
+              <template v-if="conn.isOutgoing && (conn.rawConnection.fromEffectIndex != null || conn.rawConnection.fromNodeType === 'status')">
                 <div class="ea-btn ea-btn--glass-rect ea-btn--glass-rect-tag ea-btn--accent-gold ea-btn--glass-rect-hover-accent"
                  :class="{ 'active': conn.rawConnection.isConsumption }"
                  @click="store.updateConnection(conn.id, { isConsumption: !conn.rawConnection.isConsumption })">

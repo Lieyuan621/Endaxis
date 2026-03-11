@@ -63,6 +63,8 @@ function getColors() {
   if (fromNode) {
     if (fromNode.type === 'action') {
       startColor = getActionColor(fromNode.node)
+    } else if (fromNode.type === 'status') {
+      startColor = fromNode.node?.color || store.getColor('default')
     } else {
       startColor = store.getColor(fromNode.node.type)
     }
@@ -70,6 +72,8 @@ function getColors() {
   if (toNode) {
     if (toNode.type === 'action') {
       endColor = getActionColor(toNode.node)
+    } else if (toNode.type === 'status') {
+      endColor = toNode.node?.color || store.getColor('default')
     } else {
       endColor = store.getColor(toNode.node.type)
     }

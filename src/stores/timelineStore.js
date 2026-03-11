@@ -417,6 +417,22 @@ export const useTimelineStore = defineStore('timeline', () => {
         return map
     })
 
+    const statusMap = computed(() => {
+        const map = new Map()
+        for (const status of weaponStatuses.value) {
+            if (!status?.id) continue
+            const trackIndex = tracks.value.findIndex(t => t?.id && t.id === status.trackId)
+            map.set(status.id, {
+                id: status.id,
+                node: status,
+                trackId: status.trackId,
+                trackIndex,
+                type: 'status'
+            })
+        }
+        return map
+    })
+
     function setBaseBlockWidth(val) {
         const sanitizedVal = Math.min(ZOOM_LIMITS.MAX, Math.max(ZOOM_LIMITS.MIN, val))
         BASE_BLOCK_WIDTH.value = sanitizedVal
@@ -434,8 +450,12 @@ export const useTimelineStore = defineStore('timeline', () => {
         return effectsMap.value.get(effectId)
     }
 
+    function getStatusById(statusId) {
+        return statusMap.value.get(statusId)
+    }
+
     function resolveNode(nodeId) {
-        return getActionById(nodeId) || getEffectById(nodeId)
+        return getActionById(nodeId) || getEffectById(nodeId) || getStatusById(nodeId)
     }
 
     function getNodesOfConnection(connectionId) {
@@ -444,21 +464,99 @@ export const useTimelineStore = defineStore('timeline', () => {
             return { fromNode: null, toNode: null }
         }
 
-        let fromNode = null
-        let toNode = null
+        const fromId = conn.fromNodeId || conn.fromEffectId || conn.from || null
+        const toId = conn.toNodeId || conn.toEffectId || conn.to || null
 
-        if (conn.fromEffectId) {
-            fromNode = getEffectById(conn.fromEffectId)
-        } else if (conn.from) {
-            fromNode = getActionById(conn.from)
-        }
-        if (conn.toEffectId) {
-            toNode = getEffectById(conn.toEffectId)
-        } else if (conn.to) {
-            toNode = getActionById(conn.to)
-        }
+        const fromNode = fromId ? resolveNode(fromId) : null
+        const toNode = toId ? resolveNode(toId) : null
 
         return { fromNode, toNode }
+    }
+
+    function _getConnectionEndpointId(conn, side) {
+        if (!conn) return null
+        if (side === 'from') return conn.fromNodeId || conn.fromEffectId || conn.from || null
+        return conn.toNodeId || conn.toEffectId || conn.to || null
+    }
+
+    function normalizeConnection(rawConn) {
+        if (!rawConn) return null
+        const conn = { ...rawConn }
+
+        const fromId = _getConnectionEndpointId(conn, 'from')
+        const toId = _getConnectionEndpointId(conn, 'to')
+
+        if (fromId) conn.fromNodeId = fromId
+        if (toId) conn.toNodeId = toId
+
+        const fromNode = fromId ? resolveNode(fromId) : null
+        const toNode = toId ? resolveNode(toId) : null
+
+        if (!conn.fromNodeType && fromNode?.type) conn.fromNodeType = fromNode.type
+        if (!conn.toNodeType && toNode?.type) conn.toNodeType = toNode.type
+
+        if (fromNode?.type === 'effect') {
+            conn.fromEffectId = fromNode.id
+            conn.fromEffectIndex = fromNode.flatIndex
+            conn.from = fromNode.actionId
+        } else if (fromNode?.type === 'action') {
+            conn.from = fromNode.id
+        }
+
+        if (toNode?.type === 'effect') {
+            conn.toEffectId = toNode.id
+            conn.toEffectIndex = toNode.flatIndex
+            conn.to = toNode.actionId
+        } else if (toNode?.type === 'action') {
+            conn.to = toNode.id
+        }
+
+        return conn
+    }
+
+    function normalizeConnections(list) {
+        if (!Array.isArray(list)) return []
+        const out = []
+        for (const conn of list) {
+            const normalized = normalizeConnection(conn)
+            if (normalized) out.push(normalized)
+        }
+        return out
+    }
+
+    function pruneDanglingConnections() {
+        const before = connections.value.length
+        connections.value = connections.value.filter(conn => {
+            const fromId = _getConnectionEndpointId(conn, 'from')
+            const toId = _getConnectionEndpointId(conn, 'to')
+            if (!fromId || !toId) return false
+            return !!resolveNode(fromId) && !!resolveNode(toId)
+        })
+        return before - connections.value.length
+    }
+
+    function _connectionTouchesAnyActionId(conn, actionIds) {
+        if (!conn || !actionIds || actionIds.size === 0) return false
+        const fromId = _getConnectionEndpointId(conn, 'from')
+        const toId = _getConnectionEndpointId(conn, 'to')
+        if (!fromId || !toId) return false
+
+        const check = (nodeId) => {
+            const node = resolveNode(nodeId)
+            if (!node) return false
+            if (node.type === 'action') return actionIds.has(node.id)
+            if (node.type === 'effect') return actionIds.has(node.actionId)
+            return false
+        }
+
+        return check(fromId) || check(toId)
+    }
+
+    function _connectionTouchesStatusId(conn, statusId) {
+        if (!conn || !statusId) return false
+        const fromId = _getConnectionEndpointId(conn, 'from')
+        const toId = _getConnectionEndpointId(conn, 'to')
+        return fromId === statusId || toId === statusId
     }
 
     function updateTrackGaugeEfficiency(trackId, value) {
@@ -502,6 +600,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 selectedLibrarySource.value = 'character';
             }
             weaponStatuses.value = weaponStatuses.value.filter(s => !(s.trackId === track.id && (!s.type || s.type === 'weapon')));
+            pruneDanglingConnections()
             syncTrackWeaponModifiers(trackId)
             commitState();
         }
@@ -659,7 +758,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             shiftSnapshotTimes(snapshot, MIN_PREP_DURATION - rawPrep)
         }
         tracks.value = normalizeTracks(snapshot.tracks)
-        connections.value = snapshot.connections
+        connections.value = normalizeConnections(snapshot.connections)
         characterOverrides.value = snapshot.characterOverrides
         weaponOverrides.value = snapshot.weaponOverrides || {}
         equipmentCategoryOverrides.value = snapshot.equipmentCategoryOverrides || {}
@@ -702,7 +801,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             ? JSON.parse(JSON.stringify(incoming.tracks))
             : createDefaultTracks()
         tracks.value = normalizeTracks(incomingTracks)
-        connections.value = JSON.parse(JSON.stringify(incoming.connections || []))
+        connections.value = normalizeConnections(JSON.parse(JSON.stringify(incoming.connections || [])))
         characterOverrides.value = JSON.parse(JSON.stringify(incoming.characterOverrides || {}))
         weaponOverrides.value = JSON.parse(JSON.stringify(incoming.weaponOverrides || {}))
         equipmentCategoryOverrides.value = JSON.parse(JSON.stringify(incoming.equipmentCategoryOverrides || {}))
@@ -753,7 +852,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     function createConnection(fromPortDir, targetPortDir, isConsumption = false, connectionData) {
-        const newConn = {
+        const rawConn = {
             id: `conn_${uid()}`,
             isConsumption,
             sourcePort: fromPortDir || 'right',
@@ -761,6 +860,8 @@ export const useTimelineStore = defineStore('timeline', () => {
             ...connectionData
         }
 
+        const newConn = normalizeConnection(rawConn)
+        if (!newConn) return
         connections.value.push(newConn)
         commitState()
     }
@@ -2202,11 +2303,13 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     function removeCurrentSelection() {
         if (selectedWeaponStatusId.value) {
+            const toDeleteId = selectedWeaponStatusId.value
             const before = weaponStatuses.value.length
-            weaponStatuses.value = weaponStatuses.value.filter(s => s.id !== selectedWeaponStatusId.value)
+            weaponStatuses.value = weaponStatuses.value.filter(s => s.id !== toDeleteId)
             const removed = before - weaponStatuses.value.length
             selectedWeaponStatusId.value = null
             if (removed > 0) {
+                connections.value = connections.value.filter(conn => !_connectionTouchesStatusId(conn, toDeleteId))
                 commitState()
                 return { statusCount: removed, total: removed }
             }
@@ -2252,7 +2355,9 @@ export const useTimelineStore = defineStore('timeline', () => {
                     actionCount += (initialLen - track.actions.length);
                 }
             });
-            connections.value = connections.value.filter(c => !targets.has(c.from) && !targets.has(c.to));
+            const connBefore = connections.value.length
+            connections.value = connections.value.filter(conn => !_connectionTouchesAnyActionId(conn, targets));
+            connCount += (connBefore - connections.value.length)
         }
 
         if (selectedConnectionId.value) {
@@ -2428,11 +2533,12 @@ export const useTimelineStore = defineStore('timeline', () => {
             if (tracks.value.some((t, i) => i !== trackIndex && t.id === newOperatorId)) { alert(tr('timelineGrid.track.operatorAlreadyInUse')); return; }
             const actionIdsToDelete = new Set(track.actions.map(a => a.instanceId));
             if (actionIdsToDelete.size > 0) {
-                connections.value = connections.value.filter(conn => !actionIdsToDelete.has(conn.from) && !actionIdsToDelete.has(conn.to));
+                connections.value = connections.value.filter(conn => !_connectionTouchesAnyActionId(conn, actionIdsToDelete));
             }
             if (oldOperatorId) {
                 switchEvents.value = switchEvents.value.filter(s => s.characterId !== oldOperatorId);
                 weaponStatuses.value = weaponStatuses.value.filter(s => s.trackId !== oldOperatorId);
+                pruneDanglingConnections()
             }
             track.weaponId = null;
             syncTrackWeaponModifiers(oldOperatorId)
@@ -2462,11 +2568,12 @@ export const useTimelineStore = defineStore('timeline', () => {
         const oldOperatorId = track.id;
         const actionIdsToDelete = new Set(track.actions.map(a => a.instanceId));
         if (actionIdsToDelete.size > 0) {
-            connections.value = connections.value.filter(conn => !actionIdsToDelete.has(conn.from) && !actionIdsToDelete.has(conn.to));
+            connections.value = connections.value.filter(conn => !_connectionTouchesAnyActionId(conn, actionIdsToDelete));
         }
         if (oldOperatorId) {
             switchEvents.value = switchEvents.value.filter(s => s.characterId !== oldOperatorId);
             weaponStatuses.value = weaponStatuses.value.filter(s => s.trackId !== oldOperatorId);
+            pruneDanglingConnections()
         }
         track.weaponId = null;
         if (oldOperatorId) syncTrackWeaponModifiers(oldOperatorId)
@@ -2504,7 +2611,11 @@ export const useTimelineStore = defineStore('timeline', () => {
         const effectToDelete = rows[rowIndex][colIndex]
         const idToDelete = effectToDelete._id
         if (idToDelete) {
-            connections.value = connections.value.filter(conn => conn.fromEffectId !== idToDelete && conn.toEffectId !== idToDelete)
+            connections.value = connections.value.filter(conn => {
+                const fromId = _getConnectionEndpointId(conn, 'from')
+                const toId = _getConnectionEndpointId(conn, 'to')
+                return fromId !== idToDelete && toId !== idToDelete && conn.fromEffectId !== idToDelete && conn.toEffectId !== idToDelete
+            })
         }
         rows[rowIndex].splice(colIndex, 1);
         if (rows[rowIndex].length === 0) rows.splice(rowIndex, 1);
@@ -2835,8 +2946,9 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         connections.value.forEach(conn => {
             if (conn.isConsumption) {
-                if (conn.fromEffectId) {
-                    consumptionMap.set(conn.fromEffectId, conn)
+                const fromEffectId = conn.fromEffectId || (conn.fromNodeType === 'effect' ? conn.fromNodeId : null)
+                if (fromEffectId) {
+                    consumptionMap.set(fromEffectId, conn)
                 }
             }
         })
@@ -2948,10 +3060,126 @@ export const useTimelineStore = defineStore('timeline', () => {
         return layoutMap
     })
 
+    const statusNodeRects = computed(() => {
+        const map = new Map()
+        const ICON_SIZE = 20
+        const BAR_MARGIN = 2
+        const WEAPON_OFFSET = 8
+        const SET_OFFSET = 32
+
+        for (const status of weaponStatuses.value) {
+            if (!status?.id || !status.trackId) continue
+            const trackIndex = tracks.value.findIndex(t => t?.id && t.id === status.trackId)
+            if (trackIndex < 0) continue
+
+            const trackRect = trackLaneRects.value[trackIndex]
+            if (!trackRect) continue
+
+            const start = Number(status.startTime) || 0
+            const left = timeToPx(start)
+
+            const offset = status.type === 'set' ? SET_OFFSET : WEAPON_OFFSET
+            const top = (trackRect.top + trackRect.height + offset) - timelineRect.value.top
+
+            const iconRect = {
+                left,
+                top,
+                width: ICON_SIZE,
+                height: ICON_SIZE,
+                right: left + ICON_SIZE,
+            }
+
+            map.set(status.id, { rect: iconRect })
+
+            const rawDuration = Number(status.duration) || 0
+            const shiftedEnd = getShiftedEndTime(start, rawDuration, status.id)
+            const baseFinalDuration = Math.max(0, shiftedEnd - start)
+
+            let finalDuration = baseFinalDuration
+            let isConsumed = false
+
+            const cutTime = statusConsumptionTimeById.value?.get(status.id)
+            if (Number.isFinite(cutTime)) {
+                const cutDuration = cutTime - start
+                if (cutDuration >= 0 && cutDuration < finalDuration - 0.0001) {
+                    finalDuration = Math.max(0, cutDuration)
+                    isConsumed = true
+                }
+            }
+
+            if (isConsumed) {
+                let finalBarWidth = finalDuration > 0 ? (timeToPx(start + finalDuration) - timeToPx(start)) : 0
+                if (finalBarWidth > 0) {
+                    finalBarWidth = Math.max(0, finalBarWidth - ICON_SIZE - BAR_MARGIN)
+                }
+
+                const barLeft = iconRect.left + ICON_SIZE + BAR_MARGIN
+                const barRight = barLeft + finalBarWidth
+
+                const transferRect = {
+                    left: barRight,
+                    width: 0,
+                    right: barRight,
+                    height: ICON_SIZE,
+                    top: iconRect.top
+                }
+                map.set(`${status.id}_transfer`, { rect: transferRect })
+            }
+        }
+
+        return map
+    })
+
+    const statusConsumptionTimeById = computed(() => {
+        const map = new Map()
+
+        const getNodeTime = (nodeWrap) => {
+            if (!nodeWrap) return null
+            if (nodeWrap.type === 'action') return Number(nodeWrap.node.startTime) || 0
+            if (nodeWrap.type === 'status') return Number(nodeWrap.node.startTime) || 0
+            if (nodeWrap.type === 'effect') {
+                const actionWrap = getActionById(nodeWrap.actionId)
+                if (!actionWrap) return null
+                const offset = Number(nodeWrap.node?.offset) || 0
+                return getShiftedEndTime(actionWrap.node.startTime, offset, actionWrap.id)
+            }
+            return null
+        }
+
+        for (const conn of connections.value) {
+            if (!conn?.isConsumption) continue
+
+            const fromId = _getConnectionEndpointId(conn, 'from')
+            const toId = _getConnectionEndpointId(conn, 'to')
+            if (!fromId || !toId) continue
+
+            const fromNode = resolveNode(fromId)
+            if (!fromNode || fromNode.type !== 'status') continue
+
+            const toNode = resolveNode(toId)
+            if (!toNode) continue
+
+            const targetTime = getNodeTime(toNode)
+            if (!Number.isFinite(targetTime)) continue
+
+            const offset = Number(conn.consumptionOffset) || 0
+            const consumptionTime = snapMs(targetTime - offset)
+
+            const prev = map.get(fromId)
+            if (prev === undefined || consumptionTime < prev) {
+                map.set(fromId, consumptionTime)
+            }
+        }
+
+        return map
+    })
+
     function getNodeRect(id) {
         if (nodeRects.value[id]) return nodeRects.value[id]
         const effectLayout = effectLayouts.value.get(id)
         if (effectLayout) return effectLayout.rect
+        const statusLayout = statusNodeRects.value.get(id)
+        if (statusLayout) return statusLayout.rect
         return null
     }
 
@@ -4111,6 +4339,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         toggleActionLock, toggleActionDisable, setActionColor,
         globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById, getEffectById,
         getUltimateEnhancementMetrics,
+        statusMap, getStatusById, statusNodeRects, statusConsumptionTimeById,
         enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
         effectLayouts, getNodeRect, weaponDatabase, weaponOverrides, weaponStatuses, activeWeapon, getWeaponById, isWeaponSkillId, addWeaponStatus,
