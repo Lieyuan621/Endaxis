@@ -1361,7 +1361,7 @@ function addNewEnemy() {
     staggerNodeDuration: 2,
     staggerBreakDuration: 10,
     executionRecovery: 20,
-    category: enemyCategories.value[0] || '',
+    category: '',
     tier: 'normal'
   }
   if (!enemyDatabase.value) enemyDatabase.value = []
@@ -1394,7 +1394,7 @@ function addNewWeapon() {
 
 function addNewEquipment() {
   const newId = `eq_${Date.now()}`
-  const category = equipmentCategories.value?.[0] || ''
+  const category = ''
   const newEquipment = {
     id: newId,
     name: '新装备',
