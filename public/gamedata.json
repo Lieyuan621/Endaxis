@@ -3060,8 +3060,8 @@
             }
           ],
           "spCost": 100,
-          "gaugeGain": 0,
-          "teamGaugeGain": 0,
+          "gaugeGain": 6.5,
+          "teamGaugeGain": 6.5,
           "icon": "/avatars/LAEVATAIN/icon_skill_laevat_02_line.webp"
         },
         {
@@ -3102,15 +3102,15 @@
             }
           ],
           "spCost": 100,
-          "gaugeGain": 0,
-          "teamGaugeGain": 0
+          "gaugeGain": 6.5,
+          "teamGaugeGain": 6.5
         },
         {
           "id": "v_1770210431243",
           "name": "强化战技",
           "type": "skill",
           "duration": 3.9,
-          "icon": "/avatars/LAEVATAIN/icon_skill_laevat_01_line.webp",
+          "icon": "/avatars/LAEVATAIN/icon_skill_laevat_01.webp",
           "allowedTypes": [
             "burning",
             "blaze_attach",
@@ -3203,7 +3203,7 @@
             }
           ],
           "spCost": 100,
-          "gaugeGain": 6.5,
+          "gaugeGain": 106.5,
           "teamGaugeGain": 6.5
         }
       ],
@@ -4269,7 +4269,7 @@
           "damage_ticks": [
             {
               "offset": 1,
-              "stagger": 0,
+              "stagger": 18,
               "sp": 18,
               "boundEffects": []
             }
@@ -4278,8 +4278,8 @@
       ],
       "skill_duration": 1.867,
       "skill_spCost": 100,
-      "skill_gaugeGain": 0,
-      "skill_teamGaugeGain": 0,
+      "skill_gaugeGain": 6.5,
+      "skill_teamGaugeGain": 6.5,
       "skill_allowed_types": [
         "cold_attach",
         "frozen",
@@ -4299,7 +4299,7 @@
       "skill_damage_ticks": [
         {
           "offset": 1,
-          "stagger": 0,
+          "stagger": 10,
           "sp": 0,
           "boundEffects": [
             "0gbmca2"
@@ -4309,13 +4309,13 @@
       "skill_icon": "",
       "link_duration": 1.65,
       "link_cooldown": 13,
-      "link_gaugeGain": 0,
+      "link_gaugeGain": 10,
       "link_allowed_types": [],
       "link_anomalies": [],
       "link_damage_ticks": [
         {
           "offset": 0.95,
-          "stagger": 0,
+          "stagger": 10,
           "sp": 0,
           "boundEffects": []
         }
@@ -4361,7 +4361,80 @@
       "execution_anomalies": [],
       "execution_damage_ticks": [],
       "dodge_duration": 0.5,
-      "variants": []
+      "variants": [
+        {
+          "id": "v_1773431405833",
+          "name": "战技涡流一",
+          "type": "skill",
+          "duration": 1.867,
+          "icon": "",
+          "allowedTypes": [
+            "cold_attach",
+            "frozen",
+            "cold_burst"
+          ],
+          "physicalAnomaly": [
+            [
+              {
+                "_id": "0gbmca2",
+                "type": "cold_attach",
+                "stacks": 1,
+                "duration": 0,
+                "offset": 1
+              }
+            ]
+          ],
+          "damageTicks": [
+            {
+              "offset": 1,
+              "stagger": 10,
+              "sp": 20,
+              "boundEffects": [
+                "0gbmca2"
+              ]
+            }
+          ],
+          "spCost": 100,
+          "gaugeGain": 6.5,
+          "teamGaugeGain": 6.5
+        },
+        {
+          "id": "v_1773431421000",
+          "name": "战技涡流2",
+          "type": "skill",
+          "duration": 1.867,
+          "icon": "",
+          "allowedTypes": [
+            "cold_attach",
+            "frozen",
+            "cold_burst"
+          ],
+          "physicalAnomaly": [
+            [
+              {
+                "_id": "0gbmca2",
+                "type": "cold_attach",
+                "stacks": 1,
+                "duration": 0,
+                "offset": 1
+              }
+            ]
+          ],
+          "damageTicks": [
+            {
+              "offset": 1,
+              "stagger": 10,
+              "sp": 40,
+              "boundEffects": [
+                "0gbmca2"
+              ]
+            }
+          ],
+          "spCost": 100,
+          "gaugeGain": 6.5,
+          "teamGaugeGain": 6.5
+        }
+      ]
     },
     {
       "id": "ROSSI",
@@ -9619,6 +9692,318 @@
       "executionRecovery": 25,
       "category": "裂地者",
       "tier": "normal"
+    },
+    {
+      "id": "eny_0046_lbshamman",
+      "name": "碾骨焰术师",
+      "avatar": "/Icon_Enemy/eny_0046_lbshamman.webp",
+      "maxStagger": 160,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7,
+      "executionRecovery": 35,
+      "category": "裂地者",
+      "tier": "elite"
+    },
+    {
+      "id": "eny_0047_firebat",
+      "name": "碾骨清道夫",
+      "avatar": "/Icon_Enemy/eny_0047_firebat.webp",
+      "maxStagger": 170,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7,
+      "executionRecovery": 35,
+      "category": "裂地者",
+      "tier": "elite"
+    },
+    {
+      "id": "eny_0048_hvybow",
+      "name": "碾骨射手",
+      "avatar": "/Icon_Enemy/eny_0048_hvybow.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 1,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "裂地者",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0049_rogue",
+      "name": "碾骨渗透者",
+      "avatar": "/Icon_Enemy/eny_0049_rogue.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0060_lbmad",
+      "name": "雾火爪牙",
+      "avatar": "/Icon_Enemy/eny_0060_lbmad.webp",
+      "maxStagger": 100,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0050_hound",
+      "name": "碾骨撕裂牙兽",
+      "avatar": "/Icon_Enemy/eny_0050_hound.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0059_erhound",
+      "name": "雾火牙兽",
+      "avatar": "/Icon_Enemy/eny_0059_erhound.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0065_lbmob2",
+      "name": "精锐劫掠者",
+      "avatar": "/Icon_Enemy/eny_0065_lbmob2.webp",
+      "maxStagger": 110,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0066_lbhunt2",
+      "name": "精锐伏击射手",
+      "avatar": "/Icon_Enemy/eny_0066_lbhunt2.webp",
+      "maxStagger": 110,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0067_hound2",
+      "name": "精锐撕裂牙兽",
+      "avatar": "/Icon_Enemy/eny_0067_hound2.webp",
+      "maxStagger": 90,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0068_lbtough2",
+      "name": "精锐行刑人",
+      "avatar": "/Icon_Enemy/eny_0068_lbtough2.webp",
+      "maxStagger": 340,
+      "staggerNodeCount": 1,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "裂地者",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0074_lbshield",
+      "name": "碾骨先锋",
+      "avatar": "/Icon_Enemy/eny_0074_lbshield.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "裂地者",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0075_lbroshan",
+      "name": "碾骨破城者",
+      "avatar": "/Icon_Enemy/eny_0075_lbroshan.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 1,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 50,
+      "category": "裂地者",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0084_hshunt",
+      "name": "穿林箭",
+      "avatar": "/Icon_Enemy/eny_0084_hshunt.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "沧贼",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0071_sandb",
+      "name": "斧甲兽",
+      "avatar": "/Icon_Enemy/eny_0071_sandb.webp",
+      "maxStagger": 280,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "野外生物",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0072_slimeml",
+      "name": "原生钳兽",
+      "avatar": "/Icon_Enemy/eny_0072_slimeml.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "野外生物",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0073_slimerg",
+      "name": "酸液源石虫",
+      "avatar": "/Icon_Enemy/eny_0073_slimerg.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "野外生物",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0083_hstiger",
+      "name": "百眼彪兽",
+      "avatar": "/Icon_Enemy/eny_0083_hstiger.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "野外生物",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0092_slbomb",
+      "name": "火雾源石虫",
+      "avatar": "/Icon_Enemy/eny_0092_slbomb.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "野外生物",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0094_hsfly",
+      "name": "水灯虫",
+      "avatar": "/Icon_Enemy/eny_0094_hsfly.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "野外生物",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0098_sandb2",
+      "name": "雾火斧甲兽",
+      "avatar": "/Icon_Enemy/eny_0098_sandb2.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "野外生物",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0099_slimeml2",
+      "name": "残暴原生钳兽",
+      "avatar": "/Icon_Enemy/eny_0099_slimeml2.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "野外生物",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0100_slimerg2",
+      "name": "酸液源石虫·α",
+      "avatar": "/Icon_Enemy/eny_0100_slimerg2.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "野外生物",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0102_hstiger2",
+      "name": "怒目彪兽",
+      "avatar": "/Icon_Enemy/eny_0102_hstiger2.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "野外生物",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0108_slbomb2",
+      "name": "焚雾源石虫",
+      "avatar": "/Icon_Enemy/eny_0108_slbomb2.webp",
+      "maxStagger": 60,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "野外生物",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0109_hshog2",
+      "name": "充能球刺兽",
+      "avatar": "/Icon_Enemy/eny_0109_hshog2.webp",
+      "maxStagger": 200,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7,
+      "executionRecovery": 35,
+      "category": "野外生物",
+      "tier": "elite"
     }
   ],
   "enemyCategories": [
@@ -10957,26 +11342,38 @@
       "icon": "/equipment/item_equip_t4_suit_phy01_edc_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "physical_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "physical_dmg"
+          ],
           "values": [
             0,
             0,
@@ -10995,26 +11392,38 @@
       "icon": "/equipment/item_equip_t4_suit_phy01_body_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                20,
+                22,
+                24,
+                26
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
             0,
             0,
@@ -11033,26 +11442,38 @@
       "icon": "/equipment/item_equip_t4_suit_phy01_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "physical_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "physical_dmg"
+          ],
           "values": [
             0,
             0,
@@ -11071,26 +11492,38 @@
       "icon": "/equipment/item_equip_t4_suit_phy01_hand_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "ultimate_dmg_bonus",
+              "values": [
+                43.1,
+                47.4,
+                51.7,
+                56.1
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ultimate_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11209,26 +11642,38 @@
       "icon": "/equipment/item_equip_t4_suit_usp02_edc_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                24.6,
+                27.1,
+                29.6,
+                32
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
           "values": [
             0,
             0,
@@ -11347,26 +11792,38 @@
       "icon": "/equipment/item_equip_t4_suit_usp02_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "healing_effect",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "healing_effect"
+          ],
           "values": [
             0,
             0,
@@ -11435,26 +11892,48 @@
       "icon": "/equipment/item_equip_t4_suit_burst01_edc_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "cold_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            },
+            {
+              "modifierId": "emag_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "cold_dmg",
+            "emag_dmg"
+          ],
           "values": [
             0,
             0,
@@ -11473,26 +11952,38 @@
       "icon": "/equipment/item_equip_t4_suit_burst01_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "attack_dmg_bonus",
+              "values": [
+                27.6,
+                30.4,
+                33.1,
+                35.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "attack_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11511,26 +12002,48 @@
       "icon": "/equipment/item_equip_t4_suit_burst01_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "cold_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            },
+            {
+              "modifierId": "emag_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "cold_dmg",
+            "emag_dmg"
+          ],
           "values": [
             0,
             0,
@@ -11549,26 +12062,38 @@
       "icon": "/equipment/item_equip_t4_suit_atk02_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "physical_dmg",
+              "values": [
+                11.5,
+                12.7,
+                13.8,
+                14.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "physical_dmg"
+          ],
           "values": [
             0,
             0,
@@ -11587,26 +12112,38 @@
       "icon": "/equipment/item_equip_t4_suit_atk02_body_04.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "all_skill_dmg_bonus",
+              "values": [
+                13.8,
+                15.2,
+                16.6,
+                17.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "all_skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11625,26 +12162,38 @@
       "icon": "/equipment/item_equip_t4_suit_atk02_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                34.5,
+                38,
+                41.4,
+                44.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11663,26 +12212,38 @@
       "icon": "/equipment/item_equip_t4_suit_atk02_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                34.5,
+                38,
+                41.4,
+                44.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11701,26 +12262,38 @@
       "icon": "/equipment/item_equip_t4_suit_atk02_edc_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "physical_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "physical_dmg"
+          ],
           "values": [
             0,
             0,
@@ -11739,26 +12312,38 @@
       "icon": "/equipment/item_equip_t4_suit_atk02_edc_04.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11777,26 +12362,38 @@
       "icon": "/equipment/item_equip_t4_suit_atk02_edc_05.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "all_skill_dmg_bonus",
+              "values": [
+                27.6,
+                30.4,
+                33.1,
+                35.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "all_skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11815,26 +12412,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                20,
+                22,
+                24,
+                26
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
             0,
             0,
@@ -11853,26 +12462,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_body_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "attack_dmg_bonus",
+              "values": [
+                13.8,
+                15.2,
+                16.6,
+                17.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "attack_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11891,26 +12512,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_body_04.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11929,26 +12562,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                34.5,
+                38,
+                41.4,
+                44.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -11967,26 +12612,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_hand_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "attack_dmg_bonus",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "attack_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12005,26 +12662,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_hand_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "crit_rate",
+              "values": [
+                8.6,
+                9.5,
+                10.3,
+                11.2
+              ]
+            }
+          ],
+          "modifierIds": [
+            "crit_rate"
+          ],
           "values": [
             0,
             0,
@@ -12043,26 +12712,48 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_edc_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "cold_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            },
+            {
+              "modifierId": "emag_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "cold_dmg",
+            "emag_dmg"
+          ],
           "values": [
             0,
             0,
@@ -12081,26 +12772,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12119,26 +12822,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_edc_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "crit_rate",
+              "values": [
+                10.3,
+                11.4,
+                12.4,
+                13.5
+              ]
+            }
+          ],
+          "modifierIds": [
+            "crit_rate"
+          ],
           "values": [
             0,
             0,
@@ -12157,26 +12872,38 @@
       "icon": "/equipment/item_equip_t4_suit_criti01_edc_05.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12195,26 +12922,48 @@
       "icon": "/equipment/item_equip_t4_suit_fire_natr01_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "blaze_dmg",
+              "values": [
+                11.5,
+                12.7,
+                13.8,
+                14.9
+              ]
+            },
+            {
+              "modifierId": "nature_dmg",
+              "values": [
+                11.5,
+                12.7,
+                13.8,
+                14.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "blaze_dmg",
+            "nature_dmg"
+          ],
           "values": [
             0,
             0,
@@ -12233,26 +12982,48 @@
       "icon": "/equipment/item_equip_t4_suit_fire_natr01_hand_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "blaze_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            },
+            {
+              "modifierId": "nature_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "blaze_dmg",
+            "nature_dmg"
+          ],
           "values": [
             0,
             0,
@@ -12271,26 +13042,48 @@
       "icon": "/equipment/item_equip_t4_suit_fire_natr01_hand_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "blaze_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            },
+            {
+              "modifierId": "nature_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "blaze_dmg",
+            "nature_dmg"
+          ],
           "values": [
             0,
             0,
@@ -12309,26 +13102,38 @@
       "icon": "/equipment/item_equip_t4_suit_fire_natr01_edc_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                41,
+                45,
+                49,
+                53
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
             0,
             0,
@@ -12347,12 +13152,12 @@
       "icon": "/equipment/item_equip_t4_suit_fire_natr01_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            41,
+            45,
+            49,
+            53
           ]
         },
         "primary2": {
@@ -12365,8 +13170,20 @@
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12385,26 +13202,38 @@
       "icon": "/equipment/item_equip_t4_suit_fire_natr01_edc_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                41,
+                45,
+                49,
+                53
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
             0,
             0,
@@ -12733,26 +13562,38 @@
       "icon": "/equipment/item_equip_t4_suit_pulse_cryst01_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                20,
+                22,
+                24,
+                26
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
             0,
             0,
@@ -12771,26 +13612,48 @@
       "icon": "/equipment/item_equip_t4_suit_pulse_cryst01_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "cold_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            },
+            {
+              "modifierId": "emag_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "cold_dmg",
+            "emag_dmg"
+          ],
           "values": [
             0,
             0,
@@ -12809,12 +13672,12 @@
       "icon": "/equipment/item_equip_t4_suit_pulse_cryst01_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            41,
+            45,
+            49,
+            53
           ]
         },
         "primary2": {
@@ -12827,8 +13690,20 @@
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                41,
+                45,
+                49,
+                53
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
             0,
             0,
@@ -12897,26 +13772,38 @@
       "icon": "/equipment/item_equip_t4_suit_attri01_body_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12935,26 +13822,38 @@
       "icon": "/equipment/item_equip_t4_suit_attri01_body_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -12973,26 +13872,38 @@
       "icon": "/equipment/item_equip_t4_suit_attri01_body_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                12.3,
+                13.6,
+                14.8,
+                16
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
           "values": [
             0,
             0,
@@ -13011,26 +13922,38 @@
       "icon": "/equipment/item_equip_t4_suit_attri01_edc_04.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "broken_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "broken_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -13049,26 +13972,38 @@
       "icon": "/equipment/item_equip_t4_suit_attri01_edc_05.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "crit_rate",
+              "values": [
+                10.3,
+                11.4,
+                12.4,
+                13.5
+              ]
+            }
+          ],
+          "modifierIds": [
+            "crit_rate"
+          ],
           "values": [
             0,
             0,
@@ -13087,26 +14022,38 @@
       "icon": "/equipment/item_equip_t4_suit_attri01_edc_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -13125,26 +14072,38 @@
       "icon": "/equipment/item_equip_t4_suit_attri01_edc_06.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -13163,26 +14122,38 @@
       "icon": "/equipment/item_equip_t4_suit_poise01_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "broken_dmg_bonus",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "broken_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -13201,26 +14172,38 @@
       "icon": "/equipment/item_equip_t4_suit_poise01_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                34,
+                37,
+                41,
+                44
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
             0,
             0,
@@ -13239,26 +14222,38 @@
       "icon": "/equipment/item_equip_t4_suit_poise01_edc_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "physical_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "physical_dmg"
+          ],
           "values": [
             0,
             0,
@@ -13277,26 +14272,38 @@
       "icon": "/equipment/item_equip_t4_suit_poise01_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                41,
+                45,
+                49,
+                53
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
           "values": [
             0,
             0,
@@ -13315,26 +14322,38 @@
       "icon": "/equipment/item_equip_t4_suit_heal01_body_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "healing_effect",
+              "values": [
+                10.3,
+                11.4,
+                12.4,
+                13.5
+              ]
+            }
+          ],
+          "modifierIds": [
+            "healing_effect"
+          ],
           "values": [
             0,
             0,
@@ -13353,26 +14372,38 @@
       "icon": "/equipment/item_equip_t4_suit_heal01_body_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            87,
+            95,
+            104,
+            113
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            58,
+            63,
+            69,
+            75
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "healing_effect",
+              "values": [
+                10.3,
+                11.4,
+                12.4,
+                13.5
+              ]
+            }
+          ],
+          "modifierIds": [
+            "healing_effect"
+          ],
           "values": [
             0,
             0,
@@ -13391,26 +14422,38 @@
       "icon": "/equipment/item_equip_t4_suit_heal01_hand_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                20.5,
+                22.6,
+                24.6,
+                26.7
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
           "values": [
             0,
             0,
@@ -13429,26 +14472,38 @@
       "icon": "/equipment/item_equip_t4_suit_heal01_hand_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            65,
+            71,
+            78,
+            84
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "healing_effect",
+              "values": [
+                17.3,
+                19,
+                20.7,
+                22.4
+              ]
+            }
+          ],
+          "modifierIds": [
+            "healing_effect"
+          ],
           "values": [
             0,
             0,
@@ -13467,21 +14522,21 @@
       "icon": "/equipment/item_equip_t4_suit_heal01_edc_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
@@ -13505,26 +14560,38 @@
       "icon": "/equipment/item_equip_t4_suit_heal01_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "hp",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "hp"
+          ],
           "values": [
             0,
             0,
@@ -13543,26 +14610,38 @@
       "icon": "/equipment/item_equip_t4_suit_heal01_edc_03.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            32,
+            35,
+            38,
+            41
           ]
         },
         "primary2": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            21,
+            23,
+            25,
+            27
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "primary_ability",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "primary_ability"
+          ],
           "values": [
             0,
             0,
@@ -13581,12 +14660,12 @@
       "icon": "/equipment/item_equip_t4_suit_heal01_edc_04.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "intellect",
           "values": [
-            0,
-            0,
-            0,
-            0
+            41,
+            45,
+            49,
+            53
           ]
         },
         "primary2": {
@@ -13599,8 +14678,20 @@
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "healing_effect",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "healing_effect"
+          ],
           "values": [
             0,
             0,
@@ -15583,12 +16674,12 @@
       "icon": "/equipment/item_equip_t4_parts_wuling01_edc_04.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "will",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "primary2": {
@@ -15601,8 +16692,20 @@
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "crit_rate",
+              "values": [
+                10.8,
+                11.9,
+                13,
+                14
+              ]
+            }
+          ],
+          "modifierIds": [
+            "crit_rate"
+          ],
           "values": [
             0,
             0,
@@ -15621,12 +16724,12 @@
       "icon": "/equipment/item_equip_t4_parts_wuling01_edc_01.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "strength",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "primary2": {
@@ -15659,12 +16762,12 @@
       "icon": "/equipment/item_equip_t4_parts_wuling01_edc_02.webp",
       "affixes": {
         "primary1": {
-          "modifierId": null,
+          "modifierId": "agility",
           "values": [
-            0,
-            0,
-            0,
-            0
+            43,
+            47,
+            51,
+            55
           ]
         },
         "primary2": {
@@ -15677,8 +16780,20 @@
           ]
         },
         "adapter": {
-          "entries": [],
-          "modifierIds": [],
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                43.2,
+                47.5,
+                51.8,
+                56.2
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
           "values": [
             0,
             0,
@@ -15778,6 +16893,116 @@
           ],
           "modifierIds": [
             "skill_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_criti01_body_03",
+      "name": "M.I.警用罩衣·壹型",
+      "category": "M.I.警用",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/item_equip_t4_suit_criti01_body_03.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "intellect",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "will",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "crit_rate",
+              "values": [
+                5.2,
+                5.7,
+                6.2,
+                6.7
+              ]
+            }
+          ],
+          "modifierIds": [
+            "crit_rate"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_criti01_edc_04",
+      "name": "M.I.警用刺刃",
+      "category": "M.I.警用",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/item_equip_t4_suit_criti01_edc_04.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "will",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "intellect",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "blaze_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            },
+            {
+              "modifierId": "nature_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "blaze_dmg",
+            "nature_dmg"
           ],
           "values": [
             0,
@@ -16714,10 +17939,10 @@
           0
         ],
         "accessoryDual": [
-          0,
-          0,
-          0,
-          0
+          20.7,
+          22.8,
+          24.8,
+          26.9
         ]
       },
       "secondary_ability": {
@@ -16766,10 +17991,10 @@
           0
         ],
         "armorDual": [
-          0,
-          0,
-          0,
-          0
+          5.2,
+          5.7,
+          6.2,
+          6.7
         ],
         "glovesSingle": [
           0,
@@ -16778,22 +18003,22 @@
           0
         ],
         "glovesDual": [
-          0,
-          0,
-          0,
-          0
+          8.6,
+          9.5,
+          10.3,
+          11.2
         ],
         "accessorySingle": [
-          0,
-          0,
-          0,
-          0
+          10.8,
+          11.9,
+          13,
+          14
         ],
         "accessoryDual": [
-          0,
-          0,
-          0,
-          0
+          10.3,
+          11.4,
+          12.4,
+          13.5
         ]
       },
       "originium_arts_power": {
@@ -16804,10 +18029,10 @@
           0
         ],
         "armorDual": [
-          0,
-          0,
-          0,
-          0
+          20,
+          22,
+          24,
+          26
         ],
         "glovesSingle": [
           0,
@@ -16816,10 +18041,10 @@
           0
         ],
         "glovesDual": [
-          0,
-          0,
-          0,
-          0
+          34,
+          37,
+          41,
+          44
         ],
         "accessorySingle": [
           0,
@@ -16828,10 +18053,10 @@
           0
         ],
         "accessoryDual": [
-          0,
-          0,
-          0,
-          0
+          41,
+          45,
+          49,
+          53
         ]
       },
       "ult_charge_eff": {
@@ -16854,22 +18079,22 @@
           0
         ],
         "glovesDual": [
-          0,
-          0,
-          0,
-          0
+          20.5,
+          22.6,
+          24.6,
+          26.7
         ],
         "accessorySingle": [
-          0,
-          0,
-          0,
-          0
+          25.7,
+          28.3,
+          30.9,
+          33.4
         ],
         "accessoryDual": [
-          0,
-          0,
-          0,
-          0
+          24.6,
+          27.1,
+          29.6,
+          32
         ]
       },
       "attack_dmg_bonus": {
@@ -16880,10 +18105,10 @@
           0
         ],
         "armorDual": [
-          0,
-          0,
-          0,
-          0
+          13.8,
+          15.2,
+          16.6,
+          17.9
         ],
         "glovesSingle": [
           0,
@@ -16892,10 +18117,10 @@
           0
         ],
         "glovesDual": [
-          0,
-          0,
-          0,
-          0
+          23,
+          25.3,
+          27.6,
+          29.9
         ],
         "accessorySingle": [
           0,
@@ -16904,10 +18129,10 @@
           0
         ],
         "accessoryDual": [
-          0,
-          0,
-          0,
-          0
+          27.6,
+          30.4,
+          33.1,
+          35.9
         ]
       },
       "skill_dmg_bonus": {
@@ -16942,13 +18167,355 @@
           0
         ],
         "accessoryDual": [
+          41.4,
+          45.5,
+          49.7,
+          53.8
+        ]
+      },
+      "link_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          20.7,
+          22.8,
+          24.8,
+          26.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          34.5,
+          38,
+          41.4,
+          44.9
+        ],
+        "accessorySingle": [
+          43.2,
+          47.5,
+          51.8,
+          56.2
+        ],
+        "accessoryDual": [
+          41.4,
+          45.5,
+          49.7,
+          53.8
+        ]
+      },
+      "ultimate_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          25.9,
+          28.5,
+          31.1,
+          33.6
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          43.1,
+          47.4,
+          51.7,
+          56.1
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
           0,
           0,
           0,
           0
         ]
       },
-      "link_dmg_bonus": {
+      "broken_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          20.7,
+          22.8,
+          24.8,
+          26.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          41.4,
+          45.5,
+          49.7,
+          53.8
+        ]
+      },
+      "all_skill_dmg_bonus": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          13.8,
+          15.2,
+          16.6,
+          17.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          27.6,
+          30.4,
+          33.1,
+          35.9
+        ]
+      },
+      "cold_dmg": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          11.5,
+          12.7,
+          13.8,
+          14.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          19.2,
+          21.1,
+          23,
+          24.9
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          23,
+          25.3,
+          27.6,
+          29.9
+        ]
+      },
+      "emag_dmg": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          11.5,
+          12.7,
+          13.8,
+          14.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          19.2,
+          21.1,
+          23,
+          24.9
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          23,
+          25.3,
+          27.6,
+          29.9
+        ]
+      },
+      "blaze_dmg": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          11.5,
+          12.7,
+          13.8,
+          14.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          19.2,
+          21.1,
+          23,
+          24.9
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          23,
+          25.3,
+          27.6,
+          29.9
+        ]
+      },
+      "nature_dmg": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          11.5,
+          12.7,
+          13.8,
+          14.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          19.2,
+          21.1,
+          23,
+          24.9
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          23,
+          25.3,
+          27.6,
+          29.9
+        ]
+      },
+      "physical_dmg": {
+        "armorSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "armorDual": [
+          11.5,
+          12.7,
+          13.8,
+          14.9
+        ],
+        "glovesSingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "glovesDual": [
+          19.2,
+          21.1,
+          23,
+          24.9
+        ],
+        "accessorySingle": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "accessoryDual": [
+          23,
+          25.3,
+          27.6,
+          29.9
+        ]
+      },
+      "hp": {
         "armorSingle": [
           0,
           0,
@@ -16986,7 +18553,7 @@
           53.8
         ]
       },
-      "ultimate_dmg_bonus": {
+      "healing_effect": {
         "armorSingle": [
           0,
           0,
@@ -16994,10 +18561,10 @@
           0
         ],
         "armorDual": [
-          25.9,
-          28.5,
-          31.1,
-          33.6
+          10.3,
+          11.4,
+          12.4,
+          13.5
         ],
         "glovesSingle": [
           0,
@@ -17006,10 +18573,10 @@
           0
         ],
         "glovesDual": [
-          0,
-          0,
-          0,
-          0
+          17.3,
+          19,
+          20.7,
+          22.4
         ],
         "accessorySingle": [
           0,
@@ -17018,124 +18585,10 @@
           0
         ],
         "accessoryDual": [
-          0,
-          0,
-          0,
-          0
-        ]
-      },
-      "broken_dmg_bonus": {
-        "armorSingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "armorDual": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "glovesSingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "glovesDual": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "accessorySingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "accessoryDual": [
-          0,
-          0,
-          0,
-          0
-        ]
-      },
-      "cold_dmg": {
-        "armorSingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "armorDual": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "glovesSingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "glovesDual": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "accessorySingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "accessoryDual": [
-          23,
-          25.3,
-          27.6,
-          29.9
-        ]
-      },
-      "emag_dmg": {
-        "armorSingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "armorDual": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "glovesSingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "glovesDual": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "accessorySingle": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "accessoryDual": [
-          23,
-          25.3,
-          27.6,
-          29.9
+          20.7,
+          22.8,
+          24.8,
+          26.9
         ]
       }
     },
@@ -17192,8 +18645,14 @@
           "link_dmg_bonus",
           "ultimate_dmg_bonus",
           "broken_dmg_bonus",
+          "all_skill_dmg_bonus",
           "cold_dmg",
-          "emag_dmg"
+          "emag_dmg",
+          "blaze_dmg",
+          "nature_dmg",
+          "physical_dmg",
+          "hp",
+          "healing_effect"
         ],
         "units": {
           "primary_ability": "percent",
@@ -17206,8 +18665,14 @@
           "link_dmg_bonus": "percent",
           "ultimate_dmg_bonus": "percent",
           "broken_dmg_bonus": "percent",
+          "all_skill_dmg_bonus": "percent",
           "cold_dmg": "percent",
-          "emag_dmg": "percent"
+          "emag_dmg": "percent",
+          "blaze_dmg": "percent",
+          "nature_dmg": "percent",
+          "physical_dmg": "percent",
+          "hp": "percent",
+          "healing_effect": "percent"
         }
       }
     }

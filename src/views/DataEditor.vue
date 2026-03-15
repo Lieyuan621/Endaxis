@@ -67,7 +67,7 @@ function getEquipmentLevelColor(level) {
 }
 
 const ENEMY_TIERS = store.ENEMY_TIERS
-const TIER_WEIGHTS = { 'boss': 4, 'champion': 3, 'elite': 2, 'normal': 1 }
+const TIER_WEIGHTS = { 'boss': 5, 'head': 4, 'champion': 3, 'elite': 2, 'normal': 1 }
 const HIDDEN_CHECKBOX_KEYS = ['default']
 const effectKeys = Object.keys(EFFECT_NAMES).filter(key => !HIDDEN_CHECKBOX_KEYS.includes(key))
 
@@ -405,6 +405,28 @@ const groupedEquipment = computed(() => {
     const cat = eq.category
     if (cat && groups[cat]) groups[cat].push(eq)
     else groups['未分类'].push(eq)
+  })
+
+  const SLOT_ORDER = { armor: 1, gloves: 2, accessory: 3 }
+  const compareEquipment = (a, b) => {
+    const slotA = SLOT_ORDER[a?.slot] || 99
+    const slotB = SLOT_ORDER[b?.slot] || 99
+    if (slotA !== slotB) return slotA - slotB
+
+    const lvA = Number(a?.level) || 0
+    const lvB = Number(b?.level) || 0
+    if (lvA !== lvB) return lvB - lvA
+
+    const nameA = (a?.name || '').toString()
+    const nameB = (b?.name || '').toString()
+    const nameDiff = nameA.localeCompare(nameB)
+    if (nameDiff !== 0) return nameDiff
+
+    return (a?.id || '').toString().localeCompare((b?.id || '').toString())
+  }
+
+  Object.keys(groups).forEach(key => {
+    groups[key].sort(compareEquipment)
   })
 
   const result = []

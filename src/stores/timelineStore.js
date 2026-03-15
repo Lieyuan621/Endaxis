@@ -281,6 +281,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         { labelKey: 'enemyTier.normal', label: '普通', value: 'normal', color: '#a0a0a0' },
         { labelKey: 'enemyTier.elite', label: '进阶', value: 'elite', color: '#52c41a' },
         { labelKey: 'enemyTier.champion', label: '精英', value: 'champion', color: '#d8b4fe' },
+        { labelKey: 'enemyTier.head', label: '头目', value: 'head', color: '#ffd700' },
         { labelKey: 'enemyTier.boss', label: '领袖', value: 'boss', color: '#ff4d4f' }
     ]
     // ===================================================================================

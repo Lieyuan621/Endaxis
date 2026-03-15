@@ -11,7 +11,7 @@ const { t } = useI18n({ useScope: 'global' })
 
 const { enemyDatabase, enemyCategories } = storeToRefs(store)
 const ENEMY_TIERS = store.ENEMY_TIERS
-const TIER_WEIGHTS = { 'boss': 4, 'champion': 3, 'elite': 2, 'normal': 1 }
+const TIER_WEIGHTS = { 'boss': 5, 'head': 4, 'champion': 3, 'elite': 2, 'normal': 1 }
 
 // === 布局常量 ===
 const TOTAL_HEIGHT = 200
@@ -419,7 +419,7 @@ const transformStyle = computed(() => {
               </div>
 
               <div class="enemy-info">
-                <div class="name" :style="{ color: enemy.tier === 'boss' ? '#ff4d4f' : '#f0f0f0' }">
+                <div class="name" :style="{ color: enemy.tier === 'boss' ? '#ff4d4f' : (enemy.tier === 'head' ? '#ffd700' : '#f0f0f0') }">
                   {{ enemy.name }}
                 </div>
                 <div class="desc">{{ t('resourceMonitor.enemy.desc', { max: enemy.maxStagger, nodes: enemy.staggerNodeCount }) }}</div>

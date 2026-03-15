@@ -302,6 +302,7 @@
     "normal": "Normal",
     "elite": "Elite",
     "champion": "Champion",
+    "head": "Head",
     "boss": "Boss"
   },
   "weapon": {
