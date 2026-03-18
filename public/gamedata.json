@@ -4135,11 +4135,32 @@
       "element": "cold",
       "weapon": "pistol",
       "avatar": "/avatars/TANGTANG/TANGTANG.webp",
-      "exclusive_buffs": [],
+      "exclusive_buffs": [
+        {
+          "key": "skillwater",
+          "name": "水龙卷",
+          "path": "/avatars/TANGTANG/icon_talent_tangtang_02.webp"
+        },
+        {
+          "key": "comboskillwater",
+          "name": "涡流",
+          "path": "/avatars/TANGTANG/icon_battle_tangtang_comboskillwater.webp"
+        },
+        {
+          "key": "ultskilldebuff",
+          "name": "古老图形",
+          "path": "/avatars/TANGTANG/icon_battle_tangtang_ultskilldebuff.webp"
+        },
+        {
+          "key": "spell_vulnerable",
+          "name": "法术脆弱",
+          "path": "/icons/icon_battle_affix_spell_vulnerable.webp"
+        }
+      ],
       "accept_team_gauge": true,
       "attack_segments": [
         {
-          "duration": 0.67,
+          "duration": 0.27,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -4162,10 +4183,17 @@
             "corrosion"
           ],
           "anomalies": [],
-          "damage_ticks": []
+          "damage_ticks": [
+            {
+              "offset": 0.1,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ]
         },
         {
-          "duration": 0.25,
+          "duration": 0.63,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -4188,10 +4216,23 @@
             "corrosion"
           ],
           "anomalies": [],
-          "damage_ticks": []
+          "damage_ticks": [
+            {
+              "offset": 0.2,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.33,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ]
         },
         {
-          "duration": 0.8,
+          "duration": 0.9,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -4214,10 +4255,65 @@
             "corrosion"
           ],
           "anomalies": [],
-          "damage_ticks": []
+          "damage_ticks": [
+            {
+              "offset": 0.17,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.23,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.29,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.35,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.41,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.57,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.57,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.6,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.6,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ]
         },
         {
-          "duration": 1,
+          "duration": 0.83,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -4240,10 +4336,29 @@
             "corrosion"
           ],
           "anomalies": [],
-          "damage_ticks": []
+          "damage_ticks": [
+            {
+              "offset": 0.2,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.33,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.77,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ]
         },
         {
-          "duration": 1,
+          "duration": 1.23,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -4276,14 +4391,16 @@
           ]
         }
       ],
-      "skill_duration": 1.867,
+      "skill_duration": 1.67,
       "skill_spCost": 100,
       "skill_gaugeGain": 6.5,
       "skill_teamGaugeGain": 6.5,
       "skill_allowed_types": [
         "cold_attach",
         "frozen",
-        "cold_burst"
+        "cold_burst",
+        "skillwater",
+        "spell_vulnerable"
       ],
       "skill_anomalies": [
         [
@@ -4292,51 +4409,106 @@
             "type": "cold_attach",
             "stacks": 1,
             "duration": 0,
-            "offset": 1
+            "offset": 0.77
+          }
+        ],
+        [
+          {
+            "_id": "kvisxy3",
+            "type": "skillwater",
+            "stacks": 1,
+            "duration": 0,
+            "offset": 0.77
           }
         ]
       ],
       "skill_damage_ticks": [
         {
-          "offset": 1,
+          "offset": 0.77,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": [
+            "0gbmca2",
+            "kvisxy3"
+          ]
+        },
+        {
+          "offset": 0.9,
+          "stagger": 10,
+          "sp": 0,
+          "boundEffects": []
+        }
+      ],
+      "skill_icon": "/avatars/TANGTANG/icon_skill_tangtang_01.webp",
+      "link_duration": 1.03,
+      "link_cooldown": 13,
+      "link_gaugeGain": 10,
+      "link_allowed_types": [
+        "comboskillwater"
+      ],
+      "link_anomalies": [
+        [
+          {
+            "_id": "srcvyfw",
+            "type": "comboskillwater",
+            "stacks": 1,
+            "duration": 0,
+            "offset": 0.87
+          }
+        ]
+      ],
+      "link_damage_ticks": [
+        {
+          "offset": 0.87,
           "stagger": 10,
           "sp": 0,
           "boundEffects": [
-            "0gbmca2"
+            "srcvyfw"
           ]
         }
       ],
-      "skill_icon": "",
-      "link_duration": 1.65,
-      "link_cooldown": 13,
-      "link_gaugeGain": 10,
-      "link_allowed_types": [],
-      "link_anomalies": [],
-      "link_damage_ticks": [
-        {
-          "offset": 0.95,
-          "stagger": 10,
-          "sp": 0,
-          "boundEffects": []
-        }
-      ],
-      "link_icon": "",
-      "ultimate_duration": 2.9,
+      "link_icon": "/avatars/TANGTANG/icon_combo_skill_tangtang_01.webp",
+      "ultimate_duration": 2.8,
       "ultimate_gaugeMax": 100,
       "ultimate_gaugeReply": 0,
       "ultimate_enhancementTime": 0,
-      "ultimate_allowed_types": [],
-      "ultimate_anomalies": [],
+      "ultimate_allowed_types": [
+        "ultskilldebuff",
+        "skillwater",
+        "spell_vulnerable",
+        "cold_burst",
+        "frozen",
+        "cold_attach"
+      ],
+      "ultimate_anomalies": [
+        [
+          {
+            "_id": "dbii4zc",
+            "type": "ultskilldebuff",
+            "stacks": 1,
+            "duration": 4,
+            "offset": 2.53
+          }
+        ]
+      ],
       "ultimate_damage_ticks": [
         {
-          "offset": 2.8,
+          "offset": 2.53,
           "stagger": 0,
+          "sp": 0,
+          "boundEffects": [
+            "dbii4zc"
+          ]
+        },
+        {
+          "offset": 6.97,
+          "stagger": 15,
           "sp": 0,
           "boundEffects": []
         }
       ],
-      "ultimate_animationTime": 2.73,
-      "ultimate_icon": "",
+      "ultimate_animationTime": 2.53,
+      "ultimate_icon": "/avatars/TANGTANG/icon_ultimate_skill_tangtang_01.webp",
       "execution_duration": 1.5,
       "execution_allowed_types": [
         "break",
@@ -4363,15 +4535,17 @@
       "dodge_duration": 0.5,
       "variants": [
         {
-          "id": "v_1773431405833",
+          "id": "v_1773574418027",
           "name": "战技涡流一",
           "type": "skill",
-          "duration": 1.867,
-          "icon": "",
+          "duration": 1.67,
+          "icon": "/avatars/TANGTANG/icon_skill_tangtang_01.webp",
           "allowedTypes": [
             "cold_attach",
             "frozen",
-            "cold_burst"
+            "cold_burst",
+            "skillwater",
+            "spell_vulnerable"
           ],
           "physicalAnomaly": [
             [
@@ -4380,18 +4554,44 @@
                 "type": "cold_attach",
                 "stacks": 1,
                 "duration": 0,
-                "offset": 1
+                "offset": 0.77
+              }
+            ],
+            [
+              {
+                "_id": "kvisxy3",
+                "type": "skillwater",
+                "stacks": 2,
+                "duration": 0,
+                "offset": 0.77
+              }
+            ],
+            [
+              {
+                "_id": "w66s52n",
+                "type": "spell_vulnerable",
+                "stacks": 1,
+                "duration": 15,
+                "offset": 0.77
               }
             ]
           ],
           "damageTicks": [
             {
-              "offset": 1,
-              "stagger": 10,
-              "sp": 20,
+              "offset": 0.77,
+              "stagger": 0,
+              "sp": 0,
               "boundEffects": [
-                "0gbmca2"
+                "0gbmca2",
+                "kvisxy3",
+                "w66s52n"
               ]
+            },
+            {
+              "offset": 0.9,
+              "stagger": 10,
+              "sp": 0,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
@@ -4399,15 +4599,17 @@
           "teamGaugeGain": 6.5
         },
         {
-          "id": "v_1773431421000",
-          "name": "战技涡流2",
+          "id": "v_1773574623127",
+          "name": "战技涡流二",
           "type": "skill",
-          "duration": 1.867,
-          "icon": "",
+          "duration": 1.67,
+          "icon": "/avatars/TANGTANG/icon_skill_tangtang_01.webp",
           "allowedTypes": [
             "cold_attach",
             "frozen",
-            "cold_burst"
+            "cold_burst",
+            "skillwater",
+            "spell_vulnerable"
           ],
           "physicalAnomaly": [
             [
@@ -4416,23 +4618,266 @@
                 "type": "cold_attach",
                 "stacks": 1,
                 "duration": 0,
-                "offset": 1
+                "offset": 0.77
+              }
+            ],
+            [
+              {
+                "_id": "kvisxy3",
+                "type": "skillwater",
+                "stacks": 3,
+                "duration": 0,
+                "offset": 0.77
+              }
+            ],
+            [
+              {
+                "_id": "gmydc33",
+                "type": "spell_vulnerable",
+                "stacks": 1,
+                "duration": 15,
+                "offset": 0.77
               }
             ]
           ],
           "damageTicks": [
             {
-              "offset": 1,
-              "stagger": 10,
-              "sp": 40,
+              "offset": 0.77,
+              "stagger": 0,
+              "sp": 0,
               "boundEffects": [
-                "0gbmca2"
+                "0gbmca2",
+                "kvisxy3",
+                "gmydc33"
               ]
+            },
+            {
+              "offset": 0.9,
+              "stagger": 10,
+              "sp": 0,
+              "boundEffects": []
             }
           ],
           "spCost": 100,
           "gaugeGain": 6.5,
           "teamGaugeGain": 6.5
+        },
+        {
+          "id": "v_1773575180695",
+          "name": "终结技无涡流",
+          "type": "ultimate",
+          "duration": 2.8,
+          "icon": "/avatars/TANGTANG/icon_ultimate_skill_tangtang_01.webp",
+          "allowedTypes": [
+            "ultskilldebuff",
+            "skillwater",
+            "spell_vulnerable",
+            "cold_burst",
+            "frozen",
+            "cold_attach"
+          ],
+          "physicalAnomaly": [
+            [
+              {
+                "_id": "dbii4zc",
+                "type": "ultskilldebuff",
+                "stacks": 1,
+                "duration": 4,
+                "offset": 2.53
+              }
+            ],
+            [
+              {
+                "_id": "y7c2csd",
+                "type": "skillwater",
+                "stacks": 1,
+                "duration": 0,
+                "offset": 6.97
+              }
+            ],
+            [
+              {
+                "_id": "qi50m09",
+                "type": "cold_attach",
+                "stacks": 1,
+                "duration": 0,
+                "offset": 6.97
+              }
+            ]
+          ],
+          "damageTicks": [
+            {
+              "offset": 2.53,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": [
+                "dbii4zc"
+              ]
+            },
+            {
+              "offset": 6.97,
+              "stagger": 15,
+              "sp": 0,
+              "boundEffects": [
+                "y7c2csd",
+                "qi50m09"
+              ]
+            }
+          ],
+          "gaugeCost": 100,
+          "gaugeGain": 0,
+          "enhancementTime": 0,
+          "animationTime": 2.53
+        },
+        {
+          "id": "v_1773575266144",
+          "name": "终结技涡流一",
+          "type": "ultimate",
+          "duration": 2.8,
+          "icon": "/avatars/TANGTANG/icon_ultimate_skill_tangtang_01.webp",
+          "allowedTypes": [
+            "ultskilldebuff",
+            "skillwater",
+            "spell_vulnerable",
+            "cold_burst",
+            "frozen",
+            "cold_attach"
+          ],
+          "physicalAnomaly": [
+            [
+              {
+                "_id": "dbii4zc",
+                "type": "ultskilldebuff",
+                "stacks": 1,
+                "duration": 4,
+                "offset": 2.53
+              }
+            ],
+            [
+              {
+                "_id": "0g497dp",
+                "type": "skillwater",
+                "stacks": 2,
+                "duration": 0,
+                "offset": 6.97
+              }
+            ],
+            [
+              {
+                "_id": "n3sg6my",
+                "type": "cold_attach",
+                "stacks": 1,
+                "duration": 0,
+                "offset": 6.97
+              }
+            ],
+            [
+              {
+                "_id": "q0vimzj",
+                "type": "spell_vulnerable",
+                "stacks": 1,
+                "duration": 15,
+                "offset": 6.97
+              }
+            ]
+          ],
+          "damageTicks": [
+            {
+              "offset": 2.53,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": [
+                "dbii4zc"
+              ]
+            },
+            {
+              "offset": 6.97,
+              "stagger": 15,
+              "sp": 0,
+              "boundEffects": [
+                "0g497dp",
+                "n3sg6my",
+                "q0vimzj"
+              ]
+            }
+          ],
+          "gaugeCost": 100,
+          "gaugeGain": 0,
+          "enhancementTime": 0,
+          "animationTime": 2.53
+        },
+        {
+          "id": "v_1773575425784",
+          "name": "终结技涡流二",
+          "type": "ultimate",
+          "duration": 2.8,
+          "icon": "/avatars/TANGTANG/icon_ultimate_skill_tangtang_01.webp",
+          "allowedTypes": [
+            "ultskilldebuff",
+            "skillwater",
+            "spell_vulnerable",
+            "cold_burst",
+            "frozen",
+            "cold_attach"
+          ],
+          "physicalAnomaly": [
+            [
+              {
+                "_id": "dbii4zc",
+                "type": "ultskilldebuff",
+                "stacks": 1,
+                "duration": 4,
+                "offset": 2.53
+              }
+            ],
+            [
+              {
+                "_id": "49hicx8",
+                "type": "skillwater",
+                "stacks": 3,
+                "duration": 0,
+                "offset": 6.97
+              }
+            ],
+            [
+              {
+                "_id": "gdcn9h7",
+                "type": "cold_attach",
+                "stacks": 1,
+                "duration": 0,
+                "offset": 6.97
+              }
+            ],
+            [
+              {
+                "_id": "dty5obz",
+                "type": "spell_vulnerable",
+                "stacks": 1,
+                "duration": 15,
+                "offset": 6.97
+              }
+            ]
+          ],
+          "damageTicks": [
+            {
+              "offset": 2.53,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": [
+                "dbii4zc"
+              ]
+            },
+            {
+              "offset": 6.97,
+              "stagger": 15,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ],
+          "gaugeCost": 100,
+          "gaugeGain": 0,
+          "enhancementTime": 0,
+          "animationTime": 2.53
         }
       ]
     },
@@ -11261,12 +11706,12 @@
       "icon": "/weapons/sword/wpn_sword_0017.webp",
       "commonSlots": [
         {
-          "modifierId": null,
-          "size": "small"
+          "modifierId": "agility",
+          "size": "large"
         },
         {
-          "modifierId": null,
-          "size": "small"
+          "modifierId": "crit_rate",
+          "size": "large"
         }
       ],
       "buffBonuses": []
@@ -11281,12 +11726,12 @@
       "icon": "/weapons/pistol/wpn_pistol_0007.webp",
       "commonSlots": [
         {
-          "modifierId": null,
-          "size": "small"
+          "modifierId": "agility",
+          "size": "large"
         },
         {
-          "modifierId": null,
-          "size": "small"
+          "modifierId": "cold_dmg",
+          "size": "large"
         }
       ],
       "buffBonuses": []
@@ -11321,12 +11766,12 @@
       "icon": "/weapons/sword/wpn_sword_0022.webp",
       "commonSlots": [
         {
-          "modifierId": null,
-          "size": "small"
+          "modifierId": "agility",
+          "size": "large"
         },
         {
-          "modifierId": null,
-          "size": "small"
+          "modifierId": "crit_rate",
+          "size": "large"
         }
       ],
       "buffBonuses": []
@@ -11339,7 +11784,7 @@
       "category": "点剑",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_phy01_edc_03.webp",
+      "icon": "/equipment/phy01/item_equip_t4_suit_phy01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -11389,7 +11834,7 @@
       "category": "点剑",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_phy01_body_02.webp",
+      "icon": "/equipment/phy01/item_equip_t4_suit_phy01_body_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -11439,7 +11884,7 @@
       "category": "点剑",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_phy01_hand_01.webp",
+      "icon": "/equipment/phy01/item_equip_t4_suit_phy01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -11489,7 +11934,7 @@
       "category": "点剑",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_phy01_hand_02.webp",
+      "icon": "/equipment/phy01/item_equip_t4_suit_phy01_hand_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -11539,7 +11984,7 @@
       "category": "长息",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_usp02_hand_01.webp",
+      "icon": "/equipment/usp02/item_equip_t4_suit_usp02_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -11589,7 +12034,7 @@
       "category": "长息",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_usp02_body_01.webp",
+      "icon": "/equipment/usp02/item_equip_t4_suit_usp02_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -11639,7 +12084,7 @@
       "category": "长息",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_usp02_edc_01.webp",
+      "icon": "/equipment/usp02/item_equip_t4_suit_usp02_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -11689,7 +12134,7 @@
       "category": "长息",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_usp02_edc_03.webp",
+      "icon": "/equipment/usp02/item_equip_t4_suit_usp02_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -11739,7 +12184,7 @@
       "category": "长息",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_usp02_hand_01.webp",
+      "icon": "/equipment/usp02/item_equip_t4_suit_usp02_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -11789,7 +12234,7 @@
       "category": "长息",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_usp02_edc_02.webp",
+      "icon": "/equipment/usp02/item_equip_t4_suit_usp02_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -11839,7 +12284,7 @@
       "category": "潮涌",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_burst01_body_01.webp",
+      "icon": "/equipment/burst01/item_equip_t4_suit_burst01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -11889,7 +12334,7 @@
       "category": "潮涌",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_burst01_edc_01.webp",
+      "icon": "/equipment/burst01/item_equip_t4_suit_burst01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -11949,7 +12394,7 @@
       "category": "潮涌",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_burst01_edc_02.webp",
+      "icon": "/equipment/burst01/item_equip_t4_suit_burst01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -11999,7 +12444,7 @@
       "category": "潮涌",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_burst01_hand_01.webp",
+      "icon": "/equipment/burst01/item_equip_t4_suit_burst01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -12059,7 +12504,7 @@
       "category": "50式应龙",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atk02_body_01.webp",
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -12109,7 +12554,7 @@
       "category": "50式应龙",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atk02_body_04.webp",
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_body_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -12159,7 +12604,7 @@
       "category": "50式应龙",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atk02_hand_01.webp",
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -12209,7 +12654,7 @@
       "category": "50式应龙",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atk02_hand_01.webp",
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -12259,7 +12704,7 @@
       "category": "50式应龙",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atk02_edc_01.webp",
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -12309,7 +12754,7 @@
       "category": "50式应龙",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atk02_edc_04.webp",
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_edc_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -12359,7 +12804,7 @@
       "category": "50式应龙",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atk02_edc_05.webp",
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_edc_05.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -12409,7 +12854,7 @@
       "category": "M.I.警用",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_body_01.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -12459,7 +12904,7 @@
       "category": "M.I.警用",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_body_03.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_body_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -12509,7 +12954,7 @@
       "category": "M.I.警用",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_body_04.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_body_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -12559,7 +13004,7 @@
       "category": "M.I.警用",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_hand_01.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -12609,7 +13054,7 @@
       "category": "M.I.警用",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_hand_02.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_hand_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -12659,7 +13104,7 @@
       "category": "M.I.警用",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_hand_03.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_hand_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -12709,7 +13154,7 @@
       "category": "M.I.警用",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_edc_01.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -12769,7 +13214,7 @@
       "category": "M.I.警用",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_edc_02.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -12819,7 +13264,7 @@
       "category": "M.I.警用",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_edc_03.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -12869,7 +13314,7 @@
       "category": "M.I.警用",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_edc_05.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_edc_05.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -12919,7 +13364,7 @@
       "category": "动火用",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_fire_natr01_body_01.webp",
+      "icon": "/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -12979,7 +13424,7 @@
       "category": "动火用",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_fire_natr01_hand_02.webp",
+      "icon": "/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_hand_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -13039,7 +13484,7 @@
       "category": "动火用",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_fire_natr01_hand_03.webp",
+      "icon": "/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_hand_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -13099,7 +13544,7 @@
       "category": "动火用",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_fire_natr01_edc_01.webp",
+      "icon": "/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -13149,7 +13594,7 @@
       "category": "动火用",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_fire_natr01_edc_02.webp",
+      "icon": "/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -13199,7 +13644,7 @@
       "category": "动火用",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_fire_natr01_edc_03.webp",
+      "icon": "/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -13249,7 +13694,7 @@
       "category": "拓荒",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atb01_body_01.webp",
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -13299,7 +13744,7 @@
       "category": "拓荒",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atb01_body_02.webp",
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_body_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -13349,7 +13794,7 @@
       "category": "拓荒",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atb01_body_03.webp",
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_body_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -13399,7 +13844,7 @@
       "category": "拓荒",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atb01_hand_01.webp",
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -13449,7 +13894,7 @@
       "category": "拓荒",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atb01_edc_02.webp",
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -13509,7 +13954,7 @@
       "category": "拓荒",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atb01_edc_04.webp",
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_edc_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -13559,7 +14004,7 @@
       "category": "脉冲式",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_pulse_cryst01_body_01.webp",
+      "icon": "/equipment/pulse_cryst01/item_equip_t4_suit_pulse_cryst01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -13609,7 +14054,7 @@
       "category": "脉冲式",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_pulse_cryst01_hand_01.webp",
+      "icon": "/equipment/pulse_cryst01/item_equip_t4_suit_pulse_cryst01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -13669,7 +14114,7 @@
       "category": "脉冲式",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_pulse_cryst01_edc_02.webp",
+      "icon": "/equipment/pulse_cryst01/item_equip_t4_suit_pulse_cryst01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -13719,7 +14164,7 @@
       "category": "碾骨",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_attri01_body_01.webp",
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -13769,7 +14214,7 @@
       "category": "碾骨",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_attri01_body_02.webp",
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_body_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -13819,7 +14264,7 @@
       "category": "碾骨",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_attri01_body_03.webp",
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_body_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -13869,7 +14314,7 @@
       "category": "碾骨",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_attri01_body_03.webp",
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_body_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -13919,7 +14364,7 @@
       "category": "碾骨",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_attri01_edc_04.webp",
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_edc_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -13969,7 +14414,7 @@
       "category": "碾骨",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_attri01_edc_05.webp",
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_edc_05.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -14019,7 +14464,7 @@
       "category": "碾骨",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_attri01_edc_03.webp",
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -14069,7 +14514,7 @@
       "category": "碾骨",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_attri01_edc_06.webp",
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_edc_06.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -14119,7 +14564,7 @@
       "category": "轻超域",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_poise01_body_01.webp",
+      "icon": "/equipment/poise01/item_equip_t4_suit_poise01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -14169,7 +14614,7 @@
       "category": "轻超域",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_poise01_hand_01.webp",
+      "icon": "/equipment/poise01/item_equip_t4_suit_poise01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -14219,7 +14664,7 @@
       "category": "轻超域",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_poise01_edc_01.webp",
+      "icon": "/equipment/poise01/item_equip_t4_suit_poise01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -14269,7 +14714,7 @@
       "category": "轻超域",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_poise01_edc_02.webp",
+      "icon": "/equipment/poise01/item_equip_t4_suit_poise01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -14319,7 +14764,7 @@
       "category": "生物辅助",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_heal01_body_01.webp",
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -14369,7 +14814,7 @@
       "category": "生物辅助",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_heal01_body_02.webp",
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_body_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -14419,7 +14864,7 @@
       "category": "生物辅助",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_heal01_hand_01.webp",
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -14469,7 +14914,7 @@
       "category": "生物辅助",
       "slot": "gloves",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_heal01_hand_02.webp",
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_hand_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -14519,7 +14964,7 @@
       "category": "生物辅助",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_heal01_edc_01.webp",
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -14552,12 +14997,12 @@
       }
     },
     {
-      "id": "item_equip_t4_suit_heal01_edc_02",
+      "id": "item_equip_t4_suit_heal01_edc_05",
       "name": "生物辅助接驳器·壹型",
       "category": "生物辅助",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_heal01_edc_02.webp",
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_edc_05.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -14607,7 +15052,7 @@
       "category": "生物辅助",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_heal01_edc_03.webp",
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -14657,7 +15102,7 @@
       "category": "生物辅助",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_heal01_edc_04.webp",
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_edc_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -14707,7 +15152,7 @@
       "category": "天灾防护",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_usp01_body_01.webp",
+      "icon": "/equipment/usp01/item_equip_t3_suit_usp01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14736,7 +15181,7 @@
       "category": "天灾防护",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_usp01_body_02.webp",
+      "icon": "/equipment/usp01/item_equip_t3_suit_usp01_body_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14765,7 +15210,7 @@
       "category": "天灾防护",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_usp01_edc_01.webp",
+      "icon": "/equipment/usp01/item_equip_t3_suit_usp01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14794,7 +15239,7 @@
       "category": "天灾防护",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_usp01_edc_02.webp",
+      "icon": "/equipment/usp01/item_equip_t3_suit_usp01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14823,7 +15268,7 @@
       "category": "天灾防护",
       "slot": "gloves",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_usp01_hand_01.webp",
+      "icon": "/equipment/usp01/item_equip_t3_suit_usp01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14852,7 +15297,7 @@
       "category": "天灾防护",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_usp01_edc_03.webp",
+      "icon": "/equipment/usp01/item_equip_t3_suit_usp01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14881,7 +15326,7 @@
       "category": "阿伯莉遗声",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_body_01.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14910,7 +15355,7 @@
       "category": "阿伯莉遗声",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_body_02.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_body_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14939,7 +15384,7 @@
       "category": "阿伯莉遗声",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_body_03.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_body_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14968,7 +15413,7 @@
       "category": "阿伯莉遗声",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_body_04.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_body_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -14997,7 +15442,7 @@
       "category": "阿伯莉遗声",
       "slot": "gloves",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_hand_01.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15026,7 +15471,7 @@
       "category": "阿伯莉遗声",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_edc_02.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15055,7 +15500,7 @@
       "category": "阿伯莉遗声",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_edc_03.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15084,7 +15529,7 @@
       "category": "阿伯莉遗声",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_edc_01.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15113,7 +15558,7 @@
       "category": "阿伯莉遗声",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_edc_04.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_edc_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15142,7 +15587,7 @@
       "category": "阿伯莉遗声",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_edc_05.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_edc_05.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15171,7 +15616,7 @@
       "category": "阿伯莉遗声",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_atk01_edc_06.webp",
+      "icon": "/equipment/atk01/item_equip_t3_suit_atk01_edc_06.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15200,7 +15645,7 @@
       "category": "蚀电防护",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_will01_body_01.webp",
+      "icon": "/equipment/will01/item_equip_t3_suit_will01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15229,7 +15674,7 @@
       "category": "蚀电防护",
       "slot": "gloves",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_will01_hand_01.webp",
+      "icon": "/equipment/will01/item_equip_t3_suit_will01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15258,7 +15703,7 @@
       "category": "蚀电防护",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_will01_edc_02.webp",
+      "icon": "/equipment/will01/item_equip_t3_suit_will01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15287,7 +15732,7 @@
       "category": "蚀电防护",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_will01_edc_01.webp",
+      "icon": "/equipment/will01/item_equip_t3_suit_will01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15316,7 +15761,7 @@
       "category": "蚀电防护",
       "slot": "armor",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_will01_body_01.webp",
+      "icon": "/equipment/will01/item_equip_t2_suit_will01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15345,7 +15790,7 @@
       "category": "蚀电防护",
       "slot": "gloves",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_will01_hand_01.webp",
+      "icon": "/equipment/will01/item_equip_t2_suit_will01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15374,7 +15819,7 @@
       "category": "蚀电防护",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_will01_edc_01.webp",
+      "icon": "/equipment/will01/item_equip_t2_suit_will01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15403,7 +15848,7 @@
       "category": "蚀电防护",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_will01_edc_02.webp",
+      "icon": "/equipment/will01/item_equip_t2_suit_will01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15432,7 +15877,7 @@
       "category": "蚀电屏蔽",
       "slot": "armor",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_wisd01_body_01.webp",
+      "icon": "/equipment/wisd01/item_equip_t2_suit_wisd01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15461,7 +15906,7 @@
       "category": "蚀电屏蔽",
       "slot": "gloves",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_wisd01_hand_01.webp",
+      "icon": "/equipment/wisd01/item_equip_t2_suit_wisd01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15490,7 +15935,7 @@
       "category": "蚀电屏蔽",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_wisd01_edc_01.webp",
+      "icon": "/equipment/wisd01/item_equip_t2_suit_wisd01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15519,7 +15964,7 @@
       "category": "蚀电屏蔽",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_wisd01_edc_02.webp",
+      "icon": "/equipment/wisd01/item_equip_t2_suit_wisd01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15548,7 +15993,7 @@
       "category": "蚀电屏蔽",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_wisd01_edc_03.webp",
+      "icon": "/equipment/wisd01/item_equip_t2_suit_wisd01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15577,7 +16022,7 @@
       "category": "蚀电屏蔽",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_wisd01_body_01.webp",
+      "icon": "/equipment/wisd01/item_equip_t3_suit_wisd01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15606,7 +16051,7 @@
       "category": "蚀电屏蔽",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_wisd01_body_02.webp",
+      "icon": "/equipment/wisd01/item_equip_t3_suit_wisd01_body_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15635,7 +16080,7 @@
       "category": "蚀电屏蔽",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_wisd01_hand_01.webp",
+      "icon": "/equipment/wisd01/item_equip_t3_suit_wisd01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15664,7 +16109,7 @@
       "category": "蚀电屏蔽",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_wisd01_edc_01.webp",
+      "icon": "/equipment/wisd01/item_equip_t3_suit_wisd01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15693,7 +16138,7 @@
       "category": "蚀电屏蔽",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_wisd01_edc_02.webp",
+      "icon": "/equipment/wisd01/item_equip_t3_suit_wisd01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15722,7 +16167,7 @@
       "category": "巡行信使",
       "slot": "armor",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_agi01_body_01.webp",
+      "icon": "/equipment/agi01/item_equip_t2_suit_agi01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15751,7 +16196,7 @@
       "category": "巡行信使",
       "slot": "gloves",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_agi01_hand_01.webp",
+      "icon": "/equipment/agi01/item_equip_t2_suit_agi01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15780,7 +16225,7 @@
       "category": "巡行信使",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_agi01_edc_02.webp",
+      "icon": "/equipment/agi01/item_equip_t2_suit_agi01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15809,7 +16254,7 @@
       "category": "巡行信使",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_agi01_edc_01.webp",
+      "icon": "/equipment/agi01/item_equip_t2_suit_agi01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15838,7 +16283,7 @@
       "category": "巡行信使",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_agi01_body_01.webp",
+      "icon": "/equipment/agi01/item_equip_t3_suit_agi01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15867,7 +16312,7 @@
       "category": "巡行信使",
       "slot": "gloves",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_agi01_hand_01.webp",
+      "icon": "/equipment/agi01/item_equip_t3_suit_agi01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15896,7 +16341,7 @@
       "category": "巡行信使",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_agi01_edc_02.webp",
+      "icon": "/equipment/agi01/item_equip_t3_suit_agi01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15925,7 +16370,7 @@
       "category": "巡行信使",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_agi01_edc_01.webp",
+      "icon": "/equipment/agi01/item_equip_t3_suit_agi01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15954,7 +16399,7 @@
       "category": "巡行信使",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_agi01_edc_03.webp",
+      "icon": "/equipment/agi01/item_equip_t3_suit_agi01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -15983,7 +16428,7 @@
       "category": "重装信徒",
       "slot": "armor",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_str01_body_01.webp",
+      "icon": "/equipment/str01/item_equip_t2_suit_str01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16012,7 +16457,7 @@
       "category": "重装信徒",
       "slot": "gloves",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_str01_hand_01.webp",
+      "icon": "/equipment/str01/item_equip_t2_suit_str01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16041,7 +16486,7 @@
       "category": "重装信徒",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_str01_edc_02.webp",
+      "icon": "/equipment/str01/item_equip_t2_suit_str01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16070,7 +16515,7 @@
       "category": "重装信徒",
       "slot": "accessory",
       "level": 36,
-      "icon": "/equipment/item_equip_t2_suit_str01_edc_01.webp",
+      "icon": "/equipment/str01/item_equip_t2_suit_str01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16099,7 +16544,7 @@
       "category": "重装信徒",
       "slot": "armor",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_str01_body_01.webp",
+      "icon": "/equipment/str01/item_equip_t3_suit_str01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16128,7 +16573,7 @@
       "category": "重装信徒",
       "slot": "gloves",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_str01_hand_02.webp",
+      "icon": "/equipment/str01/item_equip_t3_suit_str01_hand_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16157,7 +16602,7 @@
       "category": "重装信徒",
       "slot": "gloves",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_str01_hand_01.webp",
+      "icon": "/equipment/str01/item_equip_t3_suit_str01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16186,7 +16631,7 @@
       "category": "重装信徒",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_str01_edc_02.webp",
+      "icon": "/equipment/str01/item_equip_t3_suit_str01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16215,7 +16660,7 @@
       "category": "重装信徒",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t3_suit_str01_edc_01.webp",
+      "icon": "/equipment/str01/item_equip_t3_suit_str01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16244,7 +16689,7 @@
       "category": "集成轻型",
       "slot": "armor",
       "level": 20,
-      "icon": "/equipment/item_equip_t1_suit_wisdwill01_body_01.webp",
+      "icon": "/equipment/wisdwill01/item_equip_t1_suit_wisdwill01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16273,7 +16718,7 @@
       "category": "集成轻型",
       "slot": "gloves",
       "level": 20,
-      "icon": "/equipment/item_equip_t1_suit_wisdwill01_hand_01.webp",
+      "icon": "/equipment/wisdwill01/item_equip_t1_suit_wisdwill01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16302,7 +16747,7 @@
       "category": "集成轻型",
       "slot": "accessory",
       "level": 20,
-      "icon": "/equipment/item_equip_t1_suit_wisdwill01_edc_01.webp",
+      "icon": "/equipment/wisdwill01/item_equip_t1_suit_wisdwill01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16331,7 +16776,7 @@
       "category": "集成轻型",
       "slot": "accessory",
       "level": 20,
-      "icon": "/equipment/item_equip_t1_suit_wisdwill01_edc_02.webp",
+      "icon": "/equipment/wisdwill01/item_equip_t1_suit_wisdwill01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16360,7 +16805,7 @@
       "category": "集成重型",
       "slot": "armor",
       "level": 20,
-      "icon": "/equipment/item_equip_t1_suit_stragi01_body_01.webp",
+      "icon": "/equipment/stragi01/item_equip_t1_suit_stragi01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16389,7 +16834,7 @@
       "category": "集成重型",
       "slot": "gloves",
       "level": 20,
-      "icon": "/equipment/item_equip_t1_suit_stragi01_hand_01.webp",
+      "icon": "/equipment/stragi01/item_equip_t1_suit_stragi01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16418,7 +16863,7 @@
       "category": "集成重型",
       "slot": "accessory",
       "level": 20,
-      "icon": "/equipment/item_equip_t1_suit_stragi01_edc_02.webp",
+      "icon": "/equipment/stragi01/item_equip_t1_suit_stragi01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16447,7 +16892,7 @@
       "category": "集成重型",
       "slot": "accessory",
       "level": 20,
-      "icon": "/equipment/item_equip_t1_suit_stragi01_edc_01.webp",
+      "icon": "/equipment/stragi01/item_equip_t1_suit_stragi01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16476,7 +16921,7 @@
       "category": "四号谷地",
       "slot": "accessory",
       "level": 50,
-      "icon": "/equipment/item_equip_t2_parts_tundra01_edc_04.webp",
+      "icon": "/equipment/tundra01/item_equip_t2_parts_tundra01_edc_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16505,7 +16950,7 @@
       "category": "四号谷地",
       "slot": "gloves",
       "level": 10,
-      "icon": "/equipment/item_equip_t0_parts_tundra01_hand_02.webp",
+      "icon": "/equipment/tundra01/item_equip_t0_parts_tundra01_hand_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16534,7 +16979,7 @@
       "category": "四号谷地",
       "slot": "gloves",
       "level": 10,
-      "icon": "/equipment/item_equip_t0_parts_tundra01_hand_01.webp",
+      "icon": "/equipment/tundra01/item_equip_t0_parts_tundra01_hand_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16563,7 +17008,7 @@
       "category": "四号谷地",
       "slot": "armor",
       "level": 10,
-      "icon": "/equipment/item_equip_t0_parts_tundra01_body_02.webp",
+      "icon": "/equipment/tundra01/item_equip_t0_parts_tundra01_body_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16592,7 +17037,7 @@
       "category": "四号谷地",
       "slot": "armor",
       "level": 10,
-      "icon": "/equipment/item_equip_t0_parts_tundra01_body_01.webp",
+      "icon": "/equipment/tundra01/item_equip_t0_parts_tundra01_body_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": null,
@@ -16621,7 +17066,7 @@
       "category": "武陵",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_parts_wuling01_edc_03.webp",
+      "icon": "/equipment/wuling01/item_equip_t4_parts_wuling01_edc_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -16671,7 +17116,7 @@
       "category": "武陵",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_parts_wuling01_edc_04.webp",
+      "icon": "/equipment/wuling01/item_equip_t4_parts_wuling01_edc_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -16721,7 +17166,7 @@
       "category": "武陵",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_parts_wuling01_edc_01.webp",
+      "icon": "/equipment/wuling01/item_equip_t4_parts_wuling01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -16759,7 +17204,7 @@
       "category": "武陵",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_parts_wuling01_edc_02.webp",
+      "icon": "/equipment/wuling01/item_equip_t4_parts_wuling01_edc_02.webp",
       "affixes": {
         "primary1": {
           "modifierId": "agility",
@@ -16809,7 +17254,7 @@
       "category": "拓荒",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atb01_edc_01.webp",
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_edc_01.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -16859,7 +17304,7 @@
       "category": "拓荒",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_atb01_body_04.webp",
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_body_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "strength",
@@ -16909,7 +17354,7 @@
       "category": "M.I.警用",
       "slot": "armor",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_body_03.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_body_03.webp",
       "affixes": {
         "primary1": {
           "modifierId": "intellect",
@@ -16959,7 +17404,7 @@
       "category": "M.I.警用",
       "slot": "accessory",
       "level": 70,
-      "icon": "/equipment/item_equip_t4_suit_criti01_edc_04.webp",
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_edc_04.webp",
       "affixes": {
         "primary1": {
           "modifierId": "will",
@@ -17003,6 +17448,1546 @@
           "modifierIds": [
             "blaze_dmg",
             "nature_dmg"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atb01_body_05",
+      "name": "拓荒护服",
+      "category": "拓荒",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_body_05.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "intellect",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "agility",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                12.3,
+                13.6,
+                14.8,
+                16
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atb01_hand_02",
+      "name": "拓荒纤维手套",
+      "category": "拓荒",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_hand_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "will",
+          "values": [
+            65,
+            71,
+            78,
+            84
+          ]
+        },
+        "primary2": {
+          "modifierId": "strength",
+          "values": [
+            43,
+            47,
+            51,
+            55
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "all_skill_dmg_bonus",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "all_skill_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atb01_edc_03",
+      "name": "拓荒分析仪",
+      "category": "拓荒",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_edc_03.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            41,
+            45,
+            49,
+            53
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ultimate_dmg_bonus",
+              "values": [
+                51.7,
+                56.9,
+                62.1,
+                67.3
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ultimate_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atb01_edc_05",
+      "name": "拓荒供氧栓",
+      "category": "拓荒",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/atb01/item_equip_t4_suit_atb01_edc_05.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "intellect",
+          "values": [
+            41,
+            45,
+            49,
+            53
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "physical_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "physical_dmg"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_parts_wuling01_body_01",
+      "name": "纾难重甲",
+      "category": "武陵",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/wuling01/item_equip_t4_parts_wuling01_body_01.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            115,
+            126,
+            138,
+            149
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "attack_dmg_bonus",
+              "values": [
+                14.4,
+                15.8,
+                17.3,
+                18.7
+              ]
+            }
+          ],
+          "modifierIds": [
+            "attack_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_parts_wuling01_body_02",
+      "name": "纾难护甲",
+      "category": "武陵",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/wuling01/item_equip_t4_parts_wuling01_body_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "intellect",
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_parts_wuling01_hand_01",
+      "name": "新装备",
+      "category": "武陵",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/wuling01/item_equip_t4_parts_wuling01_hand_01.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            86,
+            94,
+            103,
+            111
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ultimate_dmg_bonus",
+              "values": [
+                45,
+                49.5,
+                54,
+                58.5
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ultimate_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_parts_wuling01_hand_02",
+      "name": "纾难手套",
+      "category": "武陵",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/wuling01/item_equip_t4_parts_wuling01_hand_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            86,
+            94,
+            103,
+            111
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "all_skill_dmg_bonus",
+              "values": [
+                24,
+                26.4,
+                28.8,
+                31.2
+              ]
+            }
+          ],
+          "modifierIds": [
+            "all_skill_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atk02_body_02",
+      "name": "50式应龙重甲·壹型",
+      "category": "50式应龙",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_body_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "strength",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                12.3,
+                13.6,
+                14.8,
+                16
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atk02_body_03",
+      "name": "50式应龙重甲·贰型",
+      "category": "50式应龙",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_body_03.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "intellect",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                20.7,
+                22.8,
+                24.8,
+                26.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atk02_edc_02",
+      "name": "50式应龙雷达·壹型",
+      "category": "50式应龙",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_edc_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "strength",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ultimate_dmg_bonus",
+              "values": [
+                51.7,
+                56.9,
+                62.1,
+                67.3
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ultimate_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_atk02_edc_03",
+      "name": "50式应龙雷达·贰型",
+      "category": "50式应龙",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/atk02/item_equip_t4_suit_atk02_edc_03.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "intellect",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "link_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "link_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_attri01_body_05",
+      "name": "碾骨重护甲·贰型",
+      "category": "碾骨",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_body_05.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "strength",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "cold_dmg",
+              "values": [
+                11.5,
+                12.7,
+                13.8,
+                14.9
+              ]
+            },
+            {
+              "modifierId": "emag_dmg",
+              "values": [
+                11.5,
+                12.7,
+                13.8,
+                14.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "cold_dmg",
+            "emag_dmg"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_attri01_hand_01",
+      "name": "碾骨腕带",
+      "category": "碾骨",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_hand_01.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            65,
+            71,
+            78,
+            84
+          ]
+        },
+        "primary2": {
+          "modifierId": "agility",
+          "values": [
+            43,
+            47,
+            51,
+            55
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "blaze_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            },
+            {
+              "modifierId": "nature_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "blaze_dmg",
+            "nature_dmg"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_attri01_hand_02",
+      "name": "碾骨腕带·壹型",
+      "category": "碾骨",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_hand_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            65,
+            71,
+            78,
+            84
+          ]
+        },
+        "primary2": {
+          "modifierId": "strength",
+          "values": [
+            43,
+            47,
+            51,
+            55
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "cold_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            },
+            {
+              "modifierId": "emag_dmg",
+              "values": [
+                19.2,
+                21.1,
+                23,
+                24.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "cold_dmg",
+            "emag_dmg"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_attri01_edc_07",
+      "name": "碾骨面具·贰型",
+      "category": "碾骨",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/attri01/item_equip_t4_suit_attri01_edc_07.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "strength",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_criti01_body_06",
+      "name": "M.I.警用护甲·壹型",
+      "category": "M.I.警用",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_body_06.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "intellect",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                12.3,
+                13.6,
+                14.8,
+                16
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_criti01_hand_04",
+      "name": "M.I.警用手套·壹型",
+      "category": "M.I.警用",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_hand_04.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            65,
+            71,
+            78,
+            84
+          ]
+        },
+        "primary2": {
+          "modifierId": "intellect",
+          "values": [
+            43,
+            47,
+            51,
+            55
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ultimate_dmg_bonus",
+              "values": [
+                43.1,
+                47.4,
+                51.7,
+                56.1
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ultimate_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_criti01_edc_06",
+      "name": "M.I.警用瞄具·壹型",
+      "category": "M.I.警用",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/criti01/item_equip_t4_suit_criti01_edc_06.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "intellect",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "crit_rate",
+              "values": [
+                10.3,
+                11.4,
+                12.4,
+                13.5
+              ]
+            }
+          ],
+          "modifierIds": [
+            "crit_rate"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_fire_natr01_body_02",
+      "name": "动火用辅助骨骼",
+      "category": "动火用",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_body_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "intellect",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "will",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "blaze_dmg",
+              "values": [
+                11.5,
+                12.7,
+                13.8,
+                14.9
+              ]
+            },
+            {
+              "modifierId": "nature_dmg",
+              "values": [
+                11.5,
+                12.7,
+                13.8,
+                14.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "blaze_dmg",
+            "nature_dmg"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_fire_natr01_hand_01",
+      "name": "动火用手套",
+      "category": "动火用",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_hand_01.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            65,
+            71,
+            78,
+            84
+          ]
+        },
+        "primary2": {
+          "modifierId": "will",
+          "values": [
+            43,
+            47,
+            51,
+            55
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                34,
+                37,
+                41,
+                44
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_heal01_edc_02",
+      "name": "生物辅助接驳器·贰型",
+      "category": "生物辅助",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/heal01/item_equip_t4_suit_heal01_edc_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            41,
+            45,
+            49,
+            53
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "hp",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "hp"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_phy01_body_01",
+      "name": "点剑轻装甲",
+      "category": "点剑",
+      "slot": "armor",
+      "level": 70,
+      "icon": "/equipment/phy01/item_equip_t4_suit_phy01_body_01.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            87,
+            95,
+            104,
+            113
+          ]
+        },
+        "primary2": {
+          "modifierId": "will",
+          "values": [
+            58,
+            63,
+            69,
+            75
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ult_charge_eff",
+              "values": [
+                12.3,
+                13.6,
+                14.8,
+                16
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ult_charge_eff"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_phy01_edc_01",
+      "name": "点剑定位信标",
+      "category": "点剑",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/phy01/item_equip_t4_suit_phy01_edc_01.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            41,
+            45,
+            49,
+            53
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                41,
+                45,
+                49,
+                53
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_phy01_edc_02",
+      "name": "点剑微型滤芯",
+      "category": "点剑",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/phy01/item_equip_t4_suit_phy01_edc_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "will",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "physical_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "physical_dmg"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_poise01_hand_02",
+      "name": "轻超域轻护手",
+      "category": "轻超域",
+      "slot": "gloves",
+      "level": 70,
+      "icon": "/equipment/poise01/item_equip_t4_suit_poise01_hand_02.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "will",
+          "values": [
+            65,
+            71,
+            78,
+            84
+          ]
+        },
+        "primary2": {
+          "modifierId": "agility",
+          "values": [
+            43,
+            47,
+            51,
+            55
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "all_skill_dmg_bonus",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "all_skill_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_poise01_edc_04",
+      "name": "轻超域腕表",
+      "category": "轻超域",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/poise01/item_equip_t4_suit_poise01_edc_04.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "strength",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "agility",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "skill_dmg_bonus",
+              "values": [
+                41.4,
+                45.5,
+                49.7,
+                53.8
+              ]
+            }
+          ],
+          "modifierIds": [
+            "skill_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_poise01_edc_03",
+      "name": "轻超域稳定盘·壹型",
+      "category": "轻超域",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/poise01/item_equip_t4_suit_poise01_edc_03.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "agility",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "strength",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "physical_dmg",
+              "values": [
+                23,
+                25.3,
+                27.6,
+                29.9
+              ]
+            }
+          ],
+          "modifierIds": [
+            "physical_dmg"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_pulse_cryst01_edc_03",
+      "name": "脉冲式侵入核",
+      "category": "脉冲式",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/pulse_cryst01/item_equip_t4_suit_pulse_cryst01_edc_03.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "will",
+          "values": [
+            41,
+            45,
+            49,
+            53
+          ]
+        },
+        "primary2": {
+          "modifierId": null,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "ultimate_dmg_bonus",
+              "values": [
+                51.7,
+                56.9,
+                62.1,
+                67.3
+              ]
+            }
+          ],
+          "modifierIds": [
+            "ultimate_dmg_bonus"
+          ],
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "item_equip_t4_suit_pulse_cryst01_edc_01",
+      "name": "脉冲式探针",
+      "category": "脉冲式",
+      "slot": "accessory",
+      "level": 70,
+      "icon": "/equipment/pulse_cryst01/item_equip_t4_suit_pulse_cryst01_edc_01.webp",
+      "affixes": {
+        "primary1": {
+          "modifierId": "intellect",
+          "values": [
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        "primary2": {
+          "modifierId": "agility",
+          "values": [
+            21,
+            23,
+            25,
+            27
+          ]
+        },
+        "adapter": {
+          "entries": [
+            {
+              "modifierId": "originium_arts_power",
+              "values": [
+                41,
+                45,
+                49,
+                53
+              ]
+            }
+          ],
+          "modifierIds": [
+            "originium_arts_power"
           ],
           "values": [
             0,
@@ -17859,10 +19844,10 @@
           75
         ],
         "primary1Single": [
-          0,
-          0,
-          0,
-          0
+          115,
+          126,
+          138,
+          149
         ]
       },
       "gloves": {
@@ -17879,10 +19864,10 @@
           55
         ],
         "primary1Single": [
-          0,
-          0,
-          0,
-          0
+          86,
+          94,
+          103,
+          111
         ]
       },
       "accessory": {
@@ -18061,10 +20046,10 @@
       },
       "ult_charge_eff": {
         "armorSingle": [
-          0,
-          0,
-          0,
-          0
+          12.9,
+          14.1,
+          15.4,
+          16.7
         ],
         "armorDual": [
           12.3,
@@ -18099,10 +20084,10 @@
       },
       "attack_dmg_bonus": {
         "armorSingle": [
-          0,
-          0,
-          0,
-          0
+          14.4,
+          15.8,
+          17.3,
+          18.7
         ],
         "armorDual": [
           13.8,
@@ -18225,10 +20210,10 @@
           33.6
         ],
         "glovesSingle": [
-          0,
-          0,
-          0,
-          0
+          45,
+          49.5,
+          54,
+          58.5
         ],
         "glovesDual": [
           43.1,
@@ -18243,10 +20228,10 @@
           0
         ],
         "accessoryDual": [
-          0,
-          0,
-          0,
-          0
+          51.7,
+          56.9,
+          62.1,
+          67.3
         ]
       },
       "broken_dmg_bonus": {
@@ -18301,16 +20286,16 @@
           17.9
         ],
         "glovesSingle": [
-          0,
-          0,
-          0,
-          0
+          24,
+          26.4,
+          28.8,
+          31.2
         ],
         "glovesDual": [
-          0,
-          0,
-          0,
-          0
+          23,
+          25.3,
+          27.6,
+          29.9
         ],
         "accessorySingle": [
           0,
