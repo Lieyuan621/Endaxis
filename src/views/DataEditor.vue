@@ -85,6 +85,8 @@ const newEnemyCategoryName = ref('')
 const activeTab = ref('basic')
 const attackSegmentIndex = ref(0)
 const variantAttackSegmentIndexList = ref([])
+const variantLinkSegmentIndexList = ref([])
+const linkSegmentIndex = ref(0)
 
 const ATTACK_SEGMENT_COUNT = 5
 
@@ -163,8 +165,165 @@ function syncVariantAttackSegmentIndexList() {
   variantAttackSegmentIndexList.value = next
 }
 
+function syncVariantLinkSegmentIndexList() {
+  const len = selectedChar.value?.variants?.length || 0
+  const prev = Array.isArray(variantLinkSegmentIndexList.value) ? variantLinkSegmentIndexList.value : []
+  const next = prev.slice(0, len).map(v => {
+    const n = Number(v)
+    if (!Number.isFinite(n)) return 0
+    return Math.min(Math.max(Math.floor(n), 0), 1)
+  })
+  while (next.length < len) next.push(0)
+  variantLinkSegmentIndexList.value = next
+}
+
 function deepClone(val) {
   return val ? JSON.parse(JSON.stringify(val)) : val
+}
+
+function ensureLinkSegments(char, { force = false } = {}) {
+  if (!char) return
+
+  const sanitizeSeg = (seg) => {
+    if (!seg || typeof seg !== 'object') return
+    seg.duration = Number(seg.duration) || 0
+    seg.cooldown = Number(seg.cooldown) || 0
+    seg.gaugeGain = Number(seg.gaugeGain) || 0
+    seg.followup_delay = Math.max(0, Math.round((Number(seg.followup_delay) || 0) * 1000) / 1000)
+    if (seg.icon !== undefined && typeof seg.icon !== 'string') delete seg.icon
+    if (seg.name !== undefined && typeof seg.name !== 'string') delete seg.name
+    if (!Array.isArray(seg.allowed_types)) seg.allowed_types = []
+    if (!Array.isArray(seg.anomalies)) seg.anomalies = []
+    if (!Array.isArray(seg.damage_ticks)) seg.damage_ticks = []
+    normalizeDamageTicks(seg.damage_ticks)
+    ensureEffectIds(seg.anomalies)
+  }
+
+  const seedFromLegacy = (suffix, { cooldownOverride } = {}) => {
+    const out = {
+      name: `${char.name || char.id || '连携'}${suffix}`,
+      duration: Number(char.link_duration) || 0,
+      cooldown: (cooldownOverride !== undefined) ? cooldownOverride : (Number(char.link_cooldown) || 0),
+      gaugeGain: Number(char.link_gaugeGain) || 0,
+      icon: typeof char.link_icon === 'string' ? char.link_icon : '',
+      allowed_types: Array.isArray(char.link_allowed_types) ? [...char.link_allowed_types] : [],
+      anomalies: deepClone(char.link_anomalies) || [],
+      damage_ticks: deepClone(char.link_damage_ticks) || [],
+      followup_delay: 1,
+    }
+    sanitizeSeg(out)
+    return out
+  }
+
+  if (force || !Array.isArray(char.link_segments) || char.link_segments.length < 2) {
+    char.link_segments = [
+      seedFromLegacy('·一段', { cooldownOverride: 0 }),
+      seedFromLegacy('·二段'),
+    ]
+  } else {
+    char.link_segments.forEach(sanitizeSeg)
+  }
+}
+
+function cloneLinkSegmentForAppend(seg) {
+  const cloned = deepClone(seg) || {}
+  if (!Array.isArray(cloned.allowed_types)) cloned.allowed_types = []
+  if (!Array.isArray(cloned.anomalies)) cloned.anomalies = []
+  if (!Array.isArray(cloned.damage_ticks)) cloned.damage_ticks = []
+  normalizeDamageTicks(cloned.damage_ticks)
+
+  ensureEffectIds(cloned.anomalies)
+  const normalizedRows = Array.isArray(cloned.anomalies?.[0]) ? cloned.anomalies : [cloned.anomalies]
+  const idMap = new Map()
+
+  normalizedRows.forEach(row => {
+    if (!Array.isArray(row)) return
+    row.forEach(effect => {
+      if (!effect) return
+      const oldId = effect._id
+      const newId = generateEffectId()
+      effect._id = newId
+      if (oldId) idMap.set(oldId, newId)
+    })
+  })
+
+  cloned.damage_ticks.forEach(tick => {
+    if (!tick || !Array.isArray(tick.boundEffects) || tick.boundEffects.length === 0) return
+    tick.boundEffects = tick.boundEffects.map(id => idMap.get(id) || id)
+  })
+
+  return cloned
+}
+
+function addLinkSegment(char) {
+  if (!char) return
+  ensureLinkSegments(char)
+  if (!Array.isArray(char.link_segments) || char.link_segments.length === 0) return
+  if (char.link_segments.length >= 5) return
+
+  const last = char.link_segments[char.link_segments.length - 1]
+  char.link_segments.push(cloneLinkSegmentForAppend(last))
+  ensureLinkSegments(char)
+  linkSegmentIndex.value = char.link_segments.length - 1
+}
+
+function removeLinkSegment(char) {
+  if (!char || !Array.isArray(char.link_segments)) return
+  if (char.link_segments.length <= 2) return
+  const idx = Math.min(Math.max(linkSegmentIndex.value, 0), char.link_segments.length - 1)
+  char.link_segments.splice(idx, 1)
+  ensureLinkSegments(char)
+  linkSegmentIndex.value = Math.max(0, Math.min(idx - 1, char.link_segments.length - 1))
+}
+
+function ensureVariantLinkSegments(variant, { force = false } = {}) {
+  if (!variant || variant.type !== 'link') return
+
+  const round3 = (v) => Math.max(0, Math.round((Number(v) || 0) * 1000) / 1000)
+
+  const sanitizeSeg = (seg) => {
+    if (!seg || typeof seg !== 'object') return
+    seg.type = 'link'
+    seg.duration = Number(seg.duration) || 0
+    seg.cooldown = Number(seg.cooldown) || 0
+    seg.gaugeGain = Number(seg.gaugeGain) || 0
+    seg.followupDelay = round3(seg.followupDelay)
+    if (!Array.isArray(seg.allowedTypes)) seg.allowedTypes = []
+    if (!Array.isArray(seg.physicalAnomaly)) seg.physicalAnomaly = []
+    if (!Array.isArray(seg.damageTicks)) seg.damageTicks = []
+    normalizeDamageTicks(seg.damageTicks)
+    ensureEffectIds(seg.physicalAnomaly)
+    if (seg.icon !== undefined && typeof seg.icon !== 'string') delete seg.icon
+    if (seg.name !== undefined && typeof seg.name !== 'string') delete seg.name
+  }
+
+  const seedFromVariant = (suffix, { cooldownOverride } = {}) => {
+    const out = {
+      name: `${variant.name || '连携'}${suffix}`,
+      type: 'link',
+      duration: Number(variant.duration) || 0,
+      icon: (typeof variant.icon === 'string') ? variant.icon : '',
+      allowedTypes: Array.isArray(variant.allowedTypes) ? [...variant.allowedTypes] : [],
+      physicalAnomaly: deepClone(variant.physicalAnomaly) || [],
+      damageTicks: deepClone(variant.damageTicks) || [],
+      cooldown: (cooldownOverride !== undefined) ? cooldownOverride : (Number(variant.cooldown) || 0),
+      gaugeGain: Number(variant.gaugeGain) || 0,
+      followupDelay: 0,
+    }
+    sanitizeSeg(out)
+    return out
+  }
+
+  if (force || !Array.isArray(variant.segments) || variant.segments.length !== 2) {
+    variant.segments = [
+      { ...seedFromVariant('·一段', { cooldownOverride: 0 }), followupDelay: 1 },
+      seedFromVariant('·二段'),
+    ]
+  } else {
+    sanitizeSeg(variant.segments[0])
+    sanitizeSeg(variant.segments[1])
+  }
+  if (variant.segments[1]) variant.segments[1].followupDelay = 0
 }
 
 function createVariantAttackSegment(seed = {}, fallbackSeg = null) {
@@ -269,12 +428,26 @@ function getVariantAttackSegIndex(variantIdx) {
   return Math.min(Math.max(Math.floor(n), 0), ATTACK_SEGMENT_COUNT - 1)
 }
 
+function getVariantLinkSegIndex(variantIdx) {
+  const raw = variantLinkSegmentIndexList.value?.[variantIdx]
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return 0
+  return Math.min(Math.max(Math.floor(n), 0), 1)
+}
+
 function getVariantAllowedTypesRef(variant, variantIdx) {
   if (!variant) return []
   if (variant.type === 'attack') {
     ensureVariantAttackSegments(variant, selectedChar.value)
     const idx = getVariantAttackSegIndex(variantIdx)
     const seg = variant.attackSegments?.[idx]
+    if (!seg.allowedTypes) seg.allowedTypes = []
+    return seg.allowedTypes
+  }
+  if (variant.type === 'link' && Array.isArray(variant.segments)) {
+    ensureVariantLinkSegments(variant)
+    const idx = getVariantLinkSegIndex(variantIdx)
+    const seg = variant.segments?.[idx]
     if (!seg.allowedTypes) seg.allowedTypes = []
     return seg.allowedTypes
   }
@@ -292,6 +465,14 @@ function getVariantPhysicalAnomalyRef(variant, variantIdx) {
     ensureEffectIds(seg.physicalAnomaly)
     return seg.physicalAnomaly
   }
+  if (variant.type === 'link' && Array.isArray(variant.segments)) {
+    ensureVariantLinkSegments(variant)
+    const idx = getVariantLinkSegIndex(variantIdx)
+    const seg = variant.segments?.[idx]
+    if (!seg.physicalAnomaly) seg.physicalAnomaly = []
+    ensureEffectIds(seg.physicalAnomaly)
+    return seg.physicalAnomaly
+  }
   if (!variant.physicalAnomaly) variant.physicalAnomaly = []
   ensureEffectIds(variant.physicalAnomaly)
   return variant.physicalAnomaly
@@ -303,6 +484,14 @@ function getVariantDamageTicksRef(variant, variantIdx) {
     ensureVariantAttackSegments(variant, selectedChar.value)
     const idx = getVariantAttackSegIndex(variantIdx)
     const seg = variant.attackSegments?.[idx]
+    if (!seg.damageTicks) seg.damageTicks = []
+    normalizeDamageTicks(seg.damageTicks)
+    return seg.damageTicks
+  }
+  if (variant.type === 'link' && Array.isArray(variant.segments)) {
+    ensureVariantLinkSegments(variant)
+    const idx = getVariantLinkSegIndex(variantIdx)
+    const seg = variant.segments?.[idx]
     if (!seg.damageTicks) seg.damageTicks = []
     normalizeDamageTicks(seg.damageTicks)
     return seg.damageTicks
@@ -854,6 +1043,7 @@ watch(characterRoster, (newList) => {
 
 watch(selectedCharId, () => {
   attackSegmentIndex.value = 0
+  linkSegmentIndex.value = 0
   if (!selectedChar.value) return
   ensureAttackSegments(selectedChar.value)
   for (const seg of selectedChar.value.attack_segments || []) {
@@ -861,9 +1051,12 @@ watch(selectedCharId, () => {
     ensureEffectIds(seg.anomalies)
   }
   syncVariantAttackSegmentIndexList()
+  syncVariantLinkSegmentIndexList()
+  if (Array.isArray(selectedChar.value.link_segments)) ensureLinkSegments(selectedChar.value)
   if (selectedChar.value.variants) {
     selectedChar.value.variants.forEach(v => {
       if (v?.type === 'attack') ensureVariantAttackSegments(v, selectedChar.value)
+      if (v?.type === 'link' && Array.isArray(v.segments)) ensureVariantLinkSegments(v)
     })
   }
 })
@@ -1722,6 +1915,15 @@ function getDamageTicks(char, type) {
     return Array.isArray(seg?.damage_ticks) ? seg.damage_ticks : []
   }
 
+  if (type === 'link' && Array.isArray(char.link_segments) && char.link_segments.length > 0) {
+    ensureLinkSegments(char)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), char.link_segments.length - 1)
+    const seg = char.link_segments[idx]
+    if (!Array.isArray(seg.damage_ticks)) seg.damage_ticks = []
+    normalizeDamageTicks(seg.damage_ticks)
+    return seg.damage_ticks
+  }
+
   const key = `${type}_damage_ticks`
   if (!char[key]) char[key] = []
   normalizeDamageTicks(char[key])
@@ -1740,6 +1942,16 @@ function addDamageTick(char, type) {
     return
   }
 
+  if (type === 'link' && Array.isArray(char.link_segments) && char.link_segments.length > 0) {
+    ensureLinkSegments(char)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), char.link_segments.length - 1)
+    const seg = char.link_segments[idx]
+    if (!Array.isArray(seg.damage_ticks)) seg.damage_ticks = []
+    normalizeDamageTicks(seg.damage_ticks)
+    seg.damage_ticks.push({ offset: 0, stagger: 0, sp: 0, boundEffects: [] })
+    return
+  }
+
   const list = getDamageTicks(char, type)
   // 默认判定点：0秒时，造成0失衡，回复0技力
   list.push({ offset: 0, stagger: 0, sp: 0, boundEffects: [] })
@@ -1751,6 +1963,15 @@ function removeDamageTick(char, type, index) {
     ensureAttackSegments(char)
     const idx = Math.min(Math.max(attackSegmentIndex.value, 0), ATTACK_SEGMENT_COUNT - 1)
     const seg = char.attack_segments[idx]
+    if (!Array.isArray(seg.damage_ticks)) seg.damage_ticks = []
+    seg.damage_ticks.splice(index, 1)
+    return
+  }
+
+  if (type === 'link' && Array.isArray(char.link_segments) && char.link_segments.length > 0) {
+    ensureLinkSegments(char)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), char.link_segments.length - 1)
+    const seg = char.link_segments[idx]
     if (!Array.isArray(seg.damage_ticks)) seg.damage_ticks = []
     seg.damage_ticks.splice(index, 1)
     return
@@ -1817,6 +2038,7 @@ function addVariant() {
     ...baseStats
   })
   syncVariantAttackSegmentIndexList()
+  syncVariantLinkSegmentIndexList()
 }
 
 function removeVariant(idx) {
@@ -1824,6 +2046,7 @@ function removeVariant(idx) {
     selectedChar.value.variants.splice(idx, 1)
   }
   syncVariantAttackSegmentIndexList()
+  syncVariantLinkSegmentIndexList()
 }
 
 function onVariantTypeChange(variant, variantIdx) {
@@ -1834,11 +2057,18 @@ function onVariantTypeChange(variant, variantIdx) {
   if (variant.type === 'attack') {
     ensureVariantAttackSegments(variant, selectedChar.value, { force: true })
     syncVariantAttackSegmentIndexList()
+    syncVariantLinkSegmentIndexList()
     if (variantIdx !== undefined && variantIdx !== null) {
       variantAttackSegmentIndexList.value[variantIdx] = 0
     }
   } else {
     delete variant.attackSegments
+    syncVariantAttackSegmentIndexList()
+    syncVariantLinkSegmentIndexList()
+  }
+
+  if (variant.type !== 'link') {
+    delete variant.segments
   }
 
   if (variant.name === '新强化技能' || variant.name.startsWith('强化')) {
@@ -1865,6 +2095,17 @@ function onCheckChange(char, skillType, key) {
     ensureAttackSegments(char)
     const idx = Math.min(Math.max(attackSegmentIndex.value, 0), ATTACK_SEGMENT_COUNT - 1)
     const seg = char.attack_segments[idx]
+    if (!seg.allowed_types) seg.allowed_types = []
+    const list = seg.allowed_types
+    const isChecked = list.includes(key)
+    handleGroupCheck(list, isChecked, key)
+    return
+  }
+
+  if (skillType === 'link' && Array.isArray(char.link_segments) && char.link_segments.length > 0) {
+    ensureLinkSegments(char)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), char.link_segments.length - 1)
+    const seg = char.link_segments[idx]
     if (!seg.allowed_types) seg.allowed_types = []
     const list = seg.allowed_types
     const isChecked = list.includes(key)
@@ -1949,6 +2190,15 @@ function getAvailableAnomalyOptions(skillType) {
     return buildOptions(combinedKeys)
   }
 
+  if (skillType === 'link' && Array.isArray(selectedChar.value.link_segments) && selectedChar.value.link_segments.length > 0) {
+    ensureLinkSegments(selectedChar.value)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), selectedChar.value.link_segments.length - 1)
+    const seg = selectedChar.value.link_segments[idx]
+    const allowedList = seg?.allowed_types || []
+    const combinedKeys = new Set([...allowedList, 'default'])
+    return buildOptions(combinedKeys)
+  }
+
   const allowedList = selectedChar.value[`${skillType}_allowed_types`] || []
   const combinedKeys = new Set([...allowedList, 'default'])
   return buildOptions(combinedKeys)
@@ -1978,6 +2228,14 @@ function getBindingOptions(skillType) {
     return buildBindingOptionsFromAnomalies(raw)
   }
 
+  if (skillType === 'link' && Array.isArray(selectedChar.value.link_segments) && selectedChar.value.link_segments.length > 0) {
+    ensureLinkSegments(selectedChar.value)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), selectedChar.value.link_segments.length - 1)
+    const seg = selectedChar.value.link_segments[idx]
+    const raw = seg?.anomalies
+    return buildBindingOptionsFromAnomalies(raw)
+  }
+
   const raw = selectedChar.value[`${skillType}_anomalies`]
   return buildBindingOptionsFromAnomalies(raw)
 }
@@ -1997,6 +2255,17 @@ function getAnomalyRows(char, skillType) {
     const seg = Array.isArray(char.attack_segments) ? char.attack_segments[idx] : null
     const raw = seg?.anomalies || []
     if (raw.length === 0) return []
+    if (!Array.isArray(raw[0])) return [raw]
+    return raw
+  }
+
+  if (skillType === 'link' && Array.isArray(char.link_segments) && char.link_segments.length > 0) {
+    ensureLinkSegments(char)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), char.link_segments.length - 1)
+    const seg = char.link_segments[idx]
+    const raw = seg?.anomalies || []
+    if (raw.length === 0) return []
+    ensureEffectIds(raw)
     if (!Array.isArray(raw[0])) return [raw]
     return raw
   }
@@ -2026,6 +2295,19 @@ function addAnomalyRow(char, skillType) {
     return
   }
 
+  if (skillType === 'link' && Array.isArray(char.link_segments) && char.link_segments.length > 0) {
+    ensureLinkSegments(char)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), char.link_segments.length - 1)
+    const seg = char.link_segments[idx]
+    const raw = seg.anomalies || []
+    if (raw.length > 0 && !Array.isArray(raw[0])) seg.anomalies = [raw]
+    const allowedList = seg.allowed_types || []
+    const defaultType = allowedList.length > 0 ? allowedList[0] : 'default'
+    if (!Array.isArray(seg.anomalies)) seg.anomalies = []
+    seg.anomalies.push([createEffect(defaultType)])
+    return
+  }
+
   const key = `${skillType}_anomalies`
   let rows = getAnomalyRows(char, skillType)
   if (!char[key] || (char[key].length > 0 && !Array.isArray(char[key][0]))) {
@@ -2043,6 +2325,18 @@ function addAnomalyToRow(char, skillType, rowIndex) {
     ensureAttackSegments(char)
     const idx = Math.min(Math.max(attackSegmentIndex.value, 0), ATTACK_SEGMENT_COUNT - 1)
     const seg = char.attack_segments[idx]
+    const allowedList = seg.allowed_types || []
+    const defaultType = allowedList.length > 0 ? allowedList[0] : 'default'
+    if (rows[rowIndex]) {
+      rows[rowIndex].push(createEffect(defaultType))
+    }
+    return
+  }
+
+  if (skillType === 'link' && Array.isArray(char.link_segments) && char.link_segments.length > 0) {
+    ensureLinkSegments(char)
+    const idx = Math.min(Math.max(linkSegmentIndex.value, 0), char.link_segments.length - 1)
+    const seg = char.link_segments[idx]
     const allowedList = seg.allowed_types || []
     const defaultType = allowedList.length > 0 ? allowedList[0] : 'default'
     if (rows[rowIndex]) {
@@ -2141,6 +2435,26 @@ function normalizeCharacterForSave(char) {
     if (!Array.isArray(seg.allowed_types)) seg.allowed_types = []
   }
 
+  if (Array.isArray(char.link_segments)) {
+    for (const seg of char.link_segments) {
+      if (!seg || typeof seg !== 'object') continue
+      seg.duration = Number(seg.duration) || 0
+      seg.cooldown = Number(seg.cooldown) || 0
+      seg.gaugeGain = Number(seg.gaugeGain) || 0
+      seg.followup_delay = Math.max(0, Math.round((Number(seg.followup_delay) || 0) * 1000) / 1000)
+
+      if (seg.element !== undefined && typeof seg.element !== 'string') delete seg.element
+      if (seg.icon !== undefined && typeof seg.icon !== 'string') delete seg.icon
+      if (seg.name !== undefined && typeof seg.name !== 'string') delete seg.name
+
+      if (!Array.isArray(seg.allowed_types)) seg.allowed_types = []
+      if (!Array.isArray(seg.anomalies)) seg.anomalies = []
+      if (!Array.isArray(seg.damage_ticks)) seg.damage_ticks = []
+      normalizeDamageTicks(seg.damage_ticks)
+      ensureEffectIds(seg.anomalies)
+    }
+  }
+
   // Legacy attack fields are no longer persisted.
   delete char.attack_duration
   delete char.attack_gaugeGain
@@ -2158,6 +2472,17 @@ function normalizeCharacterForSave(char) {
           ensureEffectIds(seg.physicalAnomaly)
           if (!Array.isArray(seg.allowedTypes)) seg.allowedTypes = []
         }
+      } else if (variant?.type === 'link' && Array.isArray(variant.segments)) {
+        ensureVariantLinkSegments(variant)
+        for (const seg of variant.segments || []) {
+          if (!seg.damageTicks) seg.damageTicks = []
+          normalizeDamageTicks(seg.damageTicks)
+          ensureEffectIds(seg.physicalAnomaly)
+          if (!Array.isArray(seg.allowedTypes)) seg.allowedTypes = []
+          const rawDelay = Number(seg.followupDelay)
+          seg.followupDelay = Number.isFinite(rawDelay) ? Math.max(0, Math.round(rawDelay * 1000) / 1000) : 0
+        }
+        if (variant.segments[variant.segments.length - 1]) variant.segments[variant.segments.length - 1].followupDelay = 0
       } else {
         if (!variant.damageTicks) variant.damageTicks = []
         normalizeDamageTicks(variant.damageTicks)
@@ -2738,7 +3063,7 @@ function saveData() {
                   <input v-model="variant.icon" type="text"/>
                 </div>
 
-                <div class="form-group" v-if="variant.type !== 'attack'"><label>持续时间</label><input type="number" step="0.1" v-model.number="variant.duration"></div>
+                <div class="form-group" v-if="variant.type !== 'attack' && !(variant.type === 'link' && Array.isArray(variant.segments))"><label>持续时间</label><input type="number" step="0.1" v-model.number="variant.duration"></div>
 
                 <template v-if="variant.type === 'attack'">
                   <div class="form-group">
@@ -2759,8 +3084,58 @@ function saveData() {
                 <div class="form-group" v-if="variant.type === 'skill'"><label>自身充能</label><input type="number" v-model.number="variant.gaugeGain"></div>
                 <div class="form-group" v-if="variant.type === 'skill'"><label>队友充能</label><input type="number" v-model.number="variant.teamGaugeGain"></div>
 
-                <div class="form-group" v-if="variant.type === 'link'"><label>冷却时间 (CD)</label><input type="number" v-model.number="variant.cooldown"></div>
-                <div class="form-group" v-if="variant.type === 'link'"><label>自身充能</label><input type="number" v-model.number="variant.gaugeGain"></div>
+                <template v-if="variant.type === 'link'">
+                  <div class="form-group">
+                    <label>二段连携</label>
+                    <button
+                      v-if="!Array.isArray(variant.segments)"
+                      class="ea-btn ea-btn--block ea-btn--dashed-muted ea-btn--field"
+                      @click="ensureVariantLinkSegments(variant, { force: true }); syncVariantLinkSegmentIndexList(); variantLinkSegmentIndexList[idx] = 0"
+                    >启用二段连携</button>
+                    <button
+                      v-else
+                      class="ea-btn ea-btn--block ea-btn--dashed-muted ea-btn--field"
+                      @click="delete variant.segments"
+                    >关闭二段连携</button>
+                  </div>
+
+                  <template v-if="Array.isArray(variant.segments)">
+                    <div class="form-group">
+                      <label>编辑段</label>
+                      <el-select v-model="variantLinkSegmentIndexList[idx]" size="large" style="width: 100%">
+                        <el-option :label="'第1段'" :value="0" />
+                        <el-option :label="'第2段'" :value="1" />
+                      </el-select>
+                    </div>
+                    <div class="form-group" v-if="(variantLinkSegmentIndexList[idx] || 0) < (variant.segments.length - 1)">
+                      <label>到下一段间隔 (s)</label>
+                      <input type="number" step="0.001" v-model.number="variant.segments[variantLinkSegmentIndexList[idx] || 0].followupDelay">
+                    </div>
+                    <div class="form-group">
+                      <label>本段显示名称</label>
+                      <input v-model="variant.segments[variantLinkSegmentIndexList[idx] || 0].name" placeholder="例如：连携·一段" />
+                    </div>
+                    <div class="form-group">
+                      <label>本段图标路径</label>
+                      <input v-model="variant.segments[variantLinkSegmentIndexList[idx] || 0].icon" type="text"/>
+                    </div>
+                    <div class="form-group">
+                      <label>本段持续时间 (s)</label>
+                      <input type="number" step="0.1" v-model.number="variant.segments[variantLinkSegmentIndexList[idx] || 0].duration">
+                    </div>
+                    <div class="form-group">
+                      <label>本段冷却时间 (CD)</label>
+                      <input type="number" step="0.001" v-model.number="variant.segments[variantLinkSegmentIndexList[idx] || 0].cooldown">
+                    </div>
+                    <div class="form-group">
+                      <label>本段自身充能</label>
+                      <input type="number" v-model.number="variant.segments[variantLinkSegmentIndexList[idx] || 0].gaugeGain">
+                    </div>
+                  </template>
+
+                  <div class="form-group" v-if="!Array.isArray(variant.segments)"><label>冷却时间 (CD)</label><input type="number" v-model.number="variant.cooldown"></div>
+                  <div class="form-group" v-if="!Array.isArray(variant.segments)"><label>自身充能</label><input type="number" v-model.number="variant.gaugeGain"></div>
+                </template>
 
                 <div class="form-group" v-if="variant.type === 'ultimate'"><label>充能消耗</label><input type="number" v-model.number="variant.gaugeCost"></div>
                 <div class="form-group" v-if="variant.type === 'ultimate'"><label>充能返还</label><input type="number" v-model.number="variant.gaugeGain"></div>
@@ -2819,21 +3194,33 @@ function saveData() {
                   </label>
                 </template>
                 <template v-else>
-                  <label v-for="key in effectKeys" :key="`v_${variant.id}_${key}`" class="cb-item">
-                    <input type="checkbox" :value="key" v-model="variant.allowedTypes" @change="onVariantCheckChange(variant, idx, key)">
-                    {{ EFFECT_NAMES[key] }}
-                  </label>
-                  <label v-for="buff in selectedChar.exclusive_buffs" :key="`v_${variant.id}_${buff.key}`" class="cb-item exclusive">
-                    <input type="checkbox" :value="buff.key" v-model="variant.allowedTypes" @change="onVariantCheckChange(variant, idx, buff.key)">
-                    ★ {{ buff.name }}
-                  </label>
+                  <template v-if="variant.type === 'link' && Array.isArray(variant.segments)">
+                    <label v-for="key in effectKeys" :key="`v_${variant.id}_${key}`" class="cb-item">
+                      <input type="checkbox" :value="key" v-model="variant.segments[variantLinkSegmentIndexList[idx] || 0].allowedTypes" @change="onVariantCheckChange(variant, idx, key)">
+                      {{ EFFECT_NAMES[key] }}
+                    </label>
+                    <label v-for="buff in selectedChar.exclusive_buffs" :key="`v_${variant.id}_${buff.key}`" class="cb-item exclusive">
+                      <input type="checkbox" :value="buff.key" v-model="variant.segments[variantLinkSegmentIndexList[idx] || 0].allowedTypes" @change="onVariantCheckChange(variant, idx, buff.key)">
+                      ★ {{ buff.name }}
+                    </label>
+                  </template>
+                  <template v-else>
+                    <label v-for="key in effectKeys" :key="`v_${variant.id}_${key}`" class="cb-item">
+                      <input type="checkbox" :value="key" v-model="variant.allowedTypes" @change="onVariantCheckChange(variant, idx, key)">
+                      {{ EFFECT_NAMES[key] }}
+                    </label>
+                    <label v-for="buff in selectedChar.exclusive_buffs" :key="`v_${variant.id}_${buff.key}`" class="cb-item exclusive">
+                      <input type="checkbox" :value="buff.key" v-model="variant.allowedTypes" @change="onVariantCheckChange(variant, idx, buff.key)">
+                      ★ {{ buff.name }}
+                    </label>
+                  </template>
                 </template>
               </div>
 
               <div class="matrix-editor-area" style="margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;">
                 <label style="font-size: 12px; color: #aaa; margin-bottom: 8px; display: block; font-weight: bold;">附加异常状态</label>
                 <div class="anomalies-grid-editor">
-                  <div v-for="(row, rIndex) in (variant.type === 'attack' ? (variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].physicalAnomaly || []) : (variant.physicalAnomaly || []))" :key="rIndex" class="editor-row">
+                  <div v-for="(row, rIndex) in (getVariantPhysicalAnomalyRef(variant, idx) || [])" :key="rIndex" class="editor-row">
                     <div v-for="(item, cIndex) in row" :key="cIndex" class="editor-card">
                       <div class="card-header">
                         <span class="card-label">R{{rIndex+1}}:C{{cIndex+1}}</span>
@@ -2913,16 +3300,63 @@ function saveData() {
                   </el-select>
                 </div>
 
-                <div class="form-group" v-if="['skill', 'link', 'ultimate'].includes(type)"><label>自定义图标路径</label><input v-model="selectedChar[`${type}_icon`]" type="text"/></div>
+                 <template v-if="type === 'link' && Array.isArray(selectedChar.link_segments)">
+                   <div class="form-group full-width">
+                     <label>分段连携</label>
+                     <button class="ea-btn ea-btn--block ea-btn--dashed-muted ea-btn--field" @click="delete selectedChar.link_segments; linkSegmentIndex = 0">关闭分段连携</button>
+                   </div>
+                   <div class="form-group full-width">
+                     <label>编辑段</label>
+                     <div class="seg-select-row">
+                       <el-select v-model="linkSegmentIndex" size="large" style="flex:1; min-width: 240px;">
+                         <el-option v-for="(s, i) in selectedChar.link_segments" :key="`linkseg_${i}`" :label="`第${i + 1}段`" :value="i" />
+                       </el-select>
+                       <button class="ea-btn ea-btn--glass-cut ea-btn--field" @click="addLinkSegment(selectedChar)" :disabled="selectedChar.link_segments.length >= 5">+ 段</button>
+                       <button class="ea-btn ea-btn--glass-cut ea-btn--field" @click="removeLinkSegment(selectedChar)" :disabled="selectedChar.link_segments.length <= 2">- 段</button>
+                     </div>
+                   </div>
+                   <div class="form-grid four-col full-width">
+                     <div class="form-group">
+                       <label>本段图标路径</label>
+                       <input v-model="selectedChar.link_segments[linkSegmentIndex].icon" type="text"/>
+                     </div>
+                     <div class="form-group">
+                       <label>本段持续时间 (s)</label>
+                       <input type="number" step="0.1" v-model.number="selectedChar.link_segments[linkSegmentIndex].duration">
+                     </div>
+                     <div class="form-group">
+                       <label>本段冷却时间 (s)</label>
+                       <input type="number" step="0.001" v-model.number="selectedChar.link_segments[linkSegmentIndex].cooldown">
+                     </div>
+                     <div class="form-group">
+                       <label>本段自身充能</label>
+                       <input type="number" v-model.number="selectedChar.link_segments[linkSegmentIndex].gaugeGain">
+                     </div>
+                   </div>
+                   <div class="form-group full-width" v-if="linkSegmentIndex < (selectedChar.link_segments.length - 1)">
+                     <label>到下一段间隔 (s)</label>
+                     <input type="number" step="0.001" v-model.number="selectedChar.link_segments[linkSegmentIndex].followup_delay">
+                   </div>
+                 </template>
 
-                <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar[`${type}_duration`]"></div>
+                 <template v-else>
+                   <div class="form-group full-width" v-if="type === 'link'">
+                     <label>分段连携</label>
+                     <button class="ea-btn ea-btn--block ea-btn--dashed-muted ea-btn--field" @click="ensureLinkSegments(selectedChar); linkSegmentIndex = 0">启用分段连携</button>
+                   </div>
+
+                   <div class="form-group" v-if="['skill', 'link', 'ultimate'].includes(type)"><label>自定义图标路径</label><input v-model="selectedChar[`${type}_icon`]" type="text"/></div>
+                   <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar[`${type}_duration`]"></div>
+                 </template>
 
                 <div class="form-group" v-if="type === 'skill'"><label>技力消耗</label><input type="number" v-model.number="selectedChar[`${type}_spCost`]"></div>
                 <div class="form-group" v-if="type === 'skill'"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeGain`]" @input="onSkillGaugeInput"></div>
                 <div class="form-group" v-if="type === 'skill'"><label>队友充能</label><input type="number" v-model.number="selectedChar[`${type}_teamGaugeGain`]"></div>
 
-                <div class="form-group" v-if="type === 'link'"><label>冷却时间 (s)</label><input type="number" v-model.number="selectedChar[`${type}_cooldown`]"></div>
-                <div class="form-group" v-if="type === 'link'"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeGain`]"></div>
+                 <template v-if="type === 'link' && !Array.isArray(selectedChar.link_segments)">
+                   <div class="form-group"><label>冷却时间 (s)</label><input type="number" v-model.number="selectedChar[`${type}_cooldown`]"></div>
+                   <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeGain`]"></div>
+                 </template>
 
                 <div class="form-group" v-if="type === 'ultimate'"><label>充能消耗</label><input type="number" v-model.number="selectedChar[`${type}_gaugeMax`]"></div>
                 <div class="form-group" v-if="type === 'ultimate'"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeReply`]"></div>
@@ -2986,16 +3420,28 @@ function saveData() {
                   ★ {{ buff.name }}
                 </label>
               </div>
-              <div v-else class="checkbox-grid">
-                <label v-for="key in effectKeys" :key="`${type}_${key}`" class="cb-item">
-                  <input type="checkbox" :value="key" v-model="selectedChar[`${type}_allowed_types`]" @change="onCheckChange(selectedChar, type, key)">
-                  {{ EFFECT_NAMES[key] }}
-                </label>
-                <label v-for="buff in selectedChar.exclusive_buffs" :key="`${type}_${buff.key}`" class="cb-item exclusive">
-                  <input type="checkbox" :value="buff.key" v-model="selectedChar[`${type}_allowed_types`]">
-                  ★ {{ buff.name }}
-                </label>
-              </div>
+               <div v-else class="checkbox-grid">
+                 <template v-if="type === 'link' && Array.isArray(selectedChar.link_segments)">
+                   <label v-for="key in effectKeys" :key="`${type}_${linkSegmentIndex}_${key}`" class="cb-item">
+                     <input type="checkbox" :value="key" v-model="selectedChar.link_segments[linkSegmentIndex].allowed_types" @change="onCheckChange(selectedChar, type, key)">
+                     {{ EFFECT_NAMES[key] }}
+                   </label>
+                   <label v-for="buff in selectedChar.exclusive_buffs" :key="`${type}_${linkSegmentIndex}_${buff.key}`" class="cb-item exclusive">
+                     <input type="checkbox" :value="buff.key" v-model="selectedChar.link_segments[linkSegmentIndex].allowed_types">
+                     ★ {{ buff.name }}
+                   </label>
+                 </template>
+                 <template v-else>
+                   <label v-for="key in effectKeys" :key="`${type}_${key}`" class="cb-item">
+                     <input type="checkbox" :value="key" v-model="selectedChar[`${type}_allowed_types`]" @change="onCheckChange(selectedChar, type, key)">
+                     {{ EFFECT_NAMES[key] }}
+                   </label>
+                   <label v-for="buff in selectedChar.exclusive_buffs" :key="`${type}_${buff.key}`" class="cb-item exclusive">
+                     <input type="checkbox" :value="buff.key" v-model="selectedChar[`${type}_allowed_types`]">
+                     ★ {{ buff.name }}
+                   </label>
+                 </template>
+               </div>
 
               <div class="matrix-editor-area">
                 <h3 class="section-title">默认附带状态 (二维矩阵)</h3>
@@ -3903,6 +4349,13 @@ function saveData() {
   outline: none;
   background: #1f1f24;
 }
+
+.seg-select-row { display: flex; align-items: center; gap: 10px; width: 100%; }
+.seg-select-row :deep(.el-select) { flex: 1 1 auto; }
+
+.form-grid.four-col { grid-template-columns: repeat(4, minmax(160px, 1fr)); }
+
+.ea-btn--field { height: 40px; padding: 0 12px; display: flex; align-items: center; justify-content: center; }
 
 :deep(.enemy-tier-select .el-input__inner) {
   color: var(--ea-tier-color) !important;

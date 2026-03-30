@@ -28,7 +28,14 @@ const displayLabel = computed(() => {
   const type = props.action.type
   const width = secWidth.value
 
-  const suffix = isVariant.value ? '*' : ''
+  const variantSuffix = isVariant.value ? '*' : ''
+  const comboIdx = Number(props.action.comboSegmentIndex) || 0
+  const comboTotal = Number(props.action.comboSegmentTotal) || 0
+  const CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩']
+  const comboSuffix = (comboTotal >= 2 && comboIdx >= 1)
+    ? (CIRCLED[comboIdx - 1] || `(${comboIdx})`)
+    : ''
+  const suffix = `${variantSuffix}${comboSuffix}`
 
   if (type === 'dodge') {
     return `${TYPE_SHORTHAND[type] || '?'}${suffix}`

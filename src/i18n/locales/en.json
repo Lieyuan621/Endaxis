@@ -397,7 +397,14 @@
       "gaugeCost": "Charge Cost",
       "gaugeGain": "SP Gain",
       "teamGaugeGain": "Team SP",
-      "enhancementTimeS": "Enhancement Time (s)"
+      "enhancementTimeS": "Enhancement Time (s)",
+      "followupDelayS": "Next Delay (s)",
+      "comboSegment": "Combo Segment",
+      "comboLink": "Combo Link"
+    },
+    "combo": {
+      "unlink": "Unlink",
+      "relink": "Relink"
     },
     "damage": {
       "title": "Damage Points",

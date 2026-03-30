@@ -397,7 +397,14 @@
       "gaugeCost": "充能消耗",
       "gaugeGain": "自身充能",
       "teamGaugeGain": "队友充能",
-      "enhancementTimeS": "强化时间(s)"
+      "enhancementTimeS": "强化时间(s)",
+      "followupDelayS": "下一段间隔(s)",
+      "comboSegment": "连携段",
+      "comboLink": "连携绑定"
+    },
+    "combo": {
+      "unlink": "解绑",
+      "relink": "重绑"
     },
     "damage": {
       "title": "伤害判定点",

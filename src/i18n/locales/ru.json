@@ -397,7 +397,14 @@
       "gaugeCost": "Стоимость заряда",
       "gaugeGain": "ОН",
       "teamGaugeGain": "ОН (общ.)",
-      "enhancementTimeS": "Время усиления (с)"
+      "enhancementTimeS": "Время усиления (с)",
+      "followupDelayS": "Задержка до следующей (с)",
+      "comboSegment": "Сегмент комбо",
+      "comboLink": "Связь комбо"
+    },
+    "combo": {
+      "unlink": "Отвязать",
+      "relink": "Связать"
     },
     "damage": {
       "title": "Удары",

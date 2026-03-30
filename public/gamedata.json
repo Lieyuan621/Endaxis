@@ -5123,43 +5123,6 @@
       "execution_anomalies": [],
       "execution_damage_ticks": [],
       "dodge_duration": 0.5,
-      "variants": [
-        {
-          "id": "v_1772384921148",
-          "name": "二段连携",
-          "type": "link",
-          "duration": 3.05,
-          "icon": "",
-          "allowedTypes": [
-            "knockup",
-            "break",
-            "ice_shatter"
-          ],
-          "physicalAnomaly": [
-            [
-              {
-                "_id": "o709hoq",
-                "type": "knockup",
-                "stacks": 2,
-                "duration": 0,
-                "offset": 2.3
-              }
-            ]
-          ],
-          "damageTicks": [
-            {
-              "offset": 2.3,
-              "stagger": 0,
-              "sp": 0,
-              "boundEffects": [
-                "o709hoq"
-              ]
-            }
-          ],
-          "cooldown": 15,
-          "gaugeGain": 0
-        }
-      ],
       "ultimate_element": "blaze"
     },
     {

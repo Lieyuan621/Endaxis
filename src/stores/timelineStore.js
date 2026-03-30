@@ -803,6 +803,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             : createDefaultTracks()
         tracks.value = normalizeTracks(incomingTracks)
         connections.value = normalizeConnections(JSON.parse(JSON.stringify(incoming.connections || [])))
+        normalizeComboLinksInTracks()
         characterOverrides.value = JSON.parse(JSON.stringify(incoming.characterOverrides || {}))
         weaponOverrides.value = JSON.parse(JSON.stringify(incoming.weaponOverrides || {}))
         equipmentCategoryOverrides.value = JSON.parse(JSON.stringify(incoming.equipmentCategoryOverrides || {}))
@@ -1670,7 +1671,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             const finalAnomalies = globalOverride.physicalAnomaly || getAnomalies(activeChar[`${suffix}_anomalies`])
             const finalAllowedTypes = getAllowed(activeChar[`${suffix}_allowed_types`])
 
-            return {
+            const baseSkill = {
                 id: globalId, type: type, name: name,
                 librarySource: 'character',
                 element: derivedElement,
@@ -1679,6 +1680,66 @@ export const useTimelineStore = defineStore('timeline', () => {
                 allowedTypes: finalAllowedTypes,
                 physicalAnomaly: finalAnomalies,
             }
+
+            if (suffix === 'link' && Array.isArray(activeChar.link_segments) && activeChar.link_segments.length >= 2) {
+                const rawSegs = activeChar.link_segments.filter(Boolean)
+                if (rawSegs.length >= 2) {
+                    const segments = rawSegs.map((seg, idx, list) => {
+                        const segId = `${globalId}_seg${idx + 1}`
+                        const segOverride = characterOverrides.value[segId] || {}
+
+                        const segDuration = Number(seg?.duration) || 0
+                        const segCooldown = Number(seg?.cooldown) || 0
+                        const segGaugeGain = Number(seg?.gaugeGain) || 0
+                        const segFollowupDelayRaw = Number(seg?.followup_delay)
+                        const segFollowupDelay = (idx < list.length - 1 && Number.isFinite(segFollowupDelayRaw))
+                            ? snapMs(Math.max(0, segFollowupDelayRaw))
+                            : 0
+
+                        const segTicks = seg?.damage_ticks
+                            ? JSON.parse(JSON.stringify(seg.damage_ticks))
+                            : []
+                        const segAnomalies = seg?.anomalies
+                            ? JSON.parse(JSON.stringify(seg.anomalies))
+                            : []
+                        const segAllowed = Array.isArray(seg?.allowed_types) ? [...seg.allowed_types] : []
+
+                        const finalSegDamageTicks = segOverride.damageTicks || segTicks
+                        const finalSegAnomalies = segOverride.physicalAnomaly || segAnomalies
+                        const finalSegAllowed = segOverride.allowedTypes || segAllowed
+
+                        return {
+                            id: segId,
+                            type: type,
+                            name: (typeof seg?.name === 'string' && seg.name.trim()) ? seg.name.trim() : `${name} ${idx + 1}`,
+                            librarySource: 'character',
+                            element: seg?.element || derivedElement,
+                            icon: (typeof seg?.icon === 'string') ? seg.icon : (baseSkill.icon || ''),
+                            duration: segDuration,
+                            cooldown: segCooldown,
+                            gaugeGain: segGaugeGain,
+                            followupDelay: segFollowupDelay,
+                            damageTicks: finalSegDamageTicks,
+                            allowedTypes: finalSegAllowed,
+                            physicalAnomaly: finalSegAnomalies,
+                            ...(segOverride && typeof segOverride === 'object' ? segOverride : {}),
+                        }
+                    })
+
+                    const groupDuration = segments.reduce((acc, s) => acc + (Number(s.duration) || 0) + (Number(s.followupDelay) || 0), 0)
+                    const groupCooldown = Math.max(0, ...segments.map(s => Number(s.cooldown) || 0))
+                    const groupGaugeGain = segments.reduce((acc, s) => acc + (Number(s.gaugeGain) || 0), 0)
+                    return {
+                        ...baseSkill,
+                        duration: groupDuration,
+                        cooldown: groupCooldown,
+                        gaugeGain: groupGaugeGain,
+                        segments,
+                    }
+                }
+            }
+
+            return baseSkill
         }
 
         const createAttackLibrary = () => {
@@ -2165,6 +2226,80 @@ export const useTimelineStore = defineStore('timeline', () => {
         selectedLibrarySource.value = 'character'
     }
 
+    function normalizeComboLinksInTracks() {
+        const byGroup = new Map()
+        tracks.value.forEach(track => {
+            (track.actions || []).forEach(action => {
+                const gid = action?.comboGroupId
+                if (!gid) return
+                if (!byGroup.has(gid)) byGroup.set(gid, [])
+                byGroup.get(gid).push({ action, track })
+            })
+        })
+
+        for (const [, list] of byGroup.entries()) {
+            const actions = list.map(x => x.action).filter(Boolean)
+            const segIndices = actions.map(a => Number(a.comboSegmentIndex) || 0)
+            const totals = actions.map(a => Number(a.comboSegmentTotal) || 0).filter(Boolean)
+
+            const maxIndex = Math.max(0, ...segIndices)
+            const total = Math.max(maxIndex, ...totals, 0)
+            if (total < 2) continue
+
+            const used = new Set()
+            let valid = true
+            actions.forEach(a => {
+                const idx = Number(a.comboSegmentIndex) || 0
+                if (idx <= 0 || idx > total) valid = false
+                if (used.has(idx)) valid = false
+                used.add(idx)
+            })
+            for (let i = 1; i <= total; i++) {
+                if (!used.has(i)) valid = false
+            }
+
+            const sorted = actions.slice().sort((a, b) => (Number(a.comboSegmentIndex) || 0) - (Number(b.comboSegmentIndex) || 0))
+
+            if (!valid) {
+                const clearCombo = (a) => {
+                    delete a.comboGroupId
+                    delete a.comboSegmentIndex
+                    delete a.comboSegmentTotal
+                    delete a.comboLinked
+                    delete a.comboFollowupDelay
+                    delete a.comboParentSkillId
+                    delete a.comboPrevId
+                    delete a.comboNextId
+                }
+                sorted.forEach(a => {
+                    clearCombo(a)
+                })
+                continue
+            }
+
+            const linked = sorted.every(a => a.comboLinked !== false)
+            sorted.forEach(a => { a.comboLinked = linked })
+
+            sorted.forEach((a, i) => {
+                a.comboSegmentTotal = total
+                a.comboPrevId = i > 0 ? sorted[i - 1].instanceId : null
+                a.comboNextId = i < total - 1 ? sorted[i + 1].instanceId : null
+            })
+
+            if (linked) {
+                for (let i = 0; i < total; i++) {
+                    const a = sorted[i]
+                    if (i === total - 1) {
+                        a.comboFollowupDelay = 0
+                        continue
+                    }
+                    const raw = Number(a.comboFollowupDelay)
+                    a.comboFollowupDelay = Number.isFinite(raw) ? snapMs(Math.max(0, raw)) : 0
+                }
+            }
+        }
+    }
+
     function addSkillToTrack(trackId, skill, startTime) {
         const track = tracks.value.find(t => t.id === trackId); if (!track) return
 
@@ -2205,6 +2340,71 @@ export const useTimelineStore = defineStore('timeline', () => {
                 logicalStartTime: actionStartTime,
                 startTime: actionStartTime
             }
+        }
+
+        if (Array.isArray(skill?.segments) && skill.segments.length >= 2) {
+            const rawSegments = skill.segments.filter(Boolean)
+            if (rawSegments.length < 2) return
+
+            const comboGroupId = `combo_${uid()}`
+
+            const mergeSeg = (seg) => {
+                const merged = { ...skill, ...(seg || {}) }
+                delete merged.segments
+                delete merged.followupDelay
+                return merged
+            }
+
+            const segmentSkills = rawSegments.map(mergeSeg)
+
+            const getDelayAfter = (rawSeg, index, total) => {
+                if (index >= total - 1) return 0
+                const segDelayRaw = Number(rawSeg?.followupDelay)
+                if (!Number.isFinite(segDelayRaw)) return 0
+                return snapMs(Math.max(0, segDelayRaw))
+            }
+
+            const inserted = []
+            let cursor = startTime
+
+            for (let i = 0; i < segmentSkills.length; i++) {
+                const segSkill = segmentSkills[i]
+                const action = createActionFromSkill(segSkill, cursor)
+                const delay = getDelayAfter(rawSegments[i], i, segmentSkills.length)
+
+                action.comboGroupId = comboGroupId
+                action.comboSegmentIndex = i + 1
+                action.comboSegmentTotal = segmentSkills.length
+                action.comboLinked = true
+                action.comboFollowupDelay = delay
+                action.comboParentSkillId = skill.id || null
+                action.comboPrevId = null
+                action.comboNextId = null
+
+                inserted.push(action)
+
+                const end = (Number(action.startTime) || 0) + (Number(action.duration) || 0)
+                cursor = snapMs(end + delay)
+            }
+
+            for (let i = 0; i < inserted.length; i++) {
+                inserted[i].comboPrevId = i > 0 ? inserted[i - 1].instanceId : null
+                inserted[i].comboNextId = i < inserted.length - 1 ? inserted[i + 1].instanceId : null
+            }
+
+            track.actions.push(...inserted)
+            track.actions.sort((a, b) => a.startTime - b.startTime)
+
+            const insertedIds = inserted.map(a => a.instanceId)
+            inserted.forEach((action) => {
+                if (action.type !== 'link' && action.type !== 'ultimate') return
+                const amount = action.type === 'link' ? 0.5 : (Number(action.animationTime) || 1.5)
+                pushSubsequentActions(action.startTime, amount, insertedIds)
+            })
+
+            normalizeComboLinksInTracks()
+            commitState()
+            return
         }
 
         if (skill?.kind === 'attack_group' && Array.isArray(skill.attackSegments)) {
@@ -2320,6 +2520,17 @@ export const useTimelineStore = defineStore('timeline', () => {
         const targets = new Set(multiSelectedIds.value);
         if (selectedActionId.value) targets.add(selectedActionId.value);
 
+        Array.from(targets).forEach((id) => {
+            const wrap = getActionById(id)
+            const action = wrap ? wrap.node : null
+            if (!action) return
+            if (action.comboGroupId && action.comboLinked !== false) {
+                tracks.value.forEach(t => (t.actions || []).forEach(a => {
+                    if (a?.comboGroupId === action.comboGroupId) targets.add(a.instanceId)
+                }))
+            }
+        })
+
         targets.forEach(id => {
             const actionWrap = getActionById(id);
             const action = actionWrap ? actionWrap.node : null;
@@ -2397,6 +2608,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         const { actions, connections: clipConns, baseTime } = clipboard.value
         const idMap = new Map()
         const globalEffectIdMap = new Map()
+        const pasted = []
 
         let timeDelta = 0
         if (targetStartTime !== null) {
@@ -2435,7 +2647,23 @@ export const useTimelineStore = defineStore('timeline', () => {
             const newAction = { ...clonedAction, instanceId: newId, startTime: newStartTime, logicalStartTime: newStartTime }
             track.actions.push(newAction)
             track.actions.sort((a, b) => a.startTime - b.startTime)
+            pasted.push(newAction)
         })
+
+        if (pasted.length > 0) {
+            const groupMap = new Map()
+
+            pasted.forEach((a) => {
+                if (!a || !a.comboGroupId) return
+                const oldGroup = a.comboGroupId
+                if (!groupMap.has(oldGroup)) groupMap.set(oldGroup, `combo_${uid()}`)
+                a.comboGroupId = groupMap.get(oldGroup)
+                delete a.comboPrevId
+                delete a.comboNextId
+            })
+
+            normalizeComboLinksInTracks()
+        }
         clipConns.forEach(conn => {
             const newFrom = idMap.get(conn.from)
             const newTo = idMap.get(conn.to)
@@ -2486,25 +2714,162 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     function updateAction(actionId, patch) {
-        let found = null;
-        let trackRef = null;
-
-        tracks.value.forEach(t => {
-            const idx = t.actions.findIndex(a => a.instanceId === actionId);
-            if (idx !== -1) {
-                found = t.actions[idx];
-                trackRef = t;
+        const locate = (id) => {
+            for (const t of tracks.value) {
+                const idx = t.actions.findIndex(a => a.instanceId === id)
+                if (idx !== -1) return { action: t.actions[idx], track: t }
             }
-        });
-
-        if (found) {
-            Object.assign(found, patch);
-            if (patch.startTime !== undefined) {
-                found.logicalStartTime = patch.startTime;
-                refreshAllActionShifts();
-            }
-            commitState();
+            return null
         }
+
+        const getGroup = (groupId) => {
+            const out = []
+            if (!groupId) return out
+            tracks.value.forEach(t => {
+                (t.actions || []).forEach(a => {
+                    if (a?.comboGroupId === groupId) out.push({ action: a, track: t })
+                })
+            })
+            return out
+        }
+
+        const wrap = locate(actionId)
+        if (!wrap || !wrap.action) return
+
+        const found = wrap.action
+        const foundTrack = wrap.track
+
+        const has = (key) => patch && Object.prototype.hasOwnProperty.call(patch, key)
+        const startTouched = has('startTime')
+        const durationTouched = has('duration')
+        const delayTouched = has('comboFollowupDelay')
+        const linkTouched = has('comboLinked')
+
+        const isCombo = !!found.comboGroupId && (Number(found.comboSegmentIndex) > 0)
+        const oldStart = Number(found.startTime) || 0
+
+        const applyStart = (action, nextStart) => {
+            if (!action) return false
+            const raw = Number(nextStart)
+            if (!Number.isFinite(raw)) return false
+            const clamped = raw < 0 ? 0 : raw
+            const prev = Number(action.startTime) || 0
+            if (Math.abs(prev - clamped) < 0.0001) return false
+            action.startTime = clamped
+            action.logicalStartTime = clamped
+            return true
+        }
+
+        const computeEnd = (action) => {
+            const st = Number(action?.startTime) || 0
+            const dur = Number(action?.duration) || 0
+            return getShiftedEndTime(st, dur, action?.instanceId)
+        }
+
+        Object.assign(found, patch)
+
+        let anyStartChanged = false
+
+        if (isCombo) {
+            const group = getGroup(found.comboGroupId)
+            const groupActions = group.map(x => x.action).filter(Boolean)
+            const total = Math.max(0, ...groupActions.map(a => Number(a.comboSegmentIndex) || 0))
+            const sorted = groupActions.slice().sort((a, b) => (Number(a.comboSegmentIndex) || 0) - (Number(b.comboSegmentIndex) || 0))
+
+            const idx0 = sorted.findIndex(a => a.instanceId === found.instanceId)
+
+            if (idx0 !== -1 && total >= 2) {
+                sorted.forEach((a, i) => {
+                    a.comboSegmentTotal = total
+                    a.comboPrevId = i > 0 ? sorted[i - 1].instanceId : null
+                    a.comboNextId = i < total - 1 ? sorted[i + 1].instanceId : null
+                })
+
+                if (linkTouched) {
+                    const nextLinked = !!found.comboLinked
+                    sorted.forEach(a => { a.comboLinked = nextLinked })
+                    if (nextLinked) {
+                        // derive delays from current layout, then snap chain positions
+                        for (let i = 0; i < total - 1; i++) {
+                            const end = computeEnd(sorted[i])
+                            const nextStart = Number(sorted[i + 1].startTime) || 0
+                            sorted[i].comboFollowupDelay = snapMs(Math.max(0, nextStart - end))
+                        }
+                        sorted[total - 1].comboFollowupDelay = 0
+                        for (let i = 0; i < total - 1; i++) {
+                            const end = computeEnd(sorted[i])
+                            const delay = snapMs(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
+                            sorted[i].comboFollowupDelay = delay
+                            anyStartChanged = applyStart(sorted[i + 1], snapMs(end + delay)) || anyStartChanged
+                        }
+                    }
+                }
+
+                const linked = sorted.every(a => a.comboLinked !== false)
+                if (linked) {
+                    if (delayTouched) {
+                        if (idx0 < total - 1) {
+                            const rawDelay = Number(found.comboFollowupDelay)
+                            found.comboFollowupDelay = Number.isFinite(rawDelay) ? snapMs(Math.max(0, rawDelay)) : 0
+                            for (let i = idx0; i < total - 1; i++) {
+                                const end = computeEnd(sorted[i])
+                                const delay = snapMs(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
+                                sorted[i].comboFollowupDelay = delay
+                                anyStartChanged = applyStart(sorted[i + 1], snapMs(end + delay)) || anyStartChanged
+                            }
+                        } else {
+                            found.comboFollowupDelay = 0
+                        }
+                    }
+
+                    if (startTouched) {
+                        if (idx0 === 0) {
+                            const newStart = Number(found.startTime) || 0
+                            const delta = newStart - oldStart
+                            if (Number.isFinite(delta) && Math.abs(delta) > 0.0001) {
+                                sorted.forEach(a => { anyStartChanged = applyStart(a, (Number(a.startTime) || 0) + delta) || anyStartChanged })
+                            }
+                        } else {
+                            const prev = sorted[idx0 - 1]
+                            const prevEnd = computeEnd(prev)
+                            const desiredDelay = snapMs(Math.max(0, (Number(found.startTime) || 0) - prevEnd))
+                            prev.comboFollowupDelay = desiredDelay
+                            anyStartChanged = applyStart(found, snapMs(prevEnd + desiredDelay)) || anyStartChanged
+                            for (let i = idx0; i < total - 1; i++) {
+                                const end = computeEnd(sorted[i])
+                                const delay = snapMs(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
+                                sorted[i].comboFollowupDelay = delay
+                                anyStartChanged = applyStart(sorted[i + 1], snapMs(end + delay)) || anyStartChanged
+                            }
+                        }
+                    }
+
+                    if (durationTouched && idx0 < total - 1) {
+                        for (let i = idx0; i < total - 1; i++) {
+                            const end = computeEnd(sorted[i])
+                            const delay = snapMs(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
+                            sorted[i].comboFollowupDelay = delay
+                            anyStartChanged = applyStart(sorted[i + 1], snapMs(end + delay)) || anyStartChanged
+                        }
+                    }
+                }
+            }
+        }
+
+        if (startTouched) {
+            found.logicalStartTime = Number(found.startTime) || 0
+            anyStartChanged = true
+        }
+
+        if (anyStartChanged) {
+            refreshAllActionShifts()
+        }
+
+        if (anyStartChanged && foundTrack?.actions) {
+            foundTrack.actions.sort((a, b) => (Number(a.startTime) || 0) - (Number(b.startTime) || 0))
+        }
+
+        commitState()
     }
 
     function updateWeaponStatus(statusId, patch) {

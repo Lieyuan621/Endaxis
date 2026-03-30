@@ -120,6 +120,45 @@ const currentSkillType = computed(() => {
   return targetData.value?.type || 'unknown'
 })
 
+// === 分段连携 ===
+const isComboInstance = computed(() => {
+  if (isLibraryMode.value) return false
+  const a = targetData.value
+  if (!a) return false
+  const idx = Number(a.comboSegmentIndex) || 0
+  const total = Number(a.comboSegmentTotal) || 0
+  return !!a.comboGroupId && idx > 0 && total >= 2 && idx <= total
+})
+
+const comboLinked = computed(() => {
+  if (!isComboInstance.value) return false
+  return targetData.value.comboLinked !== false
+})
+
+const isComboSeg1 = computed(() => {
+  if (!isComboInstance.value) return false
+  return Number(targetData.value.comboSegmentIndex) === 1
+})
+
+const isComboHasNext = computed(() => {
+  if (!isComboInstance.value) return false
+  const idx = Number(targetData.value.comboSegmentIndex) || 0
+  const total = Number(targetData.value.comboSegmentTotal) || 0
+  return idx > 0 && total > 0 && idx < total
+})
+
+const comboSegmentText = computed(() => {
+  if (!isComboInstance.value) return ''
+  const idx = Number(targetData.value.comboSegmentIndex) || 0
+  const total = Number(targetData.value.comboSegmentTotal) || 2
+  return `${idx}/${total}`
+})
+
+function toggleComboLinked() {
+  if (!isComboInstance.value) return
+  updateActionProp('comboLinked', !comboLinked.value)
+}
+
 // === 统一更新函数 ===
 function commitUpdate(payload) {
   if (!targetData.value) return
@@ -587,6 +626,27 @@ function handleStartConnection(id, type = null) {
               <CustomNumberInput :model-value="targetData.cooldown" @update:model-value="val => updateActionProp('cooldown', val)" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
             </div>
 
+            <div class="form-group compact" v-if="isComboInstance">
+              <label>{{ t('propertiesPanel.labels.comboSegment') }}</label>
+              <div class="combo-hint">{{ comboSegmentText }}</div>
+            </div>
+
+            <div class="form-group compact" v-if="isComboInstance">
+              <label>{{ t('propertiesPanel.labels.comboLink') }}</label>
+              <button
+                type="button"
+                class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent"
+                @click.stop="toggleComboLinked"
+              >
+                {{ comboLinked ? t('propertiesPanel.combo.unlink') : t('propertiesPanel.combo.relink') }}
+              </button>
+            </div>
+
+            <div class="form-group compact" v-if="currentSkillType === 'link' && isComboHasNext && comboLinked">
+              <label>{{ t('propertiesPanel.labels.followupDelayS') }}</label>
+              <CustomNumberInput :model-value="targetData.comboFollowupDelay || 0" @update:model-value="val => updateActionProp('comboFollowupDelay', val)" :min="0" :step="0.001" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
+            </div>
+
             <div class="form-group compact" v-if="currentSkillType === 'link' && !isLibraryMode">
               <label>{{ t('propertiesPanel.labels.triggerWindowS') }}</label>
               <CustomNumberInput :model-value="targetData.triggerWindow || 0" @update:model-value="val => updateActionProp('triggerWindow', val)" :step="0.1" :border-color="HIGHLIGHT_COLORS.default" text-align="center"/>
@@ -1022,6 +1082,19 @@ function handleStartConnection(id, type = null) {
 .port-arrow { font-size: 8px; color: #444; letter-spacing: -1px; font-weight: bold; }
 .offset-mini { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 .spacer { flex: 1; }
+
+.combo-hint {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #16161a;
+  box-shadow: 0 0 0 1px #333 inset;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  font-size: 12px;
+  user-select: none;
+}
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 :deep(.is-rotated) { transform: rotate(90deg); transition: transform 0.2s; }
