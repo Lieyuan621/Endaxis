@@ -4888,37 +4888,22 @@
       "element": "physical",
       "weapon": "sword",
       "avatar": "/avatars/ROSSI/ROSSI.webp",
-      "exclusive_buffs": [],
+      "exclusive_buffs": [
+        {
+          "key": "wulfa_blood",
+          "name": "爪印斫痕",
+          "path": "/avatars/ROSSI/icon_battle_buff_wulfa_blood.webp"
+        },
+        {
+          "key": "talent_wulfa_02",
+          "name": "沸血",
+          "path": "/avatars/ROSSI/icon_talent_wulfa_02.webp"
+        }
+      ],
       "accept_team_gauge": true,
       "attack_segments": [
         {
-          "duration": 2.83,
-          "gaugeGain": 0,
-          "allowed_types": [
-            "break",
-            "armor_break",
-            "stagger",
-            "knockdown",
-            "knockup",
-            "blaze_attach",
-            "emag_attach",
-            "cold_attach",
-            "nature_attach",
-            "blaze_burst",
-            "emag_burst",
-            "cold_burst",
-            "nature_burst",
-            "burning",
-            "conductive",
-            "frozen",
-            "ice_shatter",
-            "corrosion"
-          ],
-          "anomalies": [],
-          "damage_ticks": []
-        },
-        {
-          "duration": 0.75,
+          "duration": 0.53,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -4943,15 +4928,15 @@
           "anomalies": [],
           "damage_ticks": [
             {
-              "offset": 0.75,
+              "offset": 0.27,
               "stagger": 0,
-              "sp": 18,
+              "sp": 0,
               "boundEffects": []
             }
           ]
         },
         {
-          "duration": 0,
+          "duration": 0.7,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -4974,10 +4959,23 @@
             "corrosion"
           ],
           "anomalies": [],
-          "damage_ticks": []
+          "damage_ticks": [
+            {
+              "offset": 0.03,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.23,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ]
         },
         {
-          "duration": 0,
+          "duration": 0.87,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -5000,10 +4998,23 @@
             "corrosion"
           ],
           "anomalies": [],
-          "damage_ticks": []
+          "damage_ticks": [
+            {
+              "offset": 0.03,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.13,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ]
         },
         {
-          "duration": 0,
+          "duration": 1.03,
           "gaugeGain": 0,
           "allowed_types": [
             "break",
@@ -5026,17 +5037,84 @@
             "corrosion"
           ],
           "anomalies": [],
-          "damage_ticks": []
+          "damage_ticks": [
+            {
+              "offset": 0.2,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.23,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.267,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.43,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.467,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ]
+        },
+        {
+          "duration": 1.03,
+          "gaugeGain": 0,
+          "allowed_types": [
+            "break",
+            "armor_break",
+            "stagger",
+            "knockdown",
+            "knockup",
+            "blaze_attach",
+            "emag_attach",
+            "cold_attach",
+            "nature_attach",
+            "blaze_burst",
+            "emag_burst",
+            "cold_burst",
+            "nature_burst",
+            "burning",
+            "conductive",
+            "frozen",
+            "ice_shatter",
+            "corrosion",
+            "talent_wulfa_02"
+          ],
+          "anomalies": [],
+          "damage_ticks": [
+            {
+              "offset": 0.5,
+              "stagger": 18,
+              "sp": 21,
+              "boundEffects": []
+            }
+          ]
         }
       ],
-      "skill_duration": 1.75,
+      "skill_duration": 1.27,
       "skill_spCost": 100,
-      "skill_gaugeGain": 0,
-      "skill_teamGaugeGain": 0,
+      "skill_gaugeGain": 6.5,
+      "skill_teamGaugeGain": 6.5,
       "skill_allowed_types": [
         "knockup",
         "break",
-        "ice_shatter"
+        "ice_shatter",
+        "wulfa_blood",
+        "talent_wulfa_02"
       ],
       "skill_anomalies": [
         [
@@ -5045,52 +5123,246 @@
             "type": "knockup",
             "stacks": 1,
             "duration": 0,
-            "offset": 1.6
+            "offset": 1.17
           }
         ]
       ],
       "skill_damage_ticks": [
         {
-          "offset": 1.6,
+          "offset": 0.53,
           "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 0.73,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 1.17,
+          "stagger": 5,
           "sp": 0,
           "boundEffects": [
             "po2hqi8"
           ]
         }
       ],
-      "skill_icon": "",
-      "link_duration": 1.3,
+      "skill_icon": "/avatars/ROSSI/icon_skill_wulfa_01.webp",
+      "link_duration": 0.7,
       "link_cooldown": 0,
       "link_gaugeGain": 0,
       "link_allowed_types": [],
       "link_anomalies": [],
-      "link_damage_ticks": [],
-      "link_icon": "",
-      "ultimate_duration": 5,
+      "link_damage_ticks": [
+        {
+          "offset": 0.4,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 0.63,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 0.67,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 0.7,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        }
+      ],
+      "link_icon": "/avatars/ROSSI/icon_combo_skill_wulfa_01.webp",
+      "ultimate_duration": 5.17,
       "ultimate_gaugeMax": 100,
       "ultimate_gaugeReply": 0,
       "ultimate_enhancementTime": 0,
       "ultimate_allowed_types": [
         "blaze_burst",
         "burning",
-        "blaze_attach"
+        "blaze_attach",
+        "talent_wulfa_02"
       ],
       "ultimate_anomalies": [
         [
           {
             "_id": "35u8nuo",
-            "type": "blaze_burst",
+            "type": "blaze_attach",
             "stacks": 1,
             "duration": 0,
-            "offset": 5
+            "offset": 4.37
           }
         ]
       ],
       "ultimate_damage_ticks": [
         {
-          "offset": 5,
+          "offset": 2.1,
           "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.17,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.2,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.3,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.37,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.47,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.5,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.567,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.6,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.67,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.77,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.8,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.9,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 2.93,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.07,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.13,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.2,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.23,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.3,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.4,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.43,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.53,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.6,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 3.7,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 4.07,
+          "stagger": 0,
+          "sp": 0,
+          "boundEffects": []
+        },
+        {
+          "offset": 4.37,
+          "stagger": 25,
           "sp": 0,
           "boundEffects": [
             "35u8nuo"
@@ -5098,7 +5370,7 @@
         }
       ],
       "ultimate_animationTime": 2.05,
-      "ultimate_icon": "",
+      "ultimate_icon": "/avatars/ROSSI/icon_ultimate_skill_wulfa_01.webp",
       "execution_duration": 1.5,
       "execution_allowed_types": [
         "break",
@@ -5118,12 +5390,162 @@
         "conductive",
         "frozen",
         "ice_shatter",
-        "corrosion"
+        "corrosion",
+        "talent_wulfa_02"
       ],
       "execution_anomalies": [],
       "execution_damage_ticks": [],
       "dodge_duration": 0.5,
-      "ultimate_element": "blaze"
+      "variants": [
+        {
+          "id": "v_1774882564197",
+          "name": "强化战技",
+          "type": "skill",
+          "duration": 1.47,
+          "icon": "/avatars/ROSSI/icon_skill_wulfa_01.webp",
+          "allowedTypes": [
+            "knockup",
+            "break",
+            "ice_shatter",
+            "wulfa_blood"
+          ],
+          "physicalAnomaly": [
+            [
+              {
+                "_id": "po2hqi8",
+                "type": "knockup",
+                "stacks": 1,
+                "duration": 0,
+                "offset": 1.17
+              }
+            ],
+            [
+              {
+                "_id": "fk805lb",
+                "type": "wulfa_blood",
+                "stacks": 1,
+                "duration": 25,
+                "offset": 1.37
+              }
+            ]
+          ],
+          "damageTicks": [
+            {
+              "offset": 0.53,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.73,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 1.17,
+              "stagger": 5,
+              "sp": 0,
+              "boundEffects": [
+                "po2hqi8"
+              ]
+            },
+            {
+              "offset": 1.37,
+              "stagger": 10,
+              "sp": 0,
+              "boundEffects": [
+                "fk805lb"
+              ]
+            }
+          ],
+          "spCost": 100,
+          "gaugeGain": 6.5,
+          "teamGaugeGain": 6.5
+        }
+      ],
+      "ultimate_element": "blaze",
+      "link_segments": [
+        {
+          "name": "洛茜·一段",
+          "duration": 0.7,
+          "cooldown": 0,
+          "gaugeGain": 10,
+          "icon": "/avatars/ROSSI/icon_combo_skill_wulfa_01.webp",
+          "allowed_types": [
+            "talent_wulfa_02"
+          ],
+          "anomalies": [],
+          "damage_ticks": [
+            {
+              "offset": 0.4,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.63,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.67,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.7,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            }
+          ],
+          "followup_delay": 1.23
+        },
+        {
+          "name": "洛茜·二段",
+          "duration": 1.73,
+          "cooldown": 15,
+          "gaugeGain": 10,
+          "icon": "/avatars/ROSSI/icon_combo_skill_wulfa_01.webp",
+          "allowed_types": [
+            "talent_wulfa_02",
+            "knockup",
+            "break",
+            "ice_shatter"
+          ],
+          "anomalies": [
+            [
+              {
+                "_id": "w9jl15y",
+                "type": "knockup",
+                "stacks": 1,
+                "duration": 0,
+                "offset": 0.9
+              }
+            ]
+          ],
+          "damage_ticks": [
+            {
+              "offset": 0.87,
+              "stagger": 0,
+              "sp": 0,
+              "boundEffects": []
+            },
+            {
+              "offset": 0.9,
+              "stagger": 5,
+              "sp": 0,
+              "boundEffects": [
+                "w9jl15y"
+              ]
+            }
+          ],
+          "followup_delay": 1
+        }
+      ]
     },
     {
       "id": "XAIHI",
@@ -9955,7 +10377,7 @@
       "staggerBreakDuration": 10,
       "executionRecovery": 50,
       "category": "天使",
-      "tier": "champion"
+      "tier": "head"
     },
     {
       "id": "eny_0087_wgslime",
@@ -10015,7 +10437,7 @@
       "staggerBreakDuration": 13,
       "executionRecovery": 50,
       "category": "天使",
-      "tier": "champion"
+      "tier": "head"
     },
     {
       "id": "eny_0105_wgslime2",
@@ -10412,6 +10834,102 @@
       "executionRecovery": 35,
       "category": "野外生物",
       "tier": "elite"
+    },
+    {
+      "id": "eny_0081_ruanyi",
+      "name": "阮一",
+      "avatar": "/Icon_Enemy/eny_0081_ruanyi.webp",
+      "maxStagger": 300,
+      "staggerNodeCount": 3,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 15,
+      "executionRecovery": 100,
+      "category": "沧贼",
+      "tier": "boss"
+    },
+    {
+      "id": "eny_0054_hsmino",
+      "name": "摧山将",
+      "avatar": "/Icon_Enemy/eny_0054_hsmino.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "沧贼",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0055_hscrane",
+      "name": "劫云客",
+      "avatar": "/Icon_Enemy/eny_0055_hscrane.webp",
+      "maxStagger": 110,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7,
+      "executionRecovery": 35,
+      "category": "沧贼",
+      "tier": "elite"
+    },
+    {
+      "id": "eny_0085_hsrogue",
+      "name": "割云翁",
+      "avatar": "/Icon_Enemy/eny_0085_hsrogue.webp",
+      "maxStagger": 110,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7,
+      "executionRecovery": 35,
+      "category": "沧贼",
+      "tier": "elite"
+    },
+    {
+      "id": "eny_0096_hsmob2",
+      "name": "莫惜命",
+      "avatar": "/Icon_Enemy/eny_0096_hsmob2.webp",
+      "maxStagger": 80,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "沧贼",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0103_hshunt2",
+      "name": "过堂风",
+      "avatar": "/Icon_Enemy/eny_0103_hshunt2.webp",
+      "maxStagger": 110,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 6,
+      "executionRecovery": 25,
+      "category": "沧贼",
+      "tier": "normal"
+    },
+    {
+      "id": "eny_0097_hsmino2",
+      "name": "开天将",
+      "avatar": "/Icon_Enemy/eny_0097_hsmino2.webp",
+      "maxStagger": 320,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 9,
+      "executionRecovery": 50,
+      "category": "沧贼",
+      "tier": "champion"
+    },
+    {
+      "id": "eny_0104_hsrogue2",
+      "name": "断云叟",
+      "avatar": "/Icon_Enemy/eny_0104_hsrogue2.webp",
+      "maxStagger": 110,
+      "staggerNodeCount": 0,
+      "staggerNodeDuration": 2,
+      "staggerBreakDuration": 7,
+      "executionRecovery": 35,
+      "category": "沧贼",
+      "tier": "champion"
     }
   ],
   "enemyCategories": [
