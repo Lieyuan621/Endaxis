@@ -5,6 +5,7 @@ import { useDragConnection } from '../composables/useDragConnection.js'
 import ActionLinkPorts from './ActionLinkPorts.vue'
 import { getRectPos } from '@/utils/layoutUtils.js'
 import { useI18n } from 'vue-i18n'
+import { snapTimeToFrame } from '@/utils/time.js'
 
 const props = defineProps({
   action: { type: Object, required: true },
@@ -84,6 +85,14 @@ const themeColor = computed(() => {
 })
 
 const actionLayout = computed(() => store.nodeRects[props.action.instanceId])
+const coverStartTime = computed(() => store.getActionCoverStartTime(props.action.instanceId))
+
+function isCoveredBeforeStart(startTime) {
+  const coverStart = coverStartTime.value
+  const itemStart = Number(startTime)
+  if (!Number.isFinite(coverStart) || !Number.isFinite(itemStart)) return false
+  return coverStart <= itemStart + 0.0001
+}
 
 function getDamageTickTitle(tick) {
   if (!tick) return ''
@@ -239,7 +248,7 @@ const enhancementMetrics = computed(() => {
   const baseDuration = ultimateMetrics?.baseDuration ?? time
 
   const shiftedEnhDuration = finalEnd - end
-  const extensionAmount = Math.round((shiftedEnhDuration - baseDuration) * 1000) / 1000
+  const extensionAmount = snapTimeToFrame(shiftedEnhDuration - baseDuration)
   const widthPx = store.timeToPx(finalEnd) - store.timeToPx(end)
 
   return { widthPx, extensionAmount }
@@ -288,6 +297,7 @@ const customBarsToRender = computed(() => {
 
     // 计算起始点的现实偏移
     const shiftedStartTimestamp = store.getShiftedEndTime(props.action.startTime, originalOffset, props.action.instanceId)
+    if (isCoveredBeforeStart(shiftedStartTimestamp)) return null
     const shiftedOffset = shiftedStartTimestamp - props.action.startTime
 
     // 计算受时停影响后的结束点，从而得出最终视觉时长
@@ -295,7 +305,7 @@ const customBarsToRender = computed(() => {
     const shiftedDuration = shiftedEndTimestamp - shiftedStartTimestamp
 
     // 计算延长量
-    const extensionAmount = Math.round((shiftedDuration - originalDuration) * 1000) / 1000
+    const extensionAmount = snapTimeToFrame(shiftedDuration - originalDuration)
 
     const base = Number(props.action.startTime) || 0
     const left = (store.timeToPx(shiftedStartTimestamp) - store.timeToPx(base)) - 2
@@ -305,7 +315,7 @@ const customBarsToRender = computed(() => {
     return {
       style: { width: `${width}px`, left: `${left}px`, bottom: `${bottomOffset}px`, pointerEvents: 'none', opacity: 0.6, zIndex: 5 - index },
       text: bar.text, originalDuration, extensionAmount,
-      displayDuration: Number(shiftedDuration.toFixed(1))
+      displayDuration: snapTimeToFrame(shiftedDuration)
     }
   }).filter(item => item !== null)
 })
@@ -362,7 +372,7 @@ const connectionSourceActionId = computed(() => {
 const renderableTicks = computed(() => {
   if (store.useNewCompiler) {
     const resolvedAction = store.compiledTimeline.actionMap.get(props.action.instanceId)
-    return resolvedAction?.resolvedDamageTicks.map(tick => {
+    return resolvedAction?.resolvedDamageTicks.filter(tick => !isCoveredBeforeStart(tick.realTime)).map(tick => {
         const left = store.timeToPx(tick.realTime) - store.timeToPx(resolvedAction.realStartTime)
         return {
             style: { left: `${left}px` },
@@ -376,12 +386,13 @@ const renderableTicks = computed(() => {
   return ticks.map(tick => {
     const originalOffset = tick.offset || 0
     const shiftedTimestamp = store.getShiftedEndTime(props.action.startTime, originalOffset, props.action.instanceId)
+    if (isCoveredBeforeStart(shiftedTimestamp)) return null
     const left = store.timeToPx(shiftedTimestamp) - store.timeToPx(props.action.startTime)
     return {
       style: { left: `${left}px` },
       data: tick
     }
-  })
+  }).filter(item => item !== null)
 })
 
 const renderableAnomalies = computed(() => {
@@ -399,6 +410,7 @@ const renderableAnomalies = computed(() => {
       
       const layout = store.effectLayouts.get(effectId)
       if (!layout) return
+      if (isCoveredBeforeStart(layout.startTime)) return
 
       resultRows.push({
         data: effect, 

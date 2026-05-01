@@ -7,6 +7,8 @@ import { ArrowRight } from '@element-plus/icons-vue'
 import { executeSave } from '@/api/saveStrategy.js'
 import { CORE_STATS } from '@/utils/coreStats.js'
 import { buildEffectBindingOptions } from '@/utils/effectBindingOptions.js'
+import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time.js'
+import { serializeGameData } from '@/utils/timeSerialization.js'
 import draggable from 'vuedraggable'
 
 const store = useTimelineStore()
@@ -89,6 +91,20 @@ const variantLinkSegmentIndexList = ref([])
 const linkSegmentIndex = ref(0)
 
 const ATTACK_SEGMENT_COUNT = 5
+
+function frameValue(value) {
+  return Math.max(0, timeToFrame(value))
+}
+
+function normalizeFrameTime(value) {
+  return Math.max(0, snapTimeToFrame(value))
+}
+
+function updateFrameField(target, key, rawValue) {
+  if (!target || typeof target !== 'object') return
+  const frameCount = Number(rawValue)
+  target[key] = Number.isFinite(frameCount) ? frameToTime(Math.max(0, frameCount)) : 0
+}
 
 function ensureAttackSegments(char) {
   if (!char) return
@@ -189,7 +205,7 @@ function ensureLinkSegments(char, { force = false } = {}) {
     seg.duration = Number(seg.duration) || 0
     seg.cooldown = Number(seg.cooldown) || 0
     seg.gaugeGain = Number(seg.gaugeGain) || 0
-    seg.followup_delay = Math.max(0, Math.round((Number(seg.followup_delay) || 0) * 1000) / 1000)
+    seg.followup_delay = normalizeFrameTime(seg.followup_delay)
     if (seg.icon !== undefined && typeof seg.icon !== 'string') delete seg.icon
     if (seg.name !== undefined && typeof seg.name !== 'string') delete seg.name
     if (!Array.isArray(seg.allowed_types)) seg.allowed_types = []
@@ -279,15 +295,13 @@ function removeLinkSegment(char) {
 function ensureVariantLinkSegments(variant, { force = false } = {}) {
   if (!variant || variant.type !== 'link') return
 
-  const round3 = (v) => Math.max(0, Math.round((Number(v) || 0) * 1000) / 1000)
-
   const sanitizeSeg = (seg) => {
     if (!seg || typeof seg !== 'object') return
     seg.type = 'link'
     seg.duration = Number(seg.duration) || 0
     seg.cooldown = Number(seg.cooldown) || 0
     seg.gaugeGain = Number(seg.gaugeGain) || 0
-    seg.followupDelay = round3(seg.followupDelay)
+    seg.followupDelay = normalizeFrameTime(seg.followupDelay)
     if (!Array.isArray(seg.allowedTypes)) seg.allowedTypes = []
     if (!Array.isArray(seg.physicalAnomaly)) seg.physicalAnomaly = []
     if (!Array.isArray(seg.damageTicks)) seg.damageTicks = []
@@ -418,7 +432,7 @@ function getVariantAttackTotalDuration(variant) {
   ensureVariantAttackSegments(variant, selectedChar.value)
   const segs = Array.isArray(variant.attackSegments) ? variant.attackSegments : []
   const total = segs.reduce((acc, s) => acc + (Number(s?.duration) || 0), 0)
-  return Math.round(total * 1000) / 1000
+  return snapTimeToFrame(total)
 }
 
 function getVariantAttackSegIndex(variantIdx) {
@@ -645,7 +659,7 @@ const attackTotalDuration = computed(() => {
   const list = Array.isArray(char.attack_segments) ? char.attack_segments : null
   if (!list) return Number(char.attack_duration) || 0
   const total = list.reduce((acc, seg) => acc + (Number(seg?.duration) || 0), 0)
-  return Math.round(total * 1000) / 1000
+  return snapTimeToFrame(total)
 })
 
 function applyAttackSegmentToAll({ includeDuration = false } = {}) {
@@ -1896,13 +1910,13 @@ function getCategorySetBonusDuration(category) {
   ensureEquipmentCategoryConfig(category)
   const raw = equipmentCategoryConfigs.value?.[category]?.setBonus?.duration
   const num = Number(raw)
-  return Number.isFinite(num) ? Math.max(0, num) : 0
+  return Number.isFinite(num) ? frameValue(num) : 0
 }
 
 function setCategorySetBonusDuration(category, value) {
   ensureEquipmentCategoryConfig(category)
   const num = Number(value)
-  equipmentCategoryConfigs.value[category].setBonus.duration = Number.isFinite(num) ? Math.max(0, num) : 0
+  equipmentCategoryConfigs.value[category].setBonus.duration = Number.isFinite(num) ? frameToTime(Math.max(0, num)) : 0
 }
 
 // === 判定点逻辑 (Damage Ticks) ===
@@ -2441,7 +2455,7 @@ function normalizeCharacterForSave(char) {
       seg.duration = Number(seg.duration) || 0
       seg.cooldown = Number(seg.cooldown) || 0
       seg.gaugeGain = Number(seg.gaugeGain) || 0
-      seg.followup_delay = Math.max(0, Math.round((Number(seg.followup_delay) || 0) * 1000) / 1000)
+      seg.followup_delay = normalizeFrameTime(seg.followup_delay)
 
       if (seg.element !== undefined && typeof seg.element !== 'string') delete seg.element
       if (seg.icon !== undefined && typeof seg.icon !== 'string') delete seg.icon
@@ -2479,8 +2493,7 @@ function normalizeCharacterForSave(char) {
           normalizeDamageTicks(seg.damageTicks)
           ensureEffectIds(seg.physicalAnomaly)
           if (!Array.isArray(seg.allowedTypes)) seg.allowedTypes = []
-          const rawDelay = Number(seg.followupDelay)
-          seg.followupDelay = Number.isFinite(rawDelay) ? Math.max(0, Math.round(rawDelay * 1000) / 1000) : 0
+          seg.followupDelay = normalizeFrameTime(seg.followupDelay)
         }
         if (variant.segments[variant.segments.length - 1]) variant.segments[variant.segments.length - 1].followupDelay = 0
       } else {
@@ -2644,7 +2657,7 @@ function saveData() {
     equipmentCategoryConfigs: equipmentCategoryConfigs.value,
     misc: misc.value
   }
-  executeSave(dataToSave)
+  executeSave(serializeGameData(dataToSave))
 }
 </script>
 
@@ -3063,7 +3076,7 @@ function saveData() {
                   <input v-model="variant.icon" type="text"/>
                 </div>
 
-                <div class="form-group" v-if="variant.type !== 'attack' && !(variant.type === 'link' && Array.isArray(variant.segments))"><label>持续时间</label><input type="number" step="0.1" v-model.number="variant.duration"></div>
+                <div class="form-group" v-if="variant.type !== 'attack' && !(variant.type === 'link' && Array.isArray(variant.segments))"><label>持续时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(variant.duration)" @input="updateFrameField(variant, 'duration', $event.target.value)"></div>
 
                 <template v-if="variant.type === 'attack'">
                   <div class="form-group">
@@ -3072,8 +3085,8 @@ function saveData() {
                       <el-option v-for="i in ATTACK_SEGMENT_COUNT" :key="`vseg_${idx}_${i}`" :label="`第${i}段`" :value="i - 1" />
                     </el-select>
                   </div>
-                  <div class="form-group"><label>总时长 (s)</label><input type="number" :value="getVariantAttackTotalDuration(variant)" disabled></div>
-                  <div class="form-group"><label>本段时长 (s)</label><input type="number" step="0.1" v-model.number="variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].duration"></div>
+                  <div class="form-group"><label>总时长 (f)</label><input type="number" :value="frameValue(getVariantAttackTotalDuration(variant))" disabled></div>
+                  <div class="form-group"><label>本段时长 (f)</label><input type="number" step="1" min="0" :value="frameValue(variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].duration)" @input="updateFrameField(variant.attackSegments[variantAttackSegmentIndexList[idx] || 0], 'duration', $event.target.value)"></div>
                   <div class="form-group"><label>本段自身充能</label><input type="number" v-model.number="variant.attackSegments[variantAttackSegmentIndexList[idx] || 0].gaugeGain"></div>
                   <div class="form-group full-width">
                     <button class="ea-btn ea-btn--block ea-btn--dashed-muted" @click="ensureVariantAttackSegments(variant, selectedChar, { force: true })">从基础重击重新深拷贝 5 段</button>
@@ -3108,8 +3121,8 @@ function saveData() {
                       </el-select>
                     </div>
                     <div class="form-group" v-if="(variantLinkSegmentIndexList[idx] || 0) < (variant.segments.length - 1)">
-                      <label>到下一段间隔 (s)</label>
-                      <input type="number" step="0.001" v-model.number="variant.segments[variantLinkSegmentIndexList[idx] || 0].followupDelay">
+                      <label>到下一段间隔 (f)</label>
+                      <input type="number" step="1" min="0" :value="frameValue(variant.segments[variantLinkSegmentIndexList[idx] || 0].followupDelay)" @input="updateFrameField(variant.segments[variantLinkSegmentIndexList[idx] || 0], 'followupDelay', $event.target.value)">
                     </div>
                     <div class="form-group">
                       <label>本段显示名称</label>
@@ -3120,12 +3133,12 @@ function saveData() {
                       <input v-model="variant.segments[variantLinkSegmentIndexList[idx] || 0].icon" type="text"/>
                     </div>
                     <div class="form-group">
-                      <label>本段持续时间 (s)</label>
-                      <input type="number" step="0.1" v-model.number="variant.segments[variantLinkSegmentIndexList[idx] || 0].duration">
+                      <label>本段持续时间 (f)</label>
+                      <input type="number" step="1" min="0" :value="frameValue(variant.segments[variantLinkSegmentIndexList[idx] || 0].duration)" @input="updateFrameField(variant.segments[variantLinkSegmentIndexList[idx] || 0], 'duration', $event.target.value)">
                     </div>
                     <div class="form-group">
-                      <label>本段冷却时间 (CD)</label>
-                      <input type="number" step="0.001" v-model.number="variant.segments[variantLinkSegmentIndexList[idx] || 0].cooldown">
+                      <label>本段冷却时间 (f)</label>
+                      <input type="number" step="1" min="0" :value="frameValue(variant.segments[variantLinkSegmentIndexList[idx] || 0].cooldown)" @input="updateFrameField(variant.segments[variantLinkSegmentIndexList[idx] || 0], 'cooldown', $event.target.value)">
                     </div>
                     <div class="form-group">
                       <label>本段自身充能</label>
@@ -3133,14 +3146,14 @@ function saveData() {
                     </div>
                   </template>
 
-                  <div class="form-group" v-if="!Array.isArray(variant.segments)"><label>冷却时间 (CD)</label><input type="number" v-model.number="variant.cooldown"></div>
+                  <div class="form-group" v-if="!Array.isArray(variant.segments)"><label>冷却时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(variant.cooldown)" @input="updateFrameField(variant, 'cooldown', $event.target.value)"></div>
                   <div class="form-group" v-if="!Array.isArray(variant.segments)"><label>自身充能</label><input type="number" v-model.number="variant.gaugeGain"></div>
                 </template>
 
                 <div class="form-group" v-if="variant.type === 'ultimate'"><label>充能消耗</label><input type="number" v-model.number="variant.gaugeCost"></div>
                 <div class="form-group" v-if="variant.type === 'ultimate'"><label>充能返还</label><input type="number" v-model.number="variant.gaugeGain"></div>
-                <div class="form-group" v-if="variant.type === 'ultimate'"><label>强化时间 (s)</label><input type="number" step="0.5" v-model.number="variant.enhancementTime"></div>
-                <div class="form-group" v-if="variant.type === 'ultimate'"><label>动画时间 (s)</label><input type="number" step="0.1" v-model.number="variant.animationTime"></div>
+                <div class="form-group" v-if="variant.type === 'ultimate'"><label>强化时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(variant.enhancementTime)" @input="updateFrameField(variant, 'enhancementTime', $event.target.value)"></div>
+                <div class="form-group" v-if="variant.type === 'ultimate'"><label>动画时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(variant.animationTime)" @input="updateFrameField(variant, 'animationTime', $event.target.value)"></div>
               </div>
 
               <div class="ticks-editor-area" style="margin-top: 10px;">
@@ -3150,7 +3163,7 @@ function saveData() {
                   <div class="tick-top">
                     <div class="tick-idx">HIT {{ tIdx + 1 }}</div>
                     <div class="tick-inputs">
-                      <div class="t-group"><label>时间(s)</label><input type="number" v-model.number="tick.offset" step="any" class="mini-input"></div>
+                      <div class="t-group"><label>时间(f)</label><input type="number" step="1" min="0" :value="frameValue(tick.offset)" @input="updateFrameField(tick, 'offset', $event.target.value)" class="mini-input"></div>
                       <div class="t-group"><label style="color:#ff7875">失衡值</label><input type="number" v-model.number="tick.stagger" class="mini-input"></div>
                       <div class="t-group"><label style="color:#ffd700">回复技力</label><input type="number" v-model.number="tick.sp" class="mini-input"></div>
                     </div>
@@ -3241,15 +3254,15 @@ function saveData() {
                         <div class="prop-item">
                           <label>触发 (Start)</label>
                           <div class="input-with-unit">
-                            <input type="number" v-model.number="item.offset" placeholder="0" step="0.1" class="mini-input">
-                            <span class="unit">s</span>
+                            <input type="number" :value="frameValue(item.offset)" @input="updateFrameField(item, 'offset', $event.target.value)" placeholder="0" step="1" min="0" class="mini-input">
+                            <span class="unit">f</span>
                           </div>
                         </div>
                         <div class="prop-item">
                           <label>持续 (Dur)</label>
                           <div class="input-with-unit">
-                            <input type="number" v-model.number="item.duration" placeholder="0" step="0.5" class="mini-input">
-                            <span class="unit">s</span>
+                            <input type="number" :value="frameValue(item.duration)" @input="updateFrameField(item, 'duration', $event.target.value)" placeholder="0" step="1" min="0" class="mini-input">
+                            <span class="unit">f</span>
                           </div>
                         </div>
                       </div>
@@ -3280,14 +3293,14 @@ function saveData() {
                   >第{{ i }}段</button>
                 </div>
                 <div class="attack-seg-meta">
-                  <span class="meta-item">总时长：{{ attackTotalDuration }}s</span>
+                  <span class="meta-item">总时长：{{ frameValue(attackTotalDuration) }}f</span>
                   <button class="ea-btn ea-btn--glass-cut ea-btn--sm" @click="applyAttackSegmentToAll({ includeDuration: false })">批量覆盖（不含时长）</button>
                   <button class="ea-btn ea-btn--glass-cut ea-btn--sm" @click="applyAttackSegmentToAll({ includeDuration: true })">批量覆盖（含时长）</button>
                 </div>
               </div>
 
               <div v-if="type === 'attack' && currentAttackSegment" class="form-grid three-col">
-                <div class="form-group"><label>本段持续时间 (s)</label><input type="number" step="0.1" v-model.number="currentAttackSegment.duration"></div>
+                <div class="form-group"><label>本段持续时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(currentAttackSegment.duration)" @input="updateFrameField(currentAttackSegment, 'duration', $event.target.value)"></div>
                 <div class="form-group"><label>本段自身充能</label><input type="number" v-model.number="currentAttackSegment.gaugeGain"></div>
               </div>
 
@@ -3321,12 +3334,12 @@ function saveData() {
                        <input v-model="selectedChar.link_segments[linkSegmentIndex].icon" type="text"/>
                      </div>
                      <div class="form-group">
-                       <label>本段持续时间 (s)</label>
-                       <input type="number" step="0.1" v-model.number="selectedChar.link_segments[linkSegmentIndex].duration">
+                       <label>本段持续时间 (f)</label>
+                       <input type="number" step="1" min="0" :value="frameValue(selectedChar.link_segments[linkSegmentIndex].duration)" @input="updateFrameField(selectedChar.link_segments[linkSegmentIndex], 'duration', $event.target.value)">
                      </div>
                      <div class="form-group">
-                       <label>本段冷却时间 (s)</label>
-                       <input type="number" step="0.001" v-model.number="selectedChar.link_segments[linkSegmentIndex].cooldown">
+                       <label>本段冷却时间 (f)</label>
+                       <input type="number" step="1" min="0" :value="frameValue(selectedChar.link_segments[linkSegmentIndex].cooldown)" @input="updateFrameField(selectedChar.link_segments[linkSegmentIndex], 'cooldown', $event.target.value)">
                      </div>
                      <div class="form-group">
                        <label>本段自身充能</label>
@@ -3334,8 +3347,8 @@ function saveData() {
                      </div>
                    </div>
                    <div class="form-group full-width" v-if="linkSegmentIndex < (selectedChar.link_segments.length - 1)">
-                     <label>到下一段间隔 (s)</label>
-                     <input type="number" step="0.001" v-model.number="selectedChar.link_segments[linkSegmentIndex].followup_delay">
+                     <label>到下一段间隔 (f)</label>
+                     <input type="number" step="1" min="0" :value="frameValue(selectedChar.link_segments[linkSegmentIndex].followup_delay)" @input="updateFrameField(selectedChar.link_segments[linkSegmentIndex], 'followup_delay', $event.target.value)">
                    </div>
                  </template>
 
@@ -3346,7 +3359,7 @@ function saveData() {
                    </div>
 
                    <div class="form-group" v-if="['skill', 'link', 'ultimate'].includes(type)"><label>自定义图标路径</label><input v-model="selectedChar[`${type}_icon`]" type="text"/></div>
-                   <div class="form-group"><label>持续时间 (s)</label><input type="number" step="0.1" v-model.number="selectedChar[`${type}_duration`]"></div>
+                   <div class="form-group"><label>持续时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(selectedChar[`${type}_duration`])" @input="updateFrameField(selectedChar, `${type}_duration`, $event.target.value)"></div>
                  </template>
 
                 <div class="form-group" v-if="type === 'skill'"><label>技力消耗</label><input type="number" v-model.number="selectedChar[`${type}_spCost`]"></div>
@@ -3354,16 +3367,16 @@ function saveData() {
                 <div class="form-group" v-if="type === 'skill'"><label>队友充能</label><input type="number" v-model.number="selectedChar[`${type}_teamGaugeGain`]"></div>
 
                  <template v-if="type === 'link' && !Array.isArray(selectedChar.link_segments)">
-                   <div class="form-group"><label>冷却时间 (s)</label><input type="number" v-model.number="selectedChar[`${type}_cooldown`]"></div>
+                   <div class="form-group"><label>冷却时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(selectedChar[`${type}_cooldown`])" @input="updateFrameField(selectedChar, `${type}_cooldown`, $event.target.value)"></div>
                    <div class="form-group"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeGain`]"></div>
                  </template>
 
                 <div class="form-group" v-if="type === 'ultimate'"><label>充能消耗</label><input type="number" v-model.number="selectedChar[`${type}_gaugeMax`]"></div>
                 <div class="form-group" v-if="type === 'ultimate'"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeReply`]"></div>
-                <div class="form-group" v-if="type === 'ultimate'"><label>强化时间 (s)</label><input type="number" step="0.5" v-model.number="selectedChar[`${type}_enhancementTime`]"></div>
+                <div class="form-group" v-if="type === 'ultimate'"><label>强化时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(selectedChar[`${type}_enhancementTime`])" @input="updateFrameField(selectedChar, `${type}_enhancementTime`, $event.target.value)"></div>
                 <div class="form-group" v-if="type === 'ultimate'">
-                  <label>动画时间 (s)</label>
-                  <input type="number" step="0.1" v-model.number="selectedChar[`${type}_animationTime`]">
+                  <label>动画时间 (f)</label>
+                  <input type="number" step="1" min="0" :value="frameValue(selectedChar[`${type}_animationTime`])" @input="updateFrameField(selectedChar, `${type}_animationTime`, $event.target.value)">
                 </div>
               </div>
 
@@ -3377,7 +3390,7 @@ function saveData() {
                   <div class="tick-top">
                     <div class="tick-idx">HIT {{ tIdx + 1 }}</div>
                     <div class="tick-inputs">
-                      <div class="t-group"><label>时间(s)</label><input type="number" v-model.number="tick.offset" step="any" class="mini-input"></div>
+                      <div class="t-group"><label>时间(f)</label><input type="number" step="1" min="0" :value="frameValue(tick.offset)" @input="updateFrameField(tick, 'offset', $event.target.value)" class="mini-input"></div>
                       <div class="t-group"><label style="color:#ff7875">失衡值</label><input type="number" v-model.number="tick.stagger" class="mini-input"></div>
                       <div class="t-group"><label style="color:#ffd700">回复技力</label><input type="number" v-model.number="tick.sp" class="mini-input"></div>
                     </div>
@@ -3468,15 +3481,15 @@ function saveData() {
                         <div class="prop-item">
                           <label>触发</label>
                           <div class="input-with-unit">
-                            <input type="number" v-model.number="item.offset" placeholder="0" step="0.1" class="mini-input">
-                            <span class="unit">s</span>
+                            <input type="number" :value="frameValue(item.offset)" @input="updateFrameField(item, 'offset', $event.target.value)" placeholder="0" step="1" min="0" class="mini-input">
+                            <span class="unit">f</span>
                           </div>
                         </div>
                         <div class="prop-item">
                           <label>持续</label>
                           <div class="input-with-unit">
-                            <input type="number" v-model.number="item.duration" placeholder="0" step="0.5" class="mini-input">
-                            <span class="unit">s</span>
+                            <input type="number" :value="frameValue(item.duration)" @input="updateFrameField(item, 'duration', $event.target.value)" placeholder="0" step="1" min="0" class="mini-input">
+                            <span class="unit">f</span>
                           </div>
                         </div>
                       </div>
@@ -3542,8 +3555,8 @@ function saveData() {
           <div class="form-grid three-col">
             <div class="form-group"><label style="color:#ff7875">失衡上限</label><input type="number" v-model.number="selectedEnemy.maxStagger"></div>
             <div class="form-group"><label style="color:#ff7875">失衡节点数</label><input type="number" v-model.number="selectedEnemy.staggerNodeCount"></div>
-            <div class="form-group"><label style="color:#ff7875">踉跄时长 (s)</label><input type="number" step="0.1" v-model.number="selectedEnemy.staggerNodeDuration"></div>
-            <div class="form-group"><label style="color:#ff7875">失衡时长 (s)</label><input type="number" step="0.5" v-model.number="selectedEnemy.staggerBreakDuration"></div>
+            <div class="form-group"><label style="color:#ff7875">踉跄时长 (f)</label><input type="number" step="1" min="0" :value="frameValue(selectedEnemy.staggerNodeDuration)" @input="updateFrameField(selectedEnemy, 'staggerNodeDuration', $event.target.value)"></div>
+            <div class="form-group"><label style="color:#ff7875">失衡时长 (f)</label><input type="number" step="1" min="0" :value="frameValue(selectedEnemy.staggerBreakDuration)" @input="updateFrameField(selectedEnemy, 'staggerBreakDuration', $event.target.value)"></div>
             <div class="form-group"><label style="color:#ffd700">处决回复技力</label><input type="number" v-model.number="selectedEnemy.executionRecovery"></div>
           </div>
         </div>
@@ -3605,11 +3618,11 @@ function saveData() {
               <input :value="selectedEquipment.category || ''" disabled />
             </div>
             <div class="form-group">
-              <label>持续时间 (s)</label>
+              <label>持续时间 (f)</label>
               <input
                   type="number"
                   min="0"
-                  step="0.1"
+                  step="1"
                   :value="getCategorySetBonusDuration(selectedEquipment.category)"
                   @input="setCategorySetBonusDuration(selectedEquipment.category, $event.target.value)"
               />
@@ -4022,8 +4035,8 @@ function saveData() {
                   <input v-model="selectedWeapon.buffName" type="text" />
                 </div>
                 <div class="form-group">
-                  <label>持续时间 (s)</label>
-                  <input type="number" min="0" step="0.1" v-model.number="selectedWeapon.duration">
+                  <label>持续时间 (f)</label>
+                  <input type="number" min="0" step="1" :value="frameValue(selectedWeapon.duration)" @input="updateFrameField(selectedWeapon, 'duration', $event.target.value)">
                 </div>
               </div>
             </div>

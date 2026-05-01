@@ -390,15 +390,15 @@
       "basic": "Базовые атрибуты"
     },
     "labels": {
-      "durationS": "Время(с)",
-      "cooldownS": "КД(с)",
-      "triggerWindowS": "Активация(с)",
+      "durationS": "Время(f)",
+      "cooldownS": "КД(f)",
+      "triggerWindowS": "Активация(f)",
       "spCost": "Расход ОН",
       "gaugeCost": "Стоимость заряда",
       "gaugeGain": "ОН",
       "teamGaugeGain": "ОН (общ.)",
-      "enhancementTimeS": "Время усиления (с)",
-      "followupDelayS": "Задержка до следующей (с)",
+      "enhancementTimeS": "Время усиления (f)",
+      "followupDelayS": "Задержка до следующей (f)",
       "comboSegment": "Сегмент комбо",
       "comboLink": "Связь комбо"
     },
@@ -424,8 +424,8 @@
       "activeItems": "Активные записи",
       "empty": "Нет таймлайнов",
       "namePlaceholder": "Имя записи",
-      "offsetS": "Активация (с)",
-      "durationS": "Время (с)"
+      "offsetS": "Активация (f)",
+      "durationS": "Время (f)"
     },
     "effects": {
       "title": "Статус эффекты",

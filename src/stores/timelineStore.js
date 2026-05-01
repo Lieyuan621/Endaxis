@@ -10,6 +10,8 @@ import { projectSpSeries } from '@/simulation/projection/projectSpSeries'
 import { projectStaggerSeries } from '@/simulation/projection/projectStaggerSeries'
 import { i18n } from '@/i18n'
 import { snapMs } from '@/utils/precision.js'
+import { FRAME_DURATION, formatFrameCount, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time.js'
+import { deserializeGameData, deserializeProjectData, serializeProjectData } from '@/utils/timeSerialization.js'
 
 const tr = (key, params) => i18n.global.t(key, params)
 const getI18nSkillType = (type) => {
@@ -21,7 +23,8 @@ const getI18nSkillType = (type) => {
 const uid = () => Math.random().toString(36).substring(2, 9)
 const ATTACK_SEGMENT_COUNT = 5
 const COLLAPSED_PREP_PX = 18
-const MIN_PREP_DURATION = 0.5
+const MIN_PREP_DURATION = FRAME_DURATION
+const COARSE_SNAP_STEP = FRAME_DURATION * 6
 const EQUIPMENT_REFINE_MAX_TIER = 3
 
 const createOwnSkillLinkEnhancer = ({ linkSubtract = 0.0 } = {}) => {
@@ -256,12 +259,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         const bt = toBattleTime(viewTime)
         if (!Number.isFinite(bt)) return ''
         const sign = bt < 0 ? '-' : ''
-        const abs = Math.abs(bt)
-        const totalFrames = Math.round(abs * 60)
-        const s = Math.floor(totalFrames / 60)
-        const f = totalFrames % 60
-        if (f === 0) return `${sign}${s}s`
-        return `${sign}${s}s ${f.toString().padStart(2, '0')}f`
+        return `${sign}${formatFrameCount(Math.abs(bt))}`
     }
 
     const ELEMENT_COLORS = {
@@ -670,7 +668,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const showCursorGuide = ref(false)
     const cursorPosition = ref({ x: 0, y: 0 })
-    const snapStep = ref(0.1)
+    const snapStep = ref(FRAME_DURATION)
 
     const draggingSkillData = ref(null)
 
@@ -700,7 +698,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const cursorCurrentTime = computed(() => {
         const exactTime = pxToTime(cursorPosTimeline.value.x)
         const clamped = Math.min(Math.max(0, exactTime), viewDuration.value)
-        return snapMs(clamped)
+        return snapTimeToFrame(clamped)
     })
 
     function setIsCapturing(val) { isCapturing.value = val }
@@ -1613,11 +1611,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const formatTimeLabel = (time) => {
         if (time === undefined || time === null) return '';
-        const totalFrames = Math.round(time * 60);
-        const s = Math.floor(totalFrames / 60);
-        const f = totalFrames % 60;
-        if (f === 0) return `${s}s`;
-        return `${s}s ${f.toString().padStart(2, '0')}f`;
+        return formatTimeWithFrames(time);
     };
 
     const activeSkillLibrary = computed(() => {
@@ -1693,7 +1687,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                         const segGaugeGain = Number(seg?.gaugeGain) || 0
                         const segFollowupDelayRaw = Number(seg?.followup_delay)
                         const segFollowupDelay = (idx < list.length - 1 && Number.isFinite(segFollowupDelayRaw))
-                            ? snapMs(Math.max(0, segFollowupDelayRaw))
+                            ? snapTimeToFrame(Math.max(0, segFollowupDelayRaw))
                             : 0
 
                         const segTicks = seg?.damage_ticks
@@ -2083,10 +2077,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     function toggleCursorGuide() { showCursorGuide.value = !showCursorGuide.value }
     function toggleBoxSelectMode() { if (!isBoxSelectMode.value) connectionDragState.value.isDragging = false; isBoxSelectMode.value = !isBoxSelectMode.value }
     function toggleSnapStep() {
-        if (snapStep.value > 0.02) {
-            snapStep.value = 1 / 60;
+        if (snapStep.value > FRAME_DURATION) {
+            snapStep.value = FRAME_DURATION;
         } else {
-            snapStep.value = 0.1;
+            snapStep.value = COARSE_SNAP_STEP;
         }
     }
 
@@ -2294,7 +2288,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                         continue
                     }
                     const raw = Number(a.comboFollowupDelay)
-                    a.comboFollowupDelay = Number.isFinite(raw) ? snapMs(Math.max(0, raw)) : 0
+                    a.comboFollowupDelay = Number.isFinite(raw) ? snapTimeToFrame(Math.max(0, raw)) : 0
                 }
             }
         }
@@ -2361,7 +2355,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 if (index >= total - 1) return 0
                 const segDelayRaw = Number(rawSeg?.followupDelay)
                 if (!Number.isFinite(segDelayRaw)) return 0
-                return snapMs(Math.max(0, segDelayRaw))
+                return snapTimeToFrame(Math.max(0, segDelayRaw))
             }
 
             const inserted = []
@@ -2384,7 +2378,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 inserted.push(action)
 
                 const end = (Number(action.startTime) || 0) + (Number(action.duration) || 0)
-                cursor = snapMs(end + delay)
+                cursor = snapTimeToFrame(end + delay)
             }
 
             for (let i = 0; i < inserted.length; i++) {
@@ -2752,7 +2746,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             if (!action) return false
             const raw = Number(nextStart)
             if (!Number.isFinite(raw)) return false
-            const clamped = raw < 0 ? 0 : raw
+            const clamped = raw < 0 ? 0 : snapTimeToFrame(raw)
             const prev = Number(action.startTime) || 0
             if (Math.abs(prev - clamped) < 0.0001) return false
             action.startTime = clamped
@@ -2793,14 +2787,14 @@ export const useTimelineStore = defineStore('timeline', () => {
                         for (let i = 0; i < total - 1; i++) {
                             const end = computeEnd(sorted[i])
                             const nextStart = Number(sorted[i + 1].startTime) || 0
-                            sorted[i].comboFollowupDelay = snapMs(Math.max(0, nextStart - end))
+                            sorted[i].comboFollowupDelay = snapTimeToFrame(Math.max(0, nextStart - end))
                         }
                         sorted[total - 1].comboFollowupDelay = 0
                         for (let i = 0; i < total - 1; i++) {
                             const end = computeEnd(sorted[i])
-                            const delay = snapMs(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
+                            const delay = snapTimeToFrame(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
                             sorted[i].comboFollowupDelay = delay
-                            anyStartChanged = applyStart(sorted[i + 1], snapMs(end + delay)) || anyStartChanged
+                            anyStartChanged = applyStart(sorted[i + 1], snapTimeToFrame(end + delay)) || anyStartChanged
                         }
                     }
                 }
@@ -2810,12 +2804,12 @@ export const useTimelineStore = defineStore('timeline', () => {
                     if (delayTouched) {
                         if (idx0 < total - 1) {
                             const rawDelay = Number(found.comboFollowupDelay)
-                            found.comboFollowupDelay = Number.isFinite(rawDelay) ? snapMs(Math.max(0, rawDelay)) : 0
+                            found.comboFollowupDelay = Number.isFinite(rawDelay) ? snapTimeToFrame(Math.max(0, rawDelay)) : 0
                             for (let i = idx0; i < total - 1; i++) {
                                 const end = computeEnd(sorted[i])
-                                const delay = snapMs(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
+                                const delay = snapTimeToFrame(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
                                 sorted[i].comboFollowupDelay = delay
-                                anyStartChanged = applyStart(sorted[i + 1], snapMs(end + delay)) || anyStartChanged
+                                anyStartChanged = applyStart(sorted[i + 1], snapTimeToFrame(end + delay)) || anyStartChanged
                             }
                         } else {
                             found.comboFollowupDelay = 0
@@ -2832,14 +2826,14 @@ export const useTimelineStore = defineStore('timeline', () => {
                         } else {
                             const prev = sorted[idx0 - 1]
                             const prevEnd = computeEnd(prev)
-                            const desiredDelay = snapMs(Math.max(0, (Number(found.startTime) || 0) - prevEnd))
+                            const desiredDelay = snapTimeToFrame(Math.max(0, (Number(found.startTime) || 0) - prevEnd))
                             prev.comboFollowupDelay = desiredDelay
-                            anyStartChanged = applyStart(found, snapMs(prevEnd + desiredDelay)) || anyStartChanged
+                            anyStartChanged = applyStart(found, snapTimeToFrame(prevEnd + desiredDelay)) || anyStartChanged
                             for (let i = idx0; i < total - 1; i++) {
                                 const end = computeEnd(sorted[i])
-                                const delay = snapMs(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
+                                const delay = snapTimeToFrame(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
                                 sorted[i].comboFollowupDelay = delay
-                                anyStartChanged = applyStart(sorted[i + 1], snapMs(end + delay)) || anyStartChanged
+                                anyStartChanged = applyStart(sorted[i + 1], snapTimeToFrame(end + delay)) || anyStartChanged
                             }
                         }
                     }
@@ -2847,9 +2841,9 @@ export const useTimelineStore = defineStore('timeline', () => {
                     if (durationTouched && idx0 < total - 1) {
                         for (let i = idx0; i < total - 1; i++) {
                             const end = computeEnd(sorted[i])
-                            const delay = snapMs(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
+                            const delay = snapTimeToFrame(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0))
                             sorted[i].comboFollowupDelay = delay
-                            anyStartChanged = applyStart(sorted[i + 1], snapMs(end + delay)) || anyStartChanged
+                            anyStartChanged = applyStart(sorted[i + 1], snapTimeToFrame(end + delay)) || anyStartChanged
                         }
                     }
                 }
@@ -2857,7 +2851,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
 
         if (startTouched) {
-            found.logicalStartTime = Number(found.startTime) || 0
+            found.logicalStartTime = snapTimeToFrame(Number(found.startTime) || 0)
             anyStartChanged = true
         }
 
@@ -3001,7 +2995,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 if (targets.has(action.instanceId) && !action.isLocked) {
                     if (action.logicalStartTime === undefined) action.logicalStartTime = action.startTime
 
-                    let newLogicalTime = snapMs(action.logicalStartTime + delta)
+                    let newLogicalTime = snapTimeToFrame(action.logicalStartTime + delta)
                     if (newLogicalTime < 0) newLogicalTime = 0
 
                     if (action.logicalStartTime !== newLogicalTime) {
@@ -3065,7 +3059,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             case 'RR': newStartTime = tEnd - sDur; break // [右对齐]
         }
 
-        newStartTime = snapMs(newStartTime)
+        newStartTime = snapTimeToFrame(newStartTime)
 
         if (sourceAction.startTime !== newStartTime) {
             sourceAction.startTime = newStartTime
@@ -3079,6 +3073,106 @@ export const useTimelineStore = defineStore('timeline', () => {
         return false
     }
 
+    function buildVisibleEndMap(items, {
+        getId,
+        getTrackIndex,
+        getStart,
+        getEnd,
+        isVisible = () => true,
+    }) {
+        const trackBuckets = new Map()
+        items.forEach((item, originalIndex) => {
+            if (!item || !isVisible(item)) return
+            const trackIndex = Number(getTrackIndex(item))
+            if (!Number.isFinite(trackIndex)) return
+            const start = Number(getStart(item)) || 0
+            const end = Number(getEnd(item)) || start
+            const normalizedEnd = end < start ? start : end
+            if (!trackBuckets.has(trackIndex)) trackBuckets.set(trackIndex, [])
+            trackBuckets.get(trackIndex).push({
+                item,
+                originalIndex,
+                start,
+                end: normalizedEnd,
+            })
+        })
+
+        const visibleEndMap = new Map()
+        trackBuckets.forEach((bucket) => {
+            bucket.sort((a, b) => {
+                if (a.start !== b.start) return a.start - b.start
+                return a.originalIndex - b.originalIndex
+            })
+
+            bucket.forEach((entry, idx) => {
+                const nextEntry = bucket[idx + 1]
+                const nextStart = nextEntry ? nextEntry.start : Infinity
+                const visibleEnd = Math.min(entry.end, nextStart)
+                visibleEndMap.set(getId(entry.item), visibleEnd < entry.start ? entry.start : visibleEnd)
+            })
+        })
+
+        return visibleEndMap
+    }
+
+    function buildNextStartMap(items, {
+        getId,
+        getTrackIndex,
+        getStart,
+        isVisible = () => true,
+    }) {
+        const trackBuckets = new Map()
+        items.forEach((item, originalIndex) => {
+            if (!item || !isVisible(item)) return
+            const trackIndex = Number(getTrackIndex(item))
+            if (!Number.isFinite(trackIndex)) return
+            const start = Number(getStart(item)) || 0
+            if (!trackBuckets.has(trackIndex)) trackBuckets.set(trackIndex, [])
+            trackBuckets.get(trackIndex).push({
+                item,
+                originalIndex,
+                start,
+            })
+        })
+
+        const nextStartMap = new Map()
+        trackBuckets.forEach((bucket) => {
+            bucket.sort((a, b) => {
+                if (a.start !== b.start) return a.start - b.start
+                return a.originalIndex - b.originalIndex
+            })
+
+            bucket.forEach((entry, idx) => {
+                const nextEntry = bucket[idx + 1]
+                nextStartMap.set(getId(entry.item), nextEntry ? nextEntry.start : Infinity)
+            })
+        })
+
+        return nextStartMap
+    }
+
+    const newActionCoverStartMap = computed(() => buildNextStartMap(compiledTimeline.value.actions || [], {
+        getId: (action) => action.id,
+        getTrackIndex: (action) => action.trackIndex,
+        getStart: (action) => action.realStartTime,
+    }))
+
+    const legacyActionCoverStartMap = computed(() => buildNextStartMap(
+        tracks.value.flatMap((track, trackIndex) => (track?.actions || []).map(action => ({ action, trackIndex }))),
+        {
+            getId: (entry) => entry.action.instanceId,
+            getTrackIndex: (entry) => entry.trackIndex,
+            getStart: (entry) => entry.action.startTime,
+            isVisible: (entry) => (entry.action?.triggerWindow || 0) >= 0,
+        }
+    ))
+
+    function getActionCoverStartTime(actionId) {
+        const map = useNewCompiler.value ? newActionCoverStartMap.value : legacyActionCoverStartMap.value
+        const value = map.get(actionId)
+        return Number.isFinite(value) ? value : null
+    }
+
     const nodeRects = computed(() => {
         return useNewCompiler.value ? newNodeRects.value : legacyNodeRects.value;
     });
@@ -3088,10 +3182,17 @@ export const useTimelineStore = defineStore('timeline', () => {
         const ACTION_BORDER = 2
         const LINE_GAP = 6
         const LINE_HEIGHT = 2
+        const visibleEndMap = buildVisibleEndMap(compiledTimeline.value.actions || [], {
+            getId: (action) => action.id,
+            getTrackIndex: (action) => action.trackIndex,
+            getStart: (action) => action.realStartTime,
+            getEnd: (action) => (Number(action.realStartTime) || 0) + (Number(action.realDuration) || 0),
+        })
 
         compiledTimeline.value.actions.forEach(resAction => {
             const left = timeToPx(resAction.realStartTime)
-            const width = timeToPx(resAction.realStartTime + resAction.realDuration) - timeToPx(resAction.realStartTime)
+            const visibleEnd = visibleEndMap.get(resAction.id) ?? ((Number(resAction.realStartTime) || 0) + (Number(resAction.realDuration) || 0))
+            const width = timeToPx(visibleEnd) - timeToPx(resAction.realStartTime)
             const finalWidth = width < 2 ? 2 : width
             const trackRect = trackLaneRects.value[resAction.trackIndex]
 
@@ -3158,9 +3259,19 @@ export const useTimelineStore = defineStore('timeline', () => {
         const ACTION_BORDER = 2
         const LINE_GAP = 6
         const LINE_HEIGHT = 2
+        const visibleEndMap = buildVisibleEndMap(
+            tracks.value.flatMap((track, trackIndex) => (track?.actions || []).map(action => ({ action, trackIndex }))),
+            {
+                getId: (entry) => entry.action.instanceId,
+                getTrackIndex: (entry) => entry.trackIndex,
+                getStart: (entry) => entry.action.startTime,
+                getEnd: (entry) => getShiftedEndTime(entry.action.startTime, entry.action.duration, entry.action.instanceId),
+                isVisible: (entry) => (entry.action?.triggerWindow || 0) >= 0,
+            }
+        )
 
         actionMap.value.forEach(action => {
-            const end = getShiftedEndTime(action.node.startTime, action.node.duration, action.id)
+            const end = visibleEndMap.get(action.id) ?? getShiftedEndTime(action.node.startTime, action.node.duration, action.id)
             const start = action.node.startTime || 0
             const left = timeToPx(start)
             const width = timeToPx(end) - timeToPx(start)
@@ -3275,6 +3386,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
                 layoutMap.set(effectId, {
                     rect: iconRect,
+                    startTime: effect.realStartTime,
                     localTransform,
                     barData: {
                         width: finalBarWidth,
@@ -3393,6 +3505,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
                         layoutMap.set(effectId, {
                             rect: iconRect,
+                            startTime: shiftedStartTimestamp,
                             localTransform,
                             barData: {
                                 width: finalBarWidth,
@@ -3529,7 +3642,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             if (!Number.isFinite(targetTime)) continue
 
             const offset = Number(conn.consumptionOffset) || 0
-            const consumptionTime = snapMs(targetTime - offset)
+            const consumptionTime = snapTimeToFrame(targetTime - offset)
 
             const prev = map.get(fromId)
             if (prev === undefined || consumptionTime < prev) {
@@ -3695,7 +3808,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             } else {
                 if (next) {
                     const gap = next.logicalTime - current.logicalTime;
-                    amount = Math.min(0.5, Math.max(0.1, snapMs(gap)));
+                    amount = Math.min(0.5, Math.max(0.1, snapTimeToFrame(gap)));
                 } else {
                     amount = 0.5;
                 }
@@ -3740,7 +3853,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             } else {
                 if (nextSource) {
                     const gap = nextSource.logicalStartTime - source.logicalStartTime;
-                    amount = Math.min(0.5, Math.max(0.1, snapMs(gap)));
+                    amount = Math.min(0.5, Math.max(0.1, snapTimeToFrame(gap)));
                 } else {
                     amount = 0.5;
                 }
@@ -3761,10 +3874,10 @@ export const useTimelineStore = defineStore('timeline', () => {
                 const ctx = sourceShiftMap.get(activeSource.instanceId);
 
                 if (a.instanceId === activeSource.instanceId) {
-                    a.startTime = snapMs(ctx.physicalStart);
+                    a.startTime = snapTimeToFrame(ctx.physicalStart);
                 } else {
                     const normalShiftedTime = a.logicalStartTime + ctx.shift;
-                    a.startTime = snapMs(Math.max(normalShiftedTime, ctx.physicalEnd));
+                    a.startTime = snapTimeToFrame(Math.max(normalShiftedTime, ctx.physicalEnd));
                 }
             } else {
                 a.startTime = a.logicalStartTime;
@@ -3978,7 +4091,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                             const adjustedStagger = snapMs(staggerVal * bonusMultiplier);
 
                             const actualTickTime = getShiftedEndTime(action.startTime, Number(tick.offset) || 0, action.instanceId);
-                            events.push({ time: snapMs(actualTickTime), change: adjustedStagger });
+                            events.push({ time: snapTimeToFrame(actualTickTime), change: adjustedStagger });
                         }
                     });
                 }
@@ -3998,7 +4111,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         const hasNodes = staggerNodeCount > 0;
 
         const advanceTime = (targetTime) => {
-            const t = snapMs(targetTime);
+            const t = snapTimeToFrame(targetTime);
             if (t > currentTime) {
                 points.push({ time: t, val: currentVal });
                 currentTime = t;
@@ -4017,7 +4130,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                     currentVal = 0;
                     // 击破时长受全局时间延长逻辑（时停）影响
                     const breakEnd = getShiftedEndTime(currentTime, staggerBreakDuration);
-                    lockedUntil = snapMs(breakEnd);
+                    lockedUntil = snapTimeToFrame(breakEnd);
 
                     lockSegments.push({ start: currentTime, end: lockedUntil });
                     points.push({ time: currentTime, val: 0 });
@@ -4030,7 +4143,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                     if (currNodeIdx > prevNodeIdx) {
                         // 节点锁定时间同样受延长逻辑影响
                         const nodeEnd = getShiftedEndTime(currentTime, staggerNodeDuration);
-                        const finalNodeEnd = snapMs(nodeEnd);
+                        const finalNodeEnd = snapTimeToFrame(nodeEnd);
 
                         nodeSegments.push({
                             start: currentTime,
@@ -4062,27 +4175,27 @@ export const useTimelineStore = defineStore('timeline', () => {
 
                 if (action.type === 'skill') {
                     pauseWindows.push({
-                        start: snapMs(action.startTime),
-                        end: snapMs(action.startTime + 0.5)
+                        start: snapTimeToFrame(action.startTime),
+                        end: snapTimeToFrame(action.startTime + 0.5)
                     });
                 }
 
                 if (action.spCost > 0) {
                     instantEvents.push({
-                        time: snapMs(action.startTime),
+                        time: snapTimeToFrame(action.startTime),
                         change: -Number(action.spCost)
                     });
                 }
 
                 if (action.spGain > 0) {
                     const actualEndTime = getShiftedEndTime(action.startTime, action.duration, action.instanceId);
-                    instantEvents.push({ time: snapMs(actualEndTime), change: Number(action.spGain) });
+                    instantEvents.push({ time: snapTimeToFrame(actualEndTime), change: Number(action.spGain) });
                 }
 
                 if (action.type === 'execution') {
                     const actualEndTime = getShiftedEndTime(action.startTime, action.duration, action.instanceId);
                     instantEvents.push({
-                        time: snapMs(actualEndTime),
+                        time: snapTimeToFrame(actualEndTime),
                         change: Number(executionRecovery) || 0
                     });
                 }
@@ -4091,7 +4204,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                     action.damageTicks.forEach(tick => {
                         if (tick.sp > 0) {
                             const actualTickTime = getShiftedEndTime(action.startTime, tick.offset, action.instanceId);
-                            instantEvents.push({ time: snapMs(actualTickTime), change: Number(tick.sp) });
+                            instantEvents.push({ time: snapTimeToFrame(actualTickTime), change: Number(tick.sp) });
                         }
                     });
                 }
@@ -4100,20 +4213,20 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         // 战前准备：冻结全部 SP 变化
         if (prep > 0) {
-            pauseWindows.push({ start: 0, end: snapMs(prep) })
+            pauseWindows.push({ start: 0, end: snapTimeToFrame(prep) })
         }
 
         globalExtensions.value.forEach(ext => {
             pauseWindows.push({
-                start: snapMs(ext.time),
-                end: snapMs(ext.time + ext.amount)
+                start: snapTimeToFrame(ext.time),
+                end: snapTimeToFrame(ext.time + ext.amount)
             });
         });
 
         const criticalTimes = new Set();
         criticalTimes.add(0);
-        criticalTimes.add(snapMs(endTime));
-        if (prep > 0) criticalTimes.add(snapMs(prep))
+        criticalTimes.add(snapTimeToFrame(endTime));
+        if (prep > 0) criticalTimes.add(snapTimeToFrame(prep))
 
         instantEvents
             .filter(e => e.time >= prep - 0.0001)
@@ -4147,7 +4260,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
                         if (potentialGain > needed) {
                             const timeToCap = needed / spRegenRate;
-                            points.push({ time: snapMs(prevTime + timeToCap), sp: maxSp });
+                            points.push({ time: snapTimeToFrame(prevTime + timeToCap), sp: maxSp });
                             currentSp = maxSp;
                         } else {
                             currentSp += potentialGain;
@@ -4220,18 +4333,18 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (track.actions) {
             track.actions.forEach(action => {
                 if (action.type === 'ultimate' && !action.isDisabled) {
-                    const start = snapMs(action.startTime);
+                    const start = snapTimeToFrame(action.startTime);
                     const animT = Number(action.animationTime || 0);
                     const enhT = Number(action.enhancementTime || 0);
 
                     let end = null
                     if (typeof ULTIMATE_ENHANCEMENT_EXTENDERS[trackId] === 'function' && enhT > 0) {
                         const metrics = getUltimateEnhancementMetrics(action.instanceId)
-                        if (metrics?.finalEnd) end = snapMs(metrics.finalEnd)
+                        if (metrics?.finalEnd) end = snapTimeToFrame(metrics.finalEnd)
                     }
 
                     if (!end) {
-                        end = snapMs(getShiftedEndTime(
+                        end = snapTimeToFrame(getShiftedEndTime(
                             action.startTime,
                             animT + enhT,
                             action.instanceId
@@ -4244,7 +4357,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
 
         const isBlocked = (time, excludeId = null) => {
-            const t = snapMs(time);
+            const t = snapTimeToFrame(time);
             const epsilon = 0.0001;
             return blockWindows.some(w =>
                 w.sourceId !== excludeId &&
@@ -4263,13 +4376,13 @@ export const useTimelineStore = defineStore('timeline', () => {
                 if (sourceTrack.id === trackId) {
                     // 消耗：在开始时刻发生
                     if (action.gaugeCost > 0) {
-                        events.push({ time: snapMs(action.startTime), change: -Number(action.gaugeCost) });
+                        events.push({ time: snapTimeToFrame(action.startTime), change: -Number(action.gaugeCost) });
                     }
                     // 自身回能：在结束时刻触发
                     if (action.gaugeGain > 0) {
                         const triggerTime = getShiftedEndTime(action.startTime, action.duration, action.instanceId);
                         if (!isBlocked(triggerTime, action.instanceId)) {
-                            events.push({ time: snapMs(triggerTime), change: action.gaugeGain * efficiency });
+                            events.push({ time: snapTimeToFrame(triggerTime), change: action.gaugeGain * efficiency });
                         }
                     }
                 }
@@ -4277,7 +4390,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 else if (action.teamGaugeGain > 0 && canAcceptTeamGauge) {
                     const triggerTime = getShiftedEndTime(action.startTime, action.duration, action.instanceId);
                     if (!isBlocked(triggerTime, action.instanceId)) {
-                        events.push({ time: snapMs(triggerTime), change: action.teamGaugeGain * efficiency });
+                        events.push({ time: snapTimeToFrame(triggerTime), change: action.teamGaugeGain * efficiency });
                     }
                 }
             });
@@ -4405,7 +4518,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                     systemConstants: newSys,
                     activeEnemyId: newEnemyId
                 }
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProjectData(snapshot)))
             }, { deep: true, throttle: 500 })
     }
 
@@ -4413,7 +4526,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
             try {
-                const data = JSON.parse(raw);
+                const data = deserializeProjectData(JSON.parse(raw));
 
                 if (!data.scenarioList) return false;
 
@@ -4480,7 +4593,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         try {
             isLoading.value = true
 
-            const data = await executeFetch()
+            const rawData = await executeFetch()
+            const data = deserializeGameData(rawData)
 
         if (data) {
             if (data.characterRoster) {
@@ -4587,7 +4701,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     function exportProject({ filename } = {}) {
-        const projectData = getProjectData();
+        const projectData = serializeProjectData(getProjectData());
 
         const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
@@ -4601,7 +4715,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     async function exportShareString({ includeScenarios = null } = {}) {
-        const projectData = getProjectData({ includeScenarios });
+        const projectData = serializeProjectData(getProjectData({ includeScenarios }));
         const jsonString = JSON.stringify(projectData);
         return await compressGzip(jsonString);
     }
@@ -4621,17 +4735,19 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     function loadProjectData(data) {
         try {
-            if (data.systemConstants) { systemConstants.value = { ...systemConstants.value, ...data.systemConstants }; }
+            const normalizedData = deserializeProjectData(data)
 
-            if (data.activeEnemyId) { activeEnemyId.value = data.activeEnemyId }
+            if (normalizedData.systemConstants) { systemConstants.value = { ...systemConstants.value, ...normalizedData.systemConstants }; }
 
-            if (data.customEnemyParams) {
-                customEnemyParams.value = { ...customEnemyParams.value, ...data.customEnemyParams }
+            if (normalizedData.activeEnemyId) { activeEnemyId.value = normalizedData.activeEnemyId }
+
+            if (normalizedData.customEnemyParams) {
+                customEnemyParams.value = { ...customEnemyParams.value, ...normalizedData.customEnemyParams }
             }
 
-            if (data.scenarioList) {
+            if (normalizedData.scenarioList) {
                 // normalize & migrate legacy scenarios
-                scenarioList.value = data.scenarioList.map(sc => {
+                scenarioList.value = normalizedData.scenarioList.map(sc => {
                     const cloned = JSON.parse(JSON.stringify(sc))
                     if (cloned?.data) {
                         const normalized = normalizePrepConfig(cloned.data)
@@ -4639,7 +4755,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                     }
                     return cloned
                 })
-                const validId = scenarioList.value.find(s => s.id === data.activeScenarioId) ? data.activeScenarioId : scenarioList.value[0].id
+                const validId = scenarioList.value.find(s => s.id === normalizedData.activeScenarioId) ? normalizedData.activeScenarioId : scenarioList.value[0].id
                 activeScenarioId.value = validId
 
                 const currentSc = scenarioList.value.find(s => s.id === activeScenarioId.value)
@@ -4715,6 +4831,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         misc,
         prepDuration, prepExpanded, viewDuration, prepZoneWidthPx, totalTimelineWidthPx,
         timeToPx, pxToTime, formatAxisTimeLabel, togglePrepExpanded, setPrepDuration,
+        getActionCoverStartTime,
         useNewCompiler, compiledTimeline, spSeries, staggerSeries,
         gaugeSeriesByTrackId
     }

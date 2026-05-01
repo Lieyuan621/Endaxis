@@ -12,6 +12,7 @@ import { Search } from '@element-plus/icons-vue'
 import { useDragConnection } from '@/composables/useDragConnection.js'
 import { useI18n } from 'vue-i18n'
 import { snapMs } from '@/utils/precision.js'
+import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time.js'
 import { getRectPos } from '@/utils/layoutUtils.js'
 
 const store = useTimelineStore()
@@ -899,7 +900,7 @@ function calculateTimeFromEvent(evt, fixedStep = null) {
   let startTime = Math.round(rawTime * inverse) / inverse
   if (startTime < 0) startTime = 0
 
-  return startTime
+  return snapTimeToFrame(startTime)
 }
 
 function onPrepResizeMouseDown(evt) {
@@ -933,7 +934,7 @@ const prepDurationDraft = ref('')
 const prepDurationInputRef = ref(null)
 
 function openPrepDurationEditor() {
-  prepDurationDraft.value = String(Number(store.prepDuration) || 0)
+  prepDurationDraft.value = String(timeToFrame(store.prepDuration))
   isPrepDurationEditorOpen.value = true
   nextTick(() => prepDurationInputRef.value?.focus?.())
 }
@@ -943,9 +944,9 @@ function closePrepDurationEditor() {
 }
 
 function applyPrepDurationDraft() {
-  const v = Number(prepDurationDraft.value)
-  if (!Number.isFinite(v)) return
-  store.setPrepDuration(v)
+  const frames = Number(prepDurationDraft.value)
+  if (!Number.isFinite(frames)) return
+  store.setPrepDuration(frameToTime(frames))
   closePrepDurationEditor()
 }
 
@@ -1064,7 +1065,7 @@ function toMutedRgba(color, alpha = 0.78) {
 }
 
 const cursorGaugeRows = computed(() => {
-  const time = snapMs(store.cursorCurrentTime)
+  const time = snapTimeToFrame(store.cursorCurrentTime)
   const rows = []
 
   for (const track of store.teamTracksInfo) {
@@ -1168,9 +1169,9 @@ function onBoxMouseUp() {
     const trackRelativeBottom = trackRelativeTop + trackRect.height
     if (trackRelativeBottom < selection.top || trackRelativeTop > selection.bottom) return
     track.actions.forEach(action => {
-      const endTime = store.getShiftedEndTime(action.startTime, action.duration, action.instanceId)
-      const startPixel = store.timeToPx(action.startTime)
-      const endPixel = store.timeToPx(endTime)
+      const rect = store.nodeRects[action.instanceId]?.rect
+      const startPixel = rect ? rect.left : store.timeToPx(action.startTime)
+      const endPixel = rect ? rect.right : store.timeToPx(store.getShiftedEndTime(action.startTime, action.duration, action.instanceId))
       if (startPixel < selection.right && endPixel > selection.left) foundIds.push(action.instanceId)
     })
   })
@@ -1348,7 +1349,7 @@ function onBackgroundContextMenu(evt) {
 
   const snap = store.snapStep
   let clickTime = Math.round(rawTime / snap) * snap
-  clickTime = snapMs(Math.max(0, clickTime))
+  clickTime = snapTimeToFrame(Math.max(0, clickTime))
   store.openContextMenu(evt, null, clickTime)
 }
 
@@ -1450,7 +1451,7 @@ function updateDragPosition(clientX) {
 
         let snappedTime = Math.round(targetTime / snap) * snap;
 
-        a.logicalStartTime = Math.max(0, snapMs(snappedTime));
+        a.logicalStartTime = Math.max(0, snapTimeToFrame(snappedTime));
       }
     });
   });
@@ -1531,7 +1532,7 @@ function onWindowMouseMove(evt) {
     }
     let newTime = calculateTimeFromEvent(evt, store.snapStep)
     if (newTime > store.viewDuration) newTime = store.viewDuration
-    newTime = snapMs(newTime)
+    newTime = snapTimeToFrame(newTime)
     store.updateSwitchEvent(draggingSwitchEventId.value, newTime)
     return
   }
@@ -1543,7 +1544,7 @@ function onWindowMouseMove(evt) {
     let newTime = calculateTimeFromEvent(evt, store.snapStep) - weaponStatusDragOffset.value
     if (newTime > store.viewDuration) newTime = store.viewDuration
     if (newTime < 0) newTime = 0
-    newTime = snapMs(newTime)
+    newTime = snapTimeToFrame(newTime)
     const status = store.weaponStatuses.find(s => s.id === draggingWeaponStatusId.value)
     if (status) {
       status.startTime = newTime
@@ -1562,7 +1563,7 @@ function onWindowMouseMove(evt) {
     }
     let newTime = calculateTimeFromEvent(evt, store.snapStep)
     if (newTime > store.viewDuration) newTime = store.viewDuration
-    newTime = snapMs(newTime)
+    newTime = snapTimeToFrame(newTime)
     store.updateCycleBoundary(draggingCycleBoundaryId.value, newTime)
     return
   }
@@ -1939,13 +1940,13 @@ onUnmounted(() => {
           v-model="prepDurationDraft"
           class="prep-duration-input"
           type="number"
-          min="0.5"
-          step="0.1"
+          min="1"
+          step="1"
           @keydown.enter.prevent="applyPrepDurationDraft"
           @keydown.esc.prevent="closePrepDurationEditor"
           @blur="applyPrepDurationDraft"
         />
-        <span class="prep-duration-unit">s</span>
+        <span class="prep-duration-unit">f</span>
       </div>
 
       <div v-if="store.prepDuration > 0" class="prep-rtgt-wrapper" :style="{ width: `${prepZoneWidthPxRounded}px` }">

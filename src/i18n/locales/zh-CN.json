@@ -390,15 +390,15 @@
       "basic": "基础属性"
     },
     "labels": {
-      "durationS": "持续时间(s)",
-      "cooldownS": "冷却时间(s)",
-      "triggerWindowS": "触发窗口(s)",
+      "durationS": "持续时间(f)",
+      "cooldownS": "冷却时间(f)",
+      "triggerWindowS": "触发窗口(f)",
       "spCost": "技力消耗",
       "gaugeCost": "充能消耗",
       "gaugeGain": "自身充能",
       "teamGaugeGain": "队友充能",
-      "enhancementTimeS": "强化时间(s)",
-      "followupDelayS": "下一段间隔(s)",
+      "enhancementTimeS": "强化时间(f)",
+      "followupDelayS": "下一段间隔(f)",
       "comboSegment": "连携段",
       "comboLink": "连携绑定"
     },
@@ -424,8 +424,8 @@
       "activeItems": "活跃条目",
       "empty": "暂无时间条",
       "namePlaceholder": "条目名称",
-      "offsetS": "触发时间(s)",
-      "durationS": "持续时间(s)"
+      "offsetS": "触发时间(f)",
+      "durationS": "持续时间(f)"
     },
     "effects": {
       "title": "状态效果与排布",

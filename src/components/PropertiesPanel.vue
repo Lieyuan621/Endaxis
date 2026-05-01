@@ -8,6 +8,7 @@ import { useDragConnection } from '@/composables/useDragConnection.js'
 import { getRectPos } from '@/utils/layoutUtils.js'
 import { buildEffectBindingOptions } from '@/utils/effectBindingOptions.js'
 import { useI18n } from 'vue-i18n'
+import { frameToTime, timeToFrame } from '@/utils/time.js'
 
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
@@ -267,6 +268,10 @@ function updateEffectProp(key, value) {
   }
 }
 
+function updateEffectFrameProp(key, value) {
+  updateEffectProp(key, timeValueFromFrame(value))
+}
+
 function addRow() {
   const rows = JSON.parse(JSON.stringify(anomalyRows.value))
   const allowed = targetData.value.allowedTypes || []
@@ -324,6 +329,18 @@ function updateActionProp(key, value) {
   commitUpdate({ [key]: value })
 }
 
+function frameValue(value) {
+  return timeToFrame(value)
+}
+
+function timeValueFromFrame(value) {
+  return frameToTime(value)
+}
+
+function updateActionFrameProp(key, value) {
+  updateActionProp(key, timeValueFromFrame(value))
+}
+
 function addDamageTick() {
   const currentTicks = targetData.value.damageTicks ? [...targetData.value.damageTicks] : []
   currentTicks.push({ offset: 0, stagger: 0, sp: 0, boundEffects: [] })
@@ -345,6 +362,10 @@ function updateDamageTick(index, key, value) {
     currentTicks.sort((a, b) => a.offset - b.offset)
   }
   commitUpdate({ damageTicks: currentTicks })
+}
+
+function updateDamageTickFrame(index, key, value) {
+  updateDamageTick(index, key, timeValueFromFrame(value))
 }
 
 const availableEffectOptions = computed(() => {
@@ -390,6 +411,10 @@ function updateCustomBarItem(index, key, value) {
   const newList = [...customBarsList.value]
   newList[index] = { ...newList[index], [key]: value }
   commitUpdate({ customBars: newList })
+}
+
+function updateCustomBarFrame(index, key, value) {
+  updateCustomBarItem(index, key, timeValueFromFrame(value))
 }
 
 // ===================================================================================
@@ -619,11 +644,11 @@ function handleStartConnection(id, type = null) {
           <div class="attribute-grid">
             <div class="form-group compact">
               <label>{{ t('propertiesPanel.labels.durationS') }}</label>
-              <CustomNumberInput :model-value="targetData.duration" @update:model-value="val => updateActionProp('duration', val)" :step="0.1" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
+              <CustomNumberInput :model-value="frameValue(targetData.duration)" @update:model-value="val => updateActionFrameProp('duration', val)" :step="1" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
             </div>
             <div class="form-group compact" v-if="currentSkillType === 'link'">
               <label>{{ t('propertiesPanel.labels.cooldownS') }}</label>
-              <CustomNumberInput :model-value="targetData.cooldown" @update:model-value="val => updateActionProp('cooldown', val)" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
+              <CustomNumberInput :model-value="frameValue(targetData.cooldown)" @update:model-value="val => updateActionFrameProp('cooldown', val)" :step="1" :min="0" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
             </div>
 
             <div class="form-group compact" v-if="isComboInstance">
@@ -644,12 +669,12 @@ function handleStartConnection(id, type = null) {
 
             <div class="form-group compact" v-if="currentSkillType === 'link' && isComboHasNext && comboLinked">
               <label>{{ t('propertiesPanel.labels.followupDelayS') }}</label>
-              <CustomNumberInput :model-value="targetData.comboFollowupDelay || 0" @update:model-value="val => updateActionProp('comboFollowupDelay', val)" :min="0" :step="0.001" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
+              <CustomNumberInput :model-value="frameValue(targetData.comboFollowupDelay || 0)" @update:model-value="val => updateActionFrameProp('comboFollowupDelay', val)" :min="0" :step="1" :activeColor="HIGHLIGHT_COLORS.default" text-align="center"/>
             </div>
 
             <div class="form-group compact" v-if="currentSkillType === 'link' && !isLibraryMode">
               <label>{{ t('propertiesPanel.labels.triggerWindowS') }}</label>
-              <CustomNumberInput :model-value="targetData.triggerWindow || 0" @update:model-value="val => updateActionProp('triggerWindow', val)" :step="0.1" :border-color="HIGHLIGHT_COLORS.default" text-align="center"/>
+              <CustomNumberInput :model-value="frameValue(targetData.triggerWindow || 0)" @update:model-value="val => updateActionFrameProp('triggerWindow', val)" :step="1" :border-color="HIGHLIGHT_COLORS.default" text-align="center"/>
             </div>
 
             <div class="form-group compact" v-if="currentSkillType === 'skill'">
@@ -674,7 +699,7 @@ function handleStartConnection(id, type = null) {
 
             <div class="form-group compact" v-if="currentSkillType === 'ultimate'">
               <label>{{ t('propertiesPanel.labels.enhancementTimeS') }}</label>
-              <CustomNumberInput :model-value="targetData.enhancementTime || 0" @update:model-value="val => updateActionProp('enhancementTime', val)" :step="0.5" :min="0" activeColor="#b37feb" border-color="#b37feb" text-align="center"/></div>
+              <CustomNumberInput :model-value="frameValue(targetData.enhancementTime || 0)" @update:model-value="val => updateActionFrameProp('enhancementTime', val)" :step="1" :min="0" activeColor="#b37feb" border-color="#b37feb" text-align="center"/></div>
           </div>
         </div>
 
@@ -703,7 +728,7 @@ function handleStartConnection(id, type = null) {
               <div class="tick-row">
                 <div class="tick-col">
                   <label>{{ t('propertiesPanel.damage.tickTime') }}</label>
-                  <CustomNumberInput :model-value="tick.offset" @update:model-value="val => updateDamageTick(index, 'offset', val)" :step="0.1" :min="0" border-color="#ff7875" />
+                  <CustomNumberInput :model-value="frameValue(tick.offset)" @update:model-value="val => updateDamageTickFrame(index, 'offset', val)" :step="1" :min="0" border-color="#ff7875" />
                 </div>
                 <div class="tick-col">
                   <label>{{ t('propertiesPanel.damage.tickStagger') }}</label>
@@ -773,11 +798,11 @@ function handleStartConnection(id, type = null) {
               <div class="tick-row">
                 <div class="tick-col">
                   <label>{{ t('propertiesPanel.bars.offsetS') }}</label>
-                  <CustomNumberInput :model-value="bar.offset" @update:model-value="val => updateCustomBarItem(index, 'offset', val)" :step="0.1" :min="0" border-color="#00e5ff" />
+                  <CustomNumberInput :model-value="frameValue(bar.offset)" @update:model-value="val => updateCustomBarFrame(index, 'offset', val)" :step="1" :min="0" border-color="#00e5ff" />
                 </div>
                 <div class="tick-col">
                   <label>{{ t('propertiesPanel.bars.durationS') }}</label>
-                  <CustomNumberInput :model-value="bar.duration" @update:model-value="val => updateCustomBarItem(index, 'duration', val)" :step="0.5" :min="0" border-color="#00e5ff" />
+                  <CustomNumberInput :model-value="frameValue(bar.duration)" @update:model-value="val => updateCustomBarFrame(index, 'duration', val)" :step="1" :min="0" border-color="#00e5ff" />
                 </div>
             </div>
           </div>
@@ -844,7 +869,7 @@ function handleStartConnection(id, type = null) {
 
             <div>
               <label>{{ t('common.triggerTime') }}</label>
-              <CustomNumberInput :model-value="editingEffectData.offset || 0" @update:model-value="val => updateEffectProp('offset', val)" :step="0.1" :min="0" :activeColor="HIGHLIGHT_COLORS.default"/>
+              <CustomNumberInput :model-value="frameValue(editingEffectData.offset || 0)" @update:model-value="val => updateEffectFrameProp('offset', val)" :step="1" :min="0" :activeColor="HIGHLIGHT_COLORS.default"/>
             </div>
             <div>
               <label>{{ t('common.stacks') }}</label>
@@ -852,7 +877,7 @@ function handleStartConnection(id, type = null) {
             </div>
             <div>
               <label>{{ t('common.duration') }}</label>
-              <CustomNumberInput :model-value="editingEffectData.duration" @update:model-value="val => updateEffectProp('duration', val)" :min="0" :step="0.5" :activeColor="HIGHLIGHT_COLORS.default"/>
+              <CustomNumberInput :model-value="frameValue(editingEffectData.duration)" @update:model-value="val => updateEffectFrameProp('duration', val)" :min="0" :step="1" :activeColor="HIGHLIGHT_COLORS.default"/>
             </div>
           </div>
 
@@ -939,8 +964,8 @@ function handleStartConnection(id, type = null) {
                 <div v-if="conn.rawConnection.isConsumption" class="offset-mini">
                   <span style="color: #666; font-size: 10px; margin-right: 2px; white-space: nowrap;">{{ t('propertiesPanel.connections.offset') }}</span>
                   <CustomNumberInput
-                      :model-value="conn.rawConnection.consumptionOffset || 0"
-                      @update:model-value="val => store.updateConnection(conn.id, { consumptionOffset: val })"
+                      :model-value="frameValue(conn.rawConnection.consumptionOffset || 0)"
+                      @update:model-value="val => store.updateConnection(conn.id, { consumptionOffset: timeValueFromFrame(val) })"
                       :step="0.1"
                       :min="-10"
                       :max="10"

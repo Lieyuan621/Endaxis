@@ -390,15 +390,15 @@
       "basic": "Basic Attributes"
     },
     "labels": {
-      "durationS": "Duration(s)",
-      "cooldownS": "CD(s)",
-      "triggerWindowS": "Trigger Window(s)",
+      "durationS": "Duration(f)",
+      "cooldownS": "CD(f)",
+      "triggerWindowS": "Trigger Window(f)",
       "spCost": "SP Cost",
       "gaugeCost": "Charge Cost",
       "gaugeGain": "SP Gain",
       "teamGaugeGain": "Team SP",
-      "enhancementTimeS": "Enhancement Time (s)",
-      "followupDelayS": "Next Delay (s)",
+      "enhancementTimeS": "Enhancement Time (f)",
+      "followupDelayS": "Next Delay (f)",
       "comboSegment": "Combo Segment",
       "comboLink": "Combo Link"
     },
@@ -424,8 +424,8 @@
       "activeItems": "Active Entries",
       "empty": "No time bars",
       "namePlaceholder": "Entry Name",
-      "offsetS": "Trigger Time (s)",
-      "durationS": "Duration (s)"
+      "offsetS": "Trigger Time (f)",
+      "durationS": "Duration (f)"
     },
     "effects": {
       "title": "Status Effects & Layout",
