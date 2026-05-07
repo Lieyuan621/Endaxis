@@ -7,6 +7,7 @@ import type {
   ScenarioData,
   ScenarioTrack,
   SystemConstants,
+  Action,
 } from "./types";
 import { createDefaultStats } from "@/utils/coreStats";
 import type { ActorSnapshot } from "@/simulation/state/types.ts";
@@ -15,9 +16,41 @@ function normalizeTracks(tracks: ScenarioTrack[]): ScenarioTrack[] {
   return tracks.map((track) => {
     const baseStats = createDefaultStats() as ActorStats;
     track.stats = { ...baseStats, ...track.stats };
+    track.acceptTeamGauge = track.acceptTeamGauge !== false;
+    track.actions = (track.actions || []).map((action) => normalizeAction(action));
 
     return track;
   });
+}
+
+function normalizeAction(action: Action): Action {
+  const nextAction = {
+    ...action,
+    damageTicks: (action.damageTicks || []).map((tick) => ({
+      ...tick,
+      spKind: tick.spKind || "recover",
+    })),
+  };
+
+  // Skill-based ultimate charge is now derived from consumed recover SP.
+  if (nextAction.type === "skill") {
+    nextAction.gaugeGain = 0;
+    nextAction.teamGaugeGain = 0;
+  }
+
+  return nextAction;
+}
+
+function resolveTrackMaxGauge(track: ScenarioTrack) {
+  if (Number(track.maxGaugeOverride) > 0) {
+    return Number(track.maxGaugeOverride);
+  }
+
+  const ultimateAction = (track.actions || []).find(
+    (action) => action.type === "ultimate" && Number(action.gaugeCost) > 0,
+  );
+
+  return Math.max(1, Number(ultimateAction?.gaugeCost) || 100);
 }
 
 function processActors(tracks: ScenarioTrack[]): ActorSnapshot[] {
@@ -27,7 +60,12 @@ function processActors(tracks: ScenarioTrack[]): ActorSnapshot[] {
       return {
         id: track.id,
         stats: track.stats,
-        resources: { hp: track.stats.hp, gauge: track.initialGauge },
+        acceptTeamGauge: track.acceptTeamGauge !== false,
+        resources: {
+          hp: track.stats.hp,
+          gauge: track.initialGauge,
+          maxGauge: resolveTrackMaxGauge(track),
+        },
         cooldowns: new Map(),
         activeBuffs: new Map(),
       };

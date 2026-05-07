@@ -1,4 +1,8 @@
-import type { ActionType, ResolvedDamageTick } from "../compiler/types";
+import type {
+  ActionType,
+  ResolvedDamageTick,
+  SpGainKind,
+} from "../compiler/types";
 import type { EffectSnapshot } from "../effects/types";
 
 export type SimEventType = SimEvent["type"];
@@ -25,6 +29,7 @@ export type ActionEndEvent = SimBaseEvent<
     skillId: string;
     actionId: string;
     spGain?: number;
+    spGainKind?: SpGainKind;
     actorId: string;
     type: ActionType;
   }
@@ -45,9 +50,23 @@ export type SpChangeEvent = SimBaseEvent<
   {
     actorId: string;
     spChange: number;
+    sourceKind?: SpGainKind;
     reason: string;
     sourceId: string;
     parent: SimEvent;
+  }
+>;
+export type UltimateChargeChangeEvent = SimBaseEvent<
+  "ULTIMATE_CHARGE_CHANGE",
+  {
+    actorId: string;
+    sourceActorId?: string;
+    actionId?: string;
+    change: number;
+    reason: string;
+    sourceId: string;
+    isTeamGain?: boolean;
+    parent?: SimEvent;
   }
 >;
 export type SpRegenPauseEvent = SimBaseEvent<
@@ -88,6 +107,7 @@ export type SimEvent =
   | ActionEndEvent
   | DamageTickEvent
   | SpChangeEvent
+  | UltimateChargeChangeEvent
   | SpRegenPauseEvent
   | EffectStartEvent
   | EffectEndEvent
@@ -112,6 +132,21 @@ export type SimLogEntry =
       "SP_CHANGE",
       {
         sp: number;
+        change: number;
+        sourceId: string;
+        reason: string;
+        sourceKind?: SpGainKind;
+        recoverSp: number;
+        refundSp: number;
+        debtSp: number;
+      }
+    >
+  | SimLogEntryBase<
+      "ULTIMATE_CHARGE_CHANGE",
+      {
+        actorId: string;
+        gauge: number;
+        maxGauge: number;
         change: number;
         sourceId: string;
         reason: string;
@@ -157,6 +192,7 @@ export type SimLogEntry =
         actionId: string;
         type: ActionType;
         spGain?: number;
+        spGainKind?: SpGainKind;
       }
     >
   | SimLogEntryBase<

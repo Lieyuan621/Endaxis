@@ -93,6 +93,7 @@ export interface ScenarioTrack {
   // config
   initialGauge: number;
   maxGaugeOverride?: number | null;
+  acceptTeamGauge?: boolean;
 
   // equipment
   weaponId?: string | null;
@@ -119,6 +120,8 @@ export interface CompiledScenario {
   systemConstants: SystemConstants;
 }
 
+export type SpGainKind = "recover" | "refund";
+
 export interface Anomaly {
   _id: string;
   offset: number;
@@ -132,6 +135,7 @@ export interface Anomaly {
 export interface DamageTick {
   offset: number;
   sp: number;
+  spKind?: SpGainKind;
   stagger: number;
   boundEffects?: string[];
 }
@@ -159,6 +163,7 @@ export interface Action {
   cooldown: number;
   spCost: number;
   spGain?: number;
+  spGainKind?: SpGainKind;
   element: string;
   librarySource?: string;
   icon?: string;

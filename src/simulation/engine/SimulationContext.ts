@@ -10,6 +10,12 @@ export interface SimulationContext {
   };
   simLog: (entry: SimLogEntry) => void;
   getAction: (id: string) => ResolvedAction | undefined;
+  getActionsForActor: (actorId: string) => ResolvedAction[];
+  getShiftedEndTime: (
+    startTime: number,
+    duration: number,
+    excludeActionId?: string | null,
+  ) => number;
 }
 
 export interface EventHookContext extends SimulationContext {

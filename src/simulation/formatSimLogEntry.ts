@@ -29,6 +29,11 @@ export function formatSimLogEntry(entry: SimLogEntry) {
         entry,
         `sp change ${entry.payload.change} -> ${entry.payload.sp} (${entry.payload.reason})`,
       );
+    case "ULTIMATE_CHARGE_CHANGE":
+      return withPrefix(
+        entry,
+        `${entry.payload.actorId} gauge change ${entry.payload.change} -> ${entry.payload.gauge} (${entry.payload.reason})`,
+      );
     case "SP_REGEN_PAUSE":
       return withPrefix(
         entry,

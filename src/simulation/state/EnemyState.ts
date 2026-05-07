@@ -56,7 +56,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
     if (this.stagger >= this.config.maxStagger - 0.0001) {
       this.stagger = 0;
       const breakDuration = this.config.staggerBreakDuration;
-      const breakEnd = this.engine.getShiftedTime(currentTime, breakDuration);
+      const breakEnd = this.engine.getShiftedEndTime(currentTime, breakDuration);
       this.breakEndTime = breakEnd;
       this.lock(breakEnd);
       return { broken: true, breakEnd };
@@ -68,7 +68,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
 
       if (currNodeIdx > prevNodeIdx) {
         const nodeDuration = this.config.staggerNodeDuration;
-        const nodeEnd = this.engine.getShiftedTime(currentTime, nodeDuration);
+        const nodeEnd = this.engine.getShiftedEndTime(currentTime, nodeDuration);
         this.lock(nodeEnd);
         return {
           broken: false,

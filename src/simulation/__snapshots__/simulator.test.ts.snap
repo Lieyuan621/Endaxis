@@ -277,3 +277,12 @@ exports[`SimulationEngine Integration > should match Stagger snapshot 1`] = `
   ],
 }
 `;
+
+exports[`SimulationEngine Integration > should match ultimate charge snapshots 1`] = `
+{
+  "AKEKURI": [],
+  "CHENQIANYU": [],
+  "ENDMINISTRATOR": [],
+  "ESTELLA": [],
+}
+`;

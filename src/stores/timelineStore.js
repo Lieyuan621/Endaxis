@@ -8,6 +8,7 @@ import { compileScenario } from '@/simulation/compiler/compileScenario'
 import { simulate } from '@/simulation/simulator'
 import { projectSpSeries } from '@/simulation/projection/projectSpSeries'
 import { projectStaggerSeries } from '@/simulation/projection/projectStaggerSeries'
+import { projectUltimateSeries } from '@/simulation/projection/projectUltimateSeries'
 import { i18n } from '@/i18n'
 import { snapMs } from '@/utils/precision.js'
 import { FRAME_DURATION, formatFrameCount, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time.js'
@@ -1645,8 +1646,8 @@ export const useTimelineStore = defineStore('timeline', () => {
 
             if (suffix === 'skill') {
                 defaults.spCost = activeChar.skill_spCost || systemConstants.value.skillSpCostDefault;
-                defaults.gaugeGain = activeChar.skill_gaugeGain || 0;
-                defaults.teamGaugeGain = activeChar.skill_teamGaugeGain || 0;
+                defaults.gaugeGain = 0;
+                defaults.teamGaugeGain = 0;
             } else if (suffix === 'link') {
                 defaults.gaugeGain = activeChar.link_gaugeGain || 0
             } else if (suffix === 'ultimate') {
@@ -1880,7 +1881,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             const globalId = `${activeChar.id}_variant_${variant.id}`
             const globalOverride = characterOverrides.value[globalId] || {}
             const defaults = {
-                duration: 1, cooldown: 0, spCost: 0, spGain: 0, gaugeCost: 0, gaugeGain: 0,
+                duration: 1, cooldown: 0, spCost: 0, spGain: 0, spGainKind: 'recover', gaugeCost: 0, gaugeGain: 0,
                 stagger: 0, teamGaugeGain: 0, element: activeChar.element || 'physical'
             }
             const merged = { ...defaults, ...variant, ...globalOverride }
@@ -2006,6 +2007,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 teamGaugeGain: raw.teamGaugeGain || 0,
                 spCost: raw.spCost || 0,
                 spGain: raw.spGain || 0,
+                spGainKind: raw.spGainKind || 'recover',
                 triggerWindow: raw.triggerWindow || 0,
                 physicalAnomaly: clonedAnomalies,
                 damageTicks: clonedTicks,
@@ -3743,10 +3745,17 @@ export const useTimelineStore = defineStore('timeline', () => {
     const compiledScenario = computed(() => {
         const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
         if (!currentScenario) return null;
+        const compiledTracks = tracks.value.map(track => {
+            const charInfo = characterRoster.value.find(c => c.id === track.id)
+            return {
+                ...track,
+                acceptTeamGauge: charInfo?.accept_team_gauge !== false,
+            }
+        })
         const { timeline, actors, teamConfig, enemyConfig } = compileScenario(
             {
                 ...currentScenario.data,
-                tracks: tracks.value // add tracks as a dependency
+                tracks: compiledTracks
             }
             , { systemConstants: systemConstants.value });
         return { timeline, actors, teamConfig, enemyConfig };
@@ -4310,9 +4319,18 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const gaugeSeriesByTrackId = computed(() => {
         const map = new Map()
+        if (!simulation.value) return map
         for (const track of tracks.value) {
             if (!track?.id) continue
-            map.set(track.id, calculateGaugeData(track.id))
+            map.set(
+                track.id,
+                projectUltimateSeries(
+                    simulation.value.simLog,
+                    simulation.value.state.getInitialSnapshot(),
+                    track.id,
+                    viewDuration.value,
+                ),
+            )
         }
         return map
     })

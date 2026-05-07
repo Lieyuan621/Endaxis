@@ -62,12 +62,24 @@ export class SimulationEngine {
     return this.timeline.actionMap.get(id);
   }
 
+  getActionsForActor(actorId: string) {
+    return this.timeline.actions.filter((action) => action.trackId === actorId);
+  }
+
   getSimLog(): SimLogEntry[] {
     return this.simLog.toArray();
   }
 
-  getShiftedTime(startTime: number, duration: number) {
-    return this.timeline.timeContext.getShiftedEndTime(startTime, duration);
+  getShiftedEndTime(
+    startTime: number,
+    duration: number,
+    excludeActionId: string | null = null,
+  ) {
+    return this.timeline.timeContext.getShiftedEndTime(
+      startTime,
+      duration,
+      excludeActionId,
+    );
   }
 
   run() {
@@ -78,6 +90,8 @@ export class SimulationEngine {
         this.simLog.enqueue(entry);
       },
       getAction: this.getAction.bind(this),
+      getActionsForActor: this.getActionsForActor.bind(this),
+      getShiftedEndTime: this.getShiftedEndTime.bind(this),
     };
 
     while (!this.queue.isEmpty()) {

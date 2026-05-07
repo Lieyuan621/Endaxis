@@ -45,6 +45,10 @@ export class GameState implements BaseGameState<GameSnapshot> {
     return actor;
   }
 
+  getActors(): ActorState[] {
+    return Array.from(this.actors.values());
+  }
+
   getCurrentTime() {
     return this.currentTime;
   }
@@ -57,6 +61,7 @@ export class GameState implements BaseGameState<GameSnapshot> {
     return {
       team: this.team.snapshot(),
       enemy: this.enemy.snapshot(),
+      actors: this.getActors().map((actor) => actor.snapshot()),
     };
   }
 }

@@ -4,9 +4,16 @@ import { EffectManager } from "./EffectManager";
 
 export class ActorState implements BaseGameState<ActorSnapshot> {
   public effects: EffectManager;
+  private gauge: number;
+  private maxGauge: number;
 
   constructor(public readonly snapshotData: ActorSnapshot) {
     this.effects = new EffectManager();
+    this.gauge = Number(snapshotData.resources?.gauge) || 0;
+    this.maxGauge = Math.max(
+      0,
+      Number(snapshotData.resources?.maxGauge) || 0,
+    );
   }
 
   get id() {
@@ -15,7 +22,32 @@ export class ActorState implements BaseGameState<ActorSnapshot> {
 
   advanceTime(_dt: number, _currentTime: number) {}
 
+  getGauge() {
+    return this.gauge;
+  }
+
+  getMaxGauge() {
+    return this.maxGauge;
+  }
+
+  modifyGauge(amount: number) {
+    if (!Number.isFinite(amount) || amount === 0) {
+      return this.gauge;
+    }
+
+    const next = this.gauge + amount;
+    this.gauge = Math.max(0, Math.min(next, this.maxGauge || next));
+    return this.gauge;
+  }
+
   snapshot(): ActorSnapshot {
-    return this.snapshotData;
+    return {
+      ...this.snapshotData,
+      resources: {
+        ...this.snapshotData.resources,
+        gauge: this.gauge,
+        maxGauge: this.maxGauge,
+      },
+    };
   }
 }

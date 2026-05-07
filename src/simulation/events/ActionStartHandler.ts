@@ -36,7 +36,7 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
         payload: {
           actorId: e.payload.actorId,
           spChange: -e.payload.spCost,
-          reason: "skill",
+          reason: e.payload.type === "skill" ? "skill_cost" : "cost",
           sourceId: e.payload.actionId,
           parent: e,
         },

@@ -1952,7 +1952,7 @@ function addDamageTick(char, type) {
     const seg = char.attack_segments[idx]
     if (!Array.isArray(seg.damage_ticks)) seg.damage_ticks = []
     normalizeDamageTicks(seg.damage_ticks)
-    seg.damage_ticks.push({ offset: 0, stagger: 0, sp: 0, boundEffects: [] })
+    seg.damage_ticks.push({ offset: 0, stagger: 0, sp: 0, spKind: 'recover', boundEffects: [] })
     return
   }
 
@@ -1962,7 +1962,7 @@ function addDamageTick(char, type) {
     const seg = char.link_segments[idx]
     if (!Array.isArray(seg.damage_ticks)) seg.damage_ticks = []
     normalizeDamageTicks(seg.damage_ticks)
-    seg.damage_ticks.push({ offset: 0, stagger: 0, sp: 0, boundEffects: [] })
+    seg.damage_ticks.push({ offset: 0, stagger: 0, sp: 0, spKind: 'recover', boundEffects: [] })
     return
   }
 
@@ -1998,6 +1998,7 @@ function removeDamageTick(char, type, index) {
 function normalizeDamageTicks(list = []) {
   list.forEach(tick => {
     if (!tick.boundEffects) tick.boundEffects = []
+    if (tick.spKind !== 'refund') tick.spKind = 'recover'
   })
 }
 
@@ -2023,8 +2024,8 @@ function getSnapshotFromBase(char, type) {
 
   if (type === 'skill') {
     snapshot.spCost = char.skill_spCost || 0
-    snapshot.gaugeGain = char.skill_gaugeGain || 0
-    snapshot.teamGaugeGain = char.skill_teamGaugeGain || 0
+    snapshot.gaugeGain = 0
+    snapshot.teamGaugeGain = 0
   }
   else if (type === 'link') {
     snapshot.cooldown = char.link_cooldown || 0
@@ -3094,8 +3095,6 @@ function saveData() {
                 </template>
 
                 <div class="form-group" v-if="variant.type === 'skill'"><label>技力消耗</label><input type="number" v-model.number="variant.spCost"></div>
-                <div class="form-group" v-if="variant.type === 'skill'"><label>自身充能</label><input type="number" v-model.number="variant.gaugeGain"></div>
-                <div class="form-group" v-if="variant.type === 'skill'"><label>队友充能</label><input type="number" v-model.number="variant.teamGaugeGain"></div>
 
                 <template v-if="variant.type === 'link'">
                   <div class="form-group">
@@ -3165,31 +3164,38 @@ function saveData() {
                     <div class="tick-inputs">
                       <div class="t-group"><label>时间(f)</label><input type="number" step="1" min="0" :value="frameValue(tick.offset)" @input="updateFrameField(tick, 'offset', $event.target.value)" class="mini-input"></div>
                       <div class="t-group"><label style="color:#ff7875">失衡值</label><input type="number" v-model.number="tick.stagger" class="mini-input"></div>
-                      <div class="t-group"><label style="color:#ffd700">回复技力</label><input type="number" v-model.number="tick.sp" class="mini-input"></div>
-                    </div>
-                    <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeVariantDamageTick(variant, idx, tIdx)">×</button>
-                  </div>
-                  <div class="tick-binding">
-                    <label>绑定状态</label>
-                    <el-select
+                      <div class="t-group"><label style="color:#ffd700">技力数值</label><input type="number" v-model.number="tick.sp" class="mini-input"></div>
+                      <div class="t-group t-group--select">
+                        <label style="color:#ffd700">技力类型</label>
+                        <el-select v-model="tick.spKind" size="small" class="tick-select tick-kind-select">
+                          <el-option label="回复" value="recover" />
+                          <el-option label="返还" value="refund" />
+                        </el-select>
+                      </div>
+                      <div class="t-group t-group--binding">
+                      <label>绑定状态</label>
+                      <el-select
                         v-model="tick.boundEffects"
                         multiple
                         collapse-tags
                         collapse-tags-tooltip
                         popper-class="ea-tick-binding-popper"
                         size="small"
-                        class="tick-select"
+                        class="tick-select tick-binding-select"
                         placeholder="选择要绑定的状态"
                         :disabled="getVariantBindingOptions(variant, idx).length === 0"
-                    >
-                      <el-option v-for="opt in getVariantBindingOptions(variant, idx)" :key="opt.value" :label="opt.label" :value="opt.value">
-                        <div class="binding-option">
-                          <img :src="getEffectIconPath(opt.type)" class="binding-option__icon" />
-                          <span class="binding-option__label">{{ opt.label }}</span>
-                          <span class="binding-option__hint">{{ opt.hint }}</span>
-                        </div>
-                      </el-option>
-                    </el-select>
+                      >
+                        <el-option v-for="opt in getVariantBindingOptions(variant, idx)" :key="opt.value" :label="opt.label" :value="opt.value">
+                          <div class="binding-option">
+                            <img :src="getEffectIconPath(opt.type)" class="binding-option__icon" />
+                            <span class="binding-option__label">{{ opt.label }}</span>
+                            <span class="binding-option__hint">{{ opt.hint }}</span>
+                          </div>
+                        </el-option>
+                      </el-select>
+                    </div>
+                    </div>
+                    <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeVariantDamageTick(variant, idx, tIdx)">×</button>
                   </div>
                 </div>
                 <button class="ea-btn ea-btn--block ea-btn--lg ea-btn--dashed-panel ea-btn--radius-6" style="margin-top: 5px;" @click="addVariantDamageTick(variant, idx)">+ 添加判定点</button>
@@ -3363,8 +3369,6 @@ function saveData() {
                  </template>
 
                 <div class="form-group" v-if="type === 'skill'"><label>技力消耗</label><input type="number" v-model.number="selectedChar[`${type}_spCost`]"></div>
-                <div class="form-group" v-if="type === 'skill'"><label>自身充能</label><input type="number" v-model.number="selectedChar[`${type}_gaugeGain`]" @input="onSkillGaugeInput"></div>
-                <div class="form-group" v-if="type === 'skill'"><label>队友充能</label><input type="number" v-model.number="selectedChar[`${type}_teamGaugeGain`]"></div>
 
                  <template v-if="type === 'link' && !Array.isArray(selectedChar.link_segments)">
                    <div class="form-group"><label>冷却时间 (f)</label><input type="number" step="1" min="0" :value="frameValue(selectedChar[`${type}_cooldown`])" @input="updateFrameField(selectedChar, `${type}_cooldown`, $event.target.value)"></div>
@@ -3392,31 +3396,38 @@ function saveData() {
                     <div class="tick-inputs">
                       <div class="t-group"><label>时间(f)</label><input type="number" step="1" min="0" :value="frameValue(tick.offset)" @input="updateFrameField(tick, 'offset', $event.target.value)" class="mini-input"></div>
                       <div class="t-group"><label style="color:#ff7875">失衡值</label><input type="number" v-model.number="tick.stagger" class="mini-input"></div>
-                      <div class="t-group"><label style="color:#ffd700">回复技力</label><input type="number" v-model.number="tick.sp" class="mini-input"></div>
-                    </div>
-                    <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeDamageTick(selectedChar, type, tIdx)">×</button>
-                  </div>
-                  <div class="tick-binding">
-                    <label>绑定状态</label>
-                    <el-select
+                      <div class="t-group"><label style="color:#ffd700">技力数值</label><input type="number" v-model.number="tick.sp" class="mini-input"></div>
+                      <div class="t-group t-group--select">
+                        <label style="color:#ffd700">技力类型</label>
+                        <el-select v-model="tick.spKind" size="small" class="tick-select tick-kind-select">
+                          <el-option label="回复" value="recover" />
+                          <el-option label="返还" value="refund" />
+                        </el-select>
+                      </div>
+                      <div class="t-group t-group--binding">
+                      <label>绑定状态</label>
+                      <el-select
                         v-model="tick.boundEffects"
                         multiple
                         collapse-tags
                         collapse-tags-tooltip
                         popper-class="ea-tick-binding-popper"
                         size="small"
-                        class="tick-select"
+                        class="tick-select tick-binding-select"
                         placeholder="选择要绑定的状态"
                         :disabled="getBindingOptions(type).length === 0"
-                    >
-                      <el-option v-for="opt in getBindingOptions(type)" :key="opt.value" :label="opt.label" :value="opt.value">
-                        <div class="binding-option">
-                          <img :src="getEffectIconPath(opt.type)" class="binding-option__icon" />
-                          <span class="binding-option__label">{{ opt.label }}</span>
-                          <span class="binding-option__hint">{{ opt.hint }}</span>
-                        </div>
-                      </el-option>
-                    </el-select>
+                      >
+                        <el-option v-for="opt in getBindingOptions(type)" :key="opt.value" :label="opt.label" :value="opt.value">
+                          <div class="binding-option">
+                            <img :src="getEffectIconPath(opt.type)" class="binding-option__icon" />
+                            <span class="binding-option__label">{{ opt.label }}</span>
+                            <span class="binding-option__hint">{{ opt.hint }}</span>
+                          </div>
+                        </el-option>
+                      </el-select>
+                    </div>
+                    </div>
+                    <button class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeDamageTick(selectedChar, type, tIdx)">×</button>
                   </div>
                 </div>
                 <button class="ea-btn ea-btn--block ea-btn--lg ea-btn--dashed-panel ea-btn--radius-6" style="margin-top: 10px;" @click="addDamageTick(selectedChar, type)">+ 添加判定点</button>
@@ -4651,7 +4662,6 @@ function saveData() {
   background: transparent !important;
   outline: none;
 }
-
 .unit {
   font-size: 10px;
   color: #666;
@@ -4662,16 +4672,22 @@ function saveData() {
 
 /* Ticks Editor Area */
 .ticks-editor-area { background: #1f1f1f; padding: 15px; border-radius: 6px; border: 1px solid #333; margin-bottom: 20px; }
-.tick-row { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 8px; background: #2b2b2b; padding: 10px; border-radius: 4px; border-left: 3px solid #666; }
-.tick-top { display: flex; align-items: center; gap: 15px; width: 100%; }
+.tick-row { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-bottom: 8px; background: #2b2b2b; padding: 8px 10px; border-radius: 4px; border-left: 3px solid #666; }
+.tick-top { display: flex; align-items: center; gap: 10px; width: 100%; }
 .tick-idx { font-family: monospace; color: #888; font-size: 12px; width: 48px; }
-.tick-inputs { display: flex; gap: 15px; flex-grow: 1; flex-wrap: wrap; }
-.t-group { display: flex; align-items: center; gap: 6px; }
+.tick-inputs { display: flex; gap: 10px; flex-grow: 1; flex-wrap: nowrap; min-width: 0; }
+.t-group { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
 .t-group label { font-size: 11px; color: #aaa; white-space: nowrap; }
-.tick-binding { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-.tick-select { width: 100%; }
-:deep(.tick-binding label) { font-size: 12px; color: #ccc; font-weight: 600; letter-spacing: 0.2px; }
+.t-group--select { min-width: 154px; }
+.t-group--binding { flex: 1 1 260px; min-width: 220px; }
+.tick-select { width: 100%; min-width: 0; }
+.tick-kind-select { width: 110px; }
+.tick-binding-select { width: 100%; }
+:deep(.t-group .el-select) { min-width: 0; }
+:deep(.t-group--binding label) { font-size: 12px; color: #ccc; font-weight: 600; letter-spacing: 0.2px; }
 :deep(.tick-select .el-input__wrapper) { background: #16161a; box-shadow: 0 0 0 1px #333 inset; }
+:deep(.tick-select .el-select__placeholder) { color: #777; }
+:deep(.tick-select .el-input__inner) { color: #f0f0f0; }
 
 .binding-option { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
 .binding-option__icon { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; background: #111; box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset; flex: 0 0 auto; }
@@ -4679,6 +4695,12 @@ function saveData() {
 .binding-option__hint { font-size: 11px; color: #9aa0a6; margin-left: 4px; white-space: nowrap; opacity: 0.95; }
 
 .empty-ticks-hint { color: #666; font-size: 12px; text-align: center; padding: 10px; font-style: italic; }
+
+@media (max-width: 1200px) {
+  .tick-top { align-items: flex-start; }
+  .tick-inputs { flex-wrap: wrap; }
+  .t-group--binding { flex-basis: 100%; min-width: 0; }
+}
 
 .info-banner { background: rgba(50, 50, 50, 0.5); padding: 12px; border-left: 3px solid #666; color: #aaa; margin-bottom: 20px; font-size: 13px; border-radius: 0 4px 4px 0; }
 .empty-state { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 400px; color: #666; font-size: 16px; border: 2px dashed #333; border-radius: 8px; margin-top: 20px; }

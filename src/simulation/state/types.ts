@@ -7,9 +7,11 @@ import type {
 export interface ActorSnapshot {
   id: string;
   stats: ActorStats;
+  acceptTeamGauge?: boolean;
   resources: {
     hp: number;
     gauge: number;
+    maxGauge: number;
   };
   cooldowns: Map<string, number>;
   activeBuffs: Map<string, ResolvedEffect>;
@@ -26,6 +28,9 @@ export interface TeamConfig {
 
 export interface TeamSnapshot {
   sp: number;
+  recoverSp: number;
+  refundSp: number;
+  debtSp: number;
   spRegenRate: number;
   maxSp: number;
   isSpRegenPaused: boolean;
@@ -56,4 +61,5 @@ export interface GameConfig {
 export interface GameSnapshot {
   team: TeamSnapshot;
   enemy: EnemySnapshot;
+  actors: ActorSnapshot[];
 }

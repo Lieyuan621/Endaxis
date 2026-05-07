@@ -42,6 +42,7 @@ export class DamageHandler implements EventHandler<DamageTickEvent> {
         payload: {
           actorId: e.payload.sourceId,
           spChange: e.payload.tickData.sp,
+          sourceKind: e.payload.tickData.spKind || "recover",
           reason: "damage",
           sourceId: e.payload.actionId,
           parent: e,

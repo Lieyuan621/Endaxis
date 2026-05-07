@@ -12,6 +12,7 @@ import { SpRegenPauseHandler } from "../events/SpRegenPauseHandler";
 import { EffectStartHandler } from "../events/EffectStartHandler";
 import { EffectEndHandler } from "../events/EffectEndHandler";
 import { StaggerChangeHandler } from "../events/StaggerChangeHandler";
+import { UltimateChargeChangeHandler } from "../events/UltimateChargeChangeHandler";
 import type { ResolvedTimeline } from "../compiler/types";
 
 export function createEngine(
@@ -31,6 +32,10 @@ export function createEngine(
   engine.registerHandler("ACTION_START", new ActionStartHandler());
   engine.registerHandler("ACTION_END", new ActionEndHandler());
   engine.registerHandler("SP_CHANGE", new SpChangeHandler());
+  engine.registerHandler(
+    "ULTIMATE_CHARGE_CHANGE",
+    new UltimateChargeChangeHandler(),
+  );
   engine.registerHandler("SP_REGEN_PAUSE", new SpRegenPauseHandler());
   engine.registerHandler("EFFECT_START", new EffectStartHandler());
   engine.registerHandler("EFFECT_END", new EffectEndHandler());

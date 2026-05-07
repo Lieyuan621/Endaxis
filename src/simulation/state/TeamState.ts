@@ -1,9 +1,12 @@
+import type { SpGainKind } from "@/simulation/compiler/types.ts";
 import type { BaseGameState } from "@/simulation/state/BaseGameState.ts";
 import type { TeamSnapshot, TeamConfig } from "@/simulation/state/types.ts";
 import type { SimulationEngine } from "../engine/SimulationEngine";
 
 export class TeamState implements BaseGameState<TeamSnapshot> {
-  private sp: number;
+  private recoverSp: number;
+  private refundSp: number = 0;
+  private debtSp: number = 0;
   private isSpRegenPaused: boolean = false;
   private spRegenPauseDuration: number = 0;
 
@@ -11,7 +14,10 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
     readonly config: TeamConfig,
     _engine: SimulationEngine,
   ) {
-    this.sp = config.initialSp || 0;
+    this.recoverSp = Math.max(0, Number(config.initialSp) || 0);
+    if (this.recoverSp > this.config.maxSp) {
+      this.recoverSp = this.config.maxSp;
+    }
   }
 
   advanceTime(dt: number, _currentTime: number) {
@@ -20,7 +26,10 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
 
   snapshot(): TeamSnapshot {
     return {
-      sp: this.sp,
+      sp: this.getSp(),
+      recoverSp: this.recoverSp,
+      refundSp: this.refundSp,
+      debtSp: this.debtSp,
       spRegenRate: this.config.spRegenRate,
       maxSp: this.config.maxSp,
       isSpRegenPaused: this.isSpRegenPaused,
@@ -29,15 +38,78 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
   }
 
   getSp(): number {
-    return this.sp;
+    return this.getPositiveSp() - this.debtSp;
   }
 
-  modifySp(amount: number): number {
-    if (amount === 0) {
-      return this.sp;
+  getRecoverSp() {
+    return this.recoverSp;
+  }
+
+  getRefundSp() {
+    return this.refundSp;
+  }
+
+  getDebtSp() {
+    return this.debtSp;
+  }
+
+  addSp(amount: number, kind: SpGainKind = "recover"): number {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return this.getSp();
     }
-    this.sp = Math.min(this.sp + amount, this.config.maxSp);
-    return this.sp;
+
+    let remaining = amount;
+
+    if (this.debtSp > 0) {
+      const repaid = Math.min(this.debtSp, remaining);
+      this.debtSp -= repaid;
+      remaining -= repaid;
+    }
+
+    if (remaining <= 0) {
+      return this.getSp();
+    }
+
+    if (kind === "refund") {
+      this.refundSp += remaining;
+      this.trimOverflow("refund");
+      return this.getSp();
+    }
+
+    this.recoverSp += remaining;
+    this.trimOverflow("recover");
+    return this.getSp();
+  }
+
+  consumeSp(amount: number) {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return {
+        sp: this.getSp(),
+        recoverConsumed: 0,
+        refundConsumed: 0,
+        debtIncurred: 0,
+      };
+    }
+
+    let remaining = amount;
+    const refundConsumed = Math.min(this.refundSp, remaining);
+    this.refundSp -= refundConsumed;
+    remaining -= refundConsumed;
+
+    const recoverConsumed = Math.min(this.recoverSp, remaining);
+    this.recoverSp -= recoverConsumed;
+    remaining -= recoverConsumed;
+
+    if (remaining > 0) {
+      this.debtSp += remaining;
+    }
+
+    return {
+      sp: this.getSp(),
+      recoverConsumed,
+      refundConsumed,
+      debtIncurred: remaining,
+    };
   }
 
   pauseSpRegen(duration: number) {
@@ -46,7 +118,7 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
   }
 
   private regenSp(dt: number) {
-    if (this.sp >= this.config.maxSp) {
+    if (this.getSp() >= this.config.maxSp) {
       return;
     }
 
@@ -63,9 +135,37 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
       this.spRegenPauseDuration = 0;
     }
 
-    if (this.sp < this.config.maxSp) {
+    if (this.getSp() < this.config.maxSp) {
       const gain = effectiveDuration * this.config.spRegenRate;
-      this.modifySp(gain);
+      this.addSp(gain, "recover");
     }
+  }
+
+  private getPositiveSp() {
+    return this.recoverSp + this.refundSp;
+  }
+
+  private trimOverflow(preferredKind: SpGainKind) {
+    let overflow = Math.max(0, this.getPositiveSp() - this.config.maxSp);
+    if (overflow <= 0) {
+      return;
+    }
+
+    if (preferredKind === "recover" && this.refundSp > 0) {
+      const displacedRefund = Math.min(this.refundSp, overflow);
+      this.refundSp -= displacedRefund;
+      overflow -= displacedRefund;
+    }
+
+    if (overflow <= 0) {
+      return;
+    }
+
+    if (preferredKind === "refund") {
+      this.refundSp = Math.max(0, this.refundSp - overflow);
+      return;
+    }
+
+    this.recoverSp = Math.max(0, this.recoverSp - overflow);
   }
 }

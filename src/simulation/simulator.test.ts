@@ -3,6 +3,7 @@ import { simulate } from "./simulator";
 import { simulatorFixture1 } from "./fixture/simulator.fixture";
 import { projectSpSeries } from "./projection/projectSpSeries";
 import { projectStaggerSeries } from "./projection/projectStaggerSeries";
+import { projectUltimateSeries } from "./projection/projectUltimateSeries";
 import { compileScenario } from "./compiler/compileScenario";
 import { formatSimLogEntry } from "./formatSimLogEntry";
 
@@ -49,5 +50,28 @@ describe("SimulationEngine Integration", () => {
     expect(projection.nodeStep).toBe(125);
 
     expect(projection).toMatchSnapshot();
+  });
+
+  it("should match ultimate charge snapshots", () => {
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(
+      simulatorFixture1.scenario,
+    );
+
+    const result = simulate(timeline, teamConfig, enemyConfig, actors);
+    const initialSnapshot = result.state.getInitialSnapshot();
+
+    const projections = Object.fromEntries(
+      actors.map((actor) => [
+        actor.id,
+        projectUltimateSeries(
+          result.simLog,
+          initialSnapshot,
+          actor.id,
+          timeline.meta.totalDuration,
+        ),
+      ]),
+    );
+
+    expect(projections).toMatchSnapshot();
   });
 });
