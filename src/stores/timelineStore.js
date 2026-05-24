@@ -11,7 +11,7 @@ import { projectStaggerSeries } from '@/simulation/projection/projectStaggerSeri
 import { projectUltimateSeries } from '@/simulation/projection/projectUltimateSeries'
 import { i18n } from '@/i18n'
 import { snapMs } from '@/utils/precision.js'
-import { FRAME_DURATION, formatFrameCount, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time.js'
+import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time.js'
 import { deserializeGameData, deserializeProjectData, serializeProjectData } from '@/utils/timeSerialization.js'
 
 const tr = (key, params) => i18n.global.t(key, params)
@@ -259,8 +259,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     function formatAxisTimeLabel(viewTime) {
         const bt = toBattleTime(viewTime)
         if (!Number.isFinite(bt)) return ''
-        const sign = bt < 0 ? '-' : ''
-        return `${sign}${formatFrameCount(Math.abs(bt))}`
+        return formatTimeWithFrames(bt)
     }
 
     const ELEMENT_COLORS = {
@@ -668,6 +667,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     const trackLaneRects = ref({})
 
     const showCursorGuide = ref(false)
+    const OPERATOR_EFFECTS_VISIBLE_KEY = 'endaxis:operator-effects-visible:v1'
+    const operatorEffectsVisible = ref(loadOperatorEffectsVisible())
     const cursorPosition = ref({ x: 0, y: 0 })
     const snapStep = ref(FRAME_DURATION)
 
@@ -703,6 +704,58 @@ export const useTimelineStore = defineStore('timeline', () => {
     })
 
     function setIsCapturing(val) { isCapturing.value = val }
+
+    function getOperatorEffectsTrackCount() {
+        return Math.max(4, Array.isArray(tracks.value) ? tracks.value.length : 0)
+    }
+
+    function normalizeOperatorEffectsVisible(source, length = getOperatorEffectsTrackCount()) {
+        const targetLength = Math.max(1, Number(length) || 0)
+        return Array.from({ length: targetLength }, (_, index) => source?.[index] !== false)
+    }
+
+    function loadOperatorEffectsVisible() {
+        try {
+            const raw = localStorage.getItem(OPERATOR_EFFECTS_VISIBLE_KEY)
+            if (!raw) return normalizeOperatorEffectsVisible([])
+            const parsed = JSON.parse(raw)
+            return normalizeOperatorEffectsVisible(Array.isArray(parsed) ? parsed : [])
+        } catch {
+            return normalizeOperatorEffectsVisible([])
+        }
+    }
+
+    function persistOperatorEffectsVisible() {
+        try {
+            localStorage.setItem(
+                OPERATOR_EFFECTS_VISIBLE_KEY,
+                JSON.stringify(normalizeOperatorEffectsVisible(operatorEffectsVisible.value))
+            )
+        } catch {
+            // ignore
+        }
+    }
+
+    function ensureOperatorEffectsVisible() {
+        const normalized = normalizeOperatorEffectsVisible(operatorEffectsVisible.value)
+        const current = operatorEffectsVisible.value
+        if (
+            normalized.length !== current.length ||
+            normalized.some((value, index) => value !== current[index])
+        ) {
+            operatorEffectsVisible.value = normalized
+        }
+    }
+
+    function isOperatorEffectsVisible(index) {
+        ensureOperatorEffectsVisible()
+        return operatorEffectsVisible.value[index] !== false
+    }
+
+    watch(() => tracks.value.length, () => {
+        ensureOperatorEffectsVisible()
+        persistOperatorEffectsVisible()
+    }, { immediate: true })
 
     const isActionSelected = (id) => selectedActionId.value === id || multiSelectedIds.value.has(id)
 
@@ -2077,6 +2130,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     function setNodeRect(nodeId, rect) { nodeRects.value[nodeId] = rect }
     function setCursorPosition(x, y) { cursorPosition.value = { x, y } }
     function toggleCursorGuide() { showCursorGuide.value = !showCursorGuide.value }
+    function toggleOperatorEffectsVisible(index) {
+        const normalized = normalizeOperatorEffectsVisible(operatorEffectsVisible.value)
+        if (index < 0 || index >= normalized.length) return
+        normalized[index] = !normalized[index]
+        operatorEffectsVisible.value = normalized
+        persistOperatorEffectsVisible()
+    }
     function toggleBoxSelectMode() { if (!isBoxSelectMode.value) connectionDragState.value.isDragging = false; isBoxSelectMode.value = !isBoxSelectMode.value }
     function toggleSnapStep() {
         if (snapStep.value > FRAME_DURATION) {
@@ -2987,10 +3047,51 @@ export const useTimelineStore = defineStore('timeline', () => {
     function nudgeSelection(direction) {
         const targets = new Set(multiSelectedIds.value)
         if (selectedActionId.value) targets.add(selectedActionId.value)
-        if (targets.size === 0) return
 
         const delta = direction * snapStep.value
         let hasChanged = false
+
+        if (targets.size === 0) {
+            if (selectedWeaponStatusId.value) {
+                const status = weaponStatuses.value.find((item) => item.id === selectedWeaponStatusId.value)
+                if (!status) return
+                const currentTime = status.logicalStartTime ?? status.startTime ?? 0
+                let newTime = snapTimeToFrame(currentTime + delta)
+                if (newTime < 0) newTime = 0
+                if (currentTime !== newTime) {
+                    status.startTime = newTime
+                    status.logicalStartTime = newTime
+                    commitState()
+                }
+                return
+            }
+
+            if (selectedSwitchEventId.value) {
+                const event = switchEvents.value.find((item) => item.id === selectedSwitchEventId.value)
+                if (!event) return
+                let newTime = snapTimeToFrame((Number(event.time) || 0) + delta)
+                if (newTime < 0) newTime = 0
+                if (event.time !== newTime) {
+                    event.time = newTime
+                    commitState()
+                }
+                return
+            }
+
+            if (selectedCycleBoundaryId.value) {
+                const boundary = cycleBoundaries.value.find((item) => item.id === selectedCycleBoundaryId.value)
+                if (!boundary) return
+                let newTime = snapTimeToFrame((Number(boundary.time) || 0) + delta)
+                if (newTime < 0) newTime = 0
+                if (boundary.time !== newTime) {
+                    boundary.time = newTime
+                    commitState()
+                }
+                return
+            }
+
+            return
+        }
 
         tracks.value.forEach(track => {
             track.actions.forEach(action => {
@@ -4266,13 +4367,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     return {
         MAX_SCENARIOS, toTimelineSpace, toViewportSpace, toGameTime, toRealTime,
         systemConstants, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, timelineScrollTop, timelineShift, timelineRect, trackLaneRects, nodeRects, draggingSkillData,
-        selectedActionId, selectedLibrarySkillId, selectedLibrarySource, selectedWeaponStatusId, multiSelectedIds, clipboard, isCapturing, setIsCapturing, showCursorGuide, isBoxSelectMode, cursorPosTimeline, cursorCurrentTime, cursorPosition, snapStep,
+        selectedActionId, selectedLibrarySkillId, selectedLibrarySource, selectedWeaponStatusId, multiSelectedIds, clipboard, isCapturing, setIsCapturing, showCursorGuide, operatorEffectsVisible, isBoxSelectMode, cursorPosTimeline, cursorCurrentTime, cursorPosition, snapStep,
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,
         teamTracksInfo, activeSkillLibrary, activeWeaponSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
         fetchGameData, exportProject, importProject, exportShareString, importShareString, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction, updateWeaponStatus,
         addSkillToTrack, setDraggingSkill, setTimelineShift, setScrollTop, setTimelineRect, setTrackLaneRect, setNodeRect, calculateGaugeData, getTrackGaugeMax, updateTrackInitialGauge, updateTrackMaxGauge, updateTrackOriginiumArtsPower, updateTrackLinkCdReduction, updateTrackWeapon,
         updateTrackWeaponTier, syncAllWeaponModifiers, getModifierLabel,
-        removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleBoxSelectMode, setCursorPosition, toggleSnapStep, nudgeSelection,
+        removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleOperatorEffectsVisible, isOperatorEffectsVisible, toggleBoxSelectMode, setCursorPosition, toggleSnapStep, nudgeSelection,
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
         removeAnomaly, initAutoSave, loadFromBrowser, resetProject, selectedConnectionId, selectConnection, selectAnomaly,
         alignActionToTarget, moveTrack,

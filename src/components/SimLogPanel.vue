@@ -679,7 +679,6 @@ onMounted(() => {
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  margin-right: -2px;
 }
 
 .header-divider {

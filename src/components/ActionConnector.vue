@@ -49,6 +49,30 @@ const isDimmed = computed(() => {
   return store.hoveredActionId && !isRelatedToHover.value && !isSelected.value && !connectionHandler.isDragging.value
 })
 
+const getTrackIndexByNodeId = (nodeId) => {
+  const info = store.resolveNode(nodeId)
+  if (!info) return null
+  if (info.type === 'action' || info.type === 'status') {
+    return Number.isInteger(info.trackIndex) ? info.trackIndex : null
+  }
+  if (info.type === 'effect') {
+    const actionWrap = store.getActionById(info.actionId)
+    return Number.isInteger(actionWrap?.trackIndex) ? actionWrap.trackIndex : null
+  }
+  return null
+}
+
+const isConnectionVisible = computed(() => {
+  const fromId = getEndpointId(props.connection, 'from')
+  const toId = getEndpointId(props.connection, 'to')
+  const fromTrackIndex = fromId ? getTrackIndexByNodeId(fromId) : null
+  const toTrackIndex = toId ? getTrackIndexByNodeId(toId) : null
+
+  if (fromTrackIndex !== null && !store.isOperatorEffectsVisible(fromTrackIndex)) return false
+  if (toTrackIndex !== null && !store.isOperatorEffectsVisible(toTrackIndex)) return false
+  return true
+})
+
 const getTrackCenterY = (trackIndex) => {
   const trackRect = store.trackLaneRects[trackIndex]
   if (!trackRect) return 0
@@ -217,7 +241,7 @@ const onDragTarget = (evt) => {
 
 <template>
   <ConnectionPath
-    v-if="coordinateInfo"
+    v-if="coordinateInfo && isConnectionVisible"
     :id="connection.id"
     :is-consumption="connection.isConsumption"  :start-point="coordinateInfo.startPoint"
     :end-point="coordinateInfo.endPoint"

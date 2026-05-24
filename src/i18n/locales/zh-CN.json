@@ -127,6 +127,8 @@
       "rendering": "正在渲染前 {seconds} 秒的长图..."
     },
     "header": {
+      "hideEffectsLabel": "隐藏效果",
+      "hideEffectsTooltip": "按干员隐藏图标、连线和效果层",
       "languageTooltip": "切换语言",
       "loadTooltip": "导入 .json 项目文件或 .png 图片",
       "receiveTooltip": "粘贴数据码导入项目",

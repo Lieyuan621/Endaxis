@@ -127,6 +127,8 @@
       "rendering": "Rendering timeline image for the first {seconds} seconds..."
     },
     "header": {
+      "hideEffectsLabel": "Hide Effects",
+      "hideEffectsTooltip": "Hide icons, links, and effect overlays by operator",
       "languageTooltip": "Language",
       "loadTooltip": "Import .json project file or .png image",
       "receiveTooltip": "Paste data code to import project",

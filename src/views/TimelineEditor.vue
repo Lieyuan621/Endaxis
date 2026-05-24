@@ -380,6 +380,7 @@ async function onFileSelected(event) {
 const isDragging = ref(false)
 const isInternalDrag = ref(false)
 let dragCounter = 0
+const hideEffectsHovered = ref(false)
 
 function hasFiles(e) {
   if (isInternalDrag.value) return false
@@ -822,6 +823,61 @@ onUnmounted(() => {
         <div class="header-controls">
           <input type="file" ref="fileInputRef" style="display: none" accept=".json,.png" @change="onFileSelected" />
 
+          <div
+            class="hide-effects-group"
+            @mouseenter="hideEffectsHovered = true"
+            @mouseleave="hideEffectsHovered = false"
+          >
+            <button
+              class="ea-btn ea-btn--sm ea-btn--lift hide-effects-btn"
+              type="button"
+              :title="t('timeline.header.hideEffectsTooltip')"
+              :disabled="!store.teamTracksInfo.some(track => track.id)"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {{ t('timeline.header.hideEffectsLabel') }}
+            </button>
+
+            <div v-show="hideEffectsHovered" class="hide-effects-dropdown">
+              <template v-for="(track, index) in store.teamTracksInfo" :key="index">
+                <div
+                  v-if="track.id"
+                  class="hide-effects-row"
+                  @click="store.toggleOperatorEffectsVisible(index)"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    :stroke="store.getCharacterElementColor(track.id)"
+                    stroke-width="1.5"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="store.operatorEffectsVisible[index]"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span class="hide-effects-name">{{ track.name }}</span>
+                </div>
+              </template>
+            </div>
+          </div>
+
           <el-dropdown @command="changeLocale" trigger="click" placement="bottom-end">
             <button class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-info" type="button" :title="t('timeline.header.languageTooltip')">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1090,6 +1146,12 @@ onUnmounted(() => {
 
 .header-controls { display: flex; align-items: center; gap: 10px; }
 .divider-vertical { width: 1px; height: 20px; background-color: #555; margin: 0 5px; }
+.hide-effects-group { position: relative; }
+.hide-effects-btn { white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.hide-effects-dropdown { position: absolute; top: 100%; left: 0; min-width: 160px; margin-top: 4px; padding: 4px 0; background: #2a2a2a; border: 1px solid #444; border-radius: 4px; z-index: 40; }
+.hide-effects-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap; user-select: none; color: #ccc; font-size: 12px; }
+.hide-effects-row:hover { background: #3a3a3a; color: #fff; }
+.hide-effects-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 /* === 方案选择器样式 === */
 .tech-scenario-bar { display: flex; align-items: center; height: 36px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%); padding: 0 10px; flex: 1; min-width: 0; margin-right: 20px; }

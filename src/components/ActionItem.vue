@@ -9,6 +9,7 @@ import { snapTimeToFrame } from '@/utils/time.js'
 
 const props = defineProps({
   action: { type: Object, required: true },
+  showDecorations: { type: Boolean, default: true },
 })
 
 const store = useTimelineStore()
@@ -498,7 +499,7 @@ function handleEffectDrop(effectId) {
        @dragstart.prevent>
 
 
-    <div v-if="!isGhostMode && effectiveCooldown > 0" class="cd-bar-container bottom-bar" :style="cdStyle">
+    <div v-if="showDecorations && !isGhostMode && effectiveCooldown > 0" class="cd-bar-container bottom-bar" :style="cdStyle">
       <div class="cd-line" :style="{ backgroundColor: themeColor }"></div>
 
       <span class="cd-text" :style="{ color: themeColor }">{{ store.formatTimeLabel(effectiveCooldown) }}</span>
@@ -511,7 +512,7 @@ function handleEffectDrop(effectId) {
       </div>
     </div>
 
-    <div v-if="!isGhostMode && action.type === 'ultimate' && (action.enhancementTime || 0) > 0"
+    <div v-if="showDecorations && !isGhostMode && action.type === 'ultimate' && (action.enhancementTime || 0) > 0"
          class="cd-bar-container bottom-bar"
          :style="enhancementStyle">
 
@@ -526,7 +527,7 @@ function handleEffectDrop(effectId) {
 
     </div>
 
-    <template v-if="!isGhostMode">
+    <template v-if="showDecorations && !isGhostMode">
       <div v-for="(barItem, idx) in customBarsToRender" :key="idx"
            class="custom-blue-bar bottom-bar" :style="barItem.style">
         <div class="cb-line"></div>
@@ -540,7 +541,7 @@ function handleEffectDrop(effectId) {
       </div>
     </template>
 
-    <div v-if="!isGhostMode" class="damage-ticks-layer">
+    <div v-if="showDecorations && !isGhostMode" class="damage-ticks-layer">
       <div v-for="(tick, idx) in renderableTicks" :key="idx"
            class="damage-tick-wrapper"
            :style="tick.style"
@@ -549,26 +550,26 @@ function handleEffectDrop(effectId) {
       </div>
     </div>
 
-    <div v-if="action.triggerWindow && action.triggerWindow !== 0" class="trigger-window-bar bottom-bar" :style="triggerWindowStyle">
+    <div v-if="showDecorations && action.triggerWindow && action.triggerWindow !== 0" class="trigger-window-bar bottom-bar" :style="triggerWindowStyle">
       <div class="tw-dot"></div>
       <div class="tw-separator"></div>
     </div>
 
-    <div v-if="action.isLocked" class="status-icon lock-icon" :title="t('actionItem.lockedTitle')">
+    <div v-if="showDecorations && action.isLocked" class="status-icon lock-icon" :title="t('actionItem.lockedTitle')">
       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
       </svg>
     </div>
 
-    <div v-if="action.isDisabled" class="status-icon mute-icon" :title="t('actionItem.disabledTitle')">
+    <div v-if="showDecorations && action.isDisabled" class="status-icon mute-icon" :title="t('actionItem.disabledTitle')">
       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
       </svg>
     </div>
 
-    <template v-if="action.type === 'ultimate' && !action.isDisabled">
+    <template v-if="showDecorations && action.type === 'ultimate' && !action.isDisabled">
       <div class="ultimate-side-bar left-bar" :style="{ backgroundColor: themeColor }"></div>
       <div class="ultimate-side-bar right-bar" :style="{ backgroundColor: themeColor }"></div>
     </template>
@@ -588,10 +589,10 @@ function handleEffectDrop(effectId) {
                      :disabled="!isActionValidConnectionTarget"
                      :canStart="connectionHandler.toolEnabled.value"
                      :rect="store.nodeRects[action.instanceId]?.rect"
-                     v-if="showPorts"
+                     v-if="showPorts && showDecorations"
                      :color="themeColor" />
 
-    <div v-if="!isGhostMode" class="anomalies-overlay">
+    <div v-if="showDecorations && !isGhostMode" class="anomalies-overlay">
       <div v-for="(item, index) in renderableAnomalies" :key="`${item.rowIndex}-${item.colIndex}`"
            class="anomaly-wrapper" :style="item.style" :data-id="item.effectId">
 

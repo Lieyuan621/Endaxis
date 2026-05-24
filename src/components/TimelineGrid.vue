@@ -58,17 +58,27 @@ const draggingSwitchEventId = ref(null)
 const draggingWeaponStatusId = ref(null)
 const wasWeaponStatusSelectedOnPress = ref(false)
 const weaponStatusDragOffset = ref(0)
+const switchEventDragOffsetX = ref(0)
+const cycleBoundaryDragOffsetX = ref(0)
 const dragStartMouseTime = ref(0)
 
 // === 边缘自动滚动相关状态 ===
 const autoScrollSpeed = ref(0)
 let autoScrollRaf = null
 let lastMouseX = 0
+let lastMouseY = 0
 const SCROLL_ZONE = 50
 const MAX_SCROLL_SPEED = 15
 
 const TRACK_HEIGHT = 50
+const TRACK_ROW_BASE_PADDING = 30
+const TRACK_ROW_MIN_PADDING = 8
+const TRACK_ROW_BASE_HEIGHT = TRACK_HEIGHT + TRACK_ROW_BASE_PADDING * 2
+const TRACK_ROW_MIN_HEIGHT = TRACK_HEIGHT + TRACK_ROW_MIN_PADDING * 2
+const TRACKS_VERTICAL_PADDING = 20
+const TRACK_LAYOUT_KEY = 'endaxis:timeline-track-row-heights:v1'
 let resizeObserver = []
+let trackResizeState = null
 
 // Box Select State
 const isBoxSelecting = ref(false)
@@ -123,6 +133,163 @@ function moveTrackUp(index) {
 
 function moveTrackDown(index) {
   if (index < store.tracks.length - 1) store.moveTrack(index, index + 1)
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max)
+}
+
+function normalizeTrackWeights(weights, count = store.tracks.length) {
+  const safeCount = Math.max(0, Number(count) || 0)
+  return Array.from({ length: safeCount }, (_, index) => {
+    const raw = Array.isArray(weights) ? weights[index] : null
+    const parsed = Number(raw)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+  })
+}
+
+const trackHeightWeights = ref([])
+const tracksViewportHeight = ref(0)
+const draggingTrackResizeIndex = ref(null)
+const trackRowHeightPreview = ref(null)
+
+function restoreTrackLayoutWeights() {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = window.localStorage.getItem(TRACK_LAYOUT_KEY)
+    if (!raw) return
+    trackHeightWeights.value = normalizeTrackWeights(JSON.parse(raw))
+  } catch {
+    trackHeightWeights.value = normalizeTrackWeights([])
+  }
+}
+
+function persistTrackLayoutWeights() {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(TRACK_LAYOUT_KEY, JSON.stringify(trackHeightWeights.value))
+  } catch {
+    // ignore
+  }
+}
+
+watch(() => store.tracks.length, (count) => {
+  trackHeightWeights.value = normalizeTrackWeights(trackHeightWeights.value, count)
+}, { immediate: true })
+
+const trackRowHeights = computed(() => {
+  const count = store.tracks.length
+  if (!count) return []
+
+  const weights = normalizeTrackWeights(trackHeightWeights.value, count)
+  const totalHeight = Math.max(
+    (tracksViewportHeight.value || 0) - TRACKS_VERTICAL_PADDING * 2,
+    count * TRACK_ROW_MIN_HEIGHT
+  )
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0) || count
+  const heights = new Array(count).fill(TRACK_ROW_MIN_HEIGHT)
+  let remaining = totalHeight
+
+  for (let index = 0; index < count; index += 1) {
+    if (index === count - 1) {
+      heights[index] = remaining
+      break
+    }
+
+    const portion = Math.round(totalHeight * (weights[index] / totalWeight))
+    const applied = clamp(portion, TRACK_ROW_MIN_HEIGHT, remaining - ((count - index - 1) * TRACK_ROW_MIN_HEIGHT))
+    heights[index] = applied
+    remaining -= applied
+  }
+
+  return heights
+})
+
+const displayTrackRowHeights = computed(() => {
+  const preview = trackRowHeightPreview.value
+  if (Array.isArray(preview) && preview.length === store.tracks.length) return preview
+  return trackRowHeights.value
+})
+
+const trackDividerOffsets = computed(() => {
+  const offsets = []
+  let cumulative = TRACKS_VERTICAL_PADDING
+
+  for (let index = 0; index < displayTrackRowHeights.value.length - 1; index += 1) {
+    cumulative += displayTrackRowHeights.value[index]
+    offsets.push(cumulative)
+  }
+
+  return offsets
+})
+
+function getTrackRowStyle(index) {
+  const rowHeight = displayTrackRowHeights.value[index] ?? TRACK_ROW_BASE_HEIGHT
+  const rowPadding = Math.max(TRACK_ROW_MIN_PADDING, (rowHeight - TRACK_HEIGHT) / 2)
+  return {
+    '--track-height': `${TRACK_HEIGHT}px`,
+    '--track-row-height': `${rowHeight}px`,
+    '--track-row-padding': `${rowPadding}px`,
+  }
+}
+
+function getTrackInfoStyle(index) {
+  const rowHeight = displayTrackRowHeights.value[index] ?? TRACK_ROW_BASE_HEIGHT
+  return {
+    '--track-row-height': `${rowHeight}px`,
+  }
+}
+
+function beginTrackResize(index, event) {
+  event.preventDefault()
+  const rowHeights = trackRowHeights.value
+  if (!rowHeights[index] || !rowHeights[index + 1]) return
+
+  draggingTrackResizeIndex.value = index
+  trackRowHeightPreview.value = [...rowHeights]
+  trackResizeState = {
+    index,
+    startY: event.clientY,
+    rowHeights: [...rowHeights],
+  }
+  document.body.style.userSelect = 'none'
+  document.body.style.cursor = 'ns-resize'
+  window.addEventListener('pointermove', onTrackResizeMove)
+  window.addEventListener('pointerup', endTrackResize)
+}
+
+function onTrackResizeMove(event) {
+  if (!trackResizeState) return
+
+  const { index, startY, rowHeights } = trackResizeState
+  const dy = event.clientY - startY
+  const nextHeights = [...rowHeights]
+  const pairTotal = rowHeights[index] + rowHeights[index + 1]
+  const upper = clamp(rowHeights[index] + dy, TRACK_ROW_MIN_HEIGHT, pairTotal - TRACK_ROW_MIN_HEIGHT)
+  nextHeights[index] = upper
+  nextHeights[index + 1] = pairTotal - upper
+  trackRowHeightPreview.value = nextHeights
+}
+
+function endTrackResize() {
+  const preview = Array.isArray(trackRowHeightPreview.value) ? trackRowHeightPreview.value : null
+  if (preview && preview.length === store.tracks.length) {
+    trackHeightWeights.value = normalizeTrackWeights(preview, preview.length)
+  }
+  trackResizeState = null
+  trackRowHeightPreview.value = null
+  draggingTrackResizeIndex.value = null
+  document.body.style.userSelect = ''
+  document.body.style.cursor = ''
+  window.removeEventListener('pointermove', onTrackResizeMove)
+  window.removeEventListener('pointerup', endTrackResize)
+  persistTrackLayoutWeights()
+}
+
+function resetTrackLayoutWeights() {
+  trackRowHeightPreview.value = null
+  trackHeightWeights.value = normalizeTrackWeights([])
+  persistTrackLayoutWeights()
 }
 
 
@@ -899,8 +1066,8 @@ function updateScrollbarHeight() {
   }
 }
 
-function calculateTimeFromEvent(evt, fixedStep = null) {
-  const mouseXInTrack = store.toTimelineSpace(evt.clientX, evt.clientY).x
+function calculateTimeFromClient(clientX, clientY, offsetX = 0, fixedStep = null) {
+  const mouseXInTrack = store.toTimelineSpace(clientX - offsetX, clientY).x
 
   const rawTime = store.pxToTime(mouseXInTrack)
 
@@ -911,6 +1078,10 @@ function calculateTimeFromEvent(evt, fixedStep = null) {
   if (startTime < 0) startTime = 0
 
   return snapTimeToFrame(startTime)
+}
+
+function calculateTimeFromEvent(evt, fixedStep = null) {
+  return calculateTimeFromClient(evt.clientX, evt.clientY, 0, fixedStep)
 }
 
 function onPrepResizeMouseDown(evt) {
@@ -1134,6 +1305,8 @@ function onContentMouseDown(evt) {
 
 function onCycleLineMouseDown(evt, boundaryId) {
   evt.stopPropagation()
+  evt.preventDefault()
+  if (evt.button !== 0) return
 
   wasCycleSelectedOnPress.value = (store.selectedCycleBoundaryId === boundaryId)
 
@@ -1141,14 +1314,19 @@ function onCycleLineMouseDown(evt, boundaryId) {
     store.selectCycleBoundary(boundaryId)
   }
 
+  const boundary = store.cycleBoundaries.find((item) => item.id === boundaryId)
+  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY)
+  cycleBoundaryDragOffsetX.value = mousePos.x - store.timeToPx(Number(boundary?.time) || 0)
   draggingCycleBoundaryId.value = boundaryId
   initialMouseX.value = evt.clientX
   initialMouseY.value = evt.clientY
   isDragStarted.value = false
   isMouseDown.value = true
+  document.body.classList.add('is-dragging')
 
   window.addEventListener('mousemove', onWindowMouseMove)
   window.addEventListener('mouseup', onWindowMouseUp)
+  window.addEventListener('blur', onWindowMouseUp)
 }
 
 function onBoxMouseMove(evt) {
@@ -1478,6 +1656,53 @@ function updateDragPosition(clientX) {
   nextTick(() => svgRenderKey.value++);
 }
 
+function updateSwitchMarkerPosition(clientX, clientY) {
+  let newTime = calculateTimeFromClient(clientX, clientY, switchEventDragOffsetX.value, store.snapStep)
+  if (newTime > store.viewDuration) newTime = store.viewDuration
+  if (newTime < 0) newTime = 0
+  newTime = snapTimeToFrame(newTime)
+  store.updateSwitchEvent(draggingSwitchEventId.value, newTime)
+}
+
+function updateWeaponStatusPosition(clientX, clientY) {
+  let newTime = calculateTimeFromClient(clientX, clientY, 0, store.snapStep) - weaponStatusDragOffset.value
+  if (newTime > store.viewDuration) newTime = store.viewDuration
+  if (newTime < 0) newTime = 0
+  newTime = snapTimeToFrame(newTime)
+  const status = store.weaponStatuses.find(s => s.id === draggingWeaponStatusId.value)
+  if (status) {
+    status.startTime = newTime
+    status.logicalStartTime = newTime
+  }
+}
+
+function updateCycleBoundaryPosition(clientX, clientY) {
+  let newTime = calculateTimeFromClient(clientX, clientY, cycleBoundaryDragOffsetX.value, store.snapStep)
+  if (newTime > store.viewDuration) newTime = store.viewDuration
+  if (newTime < 0) newTime = 0
+  newTime = snapTimeToFrame(newTime)
+  store.updateCycleBoundary(draggingCycleBoundaryId.value, newTime)
+}
+
+function updateDragAutoScroll(clientX) {
+  if (!tracksContentRef.value) return
+  const rect = store.timelineRect
+  if (clientX < rect.left + SCROLL_ZONE) {
+    const ratio = 1 - (Math.max(0, clientX - rect.left) / SCROLL_ZONE)
+    autoScrollSpeed.value = -Math.max(2, ratio * MAX_SCROLL_SPEED)
+  }
+  else if (clientX > rect.right - SCROLL_ZONE) {
+    const ratio = 1 - (Math.max(0, rect.right - clientX) / SCROLL_ZONE)
+    autoScrollSpeed.value = Math.max(2, ratio * MAX_SCROLL_SPEED)
+  }
+  else {
+    autoScrollSpeed.value = 0
+  }
+  if (autoScrollSpeed.value !== 0 && !autoScrollRaf) {
+    performAutoScroll()
+  }
+}
+
 function performAutoScroll() {
   if (autoScrollSpeed.value === 0) {
     cancelAnimationFrame(autoScrollRaf)
@@ -1486,7 +1711,10 @@ function performAutoScroll() {
   }
   const newShift = store.timelineShift + autoScrollSpeed.value
   store.setTimelineShift(newShift)
-  updateDragPosition(lastMouseX)
+  if (draggingSwitchEventId.value) updateSwitchMarkerPosition(lastMouseX, lastMouseY)
+  else if (draggingWeaponStatusId.value) updateWeaponStatusPosition(lastMouseX, lastMouseY)
+  else if (draggingCycleBoundaryId.value) updateCycleBoundaryPosition(lastMouseX, lastMouseY)
+  else updateDragPosition(lastMouseX)
   autoScrollRaf = requestAnimationFrame(performAutoScroll)
 }
 
@@ -1500,6 +1728,9 @@ function onSwitchMarkerMouseDown(evt, id) {
   if (!wasSwitchSelectedOnPress.value) {
     store.selectSwitchEvent(id)
   }
+  const sw = store.switchEvents.find((item) => item.id === id)
+  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY)
+  switchEventDragOffsetX.value = mousePos.x - store.timeToPx(Number(sw?.time) || 0)
   draggingSwitchEventId.value = id
   initialMouseX.value = evt.clientX
   initialMouseY.value = evt.clientY
@@ -1542,15 +1773,18 @@ function onWeaponStatusMouseDown(evt, status) {
 }
 
 function onWindowMouseMove(evt) {
-    if (draggingSwitchEventId.value) {
+  lastMouseX = evt.clientX
+  lastMouseY = evt.clientY
+
+  if (draggingSwitchEventId.value) {
     if (!isDragStarted.value) {
       const dist = Math.sqrt(Math.pow(evt.clientX - initialMouseX.value, 2) + Math.pow(evt.clientY - initialMouseY.value, 2))
       if (dist > dragThreshold) isDragStarted.value = true; else return
     }
-    let newTime = calculateTimeFromEvent(evt, store.snapStep)
-    if (newTime > store.viewDuration) newTime = store.viewDuration
-    newTime = snapTimeToFrame(newTime)
-    store.updateSwitchEvent(draggingSwitchEventId.value, newTime)
+    updateDragAutoScroll(evt.clientX)
+    if (autoScrollSpeed.value === 0) {
+      updateSwitchMarkerPosition(evt.clientX, evt.clientY)
+    }
     return
   }
   if (draggingWeaponStatusId.value) {
@@ -1558,14 +1792,9 @@ function onWindowMouseMove(evt) {
       const dist = Math.sqrt(Math.pow(evt.clientX - initialMouseX.value, 2) + Math.pow(evt.clientY - initialMouseY.value, 2))
       if (dist > dragThreshold) isDragStarted.value = true; else return
     }
-    let newTime = calculateTimeFromEvent(evt, store.snapStep) - weaponStatusDragOffset.value
-    if (newTime > store.viewDuration) newTime = store.viewDuration
-    if (newTime < 0) newTime = 0
-    newTime = snapTimeToFrame(newTime)
-    const status = store.weaponStatuses.find(s => s.id === draggingWeaponStatusId.value)
-    if (status) {
-      status.startTime = newTime
-      status.logicalStartTime = newTime
+    updateDragAutoScroll(evt.clientX)
+    if (autoScrollSpeed.value === 0) {
+      updateWeaponStatusPosition(evt.clientX, evt.clientY)
     }
     return
   }
@@ -1578,10 +1807,10 @@ function onWindowMouseMove(evt) {
         return
       }
     }
-    let newTime = calculateTimeFromEvent(evt, store.snapStep)
-    if (newTime > store.viewDuration) newTime = store.viewDuration
-    newTime = snapTimeToFrame(newTime)
-    store.updateCycleBoundary(draggingCycleBoundaryId.value, newTime)
+    updateDragAutoScroll(evt.clientX)
+    if (autoScrollSpeed.value === 0) {
+      updateCycleBoundaryPosition(evt.clientX, evt.clientY)
+    }
     return
   }
   if (!isMouseDown.value) return
@@ -1596,23 +1825,8 @@ function onWindowMouseMove(evt) {
     if (dist > dragThreshold) isDragStarted.value = true; else return
   }
 
-  lastMouseX = evt.clientX
   if (tracksContentRef.value) {
-    const rect = store.timelineRect
-    if (evt.clientX < rect.left + SCROLL_ZONE) {
-      const ratio = 1 - (Math.max(0, evt.clientX - rect.left) / SCROLL_ZONE)
-      autoScrollSpeed.value = -Math.max(2, ratio * MAX_SCROLL_SPEED)
-    }
-    else if (evt.clientX > rect.right - SCROLL_ZONE) {
-      const ratio = 1 - (Math.max(0, rect.right - evt.clientX) / SCROLL_ZONE)
-      autoScrollSpeed.value = Math.max(2, ratio * MAX_SCROLL_SPEED)
-    }
-    else {
-      autoScrollSpeed.value = 0
-    }
-    if (autoScrollSpeed.value !== 0 && !autoScrollRaf) {
-      performAutoScroll()
-    }
+    updateDragAutoScroll(evt.clientX)
   }
 
   if (autoScrollSpeed.value === 0) {
@@ -1641,6 +1855,7 @@ function onWindowMouseUp(event) {
 
     isDragStarted.value = false
     draggingSwitchEventId.value = null
+    switchEventDragOffsetX.value = 0
     document.body.classList.remove('is-dragging')
     window.removeEventListener('mousemove', onWindowMouseMove)
     window.removeEventListener('mouseup', onWindowMouseUp)
@@ -1681,6 +1896,8 @@ function onWindowMouseUp(event) {
 
     isDragStarted.value = false
     draggingCycleBoundaryId.value = null
+    cycleBoundaryDragOffsetX.value = 0
+    document.body.classList.remove('is-dragging')
     window.removeEventListener('mousemove', onWindowMouseMove)
     window.removeEventListener('mouseup', onWindowMouseUp)
     window.removeEventListener('blur', onWindowMouseUp)
@@ -1752,6 +1969,7 @@ function handleKeyDown(event) {
   if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
 
   const hasSelection = store.selectedActionId || store.multiSelectedIds.size > 0 || store.selectedConnectionId || store.selectedCycleBoundaryId || store.selectedSwitchEventId || store.selectedWeaponStatusId
+  const hasNudgeTarget = store.selectedActionId || store.multiSelectedIds.size > 0 || store.selectedCycleBoundaryId || store.selectedSwitchEventId || store.selectedWeaponStatusId
   if (!hasSelection) return
 
   if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -1761,7 +1979,7 @@ function handleKeyDown(event) {
       ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 })
     }
   }
-  if (store.selectedActionId || store.multiSelectedIds.size > 0) {
+  if (hasNudgeTarget) {
     if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') { event.preventDefault(); store.nudgeSelection(-1) }
     if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') { event.preventDefault(); store.nudgeSelection(1) }
   }
@@ -1832,13 +2050,22 @@ const activeFreezeRegions = computed(() => {
 
 watch(() => store.timeBlockWidth, () => { nextTick(() => { forceSvgUpdate(); updateScrollbarHeight() }) })
 watch(() => [store.tracks, store.connections], () => { nextTick(() => { forceSvgUpdate() }) }, { deep: true })
+watch(() => trackRowHeights.value.slice(), () => {
+  nextTick(() => {
+    updateTrackRects()
+    forceSvgUpdate()
+  })
+})
 
 onMounted(() => {
+  restoreTrackLayoutWeights()
   if (tracksContentRef.value) {
     tracksContentRef.value.addEventListener('scroll', syncVerticalScroll)
+    tracksViewportHeight.value = tracksContentRef.value.clientHeight || 0
 
     const tracksResizeObserver = new ResizeObserver(([entry]) => { 
       const rect = entry.target.getBoundingClientRect()
+      tracksViewportHeight.value = entry.target.clientHeight || rect.height || 0
 
       updateTrackRects()
 
@@ -1874,6 +2101,10 @@ onUnmounted(() => {
   window.removeEventListener('mouseup', onGlobalWindowMouseUp)
   window.removeEventListener('mousemove', onPrepResizeMouseMove)
   window.removeEventListener('mouseup', onPrepResizeMouseUp)
+  window.removeEventListener('pointermove', onTrackResizeMove)
+  window.removeEventListener('pointerup', endTrackResize)
+  document.body.style.userSelect = ''
+  document.body.style.cursor = ''
 })
 </script>
 
@@ -2029,6 +2260,7 @@ onUnmounted(() => {
     <div class="tracks-header-sticky" ref="tracksHeaderRef" @click="store.selectTrack(null)"
          :style="{ paddingBottom: `${20 + scrollbarHeight}px` }">
       <div v-for="(track, index) in store.teamTracksInfo" :key="index" class="track-info"
+           :style="getTrackInfoStyle(index)"
            @click.stop="store.selectTrack(track.id)"
            :class="{ 
              'is-active': track.id && track.id === store.activeTrackId,
@@ -2115,6 +2347,19 @@ onUnmounted(() => {
 
     <div class="tracks-content-viewport" ref="tracksContentRef" @mousedown="onContentMouseDown" @wheel="handleTrackWheel"
          @mousemove="onGridMouseMove" @mouseleave="onGridMouseLeave" @contextmenu="onBackgroundContextMenu">
+      <div v-if="trackDividerOffsets.length" class="track-divider-overlay" aria-hidden="true">
+        <div
+          v-for="(offset, index) in trackDividerOffsets"
+          :key="`track-divider-${index}`"
+          class="track-divider-handle"
+          :class="{ 'is-active': draggingTrackResizeIndex === index }"
+          :style="{ top: `${offset - store.timelineScrollTop}px` }"
+          @pointerdown.stop="beginTrackResize(index, $event)"
+          @dblclick.stop="resetTrackLayoutWeights"
+        >
+          <div class="track-divider-line"></div>
+        </div>
+      </div>
 
       <div class="tracks-content-scroller" :style="transformStyle">
         <div v-if="store.showCursorGuide && !store.isBoxSelectMode" class="cursor-guide"
@@ -2232,12 +2477,13 @@ onUnmounted(() => {
             </template>
           </svg>
 
-          <div v-for="(track, index) in store.tracks" :key="index" class="track-row" :id="`track-row-${index}`" :style="{ '--track-height': `${TRACK_HEIGHT}px` }"
+          <div v-for="(track, index) in store.tracks" :key="index" class="track-row" :id="`track-row-${index}`" :style="getTrackRowStyle(index)"
                :class="{ 'is-active-drop': track.id === store.activeTrackId,'is-last-track': index === store.tracks.length - 1 }" @dragover="onTrackDragOver" @drop="onTrackDrop(track, $event)">
             <div class="track-lane" :style="getTrackLaneStyle" ref="trackLaneRefs" :data-track-index="index" :data-track-id="track.id">
-              <GaugeOverlay v-if="track.id" :track-id="track.id"/>
+              <GaugeOverlay v-if="track.id && store.isOperatorEffectsVisible(index)" :track-id="track.id"/>
               <div class="actions-container">
-                <ActionItem v-memo="[action]" v-for="action in track.actions" :key="action.instanceId" :action="action"
+                <ActionItem v-memo="[action, store.isOperatorEffectsVisible(index)]" v-for="action in track.actions" :key="action.instanceId" :action="action"
+                  :show-decorations="store.isOperatorEffectsVisible(index)"
                   @mousedown="onActionMouseDown($event, track, action)"
                   @mousemove="updateAlignGuide($event, action, $el.querySelector(`#action-${action.instanceId}`))"
                   @mouseleave="hideAlignGuide"
@@ -2245,7 +2491,7 @@ onUnmounted(() => {
                   :class="{ 'is-moving': isDragStarted && store.isActionSelected(action.instanceId) }"
                 />
               </div>
-              <div class="switch-marker-layer">
+              <div v-if="store.isOperatorEffectsVisible(index)" class="switch-marker-layer">
                 <div v-for="sw in store.switchEvents.filter(s => s.characterId === track.id)"
                      :key="sw.id"
                      class="switch-tag"
@@ -2257,9 +2503,10 @@ onUnmounted(() => {
                     <img :src="store.characterRoster.find(c => c.id === sw.characterId)?.avatar" />
                   </div>
                   <div class="tag-time">{{ store.formatAxisTimeLabel(sw.time) }}</div>
+                  <div class="tag-pointer"></div>
                 </div>
               </div>
-              <div class="weapon-status-layer">
+              <div v-if="store.isOperatorEffectsVisible(index)" class="weapon-status-layer">
                 <div
                   v-for="status in weaponStatusesByTrack.get(track.id) || []"
                   :key="status.id"
@@ -2288,7 +2535,7 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
-              <div class="set-status-layer">
+              <div v-if="store.isOperatorEffectsVisible(index)" class="set-status-layer">
                 <div
                   v-for="status in setStatusesByTrack.get(track.id) || []"
                   :key="status.id"
@@ -3015,12 +3262,15 @@ body.capture-mode .davinci-range {
   border-right: 1px solid #444;
   padding: 20px 0;
   overflow-x: hidden;
+  overflow-y: hidden;
   box-sizing: border-box;
 }
 
 .track-info {
-  flex: 1;
-  min-height: 110px;
+  --track-row-height: 110px;
+  flex: 0 0 auto;
+  height: var(--track-row-height);
+  min-height: var(--track-row-height);
   display: flex;
   align-items: center;
   background: #3a3a3a;
@@ -3314,6 +3564,40 @@ body.capture-mode .davinci-range {
   height: 100%;
 }
 
+.track-divider-overlay {
+  position: absolute;
+  inset: 0 0 12px 0;
+  pointer-events: none;
+  z-index: 35;
+}
+
+.track-divider-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16px;
+  transform: translateY(-50%);
+  cursor: ns-resize;
+  pointer-events: auto;
+}
+
+.track-divider-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-50%);
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.track-divider-handle:hover .track-divider-line,
+.track-divider-handle.is-active .track-divider-line {
+  background: rgba(255, 215, 0, 0.45);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
 .timeline-horizontal-scrollbar {
   grid-column: 2 / 3;
   grid-row: 2 / 3;
@@ -3469,21 +3753,20 @@ body.capture-mode .davinci-range {
    ========================================================================== */
 .track-row {
   --track-height: 50px;
+  --track-row-height: 110px;
+  --track-row-padding: 30px;
   position: relative;
-  flex: 1;
+  flex: 0 0 auto;
+  height: var(--track-row-height);
   min-height: var(--track-height);
-  padding-top: 30px;
-  padding-bottom: 30px;
+  padding-top: var(--track-row-padding);
+  padding-bottom: var(--track-row-padding);
+  box-sizing: border-box;
   width: fit-content;
   min-width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.track-row.is-last-track {
-  border-bottom: none;
 }
 
 .track-lane {
@@ -3960,7 +4243,7 @@ body.capture-mode .davinci-range {
   background: #d3adff;
   box-shadow: 0 0 6px #d3adff;
   pointer-events: auto;
-  cursor: ew-resize;
+  cursor: grab;
   z-index: 4;
   transition: background-color 0.1s, box-shadow 0.1s;
 }
@@ -4031,7 +4314,7 @@ body.capture-mode .davinci-range {
   bottom: 0;
   width: 10px;
   background: transparent;
-  cursor: ew-resize;
+  cursor: grab;
   z-index: 20;
 }
 @keyframes pulse-border {
@@ -4047,12 +4330,14 @@ body.capture-mode .davinci-range {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
 }
 .switch-tag {
-  position: absolute; top: -12px;
+  position: absolute; top: -42px;
   display: flex; flex-direction: column; align-items: center;
-  pointer-events: auto; cursor: col-resize; z-index: 30; transform: translateX(-50%); transition: transform 0.1s;
+  gap: 2px;
+  pointer-events: auto; cursor: grab; z-index: 30; transform: translateX(-50%); transition: transform 0.1s;
 }
 .switch-tag.is-dragging {
   transition: none;
+  cursor: grabbing;
 }
 .tag-avatar {
   width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d3adff;
@@ -4061,16 +4346,34 @@ body.capture-mode .davinci-range {
 .tag-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .tag-time {
   font-size: 9px;
-  color: #d3adff;
+  color: #f0dcff;
   font-weight: bold;
-  background: transparent;
-  padding: 0 2px;
-  border-radius: 2px;
-  margin-top: 2px;
+  background: rgba(24, 18, 30, 0.92);
+  border: 1px solid rgba(211, 173, 255, 0.65);
+  padding: 1px 5px;
+  border-radius: 10px;
+  line-height: 1.2;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  white-space: nowrap;
+}
+.tag-pointer {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #d3adff;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
 }
 .switch-tag.is-selected .tag-avatar {
   border-color: #fff; box-shadow: 0 0 8px #fff;
+}
+.switch-tag.is-selected .tag-time {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.85);
+}
+.switch-tag.is-selected .tag-pointer {
+  border-top-color: #fff;
 }
 
 .weapon-status-layer {
@@ -4236,7 +4539,7 @@ body.capture-mode .davinci-range {
 }
 :global(body.is-dragging) {
   user-select: none !important;
-  cursor: ew-resize !important;
+  cursor: grabbing !important;
 }
 .guide-line-vertical {
   position: absolute;

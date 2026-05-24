@@ -127,6 +127,8 @@
       "rendering": "Рендеринг изображения таймлайна для первых {seconds} сек..."
     },
     "header": {
+      "hideEffectsLabel": "Скрыть эффекты",
+      "hideEffectsTooltip": "Скрывать значки, связи и слои эффектов по оператору",
       "languageTooltip": "Язык",
       "loadTooltip": "Импорт .json файла проекта или .png изображения",
       "receiveTooltip": "Вставьте дата-код для импорта проекта",
