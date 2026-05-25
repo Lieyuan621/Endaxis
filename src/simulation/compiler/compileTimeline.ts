@@ -1,4 +1,4 @@
-import { TimeContext } from "./timeContext";
+﻿import { TimeContext } from "./timeContext";
 import type {
   Connection,
   ActionNode,
@@ -18,6 +18,12 @@ interface ShiftContext {
 
 function round(num: number, factor: number = 1000): number {
   return Math.round(num * factor) / factor;
+}
+
+function getNominalFreezeDuration(action: ActionNode["node"]): number {
+  if (action.type === "link") return 0.5;
+  if (action.type === "ultimate") return Number(action.animationTime) || 1.5;
+  return 0;
 }
 
 function calculateTimeShifts(startSortedActions: ActionNode[]) {
@@ -80,7 +86,7 @@ function calculateTimeShifts(startSortedActions: ActionNode[]) {
   return { stopSources, sourceShiftMap, timeExtensions };
 }
 
-// 计算动作的逻辑时间
+// Resolve an action's shifted timing and derived runtime data.
 function resolveAction(
   item: ActionNode,
   stopSources: ActionNode[],
@@ -98,6 +104,7 @@ function resolveAction(
     .find((s) => s.node.startTime <= startTime);
 
   const realFreezeDuration = sourceShiftMap.get(item.id)?.amount;
+  const nominalFreezeDuration = getNominalFreezeDuration(action);
 
   if (activeSourceItem) {
     const ctx = sourceShiftMap.get(activeSourceItem.id)!;
@@ -112,9 +119,15 @@ function resolveAction(
   }
 
   // Calculate Real Duration
+  const effectiveDuration = round(
+    Math.max(
+      0,
+      action.duration - nominalFreezeDuration + (realFreezeDuration ?? nominalFreezeDuration)
+    )
+  );
   const realEndTime = timeCtx.getShiftedEndTime(
     realStartTime,
-    action.duration,
+    effectiveDuration,
     item.id
   );
   const realDuration = round(realEndTime - realStartTime);

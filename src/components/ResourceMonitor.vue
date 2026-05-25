@@ -34,10 +34,10 @@ function clamp(value, min, max) {
 function beginSectionResize(which, event) {
   event.preventDefault()
   sectionResizeState = {
-    which,
+    upperKey: which.upperKey,
+    lowerKey: which.lowerKey,
     startY: event.clientY,
-    contentHeight: CHART_CONTENT_HEIGHT.value,
-    heights: { ...SECTION_HEIGHTS.value },
+    heights: { ...SECTION_BODY_HEIGHTS.value },
   }
   document.body.style.userSelect = 'none'
   document.body.style.cursor = 'ns-resize'
@@ -49,26 +49,30 @@ function onSectionResizeMove(event) {
   if (!sectionResizeState) return
 
   const dy = event.clientY - sectionResizeState.startY
-  const content = CHART_CONTENT_HEIGHT.value
   const base = sectionResizeState.heights
 
   let aff = base.affliction
   let stg = base.stagger
   let sp = base.sp
 
-  if (sectionResizeState.which === 'affliction') {
-    const maxAff = content - MIN_STAGGER_HEIGHT - MIN_SP_HEIGHT
-    aff = clamp(base.affliction + dy, MIN_AFFLICTION_HEIGHT, maxAff)
-    const maxStg = content - aff - MIN_SP_HEIGHT
-    stg = clamp(stg, MIN_STAGGER_HEIGHT, maxStg)
-    sp = content - aff - stg
-  } else if (sectionResizeState.which === 'stagger') {
-    const maxStg = content - MIN_AFFLICTION_HEIGHT - MIN_SP_HEIGHT
-    stg = clamp(base.stagger + dy, MIN_STAGGER_HEIGHT, maxStg)
-    const maxAff = content - stg - MIN_SP_HEIGHT
-    aff = clamp(aff, MIN_AFFLICTION_HEIGHT, maxAff)
-    sp = content - aff - stg
+  const minMap = {
+    affliction: MIN_AFFLICTION_HEIGHT,
+    stagger: MIN_STAGGER_HEIGHT,
+    sp: MIN_SP_HEIGHT,
   }
+  const upperKey = sectionResizeState.upperKey
+  const lowerKey = sectionResizeState.lowerKey
+  const pairTotal = base[upperKey] + base[lowerKey]
+  const nextUpper = clamp(base[upperKey] + dy, minMap[upperKey], pairTotal - minMap[lowerKey])
+  const nextLower = pairTotal - nextUpper
+
+  if (upperKey === 'affliction') aff = nextUpper
+  if (upperKey === 'stagger') stg = nextUpper
+  if (upperKey === 'sp') sp = nextUpper
+
+  if (lowerKey === 'affliction') aff = nextLower
+  if (lowerKey === 'stagger') stg = nextLower
+  if (lowerKey === 'sp') sp = nextLower
 
   sectionWeights.value = normalizeWeights({
     affliction: aff,
@@ -126,10 +130,8 @@ const TOTAL_HEIGHT = computed(() => {
   return clamp(Math.round(measured), MIN_CHART_HEIGHT, MAX_CHART_HEIGHT)
 })
 
-const CHART_TOP_PADDING = computed(() => 10)
-const CHART_BOTTOM_PADDING = computed(() => 18)
-const SECTION_GAP = computed(() => 10)
-const CHART_CONTENT_HEIGHT = computed(() => Math.max(96, TOTAL_HEIGHT.value - CHART_TOP_PADDING.value - CHART_BOTTOM_PADDING.value - SECTION_GAP.value * 2))
+const SECTION_TOPBAR_HEIGHT = 14
+const SECTION_RESIZE_HANDLE_HEIGHT = 0
 
 const DEFAULT_SECTION_WEIGHTS = Object.freeze({
   affliction: 2,
@@ -140,9 +142,17 @@ const DEFAULT_SECTION_WEIGHTS = Object.freeze({
 const MIN_AFFLICTION_HEIGHT = 46
 const MIN_STAGGER_HEIGHT = 26
 const MIN_SP_HEIGHT = 52
+const COLLAPSED_STRIP_HEIGHT = 14
+const SECTION_COLLAPSE_KEY = 'endaxis:resource-monitor-section-collapse:v1'
+const SECTION_KEYS = ['affliction', 'stagger', 'sp']
 
 const SECTION_LAYOUT_KEY = 'endaxis:resource-monitor-sections:v1'
 const sectionWeights = ref({ ...DEFAULT_SECTION_WEIGHTS })
+const sectionCollapsed = ref({
+  affliction: false,
+  stagger: false,
+  sp: false,
+})
 
 function normalizeWeights(next) {
   const a = Math.max(0.1, Number(next?.affliction) || DEFAULT_SECTION_WEIGHTS.affliction)
@@ -170,55 +180,174 @@ function restoreSectionWeights() {
   }
 }
 
+function normalizeSectionCollapsed(next) {
+  return {
+    affliction: next?.affliction === true,
+    stagger: next?.stagger === true,
+    sp: next?.sp === true,
+  }
+}
+
+function persistSectionCollapsed() {
+  try {
+    localStorage.setItem(SECTION_COLLAPSE_KEY, JSON.stringify(sectionCollapsed.value))
+  } catch {
+    // ignore
+  }
+}
+
+function restoreSectionCollapsed() {
+  try {
+    const raw = localStorage.getItem(SECTION_COLLAPSE_KEY)
+    if (!raw) return
+    sectionCollapsed.value = normalizeSectionCollapsed(JSON.parse(raw))
+  } catch {
+    // ignore
+  }
+}
+
+function getNormalizedCollapsedState(source = sectionCollapsed.value) {
+  const normalized = normalizeSectionCollapsed(source)
+  if (normalized.affliction && normalized.stagger && normalized.sp) {
+    normalized.sp = false
+  }
+  return normalized
+}
+
+function toggleSectionCollapsed(which) {
+  if (!SECTION_KEYS.includes(which)) return
+  const next = getNormalizedCollapsedState({
+    ...sectionCollapsed.value,
+    [which]: !sectionCollapsed.value[which],
+  })
+  sectionCollapsed.value = next
+  persistSectionCollapsed()
+}
+
 onMounted(() => {
   restoreSectionWeights()
+  restoreSectionCollapsed()
 })
 
-const SECTION_HEIGHTS = computed(() => {
-  const content = CHART_CONTENT_HEIGHT.value
-  if (content <= 0) return { affliction: 0, stagger: 0, sp: 0 }
-
-  const w = normalizeWeights(sectionWeights.value)
-  const total = w.affliction + w.stagger + w.sp
-  const minSum = MIN_AFFLICTION_HEIGHT + MIN_STAGGER_HEIGHT + MIN_SP_HEIGHT
-
-  if (content < minSum) {
-    const scale = content / minSum
-    const aff = Math.max(8, Math.floor(MIN_AFFLICTION_HEIGHT * scale))
-    const stg = Math.max(8, Math.floor(MIN_STAGGER_HEIGHT * scale))
-    const sp = Math.max(8, content - aff - stg)
-    return { affliction: aff, stagger: stg, sp }
-  }
-
-  const desiredAff = Math.round(content * (w.affliction / total))
-  const desiredStg = Math.round(content * (w.stagger / total))
-  let aff = clamp(desiredAff, MIN_AFFLICTION_HEIGHT, content - MIN_STAGGER_HEIGHT - MIN_SP_HEIGHT)
-  let stg = clamp(desiredStg, MIN_STAGGER_HEIGHT, content - aff - MIN_SP_HEIGHT)
-  let sp = content - aff - stg
-
-  if (sp < MIN_SP_HEIGHT) {
-    const deficit = MIN_SP_HEIGHT - sp
-    const takeFromAff = Math.min(deficit, Math.max(0, aff - MIN_AFFLICTION_HEIGHT))
-    aff -= takeFromAff
-    const takeFromStg = Math.min(deficit - takeFromAff, Math.max(0, stg - MIN_STAGGER_HEIGHT))
-    stg -= takeFromStg
-    sp = content - aff - stg
-  }
-
-  return { affliction: aff, stagger: stg, sp }
+const activeSectionCollapsed = computed(() => getNormalizedCollapsedState())
+const expandedSectionKeys = computed(() => SECTION_KEYS.filter(key => !activeSectionCollapsed.value[key]))
+const expandedSectionCount = computed(() => expandedSectionKeys.value.length)
+const resizeHandleItems = computed(() => {
+  return expandedSectionKeys.value.slice(1).map((lowerKey, index) => ({
+    upperKey: expandedSectionKeys.value[index],
+    lowerKey,
+  }))
+})
+const visibleResizeHandleCount = computed(() => resizeHandleItems.value.length)
+const EXPANDED_SECTION_BODY_SPACE = computed(() => {
+  return Math.max(
+    96,
+    TOTAL_HEIGHT.value
+      - SECTION_TOPBAR_HEIGHT * expandedSectionCount.value
+      - COLLAPSED_STRIP_HEIGHT * (SECTION_KEYS.length - expandedSectionCount.value)
+      - SECTION_RESIZE_HANDLE_HEIGHT * visibleResizeHandleCount.value,
+  )
 })
 
-const PADDING_TOP_AFFLICTION = computed(() => CHART_TOP_PADDING.value)
-const BASE_Y_AFFLICTION = computed(() => PADDING_TOP_AFFLICTION.value + SECTION_HEIGHTS.value.affliction)
-const PADDING_TOP_STAGGER = computed(() => BASE_Y_AFFLICTION.value + SECTION_GAP.value)
-const BASE_Y_STAGGER = computed(() => PADDING_TOP_STAGGER.value + SECTION_HEIGHTS.value.stagger)
-const PADDING_TOP_SP = computed(() => BASE_Y_STAGGER.value + SECTION_GAP.value)
-const BASE_Y_SP = computed(() => PADDING_TOP_SP.value + SECTION_HEIGHTS.value.sp)
-const EFFECTIVE_HEIGHT_SP = computed(() => Math.max(28, BASE_Y_SP.value - PADDING_TOP_SP.value))
-const SECTION_DIVIDER_Y1 = computed(() => BASE_Y_AFFLICTION.value + Math.round(SECTION_GAP.value / 2))
-const SECTION_DIVIDER_Y2 = computed(() => BASE_Y_STAGGER.value + Math.round(SECTION_GAP.value / 2))
+const sectionLayout = computed(() => {
+  const collapsed = activeSectionCollapsed.value
+  const expanded = expandedSectionKeys.value
+  const heights = { affliction: 0, stagger: 0, sp: 0 }
+  const minMap = {
+    affliction: MIN_AFFLICTION_HEIGHT,
+    stagger: MIN_STAGGER_HEIGHT,
+    sp: MIN_SP_HEIGHT,
+  }
+  const expandedContent = Math.max(0, EXPANDED_SECTION_BODY_SPACE.value)
+
+  if (expanded.length === 1) {
+    heights[expanded[0]] = expandedContent
+  } else if (expanded.length > 0) {
+    const w = normalizeWeights(sectionWeights.value)
+    const totalWeight = expanded.reduce((sum, key) => sum + w[key], 0)
+    const minSum = expanded.reduce((sum, key) => sum + minMap[key], 0)
+
+    if (expandedContent < minSum) {
+      const scale = expandedContent / Math.max(1, minSum)
+      let remaining = expandedContent
+      expanded.forEach((key, index) => {
+        const proposed = index === expanded.length - 1
+          ? remaining
+          : Math.max(8, Math.floor(minMap[key] * scale))
+        heights[key] = proposed
+        remaining -= proposed
+      })
+    } else {
+      expanded.forEach((key) => {
+        heights[key] = Math.round(expandedContent * (w[key] / totalWeight))
+      })
+
+      expanded.forEach((key) => {
+        heights[key] = Math.max(minMap[key], heights[key])
+      })
+
+      let sum = expanded.reduce((acc, key) => acc + heights[key], 0)
+      if (sum > expandedContent) {
+        let overflow = sum - expandedContent
+        const shrinkOrder = ['affliction', 'stagger', 'sp'].filter((key) => expanded.includes(key))
+        shrinkOrder.forEach((key) => {
+          if (overflow <= 0) return
+          const reducible = Math.max(0, heights[key] - minMap[key])
+          const take = Math.min(overflow, reducible)
+          heights[key] -= take
+          overflow -= take
+        })
+      } else if (sum < expandedContent) {
+        heights[expanded[expanded.length - 1]] += expandedContent - sum
+      }
+    }
+  }
+
+  SECTION_KEYS.forEach((key) => {
+    if (collapsed[key]) {
+      heights[key] = COLLAPSED_STRIP_HEIGHT
+    }
+  })
+
+  let cursorTop = 0
+  const ranges = {}
+  SECTION_KEYS.forEach((key) => {
+    const handleBeforeVisible = resizeHandleItems.value.some((item) => item.lowerKey === key)
+    if (handleBeforeVisible) {
+      cursorTop += SECTION_RESIZE_HANDLE_HEIGHT
+    }
+
+    const isCollapsed = collapsed[key]
+    const bodyHeight = isCollapsed ? 0 : heights[key]
+    const topbarHeight = isCollapsed ? 0 : SECTION_TOPBAR_HEIGHT
+    const stripHeight = isCollapsed ? COLLAPSED_STRIP_HEIGHT : 0
+    const topbarTop = cursorTop
+    const bodyTop = topbarTop + topbarHeight
+    const bodyBottom = bodyTop + bodyHeight
+    const shellHeight = topbarHeight + bodyHeight + stripHeight
+    ranges[key] = {
+      topbarTop,
+      topbarHeight,
+      bodyTop,
+      bodyBottom,
+      bodyHeight,
+      stripHeight,
+      shellHeight,
+      collapsed: isCollapsed,
+      handleBeforeVisible,
+    }
+
+    cursorTop += shellHeight
+  })
+
+  return { heights, ranges }
+})
+
+const SECTION_BODY_HEIGHTS = computed(() => sectionLayout.value.heights)
+const sectionRects = computed(() => sectionLayout.value.ranges)
 const chartLabelFontSize = computed(() => 9)
 const warningLabelText = computed(() => t('resourceMonitor.sp.insufficient'))
+
 const gridLineTimes = computed(() => {
   const prep = Number(store.prepDuration) || 0
   const startBt = -prep
@@ -732,9 +861,7 @@ const afflictionConnectionItems = computed(() => {
 })
 
 const afflictionLayout = computed(() => {
-  const top = PADDING_TOP_AFFLICTION.value
-  const bottom = BASE_Y_AFFLICTION.value
-  const height = Math.max(0, bottom - top)
+  const height = Math.max(0, sectionRects.value.affliction?.bodyHeight || 0)
 
   const header = 0
   const padding = 0
@@ -749,14 +876,12 @@ const afflictionLayout = computed(() => {
   const rawRow = Math.floor(available / totalRows)
   const rowHeight = Math.max(14, Math.min(20, rawRow))
 
-  const startY = top + header + padding
+  const startY = header + padding
   const yPhysical = startY
   const yAttachment = yPhysical + rowHeight + gap
   const yAnomalyStart = yAttachment + rowHeight + gap
 
   return {
-    top,
-    bottom,
     height,
     headerHeight: header,
     padding,
@@ -852,11 +977,12 @@ const staggerResult = computed(() => {
 const staggerPoints = computed(() => staggerResult.value.points || [])
 const lockSegments = computed(() => staggerResult.value.lockSegments || [])
 const nodeSegments = computed(() => staggerResult.value.nodeSegments || [])
+const STAGGER_BODY_HEIGHT = computed(() => Math.max(0, sectionRects.value.stagger?.bodyHeight || 0))
 
 const scaleY_Stagger = computed(() => {
   const max = store.systemConstants.maxStagger
   if (!max || max <= 0) return 1
-  return (BASE_Y_STAGGER.value - PADDING_TOP_STAGGER.value) / max
+  return STAGGER_BODY_HEIGHT.value / max
 })
 
 const staggerPolyline = computed(() => {
@@ -864,7 +990,7 @@ const staggerPolyline = computed(() => {
   return staggerPoints.value.map(p => {
     const x = store.timeToPx(p.time)
     const val = Math.min(p.val, store.systemConstants.maxStagger)
-    const y = BASE_Y_STAGGER.value - (val * scaleY_Stagger.value)
+    const y = STAGGER_BODY_HEIGHT.value - (val * scaleY_Stagger.value)
     return `${x},${y}`
   }).join(' ')
 })
@@ -873,13 +999,13 @@ const staggerArea = computed(() => {
   if (staggerPoints.value.length === 0) return ''
   const line = staggerPolyline.value
   const lastX = store.timeToPx(staggerPoints.value[staggerPoints.value.length - 1].time)
-  return `0,${BASE_Y_STAGGER.value} ${line} ${lastX},${BASE_Y_STAGGER.value}`
+  return `0,${STAGGER_BODY_HEIGHT.value} ${line} ${lastX},${STAGGER_BODY_HEIGHT.value}`
 })
 
 const nodeZones = computed(() => nodeSegments.value.map(seg => ({
   x: store.timeToPx(seg.start),
   width: store.timeToPx(seg.end) - store.timeToPx(seg.start),
-  y: BASE_Y_STAGGER.value - (seg.thresholdVal * scaleY_Stagger.value)
+  y: STAGGER_BODY_HEIGHT.value - (seg.thresholdVal * scaleY_Stagger.value)
 })))
 
 const lockZones = computed(() => lockSegments.value.map(seg => ({
@@ -892,15 +1018,24 @@ const lockZones = computed(() => lockSegments.value.map(seg => ({
 const spData = computed(() => {
   return store.spSeries
 })
+const SP_BODY_HEIGHT = computed(() => Math.max(0, sectionRects.value.sp?.bodyHeight || 0))
+const SP_NEGATIVE_BUFFER = 40
+const SP_TOTAL_RANGE = computed(() => 300 + SP_NEGATIVE_BUFFER)
+const SP_ZERO_Y = computed(() => {
+  return SP_BODY_HEIGHT.value * (300 / SP_TOTAL_RANGE.value)
+})
+const SP_WARNING_TAG_TOP = computed(() => `${Math.min(Math.max(6, SP_ZERO_Y.value + 4), Math.max(6, SP_BODY_HEIGHT.value - 18))}px`)
 
 // 技力绘图坐标计算
-const scaleY_SP = computed(() => EFFECTIVE_HEIGHT_SP.value / 300)
+const scaleY_SP = computed(() => {
+  return SP_BODY_HEIGHT.value / SP_TOTAL_RANGE.value
+})
 
 const spPolyline = computed(() => {
   if (spData.value.length === 0) return ''
   return spData.value.map(p => {
     const x = store.timeToPx(p.time)
-    const y = BASE_Y_SP.value - (p.sp * scaleY_SP.value)
+    const y = SP_ZERO_Y.value - (p.sp * scaleY_SP.value)
     return `${x},${y}`
   }).join(' ')
 })
@@ -909,11 +1044,11 @@ const spArea = computed(() => {
   if (spData.value.length === 0) return ''
   const points = spData.value.map(p => {
     const x = store.timeToPx(p.time)
-    const y = BASE_Y_SP.value - (p.sp * scaleY_SP.value)
+    const y = SP_ZERO_Y.value - (p.sp * scaleY_SP.value)
     return `${x},${y}`
   })
   const lastX = store.timeToPx(spData.value[spData.value.length - 1].time)
-  return `0,${BASE_Y_SP.value} ${points.join(' ')} ${lastX},${BASE_Y_SP.value}`
+  return `0,${SP_ZERO_Y.value} ${points.join(' ')} ${lastX},${SP_ZERO_Y.value}`
 })
 
 const spWarningZones = computed(() => spData.value.filter(p => p.sp < 0).map(p => ({
@@ -989,473 +1124,319 @@ const transformStyle = computed(() => {
       </div>
     </div>
 
-	    <div ref="chartViewportRef" class="chart-scroll-wrapper">
-	      <div :style="transformStyle" class="chart-inner">
-	        <svg class="chart-svg" :height="TOTAL_HEIGHT" :width="store.totalTimelineWidthPx">
-	          <defs>
-            <linearGradient id="stagger-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" :stop-color="COLOR_STAGGER" stop-opacity="0.5"/>
-              <stop offset="100%" :stop-color="COLOR_STAGGER" stop-opacity="0.1"/>
-            </linearGradient>
-            <linearGradient id="sp-fill-gradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.3"/>
-              <stop offset="100%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.05"/>
-            </linearGradient>
+    <div ref="chartViewportRef" class="chart-scroll-wrapper">
+      <div class="chart-background-layer">
+        <div :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]" class="chart-background-track">
+          <svg class="chart-background-svg" :height="TOTAL_HEIGHT" :width="store.totalTimelineWidthPx">
+            <rect
+              v-if="store.prepDuration > 0"
+              x="0"
+              y="0"
+              :width="store.prepZoneWidthPx"
+              :height="TOTAL_HEIGHT"
+              fill="rgba(255, 255, 255, 0.04)"
+            />
+            <line
+              v-if="store.prepDuration > 0"
+              :x1="store.prepZoneWidthPx"
+              y1="0"
+              :x2="store.prepZoneWidthPx"
+              :y2="TOTAL_HEIGHT"
+              stroke="rgba(255, 255, 255, 0.38)"
+              stroke-width="2"
+            />
+            <line
+              v-for="(time, index) in gridLineTimes"
+              :key="`bg-grid-${index}`"
+              :x1="store.timeToPx(time)"
+              y1="0"
+              :x2="store.timeToPx(time)"
+              :y2="TOTAL_HEIGHT"
+              stroke="#333"
+              stroke-width="1"
+              stroke-dasharray="2"
+            />
+          </svg>
+        </div>
+      </div>
 
-            <pattern id="stun-pattern" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <rect width="10" height="10" fill="#ff9c6e" fill-opacity="0.1"/>
-              <rect width="2" height="10" transform="translate(0,0)" fill="#ffd591" fill-opacity="0.6"></rect>
-            </pattern>
-
-	            <pattern id="node-stripe-pattern" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-	              <rect width="8" height="8" fill="#fa8c16" fill-opacity="0.05"/>
-	              <rect width="2" height="8" transform="translate(0,0)" fill="#fa8c16" fill-opacity="0.5"></rect>
-	            </pattern>
-
-	            <pattern id="affliction-stripe-pattern" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-	              <rect width="8" height="8" fill="rgba(255,255,255,0)" />
-	              <rect width="2" height="8" transform="translate(0,0)" fill="rgba(255,255,255,0.25)"></rect>
-	            </pattern>
-	          </defs>
-
-          <rect v-if="store.prepDuration > 0" x="0" y="0" :width="store.prepZoneWidthPx" :height="TOTAL_HEIGHT" fill="rgba(255, 255, 255, 0.04)" />
-          <line v-if="store.prepDuration > 0" :x1="store.prepZoneWidthPx" y1="0" :x2="store.prepZoneWidthPx" :y2="TOTAL_HEIGHT" stroke="rgba(255, 255, 255, 0.38)" stroke-width="2"/>
-
-          <line v-for="(t, i) in gridLineTimes" :key="`grid-${i}`"
-                :x1="store.timeToPx(t)" y1="0"
-                :x2="store.timeToPx(t)" :y2="TOTAL_HEIGHT"
-                stroke="#333" stroke-width="1" stroke-dasharray="2"/>
-
-          <g v-if="false" class="layer-affliction">
-            <!-- Physical (top row) -->
-            <g v-for="(seg, idx) in afflictionViz.physical.segments" :key="`phys-seg-${idx}`">
-              <!-- duration bar (timeline-style) -->
-              <rect
-                :x="store.timeToPx(seg.start) + afflictionLayout.iconSize + 2"
-                :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - Math.min(16, afflictionLayout.rowHeight)) / 2)"
-                :width="Math.max(0, store.timeToPx(seg.end) - (store.timeToPx(seg.start) + afflictionLayout.iconSize + 2))"
-                :height="Math.min(16, afflictionLayout.rowHeight)"
-                :fill="getAfflictionColor(seg.effectId)"
-                fill-opacity="0.65"
-                rx="2"
+      <div class="chart-sections-layer">
+        <div class="monitor-sections" :style="{ height: TOTAL_HEIGHT + 'px' }">
+          <div class="monitor-section-shell" :style="{ height: `${sectionRects.affliction.shellHeight}px` }">
+            <div v-if="!activeSectionCollapsed.affliction" class="section-topbar">
+              <div class="section-topbar-line"></div>
+              <button
+                type="button"
+                class="section-toggle-btn"
+                :class="{ 'is-collapsed': activeSectionCollapsed.affliction }"
+                @click="toggleSectionCollapsed('affliction')"
               >
-                <title>{{ seg.effectId }} x{{ seg.stacks || 1 }}</title>
-              </rect>
-              <rect
-                :x="store.timeToPx(seg.start) + afflictionLayout.iconSize + 2"
-                :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - Math.min(16, afflictionLayout.rowHeight)) / 2)"
-                :width="Math.max(0, store.timeToPx(seg.end) - (store.timeToPx(seg.start) + afflictionLayout.iconSize + 2))"
-                :height="Math.min(16, afflictionLayout.rowHeight)"
-                fill="url(#affliction-stripe-pattern)"
-                opacity="0.55"
-                rx="2"
-              />
-
-              <!-- icon box -->
-              <rect
-                :x="store.timeToPx(seg.start)"
-                :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-                fill="#333"
-                stroke="#999"
-                stroke-width="1"
-                rx="2"
-              />
-              <image
-                :href="getAfflictionIcon(seg.effectId)"
-                :x="store.timeToPx(seg.start)"
-                :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-              />
-              <g>
-                <rect
-                  :x="store.timeToPx(seg.start) + afflictionLayout.iconSize - 12 + 2"
-                  :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2"
-                  width="12"
-                  height="10"
-                  rx="2"
-                  fill="rgba(0,0,0,0.8)"
-                />
-                <text
-                  :x="store.timeToPx(seg.start) + afflictionLayout.iconSize - 12 + 2 + 6"
-                  :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2 + 8"
-                  text-anchor="middle"
-                  fill="#ffd700"
-                  font-size="8"
-                  font-weight="900"
-                >
-                  {{ seg.stacks || 1 }}
-                </text>
-              </g>
-            </g>
-            <g v-for="(m, idx) in afflictionViz.physical.markers" :key="`phys-m-${idx}`">
-              <title>{{ m.effectId }} x{{ m.stacks || 1 }}</title>
-              <rect
-                :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2)"
-                :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-                fill="#333"
-                stroke="#999"
-                stroke-width="1"
-                rx="2"
-              />
-              <image
-                :href="getAfflictionIcon(m.effectId)"
-                :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2)"
-                :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-              />
-              <g>
-                <rect
-                  :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2) + afflictionLayout.iconSize - 12 + 2"
-                  :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2"
-                  width="12"
-                  height="10"
-                  rx="2"
-                  fill="rgba(0,0,0,0.8)"
-                />
-                <text
-                  :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2) + afflictionLayout.iconSize - 12 + 2 + 6"
-                  :y="afflictionLayout.yPhysical + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2 + 8"
-                  text-anchor="middle"
-                  fill="#ffd700"
-                  font-size="8"
-                  font-weight="900"
-                >
-                  {{ m.stacks || 1 }}
-                </text>
-              </g>
-            </g>
-
-            <!-- Arts attachment (second row) -->
-            <g v-for="(seg, idx) in afflictionViz.attachment.segments" :key="`att-seg-${idx}`">
-              <rect
-                :x="store.timeToPx(seg.start) + afflictionLayout.iconSize + 2"
-                :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - Math.min(16, afflictionLayout.rowHeight)) / 2)"
-                :width="Math.max(0, store.timeToPx(seg.end) - (store.timeToPx(seg.start) + afflictionLayout.iconSize + 2))"
-                :height="Math.min(16, afflictionLayout.rowHeight)"
-                :fill="getAfflictionColor(seg.effectId)"
-                fill-opacity="0.6"
-                rx="2"
+                <span class="section-toggle-chevron" :class="{ 'is-collapsed': activeSectionCollapsed.affliction }"></span>
+              </button>
+            </div>
+            <div
+              v-if="activeSectionCollapsed.affliction"
+              class="section-collapsed-strip"
+              :style="{ height: `${sectionRects.affliction.stripHeight}px` }"
+            >
+              <button
+                type="button"
+                class="section-toggle-btn is-in-strip"
+                @click="toggleSectionCollapsed('affliction')"
               >
-                <title>{{ seg.effectId }} x{{ seg.stacks || 1 }}</title>
-              </rect>
-              <rect
-                :x="store.timeToPx(seg.start) + afflictionLayout.iconSize + 2"
-                :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - Math.min(16, afflictionLayout.rowHeight)) / 2)"
-                :width="Math.max(0, store.timeToPx(seg.end) - (store.timeToPx(seg.start) + afflictionLayout.iconSize + 2))"
-                :height="Math.min(16, afflictionLayout.rowHeight)"
-                fill="url(#affliction-stripe-pattern)"
-                opacity="0.55"
-                rx="2"
-              />
-
-              <rect
-                :x="store.timeToPx(seg.start)"
-                :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-                fill="#333"
-                stroke="#999"
-                stroke-width="1"
-                rx="2"
-              />
-              <image
-                :href="getAfflictionIcon(seg.effectId)"
-                :x="store.timeToPx(seg.start)"
-                :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-              />
-              <g>
-                <rect
-                  :x="store.timeToPx(seg.start) + afflictionLayout.iconSize - 12 + 2"
-                  :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2"
-                  width="12"
-                  height="10"
-                  rx="2"
-                  fill="rgba(0,0,0,0.8)"
-                />
-                <text
-                  :x="store.timeToPx(seg.start) + afflictionLayout.iconSize - 12 + 2 + 6"
-                  :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2 + 8"
-                  text-anchor="middle"
-                  fill="#ffd700"
-                  font-size="8"
-                  font-weight="900"
+                <span class="section-toggle-chevron is-collapsed"></span>
+              </button>
+            </div>
+            <div
+              v-else
+              class="section-body affliction-section-body"
+              :style="{ height: `${sectionRects.affliction.bodyHeight}px` }"
+            >
+              <div :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]" class="section-content-track">
+                <div
+                  class="affliction-connections-overlay"
+                  :style="{
+                    width: store.totalTimelineWidthPx + 'px',
+                    height: sectionRects.affliction.bodyHeight + 'px',
+                  }"
                 >
-                  {{ seg.stacks || 1 }}
-                </text>
-              </g>
-            </g>
-            <g v-for="(m, idx) in afflictionViz.attachment.markers" :key="`att-m-${idx}`">
-              <title>{{ m.effectId }} x{{ m.stacks || 1 }}</title>
-              <rect
-                :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2)"
-                :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-                fill="#333"
-                stroke="#999"
-                stroke-width="1"
-                rx="2"
-              />
-              <image
-                :href="getAfflictionIcon(m.effectId)"
-                :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2)"
-                :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-              />
-              <g>
-                <rect
-                  :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2) + afflictionLayout.iconSize - 12 + 2"
-                  :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2"
-                  width="12"
-                  height="10"
-                  rx="2"
-                  fill="rgba(0,0,0,0.8)"
-                />
-                <text
-                  :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2) + afflictionLayout.iconSize - 12 + 2 + 6"
-                  :y="afflictionLayout.yAttachment + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2 + 8"
-                  text-anchor="middle"
-                  fill="#ffd700"
-                  font-size="8"
-                  font-weight="900"
-                >
-                  {{ m.stacks || 1 }}
-                </text>
-              </g>
-            </g>
+                  <svg class="affliction-connections-svg" :height="sectionRects.affliction.bodyHeight" :width="store.totalTimelineWidthPx">
+                    <g v-for="it in afflictionConnectionItems" :key="it.key" style="pointer-events: none;">
+                      <ConnectionPath
+                        :id="it.key"
+                        :start-point="it.startPoint"
+                        :end-point="it.endPoint"
+                        :start-direction="{ cx: 1, cy: 0 }"
+                        :end-direction="{ cx: -1, cy: 0 }"
+                        :colors="it.colors"
+                        :is-selectable="false"
+                      />
+                    </g>
+                  </svg>
+                </div>
 
-            <!-- Arts anomalies (packed rows below) -->
-            <g v-for="(seg, idx) in afflictionViz.anomalies.segments" :key="`anom-seg-${idx}`">
-              <rect
-                :x="store.timeToPx(seg.start) + afflictionLayout.iconSize + 2"
-                :y="afflictionLayout.yAnomalyStart + (seg.row || 0) * (afflictionLayout.rowHeight + afflictionLayout.gap) + Math.floor((afflictionLayout.rowHeight - Math.min(16, afflictionLayout.rowHeight)) / 2)"
-                :width="Math.max(0, store.timeToPx(seg.end) - (store.timeToPx(seg.start) + afflictionLayout.iconSize + 2))"
-                :height="Math.min(16, afflictionLayout.rowHeight)"
-                :fill="getAfflictionColor(seg.effectId)"
-                fill-opacity="0.65"
-                rx="2"
+                <div
+                  class="afflictions-overlay"
+                  :style="{
+                    width: store.totalTimelineWidthPx + 'px',
+                    height: sectionRects.affliction.bodyHeight + 'px',
+                    '--aff-icon-size': afflictionLayout.iconSize + 'px',
+                  }"
+                >
+                  <div
+                    v-for="it in afflictionItems"
+                    :key="it._key"
+                    class="anomaly-wrapper affliction-item"
+                    :style="{ left: it.leftPx + 'px', top: it.topPx + 'px' }"
+                  >
+                    <div class="anomaly-icon-box">
+                      <img :src="getTypeIcon(it.typeKey)" class="anomaly-icon" />
+                      <div class="anomaly-stacks">{{ it.stacks || 1 }}</div>
+                    </div>
+
+                    <div
+                      v-if="!it.isMarker && it.row !== 'attach' && it.barWidthPx > 0"
+                      class="anomaly-duration-bar"
+                      :style="{ width: it.barWidthPx + 'px', backgroundColor: getTypeColor(it.typeKey) }"
+                    >
+                      <div class="striped-bg"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="resizeHandleItems.some((item) => item.lowerKey === 'stagger')"
+            class="section-resize-handle"
+            @pointerdown="beginSectionResize(resizeHandleItems.find((item) => item.lowerKey === 'stagger'), $event)"
+          ></div>
+          <div class="monitor-section-shell" :style="{ height: `${sectionRects.stagger.shellHeight}px` }">
+            <div v-if="!activeSectionCollapsed.stagger" class="section-topbar">
+              <div class="section-topbar-line"></div>
+              <button
+                type="button"
+                class="section-toggle-btn"
+                :class="{ 'is-collapsed': activeSectionCollapsed.stagger }"
+                @click="toggleSectionCollapsed('stagger')"
               >
-                <title>{{ seg.effectId }} x{{ seg.stacks || 1 }}</title>
-              </rect>
-              <rect
-                :x="store.timeToPx(seg.start) + afflictionLayout.iconSize + 2"
-                :y="afflictionLayout.yAnomalyStart + (seg.row || 0) * (afflictionLayout.rowHeight + afflictionLayout.gap) + Math.floor((afflictionLayout.rowHeight - Math.min(16, afflictionLayout.rowHeight)) / 2)"
-                :width="Math.max(0, store.timeToPx(seg.end) - (store.timeToPx(seg.start) + afflictionLayout.iconSize + 2))"
-                :height="Math.min(16, afflictionLayout.rowHeight)"
-                fill="url(#affliction-stripe-pattern)"
-                opacity="0.55"
-                rx="2"
-              />
+                <span class="section-toggle-chevron" :class="{ 'is-collapsed': activeSectionCollapsed.stagger }"></span>
+              </button>
+            </div>
+            <div
+              v-if="activeSectionCollapsed.stagger"
+              class="section-collapsed-strip"
+              :style="{ height: `${sectionRects.stagger.stripHeight}px` }"
+            >
+              <button
+                type="button"
+                class="section-toggle-btn is-in-strip"
+                @click="toggleSectionCollapsed('stagger')"
+              >
+                <span class="section-toggle-chevron is-collapsed"></span>
+              </button>
+            </div>
+            <div
+              v-else
+              class="section-body stagger-section-body"
+              :style="{ height: `${sectionRects.stagger.bodyHeight}px` }"
+            >
+              <div :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]" class="section-content-track">
+                <svg class="section-body-svg" :height="sectionRects.stagger.bodyHeight" :width="store.totalTimelineWidthPx">
+                  <defs>
+                    <linearGradient id="stagger-grad-monitor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" :stop-color="COLOR_STAGGER" stop-opacity="0.5" />
+                      <stop offset="100%" :stop-color="COLOR_STAGGER" stop-opacity="0.1" />
+                    </linearGradient>
+                    <pattern id="stun-pattern-monitor" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <rect width="10" height="10" fill="#ff9c6e" fill-opacity="0.1" />
+                      <rect width="2" height="10" transform="translate(0,0)" fill="#ffd591" fill-opacity="0.6"></rect>
+                    </pattern>
+                    <pattern id="node-stripe-pattern-monitor" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <rect width="8" height="8" fill="#fa8c16" fill-opacity="0.05" />
+                      <rect width="2" height="8" transform="translate(0,0)" fill="#fa8c16" fill-opacity="0.5"></rect>
+                    </pattern>
+                  </defs>
 
-              <rect
-                :x="store.timeToPx(seg.start)"
-                :y="afflictionLayout.yAnomalyStart + (seg.row || 0) * (afflictionLayout.rowHeight + afflictionLayout.gap) + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-                fill="#333"
-                stroke="#999"
-                stroke-width="1"
-                rx="2"
-              />
-              <image
-                :href="getAfflictionIcon(seg.effectId)"
-                :x="store.timeToPx(seg.start)"
-                :y="afflictionLayout.yAnomalyStart + (seg.row || 0) * (afflictionLayout.rowHeight + afflictionLayout.gap) + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-              />
-              <g>
-                <rect
-                  :x="store.timeToPx(seg.start) + afflictionLayout.iconSize - 12 + 2"
-                  :y="afflictionLayout.yAnomalyStart + (seg.row || 0) * (afflictionLayout.rowHeight + afflictionLayout.gap) + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2"
-                  width="12"
-                  height="10"
-                  rx="2"
-                  fill="rgba(0,0,0,0.8)"
-                />
-                <text
-                  :x="store.timeToPx(seg.start) + afflictionLayout.iconSize - 12 + 2 + 6"
-                  :y="afflictionLayout.yAnomalyStart + (seg.row || 0) * (afflictionLayout.rowHeight + afflictionLayout.gap) + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2 + 8"
-                  text-anchor="middle"
-                  fill="#ffd700"
-                  font-size="8"
-                  font-weight="900"
+                  <g v-for="(zone, index) in nodeZones" :key="`node-${index}`">
+                    <rect
+                      :x="zone.x"
+                      y="0"
+                      :width="zone.width"
+                      :height="sectionRects.stagger.bodyHeight"
+                      fill="url(#node-stripe-pattern-monitor)"
+                      class="node-bar-anim"
+                    />
+                  </g>
+
+                  <g v-for="(zone, index) in lockZones" :key="`lock-${index}`">
+                    <rect
+                      :x="zone.x"
+                      y="0"
+                      :width="zone.width"
+                      :height="sectionRects.stagger.bodyHeight"
+                      fill="url(#stun-pattern-monitor)"
+                      class="stun-bg-anim"
+                    />
+                    <text
+                      :x="zone.x + zone.width / 2"
+                      :y="sectionRects.stagger.bodyHeight / 2 + 4"
+                      fill="#fff"
+                      font-size="10"
+                      font-weight="900"
+                      text-anchor="middle"
+                      style="text-shadow: 0 0 2px #ff7a45; letter-spacing: 1px;"
+                    >
+                      WEAK
+                    </text>
+                  </g>
+
+                  <polygon :points="staggerArea" fill="url(#stagger-grad-monitor)" />
+                  <polyline :points="staggerPolyline" fill="none" :stroke="COLOR_STAGGER" stroke-width="2" />
+                  <circle
+                    v-for="(point, index) in staggerPoints"
+                    :key="`stagger-point-${index}`"
+                    :cx="store.timeToPx(point.time)"
+                    :cy="STAGGER_BODY_HEIGHT - (Math.min(point.val, store.systemConstants.maxStagger) * scaleY_Stagger)"
+                    r="2"
+                    :fill="COLOR_STAGGER"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="resizeHandleItems.some((item) => item.lowerKey === 'sp')"
+            class="section-resize-handle"
+            @pointerdown="beginSectionResize(resizeHandleItems.find((item) => item.lowerKey === 'sp'), $event)"
+          ></div>
+          <div class="monitor-section-shell" :style="{ height: `${sectionRects.sp.shellHeight}px` }">
+            <div v-if="!activeSectionCollapsed.sp" class="section-topbar">
+              <div class="section-topbar-line"></div>
+              <button
+                type="button"
+                class="section-toggle-btn"
+                :class="{ 'is-collapsed': activeSectionCollapsed.sp }"
+                @click="toggleSectionCollapsed('sp')"
+              >
+                <span class="section-toggle-chevron" :class="{ 'is-collapsed': activeSectionCollapsed.sp }"></span>
+              </button>
+            </div>
+            <div
+              v-if="activeSectionCollapsed.sp"
+              class="section-collapsed-strip"
+              :style="{ height: `${sectionRects.sp.stripHeight}px` }"
+            >
+              <button
+                type="button"
+                class="section-toggle-btn is-in-strip"
+                @click="toggleSectionCollapsed('sp')"
+              >
+                <span class="section-toggle-chevron is-collapsed"></span>
+              </button>
+            </div>
+            <div
+              v-else
+              class="section-body sp-section-body"
+              :style="{ height: `${sectionRects.sp.bodyHeight}px` }"
+            >
+              <div :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]" class="section-content-track">
+                <svg class="section-body-svg" :height="sectionRects.sp.bodyHeight" :width="store.totalTimelineWidthPx">
+                  <defs>
+                    <linearGradient id="sp-fill-gradient-monitor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.3" />
+                      <stop offset="100%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.05" />
+                    </linearGradient>
+                  </defs>
+
+                  <line x1="0" :y1="SP_ZERO_Y - (300 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="SP_ZERO_Y - (300 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2" />
+                  <line x1="0" :y1="SP_ZERO_Y - (200 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="SP_ZERO_Y - (200 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2" />
+                  <line x1="0" :y1="SP_ZERO_Y - (100 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="SP_ZERO_Y - (100 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2" />
+
+                  <text x="5" :y="SP_ZERO_Y - (300 * scaleY_SP) + 12" fill="#888" :font-size="chartLabelFontSize">MAX(300)</text>
+                  <text x="5" :y="SP_ZERO_Y - 4" fill="#666" :font-size="chartLabelFontSize">0</text>
+
+                  <rect
+                    x="0"
+                    :y="SP_ZERO_Y"
+                    :width="store.totalTimelineWidthPx"
+                    :height="Math.max(0, SP_BODY_HEIGHT - SP_ZERO_Y)"
+                    :fill="`${COLOR_SP_WARN}18`"
+                  />
+
+                  <polygon :points="spArea" fill="url(#sp-fill-gradient-monitor)" />
+                  <polyline :points="spPolyline" fill="none" :stroke="COLOR_SP_MAIN" stroke-width="2" stroke-linejoin="round" />
+
+                  <circle
+                    v-for="(point, index) in spData"
+                    :key="`sp-point-${index}`"
+                    :cx="store.timeToPx(point.time)"
+                    :cy="SP_ZERO_Y - (point.sp * scaleY_SP)"
+                    r="2"
+                    :fill="point.sp < 0 ? COLOR_SP_WARN : COLOR_SP_MAIN"
+                  />
+                </svg>
+
+                <div
+                  v-for="(warning, index) in spWarningZones"
+                  :key="`warning-${index}`"
+                  class="warning-tag"
+                  :style="{ left: warning.left + 'px', top: SP_WARNING_TAG_TOP, color: COLOR_SP_WARN }"
                 >
-                  {{ seg.stacks || 1 }}
-                </text>
-              </g>
-            </g>
-            <g v-for="(m, idx) in afflictionViz.anomalies.markers" :key="`anom-m-${idx}`">
-              <title>{{ m.effectId }} x{{ m.stacks || 1 }}</title>
-              <rect
-                :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2)"
-                :y="afflictionLayout.yAnomalyStart + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-                fill="#333"
-                stroke="#999"
-                stroke-width="1"
-                rx="2"
-              />
-              <image
-                :href="getAfflictionIcon(m.effectId)"
-                :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2)"
-                :y="afflictionLayout.yAnomalyStart + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2)"
-                :width="afflictionLayout.iconSize"
-                :height="afflictionLayout.iconSize"
-              />
-              <g>
-                <rect
-                  :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2) + afflictionLayout.iconSize - 12 + 2"
-                  :y="afflictionLayout.yAnomalyStart + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2"
-                  width="12"
-                  height="10"
-                  rx="2"
-                  fill="rgba(0,0,0,0.8)"
-                />
-                <text
-                  :x="store.timeToPx(m.time) - Math.floor(afflictionLayout.iconSize / 2) + afflictionLayout.iconSize - 12 + 2 + 6"
-                  :y="afflictionLayout.yAnomalyStart + Math.floor((afflictionLayout.rowHeight - afflictionLayout.iconSize) / 2) + afflictionLayout.iconSize - 10 + 2 + 8"
-                  text-anchor="middle"
-                  fill="#ffd700"
-                  font-size="8"
-                  font-weight="900"
-                >
-                  {{ m.stacks || 1 }}
-                </text>
-              </g>
-            </g>
-          </g>
-
-          <g class="layer-stagger">
-            <line x1="0" :y1="PADDING_TOP_STAGGER" :x2="store.totalTimelineWidthPx" :y2="PADDING_TOP_STAGGER"
-                  :stroke="COLOR_LIMIT" stroke-width="1" stroke-dasharray="4"/>
-            <line x1="0" :y1="BASE_Y_STAGGER" :x2="store.totalTimelineWidthPx" :y2="BASE_Y_STAGGER"
-                  :stroke="COLOR_LIMIT" stroke-width="1" stroke-dasharray="4" opacity="0.6"/>
-
-            <g v-for="(zone, i) in nodeZones" :key="`node-${i}`">
-              <rect :x="zone.x" :y="PADDING_TOP_STAGGER" :width="zone.width" :height="BASE_Y_STAGGER - PADDING_TOP_STAGGER"
-                    fill="url(#node-stripe-pattern)" class="node-bar-anim" />
-            </g>
-
-            <g v-for="(zone, i) in lockZones" :key="`lock-${i}`">
-              <rect :x="zone.x" :y="PADDING_TOP_STAGGER" :width="zone.width" :height="BASE_Y_STAGGER - PADDING_TOP_STAGGER" fill="url(#stun-pattern)" class="stun-bg-anim" />
-              <text :x="zone.x + zone.width / 2" :y="(BASE_Y_STAGGER + PADDING_TOP_STAGGER) / 2 + 4" fill="#fff" font-size="10" font-weight="900" text-anchor="middle" style="text-shadow: 0 0 2px #ff7a45; letter-spacing: 1px;">WEAK</text>
-            </g>
-
-            <polygon :points="staggerArea" fill="url(#stagger-grad)"/>
-            <polyline :points="staggerPolyline" fill="none" :stroke="COLOR_STAGGER" stroke-width="2"/>
-            <circle v-for="(p, idx) in staggerPoints" :key="idx" :cx="store.timeToPx(p.time)"
-                    :cy="BASE_Y_STAGGER - (Math.min(p.val, store.systemConstants.maxStagger) * scaleY_Stagger)" r="2" :fill="COLOR_STAGGER"/>
-          </g>
-
-          <line x1="0" :y1="SECTION_DIVIDER_Y1" :x2="store.totalTimelineWidthPx" :y2="SECTION_DIVIDER_Y1" stroke="#444" stroke-width="2"/>
-          <line x1="0" :y1="SECTION_DIVIDER_Y2" :x2="store.totalTimelineWidthPx" :y2="SECTION_DIVIDER_Y2" stroke="#444" stroke-width="2"/>
-          <rect
-            x="0"
-            :y="SECTION_DIVIDER_Y1 - 6"
-            :width="store.totalTimelineWidthPx"
-            height="12"
-            fill="transparent"
-            style="cursor: ns-resize"
-            @pointerdown="beginSectionResize('affliction', $event)"
-          />
-          <rect
-            x="0"
-            :y="SECTION_DIVIDER_Y2 - 6"
-            :width="store.totalTimelineWidthPx"
-            height="12"
-            fill="transparent"
-            style="cursor: ns-resize"
-            @pointerdown="beginSectionResize('stagger', $event)"
-          />
-
-          <g class="layer-sp">
-            <line x1="0" :y1="BASE_Y_SP - (300 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="BASE_Y_SP - (300 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
-            <line x1="0" :y1="BASE_Y_SP - (200 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="BASE_Y_SP - (200 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
-            <line x1="0" :y1="BASE_Y_SP - (100 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="BASE_Y_SP - (100 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2"/>
-            <line x1="0" :y1="BASE_Y_SP" :x2="store.totalTimelineWidthPx" :y2="BASE_Y_SP" stroke="#aaa" stroke-width="2"/>
-
-            <text x="5" :y="BASE_Y_SP - (300 * scaleY_SP) + 12" fill="#888" :font-size="chartLabelFontSize">MAX(300)</text>
-            <text x="5" :y="BASE_Y_SP + 12" fill="#666" :font-size="chartLabelFontSize">0</text>
-
-            <rect x="0" :y="BASE_Y_SP" :width="store.totalTimelineWidthPx" :height="TOTAL_HEIGHT - BASE_Y_SP" :fill="`${COLOR_SP_WARN}26`"/>
-            <polygon :points="spArea" fill="url(#sp-fill-gradient)"/>
-            <polyline :points="spPolyline" fill="none" :stroke="COLOR_SP_MAIN" stroke-width="2" stroke-linejoin="round"/>
-
-            <circle v-for="(p, idx) in spData" :key="idx" :cx="store.timeToPx(p.time)" :cy="BASE_Y_SP - (p.sp * scaleY_SP)" r="2" :fill="p.sp < 0 ? COLOR_SP_WARN : COLOR_SP_MAIN" />
-          </g>
-	        </svg>
-
-	        <div
-	          class="affliction-connections-overlay"
-	          :style="{
-	            width: store.totalTimelineWidthPx + 'px',
-	            height: TOTAL_HEIGHT + 'px',
-	          }"
-	        >
-	          <svg class="affliction-connections-svg" :height="TOTAL_HEIGHT" :width="store.totalTimelineWidthPx">
-	            <g v-for="it in afflictionConnectionItems" :key="it.key" style="pointer-events: none;">
-	              <ConnectionPath
-	                :id="it.key"
-	                :start-point="it.startPoint"
-	                :end-point="it.endPoint"
-	                :start-direction="{ cx: 1, cy: 0 }"
-	                :end-direction="{ cx: -1, cy: 0 }"
-	                :colors="it.colors"
-	                :is-selectable="false"
-	              />
-	            </g>
-	          </svg>
-	        </div>
-
-	        <div
-	          class="afflictions-overlay"
-	          :style="{
-	            width: store.totalTimelineWidthPx + 'px',
-	            height: TOTAL_HEIGHT + 'px',
-	            '--aff-icon-size': afflictionLayout.iconSize + 'px',
-	          }"
-	        >
-	          <div
-	            v-for="it in afflictionItems"
-	            :key="it._key"
-	            class="anomaly-wrapper affliction-item"
-	            :style="{ left: it.leftPx + 'px', top: it.topPx + 'px' }"
-	          >
-	            <div class="anomaly-icon-box">
-	              <img :src="getTypeIcon(it.typeKey)" class="anomaly-icon" />
-	              <div class="anomaly-stacks">{{ it.stacks || 1 }}</div>
-	            </div>
-
-	            <div
-	              v-if="!it.isMarker && it.row !== 'attach' && it.barWidthPx > 0"
-	              class="anomaly-duration-bar"
-	              :style="{ width: it.barWidthPx + 'px', backgroundColor: getTypeColor(it.typeKey) }"
-	            >
-	              <div class="striped-bg"></div>
-	            </div>
-	          </div>
-	        </div>
-	        <div v-for="(w, idx) in spWarningZones" :key="idx" class="warning-tag"
-	            :style="{ left: w.left + 'px', top: (BASE_Y_SP + 5) + 'px', color: COLOR_SP_WARN }">
-          <span class="warn-icon">
-            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-              <line x1="12" y1="9" x2="12" y2="13"></line>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </span>
-          {{ warningLabelText }}
+                  <span class="warn-icon">
+                    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                  </span>
+                  {{ warningLabelText }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1719,10 +1700,137 @@ const transformStyle = computed(() => {
   min-height: 0;
 }
 
-.chart-svg { display: block; }
+.chart-background-layer,
+.chart-sections-layer {
+  position: absolute;
+  inset: 0;
+}
 
-.chart-inner {
+.chart-background-layer {
+  pointer-events: none;
+  z-index: 0;
+}
+
+.chart-background-track {
+  position: absolute;
+  inset: 0 auto 0 0;
+  will-change: transform;
+}
+
+.chart-background-svg {
+  display: block;
+}
+
+.chart-sections-layer {
+  z-index: 1;
+}
+
+.monitor-sections {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.monitor-section-shell {
   position: relative;
+  min-height: 0;
+}
+
+.section-topbar {
+  position: relative;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.section-topbar-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.section-body {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.section-content-track {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  will-change: transform;
+}
+
+.section-body-svg {
+  display: block;
+}
+
+.section-collapsed-strip {
+  position: relative;
+  background: rgba(34, 34, 40, 0.94);
+  border-radius: 2px;
+}
+
+.section-resize-handle {
+  position: relative;
+  height: 0;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+.section-resize-handle::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  height: 12px;
+  cursor: ns-resize;
+}
+
+.section-toggle-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.section-toggle-btn.is-in-strip {
+  top: 50%;
+  width: 24px;
+  height: 14px;
+}
+
+.section-toggle-btn:hover {
+  color: #fff;
+}
+
+.section-toggle-chevron {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.88;
+}
+
+.section-toggle-chevron.is-collapsed {
+  transform: rotate(-135deg);
 }
 
 /* === 附着/异常叠层 === */

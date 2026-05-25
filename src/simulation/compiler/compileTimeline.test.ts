@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+﻿import { describe, it, expect } from "vitest";
 import { compileTimeline } from "./compileTimeline";
 import type { Action, ActionNode, Anomaly } from "./types";
 
@@ -59,7 +59,7 @@ describe("compileTimeline", () => {
     }),
   });
 
-  it("应正确映射动作", () => {
+  it("maps actions without freeze shifts", () => {
     const actions = [createMockAction("A", 0, 5), createMockAction("B", 6, 2)];
 
     const result = compileTimeline(actions);
@@ -68,8 +68,8 @@ describe("compileTimeline", () => {
     expect(result.actions[1]?.realStartTime).toBe(6);
   });
 
-  describe("时停计算", () => {
-    it("应推迟时停期间开始的动作", () => {
+  describe("freeze calculations", () => {
+    it("delays actions that start during a freeze", () => {
       const ult = createMockAction("ULT", 2, 5, {
         type: "ultimate",
         animationTime: 2,
@@ -84,14 +84,12 @@ describe("compileTimeline", () => {
       expect(resolvedUlt.realStartTime).toBe(2);
       expect(resolvedUlt.realDuration).toBe(5);
 
-      // 推迟 1 秒
       expect(resolvedSkill.realStartTime).toBe(4);
 
-      // 长度不变
       expect(resolvedSkill.realDuration).toBe(1);
     });
 
-    it("应延长时停期间未结束的动作", () => {
+    it("extends actions that overlap later freezes", () => {
       const ult = createMockAction("ULT", 2, 3, {
         type: "ultimate",
         animationTime: 1.5,
@@ -106,20 +104,17 @@ describe("compileTimeline", () => {
       const resolvedLink = result.actions.find((a) => a.id === "LINK")!;
 
       expect(resolvedUlt.realStartTime).toBe(2);
-      // 延长 3 + 0.5 = 3.5
       expect(resolvedUlt.realDuration).toBe(3.5);
 
       expect(resolvedLink.realStartTime).toBe(3.5);
       expect(resolvedLink.realDuration).toBe(1.2);
 
-      // 开始时间不变
       expect(resolvedSkill.realStartTime).toBe(0);
 
-      // 延长 2.2 + 1.5 + 0.5 = 4.2
       expect(resolvedSkill.realDuration).toBe(4.2);
     });
 
-    it("应忽略禁用的动作", () => {
+    it("ignores disabled freeze sources", () => {
       const ult = createMockAction("ULT", 2, 5, {
         type: "ultimate",
         animationTime: 2,
@@ -131,13 +126,11 @@ describe("compileTimeline", () => {
 
       const resolvedSkill = result.actions.find((a) => a.id === "SKILL")!;
 
-      // ULT 被禁用，所以 SKILL 不受影响
       expect(resolvedSkill.realStartTime).toBe(3);
       expect(resolvedSkill.realDuration).toBe(1);
     });
 
-    // 触发窗口为负
-    it("应忽略幽灵动作", () => {
+    it("ignores ghost actions with negative triggerWindow", () => {
       const ult = createMockAction("ULT", 2, 5, {
         type: "ultimate",
         animationTime: 2,
@@ -153,7 +146,7 @@ describe("compileTimeline", () => {
       expect(resolvedSkill.realDuration).toBe(1);
     });
 
-    it("连携的时停可被缩短", () => {
+    it("shortens link freeze when the next source starts early", () => {
       const link1 = createMockAction("LINK1", 0, 1.2, {
         type: "link",
       });
@@ -167,14 +160,12 @@ describe("compileTimeline", () => {
       const l2 = result.actions.find((a) => a.id === "LINK2")!;
 
       expect(l1.realStartTime).toBe(0);
-      // 长度延长 1.2 + 0.5 = 1.7
-      expect(l1.realDuration).toBe(1.7);
-      // 开始时间不受时停影响
+      expect(l1.realDuration).toBe(1.3);
       expect(l2.realStartTime).toBe(0.1);
       expect(l2.realDuration).toBe(1.2);
     });
 
-    it("终结技时停不可缩短", () => {
+    it("ultimate freeze duration is not shortened", () => {
       const ult1 = createMockAction("ULT1", 0, 1.5, {
         type: "ultimate",
         animationTime: 1.5,
@@ -191,12 +182,11 @@ describe("compileTimeline", () => {
 
       expect(r1.realStartTime).toBe(0);
       expect(r1.realDuration).toBe(1.5);
-      // 延后至 ult1 结束
       expect(r2.realStartTime).toBe(1.5);
       expect(r2.realDuration).toBe(2.7);
     });
 
-    it("应推迟时停期间开始的状态", () => {
+    it("delays effect start times that begin during a freeze", () => {
       const ult = createMockAction("ULT", 2, 5, {
         type: "ultimate",
         animationTime: 2,
@@ -220,13 +210,12 @@ describe("compileTimeline", () => {
       const resolvedSkill = result.actions.find((a) => a.id === "SKILL")!;
 
       expect(resolvedSkill.effects).toHaveLength(1);
-      // 动作推迟至 4 秒，状态再延后 1 秒 = 5 秒
       expect(resolvedSkill.effects[0]?.realStartTime).toBe(5);
       expect(resolvedSkill.effects[0]?.realDuration).toBe(1);
       expect(resolvedSkill.effects[0]?.extensionAmount).toBe(0);
     });
 
-    it("应推延长时停期间未结束的状态的持续时间", () => {
+    it("extends effect durations that overlap freezes", () => {
       const ult = createMockAction("ULT", 3, 5, {
         type: "ultimate",
         animationTime: 2,
@@ -251,12 +240,11 @@ describe("compileTimeline", () => {
 
       expect(resolvedSkill.effects).toHaveLength(1);
       expect(resolvedSkill.effects[0]?.realStartTime).toBe(2);
-      // 状态持续时间延长 2 秒
       expect(resolvedSkill.effects[0]?.realDuration).toBe(4);
       expect(resolvedSkill.effects[0]?.extensionAmount).toBe(2);
     });
 
-    it("应推迟伤害触发点", () => {
+    it("shifts damage tick timings", () => {
       const ult = createMockAction("ULT", 2, 5, {
         type: "ultimate",
         animationTime: 2,
@@ -282,16 +270,14 @@ describe("compileTimeline", () => {
       const resolvedSkill = result.actions.find((a) => a.id === "SKILL")!;
 
       expect(resolvedSkill.resolvedDamageTicks).toHaveLength(2);
-      // 第一段伤害不受影响
       expect(resolvedSkill.resolvedDamageTicks[0]?.realOffset).toBe(0);
       expect(resolvedSkill.resolvedDamageTicks[0]?.realTime).toBe(1);
-      // 第二段伤害推迟2秒
       expect(resolvedSkill.resolvedDamageTicks[1]?.realOffset).toBe(4);
       expect(resolvedSkill.resolvedDamageTicks[1]?.realTime).toBe(5);
     });
   });
 
-  it("应计算状态消耗", () => {
+  it("resolves consumed effects", () => {
     const producer = createMockAction("PROD", 0, 10, {
       physicalAnomaly: [
         [createAnomaly({ _id: "eff1", offset: 0, duration: 10, type: "buff" })],
