@@ -250,7 +250,7 @@ function openItemEditor(slot) {
 
     <template #footer>
       <div class="footer">
-        <button class="ea-btn ea-btn--sm ea-btn--square ea-btn--hover-gold-fill" @click="maxOut">{{ t('common.max') }}</button>
+        <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill" @click="maxOut">{{ t('common.max') }}</button>
         <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">{{ t('common.close') }}</button>
       </div>
     </template>

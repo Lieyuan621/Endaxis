@@ -3348,7 +3348,6 @@ body.capture-mode .davinci-range {
   height: 18px;
   padding: 0 7px;
   border: 1px solid rgba(255, 215, 0, 0.28);
-  border-radius: 3px;
   background: rgba(255, 215, 0, 0.08);
   color: #ffd700;
   cursor: pointer;

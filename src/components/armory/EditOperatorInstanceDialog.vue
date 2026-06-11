@@ -313,7 +313,7 @@ function promotedLabel() {
 
     <template #footer>
       <div class="footer">
-        <button class="ea-btn ea-btn--sm ea-btn--square ea-btn--hover-gold-fill" @click="maxOut">{{ t('common.max') }}</button>
+        <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill" @click="maxOut">{{ t('common.max') }}</button>
         <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">{{ t('common.close') }}</button>
       </div>
     </template>
@@ -343,7 +343,7 @@ function promotedLabel() {
   color: transparent !important;
 }
 .tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.tag { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; border: 1px solid #555; border-radius: 3px; color: #bbb; background: rgba(255,255,255,0.04); }
+.tag { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; border: 1px solid #555; color: #bbb; background: rgba(255,255,255,0.04); }
 .level-display { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
 .level-num { font-size: 28px; font-weight: 700; color: #f0f0f0; line-height: 1; }
 .level-text { font-size: 11px; color: #888; letter-spacing: 2px; text-transform: uppercase; }

@@ -449,6 +449,12 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
+.ea-btn--glass-rect.ea-btn--hover-gold-fill {
+  --ea-btn-bg-hover: var(--ea-gold);
+  --ea-btn-border-hover: var(--ea-gold);
+  --ea-btn-color-hover: #000;
+}
+
 .ea-btn--glass-rect-hover-accent {
   --ea-btn-bg-hover: color-mix(in srgb, var(--ea-btn-accent) 12%, transparent);
   --ea-btn-border-hover: var(--ea-btn-accent);
