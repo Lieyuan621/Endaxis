@@ -244,9 +244,9 @@ function translateOperatorDisplayName(slug) {
 
 function getOperatorSkillIcon(slug, optimizerSkillType, skill) {
     if (typeof skill?.icon === 'string' && skill.icon.trim()) return skill.icon.trim()
-    if (optimizerSkillType === 'battleSkill') return `/operators/${slug}/battle.png`
-    if (optimizerSkillType === 'comboSkill') return `/operators/${slug}/combo.png`
-    if (optimizerSkillType === 'ultimate') return `/operators/${slug}/ultimate.png`
+    if (optimizerSkillType === 'battleSkill') return `/operators/${slug}/battle.webp`
+    if (optimizerSkillType === 'comboSkill') return `/operators/${slug}/combo.webp`
+    if (optimizerSkillType === 'ultimate') return `/operators/${slug}/ultimate.webp`
     return ''
 }
 

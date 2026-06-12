@@ -10,7 +10,7 @@ const BATTLE_FIRST_HIT_EFFECTS: Effect[] = [
     stackStrategy: 'INDEPENDENT',
     stacks: 1,
     maxStacks: 9,
-    icon: '/operators/zhuang-fangyi/battle.png',
+    icon: '/operators/zhuang-fangyi/battle.webp',
     condition: [
       {
         kind: 'not',
@@ -42,7 +42,7 @@ const BATTLE_FIRST_HIT_EFFECTS: Effect[] = [
     stackStrategy: 'INDEPENDENT',
     stacks: 2,
     maxStacks: 9,
-    icon: '/operators/zhuang-fangyi/battle.png',
+    icon: '/operators/zhuang-fangyi/battle.webp',
     condition: [
       {
         kind: 'enemyStatus',
@@ -67,7 +67,7 @@ const BATTLE_FIRST_HIT_EFFECTS: Effect[] = [
     stackStrategy: 'INDEPENDENT',
     stacks: 3,
     maxStacks: 9,
-    icon: '/operators/zhuang-fangyi/battle.png',
+    icon: '/operators/zhuang-fangyi/battle.webp',
     condition: [
       {
         kind: 'enemyStatus',
@@ -115,7 +115,7 @@ const BATTLE_FIRST_HIT_EFFECTS: Effect[] = [
     stackStrategy: 'INDEPENDENT',
     stacks: 3,
     maxStacks: 9,
-    icon: '/operators/zhuang-fangyi/battle.png',
+    icon: '/operators/zhuang-fangyi/battle.webp',
     condition: {
       kind: 'operatorStatus',
       status: 'zhuangfangyi-free-battle',
@@ -411,7 +411,7 @@ const sheet: OperatorSheet = {
                 stackStrategy: 'INDEPENDENT',
                 stacks: 1,
                 maxStacks: 9,
-                icon: '/operators/zhuang-fangyi/battle.png',
+                icon: '/operators/zhuang-fangyi/battle.webp',
                 condition: {
                   kind: 'not',
                   condition: {

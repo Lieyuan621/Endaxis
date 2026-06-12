@@ -34,9 +34,9 @@ function slugFromPath(path: string): string {
 }
 
 const SKILL_ICON_FILE: Record<string, string> = {
-  battleSkill: 'battle.png',
-  comboSkill: 'combo.png',
-  ultimate: 'ultimate.png',
+  battleSkill: 'battle.webp',
+  comboSkill: 'combo.webp',
+  ultimate: 'ultimate.webp',
 };
 
 // ─── Default UE / SP constants ──────────────────────────────────────────────

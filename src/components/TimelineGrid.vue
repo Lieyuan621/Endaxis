@@ -494,11 +494,11 @@ const ELEMENT_FILTERS = computed(() => {
 })
 
 const OPERATOR_ELEMENT_ICON_MAP = {
-  physical: '/icons/icon_element_physical.png',
-  heat: '/icons/icon_element_heat.png',
-  cryo: '/icons/icon_element_cryo.png',
-  electric: '/icons/icon_element_electric.png',
-  nature: '/icons/icon_element_nature.png',
+  physical: '/icons/icon_element_physical.webp',
+  heat: '/icons/icon_element_heat.webp',
+  cryo: '/icons/icon_element_cryo.webp',
+  electric: '/icons/icon_element_electric.webp',
+  nature: '/icons/icon_element_nature.webp',
 }
 
 function getOperatorElementIcon(element) {

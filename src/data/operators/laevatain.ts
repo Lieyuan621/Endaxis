@@ -82,7 +82,7 @@ const sheet: OperatorSheet = {
                 stacks: { compare: 'exact', count: 4 },
               },
               duration: 20,
-              icon: '/operators/laevatain/talent 1.png',
+              icon: '/operators/laevatain/talent 1.webp',
             },
           ],
         },

@@ -37,7 +37,7 @@ const sheet: OperatorSheet = {
                 duration: [15, 25],
                 snapshot: true,
                 cancelOnRefresh: true,
-                icon: '/operators/rossi/icon_battle_buff_wulfa_blood.png',
+                icon: '/operators/rossi/icon_battle_buff_wulfa_blood.webp',
               },
               {
                 id: 'rossi-razor-clawmark',

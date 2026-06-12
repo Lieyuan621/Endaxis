@@ -97,7 +97,7 @@ function maxOut() {
 function getSkillIcon(key) {
   if (key === 'basicAttack') return WEAPON_ATTACK_ICON[op.value?.weapon] ?? '/icons/default_icon.webp'
   const slug = props.instance?.operatorSlug
-  const file = key === 'battleSkill' ? 'battle.png' : key === 'comboSkill' ? 'combo.png' : 'ultimate.png'
+  const file = key === 'battleSkill' ? 'battle.webp' : key === 'comboSkill' ? 'combo.webp' : 'ultimate.webp'
   return slug && file ? `/operators/${slug}/${file}` : '/icons/default_icon.webp'
 }
 

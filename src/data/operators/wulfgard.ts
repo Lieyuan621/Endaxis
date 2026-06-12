@@ -33,7 +33,7 @@ const sheet: OperatorSheet = {
               target: 'self',
               value: [20, 30],
               duration: 10,
-              icon: '/operators/wulfgard/talent 1.png',
+              icon: '/operators/wulfgard/talent 1.webp',
             },
           ],
         },

@@ -52,7 +52,7 @@ const sheet: OperatorSheet = {
               },
               duration: 3,
               interval: 0.3,
-              icon: '/operators/tangtang/talent 2.png',
+              icon: '/operators/tangtang/talent 2.webp',
               consumedStatEffects: [{ stat: { modifier: 'dmgBonus' }, value: [40, 60] }],
             },
             {
@@ -366,7 +366,7 @@ const sheet: OperatorSheet = {
                       },
                       duration: 3,
                       interval: 0.3,
-                      icon: '/operators/tangtang/talent 2.png',
+                      icon: '/operators/tangtang/talent 2.webp',
                     },
                     {
                       kind: 'infliction',

@@ -199,7 +199,7 @@ const sheet: OperatorSheet = {
                       stacks: 2,
                       maxStacks: 2,
                       duration: 20,
-                      icon: '/operators/xaihi/battle.png',
+                      icon: '/operators/xaihi/battle.webp',
                     },
                   ],
                 },
