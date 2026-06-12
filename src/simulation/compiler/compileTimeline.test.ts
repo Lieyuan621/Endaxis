@@ -275,6 +275,67 @@ describe("compileTimeline", () => {
     });
   });
 
+  describe("action interruption", () => {
+    it("cuts hits and effects when a later same-track action overlaps the active duration", () => {
+      const first = createMockAction("FIRST", 0, 3, {
+        hits: [
+          {
+            offset: 0.5,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+          },
+          {
+            offset: 2,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [createEffect({ _id: "late-effect", duration: 5 })],
+          },
+        ],
+      });
+      const second = createMockAction("SECOND", 1, 1);
+      first.trackId = "operator-a";
+      second.trackId = "operator-a";
+
+      const result = compileTimeline([first, second]);
+      const resolvedFirst = result.actions.find((a) => a.id === "FIRST")!;
+
+      expect(resolvedFirst.isInterrupted).toBe(true);
+      expect(resolvedFirst.interruptTime).toBe(1);
+      expect(resolvedFirst.realDuration).toBe(1);
+      expect(resolvedFirst.resolvedHits).toHaveLength(1);
+      expect(resolvedFirst.resolvedHits[0]?.realTime).toBe(0.5);
+      expect(resolvedFirst.effects).toHaveLength(0);
+      expect(result.effectMap.has("late-effect")).toBe(false);
+    });
+
+    it("keeps delayed hits when the later same-track action starts after active duration", () => {
+      const detachedLike = createMockAction("DETACHED_LIKE", 0, 1, {
+        hits: [
+          {
+            offset: 2,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+          },
+        ],
+      });
+      const later = createMockAction("LATER", 1.5, 1);
+      detachedLike.trackId = "operator-a";
+      later.trackId = "operator-a";
+
+      const result = compileTimeline([detachedLike, later]);
+      const resolved = result.actions.find((a) => a.id === "DETACHED_LIKE")!;
+
+      expect(resolved.isInterrupted).toBe(false);
+      expect(resolved.interruptTime).toBeUndefined();
+      expect(resolved.realDuration).toBe(1);
+      expect(resolved.resolvedHits).toHaveLength(1);
+      expect(resolved.resolvedHits[0]?.realTime).toBe(2);
+    });
+  });
+
   it("resolves consumed effects", () => {
     const producer = createMockAction("PROD", 0, 10, {
       hits: [

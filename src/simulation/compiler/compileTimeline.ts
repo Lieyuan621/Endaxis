@@ -271,6 +271,57 @@ function resolveActions(
   return { resolvedActions, actionMap, effectMap };
 }
 
+function applyActionInterruptions(resolvedActions: ResolvedAction[]) {
+  const trackBuckets = new Map<string, ResolvedAction[]>();
+  const epsilon = 0.0001;
+
+  resolvedActions.forEach((action) => {
+    if (!action.trackId) return;
+    const bucket = trackBuckets.get(action.trackId) ?? [];
+    bucket.push(action);
+    trackBuckets.set(action.trackId, bucket);
+  });
+
+  trackBuckets.forEach((bucket) => {
+    bucket.sort((a, b) => {
+      if (a.realStartTime !== b.realStartTime) {
+        return a.realStartTime - b.realStartTime;
+      }
+      return a.id.localeCompare(b.id);
+    });
+
+    bucket.forEach((action, index) => {
+      const nextAction = bucket[index + 1];
+      if (!nextAction) return;
+
+      const activeEnd = round(action.realStartTime + action.realDuration);
+      const interruptAt = round(nextAction.realStartTime);
+      if (interruptAt >= activeEnd - epsilon) return;
+
+      action.isInterrupted = true;
+      action.interruptTime = interruptAt;
+      action.realDuration = round(Math.max(0, interruptAt - action.realStartTime));
+      action.resolvedHits = action.resolvedHits.filter(
+        (hit) => hit.realTime < interruptAt - epsilon,
+      );
+      action.effects = action.effects.filter(
+        (effect) => effect.realStartTime < interruptAt - epsilon,
+      );
+      action.extensionAmount = round(action.realDuration - action.duration);
+    });
+  });
+}
+
+function rebuildEffectMap(resolvedActions: ResolvedAction[]) {
+  const effectMap = new Map<string, ResolvedEffect>();
+  resolvedActions.forEach((action) => {
+    action.effects.forEach((effect) => {
+      effectMap.set(effect.id, effect);
+    });
+  });
+  return effectMap;
+}
+
 export function compileTimeline(
   actions: ActionNode[],
   connections: Connection[] = [],
@@ -284,12 +335,15 @@ export function compileTimeline(
 
   const timeCtx = new TimeContext(timeExtensions);
 
-  const { resolvedActions, actionMap, effectMap } = resolveActions(
+  const { resolvedActions, actionMap } = resolveActions(
     sortedActions,
     stopSources,
     sourceShiftMap,
     timeCtx,
   );
+
+  applyActionInterruptions(resolvedActions);
+  const finalEffectMap = rebuildEffectMap(resolvedActions);
 
   if (connections.length > 0) {
     resolveConsumption(resolvedActions, connections);
@@ -303,7 +357,7 @@ export function compileTimeline(
   return {
     actions: resolvedActions,
     actionMap,
-    effectMap,
+    effectMap: finalEffectMap,
     timeExtensions,
     timeContext: timeCtx,
     meta: {

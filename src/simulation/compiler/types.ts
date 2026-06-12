@@ -287,6 +287,7 @@ export interface ResolvedAction extends ActionNode {
   duration: number;
   realDuration: number;
   isInterrupted: boolean;
+  interruptTime?: number;
   effects: ResolvedEffect[];
   triggerWindow: {
     hasWindow: boolean;

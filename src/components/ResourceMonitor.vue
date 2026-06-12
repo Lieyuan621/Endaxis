@@ -483,6 +483,13 @@ function getTypeColor(typeKey) {
   return store.getColor?.(typeKey) || '#aaaaaa'
 }
 
+function getAttachmentLineColors(headTypeKey, tailTypeKey = null) {
+  return {
+    start: getTypeColor(headTypeKey),
+    end: getTypeColor(tailTypeKey || headTypeKey),
+  }
+}
+
 const afflictionItems = computed(() => {
   const iconSize = Number(afflictionLayout.value.iconSize) || 20
   const rowHeight = Number(afflictionLayout.value.rowHeight) || 20
@@ -699,21 +706,42 @@ const afflictionItems = computed(() => {
 
 const afflictionConnectionItems = computed(() => {
   const iconSize = Number(afflictionLayout.value.iconSize) || 20
+  const epsilon = 0.001
+  const findTailItem = (sourceItem) => {
+    const endTime = Number(sourceItem.endTime)
+    if (!Number.isFinite(endTime)) return null
+    return afflictionItems.value
+      .filter((candidate) => candidate._key !== sourceItem._key)
+      .filter((candidate) => !candidate.isDamageHit)
+      .filter((candidate) => Math.abs((Number(candidate.startTime) || 0) - endTime) <= epsilon)
+      .sort((a, b) => {
+        const weight = { anomaly: 4, status: 3, physical: 2, attach: 1 }
+        return (weight[b.row] || 0) - (weight[a.row] || 0)
+      })[0]
+  }
+
   return afflictionItems.value
     .filter((it) => !it.isMarker && it.row === 'attach' && it.barWidthPx > 0)
     .map((it) => {
+      const tail = findTailItem(it)
+      if (!tail) return null
       const y = it.topPx + iconSize / 2
       const startX = it.leftPx + iconSize
       const endX = it.leftPx + iconSize + 2 + it.barWidthPx
-      const color = getTypeColor(it.typeKey)
 
       return {
         key: `${it._key}-link`,
+        sourceKey: it._key,
         startPoint: { x: startX, y },
         endPoint: { x: endX, y },
-        colors: { start: color, end: color },
+        colors: getAttachmentLineColors(it.typeKey, tail.typeKey),
       }
     })
+    .filter(Boolean)
+})
+
+const reactedAttachmentKeys = computed(() => {
+  return new Set(afflictionConnectionItems.value.map((item) => item.sourceKey))
 })
 
 const afflictionLayout = computed(() => {
@@ -1105,7 +1133,7 @@ const transformStyle = computed(() => {
                     </div>
 
                     <div
-                      v-if="!it.isMarker && it.row !== 'attach' && it.barWidthPx > 0"
+                      v-if="!it.isMarker && it.barWidthPx > 0 && !reactedAttachmentKeys.has(it._key)"
                       class="anomaly-duration-bar"
                       :style="{ width: it.barWidthPx + 'px', backgroundColor: getTypeColor(it.typeKey) }"
                     >

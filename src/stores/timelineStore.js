@@ -3831,11 +3831,16 @@ export const useTimelineStore = defineStore('timeline', () => {
         return nextStartMap
     }
 
-    const newActionCoverStartMap = computed(() => buildNextStartMap(compiledTimeline.value.actions || [], {
-        getId: (action) => action.id,
-        getTrackIndex: (action) => action.trackIndex,
-        getStart: (action) => action.realStartTime,
-    }))
+    const newActionCoverStartMap = computed(() => {
+        const map = new Map()
+        ;(compiledTimeline.value.actions || []).forEach((action) => {
+            const interruptTime = Number(action?.interruptTime)
+            if (Number.isFinite(interruptTime)) {
+                map.set(action.id, interruptTime)
+            }
+        })
+        return map
+    })
 
     function getActionCoverStartTime(actionId) {
         const value = newActionCoverStartMap.value.get(actionId)
