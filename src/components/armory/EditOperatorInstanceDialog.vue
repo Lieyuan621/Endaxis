@@ -113,7 +113,7 @@ function getSkillName(key) {
 
 function getTalentIcon(groupIdx) {
   const slug = props.instance?.operatorSlug
-  return slug ? `/operators/${slug}/talent ${groupIdx + 1}.png` : '/icons/default_icon.webp'
+  return slug ? `/operators/${slug}/talent ${groupIdx + 1}.webp` : '/icons/default_icon.webp'
 }
 
 function talentFlatIndex(groupIdx) {
