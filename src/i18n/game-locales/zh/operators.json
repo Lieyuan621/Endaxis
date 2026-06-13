@@ -289,6 +289,63 @@
       }
     }
   },
+  "mifu": {
+    "name": "弭弗",
+    "talents": [
+      {
+        "name": "冷面无情",
+        "description": "战技开天命中时，若目标处于物理脆弱或失衡状态，伤害倍率提升至原本的1.1倍。"
+      },
+      {
+        "name": "冷面无情",
+        "description": "战技开天命中时，若目标处于物理脆弱或失衡状态，伤害倍率提升至原本的1.2倍。"
+      },
+      {
+        "name": "怒意留心",
+        "description": "施放连携技后获得15%最大生命值的护盾，持续期间更难被打断，持续10秒。该效果每60秒最多触发一次。"
+      },
+      {
+        "name": "怒意留心",
+        "description": "施放连携技后获得30%最大生命值的护盾，持续期间更难被打断，持续10秒。该效果每60秒最多触发一次。"
+      }
+    ],
+    "potentials": [
+      {
+        "name": "不息巡行",
+        "description": "连携技拳出无悔的冷却时间-2秒，施加的物理脆弱效果额外+5%，持续时间+4秒。"
+      },
+      {
+        "name": "心手合一",
+        "description": "力量+20，源石技艺强度+16。"
+      },
+      {
+        "name": "热身完毕",
+        "description": "天赋怒意留心效果加强：护盾持续时间+5秒，护盾触发间隔-15秒，每次触发时额外获得攻击力+6%，持续20秒。"
+      },
+      {
+        "name": "气炼三绝",
+        "description": "终结技绝心所需的终结技能量-15%。"
+      },
+      {
+        "name": "拳出山林",
+        "description": "战技断云、追形、开天的伤害倍率提升至原本的1.1倍，终结技绝心造成的失衡值+5点。战技倍率提升效果可与天赋冷面无情叠加。"
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "剑行拳意"
+      },
+      "battleSkill": {
+        "name": "清波三艺"
+      },
+      "comboSkill": {
+        "name": "拳出无悔"
+      },
+      "ultimate": {
+        "name": "绝心"
+      }
+    }
+  },
   "ember": {
     "name": "余烬",
     "talents": [
@@ -1127,6 +1184,63 @@
       },
       "ultimate": {
         "name": "雷枪·决颤"
+      }
+    }
+  },
+  "camille": {
+    "name": "卡缪",
+    "talents": [
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      }
+    ],
+    "potentials": [
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "歃血涤罪"
+      },
+      "battleSkill": {
+        "name": "驱火焚影"
+      },
+      "comboSkill": {
+        "name": "锥心之棘"
+      },
+      "ultimate": {
+        "name": "猩红坠雨"
       }
     }
   },

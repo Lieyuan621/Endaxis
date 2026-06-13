@@ -137,6 +137,12 @@ export function resolveHitsFromSheet(storedHits = [], rawEntries = [], level = 0
       delete nextHit.treatAsReaction
     }
 
+    if (rawEntry.treatAsSkillType) {
+      nextHit.treatAsSkillType = rawEntry.treatAsSkillType
+    } else {
+      delete nextHit.treatAsSkillType
+    }
+
     if (nextHit._noDamage) {
       delete nextHit.multiplier
       delete nextHit._multiplierScaling
@@ -183,6 +189,10 @@ export function resolveHitsFromSheet(storedHits = [], rawEntries = [], level = 0
       nextHit.treatAsReaction = rawHit.treatAsReaction
     }
 
+    if (rawEntry.treatAsSkillType) {
+      nextHit.treatAsSkillType = rawEntry.treatAsSkillType
+    }
+
     if (Array.isArray(rawHit.effects) && rawHit.effects.length > 0) {
       nextHit.effects = rawHit.effects
         .map((rawEffect) => resolveEffectAtLevel(rawEffect, undefined, level))
@@ -215,6 +225,7 @@ export function extractRawEntries(skill, segmentIndex = 0) {
       multiplier: group?.multiplier,
       multiplierMode: group?.multiplierMode,
       multiplierScaling: group?.multiplierScaling,
+      treatAsSkillType: group?.treatAsSkillType,
       hitFraction: (Number(hit?.weight) || 1) / totalWeight,
     }))
   })
@@ -255,6 +266,7 @@ export function buildResolvedSegmentPayload(skillIdBase, skill, levelIndex = 0) 
   rawSegments.forEach((segment, index) => {
     const rawEntries = extractRawEntries(skill, index)
     const hits = resolveHitsFromSheet([], rawEntries, levelIndex, { preserveCondition: true })
+    const segmentSkillId = segment?.skillId
     const followupDelay = index < rawSegments.length - 1
       ? snapTimeToFrame(Math.max(0, Number(segment?.gap) || 0))
       : 0
@@ -263,6 +275,7 @@ export function buildResolvedSegmentPayload(skillIdBase, skill, levelIndex = 0) 
     if (!aggregateElement && segmentElement) aggregateElement = segmentElement
     aggregateHits.push(...hits.map((hit) => ({
       ...hit,
+      ...(segmentSkillId ? { skillId: segmentSkillId } : {}),
       offset: (Number(hit.offset) || 0) + cursor,
     })))
 
@@ -270,7 +283,9 @@ export function buildResolvedSegmentPayload(skillIdBase, skill, levelIndex = 0) 
       id: `${skillIdBase}_seg${index + 1}`,
       duration: Number(segment?.duration) || 0,
       followupDelay,
-      payload: { hits },
+      ...(segmentSkillId ? { skillId: segmentSkillId } : {}),
+      ...(segment?.spCost != null ? { spCost: Number(segment.spCost) || 0 } : {}),
+      payload: { hits: segmentSkillId ? hits.map((hit) => ({ ...hit, skillId: segmentSkillId })) : hits },
       element: segmentElement || aggregateElement || skill?.element || 'physical',
     })
 

@@ -206,6 +206,24 @@ function getVisibleAttackSegments(skill) {
   return Array.isArray(skill?.attackSegments) ? skill.attackSegments : []
 }
 
+function getVisibleSkillSegments(skill) {
+  if (skill?.kind === 'attack_group') return getVisibleAttackSegments(skill)
+  if (skill?.kind === 'group' && Array.isArray(skill?.segments)) return skill.segments
+  return []
+}
+
+function getSegmentChipLabel(seg) {
+  if (seg.type === 'basicAttack') return `${seg.attackSegmentIndex || seg.segmentIndex || ''}A`
+  const suffix = {
+    battleSkill: 'C',
+    comboSkill: 'E',
+    ultimate: 'U',
+    finisher: 'X',
+    dive: 'D',
+  }[seg.type] || '?'
+  return `${seg.segmentIndex || seg.sequenceIndex || ''}${suffix}`
+}
+
 function onAttackSegmentDragStart(evt, seg) {
   if (isAttackSegmentDisabled(seg)) {
     evt.preventDefault()
@@ -372,17 +390,17 @@ function onNativeDragEnd() {
             <div v-else class="card-bg-deco-empty"></div>
           </div>
 
-          <div v-if="skill.kind === 'attack_group'" class="attack-segment-row" @click.stop>
+          <div v-if="getVisibleSkillSegments(skill).length > 1" class="attack-segment-row" @click.stop>
             <div
-                v-for="(seg, idx) in getVisibleAttackSegments(skill)"
+                v-for="(seg, idx) in getVisibleSkillSegments(skill)"
                 :key="seg.id"
                 class="attack-segment-chip"
-                :class="{ 'is-selected': store.selectedLibrarySkillId === seg.id, 'is-last': idx === getVisibleAttackSegments(skill).length - 1 }"
+                :class="{ 'is-selected': store.selectedLibrarySkillId === seg.id, 'is-last': idx === getVisibleSkillSegments(skill).length - 1 }"
                 :draggable="!isAttackSegmentDisabled(seg)"
                 @dragstart="onAttackSegmentDragStart($event, seg)"
                 @dragend="onNativeDragEnd"
                 @click.stop="onAttackSegmentClick(seg)"
-            >{{ (seg.attackSegmentIndex || '') + 'A' }}</div>
+            >{{ getSegmentChipLabel(seg) }}</div>
           </div>
         </div>
       </div>
@@ -511,8 +529,8 @@ function onNativeDragEnd() {
   top: 0;
   bottom: 0;
   width: 4px;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 2px 0 10px rgba(255, 255, 255, 0.25);
+  background-color: var(--accent-color, rgba(255, 255, 255, 0.9));
+  box-shadow: 2px 0 10px color-mix(in srgb, var(--accent-color, white) 25%, transparent);
   opacity: 0.75;
 }
 

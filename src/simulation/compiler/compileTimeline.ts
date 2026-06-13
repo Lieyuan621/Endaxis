@@ -182,17 +182,30 @@ function resolveAction(
       Number(hit.offset) || 0,
       item.id,
     );
+    const treatAsReaction = (hit as any).treatAsReaction as string | undefined;
+    const treatAsSkillType = (hit as any).treatAsSkillType as string | undefined;
 
     return {
       ...hit,
       realTime,
       realOffset: realTime - realStartTime,
       time: timeCtx.toGameTime(realTime),
-      skillType: action.type,
-      skillId: action.skillId,
+      skillType: treatAsSkillType ?? action.type,
+      skillId: (hit as any).skillId ?? action.skillId,
       element: hit.element || action.element,
       _actionInstanceId: item.id,
       _hitIndex: hitIndex,
+      ...(treatAsReaction
+        ? {
+            _reactionMeta: {
+              reactionType: treatAsReaction,
+              level: 0,
+              element: (hit as any).element ?? action.element ?? 'physical',
+              consumedStackSources: {},
+              synthetic: true,
+            },
+          }
+        : {}),
     };
   });
 

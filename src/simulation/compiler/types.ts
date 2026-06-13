@@ -145,6 +145,9 @@ export interface Hit {
   durationExtension?: number;
   effects?: CompiledEffect[];
   _condition?: EffectCondition | EffectCondition[];
+  treatAsReaction?: string;
+  treatAsSkillType?: string;
+  skillId?: string;
 }
 
 export interface ResolvedHit extends Hit {

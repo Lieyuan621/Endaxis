@@ -24,6 +24,7 @@ import antal from './operators/antal';
 import arclight from './operators/arclight';
 import ardelia from './operators/ardelia';
 import avywenna from './operators/avywenna';
+import camille from './operators/camille';
 import catcher from './operators/catcher';
 import chen_qianyu from './operators/chen-qianyu';
 import da_pan from './operators/da-pan';
@@ -35,6 +36,7 @@ import gilberta from './operators/gilberta';
 import laevatain from './operators/laevatain';
 import last_rite from './operators/last-rite';
 import lifeng from './operators/lifeng';
+import mifu from './operators/mifu';
 import perlica from './operators/perlica';
 import pogranichnik from './operators/pogranichnik';
 import rossi from './operators/rossi';
@@ -88,6 +90,7 @@ const operatorSheets: Record<string, OperatorSheet> = {
   arclight: arclight,
   ardelia: ardelia,
   avywenna: avywenna,
+  camille: camille,
   catcher: catcher,
   'chen-qianyu': chen_qianyu,
   'da-pan': da_pan,
@@ -99,6 +102,7 @@ const operatorSheets: Record<string, OperatorSheet> = {
   laevatain: laevatain,
   'last-rite': last_rite,
   lifeng: lifeng,
+  mifu: mifu,
   perlica: perlica,
   pogranichnik: pogranichnik,
   rossi: rossi,

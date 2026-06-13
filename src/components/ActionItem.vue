@@ -33,7 +33,7 @@ const displayLabel = computed(() => {
   const comboIdx = Number(props.action.comboSegmentIndex) || 0
   const comboTotal = Number(props.action.comboSegmentTotal) || 0
   const CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩']
-  const comboSuffix = (comboTotal >= 2 && comboIdx >= 1)
+  const comboSuffix = (props.action.kind !== 'segment' && comboTotal >= 2 && comboIdx >= 1)
     ? (CIRCLED[comboIdx - 1] || `(${comboIdx})`)
     : ''
   const suffix = `${variantSuffix}${comboSuffix}`

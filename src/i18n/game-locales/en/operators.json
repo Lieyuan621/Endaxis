@@ -289,6 +289,63 @@
       }
     }
   },
+  "mifu": {
+    "name": "Mi Fu",
+    "talents": [
+      {
+        "name": "Stern Crackdown",
+        "description": "Battle skill move World Splitter improved: When hitting a target with Physical Susceptibility or Staggered, DMG Multiplier is increased to 1.1 times the original."
+      },
+      {
+        "name": "Stern Crackdown",
+        "description": "Battle skill move World Splitter improved: When hitting a target with Physical Susceptibility or Staggered, DMG Multiplier is increased to 1.2 times the original."
+      },
+      {
+        "name": "Vigilant Fury",
+        "description": "Combo skill improved: Casting the combo creates a shield with 15% Max HP and a duration of 10s. While the shield is active, Mi Fu becomes harder to interrupt.This effect can only trigger once every 60s."
+      },
+      {
+        "name": "Vigilant Fury",
+        "description": "Combo skill improved: Casting the combo creates a shield with 30% Max HP and a duration of 10s. While the shield is active, Mi Fu becomes harder to interrupt.This effect can only trigger once every 60s."
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Restless Watch",
+        "description": "Combo skill Fists of No Regrets improved: Length of cooldown -2s. Physical Susceptibility effect applied by the skill is further increased by +5% and has +4s duration."
+      },
+      {
+        "name": "Kinesthesia of Harmony",
+        "description": "Strength +20, Arts Intensity +16."
+      },
+      {
+        "name": "Complete Warmup",
+        "description": "Talent Vigilant Fury improved: Shield duration +5s. Shield trigger cooldown -15s. Each time the shield is triggered, Mi Fu gains ATK +6% for 20s."
+      },
+      {
+        "name": "Qi Thrice-Refined",
+        "description": "Ultimate Pile of No Mercy improved: Ultimate Energy cost -15%."
+      },
+      {
+        "name": "Pugilist of the Stockade",
+        "description": "Battle skill improved: DMG Multipliers of the moves Cloudtrapper, Trail and Mangle, and World Splitter are increased to 1.1 times the original. Ultimate Pile of No Mercy improved: Stagger Dealt +5.The Battle Skill DMG Multiplier buff can stack with the talent Stern Crackdown."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Fistmancer of Blades"
+      },
+      "battleSkill": {
+        "name": "Qingbo Triplex"
+      },
+      "comboSkill": {
+        "name": "Fists of No Regrets"
+      },
+      "ultimate": {
+        "name": "Pile of No Mercy"
+      }
+    }
+  },
   "ember": {
     "name": "Ember",
     "talents": [
@@ -1127,6 +1184,63 @@
       },
       "ultimate": {
         "name": "Thunderlance: Final Shock"
+      }
+    }
+  },
+  "camille": {
+    "name": "Camille",
+    "talents": [
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      }
+    ],
+    "potentials": [
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      },
+      {
+        "name": "",
+        "description": ""
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Sanguine Absolution"
+      },
+      "battleSkill": {
+        "name": "Blazing Exorcism"
+      },
+      "comboSkill": {
+        "name": "Heartstake Thorn"
+      },
+      "ultimate": {
+        "name": "Sanguine Downpour"
       }
     }
   },

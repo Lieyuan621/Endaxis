@@ -2502,6 +2502,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             payload,
             override = {},
             extra = {},
+            sourceSkillKey = skillId,
         }) => {
             const safePayload = payload || { hits: [] }
             return {
@@ -2521,7 +2522,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 enhancementTime,
                 animationTime,
                 hits: cloneJsonData(safePayload.hits) || [],
-                sourceSkillKey: skillId,
+                sourceSkillKey,
                 ...(override && typeof override === 'object' ? override : {}),
                 ...(extra && typeof extra === 'object' ? extra : {}),
             }
@@ -2621,29 +2622,40 @@ export const useTimelineStore = defineStore('timeline', () => {
                 })
             }
 
-            if (skill.type === 'comboSkill' && segmentData.segmentPayloads.length >= 2) {
+            const multiSegmentTypes = new Set(['battleSkill', 'comboSkill', 'ultimate'])
+            if (multiSegmentTypes.has(skill.type) && segmentData.segmentPayloads.length >= 2) {
                 const segments = segmentData.segmentPayloads.map((segmentInfo, idx, list) => {
                     const segOverride = characterOverrides.value[segmentInfo.id] || {}
+                    const segmentSkillId = segmentInfo.skillId || skillId
+                    const segmentSpCost = skill.type === 'battleSkill'
+                        ? (segmentInfo.spCost ?? baseDefaults.spCost)
+                        : (idx === 0 ? baseDefaults.spCost : 0)
+                    const segmentGaugeGain = skill.type === 'battleSkill'
+                        ? ((Number(segmentSpCost) || 0) * (DEFAULT_BATTLE_SKILL_UE / systemConstants.value.skillSpCostDefault))
+                        : (idx === list.length - 1 ? baseDefaults.gaugeGain : 0)
                     return buildBaseAction({
                         id: segmentInfo.id,
                         type: actionType,
-                        skillId,
+                        skillId: segmentSkillId,
                         name: `${displayName} ${idx + 1}`,
                         element: segmentInfo.element,
                         icon,
                         duration: segmentInfo.duration,
                         cooldown: 0,
-                        spCost: idx === 0 ? baseDefaults.spCost : 0,
+                        spCost: segmentSpCost,
                         gaugeCost: idx === 0 ? baseDefaults.gaugeCost : 0,
-                        gaugeGain: idx === list.length - 1 ? baseDefaults.gaugeGain : 0,
-                        teamGaugeGain: idx === list.length - 1 ? baseDefaults.teamGaugeGain : 0,
+                        gaugeGain: segmentGaugeGain,
+                        teamGaugeGain: skill.type === 'battleSkill' ? segmentGaugeGain : (idx === list.length - 1 ? baseDefaults.teamGaugeGain : 0),
                         enhancementTime: idx === 0 ? baseDefaults.enhancementTime : 0,
                         animationTime: idx === 0 ? baseDefaults.animationTime : 0,
                         payload: segmentInfo.payload,
                         override: segOverride,
+                        sourceSkillKey: skillId,
                         extra: {
+                            kind: 'segment',
                             segmentIndex: idx + 1,
                             followupDelay: segmentInfo.followupDelay,
+                            hiddenInLibraryGrid: true,
                         },
                     })
                 })
@@ -2666,8 +2678,11 @@ export const useTimelineStore = defineStore('timeline', () => {
                     payload: segmentData.aggregatePayload,
                     override: globalOverride,
                     extra: {
+                        kind: 'group',
                         segments,
+                        segmentsAll: segments,
                     },
+                    sourceSkillKey: skillId,
                 })
             }
 

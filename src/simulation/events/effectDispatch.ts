@@ -61,7 +61,8 @@ export function conditionHasConsume(
   cond: EffectCondition | EffectCondition[] | undefined,
 ): boolean {
   if (!cond) return false;
-  if (Array.isArray(cond)) return cond.some(c => 'consume' in c && c.consume);
+  if (Array.isArray(cond)) return cond.some(c => conditionHasConsume(c));
+  if (cond.kind === 'or') return cond.conditions.some(c => conditionHasConsume(c));
   return 'consume' in cond && !!(cond as any).consume;
 }
 
@@ -206,6 +207,11 @@ export function evaluateEffectCondition(
   if (Array.isArray(cond)) {
     return cond.every(c => evaluateEffectCondition(c, time, sourceTrackId, ctx, snap, actionId));
   }
+  if (cond.kind === 'or') {
+    return cond.conditions.some(c =>
+      evaluateEffectCondition(c, time, sourceTrackId, ctx, snap, actionId),
+    );
+  }
   if (cond.kind === 'enemyStatus') {
     const s = snap ?? ctx.state.enemy.statusSnapshot();
     const statuses = Array.isArray(cond.status) ? cond.status : [cond.status];
@@ -268,6 +274,11 @@ export function scheduleConsumption(
 ): void {
   if (Array.isArray(condition)) {
     for (const c of condition) scheduleConsumption(c, time, sourceId, ctx, skillType, skillId);
+    return;
+  }
+  if (condition.kind === 'or') {
+    for (const c of condition.conditions)
+      scheduleConsumption(c, time, sourceId, ctx, skillType, skillId);
     return;
   }
   if (condition.kind === 'enemyStatus') {

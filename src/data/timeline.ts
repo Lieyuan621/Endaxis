@@ -76,6 +76,8 @@ function flattenHitGroup(hg: any): any[] {
     stagger: rlv(t.stagger, 0),
     effects: t.effects ?? [],
     ...(hg.condition != null ? { _condition: hg.condition } : {}),
+    ...(t.treatAsReaction ? { treatAsReaction: t.treatAsReaction } : {}),
+    ...(hg.treatAsSkillType ? { treatAsSkillType: hg.treatAsSkillType } : {}),
     ...(hasMultiplier
       ? {
           multiplier:
@@ -149,13 +151,25 @@ export function getCharacterRoster(): any[] {
       if (!seg) continue;
 
       // Per-segment array (mirrors basicAttack_segments shape)
-      entry[`${skillKey}_segments`] = expandedSegs.map((s: any) => ({
-        duration: s.duration,
-        ...(s.gap != null ? { gap: s.gap } : {}),
-        element: s.damageGroups?.[0]?.element,
-        ultimateEnergyGain: 0,
-        damage_hits: (s?.damageGroups ?? []).flatMap(flattenHitGroup),
-      }));
+      const ueRatio = BATTLE_SKILL_UE / BATTLE_SKILL_SP_COST;
+      entry[`${skillKey}_segments`] = expandedSegs.map((s: any) => {
+        const base: any = {
+          duration: s.duration,
+          ...(s.gap != null ? { gap: s.gap } : {}),
+          ...(s.skillId ? { skillId: s.skillId } : {}),
+          element: s.damageGroups?.[0]?.element,
+          ultimateEnergyGain: 0,
+          damage_hits: (s?.damageGroups ?? []).flatMap(flattenHitGroup),
+        };
+        if (skillKey === 'battleSkill') {
+          const segSpCost = s.spCost ?? BATTLE_SKILL_SP_COST;
+          const segUe = segSpCost * ueRatio;
+          base.spCost = segSpCost;
+          base.ultimateEnergyGain = segUe;
+          base.teamUltimateEnergyGain = segUe;
+        }
+        return base;
+      });
 
       // Flat fields from first segment
       entry[`${skillKey}_duration`] = seg.duration ?? 0;
@@ -164,10 +178,12 @@ export function getCharacterRoster(): any[] {
       entry[`${skillKey}_icon`] = `/operators/${slug}/${SKILL_ICON_FILE[skillKey]}`;
 
       if (skillKey === 'battleSkill') {
-        const ue = skill.ultimateEnergyGain ?? BATTLE_SKILL_UE;
-        entry.battleSkill_spCost = BATTLE_SKILL_SP_COST;
-        entry.battleSkill_ultimateEnergyGain = ue;
-        entry.battleSkill_teamUltimateEnergyGain = ue;
+        const segs = entry.battleSkill_segments as any[];
+        const totalSpCost = segs.reduce((acc, s) => acc + (s.spCost ?? 0), 0);
+        const totalUe = segs.reduce((acc, s) => acc + (s.ultimateEnergyGain ?? 0), 0);
+        entry.battleSkill_spCost = totalSpCost;
+        entry.battleSkill_ultimateEnergyGain = totalUe;
+        entry.battleSkill_teamUltimateEnergyGain = totalUe;
       }
       if (skillKey === 'comboSkill') {
         entry.comboSkill_ultimateEnergyGain = skill.ultimateEnergyGain ?? COMBO_SKILL_UE;

@@ -178,7 +178,12 @@ export interface OperatorHpCondition {
 
 export interface NegatedCondition {
   kind: 'not';
-  condition: EnemyCondition | OperatorCondition | EnemyStaggeredCondition;
+  condition: EnemyCondition | OperatorCondition | EnemyStaggeredCondition | OrCondition;
+}
+
+export interface OrCondition {
+  kind: 'or';
+  conditions: EffectCondition[];
 }
 
 export interface ActionLinkConsumedCondition {
@@ -196,7 +201,8 @@ export type EffectCondition =
   | OperatorCondition
   | OperatorHpCondition
   | ActionLinkConsumedCondition
-  | NegatedCondition;
+  | NegatedCondition
+  | OrCondition;
 
 // ─── Leveled value type ──────────────────────────────────────────────────────
 
@@ -932,6 +938,7 @@ export interface Hit {
   stagger?: Leveled<number>;
   durationExtension?: number;
   effects?: Effect[];
+  treatAsReaction?: ArtsReaction | 'shatter' | 'breach' | 'crush';
 }
 
 export interface HitGroup {
@@ -943,6 +950,7 @@ export interface HitGroup {
   multiplierScaling?: ScalingDef;
   hits: Hit[];
   condition?: EffectCondition | EffectCondition[];
+  treatAsSkillType?: CombatSkillType;
 }
 
 export interface Tick {
@@ -975,6 +983,10 @@ export interface Segment {
   duration: number;
   /** Gap (seconds) before this segment starts (relative to the previous segment's end). */
   gap?: number;
+  /** Override the skillId for this segment's hits. */
+  skillId?: string;
+  /** Per-segment SP cost for multi-stage battle skills. */
+  spCost?: number;
   damageGroups: (HitGroup | TickGroup)[];
 }
 
