@@ -6,7 +6,7 @@ import { TriggerRegistry } from "./engine/TriggerRegistry";
 import { compileEndaxisScenario } from "./adapters/compileEndaxisScenario";
 import { projectEnemyAfflictionViz, projectOptimizerResult } from "./adapters/projectOptimizerResult";
 import { projectActionBuffs } from "./projection/projectActionBuffs";
-import { createDefaultStats } from "@/utils/coreStats";
+import { createDefaultStats } from "@/simulation/defaultActorStats";
 import { collectTriggerEffects, patchCombatSkills } from "@/data/collect";
 import estellaSheet from "@/data/operators/estella";
 import { extractRawEntries, resolveHitsFromSheet } from "@/stores/timeline/resolveHits";
@@ -566,6 +566,102 @@ describe("optimizer-native runtime parity", () => {
       end: 20,
       maxStacks: 2,
     });
+  });
+
+  it("lets ally final strikes feed Laevatain melting flame from heat infliction", () => {
+    const tracks = [
+      createTrack("laevatain", []),
+      createTrack("ally", [
+        createAction("apply_heat", "battleSkill", {
+          startTime: 0,
+          hits: [0, 0.1, 0.2, 0.3].map((offset) => ({
+            offset,
+            multiplier: 1,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [{ kind: "infliction", element: "heat", duration: 20 }],
+          })),
+        }),
+        createAction("ally_basic_first", "basicAttack", {
+          startTime: 1,
+          attackSequenceIndex: 1,
+          attackSequenceTotal: 5,
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        } as Partial<Action>),
+        createAction("ally_final_strike", "basicAttack", {
+          startTime: 2,
+          attackSequenceIndex: 5,
+          attackSequenceTotal: 5,
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        } as Partial<Action>),
+      ]),
+    ];
+    const team: TeamInstance = {
+      id: "team",
+      name: "team",
+      slots: [
+        {
+          operatorId: "op_laevatain",
+          weaponId: null,
+          gear: { armor: null, gloves: null, kit1: null, kit2: null },
+        },
+        {
+          operatorId: "op_ally",
+          weaponId: null,
+          gear: { armor: null, gloves: null, kit1: null, kit2: null },
+        },
+        {
+          operatorId: null,
+          weaponId: null,
+          gear: { armor: null, gloves: null, kit1: null, kit2: null },
+        },
+        {
+          operatorId: null,
+          weaponId: null,
+          gear: { armor: null, gloves: null, kit1: null, kit2: null },
+        },
+      ],
+    };
+    const laevatain = createOperatorInstance("op_laevatain", "laevatain");
+    laevatain.talentStates = { "0": 1 };
+    const operatorInstances = [
+      laevatain,
+      createOperatorInstance("op_ally", "estella"),
+    ];
+    const triggerEffects = collectRuntimeTriggers(team, operatorInstances, [], [], tracks);
+
+    expect(triggerEffects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceTrackId: "laevatain",
+          triggerEffect: expect.objectContaining({
+            trigger: expect.objectContaining({
+              kind: "onFinalStrike",
+              triggerScope: "global",
+            }),
+          }),
+        }),
+      ]),
+    );
+
+    const result = runScenario(tracks, registry(triggerEffects));
+    const meltingFlameApplies = result.operatorLog.filter(
+      (entry) => entry.type === "OPERATOR_EFFECT_APPLY" && entry.id === "laevatain-melting-flame",
+    );
+    expect(meltingFlameApplies.some((entry) => entry.time === 1)).toBe(false);
+    expect(result.operatorLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "OPERATOR_EFFECT_APPLY",
+          id: "laevatain-melting-flame",
+          time: 2,
+          targetTrackId: "laevatain",
+          sourceId: "laevatain",
+          stacks: 4,
+        }),
+      ]),
+    );
   });
 
   it("projects a 3-piece gear-set onHit stack in the lower buff layer and affects later damage", () => {

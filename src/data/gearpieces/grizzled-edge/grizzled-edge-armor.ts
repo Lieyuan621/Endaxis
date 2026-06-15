@@ -1,18 +1,18 @@
 import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
-  name: 'Armored MSGR Gloves',
-  icon: '/equipment/str01/item_equip_t2_suit_str01_hand_01.webp',
-  slotType: 'gloves',
-  levelRequirement: 36,
-  defense: 21,
+  name: 'Grizzled Edge Armor',
+  icon: '/equipment/crush_fracture/item_equip_t4_suit_crush_fracture_body_01.webp',
+  slotType: 'armor',
+  levelRequirement: 70,
+  defense: 56,
   skill1: {
     effects: [
       {
         kind: 'status',
         stat: { modifier: 'attributeFlat', attribute: 'strength' },
         target: 'self',
-        value: 33,
+        value: [87, 95, 104, 113],
       },
     ],
   },
@@ -22,7 +22,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'attributeFlat', attribute: 'will' },
         target: 'self',
-        value: 22,
+        value: [58, 63, 69, 75],
       },
     ],
   },
@@ -30,13 +30,13 @@ const sheet: GearPieceSheet = {
     effects: [
       {
         kind: 'status',
-        stat: { modifier: 'protection' },
+        stat: { modifier: 'dmgBonus', elements: 'physical' },
         target: 'self',
-        value: 8,
+        value: [11.5, 12.7, 13.8, 14.9],
       },
     ],
   },
-  setSlug: 'armored-msgr',
+  setSlug: 'grizzled-edge',
 };
 
 export default sheet;

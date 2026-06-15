@@ -98,8 +98,17 @@ function formatStatLabel(effect) {
   if (stat.modifier === 'critDmg') return t('stats.crit_dmg')
   if (stat.modifier === 'artsIntensity') return t('actionLibrary.labels.originiumArtsPower')
   if (stat.modifier === 'ultimateGainEfficiency') return t('actionLibrary.labels.chargeEfficiency')
+  if (stat.modifier === 'heal') return t('stats.healing_effect')
+  if (stat.modifier === 'protection') return t('stats.final_dmg_reduction')
   if (stat.modifier === 'susceptibility') return tr('armory.common.susceptibility', 'Susceptibility')
   return getEffectName(effect)
+}
+
+function getDisplaySlotName(slotType) {
+  if (slotType === 'kit' || slotType === 'accessory') {
+    return String(locale.value || '').toLowerCase().startsWith('zh') ? '配件' : 'Accessory'
+  }
+  return getGameSlotTypeName(slotType, locale.value)
 }
 
 function formatStatValue(value) {
@@ -191,7 +200,7 @@ function openItemEditor(slot) {
           <div class="slot-title">{{ slot.label }}</div>
           <div v-if="slot.instance" class="slot-tags">
             <span class="slot-tag" :style="{ color: slot.color, borderColor: slot.color }">{{ getGameQualityName(slot.quality, locale) }}</span>
-            <span class="slot-tag">{{ getGameSlotTypeName(slot.slotType, locale) }}</span>
+            <span class="slot-tag">{{ getDisplaySlotName(slot.slotType) }}</span>
           </div>
         </div>
 

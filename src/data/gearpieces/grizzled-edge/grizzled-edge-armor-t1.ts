@@ -1,8 +1,8 @@
 import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
-  name: 'LYNX Cuirass',
-  icon: '/equipment/heal01/item_equip_t4_suit_heal01_body_02.webp',
+  name: 'Grizzled Edge Armor T1',
+  icon: '/equipment/crush_fracture/item_equip_t4_suit_crush_fracture_body_02.webp',
   slotType: 'armor',
   levelRequirement: 70,
   defense: 56,
@@ -10,7 +10,7 @@ const sheet: GearPieceSheet = {
     effects: [
       {
         kind: 'status',
-        stat: { modifier: 'attributeFlat', attribute: 'will' },
+        stat: { modifier: 'attributeFlat', attribute: 'agility' },
         target: 'self',
         value: [87, 95, 104, 113],
       },
@@ -20,7 +20,7 @@ const sheet: GearPieceSheet = {
     effects: [
       {
         kind: 'status',
-        stat: { modifier: 'attributeFlat', attribute: 'intellect' },
+        stat: { modifier: 'attributeFlat', attribute: 'strength' },
         target: 'self',
         value: [58, 63, 69, 75],
       },
@@ -30,13 +30,13 @@ const sheet: GearPieceSheet = {
     effects: [
       {
         kind: 'status',
-        stat: { modifier: 'heal' },
+        stat: { modifier: 'artsIntensity' },
         target: 'self',
-        value: [10.3, 11.4, 12.4, 13.5],
+        value: [20, 22, 24, 26],
       },
     ],
   },
-  setSlug: 'lynx',
+  setSlug: 'grizzled-edge',
 };
 
 export default sheet;

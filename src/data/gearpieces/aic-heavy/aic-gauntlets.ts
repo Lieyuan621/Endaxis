@@ -26,7 +26,16 @@ const sheet: GearPieceSheet = {
       },
     ],
   },
-  skill3: {},
+  skill3: {
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'protection' },
+        target: 'self',
+        value: 6.3,
+      },
+    ],
+  },
   setSlug: 'aic-heavy',
 };
 

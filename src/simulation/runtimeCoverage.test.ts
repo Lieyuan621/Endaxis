@@ -15,7 +15,7 @@ import type { Action, ScenarioData, ScenarioTrack } from "./compiler/types";
 import { simulate } from "./simulator";
 import type { InitialEffect } from "./simulator";
 import { TriggerRegistry } from "./engine/TriggerRegistry";
-import { createDefaultStats } from "@/utils/coreStats";
+import { createDefaultStats } from "@/simulation/defaultActorStats";
 import type { BaseStatValues } from "@/data/stats/types";
 import { i18n } from "@/i18n";
 

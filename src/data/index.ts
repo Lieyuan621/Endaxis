@@ -69,6 +69,7 @@ import bonekrusha from './gearsets/bonekrusha';
 import catastrophe from './gearsets/catastrophe';
 import eternal_xiranite from './gearsets/eternal-xiranite';
 import frontiers from './gearsets/frontiers';
+import grizzled_edge from './gearsets/grizzled-edge';
 import hot_work from './gearsets/hot-work';
 import lynx from './gearsets/lynx';
 import mi_security from './gearsets/mi-security';
@@ -211,6 +212,7 @@ const gearSetSheets: Record<string, GearSetSheet> = {
   catastrophe: catastrophe,
   'eternal-xiranite': eternal_xiranite,
   frontiers: frontiers,
+  'grizzled-edge': grizzled_edge,
   'hot-work': hot_work,
   lynx: lynx,
   'mi-security': mi_security,

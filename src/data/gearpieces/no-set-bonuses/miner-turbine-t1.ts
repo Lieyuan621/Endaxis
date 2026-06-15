@@ -16,7 +16,16 @@ const sheet: GearPieceSheet = {
       },
     ],
   },
-  skill2: {},
+  skill2: {
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'protection' },
+        target: 'self',
+        value: 13.5,
+      },
+    ],
+  },
   setSlug: 'no-set-bonuses',
 };
 

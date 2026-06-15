@@ -107,6 +107,10 @@ function onDamageHitClick(hit) {
 
 // 连携冷却计算
 
+const currentTrack = computed(() => {
+  return store.tracks.find(t => t.actions?.some(a => a.instanceId === props.action.instanceId)) || null
+})
+
 const baseCooldown = computed(() => {
   const resolved = store.compiledTimeline?.actionMap?.get(props.action.instanceId)
   return Number(resolved?.node?.cooldown ?? props.action.cooldown) || 0
@@ -122,7 +126,7 @@ const simCdReduction = computed(() => {
 const effectiveComboCooldown = computed(() => {
   const baseCd = baseCooldown.value
   if (props.action.type !== 'comboSkill') return 0
-  const track = store.tracks.find(t => t.actions?.some(a => a.instanceId === props.action.instanceId))
+  const track = currentTrack.value
   const clamp = (val) => {
     const num = Number(val) || 0
     if (num < 0) return 0
@@ -144,6 +148,19 @@ const effectiveUltimateCooldown = computed(() => {
 })
 
 // 主体样式计算
+const PERFECT_LINK_STATUS_IDS = new Set([
+  'rossi-combo-perfect-timing-satisfied',
+])
+
+const isPerfectLinkAction = computed(() => {
+  if (props.action.type !== 'comboSkill') return false
+  return (store.operatorLog || []).some((entry) => (
+    entry?.type === 'OPERATOR_EFFECT_APPLY' &&
+    entry?.actionId === props.action.instanceId &&
+    PERFECT_LINK_STATUS_IDS.has(entry?.id)
+  ))
+})
+
 const style = computed(() => {
   const layout = actionLayout.value
   if (!layout || !layout.rect) {
@@ -201,14 +218,17 @@ const style = computed(() => {
   }
 
   if (props.action.type === 'comboSkill' && !props.action.isDisabled) {
+    const perfect = isPerfectLinkAction.value
     return {
       ...layoutStyle,
-      border: `1.5px solid ${color}`,
+      border: perfect ? '1.5px solid #fff2a8' : `1.5px solid ${color}`,
       borderRadius: '2px',
-      backgroundColor: hexToRgba(color, 0.15),
-      boxShadow: isSelected.value ? `0 0 8px ${color}` : 'none',
+      backgroundColor: perfect ? 'rgba(255, 236, 122, 0.18)' : hexToRgba(color, 0.15),
+      boxShadow: perfect
+        ? '0 0 0 1px rgba(255, 242, 168, 0.75), 0 0 14px rgba(255, 215, 0, 0.55)'
+        : (isSelected.value ? `0 0 8px ${color}` : 'none'),
       backdropFilter: store.isCapturing ? 'none' : 'blur(4px)',
-      color: isSelected.value ? '#ffffff' : color,
+      color: perfect ? '#fff7cf' : (isSelected.value ? '#ffffff' : color),
     }
   }
 
@@ -503,7 +523,7 @@ function handleActionDragStart(startPos, port) {
 
 <template>
   <div :id="`action-${action.instanceId}`" ref="actionElRef" class="action-item-wrapper" :data-id="action.instanceId"
-       :class="{ 'is-link-target-invalid': !isActionValidConnectionTarget && connectionSourceActionId !== action.instanceId }"
+       :class="{ 'is-link-target-invalid': !isActionValidConnectionTarget && connectionSourceActionId !== action.instanceId, 'is-perfect-link-action': isPerfectLinkAction }"
        @mouseenter="store.setHoveredAction(action.instanceId)"
        @mouseleave="store.setHoveredAction(null)"
        :style="style"
@@ -635,6 +655,27 @@ function handleActionDragStart(startPos, port) {
   font-weight: bold; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 .action-item-wrapper:hover { filter: brightness(1.2); }
+
+.action-item-wrapper.is-perfect-link-action::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 1px solid rgba(255, 242, 168, 0.9);
+  border-radius: 3px;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.7);
+  pointer-events: none;
+  z-index: 4;
+  animation: perfect-link-action-pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes perfect-link-action-pulse {
+  0%, 100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
 
 /* === 异常状态层 === */
 

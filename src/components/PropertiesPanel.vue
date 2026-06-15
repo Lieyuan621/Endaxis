@@ -8,7 +8,7 @@ import { useDragConnection } from '@/composables/useDragConnection.js'
 import { getRectPos } from '@/utils/layoutUtils.js'
 import { useI18n } from 'vue-i18n'
 import { frameToTime, timeToFrame } from '@/utils/time.js'
-import { getDisplayKeyCandidates, resolveEffectDisplayKey, toLegacyUiKey } from '@/utils/effectDisplay.js'
+import { getDisplayKeyCandidates, resolveEffectDisplayKey } from '@/utils/effectDisplay.js'
 import {
   createEditorEffect,
   createEditorHit,
@@ -50,7 +50,7 @@ const HIGHLIGHT_COLORS = {
 }
 
 function getEffectDisplayName(type) {
-  const displayType = toLegacyUiKey(type) || type
+  const displayType = type
   if (!displayType) return t('common.unknown')
   const key = `effects.name.${displayType}`
   const out = t(key)

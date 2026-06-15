@@ -5,15 +5,15 @@ import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { executeSave } from '@/api/saveStrategy.js'
-import { CORE_STATS } from '@/utils/coreStats.js'
 import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time.js'
 import { serializeGameData } from '@/utils/timeSerialization.js'
 import draggable from 'vuedraggable'
-import { getDisplayKeyCandidates, resolveEffectDisplayKey, toLegacyUiKey } from '@/utils/effectDisplay.js'
+import { getDisplayKeyCandidates, resolveEffectDisplayKey } from '@/utils/effectDisplay.js'
 import { createEditorHit, ensureActionLikeModel, normalizeHits } from '@/utils/hitModel.js'
 
 const store = useTimelineStore()
 const { characterRoster, iconDatabase, enemyDatabase, enemyCategories, weaponDatabase, equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, misc } = storeToRefs(store)
+const DATA_EDITOR_STATS = []
 
 // === 常量定义 ===
 
@@ -748,13 +748,13 @@ function getModifierLabelById(modifierId) {
   if (!modifierId) return ''
   const fromDefs = (modifierDefs.value || []).find(d => d?.id === modifierId)
   if (fromDefs?.label) return fromDefs.label
-  const core = CORE_STATS.find(s => s.id === modifierId)
+  const core = DATA_EDITOR_STATS.find(s => s.id === modifierId)
   return core?.label || modifierId
 }
 
 const allModifierOptions = computed(() => {
   const map = new Map()
-  for (const s of CORE_STATS) {
+  for (const s of DATA_EDITOR_STATS) {
     map.set(s.id, { id: s.id, label: s.label || s.id, source: 'core' })
   }
   for (const d of (modifierDefs.value || [])) {
@@ -871,13 +871,13 @@ const equipmentAdapterEnabledOptions = computed(() => {
 })
 
 const primaryStatOptions = computed(() => {
-  const coreMap = new Map(CORE_STATS.map(s => [s.id, s]))
+  const coreMap = new Map(DATA_EDITOR_STATS.map(s => [s.id, s]))
   return PRIMARY_STAT_IDS.map(id => ({ value: id, label: coreMap.get(id)?.label || id }))
 })
 
 const equipmentModifierOptions = computed(() => {
   const map = new Map()
-  for (const s of CORE_STATS) {
+  for (const s of DATA_EDITOR_STATS) {
     map.set(s.id, { id: s.id, label: s.label })
   }
   for (const d of (modifierDefs.value || [])) {
@@ -895,7 +895,7 @@ const equipmentAdapterModifierOptionsV2 = computed(() => equipmentAdapterEnabled
 
 const availableCoreStatsToAdd = computed(() => {
   const existing = new Set((modifierDefs.value || []).map(d => d.id))
-  return CORE_STATS.filter(s => !existing.has(s.id))
+  return DATA_EDITOR_STATS.filter(s => !existing.has(s.id))
 })
 
 const collapsedEnemyGroups = ref(new Set())
@@ -1648,7 +1648,7 @@ function addCoreModifierDef(statId) {
   if (!statId) return
   ensureMiscRoot()
   if (modifierDefs.value.some(d => d.id === statId)) return
-  const core = CORE_STATS.find(s => s.id === statId)
+  const core = DATA_EDITOR_STATS.find(s => s.id === statId)
   const newDef = { id: statId, label: core ? `${core.label}提升` : '新属性' }
   misc.value.modifierDefs.push(newDef)
   ensureWeaponCommonEntry(statId)
@@ -2179,7 +2179,7 @@ function ensureEffectIds(rows) {
 }
 
 function getEffectDisplayName(type) {
-  const displayType = toLegacyUiKey(type) || type
+  const displayType = type
   if (EFFECT_NAMES[displayType]) return EFFECT_NAMES[displayType]
   const exclusive = selectedChar.value?.exclusive_buffs?.find(b => b.key === displayType || b.key === type)
   if (exclusive?.name) return exclusive.name

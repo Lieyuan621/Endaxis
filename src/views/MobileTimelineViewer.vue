@@ -295,9 +295,38 @@ function normalizeDuration(action) {
   return 0.1
 }
 
+function getCompiledAction(action) {
+  const id = action?.instanceId
+  if (!id) return null
+  return store.compiledTimeline?.actionMap?.get(id) || null
+}
+
+function getVisualActionStartTime(action) {
+  const resolved = getCompiledAction(action)
+  return Number(resolved?.realStartTime ?? action?.startTime) || 0
+}
+
+function getVisualActionEndTime(action) {
+  const id = action?.instanceId
+  const storeEnd = typeof store.getActionVisualEndTime === 'function'
+    ? store.getActionVisualEndTime(id)
+    : null
+  const normalizedStoreEnd = Number(storeEnd)
+  if (Number.isFinite(normalizedStoreEnd)) return normalizedStoreEnd
+
+  const start = getVisualActionStartTime(action)
+  return start + normalizeDuration(action)
+}
+
+function getVisualActionDuration(action) {
+  const start = getVisualActionStartTime(action)
+  const end = getVisualActionEndTime(action)
+  return Math.max(0.1, end - start)
+}
+
 function getActionStyle(action) {
-  const start = Number(action?.startTime) || 0
-  const duration = normalizeDuration(action)
+  const start = getVisualActionStartTime(action)
+  const duration = getVisualActionDuration(action)
   const top = timeToY(start)
   const bottom = timeToY(start + duration)
   const height = Math.max(16, bottom - top)
@@ -350,7 +379,19 @@ const resolvedAction = computed(() => {
 
 const resolvedActionEndTime = computed(() => {
   if (!resolvedAction.value) return null
+  const storeEnd = typeof store.getActionVisualEndTime === 'function'
+    ? store.getActionVisualEndTime(resolvedAction.value.id)
+    : null
+  const normalizedStoreEnd = Number(storeEnd)
+  if (Number.isFinite(normalizedStoreEnd)) return normalizedStoreEnd
+
   return (Number(resolvedAction.value.realStartTime) || 0) + (Number(resolvedAction.value.realDuration) || 0)
+})
+
+const resolvedActionDuration = computed(() => {
+  if (!resolvedAction.value || resolvedActionEndTime.value == null) return null
+  const start = Number(resolvedAction.value.realStartTime) || 0
+  return Math.max(0, Number(resolvedActionEndTime.value) - start)
 })
 
 const resolvedOperator = computed(() => {
@@ -408,6 +449,21 @@ const timeTicks = computed(() => {
   return Array.from(byY.values()).sort((a, b) => a.y - b.y)
 })
 
+const PERFECT_LINK_STATUS_IDS = new Set([
+  'rossi-combo-perfect-timing-satisfied',
+])
+
+function isPerfectLinkAction(action) {
+  if (!action || toLegacyDisplayType(action.type) !== 'link') return false
+  const id = action.instanceId
+  if (!id) return false
+  return (store.operatorLog || []).some((entry) => (
+    entry?.type === 'OPERATOR_EFFECT_APPLY' &&
+    entry?.actionId === id &&
+    PERFECT_LINK_STATUS_IDS.has(entry?.id)
+  ))
+}
+
 const operationHintsRaw = computed(() => {
   const out = []
   const safeTracks = tracks.value
@@ -447,6 +503,7 @@ const operationHintsRaw = computed(() => {
         label,
         isHold,
         customClass,
+        perfectLink: isPerfectLinkAction(action),
       })
     }
 
@@ -666,7 +723,7 @@ async function doImport() {
               v-for="op in operationLayout.items"
               :key="op.id"
               class="mobile-key-cap"
-              :class="[op.customClass, { 'is-hold': op.isHold }]"
+              :class="[op.customClass, { 'is-hold': op.isHold, 'is-perfect-link': op.perfectLink }]"
               :style="{ top: `${op.y}px`, '--lane': op.lane }"
             >
               <span class="key-text">{{ op.label }}</span>
@@ -763,7 +820,7 @@ async function doImport() {
               </div>
               <div class="time-chip">
                 <div class="time-chip__label">{{ t('timeline.mobile.actionInfo.duration') }}</div>
-                <div class="time-chip__val mono">{{ formatSec(resolvedAction.realDuration) }}s</div>
+                <div class="time-chip__val mono">{{ formatSec(resolvedActionDuration) }}s</div>
               </div>
             </div>
           </div>
@@ -1202,6 +1259,14 @@ async function doImport() {
   color: #ffd700;
 }
 
+.mobile-key-cap.op-link.is-perfect-link {
+  background: rgba(255, 236, 122, 0.36);
+  border-color: #fff2a8;
+  color: #fff7cf;
+  box-shadow: 0 0 0 1px rgba(255, 242, 168, 0.85), 0 0 10px rgba(255, 215, 0, 0.8);
+  animation: mobile-perfect-link-pulse 1.15s ease-in-out infinite;
+}
+
 .mobile-key-cap.op-switch {
   background: rgba(211, 173, 255, 0.2);
   border-color: #d3adff;
@@ -1216,6 +1281,15 @@ async function doImport() {
 .mobile-key-cap .key-text {
   font-size: inherit;
   line-height: inherit;
+}
+
+@keyframes mobile-perfect-link-pulse {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.35);
+  }
 }
 
 .mobile-time-tick {

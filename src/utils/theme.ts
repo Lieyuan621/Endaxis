@@ -10,7 +10,7 @@ export const elementColors: Record<string, string> = {
 
 // ─── Extended color map (elements + action types + reactions + default) ──────
 
-export const ELEMENT_COLORS: Record<string, string> = expandDisplayAliases({
+export const ELEMENT_COLORS: Record<string, string> = {
   // Base elements
   ...elementColors,
 
@@ -21,6 +21,11 @@ export const ELEMENT_COLORS: Record<string, string> = expandDisplayAliases({
   battleSkill: '#ffffff',
   ultimate: '#4a90d9',
   basicAttack: '#aaaaaa',
+  attack: '#aaaaaa',
+  skill: '#ffffff',
+  link: '#fdd900',
+  execution: '#a61d24',
+  dodge: '#5ec5e5',
   default: '#8c8c8c',
 
   // Heat reactions
@@ -50,7 +55,7 @@ export const ELEMENT_COLORS: Record<string, string> = expandDisplayAliases({
   crush: '#d9d9d9',
   knockdown: '#d9d9d9',
   lift: '#d9d9d9',
-});
+};
 
 // ─── Rarity colors ──────────────────────────────────────────────────────────
 
@@ -83,7 +88,7 @@ export const ENEMY_TIERS = [
 // Used by simulation projection for effect status bars on the timeline.
 // Distinct from ELEMENT_COLORS which colors action bars.
 
-export const EFFECT_COLORS: Record<string, string> = expandDisplayAliases({
+export const EFFECT_COLORS: Record<string, string> = {
   // Inflictions
   heat_infliction: '#ff4d4f',
   electric_infliction: '#ffd700',
@@ -106,7 +111,7 @@ export const EFFECT_COLORS: Record<string, string> = expandDisplayAliases({
   crush: '#d9d9d9',
   knockdown: '#d9d9d9',
   lift: '#d9d9d9',
-});
+};
 
 export const FALLBACK_EFFECT_COLOR = '#8c8c8c';
 
@@ -134,4 +139,3 @@ export function lightenColor(hex: string, amount: number): string {
   const lb = Math.round(b + (255 - b) * amount);
   return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
 }
-import { expandDisplayAliases } from './effectDisplay.js';

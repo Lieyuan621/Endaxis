@@ -628,7 +628,8 @@
     },
     "subSkills": {
       "enhancedBattleSkill": "E. Skill",
-      "enhancedBasicAttack": "E. Basic"
+      "enhancedBasicAttack": "E. Heavy",
+      "laevatain-basic-attack-during-ultimate": "E. Heavy"
     }
   },
   "yvonne": {

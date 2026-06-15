@@ -146,7 +146,9 @@ export class TriggerRegistry {
     if (action.node.type !== 'basicAttack') return;
 
     const node = action.node as any;
-    if (node.sequenceTotal && node.sequenceIndex !== node.sequenceTotal) return;
+    const sequenceIndex = Number(node.sequenceIndex ?? node.attackSequenceIndex) || 0;
+    const sequenceTotal = Number(node.sequenceTotal ?? node.attackSequenceTotal) || 0;
+    if (sequenceTotal > 0 && sequenceIndex !== sequenceTotal) return;
 
     for (const entry of this.entries) {
       if (!this.matchesScope(entry, actorId)) continue;

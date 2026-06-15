@@ -4,6 +4,11 @@
     "passive": "",
     "conditional": ""
   },
+  "grizzled-edge": {
+    "setName": "旧锋",
+    "passive": "装备者攻击力+8%。",
+    "conditional": "装备者造成猛击或破裂时，自身物理伤害+[6%×从单个敌人身上消耗的最大破防层数]，持续20秒。若目标已带有物理脆弱、处于失衡状态，或附着源石晶体，上述增益提升为2倍。该增益无法叠加。"
+  },
   "type-50-yinglung": {
     "setName": "50式应龙",
     "passive": "",

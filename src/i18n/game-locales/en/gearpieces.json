@@ -285,6 +285,132 @@
     },
     "defense": 21
   },
+  "grizzled-edge-armor": {
+    "name": "Grizzled Edge Armor",
+    "slotType": "Armor",
+    "setName": "Grizzled Edge",
+    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
+    "stats": {
+      "Strength": {
+        "values": [87, 95, 104, 113],
+        "isPercent": false
+      },
+      "Will": {
+        "values": [58, 63, 69, 75],
+        "isPercent": false
+      },
+      "Physical DMG Bonus": {
+        "values": [11.5, 12.7, 13.8, 14.9],
+        "isPercent": true
+      }
+    },
+    "defense": 56
+  },
+  "grizzled-edge-armor-t1": {
+    "name": "Grizzled Edge Armor T1",
+    "slotType": "Armor",
+    "setName": "Grizzled Edge",
+    "statNames": ["Agility", "Strength", "Arts Intensity"],
+    "stats": {
+      "Agility": {
+        "values": [87, 95, 104, 113],
+        "isPercent": false
+      },
+      "Strength": {
+        "values": [58, 63, 69, 75],
+        "isPercent": false
+      },
+      "Arts Intensity": {
+        "values": [20, 22, 24, 26],
+        "isPercent": false
+      }
+    },
+    "defense": 56
+  },
+  "grizzled-edge-gauntlets": {
+    "name": "Grizzled Edge Gauntlets",
+    "slotType": "Gloves",
+    "setName": "Grizzled Edge",
+    "statNames": ["Strength", "Will", "Arts Intensity"],
+    "stats": {
+      "Strength": {
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      "Will": {
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      "Arts Intensity": {
+        "values": [34, 37, 41, 44],
+        "isPercent": false
+      }
+    },
+    "defense": 42
+  },
+  "grizzled-edge-gauntlets-t1": {
+    "name": "Grizzled Edge Gauntlets T1",
+    "slotType": "Gloves",
+    "setName": "Grizzled Edge",
+    "statNames": ["Agility", "Strength", "Arts Intensity"],
+    "stats": {
+      "Agility": {
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      "Strength": {
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      "Arts Intensity": {
+        "values": [34, 37, 41, 44],
+        "isPercent": false
+      }
+    },
+    "defense": 42
+  },
+  "grizzled-edge-push-knife": {
+    "name": "Grizzled Edge Push Knife",
+    "slotType": "Kit",
+    "setName": "Grizzled Edge",
+    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
+    "stats": {
+      "Strength": {
+        "values": [32, 35, 38, 41],
+        "isPercent": false
+      },
+      "Will": {
+        "values": [21, 23, 25, 27],
+        "isPercent": false
+      },
+      "Physical DMG Bonus": {
+        "values": [23, 25.3, 27.6, 29.9],
+        "isPercent": true
+      }
+    },
+    "defense": 21
+  },
+  "grizzled-edge-push-knife-t1": {
+    "name": "Grizzled Edge Push Knife T1",
+    "slotType": "Kit",
+    "setName": "Grizzled Edge",
+    "statNames": ["Agility", "Strength", "Physical DMG Bonus"],
+    "stats": {
+      "Agility": {
+        "values": [32, 35, 38, 41],
+        "isPercent": false
+      },
+      "Strength": {
+        "values": [21, 23, 25, 27],
+        "isPercent": false
+      },
+      "Physical DMG Bonus": {
+        "values": [23, 25.3, 27.6, 29.9],
+        "isPercent": true
+      }
+    },
+    "defense": 21
+  },
   "type-50-yinglung-heavy-armor-t1": {
     "name": "Type 50 Yinglung Heavy Armor T1",
     "slotType": "Armor",

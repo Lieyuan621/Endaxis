@@ -17,8 +17,10 @@ import { useI18n } from 'vue-i18n'
 import { snapMs } from '@/utils/precision.js'
 import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time.js'
 import { toLegacyDisplayType } from '@/utils/hitModel.js'
+import { getGearPiece } from '@/data'
 import {
   getGameElementName,
+  getGameAttributeName,
   getGameSlotTypeName,
   getGameWeaponTypeName,
   getGearPieceGameName,
@@ -379,42 +381,55 @@ const EQUIPMENT_LEVEL_COLORS = {
 }
 const EQUIPMENT_REFINE_TIERS = [0, 1, 2, 3]
 
-const EQUIPMENT_PRIMARY_STAT_IDS = ['strength', 'agility', 'intellect', 'will']
 const EQUIPMENT_PRIMARY_STAT_ICON_MAP = {
+  primary_ability: '/icons/icon_battle_primary_attribute_all_up.webp',
+  secondary_ability: '/icons/icon_battle_primary_attribute_all_up.webp',
   strength: '/icons/icon_attribute_str.webp',
   agility: '/icons/icon_attribute_agi.webp',
   intellect: '/icons/icon_attribute_wisd.webp',
   will: '/icons/icon_attribute_will.webp',
 }
 
-const EQUIPMENT_BONUS_STAT_ORDER = [
-  'attack_dmg_bonus',
-  'skill_dmg_bonus',
-  'link_dmg_bonus',
-  'ultimate_dmg_bonus',
-  'broken_dmg_bonus',
-  'crit_rate',
-  'crit_dmg',
-  'hp',
-  'healing_effect',
-  'physical_dmg',
-  'originium_arts_power',
-  'ult_charge_eff',
-]
-
 const EQUIPMENT_BONUS_STAT_ICON_MAP = {
+  primary_ability: '/icons/icon_battle_primary_attribute_all_up.webp',
+  secondary_ability: '/icons/icon_battle_primary_attribute_all_up.webp',
+  strength: '/icons/icon_attribute_str.webp',
+  agility: '/icons/icon_attribute_agi.webp',
+  intellect: '/icons/icon_attribute_wisd.webp',
+  will: '/icons/icon_attribute_will.webp',
+  attack: '/icons/icon_battle_buff_atk_up.webp',
+  hp: '/icons/icon_attribute_maxHp.webp',
+  crit_rate: '/icons/icon_attribute_criticalRate.webp',
+  crit_dmg: '/icons/icon_attribute_criticalDamageIncrease.webp',
+  blaze_dmg: '/icons/icon_battle_fire_dmg_up.webp',
+  emag_dmg: '/icons/icon_battle_pulse_dmg_up.webp',
+  cold_dmg: '/icons/icon_battle_cryst_dmg_up.webp',
+  nature_dmg: '/icons/icon_battle_natural_dmg_up.webp',
+  physical_dmg: '/icons/icon_physical_damage_increase.webp',
+  arts_dmg: '/icons/icon_battle_spell_up.webp',
   attack_dmg_bonus: '/icons/icon_normal_atk_efficiency.webp',
   skill_dmg_bonus: '/icons/icon_normal_skill_efficiency.webp',
   link_dmg_bonus: '/icons/icon_comboskill_cooldown_scalar.webp',
   ultimate_dmg_bonus: '/icons/icon_ultimate_skill_efficiency.webp',
+  all_skill_dmg_bonus: '/icons/icon_battle_affix_enhance.webp',
   broken_dmg_bonus: '/icons/icon_attr_damage_to_broken_unit_increase.webp',
-  crit_rate: '/icons/icon_attribute_criticalRate.webp',
-  crit_dmg: '/icons/icon_attribute_criticalDamageIncrease.webp',
-  hp: '/icons/icon_attribute_maxHp.webp',
   healing_effect: '/icons/icon_heal_output_increase.webp',
-  physical_dmg: '/icons/icon_physical_damage_increase.webp',
+  final_dmg_reduction: '/icons/icon_battle_affix_shelter.webp',
   originium_arts_power: '/icons/icon_originium_arts.webp',
   ult_charge_eff: '/icons/icon_ultimate_sp_gain_scalar.webp',
+  link_cd_reduction: '/icons/icon_comboskill_cooldown_scalar.webp',
+  susceptibility: '/icons/icon_battle_affix_vulnerable.webp',
+  susceptibility_physical: '/icons/icon_battle_affix_physical_vulnerable.webp',
+  susceptibility_heat: '/icons/icon_battle_affix_fire_vulnerable.webp',
+  susceptibility_cryo: '/icons/icon_battle_affix_cryst_vulnerable.webp',
+  susceptibility_electric: '/icons/icon_battle_affix_pulse_vulnerable.webp',
+  susceptibility_nature: '/icons/icon_battle_affix_natural_vulnerable.webp',
+}
+
+function getEquipmentAffixIconSrc(modifierId) {
+  return EQUIPMENT_PRIMARY_STAT_ICON_MAP[modifierId]
+    || EQUIPMENT_BONUS_STAT_ICON_MAP[modifierId]
+    || '/icons/default_icon.webp'
 }
 
 function normalizeSearchText(value) {
@@ -423,58 +438,240 @@ function normalizeSearchText(value) {
     .replace(/[\s_-]+/g, '')
 }
 
-function hasNonZeroValue(values) {
-  if (!Array.isArray(values)) return false
-  return values.some(v => (Number(v) || 0) !== 0)
+function normalizeEquipmentStatArray(value) {
+  if (Array.isArray(value)) return value.filter(Boolean)
+  return value ? [value] : []
+}
+
+function normalizeEquipmentAttributeId(attribute) {
+  if (attribute === 'main') return 'primary_ability'
+  if (attribute === 'sub') return 'secondary_ability'
+  if (['strength', 'agility', 'intellect', 'will'].includes(attribute)) return attribute
+  return ''
+}
+
+function sameEquipmentValue(a, b) {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
+}
+
+function getEquipmentElementPairId(elements) {
+  const set = new Set(elements)
+  if (set.size !== 2) return ''
+  if (set.has('heat') && set.has('nature')) return 'heat_nature_dmg_bonus'
+  if (set.has('cryo') && set.has('electric')) return 'cryo_electric_dmg_bonus'
+  return ''
+}
+
+function isEquipmentPairModifierId(modifierId) {
+  return modifierId === 'heat_nature_dmg_bonus' || modifierId === 'cryo_electric_dmg_bonus'
+}
+
+function mergeEquipmentElementPairEffects(effects) {
+  const out = []
+  const used = new Set()
+  effects.forEach((effect, index) => {
+    if (used.has(index)) return
+    const stat = effect?.stat
+    const element = typeof stat?.elements === 'string' ? stat.elements : ''
+    if (stat?.modifier !== 'dmgBonus' || !element) {
+      out.push(effect)
+      return
+    }
+
+    const pairIndex = effects.findIndex((candidate, candidateIndex) => {
+      if (candidateIndex <= index || used.has(candidateIndex)) return false
+      const candidateStat = candidate?.stat
+      if (candidateStat?.modifier !== 'dmgBonus') return false
+      const candidateElement = typeof candidateStat?.elements === 'string' ? candidateStat.elements : ''
+      if (!candidateElement) return false
+      if (!sameEquipmentValue(effect.value, candidate.value)) return false
+      return !!getEquipmentElementPairId([element, candidateElement])
+    })
+
+    if (pairIndex < 0) {
+      out.push(effect)
+      return
+    }
+
+    used.add(index)
+    used.add(pairIndex)
+    out.push({
+      ...effect,
+      stat: {
+        ...stat,
+        elements: [element, effects[pairIndex].stat.elements],
+      },
+    })
+  })
+  return out
+}
+
+function getEquipmentDmgBonusModifierIds(stat) {
+  const elements = normalizeEquipmentStatArray(stat?.elements)
+  if (elements.length > 0) {
+    const pairId = getEquipmentElementPairId(elements)
+    if (pairId) return [pairId]
+    const mapped = elements.map((element) => ({
+      physical: 'physical_dmg',
+      heat: 'blaze_dmg',
+      cryo: 'cold_dmg',
+      electric: 'emag_dmg',
+      nature: 'nature_dmg',
+    })[element]).filter(Boolean)
+    return mapped.length > 0 ? mapped : ['all_skill_dmg_bonus']
+  }
+
+  const skillTypes = normalizeEquipmentStatArray(stat?.skillTypes)
+  if (skillTypes.length > 0) {
+    if (skillTypes.length === 1) {
+      return [{
+        basicAttack: 'attack_dmg_bonus',
+        battleSkill: 'skill_dmg_bonus',
+        comboSkill: 'link_dmg_bonus',
+        ultimate: 'ultimate_dmg_bonus',
+      }[skillTypes[0]] || 'all_skill_dmg_bonus']
+    }
+    if (
+      skillTypes.includes('battleSkill')
+      && skillTypes.includes('comboSkill')
+      && skillTypes.includes('ultimate')
+    ) {
+      return ['all_skill_dmg_bonus']
+    }
+  }
+
+  return ['all_skill_dmg_bonus']
+}
+
+function getEquipmentEffectModifierIds(stat) {
+  if (!stat?.modifier) return []
+  if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
+    return normalizeEquipmentStatArray(stat.attribute)
+      .map(normalizeEquipmentAttributeId)
+      .filter(Boolean)
+  }
+  if (stat.modifier === 'atkFlat' || stat.modifier === 'atkPercent') return ['attack']
+  if (stat.modifier === 'flatHp' || stat.modifier === 'hpPercent') return ['hp']
+  if (stat.modifier === 'critRate') return ['crit_rate']
+  if (stat.modifier === 'critDmg') return ['crit_dmg']
+  if (stat.modifier === 'artsIntensity') return ['originium_arts_power']
+  if (stat.modifier === 'ultimateGainEfficiency') return ['ult_charge_eff']
+  if (stat.modifier === 'heal') return ['healing_effect']
+  if (stat.modifier === 'protection') return ['final_dmg_reduction']
+  if (stat.modifier === 'dmgBonus') return getEquipmentDmgBonusModifierIds(stat)
+  if (stat.modifier === 'susceptibility') {
+    const elements = normalizeEquipmentStatArray(stat.elements)
+    return elements.length > 0
+      ? elements.map(element => `susceptibility_${element}`)
+      : ['susceptibility']
+  }
+  return [stat.modifier]
+}
+
+function trOrFallback(key, fallback) {
+  const out = t(key)
+  return out === key ? fallback : out
+}
+
+function getEquipmentModifierLabel(modifierId) {
+  return trOrFallback(`stats.${modifierId}`, modifierId)
+}
+
+function getEquipmentEffectLabel(stat, modifierId) {
+  if (!stat?.modifier) return getEquipmentModifierLabel(modifierId)
+  if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
+    const attr = normalizeEquipmentStatArray(stat.attribute)[0]
+    const normalizedAttr = normalizeEquipmentAttributeId(attr)
+    if (normalizedAttr === 'primary_ability' || normalizedAttr === 'secondary_ability') {
+      return getEquipmentModifierLabel(normalizedAttr)
+    }
+    if (attr) return getGameAttributeName(attr, locale.value)
+  }
+  if (stat.modifier === 'dmgBonus') {
+    const elements = normalizeEquipmentStatArray(stat.elements)
+    const skillTypes = normalizeEquipmentStatArray(stat.skillTypes)
+    const pairId = getEquipmentElementPairId(elements)
+    if (pairId) {
+      const names = elements.map(element => getGameElementName(element, locale.value)).filter(Boolean)
+      return `${names.join(' / ')} ${trOrFallback('game.stat.dmgBonus', '伤害加成')}`
+    }
+    if (elements.length === 1) return trOrFallback(`game.stat.dmgBonus:${elements[0]}`, getEquipmentModifierLabel(modifierId))
+    if (skillTypes.length === 1) return trOrFallback(`game.stat.dmgBonus:${skillTypes[0]}`, getEquipmentModifierLabel(modifierId))
+    return trOrFallback('game.stat.dmgBonus', getEquipmentModifierLabel(modifierId))
+  }
+  if (stat.modifier === 'susceptibility') {
+    const elements = normalizeEquipmentStatArray(stat.elements)
+    if (elements.length === 1) return trOrFallback(`game.stat.susceptibility:${elements[0]}`, trOrFallback('game.stat.susceptibility', '脆弱'))
+    return trOrFallback('game.stat.susceptibility', '脆弱')
+  }
+  if (stat.modifier === 'artsIntensity') return trOrFallback('actionLibrary.labels.originiumArtsPower', getEquipmentModifierLabel(modifierId))
+  if (stat.modifier === 'ultimateGainEfficiency') return trOrFallback('actionLibrary.labels.chargeEfficiency', getEquipmentModifierLabel(modifierId))
+  if (stat.modifier === 'heal') return getEquipmentModifierLabel('healing_effect')
+  if (stat.modifier === 'protection') return getEquipmentModifierLabel('final_dmg_reduction')
+  return getEquipmentModifierLabel(modifierId)
+}
+
+function equipmentValueNeedsPercent(stat) {
+  return [
+    'attributePercent',
+    'atkPercent',
+    'hpPercent',
+    'critRate',
+    'critDmg',
+    'dmgBonus',
+    'ultimateGainEfficiency',
+    'susceptibility',
+    'heal',
+    'protection',
+  ].includes(stat?.modifier)
+}
+
+function formatEquipmentNumber(value) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return String(value ?? '')
+  if (Math.abs(num - Math.round(num)) < 0.0001) return String(Math.round(num))
+  return num.toFixed(1).replace(/\.0$/, '')
+}
+
+function formatEquipmentEffectValue(effect) {
+  const rawValues = Array.isArray(effect?.value) ? effect.value : [effect?.value]
+  const values = rawValues.filter(v => v !== undefined && v !== null)
+  if (values.length === 0) return ''
+  const suffix = equipmentValueNeedsPercent(effect?.stat) ? '%' : ''
+  return values.map(value => `+${formatEquipmentNumber(value)}${suffix}`).join(' / ')
+}
+
+function getEquipmentPieceAffixRows(eq) {
+  const piece = getGearPiece(eq?.canonicalId || eq?.canonicalGearPieceId || eq?.id)
+  if (!piece) return []
+  return [piece.skill1, piece.skill2, piece.skill3]
+    .filter(Boolean)
+    .flatMap((skill, slotIndex) => {
+      const effects = Array.isArray(skill?.effects) ? skill.effects : []
+      return mergeEquipmentElementPairEffects(effects)
+        .filter(effect => effect?.kind === 'status')
+        .flatMap((effect, effectIndex) => getEquipmentEffectModifierIds(effect.stat).map((modifierId) => {
+          const label = getEquipmentEffectLabel(effect.stat, modifierId)
+          const valueText = formatEquipmentEffectValue(effect)
+          return {
+            key: `${eq?.id || 'eq'}-${slotIndex}-${effectIndex}-${modifierId}`,
+            modifierId,
+            label,
+            valueText,
+            src: isEquipmentPairModifierId(modifierId) ? '' : getEquipmentAffixIconSrc(modifierId),
+            marker: isEquipmentPairModifierId(modifierId) ? 'hollow-dot' : 'image',
+            title: valueText ? `${label} ${valueText}` : label,
+          }
+        }))
+    })
+}
+
+function getEquipmentAffixRows(eq) {
+  return getEquipmentPieceAffixRows(eq)
 }
 
 function getEquipmentPrimaryAffixIconStack(eq) {
-  const out = []
-  const aff = eq?.affixes
-  if (!aff || typeof aff !== 'object') return out
-  const seen = new Set()
-
-  const push = (entry) => {
-    const modifierId = typeof entry?.modifierId === 'string' ? entry.modifierId.trim() : ''
-    if (!modifierId) return
-    if (!EQUIPMENT_PRIMARY_STAT_IDS.includes(modifierId)) return
-    if (!hasNonZeroValue(entry?.values)) return
-    const src = EQUIPMENT_PRIMARY_STAT_ICON_MAP[modifierId]
-    if (!src) return
-    out.push({ modifierId, src, title: t(`stats.${modifierId}`) })
-    seen.add(modifierId)
-  }
-
-  push(aff.primary1)
-  push(aff.primary2)
-
-  const adapterEntries = Array.isArray(aff.adapter?.entries) ? aff.adapter.entries : []
-  if (adapterEntries.length > 0) {
-    const hasEntry = (statId) => adapterEntries.find((e) => {
-      const modifierId = typeof e?.modifierId === 'string' ? e.modifierId.trim() : ''
-      if (modifierId !== statId) return false
-      return hasNonZeroValue(e?.values)
-    })
-
-    for (const statId of EQUIPMENT_BONUS_STAT_ORDER) {
-      if (seen.has(statId)) continue
-      const found = hasEntry(statId)
-      if (!found) continue
-      out.push({ modifierId: statId, src: EQUIPMENT_BONUS_STAT_ICON_MAP[statId] || null, title: t(`stats.${statId}`) })
-      seen.add(statId)
-    }
-
-    for (const ent of adapterEntries) {
-      const modifierId = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : ''
-      if (!modifierId) continue
-      if (seen.has(modifierId)) continue
-      if (!hasNonZeroValue(ent?.values)) continue
-      out.push({ modifierId, src: EQUIPMENT_BONUS_STAT_ICON_MAP[modifierId] || null, title: t(`stats.${modifierId}`) })
-      seen.add(modifierId)
-    }
-  }
-
-  return out
+  return getEquipmentAffixRows(eq)
 }
 
 const isGameTimeCollapsed = ref(true)
@@ -853,6 +1050,21 @@ function isEquipmentEquipped(equipmentId) {
 // 核心逻辑：操作轴计算
 // ===================================================================================
 
+const PERFECT_LINK_STATUS_IDS = new Set([
+  'rossi-combo-perfect-timing-satisfied',
+])
+
+function isPerfectLinkAction(action) {
+  if (!action || toLegacyDisplayType(action.type) !== 'link') return false
+  const id = action.instanceId
+  if (!id) return false
+  return (store.operatorLog || []).some((entry) => (
+    entry?.type === 'OPERATOR_EFFECT_APPLY' &&
+    entry?.actionId === id &&
+    PERFECT_LINK_STATUS_IDS.has(entry?.id)
+  ))
+}
+
 const operationMarkers = computed(() => {
   let rawMarkers = []
 
@@ -879,6 +1091,7 @@ const operationMarkers = computed(() => {
         width: isHold ? null : 24,
         right: store.timeToPx(action.startTime || 0) + (isHold ? (store.timeToPx((action.startTime || 0) + (action.duration || 0)) - store.timeToPx(action.startTime || 0)) : 24),
         label, isHold, customClass,
+        perfectLink: isPerfectLinkAction(action),
         top: 0, height: 14, fontSize: 9
       })
     })
@@ -2205,7 +2418,7 @@ onUnmounted(() => {
       </div>
       <div class="operation-layer">
         <div v-for="op in operationMarkers" :key="op.id" class="key-cap"
-             :class="[op.customClass, { 'is-hold': op.isHold }]"
+             :class="[op.customClass, { 'is-hold': op.isHold, 'is-perfect-link': op.perfectLink }]"
              :style="{ left: `${op.left}px`, top: `${op.top}px`, width: op.width ? `${op.width}px` : 'auto', height: `${op.height}px`, fontSize: `${op.fontSize}px` }">
           <span class="key-text">{{ op.label }}</span>
         </div>
@@ -2606,11 +2819,20 @@ onUnmounted(() => {
             </svg>
             {{ t('common.unequip') }}
           </button>
-          <div v-if="currentEquipmentForDialog?.level === 70" class="equipment-tier-picker">
+          <div class="equipment-tier-picker">
             <span class="tier-label">{{ t('timelineGrid.equipmentDialog.refine') }}</span>
-            <el-select :model-value="currentEquipmentTierForDialog" @update:model-value="setCurrentEquipmentTierForDialog" size="small" style="width: 92px">
-              <el-option v-for="t in EQUIPMENT_REFINE_TIERS" :key="`tier_${t}`" :label="t === 0 ? $t('timelineGrid.equipmentDialog.refineBase') : $t('timelineGrid.equipmentDialog.refineTier', { tier: t })" :value="t" />
-            </el-select>
+            <div class="equipment-refine-buttons">
+              <button
+                v-for="tier in EQUIPMENT_REFINE_TIERS"
+                :key="`tier_${tier}`"
+                type="button"
+                class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold equipment-refine-btn"
+                :class="{ 'is-active': currentEquipmentTierForDialog === tier }"
+                @click="setCurrentEquipmentTierForDialog(tier)"
+              >
+                {{ tier === 0 ? t('timelineGrid.equipmentDialog.refineBase') : tier }}
+              </button>
+            </div>
           </div>
         </div>
         <div class="element-filters">
@@ -2631,28 +2853,65 @@ onUnmounted(() => {
           </div>
           <div class="roster-grid">
             <div v-for="eq in group.list" :key="eq.id" class="roster-card" @click="confirmEquipmentSelection(eq.id)">
-              <div class="card-avatar-wrapper" :style="{ borderColor: getEquipmentLevelColor(eq.level) }">
-                <div class="eq-affix-icon-stack">
-                  <div
-                    v-for="icon in getEquipmentPrimaryAffixIconStack(eq)"
-                    :key="`eq_affix_${eq.id}_${icon.modifierId}`"
-                    class="eq-affix-icon-cell"
-                    :class="{ 'has-img': !!icon.src }"
-                    :title="icon.title"
-                  >
-                    <span class="eq-affix-icon-dot" aria-hidden="true"></span>
-                    <img
-                      v-if="icon.src"
-                      class="eq-affix-icon-img"
-                      :src="icon.src"
-                      loading="lazy"
-                      @load="e=>e.target.closest('.eq-affix-icon-cell')?.classList.remove('img-failed')"
-                      @error="e=>e.target.closest('.eq-affix-icon-cell')?.classList.add('img-failed')"
-                    />
+              <el-tooltip
+                placement="right"
+                effect="dark"
+                :show-after="160"
+                :disabled="getEquipmentAffixRows(eq).length === 0"
+                popper-class="equipment-affix-tooltip-popper"
+              >
+                <template #content>
+                  <div class="equipment-affix-tooltip">
+                    <div
+                      v-for="row in getEquipmentAffixRows(eq)"
+                      :key="`eq_tip_${row.key}`"
+                      class="equipment-affix-tooltip-row"
+                    >
+                      <svg
+                        v-if="row.marker === 'hollow-dot'"
+                        class="equipment-affix-tooltip-marker"
+                        viewBox="0 0 12 12"
+                        aria-hidden="true"
+                      >
+                        <circle cx="6" cy="6" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+                      </svg>
+                      <img v-else class="equipment-affix-tooltip-icon" :src="row.src" loading="lazy" />
+                      <span class="equipment-affix-tooltip-label">{{ row.label }}</span>
+                      <strong class="equipment-affix-tooltip-value">{{ row.valueText }}</strong>
+                    </div>
                   </div>
+                </template>
+                <div class="card-avatar-wrapper" :style="{ borderColor: getEquipmentLevelColor(eq.level) }">
+                  <div class="eq-affix-icon-stack">
+                    <div
+                      v-for="icon in getEquipmentPrimaryAffixIconStack(eq)"
+                      :key="`eq_affix_${eq.id}_${icon.key || icon.modifierId}`"
+                      class="eq-affix-icon-cell"
+                      :class="{ 'has-img': !!icon.src, 'has-hollow-marker': icon.marker === 'hollow-dot' }"
+                      :title="icon.title"
+                    >
+                      <span class="eq-affix-icon-dot" aria-hidden="true"></span>
+                      <svg
+                        v-if="icon.marker === 'hollow-dot'"
+                        class="eq-affix-icon-hollow"
+                        viewBox="0 0 12 12"
+                        aria-hidden="true"
+                      >
+                        <circle cx="6" cy="6" r="3" fill="none" stroke="currentColor" stroke-width="1.4" />
+                      </svg>
+                      <img
+                        v-else-if="icon.src"
+                        class="eq-affix-icon-img"
+                        :src="icon.src"
+                        loading="lazy"
+                        @load="e=>e.target.closest('.eq-affix-icon-cell')?.classList.remove('img-failed')"
+                        @error="e=>e.target.closest('.eq-affix-icon-cell')?.classList.add('img-failed')"
+                      />
+                    </div>
+                  </div>
+                  <img :src="eq.icon || '/icons/default_icon.webp'" loading="lazy" />
                 </div>
-                <img :src="eq.icon || '/icons/default_icon.webp'" loading="lazy" />
-              </div>
+              </el-tooltip>
               <div class="card-name">{{ eq.name }}</div>
               <div v-if="isEquipmentEquipped(eq.id)" class="in-team-tag weapon-equipped">{{ t('timelineGrid.weaponDialog.equipped') }}</div>
             </div>
@@ -3500,6 +3759,19 @@ body.capture-mode .davinci-range {
   user-select: none;
 }
 
+.equipment-refine-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.equipment-refine-btn {
+  min-width: 30px;
+  height: 24px;
+  padding: 0 7px;
+  line-height: 1;
+}
+
 .gear-hint-row { height: 22px; }
 
 .set-bonus-hint {
@@ -3823,6 +4095,14 @@ body.capture-mode .davinci-range {
   z-index: 2;
 }
 
+.key-cap.op-link.is-perfect-link {
+  background: rgba(255, 236, 122, 0.36);
+  border-color: #fff2a8;
+  color: #fff7cf;
+  box-shadow: 0 0 0 1px rgba(255, 242, 168, 0.85), 0 0 12px rgba(255, 215, 0, 0.85);
+  animation: perfect-link-pulse 1.15s ease-in-out infinite;
+}
+
 .key-cap.op-switch {
   background: rgba(211, 173, 255, 0.2);
   border-color: #d3adff;
@@ -3846,6 +4126,15 @@ body.capture-mode .davinci-range {
   background: transparent;
   color: #fff;
   font-size: 9px;
+}
+
+@keyframes perfect-link-pulse {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.35);
+  }
 }
 
 .track-info.is-reorder-target {
@@ -4069,6 +4358,20 @@ body.capture-mode .davinci-range {
   display: none;
 }
 
+.eq-affix-icon-cell.has-hollow-marker .eq-affix-icon-dot {
+  opacity: 0;
+}
+
+.eq-affix-icon-hollow {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 7px;
+  height: 7px;
+  color: rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+}
+
 .eq-affix-icon-img {
   position: absolute;
   inset: 0;
@@ -4076,6 +4379,65 @@ body.capture-mode .davinci-range {
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+}
+
+:global(.equipment-affix-tooltip-popper) {
+  max-width: 320px;
+}
+
+:global(.equipment-affix-tooltip-popper.el-popper.is-dark) {
+  background: #080b10;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.58);
+}
+
+:global(.equipment-affix-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
+  background: #080b10;
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+:global(.equipment-affix-tooltip) {
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+:global(.equipment-affix-tooltip-row) {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 22px;
+}
+
+:global(.equipment-affix-tooltip-icon) {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+
+:global(.equipment-affix-tooltip-marker) {
+  width: 12px;
+  height: 12px;
+  justify-self: center;
+  color: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+
+:global(.equipment-affix-tooltip-label) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+:global(.equipment-affix-tooltip-value) {
+  color: #facc15;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .element-badge {

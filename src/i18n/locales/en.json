@@ -786,6 +786,7 @@
     "cold_dmg": "Cryo DMG",
     "nature_dmg": "Nature DMG",
     "healing_effect": "Treatment Efficiency",
+    "final_dmg_reduction": "Final DMG Reduction",
     "physical_dmg": "Physical DMG",
     "arts_dmg": "Arts DMG",
     "attack_dmg_bonus": "Normal Attack DMG Bonus",

@@ -1,18 +1,18 @@
 import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
-  name: 'LYNX Gauntlets',
-  icon: '/equipment/heal01/item_equip_t4_suit_heal01_hand_02.webp',
-  slotType: 'gloves',
+  name: 'Grizzled Edge Push Knife T1',
+  icon: '/equipment/crush_fracture/item_equip_t4_suit_crush_fracture_edc_02.webp',
+  slotType: 'kit',
   levelRequirement: 70,
-  defense: 42,
+  defense: 21,
   skill1: {
     effects: [
       {
         kind: 'status',
-        stat: { modifier: 'attributeFlat', attribute: 'will' },
+        stat: { modifier: 'attributeFlat', attribute: 'agility' },
         target: 'self',
-        value: [65, 71, 78, 84],
+        value: [32, 35, 38, 41],
       },
     ],
   },
@@ -22,7 +22,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'attributeFlat', attribute: 'strength' },
         target: 'self',
-        value: [43, 47, 51, 55],
+        value: [21, 23, 25, 27],
       },
     ],
   },
@@ -30,13 +30,13 @@ const sheet: GearPieceSheet = {
     effects: [
       {
         kind: 'status',
-        stat: { modifier: 'heal' },
+        stat: { modifier: 'dmgBonus', elements: 'physical' },
         target: 'self',
-        value: [17.3, 19, 20.7, 22.4],
+        value: [23, 25.3, 27.6, 29.9],
       },
     ],
   },
-  setSlug: 'lynx',
+  setSlug: 'grizzled-edge',
 };
 
 export default sheet;

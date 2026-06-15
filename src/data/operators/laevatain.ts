@@ -38,7 +38,7 @@ const sheet: OperatorSheet = {
       levels: 3,
       triggers: [
         {
-          trigger: { kind: 'onFinalStrike' },
+          trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
           effects: [0, 1, 2, 3].map(x => ({
             kind: 'consume',
             enemyStatus: 'heatInfliction',

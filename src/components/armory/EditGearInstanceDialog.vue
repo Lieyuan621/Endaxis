@@ -50,8 +50,17 @@ function formatStatLabel(effect) {
   if (stat.modifier === 'critDmg') return t('stats.crit_dmg')
   if (stat.modifier === 'artsIntensity') return t('actionLibrary.labels.originiumArtsPower')
   if (stat.modifier === 'ultimateGainEfficiency') return t('actionLibrary.labels.chargeEfficiency')
+  if (stat.modifier === 'heal') return t('stats.healing_effect')
+  if (stat.modifier === 'protection') return t('stats.final_dmg_reduction')
   if (stat.modifier === 'susceptibility') return t('armory.common.susceptibility')
   return getEffectName(effect)
+}
+
+function getDisplaySlotName(slotType) {
+  if (slotType === 'kit' || slotType === 'accessory') {
+    return String(locale.value || '').toLowerCase().startsWith('zh') ? '配件' : 'Accessory'
+  }
+  return getGameSlotTypeName(slotType, locale.value)
 }
 
 function update(updates) {
@@ -102,7 +111,7 @@ function formatStatValue(value) {
             <div class="name">{{ getGearPieceGameName(instance.gearPieceId, locale) || instance.gearPieceId }}</div>
             <div class="tags">
               <span class="tag" :style="{ color, borderColor: color }">{{ getGameQualityName(quality, locale) }}</span>
-              <span class="tag">{{ getGameSlotTypeName(piece.slotType, locale) }}</span>
+              <span class="tag">{{ getDisplaySlotName(piece.slotType) }}</span>
               <span v-if="piece.setSlug" class="tag">{{ getGearSetGameName(piece.setSlug, locale) }}</span>
             </div>
             <div v-if="piece.defense" class="row">

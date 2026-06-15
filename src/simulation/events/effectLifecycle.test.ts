@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultStats } from "@/utils/coreStats";
+import { createDefaultStats } from "@/simulation/defaultActorStats";
 import { compileScenario } from "@/simulation/compiler/compileScenario";
 import { simulate } from "@/simulation/simulator";
 import { TriggerRegistry } from "@/simulation/engine/TriggerRegistry";

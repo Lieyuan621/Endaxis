@@ -8,7 +8,7 @@ import {
   getWeaponList,
 } from "@/data";
 import { collectEffects, collectTriggerEffects, patchCombatSkills } from "@/data/collect";
-import { createDefaultStats } from "@/utils/coreStats";
+import { createDefaultStats } from "@/simulation/defaultActorStats";
 import { extractRawEntries, resolveHitsFromSheet } from "@/stores/timeline/resolveHits";
 import { compileScenario } from "./compiler/compileScenario";
 import { simulate } from "./simulator";

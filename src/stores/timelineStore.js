@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch, toRaw } from 'vue'
 import { watchThrottled } from '@vueuse/core'
 import { compressGzip, decompressGzip } from '@/utils/gzipUtils'
-import { CORE_STATS, createDefaultStats } from '@/utils/coreStats.js'
+import { createDefaultStats } from '@/simulation/defaultActorStats'
 import { simulate } from '@/simulation/simulator'
 import { resolveEffectValueStatic } from '@/simulation/events/effectDispatch'
 import { compileEndaxisScenario } from '@/simulation/adapters/compileEndaxisScenario'
@@ -11,7 +11,6 @@ import { i18n } from '@/i18n'
 import { snapMs } from '@/utils/precision.js'
 import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time.js'
 import { deserializeProjectData, serializeProjectData } from '@/utils/timeSerialization.js'
-import { expandDisplayAliases, toLegacyUiKey } from '@/utils/effectDisplay.js'
 import { useOperatorStore } from '@/stores/operatorStore'
 import { useWeaponStore } from '@/stores/weaponStore'
 import { useGearStore } from '@/stores/gearStore'
@@ -342,19 +341,19 @@ export const useTimelineStore = defineStore('timeline', () => {
         return formatTimeWithFrames(bt)
     }
 
-    const ELEMENT_COLORS = expandDisplayAliases({
+    const ELEMENT_COLORS = {
         heat: "#ff4d4f", cryo: "#00e5ff", electric: "#ffbf00", nature: "#52c41a", physical: "#e0e0e0",
         comboSkill: "#fdd900", finisher: "#a61d24", dive: "#69c0ff", battleSkill: "#ffffff", ultimate: "#00e5ff", basicAttack: "#aaaaaa", default: "#8c8c8c",
+        attack: "#aaaaaa", skill: "#ffffff", link: "#fdd900", execution: "#a61d24", dodge: "#69c0ff",
         heat_infliction: '#ff4d4f', heat_burst: '#ff7875', combustion: '#f5222d',
         cryo_infliction: '#00e5ff', cryo_burst: '#40a9ff', solidification: '#1890ff', shatter: '#bae7ff',
         electric_infliction: '#ffd700', electric_burst: '#fff566', electrification: '#ffec3d',
         nature_infliction: '#95de64', nature_burst: '#73d13d', corrosion: '#52c41a',
         lift: '#d9d9d9', knockdown: '#d9d9d9', crush: '#d9d9d9', breach: '#d9d9d9', vulnerability: '#d9d9d9',
-    })
+    }
 
     const getColor = (key) => {
-        const resolvedKey = toLegacyUiKey(key) || key
-        return ELEMENT_COLORS[resolvedKey] || ELEMENT_COLORS.default
+        return ELEMENT_COLORS[key] || ELEMENT_COLORS.default
     }
 
     const ENEMY_TIERS = [
@@ -876,9 +875,6 @@ export const useTimelineStore = defineStore('timeline', () => {
             currentScenario.data = _createSnapshot()
         }
 
-        if (historyIndex.value < historyStack.value.length - 1) {
-            historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
-        }
         const snapshot = JSON.stringify({
             tracks: tracks.value,
             connections: connections.value,
@@ -893,6 +889,14 @@ export const useTimelineStore = defineStore('timeline', () => {
             weapons: weaponStore.weapons,
             gears: gearStore.gears,
         })
+
+        if (historyStack.value[historyIndex.value] === snapshot) {
+            return
+        }
+
+        if (historyIndex.value < historyStack.value.length - 1) {
+            historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
+        }
         historyStack.value.push(snapshot)
         if (historyStack.value.length > MAX_HISTORY) {
             historyStack.value.shift()
@@ -1052,6 +1056,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
 
         activeScenarioId.value = targetId
+        resetTimelineViewport()
         historyStack.value = []
         historyIndex.value = -1
         commitState()
@@ -1080,6 +1085,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         scenarioList.value.push({ id: newId, name: newName, data: emptySnapshot })
         activeScenarioId.value = newId
         _loadSnapshot(emptySnapshot)
+        resetTimelineViewport()
 
         historyStack.value = []
         historyIndex.value = -1
@@ -1867,12 +1873,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     const getModifierLabel = (modifierId) => {
         const found = (misc.value?.modifierDefs || []).find(d => d.id === modifierId)
         if (found?.label) return found.label
-        const core = CORE_STATS.find(s => s.id === modifierId)
-        if (core?.labelKey) {
-            const translated = tr(core.labelKey)
-            if (translated !== core.labelKey) return translated
-        }
-        return core?.label || modifierId || ''
+        const translated = tr(`stats.${modifierId}`)
+        if (translated !== `stats.${modifierId}`) return translated
+        return modifierId || ''
     }
 
     const normalizeWeaponCommonSlots = (slots) => {
@@ -2225,7 +2228,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     const initializeOptimizerGameData = () => {
-        iconDatabase.value = expandDisplayAliases(cloneJsonData(getTimelineIconDatabase()) || {})
+        iconDatabase.value = cloneJsonData(getTimelineIconDatabase()) || {}
         characterRoster.value = buildOptimizerCharacterRoster()
         weaponDatabase.value = buildOptimizerWeaponDatabase()
         equipmentDatabase.value = buildOptimizerEquipmentDatabase()
@@ -2641,7 +2644,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                         element: segmentInfo.element,
                         icon,
                         duration: segmentInfo.duration,
-                        cooldown: 0,
+                        cooldown: skill.type === 'comboSkill' ? cooldown : 0,
                         spCost: segmentSpCost,
                         gaugeCost: idx === 0 ? baseDefaults.gaugeCost : 0,
                         gaugeGain: segmentGaugeGain,
@@ -2763,10 +2766,14 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     function setTimelineShift(val) {
         const width = totalTimelineWidthPx.value
-        const maxShift = width - timelineRect.value.width
+        const maxShift = Math.max(0, width - timelineRect.value.width)
         timelineShift.value = Math.min(Math.max(0, val), maxShift)
     }
     function setScrollTop(val) { timelineScrollTop.value = val }
+    function resetTimelineViewport() {
+        setTimelineShift(0)
+        setScrollTop(0)
+    }
     function setTimelineRect(width, height, top, right, bottom, left) { timelineRect.value = { width, height, top, left, right, bottom } }
     function setTrackLaneRect(trackId, rect) { trackLaneRects.value[trackId] = rect }
     function setNodeRect(nodeId, rect) { nodeRects.value[nodeId] = rect }
@@ -3036,8 +3043,6 @@ export const useTimelineStore = defineStore('timeline', () => {
             const rawSegments = skill.segments.filter(Boolean)
             if (rawSegments.length < 2) return
 
-            const comboGroupId = `combo_${uid()}`
-
             const mergeSeg = (seg) => {
                 const merged = { ...skill, ...(seg || {}) }
                 delete merged.segments
@@ -3062,14 +3067,10 @@ export const useTimelineStore = defineStore('timeline', () => {
                 const action = createActionFromSkill(segSkill, cursor)
                 const delay = getDelayAfter(rawSegments[i], i, segmentSkills.length)
 
-                action.comboGroupId = comboGroupId
-                action.comboSegmentIndex = i + 1
-                action.comboSegmentTotal = segmentSkills.length
-                action.comboLinked = true
-                action.comboFollowupDelay = delay
-                action.comboParentSkillId = skill.id || null
-                action.comboPrevId = null
-                action.comboNextId = null
+                action.segmentIndex = i + 1
+                action.segmentTotal = segmentSkills.length
+                action.followupDelay = delay
+                action.parentSkillId = skill.id || null
 
                 inserted.push(action)
 
@@ -3077,20 +3078,14 @@ export const useTimelineStore = defineStore('timeline', () => {
                 cursor = snapTimeToFrame(end + delay)
             }
 
-            for (let i = 0; i < inserted.length; i++) {
-                inserted[i].comboPrevId = i > 0 ? inserted[i - 1].instanceId : null
-                inserted[i].comboNextId = i < inserted.length - 1 ? inserted[i + 1].instanceId : null
-            }
-
             track.actions.push(...inserted)
             track.actions.sort((a, b) => a.startTime - b.startTime)
 
             const insertedIds = inserted.map(a => a.instanceId)
-            inserted.forEach((action) => {
-                if (!isComboLikeAction(action) && !isUltimateLikeAction(action)) return
-                const amount = isComboLikeAction(action) ? 0.5 : (Number(action.animationTime) || 1.5)
-                pushSubsequentActions(action.startTime, amount, insertedIds)
-            })
+            if (isComboLikeAction(skill) || isUltimateLikeAction(skill)) {
+                const amount = isComboLikeAction(skill) ? 0.5 : (Number(skill.animationTime) || 1.5)
+                pushSubsequentActions(startTime, amount, insertedIds)
+            }
 
             normalizeComboLinksInTracks()
             commitState()
@@ -3862,6 +3857,39 @@ export const useTimelineStore = defineStore('timeline', () => {
         return Number.isFinite(value) ? value : null
     }
 
+    function getResolvedActionVisualEndTime(resolvedAction) {
+        if (!resolvedAction) return null
+
+        const simEnd = simulation.value?.actionEndTimes?.get(resolvedAction.id)
+        const normalizedSimEnd = Number(simEnd)
+        if (Number.isFinite(normalizedSimEnd)) return normalizedSimEnd
+
+        const start = Number(resolvedAction.realStartTime) || 0
+        const duration = Number(resolvedAction.realDuration) || 0
+        return start + duration
+    }
+
+    function getActionVisualEndTime(actionId) {
+        if (!actionId) return null
+        const resolvedAction = compiledTimeline.value?.actionMap?.get(actionId)
+        if (resolvedAction) return getResolvedActionVisualEndTime(resolvedAction)
+
+        const actionWrap = getActionById(actionId)
+        const action = actionWrap?.node
+        if (!action) return null
+        return (Number(action.startTime) || 0) + (Number(action.duration) || 0)
+    }
+
+    function getActionVisualDuration(actionId) {
+        if (!actionId) return null
+        const resolvedAction = compiledTimeline.value?.actionMap?.get(actionId)
+        const visualEnd = getActionVisualEndTime(actionId)
+        if (visualEnd == null) return null
+
+        const start = Number(resolvedAction?.realStartTime ?? getActionById(actionId)?.node?.startTime) || 0
+        return Math.max(0, visualEnd - start)
+    }
+
     const nodeRects = computed(() => {
         return newNodeRects.value;
     });
@@ -3875,14 +3903,14 @@ export const useTimelineStore = defineStore('timeline', () => {
             getId: (action) => action.id,
             getTrackIndex: (action) => action.trackIndex,
             getStart: (action) => action.realStartTime,
-            getEnd: (action) => (Number(action.realStartTime) || 0) + (Number(action.realDuration) || 0),
+            getEnd: (action) => getResolvedActionVisualEndTime(action),
         })
 
         const actions = compiledTimeline.value?.actions || []
 
         actions.forEach(resAction => {
             const left = timeToPx(resAction.realStartTime)
-            const visibleEnd = visibleEndMap.get(resAction.id) ?? ((Number(resAction.realStartTime) || 0) + (Number(resAction.realDuration) || 0))
+            const visibleEnd = visibleEndMap.get(resAction.id) ?? getResolvedActionVisualEndTime(resAction)
             const width = timeToPx(visibleEnd) - timeToPx(resAction.realStartTime)
             const finalWidth = width < 2 ? 2 : width
             const trackRect = trackLaneRects.value[resAction.trackIndex]
@@ -4852,7 +4880,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,
         teamTracksInfo, activeSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
         fetchGameData, exportProject, importProject, exportShareString, importShareString, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction,
-        addSkillToTrack, setDraggingSkill, setTimelineShift, setScrollTop, setTimelineRect, setTrackLaneRect, setNodeRect, calculateGaugeData, getTrackGaugeMax, updateTrackInitialGauge, updateTrackMaxGauge, updateTrackOriginiumArtsPower, updateTrackLinkCdReduction, updateTrackWeapon,
+        addSkillToTrack, setDraggingSkill, setTimelineShift, setScrollTop, resetTimelineViewport, setTimelineRect, setTrackLaneRect, setNodeRect, calculateGaugeData, getTrackGaugeMax, updateTrackInitialGauge, updateTrackMaxGauge, updateTrackOriginiumArtsPower, updateTrackLinkCdReduction, updateTrackWeapon,
         updateTrackWeaponTier, syncAllWeaponModifiers, getModifierLabel,
         removeConnection, updateConnection, updateConnectionPort, getColor, toggleCursorGuide, toggleFullUltEnergy, toggleOperatorEffectsVisible, isOperatorEffectsVisible, toggleBoxSelectMode, setCursorPosition, toggleSnapStep, nudgeSelection,
         setMultiSelection, clearSelection, copySelection, pasteSelection, removeCurrentSelection, undo, redo, commitState,
@@ -4874,7 +4902,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         misc,
         prepDuration, prepExpanded, viewDuration, prepZoneWidthPx, totalTimelineWidthPx,
         timeToPx, pxToTime, formatAxisTimeLabel, togglePrepExpanded, setPrepDuration,
-        getActionCoverStartTime,
+        getActionCoverStartTime, getActionVisualEndTime, getActionVisualDuration,
         compiledTimeline, spSeries, staggerSeries,
         trackBuffLayouts,
         enemyEffectLayout,

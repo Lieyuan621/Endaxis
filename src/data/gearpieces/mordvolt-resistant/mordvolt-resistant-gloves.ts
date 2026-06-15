@@ -26,7 +26,16 @@ const sheet: GearPieceSheet = {
       },
     ],
   },
-  skill3: {},
+  skill3: {
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'heal' },
+        target: 'self',
+        value: 8.8,
+      },
+    ],
+  },
   setSlug: 'mordvolt-resistant',
 };
 

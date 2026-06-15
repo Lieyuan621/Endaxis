@@ -26,7 +26,16 @@ const sheet: GearPieceSheet = {
       },
     ],
   },
-  skill3: {},
+  skill3: {
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'heal' },
+        target: 'self',
+        value: [10.3, 11.4, 12.4, 13.5],
+      },
+    ],
+  },
   setSlug: 'lynx',
 };
 

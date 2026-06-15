@@ -4,6 +4,11 @@
     "passive": "Wearer's Combo Skill Cooldown Reduction +15%.",
     "conditional": "After the wearer's skill recovers SP, the team gains DMG +16% for 15s. This effect cannot stack."
   },
+  "grizzled-edge": {
+    "setName": "Grizzled Edge",
+    "passive": "Wearer's ATK +8%.",
+    "conditional": "When the wearer applies Crush or Breach, the wearer gains Physical DMG Dealt +[6% x Max number of Vulnerability stacks consumed from one enemy] for 20s. If the target already has Physical Susceptibility, is Staggered, or has attached Originium Crystals, increase the aforementioned buff to 2 times. This buff cannot stack."
+  },
   "type-50-yinglung": {
     "setName": "Type 50 Yinglung",
     "passive": "Wearer's ATK +15%.",

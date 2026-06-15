@@ -628,7 +628,8 @@
     },
     "subSkills": {
       "enhancedBattleSkill": "强化战技",
-      "enhancedBasicAttack": "强化普攻"
+      "enhancedBasicAttack": "强化重击",
+      "laevatain-basic-attack-during-ultimate": "强化重击"
     }
   },
   "yvonne": {

@@ -9,7 +9,7 @@ import type {
   SystemConstants,
   Action,
 } from "./types";
-import { createDefaultStats } from "@/utils/coreStats";
+import { createDefaultStats } from "@/simulation/defaultActorStats";
 import type { ActorSnapshot } from "@/simulation/state/types.ts";
 import { isUltimateLikeAction } from "./types";
 
@@ -132,8 +132,8 @@ export function compileScenario(
 
   const mergedSystemConstants = {
     ...DEFAULT_SYSTEM_CONSTANTS,
-    ...systemConstants,
     ...scenario.systemConstants,
+    ...systemConstants,
   };
 
   return {
