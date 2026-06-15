@@ -1,7 +1,4 @@
 {
-  "app": {
-    "name": "Endaxis"
-  },
   "common": {
     "cancel": "Cancel",
     "close": "Close",
@@ -44,9 +41,7 @@
   "battleLog": {
     "title": "Battle Log",
     "refresh": "Refresh",
-    "copy": "Copy",
     "searchPlaceholder": "Search logs...",
-    "typeFilter": "Types",
     "limit": "Limit",
     "dirtyHint": "Updated",
     "types": {
@@ -212,9 +207,6 @@
         "duration": "Duration"
       }
     },
-    "attack": {
-      "enhancedAttack": "Enhanced Attack"
-    },
     "loading": "Loading resources...",
     "reset": {
       "confirm": "Are you sure you want to clear all current progress? This will clear all plan data.",
@@ -368,8 +360,6 @@
   },
   "actionLibrary": {
     "buttons": {
-      "editInstance": "Edit Instance",
-      "editWeapon": "Edit Weapon",
       "editItem": "Edit Item"
     },
     "fallback": {
@@ -382,38 +372,12 @@
       "weaponStats": "Weapon Stats",
       "equipmentRefine": "Equipment Artificing"
     },
-    "labels": {
-      "initialCharge": "Initial Charge",
-      "maxCharge": "Max Charge",
-      "armoryInstance": "Armory Instance",
-      "derivedStatus": "Derived Status",
-      "chargeEfficiency": "Charge Efficiency",
-      "linkCdReduction": "Combo CD Reduction",
-      "originiumArtsPower": "Arts Intensity",
-      "commonSlot1": "Attribute 1",
-      "commonSlot2": "Attribute 2",
-      "exclusiveBuff": "Exclusive Buff",
-      "armor": "Armor",
-      "gloves": "Gloves",
-      "accessory1": "Accessory 1",
-      "accessory2": "Accessory 2"
-    },
     "section": {
-      "weaponBuffLibrary": "Weapon Buff Library",
-      "setBuffLibrary": "Set Buff Library",
       "operatorSkillLibrary": "Operator Skill Library"
     },
     "hints": {
       "noRefineNon70": "No Artificing below Lv70",
-      "instanceReady": "READY",
-      "instancePending": "PENDING",
-      "awaitingDerivedStatus": "Waiting for operator instance hydration",
-      "dragWeaponBuff": "Drag weapon buff to track. Drop position = start time",
-      "dragSetBuff": "Drag buff to track. Drop position = start time",
       "clickOrDrag": "Click to edit base values / Drag to arrange timeline"
-    },
-    "suffix": {
-      "equipment": "Equipment"
     },
     "tabs": {
       "operator": "OP",
@@ -430,7 +394,6 @@
       "skills": "Skills",
       "talents": "Talents",
       "trust": "Trust",
-      "group": "Group {index}",
       "baseAtk": "Base ATK",
       "defense": "Defense",
       "artificing": "Artificing",
@@ -438,20 +401,7 @@
       "susceptibility": "Susceptibility"
     },
     "operator": {
-      "promote": "Promote",
-      "promoted": "Promoted",
-      "fullyPromoted": "Fully Promoted",
-      "promotionLocked": "Promotion Locked",
       "talent": "Talent {index}"
-    },
-    "weapon": {
-      "tune": "Tune",
-      "tuned": "Tuned",
-      "fullyTuned": "Fully Tuned",
-      "tuningLocked": "Tuning Locked",
-      "skill1": "Skill 1",
-      "skill2": "Skill 2",
-      "skill3": "Skill 3"
     }
   },
   "skillType": {
@@ -472,10 +422,6 @@
     "champion": "Champion",
     "head": "Head",
     "boss": "Boss"
-  },
-  "weapon": {
-    "skill": "Weapon Skill",
-    "effect": "Weapon Effect"
   },
   "contextMenu": {
     "lockPosition": "Lock Position",
@@ -874,7 +820,6 @@
     }
   },
   "actionItem": {
-    "tickTooltip": "Time: {time}\nStagger: {stagger}\nSP {spKind}: {sp}",
     "damageHitTooltip": "Damage: {damage}",
     "lockedTitle": "Locked",
     "disabledTitle": "Disabled"

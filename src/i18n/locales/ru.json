@@ -1,7 +1,4 @@
 {
-  "app": {
-    "name": "Endaxis"
-  },
   "common": {
     "cancel": "Отмена",
     "close": "Закрыть",
@@ -44,9 +41,7 @@
   "battleLog": {
     "title": "Журнал боя",
     "refresh": "Обновить",
-    "copy": "Копировать",
     "searchPlaceholder": "Поиск по журналу...",
-    "typeFilter": "Типы",
     "limit": "Лимит",
     "dirtyHint": "Обновлено",
     "types": {
@@ -212,9 +207,6 @@
         "duration": "Длительность"
       }
     },
-    "attack": {
-      "enhancedAttack": "Усиленная атака"
-    },
     "loading": "Загрузка ресурсов...",
     "reset": {
       "confirm": "Вы уверены, что хотите очистить весь текущий прогресс? Это удалит все данные проекта.",
@@ -368,8 +360,6 @@
   },
   "actionLibrary": {
     "buttons": {
-      "editInstance": "Изм. экземпляр",
-      "editWeapon": "Изм. оружие",
       "editItem": "Изм. предмет"
     },
     "fallback": {
@@ -382,38 +372,12 @@
       "weaponStats": "Показатели оружия",
       "equipmentRefine": "Доработка"
     },
-    "labels": {
-      "initialCharge": "Начальные ОН",
-      "maxCharge": "Макс. ОН",
-      "armoryInstance": "Привязка экземпляра",
-      "derivedStatus": "Производные параметры",
-      "chargeEfficiency": "Восстановление суперэнергии",
-      "linkCdReduction": "Откат комбонавыка",
-      "originiumArtsPower": "Сила искусств",
-      "commonSlot1": "Атрибут 1",
-      "commonSlot2": "Атрибут 2",
-      "exclusiveBuff": "Эксклюзивный бафф",
-      "armor": "Броня",
-      "gloves": "Перчатки",
-      "accessory1": "Амуниция 1",
-      "accessory2": "Амуниция 2"
-    },
     "section": {
-      "weaponBuffLibrary": "Баффы оружия",
-      "setBuffLibrary": "Баффы снаряжения",
       "operatorSkillLibrary": "Навыки оператора"
     },
     "hints": {
       "noRefineNon70": "Без доработки до 70 ур.",
-      "instanceReady": "ГОТОВО",
-      "instancePending": "ОЖИДАНИЕ",
-      "awaitingDerivedStatus": "Ожидание привязки экземпляра и расчета параметров",
-      "dragWeaponBuff": "Перетащите бафф оружия на дорожку. Позиция = время начала",
-      "dragSetBuff": "Перетащите бафф сета на дорожку. Позиция = время начала",
       "clickOrDrag": "Нажмите для ред. знач. / Перетащите для расп. на таймлайне"
-    },
-    "suffix": {
-      "equipment": "Снаряжение"
     },
     "tabs": {
       "operator": "ОП",
@@ -430,7 +394,6 @@
       "skills": "Навыки",
       "talents": "Таланты",
       "trust": "Доверие",
-      "group": "Группа {index}",
       "baseAtk": "Баз. ATK",
       "defense": "Защита",
       "artificing": "Доработка",
@@ -438,20 +401,7 @@
       "susceptibility": "Уязвимость"
     },
     "operator": {
-      "promote": "Повысить",
-      "promoted": "Повышен",
-      "fullyPromoted": "Макс. повышение",
-      "promotionLocked": "Повышение недоступно",
       "talent": "Талант {index}"
-    },
-    "weapon": {
-      "tune": "Настроить",
-      "tuned": "Настроено",
-      "fullyTuned": "Макс. настройка",
-      "tuningLocked": "Настройка недоступна",
-      "skill1": "Навык 1",
-      "skill2": "Навык 2",
-      "skill3": "Навык 3"
     }
   },
   "skillType": {
@@ -472,10 +422,6 @@
     "champion": "Чемпион",
     "head": "Главарь",
     "boss": "Босс"
-  },
-  "weapon": {
-    "skill": "Навык оружия",
-    "effect": "Эффект оружия"
   },
   "contextMenu": {
     "lockPosition": "Заблокировать",
@@ -761,7 +707,6 @@
     }
   },
   "actionItem": {
-    "tickTooltip": "Время: {time}\nОшеломление: {stagger}\nОН {spKind}: {sp}",
     "damageHitTooltip": "Урон: {damage}",
     "lockedTitle": "Заблокировано",
     "disabledTitle": "Отключено"

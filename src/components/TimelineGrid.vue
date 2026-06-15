@@ -4144,7 +4144,7 @@ body.capture-mode .davinci-range {
   width: 1px;
   background: rgba(255, 215, 0, 0.8);
   pointer-events: none;
-  z-index: 5;
+  z-index: 3000;
   box-shadow: 0 0 6px #ffd700;
 }
 

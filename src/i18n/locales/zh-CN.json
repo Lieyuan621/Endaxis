@@ -1,7 +1,4 @@
 {
-  "app": {
-    "name": "Endaxis"
-  },
   "common": {
     "cancel": "取消",
     "close": "关闭",
@@ -44,9 +41,7 @@
   "battleLog": {
     "title": "战斗日志",
     "refresh": "刷新",
-    "copy": "复制",
     "searchPlaceholder": "搜索日志...",
-    "typeFilter": "类型",
     "limit": "条数",
     "dirtyHint": "有更新",
     "types": {
@@ -212,9 +207,6 @@
         "duration": "持续时间"
       }
     },
-    "attack": {
-      "enhancedAttack": "强化重击"
-    },
     "loading": "正在加载资源...",
     "reset": {
       "confirm": "确定要清空当前所有进度吗？这将清空所有方案数据。",
@@ -368,8 +360,6 @@
   },
   "actionLibrary": {
     "buttons": {
-      "editInstance": "编辑实例",
-      "editWeapon": "编辑武器",
       "editItem": "编辑装备"
     },
     "fallback": {
@@ -382,38 +372,12 @@
       "weaponStats": "武器数值",
       "equipmentRefine": "装备精锻"
     },
-    "labels": {
-      "initialCharge": "初始充能",
-      "maxCharge": "充能上限",
-      "armoryInstance": "实例绑定",
-      "derivedStatus": "推导属性",
-      "chargeEfficiency": "充能效率",
-      "linkCdReduction": "连携技冷却缩减",
-      "originiumArtsPower": "源石技艺强度",
-      "commonSlot1": "通用词条 1",
-      "commonSlot2": "通用词条 2",
-      "exclusiveBuff": "专属 BUFF",
-      "armor": "护甲",
-      "gloves": "护手",
-      "accessory1": "配件 1",
-      "accessory2": "配件 2"
-    },
     "section": {
-      "weaponBuffLibrary": "武器 BUFF 库",
-      "setBuffLibrary": "套装 BUFF 库",
       "operatorSkillLibrary": "干员技能库"
     },
     "hints": {
       "noRefineNon70": "非 Lv70 无精锻",
-      "instanceReady": "已建立",
-      "instancePending": "待生成",
-      "awaitingDerivedStatus": "等待实例完成绑定并计算属性",
-      "dragWeaponBuff": "拖拽武器 BUFF 到轨道，拖拽位置即为开始时间",
-      "dragSetBuff": "拖拽 BUFF 到轨道，拖拽位置即为开始时间",
       "clickOrDrag": "点击编辑基础数值 / 拖拽排轴"
-    },
-    "suffix": {
-      "equipment": "装备"
     },
     "tabs": {
       "operator": "干员",
@@ -430,7 +394,6 @@
       "skills": "技能",
       "talents": "天赋",
       "trust": "信赖",
-      "group": "组 {index}",
       "baseAtk": "基础攻击",
       "defense": "防御",
       "artificing": "精锻",
@@ -438,20 +401,7 @@
       "susceptibility": "易伤"
     },
     "operator": {
-      "promote": "晋升",
-      "promoted": "已晋升",
-      "fullyPromoted": "满晋升",
-      "promotionLocked": "当前不可晋升",
       "talent": "天赋 {index}"
-    },
-    "weapon": {
-      "tune": "调谐",
-      "tuned": "已调谐",
-      "fullyTuned": "满调谐",
-      "tuningLocked": "当前不可调谐",
-      "skill1": "词条 1",
-      "skill2": "词条 2",
-      "skill3": "词条 3"
     }
   },
   "skillType": {
@@ -472,10 +422,6 @@
     "champion": "精英",
     "head": "头目",
     "boss": "领袖"
-  },
-  "weapon": {
-    "skill": "武器技能",
-    "effect": "武器效果"
   },
   "contextMenu": {
     "lockPosition": "锁定位置",
@@ -874,7 +820,6 @@
     }
   },
   "actionItem": {
-    "tickTooltip": "时间: {time}\n失衡值: {stagger}\n技力{spKind}: {sp}",
     "damageHitTooltip": "伤害: {damage}",
     "lockedTitle": "位置已锁定",
     "disabledTitle": "已禁用：不参与计算"
