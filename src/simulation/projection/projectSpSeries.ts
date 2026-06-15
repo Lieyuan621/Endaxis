@@ -6,7 +6,12 @@ export function projectSpSeries(
   initialSnapshot: GameSnapshot,
   timelineDuration = 120
 ) {
-  const spSeries: { time: number; sp: number; actionId?: string }[] = [];
+  const spSeries: {
+    time: number;
+    sp: number;
+    actionId?: string;
+    change?: number;
+  }[] = [];
 
   let lastTime = 0;
   let lastValue = initialSnapshot.team.sp;
@@ -56,6 +61,7 @@ export function projectSpSeries(
         time: now,
         sp: lastValue,
         actionId: entry.payload.sourceId,
+        change: entry.payload.change,
       });
     } else if (entry.type === "SP_REGEN_PAUSE") {
       lastValue = arrivalValue;

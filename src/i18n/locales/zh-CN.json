@@ -700,7 +700,7 @@
       "spPerSecond": "回复 / 秒"
     },
     "sp": {
-      "insufficient": "不足"
+      "insufficient": "技力不足"
     },
     "enemy": {
       "custom": "自定义敌人",

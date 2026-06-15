@@ -918,7 +918,7 @@ const SP_TOTAL_RANGE = computed(() => 300 + SP_NEGATIVE_BUFFER)
 const SP_ZERO_Y = computed(() => {
   return SP_BODY_HEIGHT.value * (300 / SP_TOTAL_RANGE.value)
 })
-const SP_WARNING_TAG_TOP = computed(() => `${Math.min(Math.max(6, SP_ZERO_Y.value + 4), Math.max(6, SP_BODY_HEIGHT.value - 18))}px`)
+const SP_WARNING_TAG_HEIGHT = 18
 
 // 鎶€鍔涚粯鍥惧潗鏍囪绠?
 const scaleY_SP = computed(() => {
@@ -945,10 +945,36 @@ const spArea = computed(() => {
   return `0,${SP_ZERO_Y.value} ${points.join(' ')} ${lastX},${SP_ZERO_Y.value}`
 })
 
-const spWarningZones = computed(() => spData.value.filter(p => p.sp < 0).map(p => ({
-  left: store.timeToPx(p.time),
-  sp: p.sp
-})))
+const spWarningZones = computed(() => {
+  const points = spData.value
+  return points.flatMap((point, index) => {
+    // 只有技力降低到0以下的点会警告
+    if (!(point.sp < 0 && point.change < 0)) return []
+    // 技力不足警告放在扣技力前的拐点高度，避免盖住折线图
+    const referenceSp = index === 0 ? point.sp : points[index - 1].sp
+    return [{
+      left: store.timeToPx(point.time),
+      top: getSpWarningTagTop(referenceSp),
+    }]
+  })
+})
+
+function getSpPointY(sp) {
+  return clamp(SP_ZERO_Y.value - (sp * scaleY_SP.value), 0, SP_BODY_HEIGHT.value)
+}
+
+function getSpWarningTagTop(sp) {
+  const curveY = getSpPointY(sp);
+  const spBodyHeight = SP_BODY_HEIGHT.value
+  // 技力不足警告到折线的间距
+  const gap = clamp(Math.round(spBodyHeight * 0.08), 4, 10)
+  // 技力不足警告到顶部和底部的最小间距
+  const topPadding = clamp(Math.round(spBodyHeight * 0.07), 4, 10)
+  const bottomPadding = clamp(Math.round(spBodyHeight * 0.09), 6, 12)
+  const preferredTop = curveY - SP_WARNING_TAG_HEIGHT - gap
+  const maxTop = Math.max(topPadding, spBodyHeight - SP_WARNING_TAG_HEIGHT - bottomPadding)
+  return clamp(preferredTop, topPadding, maxTop)
+}
 
 const transformStyle = computed(() => {
   return {
@@ -1321,7 +1347,7 @@ const transformStyle = computed(() => {
                   v-for="(warning, index) in spWarningZones"
                   :key="`warning-${index}`"
                   class="warning-tag"
-                  :style="{ left: warning.left + 'px', top: SP_WARNING_TAG_TOP, color: COLOR_SP_WARN }"
+                  :style="{ left: warning.left + 'px', top: warning.top + 'px', color: COLOR_SP_WARN }"
                 >
                   <span class="warn-icon">
                     <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -1867,16 +1893,21 @@ const transformStyle = computed(() => {
 
 .warning-tag {
   position: absolute;
+  min-width: 58px;
+  height: 18px;
   font-size: 10px;
   background: rgba(0, 0, 0, 0.8);
   padding: 2px 6px;
+  box-sizing: border-box;
   border-radius: 4px;
   transform: translateX(-50%);
   pointer-events: none;
   z-index: 5;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
+  line-height: 1;
   border: 1px solid rgba(255, 77, 79, 0.3);
   box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   white-space: nowrap;

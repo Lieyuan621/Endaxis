@@ -587,7 +587,7 @@
       "spPerSecond": "ОН/сек."
     },
     "sp": {
-      "insufficient": "недостаточно"
+      "insufficient": "Недостаточно ОН"
     },
     "enemy": {
       "custom": "Настраиваемый враг",

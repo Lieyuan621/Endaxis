@@ -700,7 +700,7 @@
       "spPerSecond": "SP/sec."
     },
     "sp": {
-      "insufficient": "不足"
+      "insufficient": "Insufficient SP"
     },
     "enemy": {
       "custom": "Custom Enemy",
