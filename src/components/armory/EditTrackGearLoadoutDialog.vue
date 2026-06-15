@@ -97,7 +97,7 @@ function formatStatLabel(effect) {
   if (stat.modifier === 'critRate') return t('stats.crit_rate')
   if (stat.modifier === 'critDmg') return t('stats.crit_dmg')
   if (stat.modifier === 'artsIntensity') return t('actionLibrary.labels.originiumArtsPower')
-  if (stat.modifier === 'ultimateGainEfficiency') return t('actionLibrary.labels.chargeEfficiency')
+  if (stat.modifier === 'ultimateGainEfficiency') return t('timelineGrid.equipmentDialog.affixFilters.ult_charge_eff')
   if (stat.modifier === 'heal') return t('stats.healing_effect')
   if (stat.modifier === 'protection') return t('stats.final_dmg_reduction')
   if (stat.modifier === 'susceptibility') return tr('armory.common.susceptibility', 'Susceptibility')

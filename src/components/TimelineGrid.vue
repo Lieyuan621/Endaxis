@@ -349,6 +349,7 @@ const equipmentTargetIndex = ref(null)
 const equipmentSlotKey = ref('armor') // 'armor' | 'gloves' | 'accessory1' | 'accessory2'
 const equipmentSearchQuery = ref('')
 const equipmentCategoryFilter = ref('ALL')
+const equipmentAffixFilter = ref('ALL')
 const equipmentLevelFilter = ref('ALL')
 const statDetailTrackIndex = ref(null)
 
@@ -381,6 +382,72 @@ const EQUIPMENT_LEVEL_COLORS = {
   20: '#95de64',
   10: '#888888'
 }
+const EQUIPMENT_AFFIX_FILTER_GROUPS = [
+  {
+    key: 'elementDamage',
+    items: [
+      { value: 'arts_dmg', accent: '#ef4444' },
+      { value: 'cryo_electric_dmg_bonus', accent: '#ef4444' },
+      { value: 'heat_nature_dmg_bonus', accent: '#ef4444' },
+      { value: 'physical_dmg', accent: '#ef4444' },
+    ],
+  },
+  {
+    key: 'skillDamage',
+    items: [
+      { value: 'all_skill_dmg_bonus', accent: '#ef4444' },
+      { value: 'attack_dmg_bonus', accent: '#fde68a' },
+      { value: 'skill_dmg_bonus', accent: '#93c5fd' },
+      { value: 'link_dmg_bonus', accent: '#facc15' },
+      { value: 'ultimate_dmg_bonus', accent: '#38bdf8' },
+    ],
+  },
+  {
+    key: 'brokenDamage',
+    items: [
+      { value: 'broken_dmg_bonus', accent: '#fb7185' },
+    ],
+  },
+  {
+    key: 'ability',
+    items: [
+      { value: 'primary_ability', accent: '#a3e635' },
+      { value: 'secondary_ability', accent: '#84cc16' },
+    ],
+  },
+  {
+    key: 'attack',
+    items: [
+      { value: 'attack', accent: '#991b1b' },
+    ],
+  },
+  {
+    key: 'crit',
+    items: [
+      { value: 'crit_rate', accent: '#f43f5e' },
+    ],
+  },
+  {
+    key: 'artsPower',
+    items: [
+      { value: 'originium_arts_power', accent: '#a78bfa' },
+    ],
+  },
+  {
+    key: 'ultimateCharge',
+    items: [
+      { value: 'ult_charge_eff', accent: '#38bdf8' },
+    ],
+  },
+  {
+    key: 'survival',
+    items: [
+      { value: 'hp', accent: '#4ade80' },
+      { value: 'final_dmg_reduction', accent: '#4ade80' },
+      { value: 'healing_effect', accent: '#4ade80' },
+    ],
+  },
+]
 const EQUIPMENT_REFINE_TIERS = [0, 1, 2, 3]
 
 const EQUIPMENT_PRIMARY_STAT_ICON_MAP = {
@@ -548,9 +615,9 @@ function getEquipmentDmgBonusModifierIds(stat) {
       }[skillTypes[0]] || 'all_skill_dmg_bonus']
     }
     if (
-      skillTypes.includes('battleSkill')
-      && skillTypes.includes('comboSkill')
-      && skillTypes.includes('ultimate')
+        skillTypes.includes('battleSkill')
+        && skillTypes.includes('comboSkill')
+        && skillTypes.includes('ultimate')
     ) {
       return ['all_skill_dmg_bonus']
     }
@@ -590,7 +657,10 @@ function trOrFallback(key, fallback) {
 }
 
 function getEquipmentModifierLabel(modifierId) {
-  return trOrFallback(`stats.${modifierId}`, modifierId)
+  return trOrFallback(
+      `timelineGrid.equipmentDialog.affixFilters.${modifierId}`,
+      trOrFallback(`stats.${modifierId}`, modifierId)
+  )
 }
 
 function getEquipmentEffectLabel(stat, modifierId) {
@@ -604,27 +674,22 @@ function getEquipmentEffectLabel(stat, modifierId) {
     if (attr) return getGameAttributeName(attr, locale.value)
   }
   if (stat.modifier === 'dmgBonus') {
-    const elements = normalizeEquipmentStatArray(stat.elements)
-    const skillTypes = normalizeEquipmentStatArray(stat.skillTypes)
-    if (isEquipmentArtsDmgElements(elements)) {
-      return trOrFallback('game.stat.dmgBonus:arts', getEquipmentModifierLabel('arts_dmg'))
-    }
-    const pairId = getEquipmentElementPairId(elements)
-    if (pairId) {
-      const names = elements.map(element => getGameElementName(element, locale.value)).filter(Boolean)
-      return `${names.join(' / ')} ${trOrFallback('game.stat.dmgBonus', '伤害加成')}`
-    }
-    if (elements.length === 1) return trOrFallback(`game.stat.dmgBonus:${elements[0]}`, getEquipmentModifierLabel(modifierId))
-    if (skillTypes.length === 1) return trOrFallback(`game.stat.dmgBonus:${skillTypes[0]}`, getEquipmentModifierLabel(modifierId))
-    return trOrFallback('game.stat.dmgBonus', getEquipmentModifierLabel(modifierId))
+    return getEquipmentModifierLabel(modifierId)
   }
+
   if (stat.modifier === 'susceptibility') {
     const elements = normalizeEquipmentStatArray(stat.elements)
-    if (elements.length === 1) return trOrFallback(`game.stat.susceptibility:${elements[0]}`, trOrFallback('game.stat.susceptibility', '脆弱'))
+    if (elements.length === 1) {
+      return trOrFallback(
+          `game.stat.susceptibility:${elements[0]}`,
+          trOrFallback('game.stat.susceptibility', '脆弱')
+      )
+    }
     return trOrFallback('game.stat.susceptibility', '脆弱')
   }
-  if (stat.modifier === 'artsIntensity') return trOrFallback('actionLibrary.labels.originiumArtsPower', getEquipmentModifierLabel(modifierId))
-  if (stat.modifier === 'ultimateGainEfficiency') return trOrFallback('actionLibrary.labels.chargeEfficiency', getEquipmentModifierLabel(modifierId))
+
+  if (stat.modifier === 'artsIntensity') return getEquipmentModifierLabel('originium_arts_power')
+  if (stat.modifier === 'ultimateGainEfficiency') return getEquipmentModifierLabel('ult_charge_eff')
   if (stat.modifier === 'heal') return getEquipmentModifierLabel('healing_effect')
   if (stat.modifier === 'protection') return getEquipmentModifierLabel('final_dmg_reduction')
   return getEquipmentModifierLabel(modifierId)
@@ -784,6 +849,7 @@ function openEquipmentSelector(index, slotKey) {
   equipmentSlotKey.value = slotKey
   equipmentSearchQuery.value = ''
   equipmentCategoryFilter.value = 'ALL'
+  equipmentAffixFilter.value = 'ALL'
   equipmentLevelFilter.value = 'ALL'
   isEquipmentSelectorVisible.value = true
 }
@@ -1022,6 +1088,10 @@ const equipmentCandidates = computed(() => {
     }
   }
 
+  if (equipmentAffixFilter.value !== 'ALL') {
+    list = list.filter(e => equipmentMatchesAffixFilter(e, equipmentAffixFilter.value))
+  }
+
   if (equipmentLevelFilter.value !== 'ALL') {
     const targetLv = Number(equipmentLevelFilter.value)
     list = list.filter(e => Number(e.level) === targetLv)
@@ -1180,6 +1250,35 @@ const operationMarkers = computed(() => {
 // ===================================================================================
 // 辅助计算属性 & 事件处理
 // ===================================================================================
+
+const equipmentAffixFilterGroups = computed(() => {
+  locale.value
+  return EQUIPMENT_AFFIX_FILTER_GROUPS.map(group => ({
+    ...group,
+    items: group.items.map(item => ({
+      ...item,
+      label: getEquipmentAffixFilterLabel(item.value),
+    })),
+  }))
+})
+
+function getEquipmentAffixFilterLabel(filterId) {
+  return trOrFallback(
+      `timelineGrid.equipmentDialog.affixFilters.${filterId}`,
+      getEquipmentModifierLabel(filterId)
+  )
+}
+
+function getEquipmentAffixModifierIds(eq) {
+  return getEquipmentAffixRows(eq)
+      .map(row => row.modifierId)
+      .filter(Boolean)
+}
+
+function equipmentMatchesAffixFilter(eq, filterId) {
+  if (!filterId || filterId === 'ALL') return true
+  return getEquipmentAffixModifierIds(eq).includes(filterId)
+}
 
 const totalWidthComputed = computed(() => {
   return store.totalTimelineWidthPx
@@ -2888,13 +2987,47 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="element-filters">
-          <button class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentCategoryFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentCategoryFilter = 'ALL'">{{ t('timelineGrid.equipmentDialog.allCategories') }}</button>
-          <button class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentCategoryFilter === '__UNCAT__' }" :style="{ '--ea-btn-accent': '#888' }" @click="equipmentCategoryFilter = '__UNCAT__'">{{ t('timelineGrid.equipmentDialog.uncategorized') }}</button>
+          <button class="ea-btn ea-btn--glass-cut equipment-filter-chip" :class="{ 'is-active': equipmentCategoryFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentCategoryFilter = 'ALL'">{{ t('timelineGrid.equipmentDialog.allCategories') }}</button>
+          <button class="ea-btn ea-btn--glass-cut equipment-filter-chip" :class="{ 'is-active': equipmentCategoryFilter === '__UNCAT__' }" :style="{ '--ea-btn-accent': '#888' }" @click="equipmentCategoryFilter = '__UNCAT__'">{{ t('timelineGrid.equipmentDialog.uncategorized') }}</button>
           <button v-for="cat in store.equipmentCategories" :key="`eqcat_${cat}`" class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentCategoryFilter === cat }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentCategoryFilter = cat">{{ store.getSetBonusDisplayName ? store.getSetBonusDisplayName(cat) : cat }}</button>
         </div>
+        <div class="equipment-affix-filter-section">
+          <div class="equipment-affix-filter-strip">
+            <button
+                class="ea-btn ea-btn--glass-cut equipment-filter-chip"
+                :class="{ 'is-active': equipmentAffixFilter === 'ALL' }"
+                :style="{ '--ea-btn-accent': '#2dd4bf' }"
+                @click="equipmentAffixFilter = 'ALL'"
+            >
+              {{ t('timelineGrid.equipmentDialog.allAffixes') }}
+            </button>
+
+            <template
+                v-for="(group, groupIndex) in equipmentAffixFilterGroups"
+                :key="`eq_affix_group_${group.key}`"
+            >
+      <span
+          v-if="groupIndex > 0"
+          class="equipment-affix-filter-divider"
+          aria-hidden="true"
+      />
+
+              <button
+                  v-for="option in group.items"
+                  :key="`eq_affix_filter_${option.value}`"
+                  class="ea-btn ea-btn--glass-cut equipment-filter-chip"
+                  :class="{ 'is-active': equipmentAffixFilter === option.value }"
+                  :style="{ '--ea-btn-accent': option.accent }"
+                  @click="equipmentAffixFilter = option.value"
+              >
+                {{ option.label }}
+              </button>
+            </template>
+          </div>
+        </div>
         <div class="element-filters">
-          <button class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentLevelFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentLevelFilter = 'ALL'">{{ t('timelineGrid.equipmentDialog.allLevels') }}</button>
-          <button v-for="lv in EQUIPMENT_LEVELS" :key="`eqlv_${lv}`" class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentLevelFilter === lv }" :style="{ '--ea-btn-accent': getEquipmentLevelColor(lv) }" @click="equipmentLevelFilter = lv">Lv{{ lv }}</button>
+          <button class="ea-btn ea-btn--glass-cut equipment-filter-chip" :class="{ 'is-active': equipmentLevelFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentLevelFilter = 'ALL'">{{ t('timelineGrid.equipmentDialog.allLevels') }}</button>
+          <button v-for="lv in EQUIPMENT_LEVELS" :key="`eqlv_${lv}`" class="ea-btn ea-btn--glass-cut equipment-filter-chip" :class="{ 'is-active': equipmentLevelFilter === lv }" :style="{ '--ea-btn-accent': getEquipmentLevelColor(lv) }" @click="equipmentLevelFilter = lv">Lv{{ lv }}</button>
         </div>
       </div>
       <div class="roster-scroll-container">
@@ -2906,7 +3039,7 @@ onUnmounted(() => {
           <div class="roster-grid">
             <div v-for="eq in group.list" :key="eq.id" class="roster-card" @click="confirmEquipmentSelection(eq.id)">
               <el-tooltip
-                placement="right"
+                placement="top-start"
                 effect="dark"
                 :show-after="160"
                 :disabled="getEquipmentAffixRows(eq).length === 0"
@@ -4351,6 +4484,62 @@ body.capture-mode .davinci-range {
   gap: 6px;
   max-width: 100%;
 }
+.equipment-affix-filter-section {
+  width: 100%;
+}
+
+.equipment-affix-filter-strip {
+  --equipment-filter-cut: 10px;
+  --equipment-filter-divider-skew: -18deg;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.equipment-filter-chip {
+  --equipment-filter-cut-size: var(--equipment-filter-cut, 10px);
+
+  height: 26px;
+  min-width: 0;
+  padding-left: 14px;
+  padding-right: 14px;
+  white-space: nowrap;
+  clip-path: polygon(
+      var(--equipment-filter-cut-size) 0,
+      100% 0,
+      calc(100% - var(--equipment-filter-cut-size)) 100%,
+      0 100%
+  );
+}
+
+.equipment-affix-filter-divider {
+  position: relative;
+  flex: 0 0 12px;
+  width: 12px;
+  height: 26px;
+  opacity: 0.85;
+}
+
+.equipment-affix-filter-divider::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(255, 255, 255, 0.32),
+      transparent
+  );
+  transform: translateX(-50%) skewX(var(--equipment-filter-divider-skew));
+  transform-origin: center;
+}
+
 .roster-scroll-container {
   max-height: 400px;
   overflow-y: auto;
