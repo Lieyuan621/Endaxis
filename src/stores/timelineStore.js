@@ -277,7 +277,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         staggerNodeCount: 0,
         staggerNodeDuration: 2,
         staggerBreakDuration: 10,
-        executionRecovery: 25
+        executionRecovery: 25,
+        enemyHp: 100000
     }
 
     const systemConstants = ref({ ...DEFAULT_SYSTEM_CONSTANTS })
@@ -286,7 +287,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         staggerNodeCount: 0,
         staggerNodeDuration: 2,
         staggerBreakDuration: 10,
-        executionRecovery: 25
+        executionRecovery: 25,
+        enemyHp: 100000
     })
 
     watch(systemConstants, (newVal) => {
@@ -296,7 +298,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                 staggerNodeCount: newVal.staggerNodeCount,
                 staggerNodeDuration: newVal.staggerNodeDuration,
                 staggerBreakDuration: newVal.staggerBreakDuration,
-                executionRecovery: newVal.executionRecovery
+                executionRecovery: newVal.executionRecovery,
+                enemyHp: newVal.enemyHp
             }
         }
     }, { deep: true })
@@ -1272,16 +1275,19 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     function createWeaponInstanceData(track, weaponSlug) {
         const resolvedSlug = resolveWeaponSlug(weaponSlug) || weaponSlug
-        const potential = 0
+        const weaponSheet = getWeaponSheet(resolvedSlug)
+        const rarity = Number(weaponSheet?.rarity) || 6
+        const potential = rarity <= 5 ? 5 : 0
         const bounds = getSkillBounds(90, true, potential)
+
         return {
             weaponSlug: resolvedSlug,
             level: 90,
             tuned: true,
             potential,
-            skill1Level: clampSkillLevel(clampTier9(track?.weaponCommon1Tier ?? 1), bounds.skill1),
-            skill2Level: clampSkillLevel(clampTier9(track?.weaponCommon2Tier ?? 1), bounds.skill2),
-            skill3Level: clampSkillLevel(clampTier9(track?.weaponBuffTier ?? 1), bounds.skill3),
+            skill1Level: bounds.skill1.max,
+            skill2Level: bounds.skill2.max,
+            skill3Level: bounds.skill3.max,
         }
     }
 
@@ -2759,11 +2765,13 @@ export const useTimelineStore = defineStore('timeline', () => {
             // Apply the selected preset enemy.
             const enemy = enemyDatabase.value.find(e => e.id === enemyId)
             if (enemy) {
+                const enemySheet = getEnemy(enemyId)
                 systemConstants.value.maxStagger = enemy.maxStagger
                 systemConstants.value.staggerNodeCount = enemy.staggerNodeCount
                 systemConstants.value.staggerNodeDuration = enemy.staggerNodeDuration
                 systemConstants.value.staggerBreakDuration = enemy.staggerBreakDuration
                 systemConstants.value.executionRecovery = enemy.executionRecovery
+                systemConstants.value.enemyHp = Number(enemy.hp ?? enemySheet?.hp ?? systemConstants.value.enemyHp) || 0
             }
         }
     }

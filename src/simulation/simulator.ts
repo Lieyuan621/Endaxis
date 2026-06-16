@@ -70,6 +70,7 @@ export function simulate(
   });
 
   const actorIds = actors.map((actor) => actor.id);
+  const actorMetaById = new Map(actors.map(actor => [actor.id, actor]));
 
   timeline.actions.forEach((action) => {
     engine.enqueue({
@@ -145,6 +146,9 @@ export function simulate(
 
     if (Number(action.node.teamGaugeGain) > 0) {
       actorIds.forEach((actorId) => {
+        if (actorId === action.trackId) return;
+        const targetActor = actorMetaById.get(actorId);
+        if (targetActor?.acceptTeamUltEnergy === false) return;
         engine.enqueue({
           type: "ULT_ENERGY_CHANGE",
           time: action.realStartTime + action.realDuration,

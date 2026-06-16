@@ -691,6 +691,7 @@
       "team": "队伍属性"
     },
     "labels": {
+      "enemyHp": "敌人血量",
       "maxStagger": "失衡上限",
       "staggerNodes": "失衡节点",
       "nodeDuration": "踉跄时长",

@@ -691,6 +691,7 @@
       "team": "Team Attributes"
     },
     "labels": {
+      "enemyHp": "Enemy HP",
       "maxStagger": "Max Stagger",
       "staggerNodes": "Stagger Nodes",
       "nodeDuration": "Node duration",

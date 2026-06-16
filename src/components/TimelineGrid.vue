@@ -18,7 +18,7 @@ import { useI18n } from 'vue-i18n'
 import { snapMs } from '@/utils/precision.js'
 import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time.js'
 import { toLegacyDisplayType } from '@/utils/hitModel.js'
-import { getGearPiece } from '@/data'
+import { getGearPiece, getEnemy } from '@/data'
 import {
   getGameElementName,
   getGameAttributeName,
@@ -1610,6 +1610,33 @@ const currentStaggerValue = computed(() => {
   }
   return Math.floor(points[points.length - 1].val)
 })
+const currentEnemyMaxHp = computed(() => {
+  return Number(store.systemConstants.enemyHp ?? 0) || 0
+})
+
+const currentEnemyDamageTaken = computed(() => {
+  const time = store.cursorCurrentTime
+
+  return (store.simLog || [])
+      .filter(entry => entry.type === 'DAMAGE_HIT' && Number(entry.time) <= time)
+      .reduce((sum, entry) => {
+        const hitData = entry.payload?.hitData
+        const damage = Number(store.getHitDisplayDamage?.(hitData) ?? hitData?._expectedDamage ?? 0) || 0
+        return sum + damage
+      }, 0)
+})
+
+const currentEnemyHp = computed(() => {
+  const maxHp = currentEnemyMaxHp.value
+  if (!maxHp) return 0
+  return Math.max(0, Math.floor(maxHp - currentEnemyDamageTaken.value))
+})
+
+const currentEnemyHpText = computed(() => {
+  const maxHp = currentEnemyMaxHp.value
+  if (!maxHp) return ''
+  return `${currentEnemyHp.value.toLocaleString()} / ${maxHp.toLocaleString()}`
+})
 
 function getStepPointAtTime(points, time) {
   if (!points || points.length === 0) return null
@@ -2742,6 +2769,9 @@ onUnmounted(() => {
                 </span>
               </div>
             </div>
+          </div>
+          <div v-if="currentEnemyHpText" class="guide-enemy-hp-label">
+            HP: {{ currentEnemyHpText }}
           </div>
         </div>
 
@@ -4216,6 +4246,19 @@ body.capture-mode .davinci-range {
   line-height: 1;
   text-shadow: 0 0 2px rgba(255, 120, 117, 0.5);
   margin-top: 1px;
+}
+
+.guide-enemy-hp-label {
+  width: fit-content;
+  color: #ff4d4f;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: monospace;
+  padding: 2px 4px;
+  white-space: nowrap;
+  line-height: 1;
+  text-shadow: 0 0 2px rgba(255, 77, 79, 0.5);
+  margin-top: 2px;
 }
 
 .guide-gauge-panel {

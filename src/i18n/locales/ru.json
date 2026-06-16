@@ -578,6 +578,7 @@
       "team": "Атрибуты команды"
     },
     "labels": {
+      "enemyHp": "Enemy HP",
       "maxStagger": "Макс. ошеломление",
       "staggerNodes": "Узлы ошеломления",
       "nodeDuration": "Длит. пробития узла",

@@ -1000,6 +1000,15 @@ const transformStyle = computed(() => {
             <div class="panel-tag-mini red">{{ t('resourceMonitor.sections.enemy') }}</div>
             <div class="attribute-grid-mini">
               <div class="control-row-mini">
+                <label>{{ t('resourceMonitor.labels.enemyHp') }}</label>
+                <CustomNumberInput
+                    v-model="store.systemConstants.enemyHp"
+                    :min="1"
+                    active-color="#ff7875"
+                    class="standard-input"
+                />
+              </div>
+              <div class="control-row-mini">
                 <label>{{ t('resourceMonitor.labels.maxStagger') }}</label>
                 <CustomNumberInput v-model="store.systemConstants.maxStagger" :min="1" active-color="#ff7875" class="standard-input" />
               </div>

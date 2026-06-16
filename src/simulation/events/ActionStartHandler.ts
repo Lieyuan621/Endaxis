@@ -11,6 +11,7 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
   }
 
   handle(e: ActionStartEvent, ctx: SimulationContext) {
+    const isPrepAction = this.isPrepAction(e, ctx);
     ctx.simLog({
       type: 'ACTION_START',
       time: e.time,
@@ -18,11 +19,10 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
         skillId: e.payload.skillId,
         actionId: e.payload.actionId,
         type: e.payload.type,
-        spCost: e.payload.spCost,
+        spCost: isPrepAction ? 0 : e.payload.spCost,
       },
     });
-
-    const spFreezeDuration = this.getSpFreezeDuration(e);
+    const spFreezeDuration = isPrepAction ? 0 : this.getSpFreezeDuration(e);
     if (spFreezeDuration > 0) {
       // 暂停SP再生
       ctx.queue.enqueue({
@@ -35,7 +35,7 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
       });
     }
 
-    if (e.payload.spCost && e.payload.spCost > 0) {
+    if (!isPrepAction && e.payload.spCost && e.payload.spCost > 0) {
       // Resolve battleSkillSPCostReduction from live active effects
       let finalSpCost = e.payload.spCost;
       const time = ctx.state.getCurrentTime();
@@ -67,6 +67,11 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
     this.consumeOneTimeEffects(e, ctx);
     this.registry?.onActionStart(e, ctx);
     this.registry?.onDuringAction(e, ctx);
+  }
+
+  private isPrepAction(e: ActionStartEvent, ctx: SimulationContext) {
+    const prepEnd = Number(ctx.state.team.config.prepDuration) || 0;
+    return prepEnd > 0 && e.time < prepEnd - 1e-6;
   }
 
   /** Consume all team-wide link stacks when a battle skill or ultimate starts. */

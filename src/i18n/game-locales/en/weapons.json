@@ -31,7 +31,7 @@
       "isPercent": true
     },
     "skill3": {
-      "name": "Technique:",
+      "name": "Technique: Amaranthine Cleave",
       "prefix": "Technique",
       "description": "Physical DMG Dealt +{0}%.When the wielder applies Physical Susceptibility, the wielder gains Arts Intensity +{1} for 20s. When the wielder applies Crush, the wielder gains Physical DMG Dealt +[{2}% + ({3}% x Max number of Vulnerability stacks consumed from one enemy)] for 30s.The two effects apply separately and do not stack with themselves.",
       "values": [
@@ -146,7 +146,7 @@
       "isPercent": true
     },
     "skill3": {
-      "name": "Efficiency:",
+      "name": "Efficiency: Fuel for the Torch",
       "prefix": "Efficiency",
       "description": "Heat DMG Dealt +{0}%.When the wielder's skill applies Heat Infliction, the wielder gains Physical and Heat DMG Dealt +{1}% for 20s. When the wielder's skill applies Heat Susceptibility, the entire team gains Physical and Heat DMG Dealt +{2}% for 30s.The two effects apply separately and do not stack with themselves.",
       "values": [
@@ -1370,7 +1370,7 @@
       "values": [10, 18, 26, 34, 42, 50, 58, 66, 78]
     },
     "skill3": {
-      "name": "Suppression:",
+      "name": "Suppression: Layered Suffering",
       "prefix": "Suppression",
       "description": "Physical DMG Dealt +{0}%.When the wielder casts battle skills or combo skills, the wielder gains Physical DMG Dealt +{1}% for 20s.Max stacks for effects of the same name: 3. Duration of each stack is counted separately. Effect only triggers once every 0.1s.",
       "values": [
