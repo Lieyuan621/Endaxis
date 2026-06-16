@@ -434,7 +434,11 @@
     "setTargetPort": "Set Input Point",
     "globalOps": "Global Operations",
     "addCycleBoundary": "Add Cycle Boundary",
-    "addSwitchEvent": "Switch Character Here..."
+    "addSwitchEvent": "Switch Character Here...",
+    "cycleBoundary": "Cycle Boundary",
+    "createInheritedScenario": "Create Scenario with Inherited Resources",
+    "inheritedScenarioCreated": "Created scenario with inherited resources",
+    "inheritedScenarioFailed": "Failed to create inherited scenario"
   },
   "connection": {
     "connect": "Connect",

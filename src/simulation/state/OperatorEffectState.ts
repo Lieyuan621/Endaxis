@@ -11,6 +11,9 @@ interface OneTimeEntry {
   maxStacks: number;
   skillTypes?: SkillType | SkillType[];
   skillId?: string | string[];
+  expiresAt: number;
+  sourceId: string;
+  effect?: OperatorStatusEntry['effect'];
 }
 
 interface IndependentSlot {
@@ -24,6 +27,7 @@ interface IndependentEffectData {
   stat?: OperatorStatusEntry['stat'];
   value: number;
   sourceId: string;
+  effect?: OperatorStatusEntry['effect'];
 }
 
 export class OperatorEffectState {
@@ -64,6 +68,7 @@ export class OperatorEffectState {
         stat: entry.stat,
         value: entry.value,
         sourceId: entry.sourceId,
+        effect: entry.effect ?? existing?.effect,
       });
       return;
     }
@@ -210,18 +215,34 @@ export class OperatorEffectState {
   applyOneTime(entry: OneTimeEntry): number {
     const existing = this.oneTimeEffects.get(entry.id);
     const newStacks = Math.min((existing?.stacks ?? 0) + entry.stacks, entry.maxStacks);
-    this.oneTimeEffects.set(entry.id, { ...entry, stacks: newStacks });
+
+    this.oneTimeEffects.set(entry.id, {
+      ...entry,
+      stacks: newStacks,
+      expiresAt: Math.max(
+          Number(existing?.expiresAt) || 0,
+          Number(entry.expiresAt) || Infinity,
+      ),
+      sourceId: entry.sourceId || existing?.sourceId || this.trackId,
+      effect: entry.effect ?? existing?.effect,
+    });
+
     return newStacks;
   }
 
   /** Consume all one-time effects matching the action. `type` scope matches `entry.skillTypes`;
    *  `skillId` scope matches `entry.skillId`. Returns consumed stat contributions with their ids. */
   consumeOneTime(
-    type: string | undefined,
-    skillId: string | undefined,
+      type: string | undefined,
+      skillId: string | undefined,
+      time = 0,
   ): (ConsumedStatEffect & { id: string })[] {
     const consumed: (ConsumedStatEffect & { id: string })[] = [];
     for (const [key, entry] of this.oneTimeEffects) {
+      if (Number.isFinite(entry.expiresAt) && time >= entry.expiresAt) {
+        this.oneTimeEffects.delete(key);
+        continue;
+      }
       if (entry.skillTypes && (!type || !passesSkillFilter(entry.skillTypes, type))) continue;
       if (entry.skillId && (!skillId || !passesSkillFilter(entry.skillId, skillId))) continue;
       consumed.push({ id: key, stat: entry.stat, value: entry.value * entry.stacks });
@@ -248,8 +269,52 @@ export class OperatorEffectState {
         expiresAt: data.slots.find(s => s.expiresAt > currentTime)?.expiresAt ?? currentTime,
         sourceId: data.sourceId,
         stackStrategy: 'INDEPENDENT',
+        effect: data.effect,
       });
     }
     return [...regular, ...independent];
+  }
+
+  exportCarryoverEntries(currentTime: number): OperatorStatusEntry[] {
+    const regular = [...this.effects.values()]
+        .filter(entry => currentTime < entry.expiresAt)
+        .map(entry => ({ ...entry }));
+
+    const independent: OperatorStatusEntry[] = [];
+
+    for (const [id, data] of this.independentEffects) {
+      for (const slot of data.slots) {
+        if (slot.expiresAt <= currentTime || slot.count <= 0) continue;
+
+        independent.push({
+          id,
+          stat: data.stat,
+          value: data.value,
+          stacks: slot.count,
+          maxStacks: data.maxStacks,
+          expiresAt: slot.expiresAt,
+          sourceId: data.sourceId,
+          stackStrategy: 'INDEPENDENT',
+          effect: data.effect,
+        });
+      }
+    }
+
+    return [...regular, ...independent];
+  }
+
+  exportCarryoverOneTimeEntries(currentTime: number) {
+    const out: Array<OneTimeEntry & { kind: 'oneTime' }> = [];
+
+    for (const entry of this.oneTimeEffects.values()) {
+      if (Number.isFinite(entry.expiresAt) && currentTime >= entry.expiresAt) continue;
+
+      out.push({
+        ...entry,
+        kind: 'oneTime',
+      });
+    }
+
+    return out;
   }
 }

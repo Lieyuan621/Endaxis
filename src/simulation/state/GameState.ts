@@ -79,4 +79,18 @@ export class GameState implements BaseGameState<GameSnapshot> {
       actors: this.getActors().map((actor) => actor.snapshot()),
     };
   }
+  exportCarryoverSnapshot(time = this.currentTime) {
+    const base = this.snapshot();
+
+    return {
+      ...base,
+      time,
+      enemyCarryover: this.enemy.exportCarryoverSnapshot(time),
+      operatorEffects: this.getActors().map((actor) => ({
+        trackId: actor.id,
+        effects: this.getOperatorEffects(actor.id).exportCarryoverEntries(time),
+        oneTimeEffects: this.getOperatorEffects(actor.id).exportCarryoverOneTimeEntries(time),
+      })),
+    };
+  }
 }

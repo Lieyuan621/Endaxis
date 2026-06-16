@@ -2055,25 +2055,46 @@ function updateDragPosition(clientX) {
   const mouseTime = store.pxToTime(timelineX)
   const deltaTime = mouseTime - dragStartMouseTime.value
 
-  const selectedIds = store.multiSelectedIds;
-  const snap = store.snapStep;
+  const selectedIds = store.multiSelectedIds
+  const snap = store.snapStep
+  const minStartTime = getMinSkillStartTime()
+
+  const dragTargets = []
 
   store.tracks.forEach(t => {
     t.actions.forEach(a => {
       if (selectedIds.has(a.instanceId) && !a.isLocked) {
-        const orgLogical = dragStartTimes.get(a.instanceId);
-        const targetTime = orgLogical + deltaTime;
+        const orgLogical = dragStartTimes.get(a.instanceId)
+        if (!Number.isFinite(Number(orgLogical))) return
 
-        let snappedTime = Math.round(targetTime / snap) * snap;
-
-        a.logicalStartTime = Math.max(0, snapTimeToFrame(snappedTime));
+        dragTargets.push({
+          action: a,
+          targetTime: Number(orgLogical) + deltaTime,
+        })
       }
-    });
-  });
+    })
+  })
 
-  store.refreshAllActionShifts();
+  if (dragTargets.length === 0) return
 
-  nextTick(() => svgRenderKey.value++);
+  const earliestTargetTime = Math.min(...dragTargets.map(item => item.targetTime))
+  const groupOffset = earliestTargetTime < minStartTime
+      ? minStartTime - earliestTargetTime
+      : 0
+
+  dragTargets.forEach(({ action, targetTime }) => {
+    const shiftedTargetTime = targetTime + groupOffset
+    const snappedTime = Math.round(shiftedTargetTime / snap) * snap
+
+    action.logicalStartTime = Math.max(
+        minStartTime,
+        snapTimeToFrame(snappedTime),
+    )
+  })
+
+  store.refreshAllActionShifts()
+
+  nextTick(() => svgRenderKey.value++)
 }
 
 function updateSwitchMarkerPosition(clientX, clientY) {
@@ -2273,6 +2294,16 @@ function onWindowMouseUp(event) {
 
 function captureClick(e) { e.stopPropagation(); e.preventDefault() }
 
+function getMinSkillStartTime() {
+  if (store.prepExpanded) return 0
+  return snapTimeToFrame(Math.max(0, Number(store.prepDuration) || 0))
+}
+
+function clampSkillStartTime(time) {
+  const raw = Number(time) || 0
+  return Math.max(getMinSkillStartTime(), snapTimeToFrame(raw))
+}
+
 function calculateTimeFromDropEvent(evt, skill, fixedStep = null) {
   const offsetX = Number(skill?.dragOffsetX) || 0
   const mouseXInTrack = store.toTimelineSpace((evt?.clientX || 0) - offsetX, evt?.clientY || 0).x
@@ -2282,7 +2313,7 @@ function calculateTimeFromDropEvent(evt, skill, fixedStep = null) {
   const step = fixedStep !== null ? fixedStep : store.snapStep
   const inverse = 1 / step
   let startTime = Math.round(rawTime * inverse) / inverse
-  if (startTime < 0) startTime = 0
+  startTime = clampSkillStartTime(startTime)
   return startTime
 }
 
@@ -2373,6 +2404,14 @@ function updateTrackRects() {
     }
     store.setTrackLaneRect(idx, data)
   })
+}
+
+function onCycleBoundaryContextMenu(evt, boundaryId) {
+  const boundary = store.cycleBoundaries.find((item) => item.id === boundaryId)
+  if (!boundary) return
+
+  store.selectCycleBoundary(boundaryId)
+  store.openContextMenu(evt, boundaryId, Number(boundary.time) || 0, 'cycleBoundary')
 }
 
 const activeFreezeRegions = computed(() => {
@@ -2780,7 +2819,8 @@ onUnmounted(() => {
              class="cycle-guide"
              :class="{ 'is-selected': boundary.id === store.selectedCycleBoundaryId }"
              :style="{ left: `${store.timeToPx(boundary.time)}px` }"
-             @mousedown="onCycleLineMouseDown($event, boundary.id)">
+             @mousedown="onCycleLineMouseDown($event, boundary.id)"
+             @contextmenu.stop.prevent="onCycleBoundaryContextMenu($event, boundary.id)">
 
           <div class="cycle-label-time">{{ store.formatAxisTimeLabel(boundary.time) }}</div>
           <div class="cycle-label-text">{{ t('timelineGrid.cycleBoundary') }}</div>

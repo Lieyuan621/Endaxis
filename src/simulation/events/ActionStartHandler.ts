@@ -150,8 +150,8 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
     if (!action) return;
     const trackId = e.payload.actorId;
     const consumed = ctx
-      .getOperatorEffects(trackId)
-      .consumeOneTime(action.node.type, action.node.skillId);
+        .getOperatorEffects(trackId)
+        .consumeOneTime(action.node.type, action.node.skillId, e.time);
     if (consumed.length > 0) {
       action.consumedStatEffects = consumed;
       for (const c of consumed) {

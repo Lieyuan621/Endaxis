@@ -213,6 +213,254 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
     };
   }
 
+  private cloneSourceQueue(queue: any[] | undefined) {
+    return Array.isArray(queue)
+        ? queue.map(slot => ({
+          sourceId: slot.sourceId,
+          count: Number(slot.count) || 0,
+        }))
+        : [];
+  }
+
+  private cloneStatusEntry(entry: EnemyStatusEntry): EnemyStatusEntry {
+    return {
+      ...entry,
+      stat: entry.stat ? { ...(entry.stat as any) } : undefined,
+      effect: entry.effect ? ({ ...(entry.effect as any) } as any) : undefined,
+      consumedStacks: entry.consumedStacks ? { ...entry.consumedStacks } : undefined,
+      sourceBreakdown: entry.sourceBreakdown ? { ...entry.sourceBreakdown } : undefined,
+    };
+  }
+
+  private getRemaining(expiresAt: number, time: number) {
+    return Math.max(0, Number(expiresAt) - Number(time));
+  }
+
+  private getNextOneSecondTickDelay(startedAt: number, time: number) {
+    const elapsed = Math.max(0, Number(time) - Number(startedAt));
+    const nextTickIndex = Math.floor(elapsed + 0.0001) + 1;
+    return Math.max(0, nextTickIndex - elapsed);
+  }
+
+  exportCarryoverSnapshot(time = this.currentTime) {
+    const activeStatuses = [...this.enemyStatusEffects.values()]
+        .filter(entry => time < entry.expiresAt)
+        .map(entry => ({
+          ...this.cloneStatusEntry(entry),
+          remainingDuration: this.getRemaining(entry.expiresAt, time),
+        }));
+
+    const infliction =
+        this.infliction && time < this.infliction.expiresAt
+            ? {
+              ...this.infliction,
+              sourceQueue: this.cloneSourceQueue(this.infliction.sourceQueue),
+              remainingDuration: this.getRemaining(this.infliction.expiresAt, time),
+            }
+            : null;
+
+    const vulnerability =
+        this.vulnerability && time < this.vulnerability.expiresAt
+            ? {
+              ...this.vulnerability,
+              sourceQueue: this.cloneSourceQueue(this.vulnerability.sourceQueue),
+              remainingDuration: this.getRemaining(this.vulnerability.expiresAt, time),
+            }
+            : null;
+
+    const solidification =
+        this.solidification && time < this.solidification.expiresAt
+            ? {
+              ...this.solidification,
+              remainingDuration: this.getRemaining(this.solidification.expiresAt, time),
+            }
+            : null;
+
+    const combustion =
+        this.combustion && time < this.combustion.expiresAt
+            ? {
+              ...this.combustion,
+              remainingDuration: this.getRemaining(this.combustion.expiresAt, time),
+              nextTickDelay: this.getNextOneSecondTickDelay(this.combustion.startedAt, time),
+            }
+            : null;
+
+    const electrification =
+        this.electrification && time < this.electrification.expiresAt
+            ? {
+              ...this.electrification,
+              remainingDuration: this.getRemaining(this.electrification.expiresAt, time),
+            }
+            : null;
+
+    const corrosion =
+        this.corrosion && time < this.corrosion.expiresAt
+            ? {
+              ...this.corrosion,
+              remainingDuration: this.getRemaining(this.corrosion.expiresAt, time),
+              nextTickDelay: this.getNextOneSecondTickDelay(this.corrosion.startedAt, time),
+            }
+            : null;
+
+    const breach =
+        this.breach && time < this.breach.expiresAt
+            ? {
+              ...this.breach,
+              remainingDuration: this.getRemaining(this.breach.expiresAt, time),
+            }
+            : null;
+
+    return {
+      time,
+      stagger: {
+        value: this.stagger,
+        maxStagger: this.config.maxStagger,
+        breakRemaining: this.isBroken(time) ? Math.max(0, this.breakEndTime - time) : 0,
+        lockRemaining: this.isLocked(time) ? Math.max(0, this.lockEndTime - time) : 0,
+        staggerContributions: { ...this.staggerContributions },
+        lastBreakContributions: { ...this.lastBreakContributions },
+      },
+      infliction,
+      vulnerability,
+      debuffs: {
+        solidification,
+        combustion,
+        electrification,
+        corrosion,
+        breach,
+      },
+      statuses: activeStatuses,
+    };
+  }
+
+  importCarryoverSnapshot(snapshot: any, applyTime: number) {
+    if (!snapshot) return;
+
+    const toExpiresAt = (entry: any) => {
+      const remaining = Number(entry?.remainingDuration);
+      if (Number.isFinite(remaining)) {
+        return applyTime + Math.max(0, remaining);
+      }
+
+      const expiresAt = Number(entry?.expiresAt);
+      if (Number.isFinite(expiresAt)) {
+        return expiresAt;
+      }
+
+      return applyTime;
+    };
+
+    const stagger = snapshot.stagger || {};
+    const maxStagger = Number(stagger.maxStagger) || this.config.maxStagger;
+    this.stagger = Math.max(
+        0,
+        Math.min(Number(stagger.value) || 0, maxStagger),
+    );
+
+    this.breakEndTime = applyTime + Math.max(0, Number(stagger.breakRemaining) || 0);
+    this.lockEndTime = applyTime + Math.max(0, Number(stagger.lockRemaining) || 0);
+    this.staggerContributions = { ...(stagger.staggerContributions || {}) };
+    this.lastBreakContributions = { ...(stagger.lastBreakContributions || {}) };
+
+    const infliction = snapshot.infliction;
+    this.infliction = infliction
+        ? {
+          element: infliction.element,
+          stacks: Math.max(1, Math.min(4, Number(infliction.stacks) || 1)),
+          appliedAt: applyTime,
+          expiresAt: toExpiresAt(infliction),
+          sourceQueue: this.cloneSourceQueue(infliction.sourceQueue),
+        }
+        : null;
+
+    const vulnerability = snapshot.vulnerability;
+    this.vulnerability = vulnerability
+        ? {
+          stacks: Math.max(1, Math.min(4, Number(vulnerability.stacks) || 1)),
+          appliedAt: applyTime,
+          expiresAt: toExpiresAt(vulnerability),
+          sourceQueue: this.cloneSourceQueue(vulnerability.sourceQueue),
+        }
+        : null;
+
+    const debuffs = snapshot.debuffs || {};
+
+    const solidification = debuffs.solidification;
+    this.solidification = solidification
+        ? {
+          level: Math.max(1, Math.min(4, Number(solidification.level) || 1)),
+          expiresAt: toExpiresAt(solidification),
+          consumedStackSources: solidification.consumedStackSources
+              ? { ...solidification.consumedStackSources }
+              : undefined,
+          sourceId: solidification.sourceId,
+        }
+        : null;
+
+    const combustion = debuffs.combustion;
+    this.combustion = combustion
+        ? {
+          level: Math.max(1, Math.min(4, Number(combustion.level) || 1)),
+          startedAt: applyTime,
+          expiresAt: toExpiresAt(combustion),
+          sourceId: combustion.sourceId,
+          effectiveness: combustion.effectiveness,
+          consumedStackSources: combustion.consumedStackSources
+              ? { ...combustion.consumedStackSources }
+              : undefined,
+          actionId: combustion.actionId,
+        }
+        : null;
+
+    const electrification = debuffs.electrification;
+    this.electrification = electrification
+        ? {
+          level: Math.max(1, Math.min(4, Number(electrification.level) || 1)),
+          expiresAt: toExpiresAt(electrification),
+          operatorSlot: Number(electrification.operatorSlot) || 0,
+          sourceId: electrification.sourceId,
+        }
+        : null;
+
+    const corrosion = debuffs.corrosion;
+    this.corrosion = corrosion
+        ? {
+          level: Math.max(1, Math.min(4, Number(corrosion.level) || 1)),
+          startedAt: applyTime,
+          expiresAt: toExpiresAt(corrosion),
+          operatorSlot: Number(corrosion.operatorSlot) || 0,
+          currentResShred: Number(corrosion.currentResShred) || 0,
+          perSecond: Number(corrosion.perSecond) || 0,
+          maxShred: Number(corrosion.maxShred) || 0,
+          sourceId: corrosion.sourceId || '',
+        }
+        : null;
+
+    const breach = debuffs.breach;
+    this.breach = breach
+        ? {
+          level: Math.max(1, Math.min(4, Number(breach.level) || 1)),
+          expiresAt: toExpiresAt(breach),
+          operatorSlot: Number(breach.operatorSlot) || 0,
+          sourceId: breach.sourceId,
+        }
+        : null;
+
+    this.enemyStatusEffects.clear();
+
+    for (const raw of snapshot.statuses || []) {
+      const expiresAt = toExpiresAt(raw);
+      if (!(expiresAt > applyTime)) continue;
+
+      const entry = this.cloneStatusEntry({
+        ...raw,
+        expiresAt,
+      });
+
+      this.enemyStatusEffects.set(entry.id, entry);
+    }
+  }
+
   /** Snapshot of all enemy status fields for hit-condition evaluation. */
   statusSnapshot(): EnemyStatusSnapshot {
     return {

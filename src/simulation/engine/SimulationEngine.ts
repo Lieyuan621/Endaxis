@@ -79,8 +79,20 @@ export class SimulationEngine {
     return this.simLog.toArray();
   }
 
+  logSimEntry(entry: SimLogEntry) {
+    this.simLog.enqueue(entry);
+  }
+
   getEnemyLog(): EnemyStateEvent[] {
     return this.enemyLogEntries;
+  }
+
+  logEnemyEvent(event: EnemyStateEvent) {
+    this.enemyLogEntries.push(event);
+  }
+
+  logOperatorEvent(event: OperatorStateEvent) {
+    this.operatorLogEntries.push(event);
   }
 
   getOperatorLog(): OperatorStateEvent[] {
@@ -274,6 +286,12 @@ export class SimulationEngine {
       } else {
         throw new Error(`No handler for event type: ${event.type}`);
       }
+    }
+    if (
+        this.endlineTime !== undefined &&
+        this.endlineTime > this.state.getCurrentTime()
+    ) {
+      this.state.advanceTime(this.endlineTime - this.state.getCurrentTime());
     }
 
     return { state: this.state, actionEndTimes };

@@ -18,6 +18,7 @@ export interface EnemyStatusEntry {
   icon?: string;
   /** When set, the entry is not yet active until this time. */
   startsAt?: number;
+  effect?: Effect;
   /** Snapshotted consumed stacks from the action that applied this effect. */
   consumedStacks?: Record<string, number>;
   /** Multi-source attribution breakdown for reaction debuffs. sourceId → fractional share (sums to 1). */
@@ -51,21 +52,27 @@ export interface VulnerabilityState {
 }
 
 export interface SolidificationState {
-  level: number; // 1–4
-  expiresAt: number; // 6/7/8/9s from trigger
+  level: number;
+  expiresAt: number;
   consumedStackSources?: Record<string, number>;
+  sourceId?: string;
 }
 
 export interface CombustionState {
-  level: number; // 1–4
+  level: number;
   startedAt: number;
-  expiresAt: number; // startedAt + 10
+  expiresAt: number;
+  sourceId?: string;
+  effectiveness?: number;
+  consumedStackSources?: Record<string, number>;
+  actionId?: string;
 }
 
 export interface ElectrificationState {
-  level: number; // 1–4
-  expiresAt: number; // 12/18/24/30s
+  level: number;
+  expiresAt: number;
   operatorSlot: number;
+  sourceId?: string;
 }
 
 export interface CorrosionState {
@@ -83,9 +90,10 @@ export interface CorrosionState {
 }
 
 export interface BreachState {
-  level: number; // 1–4
-  expiresAt: number; // 12/18/24/30s
+  level: number;
+  expiresAt: number;
   operatorSlot: number;
+  sourceId?: string;
 }
 
 // ─── Operator runtime effect state ──────────────────────────────────────────
@@ -99,6 +107,7 @@ export interface OperatorStatusEntry {
   expiresAt: number;
   sourceId: string;
   stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
+  effect?: Effect;
   /** Snapshotted consumed stacks from the action that applied this effect. */
   consumedStacks?: Record<string, number>;
 }
@@ -322,6 +331,7 @@ export interface OperatorEffectApplyEvent {
   consumedStacks?: Record<string, number>;
   /** When true, applying this effect does not fire onStatusApplied triggers. */
   silent?: boolean;
+  skipStatusAppliedTrigger?: boolean;
 }
 
 /** Expire event for operator StatusEffects. consumed=true means priority-3 forced consume. */

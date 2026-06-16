@@ -276,7 +276,7 @@ export function projectFromSimLog(
             start: event.time,
             element: event.element,
             stacks: Math.min(4, event.stacks),
-            expiresAt: event.time + 20,
+            expiresAt: event.expiresAt ?? event.time + event.effectiveDuration,
             sourceId: event.sourceId,
           };
         }

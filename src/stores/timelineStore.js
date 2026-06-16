@@ -474,6 +474,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     const weaponOverrides = ref({})
     const equipmentCategoryOverrides = ref({})
     const runtimeInitialEffects = ref([])
+    const inheritedInitialEffects = ref([])
+    const inheritedInitialEnemyState = ref(null)
     const simulationEndline = ref(null)
     const lmdiAttributionMode = ref('stacks')
 
@@ -894,8 +896,13 @@ export const useTimelineStore = defineStore('timeline', () => {
             equipmentCategoryOverrides: equipmentCategoryOverrides.value,
             prepDuration: prepDuration.value,
             prepExpanded: prepExpanded.value,
+            systemConstants: systemConstants.value,
+            activeEnemyId: activeEnemyId.value,
+            customEnemyParams: customEnemyParams.value,
             cycleBoundaries: cycleBoundaries.value,
             switchEvents: switchEvents.value,
+            inheritedInitialEffects: inheritedInitialEffects.value,
+            inheritedInitialEnemyState: inheritedInitialEnemyState.value,
             operators: operatorStore.operators,
             weapons: weaponStore.weapons,
             gears: gearStore.gears,
@@ -939,13 +946,36 @@ export const useTimelineStore = defineStore('timeline', () => {
         restoreArmoryFromSnapshot(snapshot)
         tracks.value = normalizeTracks(snapshot.tracks)
         connections.value = normalizeConnections(snapshot.connections)
-        characterOverrides.value = snapshot.characterOverrides
+        characterOverrides.value = snapshot.characterOverrides || {}
         weaponOverrides.value = snapshot.weaponOverrides || {}
         equipmentCategoryOverrides.value = snapshot.equipmentCategoryOverrides || {}
-        if (snapshot.prepDuration !== undefined) prepDuration.value = Math.max(MIN_PREP_DURATION, Number(snapshot.prepDuration) || 0)
-        if (snapshot.prepExpanded !== undefined) prepExpanded.value = snapshot.prepExpanded !== false
+
+        if (snapshot.systemConstants) {
+            systemConstants.value = { ...systemConstants.value, ...snapshot.systemConstants }
+        }
+
+        activeEnemyId.value = snapshot.activeEnemyId || activeEnemyId.value || 'custom'
+
+        if (snapshot.customEnemyParams) {
+            customEnemyParams.value = { ...customEnemyParams.value, ...snapshot.customEnemyParams }
+        }
+
+        if (snapshot.prepDuration !== undefined) {
+            prepDuration.value = Math.max(MIN_PREP_DURATION, Number(snapshot.prepDuration) || 0)
+        }
+
+        if (snapshot.prepExpanded !== undefined) {
+            prepExpanded.value = snapshot.prepExpanded !== false
+        }
+
         cycleBoundaries.value = snapshot.cycleBoundaries || []
         switchEvents.value = snapshot.switchEvents || []
+        inheritedInitialEffects.value = Array.isArray(snapshot.inheritedInitialEffects)
+            ? JSON.parse(JSON.stringify(snapshot.inheritedInitialEffects))
+            : []
+        inheritedInitialEnemyState.value = snapshot.inheritedInitialEnemyState
+            ? JSON.parse(JSON.stringify(snapshot.inheritedInitialEnemyState))
+            : null
         recomputeAllTrackOperatorStatuses()
         clearSelection()
     }
@@ -968,6 +998,8 @@ export const useTimelineStore = defineStore('timeline', () => {
             customEnemyParams: customEnemyParams.value,
             cycleBoundaries: cycleBoundaries.value,
             switchEvents: switchEvents.value,
+            inheritedInitialEffects: inheritedInitialEffects.value,
+            inheritedInitialEnemyState: inheritedInitialEnemyState.value,
             operators: operatorStore.operators,
             weapons: weaponStore.weapons,
             gears: gearStore.gears,
@@ -1001,6 +1033,12 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
         cycleBoundaries.value = incoming.cycleBoundaries ? JSON.parse(JSON.stringify(incoming.cycleBoundaries)) : []
         switchEvents.value = incoming.switchEvents ? JSON.parse(JSON.stringify(incoming.switchEvents)) : []
+        inheritedInitialEffects.value = Array.isArray(incoming.inheritedInitialEffects)
+            ? JSON.parse(JSON.stringify(incoming.inheritedInitialEffects))
+            : []
+        inheritedInitialEnemyState.value = incoming.inheritedInitialEnemyState
+            ? JSON.parse(JSON.stringify(incoming.inheritedInitialEnemyState))
+            : null
         recomputeAllTrackOperatorStatuses()
         clearSelection()
     }
@@ -1088,7 +1126,9 @@ export const useTimelineStore = defineStore('timeline', () => {
             equipmentCategoryOverrides: {},
             prepDuration: 5,
             prepExpanded: true,
-            systemConstants: { ...DEFAULT_SYSTEM_CONSTANTS }
+            systemConstants: { ...DEFAULT_SYSTEM_CONSTANTS },
+            inheritedInitialEffects: [],
+            inheritedInitialEnemyState: null,
         }
 
         scenarioList.value.push({ id: newId, name: newName, data: emptySnapshot })
@@ -1134,6 +1174,330 @@ export const useTimelineStore = defineStore('timeline', () => {
             switchScenario(nextSc.id)
         }
         scenarioList.value.splice(idx, 1)
+    }
+
+    function clampNumber(value, min, max) {
+        const num = Number(value)
+        if (!Number.isFinite(num)) return min
+        return Math.max(min, Math.min(num, max))
+    }
+
+    function collectActionNodeIds(action, out) {
+        if (!action || !out) return
+
+        if (action.instanceId) out.add(action.instanceId)
+
+        const collectEffect = (effect) => {
+            if (effect?._id) out.add(effect._id)
+        }
+
+        if (Array.isArray(action.effects)) {
+            action.effects.forEach(collectEffect)
+        }
+
+        if (Array.isArray(action.hits)) {
+            action.hits.forEach((hit) => {
+                if (Array.isArray(hit?.effects)) {
+                    hit.effects.forEach(collectEffect)
+                }
+            })
+        }
+    }
+
+    function buildInheritedResourceSnapshotAt(boundaryTime, sourceSnapshot) {
+        const time = Math.max(0, Number(boundaryTime) || 0)
+
+        const compiled = compileEndaxisScenario({
+            scenarioData: sourceSnapshot,
+            tracks: sourceSnapshot.tracks || tracks.value,
+            characterRoster: characterRoster.value,
+            systemConstants: sourceSnapshot.systemConstants || systemConstants.value,
+            prepDuration: sourceSnapshot.prepDuration ?? prepDuration.value,
+            activeEnemyId: sourceSnapshot.activeEnemyId ?? activeEnemyId.value,
+            runtimeInitialEffects: [
+                ...runtimeInitialEffects.value,
+                ...(sourceSnapshot.inheritedInitialEffects || []),
+            ],
+            runtimeInitialEnemyState: sourceSnapshot.inheritedInitialEnemyState || inheritedInitialEnemyState.value,
+            simulationEndline: time,
+            lmdiAttributionMode: lmdiAttributionMode.value,
+        })
+
+        if (!compiled) return null
+
+        const result = simulate(
+            compiled.timeline,
+            compiled.teamConfig,
+            compiled.enemyConfig,
+            compiled.actors,
+            compiled.triggerRegistry,
+            compiled.consumedStacksWriteKeys,
+            {
+                initialEffects: compiled.initialEffects,
+                initialEnemyState: compiled.initialEnemyState,
+                baseStatsByTrack: compiled.baseStatsByTrack,
+                enemyDef: compiled.enemyDef,
+                endlineTime: time,
+                lmdiAttributionMode: compiled.lmdiAttributionMode,
+            },
+        )
+
+        const finalSnapshot = result.state?.exportCarryoverSnapshot
+            ? result.state.exportCarryoverSnapshot(time)
+            : result.state?.snapshot?.()
+        if (!finalSnapshot) return null
+
+        return {
+            time,
+            team: {
+                sp: Number(finalSnapshot.team?.sp) || 0,
+                maxSp: Number(finalSnapshot.team?.maxSp) || Number(systemConstants.value.maxSp) || 300,
+            },
+            actors: (finalSnapshot.actors || []).map(actor => ({
+                id: actor.id,
+                gauge: Number(actor.resources?.gauge) || 0,
+                maxGauge: Number(actor.resources?.maxGauge) || 0,
+            })),
+            operatorEffects: finalSnapshot.operatorEffects || [],
+            enemyCarryover: finalSnapshot.enemyCarryover || null,
+        }
+    }
+
+    function createInheritedScenarioData(sourceSnapshot, inheritedState, boundaryTime) {
+        const time = Math.max(0, Number(boundaryTime) || 0)
+        const epsilon = 0.0001
+
+        const next = JSON.parse(JSON.stringify(sourceSnapshot))
+
+        const sourcePrepDuration = Number(sourceSnapshot.prepDuration ?? prepDuration.value)
+        const nextPrepDuration = Math.max(
+            MIN_PREP_DURATION,
+            Number.isFinite(sourcePrepDuration) ? sourcePrepDuration : 0,
+        )
+
+        const actorGaugeById = new Map(
+            (inheritedState?.actors || []).map(actor => [actor.id, actor])
+        )
+
+        const shiftTime = (value) => {
+            const battleOffset = Math.max(0, (Number(value) || 0) - time)
+            return snapTimeToFrame(nextPrepDuration + battleOffset)
+        }
+
+        const keptNodeIds = new Set()
+
+        next.tracks = (next.tracks || []).map(track => {
+            const inheritedActor = actorGaugeById.get(track.id)
+
+            const shiftedActions = (track.actions || [])
+                .filter(action => {
+                    const start = Number(action.startTime) || 0
+                    return start >= time - epsilon
+                })
+                .map(action => {
+                    const copy = JSON.parse(JSON.stringify(action))
+
+                    copy.startTime = shiftTime(copy.startTime)
+
+                    if (copy.logicalStartTime !== undefined) {
+                        copy.logicalStartTime = shiftTime(copy.logicalStartTime)
+                    } else {
+                        copy.logicalStartTime = copy.startTime
+                    }
+
+                    collectActionNodeIds(copy, keptNodeIds)
+                    return copy
+                })
+
+            let initialGauge = Number(track.initialGauge) || 0
+
+            if (inheritedActor) {
+                const charInfo = characterRoster.value.find(c => c.id === track.id)
+                const maxGauge = charInfo
+                    ? resolveGaugeMax(track.id, track, charInfo)
+                    : Number(inheritedActor.maxGauge) || Number(track.maxGaugeOverride) || 100
+
+                initialGauge = clampNumber(inheritedActor.gauge, 0, maxGauge)
+            }
+
+            return {
+                ...track,
+                initialGauge,
+                actions: shiftedActions,
+            }
+        })
+
+        next.connections = (next.connections || []).filter(conn => {
+            const fromId = _getConnectionEndpointId(conn, 'from')
+            const toId = _getConnectionEndpointId(conn, 'to')
+            return keptNodeIds.has(fromId) && keptNodeIds.has(toId)
+        })
+
+        next.switchEvents = (next.switchEvents || [])
+            .filter(event => (Number(event.time) || 0) >= time - epsilon)
+            .map(event => ({
+                ...event,
+                time: shiftTime(event.time),
+            }))
+
+        next.cycleBoundaries = []
+        next.inheritedInitialEffects = buildInheritedOperatorInitialEffects(inheritedState)
+        next.inheritedInitialEnemyState = inheritedState?.enemyCarryover
+            ? JSON.parse(JSON.stringify(inheritedState.enemyCarryover))
+            : null
+        next.prepDuration = nextPrepDuration
+        next.prepExpanded = sourceSnapshot.prepExpanded !== false
+
+        const maxSp = Number(next.systemConstants?.maxSp ?? systemConstants.value.maxSp) || 300
+        const inheritedSp = Number(inheritedState?.team?.sp)
+
+        next.systemConstants = {
+            ...(next.systemConstants || {}),
+            initialSp: Number.isFinite(inheritedSp)
+                ? clampNumber(inheritedSp, 0, maxSp)
+                : Number(next.systemConstants?.initialSp ?? systemConstants.value.initialSp) || 0,
+        }
+
+        return next
+    }
+
+    function createInheritedScenarioFromCycleBoundary(boundaryId) {
+        if (scenarioList.value.length >= MAX_SCENARIOS) {
+            return {
+                ok: false,
+                reason: 'limit',
+            }
+        }
+
+        const boundary = cycleBoundaries.value.find(b => b.id === boundaryId)
+        if (!boundary) {
+            return {
+                ok: false,
+                reason: 'missing-boundary',
+            }
+        }
+
+        const boundaryTime = Math.max(0, Number(boundary.time) || 0)
+
+        const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value)
+        if (!currentScenario) {
+            return {
+                ok: false,
+                reason: 'missing-scenario',
+            }
+        }
+
+        currentScenario.data = _createSnapshot()
+
+        const sourceSnapshot = JSON.parse(JSON.stringify(currentScenario.data))
+        const inheritedState = buildInheritedResourceSnapshotAt(boundaryTime, sourceSnapshot)
+
+        if (!inheritedState) {
+            return {
+                ok: false,
+                reason: 'simulation-failed',
+            }
+        }
+
+        const newData = createInheritedScenarioData(
+            sourceSnapshot,
+            inheritedState,
+            boundaryTime,
+        )
+
+        const newId = `sc_${uid()}`
+        const sourceName = currentScenario.name || tr('timeline.scenario.unnamed')
+        const newName = `${sourceName} 继承 ${formatTimeLabel(boundaryTime)}`
+
+        scenarioList.value.push({
+            id: newId,
+            name: newName,
+            data: newData,
+        })
+
+        activeScenarioId.value = newId
+        _loadSnapshot(newData)
+        resetTimelineViewport()
+
+        historyStack.value = []
+        historyIndex.value = -1
+        commitState()
+
+        return {
+            ok: true,
+            scenarioId: newId,
+            inheritedState,
+        }
+    }
+
+    function buildInheritedOperatorInitialEffects(inheritedState) {
+        if (!inheritedState) return []
+
+        const sourceTime = Math.max(0, Number(inheritedState.time) || 0)
+
+        return (inheritedState.operatorEffects || []).flatMap(group => {
+            const targetTrackId = group.trackId
+            if (!targetTrackId) return []
+
+            const statusEffects = (group.effects || [])
+                .map(entry => {
+                    if (!entry?.id) return null
+
+                    const expiresAt = Number(entry.expiresAt)
+                    if (!Number.isFinite(expiresAt)) return null
+
+                    const remainingDuration = Math.max(0, expiresAt - sourceTime)
+                    if (remainingDuration <= 0) return null
+
+                    return {
+                        kind: 'status',
+                        targetTrackId,
+                        id: entry.id,
+                        stat: entry.stat,
+                        value: Number(entry.value) || 0,
+                        sourceId: entry.sourceId || targetTrackId,
+                        effect: entry.effect,
+                        stacks: Math.max(1, Number(entry.stacks) || 1),
+                        maxStacks: Math.max(1, Number(entry.maxStacks) || 1),
+                        stackStrategy: entry.stackStrategy,
+                        remainingDuration,
+                        consumedStacks: entry.consumedStacks,
+                    }
+                })
+                .filter(Boolean)
+
+            const oneTimeEffects = (group.oneTimeEffects || [])
+                .map(entry => {
+                    if (!entry?.id) return null
+
+                    const expiresAt = Number(entry.expiresAt)
+                    if (!Number.isFinite(expiresAt)) return null
+
+                    const remainingDuration = Math.max(0, expiresAt - sourceTime)
+                    if (remainingDuration <= 0) return null
+
+                    return {
+                        kind: 'oneTime',
+                        targetTrackId,
+                        id: entry.id,
+                        stat: entry.stat,
+                        value: Number(entry.value) || 0,
+                        sourceId: entry.sourceId || targetTrackId,
+                        effect: entry.effect,
+                        stacks: Math.max(1, Number(entry.stacks) || 1),
+                        maxStacks: Math.max(1, Number(entry.maxStacks) || 1),
+                        remainingDuration,
+                        skillTypes: entry.skillTypes,
+                        skillId: entry.skillId,
+                    }
+                })
+                .filter(Boolean)
+
+            return [
+                ...statusEffects,
+                ...oneTimeEffects,
+            ]
+        })
     }
 
     // ===================================================================================
@@ -3022,9 +3386,20 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
     }
 
+    function getMinSkillStartTime() {
+        if (prepExpanded.value) return 0
+        return snapTimeToFrame(Math.max(0, Number(prepDuration.value) || 0))
+    }
+
+    function clampSkillStartTime(time) {
+        const raw = Number(time) || 0
+        return Math.max(getMinSkillStartTime(), snapTimeToFrame(raw))
+    }
+
     function addSkillToTrack(trackId, skill, startTime) {
         const track = tracks.value.find(t => t.id === trackId); if (!track) return
 
+        const actionStartTime = clampSkillStartTime(startTime)
         const cloneEffectsForAction = (skillForClone) => {
             return cloneActionHits(skillForClone.hits)
         }
@@ -3062,7 +3437,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             }
 
             const inserted = []
-            let cursor = startTime
+            let cursor = actionStartTime
 
             for (let i = 0; i < segmentSkills.length; i++) {
                 const segSkill = segmentSkills[i]
@@ -3086,7 +3461,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             const insertedIds = inserted.map(a => a.instanceId)
             if (isComboLikeAction(skill) || isUltimateLikeAction(skill)) {
                 const amount = isComboLikeAction(skill) ? 0.5 : (Number(skill.animationTime) || 1.5)
-                pushSubsequentActions(startTime, amount, insertedIds)
+                pushSubsequentActions(actionStartTime, amount, insertedIds)
             }
 
             normalizeComboLinksInTracks()
@@ -3103,7 +3478,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             const attackGroupInstanceId = `atkgrp_${uid()}`
             const attackSequenceTotal = segments.length
             const attackGroupName = skill.name || getI18nSkillType('attack')
-            let cursor = startTime
+            let cursor = actionStartTime
 
             for (let i = 0; i < segments.length; i++) {
                 const seg = segments[i]
@@ -3124,7 +3499,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (skill?.kind === 'attack_segment') {
             const idx = Number(skill.attackSequenceIndex) || Number(skill.attackSegmentIndex) || 0
             const total = Number(skill.attackSequenceTotal) || 0
-            const newAction = createActionFromSkill(skill, startTime)
+            const newAction = createActionFromSkill(skill, actionStartTime)
             if (idx > 0) {
                 newAction.attackSequenceIndex = idx
                 if (total > 0) {
@@ -3140,12 +3515,12 @@ export const useTimelineStore = defineStore('timeline', () => {
             return
         }
 
-        const newAction = createActionFromSkill(skill, startTime)
+        const newAction = createActionFromSkill(skill, actionStartTime)
         track.actions.push(newAction)
         track.actions.sort((a, b) => a.startTime - b.startTime)
         if (isComboLikeAction(skill) || isUltimateLikeAction(skill)) {
             const amount = isComboLikeAction(skill) ? 0.5 : (Number(skill.animationTime) || 1.5);
-            pushSubsequentActions(startTime, amount, newAction.instanceId);
+            pushSubsequentActions(actionStartTime, amount, newAction.instanceId)
         }
         commitState()
     }
@@ -3266,7 +3641,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             idMap.set(item.data.instanceId, newId)
             const clonedAction = JSON.parse(JSON.stringify(item.data))
             clonedAction.hits = cloneActionHits(clonedAction.hits, globalEffectIdMap)
-            const newStartTime = Math.max(0, item.data.startTime + timeDelta)
+            const newStartTime = clampSkillStartTime(item.data.startTime + timeDelta)
             const newAction = { ...clonedAction, instanceId: newId, startTime: newStartTime, logicalStartTime: newStartTime }
             track.actions.push(newAction)
             track.actions.sort((a, b) => a.startTime - b.startTime)
@@ -4088,17 +4463,19 @@ export const useTimelineStore = defineStore('timeline', () => {
         x: 0,
         y: 0,
         targetId: null,
+        targetType: null,
         time: 0
     })
 
-    function openContextMenu(evt, instanceId = null, time = 0) {
+    function openContextMenu(evt, instanceId = null, time = 0, targetType = null) {
         const timelinePos = toTimelineSpace(evt.clientX, evt.clientY)
         contextMenu.value = {
             visible: true,
             x: timelinePos.x,
             y: timelinePos.y,
             targetId: instanceId,
-            time: time
+            targetType,
+            time
         }
     }
 
@@ -4177,7 +4554,11 @@ export const useTimelineStore = defineStore('timeline', () => {
             systemConstants: systemConstants.value,
             prepDuration: prepDuration.value,
             activeEnemyId: activeEnemyId.value,
-            runtimeInitialEffects: runtimeInitialEffects.value,
+            runtimeInitialEffects: [
+                ...runtimeInitialEffects.value,
+                ...inheritedInitialEffects.value,
+            ],
+            runtimeInitialEnemyState: inheritedInitialEnemyState.value,
             simulationEndline: simulationEndline.value,
             lmdiAttributionMode: lmdiAttributionMode.value,
         });
@@ -4199,6 +4580,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             scenario.consumedStacksWriteKeys,
             {
                 initialEffects: scenario.initialEffects,
+                initialEnemyState: scenario.initialEnemyState,
                 baseStatsByTrack: scenario.baseStatsByTrack,
                 enemyDef: scenario.enemyDef,
                 endlineTime: scenario.endlineTime,
@@ -4617,8 +4999,44 @@ export const useTimelineStore = defineStore('timeline', () => {
     const STORAGE_KEY = 'endaxis_autosave'
 
     function initAutoSave() {
-        watchThrottled([tracks, connections, characterOverrides, weaponOverrides, equipmentCategoryOverrides, systemConstants, scenarioList, activeScenarioId, activeEnemyId, customEnemyParams, cycleBoundaries, switchEvents, () => operatorStore.operators, () => weaponStore.weapons, () => gearStore.gears],
-            ([newTracks, newConns, newOverrides, newWeaponOverrides, newEquipmentCatOverrides, newSys, newScList, newActiveId, newEnemyId, newCustomParams, newBoundaries, newSwEvents, newOperators, newWeapons, newGears]) => {
+        watchThrottled([
+                tracks,
+                connections,
+                characterOverrides,
+                weaponOverrides,
+                equipmentCategoryOverrides,
+                systemConstants,
+                scenarioList,
+                activeScenarioId,
+                activeEnemyId,
+                customEnemyParams,
+                cycleBoundaries,
+                switchEvents,
+                inheritedInitialEffects,
+                inheritedInitialEnemyState,
+                () => operatorStore.operators,
+                () => weaponStore.weapons,
+                () => gearStore.gears
+            ],
+            ([
+                 newTracks,
+                 newConns,
+                 newOverrides,
+                 newWeaponOverrides,
+                 newEquipmentCatOverrides,
+                 newSys,
+                 newScList,
+                 newActiveId,
+                 newEnemyId,
+                 newCustomParams,
+                 newBoundaries,
+                 newSwEvents,
+                 newInheritedInitialEffects,
+                 newInheritedInitialEnemyState,
+                 newOperators,
+                 newWeapons,
+                 newGears
+             ]) => {
 
                 if (isLoading.value) return
 
@@ -4644,7 +5062,9 @@ export const useTimelineStore = defineStore('timeline', () => {
                         activeEnemyId: newEnemyId,
                         customEnemyParams: newCustomParams,
                         cycleBoundaries: newBoundaries,
-                        switchEvents: newSwEvents
+                        switchEvents: newSwEvents,
+                        inheritedInitialEffects: newInheritedInitialEffects,
+                        inheritedInitialEnemyState: newInheritedInitialEnemyState,
                     }
                 }
 
@@ -4692,6 +5112,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                     equipmentCategoryOverrides.value = {};
                     prepDuration.value = 5
                     prepExpanded.value = true
+                    inheritedInitialEffects.value = []
+                    inheritedInitialEnemyState.value = null
                     recomputeAllTrackOperatorStatuses()
                 }
 
@@ -4714,6 +5136,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         equipmentCategoryOverrides.value = {};
         cycleBoundaries.value = [];
         switchEvents.value = [];
+        inheritedInitialEffects.value = []
+        inheritedInitialEnemyState.value = null
         prepDuration.value = 5
         prepExpanded.value = true
 
@@ -4773,10 +5197,13 @@ export const useTimelineStore = defineStore('timeline', () => {
                 equipmentCategoryOverrides: equipmentCategoryOverrides.value,
                 prepDuration: prepDuration.value,
                 prepExpanded: prepExpanded.value,
+                systemConstants: systemConstants.value,
                 activeEnemyId: activeEnemyId.value,
                 customEnemyParams: customEnemyParams.value,
                 cycleBoundaries: cycleBoundaries.value,
-                switchEvents: switchEvents.value
+                switchEvents: switchEvents.value,
+                inheritedInitialEffects: inheritedInitialEffects.value,
+                inheritedInitialEnemyState: inheritedInitialEnemyState.value,
             }
         }
 
@@ -4912,6 +5339,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         getUltimateEnhancementMetrics,
         enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
+        createInheritedScenarioFromCycleBoundary,
         effectLayouts, getNodeRect, weaponDatabase, weaponOverrides, activeWeapon, getWeaponById,
         equipmentDatabase, equipmentCategories, equipmentCategoryConfigs, getEquipmentById, updateTrackEquipment, updateTrackEquipmentTier,
         equipmentCategoryOverrides, updateEquipmentCategoryOverride, getSetBonusDisplayName,

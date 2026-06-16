@@ -11,6 +11,7 @@ interface CompileEndaxisScenarioInput {
   prepDuration?: number;
   activeEnemyId?: string | null;
   runtimeInitialEffects?: InitialEffect[];
+  runtimeInitialEnemyState?: any;
   simulationEndline?: number | null;
   lmdiAttributionMode?: "stacks" | "applier";
 }
@@ -113,6 +114,7 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
     prepDuration,
     activeEnemyId,
     runtimeInitialEffects = [],
+    runtimeInitialEnemyState = null,
     simulationEndline = null,
     lmdiAttributionMode = "stacks",
   } = input;
@@ -172,6 +174,7 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
     triggerRegistry,
     consumedStacksWriteKeys,
     initialEffects: runtimeInitialEffects,
+    initialEnemyState: runtimeInitialEnemyState,
     baseStatsByTrack,
     enemyDef: enemySheet?.def ?? enemyConfig.defense ?? 100,
     endlineTime: simulationEndline ?? undefined,

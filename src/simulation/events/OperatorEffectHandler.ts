@@ -25,6 +25,7 @@ export class OperatorEffectHandler implements EventHandler<OperatorEffectEvents>
           expiresAt: event.expiresAt,
           sourceId: event.sourceId,
           stackStrategy: event.stackStrategy,
+          effect: event.effect,
           consumedStacks: event.consumedStacks,
         });
         // Permanent passives (expiresAt === Infinity): only store in state, skip log/expiry/triggers
@@ -69,17 +70,17 @@ export class OperatorEffectHandler implements EventHandler<OperatorEffectEvents>
             2,
           );
         }
-        if (!event.silent) {
+        if (!event.silent && !event.skipStatusAppliedTrigger) {
           this.registry?.onStatusApplied(
-            event.id,
-            event.stat,
-            'self',
-            event.sourceId,
-            event.time,
-            ctx,
-            event.sourceSkillType,
-            event.sourceSkillId,
-            resolvedStacks,
+              event.id,
+              event.stat,
+              'self',
+              event.sourceId,
+              event.time,
+              ctx,
+              event.sourceSkillType,
+              event.sourceSkillId,
+              resolvedStacks,
           );
         }
         break;

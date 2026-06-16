@@ -434,7 +434,11 @@
     "setTargetPort": "Установить точку входа",
     "globalOps": "Глобальные операции",
     "addCycleBoundary": "Добавить границу цикла",
-    "addSwitchEvent": "Сменить персонажа на..."
+    "addSwitchEvent": "Сменить персонажа на...",
+    "cycleBoundary": "Граница цикла",
+    "createInheritedScenario": "Создать схему с унаследованными ресурсами",
+    "inheritedScenarioCreated": "Схема с унаследованными ресурсами создана",
+    "inheritedScenarioFailed": "Не удалось создать унаследованную схему"
   },
   "connection": {
     "connect": "Связать",

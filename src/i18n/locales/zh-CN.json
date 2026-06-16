@@ -434,7 +434,11 @@
     "setTargetPort": "设置 入点",
     "globalOps": "全局操作",
     "addCycleBoundary": "添加循环分界线",
-    "addSwitchEvent": "在此处切人..."
+    "addSwitchEvent": "在此处切人...",
+    "cycleBoundary": "循环分界线",
+    "createInheritedScenario": "继承资源并生成新方案",
+    "inheritedScenarioCreated": "已继承资源并生成新方案",
+    "inheritedScenarioFailed": "生成继承方案失败"
   },
   "connection": {
     "connect": "连线",

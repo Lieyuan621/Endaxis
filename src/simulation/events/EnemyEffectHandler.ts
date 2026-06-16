@@ -930,7 +930,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     const duration = effectiveDuration || getReactionDuration('electrification', level);
     const expiresAt = ctx.getShiftedTime(time, duration);
     this.scheduleDebuffExpire('electrification', expiresAt, ctx);
-    enemy.electrification = { level, expiresAt, operatorSlot: 0 };
+    enemy.electrification = { level, expiresAt, operatorSlot: 0, sourceId };
     ctx.enemyLog({
       type: 'DEBUFF_APPLY',
       time,
@@ -1230,7 +1230,15 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     );
 
     this.scheduleDebuffExpire('combustion', expiresAt, ctx);
-    enemy.combustion = { level, startedAt: time, expiresAt };
+    enemy.combustion = {
+      level,
+      startedAt: time,
+      expiresAt,
+      sourceId,
+      effectiveness,
+      consumedStackSources,
+      actionId,
+    };
     ctx.enemyLog({
       type: 'DEBUFF_APPLY',
       time,
@@ -1277,7 +1285,12 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     const duration = effectiveDuration || getReactionDuration('solidification', level);
     const expiresAt = ctx.getShiftedTime(time, duration);
     this.scheduleDebuffExpire('solidification', expiresAt, ctx);
-    enemy.solidification = { level, expiresAt, consumedStackSources };
+    enemy.solidification = {
+      level,
+      expiresAt,
+      consumedStackSources,
+      sourceId,
+    };
     ctx.enemyLog({
       type: 'DEBUFF_APPLY',
       time,
@@ -1313,7 +1326,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     const duration = effectiveDuration || getReactionDuration('breach', level);
     const expiresAt = ctx.getShiftedTime(time, duration);
     this.scheduleDebuffExpire('breach', expiresAt, ctx);
-    enemy.breach = { level, expiresAt, operatorSlot: 0 };
+    enemy.breach = { level, expiresAt, operatorSlot: 0, sourceId };
     ctx.enemyLog({ type: 'DEBUFF_APPLY', time, debuffType: 'breach', level, expiresAt, sourceId });
 
     // Apply physical damage taken increase as enemy status effect
@@ -1389,6 +1402,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       expiresAt,
       sourceId,
       icon: event.icon,
+      effect: event.effect,
       consumedStacks: event.consumedStacks,
       sourceBreakdown: event.sourceBreakdown,
       cancelHitKey: (event as any).cancelHitKey,

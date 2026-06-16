@@ -18,6 +18,31 @@ const targetAction = computed(() => {
   return info ? info.node : null
 })
 
+const targetCycleBoundary = computed(() => {
+  if (store.contextMenu.targetType !== 'cycleBoundary') return null
+  return store.cycleBoundaries.find(b => b.id === store.contextMenu.targetId) || null
+})
+
+function handleCreateInheritedScenario() {
+  const result = store.createInheritedScenarioFromCycleBoundary(store.contextMenu.targetId)
+
+  if (result?.ok) {
+    ElMessage.success({
+      message: t('contextMenu.inheritedScenarioCreated'),
+      duration: 1000,
+    })
+  } else if (result?.reason === 'limit') {
+    ElMessage.warning({ message: `方案数量已达上限 (${store.MAX_SCENARIOS})`, duration: 1200 })
+  } else {
+    ElMessage.error({
+      message: t('contextMenu.inheritedScenarioFailed'),
+      duration: 1200,
+    })
+  }
+
+  close()
+}
+
 function close() {
   store.closeContextMenu()
 }
@@ -75,9 +100,9 @@ function handleMute() {
 const PRESET_COLORS = computed(() => [
   { val: null, label: t('common.default') },
   { val: store.ELEMENT_COLORS.physical, label: t('timelineGrid.elementFilter.physical') },
-  { val: store.ELEMENT_COLORS.blaze, label: t('timelineGrid.elementFilter.blaze') },
-  { val: store.ELEMENT_COLORS.cold, label: t('timelineGrid.elementFilter.cold') },
-  { val: store.ELEMENT_COLORS.emag, label: t('timelineGrid.elementFilter.emag') },
+  { val: store.ELEMENT_COLORS.heat, label: t('timelineGrid.elementFilter.blaze') },
+  { val: store.ELEMENT_COLORS.cryo, label: t('timelineGrid.elementFilter.cold') },
+  { val: store.ELEMENT_COLORS.electric, label: t('timelineGrid.elementFilter.emag') },
   { val: store.ELEMENT_COLORS.nature, label: t('timelineGrid.elementFilter.nature') },
 ])
 
@@ -196,6 +221,27 @@ function handleAddCycleBoundary() {
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </div>
+      </div>
+    </template>
+
+    <template v-else-if="targetCycleBoundary">
+      <div class="menu-header">{{ t('contextMenu.cycleBoundary') }}</div>
+
+      <div class="menu-item" @click="handleCreateInheritedScenario">
+        <span class="icon">⟲</span>
+        <span class="label">{{ t('contextMenu.createInheritedScenario') }}</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="menu-item delete-item" @click="handleDelete">
+    <span class="icon">
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+      </svg>
+    </span>
+        <span class="label">{{ t('common.delete') }}</span>
+        <span class="shortcut-hint">Delete</span>
       </div>
     </template>
 

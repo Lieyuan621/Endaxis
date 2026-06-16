@@ -1084,6 +1084,9 @@ export function dispatchSingleActorEffect(
         maxStacks,
         skillTypes: r.skillTypes,
         skillId: r.skillId,
+        expiresAt,
+        sourceId: sourceTrackId,
+        effect: resolved,
       });
       ctx.operatorLog({
         type: 'OPERATOR_EFFECT_APPLY',
