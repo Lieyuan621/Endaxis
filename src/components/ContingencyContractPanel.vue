@@ -16,6 +16,14 @@ const defaultSeason = getDefaultContingencyContractSeason()
 const activeSeasonId = ref(defaultSeason?.id ?? seasons[0]?.id ?? '')
 const selectedTagIds = ref<Set<number>>(new Set())
 
+const CONTRACT_COLUMN_WIDTH = 76
+const CONTRACT_COLUMN_GAP = 12
+const CONTRACT_ROW_HEIGHT = 52
+const CONTRACT_ROW_GAP = 22
+const CONTRACT_TAG_WIDTH = 58
+const CONTRACT_TAG_HEIGHT = 52
+const CONTRACT_MAX_SCORE_ROW = 3
+
 const activeSeason = computed(() =>
   seasons.find(season => season.id === activeSeasonId.value) ?? defaultSeason ?? seasons[0] ?? null,
 )
@@ -34,6 +42,108 @@ const selectedTags = computed(() => {
   const season = activeSeason.value
   if (!season) return []
   return season.groups.flatMap(group => group.tags).filter(tag => selectedTagIds.value.has(tag.id))
+})
+
+const tagCells = computed(() => {
+  const season = activeSeason.value
+  if (!season) return []
+
+  return season.groups.flatMap((group, columnIndex) => group.tags.map(tag => {
+    const rowIndex = Math.max(0, Math.min(CONTRACT_MAX_SCORE_ROW - 1, Math.round(Number(tag.score) || 1) - 1))
+    const columnLeft = columnIndex * (CONTRACT_COLUMN_WIDTH + CONTRACT_COLUMN_GAP)
+    return {
+      tag,
+      columnIndex,
+      rowIndex,
+      left: columnLeft + Math.round((CONTRACT_COLUMN_WIDTH - CONTRACT_TAG_WIDTH) / 2),
+      top: rowIndex * (CONTRACT_ROW_HEIGHT + CONTRACT_ROW_GAP),
+    }
+  }))
+})
+
+const contractGridWidth = computed(() => {
+  const columnCount = activeSeason.value?.groups.length ?? 0
+  return columnCount > 0
+    ? columnCount * CONTRACT_COLUMN_WIDTH + (columnCount - 1) * CONTRACT_COLUMN_GAP
+    : 0
+})
+
+const contractGridHeight = computed(
+  () => CONTRACT_MAX_SCORE_ROW * CONTRACT_ROW_HEIGHT + (CONTRACT_MAX_SCORE_ROW - 1) * CONTRACT_ROW_GAP,
+)
+
+const conflictConnectors = computed(() => {
+  const byConflict = new Map<string, typeof tagCells.value>()
+  for (const cell of tagCells.value) {
+    if (!cell.tag.conflictId) continue
+    const list = byConflict.get(cell.tag.conflictId) ?? []
+    list.push(cell)
+    byConflict.set(cell.tag.conflictId, list)
+  }
+
+  const connectors: Array<{
+    key: string
+    kind: 'horizontal' | 'vertical'
+    left: number
+    top: number
+    width?: number
+    height?: number
+  }> = []
+
+  for (const [conflictId, cells] of byConflict) {
+    const byRow = new Map<number, typeof cells>()
+    const byColumn = new Map<number, typeof cells>()
+
+    for (const cell of cells) {
+      const rowCells = byRow.get(cell.rowIndex) ?? []
+      rowCells.push(cell)
+      byRow.set(cell.rowIndex, rowCells)
+
+      const columnCells = byColumn.get(cell.columnIndex) ?? []
+      columnCells.push(cell)
+      byColumn.set(cell.columnIndex, columnCells)
+    }
+
+    for (const [rowIndex, rowCells] of byRow) {
+      rowCells.sort((a, b) => a.columnIndex - b.columnIndex)
+      for (let index = 0; index < rowCells.length - 1; index += 1) {
+        const current = rowCells[index]
+        const next = rowCells[index + 1]
+        if (!current || !next || current.columnIndex === next.columnIndex) continue
+        const left = current.left + CONTRACT_TAG_WIDTH
+        const width = next.left - left
+        if (width <= 0) continue
+        connectors.push({
+          key: `${conflictId}-h-${rowIndex}-${current.columnIndex}-${next.columnIndex}`,
+          kind: 'horizontal',
+          left,
+          top: current.top + Math.round(CONTRACT_TAG_HEIGHT / 2) - 7,
+          width,
+        })
+      }
+    }
+
+    for (const [columnIndex, columnCells] of byColumn) {
+      columnCells.sort((a, b) => a.rowIndex - b.rowIndex)
+      for (let index = 0; index < columnCells.length - 1; index += 1) {
+        const current = columnCells[index]
+        const next = columnCells[index + 1]
+        if (!current || !next || current.rowIndex === next.rowIndex) continue
+        const top = current.top + CONTRACT_TAG_HEIGHT
+        const height = next.top - top
+        if (height <= 0) continue
+        connectors.push({
+          key: `${conflictId}-v-${columnIndex}-${current.rowIndex}-${next.rowIndex}`,
+          kind: 'vertical',
+          left: current.left + Math.round(CONTRACT_TAG_WIDTH / 2) - 7,
+          top,
+          height,
+        })
+      }
+    }
+  }
+
+  return connectors
 })
 
 watch(activeSeasonId, () => {
@@ -93,14 +203,57 @@ function hideBrokenImage(event: Event) {
   <section class="cc-panel">
     <div v-if="activeSeason" class="cc-body">
       <div class="cc-groups">
-        <section v-for="group in activeSeason.groups" :key="group.id" class="cc-group">
-          <div class="cc-group-label">
-            <span>{{ group.id }}</span>
+        <div class="cc-grid" :style="{ width: `${contractGridWidth}px`, height: `${contractGridHeight}px` }">
+          <div
+            v-for="connector in conflictConnectors"
+            :key="connector.key"
+            class="cc-conflict-link"
+            :class="`is-${connector.kind}`"
+            :style="{
+              left: `${connector.left}px`,
+              top: `${connector.top}px`,
+              width: connector.width ? `${connector.width}px` : undefined,
+              height: connector.height ? `${connector.height}px` : undefined,
+            }"
+            aria-hidden="true"
+          >
+            <svg
+              v-if="connector.kind === 'horizontal'"
+              class="cc-conflict-link-svg"
+              :width="connector.width"
+              height="14"
+              :viewBox="`0 0 ${connector.width ?? 0} 14`"
+              preserveAspectRatio="none"
+            >
+              <line x1="0.5" y1="2" x2="0.5" y2="5" />
+              <line x1="0.5" y1="9" x2="0.5" y2="12" />
+              <line :x1="(connector.width ?? 0) - 0.5" y1="2" :x2="(connector.width ?? 0) - 0.5" y2="5" />
+              <line :x1="(connector.width ?? 0) - 0.5" y1="9" :x2="(connector.width ?? 0) - 0.5" y2="12" />
+              <line x1="0.5" y1="7" :x2="(connector.width ?? 0) - 0.5" y2="7" />
+            </svg>
+            <svg
+              v-else
+              class="cc-conflict-link-svg"
+              width="14"
+              :height="connector.height"
+              :viewBox="`0 0 14 ${connector.height ?? 0}`"
+              preserveAspectRatio="none"
+            >
+              <line x1="2" y1="0.5" x2="5" y2="0.5" />
+              <line x1="9" y1="0.5" x2="12" y2="0.5" />
+              <line x1="2" :y1="(connector.height ?? 0) - 0.5" x2="5" :y2="(connector.height ?? 0) - 0.5" />
+              <line x1="9" :y1="(connector.height ?? 0) - 0.5" x2="12" :y2="(connector.height ?? 0) - 0.5" />
+              <line x1="7" y1="0.5" x2="7" :y2="(connector.height ?? 0) - 0.5" />
+            </svg>
           </div>
-          <div class="cc-tag-row">
+
+          <div
+            v-for="cell in tagCells"
+            :key="cell.tag.id"
+            class="cc-tag-slot"
+            :style="{ left: `${cell.left}px`, top: `${cell.top}px` }"
+          >
             <el-tooltip
-              v-for="tag in group.tags"
-              :key="tag.id"
               placement="right"
               effect="dark"
               popper-class="cc-tag-tooltip-popper"
@@ -108,28 +261,28 @@ function hideBrokenImage(event: Event) {
             >
               <template #content>
                 <div class="cc-tag-tooltip">
-                  <div class="cc-tag-tooltip-title">{{ tag.name }}</div>
-                  <div v-if="tag.description" class="cc-tag-tooltip-desc">{{ tag.description }}</div>
+                  <div class="cc-tag-tooltip-title">{{ cell.tag.name }}</div>
+                  <div v-if="cell.tag.description" class="cc-tag-tooltip-desc">{{ cell.tag.description }}</div>
                 </div>
               </template>
               <button
                 type="button"
                 class="cc-tag"
                 :class="{
-                  'is-selected': isSelected(tag.id),
-                  'is-locked': !canSelect(tag),
+                  'is-selected': isSelected(cell.tag.id),
+                  'is-locked': !canSelect(cell.tag),
                 }"
-                @click="toggleTag(tag)"
+                @click="toggleTag(cell.tag)"
               >
                 <span class="cc-tag-check">&#10003;</span>
-                <img v-if="tag.iconPath" :src="tag.iconPath" alt="" aria-hidden="true" @error="hideBrokenImage" />
-                <span v-else class="cc-tag-icon-fallback">{{ tag.score }}</span>
-                <span v-if="tag.roman" class="cc-tag-roman">{{ tag.roman }}</span>
-                <span class="cc-tag-score">+{{ tag.score }}</span>
+                <img v-if="cell.tag.iconPath" :src="cell.tag.iconPath" alt="" aria-hidden="true" @error="hideBrokenImage" />
+                <span v-else class="cc-tag-icon-fallback">{{ cell.tag.score }}</span>
+                <span v-if="cell.tag.roman" class="cc-tag-roman">{{ cell.tag.roman }}</span>
+                <span class="cc-tag-score">+{{ cell.tag.score }}</span>
               </button>
             </el-tooltip>
           </div>
-        </section>
+        </div>
       </div>
 
       <aside class="cc-detail">
@@ -210,9 +363,6 @@ function hideBrokenImage(event: Event) {
   overflow-x: auto;
   overflow-y: hidden;
   padding: 10px 12px 18px;
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
   scrollbar-width: thin;
   scrollbar-color: rgba(188, 40, 36, 0.7) rgba(255, 255, 255, 0.08);
   background: #232326;
@@ -231,37 +381,38 @@ function hideBrokenImage(event: Event) {
   border: 2px solid rgba(24, 24, 28, 0.95);
 }
 
-.cc-group {
-  flex: 0 0 76px;
-  min-width: 76px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: stretch;
+.cc-grid {
   position: relative;
+  min-width: max-content;
 }
 
-.cc-group-label {
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-top: 3px solid #d53632;
-  background: #2b2b2d;
-  color: rgba(255, 255, 255, 0.84);
-  font-family: 'Roboto Mono', monospace;
-  font-size: 12px;
-  font-weight: 900;
+.cc-tag-slot {
+  position: absolute;
+  width: 58px;
+  height: 52px;
+  z-index: 2;
 }
 
-.cc-tag-row {
-  min-width: 0;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  position: relative;
+.cc-conflict-link {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cc-conflict-link.is-horizontal {
+  height: 14px;
+}
+
+.cc-conflict-link.is-vertical {
+  width: 14px;
+}
+
+.cc-conflict-link-svg {
+  display: block;
+  overflow: visible;
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
 .cc-tag {

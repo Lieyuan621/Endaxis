@@ -916,10 +916,9 @@ const currentStaggerValue = computed(() => {
   const last = points[points.length - 1]
   return Math.round(Number(last?.val) || 0)
 })
-const currentSpValue = computed(() => {
-  const points = spData.value
-  const last = points[points.length - 1]
-  return Math.round(Number(last?.sp) || 0)
+const staggerRatio = computed(() => {
+  const maxStagger = Math.max(1, Number(store.systemConstants.maxStagger) || 1)
+  return clamp(currentStaggerValue.value / maxStagger, 0, 1)
 })
 </script>
 
@@ -934,15 +933,11 @@ const currentSpValue = computed(() => {
         <div v-else class="module-meta-body enemy-status-meta">
           <div class="module-title red">{{ t('resourceMonitor.modules.enemyStatus') }}</div>
           <div class="enemy-compact">
-            <div class="enemy-avatar-box">
-              <img v-if="!activeEnemyInfo.isCustom" :src="activeEnemyInfo.avatar" @error="e=>e.target.src='/Endaxis/avatars/default_enemy.webp'" />
-              <div v-else class="custom-avatar-placeholder">?</div>
-            </div>
             <div class="enemy-compact-text">
               <div class="enemy-name">{{ activeEnemyInfo.name }}</div>
-              <div class="enemy-hp-text">{{ enemyRemainingHp.toLocaleString() }}/{{ enemyMaxHp.toLocaleString() }}</div>
             </div>
           </div>
+          <div class="module-value-text enemy-hp-text">{{ enemyRemainingHp.toLocaleString() }}/{{ enemyMaxHp.toLocaleString() }}</div>
           <div class="enemy-hp-bar">
             <div class="enemy-hp-fill" :style="{ width: `${enemyHpRatio * 100}%` }"></div>
           </div>
@@ -959,7 +954,10 @@ const currentSpValue = computed(() => {
         </div>
         <div v-else class="module-meta-body stagger-meta">
           <div class="module-title orange">{{ t('resourceMonitor.modules.stagger') }}</div>
-          <div class="module-big-number">{{ currentStaggerValue }}/{{ store.systemConstants.maxStagger }}</div>
+          <div class="module-value-text stagger-value-text">{{ currentStaggerValue }}/{{ store.systemConstants.maxStagger }}</div>
+          <div class="enemy-hp-bar stagger-value-bar">
+            <div class="enemy-hp-fill stagger-value-fill" :style="{ width: `${staggerRatio * 100}%` }"></div>
+          </div>
         </div>
       </div>
 
@@ -972,7 +970,6 @@ const currentSpValue = computed(() => {
           {{ t('resourceMonitor.modules.sp') }}
         </div>
         <div v-else class="module-meta-body sp-meta">
-          <div class="module-title gold">{{ t('resourceMonitor.modules.sp') }}</div>
           <div class="module-control-row">
             <label>{{ t('resourceMonitor.labels.initialSp') }}</label>
             <CustomNumberInput v-model="store.systemConstants.initialSp" :min="0" :max="300" active-color="#ffd700" class="standard-input" />
@@ -981,7 +978,6 @@ const currentSpValue = computed(() => {
             <label>{{ t('resourceMonitor.labels.spPerSecond') }}</label>
             <CustomNumberInput v-model="store.systemConstants.spRegenRate" :step="0.5" :min="0" active-color="#ffd700" class="standard-input" />
           </div>
-          <div class="module-big-number sp-current">{{ currentSpValue }}/300</div>
         </div>
       </div>
     </div>
@@ -1415,42 +1411,59 @@ const currentSpValue = computed(() => {
 }
 
 .enemy-hp-text {
+  text-align: center;
+}
+
+.module-value-text {
   color: rgba(255, 255, 255, 0.82);
   font-family: 'Roboto Mono', monospace;
   font-size: 12px;
   font-weight: 800;
+  line-height: 1.1;
   white-space: nowrap;
 }
 
 .enemy-hp-bar {
   height: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background:
-    repeating-linear-gradient(45deg, rgba(255,255,255,0.13), rgba(255,255,255,0.13) 4px, transparent 4px, transparent 8px),
-    rgba(255, 255, 255, 0.08);
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .enemy-hp-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d9363e 0%, #ff4d4f 100%);
+  background: #d9363e;
+  position: relative;
   transition: width 0.16s ease;
 }
 
-.module-big-number {
-  color: rgba(255, 255, 255, 0.9);
-  font-family: 'Roboto Mono', monospace;
-  font-size: 18px;
-  font-weight: 900;
-  text-align: center;
-  line-height: 1.1;
-  white-space: nowrap;
+.enemy-hp-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.18) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  pointer-events: none;
 }
 
-.sp-current {
-  margin-top: 2px;
-  font-size: 13px;
-  color: rgba(255, 215, 0, 0.78);
+.stagger-value-text {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.stagger-value-bar {
+  background: rgba(255, 214, 145, 0.08);
+}
+
+.stagger-value-fill {
+  background: #d46b08;
 }
 
 .module-control-row {
@@ -1486,43 +1499,6 @@ const currentSpValue = computed(() => {
   width: 2px;
   background: #ffd700;
   box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
-}
-
-.custom-avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px rgba(255, 215, 0, 0.4);
-  box-sizing: border-box;
-  color: #ffd700;
-  font-size: 18px;
-  font-weight: 900;
-  font-family: 'Roboto Mono', monospace;
-  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
-}
-
-.enemy-avatar-box {
-  container-type: size;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #444;
-  background: #111;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.enemy-avatar-box img { width: 100%; height: 100%; object-fit: cover; }
-
-.scan-line {
-  position: absolute; top: 0; left: 0; width: 100%; height: 1px;
-  background: rgba(255, 215, 0, 0.3);
-  box-shadow: 0 0 4px #ffd700;
-  will-change: transform;
-  animation: scan 3s infinite linear;
 }
 
 .enemy-info-col {
@@ -1684,6 +1660,18 @@ const currentSpValue = computed(() => {
   position: relative;
   overflow: hidden;
   min-height: 0;
+}
+
+.stagger-section-body::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: rgba(255, 156, 110, 0.32);
+  z-index: 2;
+  pointer-events: none;
 }
 
 .section-content-track {
