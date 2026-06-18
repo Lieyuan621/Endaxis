@@ -7,6 +7,7 @@ import type { EventHookContext, SimulationContext } from '@/simulation/engine/Si
 import type { ResolvedTimeline } from '../compiler/types.ts';
 import type { EnemyStateEvent, OperatorStateEvent } from '../engine/types.ts';
 import type { BaseStatValues } from '@/data/stats/types';
+import { createDefaultEnemyResistance } from '@/data/enemyResistance';
 
 type SimEventHook = (event: SimEvent, ctx: EventHookContext) => void;
 
@@ -33,6 +34,8 @@ export class SimulationEngine {
   baseStatsByTrack = new Map<string, BaseStatValues>();
   /** Enemy defense value for damage calculation. */
   enemyDef = 100;
+  /** Enemy per-element damage multiplier. 100 = neutral. */
+  enemyResistance = createDefaultEnemyResistance();
   /** If set, simulation stops processing events beyond this time. */
   endlineTime?: number;
   /** LMDI attribution mode for reaction debuff contributions. */
@@ -267,6 +270,7 @@ export class SimulationEngine {
       getAllActions: () => this.timeline.actions,
       getBaseStats: (trackId: string) => this.baseStatsByTrack.get(trackId),
       enemyDef: this.enemyDef,
+      enemyResistance: this.enemyResistance,
       lmdiAttributionMode: this.lmdiAttributionMode,
     };
 

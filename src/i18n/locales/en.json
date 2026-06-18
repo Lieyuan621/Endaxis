@@ -696,6 +696,11 @@
       "enemy": "Enemy Attributes",
       "team": "Team Attributes"
     },
+    "modules": {
+      "enemyStatus": "Enemy Status",
+      "stagger": "Stagger",
+      "sp": "SP Curve"
+    },
     "labels": {
       "enemyHp": "Enemy HP",
       "maxStagger": "Max Stagger",
@@ -703,8 +708,16 @@
       "nodeDuration": "Node duration",
       "breakDuration": "Break duration",
       "executionRecovery": "Finisher recovery",
+      "resistanceTitle": "Enemy Resistance",
       "initialSp": "Initial SP",
       "spPerSecond": "SP/sec."
+    },
+    "resistance": {
+      "physical": "Physical Resistance",
+      "heat": "Heat Resistance",
+      "cryo": "Cryo Resistance",
+      "electric": "Electric Resistance",
+      "nature": "Nature Resistance"
     },
     "sp": {
       "insufficient": "Insufficient SP"
@@ -719,6 +732,23 @@
       "customDesc": "Manually adjust attribute values",
       "desc": "Max:{max} | Nodes:{nodes}",
       "empty": "No matching enemies found"
+    }
+  },
+  "contingencyContract": {
+    "title": "Contingency Contract",
+    "operationName": "Rekindled Test Operation",
+    "score": "Score",
+    "queue": "Queue",
+    "selectedCount": "{count} selected",
+    "pickHint": "Select a tag to view details",
+    "noDescription": "No description",
+    "keyGained": "Key: {key}",
+    "keyRequired": "Requires: {key}",
+    "term": {
+      "enemyBuff": "Enemy buff",
+      "selfGlobalBuff": "Operator modifier",
+      "reduceTime": "Time limit",
+      "none": "No effect"
     }
   },
   "statDetail": {
@@ -805,6 +835,7 @@
     "defMult": "DEF Modifier",
     "defDetail": "DEF {def}",
     "resMult": "RES Modifier",
+    "enemyResMult": "Enemy Resistance",
     "staggerMult": "Stagger Modifier",
     "finisherMult": "Finisher Modifier",
     "levelCoeff": "Level Coefficient",

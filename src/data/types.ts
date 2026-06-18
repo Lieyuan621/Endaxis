@@ -900,6 +900,7 @@ export interface EnemySheet {
   tier: 'boss' | 'champion' | 'elite' | 'normal';
   hp: number;
   def: number;
+  resistance: Record<DamageElement, number>;
   maxStagger: number;
   staggerNodeCount: number;
   staggerNodeDuration: number;

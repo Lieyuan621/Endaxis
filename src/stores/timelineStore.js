@@ -50,6 +50,7 @@ import {
 import { getTeamStatus, statusToKey } from '@/data/team-status'
 import { buildEffectById, collectEffects, collectTriggerEffects, patchCombatSkills } from '@/data/collect'
 import { isEnemyEffect } from '@/data/types'
+import { createDefaultEnemyResistance, normalizeEnemyResistance } from '@/data/enemyResistance'
 import { getBaseStatValues } from '@/data/stats/baseValues'
 import { computeStats } from '@/data/stats/computeStats'
 import { getSkillBounds, clampSkillLevel } from '@/utils/weaponBounds'
@@ -278,18 +279,31 @@ export const useTimelineStore = defineStore('timeline', () => {
         staggerNodeDuration: 2,
         staggerBreakDuration: 10,
         executionRecovery: 25,
-        enemyHp: 100000
+        enemyHp: 100000,
+        resistance: createDefaultEnemyResistance()
     }
 
-    const systemConstants = ref({ ...DEFAULT_SYSTEM_CONSTANTS })
-    const customEnemyParams = ref({
+    function normalizeEnemyConfig(base, patch = {}) {
+        return {
+            ...base,
+            ...(patch || {}),
+            resistance: normalizeEnemyResistance(patch?.resistance ?? base?.resistance),
+        }
+    }
+
+    function createDefaultSystemConstantsState() {
+        return normalizeEnemyConfig(DEFAULT_SYSTEM_CONSTANTS)
+    }
+
+    const systemConstants = ref(createDefaultSystemConstantsState())
+    const customEnemyParams = ref(normalizeEnemyConfig({
         maxStagger: 100,
         staggerNodeCount: 0,
         staggerNodeDuration: 2,
         staggerBreakDuration: 10,
         executionRecovery: 25,
-        enemyHp: 100000
-    })
+        enemyHp: 100000,
+    }))
 
     watch(systemConstants, (newVal) => {
         if (activeEnemyId.value === 'custom') {
@@ -299,7 +313,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                 staggerNodeDuration: newVal.staggerNodeDuration,
                 staggerBreakDuration: newVal.staggerBreakDuration,
                 executionRecovery: newVal.executionRecovery,
-                enemyHp: newVal.enemyHp
+                enemyHp: newVal.enemyHp,
+                resistance: normalizeEnemyResistance(newVal.resistance)
             }
         }
     }, { deep: true })
@@ -951,13 +966,13 @@ export const useTimelineStore = defineStore('timeline', () => {
         equipmentCategoryOverrides.value = snapshot.equipmentCategoryOverrides || {}
 
         if (snapshot.systemConstants) {
-            systemConstants.value = { ...systemConstants.value, ...snapshot.systemConstants }
+            systemConstants.value = normalizeEnemyConfig(systemConstants.value, snapshot.systemConstants)
         }
 
         activeEnemyId.value = snapshot.activeEnemyId || activeEnemyId.value || 'custom'
 
         if (snapshot.customEnemyParams) {
-            customEnemyParams.value = { ...customEnemyParams.value, ...snapshot.customEnemyParams }
+            customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, snapshot.customEnemyParams)
         }
 
         if (snapshot.prepDuration !== undefined) {
@@ -1025,11 +1040,11 @@ export const useTimelineStore = defineStore('timeline', () => {
         prepExpanded.value = incoming.prepExpanded !== false
 
         if (incoming.systemConstants) {
-            systemConstants.value = { ...systemConstants.value, ...incoming.systemConstants }
+            systemConstants.value = normalizeEnemyConfig(systemConstants.value, incoming.systemConstants)
         }
         activeEnemyId.value = incoming.activeEnemyId || 'custom'
         if (incoming.customEnemyParams) {
-            customEnemyParams.value = { ...customEnemyParams.value, ...incoming.customEnemyParams }
+            customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, incoming.customEnemyParams)
         }
         cycleBoundaries.value = incoming.cycleBoundaries ? JSON.parse(JSON.stringify(incoming.cycleBoundaries)) : []
         switchEvents.value = incoming.switchEvents ? JSON.parse(JSON.stringify(incoming.switchEvents)) : []
@@ -1126,7 +1141,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             equipmentCategoryOverrides: {},
             prepDuration: 5,
             prepExpanded: true,
-            systemConstants: { ...DEFAULT_SYSTEM_CONSTANTS },
+            systemConstants: createDefaultSystemConstantsState(),
             inheritedInitialEffects: [],
             inheritedInitialEnemyState: null,
         }
@@ -1237,6 +1252,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 initialEnemyState: compiled.initialEnemyState,
                 baseStatsByTrack: compiled.baseStatsByTrack,
                 enemyDef: compiled.enemyDef,
+                enemyResistance: compiled.enemyResistance,
                 endlineTime: time,
                 lmdiAttributionMode: compiled.lmdiAttributionMode,
             },
@@ -2600,6 +2616,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             ...cloneJsonData(enemy),
             name: getEnemyGameName(enemy.id),
             executionRecovery: Number(enemy.executionRecovery) || Number(enemy.finisherRecovery) || 25,
+            resistance: normalizeEnemyResistance(enemy.resistance),
         }))
     }
 
@@ -3124,7 +3141,10 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         if (enemyId === 'custom') {
             // Restore custom parameters when switching back to the custom enemy.
-            Object.assign(systemConstants.value, customEnemyParams.value)
+            Object.assign(systemConstants.value, {
+                ...customEnemyParams.value,
+                resistance: normalizeEnemyResistance(customEnemyParams.value.resistance),
+            })
         } else {
             // Apply the selected preset enemy.
             const enemy = enemyDatabase.value.find(e => e.id === enemyId)
@@ -3136,6 +3156,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 systemConstants.value.staggerBreakDuration = enemy.staggerBreakDuration
                 systemConstants.value.executionRecovery = enemy.executionRecovery
                 systemConstants.value.enemyHp = Number(enemy.hp ?? enemySheet?.hp ?? systemConstants.value.enemyHp) || 0
+                systemConstants.value.resistance = normalizeEnemyResistance(enemy.resistance ?? enemySheet?.resistance)
             }
         }
     }
@@ -4583,6 +4604,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 initialEnemyState: scenario.initialEnemyState,
                 baseStatsByTrack: scenario.baseStatsByTrack,
                 enemyDef: scenario.enemyDef,
+                enemyResistance: scenario.enemyResistance,
                 endlineTime: scenario.endlineTime,
                 lmdiAttributionMode: scenario.lmdiAttributionMode,
             },
@@ -5088,7 +5110,9 @@ export const useTimelineStore = defineStore('timeline', () => {
 
                 if (!data.scenarioList) return false;
 
-                if (data.systemConstants) systemConstants.value = { ...systemConstants.value, ...data.systemConstants };
+                if (data.systemConstants) {
+                    systemConstants.value = normalizeEnemyConfig(systemConstants.value, data.systemConstants);
+                }
 
                 scenarioList.value = data.scenarioList.map(sc => {
                     const cloned = JSON.parse(JSON.stringify(sc))
@@ -5141,7 +5165,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         prepDuration.value = 5
         prepExpanded.value = true
 
-        systemConstants.value = { ...DEFAULT_SYSTEM_CONSTANTS };
+        systemConstants.value = createDefaultSystemConstantsState();
 
         activeEnemyId.value = 'custom';
         // Reset scenarios to the default single-scenario state.
@@ -5253,12 +5277,14 @@ export const useTimelineStore = defineStore('timeline', () => {
         try {
             const normalizedData = deserializeProjectData(data)
 
-            if (normalizedData.systemConstants) { systemConstants.value = { ...systemConstants.value, ...normalizedData.systemConstants }; }
+            if (normalizedData.systemConstants) {
+                systemConstants.value = normalizeEnemyConfig(systemConstants.value, normalizedData.systemConstants);
+            }
 
             if (normalizedData.activeEnemyId) { activeEnemyId.value = normalizedData.activeEnemyId }
 
             if (normalizedData.customEnemyParams) {
-                customEnemyParams.value = { ...customEnemyParams.value, ...normalizedData.customEnemyParams }
+                customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, normalizedData.customEnemyParams)
             }
 
             if (normalizedData.scenarioList) {

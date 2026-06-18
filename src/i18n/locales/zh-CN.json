@@ -696,6 +696,11 @@
       "enemy": "敌人属性",
       "team": "队伍属性"
     },
+    "modules": {
+      "enemyStatus": "敌人状态",
+      "stagger": "失衡值",
+      "sp": "技力曲线"
+    },
     "labels": {
       "enemyHp": "敌人血量",
       "maxStagger": "失衡上限",
@@ -703,8 +708,16 @@
       "nodeDuration": "踉跄时长",
       "breakDuration": "失衡时长",
       "executionRecovery": "处决回复",
+      "resistanceTitle": "敌人抗性",
       "initialSp": "初始技力",
       "spPerSecond": "回复 / 秒"
+    },
+    "resistance": {
+      "physical": "物理抗性",
+      "heat": "灼热抗性",
+      "cryo": "寒冷抗性",
+      "electric": "电磁抗性",
+      "nature": "自然抗性"
     },
     "sp": {
       "insufficient": "技力不足"
@@ -719,6 +732,23 @@
       "customDesc": "手动调整属性数值",
       "desc": "上限:{max} | 节点:{nodes}",
       "empty": "未找到相关敌人"
+    }
+  },
+  "contingencyContract": {
+    "title": "危机合约",
+    "operationName": "重燃测试作战",
+    "score": "指标",
+    "queue": "队列",
+    "selectedCount": "已选 {count} 个",
+    "pickHint": "选择词条查看详情",
+    "noDescription": "暂无描述",
+    "keyGained": "获得：{key}",
+    "keyRequired": "需要：{key}",
+    "term": {
+      "enemyBuff": "敌方增益",
+      "selfGlobalBuff": "己方修正",
+      "reduceTime": "减少时间",
+      "none": "无效果"
     }
   },
   "statDetail": {
@@ -805,6 +835,7 @@
     "defMult": "防御修正",
     "defDetail": "防御 {def}",
     "resMult": "抗性修正",
+    "enemyResMult": "敌人抗性",
     "staggerMult": "失衡修正",
     "finisherMult": "处决修正",
     "levelCoeff": "等级系数",

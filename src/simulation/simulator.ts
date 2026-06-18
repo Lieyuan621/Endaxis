@@ -8,6 +8,8 @@ import {
 import type { TriggerRegistry } from "./engine/TriggerRegistry";
 import type { OperatorStat } from "@/data/types";
 import type { BaseStatValues } from "@/data/stats/types";
+import type { EnemyResistance } from "@/data/enemyResistance";
+import { normalizeEnemyResistance } from "@/data/enemyResistance";
 
 export interface InitialEffect {
   kind?: "status" | "oneTime";
@@ -34,6 +36,7 @@ interface SimulationOptions {
   initialEnemyState?: any;
   baseStatsByTrack?: Map<string, BaseStatValues>;
   enemyDef?: number;
+  enemyResistance?: EnemyResistance;
   endlineTime?: number;
   lmdiAttributionMode?: "stacks" | "applier";
 }
@@ -60,6 +63,9 @@ export function simulate(
   }
   if (options.baseStatsByTrack) engine.baseStatsByTrack = options.baseStatsByTrack;
   if (options.enemyDef !== undefined) engine.enemyDef = options.enemyDef;
+  engine.enemyResistance = normalizeEnemyResistance(
+    options.enemyResistance ?? enemyConfig.resistance,
+  );
   if (options.endlineTime !== undefined) engine.endlineTime = options.endlineTime;
   if (options.lmdiAttributionMode !== undefined) {
     engine.lmdiAttributionMode = options.lmdiAttributionMode;

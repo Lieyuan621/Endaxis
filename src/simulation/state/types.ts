@@ -4,6 +4,7 @@ import type {
   ResolvedEffect,
 } from "@/simulation/compiler/types.ts";
 import type { BaseStatValues } from "@/data/stats/types";
+import type { EnemyResistance } from "@/data/enemyResistance";
 
 export interface ActorSnapshot {
   id: string;
@@ -57,6 +58,7 @@ export interface EnemyConfig {
   finisherMultiplier?: number;
   defense?: number;
   tier?: string;
+  resistance?: EnemyResistance;
 }
 
 export interface EnemySnapshot {

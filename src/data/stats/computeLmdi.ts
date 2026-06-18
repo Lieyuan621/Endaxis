@@ -52,6 +52,7 @@ interface LmdiParams {
   hittingTrackId: string;
   element: string | undefined;
   enemyDef: number;
+  enemyResistance?: number;
   actualBreakdown: DamageBreakdown;
   staggerMult: number;
   staggerSources: Record<string, number> | undefined;
@@ -105,6 +106,7 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
     hittingTrackId,
     element,
     enemyDef,
+    enemyResistance = 0,
     actualBreakdown,
     staggerMult,
     staggerSources,
@@ -178,6 +180,7 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
       enemyDef,
       resistanceIgnore: selfStats.resistanceIgnore,
       resistanceShred: selfEnemyStatus.resistanceShred,
+      enemyResistance,
       susceptibility: selfTotalSusc,
       increasedDmgTaken: selfEnemyStatus.increasedDmgTaken + selfElementalDmgTaken,
       linkStacks: selfLinkStacks,
@@ -354,6 +357,7 @@ interface ReactionLmdiParams {
   hittingTrackId: string;
   element: string | undefined;
   enemyDef: number;
+  enemyResistance?: number;
   /** The actual (full-buffed) standard-part breakdown (before reaction multipliers). */
   actualStandardBreakdown: DamageBreakdown;
   /** The actual artsIntensityMult with all buffs. */
@@ -392,6 +396,7 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
     hittingTrackId,
     element,
     enemyDef,
+    enemyResistance = 0,
     actualStandardBreakdown,
     actualArtsIntensityMult,
     actualDamage,
@@ -454,6 +459,7 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
       enemyDef,
       resistanceIgnore: selfMods.resistanceIgnore,
       resistanceShred: selfEnemyStatus.resistanceShred,
+      enemyResistance,
       susceptibility: selfTotalSusc,
       increasedDmgTaken: selfEnemyStatus.increasedDmgTaken + selfElementalDmgTaken,
       linkStacks: 0,

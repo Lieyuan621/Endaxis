@@ -22,6 +22,7 @@ import {
   STAGGER_DAMAGE_MULTIPLIER,
 } from '@/data/stats/computeDamage';
 import type { ResolvedStatModifier } from '@/data/stats/types';
+import type { DamageElement } from '@/data/types';
 import {
   computeLmdiContributions,
   computeReactionLmdiContributions,
@@ -34,6 +35,12 @@ import {
 } from '@/data/stats/computeReactionDamage';
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
+
+function getEnemyResistanceValue(ctx: SimulationContext, element: string | undefined): number {
+  if (!element) return 0;
+  const value = ctx.enemyResistance?.[element as DamageElement];
+  return value != null ? value / 100 : 0;
+}
 
 export class HitHandler implements EventHandler<HitEvent> {
   private registry?: TriggerRegistry;
@@ -128,6 +135,7 @@ export class HitHandler implements EventHandler<HitEvent> {
       const enemyStatus = computeEnemyStats([], enemyMods);
 
       const element = reactionMeta.element;
+      const enemyResistance = getEnemyResistanceValue(ctx, element);
       const levelCoeff = reactionMeta.synthetic
         ? 1
         : computeLevelCoefficient(operatorLevel, reactionMeta.reactionType as ReactionDamageType);
@@ -165,6 +173,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         enemyDef: ctx.enemyDef,
         resistanceIgnore: mods.resistanceIgnore,
         resistanceShred: enemyStatus?.resistanceShred ?? 0,
+        enemyResistance,
         susceptibility:
           ((enemyStatus?.susceptibility ?? 0) + elementalSusc) * mods.susceptibilityAmplify,
         increasedDmgTaken: (enemyStatus?.increasedDmgTaken ?? 0) + elementalDmgTaken,
@@ -236,6 +245,7 @@ export class HitHandler implements EventHandler<HitEvent> {
           enemyDef: ctx.enemyDef,
           resistanceIgnore: mods.resistanceIgnore,
           resistanceShred: enemyStatus?.resistanceShred ?? 0,
+          enemyResistance,
           susceptibility:
             ((enemyStatus?.susceptibility ?? 0) + elementalSusc) * mods.susceptibilityAmplify,
           increasedDmgTaken: (enemyStatus?.increasedDmgTaken ?? 0) + elementalDmgTaken,
@@ -256,6 +266,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         hittingTrackId,
         element,
         enemyDef: ctx.enemyDef,
+        enemyResistance,
         actualStandardBreakdown: standardPartBreakdown,
         actualArtsIntensityMult: artsIntensityMult,
         actualDamage: breakdown.expectedDamage,
@@ -291,6 +302,7 @@ export class HitHandler implements EventHandler<HitEvent> {
 
       const action = ctx.getAction(e.payload.actionId);
       const element = hit.element ?? action?.node.element;
+      const enemyResistance = getEnemyResistanceValue(ctx, element);
 
       // Inherit consumed stacks from the action (link stacks, etc.) if the hit doesn't have its own
       if (!hit.consumedStacks && action?.consumedStacks) {
@@ -308,6 +320,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         element,
         staggerMult,
         finisherMult,
+        enemyResistance,
       );
       if (breakdown) {
         hit._expectedDamage = breakdown.expectedDamage;
@@ -368,6 +381,7 @@ export class HitHandler implements EventHandler<HitEvent> {
             hittingTrackId,
             element,
             enemyDef: ctx.enemyDef,
+            enemyResistance,
             actualBreakdown: breakdown,
             staggerMult,
             staggerSources: hit._staggerContributions,

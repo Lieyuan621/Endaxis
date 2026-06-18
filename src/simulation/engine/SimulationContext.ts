@@ -5,6 +5,7 @@ import type { ResolvedAction } from '../compiler/types';
 import type { EnemyStateEvent, OperatorStateEvent } from '../engine/types';
 import type { OperatorEffectState } from '../state/OperatorEffectState';
 import type { BaseStatValues } from '@/data/stats/types';
+import type { EnemyResistance } from '@/data/enemyResistance';
 export interface SimulationContext {
   /** All compiled actions in the timeline (used for cooldown-reduction targeting). */
   getAllActions: () => readonly ResolvedAction[];
@@ -39,6 +40,8 @@ export interface SimulationContext {
   getBaseStats: (trackId: string) => BaseStatValues | undefined;
   /** Enemy defense value for damage calculation. */
   enemyDef: number;
+  /** Enemy per-element damage multiplier. 100 = neutral. */
+  enemyResistance: EnemyResistance;
   /** LMDI attribution mode for reaction debuff contributions. */
   lmdiAttributionMode: 'stacks' | 'applier';
 }

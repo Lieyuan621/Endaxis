@@ -583,6 +583,11 @@
       "enemy": "Атрибуты врага",
       "team": "Атрибуты команды"
     },
+    "modules": {
+      "enemyStatus": "Статус врага",
+      "stagger": "Ошеломление",
+      "sp": "Кривая ОН"
+    },
     "labels": {
       "enemyHp": "Enemy HP",
       "maxStagger": "Макс. ошеломление",
@@ -590,8 +595,16 @@
       "nodeDuration": "Длит. пробития узла",
       "breakDuration": "Длит. пробития",
       "executionRecovery": "Восст. добивания",
+      "resistanceTitle": "Сопротивление врага",
       "initialSp": "Начальные ОН",
       "spPerSecond": "ОН/сек."
+    },
+    "resistance": {
+      "physical": "Физ. сопротивление",
+      "heat": "Тепловое сопротивление",
+      "cryo": "Крио сопротивление",
+      "electric": "Электр. сопротивление",
+      "nature": "Природное сопротивление"
     },
     "sp": {
       "insufficient": "Недостаточно ОН"
@@ -606,6 +619,23 @@
       "customDesc": "Ручная настройка",
       "desc": "Макс:{max} | Узлы:{nodes}",
       "empty": "Враги не найдены"
+    }
+  },
+  "contingencyContract": {
+    "title": "Контракт",
+    "operationName": "Операция повторного испытания",
+    "score": "Очки",
+    "queue": "Очередь",
+    "selectedCount": "Выбрано: {count}",
+    "pickHint": "Выберите тег для деталей",
+    "noDescription": "Нет описания",
+    "keyGained": "Ключ: {key}",
+    "keyRequired": "Требуется: {key}",
+    "term": {
+      "enemyBuff": "Усиление врага",
+      "selfGlobalBuff": "Модификатор отряда",
+      "reduceTime": "Лимит времени",
+      "none": "Без эффекта"
     }
   },
   "statDetail": {
@@ -692,6 +722,7 @@
     "defMult": "Модификатор защиты",
     "defDetail": "Защита {def}",
     "resMult": "Модификатор сопр.",
+    "enemyResMult": "Сопротивление врага",
     "staggerMult": "Модификатор ошеломления",
     "finisherMult": "Модификатор добивания",
     "levelCoeff": "Коэф. уровня",

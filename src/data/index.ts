@@ -1,6 +1,7 @@
 import type { OperatorSheet, WeaponSheet, GearPieceSheet, GearSetSheet, EnemySheet } from './types';
 import type { OperatorListEntry, WeaponListEntry, GearPieceListEntry } from '../types';
 import { getEnemyGameName } from './gameText';
+import { normalizeEnemyResistance } from './enemyResistance';
 // Gear piece sheets (loaded via glob)
 const gearPieceModules = import.meta.glob('./gearpieces/**/*.ts', {
   eager: true,
@@ -280,6 +281,9 @@ export function getEnemyList(): {
   avatar: string;
   category: string;
   tier: string;
+  hp: number;
+  def: number;
+  resistance: EnemySheet['resistance'];
   maxStagger: number;
   staggerNodeCount: number;
   staggerNodeDuration: number;
@@ -293,6 +297,9 @@ export function getEnemyList(): {
       avatar: sheet.avatar,
       category: sheet.category,
       tier: sheet.tier,
+      hp: sheet.hp,
+      def: sheet.def,
+      resistance: normalizeEnemyResistance(sheet.resistance),
       maxStagger: sheet.maxStagger,
       staggerNodeCount: sheet.staggerNodeCount,
       staggerNodeDuration: sheet.staggerNodeDuration,

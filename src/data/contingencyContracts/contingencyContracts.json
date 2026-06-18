@@ -1,0 +1,1623 @@
+{
+  "defaultSeasonId": "indie_contract001",
+  "seasons": [
+    {
+      "id": "indie_contract001",
+      "activityId": "activity_contingency_contract_0",
+      "name": "<size=+4><color=#fff100>此活动为高难挑战活动</color></size>",
+      "description": "此活动为高难挑战活动",
+      "tagMaxColumn": 24,
+      "scoreBand": [
+        25,
+        35
+      ],
+      "rangeArray": [
+        20,
+        35
+      ],
+      "keyLocks": {
+        "key2": {
+          "id": "key2",
+          "color": "#ffbb00",
+          "keyDecoImg": "deco_contingency_select_tag_key_yellow",
+          "keyName": "密钥指标",
+          "lockName": "锁闭指标"
+        }
+      },
+      "groups": [
+        {
+          "id": "1",
+          "groupId": 1028,
+          "tags": [
+            {
+              "id": 102801,
+              "groupId": 1028,
+              "name": "队列：萎缩",
+              "description": "干员主能力值-10%/-20%/-40%",
+              "rawDescription": "干员主能力值<color=#cc9900>-{1-attr:0%}</color>/-{@102802@1-attr:0%}/-{@102803@1-attr:0%}",
+              "icon": "icon_activity_contract_tag_302",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_302.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 0,
+              "unlockActivityStage": "",
+              "conflictId": "c1028",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_main_attribute_down",
+                  "blackboard": [
+                    {
+                      "key": "attr",
+                      "value": 0.9,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 102802,
+              "groupId": 1028,
+              "name": "队列：萎缩",
+              "description": "干员主能力值-10%/-20%/-40%",
+              "rawDescription": "干员主能力值-{@102801@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>/-{@102803@1-attr:0%}",
+              "icon": "icon_activity_contract_tag_303",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_303.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 0,
+              "unlockActivityStage": "",
+              "conflictId": "c1028",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_main_attribute_down",
+                  "blackboard": [
+                    {
+                      "key": "attr",
+                      "value": 0.8,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 102803,
+              "groupId": 1028,
+              "name": "队列：萎缩",
+              "description": "干员主能力值-10%/-20%/-40%",
+              "rawDescription": "干员主能力值-{@102801@1-attr:0%}/-{@102802@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>",
+              "icon": "icon_activity_contract_tag_304",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_304.webp",
+              "roman": "Ⅲ",
+              "score": 3,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 0,
+              "unlockActivityStage": "",
+              "conflictId": "c1028",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_main_attribute_down",
+                  "blackboard": [
+                    {
+                      "key": "attr",
+                      "value": 0.6,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "groupId": 1002,
+          "tags": [
+            {
+              "id": 100201,
+              "groupId": 1002,
+              "name": "改写：刺激",
+              "description": "敌人造成伤害+30%/+80%",
+              "rawDescription": "敌人造成伤害<color=#cc9900>+{dmg_up:0%}</color>/+{@100202@dmg_up:0%}",
+              "icon": "icon_activity_contract_tag_101",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_101.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 0,
+              "unlockActivityStage": "",
+              "conflictId": "c1002",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_common_dmg_up",
+                  "blackboard": [
+                    {
+                      "key": "dmg_up",
+                      "value": 0.3,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 100202,
+              "groupId": 1002,
+              "name": "改写：刺激",
+              "description": "敌人造成伤害+30%/+80%",
+              "rawDescription": "敌人造成伤害+{@100201@dmg_up:0%}/<color=#cc9900>+{dmg_up:0%}</color>",
+              "icon": "icon_activity_contract_tag_102",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_102.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 0,
+              "unlockActivityStage": "",
+              "conflictId": "c1002",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_common_dmg_up",
+                  "blackboard": [
+                    {
+                      "key": "dmg_up",
+                      "value": 0.8,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "groupId": 1021,
+          "tags": [
+            {
+              "id": 102101,
+              "groupId": 1021,
+              "name": "环境：时限",
+              "description": "倒计时-100/-200秒",
+              "rawDescription": "倒计时<color=#cc9900>-{-time:0}</color>/-{@102102@-time:0}秒",
+              "icon": "icon_activity_contract_tag_111",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_111.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 0,
+              "unlockActivityStage": "",
+              "conflictId": "c1021",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 3,
+                  "buffId": "global_buff_cc_level_countdown_reduce",
+                  "blackboard": [
+                    {
+                      "key": "time",
+                      "value": -100,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 102102,
+              "groupId": 1021,
+              "name": "环境：时限",
+              "description": "倒计时-100/-200秒",
+              "rawDescription": "倒计时-{@102101@-time:0}/<color=#cc9900>-{-time:0}</color>秒",
+              "icon": "icon_activity_contract_tag_112",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_112.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 0,
+              "unlockActivityStage": "",
+              "conflictId": "c1021",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 3,
+                  "buffId": "global_buff_cc_level_countdown_reduce",
+                  "blackboard": [
+                    {
+                      "key": "time",
+                      "value": -200,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "groupId": 9001,
+          "tags": [
+            {
+              "id": 900101,
+              "groupId": 9001,
+              "name": "改写：活性",
+              "description": "敌人生命值+50%/+100%/+200%",
+              "rawDescription": "敌人生命值<color=#cc9900>+{hp_up-1:0%}</color>/+{@900102@hp_up-1:0%}/+{@900103@hp_up-1:0%}",
+              "icon": "icon_activity_contract_tag_114",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_114.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c9001",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_common_hp_up",
+                  "blackboard": [
+                    {
+                      "key": "hp_up",
+                      "value": 1.5,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 900102,
+              "groupId": 9001,
+              "name": "改写：活性",
+              "description": "敌人生命值+50%/+100%/+200%",
+              "rawDescription": "敌人生命值+{@900101@hp_up-1:0%}/<color=#cc9900>+{hp_up-1:0%}</color>/+{@900103@hp_up-1:0%}",
+              "icon": "icon_activity_contract_tag_115",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_115.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c9001",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_common_hp_up",
+                  "blackboard": [
+                    {
+                      "key": "hp_up",
+                      "value": 2,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 900103,
+              "groupId": 9001,
+              "name": "改写：活性",
+              "description": "敌人生命值+50%/+100%/+200%",
+              "rawDescription": "敌人生命值+{@900101@hp_up-1:0%}/+{@900102@hp_up-1:0%}/<color=#cc9900>+{hp_up-1:0%}</color>",
+              "icon": "icon_activity_contract_tag_116",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_116.webp",
+              "roman": "Ⅲ",
+              "score": 3,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c9001",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_common_hp_up",
+                  "blackboard": [
+                    {
+                      "key": "hp_up",
+                      "value": 3,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "5",
+          "groupId": 1009,
+          "tags": [
+            {
+              "id": 100901,
+              "groupId": 1009,
+              "name": "队列：扼制",
+              "description": "干员使敌人的破防或法术附着层数增加后，该干员造成的对应类型伤害-45%/-90%，持续10秒",
+              "rawDescription": "干员使敌人的<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>层数增加后，该干员造成的对应类型伤害<color=#cc9900>-{-dmg_scale:0%}</color>/-{@100902@-dmg_scale:0%}，持续10秒",
+              "icon": "icon_activity_contract_tag_122",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_122.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1009",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_dmg_down_after_inflict",
+                  "blackboard": [
+                    {
+                      "key": "dmg_scale",
+                      "value": -0.45,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 100902,
+              "groupId": 1009,
+              "name": "队列：扼制",
+              "description": "干员使敌人的破防或法术附着层数增加后，该干员造成的对应类型伤害-45%/-90%，持续10秒",
+              "rawDescription": "干员使敌人的<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>层数增加后，该干员造成的对应类型伤害-{@100901@-dmg_scale:0%}/<color=#cc9900>-{-dmg_scale:0%}</color>，持续10秒",
+              "icon": "icon_activity_contract_tag_123",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_123.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1009",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_dmg_down_after_inflict",
+                  "blackboard": [
+                    {
+                      "key": "dmg_scale",
+                      "value": -0.9,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "6",
+          "groupId": 1006,
+          "tags": [
+            {
+              "id": 100601,
+              "groupId": 1006,
+              "name": "队列：斩首",
+              "description": "主控干员受到伤害+50%/+100%",
+              "rawDescription": "主控干员受到伤害<color=#cc9900>+{dmg_scale:0%}</color>/+{@100602@dmg_scale:0%}",
+              "icon": "icon_activity_contract_tag_117",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_117.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1006",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_main_dmg_taken_up",
+                  "blackboard": [
+                    {
+                      "key": "dmg_scale",
+                      "value": 0.5,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 100602,
+              "groupId": 1006,
+              "name": "队列：斩首",
+              "description": "主控干员受到伤害+50%/+100%",
+              "rawDescription": "主控干员受到伤害+{@100601@dmg_scale:0%}/<color=#cc9900>+{dmg_scale:0%}</color>",
+              "icon": "icon_activity_contract_tag_118",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_118.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1006",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_main_dmg_taken_up",
+                  "blackboard": [
+                    {
+                      "key": "dmg_scale",
+                      "value": 1,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "7",
+          "groupId": 1013,
+          "tags": [
+            {
+              "id": 101301,
+              "groupId": 1013,
+              "name": "环境：厌氧",
+              "description": "体力恢复速度-50%",
+              "rawDescription": "体力恢复速度<color=#cc9900>-{-ratio:0%}</color>",
+              "icon": "icon_activity_contract_tag_103",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_103.webp",
+              "roman": "",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1013",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_dash_recover_speed_down",
+                  "blackboard": [
+                    {
+                      "key": "ratio",
+                      "value": -0.5,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 101303,
+              "groupId": 1013,
+              "name": "环境：禁锢",
+              "description": "禁止闪避",
+              "rawDescription": "禁止闪避",
+              "icon": "icon_activity_contract_tag_104",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_104.webp",
+              "roman": "",
+              "score": 3,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1013",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_level_mute_evade",
+                  "blackboard": []
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": "已禁用闪避"
+              }
+            }
+          ]
+        },
+        {
+          "id": "8",
+          "groupId": 1020,
+          "tags": [
+            {
+              "id": 102001,
+              "groupId": 1020,
+              "name": "环境：枯萎",
+              "description": "波次间隔只产生1个治愈团块",
+              "rawDescription": "波次间隔只产生<color=#cc9900>1</color>个治愈团块",
+              "icon": "icon_activity_contract_tag_107",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_107.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1020",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_level_reduce_heal_ball",
+                  "blackboard": [
+                    {
+                      "key": "num",
+                      "value": -2,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 102002,
+              "groupId": 1020,
+              "name": "环境：枯萎",
+              "description": "波次间隔不产生治愈团块",
+              "rawDescription": "波次间隔不产生治愈团块",
+              "icon": "icon_activity_contract_tag_108",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_108.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1020",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_level_reduce_heal_ball_2",
+                  "blackboard": [
+                    {
+                      "key": "num",
+                      "value": -3,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "9",
+          "groupId": 1005,
+          "tags": [
+            {
+              "id": 100501,
+              "groupId": 1005,
+              "name": "队列：折刃",
+              "description": "干员每施放一次终结技，该干员之后的终结技伤害-50%/-100%",
+              "rawDescription": "干员每施放一次终结技，该干员之后的终结技伤害<color=#cc9900>-{-dmg_scale_per_layer:0%}</color>/-{@100502@-dmg_scale_per_layer:0%}",
+              "icon": "icon_activity_contract_tag_207",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_207.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1005",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_ult_dmg_down_gradual",
+                  "blackboard": [
+                    {
+                      "key": "dmg_scale_per_layer",
+                      "value": -0.5,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 100502,
+              "groupId": 1005,
+              "name": "队列：折刃",
+              "description": "干员每施放一次终结技，该干员之后的终结技伤害-50%/-100%",
+              "rawDescription": "干员每施放一次终结技，该干员之后的终结技伤害-{@100501@-dmg_scale_per_layer:0%}/<color=#cc9900>-{-dmg_scale_per_layer:0%}</color>",
+              "icon": "icon_activity_contract_tag_208",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_208.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1005",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_ult_dmg_down_gradual",
+                  "blackboard": [
+                    {
+                      "key": "dmg_scale_per_layer",
+                      "value": -1,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "10",
+          "groupId": 1010,
+          "tags": [
+            {
+              "id": 101001,
+              "groupId": 1010,
+              "name": "改写：屏障",
+              "description": "每个敌人每5秒只能被施加一次破防或同类型的法术附着",
+              "rawDescription": "每个敌人每<color=#cc9900>{duration:0}</color>秒只能被施加一次<color=#a68360>破防</color>或同类型的<color=#1da6e0>法术附着</color>",
+              "icon": "icon_activity_contract_tag_124",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_124.webp",
+              "roman": "",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_periodic_inflict_resist",
+                  "blackboard": [
+                    {
+                      "key": "duration",
+                      "value": 5,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 102302,
+              "groupId": 1023,
+              "name": "改写：奔腾",
+              "description": "敌人移动速度+100%，0.1秒内受到的伤害不会超过最大生命值的25%",
+              "rawDescription": "敌人移动速度<color=#cc9900>+{speedup_scale-1:0%}</color>，0.1秒内受到的伤害不会超过最大生命值的<color=#cc9900>{dmg_scale:0%}</color>",
+              "icon": "icon_activity_contract_tag_136",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_136.webp",
+              "roman": "",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_common_movespeedup",
+                  "blackboard": [
+                    {
+                      "key": "speedup_scale",
+                      "value": 2,
+                      "valueStr": ""
+                    },
+                    {
+                      "key": "dmg_scale",
+                      "value": 0.25,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 100803,
+              "groupId": 1008,
+              "name": "队列：脱力",
+              "description": "干员普通攻击伤害-70%",
+              "rawDescription": "干员普通攻击伤害<color=#cc9900>-{-dmg_scale:0%}</color>",
+              "icon": "icon_activity_contract_tag_209",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_209.webp",
+              "roman": "",
+              "score": 3,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_normal_attack_dmg_down",
+                  "blackboard": [
+                    {
+                      "key": "dmg_scale",
+                      "value": -0.7,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "11",
+          "groupId": 1033,
+          "tags": [
+            {
+              "id": 103302,
+              "groupId": 1033,
+              "name": "环境：同步生长",
+              "description": "主控干员每实际回复10%最大生命值或获得最大生命值20%的护盾时，场上敌人回复8%最大生命值",
+              "rawDescription": "主控干员每实际回复<color=#cc9900>{chr_heal_ratio:0%}</color>最大生命值或获得最大生命值<color=#cc9900>{chr_shield_ratio:0%}</color>的<color=#1da6e0>护盾</color>时，场上敌人回复<color=#cc9900>{eny_heal_ratio:0%}</color>最大生命值",
+              "icon": "icon_activity_contract_tag_307",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_307.webp",
+              "roman": "",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_heal_reflect_to_eny",
+                  "blackboard": [
+                    {
+                      "key": "chr_heal_ratio",
+                      "value": 0.1,
+                      "valueStr": ""
+                    },
+                    {
+                      "key": "eny_heal_ratio",
+                      "value": 0.08,
+                      "valueStr": ""
+                    },
+                    {
+                      "key": "chr_shield_ratio",
+                      "value": 0.2,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 101402,
+              "groupId": 1014,
+              "name": "队列：衰竭",
+              "description": "近战干员受到伤害的30%会转为减少生命值上限，远程干员转化率为50%",
+              "rawDescription": "近战干员受到伤害的<color=#cc9900>{hp_down_ratio_melee:0%}</color>会转为减少生命值上限，远程干员转化率为<color=#cc9900>{hp_down_ratio:0%}</color>",
+              "icon": "icon_activity_contract_tag_127",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_127.webp",
+              "roman": "",
+              "score": 3,
+              "keyId": "",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_dmg_reduce_maxhp",
+                  "blackboard": [
+                    {
+                      "key": "hp_down_ratio",
+                      "value": 0.5,
+                      "valueStr": ""
+                    },
+                    {
+                      "key": "hp_down_ratio_melee",
+                      "value": 0.3,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "12",
+          "groupId": 1000,
+          "tags": [
+            {
+              "id": 100003,
+              "groupId": 1000,
+              "name": "环境：过速",
+              "description": "干员连携技冷却时间-60%，战技伤害-60%",
+              "rawDescription": "干员连携技冷却时间<color=#cc9900>-{1-cd_scale:0%}</color>，战技伤害<color=#cc9900>-{-dmg_scale:0%}</color>",
+              "icon": "icon_activity_contract_tag_201",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_201.webp",
+              "roman": "",
+              "score": 3,
+              "keyId": "key2",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1000c1001",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_combo_special_cc0",
+                  "blackboard": [
+                    {
+                      "key": "cd_scale",
+                      "value": 0.4,
+                      "valueStr": ""
+                    },
+                    {
+                      "key": "dmg_scale",
+                      "value": -0.6,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "13",
+          "groupId": 1032,
+          "tags": [
+            {
+              "id": 103203,
+              "groupId": 1032,
+              "name": "环境：震荡",
+              "description": "干员除普通攻击、战技、连携技和终结技以外的伤害+100%，战技伤害-60%",
+              "rawDescription": "干员除普通攻击、战技、连携技和终结技以外的伤害<color=#cc9900>+{dmg_up:0%}</color>，战技伤害<color=#cc9900>-{-dmg_scale:0%}</color>",
+              "icon": "icon_activity_contract_tag_306",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_306.webp",
+              "roman": "",
+              "score": 3,
+              "keyId": "key2",
+              "lockIds": [],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1000c1001",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_physical_and_inflict_enhance_special_cc0",
+                  "blackboard": [
+                    {
+                      "key": "dmg_up",
+                      "value": 1,
+                      "valueStr": ""
+                    },
+                    {
+                      "key": "dmg_scale",
+                      "value": -0.6,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "14",
+          "groupId": 1031,
+          "tags": [
+            {
+              "id": 103102,
+              "groupId": 1031,
+              "name": "改写：裹附",
+              "description": "每个敌人每有一层破防或法术附着，受到的对应类型伤害-10%。该效果会在破防或法术附着结束后延迟0.1秒消失",
+              "rawDescription": "每个敌人每有一层<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>，受到的对应类型伤害<color=#cc9900>-{-dmg_scale:0%}</color>。该效果会在<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>结束后延迟0.1秒消失",
+              "icon": "icon_activity_contract_tag_308",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_308.webp",
+              "roman": "",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_inflict_stack_resist",
+                  "blackboard": [
+                    {
+                      "key": "dmg_scale",
+                      "value": -0.1,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 101201,
+              "groupId": 1012,
+              "name": "环境：分隔",
+              "description": "战斗开始后，禁止切换主控干员",
+              "rawDescription": "战斗开始后，禁止切换主控干员",
+              "icon": "icon_activity_contract_tag_125",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_125.webp",
+              "roman": "",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_level_mute_switch_player_pre",
+                  "blackboard": []
+                }
+              ],
+              "tips": {
+                "formation": "[环境：分隔] 已生效 战斗开始后将禁止切换主控干员",
+                "battleHud": "战斗开始后将禁止切换主控干员"
+              }
+            }
+          ]
+        },
+        {
+          "id": "15",
+          "groupId": 1015,
+          "tags": [
+            {
+              "id": 101501,
+              "groupId": 1015,
+              "name": "改写：遗毒",
+              "description": "敌人被击败后会留下有毒物质，干员处于其中时每秒受到2%/5%最大生命值伤害",
+              "rawDescription": "敌人被击败后会留下有毒物质，干员处于其中时每秒受到<color=#cc9900>{atk_scale:0%}</color>/{@101502@atk_scale:0%}最大生命值伤害",
+              "icon": "icon_activity_contract_tag_129",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_129.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1015",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_death_ground_area",
+                  "blackboard": [
+                    {
+                      "key": "atk_scale",
+                      "value": 0.02,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 101502,
+              "groupId": 1015,
+              "name": "改写：遗毒",
+              "description": "敌人被击败后会留下有毒物质，干员处于其中时每秒受到2%/5%最大生命值伤害",
+              "rawDescription": "敌人被击败后会留下有毒物质，干员处于其中时每秒受到{@101501@atk_scale:0%}/<color=#cc9900>{atk_scale:0%}</color>最大生命值伤害",
+              "icon": "icon_activity_contract_tag_130",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_130.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 1,
+              "unlockActivityStage": "",
+              "conflictId": "c1015",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_death_ground_area",
+                  "blackboard": [
+                    {
+                      "key": "atk_scale",
+                      "value": 0.05,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "16",
+          "groupId": 1003,
+          "tags": [
+            {
+              "id": 100301,
+              "groupId": 1003,
+              "name": "队列：失温",
+              "description": "干员每施放2/1次战技，主控干员获得一层寒冷附着。每名干员3秒冷却时间",
+              "rawDescription": "干员每施放<color=#cc9900>{times:0}</color>/{@100302@times:0}次战技，主控干员获得一层<color=#009cad>寒冷附着</color>。每名干员3秒冷却时间",
+              "icon": "icon_activity_contract_tag_203",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_203.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1003",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_normal_skill_cryst_inflict",
+                  "blackboard": [
+                    {
+                      "key": "times",
+                      "value": 2,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 100302,
+              "groupId": 1003,
+              "name": "队列：失温",
+              "description": "干员每施放2/1次战技，主控干员获得一层寒冷附着。每名干员3秒冷却时间",
+              "rawDescription": "干员每施放{@100301@times:0}/<color=#cc9900>{times:0}</color>次战技，主控干员获得一层<color=#009cad>寒冷附着</color>。每名干员3秒冷却时间",
+              "icon": "icon_activity_contract_tag_204",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_204.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1003",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_normal_skill_cryst_inflict",
+                  "blackboard": [
+                    {
+                      "key": "times",
+                      "value": 1,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "17",
+          "groupId": 1004,
+          "tags": [
+            {
+              "id": 100401,
+              "groupId": 1004,
+              "name": "队列：热流失",
+              "description": "干员每施放2/1次连携技，主控干员获得一层寒冷附着。每名干员3秒冷却时间",
+              "rawDescription": "干员每施放<color=#cc9900>{times:0}</color>/{@100402@times:0}次连携技，主控干员获得一层<color=#009cad>寒冷附着</color>。每名干员3秒冷却时间",
+              "icon": "icon_activity_contract_tag_205",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_205.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1004",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_combo_skill_cryst_inflict",
+                  "blackboard": [
+                    {
+                      "key": "times",
+                      "value": 2,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 100402,
+              "groupId": 1004,
+              "name": "队列：热流失",
+              "description": "干员每施放2/1次连携技，主控干员获得一层寒冷附着。每名干员3秒冷却时间",
+              "rawDescription": "干员每施放{@100401@times:0}/<color=#cc9900>{times:0}</color>次连携技，主控干员获得一层<color=#009cad>寒冷附着</color>。每名干员3秒冷却时间",
+              "icon": "icon_activity_contract_tag_206",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_206.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1004",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_combo_skill_cryst_inflict",
+                  "blackboard": [
+                    {
+                      "key": "times",
+                      "value": 1,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "18",
+          "groupId": 1017,
+          "tags": [
+            {
+              "id": 101701,
+              "groupId": 1017,
+              "name": "环境：融化",
+              "description": "主控干员受到的冻结时间增加至15秒，施放灼热类型技能可以解除冻结",
+              "rawDescription": "主控干员受到的<color=#009cad>冻结</color>时间增加至<color=#cc9900>{duration:0}</color>秒，施放<color=#f45511>灼热类型</color>技能可以解除<color=#009cad>冻结</color>",
+              "icon": "icon_activity_contract_tag_132",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_132.webp",
+              "roman": "",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1017c1019",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_frozenonchar_extend",
+                  "blackboard": [
+                    {
+                      "key": "duration",
+                      "value": 15,
+                      "valueStr": ""
+                    }
+                  ]
+                },
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_fire_skill_clear_frozenonchar",
+                  "blackboard": []
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "19",
+          "groupId": 1018,
+          "tags": [
+            {
+              "id": 101801,
+              "groupId": 1018,
+              "name": "环境：升华",
+              "description": "主控干员受到的冻结时间增加至15秒，施放自然类型技能可以解除冻结",
+              "rawDescription": "主控干员受到的<color=#009cad>冻结</color>时间增加至<color=#cc9900>{duration:0}</color>秒，施放<color=#6d9a00>自然类型</color>技能可以解除<color=#009cad>冻结</color>",
+              "icon": "icon_activity_contract_tag_133",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_133.webp",
+              "roman": "",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1017c1019",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_frozenonchar_extend",
+                  "blackboard": [
+                    {
+                      "key": "duration",
+                      "value": 15,
+                      "valueStr": ""
+                    }
+                  ]
+                },
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_natural_skill_clear_frozenonchar",
+                  "blackboard": []
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "20",
+          "groupId": 1019,
+          "tags": [
+            {
+              "id": 101901,
+              "groupId": 1019,
+              "name": "环境：电解",
+              "description": "主控干员受到的冻结时间增加至15秒，施放电磁类型技能可以解除冻结",
+              "rawDescription": "主控干员受到的<color=#009cad>冻结</color>时间增加至<color=#cc9900>{duration:0}</color>秒，施放<color=#cc9900>电磁类型</color>技能可以解除<color=#009cad>冻结</color>",
+              "icon": "icon_activity_contract_tag_134",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_134.webp",
+              "roman": "",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1017c1019",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_frozenonchar_extend",
+                  "blackboard": [
+                    {
+                      "key": "duration",
+                      "value": 15,
+                      "valueStr": ""
+                    }
+                  ]
+                },
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_pulse_skill_clear_frozenonchar",
+                  "blackboard": []
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "21",
+          "groupId": 1024,
+          "tags": [
+            {
+              "id": 102401,
+              "groupId": 1024,
+              "name": "环境：切削",
+              "description": "主控干员受到的冻结时间增加至15秒，施放物理类型技能可以解除冻结",
+              "rawDescription": "主控干员受到的<color=#009cad>冻结</color>时间增加至<color=#cc9900>{duration:0}</color>秒，施放<color=#a68360>物理类型</color>技能可以解除<color=#009cad>冻结</color>",
+              "icon": "icon_activity_contract_tag_210",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_210.webp",
+              "roman": "",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1017c1019",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_frozenonchar_extend",
+                  "blackboard": [
+                    {
+                      "key": "duration",
+                      "value": 15,
+                      "valueStr": ""
+                    }
+                  ]
+                },
+                {
+                  "termType": 2,
+                  "buffId": "global_buff_cc_chr_phy_skill_clear_frozenonchar",
+                  "blackboard": []
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        },
+        {
+          "id": "22",
+          "groupId": 1011,
+          "tags": [
+            {
+              "id": 101101,
+              "groupId": 1011,
+              "name": "改写：愈合",
+              "description": "敌人受到控制效果影响时，每秒回复5%/15%最大生命值",
+              "rawDescription": "敌人受到控制效果影响时，每秒回复<color=#cc9900>{hp_ratio:0%}</color>/{@101102@hp_ratio:0%}最大生命值",
+              "icon": "icon_activity_contract_tag_119",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_119.webp",
+              "roman": "Ⅰ",
+              "score": 1,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1011",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_heal_under_control",
+                  "blackboard": [
+                    {
+                      "key": "hp_ratio",
+                      "value": 0.05,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            },
+            {
+              "id": 101102,
+              "groupId": 1011,
+              "name": "改写：愈合",
+              "description": "敌人受到控制效果影响时，每秒回复5%/15%最大生命值",
+              "rawDescription": "敌人受到控制效果影响时，每秒回复{@101101@hp_ratio:0%}/<color=#cc9900>{hp_ratio:0%}</color>最大生命值",
+              "icon": "icon_activity_contract_tag_120",
+              "iconPath": "/contingency_contract/1/icon_activity_contract_tag_120.webp",
+              "roman": "Ⅱ",
+              "score": 2,
+              "keyId": "",
+              "lockIds": [
+                "key2"
+              ],
+              "unlockScore": 10,
+              "unlockActivityStage": "",
+              "conflictId": "c1011",
+              "canPreview": false,
+              "terms": [
+                {
+                  "termType": 1,
+                  "buffId": "buff_cc_enemy_heal_under_control",
+                  "blackboard": [
+                    {
+                      "key": "hp_ratio",
+                      "value": 0.15,
+                      "valueStr": ""
+                    }
+                  ]
+                }
+              ],
+              "tips": {
+                "formation": "",
+                "battleHud": ""
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

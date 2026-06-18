@@ -12,6 +12,7 @@ import type {
 import { createDefaultStats } from "@/simulation/defaultActorStats";
 import type { ActorSnapshot } from "@/simulation/state/types.ts";
 import { isComboSkillLikeAction, isUltimateLikeAction } from "./types";
+import { createDefaultEnemyResistance, normalizeEnemyResistance } from "@/data/enemyResistance";
 
 function clampPercent(value: unknown): number {
   const num = Number(value) || 0;
@@ -185,6 +186,7 @@ const DEFAULT_SYSTEM_CONSTANTS: SystemConstants = {
   executionRecovery: 25,
   defense: 100,
   tier: "normal",
+  resistance: createDefaultEnemyResistance(),
 };
 
 export function compileScenario(
@@ -234,6 +236,7 @@ export function compileScenario(
               : 1),
       defense: mergedSystemConstants.defense,
       tier: mergedSystemConstants.tier,
+      resistance: normalizeEnemyResistance(mergedSystemConstants.resistance),
     },
     systemConstants: mergedSystemConstants,
   };

@@ -2,6 +2,7 @@ import { compileScenario } from "@/simulation/compiler/compileScenario";
 import { TriggerRegistry } from "@/simulation/engine/TriggerRegistry";
 import type { InitialEffect } from "@/simulation/simulator";
 import { getEnemy } from "@/data";
+import { normalizeEnemyResistance } from "@/data/enemyResistance";
 
 interface CompileEndaxisScenarioInput {
   scenarioData: any;
@@ -123,6 +124,9 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
 
   const enemySheet =
     activeEnemyId && activeEnemyId !== "custom" ? getEnemy(activeEnemyId) : null;
+  const enemyResistance = normalizeEnemyResistance(
+    systemConstants?.resistance ?? enemySheet?.resistance,
+  );
   const compiledTracks = buildCompiledTracks(tracks, characterRoster);
   const { timeline, actors, teamConfig, enemyConfig } = compileScenario(
     {
@@ -135,6 +139,7 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
         prepDuration: Number(prepDuration) || 0,
         defense: enemySheet?.def ?? 100,
         tier: enemySheet?.tier ?? "normal",
+        resistance: enemyResistance,
         ...(enemySheet?.maxStagger !== undefined ? { maxStagger: enemySheet.maxStagger } : {}),
         ...(enemySheet?.staggerNodeCount !== undefined
           ? { staggerNodeCount: enemySheet.staggerNodeCount }
@@ -177,6 +182,7 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
     initialEnemyState: runtimeInitialEnemyState,
     baseStatsByTrack,
     enemyDef: enemySheet?.def ?? enemyConfig.defense ?? 100,
+    enemyResistance: normalizeEnemyResistance(enemyConfig.resistance ?? enemyResistance),
     endlineTime: simulationEndline ?? undefined,
     lmdiAttributionMode,
   };

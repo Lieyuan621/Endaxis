@@ -1,0 +1,499 @@
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import {
+  getContingencyContractSeasons,
+  getContractTagDisabledReason,
+  getDefaultContingencyContractSeason,
+  getSelectedContractScore,
+  type ContingencyContractTag,
+} from '@/data/contingencyContracts'
+
+const { t } = useI18n({ useScope: 'global' })
+
+const seasons = getContingencyContractSeasons()
+const defaultSeason = getDefaultContingencyContractSeason()
+const activeSeasonId = ref(defaultSeason?.id ?? seasons[0]?.id ?? '')
+const selectedTagIds = ref<Set<number>>(new Set())
+
+const activeSeason = computed(() =>
+  seasons.find(season => season.id === activeSeasonId.value) ?? defaultSeason ?? seasons[0] ?? null,
+)
+
+const activeTagMap = computed(() => {
+  const season = activeSeason.value
+  return new Map((season?.groups ?? []).flatMap(group => group.tags).map(tag => [tag.id, tag]))
+})
+
+const selectedScore = computed(() => {
+  const season = activeSeason.value
+  return season ? getSelectedContractScore(season, selectedTagIds.value) : 0
+})
+
+const selectedTags = computed(() => {
+  const season = activeSeason.value
+  if (!season) return []
+  return season.groups.flatMap(group => group.tags).filter(tag => selectedTagIds.value.has(tag.id))
+})
+
+watch(activeSeasonId, () => {
+  selectedTagIds.value = new Set()
+})
+
+function getDisabledReason(tag: ContingencyContractTag): string {
+  const season = activeSeason.value
+  return season ? getContractTagDisabledReason(season, tag, selectedTagIds.value) : ''
+}
+
+function isSelected(tagId: number): boolean {
+  return selectedTagIds.value.has(tagId)
+}
+
+function canSelect(tag: ContingencyContractTag): boolean {
+  return !getDisabledReason(tag)
+}
+
+function toggleTag(tag: ContingencyContractTag) {
+  const next = new Set(selectedTagIds.value)
+  if (next.has(tag.id)) {
+    next.delete(tag.id)
+    selectedTagIds.value = next
+    return
+  }
+  if (!canSelect(tag)) return
+
+  if (tag.conflictId) {
+    for (const selectedId of Array.from(next)) {
+      const selectedTag = activeTagMap.value.get(selectedId)
+      if (selectedTag?.conflictId === tag.conflictId) next.delete(selectedId)
+    }
+  }
+
+  next.add(tag.id)
+  selectedTagIds.value = next
+}
+
+function removeTag(tagId: number) {
+  const next = new Set(selectedTagIds.value)
+  next.delete(tagId)
+  selectedTagIds.value = next
+}
+
+function clearSelection() {
+  selectedTagIds.value = new Set()
+}
+
+function hideBrokenImage(event: Event) {
+  const target = event.target
+  if (target instanceof HTMLImageElement) target.style.display = 'none'
+}
+</script>
+
+<template>
+  <section class="cc-panel">
+    <div v-if="activeSeason" class="cc-body">
+      <div class="cc-groups">
+        <section v-for="group in activeSeason.groups" :key="group.id" class="cc-group">
+          <div class="cc-group-label">
+            <span>{{ group.id }}</span>
+          </div>
+          <div class="cc-tag-row">
+            <el-tooltip
+              v-for="tag in group.tags"
+              :key="tag.id"
+              placement="right"
+              effect="dark"
+              popper-class="cc-tag-tooltip-popper"
+              :show-after="120"
+            >
+              <template #content>
+                <div class="cc-tag-tooltip">
+                  <div class="cc-tag-tooltip-title">{{ tag.name }}</div>
+                  <div v-if="tag.description" class="cc-tag-tooltip-desc">{{ tag.description }}</div>
+                </div>
+              </template>
+              <button
+                type="button"
+                class="cc-tag"
+                :class="{
+                  'is-selected': isSelected(tag.id),
+                  'is-locked': !canSelect(tag),
+                }"
+                @click="toggleTag(tag)"
+              >
+                <span class="cc-tag-check">&#10003;</span>
+                <img v-if="tag.iconPath" :src="tag.iconPath" alt="" aria-hidden="true" @error="hideBrokenImage" />
+                <span v-else class="cc-tag-icon-fallback">{{ tag.score }}</span>
+                <span v-if="tag.roman" class="cc-tag-roman">{{ tag.roman }}</span>
+                <span class="cc-tag-score">+{{ tag.score }}</span>
+              </button>
+            </el-tooltip>
+          </div>
+        </section>
+      </div>
+
+      <aside class="cc-detail">
+        <div class="cc-detail-toolbar">
+          <div class="cc-total-score" :title="t('contingencyContract.score')">
+            <img src="/contingency_contract/deco_contract_027.webp" alt="" aria-hidden="true" />
+            <strong>{{ selectedScore }}</strong>
+          </div>
+          <button type="button" class="cc-clear-btn" :disabled="selectedTags.length === 0" @click="clearSelection">
+            {{ t('common.reset') }}
+          </button>
+        </div>
+        <div v-if="selectedTags.length" class="cc-selected-list">
+          <div v-for="tag in selectedTags" :key="tag.id" class="cc-selected-row">
+            <img v-if="tag.iconPath" :src="tag.iconPath" alt="" aria-hidden="true" @error="hideBrokenImage" />
+            <div class="cc-selected-content">
+              <div class="cc-selected-title">
+                <span>{{ t('contingencyContract.queue') }}：{{ tag.name }}</span>
+                <b>+{{ tag.score }}</b>
+              </div>
+              <div class="cc-selected-desc">{{ tag.description || t('contingencyContract.noDescription') }}</div>
+            </div>
+            <button
+              type="button"
+              class="ea-btn ea-btn--icon ea-btn--icon-28 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger cc-selected-remove"
+              :title="t('common.delete')"
+              @click="removeTag(tag.id)"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+        <template v-else>
+          <div class="cc-detail-empty">{{ t('contingencyContract.pickHint') }}</div>
+        </template>
+      </aside>
+    </div>
+  </section>
+</template>
+
+<style scoped>
+.cc-panel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #252526;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.86);
+  overflow: hidden;
+}
+
+.cc-clear-btn {
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.cc-clear-btn:disabled {
+  opacity: 0.36;
+  cursor: default;
+}
+
+.cc-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+}
+
+.cc-groups {
+  min-height: 0;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 12px 18px;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(188, 40, 36, 0.7) rgba(255, 255, 255, 0.08);
+  background: #232326;
+}
+
+.cc-groups::-webkit-scrollbar {
+  height: 9px;
+}
+
+.cc-groups::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cc-groups::-webkit-scrollbar-thumb {
+  background: rgba(188, 40, 36, 0.72);
+  border: 2px solid rgba(24, 24, 28, 0.95);
+}
+
+.cc-group {
+  flex: 0 0 76px;
+  min-width: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  position: relative;
+}
+
+.cc-group-label {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 3px solid #d53632;
+  background: #2b2b2d;
+  color: rgba(255, 255, 255, 0.84);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.cc-tag-row {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.cc-tag {
+  width: 58px;
+  height: 52px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(196, 66, 60, 0.28);
+  background: #2a2a2c;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.cc-tag:hover {
+  border-color: rgba(255, 111, 101, 0.86);
+  background: #303033;
+  box-shadow: 0 0 10px rgba(188, 40, 36, 0.14);
+}
+
+.cc-tag.is-selected {
+  border-color: #ffdbd8;
+  background: #a91512;
+}
+
+.cc-tag.is-locked {
+  opacity: 0.38;
+}
+
+.cc-tag img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.cc-tag-icon-fallback {
+  color: rgba(255, 255, 255, 0.74);
+  font-weight: 900;
+}
+
+.cc-tag-check {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  opacity: 0;
+}
+
+.cc-tag.is-selected .cc-tag-check { opacity: 1; }
+
+.cc-tag-roman {
+  position: absolute;
+  left: 3px;
+  bottom: 2px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.cc-tag-score {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  color: #ffb3ab;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.cc-detail {
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  padding: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background: #252526;
+  scrollbar-width: none;
+}
+
+.cc-detail::-webkit-scrollbar { display: none; }
+
+.cc-detail-toolbar {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cc-total-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cc-total-score img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.cc-total-score strong {
+  color: #ffdbd8;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.cc-selected-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cc-selected-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 30px;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 54px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  border-left: 3px solid #b71915;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.cc-selected-row > img {
+  width: 34px;
+  height: 34px;
+  align-self: center;
+  object-fit: contain;
+}
+
+.cc-selected-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.cc-selected-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cc-selected-title span {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-selected-title b {
+  flex-shrink: 0;
+  color: #ffdbd8;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+}
+
+.cc-selected-desc {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cc-selected-remove {
+  align-self: center;
+}
+
+
+.cc-detail-empty {
+  height: 100%;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 11px;
+}
+
+:global(.cc-tag-tooltip-popper) {
+  max-width: 320px;
+}
+
+:global(.cc-tag-tooltip-popper.el-popper.is-dark) {
+  background: rgba(37, 37, 38, 0.98);
+  border: 1px solid rgba(196, 66, 60, 0.45);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+}
+
+:global(.cc-tag-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
+  background: rgba(37, 37, 38, 0.98);
+  border-color: rgba(196, 66, 60, 0.45);
+}
+
+:global(.cc-tag-tooltip) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+:global(.cc-tag-tooltip-title) {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+:global(.cc-tag-tooltip-desc) {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 11px;
+  line-height: 1.4;
+}
+</style>

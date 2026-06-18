@@ -9,6 +9,9 @@
  *   ATK * (multiplier/100) * (1+dmgBonus) * (1+critRate*critDmg)
  *     * (1+ampBonus) * directMult * (1+susceptibility) * (1+increasedDmgTaken)
  *     * linkMult * defMult * resMult
+ *
+ * Enemy resistance is stored as resistance points: 20 means the target takes 80% damage.
+ * Resistance ignore and shred subtract from enemy resistance before converting to resMult.
  */
 
 import type { ScopedDamageModifier } from './types';
@@ -228,6 +231,7 @@ interface HitDamageParams {
   enemyDef: number;
   resistanceIgnore: number; // decimal
   resistanceShred: number; // decimal
+  enemyResistance?: number; // decimal resistance points, e.g. 0.2 = 20 resistance = 80% damage
   susceptibility: number; // decimal
   increasedDmgTaken: number; // decimal
   linkStacks: number;
@@ -259,9 +263,11 @@ export interface DamageBreakdown {
   linkMult: number;
   enemyDef: number;
   defMult: number;
+  enemyResistance: number;
   resistanceIgnore: number;
   resistanceShred: number;
   resMult: number;
+  enemyResMult: number;
   staggerMult: number;
   finisherMult: number;
   nonCritDamage: number;
@@ -292,7 +298,10 @@ export function computeExpectedDamageWithBreakdown(
   const link = linkMultiplier(p.linkStacks, p.skillType);
   const def = Math.max(p.enemyDef, 100);
   const defMult = 100 / (def + 100);
-  const resMult = 1 + p.resistanceIgnore + p.resistanceShred;
+  const enemyResistance = p.enemyResistance ?? 0;
+  const effectiveResistance = enemyResistance - p.resistanceIgnore - p.resistanceShred;
+  const resMult = 1 - effectiveResistance;
+  const enemyResMult = resMult;
 
   const shared =
     base *
@@ -329,9 +338,11 @@ export function computeExpectedDamageWithBreakdown(
     linkMult: link,
     enemyDef: p.enemyDef,
     defMult,
+    enemyResistance,
     resistanceIgnore: p.resistanceIgnore,
     resistanceShred: p.resistanceShred,
     resMult,
+    enemyResMult,
     staggerMult: p.staggerMult,
     finisherMult: p.finisherMult,
     nonCritDamage: Math.floor(shared),
@@ -354,6 +365,7 @@ export function computeHitDamageWithBreakdown(
   element: string | undefined,
   staggerMult: number = 1,
   finisherMult: number = 1,
+  enemyResistance: number = 0,
 ): DamageBreakdown | null {
   if (hit.multiplier == null || hit.multiplier === 0) return null;
 
@@ -397,6 +409,7 @@ export function computeHitDamageWithBreakdown(
       enemyDef,
       resistanceIgnore: stats.resistanceIgnore,
       resistanceShred: enemyStatus?.resistanceShred ?? 0,
+      enemyResistance,
       susceptibility: totalSusc,
       increasedDmgTaken: (enemyStatus?.increasedDmgTaken ?? 0) + elementalDmgTaken,
       linkStacks: hit.consumedStacks?.link ?? 0,

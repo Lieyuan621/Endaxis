@@ -1,7 +1,7 @@
 import type { ScenarioData } from "../types";
 
 // Native optimizer scenario fixture converted from the historical Endaxis share.
-export const scenario: ScenarioData = {
+export const scenario = {
   "tracks": [
     {
       "id": "CHENQIANYU",
@@ -834,4 +834,4 @@ export const scenario: ScenarioData = {
   },
   "cycleBoundaries": [],
   "switchEvents": []
-} as ScenarioData;
+} as unknown as ScenarioData;
