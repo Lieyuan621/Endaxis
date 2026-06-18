@@ -598,7 +598,11 @@ export function applyResolvedScaling(
           const dynamicMods: ResolvedStatModifier[] = [];
           for (const entry of activeEntries) {
             if (!entry.stat) continue;
-            dynamicMods.push({ stat: entry.stat, value: entry.value * entry.stacks });
+            dynamicMods.push({
+              stat: entry.stat,
+              value: entry.value * entry.stacks,
+              external: entry.external,
+            });
           }
           liveAttrs = computeStats(baseStats, [], dynamicMods).attributes;
         } else {
@@ -1135,7 +1139,11 @@ export function dispatchSingleActorEffect(
         const dynamicMods: ResolvedStatModifier[] = [];
         for (const entry of activeEntries) {
           if (!entry.stat) continue;
-          dynamicMods.push({ stat: entry.stat, value: entry.value * entry.stacks });
+          dynamicMods.push({
+            stat: entry.stat,
+            value: entry.value * entry.stacks,
+            external: entry.external,
+          });
         }
         const operatorStatus = computeStats(baseStats, [], dynamicMods);
         critRateScale = operatorStatus.critRate;
