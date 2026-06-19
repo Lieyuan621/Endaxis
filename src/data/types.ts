@@ -290,6 +290,7 @@ export interface EffectBase {
 
   // Display overrides (resolved from presets/i18n when absent)
   name?: string;
+  displayType?: string;
   /** Single icon path, or an array where index 0 = stack 1, index 1 = stack 2, etc. */
   icon?: string | string[];
 

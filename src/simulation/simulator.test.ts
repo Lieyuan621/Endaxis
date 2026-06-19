@@ -14,6 +14,13 @@ import type { BaseStatValues } from "@/data/stats/types";
 import type { Effect, TriggerEffect } from "@/data/types";
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from "@/types";
 import { CRITERION_MECHANISMS } from "@/data/contingencyContracts/criteriaEffects";
+import {
+  buildEffectiveEnemySystemConstants,
+  computeContingencyEnemyHealing,
+  getContingencyEnemyDamageCap,
+  getContingencyEnemyHealingRate,
+  getContingencyEnemyHpMultiplier,
+} from "@/data/contingencyContracts/criteriaEffects";
 
 type TrackPatch = Omit<Partial<ScenarioTrack>, "stats"> & {
   stats?: Partial<ScenarioTrack["stats"]>;
@@ -104,9 +111,14 @@ function createScenario(tracks: ScenarioTrack[]): ScenarioData {
 function runScenario(
   tracks: ScenarioTrack[],
   registry?: TriggerRegistry,
-  options: { lmdiAttributionMode?: "stacks" | "applier" } = {},
+  options: {
+    lmdiAttributionMode?: "stacks" | "applier";
+    systemConstants?: Record<string, any>;
+  } = {},
 ) {
-  const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+  const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks), {
+    systemConstants: options.systemConstants,
+  });
   const baseStatsByTrack = new Map<string, BaseStatValues>(
     actors.map((actor) => [actor.id, BASE_STATS]),
   );
@@ -1424,6 +1436,7 @@ describe("controlled-operator target scope", () => {
 });
 
 describe("Heat Loss criterion end-to-end (group 1003)", () => {
+  const heatLossCryoId = "cc:heat-loss:cryo";
   const mech = CRITERION_MECHANISMS[1003]!;
   // Registry entries for a given level (idx): level-invariant freeze trigger + the level's cast trigger.
   const entriesFor = (idx: number): NonNullable<TrackPatch["triggerEffects"]> =>
@@ -1466,7 +1479,7 @@ describe("Heat Loss criterion end-to-end (group 1003)", () => {
 
   it("level 2: adds a Cryo stack per (icd-gated) cast and freezes on the 4th", () => {
     const { applies } = run(1, [0, 4, 8, 12]);
-    const cryo = applies("cc:1003:cryo");
+    const cryo = applies(heatLossCryoId);
     expect(cryo.map((e) => e.cumulativeStacks)).toEqual([1, 2, 3, 4]);
     const frozen = applies("cc:frozen");
     expect(frozen).toHaveLength(1);
@@ -1476,21 +1489,21 @@ describe("Heat Loss criterion end-to-end (group 1003)", () => {
   it("level 1: adds a Cryo stack every 2 casts (team-wide toggle)", () => {
     const { applies } = run(0, [0, 4, 8, 12]);
     // 4 counted casts → bank, cryo, bank, cryo → 2 stacks, no freeze.
-    expect(applies("cc:1003:cryo")).toHaveLength(2);
+    expect(applies(heatLossCryoId)).toHaveLength(2);
     expect(applies("cc:frozen")).toHaveLength(0);
   });
 
   it("per-caster 3s recast cooldown: casts within 3s are not counted", () => {
     // Casts at 0/1/2 are all <3s after the first → only the first counts → a single Cryo stack.
     const { applies } = run(1, [0, 1, 2]);
-    expect(applies("cc:1003:cryo")).toHaveLength(1);
+    expect(applies(heatLossCryoId)).toHaveLength(1);
   });
 
   it("blocks new Cryo stacks while the controlled operator is Frozen", () => {
     // Freeze lands at t=12 (4th stack) and lasts 5s. The t=16 cast clears the 3s icd but is
     // blocked by Frozen; the t=20 cast lands after Frozen expires and starts a fresh stack.
     const { applies } = run(1, [0, 4, 8, 12, 16, 20]);
-    expect(applies("cc:1003:cryo").map((e) => e.cumulativeStacks)).toEqual([1, 2, 3, 4, 1]);
+    expect(applies(heatLossCryoId).map((e) => e.cumulativeStacks)).toEqual([1, 2, 3, 4, 1]);
     expect(applies("cc:frozen")).toHaveLength(1);
   });
 
@@ -1499,7 +1512,7 @@ describe("Heat Loss criterion end-to-end (group 1003)", () => {
     const { applies } = run(1, [0, 4, 8, 12], [
       { targetTrackId: "A", id: "cryo-infliction-immune" },
     ]);
-    expect(applies("cc:1003:cryo")).toHaveLength(0);
+    expect(applies(heatLossCryoId)).toHaveLength(0);
     expect(applies("cc:frozen")).toHaveLength(0);
   });
 });
@@ -1568,5 +1581,93 @@ describe("Lysis (Freeze extend + dispel) end-to-end (1003 Heat Loss + 1017 Pyrol
       (e) => e.time === 14 && e.consumed,
     );
     expect(expiredAt14).toHaveLength(0);
+  });
+});
+
+describe("Contingency runtime enemy mechanics", () => {
+  it("resolves Vitality, Healing, and Surge from selected tag ids", () => {
+    expect(getContingencyEnemyHpMultiplier([900103])).toBe(3);
+    expect(getContingencyEnemyHealingRate([101102])).toBe(0.15);
+    expect(getContingencyEnemyDamageCap([102302])).toEqual({
+      windowSeconds: 0.1,
+      ratio: 0.25,
+    });
+    expect(buildEffectiveEnemySystemConstants({ enemyHp: 1000 }, [900102, 102302])).toMatchObject({
+      enemyHp: 2000,
+      enemyDamageCapWindowSeconds: 0.1,
+      enemyDamageCapRatio: 0.25,
+    });
+  });
+
+  it("caps enemy damage taken per 0.1 seconds for Surge", () => {
+    const result = runScenario(
+      [
+        createTrack("alpha", [
+          createAction("surgeHits", "battleSkill", {
+            startTime: 0,
+            hits: [
+              { offset: 0, multiplier: 1000, spRecovery: 0, spReturn: 0, stagger: 0 },
+              { offset: 0.05, multiplier: 1000, spRecovery: 0, spReturn: 0, stagger: 0 },
+              { offset: 0.1, multiplier: 1000, spRecovery: 0, spReturn: 0, stagger: 0 },
+            ],
+          }),
+        ]),
+      ],
+      undefined,
+      {
+        systemConstants: {
+          enemyHp: 1000,
+          enemyDamageCapWindowSeconds: 0.1,
+          enemyDamageCapRatio: 0.25,
+        },
+      },
+    );
+
+    const damages = result.simLog
+      .filter((entry) => entry.type === "DAMAGE_HIT")
+      .map((entry: any) => entry.payload.hitData._expectedDamage);
+
+    expect(damages.slice(0, 2).reduce((sum, value) => sum + value, 0)).toBe(250);
+    expect(damages[2]).toBe(250);
+    expect(
+      result.simLog.some(
+        (entry: any) => entry.type === "DAMAGE_HIT" && entry.payload.hitData._enemyDamageCap?.capped,
+      ),
+    ).toBe(true);
+  });
+
+  it("computes Healing from enemy control intervals without double-counting overlaps", () => {
+    const healing = computeContingencyEnemyHealing(
+      [
+        {
+          type: "PHYSICAL_STATUS",
+          time: 0,
+          physicalType: "lift",
+          sourceId: "alpha",
+          effectiveDuration: 2,
+        },
+        {
+          type: "DEBUFF_APPLY",
+          time: 1,
+          debuffType: "solidification",
+          level: 1,
+          expiresAt: 3,
+          sourceId: "beta",
+        },
+        {
+          type: "ENEMY_STATUS_APPLY",
+          time: 4,
+          id: "tangtang-oldenStare@tangtang_ultimate_inst",
+          value: 0,
+          stacks: 1,
+          maxStacks: 1,
+          expiresAt: 5,
+          sourceId: "gamma",
+        },
+      ] as any,
+      { maxHp: 1000, rate: 0.05, until: 10 },
+    );
+
+    expect(healing).toBeCloseTo(200);
   });
 });

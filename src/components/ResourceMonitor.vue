@@ -7,6 +7,7 @@ import HitDamageDetailDialog from './HitDamageDetailDialog.vue'
 import { useI18n } from 'vue-i18n'
 import { getDisplayKeyCandidates } from '@/utils/effectDisplay.js'
 import { getEnemyGameName } from '@/data/gameText'
+import { computeContingencyEnemyHealing } from '@/data/contingencyContracts/criteriaEffects'
 
 const store = useTimelineStore()
 const { t, locale } = useI18n({ useScope: 'global' })
@@ -908,8 +909,16 @@ const totalDamageDone = computed(() => {
   }, 0)
 })
 
-const enemyMaxHp = computed(() => Math.max(1, Number(store.systemConstants.enemyHp) || 1))
-const enemyRemainingHp = computed(() => Math.max(0, Math.round(enemyMaxHp.value - totalDamageDone.value)))
+const enemyMaxHp = computed(() => Math.max(1, Number(store.effectiveEnemyHp ?? store.systemConstants.enemyHp) || 1))
+const enemyHealingDone = computed(() => computeContingencyEnemyHealing(store.enemyLog || [], {
+  maxHp: enemyMaxHp.value,
+  rate: Number(store.contingencyEnemyHealingRate) || 0,
+  until: Number(store.viewDuration) || Infinity,
+}))
+const enemyRemainingHp = computed(() => {
+  const remaining = enemyMaxHp.value - totalDamageDone.value + enemyHealingDone.value
+  return Math.max(0, Math.min(enemyMaxHp.value, Math.round(remaining)))
+})
 const enemyHpRatio = computed(() => clamp(enemyRemainingHp.value / enemyMaxHp.value, 0, 1))
 const currentStaggerValue = computed(() => {
   const points = staggerPoints.value

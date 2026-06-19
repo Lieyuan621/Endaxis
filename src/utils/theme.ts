@@ -93,7 +93,7 @@ export const EFFECT_COLORS: Record<string, string> = {
   // Inflictions
   heat_infliction: '#ff4d4f',
   electric_infliction: '#ffd700',
-  cryo_infliction: '#00e5ff',
+  cryo_infliction: '#1890ff',
   nature_infliction: '#52c41a',
   // Bursts
   heat_burst: '#ff4d4f',

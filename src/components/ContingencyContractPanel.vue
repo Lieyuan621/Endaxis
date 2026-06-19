@@ -262,7 +262,13 @@ function isSelected(tagId: number): boolean {
 }
 
 function canSelect(tag: ContingencyContractTag): boolean {
-  return !getDisabledReason(tag)
+  const reason = getDisabledReason(tag)
+  return !reason || reason.startsWith('Conflict:')
+}
+
+function isConflictMuted(tag: ContingencyContractTag): boolean {
+  if (isSelected(tag.id)) return false
+  return getDisabledReason(tag).startsWith('Conflict:')
 }
 
 function toggleTag(tag: ContingencyContractTag) {
@@ -379,6 +385,7 @@ function hideBrokenImage(event: Event) {
                 :class="{
                   'is-selected': isSelected(cell.tag.id),
                   'is-locked': !canSelect(cell.tag),
+                  'is-conflict-muted': isConflictMuted(cell.tag),
                 }"
                 @click="toggleTag(cell.tag)"
               >
@@ -553,6 +560,16 @@ function hideBrokenImage(event: Event) {
 
 .cc-tag.is-locked {
   opacity: 0.38;
+}
+
+.cc-tag.is-conflict-muted {
+  opacity: 0.42;
+  filter: grayscale(0.55);
+}
+
+.cc-tag.is-conflict-muted:hover {
+  opacity: 0.72;
+  filter: grayscale(0.18);
 }
 
 .cc-tag img {

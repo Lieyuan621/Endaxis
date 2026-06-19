@@ -43,6 +43,7 @@ export class SimulationEngine {
   lmdiAttributionMode: 'stacks' | 'applier' = 'stacks';
   /** Controlled-operator timeline (time-ascending segments). Empty = nobody controlled. */
   controlledOperatorSegments: ControlSegment[] = [];
+  private enemyDamageCapWindows = new Map<number, number>();
 
   /** Resolve the controlled operator (track id) at `time`: the last segment starting at or before it. */
   private getControlledOperatorAt(time: number): string | null {
@@ -52,6 +53,40 @@ export class SimulationEngine {
       else break;
     }
     return current;
+  }
+
+  private applyEnemyDamageCap(time: number, rawDamage: number) {
+    const damage = Math.max(0, Math.floor(Number(rawDamage) || 0));
+    const windowSeconds = Number(this.state.enemy.config.enemyDamageCapWindowSeconds) || 0;
+    const ratio = Number(this.state.enemy.config.enemyDamageCapRatio) || 0;
+    const enemyHp = Number(this.state.enemy.config.enemyHp) || 0;
+    const cap = Math.floor(enemyHp * ratio);
+
+    if (damage <= 0 || windowSeconds <= 0 || ratio <= 0 || cap <= 0) {
+      return {
+        damage,
+        capped: false,
+        cap: 0,
+        usedBefore: 0,
+        windowStart: time,
+        windowEnd: time,
+      };
+    }
+
+    const index = Math.floor((Math.max(0, Number(time) || 0) + 0.0000001) / windowSeconds);
+    const usedBefore = Math.max(0, this.enemyDamageCapWindows.get(index) || 0);
+    const allowed = Math.max(0, cap - usedBefore);
+    const finalDamage = Math.min(damage, allowed);
+    this.enemyDamageCapWindows.set(index, usedBefore + finalDamage);
+
+    return {
+      damage: finalDamage,
+      capped: finalDamage < damage,
+      cap,
+      usedBefore,
+      windowStart: index * windowSeconds,
+      windowEnd: (index + 1) * windowSeconds,
+    };
   }
 
   constructor(
@@ -284,6 +319,7 @@ export class SimulationEngine {
       getBaseStats: (trackId: string) => this.baseStatsByTrack.get(trackId),
       enemyDef: this.enemyDef,
       enemyResistance: this.enemyResistance,
+      applyEnemyDamageCap: this.applyEnemyDamageCap.bind(this),
       lmdiAttributionMode: this.lmdiAttributionMode,
       getControlledOperatorAt: (time: number) => this.getControlledOperatorAt(time),
     };

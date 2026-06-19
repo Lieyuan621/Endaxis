@@ -240,6 +240,9 @@ export function compileScenario(
                           ? 1.1
                           : 1),
       defense: mergedSystemConstants.defense,
+      enemyHp: (mergedSystemConstants as any).enemyHp,
+      enemyDamageCapWindowSeconds: (mergedSystemConstants as any).enemyDamageCapWindowSeconds,
+      enemyDamageCapRatio: (mergedSystemConstants as any).enemyDamageCapRatio,
       tier: mergedSystemConstants.tier,
       resistance: normalizeEnemyResistance(mergedSystemConstants.resistance),
     },

@@ -57,6 +57,9 @@ export interface EnemyConfig {
   finisherRecovery?: number;
   finisherMultiplier?: number;
   defense?: number;
+  enemyHp?: number;
+  enemyDamageCapWindowSeconds?: number;
+  enemyDamageCapRatio?: number;
   tier?: string;
   resistance?: EnemyResistance;
 }

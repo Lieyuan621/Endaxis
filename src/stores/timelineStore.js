@@ -51,6 +51,10 @@ import {
 import { getTeamStatus, statusToKey } from '@/data/team-status'
 import { buildEffectById, collectEffects, collectTriggerEffects, patchCombatSkills, resolveEffect, resolveStatAttributes, resolveTriggerEffectLevel } from '@/data/collect'
 import { CRITERION_MECHANISMS } from '@/data/contingencyContracts/criteriaEffects'
+import {
+    buildEffectiveEnemySystemConstants,
+    getContingencyEnemyHealingRate,
+} from '@/data/contingencyContracts/criteriaEffects'
 import { isEnemyEffect } from '@/data/types'
 import { createDefaultEnemyResistance, normalizeEnemyResistance } from '@/data/enemyResistance'
 import { getBaseStatValues } from '@/data/stats/baseValues'
@@ -511,6 +515,18 @@ export const useTimelineStore = defineStore('timeline', () => {
     function setContingencyContractTags(tagIds) {
         contingencyContractTags.value = Array.isArray(tagIds) ? tagIds.map(Number).filter(Number.isFinite) : []
     }
+
+    const effectiveSystemConstants = computed(() =>
+        buildEffectiveEnemySystemConstants(systemConstants.value, contingencyContractTags.value),
+    )
+
+    const effectiveEnemyHp = computed(() =>
+        Math.max(1, Number(effectiveSystemConstants.value.enemyHp) || 1),
+    )
+
+    const contingencyEnemyHealingRate = computed(() =>
+        getContingencyEnemyHealingRate(contingencyContractTags.value),
+    )
 
     // Recompute when the selected Contingency Contract criteria change.
     watch(contingencyContractTags, () => {
@@ -1268,7 +1284,10 @@ export const useTimelineStore = defineStore('timeline', () => {
             scenarioData: sourceSnapshot,
             tracks: sourceSnapshot.tracks || tracks.value,
             characterRoster: characterRoster.value,
-            systemConstants: sourceSnapshot.systemConstants || systemConstants.value,
+            systemConstants: buildEffectiveEnemySystemConstants(
+                sourceSnapshot.systemConstants || systemConstants.value,
+                sourceSnapshot.contingencyContractTags ?? contingencyContractTags.value,
+            ),
             prepDuration: sourceSnapshot.prepDuration ?? prepDuration.value,
             activeEnemyId: sourceSnapshot.activeEnemyId ?? activeEnemyId.value,
             runtimeInitialEffects: [
@@ -4717,7 +4736,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             scenarioData: currentScenario.data,
             tracks: tracks.value,
             characterRoster: characterRoster.value,
-            systemConstants: systemConstants.value,
+            systemConstants: effectiveSystemConstants.value,
             prepDuration: prepDuration.value,
             activeEnemyId: activeEnemyId.value,
             runtimeInitialEffects: [
@@ -5505,7 +5524,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     return {
         MAX_SCENARIOS, toTimelineSpace, toViewportSpace, toGameTime, toRealTime,
-        systemConstants, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, activeTrackIndex, timelineScrollTop, timelineShift, timelineRect, trackLaneRects, nodeRects, draggingSkillData,
+        systemConstants, effectiveSystemConstants, effectiveEnemyHp, contingencyEnemyHealingRate, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, activeTrackIndex, timelineScrollTop, timelineShift, timelineRect, trackLaneRects, nodeRects, draggingSkillData,
         lmdiAttributionMode,
         selectedActionId, selectedLibrarySkillId, multiSelectedIds, clipboard, isCapturing, setIsCapturing, showCursorGuide, operatorEffectsVisible, isBoxSelectMode, cursorPosTimeline, cursorCurrentTime, cursorPosition, snapStep,
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,

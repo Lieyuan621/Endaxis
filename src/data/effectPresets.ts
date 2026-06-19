@@ -209,6 +209,7 @@ export function getEffectPresetKey(effect: Effect): string {
     case 'status':
       // Stat-bearing effects derive their display key from the stat (icon, name, color).
       // Pure state effects use their id.
+      if (effect.displayType) return effect.displayType;
       if (effect.stat) return getStatPresetKey(effect.stat);
       return effect.id ?? 'status';
     case 'infliction':
@@ -335,6 +336,7 @@ export function resolveEffectLifecycle(effect: EffectBase): ResolvedLifecycle {
 function getEffectLocaleKey(effect: Effect): string {
   switch (effect.kind) {
     case 'status':
+      if (effect.displayType) return effect.displayType;
       if (effect.stat) return getStatPresetKey(effect.stat);
       return effect.id ?? 'status';
     case 'infliction':

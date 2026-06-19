@@ -543,6 +543,7 @@ describe('CC trigger clone fidelity (Infinity durations)', () => {
 
 // ─── Heat Loss (队列：失温 / 热流失) — groups 1003 / 1004 ──────────────────────
 describe('Heat Loss (groups 1003 / 1004) mechanism data', () => {
+  const sharedCryoId = 'cc:heat-loss:cryo';
   const cases = [
     { group: 1003, skill: 'battleSkill' },
     { group: 1004, skill: 'comboSkill' },
@@ -568,10 +569,11 @@ describe('Heat Loss (groups 1003 / 1004) mechanism data', () => {
     it(`group ${group} applies a display-only Cryo status to the controlled operator`, () => {
       // Level 2 (idx 1) adds a stack every cast.
       const effects = mech.triggersByLevel![1]![0]!.effects as any[];
-      const cryo = effects.find(e => e.id === `cc:${group}:cryo`)!;
+      const cryo = effects.find(e => e.id === sharedCryoId)!;
       expect(cryo.target).toBe('controlled');
       expect(cryo.maxStacks).toBe(4);
       expect(cryo.icd).toBe(3);
+      expect(cryo.displayType).toBe('cryo_infliction');
       expect(cryo.stat).toBeUndefined(); // no damage modifier — display only
     });
 
@@ -584,7 +586,7 @@ describe('Heat Loss (groups 1003 / 1004) mechanism data', () => {
         kind: 'not',
         condition: { kind: 'enemyStatus', status: `cc:${group}:toggle` },
       });
-      const cryo = effects.find(e => e.id === `cc:${group}:cryo`)!;
+      const cryo = effects.find(e => e.id === sharedCryoId)!;
       // Compound AND: consume the toggle; only when the controlled operator is not Frozen and not immune.
       expect(cryo.condition).toEqual([
         { kind: 'enemyStatus', status: `cc:${group}:toggle`, consume: true },
@@ -606,20 +608,31 @@ describe('Heat Loss (groups 1003 / 1004) mechanism data', () => {
     it(`group ${group} converts to Frozen on the 4th Cryo stack (consume all)`, () => {
       const freeze = mech.triggers![0]!;
       expect((freeze.trigger as any).kind).toBe('onStatusApplied');
-      expect((freeze.trigger as any).status).toBe(`cc:${group}:cryo`);
+      expect((freeze.trigger as any).status).toBe(sharedCryoId);
       const frozen = freeze.effects[0] as any;
       expect(frozen.id).toBe('cc:frozen');
       expect(frozen.target).toBe('controlled');
+      expect(frozen.displayType).toBe('solidification');
       expect(frozen.stat).toBeUndefined();
       expect(frozen.condition).toEqual({
         kind: 'operatorStatus',
-        status: `cc:${group}:cryo`,
+        status: sharedCryoId,
         target: 'controlled',
         stacks: { compare: 'atLeast', count: 4 },
         consume: true,
       });
     });
   }
+
+  it('uses one shared Cryo status id for both Heat Loss criteria', () => {
+    const battleCryo = CRITERION_MECHANISMS[1003]!.triggersByLevel![1]![0]!.effects
+      .find((effect: any) => effect.displayType === 'cryo_infliction') as any;
+    const comboCryo = CRITERION_MECHANISMS[1004]!.triggersByLevel![1]![0]!.effects
+      .find((effect: any) => effect.displayType === 'cryo_infliction') as any;
+
+    expect(battleCryo.id).toBe(sharedCryoId);
+    expect(comboCryo.id).toBe(sharedCryoId);
+  });
 });
 
 // ─── Lysis family (融化/升华/电解/切削) — groups 1017 / 1018 / 1019 / 1024 ──────
@@ -642,6 +655,7 @@ describe('Lysis family (groups 1017 / 1018 / 1019 / 1024) mechanism data', () =>
       expect(eff.id).toBe('cc:frozen');
       expect(eff.target).toBe('controlled');
       expect(eff.duration).toBe(15);
+      expect(eff.displayType).toBe('solidification');
       expect(eff.stackStrategy).toBe('REPLACE');
       expect(eff.silent).toBe(true); // avoids re-firing onStatusApplied (no extend loop)
     });

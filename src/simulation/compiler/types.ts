@@ -176,6 +176,15 @@ export interface ResolvedHit extends Hit {
   consumedStatEffects?: ConsumedStatEffect[];
   _expectedDamage?: number;
   _damageBreakdown?: DamageBreakdown;
+  _enemyDamageCap?: {
+    capped: boolean;
+    cap: number;
+    rawDamage: number;
+    finalDamage: number;
+    usedBefore: number;
+    windowStart: number;
+    windowEnd: number;
+  };
   _staggerMult?: number;
   _staggerContributions?: Record<string, number>;
   _finisherMult?: number;

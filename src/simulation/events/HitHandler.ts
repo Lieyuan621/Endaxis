@@ -42,6 +42,39 @@ function getEnemyResistanceValue(ctx: SimulationContext, element: string | undef
   return value != null ? value / 100 : 0;
 }
 
+function applyEnemyDamageCapToBreakdown(
+  breakdown: any,
+  time: number,
+  ctx: SimulationContext,
+  hit: any,
+) {
+  const rawDamage = Math.max(0, Math.floor(Number(breakdown?.expectedDamage) || 0));
+  const capped = ctx.applyEnemyDamageCap(time, rawDamage);
+  if (!capped.capped) return breakdown;
+
+  const finalDamage = Math.max(0, Math.floor(capped.damage));
+  const maxForThisHit = Math.max(0, capped.cap - capped.usedBefore);
+  breakdown.expectedDamage = finalDamage;
+  breakdown.nonCritDamage = Math.min(
+    Math.max(0, Math.floor(Number(breakdown.nonCritDamage) || 0)),
+    maxForThisHit,
+  );
+  breakdown.critDamage = Math.min(
+    Math.max(0, Math.floor(Number(breakdown.critDamage) || 0)),
+    maxForThisHit,
+  );
+  hit._enemyDamageCap = {
+    capped: true,
+    cap: capped.cap,
+    rawDamage,
+    finalDamage,
+    usedBefore: capped.usedBefore,
+    windowStart: capped.windowStart,
+    windowEnd: capped.windowEnd,
+  };
+  return breakdown;
+}
+
 export class HitHandler implements EventHandler<HitEvent> {
   private registry?: TriggerRegistry;
   constructor(registry?: TriggerRegistry) {
@@ -206,6 +239,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         artsIntensity: operatorStatus.artsIntensity,
         element,
       });
+      applyEnemyDamageCapToBreakdown(breakdown, e.time, ctx, hit);
       hit._expectedDamage = breakdown.expectedDamage;
       hit._damageBreakdown = breakdown;
 
@@ -355,6 +389,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         enemyResistance,
       );
       if (breakdown) {
+        applyEnemyDamageCapToBreakdown(breakdown, e.time, ctx, hit);
         hit._expectedDamage = breakdown.expectedDamage;
         hit._damageBreakdown = breakdown;
 

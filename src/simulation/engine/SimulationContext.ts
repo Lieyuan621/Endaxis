@@ -42,6 +42,15 @@ export interface SimulationContext {
   enemyDef: number;
   /** Enemy per-element damage multiplier. 100 = neutral. */
   enemyResistance: EnemyResistance;
+  /** Apply enemy-side per-window incoming damage caps, returning the final damage. */
+  applyEnemyDamageCap: (time: number, damage: number) => {
+    damage: number;
+    capped: boolean;
+    cap: number;
+    usedBefore: number;
+    windowStart: number;
+    windowEnd: number;
+  };
   /** LMDI attribution mode for reaction debuff contributions. */
   lmdiAttributionMode: 'stacks' | 'applier';
   /** Operator (track id) controlled at the given time, or null if none. Derived from switch events. */

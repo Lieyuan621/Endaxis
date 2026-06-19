@@ -1,4 +1,5 @@
 import type { Effect, TriggerEffect } from '../types';
+import type { EnemyStateEvent } from '@/simulation/engine/types';
 
 export interface CriterionMechanism {
   /** Number of selectable levels (for value-array indexing / clamping). */
@@ -25,6 +26,7 @@ export interface CriterionMechanism {
 // effectively infinite for any real timeline while keeping those alive.
 const HEAT_LOSS_CRYO_DURATION = 1e9;
 const HEAT_LOSS_FROZEN_DURATION = 5;
+const HEAT_LOSS_CRYO_ID = 'cc:heat-loss:cryo';
 /** Shared operator-Freeze status id (one freeze state regardless of which source froze the operator),
  *  so the lysis criteria (Pyrolysis/Biolysis/Electrolysis/Physicolysis) can extend / dispel it. */
 const FROZEN_ID = 'cc:frozen';
@@ -34,7 +36,7 @@ const FROZEN_ICON = '/icons/icon_battle_debuff_frozen.webp';
 export const CRYO_INFLICTION_IMMUNE_ID = 'cryo-infliction-immune';
 
 function heatLossMechanism(group: number, skillType: 'battleSkill' | 'comboSkill'): CriterionMechanism {
-  const cryoId = `cc:${group}:cryo`;
+  const cryoId = HEAT_LOSS_CRYO_ID;
   const toggleId = `cc:${group}:toggle`;
   const frozenId = FROZEN_ID;
   // While the controlled operator is Frozen, no new Cryo stacks accrue.
@@ -60,7 +62,7 @@ function heatLossMechanism(group: number, skillType: 'battleSkill' | 'comboSkill
       maxStacks: 4,
       stackStrategy: 'REFRESH_DURATION',
       duration: HEAT_LOSS_CRYO_DURATION,
-      name: 'Cryo Infliction',
+      displayType: 'cryo_infliction',
       icon: '/icons/icon_energy_fusion_cryst.webp',
       icd: 3,
       ...extra,
@@ -82,7 +84,7 @@ function heatLossMechanism(group: number, skillType: 'battleSkill' | 'comboSkill
             target: 'controlled',
             maxStacks: 1,
             duration: HEAT_LOSS_FROZEN_DURATION,
-            name: 'Frozen',
+            displayType: 'solidification',
             icon: FROZEN_ICON,
             condition: {
               kind: 'operatorStatus',
@@ -153,7 +155,7 @@ function lysisMechanism(element: 'heat' | 'nature' | 'electric' | 'physical'): C
             maxStacks: 1,
             duration: LYSIS_FREEZE_DURATION,
             stackStrategy: 'REPLACE',
-            name: 'Frozen',
+            displayType: 'solidification',
             icon: FROZEN_ICON,
             silent: true,
           } as Effect,
@@ -426,8 +428,158 @@ export const CRITERION_MECHANISMS: Record<number, CriterionMechanism> = {
   1011: { levelCount: 2 },
 };
 
+const VITALITY_HP_MULTIPLIERS = [1.5, 2, 3] as const;
+const HEALING_RATES = [0.05, 0.15] as const;
+const SURGE_DAMAGE_CAP = Object.freeze({
+  windowSeconds: 0.1,
+  ratio: 0.25,
+});
+
+const CONTROL_PHYSICAL_TYPES = new Set(["lift", "knockdown"]);
+const CONTROL_DEBUFF_TYPES = new Set(["solidification"]);
+const CONTROL_STATUS_IDS = new Set([
+  "endministrator-originium-crystals",
+  "tangtang-oldenStare",
+]);
+
+export interface EnemyDamageCapConfig {
+  windowSeconds: number;
+  ratio: number;
+}
+
+export interface EnemyControlInterval {
+  start: number;
+  end: number;
+}
+
+export function getSelectedCriterionLevel(
+  tagIds: readonly unknown[] | undefined,
+  groupId: number,
+  levelCount: number,
+): number | null {
+  for (const rawId of tagIds || []) {
+    const tagId = Number(rawId);
+    if (!Number.isFinite(tagId)) continue;
+    if (Math.floor(tagId / 100) !== groupId) continue;
+    return Math.max(0, Math.min((tagId % 100) - 1, Math.max(0, levelCount - 1)));
+  }
+  return null;
+}
+
+export function getContingencyEnemyHpMultiplier(tagIds: readonly unknown[] | undefined): number {
+  const level = getSelectedCriterionLevel(tagIds, 9001, VITALITY_HP_MULTIPLIERS.length);
+  return level == null ? 1 : VITALITY_HP_MULTIPLIERS[level] ?? 1;
+}
+
+export function getContingencyEnemyHealingRate(tagIds: readonly unknown[] | undefined): number {
+  const level = getSelectedCriterionLevel(tagIds, 1011, HEALING_RATES.length);
+  return level == null ? 0 : HEALING_RATES[level] ?? 0;
+}
+
+export function getContingencyEnemyDamageCap(
+  tagIds: readonly unknown[] | undefined,
+): EnemyDamageCapConfig | null {
+  return getSelectedCriterionLevel(tagIds, 1023, 1) == null ? null : { ...SURGE_DAMAGE_CAP };
+}
+
+export function buildEffectiveEnemySystemConstants<T extends Record<string, any>>(
+  systemConstants: T,
+  tagIds: readonly unknown[] | undefined,
+): T {
+  const baseHp = Math.max(1, Number(systemConstants?.enemyHp) || 1);
+  const damageCap = getContingencyEnemyDamageCap(tagIds);
+  return {
+    ...systemConstants,
+    enemyHp: Math.round(baseHp * getContingencyEnemyHpMultiplier(tagIds)),
+    enemyDamageCapWindowSeconds: damageCap?.windowSeconds,
+    enemyDamageCapRatio: damageCap?.ratio,
+  };
+}
+
+function finiteInterval(start: unknown, end: unknown, until: number): EnemyControlInterval | null {
+  const s = Math.max(0, Number(start) || 0);
+  const rawEnd = Number(end);
+  const e = Number.isFinite(rawEnd) ? Math.min(rawEnd, until) : until;
+  if (!(e > s)) return null;
+  return { start: s, end: e };
+}
+
+function getBaseRuntimeStatusId(statusId: unknown): string {
+  return String(statusId ?? "").split("@")[0] ?? "";
+}
+
+function isControlStatusId(statusId: unknown): boolean {
+  return CONTROL_STATUS_IDS.has(getBaseRuntimeStatusId(statusId));
+}
+
+export function buildContingencyEnemyControlIntervals(
+  enemyLog: readonly EnemyStateEvent[] | undefined,
+  until = Infinity,
+): EnemyControlInterval[] {
+  const limit = Number.isFinite(until) ? Math.max(0, until) : Infinity;
+  const intervals: EnemyControlInterval[] = [];
+
+  for (const event of enemyLog || []) {
+    if (event.type === "PHYSICAL_STATUS" && CONTROL_PHYSICAL_TYPES.has(event.physicalType)) {
+      const duration = Number(event.effectiveDuration) || 0;
+      const interval = finiteInterval(event.time, event.time + duration, limit);
+      if (interval) intervals.push(interval);
+      continue;
+    }
+
+    if (event.type === "DEBUFF_APPLY" && CONTROL_DEBUFF_TYPES.has(event.debuffType)) {
+      const interval = finiteInterval(event.time, event.expiresAt, limit);
+      if (interval) intervals.push(interval);
+      continue;
+    }
+
+    if (event.type === "ENEMY_STATUS_APPLY" && isControlStatusId(event.id)) {
+      const interval = finiteInterval(event.time, event.expiresAt, limit);
+      if (interval) intervals.push(interval);
+    }
+  }
+
+  intervals.sort((a, b) => a.start - b.start || a.end - b.end);
+  const merged: EnemyControlInterval[] = [];
+  for (const interval of intervals) {
+    const last = merged[merged.length - 1];
+    if (last && interval.start <= last.end + 0.0001) {
+      last.end = Math.max(last.end, interval.end);
+    } else {
+      merged.push({ ...interval });
+    }
+  }
+  return merged;
+}
+
+export function computeContingencyEnemyHealing(
+  enemyLog: readonly EnemyStateEvent[] | undefined,
+  {
+    maxHp,
+    rate,
+    until = Infinity,
+  }: {
+    maxHp: number;
+    rate: number;
+    until?: number;
+  },
+): number {
+  const hp = Math.max(0, Number(maxHp) || 0);
+  const healRate = Math.max(0, Number(rate) || 0);
+  if (hp <= 0 || healRate <= 0) return 0;
+
+  return buildContingencyEnemyControlIntervals(enemyLog, until).reduce(
+    (sum, interval) => sum + (interval.end - interval.start) * healRate * hp,
+    0,
+  );
+}
+
 /** True when the given numeric groupId has a damage-model mechanism (effects or triggers) implemented. */
 export function hasCriterionMechanism(groupId: number): boolean {
   const mech = CRITERION_MECHANISMS[groupId];
-  return !!mech && ((mech.effects?.length ?? 0) > 0 || (mech.triggers?.length ?? 0) > 0);
+  return !!mech && (
+    (mech.effects?.length ?? 0) > 0
+    || (mech.triggers?.length ?? 0) > 0
+    || (mech.triggersByLevel?.some(level => level.length > 0) ?? false)
+  );
 }
