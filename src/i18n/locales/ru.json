@@ -626,6 +626,7 @@
       "clickToChange": "Сменить врага",
       "dialogTitle": "Выбрать врага",
       "searchPlaceholder": "Поиск врага...",
+      "level": "Уровень",
       "specialGroup": "Особые",
       "customDesc": "Ручная настройка",
       "desc": "Макс:{max} | Узлы:{nodes}",

@@ -415,10 +415,23 @@ export const useTimelineStore = defineStore('timeline', () => {
         domainConfig: {}
     })
     const activeEnemyId = ref('custom')
+    const activeEnemyLevel = ref(90)
     const enemyCategories = ref([])
     const cycleBoundaries = ref([])
 
     const activeScenarioId = ref('default_sc')
+    function normalizeEnemyLevel(level) {
+        const num = Number(level)
+        if ([1, 20, 40, 60, 80, 90].includes(num)) return num
+        return 90
+    }
+
+    function getEnemyHpForLevel(enemy, enemySheet, level) {
+        const normalizedLevel = normalizeEnemyLevel(level)
+        const levelHp = enemy?.levelHp ?? enemySheet?.levelHp
+        return Number(levelHp?.[normalizedLevel]) || 0
+    }
+
     const scenarioList = ref([
         { id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null }
     ])
@@ -929,6 +942,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             prepExpanded: prepExpanded.value,
             systemConstants: systemConstants.value,
             activeEnemyId: activeEnemyId.value,
+            activeEnemyLevel: activeEnemyLevel.value,
             customEnemyParams: customEnemyParams.value,
             cycleBoundaries: cycleBoundaries.value,
             switchEvents: switchEvents.value,
@@ -987,6 +1001,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
 
         activeEnemyId.value = snapshot.activeEnemyId || activeEnemyId.value || 'custom'
+        activeEnemyLevel.value = normalizeEnemyLevel(snapshot.activeEnemyLevel ?? activeEnemyLevel.value)
 
         if (snapshot.customEnemyParams) {
             customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, snapshot.customEnemyParams)
@@ -1030,6 +1045,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             prepExpanded: prepExpanded.value,
             systemConstants: systemConstants.value,
             activeEnemyId: activeEnemyId.value,
+            activeEnemyLevel: activeEnemyLevel.value,
             customEnemyParams: customEnemyParams.value,
             cycleBoundaries: cycleBoundaries.value,
             switchEvents: switchEvents.value,
@@ -1064,6 +1080,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             systemConstants.value = normalizeEnemyConfig(systemConstants.value, incoming.systemConstants)
         }
         activeEnemyId.value = incoming.activeEnemyId || 'custom'
+        activeEnemyLevel.value = normalizeEnemyLevel(incoming.activeEnemyLevel ?? activeEnemyLevel.value)
         if (incoming.customEnemyParams) {
             customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, incoming.customEnemyParams)
         }
@@ -3248,9 +3265,21 @@ export const useTimelineStore = defineStore('timeline', () => {
                 systemConstants.value.staggerNodeDuration = enemy.staggerNodeDuration
                 systemConstants.value.staggerBreakDuration = enemy.staggerBreakDuration
                 systemConstants.value.executionRecovery = enemy.executionRecovery
-                systemConstants.value.enemyHp = Number(enemy.hp ?? enemySheet?.hp ?? systemConstants.value.enemyHp) || 0
+                systemConstants.value.enemyHp = getEnemyHpForLevel(enemy, enemySheet, activeEnemyLevel.value)
                 systemConstants.value.resistance = normalizeEnemyResistance(enemy.resistance ?? enemySheet?.resistance)
             }
+        }
+    }
+
+    function setActiveEnemyLevel(level) {
+        activeEnemyLevel.value = normalizeEnemyLevel(level)
+        if (activeEnemyId.value === 'custom') return
+
+        const enemy = enemyDatabase.value.find(e => e.id === activeEnemyId.value)
+        const enemySheet = getEnemy(activeEnemyId.value)
+        const nextHp = getEnemyHpForLevel(enemy, enemySheet, activeEnemyLevel.value)
+        if (nextHp > 0) {
+            systemConstants.value.enemyHp = nextHp
         }
     }
 
@@ -5124,6 +5153,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 scenarioList,
                 activeScenarioId,
                 activeEnemyId,
+                activeEnemyLevel,
                 customEnemyParams,
                 cycleBoundaries,
                 switchEvents,
@@ -5144,6 +5174,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                  newScList,
                  newActiveId,
                  newEnemyId,
+                 newEnemyLevel,
                  newCustomParams,
                  newBoundaries,
                  newSwEvents,
@@ -5177,6 +5208,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                         prepExpanded: prepExpanded.value,
                         systemConstants: newSys,
                         activeEnemyId: newEnemyId,
+                        activeEnemyLevel: newEnemyLevel,
                         customEnemyParams: newCustomParams,
                         cycleBoundaries: newBoundaries,
                         switchEvents: newSwEvents,
@@ -5192,7 +5224,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                     scenarioList: listToSave,
                     activeScenarioId: newActiveId,
                     systemConstants: newSys,
-                    activeEnemyId: newEnemyId
+                    activeEnemyId: newEnemyId,
+                    activeEnemyLevel: newEnemyLevel
                 }
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProjectData(snapshot)))
             }, { deep: true, throttle: 500 })
@@ -5209,6 +5242,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 if (data.systemConstants) {
                     systemConstants.value = normalizeEnemyConfig(systemConstants.value, data.systemConstants);
                 }
+                activeEnemyLevel.value = normalizeEnemyLevel(data.activeEnemyLevel ?? activeEnemyLevel.value)
 
                 scenarioList.value = data.scenarioList.map(sc => {
                     const cloned = JSON.parse(JSON.stringify(sc))
@@ -5264,6 +5298,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         systemConstants.value = createDefaultSystemConstantsState();
 
         activeEnemyId.value = 'custom';
+        activeEnemyLevel.value = 90;
         // Reset scenarios to the default single-scenario state.
         scenarioList.value = [{ id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null }];
         activeScenarioId.value = 'default_sc';
@@ -5319,6 +5354,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 prepExpanded: prepExpanded.value,
                 systemConstants: systemConstants.value,
                 activeEnemyId: activeEnemyId.value,
+                activeEnemyLevel: activeEnemyLevel.value,
                 customEnemyParams: customEnemyParams.value,
                 cycleBoundaries: cycleBoundaries.value,
                 switchEvents: switchEvents.value,
@@ -5333,7 +5369,9 @@ export const useTimelineStore = defineStore('timeline', () => {
             version: '1.0.0',
             scenarioList: listToExport,
             activeScenarioId: activeScenarioId.value,
-            systemConstants: systemConstants.value
+            systemConstants: systemConstants.value,
+            activeEnemyId: activeEnemyId.value,
+            activeEnemyLevel: activeEnemyLevel.value
         };
     }
 
@@ -5379,6 +5417,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             }
 
             if (normalizedData.activeEnemyId) { activeEnemyId.value = normalizedData.activeEnemyId }
+            activeEnemyLevel.value = normalizeEnemyLevel(normalizedData.activeEnemyLevel ?? activeEnemyLevel.value)
 
             if (normalizedData.customEnemyParams) {
                 customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, normalizedData.customEnemyParams)
@@ -5460,7 +5499,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         toggleActionLock, toggleActionDisable, setActionColor, isHitForcedCrit, toggleHitForcedCrit, getHitDisplayDamage,
         globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById, getEffectById,
         getUltimateEnhancementMetrics,
-        enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
+        enemyDatabase, activeEnemyId, activeEnemyLevel, applyEnemyPreset, setActiveEnemyLevel, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
         createInheritedScenarioFromCycleBoundary,
         effectLayouts, getNodeRect, weaponDatabase, weaponOverrides, activeWeapon, getWeaponById,

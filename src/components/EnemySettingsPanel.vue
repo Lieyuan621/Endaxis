@@ -14,6 +14,7 @@ const { enemyDatabase, enemyCategories } = storeToRefs(store)
 const ENEMY_TIERS = store.ENEMY_TIERS
 const TIER_WEIGHTS = { boss: 5, head: 4, champion: 3, elite: 2, normal: 1 }
 const ENEMY_RESISTANCE_ELEMENTS = ['physical', 'heat', 'cryo', 'electric', 'nature']
+const ENEMY_LEVELS = [1, 20, 40, 60, 80, 90]
 const CATEGORY_ALL = '__ALL__'
 const CATEGORY_UNCATEGORIZED = '__UNCAT__'
 
@@ -88,6 +89,10 @@ function selectEnemy(id) {
   store.applyEnemyPreset(id)
   isEnemySelectorVisible.value = false
 }
+
+function setEnemyLevel(level) {
+  store.setActiveEnemyLevel(level)
+}
 </script>
 
 <template>
@@ -104,7 +109,9 @@ function selectEnemy(id) {
         <div class="scan-line"></div>
       </div>
       <div class="enemy-info-col">
-        <div class="enemy-name">{{ activeEnemyInfo.name }}</div>
+        <div class="enemy-name-line">
+          <span class="enemy-name">{{ activeEnemyInfo.name }}</span>
+        </div>
         <div class="click-hint">{{ t('resourceMonitor.enemy.clickToChange') }}</div>
       </div>
     </button>
@@ -158,9 +165,24 @@ function selectEnemy(id) {
       </div>
     </div>
 
-    <el-dialog v-model="isEnemySelectorVisible" :title="t('resourceMonitor.enemy.dialogTitle')" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
+    <el-dialog v-model="isEnemySelectorVisible" :title="t('resourceMonitor.enemy.dialogTitle')" width="640px" align-center class="char-selector-dialog" :append-to-body="true">
       <div class="selector-header">
-        <el-input v-model="enemySearchQuery" :placeholder="t('resourceMonitor.enemy.searchPlaceholder')" :prefix-icon="Search" clearable style="width: 100%" />
+        <el-input v-model="enemySearchQuery" :placeholder="t('resourceMonitor.enemy.searchPlaceholder')" :prefix-icon="Search" clearable style="width: 180px" />
+        <div class="enemy-level-picker">
+          <span class="tier-label">{{ t('resourceMonitor.enemy.level') }}</span>
+          <div class="enemy-level-buttons">
+            <button
+              v-for="level in ENEMY_LEVELS"
+              :key="`enemy_level_${level}`"
+              type="button"
+              class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold enemy-level-btn"
+              :class="{ 'is-active': store.activeEnemyLevel === level }"
+              @click="setEnemyLevel(level)"
+            >
+              {{ level }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="category-tabs">
@@ -329,6 +351,13 @@ function selectEnemy(id) {
   justify-content: center;
 }
 
+.enemy-name-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .enemy-name {
   font-weight: bold;
   color: #eee;
@@ -413,7 +442,37 @@ function selectEnemy(id) {
 }
 
 .selector-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   margin-bottom: 16px;
+}
+
+.enemy-level-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.enemy-level-picker .tier-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 700;
+  user-select: none;
+}
+
+.enemy-level-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.enemy-level-btn {
+  min-width: 30px;
+  height: 24px;
+  padding: 0 7px;
+  line-height: 1;
 }
 
 .category-tabs {

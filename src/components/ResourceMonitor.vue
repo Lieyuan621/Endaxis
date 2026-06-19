@@ -934,7 +934,10 @@ const staggerRatio = computed(() => {
           <div class="module-title red">{{ t('resourceMonitor.modules.enemyStatus') }}</div>
           <div class="enemy-compact">
             <div class="enemy-compact-text">
-              <div class="enemy-name">{{ activeEnemyInfo.name }}</div>
+              <div class="enemy-name-line">
+                <span class="enemy-name">{{ activeEnemyInfo.name }}</span>
+                <span v-if="store.activeEnemyId !== 'custom'" class="enemy-level-badge">Lv{{ store.activeEnemyLevel }}</span>
+              </div>
             </div>
           </div>
           <div class="module-value-text enemy-hp-text">{{ enemyRemainingHp.toLocaleString() }}/{{ enemyMaxHp.toLocaleString() }}</div>
@@ -1408,6 +1411,24 @@ const staggerRatio = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.enemy-name-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.enemy-level-badge {
+  flex-shrink: 0;
+  color: #ffd700;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.86;
 }
 
 .enemy-hp-text {

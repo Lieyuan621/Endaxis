@@ -909,7 +909,7 @@ export interface EnemySheet {
   avatar: string;
   category: string;
   tier: 'boss' | 'champion' | 'elite' | 'normal';
-  hp: number;
+  levelHp: Record<number, number>;
   def: number;
   resistance: Record<DamageElement, number>;
   maxStagger: number;

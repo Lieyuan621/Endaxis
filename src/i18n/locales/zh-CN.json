@@ -739,6 +739,7 @@
       "clickToChange": "点击更换敌人",
       "dialogTitle": "选择敌人",
       "searchPlaceholder": "搜索敌人...",
+      "level": "等级",
       "specialGroup": "特殊",
       "customDesc": "手动调整属性数值",
       "desc": "上限:{max} | 节点:{nodes}",

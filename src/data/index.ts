@@ -281,7 +281,7 @@ export function getEnemyList(): {
   avatar: string;
   category: string;
   tier: string;
-  hp: number;
+  levelHp: Record<number, number>;
   def: number;
   resistance: EnemySheet['resistance'];
   maxStagger: number;
@@ -297,7 +297,7 @@ export function getEnemyList(): {
       avatar: sheet.avatar,
       category: sheet.category,
       tier: sheet.tier,
-      hp: sheet.hp,
+      levelHp: sheet.levelHp,
       def: sheet.def,
       resistance: normalizeEnemyResistance(sheet.resistance),
       maxStagger: sheet.maxStagger,

@@ -739,6 +739,7 @@
       "clickToChange": "Click to change enemy",
       "dialogTitle": "Select Enemy",
       "searchPlaceholder": "Search enemy...",
+      "level": "Level",
       "specialGroup": "Special",
       "customDesc": "Manually adjust attribute values",
       "desc": "Max:{max} | Nodes:{nodes}",
