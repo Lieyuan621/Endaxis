@@ -442,6 +442,12 @@ const CONTROL_STATUS_IDS = new Set([
   "tangtang-oldenStare",
 ]);
 
+const FROZEN_CONTROL_SUPER_ARMOR_LIMIT = 20;
+const PHYSICAL_CONTROL_SUPER_ARMOR_LIMIT = 30;
+const CONTROL_STATUS_SUPER_ARMOR_LIMITS = new Map<string, number>([
+  ["endministrator-originium-crystals", FROZEN_CONTROL_SUPER_ARMOR_LIMIT],
+]);
+
 export interface EnemyDamageCapConfig {
   windowSeconds: number;
   ratio: number;
@@ -512,15 +518,24 @@ function isControlStatusId(statusId: unknown): boolean {
   return CONTROL_STATUS_IDS.has(getBaseRuntimeStatusId(statusId));
 }
 
+function canControlByStatus(statusId: unknown, superArmor: number): boolean {
+  const limit = CONTROL_STATUS_SUPER_ARMOR_LIMITS.get(getBaseRuntimeStatusId(statusId));
+  return limit === undefined || superArmor <= limit;
+}
+
 export function buildContingencyEnemyControlIntervals(
   enemyLog: readonly EnemyStateEvent[] | undefined,
   until = Infinity,
+  superArmor = 0,
 ): EnemyControlInterval[] {
   const limit = Number.isFinite(until) ? Math.max(0, until) : Infinity;
+  const armor = Math.max(0, Number(superArmor) || 0);
   const intervals: EnemyControlInterval[] = [];
 
   for (const event of enemyLog || []) {
     if (event.type === "PHYSICAL_STATUS" && CONTROL_PHYSICAL_TYPES.has(event.physicalType)) {
+      if (event.actualControl === false) continue;
+      if (armor >= PHYSICAL_CONTROL_SUPER_ARMOR_LIMIT) continue;
       const duration = Number(event.effectiveDuration) || 0;
       const interval = finiteInterval(event.time, event.time + duration, limit);
       if (interval) intervals.push(interval);
@@ -528,12 +543,14 @@ export function buildContingencyEnemyControlIntervals(
     }
 
     if (event.type === "DEBUFF_APPLY" && CONTROL_DEBUFF_TYPES.has(event.debuffType)) {
+      if (armor > FROZEN_CONTROL_SUPER_ARMOR_LIMIT) continue;
       const interval = finiteInterval(event.time, event.expiresAt, limit);
       if (interval) intervals.push(interval);
       continue;
     }
 
     if (event.type === "ENEMY_STATUS_APPLY" && isControlStatusId(event.id)) {
+      if (!canControlByStatus(event.id, armor)) continue;
       const interval = finiteInterval(event.time, event.expiresAt, limit);
       if (interval) intervals.push(interval);
     }
@@ -558,17 +575,19 @@ export function computeContingencyEnemyHealing(
     maxHp,
     rate,
     until = Infinity,
+    superArmor = 0,
   }: {
     maxHp: number;
     rate: number;
     until?: number;
+    superArmor?: number;
   },
 ): number {
   const hp = Math.max(0, Number(maxHp) || 0);
   const healRate = Math.max(0, Number(rate) || 0);
   if (hp <= 0 || healRate <= 0) return 0;
 
-  return buildContingencyEnemyControlIntervals(enemyLog, until).reduce(
+  return buildContingencyEnemyControlIntervals(enemyLog, until, superArmor).reduce(
     (sum, interval) => sum + (interval.end - interval.start) * healRate * hp,
     0,
   );

@@ -233,6 +233,8 @@ export interface PhysicalStatusEvent {
   sourceId: string;
   /** Total resolved duration (base + extension) to apply. */
   effectiveDuration: number;
+  /** False when Lift/Knock Down only adds vulnerability and does not actually control the enemy. */
+  actualControl?: boolean;
 }
 
 export interface VulnerabilityChangeEvent {

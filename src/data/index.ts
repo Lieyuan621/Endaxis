@@ -284,6 +284,7 @@ export function getEnemyList(): {
   levelHp: Record<number, number>;
   def: number;
   resistance: EnemySheet['resistance'];
+  superArmor: number;
   maxStagger: number;
   staggerNodeCount: number;
   staggerNodeDuration: number;
@@ -300,6 +301,7 @@ export function getEnemyList(): {
       levelHp: sheet.levelHp,
       def: sheet.def,
       resistance: normalizeEnemyResistance(sheet.resistance),
+      superArmor: Number(sheet.superArmor) || 0,
       maxStagger: sheet.maxStagger,
       staggerNodeCount: sheet.staggerNodeCount,
       staggerNodeDuration: sheet.staggerNodeDuration,

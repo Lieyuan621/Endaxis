@@ -719,6 +719,7 @@
       "nodeDuration": "踉跄时长",
       "breakDuration": "失衡时长",
       "executionRecovery": "处决回复",
+      "superArmor": "霸体值",
       "resistanceTitle": "敌人抗性",
       "initialSp": "初始技力",
       "spPerSecond": "回复 / 秒"

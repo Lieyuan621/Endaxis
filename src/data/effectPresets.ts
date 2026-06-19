@@ -144,8 +144,8 @@ const PHYSICAL_PRESETS: Record<PhysicalStatus, EffectPreset> = {
   },
   breach: { icon: '/icons/icon_battle_physical_fracture.webp' },
   crush: { icon: '/icons/icon_battle_physical_crush.webp' },
-  knockdown: { icon: '/icons/icon_battle_physical_knockdown.webp' },
-  lift: { icon: '/icons/icon_battle_physical_airborne.webp' },
+  knockdown: { icon: '/icons/icon_battle_physical_knockdown.webp', duration: 3 },
+  lift: { icon: '/icons/icon_battle_physical_airborne.webp', duration: 3 },
 };
 
 // ─── Reaction duration tables (by level 1–4) ───────────────────────────────

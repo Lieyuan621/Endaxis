@@ -719,6 +719,7 @@
       "nodeDuration": "Node duration",
       "breakDuration": "Break duration",
       "executionRecovery": "Finisher recovery",
+      "superArmor": "Super Armor",
       "resistanceTitle": "Enemy Resistance",
       "initialSp": "Initial SP",
       "spPerSecond": "SP/sec."

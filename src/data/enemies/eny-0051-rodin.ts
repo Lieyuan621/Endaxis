@@ -16,6 +16,7 @@ const sheet: EnemySheet = {
   },
   def: 100,
   resistance: { physical: 0, cryo: 0, electric: 0, nature: 0, heat: 0 },
+  superArmor: 30,
   maxStagger: 280,
   staggerNodeCount: 1,
   staggerNodeDuration: 2,

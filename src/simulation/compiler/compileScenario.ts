@@ -188,6 +188,7 @@ const DEFAULT_SYSTEM_CONSTANTS: SystemConstants = {
   staggerBreakDuration: 10,
   executionRecovery: 25,
   defense: 100,
+  superArmor: 0,
   tier: "normal",
   resistance: createDefaultEnemyResistance(),
 };
@@ -241,6 +242,7 @@ export function compileScenario(
                           : 1),
       defense: mergedSystemConstants.defense,
       enemyHp: (mergedSystemConstants as any).enemyHp,
+      superArmor: (mergedSystemConstants as any).superArmor,
       enemyDamageCapWindowSeconds: (mergedSystemConstants as any).enemyDamageCapWindowSeconds,
       enemyDamageCapRatio: (mergedSystemConstants as any).enemyDamageCapRatio,
       tier: mergedSystemConstants.tier,

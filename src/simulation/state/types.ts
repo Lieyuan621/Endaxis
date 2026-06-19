@@ -58,6 +58,7 @@ export interface EnemyConfig {
   finisherMultiplier?: number;
   defense?: number;
   enemyHp?: number;
+  superArmor?: number;
   enemyDamageCapWindowSeconds?: number;
   enemyDamageCapRatio?: number;
   tier?: string;

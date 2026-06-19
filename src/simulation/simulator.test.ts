@@ -1670,4 +1670,225 @@ describe("Contingency runtime enemy mechanics", () => {
 
     expect(healing).toBeCloseTo(200);
   });
+
+  it("filters Healing control intervals by enemy super armor thresholds", () => {
+    const events = [
+      {
+        type: "PHYSICAL_STATUS",
+        time: 0,
+        physicalType: "lift",
+        sourceId: "alpha",
+        effectiveDuration: 3,
+      },
+      {
+        type: "DEBUFF_APPLY",
+        time: 4,
+        debuffType: "solidification",
+        level: 1,
+        expiresAt: 7,
+        sourceId: "beta",
+      },
+    ] as any;
+
+    expect(
+      computeContingencyEnemyHealing(events, { maxHp: 1000, rate: 0.05, until: 10, superArmor: 20 }),
+    ).toBeCloseTo(300);
+    expect(
+      computeContingencyEnemyHealing(events, { maxHp: 1000, rate: 0.05, until: 10, superArmor: 30 }),
+    ).toBe(0);
+  });
+
+  it("counts Endministrator Originium Crystals as Healing control only up to super armor 20", () => {
+    const events = [
+      {
+        type: "ENEMY_STATUS_APPLY",
+        time: 0,
+        id: "endministrator-originium-crystals",
+        value: 0,
+        stacks: 1,
+        maxStacks: 1,
+        expiresAt: 4,
+        sourceId: "endministrator",
+      },
+    ] as any;
+
+    expect(
+      computeContingencyEnemyHealing(events, { maxHp: 1000, rate: 0.05, until: 10, superArmor: 20 }),
+    ).toBeCloseTo(200);
+    expect(
+      computeContingencyEnemyHealing(events, { maxHp: 1000, rate: 0.05, until: 10, superArmor: 30 }),
+    ).toBe(0);
+  });
+
+  it("uses 3s as the default Lift/Knock Down control duration", () => {
+    const result = runScenario([
+      createTrack("alpha", [
+        createAction("lift", "comboSkill", {
+          hits: [
+            {
+              id: "lift_hit",
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ]);
+
+    expect(result.enemyLog).toContainEqual(
+      expect.objectContaining({
+        type: "PHYSICAL_STATUS",
+        physicalType: "lift",
+        effectiveDuration: 3,
+      }),
+    );
+  });
+
+  it("does not count Lift/Knock Down as Healing control before vulnerability exists", () => {
+    const firstLift = runScenario([
+      createTrack("alpha", [
+        createAction("lift", "comboSkill", {
+          hits: [
+            {
+              id: "lift_hit",
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ]);
+    const firstLiftEvent = firstLift.enemyLog.find(
+      (event: any) => event.type === "PHYSICAL_STATUS" && event.physicalType === "lift",
+    ) as any;
+
+    expect(firstLiftEvent.actualControl).toBe(false);
+    expect(
+      computeContingencyEnemyHealing(firstLift.enemyLog as any, {
+        maxHp: 1000,
+        rate: 0.05,
+        until: 10,
+      }),
+    ).toBe(0);
+
+    const secondLift = runScenario([
+      createTrack("alpha", [
+        createAction("setup", "comboSkill", {
+          startTime: 0,
+          hits: [
+            {
+              id: "setup_hit",
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "vulnerability" } as Effect],
+            },
+          ],
+        }),
+        createAction("lift", "comboSkill", {
+          startTime: 1,
+          hits: [
+            {
+              id: "lift_hit",
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ]);
+    const secondLiftEvent = secondLift.enemyLog.find(
+      (event: any) => event.type === "PHYSICAL_STATUS" && event.physicalType === "lift",
+    ) as any;
+
+    expect(secondLiftEvent.actualControl).toBe(true);
+    expect(
+      computeContingencyEnemyHealing(secondLift.enemyLog as any, {
+        maxHp: 1000,
+        rate: 0.05,
+        until: 10,
+      }),
+    ).toBeCloseTo(150);
+  });
+
+  it("projects Lift/Knock Down duration only when the enemy can actually be controlled", () => {
+    const actions = [
+      createAction("setup", "comboSkill", {
+        startTime: 0,
+        hits: [
+          {
+            id: "setup_hit",
+            offset: 0,
+            multiplier: 0,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [{ kind: "physicalStatus", physicalType: "vulnerability" } as Effect],
+          },
+        ],
+      }),
+      createAction("lift", "comboSkill", {
+        startTime: 1,
+        hits: [
+          {
+            id: "lift_hit",
+            offset: 0,
+            multiplier: 0,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+          },
+        ],
+      }),
+    ];
+    const tracks = [createTrack("alpha", actions)];
+    const controlled = runScenario(tracks);
+    const controlledProjection = projectOptimizerResult({
+      simulation: controlled,
+      compiledScenario: compileScenario(createScenario(tracks)),
+      tracks,
+      viewDuration: 8,
+    });
+
+    expect(controlled.enemyLog).toContainEqual(
+      expect.objectContaining({ type: "PHYSICAL_STATUS", physicalType: "lift", actualControl: true }),
+    );
+    expect(controlledProjection.enemyAfflictionViz.physical.segments).toContainEqual(
+      expect.objectContaining({ typeKey: "lift", start: 1, end: 4 }),
+    );
+
+    const armored = runScenario(tracks, undefined, { systemConstants: { superArmor: 30 } });
+    const armoredProjection = projectOptimizerResult({
+      simulation: armored,
+      compiledScenario: compileScenario(createScenario(tracks), {
+        systemConstants: { superArmor: 30 },
+      }),
+      tracks,
+      viewDuration: 8,
+    });
+
+    expect(armored.enemyLog).toContainEqual(
+      expect.objectContaining({ type: "PHYSICAL_STATUS", physicalType: "lift", actualControl: false }),
+    );
+    expect(
+      armoredProjection.enemyAfflictionViz.physical.segments.some(
+        (segment: any) => segment.typeKey === "lift",
+      ),
+    ).toBe(false);
+  });
 });

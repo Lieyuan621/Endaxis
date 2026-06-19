@@ -150,6 +150,10 @@ function setEnemyLevel(level) {
             <label>{{ t('resourceMonitor.labels.executionRecovery') }}</label>
             <CustomNumberInput v-model="store.systemConstants.executionRecovery" :min="0" class="standard-input" />
           </div>
+          <div class="control-row-mini">
+            <label>{{ t('resourceMonitor.labels.superArmor') }}</label>
+            <CustomNumberInput v-model="store.systemConstants.superArmor" :min="0" class="standard-input" />
+          </div>
           <div class="mini-subsection-label">{{ t('resourceMonitor.labels.resistanceTitle') }}</div>
           <div
             v-for="element in ENEMY_RESISTANCE_ELEMENTS"

@@ -286,6 +286,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         staggerBreakDuration: 10,
         executionRecovery: 25,
         enemyHp: 100000,
+        superArmor: 0,
         resistance: createDefaultEnemyResistance()
     }
 
@@ -309,6 +310,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         staggerBreakDuration: 10,
         executionRecovery: 25,
         enemyHp: 100000,
+        superArmor: 0,
     }))
 
     watch(systemConstants, (newVal) => {
@@ -320,6 +322,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 staggerBreakDuration: newVal.staggerBreakDuration,
                 executionRecovery: newVal.executionRecovery,
                 enemyHp: newVal.enemyHp,
+                superArmor: Number(newVal.superArmor) || 0,
                 resistance: normalizeEnemyResistance(newVal.resistance)
             }
         }
@@ -3309,6 +3312,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 systemConstants.value.executionRecovery = enemy.executionRecovery
                 systemConstants.value.enemyHp = getEnemyHpForLevel(enemy, enemySheet, activeEnemyLevel.value)
                 systemConstants.value.resistance = normalizeEnemyResistance(enemy.resistance ?? enemySheet?.resistance)
+                systemConstants.value.superArmor = Number(enemy.superArmor ?? enemySheet?.superArmor) || 0
             }
         }
     }

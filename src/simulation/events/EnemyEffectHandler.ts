@@ -448,6 +448,11 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     const state = ctx.state.enemy;
     const { physicalType, time, sourceId, sourceSkillType, sourceSkillId, actionId, forced } =
       event;
+    const hasVuln = state.vulnerability !== null;
+    const isLiftOrKnockdown = physicalType === 'lift' || physicalType === 'knockdown';
+    const enemySuperArmor = Math.max(0, Number(state.config?.superArmor) || 0);
+    const actualPhysicalControl =
+      isLiftOrKnockdown && Boolean(hasVuln || forced) && enemySuperArmor < 30;
 
     ctx.enemyLog({
       type: 'PHYSICAL_STATUS',
@@ -455,6 +460,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       physicalType,
       sourceId,
       effectiveDuration: event.effectiveDuration,
+      ...(isLiftOrKnockdown ? { actualControl: actualPhysicalControl } : {}),
     });
 
     // Shatter: any physical hit on a solidified enemy immediately consumes solidification
@@ -468,8 +474,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       );
       state.solidification = null;
     }
-
-    const hasVuln = state.vulnerability !== null;
 
     switch (physicalType) {
       case 'vulnerability':

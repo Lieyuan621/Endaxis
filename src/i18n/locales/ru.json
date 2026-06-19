@@ -606,6 +606,7 @@
       "nodeDuration": "Длит. пробития узла",
       "breakDuration": "Длит. пробития",
       "executionRecovery": "Восст. добивания",
+      "superArmor": "Суперброня",
       "resistanceTitle": "Сопротивление врага",
       "initialSp": "Начальные ОН",
       "spPerSecond": "ОН/сек."

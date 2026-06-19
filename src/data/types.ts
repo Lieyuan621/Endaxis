@@ -923,6 +923,7 @@ export interface EnemySheet {
   levelHp: Record<number, number>;
   def: number;
   resistance: Record<DamageElement, number>;
+  superArmor: number;
   maxStagger: number;
   staggerNodeCount: number;
   staggerNodeDuration: number;

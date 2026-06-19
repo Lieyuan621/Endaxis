@@ -140,6 +140,7 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
         ...systemConstants,
         prepDuration: Number(prepDuration) || 0,
         defense: enemySheet?.def ?? 100,
+        superArmor: Number(enemySheet?.superArmor ?? systemConstants?.superArmor) || 0,
         tier: enemySheet?.tier ?? "normal",
         resistance: enemyResistance,
         ...(enemySheet?.maxStagger !== undefined ? { maxStagger: enemySheet.maxStagger } : {}),

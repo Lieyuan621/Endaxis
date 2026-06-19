@@ -914,6 +914,7 @@ const enemyHealingDone = computed(() => computeContingencyEnemyHealing(store.ene
   maxHp: enemyMaxHp.value,
   rate: Number(store.contingencyEnemyHealingRate) || 0,
   until: Number(store.viewDuration) || Infinity,
+  superArmor: Number(store.effectiveSystemConstants?.superArmor ?? store.systemConstants.superArmor) || 0,
 }))
 const enemyRemainingHp = computed(() => {
   const remaining = enemyMaxHp.value - totalDamageDone.value + enemyHealingDone.value

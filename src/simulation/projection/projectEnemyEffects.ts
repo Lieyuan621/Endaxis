@@ -346,7 +346,16 @@ export function projectFromSimLog(
 
       case 'PHYSICAL_STATUS': {
         // Trigger icon marker in physical combo row
-        const eff = syntheticPhysical(event.physicalType);
+        const showsControlDuration =
+          (event.physicalType === 'lift' || event.physicalType === 'knockdown') &&
+          event.actualControl === true &&
+          Number(event.effectiveDuration) > 0;
+        const eff = syntheticPhysical(
+          event.actualControl === false &&
+            (event.physicalType === 'lift' || event.physicalType === 'knockdown')
+            ? 'vulnerability'
+            : event.physicalType,
+        );
         segments.push({
           typeKey: 'physical_combo',
           group: EnemyEffectGroup.PHYSICAL_COMBO,
@@ -360,6 +369,21 @@ export function projectFromSimLog(
           effect: eff,
           sourceId: event.sourceId,
         });
+        if (showsControlDuration) {
+          segments.push({
+            typeKey: `physical_control:${event.physicalType}`,
+            group: EnemyEffectGroup.PHYSICAL_COMBO,
+            start: event.time,
+            end: event.time + Number(event.effectiveDuration),
+            stacks: 1,
+            maxStacks: 1,
+            showIcon: true,
+            icon: getEffectIcon(eff),
+            color: getEffectColor(eff),
+            effect: eff,
+            sourceId: event.sourceId,
+          });
+        }
         break;
       }
 

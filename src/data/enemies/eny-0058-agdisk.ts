@@ -25,6 +25,7 @@ const sheet: EnemySheet = {
         electric: 0,
         nature: 20,
     },
+    superArmor: 30,
 
     maxStagger: 340,
     staggerNodeCount: 1,
