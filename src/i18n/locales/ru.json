@@ -504,7 +504,18 @@
       "default": "По умолчанию",
       "ultEnergyGain": "Получение энергии ульты",
       "spRecovery": "Восстановление SP",
-      "spReturn": "Возврат SP"
+      "spReturn": "Возврат SP",
+      "dmgBonusDown": "Снижение урона",
+      "dmgBonusDown:physical": "Снижение физического урона",
+      "dmgBonusDown:heat": "Снижение теплового урона",
+      "dmgBonusDown:cryo": "Снижение крио-урона",
+      "dmgBonusDown:electric": "Снижение электрического урона",
+      "dmgBonusDown:nature": "Снижение природного урона",
+      "dmgBonusDown:arts": "Снижение arts-урона",
+      "dmgBonusDown:basicAttack": "Снижение урона обычной атаки",
+      "dmgBonusDown:battleSkill": "Снижение урона навыка",
+      "dmgBonusDown:ultimate": "Снижение урона ульты",
+      "dmgBonusDown:comboSkill": "Снижение урона комбонавыка"
     }
   },
   "propertiesPanel": {
