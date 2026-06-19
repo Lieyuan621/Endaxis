@@ -513,3 +513,30 @@ describe('Wrap (group 1031) mechanism data', () => {
     }
   });
 });
+
+describe('CC trigger clone fidelity (Infinity durations)', () => {
+  const infiniteDurationGroups = [1005, 1031];
+
+  for (const group of infiniteDurationGroups) {
+    it(`criterion ${group} has at least one Infinity-duration status effect`, () => {
+      const mech = CRITERION_MECHANISMS[group]!;
+      const durations = (mech.triggers ?? []).flatMap(te =>
+        te.effects.map(e => (e as any).duration),
+      );
+      expect(durations).toContain(Infinity);
+    });
+
+    it(`structuredClone preserves Infinity for criterion ${group} (JSON clone does not)`, () => {
+      const triggers = CRITERION_MECHANISMS[group]!.triggers!;
+      const structurallyCloned = structuredClone(triggers);
+      const sDurations = structurallyCloned.flatMap(te => te.effects.map(e => (e as any).duration));
+      expect(sDurations.filter(d => d === Infinity).length).toBeGreaterThan(0);
+
+      // Demonstrate the original failure mode: JSON cloning collapses Infinity → null.
+      const jsonCloned = JSON.parse(JSON.stringify(triggers));
+      const jDurations = jsonCloned.flatMap((te: any) => te.effects.map((e: any) => e.duration));
+      expect(jDurations).toContain(null);
+      expect(jDurations).not.toContain(Infinity);
+    });
+  }
+});

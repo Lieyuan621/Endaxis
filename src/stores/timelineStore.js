@@ -2228,7 +2228,10 @@ export const useTimelineStore = defineStore('timeline', () => {
                 sourceTrackId: cte?.sourceTrackId || tracks.value[cte?.sourceSlotIndex]?.id || cte?.sourceOperatorSlug || null,
             }))
             // CC triggers already carry a resolved sourceTrackId; append after the cloned operator triggers.
-            const allTriggers = [...serializedTriggers, ...cloneJsonData(cc.triggers)]
+            // Use structuredClone (not cloneJsonData) to preserve `duration: Infinity`, the engine's
+            // sentinel for permanent statuses — JSON.stringify turns Infinity into null, which collapses
+            // to a 0 duration and silently drops the status (breaks Bent Edges, Wrap).
+            const allTriggers = [...serializedTriggers, ...structuredClone(cc.triggers)]
             runtimeInitialEffects.value = buildInitialRuntimeEffectsFromCollected(
                 [...collected, ...cc.effects], armoryContext,
             )
