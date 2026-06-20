@@ -1892,3 +1892,42 @@ describe("Contingency runtime enemy mechanics", () => {
     ).toBe(false);
   });
 });
+
+describe("external dmgBonus via initial effect (Poor Basics regression)", () => {
+  function damageWith(initialEffects: any[]) {
+    const tracks = [
+      createTrack("A", [
+        createAction("ba", "basicAttack", {
+          element: "physical",
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+    const baseStatsByTrack = new Map<string, BaseStatValues>(
+      actors.map((actor) => [actor.id, BASE_STATS]),
+    );
+    const result = simulate(timeline, teamConfig, enemyConfig, actors, undefined, undefined, {
+      baseStatsByTrack,
+      enemyDef: 100,
+      initialEffects,
+    });
+    return damageFor(result, "ba_inst");
+  }
+
+  const dmgBonus = (value: number, external?: boolean) => ({
+    targetTrackId: "A",
+    id: `db-${value}-${external ? "x" : "a"}`,
+    stat: { modifier: "dmgBonus", skillTypes: "basicAttack" },
+    value,
+    sourceId: "A",
+    ...(external ? { external: true } : {}),
+  });
+
+  it("external -70% stacks multiplicatively with a +50% regular dmgBonus (not additively)", () => {
+    const plus50 = damageWith([dmgBonus(50)]); // ×1.5
+    const withExternal = damageWith([dmgBonus(50), dmgBonus(-70, true)]); // ×1.5 × 0.30
+    // External: ×0.30 of the +50% baseline. Additive bug would give (1+0.5-0.7)=0.8 → ratio ≈0.533.
+    expect(withExternal / plus50).toBeCloseTo(0.3, 2);
+  });
+});

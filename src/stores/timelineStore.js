@@ -2107,6 +2107,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                     stacks: effect.stacks,
                     maxStacks: effect.maxStacks,
                     stackStrategy: effect.stackStrategy,
+                    external: effect.external,
                 }
             })
         })

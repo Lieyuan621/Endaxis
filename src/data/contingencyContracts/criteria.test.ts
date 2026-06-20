@@ -302,11 +302,11 @@ describe('Effect Barrier (group 1010) mechanism data', () => {
 // ─── 队列：脱力 (Poor Basics) — group 1008 ─────────────────────────────────────
 
 describe('Poor Basics (group 1008) mechanism data', () => {
-  it('applies a team-wide -70% basic-attack dmgBonus debuff (additive, not external)', () => {
+  it('applies a team-wide -70% basic-attack dmgBonus debuff as a standalone external factor', () => {
     const eff = CRITERION_MECHANISMS[1008]!.effects![0] as any;
     expect(eff.target).toBe('team');
     expect(eff.value).toBe(-70);
-    expect(eff.external).toBeUndefined();
+    expect(eff.external).toBe(true);
     expect(eff.stat.modifier).toBe('dmgBonus');
     expect(eff.stat.skillTypes).toBe('basicAttack');
   });

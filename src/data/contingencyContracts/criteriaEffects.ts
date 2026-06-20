@@ -276,6 +276,7 @@ export const CRITERION_MECHANISMS: Record<number, CriterionMechanism> = {
         stat: { modifier: 'dmgBonus', skillTypes: 'basicAttack' },
         target: 'team',
         value: -70,
+        external: true,
       },
     ],
   },
