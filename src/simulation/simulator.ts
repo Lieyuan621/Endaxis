@@ -99,7 +99,7 @@ export function simulate(
       const staggerValue = Math.max(0, Number(stagger.value) || 0);
 
       const nodeCount = Number(enemy.config?.staggerNodeCount) || 0;
-      const maxStagger = Number(stagger.maxStagger) || Number(enemy.config?.maxStagger) || 0;
+      const maxStagger = Number(enemy.config?.maxStagger) || 0;
       const nodeStep = nodeCount > 0 && maxStagger > 0
           ? maxStagger / (nodeCount + 1)
           : 0;
@@ -416,6 +416,10 @@ export function simulate(
   const actorMetaById = new Map(actors.map(actor => [actor.id, actor]));
 
   timeline.actions.forEach((action) => {
+    // Keep disabled actions in the compiled timeline for editor rendering, but
+    // never let them enter the simulator event queue.
+    if (action.node.isDisabled) return;
+
     engine.enqueue({
       type: "ACTION_START",
       time: action.realStartTime,

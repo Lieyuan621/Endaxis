@@ -13,6 +13,27 @@ import type {
 } from '@/simulation/engine/types';
 import type { SimulationEngine } from '../engine/SimulationEngine';
 
+/**
+ * Preserve enemy effects across a scenario boundary while starting a newly
+ * selected enemy with a fresh stagger cycle.
+ */
+export function resetEnemyStaggerCarryover(snapshot: any, config: EnemyConfig) {
+  if (!snapshot) return snapshot;
+
+  return {
+    ...snapshot,
+    stagger: {
+      ...(snapshot.stagger || {}),
+      value: 0,
+      maxStagger: config.maxStagger,
+      breakRemaining: 0,
+      lockRemaining: 0,
+      staggerContributions: {},
+      lastBreakContributions: {},
+    },
+  };
+}
+
 export class EnemyState implements BaseGameState<EnemySnapshot> {
   private stagger: number = 0;
 
@@ -368,10 +389,9 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
     };
 
     const stagger = snapshot.stagger || {};
-    const maxStagger = Number(stagger.maxStagger) || this.config.maxStagger;
     this.stagger = Math.max(
         0,
-        Math.min(Number(stagger.value) || 0, maxStagger),
+        Math.min(Number(stagger.value) || 0, this.config.maxStagger),
     );
 
     this.breakEndTime = applyTime + Math.max(0, Number(stagger.breakRemaining) || 0);

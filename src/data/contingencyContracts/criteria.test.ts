@@ -662,17 +662,34 @@ describe('Lysis family (groups 1017 / 1018 / 1019 / 1024) mechanism data', () =>
       expect(eff.silent).toBe(true); // avoids re-firing onStatusApplied (no extend loop)
     });
 
-    it(`group ${group} dispels Freeze on a ${element}-element cast`, () => {
-      const dispel = mech.triggers!.find(te => (te.trigger as any).kind === 'onActionStart')!;
-      expect((dispel.trigger as any).element).toBe(element);
-      expect((dispel.trigger as any).triggerScope).toBe('global');
-      const eff = dispel.effects[0] as any;
-      expect(eff.condition).toEqual({
+    it(`group ${group} Battle/Combo thaw leaves one Cryo stack`, () => {
+      const thaw = mech.triggers!.find(te => {
+        const trigger = te.trigger as any;
+        return trigger.kind === 'onActionStart' && Array.isArray(trigger.skillTypes);
+      })!;
+      expect((thaw.trigger as any).element).toBe(element);
+      expect((thaw.trigger as any).skillTypes).toEqual(['battleSkill', 'comboSkill']);
+      expect((thaw.trigger as any).triggerScope).toBe('global');
+      expect(thaw.effects[0]).toMatchObject({
+        kind: 'status',
+        id: 'cc:heat-loss:cryo',
+        target: 'controlled',
+        stacks: 1,
+        maxStacks: 4,
+      });
+      expect((thaw.effects[1] as any).condition).toEqual({
         kind: 'operatorStatus',
         status: 'cc:frozen',
         target: 'controlled',
         consume: true,
       });
+    });
+
+    it(`group ${group} Ultimate thaw does not leave Cryo`, () => {
+      const thaw = mech.triggers!.find(te => (te.trigger as any).skillTypes === 'ultimate')!;
+      expect((thaw.trigger as any).element).toBe(element);
+      expect(thaw.effects).toHaveLength(1);
+      expect((thaw.effects[0] as any).id).toBe(`cc:dispel:${element}`);
     });
   }
 });

@@ -136,12 +136,28 @@ function heatLossMechanism(group: number, skillType: 'battleSkill' | 'comboSkill
 /**
  * Lysis family (融化 / 升华 / 电解 / 切削) — c1017 / c1018 / c1019 / c1024.
  *
- * Modifies the operator Freeze produced by Heat Loss: while active, Freeze lasts 15s (vs the base 5s),
- * and any operator casting a skill of the matching element dispels it early. Display-only.
+ * Modifies the operator Freeze produced by Heat Loss: while active, Freeze lasts 15s (vs the base 5s).
+ * A matching Battle/Combo Skill dispels it and leaves 1 Cryo stack; a matching Ultimate only dispels.
  */
 const LYSIS_FREEZE_DURATION = 15;
 
 function lysisMechanism(element: 'heat' | 'nature' | 'electric' | 'physical'): CriterionMechanism {
+  const frozenCondition = (consume = false) => ({
+    kind: 'operatorStatus' as const,
+    status: FROZEN_ID,
+    target: 'controlled' as const,
+    ...(consume ? { consume: true } : {}),
+  });
+  const dispelCarrier = (): Effect => ({
+    kind: 'status',
+    id: `cc:dispel:${element}`,
+    target: 'controlled',
+    duration: 0,
+    hide: true,
+    silent: true,
+    condition: frozenCondition(true),
+  } as Effect);
+
   return {
     levelCount: 1,
     triggers: [
@@ -163,26 +179,39 @@ function lysisMechanism(element: 'heat' | 'nature' | 'electric' | 'physical'): C
           } as Effect,
         ],
       },
-      // Dispel: any operator casting a matching-element skill consumes the Freeze on the controlled
-      // operator. The 0-duration carrier never applies; the consume rides on its condition.
+      // Battle/Combo thaw: leave one Cryo stack, then consume Freeze at priority 3.
       {
-        trigger: { kind: 'onActionStart', element, triggerScope: 'global' },
+        trigger: {
+          kind: 'onActionStart',
+          element,
+          skillTypes: ['battleSkill', 'comboSkill'],
+          triggerScope: 'global',
+        },
         effects: [
           {
             kind: 'status',
-            id: `cc:dispel:${element}`,
+            id: HEAT_LOSS_CRYO_ID,
             target: 'controlled',
-            duration: 0,
-            hide: true,
-            silent: true,
-            condition: {
-              kind: 'operatorStatus',
-              status: FROZEN_ID,
-              target: 'controlled',
-              consume: true,
-            },
+            stacks: 1,
+            maxStacks: 4,
+            stackStrategy: 'REFRESH_DURATION',
+            duration: HEAT_LOSS_CRYO_DURATION,
+            displayType: 'cryo_infliction',
+            icon: '/icons/icon_energy_fusion_cryst.webp',
+            condition: frozenCondition(),
           } as Effect,
+          dispelCarrier(),
         ],
+      },
+      // Ultimate thaw: consume Freeze without leaving Cryo.
+      {
+        trigger: {
+          kind: 'onActionStart',
+          element,
+          skillTypes: 'ultimate',
+          triggerScope: 'global',
+        },
+        effects: [dispelCarrier()],
       },
     ],
   };

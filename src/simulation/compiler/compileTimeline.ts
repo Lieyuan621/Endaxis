@@ -235,6 +235,7 @@ function resolveConsumption(
   if (!connections?.length) return;
 
   resolvedActions.forEach((producer) => {
+    if (producer.node.isDisabled) return;
     producer.effects.forEach((effect) => {
       const conn = connections.find(
         (c) => c.isConsumption && c.fromEffectId === effect.id,
@@ -242,7 +243,7 @@ function resolveConsumption(
       if (!conn?.to) return;
 
       const consumer = resolvedActions.find((a) => a.id === conn.to);
-      if (!consumer) return;
+      if (!consumer || consumer.node.isDisabled) return;
 
       const consumptionOffset = Number(conn.consumptionOffset) || 0;
       const consumptionTime = consumer.realStartTime - consumptionOffset;
@@ -289,7 +290,7 @@ function applyActionInterruptions(resolvedActions: ResolvedAction[]) {
   const epsilon = 0.0001;
 
   resolvedActions.forEach((action) => {
-    if (!action.trackId) return;
+    if (!action.trackId || action.node.isDisabled) return;
     const bucket = trackBuckets.get(action.trackId) ?? [];
     bucket.push(action);
     trackBuckets.set(action.trackId, bucket);

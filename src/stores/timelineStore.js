@@ -4,6 +4,7 @@ import { watchThrottled } from '@vueuse/core'
 import { compressGzip, decompressGzip } from '@/utils/gzipUtils'
 import { createDefaultStats } from '@/simulation/defaultActorStats'
 import { simulate } from '@/simulation/simulator'
+import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState'
 import { resolveEffectValueStatic } from '@/simulation/events/effectDispatch'
 import { compileEndaxisScenario } from '@/simulation/adapters/compileEndaxisScenario'
 import { projectOptimizerResult } from '@/simulation/adapters/projectOptimizerResult'
@@ -3316,6 +3317,11 @@ export const useTimelineStore = defineStore('timeline', () => {
                 systemConstants.value.superArmor = Number(enemy.superArmor ?? enemySheet?.superArmor) || 0
             }
         }
+
+        inheritedInitialEnemyState.value = resetEnemyStaggerCarryover(
+            inheritedInitialEnemyState.value,
+            systemConstants.value,
+        )
     }
 
     function setActiveEnemyLevel(level) {

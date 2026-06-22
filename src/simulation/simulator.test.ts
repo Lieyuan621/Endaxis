@@ -14,6 +14,7 @@ import type { BaseStatValues } from "@/data/stats/types";
 import type { Effect, TriggerEffect } from "@/data/types";
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from "@/types";
 import { CRITERION_MECHANISMS } from "@/data/contingencyContracts/criteriaEffects";
+import { resetEnemyStaggerCarryover } from "@/simulation/state/EnemyState";
 import {
   buildEffectiveEnemySystemConstants,
   computeContingencyEnemyHealing,
@@ -238,6 +239,129 @@ function resolveSheetHits(
 }
 
 describe("optimizer-native runtime parity", () => {
+  it("fully excludes disabled actions and restores them when re-enabled", () => {
+    const action = createAction("disabled_skill", "battleSkill", {
+      isDisabled: true,
+      spCost: 40,
+      gaugeGain: 20,
+      hits: [
+        {
+          offset: 0,
+          multiplier: 100,
+          spRecovery: 15,
+          spReturn: 0,
+          stagger: 30,
+          effects: [
+            {
+              id: "disabled-buff",
+              kind: "status",
+              stat: { modifier: "atkPercent" },
+              value: 10,
+              target: "self",
+              duration: 5,
+            },
+            {
+              id: "disabled-infliction",
+              kind: "infliction",
+              element: "heat",
+            },
+          ],
+        },
+      ],
+    });
+
+    const disabled = runScenario([createTrack("alpha", [action])]);
+
+    expect(disabled.simLog.some((entry) =>
+      entry.type === "ACTION_START" || entry.type === "DAMAGE_HIT" || entry.type === "STAGGER"
+    )).toBe(false);
+    expect(disabled.operatorLog).toHaveLength(0);
+    expect(disabled.enemyLog).toHaveLength(0);
+    expect(disabled.state.snapshot().enemy.stagger).toBe(0);
+    expect(disabled.state.snapshot().actors[0]?.resources.gauge).toBe(0);
+
+    action.isDisabled = false;
+    const enabled = runScenario([createTrack("alpha", [action])]);
+
+    expect(enabled.simLog).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "ACTION_START" }),
+      expect.objectContaining({ type: "DAMAGE_HIT" }),
+      expect.objectContaining({ type: "STAGGER" }),
+    ]));
+    expect(enabled.operatorLog).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "OPERATOR_EFFECT_APPLY", id: "disabled-buff" }),
+    ]));
+    expect(enabled.enemyLog.length).toBeGreaterThan(0);
+    expect(enabled.state.snapshot().enemy.stagger).toBe(30);
+    expect(enabled.state.snapshot().actors[0]?.resources.gauge).toBe(20);
+  });
+
+  it("resets stagger carryover when switching to an enemy with different stagger config", () => {
+    const nextEnemyConfig = {
+      maxStagger: 120,
+      staggerNodeCount: 2,
+      staggerNodeDuration: 4,
+      staggerBreakDuration: 7,
+      executionRecovery: 25,
+    };
+    const carryover = {
+      stagger: {
+        value: 90,
+        maxStagger: 300,
+        breakRemaining: 6,
+        lockRemaining: 3,
+        staggerContributions: { alpha: 90 },
+        lastBreakContributions: { alpha: 300 },
+      },
+      infliction: { element: "heat", stacks: 2, remainingDuration: 5 },
+      statuses: [],
+    };
+    const reset = resetEnemyStaggerCarryover(carryover, nextEnemyConfig);
+
+    expect(reset.stagger).toEqual({
+      value: 0,
+      maxStagger: 120,
+      breakRemaining: 0,
+      lockRemaining: 0,
+      staggerContributions: {},
+      lastBreakContributions: {},
+    });
+    expect(reset.infliction).toEqual(carryover.infliction);
+
+    const track = createTrack("alpha", [
+      createAction("new_enemy_hit", "battleSkill", {
+        startTime: 1,
+        hits: [{ offset: 0, multiplier: 0, spRecovery: 0, spReturn: 0, stagger: 40 }],
+      }),
+    ]);
+    const compiled = compileScenario(createScenario([track]), {
+      systemConstants: nextEnemyConfig,
+    });
+    const result = simulate(
+      compiled.timeline,
+      compiled.teamConfig,
+      compiled.enemyConfig,
+      compiled.actors,
+      undefined,
+      undefined,
+      { initialEnemyState: reset },
+    );
+    const staggerLogs = result.simLog.filter((entry) => entry.type === "STAGGER");
+
+    expect(staggerLogs[0]).toMatchObject({
+      time: 0,
+      payload: { stagger: 0, isBroken: false },
+    });
+    expect(staggerLogs[1]).toMatchObject({
+      time: 1,
+      payload: { stagger: 40, nodeReachedIndex: 1, nodeEndTime: 5 },
+    });
+    expect(result.state.snapshot().enemy).toMatchObject({
+      stagger: 40,
+      isBroken: false,
+    });
+  });
+
   it("compiles Endaxis UI state into optimizer-native scenario inputs", () => {
     const triggerEffects = [
       {
@@ -1603,13 +1727,37 @@ describe("Lysis (Freeze extend + dispel) end-to-end (1003 Heat Loss + 1017 Pyrol
     expect(frozen.some((e) => e.expiresAt === 27)).toBe(true); // 12 + 15, not the base 12 + 5
   });
 
-  it("a matching-element skill dispels the Freeze early", () => {
+  it("a matching-element Combo Skill dispels Freeze and leaves one Cryo stack", () => {
     const { ops } = runActions([
       ...freezeRamp,
       createAction("heatCast", "comboSkill", { startTime: 14, element: "heat" }),
     ]);
     const expired = ops("OPERATOR_EFFECT_EXPIRE", "cc:frozen") as any[];
     expect(expired.some((e) => e.time === 14 && e.consumed)).toBe(true);
+    const cryo = ops("OPERATOR_EFFECT_APPLY", "cc:heat-loss:cryo") as any[];
+    expect(cryo.some((e) => e.time === 14 && e.cumulativeStacks === 1)).toBe(true);
+  });
+
+  it("a matching-element Ultimate dispels Freeze without leaving Cryo", () => {
+    const { ops } = runActions([
+      ...freezeRamp,
+      createAction("heatUlt", "ultimate", { startTime: 14, element: "heat" }),
+    ]);
+    const expired = ops("OPERATOR_EFFECT_EXPIRE", "cc:frozen") as any[];
+    expect(expired.some((e) => e.time === 14 && e.consumed)).toBe(true);
+    const cryoAt14 = (ops("OPERATOR_EFFECT_APPLY", "cc:heat-loss:cryo") as any[])
+      .filter((e) => e.time === 14);
+    expect(cryoAt14).toHaveLength(0);
+  });
+
+  it("a matching-element Basic Attack does not dispel Freeze", () => {
+    const { ops } = runActions([
+      ...freezeRamp,
+      createAction("heatBasic", "basicAttack", { startTime: 14, element: "heat" }),
+    ]);
+    const expiredAt14 = (ops("OPERATOR_EFFECT_EXPIRE", "cc:frozen") as any[])
+      .filter((e) => e.time === 14 && e.consumed);
+    expect(expiredAt14).toHaveLength(0);
   });
 
   it("a non-matching element does not dispel", () => {
