@@ -4698,6 +4698,53 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
     }
 
+    function getInheritedEnemyBuffEntry(key) {
+        const snapshot = inheritedInitialEnemyState.value
+        if (!snapshot || !key) return null
+        if (key === 'infliction') return snapshot.infliction || null
+        if (key === 'vulnerability') return snapshot.vulnerability || null
+        if (key.startsWith('debuff:')) return snapshot.debuffs?.[key.slice('debuff:'.length)] || null
+        if (key.startsWith('status:')) {
+            const id = key.slice('status:'.length)
+            return (snapshot.statuses || []).find(entry => entry?.id === id) || null
+        }
+        return null
+    }
+
+    function isInheritedEnemyBuffDisabled(key) {
+        return Array.isArray(inheritedInitialEnemyState.value?.disabledEffects)
+            && inheritedInitialEnemyState.value.disabledEffects.includes(key)
+    }
+
+    function toggleInheritedEnemyBuffDisable(key) {
+        if (!getInheritedEnemyBuffEntry(key)) return false
+        const snapshot = inheritedInitialEnemyState.value
+        const disabled = new Set(Array.isArray(snapshot.disabledEffects) ? snapshot.disabledEffects : [])
+        if (disabled.has(key)) disabled.delete(key)
+        else disabled.add(key)
+        snapshot.disabledEffects = [...disabled]
+        commitState()
+        return true
+    }
+
+    function removeInheritedEnemyBuff(key) {
+        const snapshot = inheritedInitialEnemyState.value
+        if (!snapshot || !getInheritedEnemyBuffEntry(key)) return false
+
+        if (key === 'infliction') snapshot.infliction = null
+        else if (key === 'vulnerability') snapshot.vulnerability = null
+        else if (key.startsWith('debuff:') && snapshot.debuffs) {
+            snapshot.debuffs[key.slice('debuff:'.length)] = null
+        } else if (key.startsWith('status:')) {
+            const id = key.slice('status:'.length)
+            snapshot.statuses = (snapshot.statuses || []).filter(entry => entry?.id !== id)
+        }
+
+        snapshot.disabledEffects = (snapshot.disabledEffects || []).filter(item => item !== key)
+        commitState()
+        return true
+    }
+
     function setActionColor(instanceId, color) {
         const info = getActionById(instanceId)
         if (info) {
@@ -5551,6 +5598,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         contextMenu, openContextMenu, closeContextMenu,
         switchEvents, selectedSwitchEventId, addSwitchEvent, updateSwitchEvent, selectSwitchEvent,
         toggleActionLock, toggleActionDisable, setActionColor, isHitForcedCrit, toggleHitForcedCrit, getHitDisplayDamage,
+        getInheritedEnemyBuffEntry, isInheritedEnemyBuffDisabled, toggleInheritedEnemyBuffDisable, removeInheritedEnemyBuff,
         globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById, getEffectById,
         getUltimateEnhancementMetrics,
         enemyDatabase, activeEnemyId, activeEnemyLevel, applyEnemyPreset, setActiveEnemyLevel, ENEMY_TIERS, enemyCategories,

@@ -203,6 +203,8 @@ export interface InflictionApplyEvent {
   expiresAt?: number;
   /** Total resolved duration (base + extension) to apply. */
   effectiveDuration: number;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 export interface ArtsBurstEvent {
@@ -244,6 +246,8 @@ export interface VulnerabilityChangeEvent {
   expiresAt: number;
   trigger: PhysicalStatus;
   sourceId: string;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 export interface VulnerabilityConsumedEvent {
@@ -268,6 +272,8 @@ export interface EnemyStatusApplyEvent {
   effect?: Effect;
   /** True when this apply is a stack-decrement continuation — icon should not be re-shown. */
   isContinuation?: boolean;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 export interface DebuffApplyEvent {
@@ -277,6 +283,8 @@ export interface DebuffApplyEvent {
   level: number;
   expiresAt: number;
   sourceId: string;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 export interface CorrosionTickEvent {

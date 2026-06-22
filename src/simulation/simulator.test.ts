@@ -362,6 +362,69 @@ describe("optimizer-native runtime parity", () => {
     });
   });
 
+  it("keeps a disabled inherited combustion visible without importing or ticking it", () => {
+    const tracks = [createTrack("alpha", [])];
+    const compiled = compileScenario(createScenario(tracks));
+    const inheritedCombustion = {
+      stagger: { value: 0 },
+      infliction: null,
+      vulnerability: null,
+      debuffs: {
+        combustion: {
+          level: 2,
+          remainingDuration: 3,
+          nextTickDelay: 1,
+          sourceId: "alpha",
+          actionId: "carried-combustion",
+        },
+      },
+      statuses: [],
+      disabledEffects: ["debuff:combustion"],
+    };
+    const disabled = simulate(
+      compiled.timeline,
+      compiled.teamConfig,
+      compiled.enemyConfig,
+      compiled.actors,
+      undefined,
+      undefined,
+      { initialEnemyState: inheritedCombustion },
+    );
+    const disabledProjection = projectOptimizerResult({
+      simulation: disabled,
+      compiledScenario: compiled,
+      tracks,
+      viewDuration: 5,
+    });
+
+    expect(disabled.state.enemy.combustion).toBeNull();
+    expect(disabled.simLog.some((entry) => entry.type === "DAMAGE_HIT")).toBe(false);
+    expect(disabled.enemyLog).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: "DEBUFF_APPLY",
+        debuffType: "combustion",
+        carryoverKey: "debuff:combustion",
+        disabled: true,
+      }),
+    ]));
+    expect(disabledProjection.enemyAfflictionViz.anomalies.segments[0]).toMatchObject({
+      typeKey: "combustion",
+      carryoverKey: "debuff:combustion",
+      disabled: true,
+    });
+
+    const enabled = simulate(
+      compiled.timeline,
+      compiled.teamConfig,
+      compiled.enemyConfig,
+      compiled.actors,
+      undefined,
+      undefined,
+      { initialEnemyState: { ...inheritedCombustion, disabledEffects: [] } },
+    );
+    expect(enabled.simLog.some((entry) => entry.type === "DAMAGE_HIT")).toBe(true);
+  });
+
   it("compiles Endaxis UI state into optimizer-native scenario inputs", () => {
     const triggerEffects = [
       {
@@ -1403,6 +1466,7 @@ describe("optimizer-native runtime parity", () => {
           end: 10,
           stacks: 1,
           icon: null,
+          sourceId: "alpha",
           effect: { kind: "status", id: "resistanceShred" },
         },
       ],
@@ -1426,6 +1490,7 @@ describe("optimizer-native runtime parity", () => {
     expect(viz.statuses.segments[0]).toMatchObject({
       typeKey: "resistanceShred",
       kind: "status",
+      sourceId: "alpha",
     });
     expect(viz.anomalies.rowCount).toBe(2);
     expect(viz.statuses.rowCount).toBe(1);

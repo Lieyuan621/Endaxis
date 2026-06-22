@@ -89,6 +89,10 @@ export function simulate(
   function logAndScheduleInitialEnemyState(engine: any, initialEnemyState: any, applyTime: number) {
     if (!initialEnemyState) return;
 
+    const disabledEffects = new Set<string>(
+      Array.isArray(initialEnemyState.disabledEffects) ? initialEnemyState.disabledEffects : [],
+    );
+
     const enemy = engine.getState().enemy;
     enemy.importCarryoverSnapshot(initialEnemyState, applyTime);
 
@@ -137,6 +141,8 @@ export function simulate(
 
     const infliction = initialEnemyState.infliction;
     if (infliction && finiteRemaining(infliction) > 0) {
+      const carryoverKey = "infliction";
+      const disabled = disabledEffects.has(carryoverKey);
       const expiresAt = toExpiresAt(infliction, applyTime);
 
       log({
@@ -147,19 +153,25 @@ export function simulate(
         sourceId: infliction.sourceQueue?.[0]?.sourceId || infliction.sourceId || "",
         expiresAt,
         effectiveDuration: finiteRemaining(infliction),
+        carryoverKey,
+        disabled,
       });
 
-      enqueueExpire({
-        type: "ENEMY_EFFECT_EXPIRE",
-        time: expiresAt,
-        kind: "infliction",
-        element: infliction.element,
-        consumed: false,
-      });
+      if (!disabled) {
+        enqueueExpire({
+          type: "ENEMY_EFFECT_EXPIRE",
+          time: expiresAt,
+          kind: "infliction",
+          element: infliction.element,
+          consumed: false,
+        });
+      }
     }
 
     const vulnerability = initialEnemyState.vulnerability;
     if (vulnerability && finiteRemaining(vulnerability) > 0) {
+      const carryoverKey = "vulnerability";
+      const disabled = disabledEffects.has(carryoverKey);
       const expiresAt = toExpiresAt(vulnerability, applyTime);
 
       log({
@@ -169,14 +181,18 @@ export function simulate(
         expiresAt,
         trigger: "lift",
         sourceId: vulnerability.sourceQueue?.[0]?.sourceId || vulnerability.sourceId || "",
+        carryoverKey,
+        disabled,
       });
 
-      enqueueExpire({
-        type: "ENEMY_EFFECT_EXPIRE",
-        time: expiresAt,
-        kind: "vulnerability",
-        consumed: false,
-      });
+      if (!disabled) {
+        enqueueExpire({
+          type: "ENEMY_EFFECT_EXPIRE",
+          time: expiresAt,
+          kind: "vulnerability",
+          consumed: false,
+        });
+      }
     }
 
     const debuffs = initialEnemyState.debuffs || {};
@@ -184,6 +200,8 @@ export function simulate(
     const logDebuff = (debuffType: string, entry: any) => {
       if (!entry || finiteRemaining(entry) <= 0) return;
 
+      const carryoverKey = `debuff:${debuffType}`;
+      const disabled = disabledEffects.has(carryoverKey);
       const expiresAt = toExpiresAt(entry, applyTime);
       const sourceId = entry.sourceId || "";
 
@@ -194,15 +212,19 @@ export function simulate(
         level: Number(entry.level) || 1,
         expiresAt,
         sourceId,
+        carryoverKey,
+        disabled,
       });
 
-      enqueueExpire({
-        type: "ENEMY_EFFECT_EXPIRE",
-        time: expiresAt,
-        kind: "debuff",
-        debuffType,
-        consumed: false,
-      });
+      if (!disabled) {
+        enqueueExpire({
+          type: "ENEMY_EFFECT_EXPIRE",
+          time: expiresAt,
+          kind: "debuff",
+          debuffType,
+          consumed: false,
+        });
+      }
     };
 
     logDebuff("electrification", debuffs.electrification);
@@ -212,7 +234,7 @@ export function simulate(
     logDebuff("combustion", debuffs.combustion);
 
     const corrosion = debuffs.corrosion;
-    if (corrosion && finiteRemaining(corrosion) > 0) {
+    if (corrosion && finiteRemaining(corrosion) > 0 && !disabledEffects.has("debuff:corrosion")) {
       const expiresAt = toExpiresAt(corrosion, applyTime);
       const nextTickDelay = Math.max(0, Number(corrosion.nextTickDelay) || 1);
       const firstTickTime = applyTime + nextTickDelay;
@@ -245,7 +267,7 @@ export function simulate(
     }
 
     const combustion = debuffs.combustion;
-    if (combustion && finiteRemaining(combustion) > 0) {
+    if (combustion && finiteRemaining(combustion) > 0 && !disabledEffects.has("debuff:combustion")) {
       const expiresAt = toExpiresAt(combustion, applyTime);
       const level = Math.max(1, Math.min(4, Number(combustion.level) || 1));
       const sourceId = combustion.sourceId || "";
@@ -300,6 +322,8 @@ export function simulate(
     for (const raw of initialEnemyState.statuses || []) {
       if (!raw?.id || finiteRemaining(raw) <= 0) continue;
 
+      const carryoverKey = `status:${raw.id}`;
+      const disabled = disabledEffects.has(carryoverKey);
       const expiresAt = toExpiresAt(raw, applyTime);
 
       log({
@@ -314,15 +338,19 @@ export function simulate(
         sourceId: raw.sourceId || "",
         icon: raw.icon,
         effect: raw.effect,
+        carryoverKey,
+        disabled,
       });
 
-      enqueueExpire({
-        type: "ENEMY_EFFECT_EXPIRE",
-        time: expiresAt,
-        kind: "status",
-        id: raw.id,
-        consumed: false,
-      });
+      if (!disabled) {
+        enqueueExpire({
+          type: "ENEMY_EFFECT_EXPIRE",
+          time: expiresAt,
+          kind: "status",
+          id: raw.id,
+          consumed: false,
+        });
+      }
     }
   }
 

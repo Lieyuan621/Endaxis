@@ -37,6 +37,8 @@ interface EnemyEffectSegment {
   color: string;
   effect: Effect; // original effect data for reference
   sourceId: string; // operator/action source identifier
+  carryoverKey?: string;
+  disabled?: boolean;
   /** For stat debuffs: the stat field, used for same-stat affinity */
   stat?: string;
   /** True for reaction damage hit markers (rendered as diamonds). */
@@ -69,9 +71,11 @@ type InflictionTracker = {
   stacks: number;
   expiresAt: number;
   sourceId: string;
+  carryoverKey?: string;
+  disabled?: boolean;
 };
-type VulnTracker = { start: number; stacks: number; expiresAt: number; sourceId: string };
-type DebuffTracker = { start: number; level: number; expiresAt: number; sourceId: string };
+type VulnTracker = { start: number; stacks: number; expiresAt: number; sourceId: string; carryoverKey?: string; disabled?: boolean };
+type DebuffTracker = { start: number; level: number; expiresAt: number; sourceId: string; carryoverKey?: string; disabled?: boolean };
 
 function syntheticInfliction(element: ArtsElement): InflictionEffect {
   return { kind: 'infliction', element };
@@ -107,6 +111,8 @@ function makeInflictionSeg(t: InflictionTracker, end: number): EnemyEffectSegmen
     color: getEffectColor(eff),
     effect: eff,
     sourceId: t.sourceId,
+    carryoverKey: t.carryoverKey,
+    disabled: t.disabled,
   };
 }
 
@@ -124,6 +130,8 @@ function makeVulnSeg(t: VulnTracker, end: number): EnemyEffectSegment {
     color: getEffectColor(eff),
     effect: eff,
     sourceId: t.sourceId,
+    carryoverKey: t.carryoverKey,
+    disabled: t.disabled,
   };
 }
 
@@ -158,6 +166,8 @@ function makeDebuffSeg(
     color: getEffectColor(eff),
     effect: eff,
     sourceId: info.sourceId,
+    carryoverKey: info.carryoverKey,
+    disabled: info.disabled,
     tickMarks,
   };
 }
@@ -206,7 +216,9 @@ function windowsToEnemyStatusSegments(windows: ActivationWindow[]): EnemyEffectS
       icon: getEffectIcon(resolved, w.stacks),
       color: getEffectColor(resolved),
       effect: resolved,
-      sourceId: w.effectId,
+      sourceId: w.sourceId ?? w.effectId,
+      carryoverKey: w.carryoverKey,
+      disabled: w.disabled,
       stat: hasStat ? JSON.stringify(resolved.stat) : '',
     };
   });
@@ -258,8 +270,15 @@ export function projectFromSimLog(
             color: getEffectColor(eff),
             effect: eff,
             sourceId: event.sourceId,
+            carryoverKey: event.carryoverKey,
+            disabled: event.disabled,
           });
-        } else if (infliction && infliction.element === event.element) {
+        } else if (
+          infliction &&
+          infliction.element === event.element &&
+          !infliction.disabled &&
+          !event.disabled
+        ) {
           // Same-element reapply → split segment at boundary (stack increase + timer refresh)
           segments.push(makeInflictionSeg(infliction, event.time));
           infliction = {
@@ -268,6 +287,8 @@ export function projectFromSimLog(
             stacks: Math.min(4, infliction.stacks + event.stacks),
             expiresAt: event.expiresAt ?? event.time + 20,
             sourceId: event.sourceId,
+            carryoverKey: event.carryoverKey,
+            disabled: event.disabled,
           };
         } else {
           // Fresh infliction or different element (consumed event should precede)
@@ -278,6 +299,8 @@ export function projectFromSimLog(
             stacks: Math.min(4, event.stacks),
             expiresAt: event.expiresAt ?? event.time + event.effectiveDuration,
             sourceId: event.sourceId,
+            carryoverKey: event.carryoverKey,
+            disabled: event.disabled,
           };
         }
         break;
@@ -394,6 +417,8 @@ export function projectFromSimLog(
           stacks: event.stacks,
           expiresAt: event.expiresAt,
           sourceId: event.sourceId,
+          carryoverKey: event.carryoverKey,
+          disabled: event.disabled,
         };
         break;
       }
@@ -428,7 +453,7 @@ export function projectFromSimLog(
       }
 
       case 'DEBUFF_APPLY': {
-        const { debuffType, time, level, expiresAt, sourceId } = event;
+        const { debuffType, time, level, expiresAt, sourceId, carryoverKey, disabled } = event;
         const existing = openDebuffs.get(debuffType);
         if (existing) {
           existing.expiresAt = time;
@@ -436,7 +461,7 @@ export function projectFromSimLog(
             debuffType === 'breach' ? EnemyEffectGroup.BREACH : EnemyEffectGroup.REACTION;
           segments.push(makeDebuffSeg(debuffType, existing, group, corrosionTicks));
         }
-        openDebuffs.set(debuffType, { start: time, level, expiresAt, sourceId });
+        openDebuffs.set(debuffType, { start: time, level, expiresAt, sourceId, carryoverKey, disabled });
         break;
       }
     }
@@ -467,6 +492,9 @@ export function projectFromSimLog(
     effect: e.effect ?? syntheticStatusEffect(e.id),
     effectId: e.id,
     isContinuation: e.isContinuation,
+    sourceId: e.sourceId,
+    carryoverKey: e.carryoverKey,
+    disabled: e.disabled,
   }));
   const statusExpires = (
     events.filter(e => e.type === 'ENEMY_EFFECT_EXPIRE' && e.kind === 'status') as Extract<

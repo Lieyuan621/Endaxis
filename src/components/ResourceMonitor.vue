@@ -510,6 +510,9 @@ const afflictionItems = computed(() => {
       stacks: seg.stacks || 1,
       slotIndex: 0,
       icon: seg.icon || null,
+      sourceId: seg.sourceId || null,
+      carryoverKey: seg.carryoverKey || null,
+      isDisabled: seg.disabled === true,
       hideIcon: physicalMarkerTimeKeys.has(Math.round(start / epsilon)),
     })
   }
@@ -525,6 +528,9 @@ const afflictionItems = computed(() => {
       stacks: seg.stacks || 1,
       slotIndex: 0,
       icon: seg.icon || null,
+      sourceId: seg.sourceId || null,
+      carryoverKey: seg.carryoverKey || null,
+      isDisabled: seg.disabled === true,
       hideIcon: false,
     })
   }
@@ -540,6 +546,9 @@ const afflictionItems = computed(() => {
       stacks: seg.stacks || 1,
       slotIndex: 0,
       icon: seg.icon || null,
+      sourceId: seg.sourceId || null,
+      carryoverKey: seg.carryoverKey || null,
+      isDisabled: seg.disabled === true,
       hideIcon: false,
     })
   }
@@ -555,6 +564,9 @@ const afflictionItems = computed(() => {
       stacks: seg.stacks || 1,
       slotIndex: 0,
       icon: seg.icon || null,
+      sourceId: seg.sourceId || null,
+      carryoverKey: seg.carryoverKey || null,
+      isDisabled: seg.disabled === true,
       hideIcon: false,
     })
   }
@@ -578,6 +590,7 @@ const afflictionItems = computed(() => {
         isDamageHit: !!m.isDamageHit,
         hitData: m.hitData || null,
         damageHits: Array.isArray(m.damageHits) ? m.damageHits : [],
+        sourceId: m.sourceId || null,
       })
       if (Array.isArray(m.damageHits)) {
         for (const hitData of m.damageHits) {
@@ -588,6 +601,7 @@ const afflictionItems = computed(() => {
             isDamageHit: true,
             hitData,
             damageHits: [],
+            sourceId: m.sourceId || null,
           })
         }
       }
@@ -656,6 +670,7 @@ const afflictionItems = computed(() => {
           icon: it.icon || null,
           isDamageHit: !!it.isDamageHit,
           hitData: it.hitData || null,
+          sourceId: it.sourceId || null,
           hideIcon: false,
         })
       })
@@ -736,6 +751,33 @@ const afflictionConnectionItems = computed(() => {
 const reactedAttachmentKeys = computed(() => {
   return new Set(afflictionConnectionItems.value.map((item) => item.sourceKey))
 })
+
+function resolveEnemyBuffSourceActionId(item) {
+  if (!item || item.isDamageHit) return null
+
+  const epsilon = 0.001
+  const actionIds = new Set(
+    (store.simLog || [])
+      .filter((entry) => entry?.type === 'DAMAGE_HIT')
+      .filter((entry) => Math.abs((Number(entry.time) || 0) - (Number(item.startTime) || 0)) <= epsilon)
+      .filter((entry) => !item.sourceId || entry.payload?.sourceId === item.sourceId)
+      .map((entry) => entry.payload?.actionId)
+      .filter((actionId) => actionId && store.getActionById(actionId)),
+  )
+
+  return actionIds.size === 1 ? [...actionIds][0] : null
+}
+
+function openEnemyBuffContextMenu(event, item) {
+  if (item?.carryoverKey && store.getInheritedEnemyBuffEntry(item.carryoverKey)) {
+    store.openContextMenu(event, item.carryoverKey, item.startTime, 'enemyCarryoverBuff')
+    return
+  }
+
+  const actionId = resolveEnemyBuffSourceActionId(item)
+  if (!actionId) return
+  store.openContextMenu(event, actionId, item.startTime, 'enemyBuff')
+}
 
 const afflictionLayout = computed(() => {
   const height = Math.max(0, sectionRects.value.affliction?.bodyHeight || 0)
@@ -1098,10 +1140,11 @@ const staggerRatio = computed(() => {
                     v-for="it in afflictionItems"
                     :key="it._key"
                     class="anomaly-wrapper affliction-item"
-                    :class="{ 'is-damage-hit': it.isDamageHit }"
+                    :class="{ 'is-damage-hit': it.isDamageHit, 'is-disabled': it.isDisabled }"
                     :style="{ left: it.leftPx + 'px', top: (it.isDamageHit ? it.diamondTopPx : it.topPx) + 'px' }"
                     :title="it.isDamageHit ? getReactionHitTitle(it.hitData) : ''"
                     @mousedown.stop="it.isDamageHit && openReactionHitDetail(it.hitData)"
+                    @contextmenu.stop.prevent="openEnemyBuffContextMenu($event, it)"
                   >
                     <div v-if="it.isDamageHit" class="enemy-damage-diamond" :class="{ 'link-buffed': it.hitData?.consumedStacks?.link > 0 }"></div>
                     <div v-else-if="!it.hideIcon" class="anomaly-icon-box">
@@ -1809,6 +1852,16 @@ const staggerRatio = computed(() => {
   align-items: center;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.affliction-item:not(.is-damage-hit) {
+  pointer-events: auto;
+  cursor: context-menu;
+}
+
+.affliction-item.is-disabled {
+  opacity: 0.38;
+  filter: grayscale(0.8);
 }
 
 .affliction-item.is-damage-hit {
