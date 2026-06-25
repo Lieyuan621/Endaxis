@@ -494,7 +494,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           time,
           physicalType,
           sourceId,
-          event.effectiveDuration,
+          VULNERABILITY_DEFAULT_DURATION,
           ctx,
           sourceSkillType,
           sourceSkillId,

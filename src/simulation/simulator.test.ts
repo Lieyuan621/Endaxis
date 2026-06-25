@@ -9,6 +9,7 @@ import { projectActionBuffs } from "./projection/projectActionBuffs";
 import { createDefaultStats } from "@/simulation/defaultActorStats";
 import { collectTriggerEffects, patchCombatSkills } from "@/data/collect";
 import estellaSheet from "@/data/operators/estella";
+import mifuSheet from "@/data/operators/mifu";
 import { extractRawEntries, resolveHitsFromSheet } from "@/stores/timeline/resolveHits";
 import type { BaseStatValues } from "@/data/stats/types";
 import type { Effect, TriggerEffect } from "@/data/types";
@@ -1271,6 +1272,77 @@ describe("optimizer-native runtime parity", () => {
       expect.objectContaining({ typeKey: "knockdown", time: 1, stacks: 2 }),
       expect.objectContaining({ typeKey: "breach", time: 2, stacks: 2 }),
     ]);
+  });
+
+  it("keeps lift and knockdown as 20s physical vulnerability for delayed physical links", () => {
+    const tracks = [
+      createTrack("alpha", [
+        createAction("lift", "comboSkill", {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+            },
+          ],
+        }),
+        createAction("breach", "comboSkill", {
+          startTime: 10,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "breach" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const result = runScenario(tracks);
+
+    expect(result.enemyLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "PHYSICAL_STATUS",
+          physicalType: "lift",
+          effectiveDuration: 3,
+        }),
+        expect.objectContaining({
+          type: "VULNERABILITY_CHANGE",
+          trigger: "lift",
+          expiresAt: expect.any(Number),
+        }),
+        expect.objectContaining({
+          type: "VULNERABILITY_CONSUMED",
+          consumedBy: "breach",
+          consumedStacks: 1,
+        }),
+        expect.objectContaining({ type: "DEBUFF_APPLY", debuffType: "breach", level: 1 }),
+      ]),
+    );
+    const liftVulnerability = result.enemyLog.find(
+      (entry: any) => entry.type === "VULNERABILITY_CHANGE" && entry.trigger === "lift",
+    ) as any;
+    expect(liftVulnerability.expiresAt).toBeGreaterThan(10);
+  });
+
+  it("resolves Mifu ultimate hit multipliers as 200% then 500% at max level", () => {
+    const rawEntries = extractRawEntries(mifuSheet.combatSkills.ultimate, 0);
+    const hits = resolveHitsFromSheet([], rawEntries, 11);
+
+    expect(hits).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "mifu-ult-hit-1", multiplier: 200 }),
+        expect.objectContaining({ id: "mifu-ult-hit-2", multiplier: 500 }),
+      ]),
+    );
   });
 
   it("projects optimizer-native logs through the UI result adapter", () => {
