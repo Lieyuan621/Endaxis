@@ -8,7 +8,7 @@ const sheet: OperatorSheet = {
   element: 'physical',
   finisherElement: 'physical',
   diveElement: 'physical',
-  class: 'striker',
+  class: 'guard',
   mainAttribute: 'strength',
   subAttribute: 'will',
   attributes: {
