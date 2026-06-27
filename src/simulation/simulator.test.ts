@@ -985,6 +985,158 @@ describe("optimizer-native runtime parity", () => {
     });
   });
 
+  it("applies grizzled-edge 3-piece bonus at 1.5x when consuming physical vulnerability", () => {
+    const tracks = [
+      createTrack("alpha", [
+        createAction("apply_vulnerability", "battleSkill", {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "vulnerability" } as Effect],
+            },
+          ],
+        }),
+        createAction("consume_vulnerability", "battleSkill", {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "crush" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const gearInstances = [
+      createGearInstance("gear_armor", "grizzled-edge-armor"),
+      createGearInstance("gear_gloves", "grizzled-edge-gauntlets"),
+      createGearInstance("gear_kit", "grizzled-edge-push-knife"),
+    ];
+    const team = createTeam("op_alpha", null, {
+      armor: "gear_armor",
+      gloves: "gear_gloves",
+      kit1: "gear_kit",
+    });
+    const operatorInstances = [createOperatorInstance()];
+    const triggerEffects = collectRuntimeTriggers(team, operatorInstances, [], gearInstances, tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+    const physicalDmgBonusApplies = result.operatorLog.filter(
+      (
+        entry,
+      ): entry is Extract<(typeof result.operatorLog)[number], { type: "OPERATOR_EFFECT_APPLY" }> =>
+        entry.type === "OPERATOR_EFFECT_APPLY" &&
+        entry.targetTrackId === "alpha" &&
+        entry.effect?.sourceGroup === "gearSet" &&
+        entry.effect?.kind === "status" &&
+        entry.effect?.stat?.modifier === "dmgBonus" &&
+        entry.effect?.stat?.elements === "physical",
+    );
+
+    expect(physicalDmgBonusApplies.map((entry) => entry.value)).toEqual([6, 3]);
+    expect(physicalDmgBonusApplies.every((entry) => entry.stacks === 1)).toBe(true);
+  });
+
+  it.each([
+    {
+      name: "enemy staggered",
+      setupAction: createAction("break_enemy", "battleSkill", {
+        startTime: 0,
+        hits: [{ offset: 0, multiplier: 0, spRecovery: 0, spReturn: 0, stagger: 100 }],
+      }),
+    },
+    {
+      name: "Endministrator Originium Crystals",
+      setupAction: createAction("apply_crystals", "battleSkill", {
+        startTime: 0,
+        hits: [
+          {
+            offset: 0,
+            multiplier: 0,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [
+              {
+                kind: "status",
+                id: "endministrator-originium-crystals",
+                target: "enemy",
+                value: 0,
+                duration: 10,
+              } as Effect,
+            ],
+          },
+        ],
+      }),
+    },
+  ])("applies grizzled-edge 3-piece bonus at 1.5x when $name", ({ setupAction }) => {
+    const tracks = [
+      createTrack("alpha", [
+        setupAction,
+        createAction("apply_vulnerability", "battleSkill", {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "vulnerability" } as Effect],
+            },
+          ],
+        }),
+        createAction("consume_vulnerability", "battleSkill", {
+          startTime: 2,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "crush" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const gearInstances = [
+      createGearInstance("gear_armor", "grizzled-edge-armor"),
+      createGearInstance("gear_gloves", "grizzled-edge-gauntlets"),
+      createGearInstance("gear_kit", "grizzled-edge-push-knife"),
+    ];
+    const team = createTeam("op_alpha", null, {
+      armor: "gear_armor",
+      gloves: "gear_gloves",
+      kit1: "gear_kit",
+    });
+    const operatorInstances = [createOperatorInstance()];
+    const triggerEffects = collectRuntimeTriggers(team, operatorInstances, [], gearInstances, tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+    const physicalDmgBonusApplies = result.operatorLog.filter(
+      (
+        entry,
+      ): entry is Extract<(typeof result.operatorLog)[number], { type: "OPERATOR_EFFECT_APPLY" }> =>
+        entry.type === "OPERATOR_EFFECT_APPLY" &&
+        entry.targetTrackId === "alpha" &&
+        entry.effect?.sourceGroup === "gearSet" &&
+        entry.effect?.kind === "status" &&
+        entry.effect?.stat?.modifier === "dmgBonus" &&
+        entry.effect?.stat?.elements === "physical",
+    );
+
+    expect(physicalDmgBonusApplies.map((entry) => entry.value)).toEqual([6, 3]);
+  });
+
   it("honors onHit weapon skill type filters", () => {
     const weaponEffect: Effect = {
       id: "artzy-tyrannical-stack",

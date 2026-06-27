@@ -412,6 +412,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     sourceSkillId?: string,
   ): { level: number; consumedSources: Record<string, number> } {
     const state = ctx.state.enemy;
+    const preConsumeSnap = state.statusSnapshot();
     const consumedStacks = state.vulnerability!.stacks;
     const consumedSources = consumeSourceQueue(state.vulnerability!.sourceQueue);
     const level = Math.max(1, Math.min(MAX_VULNERABILITY_STACKS, consumedStacks));
@@ -437,6 +438,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       consumedStacks,
       sourceSkillType,
       sourceSkillId,
+      preConsumeSnap,
     );
     return { level, consumedSources };
   }

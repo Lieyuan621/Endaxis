@@ -461,7 +461,7 @@ export class TriggerRegistry {
       }
 
       // Condition check
-      if (!evaluateEffectCondition(resolved.condition, time, sourceTrackId, ctx)) continue;
+      if (!evaluateEffectCondition(resolved.condition, time, sourceTrackId, ctx, enemySnap)) continue;
 
       // Schedule consumption if the condition (or any element of a compound condition) has consume.
       const cond = resolved.condition;
