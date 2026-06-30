@@ -277,12 +277,15 @@
       "gameTimeExpandTitle": "Развернуть таймлайн"
     },
     "elementFilter": {
-      "all": "Все",
+      "all": "Все стихии",
       "blaze": "Огонь",
       "cold": "Холод",
       "emag": "Электро",
       "nature": "Природа",
       "physical": "Физ."
+    },
+    "classFilter": {
+      "all": "Все классы"
     },
     "equipmentDialog": {
       "allCategories": "Все категории",
