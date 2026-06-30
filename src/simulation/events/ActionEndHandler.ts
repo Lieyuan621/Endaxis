@@ -1,6 +1,7 @@
 import type { EventHandler } from '@/simulation/events/EventHandler.ts';
 import type { ActionEndEvent } from '@/simulation/events/event.types.ts';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext.ts';
+import { isBattleSkillLikeAction } from '@/simulation/compiler/types';
 
 export class ActionEndHandler implements EventHandler<ActionEndEvent> {
   handle(e: ActionEndEvent, ctx: SimulationContext) {
@@ -34,6 +35,8 @@ export class ActionEndHandler implements EventHandler<ActionEndEvent> {
 
     const action = ctx.getAction(e.payload.actionId);
     if (action) {
+      if (isBattleSkillLikeAction(action.node)) return;
+
       // Scale down UE proportionally to returned SP consumed.
       // Insufficient SP is ignored — only returned SP reduces UE gain.
       const actualCost: number = (action as any)._actualSpCost ?? action.node.spCost ?? 0;

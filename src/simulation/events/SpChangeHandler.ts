@@ -4,6 +4,8 @@ import type { SimulationContext } from '@/simulation/engine/SimulationContext.ts
 import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
 import { passesSkillFilter } from '@/data/filter';
 
+const ULT_ENERGY_PER_RECOVERED_SP = 6.5 / 100;
+
 export class SpChangeHandler implements EventHandler<SpChangeEvent> {
   private registry?: TriggerRegistry;
   constructor(registry?: TriggerRegistry) {
@@ -82,6 +84,18 @@ export class SpChangeHandler implements EventHandler<SpChangeEvent> {
 
     // Only trigger onSpRecovery for recovery-type gains
     if (sp > 0 && !isReturn) {
+      const ultEnergyGain = sp * ULT_ENERGY_PER_RECOVERED_SP;
+      if (ultEnergyGain > 0) {
+        ctx.queue.enqueue({
+          type: 'ULT_ENERGY_CHANGE',
+          time: e.time,
+          payload: {
+            actorId: e.payload.actorId,
+            change: ultEnergyGain,
+            sourceId: e.payload.sourceId,
+          },
+        });
+      }
       this.registry?.onSpRecovery({ ...e, payload: { ...e.payload, spChange: sp } }, ctx);
     }
   }

@@ -1,6 +1,7 @@
 import type { TeamConfig, EnemyConfig, ActorSnapshot } from "./state/types.ts";
 import { createEngine } from "./engine/createEngine.ts";
 import type { ResolvedTimeline, ResolvedHit } from "./compiler/types.ts";
+import { isBattleSkillLikeAction } from "./compiler/types.ts";
 import {
   getReactionDamageElement,
   getReactionMultiplier,
@@ -593,7 +594,9 @@ export function simulate(
       });
     }
 
-    if (Number(action.node.gaugeGain) > 0) {
+    const allowFixedActionUltEnergy = !isBattleSkillLikeAction(action.node);
+
+    if (allowFixedActionUltEnergy && Number(action.node.gaugeGain) > 0) {
       engine.enqueue({
         type: "ULT_ENERGY_CHANGE",
         time: action.realStartTime + action.realDuration,
@@ -605,7 +608,7 @@ export function simulate(
       });
     }
 
-    if (Number(action.node.teamGaugeGain) > 0) {
+    if (allowFixedActionUltEnergy && Number(action.node.teamGaugeGain) > 0) {
       actorIds.forEach((actorId) => {
         if (actorId === action.trackId) return;
         const targetActor = actorMetaById.get(actorId);

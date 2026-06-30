@@ -308,7 +308,7 @@ describe("optimizer-native runtime parity", () => {
     ]));
     expect(enabled.enemyLog.length).toBeGreaterThan(0);
     expect(enabled.state.snapshot().enemy.stagger).toBe(30);
-    expect(enabled.state.snapshot().actors[0]?.resources.gauge).toBe(20);
+    expect(enabled.state.snapshot().actors[0]?.resources.gauge).toBeCloseTo(0.975);
   });
 
   it("resets stagger carryover when switching to an enemy with different stagger config", () => {
@@ -1658,7 +1658,7 @@ describe("optimizer-native runtime parity", () => {
       createTrack(
         "alpha",
         [
-          createAction("gain", "battleSkill", {
+          createAction("gain", "comboSkill", {
             startTime: 0,
             duration: 1,
             gaugeGain: 10,
@@ -1674,6 +1674,102 @@ describe("optimizer-native runtime parity", () => {
     const gaugeEntry = simulation.simLog.find((entry) => entry.type === "ULT_ENERGY_CHANGE");
     expect(gaugeEntry?.payload.change).toBe(15);
     expect(gaugeEntry?.payload.gauge).toBe(15);
+  });
+
+  it("converts recovered SP to ultimate energy but excludes returned SP", () => {
+    const simulation = runScenario([
+      createTrack(
+        "alpha",
+        [
+          createAction("recover-sp", "battleSkill", {
+            startTime: 0,
+            duration: 1,
+            gaugeGain: 0,
+            teamGaugeGain: 0,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 0,
+                spRecovery: 100,
+                spReturn: 0,
+                stagger: 0,
+              },
+            ],
+          }),
+          createAction("return-sp", "battleSkill", {
+            startTime: 2,
+            duration: 1,
+            gaugeGain: 0,
+            teamGaugeGain: 0,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 0,
+                spRecovery: 0,
+                spReturn: 100,
+                stagger: 0,
+              },
+            ],
+          }),
+        ],
+        {
+          maxGaugeOverride: 100,
+          stats: { ult_charge_eff: 100 },
+        },
+      ),
+    ]);
+
+    const ueEntries = simulation.simLog.filter(
+      (entry) => entry.type === "ULT_ENERGY_CHANGE",
+    );
+
+    expect(ueEntries).toHaveLength(1);
+    expect(ueEntries[0]?.payload).toMatchObject({
+      actorId: "alpha",
+      sourceId: "recover-sp_inst",
+      change: 6.5,
+      gauge: 6.5,
+    });
+  });
+
+  it("does not apply fixed battle-skill ultimate energy when no SP is recovered", () => {
+    const simulation = runScenario([
+      createTrack(
+        "alpha",
+        [
+          createAction("free-battle", "battleSkill", {
+            startTime: 0,
+            duration: 1,
+            spCost: 0,
+            gaugeGain: 6.5,
+            teamGaugeGain: 6.5,
+            ultimateEnergyGain: 6.5,
+            teamUltimateEnergyGain: 6.5,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 0,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+              },
+            ],
+          }),
+        ],
+        { maxGaugeOverride: 100 },
+      ),
+      createTrack("beta", [], { maxGaugeOverride: 100 }),
+    ]);
+
+    expect(simulation.simLog).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ type: "ULT_ENERGY_CHANGE" }),
+      ]),
+    );
+    expect(simulation.state.snapshot().actors.find((actor) => actor.id === "alpha")?.resources.gauge)
+      .toBe(0);
+    expect(simulation.state.snapshot().actors.find((actor) => actor.id === "beta")?.resources.gauge)
+      .toBe(0);
   });
 
   it("does not consume link stacks when the active action branch is treated as comboSkill", () => {
@@ -1773,12 +1869,12 @@ describe("optimizer-native runtime parity", () => {
               enhancementTime: 5,
               gaugeCost: 50,
             }),
-            createAction("gain-inside", "battleSkill", {
+            createAction("gain-inside", "comboSkill", {
               startTime: 2,
               duration: 1,
               gaugeGain: 10,
             }),
-            createAction("gain-after", "battleSkill", {
+            createAction("gain-after", "comboSkill", {
               startTime: 8,
               duration: 1,
               gaugeGain: 10,

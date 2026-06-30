@@ -89,7 +89,7 @@ const OPTIMIZER_TO_DISPLAY_TYPE = {
     finisher: 'execution',
     dive: 'dive',
 }
-const DEFAULT_BATTLE_SKILL_UE = 6.5
+const DEFAULT_BATTLE_SKILL_UE = 0
 const DEFAULT_COMBO_SKILL_UE = 10
 const LEGACY_WEAPON_STATUS_KEY = `weapon${'Statuses'}`
 const resolveActionOptimizerSkillType = (action) => {
@@ -3184,7 +3184,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                         ? (segmentInfo.spCost ?? baseDefaults.spCost)
                         : (idx === 0 ? baseDefaults.spCost : 0)
                     const segmentGaugeGain = skill.type === 'battleSkill'
-                        ? ((Number(segmentSpCost) || 0) * (DEFAULT_BATTLE_SKILL_UE / systemConstants.value.skillSpCostDefault))
+                        ? (Number(segmentInfo.ultimateEnergyGain ?? DEFAULT_BATTLE_SKILL_UE) || 0)
                         : (skill.type === 'comboSkill'
                             ? baseDefaults.gaugeGain
                             : (idx === list.length - 1 ? baseDefaults.gaugeGain : 0))

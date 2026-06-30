@@ -42,7 +42,6 @@ const SKILL_ICON_FILE: Record<string, string> = {
 // ─── Default UE / SP constants ──────────────────────────────────────────────
 
 const BATTLE_SKILL_SP_COST = 100;
-const BATTLE_SKILL_UE = 6.5;
 const COMBO_SKILL_UE = 10;
 
 /**
@@ -151,7 +150,6 @@ export function getCharacterRoster(): any[] {
       if (!seg) continue;
 
       // Per-segment array (mirrors basicAttack_segments shape)
-      const ueRatio = BATTLE_SKILL_UE / BATTLE_SKILL_SP_COST;
       entry[`${skillKey}_segments`] = expandedSegs.map((s: any) => {
         const base: any = {
           duration: s.duration,
@@ -163,10 +161,9 @@ export function getCharacterRoster(): any[] {
         };
         if (skillKey === 'battleSkill') {
           const segSpCost = s.spCost ?? BATTLE_SKILL_SP_COST;
-          const segUe = segSpCost * ueRatio;
           base.spCost = segSpCost;
-          base.ultimateEnergyGain = segUe;
-          base.teamUltimateEnergyGain = segUe;
+          base.ultimateEnergyGain = s.ultimateEnergyGain ?? 0;
+          base.teamUltimateEnergyGain = s.teamUltimateEnergyGain ?? 0;
         }
         return base;
       });
