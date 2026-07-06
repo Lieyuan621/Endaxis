@@ -109,13 +109,6 @@ function formatStatLabel(effect) {
   return formatEquipmentEffectLabel(effect, t, locale.value)
 }
 
-function getDisplaySlotName(slotType) {
-  if (slotType === 'kit' || slotType === 'accessory') {
-    return String(locale.value || '').toLowerCase().startsWith('zh') ? '配件' : 'Accessory'
-  }
-  return getGameSlotTypeName(slotType, locale.value)
-}
-
 function formatStatValue(effect, value) {
   return formatEquipmentEffectStatValue(effect, value)
 }
@@ -218,7 +211,7 @@ function openItemEditor(slot) {
             <span class="slot-tag" :style="{ color: slot.color, borderColor: slot.color }">
               Lv{{ slot.level }}
             </span>
-            <span class="slot-tag">{{ getDisplaySlotName(slot.slotType) }}</span>
+            <span class="slot-tag">{{ getGameSlotTypeName(slot.slotType, locale) }}</span>
           </div>
         </div>
 
