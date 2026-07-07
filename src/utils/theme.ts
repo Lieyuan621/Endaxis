@@ -78,10 +78,11 @@ export const qualityColors: Record<string, string> = {
 // ─── Enemy tiers ────────────────────────────────────────────────────────────
 
 export const ENEMY_TIERS = [
-  { labelKey: 'game.enemyTier.normal', label: '普通', value: 'normal', color: '#a0a0a0' },
-  { labelKey: 'game.enemyTier.elite', label: '进阶', value: 'elite', color: '#52c41a' },
-  { labelKey: 'game.enemyTier.champion', label: '精英', value: 'champion', color: '#d8b4fe' },
-  { labelKey: 'game.enemyTier.boss', label: '领袖', value: 'boss', color: '#ff4d4f' },
+  { labelKey: 'enemyTier.normal', label: '普通', value: 'normal', color: '#a0a0a0' },
+  { labelKey: 'enemyTier.advanced', label: '进阶', value: 'advanced', color: '#52c41a' },
+  { labelKey: 'enemyTier.elite', label: '精英', value: 'elite', color: '#d8b4fe' },
+  { labelKey: 'enemyTier.boss', label: '头目', value: 'boss', color: '#ffd700' },
+  { labelKey: 'enemyTier.leader', label: '领袖', value: 'leader', color: '#ff4d4f' },
 ] as const;
 
 // ─── Effect / status bar colors ─────────────────────────────────────────────
@@ -92,7 +93,7 @@ export const EFFECT_COLORS: Record<string, string> = {
   // Inflictions
   heat_infliction: '#ff4d4f',
   electric_infliction: '#ffd700',
-  cryo_infliction: '#00e5ff',
+  cryo_infliction: '#1890ff',
   nature_infliction: '#52c41a',
   // Bursts
   heat_burst: '#ff4d4f',

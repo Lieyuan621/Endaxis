@@ -22,6 +22,9 @@ export interface ActivationWindow {
   stacks: number;
   maxStacks?: number;
   isContinuation?: boolean;
+  sourceId?: string;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 // ─── Convert to OperatorEffectSegment ────────────────────────────────────────
@@ -65,6 +68,9 @@ interface ApplyEvent {
   effect: Effect;
   effectId: string;
   isContinuation?: boolean;
+  sourceId?: string;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 interface ExpireEvent {
@@ -121,6 +127,9 @@ export function buildApplyExpireWindows(
           stacks: a.stacks,
           maxStacks: a.maxStacks,
           isContinuation: a.isContinuation,
+          sourceId: a.sourceId,
+          carryoverKey: a.carryoverKey,
+          disabled: a.disabled,
         });
       }
     }

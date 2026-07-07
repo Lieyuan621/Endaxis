@@ -1,14 +1,13 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
-import { storeToRefs } from 'pinia'
 import CustomNumberInput from './CustomNumberInput.vue'
 import ConnectionPath from './ConnectionPath.vue'
 import HitDamageDetailDialog from './HitDamageDetailDialog.vue'
-import { Search } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getDisplayKeyCandidates } from '@/utils/effectDisplay.js'
 import { getEnemyGameName } from '@/data/gameText'
+import { computeContingencyEnemyHealing } from '@/data/contingencyContracts/criteriaEffects'
 
 const store = useTimelineStore()
 const { t, locale } = useI18n({ useScope: 'global' })
@@ -19,10 +18,6 @@ const emit = defineEmits(['collapse-panel', 'section-collapse-change'])
 const reactionHitDetailHit = ref(null)
 const showReactionHitDetail = computed(() => reactionHitDetailHit.value !== null)
 const reactionHitDetailBreakdown = computed(() => reactionHitDetailHit.value?._damageBreakdown ?? null)
-
-const { enemyDatabase, enemyCategories } = storeToRefs(store)
-const ENEMY_TIERS = store.ENEMY_TIERS
-const TIER_WEIGHTS = { 'boss': 5, 'head': 4, 'champion': 3, 'elite': 2, 'normal': 1 }
 
 const MIN_CHART_HEIGHT = 116
 const MAX_CHART_HEIGHT = 520
@@ -515,6 +510,9 @@ const afflictionItems = computed(() => {
       stacks: seg.stacks || 1,
       slotIndex: 0,
       icon: seg.icon || null,
+      sourceId: seg.sourceId || null,
+      carryoverKey: seg.carryoverKey || null,
+      isDisabled: seg.disabled === true,
       hideIcon: physicalMarkerTimeKeys.has(Math.round(start / epsilon)),
     })
   }
@@ -530,6 +528,9 @@ const afflictionItems = computed(() => {
       stacks: seg.stacks || 1,
       slotIndex: 0,
       icon: seg.icon || null,
+      sourceId: seg.sourceId || null,
+      carryoverKey: seg.carryoverKey || null,
+      isDisabled: seg.disabled === true,
       hideIcon: false,
     })
   }
@@ -545,6 +546,9 @@ const afflictionItems = computed(() => {
       stacks: seg.stacks || 1,
       slotIndex: 0,
       icon: seg.icon || null,
+      sourceId: seg.sourceId || null,
+      carryoverKey: seg.carryoverKey || null,
+      isDisabled: seg.disabled === true,
       hideIcon: false,
     })
   }
@@ -560,6 +564,9 @@ const afflictionItems = computed(() => {
       stacks: seg.stacks || 1,
       slotIndex: 0,
       icon: seg.icon || null,
+      sourceId: seg.sourceId || null,
+      carryoverKey: seg.carryoverKey || null,
+      isDisabled: seg.disabled === true,
       hideIcon: false,
     })
   }
@@ -583,6 +590,7 @@ const afflictionItems = computed(() => {
         isDamageHit: !!m.isDamageHit,
         hitData: m.hitData || null,
         damageHits: Array.isArray(m.damageHits) ? m.damageHits : [],
+        sourceId: m.sourceId || null,
       })
       if (Array.isArray(m.damageHits)) {
         for (const hitData of m.damageHits) {
@@ -593,6 +601,7 @@ const afflictionItems = computed(() => {
             isDamageHit: true,
             hitData,
             damageHits: [],
+            sourceId: m.sourceId || null,
           })
         }
       }
@@ -661,6 +670,7 @@ const afflictionItems = computed(() => {
           icon: it.icon || null,
           isDamageHit: !!it.isDamageHit,
           hitData: it.hitData || null,
+          sourceId: it.sourceId || null,
           hideIcon: false,
         })
       })
@@ -742,6 +752,33 @@ const reactedAttachmentKeys = computed(() => {
   return new Set(afflictionConnectionItems.value.map((item) => item.sourceKey))
 })
 
+function resolveEnemyBuffSourceActionId(item) {
+  if (!item || item.isDamageHit) return null
+
+  const epsilon = 0.001
+  const actionIds = new Set(
+    (store.simLog || [])
+      .filter((entry) => entry?.type === 'DAMAGE_HIT')
+      .filter((entry) => Math.abs((Number(entry.time) || 0) - (Number(item.startTime) || 0)) <= epsilon)
+      .filter((entry) => !item.sourceId || entry.payload?.sourceId === item.sourceId)
+      .map((entry) => entry.payload?.actionId)
+      .filter((actionId) => actionId && store.getActionById(actionId)),
+  )
+
+  return actionIds.size === 1 ? [...actionIds][0] : null
+}
+
+function openEnemyBuffContextMenu(event, item) {
+  if (item?.carryoverKey && store.getInheritedEnemyBuffEntry(item.carryoverKey)) {
+    store.openContextMenu(event, item.carryoverKey, item.startTime, 'enemyCarryoverBuff')
+    return
+  }
+
+  const actionId = resolveEnemyBuffSourceActionId(item)
+  if (!actionId) return
+  store.openContextMenu(event, actionId, item.startTime, 'enemyBuff')
+}
+
 const afflictionLayout = computed(() => {
   const height = Math.max(0, sectionRects.value.affliction?.bodyHeight || 0)
 
@@ -780,12 +817,6 @@ const afflictionLayout = computed(() => {
   }
 })
 
-const CATEGORY_ALL = '__ALL__'
-const CATEGORY_UNCATEGORIZED = '__UNCAT__'
-const isEnemySelectorVisible = ref(false)
-const enemySearchQuery = ref('')
-const activeCategoryTab = ref(CATEGORY_ALL)
-
 const activeEnemyInfo = computed(() => {
   if (store.activeEnemyId === 'custom') {
     return { name: t('resourceMonitor.enemy.custom'), avatar: '', isCustom: true }
@@ -795,71 +826,6 @@ const activeEnemyInfo = computed(() => {
     ? { ...enemy, name: getEnemyGameName(enemy.id, locale.value) }
     : { name: t('resourceMonitor.enemy.unknown'), avatar: '' }
 })
-
-const groupedEnemyList = computed(() => {
-  locale.value
-  let list = (enemyDatabase.value || []).map(enemy => ({
-    ...enemy,
-    name: getEnemyGameName(enemy.id, locale.value),
-  }))
-
-  if (enemySearchQuery.value) {
-    const q = enemySearchQuery.value.toLowerCase()
-    list = list.filter(e => e.name.toLowerCase().includes(q))
-  }
-
-  const groups = {}
-
-  const targetCategories = (activeCategoryTab.value === CATEGORY_ALL)
-      ? [...enemyCategories.value, CATEGORY_UNCATEGORIZED]
-      : [activeCategoryTab.value]
-
-  targetCategories.forEach(cat => { groups[cat] = [] })
-
-  list.forEach(enemy => {
-    let cat = enemy.category
-    if (!cat || !enemyCategories.value.includes(cat)) {
-      cat = CATEGORY_UNCATEGORIZED
-    }
-
-    if (groups[cat]) {
-      groups[cat].push(enemy)
-    }
-  })
-
-  const result = []
-
-  targetCategories.forEach(cat => {
-    const enemyList = groups[cat]
-    if (enemyList && enemyList.length > 0) {
-      enemyList.sort((a, b) => (TIER_WEIGHTS[b.tier] || 0) - (TIER_WEIGHTS[a.tier] || 0))
-      result.push({
-        id: cat,
-        name: cat === CATEGORY_UNCATEGORIZED ? t('common.uncategorized') : cat,
-        list: enemyList
-      })
-    }
-  })
-
-  return result
-})
-
-function getTierColor(tierValue) {
-  const tier = ENEMY_TIERS.find(t => t.value === tierValue)
-  return tier ? tier.color : '#a0a0a0'
-}
-
-function getTierLabel(tierValue) {
-  const tier = ENEMY_TIERS.find(t => t.value === tierValue)
-  if (!tier) return ''
-  if (tier.labelKey) return t(tier.labelKey)
-  return tier.label || ''
-}
-
-function selectEnemy(id) {
-  store.applyEnemyPreset(id)
-  isEnemySelectorVisible.value = false
-}
 
 const staggerResult = computed(() => {
   return store.staggerSeries
@@ -976,74 +942,98 @@ const transformStyle = computed(() => {
     willChange: 'transform'
   }
 })
+
+const totalDamageDone = computed(() => {
+  return (store.simLog || []).reduce((sum, entry) => {
+    if (entry?.type !== 'DAMAGE_HIT') return sum
+    const hit = entry.payload?.hitData
+    return sum + Number(store.getHitDisplayDamage?.(hit) ?? hit?._expectedDamage ?? hit?._damageBreakdown?.expectedDamage ?? 0)
+  }, 0)
+})
+
+const enemyMaxHp = computed(() => Math.max(1, Number(store.effectiveEnemyHp ?? store.systemConstants.enemyHp) || 1))
+const enemyHealingDone = computed(() => computeContingencyEnemyHealing(store.enemyLog || [], {
+  maxHp: enemyMaxHp.value,
+  rate: Number(store.contingencyEnemyHealingRate) || 0,
+  until: Number(store.viewDuration) || Infinity,
+  superArmor: Number(store.effectiveSystemConstants?.superArmor ?? store.systemConstants.superArmor) || 0,
+}))
+const enemyRemainingHp = computed(() => {
+  const remaining = enemyMaxHp.value - totalDamageDone.value + enemyHealingDone.value
+  return Math.max(0, Math.min(enemyMaxHp.value, Math.round(remaining)))
+})
+const enemyHpRatio = computed(() => clamp(enemyRemainingHp.value / enemyMaxHp.value, 0, 1))
+const currentStaggerValue = computed(() => {
+  const points = staggerPoints.value
+  const last = points[points.length - 1]
+  return Math.round(Number(last?.val) || 0)
+})
+const staggerRatio = computed(() => {
+  const maxStagger = Math.max(1, Number(store.systemConstants.maxStagger) || 1)
+  return clamp(currentStaggerValue.value / maxStagger, 0, 1)
+})
 </script>
 
 <template>
   <div ref="monitorRootRef" class="resource-monitor-layout">
 
-    <div class="monitor-sidebar">
-      <div class="enemy-select-module" @click="isEnemySelectorVisible = true">
-        <div class="module-deco-line"></div>
-        <div class="enemy-avatar-box">
-          <img v-if="!activeEnemyInfo.isCustom" :src="activeEnemyInfo.avatar" @error="e=>e.target.src='/Endaxis/avatars/default_enemy.webp'" />
-          <div v-else class="custom-avatar-placeholder">?</div>
-          <div class="scan-line"></div>
+    <div class="monitor-sidebar monitor-module-sidebar">
+      <div class="module-meta-shell" :style="{ height: `${sectionRects.affliction.shellHeight}px` }">
+        <div v-if="activeSectionCollapsed.affliction" class="module-meta-collapsed">
+          {{ t('resourceMonitor.modules.enemyStatus') }}
         </div>
-          <div class="enemy-info-col">
-            <div class="enemy-name">{{ activeEnemyInfo.name }}</div>
-            <div class="click-hint">{{ t('resourceMonitor.enemy.clickToChange') }}</div>
-          </div>
-        </div>
-
-        <div class="settings-scroll-area">
-          <div class="section-container tech-style border-red">
-            <div class="panel-tag-mini red">{{ t('resourceMonitor.sections.enemy') }}</div>
-            <div class="attribute-grid-mini">
-              <div class="control-row-mini">
-                <label>{{ t('resourceMonitor.labels.enemyHp') }}</label>
-                <CustomNumberInput
-                    v-model="store.systemConstants.enemyHp"
-                    :min="1"
-                    active-color="#ff7875"
-                    class="standard-input"
-                />
-              </div>
-              <div class="control-row-mini">
-                <label>{{ t('resourceMonitor.labels.maxStagger') }}</label>
-                <CustomNumberInput v-model="store.systemConstants.maxStagger" :min="1" active-color="#ff7875" class="standard-input" />
-              </div>
-              <div class="control-row-mini">
-                <label>{{ t('resourceMonitor.labels.staggerNodes') }}</label>
-                <CustomNumberInput v-model="store.systemConstants.staggerNodeCount" :min="0" class="standard-input" />
-              </div>
-              <div class="control-row-mini">
-                <label>{{ t('resourceMonitor.labels.nodeDuration') }}</label>
-                <CustomNumberInput v-model="store.systemConstants.staggerNodeDuration" :step="0.1" active-color="#ff7875" class="standard-input" />
-              </div>
-              <div class="control-row-mini">
-                <label>{{ t('resourceMonitor.labels.breakDuration') }}</label>
-                <CustomNumberInput v-model="store.systemConstants.staggerBreakDuration" :step="0.5" active-color="#ff7875" class="standard-input" />
-              </div>
-              <div class="control-row-mini">
-                <label>{{ t('resourceMonitor.labels.executionRecovery') }}</label>
-                <CustomNumberInput v-model="store.systemConstants.executionRecovery" :min="0" class="standard-input" />
+        <div v-else class="module-meta-body enemy-status-meta">
+          <div class="module-title red">{{ t('resourceMonitor.modules.enemyStatus') }}</div>
+          <div class="enemy-compact">
+            <div class="enemy-compact-text">
+              <div class="enemy-name-line">
+                <span class="enemy-name">{{ activeEnemyInfo.name }}</span>
+                <span v-if="store.activeEnemyId !== 'custom'" class="enemy-level-badge">Lv{{ store.activeEnemyLevel }}</span>
               </div>
             </div>
           </div>
-
-          <div class="section-container tech-style border-gold">
-            <div class="panel-tag-mini gold">{{ t('resourceMonitor.sections.team') }}</div>
-            <div class="attribute-grid-mini">
-              <div class="control-row-mini">
-                <label>{{ t('resourceMonitor.labels.initialSp') }}</label>
-                <CustomNumberInput v-model="store.systemConstants.initialSp" :min="0" :max="300" active-color="#ffd700" class="standard-input" />
-              </div>
-              <div class="control-row-mini">
-                <label>{{ t('resourceMonitor.labels.spPerSecond') }}</label>
-                <CustomNumberInput v-model="store.systemConstants.spRegenRate" :step="0.5" :min="0" active-color="#ffd700" class="standard-input" />
-              </div>
-            </div>
+          <div class="module-value-text enemy-hp-text">{{ enemyRemainingHp.toLocaleString() }}/{{ enemyMaxHp.toLocaleString() }}</div>
+          <div class="enemy-hp-bar">
+            <div class="enemy-hp-fill" :style="{ width: `${enemyHpRatio * 100}%` }"></div>
           </div>
+        </div>
+      </div>
+
+      <div
+        v-if="resizeHandleItems.some((item) => item.lowerKey === 'stagger')"
+        class="module-meta-resize-gap"
+      ></div>
+      <div class="module-meta-shell" :style="{ height: `${sectionRects.stagger.shellHeight}px` }">
+        <div v-if="activeSectionCollapsed.stagger" class="module-meta-collapsed">
+          {{ t('resourceMonitor.modules.stagger') }}
+        </div>
+        <div v-else class="module-meta-body stagger-meta">
+          <div class="module-title orange">{{ t('resourceMonitor.modules.stagger') }}</div>
+          <div class="module-value-text stagger-value-text">{{ currentStaggerValue }}/{{ store.systemConstants.maxStagger }}</div>
+          <div class="enemy-hp-bar stagger-value-bar">
+            <div class="enemy-hp-fill stagger-value-fill" :style="{ width: `${staggerRatio * 100}%` }"></div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="resizeHandleItems.some((item) => item.lowerKey === 'sp')"
+        class="module-meta-resize-gap"
+      ></div>
+      <div class="module-meta-shell" :style="{ height: `${sectionRects.sp.shellHeight}px` }">
+        <div v-if="activeSectionCollapsed.sp" class="module-meta-collapsed">
+          {{ t('resourceMonitor.modules.sp') }}
+        </div>
+        <div v-else class="module-meta-body sp-meta">
+          <div class="module-control-row">
+            <label>{{ t('resourceMonitor.labels.initialSp') }}</label>
+            <CustomNumberInput v-model="store.systemConstants.initialSp" :min="0" :max="300" active-color="#ffd700" class="standard-input" />
+          </div>
+          <div class="module-control-row">
+            <label>{{ t('resourceMonitor.labels.spPerSecond') }}</label>
+            <CustomNumberInput v-model="store.systemConstants.spRegenRate" :step="0.5" :min="0" active-color="#ffd700" class="standard-input" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1150,10 +1140,11 @@ const transformStyle = computed(() => {
                     v-for="it in afflictionItems"
                     :key="it._key"
                     class="anomaly-wrapper affliction-item"
-                    :class="{ 'is-damage-hit': it.isDamageHit }"
+                    :class="{ 'is-damage-hit': it.isDamageHit, 'is-disabled': it.isDisabled }"
                     :style="{ left: it.leftPx + 'px', top: (it.isDamageHit ? it.diamondTopPx : it.topPx) + 'px' }"
                     :title="it.isDamageHit ? getReactionHitTitle(it.hitData) : ''"
                     @mousedown.stop="it.isDamageHit && openReactionHitDetail(it.hitData)"
+                    @contextmenu.stop.prevent="openEnemyBuffContextMenu($event, it)"
                   >
                     <div v-if="it.isDamageHit" class="enemy-damage-diamond" :class="{ 'link-buffed': it.hitData?.consumedStacks?.link > 0 }"></div>
                     <div v-else-if="!it.hideIcon" class="anomaly-icon-box">
@@ -1368,90 +1359,6 @@ const transformStyle = computed(() => {
       </div>
     </div>
 
-    <el-dialog v-model="isEnemySelectorVisible" :title="t('resourceMonitor.enemy.dialogTitle')" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
-      <div class="selector-header">
-        <el-input v-model="enemySearchQuery" :placeholder="t('resourceMonitor.enemy.searchPlaceholder')" :prefix-icon="Search" clearable style="width: 100%" />
-      </div>
-
-      <div class="category-tabs">
-        <button
-            class="ea-btn ea-btn--glass-cut"
-            :class="{ 'is-active': activeCategoryTab === CATEGORY_ALL }"
-            :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
-            @click="activeCategoryTab = CATEGORY_ALL"
-        >{{ t('common.all') }}</button>
-        <button
-            v-for="cat in enemyCategories"
-            :key="cat"
-            class="ea-btn ea-btn--glass-cut"
-            :class="{ 'is-active': activeCategoryTab === cat }"
-            :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
-            @click="activeCategoryTab = cat"
-        >
-          {{ cat }}
-        </button>
-      </div>
-
-      <div class="enemy-list-grid">
-
-        <div v-if="activeCategoryTab === CATEGORY_ALL && !enemySearchQuery" class="enemy-group-section">
-          <div class="group-header">
-            {{ t('resourceMonitor.enemy.specialGroup') }} <span class="count">(1)</span>
-          </div>
-          <div class="group-items">
-            <div class="enemy-card"
-                 :class="{ selected: store.activeEnemyId === 'custom' }"
-                 @click="selectEnemy('custom')"
-                 style="--tier-color: #ffd700;"> <div class="enemy-avatar-wrapper">
-              <div class="enemy-avatar custom">?</div>
-              <div class="tier-badge" style="background-color: #ffd700; color: #000;">EDIT</div>
-            </div>
-
-              <div class="enemy-info">
-                <div class="name">{{ t('resourceMonitor.enemy.custom') }}</div>
-                <div class="desc">{{ t('resourceMonitor.enemy.customDesc') }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div v-for="group in groupedEnemyList" :key="group.id" class="enemy-group-section">
-          <div class="group-header">
-            {{ group.name }}
-            <span class="count">({{ group.list.length }})</span>
-          </div>
-
-          <div class="group-items">
-            <div v-for="enemy in group.list" :key="enemy.id"
-                 class="enemy-card"
-                 :class="{ selected: store.activeEnemyId === enemy.id }"
-                 :style="{ '--tier-color': getTierColor(enemy.tier) }"
-                 @click="selectEnemy(enemy.id)">
-
-              <div class="enemy-avatar-wrapper">
-                <img :src="enemy.avatar" class="enemy-avatar" @error="e=>e.target.src='/Endaxis/avatars/default_enemy.webp'"/>
-                <div v-if="enemy.tier && enemy.tier !== 'normal'" class="tier-badge" :style="{ backgroundColor: getTierColor(enemy.tier) }">
-                  {{ getTierLabel(enemy.tier) }}
-                </div>
-              </div>
-
-              <div class="enemy-info">
-                <div class="name" :style="{ color: enemy.tier === 'boss' ? '#ff4d4f' : (enemy.tier === 'head' ? '#ffd700' : '#f0f0f0') }">
-                  {{ enemy.name }}
-                </div>
-                <div class="desc">{{ t('resourceMonitor.enemy.desc', { max: enemy.maxStagger, nodes: enemy.staggerNodeCount }) }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="groupedEnemyList.length === 0 && !(activeCategoryTab === CATEGORY_ALL && !enemySearchQuery)" class="empty-state">
-          {{ t('resourceMonitor.enemy.empty') }}
-        </div>
-
-      </div>
-    </el-dialog>
-
     <HitDamageDetailDialog
       :visible="showReactionHitDetail"
       :breakdown="reactionHitDetailBreakdown"
@@ -1485,6 +1392,167 @@ const transformStyle = computed(() => {
   height: 100%;
 }
 
+.monitor-module-sidebar {
+  background: #222;
+}
+
+.module-meta-shell {
+  min-height: 0;
+  position: relative;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.module-meta-resize-gap {
+  height: 0;
+  flex-shrink: 0;
+}
+
+.module-meta-body {
+  height: 100%;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, transparent 100%);
+  border-left: 3px solid rgba(255, 255, 255, 0.18);
+}
+
+.enemy-status-meta { border-left-color: #ff7875; }
+.stagger-meta { border-left-color: #ff9c6e; justify-content: center; }
+.sp-meta { border-left-color: #ffd700; justify-content: center; }
+
+.module-meta-collapsed {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(34, 34, 40, 0.94);
+  border-left: 3px solid rgba(255, 255, 255, 0.16);
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.module-title {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.module-title.red { color: #ff7875; }
+.module-title.orange { color: #ff9c6e; }
+.module-title.gold { color: #ffd700; }
+
+.enemy-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.enemy-compact-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.enemy-name-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.enemy-level-badge {
+  flex-shrink: 0;
+  color: #ffd700;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.86;
+}
+
+.enemy-hp-text {
+  text-align: center;
+}
+
+.module-value-text {
+  color: rgba(255, 255, 255, 0.82);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.enemy-hp-bar {
+  height: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.enemy-hp-fill {
+  height: 100%;
+  background: #d9363e;
+  position: relative;
+  transition: width 0.16s ease;
+}
+
+.enemy-hp-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.18) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  pointer-events: none;
+}
+
+.stagger-value-text {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.stagger-value-bar {
+  background: rgba(255, 214, 145, 0.08);
+}
+
+.stagger-value-fill {
+  background: #d46b08;
+}
+
+.module-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.module-control-row label {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .enemy-select-module {
   padding: 8px 10px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
@@ -1505,43 +1573,6 @@ const transformStyle = computed(() => {
   width: 2px;
   background: #ffd700;
   box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
-}
-
-.custom-avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px rgba(255, 215, 0, 0.4);
-  box-sizing: border-box;
-  color: #ffd700;
-  font-size: 18px;
-  font-weight: 900;
-  font-family: 'Roboto Mono', monospace;
-  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
-}
-
-.enemy-avatar-box {
-  container-type: size;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #444;
-  background: #111;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.enemy-avatar-box img { width: 100%; height: 100%; object-fit: cover; }
-
-.scan-line {
-  position: absolute; top: 0; left: 0; width: 100%; height: 1px;
-  background: rgba(255, 215, 0, 0.3);
-  box-shadow: 0 0 4px #ffd700;
-  will-change: transform;
-  animation: scan 3s infinite linear;
 }
 
 .enemy-info-col {
@@ -1612,6 +1643,23 @@ const transformStyle = computed(() => {
   color: rgba(255, 255, 255, 0.4);
   white-space: nowrap;
   letter-spacing: 0.3px;
+}
+
+.mini-subsection-label {
+  margin-top: 4px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.resistance-row label {
+  max-width: 86px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 :deep(.standard-input) {
@@ -1686,6 +1734,18 @@ const transformStyle = computed(() => {
   position: relative;
   overflow: hidden;
   min-height: 0;
+}
+
+.stagger-section-body::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: rgba(255, 156, 110, 0.32);
+  z-index: 2;
+  pointer-events: none;
 }
 
 .section-content-track {
@@ -1792,6 +1852,16 @@ const transformStyle = computed(() => {
   align-items: center;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.affliction-item:not(.is-damage-hit) {
+  pointer-events: auto;
+  cursor: context-menu;
+}
+
+.affliction-item.is-disabled {
+  opacity: 0.38;
+  filter: grayscale(0.8);
 }
 
 .affliction-item.is-damage-hit {
@@ -1909,172 +1979,6 @@ const transformStyle = computed(() => {
   border: 1px solid rgba(255, 77, 79, 0.3);
   box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   white-space: nowrap;
-}
-
-.enemy-list-grid {
-  max-height: 450px;
-  overflow-y: auto;
-  padding: 10px;
-  scrollbar-width: none;
-}
-.enemy-list-grid::-webkit-scrollbar { display: none; }
-
-.category-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 8px;
-  margin-bottom: 20px;
-  padding: 8px;
-  background: #1e1e1e;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-  overflow: visible;
-  white-space: normal;
-}
-
-.category-tabs .ea-btn {
-  flex: none;
-  margin-bottom: 2px;
-  --ea-btn-py: 6px;
-  --ea-btn-px: 16px;
-}
-
-.enemy-group-section {
-  margin-bottom: 24px;
-}
-
-.group-header {
-  font-size: 13px;
-  font-weight: 800;
-  color: #ececec;
-  margin-bottom: 12px;
-  padding-left: 10px;
-  border-left: 3px solid #ffd700;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  letter-spacing: 1px;
-}
-
-.group-header .count {
-  font-size: 11px;
-  color: #666;
-  font-weight: normal;
-}
-
-.group-items {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.enemy-card {
-  --tier-color: #555;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 3px solid #444;
-  cursor: pointer;
-  margin-bottom: 0;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  min-width: 0;
-  height: 64px;
-  box-sizing: border-box;
-}
-
-.enemy-card:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.15);
-  border-left-color: var(--tier-color) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5),
-  -2px 0 8px -2px var(--tier-color);
-}
-
-.enemy-card.selected {
-  border-left-color: var(--tier-color) !important;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
-}
-
-.enemy-avatar-wrapper {
-  position: relative;
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-}
-
-.enemy-avatar {
-  width: 100%;
-  height: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  object-fit: cover;
-  background: #111;
-}
-
-.tier-badge {
-  position: absolute;
-  bottom: -2px;
-  right: -4px;
-  color: #000;
-  font-size: 8px;
-  font-weight: 900;
-  padding: 1px 5px;
-  border-radius: 2px;
-  text-transform: uppercase;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  z-index: 2;
-}
-
-.enemy-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.enemy-info .name {
-  font-size: 12px;
-  font-weight: bold;
-  color: #f0f0f0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 2px;
-}
-
-.enemy-info .desc {
-  font-size: 10px;
-  color: #888;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.enemy-avatar.custom {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px rgba(255, 215, 0, 0.4);
-  color: #ffd700;
-  font-size: 22px;
-  font-weight: 900;
-  font-family: 'Roboto Mono', monospace;
-  box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.1);
-  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
-}
-
-.enemy-card.selected .enemy-avatar.custom {
-  background: rgba(255, 215, 0, 0.15);
-  border-style: solid;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
 }
 
 @keyframes scan {

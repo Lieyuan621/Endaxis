@@ -42,8 +42,7 @@ const SKILL_ICON_FILE: Record<string, string> = {
 // ─── Default UE / SP constants ──────────────────────────────────────────────
 
 const BATTLE_SKILL_SP_COST = 100;
-const BATTLE_SKILL_UE = 6.5;
-const COMBO_SKILL_UE = 10;
+const COMBO_SKILL_UE = 0;
 
 /**
  * Resolve a leveled value (number or number[]) to a scalar using a 0-based level index.
@@ -120,6 +119,7 @@ export function getCharacterRoster(): any[] {
       name: getOperatorGameName(slug),
       avatar: `/operators/${slug}/avatar.webp`,
       accept_team_ult_energy: op.acceptTeamUltEnergy ?? true,
+      accept_self_sp_cost_ult_energy: op.acceptSelfSpCostUltEnergy ?? true,
       exclusive_buffs: op.exclusiveBuffs || [],
       // Finisher
       finisher_duration: finSeg?.duration ?? 0,
@@ -151,7 +151,6 @@ export function getCharacterRoster(): any[] {
       if (!seg) continue;
 
       // Per-segment array (mirrors basicAttack_segments shape)
-      const ueRatio = BATTLE_SKILL_UE / BATTLE_SKILL_SP_COST;
       entry[`${skillKey}_segments`] = expandedSegs.map((s: any) => {
         const base: any = {
           duration: s.duration,
@@ -163,10 +162,9 @@ export function getCharacterRoster(): any[] {
         };
         if (skillKey === 'battleSkill') {
           const segSpCost = s.spCost ?? BATTLE_SKILL_SP_COST;
-          const segUe = segSpCost * ueRatio;
           base.spCost = segSpCost;
-          base.ultimateEnergyGain = segUe;
-          base.teamUltimateEnergyGain = segUe;
+          base.ultimateEnergyGain = s.ultimateEnergyGain ?? 0;
+          base.teamUltimateEnergyGain = s.teamUltimateEnergyGain ?? 0;
         }
         return base;
       });

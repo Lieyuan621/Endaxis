@@ -11,6 +11,7 @@ const sheet: OperatorSheet = {
   mainAttribute: 'strength',
   subAttribute: 'will',
   acceptTeamUltEnergy: false,
+  acceptSelfSpCostUltEnergy: false,
   attributes: {
     Strength: [21, 50, 80, 110, 140, 155],
     Agility: [8, 29, 50, 72, 93, 104],
@@ -297,6 +298,7 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 2.17,

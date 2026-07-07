@@ -243,6 +243,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
   ): void {
     const state = ctx.state.enemy;
     const { element, time, sourceId, sourceSkillType, sourceSkillId } = event;
+    if (state.hasInflictionBarrier(element, time)) return;
     const stacks = event.stacks ?? 1;
     const duration = event.effectiveDuration;
     const shiftedExpiry = ctx.getShiftedTime(time, duration);
@@ -411,6 +412,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     sourceSkillId?: string,
   ): { level: number; consumedSources: Record<string, number> } {
     const state = ctx.state.enemy;
+    const preConsumeSnap = state.statusSnapshot();
     const consumedStacks = state.vulnerability!.stacks;
     const consumedSources = consumeSourceQueue(state.vulnerability!.sourceQueue);
     const level = Math.max(1, Math.min(MAX_VULNERABILITY_STACKS, consumedStacks));
@@ -436,6 +438,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       consumedStacks,
       sourceSkillType,
       sourceSkillId,
+      preConsumeSnap,
     );
     return { level, consumedSources };
   }
@@ -447,6 +450,11 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     const state = ctx.state.enemy;
     const { physicalType, time, sourceId, sourceSkillType, sourceSkillId, actionId, forced } =
       event;
+    const hasVuln = state.vulnerability !== null;
+    const isLiftOrKnockdown = physicalType === 'lift' || physicalType === 'knockdown';
+    const enemySuperArmor = Math.max(0, Number(state.config?.superArmor) || 0);
+    const actualPhysicalControl =
+      isLiftOrKnockdown && Boolean(hasVuln || forced) && enemySuperArmor < 30;
 
     ctx.enemyLog({
       type: 'PHYSICAL_STATUS',
@@ -454,6 +462,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       physicalType,
       sourceId,
       effectiveDuration: event.effectiveDuration,
+      ...(isLiftOrKnockdown ? { actualControl: actualPhysicalControl } : {}),
     });
 
     // Shatter: any physical hit on a solidified enemy immediately consumes solidification
@@ -467,8 +476,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       );
       state.solidification = null;
     }
-
-    const hasVuln = state.vulnerability !== null;
 
     switch (physicalType) {
       case 'vulnerability':
@@ -489,7 +496,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           time,
           physicalType,
           sourceId,
-          event.effectiveDuration,
+          VULNERABILITY_DEFAULT_DURATION,
           ctx,
           sourceSkillType,
           sourceSkillId,
@@ -638,6 +645,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     sourceSkillId?: string,
   ): void {
     const state = ctx.state.enemy;
+    if (state.hasInflictionBarrier('physical', time)) return;
     const effectiveDuration = duration || VULNERABILITY_DEFAULT_DURATION;
     const shiftedExpiry = ctx.getShiftedTime(time, effectiveDuration);
     if (state.vulnerability === null) {
@@ -1406,6 +1414,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       consumedStacks: event.consumedStacks,
       sourceBreakdown: event.sourceBreakdown,
       cancelHitKey: (event as any).cancelHitKey,
+      external: event.external,
     });
     ctx.enemyLog({
       type: 'ENEMY_STATUS_APPLY',

@@ -124,6 +124,7 @@ describe("compileTimeline", () => {
 
       const resolvedSkill = result.actions.find((a) => a.id === "SKILL")!;
 
+      expect(result.actions.some((a) => a.id === "ULT")).toBe(true);
       expect(resolvedSkill.realStartTime).toBe(3);
       expect(resolvedSkill.realDuration).toBe(1);
     });

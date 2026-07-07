@@ -47,6 +47,7 @@ export function computeStats(
 
   const attrs: Attributes = { ...base.baseAttrs };
   const attrPercent: Attributes = { strength: 0, agility: 0, intellect: 0, will: 0 };
+  const attrExternalMult: Attributes = { strength: 1, agility: 1, intellect: 1, will: 1 };
   const resolvedValues = new Map<string, number>();
 
   // Sheet attribute effects
@@ -59,7 +60,12 @@ export function computeStats(
         ? attrStat.attribute
         : [attrStat.attribute];
       if (modifier === 'attributePercent') {
-        for (const attr of attributes) attrPercent[attr as keyof Attributes] += val / 100;
+        if (effect.external) {
+          for (const attr of attributes)
+            attrExternalMult[attr as keyof Attributes] *= 1 + val / 100;
+        } else {
+          for (const attr of attributes) attrPercent[attr as keyof Attributes] += val / 100;
+        }
       } else {
         for (const attr of attributes) attrs[attr as keyof Attributes] += val;
       }
@@ -76,17 +82,26 @@ export function computeStats(
         ? attrStat.attribute
         : [attrStat.attribute];
       if (modifier === 'attributePercent') {
-        for (const attr of attributes) attrPercent[attr as keyof Attributes] += mod.value / 100;
+        if (mod.external) {
+          for (const attr of attributes)
+            attrExternalMult[attr as keyof Attributes] *= 1 + mod.value / 100;
+        } else {
+          for (const attr of attributes) attrPercent[attr as keyof Attributes] += mod.value / 100;
+        }
       } else {
         for (const attr of attributes) attrs[attr as keyof Attributes] += mod.value;
       }
     }
   }
 
-  // Apply attribute percentage bonuses: final = total * (1 + pct), then floor
+  // Apply attribute bonuses: final = total * (1 + Σpct) * Π external, then floor.
+  // External multipliers are applied last so they act as a final multiplier on the attribute.
   for (const key of ['strength', 'agility', 'intellect', 'will'] as const) {
     if (attrPercent[key] !== 0) {
       attrs[key] = attrs[key] * (1 + attrPercent[key]);
+    }
+    if (attrExternalMult[key] !== 1) {
+      attrs[key] = attrs[key] * attrExternalMult[key];
     }
     attrs[key] = Math.floor(attrs[key]);
   }
@@ -170,6 +185,8 @@ export function computeStats(
   let ultCdReductionFlat = 0;
   let comboCdReductionPercent = 0;
   let ultCdReductionPercent = 0;
+  let comboCdExternalMult = 1;
+  let ultCdExternalMult = 1;
   const damageModifiers: ScopedDamageModifier[] = [];
 
   // Helper: check skill-scoped filtering.
@@ -177,17 +194,21 @@ export function computeStats(
   // `stat.skillId` matches the specific skillId (targets a particular variant).
   const passesSkillScope = (stat: Record<string, unknown>): boolean => {
     if ('skillTypes' in stat && stat.skillTypes != null) {
-      const types = stat.skillTypes;
-      const arr = Array.isArray(types) ? types : [types];
-      if (!targetSkillType || !arr.includes(targetSkillType as never)) {
-        // basicAttack scope also matches finalStrike and dive
-        if (
-          !(
-            arr.includes('basicAttack' as never) &&
-            (targetSkillType === 'finalStrike' || targetSkillType === 'dive')
-          )
-        ) {
-          return false;
+      if (stat.skillTypes === 'nonSkill') {
+        if (targetSkillType != null) return false;
+      } else {
+        const types = stat.skillTypes;
+        const arr = Array.isArray(types) ? types : [types];
+        if (!targetSkillType || !arr.includes(targetSkillType as never)) {
+          // basicAttack scope also matches finalStrike and dive
+          if (
+            !(
+              arr.includes('basicAttack' as never) &&
+              (targetSkillType === 'finalStrike' || targetSkillType === 'dive')
+            )
+          ) {
+            return false;
+          }
         }
       }
     }
@@ -199,23 +220,41 @@ export function computeStats(
     return true;
   };
 
+  const isCooldownReductionModifier = (modifier: string): boolean =>
+      modifier === 'cooldownReductionFlat' || modifier === 'cooldownReductionPercent';
+
   // Accumulate sheet effects
   for (const effect of sheetEffects) {
     if (effect.id && attrCoeffEffects.has(effect.id)) continue;
-    if (!passesSkillScope(effect.stat as Record<string, unknown>)) continue;
+
+    const modifier = effect.stat.modifier;
+
+    if (
+        !isCooldownReductionModifier(modifier) &&
+        !passesSkillScope(effect.stat as Record<string, unknown>)
+    ) {
+      continue;
+    }
 
     const val = (effect.id ? resolvedValues.get(effect.id) : undefined) ?? getEffectValue(effect);
-    accumulateStat(effect.stat.modifier, val, effect.stat, effect.id);
+    accumulateStat(modifier, val, effect.stat, effect.id, effect.external);
   }
 
   // Accumulate dynamic modifiers
   for (const mod of dynamicModifiers) {
     const { modifier } = mod.stat;
+
     // Attributes already handled in Phase 1
     if (modifier === 'attributeFlat' || modifier === 'attributePercent') continue;
-    if (!passesSkillScope(mod.stat as Record<string, unknown>)) continue;
 
-    accumulateStat(modifier, mod.value, mod.stat, mod.effectId);
+    if (
+        !isCooldownReductionModifier(modifier) &&
+        !passesSkillScope(mod.stat as Record<string, unknown>)
+    ) {
+      continue;
+    }
+
+    accumulateStat(modifier, mod.value, mod.stat, mod.effectId, mod.external);
   }
 
   function accumulateStat(
@@ -223,6 +262,7 @@ export function computeStats(
     val: number,
     stat: Record<string, unknown>,
     effectId?: string,
+    external?: boolean,
   ): void {
     const pct = val / 100;
 
@@ -282,6 +322,7 @@ export function computeStats(
           elements: stat.elements as ScopedDamageModifier['elements'],
           skillTypes: stat.skillTypes as ScopedDamageModifier['skillTypes'],
           skillId: stat.skillId as ScopedDamageModifier['skillId'],
+          external,
         });
         break;
       case 'ampBonus':
@@ -346,8 +387,16 @@ export function computeStats(
             ? skillTypes
             : [skillTypes as string]
           : [];
-        if (arr.length === 0 || arr.includes('comboSkill')) comboCdReductionPercent += val;
-        if (arr.length === 0 || arr.includes('ultimate')) ultCdReductionPercent += val;
+        const combo = arr.length === 0 || arr.includes('comboSkill');
+        const ult = arr.length === 0 || arr.includes('ultimate');
+        if (external) {
+          const f = Math.max(0, 1 - val / 100);
+          if (combo) comboCdExternalMult *= f;
+          if (ult) ultCdExternalMult *= f;
+        } else {
+          if (combo) comboCdReductionPercent += val;
+          if (ult) ultCdReductionPercent += val;
+        }
         break;
       }
 
@@ -411,6 +460,8 @@ export function computeStats(
     ultCdReductionFlat,
     comboCdReductionPercent,
     ultCdReductionPercent,
+    comboCdExternalMult,
+    ultCdExternalMult,
     damageModifiers,
   };
 }

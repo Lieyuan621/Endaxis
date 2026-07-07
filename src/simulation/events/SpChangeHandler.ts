@@ -53,10 +53,11 @@ export class SpChangeHandler implements EventHandler<SpChangeEvent> {
       }
     } else if (sp < 0) {
       // Consumption: consume returned SP first, then recovered
-      const { returnedConsumed } = ctx.state.team.consumeSp(-sp);
+      const { recoveredConsumed, returnedConsumed } = ctx.state.team.consumeSp(-sp);
       // Stamp returned SP consumed on the action for UE scaling in ActionEndHandler
       const action = ctx.getAction(e.payload.sourceId);
       if (action) {
+        (action as any)._recoveredConsumed = recoveredConsumed;
         (action as any)._returnedConsumed = returnedConsumed;
         (action as any)._actualSpCost = -sp;
       }

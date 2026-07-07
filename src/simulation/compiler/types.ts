@@ -35,7 +35,12 @@ export interface ScenarioData {
 export type SystemConstants = EnemyConfig & TeamConfig;
 
 export interface SwitchEvent {
-  // TODO
+  /** Unique id (format `sw_<uid>`). */
+  id: string;
+  /** Time at which control switches to `characterId` (effective from this time onward). */
+  time: number;
+  /** Track id (operator slug) that gains control at `time`. */
+  characterId: string;
 }
 
 export interface Connection {
@@ -72,6 +77,12 @@ export type ActorStats = {
   originium_arts_power: number;
   ult_charge_eff: number;
   link_cd_reduction: number;
+  combo_cd_reduction: number;
+  combo_cd_reduction_flat: number;
+  ult_cd_reduction: number;
+  ult_cd_reduction_flat: number;
+  combo_cd_external_mult: number;
+  ult_cd_external_mult: number;
 };
 
 export type ActorStatKeys = keyof ActorStats;
@@ -92,6 +103,7 @@ export interface ScenarioTrack {
   ultimate_gaugeMax?: number | null;
   acceptTeamGauge?: boolean;
   acceptTeamUltEnergy?: boolean;
+  acceptSelfSpCostUltEnergy?: boolean;
   ultimateEnergyCostOverride?: number | null;
   operatorStatus?: OperatorStatus | null;
   baseStats?: BaseStatValues | null;
@@ -165,6 +177,15 @@ export interface ResolvedHit extends Hit {
   consumedStatEffects?: ConsumedStatEffect[];
   _expectedDamage?: number;
   _damageBreakdown?: DamageBreakdown;
+  _enemyDamageCap?: {
+    capped: boolean;
+    cap: number;
+    rawDamage: number;
+    finalDamage: number;
+    usedBefore: number;
+    windowStart: number;
+    windowEnd: number;
+  };
   _staggerMult?: number;
   _staggerContributions?: Record<string, number>;
   _finisherMult?: number;
@@ -229,7 +250,12 @@ export interface Action {
   name: string;
   startTime: number;
   logicalStartTime: number;
+  /** Effective cooldown after passive flat/percent CD reductions. */
   cooldown: number;
+  /** Raw skill-sheet cooldown before passive CD reductions. */
+  baseCooldown?: number;
+  cooldownReductionPercent?: number;
+  cooldownReductionFlat?: number;
   spCost: number;
   spGain?: number;
   spGainKind?: SpGainKind;
@@ -246,6 +272,7 @@ export interface Action {
   duration: number;
   triggerWindow?: number;
   animationTime?: number;
+  treatAsSkillType?: ActionType;
   isDisabled?: boolean;
   weaponId?: string | null;
   sourceWeaponId?: string | null;

@@ -4,6 +4,7 @@ import type {
   ResolvedEffect,
 } from "@/simulation/compiler/types.ts";
 import type { BaseStatValues } from "@/data/stats/types";
+import type { EnemyResistance } from "@/data/enemyResistance";
 
 export interface ActorSnapshot {
   id: string;
@@ -13,6 +14,7 @@ export interface ActorSnapshot {
   triggerEffects?: any[];
   acceptTeamGauge?: boolean;
   acceptTeamUltEnergy?: boolean;
+  acceptSelfSpCostUltEnergy?: boolean;
   ultimateEnergyCostOverride?: number | null;
   resources: {
     hp: number;
@@ -56,7 +58,12 @@ export interface EnemyConfig {
   finisherRecovery?: number;
   finisherMultiplier?: number;
   defense?: number;
+  enemyHp?: number;
+  superArmor?: number;
+  enemyDamageCapWindowSeconds?: number;
+  enemyDamageCapRatio?: number;
   tier?: string;
+  resistance?: EnemyResistance;
 }
 
 export interface EnemySnapshot {

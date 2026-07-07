@@ -1,5 +1,41 @@
 {
+  "eny_0021_agmelee": {
+    "name": "大角天使"
+  },
+  "eny_0023_aghornb": {
+    "name": "刚角天使"
+  },
+  "eny_0027_agscorp": {
+    "name": "重刺天使"
+  },
   "eny_0051_rodin": {
     "name": "“碾骨之拳”罗丹"
+  },
+  "eny_0058_agdisk": {
+    "name": "肖像天使"
+  },
+  "eny_0069_aghornb2": {
+    "name": "刚角天使α"
+  },
+  "eny_0070_agscorp2": {
+    "name": "重刺天使α"
+  },
+  "eny_0076_agfly": {
+    "name": "仿生翅天使"
+  },
+  "eny_0087_wgslime": {
+    "name": "浊流天使"
+  },
+  "eny_0088_wgthorns": {
+    "name": "晶锥天使"
+  },
+  "eny_0089_wgreflec": {
+    "name": "棱镜天使"
+  },
+  "eny_0090_wgabyss": {
+    "name": "破潮之像"
+  },
+  "eny_0091_wgshoal": {
+    "name": "潮行天使"
   }
 }

@@ -10,6 +10,8 @@ import { setLocale } from '@/i18n'
 // 组件引入
 import TimelineGrid from '../components/TimelineGrid.vue'
 import ActionLibrary from '../components/ActionLibrary.vue'
+import EnemySettingsPanel from '../components/EnemySettingsPanel.vue'
+import ContingencyContractPanel from '../components/ContingencyContractPanel.vue'
 import PropertiesPanel from '../components/PropertiesPanel.vue'
 import ResourceMonitor from '../components/ResourceMonitor.vue'
 import SimLogPanel from '../components/SimLogPanel.vue'
@@ -47,6 +49,7 @@ const isRightPanelCollapsed = ref(false)
 const isBottomPanelCollapsed = ref(false)
 const activeWorkbenchDrag = ref(null)
 const rightPanelTool = ref('inspector') // 'inspector' | 'battleLog'
+const leftBottomTool = ref('enemy') // 'enemy' | 'contract'
 const analysisDialogVisible = ref(false)
 const resourceMonitorExpandAllToken = ref(0)
 const resourceMonitorCollapsedCount = ref(0)
@@ -69,6 +72,7 @@ function getMaxBottomPanelHeight(workspaceHeight = timelineWorkspaceHeight.value
 }
 
 const bottomPanelMinHeight = computed(() => {
+  if (leftBottomTool.value === 'contract') return BOTTOM_PANEL_MIN_HEIGHT
   const collapsedCount = Math.min(Math.max(Number(resourceMonitorCollapsedCount.value) || 0, 0), 2)
   if (collapsedCount === 1) return Math.round(BOTTOM_PANEL_MIN_HEIGHT * 0.75)
   if (collapsedCount >= 2) return Math.round(BOTTOM_PANEL_MIN_HEIGHT * 0.5)
@@ -92,6 +96,7 @@ function persistWorkbenchLayout() {
     isRightPanelCollapsed: isRightPanelCollapsed.value,
     isBottomPanelCollapsed: isBottomPanelCollapsed.value,
     rightPanelTool: rightPanelTool.value,
+    leftBottomTool: leftBottomTool.value,
   }))
 }
 
@@ -117,6 +122,7 @@ function restoreWorkbenchLayout() {
     isRightPanelCollapsed.value = parsed.isRightPanelCollapsed === true
     isBottomPanelCollapsed.value = parsed.isBottomPanelCollapsed === true
     rightPanelTool.value = (parsed.rightPanelTool === 'battleLog') ? 'battleLog' : 'inspector'
+    leftBottomTool.value = parsed.leftBottomTool === 'contract' ? 'contract' : 'enemy'
   } catch (error) {
     console.error(error)
   }
@@ -135,6 +141,7 @@ function resetWorkbenchLayout(target = 'all') {
   if (target === 'all' || target === 'bottom') {
     bottomPanelHeight.value = DEFAULT_BOTTOM_PANEL_HEIGHT
     isBottomPanelCollapsed.value = false
+    leftBottomTool.value = 'enemy'
   }
   persistWorkbenchLayout()
 }
@@ -255,16 +262,39 @@ const timelineWorkspaceStyle = computed(() => ({
   gridTemplateRows: `minmax(${TIMELINE_MAIN_MIN_HEIGHT}px, 1fr) ${isBottomPanelCollapsed.value ? 0 : BOTTOM_RESIZER_HEIGHT}px ${effectiveBottomPanelHeight.value}px`,
 }))
 
+const leftPanelStackStyle = computed(() => ({
+  gridTemplateRows: isBottomPanelCollapsed.value
+    ? 'minmax(0, 1fr)'
+    : `minmax(0, 1fr) ${BOTTOM_RESIZER_HEIGHT}px ${effectiveBottomPanelHeight.value}px`,
+}))
+
+function toggleBottomTool(tool = 'enemy') {
+  const nextTool = tool === 'contract' ? 'contract' : 'enemy'
+
+  if (isBottomPanelCollapsed.value) {
+    leftBottomTool.value = nextTool
+    resourceMonitorExpandAllToken.value += 1
+    isBottomPanelCollapsed.value = false
+    persistWorkbenchLayout()
+    return
+  }
+
+  if (leftBottomTool.value === nextTool) {
+    isBottomPanelCollapsed.value = true
+    persistWorkbenchLayout()
+    return
+  }
+
+  leftBottomTool.value = nextTool
+  persistWorkbenchLayout()
+}
+
 function toggleActivityPanel(target) {
   if (target === 'library') {
     isLeftPanelCollapsed.value = !isLeftPanelCollapsed.value
   } else if (target === 'bottom') {
-    if (isBottomPanelCollapsed.value) {
-      resourceMonitorExpandAllToken.value += 1
-      isBottomPanelCollapsed.value = false
-    } else {
-      isBottomPanelCollapsed.value = true
-    }
+    toggleBottomTool('enemy')
+    return
   }
   persistWorkbenchLayout()
 }
@@ -760,9 +790,23 @@ onUnmounted(() => {
       <div class="activity-bar__group activity-bar__group--bottom">
         <button
           type="button"
+          class="activity-bar__button activity-bar__button--contract"
+          :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'contract' }"
+          @click="toggleBottomTool('contract')"
+        >
+          <img
+            class="activity-bar__image-icon activity-bar__image-icon--contract"
+            src="/contingency_contract/deco_contract_028.webp"
+            alt=""
+            aria-hidden="true"
+          />
+        </button>
+
+        <button
+          type="button"
           class="activity-bar__button activity-bar__button--panel"
-          :class="{ 'is-active': !isBottomPanelCollapsed }"
-          @click="toggleActivityPanel('bottom')"
+          :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'enemy' }"
+          @click="toggleBottomTool('enemy')"
         >
           <svg
               class="activity-bar__icon activity-bar__icon--panel"
@@ -800,11 +844,25 @@ onUnmounted(() => {
 
     <aside class="workbench-panel action-library-panel">
       <template v-if="!isLeftPanelCollapsed">
-        <div class="workbench-panel__body action-library">
-          <ActionLibrary
-            :on-reset-panel="() => resetWorkbenchLayout('left')"
-            :on-collapse-panel="() => toggleWorkbenchPanel('left')"
-          />
+        <div class="workbench-panel__body action-library-stack" :style="leftPanelStackStyle">
+          <div class="action-library-stack__main action-library">
+            <ActionLibrary
+              :on-reset-panel="() => resetWorkbenchLayout('left')"
+              :on-collapse-panel="() => toggleWorkbenchPanel('left')"
+            />
+          </div>
+          <div v-if="!isBottomPanelCollapsed" class="action-library-stack__divider"></div>
+          <div
+            v-if="!isBottomPanelCollapsed"
+            class="action-library-stack__bottom"
+            :class="{ 'is-contract': leftBottomTool === 'contract' }"
+          >
+            <EnemySettingsPanel v-if="leftBottomTool === 'enemy'" />
+            <div v-else class="contract-side-panel">
+              <img src="/contingency_contract/1/deco_contingency_select_tag_3.webp" alt="" aria-hidden="true" />
+              <div class="contract-side-title">{{ t('contingencyContract.operationName') }}</div>
+            </div>
+          </div>
         </div>
       </template>
     </aside>
@@ -1030,10 +1088,12 @@ onUnmounted(() => {
         <div v-if="!isBottomPanelCollapsed" class="workbench-panel resource-monitor-panel">
           <div class="workbench-panel__body resource-monitor-panel__body">
             <ResourceMonitor
+              v-if="leftBottomTool === 'enemy'"
               :expand-all-token="resourceMonitorExpandAllToken"
               @collapse-panel="closeBottomPanelFromResourceMonitor"
               @section-collapse-change="handleResourceMonitorSectionCollapseChange"
             />
+            <ContingencyContractPanel v-else />
           </div>
         </div>
 
@@ -1190,6 +1250,21 @@ onUnmounted(() => {
 .activity-bar__button--lib .activity-bar__icon { width: 24px; height: 24px; }
 .activity-bar__button--panel .activity-bar__icon { width: 24px; height: 24px; transform: translateY(0.5px); }
 .activity-bar__button--inspector .activity-bar__icon { width: 22px; height: 22px; }
+.activity-bar__image-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+  opacity: 0.78;
+  filter: saturate(0.9) brightness(0.82);
+  transition: transform 0.14s ease, opacity 0.14s ease, filter 0.14s ease;
+}
+.activity-bar__button:hover .activity-bar__image-icon,
+.activity-bar__button.is-active .activity-bar__image-icon {
+  opacity: 1;
+  filter: saturate(1.06) brightness(1.06) drop-shadow(0 0 8px rgba(255, 215, 0, 0.18));
+  transform: scale(1.04);
+}
 .workbench-panel { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: #252526; }
 .action-library-panel { grid-column: 2; }
 .timeline-main { grid-column: 4; }
@@ -1220,6 +1295,51 @@ onUnmounted(() => {
 .workbench-resizer--vertical::after { content: ''; position: absolute; top: 0; left: 50%; width: 9px; height: 100%; transform: translateX(-50%); }
 .workbench-resizer--horizontal::after { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 9px; transform: translateY(-50%); }
 .action-library-panel { z-index: 10; }
+.action-library-stack { display: grid; min-height: 0; background-color: #252526; }
+.action-library-stack__main,
+.action-library-stack__bottom {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.action-library-stack__divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.action-library-stack__bottom {
+  background: #252526;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.action-library-stack__bottom.is-contract {
+  border-top: none;
+}
+.contract-side-panel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  box-sizing: border-box;
+  background: #252526;
+  overflow: hidden;
+}
+.contract-side-panel img {
+  width: min(82px, 48%);
+  max-height: 82px;
+  object-fit: contain;
+  opacity: 0.78;
+  filter: saturate(1.02) brightness(0.92);
+}
+.contract-side-title {
+  color: #ff4d4f;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
 .action-library { background-color: #252526; display: flex; flex-direction: column; overflow-y: auto; z-index: 10; height: 100%; }
 .timeline-main { position: relative; display: flex; flex-direction: column; overflow: hidden; background-color: #1f1f22; z-index: 1; min-width: 0; }
 .properties-sidebar { z-index: 10; }

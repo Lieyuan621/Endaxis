@@ -3,6 +3,7 @@ import type { ActionStartEvent } from '@/simulation/events/event.types.ts';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext.ts';
 import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
 import type { OperatorEffectExpireEvent } from '@/simulation/engine/types';
+import { resolveEffectiveActionSkillType } from '@/simulation/events/actionSkillType';
 
 export class ActionStartHandler implements EventHandler<ActionStartEvent> {
   private registry?: TriggerRegistry;
@@ -76,7 +77,11 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
 
   /** Consume all team-wide link stacks when a battle skill or ultimate starts. */
   private consumeLink(e: ActionStartEvent, ctx: SimulationContext): void {
-    if (e.payload.type !== 'battleSkill' && e.payload.type !== 'ultimate') return;
+    const action = ctx.getAction(e.payload.actionId);
+    const effectiveType = action
+      ? resolveEffectiveActionSkillType(action, e.time, e.payload.actorId, ctx)
+      : e.payload.type;
+    if (effectiveType !== 'battleSkill' && effectiveType !== 'ultimate') return;
 
     const time = e.time;
     const linkEntries: { trackId: string; id: string; stacks: number; sourceId: string }[] = [];
@@ -106,7 +111,6 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
     const consumed = Math.min(totalStacks, 4);
 
     // Mark the action object
-    const action = ctx.getAction(e.payload.actionId);
     if (action) {
       if (!action.consumedStacks) action.consumedStacks = {};
       action.consumedStacks.link = consumed;
@@ -149,9 +153,10 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
     const action = ctx.getAction(e.payload.actionId);
     if (!action) return;
     const trackId = e.payload.actorId;
+    const effectiveType = resolveEffectiveActionSkillType(action, e.time, trackId, ctx);
     const consumed = ctx
         .getOperatorEffects(trackId)
-        .consumeOneTime(action.node.type, action.node.skillId, e.time);
+        .consumeOneTime(effectiveType, action.node.skillId, e.time);
     if (consumed.length > 0) {
       action.consumedStatEffects = consumed;
       for (const c of consumed) {

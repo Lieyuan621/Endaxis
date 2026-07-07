@@ -13,6 +13,7 @@ import { extractRawEntries, resolveHitsFromSheet } from "@/stores/timeline/resol
 import type { BaseStatValues } from "@/data/stats/types";
 import type { Effect, TriggerEffect } from "@/data/types";
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from "@/types";
+import type { EnemyResistance } from "@/data/enemyResistance";
 
 type TrackPatch = Omit<Partial<ScenarioTrack>, "stats"> & {
   stats?: Partial<ScenarioTrack["stats"]>;
@@ -99,7 +100,11 @@ function createRegistry(entries: TrackPatch["triggerEffects"]) {
 function runScenario(
   tracks: ScenarioTrack[],
   triggerRegistry?: TriggerRegistry,
-  options: { enemyDef?: number; lmdiAttributionMode?: "stacks" | "applier" } = {},
+  options: {
+    enemyDef?: number;
+    enemyResistance?: EnemyResistance;
+    lmdiAttributionMode?: "stacks" | "applier";
+  } = {},
 ) {
   const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
   const baseStatsByTrack = new Map<string, BaseStatValues>(
@@ -108,6 +113,7 @@ function runScenario(
   return simulate(timeline, teamConfig, enemyConfig, actors, triggerRegistry, undefined, {
     baseStatsByTrack,
     enemyDef: options.enemyDef ?? 100,
+    enemyResistance: options.enemyResistance,
     lmdiAttributionMode: options.lmdiAttributionMode,
   });
 }
@@ -324,7 +330,7 @@ describe("optimizer damage golden baselines", () => {
 
     expect(compiledRodin?.enemyConfig).toMatchObject({
       defense: 100,
-      tier: "boss",
+      tier: "leader",
       maxStagger: 280,
       finisherMultiplier: 1.75,
     });
@@ -339,6 +345,124 @@ describe("optimizer damage golden baselines", () => {
       expectedDamage: 435,
     });
     expect(def300._expectedDamage).toBeLessThan(def100._expectedDamage!);
+  });
+
+  it("keeps neutral enemy resistance at the old damage result", () => {
+    const tracks = [
+      createTrack("alpha", [
+        createAction("neutral_res_hit", "battleSkill", {
+          element: "physical",
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+    const hit = damageByAction(runScenario(tracks), "neutral_res_hit_inst");
+
+    expect(hit._expectedDamage).toBe(871);
+    expect(hit._damageBreakdown).toMatchObject({
+      enemyResistance: 0,
+      enemyResMult: 1,
+      resMult: 1,
+      expectedDamage: 871,
+    });
+  });
+
+  it("reduces matching-element damage when enemy resistance multiplier is lower", () => {
+    const tracks = [
+      createTrack("alpha", [
+        createAction("physical_res_hit", "battleSkill", {
+          element: "physical",
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+    const neutral = damageByAction(runScenario(tracks), "physical_res_hit_inst");
+    const resisted = damageByAction(
+      runScenario(tracks, undefined, {
+        enemyResistance: {
+          physical: 20,
+          heat: 0,
+          cryo: 0,
+          electric: 0,
+          nature: 0,
+        },
+      }),
+      "physical_res_hit_inst",
+    );
+
+    expect(resisted._expectedDamage).toBe(696);
+    expect(resisted._expectedDamage).toBeLessThan(neutral._expectedDamage!);
+    expect(resisted._damageBreakdown).toMatchObject({
+      element: "physical",
+      enemyResistance: 0.2,
+      enemyResMult: 0.8,
+      resMult: 0.8,
+      expectedDamage: 696,
+    });
+  });
+
+  it("stacks resistance ignore and shred with enemy resistance as separate multipliers", () => {
+    const result = runScenario(
+      [
+        createTrack("alpha", [
+          createAction("setup_res_mods", "battleSkill", {
+            startTime: 0,
+            hits: [
+              {
+                offset: 0,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [
+                  {
+                    id: "self-res-ignore",
+                    kind: "status",
+                    stat: { modifier: "resistanceIgnore", elements: "physical" },
+                    target: "self",
+                    value: 10,
+                    duration: 10,
+                  } as Effect,
+                  {
+                    id: "enemy-res-shred",
+                    kind: "status",
+                    stat: { modifier: "resistanceShred" },
+                    target: "enemy",
+                    value: 15,
+                    duration: 10,
+                  } as Effect,
+                ],
+              },
+            ],
+          }),
+          createAction("res_stack_hit", "battleSkill", {
+            startTime: 1,
+            element: "physical",
+            hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ]),
+      ],
+      undefined,
+      {
+        enemyResistance: {
+          physical: 20,
+          heat: 0,
+          cryo: 0,
+          electric: 0,
+          nature: 0,
+        },
+      },
+    );
+    const hit = damageByAction(result, "res_stack_hit_inst");
+
+    expect(hit._expectedDamage).toBe(914);
+    expect(hit._damageBreakdown).toMatchObject({
+      enemyResistance: 0.2,
+      resistanceIgnore: 0.1,
+      resistanceShred: 0.15,
+      resMult: 1.05,
+      enemyResMult: 1.05,
+      expectedDamage: 914,
+    });
   });
 
   it("locks arts infliction consumption, reaction damage, and reaction attribution", () => {

@@ -4,7 +4,7 @@ import type { TeamInstance, OperatorInstance, WeaponInstance, GearInstance } fro
 import type { StatusEffect, ResolvedStatusEffect, operatorClass } from './types';
 import { isStatusEffect } from './types';
 import type { CollectedEffect } from './collect';
-import { collectEffects } from './collect';
+import { collectEffects, resolveStatAttributes } from './collect';
 import { getOperator } from './index';
 import type { SheetStatEffect } from './stats/types';
 import { getBaseStatValues } from './stats/baseValues';
@@ -67,6 +67,7 @@ function toSheetEffect(ce: CollectedEffect & { effect: StatusEffect }): SheetSta
     value: resolved.value,
     scaling: resolved.scaling,
     id: resolved.id,
+    external: resolved.external,
   };
 }
 
@@ -97,9 +98,14 @@ export function getTeamStatus(
   targetSlotIndex?: number,
   targetSkillType?: string,
   targetSkillId?: string,
+  extraEffects: CollectedEffect[] = [],
 ): TeamStatusResult {
-  // 1. Collect all effects (including implicit weapon/gear effects)
-  const allEffects = collectEffects(team, operatorInstances, weaponInstances, gearInstances);
+  // 1. Collect all effects (including implicit weapon/gear effects), plus any externally-supplied
+  //    effects (e.g. Contingency Contract criteria) that aren't part of the operator/weapon/gear sheets.
+  const allEffects = [
+    ...collectEffects(team, operatorInstances, weaponInstances, gearInstances),
+    ...extraEffects,
+  ];
 
   // 2. Filter by conditions, then narrow to stat effects
   const active = filterByConditions(allEffects, conditions).filter(
@@ -145,9 +151,13 @@ export function getTeamStatusBatch(
   conditions: TeamConditions,
   targetSlotIndex: number,
   targetSkills: Array<{ type: string; skillId: string }>,
+  extraEffects: CollectedEffect[] = [],
 ): Map<string, TeamStatusResult> {
   // Steps 1–3: shared across all skill IDs
-  const allEffects = collectEffects(team, operatorInstances, weaponInstances, gearInstances);
+  const allEffects = [
+    ...collectEffects(team, operatorInstances, weaponInstances, gearInstances),
+    ...extraEffects,
+  ];
   const active = filterByConditions(allEffects, conditions).filter(
     (ce): ce is CollectedEffect & { effect: StatusEffect } => isStatusEffect(ce.effect),
   );
@@ -201,6 +211,24 @@ function partitionByTarget(
     if (!opInst) return null;
     return getOperator(opInst.operatorSlug)?.element ?? null;
   });
+  // Per-slot operators, used to resolve 'main'/'sub' attribute placeholders on team-scoped effects
+  // against each *target* operator (not the source). Self-scoped placeholders were already
+  // resolved against the source operator at collection time.
+  const slotOperators = team.slots.map(slot => {
+    if (!slot.operatorId) return null;
+    const opInst = operatorInstances.find(o => o.id === slot.operatorId);
+    if (!opInst) return null;
+    return getOperator(opInst.operatorSlug) ?? null;
+  });
+
+  /** Resolve a team effect's 'main'/'sub' placeholder against target slot `i`. */
+  const resolveForSlot = (ce: StatusCollectedEffect, i: number): StatusCollectedEffect => {
+    const op = slotOperators[i];
+    if (!op) return ce;
+    const resolvedStat = resolveStatAttributes(ce.effect.stat, op.mainAttribute, op.subAttribute);
+    if (resolvedStat === ce.effect.stat) return ce;
+    return { ...ce, effect: { ...ce.effect, stat: resolvedStat } };
+  };
 
   const slotEffects: StatusCollectedEffect[][] = [[], [], [], []];
   const enemyEffects: StatusCollectedEffect[] = [];
@@ -218,7 +246,7 @@ function partitionByTarget(
           const cls = slotClasses[i];
           if (!cls || !classes.includes(cls)) continue;
         }
-        slotEffects[i].push(ce);
+        slotEffects[i].push(resolveForSlot(ce, i));
       }
     } else {
       // 'self' (default) — only to source slot

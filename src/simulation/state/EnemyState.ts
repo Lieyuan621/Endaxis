@@ -13,6 +13,27 @@ import type {
 } from '@/simulation/engine/types';
 import type { SimulationEngine } from '../engine/SimulationEngine';
 
+/**
+ * Preserve enemy effects across a scenario boundary while starting a newly
+ * selected enemy with a fresh stagger cycle.
+ */
+export function resetEnemyStaggerCarryover(snapshot: any, config: EnemyConfig) {
+  if (!snapshot) return snapshot;
+
+  return {
+    ...snapshot,
+    stagger: {
+      ...(snapshot.stagger || {}),
+      value: 0,
+      maxStagger: config.maxStagger,
+      breakRemaining: 0,
+      lockRemaining: 0,
+      staggerContributions: {},
+      lastBreakContributions: {},
+    },
+  };
+}
+
 export class EnemyState implements BaseGameState<EnemySnapshot> {
   private stagger: number = 0;
 
@@ -162,6 +183,23 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
     const e = this.enemyStatusEffects.get(id);
     if (!e || currentTime >= e.expiresAt) return 0;
     return e.stacks;
+  }
+
+  /**
+   * True if a non-expired `inflictionBarrier` status (Effect Barrier criterion) covers `element`.
+   * Used by EnemyEffectHandler to drop new infliction/vulnerability applications of that type.
+   * An entry with no `elements` is treated as covering all types.
+   */
+  hasInflictionBarrier(element: string, currentTime: number): boolean {
+    for (const e of this.enemyStatusEffects.values()) {
+      if (currentTime >= e.expiresAt) continue;
+      const stat = e.stat;
+      if (!stat || stat.modifier !== 'inflictionBarrier') continue;
+      const els = (stat as { elements?: string | string[] }).elements;
+      if (els == null) return true;
+      if (Array.isArray(els) ? els.includes(element) : els === element) return true;
+    }
+    return false;
   }
 
   /** Returns the consumedStacks snapshotted onto the entry, or undefined if absent.
@@ -336,6 +374,10 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
   importCarryoverSnapshot(snapshot: any, applyTime: number) {
     if (!snapshot) return;
 
+    const disabledEffects = new Set<string>(
+      Array.isArray(snapshot.disabledEffects) ? snapshot.disabledEffects : [],
+    );
+
     const toExpiresAt = (entry: any) => {
       const remaining = Number(entry?.remainingDuration);
       if (Number.isFinite(remaining)) {
@@ -351,10 +393,9 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
     };
 
     const stagger = snapshot.stagger || {};
-    const maxStagger = Number(stagger.maxStagger) || this.config.maxStagger;
     this.stagger = Math.max(
         0,
-        Math.min(Number(stagger.value) || 0, maxStagger),
+        Math.min(Number(stagger.value) || 0, this.config.maxStagger),
     );
 
     this.breakEndTime = applyTime + Math.max(0, Number(stagger.breakRemaining) || 0);
@@ -362,7 +403,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
     this.staggerContributions = { ...(stagger.staggerContributions || {}) };
     this.lastBreakContributions = { ...(stagger.lastBreakContributions || {}) };
 
-    const infliction = snapshot.infliction;
+    const infliction = disabledEffects.has('infliction') ? null : snapshot.infliction;
     this.infliction = infliction
         ? {
           element: infliction.element,
@@ -373,7 +414,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
         }
         : null;
 
-    const vulnerability = snapshot.vulnerability;
+    const vulnerability = disabledEffects.has('vulnerability') ? null : snapshot.vulnerability;
     this.vulnerability = vulnerability
         ? {
           stacks: Math.max(1, Math.min(4, Number(vulnerability.stacks) || 1)),
@@ -385,7 +426,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
 
     const debuffs = snapshot.debuffs || {};
 
-    const solidification = debuffs.solidification;
+    const solidification = disabledEffects.has('debuff:solidification') ? null : debuffs.solidification;
     this.solidification = solidification
         ? {
           level: Math.max(1, Math.min(4, Number(solidification.level) || 1)),
@@ -397,7 +438,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
         }
         : null;
 
-    const combustion = debuffs.combustion;
+    const combustion = disabledEffects.has('debuff:combustion') ? null : debuffs.combustion;
     this.combustion = combustion
         ? {
           level: Math.max(1, Math.min(4, Number(combustion.level) || 1)),
@@ -412,7 +453,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
         }
         : null;
 
-    const electrification = debuffs.electrification;
+    const electrification = disabledEffects.has('debuff:electrification') ? null : debuffs.electrification;
     this.electrification = electrification
         ? {
           level: Math.max(1, Math.min(4, Number(electrification.level) || 1)),
@@ -422,7 +463,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
         }
         : null;
 
-    const corrosion = debuffs.corrosion;
+    const corrosion = disabledEffects.has('debuff:corrosion') ? null : debuffs.corrosion;
     this.corrosion = corrosion
         ? {
           level: Math.max(1, Math.min(4, Number(corrosion.level) || 1)),
@@ -436,7 +477,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
         }
         : null;
 
-    const breach = debuffs.breach;
+    const breach = disabledEffects.has('debuff:breach') ? null : debuffs.breach;
     this.breach = breach
         ? {
           level: Math.max(1, Math.min(4, Number(breach.level) || 1)),
@@ -449,6 +490,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
     this.enemyStatusEffects.clear();
 
     for (const raw of snapshot.statuses || []) {
+      if (disabledEffects.has(`status:${raw?.id}`)) continue;
       const expiresAt = toExpiresAt(raw);
       if (!(expiresAt > applyTime)) continue;
 

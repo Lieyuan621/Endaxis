@@ -26,7 +26,8 @@ export type EnemyStat =
   | { modifier: 'increasedDmgTaken'; elements?: DamageElement | DamageElement[] }
   | { modifier: 'resistanceShred'; elements?: DamageElement | DamageElement[] }
   | { modifier: 'slowed' }
-  | { modifier: 'weaken' };
+  | { modifier: 'weaken' }
+  | { modifier: 'inflictionBarrier'; elements?: DamageElement | DamageElement[] };
 
 /** Stats that buff the operator (self/team). */
 export type OperatorStat =
@@ -90,7 +91,9 @@ export type OperatorStat =
   // ── Dual-scoped (skill type + element, both optional) ─────────────────────
   | {
       modifier: 'dmgBonus';
-      skillTypes?: SkillType | SkillType[];
+      /** `'nonSkill'` scopes to damage with no combat-skill-type attribution — reactions, burn-DoT,
+       *  and talent/gear/weapon-triggered hits; mutually exclusive with skill-type scoping. */
+      skillTypes?: SkillType | SkillType[] | 'nonSkill';
       skillId?: string | string[];
       elements?: DamageElement | DamageElement[];
     }
@@ -123,6 +126,11 @@ interface TriggerScopeFilter {
   triggerScope?: 'self' | 'global';
 }
 
+interface TriggerElementFilter {
+  /** Restrict to actions whose element matches (e.g. 'heat'). Omitted = any element. */
+  element?: DamageElement | DamageElement[];
+}
+
 export type TriggerEvent =
   | ({ kind: 'onHit' } & TriggerSkillFilter & TriggerScopeFilter)
   | ({ kind: 'onFinalStrike' } & TriggerScopeFilter)
@@ -132,7 +140,7 @@ export type TriggerEvent =
   | ({ kind: 'onStatusApplied' } & TriggerSkillFilter & TriggerStatusFilter & TriggerScopeFilter)
   | ({ kind: 'onStatusExpire' } & TriggerSkillFilter & TriggerStatusFilter & TriggerScopeFilter)
   | ({ kind: 'onStatusConsumed' } & TriggerSkillFilter & TriggerStatusFilter & TriggerScopeFilter)
-  | ({ kind: 'onActionStart' } & TriggerSkillFilter & TriggerScopeFilter)
+  | ({ kind: 'onActionStart' } & TriggerSkillFilter & TriggerScopeFilter & TriggerElementFilter)
   | ({ kind: 'duringAction' } & TriggerSkillFilter);
 
 // ─── Effect conditions ──────────────────────────────────────────────────────
@@ -169,6 +177,9 @@ export interface OperatorCondition {
   consume?: boolean | number;
   /** 'team' = check any team member and consume from all. */
   consumeScope?: 'team';
+  /** Which operator the status is read from / consumed on. 'self' (default) = the source operator;
+   *  'controlled' = the operator controlled at the effect's time (resolved via the control timeline). */
+  target?: 'self' | 'controlled';
 }
 
 export interface OperatorHpCondition {
@@ -264,7 +275,9 @@ export type EffectTargetScope =
   | 'teamExcludeSelf'
   | 'teamExcludeSameElement'
   | 'enemy'
-  | 'owner';
+  | 'owner'
+  /** The operator the player is controlling at the effect's time. Resolved via the control timeline. */
+  | 'controlled';
 
 export type EffectTarget =
   | { scope: EffectTargetScope; classes?: operatorClass[] }
@@ -277,6 +290,7 @@ export interface EffectBase {
 
   // Display overrides (resolved from presets/i18n when absent)
   name?: string;
+  displayType?: string;
   /** Single icon path, or an array where index 0 = stack 1, index 1 = stack 2, etc. */
   icon?: string | string[];
 
@@ -294,6 +308,8 @@ export interface EffectBase {
   condition?: EffectCondition | EffectCondition[];
   /** Internal cooldown in seconds — minimum interval between trigger activations. */
   icd?: number;
+  /** Optional shared ICD bucket. Effects with the same bucket share cooldown across sources. */
+  icdGroup?: string;
 
   // Identity
   id?: string;
@@ -304,6 +320,13 @@ export interface EffectBase {
 
   /** When true, effect duration is not extended by freeze events (combo/ultimate animations). */
   ignoreTimeShift?: boolean;
+
+  /**
+   * Hit-attached effects normally apply after the hit damage is calculated.
+   * `beforeDamage` lets a specific hit effect apply first when its own hit must
+   * benefit from triggers caused by that effect.
+   */
+  applyTiming?: 'beforeDamage' | 'afterDamage';
 }
 
 // ─── Effect Subtypes ────────────────────────────────────────────────────────
@@ -323,6 +346,13 @@ export interface StatusEffect extends EffectBase {
   scaling?: ScalingDef;
   /** When true, applying this effect does not fire onStatusApplied triggers. */
   silent?: boolean;
+  /**
+   * When true on an attribute modifier (`attributePercent`), the value is applied as an
+   * independent final multiplier on the attribute instead of being summed into the additive
+   * percent pool — i.e. `attr × (1 + Σpct) × (1 + value/100)` rather than `(1 + Σpct + value/100)`.
+   * Also routes `dmgBonus`/`increasedDmgTaken`/`cooldownReductionPercent` to standalone multiplicative factors.
+   */
+  external?: boolean;
 }
 
 /** Always targets the enemy — no target field needed. */
@@ -479,7 +509,9 @@ export type PatchableEffectBaseFields = Pick<
   | 'stackStrategy'
   | 'condition'
   | 'icd'
+  | 'icdGroup'
   | 'hide'
+  | 'applyTiming'
 >;
 
 export type PatchableStatusEffectFields = PatchableEffectBaseFields &
@@ -639,6 +671,7 @@ export interface ResolvedStatusEffect extends ResolvedEffectBase {
   value?: number;
   scaling?: ResolvedScalingDef;
   silent?: boolean;
+  external?: boolean;
 }
 
 export interface ResolvedInflictionEffect extends ResolvedEffectBase {
@@ -870,6 +903,7 @@ export interface OperatorSheet {
   avatar?: string;
   talentIcons?: string[];
   acceptTeamUltEnergy?: boolean;
+  acceptSelfSpCostUltEnergy?: boolean;
   finisherElement: DamageElement;
   diveElement: DamageElement;
   /** Default potential for the "Max" button. When omitted, defaults to 5 for rarity <= 5. */
@@ -897,9 +931,11 @@ export interface EnemySheet {
   gameId: string;
   avatar: string;
   category: string;
-  tier: 'boss' | 'champion' | 'elite' | 'normal';
-  hp: number;
+  tier: 'normal' | 'advanced' | 'elite' | 'boss' | 'leader';
+  levelHp: Record<number, number>;
   def: number;
+  resistance: Record<DamageElement, number>;
+  superArmor: number;
   maxStagger: number;
   staggerNodeCount: number;
   staggerNodeDuration: number;

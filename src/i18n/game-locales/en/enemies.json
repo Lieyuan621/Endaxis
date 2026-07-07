@@ -1,5 +1,41 @@
 {
+  "eny_0021_agmelee": {
+    "name": "Agmelee"
+  },
+  "eny_0023_aghornb": {
+    "name": "Aghornb"
+  },
+  "eny_0027_agscorp": {
+    "name": "Agscorp"
+  },
   "eny_0051_rodin": {
     "name": "Rhodagn the Bonekrushing Fist"
+  },
+  "eny_0058_agdisk": {
+    "name": "Agdisk"
+  },
+  "eny_0069_aghornb2": {
+    "name": "Aghornb2"
+  },
+  "eny_0070_agscorp2": {
+    "name": "Agscorp2"
+  },
+  "eny_0076_agfly": {
+    "name": "Agfly"
+  },
+  "eny_0087_wgslime": {
+    "name": "Wgslime"
+  },
+  "eny_0088_wgthorns": {
+    "name": "Wgthorns"
+  },
+  "eny_0089_wgreflec": {
+    "name": "Wgreflec"
+  },
+  "eny_0090_wgabyss": {
+    "name": "Wgabyss"
+  },
+  "eny_0091_wgshoal": {
+    "name": "Wgshoal"
   }
 }

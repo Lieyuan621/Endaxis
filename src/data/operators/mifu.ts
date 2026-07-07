@@ -324,6 +324,7 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      ultimateEnergyGain: 10,
       segments: [
         {
           duration: 1.767,
@@ -369,12 +370,14 @@ const sheet: OperatorSheet = {
                 {
                   id: 'mifu-ult-hit-1',
                   offset: 2.5,
+                  weight: 2,
                   stagger: 10,
                   effects: [{ kind: 'physicalStatus', physicalType: 'lift', forced: true }],
                 },
                 {
                   id: 'mifu-ult-hit-2',
                   offset: 3.7,
+                  weight: 5,
                   stagger: 10,
                 },
               ],

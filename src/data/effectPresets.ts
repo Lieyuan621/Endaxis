@@ -144,8 +144,8 @@ const PHYSICAL_PRESETS: Record<PhysicalStatus, EffectPreset> = {
   },
   breach: { icon: '/icons/icon_battle_physical_fracture.webp' },
   crush: { icon: '/icons/icon_battle_physical_crush.webp' },
-  knockdown: { icon: '/icons/icon_battle_physical_knockdown.webp' },
-  lift: { icon: '/icons/icon_battle_physical_airborne.webp' },
+  knockdown: { icon: '/icons/icon_battle_physical_knockdown.webp', duration: 3 },
+  lift: { icon: '/icons/icon_battle_physical_airborne.webp', duration: 3 },
 };
 
 // ─── Reaction duration tables (by level 1–4) ───────────────────────────────
@@ -167,8 +167,35 @@ export function getReactionDuration(type: string, level: number): number {
 }
 
 const FALLBACK_ICON = '/icons/default_icon.webp';
+const DMG_BONUS_DOWN_COLOR = '#b71915';
+const DMG_BONUS_DOWN_ICONS: Record<string, string> = {
+  physical: '/icons/icon_battle_affix_physical_vulnerable.webp',
+  heat: '/icons/icon_battle_affix_fire_vulnerable.webp',
+  cryo: '/icons/icon_battle_affix_cryst_vulnerable.webp',
+  electric: '/icons/icon_battle_affix_pulse_vulnerable.webp',
+  nature: '/icons/icon_battle_affix_natural_vulnerable.webp',
+};
 
 const GLOBAL_DEFAULTS = { stacks: 1, maxStacks: 1, stackStrategy: 'REFRESH_DURATION' as const };
+
+function isNegativeDmgBonusEffect(effect: Effect | ResolvedEffect): boolean {
+  if (effect.kind !== 'status' || effect.stat?.modifier !== 'dmgBonus') return false;
+  const values = Array.isArray(effect.value) ? effect.value : [effect.value];
+  return values.some(value => Number(value) < 0);
+}
+
+function getNegativeDmgBonusLocaleKey(effect: Effect): string {
+  if (effect.kind !== 'status' || !effect.stat) return 'dmgBonusDown';
+  return getStatPresetKey({ ...effect.stat, modifier: 'dmgBonusDown' } as EffectStat);
+}
+
+function getNegativeDmgBonusIcon(effect: Effect): string {
+  if (effect.kind !== 'status' || !effect.stat || !('elements' in effect.stat)) {
+    return '/icons/icon_battle_affix_shelter.webp';
+  }
+  const element = resolveElementKey(effect.stat.elements);
+  return (element && DMG_BONUS_DOWN_ICONS[element]) || '/icons/icon_battle_affix_shelter.webp';
+}
 
 // ─── Resolution functions ───────────────────────────────────────────────────
 
@@ -182,6 +209,7 @@ export function getEffectPresetKey(effect: Effect): string {
     case 'status':
       // Stat-bearing effects derive their display key from the stat (icon, name, color).
       // Pure state effects use their id.
+      if (effect.displayType) return effect.displayType;
       if (effect.stat) return getStatPresetKey(effect.stat);
       return effect.id ?? 'status';
     case 'infliction':
@@ -216,6 +244,7 @@ export function getEffectIcon(effect: Effect, currentStacks?: number): string {
 
   switch (effect.kind) {
     case 'status':
+      if (isNegativeDmgBonusEffect(effect)) return getNegativeDmgBonusIcon(effect);
       return (
         STATUS_PRESETS[effect.stat ? getStatPresetKey(effect.stat) : (effect.id ?? '')]?.icon ??
         FALLBACK_ICON
@@ -307,6 +336,7 @@ export function resolveEffectLifecycle(effect: EffectBase): ResolvedLifecycle {
 function getEffectLocaleKey(effect: Effect): string {
   switch (effect.kind) {
     case 'status':
+      if (effect.displayType) return effect.displayType;
       if (effect.stat) return getStatPresetKey(effect.stat);
       return effect.id ?? 'status';
     case 'infliction':
@@ -327,7 +357,7 @@ function getEffectLocaleKey(effect: Effect): string {
 }
 
 export function getEffectName(effect: Effect): string {
-  const key = effect.name ?? getEffectLocaleKey(effect);
+  const key = effect.name ?? (isNegativeDmgBonusEffect(effect) ? getNegativeDmgBonusLocaleKey(effect) : getEffectLocaleKey(effect));
   const { t, te } = i18n.global;
   // Try effects.name.{key} first (short camelCase keys like 'originiumCrystals')
   const effectsLocaleKey = `effects.name.${key}`;
@@ -340,6 +370,7 @@ export function getEffectName(effect: Effect): string {
 // ─── Color resolution ───────────────────────────────────────────────────────
 
 export function getEffectColor(effect: Effect): string {
+  if (isNegativeDmgBonusEffect(effect)) return DMG_BONUS_DOWN_COLOR;
   const key = getEffectPresetKey(effect);
   return EFFECT_COLORS[key] ?? FALLBACK_EFFECT_COLOR;
 }

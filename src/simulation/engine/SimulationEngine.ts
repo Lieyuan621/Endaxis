@@ -7,6 +7,8 @@ import type { EventHookContext, SimulationContext } from '@/simulation/engine/Si
 import type { ResolvedTimeline } from '../compiler/types.ts';
 import type { EnemyStateEvent, OperatorStateEvent } from '../engine/types.ts';
 import type { BaseStatValues } from '@/data/stats/types';
+import { createDefaultEnemyResistance } from '@/data/enemyResistance';
+import type { ControlSegment } from '@/stores/timeline/controlledOperator';
 
 type SimEventHook = (event: SimEvent, ctx: EventHookContext) => void;
 
@@ -33,10 +35,59 @@ export class SimulationEngine {
   baseStatsByTrack = new Map<string, BaseStatValues>();
   /** Enemy defense value for damage calculation. */
   enemyDef = 100;
+  /** Enemy per-element damage multiplier. 100 = neutral. */
+  enemyResistance = createDefaultEnemyResistance();
   /** If set, simulation stops processing events beyond this time. */
   endlineTime?: number;
   /** LMDI attribution mode for reaction debuff contributions. */
   lmdiAttributionMode: 'stacks' | 'applier' = 'stacks';
+  /** Controlled-operator timeline (time-ascending segments). Empty = nobody controlled. */
+  controlledOperatorSegments: ControlSegment[] = [];
+  private enemyDamageCapWindows = new Map<number, number>();
+
+  /** Resolve the controlled operator (track id) at `time`: the last segment starting at or before it. */
+  private getControlledOperatorAt(time: number): string | null {
+    let current = this.controlledOperatorSegments[0]?.operatorId ?? null;
+    for (const seg of this.controlledOperatorSegments) {
+      if (seg.startTime <= time) current = seg.operatorId;
+      else break;
+    }
+    return current;
+  }
+
+  private applyEnemyDamageCap(time: number, rawDamage: number) {
+    const damage = Math.max(0, Math.floor(Number(rawDamage) || 0));
+    const windowSeconds = Number(this.state.enemy.config.enemyDamageCapWindowSeconds) || 0;
+    const ratio = Number(this.state.enemy.config.enemyDamageCapRatio) || 0;
+    const enemyHp = Number(this.state.enemy.config.enemyHp) || 0;
+    const cap = Math.floor(enemyHp * ratio);
+
+    if (damage <= 0 || windowSeconds <= 0 || ratio <= 0 || cap <= 0) {
+      return {
+        damage,
+        capped: false,
+        cap: 0,
+        usedBefore: 0,
+        windowStart: time,
+        windowEnd: time,
+      };
+    }
+
+    const index = Math.floor((Math.max(0, Number(time) || 0) + 0.0000001) / windowSeconds);
+    const usedBefore = Math.max(0, this.enemyDamageCapWindows.get(index) || 0);
+    const allowed = Math.max(0, cap - usedBefore);
+    const finalDamage = Math.min(damage, allowed);
+    this.enemyDamageCapWindows.set(index, usedBefore + finalDamage);
+
+    return {
+      damage: finalDamage,
+      capped: finalDamage < damage,
+      cap,
+      usedBefore,
+      windowStart: index * windowSeconds,
+      windowEnd: (index + 1) * windowSeconds,
+    };
+  }
 
   constructor(
     private timeline: ResolvedTimeline,
@@ -256,6 +307,7 @@ export class SimulationEngine {
         const actor = this.actors.find(a => a.id === trackId);
         return {
           acceptTeamUltEnergy: actor?.acceptTeamUltEnergy ?? true,
+          acceptSelfSpCostUltEnergy: actor?.acceptSelfSpCostUltEnergy ?? true,
           ultimateEnergyCostOverride: actor?.ultimateEnergyCostOverride,
         };
       },
@@ -267,7 +319,10 @@ export class SimulationEngine {
       getAllActions: () => this.timeline.actions,
       getBaseStats: (trackId: string) => this.baseStatsByTrack.get(trackId),
       enemyDef: this.enemyDef,
+      enemyResistance: this.enemyResistance,
+      applyEnemyDamageCap: this.applyEnemyDamageCap.bind(this),
       lmdiAttributionMode: this.lmdiAttributionMode,
+      getControlledOperatorAt: (time: number) => this.getControlledOperatorAt(time),
     };
 
     while (!this.queue.isEmpty()) {

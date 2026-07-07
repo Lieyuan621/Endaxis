@@ -113,7 +113,7 @@ const currentTrack = computed(() => {
 
 const baseCooldown = computed(() => {
   const resolved = store.compiledTimeline?.actionMap?.get(props.action.instanceId)
-  return Number(resolved?.node?.cooldown ?? props.action.cooldown) || 0
+  return Number(resolved?.node?.baseCooldown ?? props.action.baseCooldown ?? props.action.cooldown) || 0
 })
 
 const simCdReduction = computed(() => {
@@ -133,9 +133,15 @@ const effectiveComboCooldown = computed(() => {
     if (num > 100) return 100
     return num
   }
-  const reduction = clamp(track?.stats?.combo_cd_reduction ?? track?.linkCdReduction ?? store.systemConstants.linkCdReduction ?? 0)
+  const reduction = Math.max(
+      clamp(track?.stats?.combo_cd_reduction),
+      clamp(track?.stats?.link_cd_reduction),
+      clamp(track?.linkCdReduction),
+      clamp(store.systemConstants.linkCdReduction),
+  )
   const flat = Math.max(0, Number(track?.stats?.combo_cd_reduction_flat) || 0)
-  return Math.max(0, (baseCd - flat) * (1 - reduction / 100) - simCdReduction.value)
+  const extMult = Math.max(0, Number(track?.stats?.combo_cd_external_mult ?? 1) || 1)
+  return Math.max(0, (baseCd - flat) * (1 - reduction / 100) * extMult - simCdReduction.value)
 })
 
 const effectiveUltimateCooldown = computed(() => {
@@ -144,7 +150,8 @@ const effectiveUltimateCooldown = computed(() => {
   const track = store.tracks.find(t => t.actions?.some(a => a.instanceId === props.action.instanceId))
   const pct = Math.max(0, Math.min(100, Number(track?.stats?.ult_cd_reduction) || 0))
   const flat = Math.max(0, Number(track?.stats?.ult_cd_reduction_flat) || 0)
-  return Math.max(0, (baseCd - flat) * (1 - pct / 100) - simCdReduction.value)
+  const extMult = Math.max(0, Number(track?.stats?.ult_cd_external_mult ?? 1) || 1)
+  return Math.max(0, (baseCd - flat) * (1 - pct / 100) * extMult - simCdReduction.value)
 })
 
 // 主体样式计算

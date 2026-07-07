@@ -25,6 +25,8 @@ export interface EnemyStatusEntry {
   sourceBreakdown?: Record<string, number>;
   /** When set, pending events with this key are cancelled on expire/consume (used by DoT effects). */
   cancelHitKey?: string;
+  /** Standalone-multiplicative damage-taken modifier (e.g. Wrap): routed to the external factor. */
+  external?: boolean;
 }
 
 // ─── Source tracking for LMDI attribution ───────────────────────────────────
@@ -110,6 +112,7 @@ export interface OperatorStatusEntry {
   effect?: Effect;
   /** Snapshotted consumed stacks from the action that applied this effect. */
   consumedStacks?: Record<string, number>;
+  external?: boolean;
 }
 
 // ─── Engine events: enemy side ───────────────────────────────────────────────
@@ -160,6 +163,8 @@ export type EnemyEffectApplyEvent = {
       sourceBreakdown?: Record<string, number>;
       /** When true, applying this effect does not fire onStatusApplied triggers. */
       silent?: boolean;
+      /** Standalone-multiplicative damage-taken modifier (Wrap); carried onto the entry. */
+      external?: boolean;
     }
 );
 
@@ -198,6 +203,8 @@ export interface InflictionApplyEvent {
   expiresAt?: number;
   /** Total resolved duration (base + extension) to apply. */
   effectiveDuration: number;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 export interface ArtsBurstEvent {
@@ -228,6 +235,8 @@ export interface PhysicalStatusEvent {
   sourceId: string;
   /** Total resolved duration (base + extension) to apply. */
   effectiveDuration: number;
+  /** False when Lift/Knock Down only adds vulnerability and does not actually control the enemy. */
+  actualControl?: boolean;
 }
 
 export interface VulnerabilityChangeEvent {
@@ -237,6 +246,8 @@ export interface VulnerabilityChangeEvent {
   expiresAt: number;
   trigger: PhysicalStatus;
   sourceId: string;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 export interface VulnerabilityConsumedEvent {
@@ -261,6 +272,8 @@ export interface EnemyStatusApplyEvent {
   effect?: Effect;
   /** True when this apply is a stack-decrement continuation — icon should not be re-shown. */
   isContinuation?: boolean;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 export interface DebuffApplyEvent {
@@ -270,6 +283,8 @@ export interface DebuffApplyEvent {
   level: number;
   expiresAt: number;
   sourceId: string;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 export interface CorrosionTickEvent {
@@ -332,6 +347,8 @@ export interface OperatorEffectApplyEvent {
   /** When true, applying this effect does not fire onStatusApplied triggers. */
   silent?: boolean;
   skipStatusAppliedTrigger?: boolean;
+  /** See StatusEffect.external — applied as an independent final attribute multiplier. */
+  external?: boolean;
 }
 
 /** Expire event for operator StatusEffects. consumed=true means priority-3 forced consume. */

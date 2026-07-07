@@ -27,6 +27,7 @@ export class OperatorEffectHandler implements EventHandler<OperatorEffectEvents>
           stackStrategy: event.stackStrategy,
           effect: event.effect,
           consumedStacks: event.consumedStacks,
+          external: event.external,
         });
         // Permanent passives (expiresAt === Infinity): only store in state, skip log/expiry/triggers
         if (event.expiresAt === Infinity) break;

@@ -4,6 +4,7 @@ import { watchThrottled } from '@vueuse/core'
 import { compressGzip, decompressGzip } from '@/utils/gzipUtils'
 import { createDefaultStats } from '@/simulation/defaultActorStats'
 import { simulate } from '@/simulation/simulator'
+import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState'
 import { resolveEffectValueStatic } from '@/simulation/events/effectDispatch'
 import { compileEndaxisScenario } from '@/simulation/adapters/compileEndaxisScenario'
 import { projectOptimizerResult } from '@/simulation/adapters/projectOptimizerResult'
@@ -15,6 +16,7 @@ import { useOperatorStore } from '@/stores/operatorStore'
 import { useWeaponStore } from '@/stores/weaponStore'
 import { useGearStore } from '@/stores/gearStore'
 import { findOperatorInstance, findWeaponInstance, findGearInstance } from '@/stores/timeline/instanceLookup'
+import { buildControlledOperatorSegments, resolveControlledOperatorAt } from '@/stores/timeline/controlledOperator'
 import {
     getOperator as getOperatorSheet,
     getOperatorList as getTimelineOperatorList,
@@ -48,8 +50,14 @@ import {
     getWeaponSkillName,
 } from '@/data/gameText'
 import { getTeamStatus, statusToKey } from '@/data/team-status'
-import { buildEffectById, collectEffects, collectTriggerEffects, patchCombatSkills } from '@/data/collect'
+import { buildEffectById, collectEffects, collectTriggerEffects, patchCombatSkills, resolveEffect, resolveStatAttributes, resolveTriggerEffectLevel } from '@/data/collect'
+import { CRITERION_MECHANISMS } from '@/data/contingencyContracts/criteriaEffects'
+import {
+    buildEffectiveEnemySystemConstants,
+    getContingencyEnemyHealingRate,
+} from '@/data/contingencyContracts/criteriaEffects'
 import { isEnemyEffect } from '@/data/types'
+import { createDefaultEnemyResistance, normalizeEnemyResistance } from '@/data/enemyResistance'
 import { getBaseStatValues } from '@/data/stats/baseValues'
 import { computeStats } from '@/data/stats/computeStats'
 import { getSkillBounds, clampSkillLevel } from '@/utils/weaponBounds'
@@ -81,8 +89,8 @@ const OPTIMIZER_TO_DISPLAY_TYPE = {
     finisher: 'execution',
     dive: 'dive',
 }
-const DEFAULT_BATTLE_SKILL_UE = 6.5
-const DEFAULT_COMBO_SKILL_UE = 10
+const DEFAULT_BATTLE_SKILL_UE = 0
+const DEFAULT_COMBO_SKILL_UE = 0
 const LEGACY_WEAPON_STATUS_KEY = `weapon${'Statuses'}`
 const resolveActionOptimizerSkillType = (action) => {
     if (!action) return null
@@ -278,18 +286,33 @@ export const useTimelineStore = defineStore('timeline', () => {
         staggerNodeDuration: 2,
         staggerBreakDuration: 10,
         executionRecovery: 25,
-        enemyHp: 100000
+        enemyHp: 100000,
+        superArmor: 0,
+        resistance: createDefaultEnemyResistance()
     }
 
-    const systemConstants = ref({ ...DEFAULT_SYSTEM_CONSTANTS })
-    const customEnemyParams = ref({
+    function normalizeEnemyConfig(base, patch = {}) {
+        return {
+            ...base,
+            ...(patch || {}),
+            resistance: normalizeEnemyResistance(patch?.resistance ?? base?.resistance),
+        }
+    }
+
+    function createDefaultSystemConstantsState() {
+        return normalizeEnemyConfig(DEFAULT_SYSTEM_CONSTANTS)
+    }
+
+    const systemConstants = ref(createDefaultSystemConstantsState())
+    const customEnemyParams = ref(normalizeEnemyConfig({
         maxStagger: 100,
         staggerNodeCount: 0,
         staggerNodeDuration: 2,
         staggerBreakDuration: 10,
         executionRecovery: 25,
-        enemyHp: 100000
-    })
+        enemyHp: 100000,
+        superArmor: 0,
+    }))
 
     watch(systemConstants, (newVal) => {
         if (activeEnemyId.value === 'custom') {
@@ -299,7 +322,9 @@ export const useTimelineStore = defineStore('timeline', () => {
                 staggerNodeDuration: newVal.staggerNodeDuration,
                 staggerBreakDuration: newVal.staggerBreakDuration,
                 executionRecovery: newVal.executionRecovery,
-                enemyHp: newVal.enemyHp
+                enemyHp: newVal.enemyHp,
+                superArmor: Number(newVal.superArmor) || 0,
+                resistance: normalizeEnemyResistance(newVal.resistance)
             }
         }
     }, { deep: true })
@@ -370,10 +395,10 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const ENEMY_TIERS = [
         { labelKey: 'enemyTier.normal', label: 'Normal', value: 'normal', color: '#a0a0a0' },
-        { labelKey: 'enemyTier.elite', label: 'Elite', value: 'elite', color: '#52c41a' },
-        { labelKey: 'enemyTier.champion', label: 'Champion', value: 'champion', color: '#d8b4fe' },
-        { labelKey: 'enemyTier.head', label: 'Head', value: 'head', color: '#ffd700' },
-        { labelKey: 'enemyTier.boss', label: 'Boss', value: 'boss', color: '#ff4d4f' }
+        { labelKey: 'enemyTier.advanced', label: 'Advanced', value: 'advanced', color: '#52c41a' },
+        { labelKey: 'enemyTier.elite', label: 'Elite', value: 'elite', color: '#d8b4fe' },
+        { labelKey: 'enemyTier.boss', label: 'Boss', value: 'boss', color: '#ffd700' },
+        { labelKey: 'enemyTier.leader', label: 'Leader', value: 'leader', color: '#ff4d4f' },
     ]
     // ===================================================================================
     // Core reactive state
@@ -399,10 +424,23 @@ export const useTimelineStore = defineStore('timeline', () => {
         domainConfig: {}
     })
     const activeEnemyId = ref('custom')
+    const activeEnemyLevel = ref(90)
     const enemyCategories = ref([])
     const cycleBoundaries = ref([])
 
     const activeScenarioId = ref('default_sc')
+    function normalizeEnemyLevel(level) {
+        const num = Number(level)
+        if ([1, 20, 40, 60, 80, 90].includes(num)) return num
+        return 90
+    }
+
+    function getEnemyHpForLevel(enemy, enemySheet, level) {
+        const normalizedLevel = normalizeEnemyLevel(level)
+        const levelHp = enemy?.levelHp ?? enemySheet?.levelHp
+        return Number(levelHp?.[normalizedLevel]) || 0
+    }
+
     const scenarioList = ref([
         { id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null }
     ])
@@ -474,6 +512,33 @@ export const useTimelineStore = defineStore('timeline', () => {
     const weaponOverrides = ref({})
     const equipmentCategoryOverrides = ref({})
     const runtimeInitialEffects = ref([])
+    // Selected Contingency Contract criteria tags (numeric tag ids, e.g. 102803). The criterion
+    // group + level is derived from the id: group = Math.floor(id/100), level = id % 100.
+    const contingencyContractTags = ref([])
+
+    function setContingencyContractTags(tagIds) {
+        contingencyContractTags.value = Array.isArray(tagIds) ? tagIds.map(Number).filter(Number.isFinite) : []
+    }
+
+    const effectiveSystemConstants = computed(() =>
+        buildEffectiveEnemySystemConstants(systemConstants.value, contingencyContractTags.value),
+    )
+
+    const effectiveEnemyHp = computed(() =>
+        Math.max(1, Number(effectiveSystemConstants.value.enemyHp) || 1),
+    )
+
+    const contingencyEnemyHealingRate = computed(() =>
+        getContingencyEnemyHealingRate(contingencyContractTags.value),
+    )
+
+    // Recompute when the selected Contingency Contract criteria change.
+    watch(contingencyContractTags, () => {
+        if (isLoading.value) return
+        recomputeAllTrackOperatorStatuses()
+        commitState()
+    }, { deep: true })
+
     const inheritedInitialEffects = ref([])
     const inheritedInitialEnemyState = ref(null)
     const simulationEndline = ref(null)
@@ -898,11 +963,13 @@ export const useTimelineStore = defineStore('timeline', () => {
             prepExpanded: prepExpanded.value,
             systemConstants: systemConstants.value,
             activeEnemyId: activeEnemyId.value,
+            activeEnemyLevel: activeEnemyLevel.value,
             customEnemyParams: customEnemyParams.value,
             cycleBoundaries: cycleBoundaries.value,
             switchEvents: switchEvents.value,
             inheritedInitialEffects: inheritedInitialEffects.value,
             inheritedInitialEnemyState: inheritedInitialEnemyState.value,
+            contingencyContractTags: contingencyContractTags.value,
             operators: operatorStore.operators,
             weapons: weaponStore.weapons,
             gears: gearStore.gears,
@@ -951,13 +1018,14 @@ export const useTimelineStore = defineStore('timeline', () => {
         equipmentCategoryOverrides.value = snapshot.equipmentCategoryOverrides || {}
 
         if (snapshot.systemConstants) {
-            systemConstants.value = { ...systemConstants.value, ...snapshot.systemConstants }
+            systemConstants.value = normalizeEnemyConfig(systemConstants.value, snapshot.systemConstants)
         }
 
         activeEnemyId.value = snapshot.activeEnemyId || activeEnemyId.value || 'custom'
+        activeEnemyLevel.value = normalizeEnemyLevel(snapshot.activeEnemyLevel ?? activeEnemyLevel.value)
 
         if (snapshot.customEnemyParams) {
-            customEnemyParams.value = { ...customEnemyParams.value, ...snapshot.customEnemyParams }
+            customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, snapshot.customEnemyParams)
         }
 
         if (snapshot.prepDuration !== undefined) {
@@ -976,6 +1044,9 @@ export const useTimelineStore = defineStore('timeline', () => {
         inheritedInitialEnemyState.value = snapshot.inheritedInitialEnemyState
             ? JSON.parse(JSON.stringify(snapshot.inheritedInitialEnemyState))
             : null
+        contingencyContractTags.value = Array.isArray(snapshot.contingencyContractTags)
+            ? snapshot.contingencyContractTags.map(Number).filter(Number.isFinite)
+            : []
         recomputeAllTrackOperatorStatuses()
         clearSelection()
     }
@@ -995,11 +1066,13 @@ export const useTimelineStore = defineStore('timeline', () => {
             prepExpanded: prepExpanded.value,
             systemConstants: systemConstants.value,
             activeEnemyId: activeEnemyId.value,
+            activeEnemyLevel: activeEnemyLevel.value,
             customEnemyParams: customEnemyParams.value,
             cycleBoundaries: cycleBoundaries.value,
             switchEvents: switchEvents.value,
             inheritedInitialEffects: inheritedInitialEffects.value,
             inheritedInitialEnemyState: inheritedInitialEnemyState.value,
+            contingencyContractTags: contingencyContractTags.value,
             operators: operatorStore.operators,
             weapons: weaponStore.weapons,
             gears: gearStore.gears,
@@ -1025,11 +1098,12 @@ export const useTimelineStore = defineStore('timeline', () => {
         prepExpanded.value = incoming.prepExpanded !== false
 
         if (incoming.systemConstants) {
-            systemConstants.value = { ...systemConstants.value, ...incoming.systemConstants }
+            systemConstants.value = normalizeEnemyConfig(systemConstants.value, incoming.systemConstants)
         }
         activeEnemyId.value = incoming.activeEnemyId || 'custom'
+        activeEnemyLevel.value = normalizeEnemyLevel(incoming.activeEnemyLevel ?? activeEnemyLevel.value)
         if (incoming.customEnemyParams) {
-            customEnemyParams.value = { ...customEnemyParams.value, ...incoming.customEnemyParams }
+            customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, incoming.customEnemyParams)
         }
         cycleBoundaries.value = incoming.cycleBoundaries ? JSON.parse(JSON.stringify(incoming.cycleBoundaries)) : []
         switchEvents.value = incoming.switchEvents ? JSON.parse(JSON.stringify(incoming.switchEvents)) : []
@@ -1039,6 +1113,9 @@ export const useTimelineStore = defineStore('timeline', () => {
         inheritedInitialEnemyState.value = incoming.inheritedInitialEnemyState
             ? JSON.parse(JSON.stringify(incoming.inheritedInitialEnemyState))
             : null
+        contingencyContractTags.value = Array.isArray(incoming.contingencyContractTags)
+            ? incoming.contingencyContractTags.map(Number).filter(Number.isFinite)
+            : []
         recomputeAllTrackOperatorStatuses()
         clearSelection()
     }
@@ -1126,7 +1203,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             equipmentCategoryOverrides: {},
             prepDuration: 5,
             prepExpanded: true,
-            systemConstants: { ...DEFAULT_SYSTEM_CONSTANTS },
+            systemConstants: createDefaultSystemConstantsState(),
             inheritedInitialEffects: [],
             inheritedInitialEnemyState: null,
         }
@@ -1211,7 +1288,10 @@ export const useTimelineStore = defineStore('timeline', () => {
             scenarioData: sourceSnapshot,
             tracks: sourceSnapshot.tracks || tracks.value,
             characterRoster: characterRoster.value,
-            systemConstants: sourceSnapshot.systemConstants || systemConstants.value,
+            systemConstants: buildEffectiveEnemySystemConstants(
+                sourceSnapshot.systemConstants || systemConstants.value,
+                sourceSnapshot.contingencyContractTags ?? contingencyContractTags.value,
+            ),
             prepDuration: sourceSnapshot.prepDuration ?? prepDuration.value,
             activeEnemyId: sourceSnapshot.activeEnemyId ?? activeEnemyId.value,
             runtimeInitialEffects: [
@@ -1221,6 +1301,10 @@ export const useTimelineStore = defineStore('timeline', () => {
             runtimeInitialEnemyState: sourceSnapshot.inheritedInitialEnemyState || inheritedInitialEnemyState.value,
             simulationEndline: time,
             lmdiAttributionMode: lmdiAttributionMode.value,
+            controlledOperatorSegments: buildControlledOperatorSegments(
+                (sourceSnapshot.tracks || tracks.value)?.[0]?.id ?? null,
+                sourceSnapshot.switchEvents || [],
+            ),
         })
 
         if (!compiled) return null
@@ -1237,8 +1321,10 @@ export const useTimelineStore = defineStore('timeline', () => {
                 initialEnemyState: compiled.initialEnemyState,
                 baseStatsByTrack: compiled.baseStatsByTrack,
                 enemyDef: compiled.enemyDef,
+                enemyResistance: compiled.enemyResistance,
                 endlineTime: time,
                 lmdiAttributionMode: compiled.lmdiAttributionMode,
+                controlledOperatorSegments: compiled.controlledOperatorSegments,
             },
         )
 
@@ -1843,6 +1929,8 @@ export const useTimelineStore = defineStore('timeline', () => {
             track.stats.combo_cd_reduction_flat = 0
             track.stats.ult_cd_reduction = 0
             track.stats.ult_cd_reduction_flat = 0
+            track.stats.combo_cd_external_mult = 1
+            track.stats.ult_cd_external_mult = 1
             track.gaugeEfficiency = 100
             track.originiumArtsPower = 0
             track.linkCdReduction = 0
@@ -1867,6 +1955,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         track.stats.combo_cd_reduction_flat = status.comboCdReductionFlat ?? 0
         track.stats.ult_cd_reduction = status.ultCdReductionPercent ?? 0
         track.stats.ult_cd_reduction_flat = status.ultCdReductionFlat ?? 0
+        track.stats.combo_cd_external_mult = status.comboCdExternalMult ?? 1
+        track.stats.ult_cd_external_mult = status.ultCdExternalMult ?? 1
         track.gaugeEfficiency = Number(track.stats.ult_charge_eff) || 100
         track.originiumArtsPower = Number(track.stats.originium_arts_power) || 0
         track.linkCdReduction = clampPercent(track.stats.link_cd_reduction)
@@ -1915,6 +2005,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                 operatorSlug: opInst.operatorSlug,
                 class: operatorSheet?.class || null,
                 element: operatorSheet?.element || null,
+                mainAttribute: operatorSheet?.mainAttribute || operatorSheet?.primaryAttribute || null,
+                subAttribute: operatorSheet?.subAttribute || operatorSheet?.secondaryAttribute || null,
             })
 
             if (!operatorIds.has(opInst.id)) {
@@ -1999,17 +2091,26 @@ export const useTimelineStore = defineStore('timeline', () => {
                 ce.sourceSlotIndex,
                 armoryContext.slotTrackIds,
                 armoryContext.trackMetaById,
-            ).filter((targetId) => targetId !== 'boss').map((targetId) => ({
-                targetTrackId: targetId,
-                id: effect.id,
-                stat: effect.stat,
-                value,
-                sourceId: sourceActorId,
-                effect: runtimeEffect,
-                stacks: effect.stacks,
-                maxStacks: effect.maxStacks,
-                stackStrategy: effect.stackStrategy,
-            }))
+            ).filter((targetId) => targetId !== 'boss').map((targetId) => {
+                const targetMeta = armoryContext.trackMetaById.get(targetId)
+                const resolvedStat = resolveStatAttributes(
+                    effect.stat,
+                    targetMeta?.mainAttribute,
+                    targetMeta?.subAttribute,
+                )
+                return {
+                    targetTrackId: targetId,
+                    id: effect.id,
+                    stat: resolvedStat,
+                    value,
+                    sourceId: sourceActorId,
+                    effect: { ...runtimeEffect, stat: resolvedStat },
+                    stacks: effect.stacks,
+                    maxStacks: effect.maxStacks,
+                    stackStrategy: effect.stackStrategy,
+                    external: effect.external,
+                }
+            })
         })
     }
 
@@ -2085,6 +2186,54 @@ export const useTimelineStore = defineStore('timeline', () => {
         return out
     }
 
+    // Build operator-side passive effects + enemy/reactive triggers for the selected Contingency
+    // Contract criteria. The criterion group + level index is derived from each tag id:
+    // group = Math.floor(id/100), levelIdx = (id % 100) - 1 (scalar-valued criteria are idx-invariant).
+    function buildContingencyCriteriaInjection() {
+        const effects = []
+        const triggers = []
+        const firstTrackId = tracks.value[0]?.id || null
+        const seenGroups = new Set()
+        for (const rawId of contingencyContractTags.value || []) {
+            const tagId = Number(rawId)
+            if (!Number.isFinite(tagId)) continue
+            const group = Math.floor(tagId / 100)
+            const mech = CRITERION_MECHANISMS[group]
+            if (!mech || seenGroups.has(group)) continue
+            seenGroups.add(group)
+            const idx = Math.max(0, Math.min((tagId % 100) - 1, (mech.levelCount || 1) - 1))
+            const slug = `cc:${group}`
+            ;(mech.effects || []).forEach((eff, ei) => {
+                const resolved = resolveEffect(eff, idx)
+                if (!resolved.id) resolved.id = `${slug}:e${ei}`
+                effects.push({
+                    effect: resolved,
+                    sourceSlotIndex: 0,
+                    sourceOperatorSlug: `${slug}:e${ei}`,
+                })
+            })
+            // Level-invariant triggers plus the structure for the selected level.
+            const levelTriggers = [
+                ...(mech.triggers || []),
+                ...(mech.triggersByLevel?.[idx] || []),
+            ]
+            levelTriggers.forEach((te, ti) => {
+                const resolved = resolveTriggerEffectLevel(te, idx)
+                resolved.effects = (resolved.effects || []).map((effect, j) =>
+                    effect.id ? effect : { ...effect, id: `${slug}:t${ti}:e${j}` },
+                )
+                triggers.push({
+                    triggerEffect: resolved,
+                    sourceSlotIndex: 0,
+                    sourceOperatorSlug: `${slug}:t${ti}`,
+                    sourceSkillType: undefined,
+                    sourceTrackId: firstTrackId,
+                })
+            })
+        }
+        return { effects, triggers }
+    }
+
     function recomputeAllTrackOperatorStatuses() {
         tracks.value.forEach(track => hydrateTrackInstances(track))
         const armoryContext = buildTimelineArmoryContext()
@@ -2117,7 +2266,12 @@ export const useTimelineStore = defineStore('timeline', () => {
                 }
             }
 
-            const result = getTeamStatus(team, operatorInstances, weaponInstances, gearInstances, conditions)
+            const cc = buildContingencyCriteriaInjection()
+
+            const result = getTeamStatus(
+                team, operatorInstances, weaponInstances, gearInstances, conditions,
+                undefined, undefined, undefined, cc.effects,
+            )
             const effectById = buildEffectById(collected)
             const collectedTriggers = collectTriggerEffects(team, operatorInstances, weaponInstances, gearInstances, effectById)
             const conditionalPassiveTriggers = buildConditionalPassiveTriggerEffectsFromCollected(collected, armoryContext)
@@ -2125,11 +2279,18 @@ export const useTimelineStore = defineStore('timeline', () => {
                 ...cte,
                 sourceTrackId: cte?.sourceTrackId || tracks.value[cte?.sourceSlotIndex]?.id || cte?.sourceOperatorSlug || null,
             }))
-            runtimeInitialEffects.value = buildInitialRuntimeEffectsFromCollected(collected, armoryContext)
+            // CC triggers already carry a resolved sourceTrackId; append after the cloned operator triggers.
+            // Use structuredClone (not cloneJsonData) to preserve `duration: Infinity`, the engine's
+            // sentinel for permanent statuses — JSON.stringify turns Infinity into null, which collapses
+            // to a 0 duration and silently drops the status (breaks Bent Edges, Wrap).
+            const allTriggers = [...serializedTriggers, ...structuredClone(cc.triggers)]
+            runtimeInitialEffects.value = buildInitialRuntimeEffectsFromCollected(
+                [...collected, ...cc.effects], armoryContext,
+            )
             tracks.value.forEach((track, index) => {
                 const fallbackStatus = computeFallbackStatus(track)
                 track.enemyStatus = cloneJsonData(result.enemyStatus)
-                track.triggerEffects = serializedTriggers || []
+                track.triggerEffects = allTriggers || []
                 applyOperatorStatusProjection(track, result.operatorStatuses?.[index] || fallbackStatus)
                 refreshTrackActionPayloads(track)
             })
@@ -2539,6 +2700,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                 ultimate_gaugeMax: maxUltimateGauge,
                 acceptTeamGauge,
                 accept_team_gauge: acceptTeamGauge,
+                acceptSelfSpCostUltEnergy: operator?.acceptSelfSpCostUltEnergy !== false,
+                accept_self_sp_cost_ult_energy: operator?.acceptSelfSpCostUltEnergy !== false,
                 beta: !!entry?.beta,
                 new: !!entry?.new,
             }
@@ -2600,6 +2763,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             ...cloneJsonData(enemy),
             name: getEnemyGameName(enemy.id),
             executionRecovery: Number(enemy.executionRecovery) || Number(enemy.finisherRecovery) || 25,
+            resistance: normalizeEnemyResistance(enemy.resistance),
         }))
     }
 
@@ -2807,6 +2971,18 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
     }))
 
+    // ─── Controlled operator ─────────────────────────────────────────────────
+    // The initial controlled operator is the first track's operator; each switch event changes
+    // control from its time onward. Derived from existing state — nothing extra is persisted.
+    const controlledOperatorSegments = computed(() =>
+        buildControlledOperatorSegments(tracks.value[0]?.id ?? null, switchEvents.value)
+    )
+
+    /** Returns the controlled operator (track id) at the given time, or null if none. */
+    function getControlledOperatorAt(time) {
+        return resolveControlledOperatorAt(tracks.value[0]?.id ?? null, switchEvents.value, time)
+    }
+
     const activeWeapon = computed(() => {
         const track = activeTrackIndex.value !== null
             ? tracks.value[activeTrackIndex.value] || null
@@ -3010,7 +3186,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                         ? (segmentInfo.spCost ?? baseDefaults.spCost)
                         : (idx === 0 ? baseDefaults.spCost : 0)
                     const segmentGaugeGain = skill.type === 'battleSkill'
-                        ? ((Number(segmentSpCost) || 0) * (DEFAULT_BATTLE_SKILL_UE / systemConstants.value.skillSpCostDefault))
+                        ? (Number(segmentInfo.ultimateEnergyGain ?? DEFAULT_BATTLE_SKILL_UE) || 0)
                         : (skill.type === 'comboSkill'
                             ? baseDefaults.gaugeGain
                             : (idx === list.length - 1 ? baseDefaults.gaugeGain : 0))
@@ -3124,7 +3300,10 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         if (enemyId === 'custom') {
             // Restore custom parameters when switching back to the custom enemy.
-            Object.assign(systemConstants.value, customEnemyParams.value)
+            Object.assign(systemConstants.value, {
+                ...customEnemyParams.value,
+                resistance: normalizeEnemyResistance(customEnemyParams.value.resistance),
+            })
         } else {
             // Apply the selected preset enemy.
             const enemy = enemyDatabase.value.find(e => e.id === enemyId)
@@ -3135,8 +3314,27 @@ export const useTimelineStore = defineStore('timeline', () => {
                 systemConstants.value.staggerNodeDuration = enemy.staggerNodeDuration
                 systemConstants.value.staggerBreakDuration = enemy.staggerBreakDuration
                 systemConstants.value.executionRecovery = enemy.executionRecovery
-                systemConstants.value.enemyHp = Number(enemy.hp ?? enemySheet?.hp ?? systemConstants.value.enemyHp) || 0
+                systemConstants.value.enemyHp = getEnemyHpForLevel(enemy, enemySheet, activeEnemyLevel.value)
+                systemConstants.value.resistance = normalizeEnemyResistance(enemy.resistance ?? enemySheet?.resistance)
+                systemConstants.value.superArmor = Number(enemy.superArmor ?? enemySheet?.superArmor) || 0
             }
+        }
+
+        inheritedInitialEnemyState.value = resetEnemyStaggerCarryover(
+            inheritedInitialEnemyState.value,
+            systemConstants.value,
+        )
+    }
+
+    function setActiveEnemyLevel(level) {
+        activeEnemyLevel.value = normalizeEnemyLevel(level)
+        if (activeEnemyId.value === 'custom') return
+
+        const enemy = enemyDatabase.value.find(e => e.id === activeEnemyId.value)
+        const enemySheet = getEnemy(activeEnemyId.value)
+        const nextHp = getEnemyHpForLevel(enemy, enemySheet, activeEnemyLevel.value)
+        if (nextHp > 0) {
+            systemConstants.value.enemyHp = nextHp
         }
     }
 
@@ -4468,11 +4666,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     })
 
     function openContextMenu(evt, instanceId = null, time = 0, targetType = null) {
-        const timelinePos = toTimelineSpace(evt.clientX, evt.clientY)
         contextMenu.value = {
             visible: true,
-            x: timelinePos.x,
-            y: timelinePos.y,
+            x: evt.clientX,
+            y: evt.clientY,
             targetId: instanceId,
             targetType,
             time
@@ -4501,6 +4698,53 @@ export const useTimelineStore = defineStore('timeline', () => {
             info.node.isDisabled = !info.node.isDisabled
             commitState()
         }
+    }
+
+    function getInheritedEnemyBuffEntry(key) {
+        const snapshot = inheritedInitialEnemyState.value
+        if (!snapshot || !key) return null
+        if (key === 'infliction') return snapshot.infliction || null
+        if (key === 'vulnerability') return snapshot.vulnerability || null
+        if (key.startsWith('debuff:')) return snapshot.debuffs?.[key.slice('debuff:'.length)] || null
+        if (key.startsWith('status:')) {
+            const id = key.slice('status:'.length)
+            return (snapshot.statuses || []).find(entry => entry?.id === id) || null
+        }
+        return null
+    }
+
+    function isInheritedEnemyBuffDisabled(key) {
+        return Array.isArray(inheritedInitialEnemyState.value?.disabledEffects)
+            && inheritedInitialEnemyState.value.disabledEffects.includes(key)
+    }
+
+    function toggleInheritedEnemyBuffDisable(key) {
+        if (!getInheritedEnemyBuffEntry(key)) return false
+        const snapshot = inheritedInitialEnemyState.value
+        const disabled = new Set(Array.isArray(snapshot.disabledEffects) ? snapshot.disabledEffects : [])
+        if (disabled.has(key)) disabled.delete(key)
+        else disabled.add(key)
+        snapshot.disabledEffects = [...disabled]
+        commitState()
+        return true
+    }
+
+    function removeInheritedEnemyBuff(key) {
+        const snapshot = inheritedInitialEnemyState.value
+        if (!snapshot || !getInheritedEnemyBuffEntry(key)) return false
+
+        if (key === 'infliction') snapshot.infliction = null
+        else if (key === 'vulnerability') snapshot.vulnerability = null
+        else if (key.startsWith('debuff:') && snapshot.debuffs) {
+            snapshot.debuffs[key.slice('debuff:'.length)] = null
+        } else if (key.startsWith('status:')) {
+            const id = key.slice('status:'.length)
+            snapshot.statuses = (snapshot.statuses || []).filter(entry => entry?.id !== id)
+        }
+
+        snapshot.disabledEffects = (snapshot.disabledEffects || []).filter(item => item !== key)
+        commitState()
+        return true
     }
 
     function setActionColor(instanceId, color) {
@@ -4551,7 +4795,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             scenarioData: currentScenario.data,
             tracks: tracks.value,
             characterRoster: characterRoster.value,
-            systemConstants: systemConstants.value,
+            systemConstants: effectiveSystemConstants.value,
             prepDuration: prepDuration.value,
             activeEnemyId: activeEnemyId.value,
             runtimeInitialEffects: [
@@ -4561,6 +4805,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             runtimeInitialEnemyState: inheritedInitialEnemyState.value,
             simulationEndline: simulationEndline.value,
             lmdiAttributionMode: lmdiAttributionMode.value,
+            controlledOperatorSegments: controlledOperatorSegments.value,
         });
     });
 
@@ -4583,8 +4828,10 @@ export const useTimelineStore = defineStore('timeline', () => {
                 initialEnemyState: scenario.initialEnemyState,
                 baseStatsByTrack: scenario.baseStatsByTrack,
                 enemyDef: scenario.enemyDef,
+                enemyResistance: scenario.enemyResistance,
                 endlineTime: scenario.endlineTime,
                 lmdiAttributionMode: scenario.lmdiAttributionMode,
+                controlledOperatorSegments: scenario.controlledOperatorSegments,
             },
         );
     });
@@ -5009,11 +5256,13 @@ export const useTimelineStore = defineStore('timeline', () => {
                 scenarioList,
                 activeScenarioId,
                 activeEnemyId,
+                activeEnemyLevel,
                 customEnemyParams,
                 cycleBoundaries,
                 switchEvents,
                 inheritedInitialEffects,
                 inheritedInitialEnemyState,
+                contingencyContractTags,
                 () => operatorStore.operators,
                 () => weaponStore.weapons,
                 () => gearStore.gears
@@ -5028,11 +5277,13 @@ export const useTimelineStore = defineStore('timeline', () => {
                  newScList,
                  newActiveId,
                  newEnemyId,
+                 newEnemyLevel,
                  newCustomParams,
                  newBoundaries,
                  newSwEvents,
                  newInheritedInitialEffects,
                  newInheritedInitialEnemyState,
+                 newContingencyContractTags,
                  newOperators,
                  newWeapons,
                  newGears
@@ -5060,11 +5311,13 @@ export const useTimelineStore = defineStore('timeline', () => {
                         prepExpanded: prepExpanded.value,
                         systemConstants: newSys,
                         activeEnemyId: newEnemyId,
+                        activeEnemyLevel: newEnemyLevel,
                         customEnemyParams: newCustomParams,
                         cycleBoundaries: newBoundaries,
                         switchEvents: newSwEvents,
                         inheritedInitialEffects: newInheritedInitialEffects,
                         inheritedInitialEnemyState: newInheritedInitialEnemyState,
+                        contingencyContractTags: newContingencyContractTags,
                     }
                 }
 
@@ -5074,7 +5327,8 @@ export const useTimelineStore = defineStore('timeline', () => {
                     scenarioList: listToSave,
                     activeScenarioId: newActiveId,
                     systemConstants: newSys,
-                    activeEnemyId: newEnemyId
+                    activeEnemyId: newEnemyId,
+                    activeEnemyLevel: newEnemyLevel
                 }
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProjectData(snapshot)))
             }, { deep: true, throttle: 500 })
@@ -5088,7 +5342,10 @@ export const useTimelineStore = defineStore('timeline', () => {
 
                 if (!data.scenarioList) return false;
 
-                if (data.systemConstants) systemConstants.value = { ...systemConstants.value, ...data.systemConstants };
+                if (data.systemConstants) {
+                    systemConstants.value = normalizeEnemyConfig(systemConstants.value, data.systemConstants);
+                }
+                activeEnemyLevel.value = normalizeEnemyLevel(data.activeEnemyLevel ?? activeEnemyLevel.value)
 
                 scenarioList.value = data.scenarioList.map(sc => {
                     const cloned = JSON.parse(JSON.stringify(sc))
@@ -5141,9 +5398,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         prepDuration.value = 5
         prepExpanded.value = true
 
-        systemConstants.value = { ...DEFAULT_SYSTEM_CONSTANTS };
+        systemConstants.value = createDefaultSystemConstantsState();
 
         activeEnemyId.value = 'custom';
+        activeEnemyLevel.value = 90;
         // Reset scenarios to the default single-scenario state.
         scenarioList.value = [{ id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null }];
         activeScenarioId.value = 'default_sc';
@@ -5199,11 +5457,13 @@ export const useTimelineStore = defineStore('timeline', () => {
                 prepExpanded: prepExpanded.value,
                 systemConstants: systemConstants.value,
                 activeEnemyId: activeEnemyId.value,
+                activeEnemyLevel: activeEnemyLevel.value,
                 customEnemyParams: customEnemyParams.value,
                 cycleBoundaries: cycleBoundaries.value,
                 switchEvents: switchEvents.value,
                 inheritedInitialEffects: inheritedInitialEffects.value,
                 inheritedInitialEnemyState: inheritedInitialEnemyState.value,
+                contingencyContractTags: contingencyContractTags.value,
             }
         }
 
@@ -5212,7 +5472,9 @@ export const useTimelineStore = defineStore('timeline', () => {
             version: '1.0.0',
             scenarioList: listToExport,
             activeScenarioId: activeScenarioId.value,
-            systemConstants: systemConstants.value
+            systemConstants: systemConstants.value,
+            activeEnemyId: activeEnemyId.value,
+            activeEnemyLevel: activeEnemyLevel.value
         };
     }
 
@@ -5253,12 +5515,15 @@ export const useTimelineStore = defineStore('timeline', () => {
         try {
             const normalizedData = deserializeProjectData(data)
 
-            if (normalizedData.systemConstants) { systemConstants.value = { ...systemConstants.value, ...normalizedData.systemConstants }; }
+            if (normalizedData.systemConstants) {
+                systemConstants.value = normalizeEnemyConfig(systemConstants.value, normalizedData.systemConstants);
+            }
 
             if (normalizedData.activeEnemyId) { activeEnemyId.value = normalizedData.activeEnemyId }
+            activeEnemyLevel.value = normalizeEnemyLevel(normalizedData.activeEnemyLevel ?? activeEnemyLevel.value)
 
             if (normalizedData.customEnemyParams) {
-                customEnemyParams.value = { ...customEnemyParams.value, ...normalizedData.customEnemyParams }
+                customEnemyParams.value = normalizeEnemyConfig(customEnemyParams.value, normalizedData.customEnemyParams)
             }
 
             if (normalizedData.scenarioList) {
@@ -5318,11 +5583,11 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     return {
         MAX_SCENARIOS, toTimelineSpace, toViewportSpace, toGameTime, toRealTime,
-        systemConstants, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, activeTrackIndex, timelineScrollTop, timelineShift, timelineRect, trackLaneRects, nodeRects, draggingSkillData,
+        systemConstants, effectiveSystemConstants, effectiveEnemyHp, contingencyEnemyHealingRate, isLoading, characterRoster, iconDatabase, tracks, connections, activeTrackId, activeTrackIndex, timelineScrollTop, timelineShift, timelineRect, trackLaneRects, nodeRects, draggingSkillData,
         lmdiAttributionMode,
         selectedActionId, selectedLibrarySkillId, multiSelectedIds, clipboard, isCapturing, setIsCapturing, showCursorGuide, operatorEffectsVisible, isBoxSelectMode, cursorPosTimeline, cursorCurrentTime, cursorPosition, snapStep,
         selectedAnomalyId, setSelectedAnomalyId, updateTrackGaugeEfficiency,
-        teamTracksInfo, activeSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
+        teamTracksInfo, controlledOperatorSegments, getControlledOperatorAt, activeSkillLibrary, BASE_BLOCK_WIDTH, setBaseBlockWidth, formatTimeLabel, ZOOM_LIMITS, timeBlockWidth, ELEMENT_COLORS, getCharacterElementColor, isActionSelected, hoveredActionId, setHoveredAction,
         fetchGameData, exportProject, importProject, exportShareString, importShareString, TOTAL_DURATION, selectTrack, changeTrackOperator, clearTrack, selectLibrarySkill, updateLibrarySkill, selectAction, updateAction,
         addSkillToTrack, setDraggingSkill, setTimelineShift, setScrollTop, resetTimelineViewport, setTimelineRect, setTrackLaneRect, setNodeRect, calculateGaugeData, getTrackGaugeMax, updateTrackInitialGauge, updateTrackMaxGauge, updateTrackOriginiumArtsPower, updateTrackLinkCdReduction, updateTrackWeapon,
         updateTrackWeaponTier, syncAllWeaponModifiers, getModifierLabel,
@@ -5335,9 +5600,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         contextMenu, openContextMenu, closeContextMenu,
         switchEvents, selectedSwitchEventId, addSwitchEvent, updateSwitchEvent, selectSwitchEvent,
         toggleActionLock, toggleActionDisable, setActionColor, isHitForcedCrit, toggleHitForcedCrit, getHitDisplayDamage,
+        getInheritedEnemyBuffEntry, isInheritedEnemyBuffDisabled, toggleInheritedEnemyBuffDisable, removeInheritedEnemyBuff,
         globalExtensions, getShiftedEndTime, refreshAllActionShifts, getActionById, getEffectById,
         getUltimateEnhancementMetrics,
-        enemyDatabase, activeEnemyId, applyEnemyPreset, ENEMY_TIERS, enemyCategories,
+        enemyDatabase, activeEnemyId, activeEnemyLevel, applyEnemyPreset, setActiveEnemyLevel, ENEMY_TIERS, enemyCategories,
         scenarioList, activeScenarioId, switchScenario, addScenario, duplicateScenario, deleteScenario,
         createInheritedScenarioFromCycleBoundary,
         effectLayouts, getNodeRect, weaponDatabase, weaponOverrides, activeWeapon, getWeaponById,
@@ -5358,5 +5624,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         operatorLog,
         enemyLog,
         simLogRevision,
+        contingencyContractTags,
+        setContingencyContractTags,
     }
 })

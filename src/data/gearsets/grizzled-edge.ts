@@ -22,7 +22,7 @@ const sheet: GearSetSheet = {
           maxStacks: 4,
           stackStrategy: 'REPLACE',
           duration: 20,
-          icon: '/equipment/item_equip_t4_suit_crush_fracture_edc_01.webp',
+          icon: '/equipment/crush_fracture/item_equip_t4_suit_crush_fracture_edc_01.webp',
         },
         {
           kind: 'status',
@@ -36,7 +36,7 @@ const sheet: GearSetSheet = {
           condition: {
             kind: 'or',
             conditions: [
-              { kind: 'enemyStatus', status: { modifier: 'susceptibility', elements: 'physical' } },
+              { kind: 'enemyStatus', status: 'vulnerability' },
               { kind: 'enemyStaggered' },
               { kind: 'enemyStatus', status: 'endministrator-originium-crystals' },
             ],

@@ -48,6 +48,7 @@ export interface ResolvedStatModifier {
   effectId?: string;
   /** Source operator track ID — used for LMDI contribution attribution. */
   sourceId?: string;
+  external?: boolean;
 }
 
 // ─── Sheet stat effect (input to computeStats) ────────────────────────────
@@ -61,6 +62,7 @@ export interface SheetStatEffect {
   value?: number;
   scaling?: ResolvedScalingDef;
   id?: string;
+  external?: boolean;
 }
 
 // ─── Scoped damage modifier ────────────────────────────────────────────────
@@ -78,6 +80,7 @@ export interface ScopedDamageModifier {
     | 'susceptibilityAmplify';
   value: number;
   elements?: DamageElement | DamageElement[];
-  skillTypes?: SkillType | SkillType[];
+  skillTypes?: SkillType | SkillType[] | 'nonSkill';
   skillId?: string | string[];
+  external?: boolean;
 }

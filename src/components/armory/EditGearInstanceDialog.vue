@@ -3,13 +3,15 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getGearPiece, getQualityTier } from '@/data'
 import {
-  getGameAttributeName,
   getGameQualityName,
   getGameSlotTypeName,
   getGearPieceGameName,
   getGearSetGameName,
 } from '@/data/gameText'
-import { getEffectName } from '@/data/effectPresets'
+import {
+  formatEquipmentEffectLabel,
+  formatEquipmentEffectStatValue,
+} from '@/utils/equipmentEffectDisplay'
 import { resolveLeveled } from '@/data/types'
 import { useGearStore } from '@/stores/gearStore'
 import { qualityColors } from '@/utils/theme'
@@ -38,22 +40,7 @@ const skillSlots = computed(() => {
 })
 
 function formatStatLabel(effect) {
-  const stat = effect?.stat
-  if (!stat) return t('common.unknown')
-  if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
-    return stat.attribute ? getGameAttributeName(stat.attribute, locale.value) : t('common.unknown')
-  }
-  if (stat.modifier === 'atkFlat' || stat.modifier === 'atkPercent') return t('stats.attack')
-  if (stat.modifier === 'hpPercent' || stat.modifier === 'flatHp') return t('stats.hp')
-  if (stat.modifier === 'flatDef') return t('armory.common.defense')
-  if (stat.modifier === 'critRate') return t('stats.crit_rate')
-  if (stat.modifier === 'critDmg') return t('stats.crit_dmg')
-  if (stat.modifier === 'artsIntensity') return t('actionLibrary.labels.originiumArtsPower')
-  if (stat.modifier === 'ultimateGainEfficiency') return t('timelineGrid.equipmentDialog.affixFilters.ult_charge_eff')
-  if (stat.modifier === 'heal') return t('stats.healing_effect')
-  if (stat.modifier === 'protection') return t('stats.final_dmg_reduction')
-  if (stat.modifier === 'susceptibility') return t('armory.common.susceptibility')
-  return getEffectName(effect)
+  return formatEquipmentEffectLabel(effect, t, locale.value)
 }
 
 function getDisplaySlotName(slotType) {
@@ -87,9 +74,8 @@ function slotClass(slotIdx, slotLevel) {
   return slotLevel <= current ? 'slot-active' : 'slot-empty'
 }
 
-function formatStatValue(value) {
-  if (typeof value === 'number' && value < 1 && value > 0) return `${(value * 100).toFixed(1)}%`
-  return String(value)
+function formatStatValue(effect, value) {
+  return formatEquipmentEffectStatValue(effect, value)
 }
 </script>
 
@@ -128,7 +114,7 @@ function formatStatValue(value) {
               <span class="stat-name">
                 {{ formatStatLabel(slot[0]) }}
                 <span v-if="slot[0]" class="stat-value-inline">
-                  +{{ formatStatValue(resolveLeveled(slot[0].value, instance.artificingLevels[slotIdx] ?? 0)) }}
+                  +{{ formatStatValue(slot[0], resolveLeveled(slot[0].value, instance.artificingLevels[slotIdx] ?? 0)) }}
                 </span>
               </span>
             </div>

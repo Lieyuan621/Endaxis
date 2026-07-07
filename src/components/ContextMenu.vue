@@ -13,10 +13,26 @@ const menuStyle = computed(() => ({
 }))
 
 const targetAction = computed(() => {
+  if (store.contextMenu.targetType === 'enemyBuff') return null
   if (!store.contextMenu.targetId) return null
   const info = store.getActionById(store.contextMenu.targetId)
   return info ? info.node : null
 })
+
+const targetEnemyBuffAction = computed(() => {
+  if (store.contextMenu.targetType !== 'enemyBuff' || !store.contextMenu.targetId) return null
+  return store.getActionById(store.contextMenu.targetId)?.node || null
+})
+
+const targetEnemyCarryoverBuff = computed(() => {
+  if (store.contextMenu.targetType !== 'enemyCarryoverBuff' || !store.contextMenu.targetId) return null
+  return store.getInheritedEnemyBuffEntry(store.contextMenu.targetId)
+})
+
+const targetEnemyCarryoverBuffDisabled = computed(() => (
+  store.contextMenu.targetType === 'enemyCarryoverBuff'
+  && store.isInheritedEnemyBuffDisabled(store.contextMenu.targetId)
+))
 
 const targetCycleBoundary = computed(() => {
   if (store.contextMenu.targetType !== 'cycleBoundary') return null
@@ -97,6 +113,31 @@ function handleMute() {
   close()
 }
 
+function handleEnemyBuffDelete() {
+  store.clearSelection()
+  store.selectAction(store.contextMenu.targetId)
+  const result = store.removeCurrentSelection()
+  if (result?.total > 0) {
+    ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 })
+  }
+  close()
+}
+
+function handleEnemyBuffMute() {
+  store.toggleActionDisable(store.contextMenu.targetId)
+  close()
+}
+
+function handleEnemyCarryoverBuffDelete() {
+  store.removeInheritedEnemyBuff(store.contextMenu.targetId)
+  close()
+}
+
+function handleEnemyCarryoverBuffMute() {
+  store.toggleInheritedEnemyBuffDisable(store.contextMenu.targetId)
+  close()
+}
+
 const PRESET_COLORS = computed(() => [
   { val: null, label: t('common.default') },
   { val: store.ELEMENT_COLORS.physical, label: t('timelineGrid.elementFilter.physical') },
@@ -145,14 +186,67 @@ function handleAddCycleBoundary() {
 </script>
 
 <template>
-  <div v-if="store.contextMenu.visible"
-       class="custom-context-menu"
-       :style="menuStyle"
-       @click.stop
-       @contextmenu.prevent
-       @mousedown.stop>
+  <Teleport to="body">
+    <div v-if="store.contextMenu.visible"
+         class="custom-context-menu"
+         :style="menuStyle"
+         @click.stop
+         @contextmenu.prevent
+         @mousedown.stop>
 
-    <template v-if="targetAction">
+    <template v-if="targetEnemyCarryoverBuff">
+      <div class="menu-header">{{ t('resourceMonitor.modules.enemyStatus') }}</div>
+
+      <div class="menu-item delete-item" @click="handleEnemyCarryoverBuffDelete">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+          </svg>
+        </span>
+        <span class="label">{{ t('common.delete') }}</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="menu-item" @click="handleEnemyCarryoverBuffMute">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line v-if="!targetEnemyCarryoverBuffDisabled" x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+            <path v-else d="M9 12l2 2 4-4"></path>
+          </svg>
+        </span>
+        <span class="label">{{ targetEnemyCarryoverBuffDisabled ? t('contextMenu.enableCalc') : t('contextMenu.disableCalc') }}</span>
+      </div>
+    </template>
+
+    <template v-else-if="targetEnemyBuffAction">
+      <div class="menu-header">{{ targetEnemyBuffAction.name }}</div>
+
+      <div class="menu-item delete-item" @click="handleEnemyBuffDelete">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+          </svg>
+        </span>
+        <span class="label">{{ t('common.delete') }}</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="menu-item" @click="handleEnemyBuffMute">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line v-if="!targetEnemyBuffAction.isDisabled" x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+            <path v-else d="M9 12l2 2 4-4"></path>
+          </svg>
+        </span>
+        <span class="label">{{ targetEnemyBuffAction.isDisabled ? t('contextMenu.enableCalc') : t('contextMenu.disableCalc') }}</span>
+      </div>
+    </template>
+
+    <template v-else-if="targetAction">
       <div class="menu-header">{{ targetAction.name }}</div>
 
        <div class="menu-item" @click="handleCopy">
@@ -353,7 +447,8 @@ function handleAddCycleBoundary() {
       </div>
     </template>
 
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>

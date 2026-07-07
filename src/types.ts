@@ -144,6 +144,10 @@ export interface OperatorStatus {
   comboCdReductionPercent: number;
   /** Percent (0–100) removed from ultimate cooldown. */
   ultCdReductionPercent: number;
+  /** Standalone multiplicative comboSkill cooldown factor (Π of external `cooldownReductionPercent`); 1 = none. */
+  comboCdExternalMult: number;
+  /** Standalone multiplicative ultimate cooldown factor (Π of external `cooldownReductionPercent`); 1 = none. */
+  ultCdExternalMult: number;
 
   // Damage modifiers (scoped by element/skill — filtered by damage calculator at hit time)
   damageModifiers: ScopedDamageModifier[];
@@ -157,4 +161,7 @@ export interface ComputedEnemyStatus {
   dmgReductionEffects: number[];
   elementalSusceptibility: Record<string, number>;
   elementalIncreasedDmgTaken: Record<string, number>;
+  /** Standalone-multiplicative damage-taken factor (external increasedDmgTaken, e.g. Wrap); 1 = none. */
+  increasedDmgTakenExternalMult: number;
+  elementalIncreasedDmgTakenExternalMult: Record<string, number>;
 }

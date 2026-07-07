@@ -373,14 +373,16 @@
       "equipmentRefine": "Доработка"
     },
     "section": {
+      "operatorStatusAdjust": "Настройка статуса оператора",
       "operatorSkillLibrary": "Навыки оператора"
     },
     "hints": {
       "noRefineNon70": "Без доработки до 70 ур.",
-      "clickOrDrag": "Нажмите для ред. знач. / Перетащите для расп. на таймлайне"
+      "adjustOperatorStatus": "Настраивайте атрибуты, оружие и комплекты; изменения влияют на симуляцию",
+      "clickOrDrag": "Нажмите, чтобы выбрать навык / Перетащите на таймлайн"
     },
     "tabs": {
-      "operator": "ОП",
+      "operator": "Атрибуты",
       "set": "СЕТ",
       "setNeedEquip": "Сначала экипируйте любую броню",
       "weapon": "ОРУЖ",
@@ -418,10 +420,10 @@
   },
   "enemyTier": {
     "normal": "Обычный",
+    "advanced": "Продвинутый",
     "elite": "Элитный",
-    "champion": "Чемпион",
-    "head": "Главарь",
-    "boss": "Босс"
+    "boss": "Босс",
+    "leader": "Лидер"
   },
   "contextMenu": {
     "lockPosition": "Заблокировать",
@@ -502,7 +504,18 @@
       "default": "По умолчанию",
       "ultEnergyGain": "Получение энергии ульты",
       "spRecovery": "Восстановление SP",
-      "spReturn": "Возврат SP"
+      "spReturn": "Возврат SP",
+      "dmgBonusDown": "Снижение урона",
+      "dmgBonusDown:physical": "Снижение физического урона",
+      "dmgBonusDown:heat": "Снижение теплового урона",
+      "dmgBonusDown:cryo": "Снижение крио-урона",
+      "dmgBonusDown:electric": "Снижение электрического урона",
+      "dmgBonusDown:nature": "Снижение природного урона",
+      "dmgBonusDown:arts": "Снижение arts-урона",
+      "dmgBonusDown:basicAttack": "Снижение урона обычной атаки",
+      "dmgBonusDown:battleSkill": "Снижение урона навыка",
+      "dmgBonusDown:ultimate": "Снижение урона ульты",
+      "dmgBonusDown:comboSkill": "Снижение урона комбонавыка"
     }
   },
   "propertiesPanel": {
@@ -581,6 +594,11 @@
       "enemy": "Атрибуты врага",
       "team": "Атрибуты команды"
     },
+    "modules": {
+      "enemyStatus": "Статус врага",
+      "stagger": "Ошеломление",
+      "sp": "Кривая ОН"
+    },
     "labels": {
       "enemyHp": "Enemy HP",
       "maxStagger": "Макс. ошеломление",
@@ -588,8 +606,17 @@
       "nodeDuration": "Длит. пробития узла",
       "breakDuration": "Длит. пробития",
       "executionRecovery": "Восст. добивания",
+      "superArmor": "Суперброня",
+      "resistanceTitle": "Сопротивление врага",
       "initialSp": "Начальные ОН",
       "spPerSecond": "ОН/сек."
+    },
+    "resistance": {
+      "physical": "Физ. сопротивление",
+      "heat": "Тепловое сопротивление",
+      "cryo": "Крио сопротивление",
+      "electric": "Электр. сопротивление",
+      "nature": "Природное сопротивление"
     },
     "sp": {
       "insufficient": "Недостаточно ОН"
@@ -600,10 +627,28 @@
       "clickToChange": "Сменить врага",
       "dialogTitle": "Выбрать врага",
       "searchPlaceholder": "Поиск врага...",
+      "level": "Уровень",
       "specialGroup": "Особые",
       "customDesc": "Ручная настройка",
       "desc": "Макс:{max} | Узлы:{nodes}",
       "empty": "Враги не найдены"
+    }
+  },
+  "contingencyContract": {
+    "title": "Контракт",
+    "operationName": "Операция повторного испытания",
+    "score": "Очки",
+    "queue": "Очередь",
+    "selectedCount": "Выбрано: {count}",
+    "pickHint": "Выберите тег для деталей",
+    "noDescription": "Нет описания",
+    "keyGained": "Ключ: {key}",
+    "keyRequired": "Требуется: {key}",
+    "term": {
+      "enemyBuff": "Усиление врага",
+      "selfGlobalBuff": "Модификатор отряда",
+      "reduceTime": "Лимит времени",
+      "none": "Без эффекта"
     }
   },
   "statDetail": {
@@ -690,6 +735,7 @@
     "defMult": "Модификатор защиты",
     "defDetail": "Защита {def}",
     "resMult": "Модификатор сопр.",
+    "enemyResMult": "Сопротивление врага",
     "staggerMult": "Модификатор ошеломления",
     "finisherMult": "Модификатор добивания",
     "levelCoeff": "Коэф. уровня",

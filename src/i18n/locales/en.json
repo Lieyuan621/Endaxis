@@ -373,14 +373,16 @@
       "equipmentRefine": "Equipment Artificing"
     },
     "section": {
+      "operatorStatusAdjust": "Operator Status Adjustment",
       "operatorSkillLibrary": "Operator Skill Library"
     },
     "hints": {
       "noRefineNon70": "No Artificing below Lv70",
-      "clickOrDrag": "Click to edit base values / Drag to arrange timeline"
+      "adjustOperatorStatus": "Tune attributes, weapons, and gear sets; changes affect timeline simulation",
+      "clickOrDrag": "Click to select a skill / Drag to arrange timeline"
     },
     "tabs": {
-      "operator": "OP",
+      "operator": "Attributes",
       "set": "SET",
       "setNeedEquip": "Equip any gear first",
       "weapon": "WPN",
@@ -418,10 +420,10 @@
   },
   "enemyTier": {
     "normal": "Normal",
+    "advanced": "Advanced",
     "elite": "Elite",
-    "champion": "Champion",
-    "head": "Head",
-    "boss": "Boss"
+    "boss": "Boss",
+    "leader": "Leader"
   },
   "contextMenu": {
     "lockPosition": "Lock Position",
@@ -527,6 +529,17 @@
       "dmgBonus:battleSkill": "Skill DMG Bonus",
       "dmgBonus:ultimate": "Ultimate DMG Bonus",
       "dmgBonus:comboSkill": "Combo Skill DMG Bonus",
+      "dmgBonusDown": "DMG Reduction",
+      "dmgBonusDown:physical": "Physical DMG Reduction",
+      "dmgBonusDown:heat": "Heat DMG Reduction",
+      "dmgBonusDown:cryo": "Cryo DMG Reduction",
+      "dmgBonusDown:electric": "Electric DMG Reduction",
+      "dmgBonusDown:nature": "Nature DMG Reduction",
+      "dmgBonusDown:arts": "Arts DMG Reduction",
+      "dmgBonusDown:basicAttack": "Basic ATK DMG Reduction",
+      "dmgBonusDown:battleSkill": "Skill DMG Reduction",
+      "dmgBonusDown:ultimate": "Ultimate DMG Reduction",
+      "dmgBonusDown:comboSkill": "Combo Skill DMG Reduction",
       "critRate": "CRIT Rate",
       "critDmg": "CRIT DMG",
       "ampBonus": "AMP Bonus",
@@ -694,6 +707,11 @@
       "enemy": "Enemy Attributes",
       "team": "Team Attributes"
     },
+    "modules": {
+      "enemyStatus": "Enemy Status",
+      "stagger": "Stagger",
+      "sp": "SP Curve"
+    },
     "labels": {
       "enemyHp": "Enemy HP",
       "maxStagger": "Max Stagger",
@@ -701,8 +719,17 @@
       "nodeDuration": "Node duration",
       "breakDuration": "Break duration",
       "executionRecovery": "Finisher recovery",
+      "superArmor": "Super Armor",
+      "resistanceTitle": "Enemy Resistance",
       "initialSp": "Initial SP",
       "spPerSecond": "SP/sec."
+    },
+    "resistance": {
+      "physical": "Physical Resistance",
+      "heat": "Heat Resistance",
+      "cryo": "Cryo Resistance",
+      "electric": "Electric Resistance",
+      "nature": "Nature Resistance"
     },
     "sp": {
       "insufficient": "Insufficient SP"
@@ -713,10 +740,28 @@
       "clickToChange": "Click to change enemy",
       "dialogTitle": "Select Enemy",
       "searchPlaceholder": "Search enemy...",
+      "level": "Level",
       "specialGroup": "Special",
       "customDesc": "Manually adjust attribute values",
       "desc": "Max:{max} | Nodes:{nodes}",
       "empty": "No matching enemies found"
+    }
+  },
+  "contingencyContract": {
+    "title": "Contingency Contract",
+    "operationName": "Rekindled Test Operation",
+    "score": "Score",
+    "queue": "Queue",
+    "selectedCount": "{count} selected",
+    "pickHint": "Select a tag to view details",
+    "noDescription": "No description",
+    "keyGained": "Key: {key}",
+    "keyRequired": "Requires: {key}",
+    "term": {
+      "enemyBuff": "Enemy buff",
+      "selfGlobalBuff": "Operator modifier",
+      "reduceTime": "Time limit",
+      "none": "No effect"
     }
   },
   "statDetail": {
@@ -803,6 +848,7 @@
     "defMult": "DEF Modifier",
     "defDetail": "DEF {def}",
     "resMult": "RES Modifier",
+    "enemyResMult": "Enemy Resistance",
     "staggerMult": "Stagger Modifier",
     "finisherMult": "Finisher Modifier",
     "levelCoeff": "Level Coefficient",

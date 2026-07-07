@@ -52,6 +52,7 @@ interface LmdiParams {
   hittingTrackId: string;
   element: string | undefined;
   enemyDef: number;
+  enemyResistance?: number;
   actualBreakdown: DamageBreakdown;
   staggerMult: number;
   staggerSources: Record<string, number> | undefined;
@@ -105,6 +106,7 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
     hittingTrackId,
     element,
     enemyDef,
+    enemyResistance = 0,
     actualBreakdown,
     staggerMult,
     staggerSources,
@@ -135,6 +137,8 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
           dmgReductionEffects: [],
           elementalSusceptibility: {},
           elementalIncreasedDmgTaken: {},
+          increasedDmgTakenExternalMult: 1,
+          elementalIncreasedDmgTakenExternalMult: {},
         };
 
   // ── 3. Compute self-only link stacks ──────────────────────────────────────
@@ -162,6 +166,10 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
       ? selfEnemyStatus.elementalIncreasedDmgTaken[element]
       : 0;
 
+  const selfDmgTakenExternalMult =
+    (selfEnemyStatus.increasedDmgTakenExternalMult ?? 1) *
+    (element ? (selfEnemyStatus.elementalIncreasedDmgTakenExternalMult?.[element] ?? 1) : 1);
+
   const selfTotalSusc =
     (selfEnemyStatus.susceptibility + selfElementalSusc) * selfStats.susceptibilityAmplify;
 
@@ -173,13 +181,16 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
       critRate: selfStats.critRate,
       critDmg: selfStats.critDmg,
       dmgBonus: selfStats.dmgBonus,
+      dmgBonusExternalMult: selfStats.dmgBonusExternalMult,
       ampBonus: selfStats.ampBonus,
       directMultiplier: selfStats.directMultiplier,
       enemyDef,
       resistanceIgnore: selfStats.resistanceIgnore,
       resistanceShred: selfEnemyStatus.resistanceShred,
+      enemyResistance,
       susceptibility: selfTotalSusc,
       increasedDmgTaken: selfEnemyStatus.increasedDmgTaken + selfElementalDmgTaken,
+      dmgTakenExternalMult: selfDmgTakenExternalMult,
       linkStacks: selfLinkStacks,
       staggerMult: selfStaggerMult,
       finisherMult,
@@ -224,6 +235,13 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
     },
   });
 
+  // (b2) dmgBonusExternalMult = Π(1 + external dmgBonus) — standalone multiplicative factor
+  factors.push({
+    actual: actualBreakdown.dmgBonusExternalMult,
+    self: selfBreakdown.dmgBonusExternalMult,
+    sources: groupExternalByStatCategory(externalOperatorMods, 'dmgBonus'),
+  });
+
   // (c) critMult = 1 + critRate * critDmg
   factors.push({
     actual: actualBreakdown.critMult,
@@ -256,6 +274,13 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
   factors.push({
     actual: actualBreakdown.dmgTakenMult,
     self: selfBreakdown.dmgTakenMult,
+    sources: groupExternalByStatCategory(externalEnemyMods, 'increasedDmgTaken'),
+  });
+
+  // (g2) dmgTakenExternalMult — standalone multiplicative damage-taken factor (e.g. Wrap)
+  factors.push({
+    actual: actualBreakdown.dmgTakenExternalMult,
+    self: selfBreakdown.dmgTakenExternalMult,
     sources: groupExternalByStatCategory(externalEnemyMods, 'increasedDmgTaken'),
   });
 
@@ -354,6 +379,7 @@ interface ReactionLmdiParams {
   hittingTrackId: string;
   element: string | undefined;
   enemyDef: number;
+  enemyResistance?: number;
   /** The actual (full-buffed) standard-part breakdown (before reaction multipliers). */
   actualStandardBreakdown: DamageBreakdown;
   /** The actual artsIntensityMult with all buffs. */
@@ -392,6 +418,7 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
     hittingTrackId,
     element,
     enemyDef,
+    enemyResistance = 0,
     actualStandardBreakdown,
     actualArtsIntensityMult,
     actualDamage,
@@ -421,6 +448,8 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
           dmgReductionEffects: [],
           elementalSusceptibility: {},
           elementalIncreasedDmgTaken: {},
+          increasedDmgTakenExternalMult: 1,
+          elementalIncreasedDmgTakenExternalMult: {},
         };
 
   // ── 3. Build self-only standard breakdown ─────────────────────────────────
@@ -439,6 +468,10 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
     : 1;
   const selfStaggerMult = 1 + selfStaggerFraction * (params.staggerMult - 1);
 
+  const selfDmgTakenExternalMult =
+    (selfEnemyStatus.increasedDmgTakenExternalMult ?? 1) *
+    (element ? (selfEnemyStatus.elementalIncreasedDmgTakenExternalMult?.[element] ?? 1) : 1);
+
   const selfTotalSusc =
     (selfEnemyStatus.susceptibility + selfElementalSusc) * selfMods.susceptibilityAmplify;
 
@@ -449,13 +482,16 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
       critRate: isCombustionDot ? 0 : selfOpStatus.critRate,
       critDmg: isCombustionDot ? 0 : selfOpStatus.critDmg,
       dmgBonus: selfMods.dmgBonus,
+      dmgBonusExternalMult: selfMods.dmgBonusExternalMult,
       ampBonus: selfMods.ampBonus,
       directMultiplier: selfMods.directMultiplier,
       enemyDef,
       resistanceIgnore: selfMods.resistanceIgnore,
       resistanceShred: selfEnemyStatus.resistanceShred,
+      enemyResistance,
       susceptibility: selfTotalSusc,
       increasedDmgTaken: selfEnemyStatus.increasedDmgTaken + selfElementalDmgTaken,
+      dmgTakenExternalMult: selfDmgTakenExternalMult,
       linkStacks: 0,
       staggerMult: selfStaggerMult,
       finisherMult: params.finisherMult,
@@ -507,6 +543,13 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
     sources: groupExternalByStatCategory(externalOperatorMods, 'dmgBonus'),
   });
 
+  // (b2) dmgBonusExternalMult — standalone multiplicative factor
+  factors.push({
+    actual: actualStandardBreakdown.dmgBonusExternalMult,
+    self: selfStandardBreakdown.dmgBonusExternalMult,
+    sources: groupExternalByStatCategory(externalOperatorMods, 'dmgBonus'),
+  });
+
   // (c) critMult (0 for combustion_dot but still included — both sides match)
   factors.push({
     actual: actualStandardBreakdown.critMult,
@@ -539,6 +582,13 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
   factors.push({
     actual: actualStandardBreakdown.dmgTakenMult,
     self: selfStandardBreakdown.dmgTakenMult,
+    sources: groupExternalByStatCategory(externalEnemyMods, 'increasedDmgTaken'),
+  });
+
+  // (g2) dmgTakenExternalMult — standalone multiplicative damage-taken factor (e.g. Wrap)
+  factors.push({
+    actual: actualStandardBreakdown.dmgTakenExternalMult,
+    self: selfStandardBreakdown.dmgTakenExternalMult,
     sources: groupExternalByStatCategory(externalEnemyMods, 'increasedDmgTaken'),
   });
 

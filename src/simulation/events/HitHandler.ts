@@ -22,6 +22,7 @@ import {
   STAGGER_DAMAGE_MULTIPLIER,
 } from '@/data/stats/computeDamage';
 import type { ResolvedStatModifier } from '@/data/stats/types';
+import type { DamageElement } from '@/data/types';
 import {
   computeLmdiContributions,
   computeReactionLmdiContributions,
@@ -32,8 +33,55 @@ import {
   computeLevelCoefficient,
   computeArtsIntensityDamageMult,
 } from '@/data/stats/computeReactionDamage';
+import type { Effect, ResolvedEffect } from '@/data/types';
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
+
+function getEnemyResistanceValue(ctx: SimulationContext, element: string | undefined): number {
+  if (!element) return 0;
+  const value = ctx.enemyResistance?.[element as DamageElement];
+  return value != null ? value / 100 : 0;
+}
+
+function applyEnemyDamageCapToBreakdown(
+  breakdown: any,
+  time: number,
+  ctx: SimulationContext,
+  hit: any,
+) {
+  const rawDamage = Math.max(0, Math.floor(Number(breakdown?.expectedDamage) || 0));
+  const capped = ctx.applyEnemyDamageCap(time, rawDamage);
+  if (!capped.capped) return breakdown;
+
+  const finalDamage = Math.max(0, Math.floor(capped.damage));
+  const maxForThisHit = Math.max(0, capped.cap - capped.usedBefore);
+  breakdown.expectedDamage = finalDamage;
+  breakdown.nonCritDamage = Math.min(
+    Math.max(0, Math.floor(Number(breakdown.nonCritDamage) || 0)),
+    maxForThisHit,
+  );
+  breakdown.critDamage = Math.min(
+    Math.max(0, Math.floor(Number(breakdown.critDamage) || 0)),
+    maxForThisHit,
+  );
+  hit._enemyDamageCap = {
+    capped: true,
+    cap: capped.cap,
+    rawDamage,
+    finalDamage,
+    usedBefore: capped.usedBefore,
+    windowStart: capped.windowStart,
+    windowEnd: capped.windowEnd,
+  };
+  return breakdown;
+}
+
+function afterDamageEffects(
+  effects: readonly (Effect | ResolvedEffect)[] | undefined,
+): readonly (Effect | ResolvedEffect)[] | undefined {
+  if (!effects?.length) return effects;
+  return effects.filter(effect => effect.applyTiming !== 'beforeDamage');
+}
 
 export class HitHandler implements EventHandler<HitEvent> {
   private registry?: TriggerRegistry;
@@ -113,7 +161,11 @@ export class HitHandler implements EventHandler<HitEvent> {
       const dynamicMods: ResolvedStatModifier[] = [];
       for (const entry of activeEntries) {
         if (!entry.stat) continue;
-        dynamicMods.push({ stat: entry.stat, value: entry.value * entry.stacks });
+        dynamicMods.push({
+          stat: entry.stat,
+          value: entry.value * entry.stacks,
+          external: entry.external,
+        });
       }
       const operatorStatus = computeStats(baseStats, [], dynamicMods);
 
@@ -123,11 +175,16 @@ export class HitHandler implements EventHandler<HitEvent> {
       const enemyMods: ResolvedStatModifier[] = [];
       for (const entry of enemyEntries) {
         if (!entry.stat) continue;
-        enemyMods.push({ stat: entry.stat, value: entry.value * entry.stacks });
+        enemyMods.push({
+          stat: entry.stat,
+          value: entry.value * entry.stacks,
+          external: entry.external,
+        });
       }
       const enemyStatus = computeEnemyStats([], enemyMods);
 
       const element = reactionMeta.element;
+      const enemyResistance = getEnemyResistanceValue(ctx, element);
       const levelCoeff = reactionMeta.synthetic
         ? 1
         : computeLevelCoefficient(operatorLevel, reactionMeta.reactionType as ReactionDamageType);
@@ -150,6 +207,9 @@ export class HitHandler implements EventHandler<HitEvent> {
         element && enemyStatus?.elementalIncreasedDmgTaken?.[element]
           ? enemyStatus.elementalIncreasedDmgTaken[element]
           : 0;
+      const dmgTakenExternalMult =
+        (enemyStatus?.increasedDmgTakenExternalMult ?? 1) *
+        (element ? (enemyStatus?.elementalIncreasedDmgTakenExternalMult?.[element] ?? 1) : 1);
 
       const isCombustionDot = reactionMeta.reactionType === 'combustion_dot';
       const noCrit = hit._canCrit === false || isCombustionDot;
@@ -160,14 +220,17 @@ export class HitHandler implements EventHandler<HitEvent> {
         critRate: noCrit ? 0 : operatorStatus.critRate,
         critDmg: noCrit ? 0 : operatorStatus.critDmg,
         dmgBonus: mods.dmgBonus,
+        dmgBonusExternalMult: mods.dmgBonusExternalMult,
         ampBonus: mods.ampBonus,
         directMultiplier: mods.directMultiplier,
         enemyDef: ctx.enemyDef,
         resistanceIgnore: mods.resistanceIgnore,
         resistanceShred: enemyStatus?.resistanceShred ?? 0,
+        enemyResistance,
         susceptibility:
           ((enemyStatus?.susceptibility ?? 0) + elementalSusc) * mods.susceptibilityAmplify,
         increasedDmgTaken: (enemyStatus?.increasedDmgTaken ?? 0) + elementalDmgTaken,
+        dmgTakenExternalMult,
         linkStacks: 0,
         staggerMult,
         finisherMult,
@@ -184,6 +247,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         artsIntensity: operatorStatus.artsIntensity,
         element,
       });
+      applyEnemyDamageCapToBreakdown(breakdown, e.time, ctx, hit);
       hit._expectedDamage = breakdown.expectedDamage;
       hit._damageBreakdown = breakdown;
 
@@ -195,7 +259,11 @@ export class HitHandler implements EventHandler<HitEvent> {
       const extOpMods: SourceTaggedMod[] = [];
       for (const entry of activeEntries) {
         if (!entry.stat) continue;
-        const mod: ResolvedStatModifier = { stat: entry.stat, value: entry.value * entry.stacks };
+        const mod: ResolvedStatModifier = {
+          stat: entry.stat,
+          value: entry.value * entry.stacks,
+          external: entry.external,
+        };
         if (entry.sourceId === hittingTrackId) selfOpMods.push(mod);
         else extOpMods.push({ sourceId: entry.sourceId, mod });
       }
@@ -212,12 +280,17 @@ export class HitHandler implements EventHandler<HitEvent> {
             const partialMod: ResolvedStatModifier = {
               stat: entry.stat,
               value: totalValue * fraction,
+              external: entry.external,
             };
             if (srcId === hittingTrackId) selfEnemyMods.push(partialMod);
             else extEnemyMods.push({ sourceId: srcId, mod: partialMod });
           }
         } else {
-          const mod: ResolvedStatModifier = { stat: entry.stat, value: totalValue };
+          const mod: ResolvedStatModifier = {
+            stat: entry.stat,
+            value: totalValue,
+            external: entry.external,
+          };
           if (entry.sourceId === hittingTrackId) selfEnemyMods.push(mod);
           else extEnemyMods.push({ sourceId: entry.sourceId, mod });
         }
@@ -231,14 +304,17 @@ export class HitHandler implements EventHandler<HitEvent> {
           critRate: noCrit ? 0 : operatorStatus.critRate,
           critDmg: noCrit ? 0 : operatorStatus.critDmg,
           dmgBonus: mods.dmgBonus,
+          dmgBonusExternalMult: mods.dmgBonusExternalMult,
           ampBonus: mods.ampBonus,
           directMultiplier: mods.directMultiplier,
           enemyDef: ctx.enemyDef,
           resistanceIgnore: mods.resistanceIgnore,
           resistanceShred: enemyStatus?.resistanceShred ?? 0,
+          enemyResistance,
           susceptibility:
             ((enemyStatus?.susceptibility ?? 0) + elementalSusc) * mods.susceptibilityAmplify,
           increasedDmgTaken: (enemyStatus?.increasedDmgTaken ?? 0) + elementalDmgTaken,
+          dmgTakenExternalMult,
           linkStacks: 0,
           staggerMult,
           finisherMult,
@@ -256,6 +332,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         hittingTrackId,
         element,
         enemyDef: ctx.enemyDef,
+        enemyResistance,
         actualStandardBreakdown: standardPartBreakdown,
         actualArtsIntensityMult: artsIntensityMult,
         actualDamage: breakdown.expectedDamage,
@@ -275,7 +352,11 @@ export class HitHandler implements EventHandler<HitEvent> {
       const dynamicMods: ResolvedStatModifier[] = [];
       for (const entry of activeEntries) {
         if (!entry.stat) continue;
-        dynamicMods.push({ stat: entry.stat, value: entry.value * entry.stacks });
+        dynamicMods.push({
+          stat: entry.stat,
+          value: entry.value * entry.stacks,
+          external: entry.external,
+        });
       }
       const operatorStatus = computeStats(baseStats, [], dynamicMods, hit.skillType, hit.skillId);
 
@@ -285,12 +366,17 @@ export class HitHandler implements EventHandler<HitEvent> {
       const enemyMods: ResolvedStatModifier[] = [];
       for (const entry of enemyEntries) {
         if (!entry.stat) continue;
-        enemyMods.push({ stat: entry.stat, value: entry.value * entry.stacks });
+        enemyMods.push({
+          stat: entry.stat,
+          value: entry.value * entry.stacks,
+          external: entry.external,
+        });
       }
       const enemyStatus = computeEnemyStats([], enemyMods);
 
       const action = ctx.getAction(e.payload.actionId);
       const element = hit.element ?? action?.node.element;
+      const enemyResistance = getEnemyResistanceValue(ctx, element);
 
       // Inherit consumed stacks from the action (link stacks, etc.) if the hit doesn't have its own
       if (!hit.consumedStacks && action?.consumedStacks) {
@@ -308,8 +394,10 @@ export class HitHandler implements EventHandler<HitEvent> {
         element,
         staggerMult,
         finisherMult,
+        enemyResistance,
       );
       if (breakdown) {
+        applyEnemyDamageCapToBreakdown(breakdown, e.time, ctx, hit);
         hit._expectedDamage = breakdown.expectedDamage;
         hit._damageBreakdown = breakdown;
 
@@ -323,6 +411,7 @@ export class HitHandler implements EventHandler<HitEvent> {
             const mod: ResolvedStatModifier = {
               stat: entry.stat,
               value: entry.value * entry.stacks,
+              external: entry.external,
             };
             if (entry.sourceId === hittingTrackId) selfOpMods.push(mod);
             else extOpMods.push({ sourceId: entry.sourceId, mod });
@@ -339,12 +428,17 @@ export class HitHandler implements EventHandler<HitEvent> {
                 const partialMod: ResolvedStatModifier = {
                   stat: entry.stat,
                   value: totalValue * fraction,
+                  external: entry.external,
                 };
                 if (srcId === hittingTrackId) selfEnemyMods.push(partialMod);
                 else extEnemyMods.push({ sourceId: srcId, mod: partialMod });
               }
             } else {
-              const mod: ResolvedStatModifier = { stat: entry.stat, value: totalValue };
+              const mod: ResolvedStatModifier = {
+                stat: entry.stat,
+                value: totalValue,
+                external: entry.external,
+              };
               if (entry.sourceId === hittingTrackId) selfEnemyMods.push(mod);
               else extEnemyMods.push({ sourceId: entry.sourceId, mod });
             }
@@ -368,6 +462,7 @@ export class HitHandler implements EventHandler<HitEvent> {
             hittingTrackId,
             element,
             enemyDef: ctx.enemyDef,
+            enemyResistance,
             actualBreakdown: breakdown,
             staggerMult,
             staggerSources: hit._staggerContributions,
@@ -453,8 +548,10 @@ export class HitHandler implements EventHandler<HitEvent> {
     }
 
     // Dispatch enemy-targeting effects from this hit
+    const postDamageEffects = afterDamageEffects(hit.effects);
+
     dispatchEnemyEffects(
-      hit.effects,
+      postDamageEffects,
       e.time,
       sourceId,
       ctx,
@@ -465,7 +562,7 @@ export class HitHandler implements EventHandler<HitEvent> {
       hit.skillId,
     );
     // Dispatch self/team-targeting effects from this hit
-    dispatchActorEffects(hit.effects, {
+    dispatchActorEffects(postDamageEffects, {
       time: e.time,
       sourceTrackId: sourceId,
       ctx,

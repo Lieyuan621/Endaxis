@@ -345,7 +345,26 @@ export function collectEffects(
   }));
 }
 
-/** Replace 'main'/'sub' attribute placeholders with the operator's actual attributes. */
+/**
+ * Resolve 'main'/'sub' attribute placeholders on a stat to concrete attributes for a given
+ * operator. Returns the same stat reference when there is nothing to resolve.
+ *
+ * `'main'`/`'sub'` is a target-relative placeholder: it must be resolved against the operator
+ * the effect lands on. For self-scoped effects that happens at collection (source == target);
+ * for team-scoped effects it is deferred to each target-binding point (partition / sim
+ * initial-effects / triggered dispatch), which call this with the target operator's attributes.
+ */
+export function resolveStatAttributes(stat, mainAttribute, subAttribute) {
+  if (!stat || !('attribute' in stat)) return stat;
+  const map = (a) =>
+    a === 'main' ? (mainAttribute ?? a) : a === 'sub' ? (subAttribute ?? a) : a;
+  const attr = stat.attribute;
+  const resolved = Array.isArray(attr) ? attr.map(map) : map(attr);
+  if (resolved === attr) return stat;
+  return { ...stat, attribute: resolved };
+}
+
+/** Replace 'main'/'sub' attribute placeholders on an effect with the operator's actual attributes. */
 function resolveContextualAttributes(
   effect: ResolvedEffect,
   mainAttribute?: Attribute,
@@ -353,14 +372,9 @@ function resolveContextualAttributes(
 ): ResolvedEffect {
   if (!('stat' in effect)) return effect;
   const stat = effect.stat;
-  if (!stat || !('attribute' in stat)) return effect;
-  if (stat.attribute === 'main' && mainAttribute) {
-    return { ...effect, stat: { ...stat, attribute: mainAttribute } } as ResolvedEffect;
-  }
-  if (stat.attribute === 'sub' && subAttribute) {
-    return { ...effect, stat: { ...stat, attribute: subAttribute } } as ResolvedEffect;
-  }
-  return effect;
+  const resolved = resolveStatAttributes(stat, mainAttribute, subAttribute);
+  if (resolved === stat) return effect;
+  return { ...effect, stat: resolved } as ResolvedEffect;
 }
 
 /** Add weapon sheet effects, resolving array value to the correct skill level. */
@@ -447,7 +461,7 @@ export function resolveScalingDef(scaling: ScalingDef, idx: number): ResolvedSca
 }
 
 /** Resolve all leveled fields in an Effect to scalars at the given level index. */
-function resolveEffect(effect: Effect, idx: number): ResolvedEffect {
+export function resolveEffect(effect: Effect, idx: number): ResolvedEffect {
   const base = {
     ...effect,
     id: effect.id ?? uid(),
@@ -1105,7 +1119,7 @@ function hydrateTriggerEffect<T extends Effect>(
  * Resolve array values in TriggerEffect.effects at the given level index.
  * Returns a new ResolvedTriggerEffect with all effects resolved to scalar values.
  */
-function resolveTriggerEffectLevel(te: TriggerEffect, idx: number): ResolvedTriggerEffect {
+export function resolveTriggerEffectLevel(te: TriggerEffect, idx: number): ResolvedTriggerEffect {
   return {
     ...te,
     effects: te.effects.map(effect => resolveEffect(effect, idx)),

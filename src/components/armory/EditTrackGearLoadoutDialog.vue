@@ -1,19 +1,19 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getGearPiece, getQualityTier } from '@/data'
+import { getGearPiece } from '@/data'
 import {
-  getGameAttributeName,
-  getGameQualityName,
   getGameSlotTypeName,
   getGearPieceGameName,
   getGearSetGameName,
 } from '@/data/gameText'
-import { getEffectName } from '@/data/effectPresets'
+import {
+  formatEquipmentEffectLabel,
+  formatEquipmentEffectStatValue,
+} from '@/utils/equipmentEffectDisplay'
 import { resolveLeveled } from '@/data/types'
 import { useGearStore } from '@/stores/gearStore'
 import { useTimelineStore } from '@/stores/timelineStore'
-import { qualityColors } from '@/utils/theme'
 import EditGearInstanceDialog from './EditGearInstanceDialog.vue'
 
 const props = defineProps({
@@ -63,6 +63,19 @@ const SLOT_CONFIGS = [
   },
 ]
 
+const EQUIPMENT_LEVEL_COLORS = {
+  70: '#ffd700',
+  50: '#b37feb',
+  36: '#4a90e2',
+  28: '#73c94f',
+  20: '#95de64',
+  10: '#888888',
+}
+function getEquipmentLevelColor(level) {
+  const key = Number(level)
+  return EQUIPMENT_LEVEL_COLORS[key] || '#888'
+}
+
 function tr(key, fallback) {
   const out = t(key)
   return out === key ? fallback : out
@@ -74,9 +87,16 @@ function getInstance(instanceId) {
 
 function getRefineLevel(instance) {
   const levels = Array.isArray(instance?.artificingLevels) ? instance.artificingLevels : []
-  return Math.max(0, ...levels.map(level => Number(level) || 0))
-}
+  const normalized = [0, 1, 2].map(index => {
+    const level = Number(levels[index]) || 0
+    return Math.max(0, Math.min(3, level))
+  })
 
+  const first = normalized[0]
+  const allSame = normalized.every(level => level === first)
+
+  return allSame ? first : null
+}
 function getSkillSlots(piece) {
   if (!piece) return []
   return [piece.skill1, piece.skill2, piece.skill3]
@@ -86,22 +106,7 @@ function getSkillSlots(piece) {
 }
 
 function formatStatLabel(effect) {
-  const stat = effect?.stat
-  if (!stat) return tr('common.unknown', 'Unknown')
-  if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
-    return stat.attribute ? getGameAttributeName(stat.attribute, locale.value) : tr('common.unknown', 'Unknown')
-  }
-  if (stat.modifier === 'atkFlat' || stat.modifier === 'atkPercent') return t('stats.attack')
-  if (stat.modifier === 'hpPercent' || stat.modifier === 'flatHp') return t('stats.hp')
-  if (stat.modifier === 'flatDef') return tr('armory.common.defense', 'Defense')
-  if (stat.modifier === 'critRate') return t('stats.crit_rate')
-  if (stat.modifier === 'critDmg') return t('stats.crit_dmg')
-  if (stat.modifier === 'artsIntensity') return t('actionLibrary.labels.originiumArtsPower')
-  if (stat.modifier === 'ultimateGainEfficiency') return t('timelineGrid.equipmentDialog.affixFilters.ult_charge_eff')
-  if (stat.modifier === 'heal') return t('stats.healing_effect')
-  if (stat.modifier === 'protection') return t('stats.final_dmg_reduction')
-  if (stat.modifier === 'susceptibility') return tr('armory.common.susceptibility', 'Susceptibility')
-  return getEffectName(effect)
+  return formatEquipmentEffectLabel(effect, t, locale.value)
 }
 
 function getDisplaySlotName(slotType) {
@@ -111,21 +116,34 @@ function getDisplaySlotName(slotType) {
   return getGameSlotTypeName(slotType, locale.value)
 }
 
-function formatStatValue(value) {
-  if (typeof value === 'number' && value < 1 && value > 0) return `${(value * 100).toFixed(1)}%`
-  return String(value)
+function formatStatValue(effect, value) {
+  return formatEquipmentEffectStatValue(effect, value)
+}
+
+function getArtificingLevel(instance, slotIdx) {
+  const levels = Array.isArray(instance?.artificingLevels) ? instance.artificingLevels : []
+  const level = Number(levels[slotIdx]) || 0
+  return Math.max(0, Math.min(3, level))
 }
 
 function getSlotStatRows(piece, instance) {
-  const refine = getRefineLevel(instance)
   return getSkillSlots(piece).map((slot, index) => {
     const effect = slot[0]
+    const refine = getArtificingLevel(instance, index)
+
     return {
       key: `${effect?.id || effect?.stat?.modifier || 'stat'}-${index}`,
       label: formatStatLabel(effect),
-      value: effect ? formatStatValue(resolveLeveled(effect.value, refine)) : '',
+      value: effect ? formatStatValue(effect, resolveLeveled(effect.value, refine)) : '',
+      refine,
     }
   })
+}
+
+function isUniformRefineActive(slot, level) {
+  const levels = (slot?.stats || []).map(row => Number(row.refine))
+  if (levels.length === 0) return false
+  return levels.every(refine => refine === level)
 }
 
 const slots = computed(() => {
@@ -136,8 +154,7 @@ const slots = computed(() => {
     const equipment = store.getEquipmentById?.(equipmentId) || null
     const piece = getGearPiece(instance?.gearPieceId || equipmentId)
     const level = Number(equipment?.level ?? piece?.levelRequirement) || 0
-    const quality = piece ? getQualityTier(piece.levelRequirement) : (level >= 70 ? 'gold' : 'green')
-    const color = qualityColors[quality] ?? '#888'
+    const color = getEquipmentLevelColor(level)
     const trackRefine = Number(track?.[config.tierKey])
     const refine = Number.isFinite(trackRefine) ? Math.max(0, Math.min(3, trackRefine)) : getRefineLevel(instance)
 
@@ -148,7 +165,6 @@ const slots = computed(() => {
       instance,
       piece,
       level,
-      quality,
       color,
       refine,
       isGold: level >= 70,
@@ -199,7 +215,9 @@ function openItemEditor(slot) {
         <div class="slot-head">
           <div class="slot-title">{{ slot.label }}</div>
           <div v-if="slot.instance" class="slot-tags">
-            <span class="slot-tag" :style="{ color: slot.color, borderColor: slot.color }">{{ getGameQualityName(slot.quality, locale) }}</span>
+            <span class="slot-tag" :style="{ color: slot.color, borderColor: slot.color }">
+              Lv{{ slot.level }}
+            </span>
             <span class="slot-tag">{{ getDisplaySlotName(slot.slotType) }}</span>
           </div>
         </div>
@@ -223,6 +241,12 @@ function openItemEditor(slot) {
 
           <div class="refine-row">
             <span class="refine-label">{{ tr('timelineGrid.equipmentDialog.refine', 'Refine') }}</span>
+            <span
+                v-if="slot.isGold && slot.stats.length > 0"
+                class="refine-mixed"
+            >
+              {{ slot.stats.map(row => row.refine).join('/') }}
+            </span>
             <template v-if="slot.isGold">
               <div class="refine-buttons">
                 <button
@@ -230,7 +254,7 @@ function openItemEditor(slot) {
                   :key="`${slot.slotKey}-${level}`"
                   type="button"
                   class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold refine-btn"
-                  :class="{ 'is-active': slot.refine === level }"
+                  :class="{ 'is-active': isUniformRefineActive(slot, level) }"
                   @click="setRefine(slot, level)"
                 >
                   {{ level === 0 ? tr('timelineGrid.equipmentDialog.refineBase', 'Base') : level }}
@@ -432,5 +456,12 @@ function openItemEditor(slot) {
   .loadout-layout {
     grid-template-columns: 1fr;
   }
+}
+
+.refine-mixed {
+  color: #eab308;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  opacity: 0.95;
 }
 </style>

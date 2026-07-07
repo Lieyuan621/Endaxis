@@ -306,6 +306,12 @@ function onNativeDragEnd() {
         </div>
       </div>
       <div class="header-divider"></div>
+
+      <div class="section-title-box status-adjust-title-box">
+        <span class="section-title">{{ t('actionLibrary.section.operatorStatusAdjust') }}</span>
+        <span class="section-hint">{{ t('actionLibrary.hints.adjustOperatorStatus') }}</span>
+      </div>
+
       <div class="loadout-actions">
         <button
           type="button"
@@ -405,6 +411,7 @@ function onNativeDragEnd() {
         </div>
       </div>
     </div>
+
   </div>
 </template>
 

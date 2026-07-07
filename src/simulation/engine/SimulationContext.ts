@@ -5,6 +5,7 @@ import type { ResolvedAction } from '../compiler/types';
 import type { EnemyStateEvent, OperatorStateEvent } from '../engine/types';
 import type { OperatorEffectState } from '../state/OperatorEffectState';
 import type { BaseStatValues } from '@/data/stats/types';
+import type { EnemyResistance } from '@/data/enemyResistance';
 export interface SimulationContext {
   /** All compiled actions in the timeline (used for cooldown-reduction targeting). */
   getAllActions: () => readonly ResolvedAction[];
@@ -24,6 +25,7 @@ export interface SimulationContext {
   /** Returns actor-level config flags for a given track. */
   getActorMeta: (trackId: string) => {
     acceptTeamUltEnergy: boolean;
+    acceptSelfSpCostUltEnergy: boolean;
     ultimateEnergyCostOverride?: number | null;
   };
   /** All track IDs currently active in the simulation. */
@@ -39,8 +41,21 @@ export interface SimulationContext {
   getBaseStats: (trackId: string) => BaseStatValues | undefined;
   /** Enemy defense value for damage calculation. */
   enemyDef: number;
+  /** Enemy per-element damage multiplier. 100 = neutral. */
+  enemyResistance: EnemyResistance;
+  /** Apply enemy-side per-window incoming damage caps, returning the final damage. */
+  applyEnemyDamageCap: (time: number, damage: number) => {
+    damage: number;
+    capped: boolean;
+    cap: number;
+    usedBefore: number;
+    windowStart: number;
+    windowEnd: number;
+  };
   /** LMDI attribution mode for reaction debuff contributions. */
   lmdiAttributionMode: 'stacks' | 'applier';
+  /** Operator (track id) controlled at the given time, or null if none. Derived from switch events. */
+  getControlledOperatorAt: (time: number) => string | null;
 }
 
 export interface EventHookContext extends SimulationContext {

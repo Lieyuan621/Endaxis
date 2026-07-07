@@ -2,6 +2,7 @@ import { compileScenario } from "@/simulation/compiler/compileScenario";
 import { TriggerRegistry } from "@/simulation/engine/TriggerRegistry";
 import type { InitialEffect } from "@/simulation/simulator";
 import { getEnemy } from "@/data";
+import { normalizeEnemyResistance } from "@/data/enemyResistance";
 
 interface CompileEndaxisScenarioInput {
   scenarioData: any;
@@ -14,6 +15,7 @@ interface CompileEndaxisScenarioInput {
   runtimeInitialEnemyState?: any;
   simulationEndline?: number | null;
   lmdiAttributionMode?: "stacks" | "applier";
+  controlledOperatorSegments?: { startTime: number; operatorId: string | null }[];
 }
 
 function buildTriggerRegistryEntries(tracks: any[]) {
@@ -93,11 +95,24 @@ function buildCompiledTracks(tracks: any[], characterRoster: any[]) {
     const charInfo = (characterRoster || []).find((character) => character.id === track.id)
     const dynamicMaxGauge = resolveDynamicMaxGauge(track, charInfo)
     const trackGaugeOverride = Number(track.maxGaugeOverride) > 0 ? Number(track.maxGaugeOverride) : null
+    const acceptTeamUltEnergy =
+      track?.acceptTeamUltEnergy ??
+      charInfo?.acceptTeamUltEnergy ??
+      charInfo?.accept_team_ult_energy ??
+      charInfo?.accept_team_gauge ??
+      track?.acceptTeamGauge ??
+      true
+
     return {
       ...track,
       element: charInfo?.element || track.element || "physical",
-      acceptTeamGauge: charInfo?.accept_team_gauge !== false,
-      acceptTeamUltEnergy: charInfo?.accept_team_gauge !== false,
+      acceptTeamGauge: acceptTeamUltEnergy !== false,
+      acceptTeamUltEnergy: acceptTeamUltEnergy !== false,
+      acceptSelfSpCostUltEnergy:
+        track?.acceptSelfSpCostUltEnergy ??
+        charInfo?.acceptSelfSpCostUltEnergy ??
+        charInfo?.accept_self_sp_cost_ult_energy ??
+        true,
       maxGaugeOverride: trackGaugeOverride,
       maxUltimateGauge: dynamicMaxGauge,
       ultimate_gaugeMax: dynamicMaxGauge,
@@ -117,12 +132,16 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
     runtimeInitialEnemyState = null,
     simulationEndline = null,
     lmdiAttributionMode = "stacks",
+    controlledOperatorSegments = [],
   } = input;
 
   if (!scenarioData) return null;
 
   const enemySheet =
     activeEnemyId && activeEnemyId !== "custom" ? getEnemy(activeEnemyId) : null;
+  const enemyResistance = normalizeEnemyResistance(
+    systemConstants?.resistance ?? enemySheet?.resistance,
+  );
   const compiledTracks = buildCompiledTracks(tracks, characterRoster);
   const { timeline, actors, teamConfig, enemyConfig } = compileScenario(
     {
@@ -134,7 +153,9 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
         ...systemConstants,
         prepDuration: Number(prepDuration) || 0,
         defense: enemySheet?.def ?? 100,
+        superArmor: Number(enemySheet?.superArmor ?? systemConstants?.superArmor) || 0,
         tier: enemySheet?.tier ?? "normal",
+        resistance: enemyResistance,
         ...(enemySheet?.maxStagger !== undefined ? { maxStagger: enemySheet.maxStagger } : {}),
         ...(enemySheet?.staggerNodeCount !== undefined
           ? { staggerNodeCount: enemySheet.staggerNodeCount }
@@ -175,8 +196,10 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
     consumedStacksWriteKeys,
     initialEffects: runtimeInitialEffects,
     initialEnemyState: runtimeInitialEnemyState,
+    controlledOperatorSegments,
     baseStatsByTrack,
     enemyDef: enemySheet?.def ?? enemyConfig.defense ?? 100,
+    enemyResistance: normalizeEnemyResistance(enemyConfig.resistance ?? enemyResistance),
     endlineTime: simulationEndline ?? undefined,
     lmdiAttributionMode,
   };

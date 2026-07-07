@@ -1,4 +1,5 @@
 import type { OperatorSheet } from '../types';
+import { CRYO_INFLICTION_IMMUNE_ID } from '../contingencyContracts/criteriaEffects';
 
 const sheet: OperatorSheet = {
   gameId: 'ESTELLA',
@@ -51,7 +52,21 @@ const sheet: OperatorSheet = {
       ],
     },
     {
+      // Talent 2 — Ignores Cryo Infliction: a hidden passive marker that makes Heat Loss's Cryo
+      // skip Estella while she's the controlled operator (so she never builds Cryo / Freezes).
+      // The inert attributeFlat:0 stat is only there so the marker flows into the sim as a runtime
+      // status (the initial-effect builder drops statuses without a stat).
       levels: 2,
+      effects: [
+        {
+          id: CRYO_INFLICTION_IMMUNE_ID,
+          kind: 'status',
+          stat: { modifier: 'attributeFlat', attribute: 'strength' },
+          value: 0,
+          target: 'self',
+          hide: true,
+        },
+      ],
     },
   ],
   potentials: [
@@ -209,6 +224,7 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      ultimateEnergyGain: 10,
       segments: [
         {
           duration: 0.67,

@@ -159,7 +159,11 @@ const multiplierRows = computed(() => {
     value: mult(b.defMult),
   })
   if (b.resMult !== 1) {
-    rows.push({ label: t('hitDetail.resMult'), detail: `${pct(b.resistanceIgnore)} + ${pct(b.resistanceShred)}`, value: mult(b.resMult) })
+    rows.push({
+      label: t('hitDetail.resMult'),
+      detail: `${pct(b.enemyResistance)} - ${pct(b.resistanceIgnore)} - ${pct(b.resistanceShred)}`,
+      value: mult(b.resMult),
+    })
   }
   if (b.staggerMult != null && b.staggerMult !== 1) {
     rows.push({ label: t('hitDetail.staggerMult'), detail: '', value: mult(b.staggerMult) })

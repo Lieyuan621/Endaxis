@@ -445,6 +445,7 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      ultimateEnergyGain: 10,
       segments: [
         {
           duration: 1.83,

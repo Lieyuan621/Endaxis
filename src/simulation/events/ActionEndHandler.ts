@@ -1,6 +1,9 @@
 import type { EventHandler } from '@/simulation/events/EventHandler.ts';
 import type { ActionEndEvent } from '@/simulation/events/event.types.ts';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext.ts';
+import { isBattleSkillLikeAction } from '@/simulation/compiler/types';
+
+const ULT_ENERGY_PER_RECOVERED_SP = 6.5 / 100;
 
 export class ActionEndHandler implements EventHandler<ActionEndEvent> {
   handle(e: ActionEndEvent, ctx: SimulationContext) {
@@ -41,7 +44,16 @@ export class ActionEndHandler implements EventHandler<ActionEndEvent> {
       const ueFraction = actualCost > 0 ? 1 - returnedConsumed / actualCost : 1;
 
       const ueTime = e.time - 0.01;
-      const selfGain = (action.node.ultimateEnergyGain ?? 0) * ueFraction;
+      const battleSkillRecoveredConsumed = Number((action as any)._recoveredConsumed) || 0;
+      const isBattleSkill = isBattleSkillLikeAction(action.node);
+      const actorMeta = ctx.getActorMeta(e.payload.actorId);
+      const battleSkillSelfGain =
+        battleSkillRecoveredConsumed > 0 && actorMeta.acceptSelfSpCostUltEnergy
+          ? battleSkillRecoveredConsumed * ULT_ENERGY_PER_RECOVERED_SP
+          : (action.node.ultimateEnergyGain ?? 0) * ueFraction;
+      const selfGain = isBattleSkill
+        ? battleSkillSelfGain
+        : (action.node.ultimateEnergyGain ?? 0) * ueFraction;
       if (selfGain > 0) {
         ctx.queue.enqueue({
           type: 'ULT_ENERGY_CHANGE',
@@ -51,7 +63,13 @@ export class ActionEndHandler implements EventHandler<ActionEndEvent> {
       }
 
       // Team gains — emit to all other actors that accept team energy
-      const teamGain = (action.node.teamUltimateEnergyGain ?? 0) * ueFraction;
+      const battleSkillTeamGain =
+        battleSkillRecoveredConsumed > 0
+          ? battleSkillRecoveredConsumed * ULT_ENERGY_PER_RECOVERED_SP
+          : (action.node.teamUltimateEnergyGain ?? 0) * ueFraction;
+      const teamGain = isBattleSkill
+        ? battleSkillTeamGain
+        : (action.node.teamUltimateEnergyGain ?? 0) * ueFraction;
       if (teamGain > 0) {
         for (const targetId of ctx.allTrackIds) {
           if (targetId === e.payload.actorId) continue;

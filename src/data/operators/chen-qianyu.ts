@@ -220,6 +220,7 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      ultimateEnergyGain: 10,
       segments: [
         {
           duration: 0.77,
@@ -231,7 +232,6 @@ const sheet: OperatorSheet = {
               hits: [
                 {
                   offset: 0.57,
-                  stagger: 10,
                   effects: [{ kind: 'physicalStatus', physicalType: 'lift' }],
                 },
               ],

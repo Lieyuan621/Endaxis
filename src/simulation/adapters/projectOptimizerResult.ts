@@ -27,6 +27,9 @@ interface EnemyAfflictionMarker {
   isDamageHit?: boolean;
   hitData?: any;
   damageHits?: any[];
+  sourceId?: string;
+  carryoverKey?: string;
+  disabled?: boolean;
 }
 
 interface EnemyAfflictionSegment {
@@ -38,6 +41,7 @@ interface EnemyAfflictionSegment {
   icon: string | null;
   row: number;
   tracksComboState: boolean;
+  sourceId?: string;
 }
 
 interface EnemyAfflictionGroup {
@@ -133,30 +137,33 @@ export function projectEnemyAfflictionViz(layout: any) {
       icon,
       row,
       tracksComboState: typeKey === "vulnerability",
+      sourceId: segment.sourceId,
+      carryoverKey: segment.carryoverKey,
+      disabled: segment.disabled === true,
     };
 
     if (segment.group === 0 || segment.group === 1) {
-      if (isMarker) out.physical.markers.push({ typeKey, time: start, stacks, icon, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData });
+      if (isMarker) out.physical.markers.push({ typeKey, time: start, stacks, icon, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData, sourceId: segment.sourceId });
       else out.physical.segments.push({ ...base, kind: "physical" });
       continue;
     }
 
     if (segment.group === 2) {
-      if (isMarker) out.attachment.markers.push({ typeKey, time: start, stacks, icon, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData });
+      if (isMarker) out.attachment.markers.push({ typeKey, time: start, stacks, icon, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData, sourceId: segment.sourceId });
       else out.attachment.segments.push({ ...base, kind: "attachment" });
       continue;
     }
 
     if (segment.group === 3) {
       rowMax.anomaly = Math.max(rowMax.anomaly, row);
-      if (isMarker) out.anomalies.markers.push({ typeKey, time: start, stacks, icon, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData });
+      if (isMarker) out.anomalies.markers.push({ typeKey, time: start, stacks, icon, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData, sourceId: segment.sourceId });
       else out.anomalies.segments.push({ ...base, kind: "anomaly" });
       continue;
     }
 
     if (segment.group === 4) {
       rowMax.status = Math.max(rowMax.status, row);
-      if (isMarker) out.statuses.markers.push({ typeKey, time: start, stacks, icon, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData });
+      if (isMarker) out.statuses.markers.push({ typeKey, time: start, stacks, icon, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData, sourceId: segment.sourceId });
       else out.statuses.segments.push({ ...base, kind: "status" });
     }
   }
@@ -221,6 +228,7 @@ function getRepresentativePhysicalMarker(
       time: physicalMarkers[0]!.time,
       stacks: 1,
       icon: null,
+      sourceId: physicalMarkers[0]!.sourceId,
     };
   }
 
@@ -237,6 +245,7 @@ function getRepresentativePhysicalMarker(
         Math.max(previousStacks, ...physicalMarkers.map((marker) => Number(marker.stacks) || 1)),
       ),
       icon: representative.icon,
+      sourceId: representative.sourceId,
     };
   }
 
@@ -246,6 +255,7 @@ function getRepresentativePhysicalMarker(
       time: representative.time,
       stacks: Math.min(4, Math.max(activeStacks, previousStacks + 1)),
       icon: representative.icon,
+      sourceId: representative.sourceId,
     };
   }
 
@@ -254,6 +264,7 @@ function getRepresentativePhysicalMarker(
     time: representative.time,
     stacks: Math.min(4, Math.max(activeStacks, previousStacks, Number(representative.stacks) || 1)),
     icon: representative.icon,
+    sourceId: representative.sourceId,
   };
 }
 

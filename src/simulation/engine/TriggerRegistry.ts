@@ -20,8 +20,10 @@ import {
   scheduleConsumption,
   checkStacks,
   dispatchSingleActorEffect,
+  conditionHasConsume,
 } from '@/simulation/events/effectDispatch';
 import { passesSkillFilter } from '@/data/filter';
+import { resolveEffectiveActionSkillType } from '@/simulation/events/actionSkillType';
 import { statusToKey } from '@/data/team-status';
 
 interface TriggerRegistryEntry {
@@ -234,8 +236,15 @@ export class TriggerRegistry {
       if (trigger.kind !== 'onActionStart') continue;
       const t = trigger as Extract<TriggerEvent, { kind: 'onActionStart' }>;
       if (action) {
-        if (t.skillTypes && !passesSkillFilter(t.skillTypes, action.node.type)) continue;
+        const effectiveType = resolveEffectiveActionSkillType(action, event.time, actorId, ctx);
+        if (t.skillTypes && !passesSkillFilter(t.skillTypes, effectiveType)) continue;
         if (t.skillId && !passesSkillFilter(t.skillId, action.node.skillId)) continue;
+        if (t.element) {
+          const allowed = Array.isArray(t.element) ? t.element : [t.element];
+          if (!allowed.includes(action.node.element as (typeof allowed)[number])) continue;
+        }
+      } else if (t.element) {
+        continue; // element-filtered trigger needs an action to match against
       }
       this.dispatch(
         entry.triggerEffect.effects,
@@ -258,7 +267,8 @@ export class TriggerRegistry {
       const { trigger } = entry.triggerEffect;
       if (trigger.kind !== 'duringAction') continue;
       const t = trigger as Extract<TriggerEvent, { kind: 'duringAction' }>;
-      if (t.skillTypes && !passesSkillFilter(t.skillTypes, action.node.type)) continue;
+      const effectiveType = resolveEffectiveActionSkillType(action, event.time, actorId, ctx);
+      if (t.skillTypes && !passesSkillFilter(t.skillTypes, effectiveType)) continue;
       if (t.skillId && !passesSkillFilter(t.skillId, action.node.skillId)) continue;
       const freezeDuration = action.freezeDuration ?? 0;
       this.dispatch(
@@ -444,19 +454,19 @@ export class TriggerRegistry {
 
       // ICD check (trigger-specific — hit-attached effects don't have ICD)
       if (resolved.icd !== undefined && resolved.icd > 0) {
-        const key = `${sourceTrackId}:${resolved.id!}`;
+        const key = resolved.icdGroup ?? `${sourceTrackId}:${resolved.id!}`;
         const last = this.lastFire.get(key) ?? -Infinity;
         if (time - last < resolved.icd) continue;
         this.lastFire.set(key, time);
       }
 
       // Condition check
-      if (!evaluateEffectCondition(resolved.condition, time, sourceTrackId, ctx)) continue;
+      if (!evaluateEffectCondition(resolved.condition, time, sourceTrackId, ctx, enemySnap)) continue;
 
-      // Schedule consumption if the condition has consume: true
+      // Schedule consumption if the condition (or any element of a compound condition) has consume.
       const cond = resolved.condition;
-      if (cond && 'consume' in cond && cond.consume) {
-        scheduleConsumption(cond, time, sourceTrackId, ctx, sourceSkillType, sourceSkillId);
+      if (conditionHasConsume(cond)) {
+        scheduleConsumption(cond!, time, sourceTrackId, ctx, sourceSkillType, sourceSkillId);
       }
 
       if (resolved.kind === 'consume') {

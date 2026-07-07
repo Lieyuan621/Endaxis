@@ -9,10 +9,21 @@ import { projectActionBuffs } from "./projection/projectActionBuffs";
 import { createDefaultStats } from "@/simulation/defaultActorStats";
 import { collectTriggerEffects, patchCombatSkills } from "@/data/collect";
 import estellaSheet from "@/data/operators/estella";
+import perlicaSheet from "@/data/operators/perlica";
+import mifuSheet from "@/data/operators/mifu";
 import { extractRawEntries, resolveHitsFromSheet } from "@/stores/timeline/resolveHits";
 import type { BaseStatValues } from "@/data/stats/types";
 import type { Effect, TriggerEffect } from "@/data/types";
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from "@/types";
+import { CRITERION_MECHANISMS } from "@/data/contingencyContracts/criteriaEffects";
+import { resetEnemyStaggerCarryover } from "@/simulation/state/EnemyState";
+import {
+  buildEffectiveEnemySystemConstants,
+  computeContingencyEnemyHealing,
+  getContingencyEnemyDamageCap,
+  getContingencyEnemyHealingRate,
+  getContingencyEnemyHpMultiplier,
+} from "@/data/contingencyContracts/criteriaEffects";
 
 type TrackPatch = Omit<Partial<ScenarioTrack>, "stats"> & {
   stats?: Partial<ScenarioTrack["stats"]>;
@@ -103,9 +114,14 @@ function createScenario(tracks: ScenarioTrack[]): ScenarioData {
 function runScenario(
   tracks: ScenarioTrack[],
   registry?: TriggerRegistry,
-  options: { lmdiAttributionMode?: "stacks" | "applier" } = {},
+  options: {
+    lmdiAttributionMode?: "stacks" | "applier";
+    systemConstants?: Record<string, any>;
+  } = {},
 ) {
-  const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+  const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks), {
+    systemConstants: options.systemConstants,
+  });
   const baseStatsByTrack = new Map<string, BaseStatValues>(
     actors.map((actor) => [actor.id, BASE_STATS]),
   );
@@ -224,7 +240,206 @@ function resolveSheetHits(
   return resolveHitsFromSheet([], rawEntries, 0, { preserveCondition: true });
 }
 
+function resolveOperatorSheetHits(
+  sheet: Parameters<typeof patchCombatSkills>[0],
+  skillKey: string,
+  segmentIndex = 0,
+  levelIndex = 11,
+  potential = 0,
+): ReturnType<typeof resolveHitsFromSheet> {
+  const flatSkills = patchCombatSkills(sheet, { talentStates: {}, potential });
+  const segment = flatSkills[skillKey]?.segments?.[segmentIndex];
+  const rawEntries = extractRawEntries({ segments: [segment] }, 0);
+  return resolveHitsFromSheet([], rawEntries, levelIndex, { preserveCondition: true });
+}
+
 describe("optimizer-native runtime parity", () => {
+  it("fully excludes disabled actions and restores them when re-enabled", () => {
+    const action = createAction("disabled_skill", "battleSkill", {
+      isDisabled: true,
+      spCost: 40,
+      gaugeGain: 20,
+      hits: [
+        {
+          offset: 0,
+          multiplier: 100,
+          spRecovery: 15,
+          spReturn: 0,
+          stagger: 30,
+          effects: [
+            {
+              id: "disabled-buff",
+              kind: "status",
+              stat: { modifier: "atkPercent" },
+              value: 10,
+              target: "self",
+              duration: 5,
+            },
+            {
+              id: "disabled-infliction",
+              kind: "infliction",
+              element: "heat",
+            },
+          ],
+        },
+      ],
+    });
+
+    const disabled = runScenario([createTrack("alpha", [action])]);
+
+    expect(disabled.simLog.some((entry) =>
+      entry.type === "ACTION_START" || entry.type === "DAMAGE_HIT" || entry.type === "STAGGER"
+    )).toBe(false);
+    expect(disabled.operatorLog).toHaveLength(0);
+    expect(disabled.enemyLog).toHaveLength(0);
+    expect(disabled.state.snapshot().enemy.stagger).toBe(0);
+    expect(disabled.state.snapshot().actors[0]?.resources.gauge).toBe(0);
+
+    action.isDisabled = false;
+    const enabled = runScenario([createTrack("alpha", [action])]);
+
+    expect(enabled.simLog).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "ACTION_START" }),
+      expect.objectContaining({ type: "DAMAGE_HIT" }),
+      expect.objectContaining({ type: "STAGGER" }),
+    ]));
+    expect(enabled.operatorLog).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "OPERATOR_EFFECT_APPLY", id: "disabled-buff" }),
+    ]));
+    expect(enabled.enemyLog.length).toBeGreaterThan(0);
+    expect(enabled.state.snapshot().enemy.stagger).toBe(30);
+    expect(enabled.state.snapshot().actors[0]?.resources.gauge).toBeCloseTo(2.6);
+  });
+
+  it("resets stagger carryover when switching to an enemy with different stagger config", () => {
+    const nextEnemyConfig = {
+      maxStagger: 120,
+      staggerNodeCount: 2,
+      staggerNodeDuration: 4,
+      staggerBreakDuration: 7,
+      executionRecovery: 25,
+    };
+    const carryover = {
+      stagger: {
+        value: 90,
+        maxStagger: 300,
+        breakRemaining: 6,
+        lockRemaining: 3,
+        staggerContributions: { alpha: 90 },
+        lastBreakContributions: { alpha: 300 },
+      },
+      infliction: { element: "heat", stacks: 2, remainingDuration: 5 },
+      statuses: [],
+    };
+    const reset = resetEnemyStaggerCarryover(carryover, nextEnemyConfig);
+
+    expect(reset.stagger).toEqual({
+      value: 0,
+      maxStagger: 120,
+      breakRemaining: 0,
+      lockRemaining: 0,
+      staggerContributions: {},
+      lastBreakContributions: {},
+    });
+    expect(reset.infliction).toEqual(carryover.infliction);
+
+    const track = createTrack("alpha", [
+      createAction("new_enemy_hit", "battleSkill", {
+        startTime: 1,
+        hits: [{ offset: 0, multiplier: 0, spRecovery: 0, spReturn: 0, stagger: 40 }],
+      }),
+    ]);
+    const compiled = compileScenario(createScenario([track]), {
+      systemConstants: nextEnemyConfig,
+    });
+    const result = simulate(
+      compiled.timeline,
+      compiled.teamConfig,
+      compiled.enemyConfig,
+      compiled.actors,
+      undefined,
+      undefined,
+      { initialEnemyState: reset },
+    );
+    const staggerLogs = result.simLog.filter((entry) => entry.type === "STAGGER");
+
+    expect(staggerLogs[0]).toMatchObject({
+      time: 0,
+      payload: { stagger: 0, isBroken: false },
+    });
+    expect(staggerLogs[1]).toMatchObject({
+      time: 1,
+      payload: { stagger: 40, nodeReachedIndex: 1, nodeEndTime: 5 },
+    });
+    expect(result.state.snapshot().enemy).toMatchObject({
+      stagger: 40,
+      isBroken: false,
+    });
+  });
+
+  it("keeps a disabled inherited combustion visible without importing or ticking it", () => {
+    const tracks = [createTrack("alpha", [])];
+    const compiled = compileScenario(createScenario(tracks));
+    const inheritedCombustion = {
+      stagger: { value: 0 },
+      infliction: null,
+      vulnerability: null,
+      debuffs: {
+        combustion: {
+          level: 2,
+          remainingDuration: 3,
+          nextTickDelay: 1,
+          sourceId: "alpha",
+          actionId: "carried-combustion",
+        },
+      },
+      statuses: [],
+      disabledEffects: ["debuff:combustion"],
+    };
+    const disabled = simulate(
+      compiled.timeline,
+      compiled.teamConfig,
+      compiled.enemyConfig,
+      compiled.actors,
+      undefined,
+      undefined,
+      { initialEnemyState: inheritedCombustion },
+    );
+    const disabledProjection = projectOptimizerResult({
+      simulation: disabled,
+      compiledScenario: compiled,
+      tracks,
+      viewDuration: 5,
+    });
+
+    expect(disabled.state.enemy.combustion).toBeNull();
+    expect(disabled.simLog.some((entry) => entry.type === "DAMAGE_HIT")).toBe(false);
+    expect(disabled.enemyLog).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: "DEBUFF_APPLY",
+        debuffType: "combustion",
+        carryoverKey: "debuff:combustion",
+        disabled: true,
+      }),
+    ]));
+    expect(disabledProjection.enemyAfflictionViz.anomalies.segments[0]).toMatchObject({
+      typeKey: "combustion",
+      carryoverKey: "debuff:combustion",
+      disabled: true,
+    });
+
+    const enabled = simulate(
+      compiled.timeline,
+      compiled.teamConfig,
+      compiled.enemyConfig,
+      compiled.actors,
+      undefined,
+      undefined,
+      { initialEnemyState: { ...inheritedCombustion, disabledEffects: [] } },
+    );
+    expect(enabled.simLog.some((entry) => entry.type === "DAMAGE_HIT")).toBe(true);
+  });
+
   it("compiles Endaxis UI state into optimizer-native scenario inputs", () => {
     const triggerEffects = [
       {
@@ -290,6 +505,7 @@ describe("optimizer-native runtime parity", () => {
           id: "alpha",
           element: "heat",
           accept_team_gauge: false,
+          accept_self_sp_cost_ult_energy: false,
           maxUltimateGauge: 150,
         },
       ],
@@ -315,13 +531,14 @@ describe("optimizer-native runtime parity", () => {
       staggerBreakDuration: 10,
       finisherRecovery: 100,
       defense: 100,
-      tier: "boss",
+      tier: "leader",
     });
     expect(compiled?.actors[0]).toMatchObject({
       id: "alpha",
       element: "heat",
       acceptTeamGauge: false,
       acceptTeamUltEnergy: false,
+      acceptSelfSpCostUltEnergy: false,
       ultimateEnergyCostOverride: 150,
     });
     expect(compiled?.triggerRegistry).toBeInstanceOf(TriggerRegistry);
@@ -333,6 +550,44 @@ describe("optimizer-native runtime parity", () => {
     expect(compiled?.enemyDef).toBe(100);
     expect(compiled?.endlineTime).toBe(9);
     expect(compiled?.lmdiAttributionMode).toBe("applier");
+  });
+
+  it("keeps existing combo ultimate energy fields unchanged at the Endaxis compile boundary", () => {
+    const tracks = [
+      createTrack("avywenna", [
+        createAction("combo", "comboSkill", {
+          gaugeGain: 10,
+          hits: [{ offset: 0, multiplier: 0, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+      createTrack("beta", []),
+    ];
+
+    const compiled = compileEndaxisScenario({
+      scenarioData: createScenario(tracks),
+      tracks,
+      characterRoster: [
+        {
+          id: "avywenna",
+          element: "electric",
+          comboSkill_ultimateEnergyGain: 0,
+          maxUltimateGauge: 100,
+        },
+        {
+          id: "beta",
+          element: "physical",
+          maxUltimateGauge: 100,
+        },
+      ],
+      systemConstants: {
+        maxSp: 300,
+        initialSp: 123,
+        spRegenRate: 8,
+        skillSpCostDefault: 100,
+      },
+    });
+
+    expect(compiled?.timeline.actions[0]?.node.gaugeGain).toBe(10);
   });
 
   it("routes newly resolved arts infliction effects from sheet hits into enemyLog", () => {
@@ -784,6 +1039,210 @@ describe("optimizer-native runtime parity", () => {
     });
   });
 
+  it("lets Perlica combo damage benefit from potential 3 before the hit resolves", () => {
+    const runPerlicaCombo = (potential: number) => {
+      const comboHits = resolveOperatorSheetHits(perlicaSheet, "comboSkill", 0, 11, potential);
+      const tracks = [
+        createTrack("perlica", [
+          createAction("perlica_combo", "comboSkill", {
+            startTime: 0,
+            skillId: "perlica_combo",
+            element: "electric",
+            hits: comboHits,
+          }),
+        ]),
+      ];
+      const operatorInstances = [createOperatorInstance("op_perlica", "perlica")];
+      operatorInstances[0]!.potential = potential;
+      const team = createTeam("op_perlica");
+      const triggerEffects = collectRuntimeTriggers(team, operatorInstances, [], [], tracks);
+      const result = runScenario(tracks, registry(triggerEffects));
+      const comboHit = result.simLog.find(
+        (entry) =>
+          entry.type === "DAMAGE_HIT" &&
+          entry.payload.actionId === "perlica_combo_inst" &&
+          entry.payload.hitData.triggeredBy == null,
+      );
+      if (!comboHit || comboHit.type !== "DAMAGE_HIT") {
+        throw new Error("Missing Perlica combo damage hit");
+      }
+      return { result, hit: comboHit.payload.hitData };
+    };
+
+    const potential2 = runPerlicaCombo(2);
+    const potential3 = runPerlicaCombo(3);
+    const potential4 = runPerlicaCombo(4);
+
+    expect(potential3.hit._damageBreakdown?.attack).toBeGreaterThan(
+      potential2.hit._damageBreakdown?.attack ?? 0,
+    );
+    expect(potential4.hit._expectedDamage).toBeGreaterThan(potential3.hit._expectedDamage ?? 0);
+    expect(potential4.result.operatorLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "OPERATOR_EFFECT_APPLY",
+          targetTrackId: "perlica",
+          value: 20,
+          effect: expect.objectContaining({
+            stat: expect.objectContaining({ modifier: "atkPercent" }),
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("applies grizzled-edge 3-piece bonus at 1.5x when consuming physical vulnerability", () => {
+    const tracks = [
+      createTrack("alpha", [
+        createAction("apply_vulnerability", "battleSkill", {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "vulnerability" } as Effect],
+            },
+          ],
+        }),
+        createAction("consume_vulnerability", "battleSkill", {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "crush" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const gearInstances = [
+      createGearInstance("gear_armor", "grizzled-edge-armor"),
+      createGearInstance("gear_gloves", "grizzled-edge-gauntlets"),
+      createGearInstance("gear_kit", "grizzled-edge-push-knife"),
+    ];
+    const team = createTeam("op_alpha", null, {
+      armor: "gear_armor",
+      gloves: "gear_gloves",
+      kit1: "gear_kit",
+    });
+    const operatorInstances = [createOperatorInstance()];
+    const triggerEffects = collectRuntimeTriggers(team, operatorInstances, [], gearInstances, tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+    const physicalDmgBonusApplies = result.operatorLog.filter(
+      (
+        entry,
+      ): entry is Extract<(typeof result.operatorLog)[number], { type: "OPERATOR_EFFECT_APPLY" }> =>
+        entry.type === "OPERATOR_EFFECT_APPLY" &&
+        entry.targetTrackId === "alpha" &&
+        entry.effect?.sourceGroup === "gearSet" &&
+        entry.effect?.kind === "status" &&
+        entry.effect?.stat?.modifier === "dmgBonus" &&
+        entry.effect?.stat?.elements === "physical",
+    );
+
+    expect(physicalDmgBonusApplies.map((entry) => entry.value)).toEqual([6, 3]);
+    expect(physicalDmgBonusApplies.every((entry) => entry.stacks === 1)).toBe(true);
+  });
+
+  it.each([
+    {
+      name: "enemy staggered",
+      setupAction: createAction("break_enemy", "battleSkill", {
+        startTime: 0,
+        hits: [{ offset: 0, multiplier: 0, spRecovery: 0, spReturn: 0, stagger: 100 }],
+      }),
+    },
+    {
+      name: "Endministrator Originium Crystals",
+      setupAction: createAction("apply_crystals", "battleSkill", {
+        startTime: 0,
+        hits: [
+          {
+            offset: 0,
+            multiplier: 0,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [
+              {
+                kind: "status",
+                id: "endministrator-originium-crystals",
+                target: "enemy",
+                value: 0,
+                duration: 10,
+              } as Effect,
+            ],
+          },
+        ],
+      }),
+    },
+  ])("applies grizzled-edge 3-piece bonus at 1.5x when $name", ({ setupAction }) => {
+    const tracks = [
+      createTrack("alpha", [
+        setupAction,
+        createAction("apply_vulnerability", "battleSkill", {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "vulnerability" } as Effect],
+            },
+          ],
+        }),
+        createAction("consume_vulnerability", "battleSkill", {
+          startTime: 2,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "crush" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const gearInstances = [
+      createGearInstance("gear_armor", "grizzled-edge-armor"),
+      createGearInstance("gear_gloves", "grizzled-edge-gauntlets"),
+      createGearInstance("gear_kit", "grizzled-edge-push-knife"),
+    ];
+    const team = createTeam("op_alpha", null, {
+      armor: "gear_armor",
+      gloves: "gear_gloves",
+      kit1: "gear_kit",
+    });
+    const operatorInstances = [createOperatorInstance()];
+    const triggerEffects = collectRuntimeTriggers(team, operatorInstances, [], gearInstances, tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+    const physicalDmgBonusApplies = result.operatorLog.filter(
+      (
+        entry,
+      ): entry is Extract<(typeof result.operatorLog)[number], { type: "OPERATOR_EFFECT_APPLY" }> =>
+        entry.type === "OPERATOR_EFFECT_APPLY" &&
+        entry.targetTrackId === "alpha" &&
+        entry.effect?.sourceGroup === "gearSet" &&
+        entry.effect?.kind === "status" &&
+        entry.effect?.stat?.modifier === "dmgBonus" &&
+        entry.effect?.stat?.elements === "physical",
+    );
+
+    expect(physicalDmgBonusApplies.map((entry) => entry.value)).toEqual([6, 3]);
+  });
+
   it("honors onHit weapon skill type filters", () => {
     const weaponEffect: Effect = {
       id: "artzy-tyrannical-stack",
@@ -1073,6 +1532,77 @@ describe("optimizer-native runtime parity", () => {
     ]);
   });
 
+  it("keeps lift and knockdown as 20s physical vulnerability for delayed physical links", () => {
+    const tracks = [
+      createTrack("alpha", [
+        createAction("lift", "comboSkill", {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+            },
+          ],
+        }),
+        createAction("breach", "comboSkill", {
+          startTime: 10,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "breach" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const result = runScenario(tracks);
+
+    expect(result.enemyLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "PHYSICAL_STATUS",
+          physicalType: "lift",
+          effectiveDuration: 3,
+        }),
+        expect.objectContaining({
+          type: "VULNERABILITY_CHANGE",
+          trigger: "lift",
+          expiresAt: expect.any(Number),
+        }),
+        expect.objectContaining({
+          type: "VULNERABILITY_CONSUMED",
+          consumedBy: "breach",
+          consumedStacks: 1,
+        }),
+        expect.objectContaining({ type: "DEBUFF_APPLY", debuffType: "breach", level: 1 }),
+      ]),
+    );
+    const liftVulnerability = result.enemyLog.find(
+      (entry: any) => entry.type === "VULNERABILITY_CHANGE" && entry.trigger === "lift",
+    ) as any;
+    expect(liftVulnerability.expiresAt).toBeGreaterThan(10);
+  });
+
+  it("resolves Mifu ultimate hit multipliers as 200% then 500% at max level", () => {
+    const rawEntries = extractRawEntries(mifuSheet.combatSkills.ultimate, 0);
+    const hits = resolveHitsFromSheet([], rawEntries, 11);
+
+    expect(hits).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "mifu-ult-hit-1", multiplier: 200 }),
+        expect.objectContaining({ id: "mifu-ult-hit-2", multiplier: 500 }),
+      ]),
+    );
+  });
+
   it("projects optimizer-native logs through the UI result adapter", () => {
     const gearEffect: Effect = {
       id: "adapter-gear-stack",
@@ -1168,7 +1698,7 @@ describe("optimizer-native runtime parity", () => {
       createTrack(
         "alpha",
         [
-          createAction("gain", "battleSkill", {
+          createAction("gain", "comboSkill", {
             startTime: 0,
             duration: 1,
             gaugeGain: 10,
@@ -1186,6 +1716,312 @@ describe("optimizer-native runtime parity", () => {
     expect(gaugeEntry?.payload.gauge).toBe(15);
   });
 
+  it("converts consumed recovered SP to battle-skill ultimate energy but excludes returned SP", () => {
+    const simulation = runScenario([
+      createTrack(
+        "alpha",
+        [
+          createAction("spend-recovered-sp", "battleSkill", {
+            startTime: 0,
+            duration: 1,
+            spCost: 100,
+            gaugeGain: 0,
+            teamGaugeGain: 0,
+          }),
+        ],
+        {
+          maxGaugeOverride: 100,
+          stats: { ult_charge_eff: 100 },
+        },
+      ),
+      createTrack(
+        "beta",
+        [],
+        {
+          maxGaugeOverride: 100,
+          stats: { ult_charge_eff: 100 },
+        },
+      ),
+    ]);
+
+    const ueEntries = simulation.simLog.filter(
+      (entry) => entry.type === "ULT_ENERGY_CHANGE",
+    );
+
+    expect(ueEntries).toHaveLength(2);
+    expect(ueEntries.map((entry) => entry.payload)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actorId: "alpha",
+          sourceId: "spend-recovered-sp_inst",
+          change: 6.5,
+          gauge: 6.5,
+        }),
+        expect.objectContaining({
+          actorId: "beta",
+          sourceId: "spend-recovered-sp_inst",
+          change: 6.5,
+          gauge: 6.5,
+        }),
+      ]),
+    );
+  });
+
+  it("lets actors opt out of self SP-cost ultimate energy while still granting team energy", () => {
+    const simulation = runScenario([
+      createTrack(
+        "alpha",
+        [
+          createAction("spend-recovered-sp", "battleSkill", {
+            startTime: 0,
+            duration: 1,
+            spCost: 100,
+            gaugeGain: 0,
+            teamGaugeGain: 0,
+          }),
+        ],
+        {
+          maxGaugeOverride: 100,
+          stats: { ult_charge_eff: 100 },
+          acceptSelfSpCostUltEnergy: false,
+        },
+      ),
+      createTrack(
+        "beta",
+        [],
+        {
+          maxGaugeOverride: 100,
+          stats: { ult_charge_eff: 100 },
+        },
+      ),
+    ]);
+
+    const ueEntries = simulation.simLog.filter(
+      (entry) => entry.type === "ULT_ENERGY_CHANGE",
+    );
+
+    expect(ueEntries).toHaveLength(1);
+    expect(ueEntries[0]?.payload).toMatchObject({
+      actorId: "beta",
+      sourceId: "spend-recovered-sp_inst",
+      change: 6.5,
+      gauge: 6.5,
+    });
+    expect(simulation.state.snapshot().actors.find((actor) => actor.id === "alpha")?.resources.gauge)
+      .toBe(0);
+  });
+
+  it("does not convert returned SP consumption into battle-skill ultimate energy", () => {
+    const simulation = runScenario(
+      [
+        createTrack(
+          "alpha",
+          [
+            createAction("return-sp-setup", "basicAttack", {
+              startTime: 0,
+              duration: 0.1,
+              gaugeGain: 0,
+              spGain: 100,
+              spGainKind: "refund",
+            }),
+            createAction("spend-returned-sp", "battleSkill", {
+              startTime: 1,
+              duration: 1,
+              spCost: 100,
+              gaugeGain: 0,
+              teamGaugeGain: 0,
+            }),
+          ],
+          {
+            maxGaugeOverride: 100,
+            stats: { ult_charge_eff: 100 },
+          },
+        ),
+      ],
+      undefined,
+      { systemConstants: { spRegenRate: 0 } },
+    );
+
+    const ueEntries = simulation.simLog.filter(
+      (entry) => entry.type === "ULT_ENERGY_CHANGE",
+    );
+
+    expect(ueEntries).toEqual([]);
+  });
+
+  it("does not apply default battle-skill ultimate energy when no SP is recovered", () => {
+    const simulation = runScenario([
+      createTrack(
+        "alpha",
+        [
+          createAction("free-battle", "battleSkill", {
+            startTime: 0,
+            duration: 1,
+            spCost: 0,
+            gaugeGain: 6.5,
+            teamGaugeGain: 6.5,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 0,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+              },
+            ],
+          }),
+        ],
+        { maxGaugeOverride: 100 },
+      ),
+      createTrack("beta", [], { maxGaugeOverride: 100 }),
+    ]);
+
+    expect(simulation.simLog).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ type: "ULT_ENERGY_CHANGE" }),
+      ]),
+    );
+    expect(simulation.state.snapshot().actors.find((actor) => actor.id === "alpha")?.resources.gauge)
+      .toBe(0);
+    expect(simulation.state.snapshot().actors.find((actor) => actor.id === "beta")?.resources.gauge)
+      .toBe(0);
+  });
+
+  it("applies explicit fixed battle-skill ultimate energy when no SP is consumed", () => {
+    const simulation = runScenario([
+      createTrack(
+        "alpha",
+        [
+          createAction("fixed-free-battle", "battleSkill", {
+            startTime: 0,
+            duration: 1,
+            spCost: 0,
+            ultimateEnergyGain: 6.5,
+            teamUltimateEnergyGain: 6.5,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 0,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+              },
+            ],
+          }),
+        ],
+        { maxGaugeOverride: 100 },
+      ),
+      createTrack("beta", [], { maxGaugeOverride: 100 }),
+    ]);
+
+    const ueEntries = simulation.simLog.filter(
+      (entry) => entry.type === "ULT_ENERGY_CHANGE",
+    );
+
+    expect(ueEntries).toHaveLength(2);
+    expect(ueEntries.map((entry) => entry.payload)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actorId: "alpha",
+          sourceId: "fixed-free-battle_inst",
+          change: 6.5,
+          gauge: 6.5,
+        }),
+        expect.objectContaining({
+          actorId: "beta",
+          sourceId: "fixed-free-battle_inst",
+          change: 6.5,
+          gauge: 6.5,
+        }),
+      ]),
+    );
+  });
+
+  it("does not consume link stacks when the active action branch is treated as comboSkill", () => {
+    const readyStatus: Effect = {
+      id: "camille-hunter-pursuit-ready",
+      kind: "status",
+      target: "self",
+      duration: 10,
+    } as Effect;
+    const linkStatus: Effect = {
+      id: "two-link-stacks",
+      kind: "status",
+      stat: { modifier: "link" },
+      target: "team",
+      duration: 10,
+      stacks: 2,
+      maxStacks: 2,
+    } as Effect;
+    const result = runScenario([
+      createTrack("alpha", [
+        createAction("setup", "battleSkill", {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [readyStatus, linkStatus],
+            },
+          ],
+        }),
+        createAction("pursuit", "battleSkill", {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              _condition: {
+                kind: "not",
+                condition: { kind: "operatorStatus", status: "camille-hunter-pursuit-ready" },
+              },
+            },
+            {
+              offset: 0,
+              multiplier: 100,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              treatAsSkillType: "comboSkill",
+              _condition: { kind: "operatorStatus", status: "camille-hunter-pursuit-ready" },
+            },
+          ],
+        }),
+        createAction("consume", "battleSkill", {
+          startTime: 2,
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ]);
+
+    const pursuitHit = result.simLog.find(
+      (entry: any) =>
+        entry.type === "DAMAGE_HIT" && entry.payload.actionId === "pursuit_inst",
+    ) as any;
+    const consumeHit = result.simLog.find(
+      (entry: any) =>
+        entry.type === "DAMAGE_HIT" && entry.payload.actionId === "consume_inst",
+    ) as any;
+
+    expect(pursuitHit?.payload.hitData.skillType).toBe("comboSkill");
+    expect(pursuitHit?.payload.hitData.consumedStacks?.link).toBeUndefined();
+    expect(consumeHit?.payload.hitData.consumedStacks).toEqual({ link: 2 });
+    expect(result.simLog).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          type: "LINK_CONSUMED",
+          payload: expect.objectContaining({ actionId: "pursuit_inst" }),
+        }),
+      ]),
+    );
+  });
+
   it("blocks positive ultimate energy gains during own ultimate enhancement window", () => {
     const simulation = runScenario([
       createTrack(
@@ -1198,12 +2034,12 @@ describe("optimizer-native runtime parity", () => {
               enhancementTime: 5,
               gaugeCost: 50,
             }),
-            createAction("gain-inside", "battleSkill", {
+            createAction("gain-inside", "comboSkill", {
               startTime: 2,
               duration: 1,
               gaugeGain: 10,
             }),
-            createAction("gain-after", "battleSkill", {
+            createAction("gain-after", "comboSkill", {
               startTime: 8,
               duration: 1,
               gaugeGain: 10,
@@ -1266,6 +2102,7 @@ describe("optimizer-native runtime parity", () => {
           end: 10,
           stacks: 1,
           icon: null,
+          sourceId: "alpha",
           effect: { kind: "status", id: "resistanceShred" },
         },
       ],
@@ -1289,6 +2126,7 @@ describe("optimizer-native runtime parity", () => {
     expect(viz.statuses.segments[0]).toMatchObject({
       typeKey: "resistanceShred",
       kind: "status",
+      sourceId: "alpha",
     });
     expect(viz.anomalies.rowCount).toBe(2);
     expect(viz.statuses.rowCount).toBe(1);
@@ -1331,5 +2169,654 @@ describe("optimizer-native runtime parity", () => {
       expect.objectContaining({ typeKey: "vulnerability", time: 0, stacks: 1 }),
       expect.objectContaining({ typeKey: "crush", time: 2, stacks: 3 }),
     ]);
+  });
+});
+
+describe("controlled-operator target scope", () => {
+  const cryoTrigger = (): TriggerEffect => ({
+    trigger: { kind: "onActionStart", skillTypes: "battleSkill", triggerScope: "global" },
+    effects: [
+      {
+        kind: "status",
+        id: "test-cryo",
+        target: "controlled",
+        stacks: 1,
+        maxStacks: 4,
+        duration: 20,
+        name: "Cryo",
+      } as Effect,
+    ],
+  });
+
+  function runWithControl(
+    tracks: ScenarioTrack[],
+    segments: { startTime: number; operatorId: string | null }[],
+    entries: NonNullable<TrackPatch["triggerEffects"]>,
+  ) {
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+    const baseStatsByTrack = new Map<string, BaseStatValues>(
+      actors.map((actor) => [actor.id, BASE_STATS]),
+    );
+    return simulate(timeline, teamConfig, enemyConfig, actors, new TriggerRegistry(entries), undefined, {
+      baseStatsByTrack,
+      enemyDef: 100,
+      controlledOperatorSegments: segments,
+    });
+  }
+
+  const cryoApplies = (result: ReturnType<typeof runWithControl>) =>
+    result.operatorLog
+      .filter(
+        (e): e is Extract<typeof e, { type: "OPERATOR_EFFECT_APPLY" }> =>
+          e.type === "OPERATOR_EFFECT_APPLY",
+      )
+      .filter((e) => e.id === "test-cryo");
+
+  it("applies a target:'controlled' status to the controlled operator, not the caster", () => {
+    const result = runWithControl(
+      [
+        createTrack("A", [createAction("a-bs", "battleSkill", { startTime: 0 })]),
+        createTrack("B", []),
+      ],
+      [{ startTime: 0, operatorId: "B" }],
+      [{ sourceTrackId: "A", triggerEffect: cryoTrigger() }],
+    );
+    const applies = cryoApplies(result);
+    expect(applies).toHaveLength(1);
+    expect(applies[0]!.targetTrackId).toBe("B");
+  });
+
+  it("follows a control switch over time", () => {
+    const result = runWithControl(
+      [
+        createTrack("A", [
+          createAction("a1", "battleSkill", { startTime: 0 }),
+          createAction("a2", "battleSkill", { startTime: 6 }),
+        ]),
+        createTrack("B", []),
+      ],
+      [
+        { startTime: 0, operatorId: "A" },
+        { startTime: 5, operatorId: "B" },
+      ],
+      [{ sourceTrackId: "A", triggerEffect: cryoTrigger() }],
+    );
+    expect(cryoApplies(result).map((e) => ({ time: e.time, target: e.targetTrackId }))).toEqual([
+      { time: 0, target: "A" },
+      { time: 6, target: "B" },
+    ]);
+  });
+
+  it("drops the status when nobody is controlled", () => {
+    const result = runWithControl(
+      [
+        createTrack("A", [createAction("a-bs", "battleSkill", { startTime: 0 })]),
+        createTrack("B", []),
+      ],
+      [{ startTime: 0, operatorId: null }],
+      [{ sourceTrackId: "A", triggerEffect: cryoTrigger() }],
+    );
+    expect(cryoApplies(result)).toHaveLength(0);
+  });
+});
+
+describe("Heat Loss criterion end-to-end (group 1003)", () => {
+  const heatLossCryoId = "cc:heat-loss:cryo";
+  const mech = CRITERION_MECHANISMS[1003]!;
+  // Registry entries for a given level (idx): level-invariant freeze trigger + the level's cast trigger.
+  const entriesFor = (idx: number): NonNullable<TrackPatch["triggerEffects"]> =>
+    [...(mech.triggers ?? []), ...(mech.triggersByLevel![idx]!)].map((te) => ({
+      sourceTrackId: "A",
+      triggerEffect: te,
+    }));
+
+  // Caster A controlled throughout; most casts are spaced well beyond the per-caster 1s ICD.
+  function run(idx: number, castTimes: number[], initialEffects?: any[]) {
+    const actions = castTimes.map((t, i) =>
+      createAction(`bs${i}`, "battleSkill", { startTime: t }),
+    );
+    const tracks = [createTrack("A", actions)];
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+    const baseStatsByTrack = new Map<string, BaseStatValues>(
+      actors.map((actor) => [actor.id, BASE_STATS]),
+    );
+    const result = simulate(
+      timeline,
+      teamConfig,
+      enemyConfig,
+      actors,
+      new TriggerRegistry(entriesFor(idx)),
+      undefined,
+      {
+        baseStatsByTrack,
+        enemyDef: 100,
+        controlledOperatorSegments: [{ startTime: 0, operatorId: "A" }],
+        initialEffects,
+      },
+    );
+    const applies = (id: string) =>
+      result.operatorLog.filter(
+        (e): e is Extract<typeof e, { type: "OPERATOR_EFFECT_APPLY" }> =>
+          e.type === "OPERATOR_EFFECT_APPLY" && e.id === id,
+      );
+    return { applies };
+  }
+
+  it("level 2: adds a Cryo stack per (icd-gated) cast and freezes on the 4th", () => {
+    const { applies } = run(1, [0, 4, 8, 12]);
+    const cryo = applies(heatLossCryoId);
+    expect(cryo.map((e) => e.cumulativeStacks)).toEqual([1, 2, 3, 4]);
+    const frozen = applies("cc:frozen");
+    expect(frozen).toHaveLength(1);
+    expect(frozen[0]!.targetTrackId).toBe("A");
+  });
+
+  it("level 1: adds a Cryo stack every 2 casts (team-wide toggle)", () => {
+    const { applies } = run(0, [0, 4, 8, 12]);
+    // 4 counted casts → bank, cryo, bank, cryo → 2 stacks, no freeze.
+    expect(applies(heatLossCryoId)).toHaveLength(2);
+    expect(applies("cc:frozen")).toHaveLength(0);
+  });
+
+  it("per-caster 1s recast cooldown: sub-second casts are ignored", () => {
+    const { applies } = run(1, [0, 0.5, 1, 1.5, 2]);
+    expect(applies(heatLossCryoId).map((e) => e.time)).toEqual([0, 1, 2]);
+  });
+
+  it("shares the 1s Cryo cooldown across Heat Loss criteria and trigger sources", () => {
+    const tracks = [
+      createTrack("A", [
+        createAction("a-bs-0", "battleSkill", { startTime: 0 }),
+        createAction("a-bs-1", "battleSkill", { startTime: 1 }),
+      ]),
+      createTrack("B", [createAction("b-cs", "comboSkill", { startTime: 0.5 })]),
+    ];
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+    const baseStatsByTrack = new Map<string, BaseStatValues>(
+      actors.map((actor) => [actor.id, BASE_STATS]),
+    );
+    const result = simulate(
+      timeline,
+      teamConfig,
+      enemyConfig,
+      actors,
+      new TriggerRegistry([
+        {
+          sourceTrackId: "A",
+          triggerEffect: CRITERION_MECHANISMS[1003]!.triggersByLevel![1]![0]!,
+        },
+        {
+          sourceTrackId: "B",
+          triggerEffect: CRITERION_MECHANISMS[1004]!.triggersByLevel![1]![0]!,
+        },
+      ]),
+      undefined,
+      {
+        baseStatsByTrack,
+        enemyDef: 100,
+        controlledOperatorSegments: [{ startTime: 0, operatorId: "A" }],
+      },
+    );
+    const cryoTimes = result.operatorLog
+      .filter((event) => event.type === "OPERATOR_EFFECT_APPLY" && event.id === heatLossCryoId)
+      .map((event) => event.time);
+
+    expect(cryoTimes).toEqual([0, 1]);
+  });
+
+  it("blocks new Cryo stacks while the controlled operator is Frozen", () => {
+    // Freeze lands at t=12 (4th stack) and lasts 5s. The t=16 cast clears the 1s ICD but is
+    // blocked by Frozen; the t=20 cast lands after Frozen expires and starts a fresh stack.
+    const { applies } = run(1, [0, 4, 8, 12, 16, 20]);
+    expect(applies(heatLossCryoId).map((e) => e.cumulativeStacks)).toEqual([1, 2, 3, 4, 1]);
+    expect(applies("cc:frozen")).toHaveLength(1);
+  });
+
+  it("a cryo-immune controlled operator (e.g. Estella talent 2) accrues no Cryo", () => {
+    // Pre-apply the immunity marker on the controlled operator (as Estella's passive talent would).
+    const { applies } = run(1, [0, 4, 8, 12], [
+      { targetTrackId: "A", id: "cryo-infliction-immune" },
+    ]);
+    expect(applies(heatLossCryoId)).toHaveLength(0);
+    expect(applies("cc:frozen")).toHaveLength(0);
+  });
+});
+
+describe("Lysis (Freeze extend + dispel) end-to-end (1003 Heat Loss + 1017 Pyrolysis)", () => {
+  const hl = CRITERION_MECHANISMS[1003]!;
+  const pyro = CRITERION_MECHANISMS[1017]!; // heat-element dispel
+
+  // Heat Loss level 2 (every cast) + Pyrolysis extend/dispel triggers, all sourced from "A".
+  const entries: NonNullable<TrackPatch["triggerEffects"]> = [
+    ...(hl.triggers ?? []),
+    ...hl.triggersByLevel![1]!,
+    ...(pyro.triggers ?? []),
+  ].map((te) => ({ sourceTrackId: "A", triggerEffect: te }));
+
+  function runActions(actions: Action[]) {
+    const tracks = [createTrack("A", actions)];
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+    const baseStatsByTrack = new Map<string, BaseStatValues>(
+      actors.map((actor) => [actor.id, BASE_STATS]),
+    );
+    const result = simulate(
+      timeline,
+      teamConfig,
+      enemyConfig,
+      actors,
+      new TriggerRegistry(entries),
+      undefined,
+      {
+        baseStatsByTrack,
+        enemyDef: 100,
+        controlledOperatorSegments: [{ startTime: 0, operatorId: "A" }],
+      },
+    );
+    const ops = (type: string, id: string) =>
+      result.operatorLog.filter((e: any) => e.type === type && e.id === id);
+    return { ops };
+  }
+
+  // Four icd-clearing battle-skill casts → Cryo→4 → Freeze at t=12.
+  const freezeRamp = [0, 4, 8, 12].map((t, i) =>
+    createAction(`bs${i}`, "battleSkill", { startTime: t }),
+  );
+
+  it("extends the Freeze window to 15s while a lysis criterion is active", () => {
+    const { ops } = runActions(freezeRamp);
+    const frozen = ops("OPERATOR_EFFECT_APPLY", "cc:frozen") as any[];
+    expect(frozen.some((e) => e.expiresAt === 27)).toBe(true); // 12 + 15, not the base 12 + 5
+  });
+
+  it("a matching-element Combo Skill dispels Freeze and leaves one Cryo stack", () => {
+    const { ops } = runActions([
+      ...freezeRamp,
+      createAction("heatCast", "comboSkill", { startTime: 14, element: "heat" }),
+    ]);
+    const expired = ops("OPERATOR_EFFECT_EXPIRE", "cc:frozen") as any[];
+    expect(expired.some((e) => e.time === 14 && e.consumed)).toBe(true);
+    const cryo = ops("OPERATOR_EFFECT_APPLY", "cc:heat-loss:cryo") as any[];
+    expect(cryo.some((e) => e.time === 14 && e.cumulativeStacks === 1)).toBe(true);
+  });
+
+  it("a matching-element Ultimate dispels Freeze without leaving Cryo", () => {
+    const { ops } = runActions([
+      ...freezeRamp,
+      createAction("heatUlt", "ultimate", { startTime: 14, element: "heat" }),
+    ]);
+    const expired = ops("OPERATOR_EFFECT_EXPIRE", "cc:frozen") as any[];
+    expect(expired.some((e) => e.time === 14 && e.consumed)).toBe(true);
+    const cryoAt14 = (ops("OPERATOR_EFFECT_APPLY", "cc:heat-loss:cryo") as any[])
+      .filter((e) => e.time === 14);
+    expect(cryoAt14).toHaveLength(0);
+  });
+
+  it("a matching-element Basic Attack does not dispel Freeze", () => {
+    const { ops } = runActions([
+      ...freezeRamp,
+      createAction("heatBasic", "basicAttack", { startTime: 14, element: "heat" }),
+    ]);
+    const expiredAt14 = (ops("OPERATOR_EFFECT_EXPIRE", "cc:frozen") as any[])
+      .filter((e) => e.time === 14 && e.consumed);
+    expect(expiredAt14).toHaveLength(0);
+  });
+
+  it("a non-matching element does not dispel", () => {
+    const { ops } = runActions([
+      ...freezeRamp,
+      createAction("coldCast", "comboSkill", { startTime: 14, element: "cryo" }),
+    ]);
+    const expiredAt14 = (ops("OPERATOR_EFFECT_EXPIRE", "cc:frozen") as any[]).filter(
+      (e) => e.time === 14 && e.consumed,
+    );
+    expect(expiredAt14).toHaveLength(0);
+  });
+});
+
+describe("Contingency runtime enemy mechanics", () => {
+  it("resolves Vitality, Healing, and Surge from selected tag ids", () => {
+    expect(getContingencyEnemyHpMultiplier([900103])).toBe(3);
+    expect(getContingencyEnemyHealingRate([101102])).toBe(0.15);
+    expect(getContingencyEnemyDamageCap([102302])).toEqual({
+      windowSeconds: 0.1,
+      ratio: 0.25,
+    });
+    expect(buildEffectiveEnemySystemConstants({ enemyHp: 1000 }, [900102, 102302])).toMatchObject({
+      enemyHp: 2000,
+      enemyDamageCapWindowSeconds: 0.1,
+      enemyDamageCapRatio: 0.25,
+    });
+  });
+
+  it("caps enemy damage taken per 0.1 seconds for Surge", () => {
+    const result = runScenario(
+      [
+        createTrack("alpha", [
+          createAction("surgeHits", "battleSkill", {
+            startTime: 0,
+            hits: [
+              { offset: 0, multiplier: 1000, spRecovery: 0, spReturn: 0, stagger: 0 },
+              { offset: 0.05, multiplier: 1000, spRecovery: 0, spReturn: 0, stagger: 0 },
+              { offset: 0.1, multiplier: 1000, spRecovery: 0, spReturn: 0, stagger: 0 },
+            ],
+          }),
+        ]),
+      ],
+      undefined,
+      {
+        systemConstants: {
+          enemyHp: 1000,
+          enemyDamageCapWindowSeconds: 0.1,
+          enemyDamageCapRatio: 0.25,
+        },
+      },
+    );
+
+    const damages = result.simLog
+      .filter((entry) => entry.type === "DAMAGE_HIT")
+      .map((entry: any) => entry.payload.hitData._expectedDamage);
+
+    expect(damages.slice(0, 2).reduce((sum, value) => sum + value, 0)).toBe(250);
+    expect(damages[2]).toBe(250);
+    expect(
+      result.simLog.some(
+        (entry: any) => entry.type === "DAMAGE_HIT" && entry.payload.hitData._enemyDamageCap?.capped,
+      ),
+    ).toBe(true);
+  });
+
+  it("computes Healing from enemy control intervals without double-counting overlaps", () => {
+    const healing = computeContingencyEnemyHealing(
+      [
+        {
+          type: "PHYSICAL_STATUS",
+          time: 0,
+          physicalType: "lift",
+          sourceId: "alpha",
+          effectiveDuration: 2,
+        },
+        {
+          type: "DEBUFF_APPLY",
+          time: 1,
+          debuffType: "solidification",
+          level: 1,
+          expiresAt: 3,
+          sourceId: "beta",
+        },
+        {
+          type: "ENEMY_STATUS_APPLY",
+          time: 4,
+          id: "tangtang-oldenStare@tangtang_ultimate_inst",
+          value: 0,
+          stacks: 1,
+          maxStacks: 1,
+          expiresAt: 5,
+          sourceId: "gamma",
+        },
+      ] as any,
+      { maxHp: 1000, rate: 0.05, until: 10 },
+    );
+
+    expect(healing).toBeCloseTo(200);
+  });
+
+  it("filters Healing control intervals by enemy super armor thresholds", () => {
+    const events = [
+      {
+        type: "PHYSICAL_STATUS",
+        time: 0,
+        physicalType: "lift",
+        sourceId: "alpha",
+        effectiveDuration: 3,
+      },
+      {
+        type: "DEBUFF_APPLY",
+        time: 4,
+        debuffType: "solidification",
+        level: 1,
+        expiresAt: 7,
+        sourceId: "beta",
+      },
+    ] as any;
+
+    expect(
+      computeContingencyEnemyHealing(events, { maxHp: 1000, rate: 0.05, until: 10, superArmor: 20 }),
+    ).toBeCloseTo(300);
+    expect(
+      computeContingencyEnemyHealing(events, { maxHp: 1000, rate: 0.05, until: 10, superArmor: 30 }),
+    ).toBe(0);
+  });
+
+  it("counts Endministrator Originium Crystals as Healing control only up to super armor 20", () => {
+    const events = [
+      {
+        type: "ENEMY_STATUS_APPLY",
+        time: 0,
+        id: "endministrator-originium-crystals",
+        value: 0,
+        stacks: 1,
+        maxStacks: 1,
+        expiresAt: 4,
+        sourceId: "endministrator",
+      },
+    ] as any;
+
+    expect(
+      computeContingencyEnemyHealing(events, { maxHp: 1000, rate: 0.05, until: 10, superArmor: 20 }),
+    ).toBeCloseTo(200);
+    expect(
+      computeContingencyEnemyHealing(events, { maxHp: 1000, rate: 0.05, until: 10, superArmor: 30 }),
+    ).toBe(0);
+  });
+
+  it("uses 3s as the default Lift/Knock Down control duration", () => {
+    const result = runScenario([
+      createTrack("alpha", [
+        createAction("lift", "comboSkill", {
+          hits: [
+            {
+              id: "lift_hit",
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ]);
+
+    expect(result.enemyLog).toContainEqual(
+      expect.objectContaining({
+        type: "PHYSICAL_STATUS",
+        physicalType: "lift",
+        effectiveDuration: 3,
+      }),
+    );
+  });
+
+  it("does not count Lift/Knock Down as Healing control before vulnerability exists", () => {
+    const firstLift = runScenario([
+      createTrack("alpha", [
+        createAction("lift", "comboSkill", {
+          hits: [
+            {
+              id: "lift_hit",
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ]);
+    const firstLiftEvent = firstLift.enemyLog.find(
+      (event: any) => event.type === "PHYSICAL_STATUS" && event.physicalType === "lift",
+    ) as any;
+
+    expect(firstLiftEvent.actualControl).toBe(false);
+    expect(
+      computeContingencyEnemyHealing(firstLift.enemyLog as any, {
+        maxHp: 1000,
+        rate: 0.05,
+        until: 10,
+      }),
+    ).toBe(0);
+
+    const secondLift = runScenario([
+      createTrack("alpha", [
+        createAction("setup", "comboSkill", {
+          startTime: 0,
+          hits: [
+            {
+              id: "setup_hit",
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "vulnerability" } as Effect],
+            },
+          ],
+        }),
+        createAction("lift", "comboSkill", {
+          startTime: 1,
+          hits: [
+            {
+              id: "lift_hit",
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ]);
+    const secondLiftEvent = secondLift.enemyLog.find(
+      (event: any) => event.type === "PHYSICAL_STATUS" && event.physicalType === "lift",
+    ) as any;
+
+    expect(secondLiftEvent.actualControl).toBe(true);
+    expect(
+      computeContingencyEnemyHealing(secondLift.enemyLog as any, {
+        maxHp: 1000,
+        rate: 0.05,
+        until: 10,
+      }),
+    ).toBeCloseTo(150);
+  });
+
+  it("projects Lift/Knock Down duration only when the enemy can actually be controlled", () => {
+    const actions = [
+      createAction("setup", "comboSkill", {
+        startTime: 0,
+        hits: [
+          {
+            id: "setup_hit",
+            offset: 0,
+            multiplier: 0,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [{ kind: "physicalStatus", physicalType: "vulnerability" } as Effect],
+          },
+        ],
+      }),
+      createAction("lift", "comboSkill", {
+        startTime: 1,
+        hits: [
+          {
+            id: "lift_hit",
+            offset: 0,
+            multiplier: 0,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+          },
+        ],
+      }),
+    ];
+    const tracks = [createTrack("alpha", actions)];
+    const controlled = runScenario(tracks);
+    const controlledProjection = projectOptimizerResult({
+      simulation: controlled,
+      compiledScenario: compileScenario(createScenario(tracks)),
+      tracks,
+      viewDuration: 8,
+    });
+
+    expect(controlled.enemyLog).toContainEqual(
+      expect.objectContaining({ type: "PHYSICAL_STATUS", physicalType: "lift", actualControl: true }),
+    );
+    expect(controlledProjection.enemyAfflictionViz.physical.segments).toContainEqual(
+      expect.objectContaining({ typeKey: "lift", start: 1, end: 4 }),
+    );
+
+    const armored = runScenario(tracks, undefined, { systemConstants: { superArmor: 30 } });
+    const armoredProjection = projectOptimizerResult({
+      simulation: armored,
+      compiledScenario: compileScenario(createScenario(tracks), {
+        systemConstants: { superArmor: 30 },
+      }),
+      tracks,
+      viewDuration: 8,
+    });
+
+    expect(armored.enemyLog).toContainEqual(
+      expect.objectContaining({ type: "PHYSICAL_STATUS", physicalType: "lift", actualControl: false }),
+    );
+    expect(
+      armoredProjection.enemyAfflictionViz.physical.segments.some(
+        (segment: any) => segment.typeKey === "lift",
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("external dmgBonus via initial effect (Poor Basics regression)", () => {
+  function damageWith(initialEffects: any[]) {
+    const tracks = [
+      createTrack("A", [
+        createAction("ba", "basicAttack", {
+          element: "physical",
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+    const baseStatsByTrack = new Map<string, BaseStatValues>(
+      actors.map((actor) => [actor.id, BASE_STATS]),
+    );
+    const result = simulate(timeline, teamConfig, enemyConfig, actors, undefined, undefined, {
+      baseStatsByTrack,
+      enemyDef: 100,
+      initialEffects,
+    });
+    return damageFor(result, "ba_inst");
+  }
+
+  const dmgBonus = (value: number, external?: boolean) => ({
+    targetTrackId: "A",
+    id: `db-${value}-${external ? "x" : "a"}`,
+    stat: { modifier: "dmgBonus", skillTypes: "basicAttack" },
+    value,
+    sourceId: "A",
+    ...(external ? { external: true } : {}),
+  });
+
+  it("external -70% stacks multiplicatively with a +50% regular dmgBonus (not additively)", () => {
+    const plus50 = damageWith([dmgBonus(50)]); // ×1.5
+    const withExternal = damageWith([dmgBonus(50), dmgBonus(-70, true)]); // ×1.5 × 0.30
+    // External: ×0.30 of the +50% baseline. Additive bug would give (1+0.5-0.7)=0.8 → ratio ≈0.533.
+    expect(withExternal / plus50).toBeCloseTo(0.3, 2);
   });
 });
