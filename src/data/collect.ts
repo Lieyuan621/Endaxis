@@ -26,7 +26,7 @@ import type {
 } from './types';
 import { resolveLeveled, isTickGroup, createFinisherEntry, createDiveEntry } from './types';
 import type { TeamInstance, OperatorInstance, WeaponInstance, GearInstance } from '../types';
-import { getOperator, getWeapon, getGearPiece, getGearSet } from './index';
+import {getOperator, getWeapon, getGearPiece, getGearSet, resolveOperatorSlug} from './index';
 import { resolveEffectDefaults } from './effectPresets';
 import { uid } from '@/utils/uid';
 import { i18n } from '@/i18n';
@@ -187,7 +187,11 @@ export function collectEffects(
         }
         const idx = state - 1;
         const talentName = getOperatorTalentName(operatorSlug, talentFlatIndex, idx);
-        for (const patch of group.patches ?? []) collectedPatches.push(patch);
+        for (const [patchIdx, patch] of (group.patches ?? []).entries()) {
+          collectedPatches.push(
+              ensurePatchEffectIds(patch, makeEffectId(operatorSlug, `talent${groupIdx}`, `patch${patchIdx}`)),
+          );
+        }
         for (let effIdx = 0; effIdx < (group.effects?.length ?? 0); effIdx++) {
           const nested = group.effects![effIdx];
           const stamped = resolveEffect(
@@ -211,7 +215,11 @@ export function collectEffects(
       for (let i = 0; i < op.potentials.length; i++) {
         if (i + 1 > opInst.potential) continue;
         const potentialName = getOperatorPotentialName(operatorSlug, i);
-        for (const patch of op.potentials[i].patches ?? []) collectedPatches.push(patch);
+        for (const [patchIdx, patch] of (op.potentials[i].patches ?? []).entries()) {
+          collectedPatches.push(
+              ensurePatchEffectIds(patch, makeEffectId(operatorSlug, `potential${i}`, `patch${patchIdx}`)),
+          );
+        }
         for (let effIdx = 0; effIdx < (op.potentials[i].effects?.length ?? 0); effIdx++) {
           const nested = op.potentials[i].effects![effIdx];
           const effect = ensureEffectId(
@@ -1064,6 +1072,24 @@ function ensureEffectId<T extends { id?: string }>(effect: T, fallback: string):
   return effect;
 }
 
+/**
+ * Annotate patchHit.hit.effects with deterministic ids before pushing to collectedPatches.
+ * Without this, resolvePatches → resolveEffect falls through to uid() which generates random ids.
+ * Non-patchHit patches pass through unchanged.
+ */
+function ensurePatchEffectIds(patch: Patch, baseId: string): Patch {
+  if (patch.kind !== 'patchHit' || !patch.hit?.effects?.length) return patch
+  return {
+    ...patch,
+    hit: {
+      ...patch.hit,
+      effects: patch.hit.effects.map((e, i) =>
+          e.id ? e : { ...e, id: `${baseId}-effect${i}` },
+      ),
+    },
+  }
+}
+
 /** Stamp IDs on a trigger effect and any inner damageHit.hit.effects. */
 function stampTriggerEffect<
   T extends { id?: string; kind?: string; hit?: { effects?: { id?: string }[] } },
@@ -1256,6 +1282,7 @@ function expandCombatSkills(
  */
 export function patchCombatSkills(
   op: {
+    gameId?: OperatorSheet['gameId'];
     talents: OperatorSheet['talents'];
     potentials: OperatorSheet['potentials'];
     combatSkills: Record<string, CombatSkillEntry>;
@@ -1266,15 +1293,23 @@ export function patchCombatSkills(
   collectedById?: Map<string, CollectedEffect>,
 ): Record<string, FlatSkillEntry> {
   const patches: { patch: Patch; idx: number }[] = [];
+  // Why op.gameId is optional
+  const slug = resolveOperatorSlug(op.gameId) ?? 'unknown';
   for (let groupIdx = 0; groupIdx < op.talents.length; groupIdx++) {
     const state = opInst.talentStates[String(groupIdx)];
     if (!state || state <= 0) continue;
     const idx = state - 1;
-    for (const patch of op.talents[groupIdx].patches ?? []) patches.push({ patch, idx });
+    for (const [patchIdx, patch] of (op.talents[groupIdx].patches ?? []).entries()) patches.push({
+      patch: ensurePatchEffectIds(patch, makeEffectId(slug, `talent${groupIdx}`, `patch${patchIdx}`)),
+      idx,
+    });
   }
   for (let i = 0; i < op.potentials.length; i++) {
     if (i + 1 > opInst.potential) continue;
-    for (const patch of op.potentials[i].patches ?? []) patches.push({ patch, idx: 0 });
+    for (const [patchIdx, patch] of (op.potentials[i].patches ?? []).entries()) patches.push({
+      patch: ensurePatchEffectIds(patch, makeEffectId(slug, `potential${i}`, `patch${patchIdx}`)),
+      idx: 0,
+    });
   }
 
   if (patches.length === 0)
