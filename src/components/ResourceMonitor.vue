@@ -582,7 +582,7 @@ const afflictionItems = computed(() => {
   }
 
   // markers (need slotIndex by time group)
-  function pushGroupedMarkers(row, rowIndex, markers) {
+  function pushGroupedMarkers(row, markers) {
     const groups = []
     for (const m of markers || []) {
       const time = Number(m.time) || 0
@@ -597,6 +597,7 @@ const afflictionItems = computed(() => {
         typeKey,
         stacks: m.stacks || 1,
         icon: m.icon || null,
+        row: m.row,
         isDamageHit: !!m.isDamageHit,
         hitData: m.hitData || null,
         damageHits: Array.isArray(m.damageHits) ? m.damageHits : [],
@@ -608,6 +609,7 @@ const afflictionItems = computed(() => {
             typeKey,
             stacks: m.stacks || 1,
             icon: null,
+            row: m.row,
             isDamageHit: true,
             hitData,
             damageHits: [],
@@ -670,7 +672,7 @@ const afflictionItems = computed(() => {
         const slotIndex = it.isDamageHit ? idx : iconSlotIndex++
         out.push({
           row,
-          rowIndex,
+          rowIndex: Number(it.row) || 0,
           isMarker: true,
           startTime: g.time,
           endTime: null,
@@ -687,10 +689,10 @@ const afflictionItems = computed(() => {
     })
   }
 
-  pushGroupedMarkers('physical', 0, afflictionViz.value.physical.markers)
-  pushGroupedMarkers('attach', 0, afflictionViz.value.attachment.markers)
-  pushGroupedMarkers('anomaly', 0, afflictionViz.value.anomalies.markers)
-  pushGroupedMarkers('status', 0, afflictionViz.value.statuses.markers)
+  pushGroupedMarkers('physical', afflictionViz.value.physical.markers)
+  pushGroupedMarkers('attach', afflictionViz.value.attachment.markers)
+  pushGroupedMarkers('anomaly', afflictionViz.value.anomalies.markers)
+  pushGroupedMarkers('status', afflictionViz.value.statuses.markers)
 
   // calculate px/top in-place for rendering
   return out.map((it, idx) => {
