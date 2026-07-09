@@ -56,7 +56,7 @@ export function resolveLeveledValue(value: number | number[] | undefined, level:
 
 // ─── Character Roster ───────────────────────────────────────────────────────
 // Returns an array in the flat format the timeline store expects,
-// with character IDs as lowercased gamedata IDs (not optimizer slugs).
+// with character IDs as legacy lowercase IDs (not optimizer slugs).
 
 const rlv = resolveLeveledValue;
 

@@ -124,10 +124,6 @@ function deserializeFrameUnitData(data) {
   return stripFrameMeta(converted)
 }
 
-export function serializeGameData(data) {
-  return serializeFrameUnitData(data)
-}
-
 export function serializeProjectData(data) {
   return serializeFrameUnitData(data)
 }
