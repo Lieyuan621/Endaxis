@@ -289,12 +289,15 @@
       "gameTimeExpandTitle": "Expand Game Timeline"
     },
     "elementFilter": {
-      "all": "All",
+      "all": "All Elements",
       "blaze": "Heat",
       "cold": "Cryo",
       "emag": "Electric",
       "nature": "Nature",
       "physical": "Physical"
+    },
+    "classFilter": {
+      "all": "All Classes"
     },
     "equipmentDialog": {
       "allCategories": "All Categories",

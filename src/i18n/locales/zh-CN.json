@@ -291,12 +291,15 @@
       "gameTimeExpandTitle": "展开游戏时间轴"
     },
     "elementFilter": {
-      "all": "全部",
+      "all": "全部属性",
       "blaze": "灼热",
       "cold": "寒冷",
       "emag": "电磁",
       "nature": "自然",
       "physical": "物理"
+    },
+    "classFilter": {
+      "all": "全部职业"
     },
     "equipmentDialog": {
       "allCategories": "全部分类",
