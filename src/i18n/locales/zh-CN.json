@@ -14,6 +14,7 @@
     "moveUp": "上移",
     "max": "拉满",
     "new": "新",
+    "none": "无",
     "noneParen": "（无）",
     "off": "关闭",
     "old": "旧",
@@ -26,6 +27,9 @@
     "triggerTime": "触发时间",
     "stacks": "层数",
     "duration": "持续时间",
+    "value": "数值",
+    "name": "名称",
+    "element": "伤害属性",
     "unequip": "卸下",
     "uncategorized": "未分类",
     "unknown": "未知",
@@ -48,6 +52,7 @@
       "ACTION_START": "动作开始",
       "ACTION_END": "动作结束",
       "DAMAGE_HIT": "伤害",
+      "CD_REDUCTION": "冷却缩减",
       "SP_CHANGE": "技力变化",
       "SP_REGEN_PAUSE": "技力暂停回复",
       "ULTIMATE_CHARGE_CHANGE": "终结技充能",
@@ -70,6 +75,7 @@
       "damageHint": "伤害数值尚未接入完整计算，当前日志中的数值可能为 0。",
       "effectApply": "附着",
       "effectRemove": "移除",
+      "cdReductionText": "冷却缩减 {amount}s",
       "orphans": "未归属事件",
       "lines": "条目",
       "broken": "破防",
@@ -113,6 +119,13 @@
     "zhCN": "简体中文"
   },
   "timeline": {
+    "activityBar": {
+      "library": "干员技能库",
+      "contract": "危机合约",
+      "resourceMonitor": "资源监控",
+      "inspector": "技能详情",
+      "battleLog": "战斗日志"
+    },
     "analysis": {
       "button": "分析",
       "tooltip": "查看当前排轴的伤害分析",
@@ -261,6 +274,7 @@
     },
     "cursor": {
       "sp": "技力",
+      "spReturn": "返还",
       "stagger": "失衡",
       "gauge": "充能"
     },
@@ -407,7 +421,7 @@
     }
   },
   "skillType": {
-    "attack": "重击",
+    "attack": "普攻",
     "dodge": "闪避",
     "dive": "下落攻击",
     "execution": "处决",
@@ -476,9 +490,9 @@
     "group": {
       "exclusive": "专属效果",
       "physical": "物理异常",
-      "attach": "元素附着",
+      "attach": "法术附着",
       "burst": "元素爆发",
-      "status": "异常状态",
+      "status": "法术异常",
       "other": "其他"
     },
     "name": {
@@ -579,7 +593,7 @@
       "spRecoveryFlat": "SP回复",
       "spRecoveryPercent": "SP回复%",
       "ultimateEnergyCostPercent": "终结技能量消耗%",
-      "ultimateEnergyGain": "终结技能量获取",
+      "ultimateEnergyGain": "终结技充能",
       "cooldownReduction": "冷却缩减",
       "cooldownReductionPercent": "冷却缩减%",
       "shield": "护盾",
@@ -626,10 +640,134 @@
       "razorClawmark": "爪印斫痕",
       "sunderblades": "青霆剑",
       "electrification": "导电",
-      "ultEnergyGain": "终结技能量获取",
+      "ultEnergyGain": "终结技充能",
       "spRecovery": "技力回复",
       "spReturn": "技力返还"
     }
+  },
+  "hitEditor": {
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "elements": {
+      "physical": "物理",
+      "heat": "灼热",
+      "cryo": "寒冷",
+      "electric": "电磁",
+      "nature": "自然"
+    },
+    "skillTypes": {
+      "basicAttack": "普攻",
+      "battleSkill": "战技",
+      "comboSkill": "连携技",
+      "ultimate": "终结技",
+      "finalStrike": "处决",
+      "dive": "下落攻击"
+    },
+    "effectKinds": {
+      "status": "其他",
+      "infliction": "法术附着",
+      "burst": "异常爆发",
+      "reaction": "法术异常",
+      "physicalStatus": "物理异常",
+      "damageHit": "伤害命中",
+      "damageOverTime": "持续伤害",
+      "spRecovery": "技力回复",
+      "spReturn": "技力返还",
+      "ultEnergyGain": "终结技充能",
+      "consume": "消耗",
+      "oneTime": "一次性数值",
+      "cooldownReductionFlat": "固定冷却缩减",
+      "cooldownReductionPercent": "百分比冷却缩减"
+    },
+    "reactions": {
+      "combustion": "燃烧",
+      "electrification": "导电",
+      "solidification": "冻结",
+      "corrosion": "腐蚀",
+      "shatter": "破碎",
+      "breach": "破防",
+      "crush": "压制"
+    },
+    "physicalStatuses": {
+      "vulnerability": "破防",
+      "breach": "碎甲",
+      "crush": "猛击",
+      "lift": "击飞",
+      "knockdown": "倒地"
+    },
+    "stackStrategies": {
+      "REFRESH_DURATION": "刷新持续时间",
+      "INDEPENDENT": "独立叠层",
+      "REPLACE": "替换"
+    },
+    "applyTimings": {
+      "afterDamage": "伤害后",
+      "beforeDamage": "伤害前"
+    },
+    "multiplierModes": {
+      "each": "每跳",
+      "split": "分摊"
+    },
+    "consumeScopes": {
+      "team": "全队"
+    },
+    "fields": {
+      "reactionType": "异常类型",
+      "treatAsReaction": "视为异常类型",
+      "physicalType": "物理异常类型",
+      "effectiveness": "效果强度",
+      "defaultLevel": "默认等级",
+      "interval": "间隔",
+      "multiplierMode": "倍率模式",
+      "scaleByCrit": "按暴击缩放",
+      "snapshot": "快照",
+      "canCrit": "可暴击",
+      "skipFirstTick": "跳过首跳",
+      "cancelOnRefresh": "刷新时取消",
+      "consumeStacks": "消耗层数",
+      "consumeScope": "消耗范围",
+      "silent": "不触发连锁",
+      "external": "独立乘区",
+      "forced": "强制",
+      "condition": "效果条件",
+      "stat": "属性",
+      "target": "效果目标",
+      "scaling": "缩放",
+      "requiresInfliction": "需要异常",
+      "multiplierScaling": "倍率缩放",
+      "staggerScaling": "失衡缩放",
+      "hit": "命中覆盖",
+      "readConsumedStacks": "读取消耗层数",
+      "consumedStatEffects": "消耗的属性效果",
+      "operatorStatus": "干员状态",
+      "enemyStatus": "敌人状态",
+      "skillTypes": "技能类型",
+      "treatAsSkillType": "视为技能类型",
+      "skillId": "技能 ID",
+      "_condition": "判定点条件"
+    },
+    "title": "命中 {index}",
+    "basic": "基础",
+    "damageResource": "伤害与资源",
+    "effects": "效果",
+    "advanced": "高级",
+    "open": "编辑",
+    "save": "保存",
+    "deleteHit": "删除命中",
+    "newEffect": "新效果",
+    "effectKind": "效果分类",
+    "displayType": "具体效果",
+    "jsonInvalid": "JSON 无效",
+    "noEffect": "未选择效果",
+    "durationExtension": "持续延长",
+    "treatAsReaction": "按异常类型处理",
+    "treatAsSkillType": "按技能类型处理",
+    "maxStacks": "最大层数",
+    "stackStrategy": "叠层策略",
+    "icdGroup": "ICD 组",
+    "applyTiming": "生效时机",
+    "hide": "隐藏显示",
+    "ignoreTimeShift": "忽略时间偏移"
   },
   "propertiesPanel": {
     "noSelection": "未选中技能",
@@ -643,8 +781,6 @@
       "triggerWindowS": "触发窗口(f)",
       "spCost": "技力消耗",
       "gaugeCost": "充能消耗",
-      "gaugeGain": "自身额外充能",
-      "teamGaugeGain": "队友额外充能",
       "enhancementTimeS": "强化时间(f)",
       "followupDelayS": "下一段间隔(f)",
       "comboSegment": "连携段",
@@ -661,6 +797,7 @@
       "sp": "技力",
       "empty": "暂无判定点",
       "tickTime": "触发时间",
+      "tickMultiplier": "倍率",
       "tickStagger": "失衡值",
       "tickSpGain": "技力数值",
       "tickSpKind": "技力类型",

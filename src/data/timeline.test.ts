@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { patchCombatSkills } from "./collect";
+import { getOperator, getOperatorList } from "./index";
 import { getCharacterRoster } from "./timeline";
+
+function collectHitEffects(skill: any): any[] {
+  return (skill?.segments || [])
+    .flatMap((segment: any) => segment.damageGroups || [])
+    .flatMap((group: any) => group.hits || [])
+    .flatMap((hit: any) => hit.effects || []);
+}
 
 describe("timeline data roster", () => {
   it("does not synthesize default battle-skill ultimate energy from SP cost", () => {
@@ -41,5 +50,54 @@ describe("timeline data roster", () => {
     const arclight = getCharacterRoster().find((entry) => entry.id === "arclight");
 
     expect(arclight?.comboSkill_ultimateEnergyGain).toBe(5);
+  });
+
+  it("keeps Zhuang Fangyi runtime battle-skill branches out of the default hit editor list", () => {
+    const zhuangFangyi = getCharacterRoster().find((entry) => entry.id === "zhuang-fangyi");
+    const hits = zhuangFangyi?.battleSkill_damage_hits || [];
+    const visibleHits = hits.filter((hit: any) => hit.hideInEditor !== true && hit.hiddenInEditor !== true);
+
+    expect(hits.length).toBeGreaterThan(20);
+    expect(visibleHits).toHaveLength(1);
+  });
+
+  it("keeps Rossi Razor Clawmark DoT on a stable display id", () => {
+    const rossi = getOperator("rossi");
+    expect(rossi).toBeTruthy();
+
+    const patched = patchCombatSkills(rossi!, {
+      talentStates: { "0": 2 },
+      potential: 0,
+    });
+    const effects = collectHitEffects(patched.battleSkill);
+    const clawmarkDot = effects.find((effect: any) => (
+      effect.kind === "damageOverTime" && effect.name === "razorClawmark"
+    ));
+
+    expect(clawmarkDot?.id).toBe("razorClawmark");
+  });
+
+  it("keeps named operator DoTs on stable runtime ids after skill patching", () => {
+    const missingIds: string[] = [];
+
+    for (const { slug } of getOperatorList()) {
+      const operator = getOperator(slug);
+      if (!operator) continue;
+      const patched = patchCombatSkills(operator, {
+        talentStates: Object.fromEntries(
+          (operator.talents ?? []).map((group, index) => [String(index), Math.max(1, group.levels ?? 1)]),
+        ),
+        potential: operator.potentials?.length ?? 0,
+      });
+      for (const [skillKey, skill] of Object.entries(patched)) {
+        collectHitEffects(skill).forEach((effect: any, effectIndex: number) => {
+          if (effect.kind === "damageOverTime" && effect.name && !effect.id) {
+            missingIds.push(`${slug}.${skillKey}.effect${effectIndex}:${effect.name}`);
+          }
+        });
+      }
+    }
+
+    expect(missingIds).toEqual([]);
   });
 });

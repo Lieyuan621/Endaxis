@@ -247,8 +247,18 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     const stacks = event.stacks ?? 1;
     const duration = event.effectiveDuration;
     const shiftedExpiry = ctx.getShiftedTime(time, duration);
+    const stackStrategy = event.stackStrategy ?? 'REFRESH_DURATION';
 
-    if (state.infliction === null) {
+    if (state.infliction === null || stackStrategy === 'REPLACE') {
+      if (state.infliction !== null) {
+        ctx.queue.cancel(
+          e =>
+            e.type === 'ENEMY_EFFECT_EXPIRE' &&
+            (e as EnemyEffectExpireEvent).kind === 'infliction' &&
+            (e as Extract<EnemyEffectExpireEvent, { kind: 'infliction' }>).element ===
+              state.infliction?.element,
+        );
+      }
       const queue: SourceSlot[] = [];
       pushSourceQueue(queue, sourceId, stacks, MAX_INFLICTION_STACKS);
       state.infliction = {
@@ -270,12 +280,13 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       );
       ctx.enemyLog({
         type: 'INFLICTION_APPLY',
-        time,
-        element,
-        stacks,
-        sourceId,
-        effectiveDuration: duration,
-      });
+          time,
+          element,
+          stacks: state.infliction.stacks,
+          sourceId,
+          effectiveDuration: duration,
+          expiresAt: shiftedExpiry,
+        });
       this.registry?.onStatusApplied(
         `${element}Infliction`,
         undefined,
@@ -487,6 +498,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           ctx,
           sourceSkillType,
           sourceSkillId,
+          event.stackStrategy,
         );
         break;
 
@@ -500,6 +512,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           ctx,
           sourceSkillType,
           sourceSkillId,
+          event.stackStrategy,
         );
         if (hasVuln || forced) {
           // Only deal damage + stagger when vulnerability was present (not forced without vuln)
@@ -563,6 +576,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
             ctx,
             sourceSkillType,
             sourceSkillId,
+            event.stackStrategy,
           );
           if (forced) {
             // Forced without vuln: no damage, but still trigger status
@@ -616,6 +630,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
             ctx,
             sourceSkillType,
             sourceSkillId,
+            event.stackStrategy,
           );
           if (forced) {
             // Forced without vuln: no damage, but still apply debuff
@@ -643,12 +658,13 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     ctx: SimulationContext,
     sourceSkillType?: string,
     sourceSkillId?: string,
+    stackStrategy: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE' = 'REFRESH_DURATION',
   ): void {
     const state = ctx.state.enemy;
     if (state.hasInflictionBarrier('physical', time)) return;
     const effectiveDuration = duration || VULNERABILITY_DEFAULT_DURATION;
     const shiftedExpiry = ctx.getShiftedTime(time, effectiveDuration);
-    if (state.vulnerability === null) {
+    if (state.vulnerability === null || stackStrategy === 'REPLACE') {
       state.vulnerability = {
         stacks: 1,
         appliedAt: time,
@@ -1395,6 +1411,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       stacks,
       maxStacks,
       expiresAt,
+      stackStrategy,
       time,
       sourceId,
       sourceSkillType,
@@ -1408,6 +1425,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       stacks,
       maxStacks,
       expiresAt,
+      stackStrategy,
       sourceId,
       icon: event.icon,
       effect: event.effect,
@@ -1425,6 +1443,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       stacks,
       maxStacks,
       expiresAt,
+      stackStrategy,
       sourceId,
       icon: event.icon,
       effect: event.effect,

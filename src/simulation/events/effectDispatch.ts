@@ -739,6 +739,7 @@ export function dispatchEnemyEffects(
             sourceSkillId: skillId,
             actionId,
             effectiveDuration: lifecycle.duration,
+            stackStrategy: lifecycle.stackStrategy,
           } as EnemyEffectApplyEvent,
           0,
         );
@@ -756,6 +757,7 @@ export function dispatchEnemyEffects(
             sourceSkillId: skillId,
             actionId,
             effectiveDuration: lifecycle.duration,
+            stackStrategy: lifecycle.stackStrategy,
             effectiveness: resolved.effectiveness,
           } as EnemyEffectApplyEvent,
           0,
@@ -775,6 +777,7 @@ export function dispatchEnemyEffects(
             actionId,
             requiresInfliction: resolved.requiresInfliction,
             effectiveDuration: lifecycle.duration,
+            stackStrategy: lifecycle.stackStrategy,
             effectiveness: resolved.effectiveness,
             forced: true,
           } as EnemyEffectApplyEvent,
@@ -808,6 +811,7 @@ export function dispatchEnemyEffects(
             expiresAt: resolved.ignoreTimeShift
               ? time + duration
               : ctx.getShiftedTime(time, duration),
+            stackStrategy: lifecycle.stackStrategy,
             sourceId,
             sourceSkillType: skillType,
             sourceSkillId: skillId,

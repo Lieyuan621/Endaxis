@@ -976,6 +976,8 @@ export interface Hit {
   stagger?: Leveled<number>;
   durationExtension?: number;
   effects?: Effect[];
+  hideInEditor?: boolean;
+  hiddenInEditor?: boolean;
   treatAsReaction?: ArtsReaction | 'shatter' | 'breach' | 'crush';
 }
 

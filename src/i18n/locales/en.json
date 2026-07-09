@@ -14,6 +14,7 @@
     "moveUp": "Move up",
     "max": "Max",
     "new": "new",
+    "none": "None",
     "noneParen": "(none)",
     "off": "off",
     "old": "old",
@@ -26,6 +27,9 @@
     "triggerTime": "Trigger time",
     "stacks": "Stacks",
     "duration": "Duration",
+    "value": "Value",
+    "name": "Name",
+    "element": "Element",
     "unequip": "Unequip",
     "uncategorized": "Uncategorized",
     "unknown": "Unknown",
@@ -113,6 +117,13 @@
     "zhCN": "简体中文"
   },
   "timeline": {
+    "activityBar": {
+      "library": "Operator Skill Library",
+      "contract": "Contingency Contract",
+      "resourceMonitor": "Resource Monitor",
+      "inspector": "Skill Details",
+      "battleLog": "Battle Log"
+    },
     "analysis": {
       "button": "Analysis",
       "tooltip": "View damage analysis for current timeline",
@@ -261,6 +272,7 @@
     },
     "cursor": {
       "sp": "SP",
+      "spReturn": "Return",
       "stagger": "Stagger",
       "gauge": "Gauge"
     },
@@ -631,6 +643,130 @@
       "spReturn": "SP Return"
     }
   },
+  "hitEditor": {
+    "title": "Hit {index}",
+    "basic": "Basic",
+    "damageResource": "Damage & Resource",
+    "effects": "Effects",
+    "advanced": "Advanced",
+    "open": "Edit",
+    "save": "Save",
+    "deleteHit": "Delete hit",
+    "newEffect": "New effect",
+    "effectKind": "Effect category",
+    "displayType": "Specific effect",
+    "jsonInvalid": "Invalid JSON",
+    "noEffect": "No effect selected",
+    "durationExtension": "Duration extension",
+    "treatAsReaction": "Treat as reaction",
+    "treatAsSkillType": "Treat as skill type",
+    "maxStacks": "Max stacks",
+    "stackStrategy": "Stack strategy",
+    "icdGroup": "ICD group",
+    "applyTiming": "Apply timing",
+    "hide": "Hidden",
+    "ignoreTimeShift": "Ignore time shift",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "elements": {
+      "physical": "Physical",
+      "heat": "Heat",
+      "cryo": "Cryo",
+      "electric": "Electric",
+      "nature": "Nature"
+    },
+    "skillTypes": {
+      "basicAttack": "Basic attack",
+      "battleSkill": "Battle skill",
+      "comboSkill": "Combo skill",
+      "ultimate": "Ultimate",
+      "finalStrike": "Final strike",
+      "dive": "Dive"
+    },
+    "effectKinds": {
+      "status": "Status",
+      "infliction": "Infliction",
+      "burst": "Burst",
+      "reaction": "Reaction",
+      "physicalStatus": "Physical status",
+      "damageHit": "Damage hit",
+      "damageOverTime": "Damage over time",
+      "spRecovery": "SP recovery",
+      "spReturn": "SP return",
+      "ultEnergyGain": "Ultimate energy gain",
+      "consume": "Consume",
+      "oneTime": "One-time value",
+      "cooldownReductionFlat": "Flat cooldown reduction",
+      "cooldownReductionPercent": "Percent cooldown reduction"
+    },
+    "reactions": {
+      "combustion": "Combustion",
+      "electrification": "Electrification",
+      "solidification": "Solidification",
+      "corrosion": "Corrosion",
+      "shatter": "Shatter",
+      "breach": "Breach",
+      "crush": "Crush"
+    },
+    "physicalStatuses": {
+      "vulnerability": "Vulnerability",
+      "breach": "Breach",
+      "crush": "Crush",
+      "lift": "Lift",
+      "knockdown": "Knockdown"
+    },
+    "stackStrategies": {
+      "REFRESH_DURATION": "Refresh duration",
+      "INDEPENDENT": "Independent",
+      "REPLACE": "Replace"
+    },
+    "applyTimings": {
+      "afterDamage": "After damage",
+      "beforeDamage": "Before damage"
+    },
+    "multiplierModes": {
+      "each": "Each tick",
+      "split": "Split across ticks"
+    },
+    "consumeScopes": {
+      "team": "Team"
+    },
+    "fields": {
+      "reactionType": "Reaction type",
+      "treatAsReaction": "Treat as anomaly type",
+      "physicalType": "Physical status type",
+      "effectiveness": "Effectiveness",
+      "defaultLevel": "Default level",
+      "interval": "Interval",
+      "multiplierMode": "Multiplier mode",
+      "scaleByCrit": "Scale by crit",
+      "snapshot": "Snapshot",
+      "canCrit": "Can crit",
+      "skipFirstTick": "Skip first tick",
+      "cancelOnRefresh": "Cancel on refresh",
+      "consumeStacks": "Stacks to consume",
+      "consumeScope": "Consume scope",
+      "silent": "Silent",
+      "external": "External",
+      "forced": "Forced",
+      "condition": "Effect condition",
+      "stat": "Stat",
+      "target": "Effect target",
+      "scaling": "Scaling",
+      "requiresInfliction": "Requires infliction",
+      "multiplierScaling": "Multiplier scaling",
+      "staggerScaling": "Stagger scaling",
+      "hit": "Hit override",
+      "readConsumedStacks": "Read consumed stacks",
+      "consumedStatEffects": "Consumed stat effects",
+      "operatorStatus": "Operator status",
+      "enemyStatus": "Enemy status",
+      "skillTypes": "Skill types",
+      "treatAsSkillType": "Treat as skill type",
+      "skillId": "Skill ID",
+      "_condition": "Hit condition"
+    }
+  },
   "propertiesPanel": {
     "noSelection": "No skill selected",
     "globalMode": "Global Mode",
@@ -643,8 +779,6 @@
       "triggerWindowS": "Trigger Window(f)",
       "spCost": "SP Cost",
       "gaugeCost": "Charge Cost",
-      "gaugeGain": "Extra Self Charge",
-      "teamGaugeGain": "Extra Team Charge",
       "enhancementTimeS": "Enhancement Time (f)",
       "followupDelayS": "Next Delay (f)",
       "comboSegment": "Combo Segment",
@@ -661,6 +795,7 @@
       "sp": "SP",
       "empty": "No points",
       "tickTime": "Time",
+      "tickMultiplier": "Multiplier",
       "tickStagger": "Stagger",
       "tickSpGain": "SP Amount",
       "tickSpKind": "SP Type",

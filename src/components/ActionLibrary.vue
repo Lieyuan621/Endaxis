@@ -439,7 +439,7 @@ function onNativeDragEnd() {
 .header-icon-bar { width: 4px; height: 18px; background-color: #ffd700; }
 .char-name { margin: 0; color: #fff; font-size: 18px; letter-spacing: 1px; }
 .header-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; margin-right: -2px; }
-.header-tool-btn { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: 4px; background: transparent; color: rgba(255, 255, 255, 0.34); cursor: pointer; padding: 0; transition: color 0.14s ease, background-color 0.14s ease; }
+.header-tool-btn { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: 0; background: transparent; color: rgba(255, 255, 255, 0.34); cursor: pointer; padding: 0; transition: color 0.14s ease, background-color 0.14s ease; }
 .header-tool-btn:hover { color: rgba(255, 255, 255, 0.86); background: rgba(255, 255, 255, 0.055); }
 .loadout-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
 .loadout-action-btn {
@@ -447,7 +447,7 @@ function onNativeDragEnd() {
   border: 1px solid #333;
   color: #bbb;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s ease;
@@ -480,7 +480,7 @@ function onNativeDragEnd() {
   height: 60px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  border-radius: 0;
   cursor: grab;
   overflow: hidden;
   box-sizing: border-box;
@@ -525,7 +525,7 @@ function onNativeDragEnd() {
   cursor: grab;
   box-sizing: border-box;
   transition: all 0.15s ease;
-  border-radius: 2px;
+  border-radius: 0;
   min-width: 0;
 }
 

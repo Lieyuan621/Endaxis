@@ -15,6 +15,7 @@ export interface EnemyStatusEntry {
   maxStacks: number;
   expiresAt: number;
   sourceId: string;
+  stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
   icon?: string;
   /** When set, the entry is not yet active until this time. */
   startsAt?: number;
@@ -129,11 +130,18 @@ export type EnemyEffectApplyEvent = {
   /** Parent action ID — threads consumedStacks from the originating action through to reaction damage hits. */
   actionId?: string;
 } & (
-  | { kind: 'infliction'; element: ArtsElement; effectiveDuration: number; stacks?: number }
+  | {
+      kind: 'infliction';
+      element: ArtsElement;
+      effectiveDuration: number;
+      stacks?: number;
+      stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
+    }
   | {
       kind: 'physicalStatus';
       physicalType: PhysicalStatus;
       effectiveDuration: number;
+      stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
       forced?: boolean;
       effectiveness?: number;
     }
@@ -143,6 +151,7 @@ export type EnemyEffectApplyEvent = {
       level?: number;
       requiresInfliction?: ArtsElement[];
       effectiveDuration: number;
+      stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
       effectiveness?: number;
       /** True when applied via ReactionEffect (skill-defined), not from natural infliction consumption. Forced reactions don't deal damage. */
       forced?: boolean;
@@ -157,6 +166,7 @@ export type EnemyEffectApplyEvent = {
       stacks: number;
       maxStacks: number;
       expiresAt: number;
+      stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
       icon?: string;
       consumedStacks?: Record<string, number>;
       effect?: Effect;
@@ -268,6 +278,7 @@ export interface EnemyStatusApplyEvent {
   maxStacks: number;
   expiresAt: number;
   sourceId: string;
+  stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
   icon?: string;
   effect?: Effect;
   /** True when this apply is a stack-decrement continuation — icon should not be re-shown. */

@@ -476,6 +476,16 @@ function getTypeColor(typeKey) {
   return store.getColor?.(typeKey) || '#aaaaaa'
 }
 
+function getTypeTitle(typeKey) {
+  locale.value
+  for (const candidate of getDisplayKeyCandidates(typeKey)) {
+    const localeKey = `effects.name.${candidate}`
+    const out = t(localeKey)
+    if (out !== localeKey) return out
+  }
+  return String(typeKey || '')
+}
+
 function getAttachmentLineColors(headTypeKey, tailTypeKey = null) {
   return {
     start: getTypeColor(headTypeKey),
@@ -1147,7 +1157,7 @@ const staggerRatio = computed(() => {
                     @contextmenu.stop.prevent="openEnemyBuffContextMenu($event, it)"
                   >
                     <div v-if="it.isDamageHit" class="enemy-damage-diamond" :class="{ 'link-buffed': it.hitData?.consumedStacks?.link > 0 }"></div>
-                    <div v-else-if="!it.hideIcon" class="anomaly-icon-box">
+                    <div v-else-if="!it.hideIcon" class="anomaly-icon-box" :title="getTypeTitle(it.typeKey)">
                       <img :src="getTypeIcon(it.typeKey, it.icon)" class="anomaly-icon" />
                       <div class="anomaly-stacks">{{ it.stacks || 1 }}</div>
                     </div>
@@ -1156,6 +1166,7 @@ const staggerRatio = computed(() => {
                       v-if="!it.isMarker && it.barWidthPx > 0 && !reactedAttachmentKeys.has(it._key)"
                       class="anomaly-duration-bar"
                       :style="{ width: it.barWidthPx + 'px', backgroundColor: getTypeColor(it.typeKey) }"
+                      :title="getTypeTitle(it.typeKey)"
                     >
                       <div class="striped-bg"></div>
                     </div>
@@ -1908,13 +1919,25 @@ const staggerRatio = computed(() => {
   position: relative;
   z-index: 10;
   flex-shrink: 0;
-  pointer-events: none;
+  pointer-events: auto;
+  transition: filter 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.anomaly-icon-box:hover {
+  filter: brightness(1.18);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 4px 12px rgba(0, 0, 0, 0.46);
 }
 
 .anomaly-icon {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: filter 0.12s ease;
+}
+
+.anomaly-icon-box:hover .anomaly-icon {
+  filter: brightness(1.12) saturate(1.08);
 }
 
 .anomaly-stacks {
@@ -1941,6 +1964,13 @@ const staggerRatio = computed(() => {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   z-index: 1;
   margin-left: 2px;
+  pointer-events: auto;
+  transition: filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+.anomaly-duration-bar:hover {
+  filter: brightness(1.16) saturate(1.08);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .striped-bg {

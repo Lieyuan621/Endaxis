@@ -44,8 +44,8 @@ const displayLabel = computed(() => {
 
     if (total > 0 && idx > 0) {
       if (idx === total) {
-        const groupName = props.action.attackGroupName || (name ? name.replace(/\s*\d+\s*$/, '') : t('skillType.attack'))
-        return `${groupName}${suffix}`
+        const finalSegmentName = name.trim() || props.action.attackGroupName || t('skillType.attack')
+        return `${finalSegmentName}${suffix}`
       }
       return `A${idx}${suffix}`
     }

@@ -28,6 +28,7 @@ const sheet: OperatorSheet = {
           hit: {
             effects: [
               {
+                id: 'razorClawmark',
                 name: 'razorClawmark',
                 kind: 'damageOverTime',
                 element: 'physical',

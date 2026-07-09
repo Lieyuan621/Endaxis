@@ -177,6 +177,9 @@ const DMG_BONUS_DOWN_ICONS: Record<string, string> = {
 };
 
 const GLOBAL_DEFAULTS = { stacks: 1, maxStacks: 1, stackStrategy: 'REFRESH_DURATION' as const };
+const DEFAULT_STACK_STRATEGIES = {
+  reaction: 'REPLACE',
+} as const;
 
 function isNegativeDmgBonusEffect(effect: Effect | ResolvedEffect): boolean {
   if (effect.kind !== 'status' || effect.stat?.modifier !== 'dmgBonus') return false;
@@ -317,6 +320,10 @@ interface ResolvedLifecycle {
   icd: number;
 }
 
+export function getDefaultStackStrategy(effect?: Pick<EffectBase, 'kind'>): 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE' {
+  return DEFAULT_STACK_STRATEGIES[effect?.kind as keyof typeof DEFAULT_STACK_STRATEGIES] ?? 'REFRESH_DURATION';
+}
+
 export function resolveEffectLifecycle(effect: EffectBase): ResolvedLifecycle {
   return {
     duration:
@@ -328,7 +335,7 @@ export function resolveEffectLifecycle(effect: EffectBase): ResolvedLifecycle {
           ? effect.stacks[0]
           : effect.stacks) ?? 1,
     maxStacks: (Array.isArray(effect.maxStacks) ? effect.maxStacks[0] : effect.maxStacks) ?? 1,
-    stackStrategy: effect.stackStrategy ?? 'REFRESH_DURATION',
+    stackStrategy: effect.stackStrategy ?? getDefaultStackStrategy(effect),
     icd: effect.icd ?? 0,
   };
 }

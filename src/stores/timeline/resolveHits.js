@@ -112,6 +112,8 @@ export function resolveHitsFromSheet(storedHits = [], rawEntries = [], level = 0
       spReturn: Number(resolveLeveledValue(rawHit.spReturn, level)) || 0,
       stagger: Number(resolveLeveledValue(rawHit.stagger, level)) || 0,
       element: rawHit.element ?? rawEntry.element ?? stored.element,
+      ...(rawHit.hideInEditor ? { hideInEditor: true } : {}),
+      ...(rawHit.hiddenInEditor ? { hiddenInEditor: true } : {}),
       ...resolveMultiplierFromEntry(rawEntry, level),
     }
 
@@ -174,6 +176,8 @@ export function resolveHitsFromSheet(storedHits = [], rawEntries = [], level = 0
       spReturn: Number(resolveLeveledValue(rawHit.spReturn, level)) || 0,
       stagger: Number(resolveLeveledValue(rawHit.stagger, level)) || 0,
       element: rawHit.element ?? rawEntry.element,
+      ...(rawHit.hideInEditor ? { hideInEditor: true } : {}),
+      ...(rawHit.hiddenInEditor ? { hiddenInEditor: true } : {}),
       ...resolveMultiplierFromEntry(rawEntry, level),
     }
 

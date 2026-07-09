@@ -74,6 +74,8 @@ function flattenHitGroup(hg: any): any[] {
     spReturn: rlv(t.spReturn, 0),
     stagger: rlv(t.stagger, 0),
     effects: t.effects ?? [],
+    ...(t.hideInEditor ? { hideInEditor: true } : {}),
+    ...(t.hiddenInEditor ? { hiddenInEditor: true } : {}),
     ...(hg.condition != null ? { _condition: hg.condition } : {}),
     ...(t.treatAsReaction ? { treatAsReaction: t.treatAsReaction } : {}),
     ...(hg.treatAsSkillType ? { treatAsSkillType: hg.treatAsSkillType } : {}),
