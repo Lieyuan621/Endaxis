@@ -98,17 +98,17 @@ const gameEnumTerms = {
     },
     weaponType: {
       sword: '单手剑',
-      greatsword: '大剑',
-      polearm: '长枪',
-      handcannon: '手炮',
+      greatsword: '双手剑',
+      polearm: '长柄武器',
+      handcannon: '手铳',
       'arts-unit': '施术单元',
       artsunit: '施术单元',
     },
     slotType: {
       armor: '护甲',
       gloves: '护手',
-      kit: '套件',
-      accessory: '套件',
+      kit: '配件',
+      accessory: '配件',
     },
     quality: {
       green: '绿色',

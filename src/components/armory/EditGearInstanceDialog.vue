@@ -43,13 +43,6 @@ function formatStatLabel(effect) {
   return formatEquipmentEffectLabel(effect, t, locale.value)
 }
 
-function getDisplaySlotName(slotType) {
-  if (slotType === 'kit' || slotType === 'accessory') {
-    return String(locale.value || '').toLowerCase().startsWith('zh') ? '配件' : 'Accessory'
-  }
-  return getGameSlotTypeName(slotType, locale.value)
-}
-
 function update(updates) {
   if (props.instance) gearStore.updateGear(props.instance.id, updates)
 }
@@ -97,7 +90,7 @@ function formatStatValue(effect, value) {
             <div class="name">{{ getGearPieceGameName(instance.gearPieceId, locale) || instance.gearPieceId }}</div>
             <div class="tags">
               <span class="tag" :style="{ color, borderColor: color }">{{ getGameQualityName(quality, locale) }}</span>
-              <span class="tag">{{ getDisplaySlotName(piece.slotType) }}</span>
+              <span class="tag">{{ getGameSlotTypeName(piece.slotType, locale) }}</span>
               <span v-if="piece.setSlug" class="tag">{{ getGearSetGameName(piece.setSlug, locale) }}</span>
             </div>
             <div v-if="piece.defense" class="row">
