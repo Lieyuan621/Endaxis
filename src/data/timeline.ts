@@ -56,7 +56,7 @@ export function resolveLeveledValue(value: number | number[] | undefined, level:
 
 // ─── Character Roster ───────────────────────────────────────────────────────
 // Returns an array in the flat format the timeline store expects,
-// with character IDs as lowercased gamedata IDs (not optimizer slugs).
+// with character IDs as legacy lowercase IDs (not optimizer slugs).
 
 const rlv = resolveLeveledValue;
 
@@ -74,6 +74,8 @@ function flattenHitGroup(hg: any): any[] {
     spReturn: rlv(t.spReturn, 0),
     stagger: rlv(t.stagger, 0),
     effects: t.effects ?? [],
+    ...(t.hideInEditor ? { hideInEditor: true } : {}),
+    ...(t.hiddenInEditor ? { hiddenInEditor: true } : {}),
     ...(hg.condition != null ? { _condition: hg.condition } : {}),
     ...(t.treatAsReaction ? { treatAsReaction: t.treatAsReaction } : {}),
     ...(hg.treatAsSkillType ? { treatAsSkillType: hg.treatAsSkillType } : {}),

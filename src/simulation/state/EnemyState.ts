@@ -166,6 +166,11 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
   }
 
   applyStatus(entry: EnemyStatusEntry): void {
+    if (entry.stackStrategy === 'REPLACE') {
+      this.enemyStatusEffects.set(entry.id, { ...entry });
+      return;
+    }
+
     const existing = this.enemyStatusEffects.get(entry.id);
     const newStacks = Math.min((existing?.stacks ?? 0) + entry.stacks, entry.maxStacks);
     this.enemyStatusEffects.set(entry.id, { ...entry, stacks: newStacks });

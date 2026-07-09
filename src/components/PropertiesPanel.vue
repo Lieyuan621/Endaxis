@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useTimelineStore } from '../stores/timelineStore.js'
 import draggable from 'vuedraggable'
 import CustomNumberInput from './CustomNumberInput.vue'
+import HitEditorDialog from './HitEditorDialog.vue'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { useDragConnection } from '@/composables/useDragConnection.js'
 import { getRectPos } from '@/utils/layoutUtils.js'
@@ -10,18 +11,22 @@ import { useI18n } from 'vue-i18n'
 import { frameToTime, timeToFrame } from '@/utils/time.js'
 import { getDisplayKeyCandidates, resolveEffectDisplayKey } from '@/utils/effectDisplay.js'
 import {
+  canEditEditorEffectValue,
   createEditorEffect,
   createEditorHit,
   createHitModelId,
   ensureActionLikeModel,
   ensureEffectId,
+  filterEditorVisibleHits,
+  mergeEditorVisibleHits,
   normalizeHits,
+  retypeEditorEffect,
   toLegacyDisplayType,
 } from '@/utils/hitModel.js'
 
 const store = useTimelineStore()
 const connectionHandler = useDragConnection()
-const { t } = useI18n({ useScope: 'global' })
+const { t, tm } = useI18n({ useScope: 'global' })
 const props = defineProps({
   onResetPanel: {
     type: Function,
@@ -58,11 +63,10 @@ function getEffectDisplayName(type) {
 }
 
 const GROUP_DEFINITIONS = computed(() => [
-  { label: t('effects.group.physical'), keys: ['vulnerability', 'breach', 'crush', 'lift', 'knockdown', 'shatter'] },
+  { label: t('effects.group.physical'), keys: ['breach', 'crush', 'lift', 'knockdown'] },
   { label: t('effects.group.attach'), matcher: (key) => key.endsWith('_infliction') || key.endsWith('_attach') },
   { label: t('effects.group.burst'), matcher: (key) => key.endsWith('_burst') },
   { label: t('effects.group.status'), keys: ['combustion', 'electrification', 'solidification', 'corrosion'] },
-  { label: t('effects.group.other'), keys: ['default'] }
 ])
 
 const PORT_OPTIONS = computed(() => [
@@ -82,12 +86,27 @@ function getFullTypeName(type) {
   return out === key ? t('skillType.unknown') : out
 }
 
+function getEditorLabel(group, value) {
+  const key = String(value || '')
+  if (!key) return ''
+  const localeKey = `hitEditor.${group}.${key}`
+  const out = t(localeKey)
+  return out === localeKey ? key : out
+}
+
+function getHitElementLabel(hit) {
+  const element = hit?.element || targetData.value?.element
+  return element ? getEditorLabel('elements', element) : t('common.default')
+}
+
 // ===================================================================================
 // 2. 核心状态计算
 // ===================================================================================
 
 const isTicksExpanded = ref(false)
 const isBarsExpanded = ref(false)
+const editingHitIndex = ref(null)
+const hitEditorVisible = ref(false)
 const localSelectedAnomalyId = ref(null) // 用于库模式下的本地选中状态
 
 watch(() => store.selectedLibrarySkillId, () => {
@@ -111,6 +130,17 @@ const targetData = computed(() => {
 
 const isLibraryMode = computed(() => {
   return !!store.selectedLibrarySkillId && !store.selectedActionId
+})
+
+const isLibraryAggregateSkill = computed(() => {
+  if (!isLibraryMode.value) return false
+  const value = targetData.value
+  return (
+    value?.kind === 'group' ||
+    value?.kind === 'attack_group' ||
+    Array.isArray(value?.segments) ||
+    Array.isArray(value?.attackSegments)
+  )
 })
 
 watch(targetData, (value) => {
@@ -214,9 +244,16 @@ const editableHits = computed({
   get: () => {
     const hits = normalizeHits(targetData.value?.hits || [], targetData.value?.element)
     hits.forEach(ensureHitUiKey)
-    return hits
+    return filterEditorVisibleHits(hits)
   },
-  set: (val) => commitUpdate({ hits: normalizeHits(val, targetData.value?.element) })
+  set: (val) => commitUpdate({
+    hits: mergeEditorVisibleHits(targetData.value?.hits || [], val, targetData.value?.element),
+  })
+})
+
+const editingHit = computed(() => {
+  if (editingHitIndex.value === null) return null
+  return editableHits.value[editingHitIndex.value] || null
 })
 
 const activeAnomalyId = computed(() => {
@@ -285,7 +322,7 @@ function updateEffectProp(key, value) {
   const effect = hits[rowIndex]?.effects?.[colIndex]
   if (effect) {
     effect[key] = value
-    commitUpdate({ hits: normalizeHits(hits, targetData.value?.element) })
+    editableHits.value = hits
   }
 }
 
@@ -293,13 +330,25 @@ function updateEffectFrameProp(key, value) {
   updateEffectProp(key, timeValueFromFrame(value))
 }
 
+function commitEditableHits() {
+  editableHits.value = editableHits.value
+}
+
+function updateEffectType(value) {
+  const coords = currentSelectedCoords.value
+  if (!coords) return
+  const { rowIndex, colIndex } = coords
+  const hits = JSON.parse(JSON.stringify(editableHits.value))
+  const effect = hits[rowIndex]?.effects?.[colIndex]
+  if (!effect) return
+  hits[rowIndex].effects[colIndex] = retypeEditorEffect(effect, value)
+  editableHits.value = hits
+}
+
 function addRow() {
-  const explicitAllowed = Array.isArray(targetData.value?.allowedEffectTypes) ? targetData.value.allowedEffectTypes : []
-  const existingTypes = editableHits.value.flatMap(hit => (hit.effects || []).map(effect => resolveEffectDisplayKey(effect)).filter(Boolean))
-  const defaultType = explicitAllowed[0] || existingTypes[0] || currentCharacter.value?.exclusive_buffs?.[0]?.key || 'default'
-  const newEffect = createEditorEffect(defaultType)
+  const newEffect = createEditorEffect('default')
   const nextHits = [...editableHits.value, createEditorHit({ element: targetData.value?.element, effects: [newEffect] })]
-  commitUpdate({ hits: normalizeHits(nextHits, targetData.value?.element) })
+  editableHits.value = nextHits
   if (newEffect) {
     if (isLibraryMode.value) localSelectedAnomalyId.value = newEffect._id
     else store.setSelectedAnomalyId(newEffect._id)
@@ -307,16 +356,13 @@ function addRow() {
 }
 
 function addEffectToRow(rowIndex) {
-  const explicitAllowed = Array.isArray(targetData.value?.allowedEffectTypes) ? targetData.value.allowedEffectTypes : []
-  const existingTypes = editableHits.value.flatMap(hit => (hit.effects || []).map(effect => resolveEffectDisplayKey(effect)).filter(Boolean))
-  const defaultType = explicitAllowed[0] || existingTypes[0] || currentCharacter.value?.exclusive_buffs?.[0]?.key || 'default'
   const hits = JSON.parse(JSON.stringify(editableHits.value))
   if (!hits[rowIndex]) return
 
-  const newEffect = createEditorEffect(defaultType)
+  const newEffect = createEditorEffect('default')
   if (!Array.isArray(hits[rowIndex].effects)) hits[rowIndex].effects = []
   hits[rowIndex].effects.push(newEffect)
-  commitUpdate({ hits: normalizeHits(hits, targetData.value?.element) })
+  editableHits.value = hits
 
   if (isLibraryMode.value) localSelectedAnomalyId.value = newEffect._id
   else store.setSelectedAnomalyId(newEffect._id)
@@ -326,7 +372,7 @@ function removeEffect(r, c) {
   const hits = JSON.parse(JSON.stringify(editableHits.value))
   if (!hits[r]?.effects?.[c]) return
   hits[r].effects.splice(c, 1)
-  commitUpdate({ hits: normalizeHits(hits, targetData.value?.element) })
+  editableHits.value = hits
   if (!isLibraryMode.value) store.removeAnomaly(store.selectedActionId, r, c)
   store.setSelectedAnomalyId(null)
   localSelectedAnomalyId.value = null
@@ -350,14 +396,14 @@ function updateActionFrameProp(key, value) {
 
 function addDamageTick() {
   const currentTicks = [...editableHits.value, createEditorHit({ element: targetData.value?.element })]
-  commitUpdate({ hits: normalizeHits(currentTicks, targetData.value?.element) })
+  editableHits.value = currentTicks
   isTicksExpanded.value = true
 }
 
 function removeDamageTick(index) {
   const currentTicks = [...editableHits.value]
   currentTicks.splice(index, 1)
-  commitUpdate({ hits: normalizeHits(currentTicks, targetData.value?.element) })
+  editableHits.value = currentTicks
 }
 
 function updateDamageTick(index, key, value) {
@@ -382,11 +428,28 @@ function updateDamageTick(index, key, value) {
   if (key === 'offset') {
     currentTicks.sort((a, b) => a.offset - b.offset)
   }
-  commitUpdate({ hits: normalizeHits(currentTicks, targetData.value?.element) })
+  editableHits.value = currentTicks
 }
 
 function updateDamageTickFrame(index, key, value) {
   updateDamageTick(index, key, timeValueFromFrame(value))
+}
+
+function openHitEditor(index) {
+  editingHitIndex.value = index
+  hitEditorVisible.value = true
+}
+
+function saveHitFromDialog(hit) {
+  if (editingHitIndex.value === null) return
+  const hits = editableHits.value.map((existing, index) => (index === editingHitIndex.value ? hit : existing))
+  editableHits.value = hits
+}
+
+function deleteHitFromDialog() {
+  if (editingHitIndex.value === null) return
+  removeDamageTick(editingHitIndex.value)
+  hitEditorVisible.value = false
 }
 
 const customBarsList = computed(() => targetData.value?.customBars || [])
@@ -418,25 +481,36 @@ function updateCustomBarFrame(index, key, value) {
 // 4. 资源与连线查询
 // ===================================================================================
 
+const effectNameMessages = computed(() => {
+  const messages = tm('effects.name')
+  return messages && typeof messages === 'object' && !Array.isArray(messages) ? messages : {}
+})
+
+const allEffectDisplayKeys = computed(() => {
+  const keys = new Set([
+    ...Object.keys(effectNameMessages.value),
+    ...Object.keys(store.iconDatabase || {}),
+  ])
+  keys.delete('default')
+  return [...keys]
+})
+
 const iconOptions = computed(() => {
-  const allGlobalKeys = Object.keys(store.iconDatabase)
-  const explicitAllowed = Array.isArray(targetData.value?.allowedEffectTypes) ? targetData.value.allowedEffectTypes : []
-  const currentTypes = editableHits.value.flatMap(hit => (hit.effects || []).map(effect => resolveEffectDisplayKey(effect)).filter(Boolean))
-  const filterSet = new Set([...explicitAllowed, ...currentTypes, 'default'])
-  const availableKeys = filterSet.size > 1
-    ? allGlobalKeys.filter(key => filterSet.has(key) || key === 'default')
-    : allGlobalKeys
+  const availableKeys = allEffectDisplayKeys.value
 
   const groups = []
+  const processedKeys = new Set()
   if (currentCharacter.value && currentCharacter.value.exclusive_buffs) {
-    let exclusiveOpts = currentCharacter.value.exclusive_buffs.map(buff => ({
+    const exclusiveOpts = currentCharacter.value.exclusive_buffs.map(buff => ({
       label: `★ ${buff.name}`, value: buff.key, path: buff.path
     }))
-    if (explicitAllowed.length > 0) exclusiveOpts = exclusiveOpts.filter(opt => explicitAllowed.includes(opt.value))
+    exclusiveOpts.forEach(opt => {
+      opt.label = String(opt.label || '').replace(/^.\?/, '')
+      processedKeys.add(opt.value)
+    })
     if (exclusiveOpts.length > 0) groups.push({ label: t('effects.group.exclusive'), options: exclusiveOpts })
   }
 
-  const processedKeys = new Set()
   GROUP_DEFINITIONS.value.forEach(def => {
     const groupKeys = availableKeys.filter(key => {
       if (processedKeys.has(key)) return false
@@ -449,7 +523,7 @@ const iconOptions = computed(() => {
       groups.push({
         label: def.label,
         options: groupKeys.map(key => ({
-          label: getEffectDisplayName(key), value: key, path: store.iconDatabase[key]
+          label: getEffectDisplayName(key), value: key, path: store.iconDatabase[key] || store.iconDatabase.default
         }))
       })
     }
@@ -460,7 +534,7 @@ const iconOptions = computed(() => {
     groups.push({
       label: t('effects.group.other'),
       options: remainingKeys.map(key => ({
-        label: getEffectDisplayName(key), value: key, path: store.iconDatabase[key]
+        label: getEffectDisplayName(key), value: key, path: store.iconDatabase[key] || store.iconDatabase.default
       }))
     })
   }
@@ -653,30 +727,17 @@ function handleStartConnection(id, type = null) {
               <CustomNumberInput :model-value="targetData.gaugeCost" @update:model-value="val => updateActionProp('gaugeCost', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
             </div>
 
-            <div class="form-group compact" v-if="!['execution','dive'].includes(currentSkillType)">
-              <label>{{ t('propertiesPanel.labels.gaugeGain') }}</label>
-              <CustomNumberInput :model-value="targetData.gaugeGain" @update:model-value="val => updateActionProp('gaugeGain', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
-            </div>
-
-            <div class="form-group compact" v-if="currentSkillType === 'skill'">
-              <label>{{ t('propertiesPanel.labels.teamGaugeGain') }}</label>
-              <CustomNumberInput :model-value="targetData.teamGaugeGain" @update:model-value="val => updateActionProp('teamGaugeGain', val)" :min="0" :border-color="HIGHLIGHT_COLORS.blue" text-align="center"/>
-            </div>
-
             <div class="form-group compact" v-if="currentSkillType === 'ultimate'">
               <label>{{ t('propertiesPanel.labels.enhancementTimeS') }}</label>
               <CustomNumberInput :model-value="frameValue(targetData.enhancementTime || 0)" @update:model-value="val => updateActionFrameProp('enhancementTime', val)" :step="1" :min="0" activeColor="#b37feb" border-color="#b37feb" text-align="center"/></div>
           </div>
         </div>
 
-      <div class="section-container tech-style border-red" @click="isTicksExpanded = !isTicksExpanded" style="cursor: pointer;">
+      <div v-if="!isLibraryAggregateSkill" class="section-container tech-style border-red" @click="isTicksExpanded = !isTicksExpanded" style="cursor: pointer;">
         <div class="panel-tag-mini red">{{ t('propertiesPanel.damage.title') }} ({{ editableHits.length }})</div>
 
         <div class="section-header-tech">
-          <div class="module-deco">
-            <span class="module-code">{{ t('propertiesPanel.damage.system') }}</span>
-            <span class="module-label">{{ t('propertiesPanel.damage.stagger') }}: {{ totalStagger }} | {{ t('propertiesPanel.damage.sp') }}: {{ totalSpGain }}</span>
-          </div>
+          <div class="section-summary">{{ t('propertiesPanel.damage.stagger') }}: {{ totalStagger }} | {{ t('propertiesPanel.damage.sp') }}: {{ totalSpGain }}</div>
           <div class="spacer"></div>
           <button class="ea-btn ea-btn--icon ea-btn--icon-22 ea-btn--icon-plus ea-btn--icon-plus-red" @click.stop="addDamageTick">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -689,44 +750,23 @@ function handleStartConnection(id, type = null) {
             <div v-for="(tick, index) in editableHits" :key="tick._editorId || index" class="tick-item red-theme">
               <div class="tick-header">
                 <span class="tick-idx">HIT {{ index + 1 }}</span>
-                <button type="button" class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeDamageTick(index)">x</button>
-              </div>
-              <div class="tick-row">
-                <div class="tick-col">
-                  <label>{{ t('propertiesPanel.damage.tickTime') }}</label>
-                  <CustomNumberInput :model-value="frameValue(tick.offset)" @update:model-value="val => updateDamageTickFrame(index, 'offset', val)" :step="1" :min="0" border-color="#ff7875" />
-                </div>
-                <div class="tick-col">
-                  <label>{{ t('propertiesPanel.damage.tickStagger') }}</label>
-                  <CustomNumberInput :model-value="tick.stagger" @update:model-value="val => updateDamageTick(index, 'stagger', val)" :step="1" :min="0" border-color="#ff7875" text-align="center"/>
-                </div>
-                <div class="tick-col">
-                  <label>{{ t('propertiesPanel.damage.tickSpGain') }}</label>
-                  <CustomNumberInput :model-value="tick.sp || 0" @update:model-value="val => updateDamageTick(index, 'sp', val)" :step="1" :min="0" border-color="#ffd700" text-align="center"/>
+                <div class="tick-actions">
+                  <button type="button" class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-gold" :title="t('hitEditor.open')" @click="openHitEditor(index)">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </button>
+                  <button type="button" class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger" @click="removeDamageTick(index)">x</button>
                 </div>
               </div>
-              <div class="tick-row binding-row">
-                <div class="tick-col tick-col-kind">
-                  <label>{{ t('propertiesPanel.damage.tickSpKind') }}</label>
-                  <div class="tick-kind-toggle">
-                    <button
-                      type="button"
-                      class="tick-kind-btn"
-                      :class="{ 'is-active': (tick.spKind || 'recover') === 'recover' }"
-                      @click="updateDamageTick(index, 'spKind', 'recover')"
-                    >
-                      {{ t('propertiesPanel.damage.spKindRecoverShort') }}
-                    </button>
-                    <button
-                      type="button"
-                      class="tick-kind-btn"
-                      :class="{ 'is-active': tick.spKind === 'refund' }"
-                      @click="updateDamageTick(index, 'spKind', 'refund')"
-                    >
-                      {{ t('propertiesPanel.damage.spKindRefundShort') }}
-                    </button>
-                  </div>
-                </div>
+              <div class="hit-summary-grid">
+                <span>{{ t('propertiesPanel.damage.tickTime') }}: {{ frameValue(tick.offset) }}f</span>
+                <span>{{ t('propertiesPanel.damage.tickMultiplier') }}: {{ tick.multiplier || 0 }}%</span>
+                <span>{{ t('common.element') }}: {{ getHitElementLabel(tick) }}</span>
+                <span>{{ t('propertiesPanel.damage.tickStagger') }}: {{ tick.stagger || 0 }}</span>
+                <span>{{ t('propertiesPanel.damage.tickSpGain') }}: {{ tick.sp || 0 }} {{ tick.spKind === 'refund' ? t('propertiesPanel.damage.spKindRefundShort') : t('propertiesPanel.damage.spKindRecoverShort') }}</span>
+                <span>{{ t('hitEditor.effects') }}: {{ tick.effects?.length || 0 }}</span>
               </div>
           </div>
         </div>
@@ -736,10 +776,6 @@ function handleStartConnection(id, type = null) {
         <div class="panel-tag-mini blue">{{ t('propertiesPanel.bars.title') }} ({{ customBarsList.length }})</div>
 
         <div class="section-header-tech">
-          <div class="module-deco">
-            <span class="module-code">{{ t('propertiesPanel.bars.system') }}</span>
-            <span class="module-label">{{ t('propertiesPanel.bars.activeItems') }}: {{ customBarsList.length }}</span>
-          </div>
           <div class="spacer"></div>
           <button class="ea-btn ea-btn--icon ea-btn--icon-22 ea-btn--icon-plus ea-btn--icon-plus-cyan" @click.stop="addCustomBar">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -768,7 +804,7 @@ function handleStartConnection(id, type = null) {
         </div>
       </div>
 
-      <div class="section-container tech-style">
+      <div v-if="false" class="section-container tech-style">
         <div class="panel-tag-mini">{{ t('propertiesPanel.effects.title') }}</div>
         <div class="anomalies-editor-container" style="background: transparent; border-color: rgba(255,255,255,0.1); margin-top: 10px;">
           <draggable v-model="editableHits" item-key="_editorId" class="rows-container" handle=".row-handle" :animation="200">
@@ -776,7 +812,7 @@ function handleStartConnection(id, type = null) {
               <div class="anomaly-editor-row">
                 <div class="row-handle">::</div>
                 <draggable :list="row.effects" item-key="_id" class="row-items-list" :group="{ name: 'effects' }" :animation="150"
-                           @change="() => commitUpdate({ hits: normalizeHits(editableHits, targetData?.element) })">
+                           @change="commitEditableHits">
                   <template #item="{ element: effect, index: colIndex }">
                     <div class="icon-wrapper" :class="{ 'is-editing': isEditing(rowIndex, colIndex) }"
                          @click="toggleEditEffect(rowIndex, colIndex)">
@@ -815,7 +851,7 @@ function handleStartConnection(id, type = null) {
           <div class="editor-grid">
             <div class="full-width-col">
               <label>{{ t('common.type') }}</label>
-              <el-select :model-value="editingEffectData.type" @update:model-value="(val) => updateEffectProp('type', val)" :placeholder="t('propertiesPanel.effects.selectPlaceholder')" filterable size="small" class="effect-select-dark">
+              <el-select :model-value="resolveEffectDisplayKey(editingEffectData)" @update:model-value="updateEffectType" :placeholder="t('propertiesPanel.effects.selectPlaceholder')" filterable size="small" class="effect-select-dark">
                 <el-option-group v-for="group in iconOptions" :key="group.label" :label="group.label">
                   <el-option v-for="item in group.options" :key="item.value" :label="item.label" :value="item.value">
                     <div class="opt-row">
@@ -838,6 +874,10 @@ function handleStartConnection(id, type = null) {
               <label>{{ t('common.duration') }}</label>
               <CustomNumberInput :model-value="frameValue(editingEffectData.duration)" @update:model-value="val => updateEffectFrameProp('duration', val)" :min="0" :step="1" :activeColor="HIGHLIGHT_COLORS.default"/>
             </div>
+            <div v-if="canEditEditorEffectValue(editingEffectData)">
+              <label>{{ t('common.value') }}</label>
+              <CustomNumberInput :model-value="editingEffectData.value || 0" @update:model-value="val => updateEffectProp('value', Number(val) || 0)" :activeColor="HIGHLIGHT_COLORS.default"/>
+            </div>
           </div>
 
           <div class="editor-actions">
@@ -854,14 +894,7 @@ function handleStartConnection(id, type = null) {
         <div class="panel-tag-mini">{{ t('propertiesPanel.connections.title') }}</div>
 
         <div class="connection-header-group">
-          <div class="link-ctrl-deco">
-            <div class="ctrl-bar"></div>
-            <div class="ctrl-info">
-              <span class="ctrl-label">{{ t('propertiesPanel.connections.system') }}</span>
-              <span class="ctrl-count">{{ t('propertiesPanel.connections.currentCount') }}: {{ relevantConnections.length }}</span>
-            </div>
-          </div>
-
+          <div class="section-summary">{{ t('propertiesPanel.connections.currentCount') }}: {{ relevantConnections.length }}</div>
           <div class="spacer"></div>
 
           <button
@@ -942,12 +975,21 @@ function handleStartConnection(id, type = null) {
         </div>
       </div>
     </div>
+    <HitEditorDialog
+      v-model:visible="hitEditorVisible"
+      :hit="editingHit"
+      :hit-index="editingHitIndex ?? -1"
+      :default-element="targetData?.element"
+      :effect-options="iconOptions"
+      @save="saveHitFromDialog"
+      @delete="deleteHitFromDialog"
+    />
   </div>
 </template>
 
 <style scoped>
 /* Base & Layout */
-.properties-panel { padding: 15px; background-color: #252525; display: flex; flex-direction: column; gap: 15px; height: 100%; box-sizing: border-box; overflow-y: auto; font-size: 13px; color: #e0e0e0; transition: background-color 0.3s ease; scrollbar-width: none; -ms-overflow-style: none; }
+.properties-panel { --right-panel-container-radius: 0; padding: 15px; background-color: #252525; display: flex; flex-direction: column; gap: 15px; height: 100%; box-sizing: border-box; overflow-y: auto; font-size: 13px; color: #e0e0e0; transition: background-color 0.3s ease; scrollbar-width: none; -ms-overflow-style: none; }
 .properties-panel::-webkit-scrollbar { display: none; }
 .panel-header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 0; }
 .header-main-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; overflow: hidden; }
@@ -968,10 +1010,8 @@ function handleStartConnection(id, type = null) {
 .section-container.tech-style.border-red { border-left-color: #ff7875 !important; }
 .section-container.tech-style.border-blue { border-left-color: #00e5ff !important; }
 .section-container.tech-style::before { content: ""; position: absolute; bottom: 4px; right: 4px; width: 10px; height: 10px; border-right: 1px solid rgba(255,255,255,0.3); border-bottom: 1px solid rgba(255,255,255,0.3); pointer-events: none; }
-.module-deco { display: flex; flex-direction: column; line-height: 1.1; opacity: 0.4; pointer-events: none; border-left: 2px solid currentColor; padding-left: 6px; margin-left: 2px; }
-.module-code { font-size: 10px; font-weight: 900; font-family: 'Inter', sans-serif; color: currentColor; letter-spacing: 1px; }
-.module-label { font-size: 9px; color: rgba(255, 255, 255, 0.7); transform: none; opacity: 1; margin-top: 2px; white-space: nowrap; }
 .section-header-tech { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; height: 26px; padding: 0 4px; }
+.section-summary { min-width: 0; color: rgba(255, 255, 255, 0.48); font-size: 10px; font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toggle-arrow { color: #666; font-size: 14px; transition: transform 0.2s; }
 .section-content-tech { margin-top: 10px; animation: fadeIn 0.2s ease; }
 .tech-style .form-group.compact label { font-size: 11px !important; color: rgba(255, 255, 255, 0.5) !important; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px !important; font-family: 'Inter', sans-serif; display: block; }
@@ -991,7 +1031,10 @@ function handleStartConnection(id, type = null) {
 .tick-item.blue-theme { border-left-color: #00e5ff !important; background: linear-gradient(90deg, rgba(0, 229, 255, 0.08) 0%, transparent 100%) !important; }
 .tick-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 4px; }
 .tick-idx { font-size: 10px; font-weight: 900; font-family: 'Inter', monospace; letter-spacing: 1px; text-transform: uppercase; }
+.tick-actions { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; }
 .tick-row { display: flex; gap: 2px; align-items: flex-end; }
+.hit-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; color: rgba(255, 255, 255, 0.74); font-size: 11px; line-height: 1.35; }
+.hit-summary-grid span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .binding-row { align-items: flex-start; }
 .tick-col { flex: 1; min-width: 0; }
 .binding-row .tick-col-kind { flex: 1 1 0; }
@@ -1049,11 +1092,6 @@ function handleStartConnection(id, type = null) {
 .connection-header-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .plus-icon { display: flex; align-items: center; }
 .connections-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
-.link-ctrl-deco { display: flex; align-items: center; gap: 8px; opacity: 0.8; flex-shrink: 0; min-width: 65px; }
-.link-ctrl-deco .ctrl-bar { width: 3px; height: 20px; background: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); flex-shrink: 0; }
-.link-ctrl-deco .ctrl-info { display: flex; flex-direction: column; line-height: 1.2; white-space: nowrap; }
-.link-ctrl-deco .ctrl-label { font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 1px; display: block; width: 100%; }
-.link-ctrl-deco .ctrl-count { font-size: 9px; color: #ffd700; font-family: 'Roboto Mono', monospace; margin-top: 1px; display: block; }
 .connection-card { background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%) !important; border: 1px solid rgba(255, 255, 255, 0.05); border-left: 3px solid #666; padding: 10px; position: relative; backdrop-filter: blur(5px); clip-path: polygon(0 0, 100% 0, 100% 90%, 97% 100%, 0 100%); transition: all 0.2s; }
 .connection-card:hover { background: rgba(255, 255, 255, 0.06) !important; border-color: rgba(255, 255, 255, 0.1); }
 .connection-card.outgoing { border-left-color: #ffd700 !important; }
@@ -1081,6 +1119,28 @@ function handleStartConnection(id, type = null) {
 .port-arrow { font-size: 8px; color: #444; letter-spacing: -1px; font-weight: bold; }
 .offset-mini { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 .spacer { flex: 1; }
+
+.mode-badge,
+.header-tool-btn,
+.skill-type-minimal,
+.section-container,
+.binding-option__icon,
+.anomalies-editor-container,
+.anomaly-editor-row,
+.icon-wrapper,
+.effect-select-dark,
+.direction-tag,
+.icon-s,
+.port-config {
+  border-radius: var(--right-panel-container-radius);
+}
+
+:deep(.tick-select .el-select__wrapper),
+:deep(.tick-select .el-input__wrapper),
+:deep(.effect-select-dark .el-select__wrapper),
+:deep(.effect-select-dark .el-input__wrapper) {
+  border-radius: var(--right-panel-container-radius);
+}
 
 .combo-hint {
   height: 28px;

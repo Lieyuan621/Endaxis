@@ -77,6 +77,13 @@ const getI18nSkillType = (type) => {
 }
 
 const uid = () => Math.random().toString(36).substring(2, 9)
+const FINAL_BASIC_ATTACK_SEGMENT_NAME = '重击'
+const getBasicAttackSegmentName = (groupName, index, total) => {
+    const oneBasedIndex = Number(index) || 0
+    const segmentTotal = Number(total) || 0
+    if (segmentTotal > 0 && oneBasedIndex === segmentTotal) return FINAL_BASIC_ATTACK_SEGMENT_NAME
+    return `${groupName} ${oneBasedIndex}`
+}
 const COLLAPSED_PREP_PX = 18
 const MIN_PREP_DURATION = FRAME_DURATION
 const COARSE_SNAP_STEP = FRAME_DURATION * 6
@@ -2029,6 +2036,46 @@ export const useTimelineStore = defineStore('timeline', () => {
         }
     }
 
+    function buildOperatorEffectById(operatorSlug, operatorInstance) {
+        if (!operatorSlug || !operatorInstance) return undefined
+        const instance = {
+            ...toRaw(operatorInstance),
+            id: operatorInstance.id || `_editor_${operatorSlug}`,
+            operatorSlug,
+        }
+        const emptySlot = { operatorId: null, weaponId: null, gear: { armor: null, gloves: null, kit1: null, kit2: null } }
+        const team = {
+            id: '_editor_operator_effects',
+            name: '',
+            slots: [
+                { operatorId: instance.id, weaponId: null, gear: { armor: null, gloves: null, kit1: null, kit2: null } },
+                JSON.parse(JSON.stringify(emptySlot)),
+                JSON.parse(JSON.stringify(emptySlot)),
+                JSON.parse(JSON.stringify(emptySlot)),
+            ],
+        }
+        try {
+            const collectedEffects = collectEffects(team, [instance], [], [])
+            const effectById = buildEffectById(collectedEffects)
+            const collectedTriggers = collectTriggerEffects(team, [instance], [], [], effectById)
+            collectedTriggers.forEach((entry) => {
+                ;(entry.triggerEffect?.effects || []).forEach((effect) => {
+                    if (effect?.id) {
+                        effectById.set(effect.id, {
+                            effect,
+                            sourceOperatorSlug: operatorSlug,
+                            sourceSlotIndex: 0,
+                        })
+                    }
+                })
+            })
+            return effectById
+        } catch (error) {
+            console.warn('[timeline] Failed to build operator effect lookup for editor skills.', error)
+            return undefined
+        }
+    }
+
     function resolveInitialEffectTargetTrackIds(effect, sourceSlotIndex, slotTrackIds, trackMetaById) {
         const sourceTrackId = slotTrackIds[sourceSlotIndex] || null
         const rawTarget = effect?.target
@@ -2313,7 +2360,11 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (!operator || !operatorInstance) return null
         return {
             operatorInstance,
-            flatSkills: patchCombatSkills(operator, operatorInstance),
+            flatSkills: patchCombatSkills(
+                operator,
+                operatorInstance,
+                buildOperatorEffectById(track.id, operatorInstance),
+            ),
         }
     }
 
@@ -3012,7 +3063,11 @@ export const useTimelineStore = defineStore('timeline', () => {
             ? findOperatorInstance(activeTrack.operatorInstanceId)
             : null
         const displayInstance = activeOpInstance || createMaxOperatorInstanceData(activeChar.id)
-        const flatSkills = patchCombatSkills(operator, displayInstance)
+        const flatSkills = patchCombatSkills(
+            operator,
+            displayInstance,
+            buildOperatorEffectById(activeChar.id, displayInstance),
+        )
         const TYPE_ORDER = {
             'basicAttack': 1,
             'dive': 2,
@@ -3129,6 +3184,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                 const { duration: _ignoredDuration, ...groupOverride } = (groupOverrideRaw && typeof groupOverrideRaw === 'object') ? groupOverrideRaw : {}
                 const attackGroupName = displayName
 
+                const segmentTotal = segmentData.segmentPayloads.length
                 const segmentSkills = segmentData.segmentPayloads.map((segmentInfo, idx) => {
                     const segOverride = characterOverrides.value[segmentInfo.id] || {}
                     const mergedOverride = { ...groupOverride, ...(segOverride && typeof segOverride === 'object' ? segOverride : {}) }
@@ -3136,7 +3192,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                         id: segmentInfo.id,
                         type: 'basicAttack',
                         skillId,
-                        name: `${attackGroupName} ${idx + 1}`,
+                        name: getBasicAttackSegmentName(attackGroupName, idx + 1, segmentTotal),
                         element: segmentInfo.element,
                         icon,
                         duration: segmentInfo.duration,
@@ -3273,7 +3329,7 @@ export const useTimelineStore = defineStore('timeline', () => {
             .map((skill) => buildStandardOrVariantSkill(skill, { isStandard: false }))
             .filter(Boolean)
 
-        return [...standardSkills, ...variantSkills].sort((a, b) => {
+        const visibleSkills = [...standardSkills, ...variantSkills].sort((a, b) => {
             const weightA = TYPE_ORDER[a.type] || 99;
             const weightB = TYPE_ORDER[b.type] || 99;
 
@@ -3290,6 +3346,22 @@ export const useTimelineStore = defineStore('timeline', () => {
 
             return 0;
         });
+
+        const hiddenSkillChildren = []
+        const seenChildIds = new Set(visibleSkills.map(skill => skill.id))
+        visibleSkills.forEach((skill) => {
+            const children = [
+                ...(Array.isArray(skill.attackSegments) ? skill.attackSegments : []),
+                ...(Array.isArray(skill.segments) ? skill.segments : []),
+            ]
+            children.forEach((child) => {
+                if (!child?.id || seenChildIds.has(child.id)) return
+                seenChildIds.add(child.id)
+                hiddenSkillChildren.push(child)
+            })
+        })
+
+        return [...visibleSkills, ...hiddenSkillChildren]
     })
 
 

@@ -14,6 +14,7 @@
     "moveUp": "Переместить вверх",
     "max": "Макс.",
     "new": "new",
+    "none": "Нет",
     "noneParen": "(нет)",
     "off": "off",
     "old": "old",
@@ -26,6 +27,9 @@
     "triggerTime": "Активация",
     "stacks": "Стаки",
     "duration": "Длительность",
+    "value": "Значение",
+    "name": "Название",
+    "element": "Элемент",
     "unequip": "Снять",
     "uncategorized": "Без категории",
     "unknown": "Неизвестно",
@@ -113,6 +117,13 @@
     "zhCN": "简体中文"
   },
   "timeline": {
+    "activityBar": {
+      "library": "Библиотека навыков",
+      "contract": "Контракт",
+      "resourceMonitor": "Монитор ресурсов",
+      "inspector": "Детали навыка",
+      "battleLog": "Журнал боя"
+    },
     "analysis": {
       "button": "Анализ",
       "tooltip": "Показать анализ урона текущей шкалы",
@@ -261,6 +272,7 @@
     },
     "cursor": {
       "sp": "ОН",
+      "spReturn": "Возврат",
       "stagger": "Ошеломление",
       "gauge": "Заряд"
     },
@@ -518,6 +530,130 @@
       "dmgBonusDown:comboSkill": "Снижение урона комбонавыка"
     }
   },
+  "hitEditor": {
+    "moveUp": "Вверх",
+    "moveDown": "Вниз",
+    "elements": {
+      "physical": "Физический",
+      "heat": "Тепло",
+      "cryo": "Крио",
+      "electric": "Электро",
+      "nature": "Природа"
+    },
+    "skillTypes": {
+      "basicAttack": "Обычная атака",
+      "battleSkill": "Боевой навык",
+      "comboSkill": "Комбо-навык",
+      "ultimate": "Ультимейт",
+      "finalStrike": "Финальный удар",
+      "dive": "Атака в падении"
+    },
+    "effectKinds": {
+      "status": "Статус",
+      "infliction": "Накопление",
+      "burst": "Взрыв",
+      "reaction": "Реакция",
+      "physicalStatus": "Физический статус",
+      "damageHit": "Удар уроном",
+      "damageOverTime": "Периодический урон",
+      "spRecovery": "Восстановление SP",
+      "spReturn": "Возврат SP",
+      "ultEnergyGain": "Энергия ультимейта",
+      "consume": "Расход",
+      "oneTime": "Разовое значение",
+      "cooldownReductionFlat": "Плоское сокращение КД",
+      "cooldownReductionPercent": "Процентное сокращение КД"
+    },
+    "reactions": {
+      "combustion": "Горение",
+      "electrification": "Электрификация",
+      "solidification": "Затвердевание",
+      "corrosion": "Коррозия",
+      "shatter": "Раскол",
+      "breach": "Пробитие",
+      "crush": "Сокрушение"
+    },
+    "physicalStatuses": {
+      "vulnerability": "Уязвимость",
+      "breach": "Пробитие",
+      "crush": "Сокрушение",
+      "lift": "Подброс",
+      "knockdown": "Нокдаун"
+    },
+    "stackStrategies": {
+      "REFRESH_DURATION": "Обновлять длительность",
+      "INDEPENDENT": "Независимые стаки",
+      "REPLACE": "Заменять"
+    },
+    "applyTimings": {
+      "afterDamage": "После урона",
+      "beforeDamage": "До урона"
+    },
+    "multiplierModes": {
+      "each": "Каждый тик",
+      "split": "Разделить по тикам"
+    },
+    "consumeScopes": {
+      "team": "Команда"
+    },
+    "fields": {
+      "reactionType": "Тип реакции",
+      "treatAsReaction": "Считать типом аномалии",
+      "physicalType": "Тип физического статуса",
+      "effectiveness": "Эффективность",
+      "defaultLevel": "Уровень по умолчанию",
+      "interval": "Интервал",
+      "multiplierMode": "Режим множителя",
+      "scaleByCrit": "Масштаб от крита",
+      "snapshot": "Снимок",
+      "canCrit": "Может критовать",
+      "skipFirstTick": "Пропустить первый тик",
+      "cancelOnRefresh": "Отменять при обновлении",
+      "consumeStacks": "Расход стаков",
+      "consumeScope": "Область расхода",
+      "silent": "Без уведомления",
+      "external": "Внешний эффект",
+      "forced": "Принудительно",
+      "condition": "Условие эффекта",
+      "stat": "Характеристика",
+      "target": "Цель эффекта",
+      "scaling": "Масштабирование",
+      "requiresInfliction": "Требует накопление",
+      "multiplierScaling": "Масштаб множителя",
+      "staggerScaling": "Масштаб ошеломления",
+      "hit": "Переопределение удара",
+      "readConsumedStacks": "Читать расход стаков",
+      "consumedStatEffects": "Расходуемые стат-эффекты",
+      "operatorStatus": "Статус оператора",
+      "enemyStatus": "Статус врага",
+      "skillTypes": "Типы навыков",
+      "treatAsSkillType": "Считать типом навыка",
+      "skillId": "ID навыка",
+      "_condition": "Условие точки удара"
+    },
+    "title": "Удар {index}",
+    "basic": "Основное",
+    "damageResource": "Урон и ресурс",
+    "effects": "Эффекты",
+    "advanced": "Дополнительно",
+    "open": "Изменить",
+    "save": "Сохранить",
+    "deleteHit": "Удалить удар",
+    "newEffect": "Новый эффект",
+    "effectKind": "Категория эффекта",
+    "displayType": "Конкретный эффект",
+    "jsonInvalid": "Неверный JSON",
+    "noEffect": "Эффект не выбран",
+    "durationExtension": "Продление",
+    "treatAsReaction": "Считать реакцией",
+    "treatAsSkillType": "Считать типом навыка",
+    "maxStacks": "Макс. стаки",
+    "stackStrategy": "Правило стаков",
+    "icdGroup": "Группа ICD",
+    "applyTiming": "Момент применения",
+    "hide": "Скрыть",
+    "ignoreTimeShift": "Игнорировать сдвиг времени"
+  },
   "propertiesPanel": {
     "noSelection": "Навык не выбран",
     "globalMode": "Глобальный режим",
@@ -530,8 +666,6 @@
       "triggerWindowS": "Активация(f)",
       "spCost": "Расход ОН",
       "gaugeCost": "Стоимость заряда",
-      "gaugeGain": "Доп. заряд себе",
-      "teamGaugeGain": "Доп. заряд команде",
       "enhancementTimeS": "Время усиления (f)",
       "followupDelayS": "Задержка до следующей (f)",
       "comboSegment": "Сегмент комбо",
@@ -548,6 +682,7 @@
       "sp": "ОН",
       "empty": "Нет ударов",
       "tickTime": "Время",
+      "tickMultiplier": "Множитель",
       "tickStagger": "Ошел.",
       "tickSpGain": "Кол-во ОН",
       "tickSpKind": "Тип ОН",

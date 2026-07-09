@@ -198,15 +198,26 @@ function makeDamageHitMarker(
   };
 }
 
+function getStateDisplayKey(effect: Effect, fallbackId: string): string {
+  const raw = effect as Effect & { displayType?: string; name?: string; type?: string };
+  return String(raw.displayType || raw.name || raw.type || raw.id || fallbackId || 'status').trim() || 'status';
+}
+
+function getEnemyStatusTypeKey(resolved: Effect, effectId: string): string {
+  const hasStat = resolved.kind === 'status' && resolved.stat;
+  if (hasStat) return `stat:${getEffectPresetKey(resolved)}:${effectId}`;
+
+  const displayKey = getStateDisplayKey(resolved, effectId);
+  return displayKey === effectId ? `state:${effectId}` : `state:${displayKey}:${effectId}`;
+}
+
 /** Convert ActivationWindows to EnemyEffectSegments for StatusEffects. */
 function windowsToEnemyStatusSegments(windows: ActivationWindow[]): EnemyEffectSegment[] {
   return windows.map(w => {
     const resolved = resolveEffectDefaults(w.effect);
     const hasStat = resolved.kind === 'status' && resolved.stat;
     return {
-      typeKey: hasStat
-        ? `stat:${getEffectPresetKey(resolved)}:${w.effectId}`
-        : `state:${resolved.id}`,
+      typeKey: getEnemyStatusTypeKey(resolved, w.effectId),
       group: EnemyEffectGroup.STAT_DEBUFF,
       start: w.start,
       end: w.end,
@@ -513,7 +524,14 @@ export function projectFromSimLog(
       return !firstApply?.effect?.hide;
     }),
   );
-  segments.push(...windowsToEnemyStatusSegments([...visibleStatusLogMap.values()].flat()));
+  const visibleStatusWindows = [...visibleStatusLogMap.values()].flat();
+  const statusTypeKeyByEffectId = new Map(
+    visibleStatusWindows.map(w => [
+      w.effectId,
+      getEnemyStatusTypeKey(resolveEffectDefaults(w.effect), w.effectId),
+    ]),
+  );
+  segments.push(...windowsToEnemyStatusSegments(visibleStatusWindows));
 
   // ── Reaction damage + DoT hit markers from simLog (single pass) ────────
   if (simLog) {
@@ -575,7 +593,7 @@ export function projectFromSimLog(
       if (!triggeredBy || !triggeredBy.startsWith('dot:')) continue;
       // Extract effectId from triggeredBy ('dot:{effectId}') to match bar typeKey ('state:{effectId}')
       const effectId = triggeredBy.slice(4);
-      const typeKey = `state:${effectId}`;
+      const typeKey = statusTypeKeyByEffectId.get(effectId) ?? `state:${effectId}`;
       segments.push(
         makeDamageHitMarker(
           typeKey,

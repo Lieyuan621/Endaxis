@@ -35,7 +35,7 @@ const DEFAULT_LEFT_PANEL_WIDTH = 200
 const DEFAULT_RIGHT_PANEL_WIDTH = 260
 const DEFAULT_BOTTOM_PANEL_HEIGHT = 220
 const BOTTOM_RESIZER_HEIGHT = 1
-const RIGHT_TOOLS_VISIBLE = false
+const RIGHT_TOOLS_VISIBLE = true
 const watermarkEl = ref(null)
 const watermarkSubText = ref('Created by Endaxis')
 const appLayoutRef = ref(null)
@@ -771,6 +771,9 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--lib"
           :class="{ 'is-active': !isLeftPanelCollapsed }"
+          :title="t('timeline.activityBar.library')"
+          :aria-label="t('timeline.activityBar.library')"
+          :data-tooltip="t('timeline.activityBar.library')"
           @click="toggleActivityPanel('library')"
         >
           <svg
@@ -792,6 +795,9 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--contract"
           :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'contract' }"
+          :title="t('timeline.activityBar.contract')"
+          :aria-label="t('timeline.activityBar.contract')"
+          :data-tooltip="t('timeline.activityBar.contract')"
           @click="toggleBottomTool('contract')"
         >
           <img
@@ -806,6 +812,9 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--panel"
           :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'enemy' }"
+          :title="t('timeline.activityBar.resourceMonitor')"
+          :aria-label="t('timeline.activityBar.resourceMonitor')"
+          :data-tooltip="t('timeline.activityBar.resourceMonitor')"
           @click="toggleBottomTool('enemy')"
         >
           <svg
@@ -1134,12 +1143,17 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--inspector"
           :class="{ 'is-active': !isRightPanelCollapsed && rightPanelTool === 'inspector' }"
+          :title="t('timeline.activityBar.inspector')"
+          :aria-label="t('timeline.activityBar.inspector')"
+          :data-tooltip="t('timeline.activityBar.inspector')"
           @click="toggleRightTool('inspector')"
         >
           <svg class="activity-bar__icon activity-bar__icon--inspector" viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M8 9.2h16v3H8Zm0 10.8h16v3H8Z" fill="#4f5054"/>
-            <path d="M12.2 7.3h3.6v6.8h-3.6Zm4 10.8h3.6v6.8h-3.6Z" fill="#f5c31e"/>
-            <path d="M13.9 14.1a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4Zm4.1 10.8a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4Z" fill="#ffffff"/>
+            <path d="M7 6h18v20H7Z" fill="currentColor" opacity="0.9"/>
+            <path d="M22 6v6h-6Z" fill="currentColor" opacity="0.54"/>
+            <path d="M11 12h10M11 18h7M11 22h10" stroke="#101114" stroke-width="2" stroke-linecap="square"/>
+            <path d="M9 9h5v5H9Z" fill="#101114" opacity="0.72"/>
+            <path d="M9 16h3v3H9Z" fill="#101114" opacity="0.56"/>
           </svg>
         </button>
 
@@ -1147,6 +1161,9 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--battle-log"
           :class="{ 'is-active': !isRightPanelCollapsed && rightPanelTool === 'battleLog' }"
+          :title="t('timeline.activityBar.battleLog')"
+          :aria-label="t('timeline.activityBar.battleLog')"
+          :data-tooltip="t('timeline.activityBar.battleLog')"
           @click="toggleRightTool('battleLog')"
         >
           <svg class="activity-bar__icon activity-bar__icon--battle-log" viewBox="0 0 32 32" aria-hidden="true">
@@ -1233,20 +1250,25 @@ onUnmounted(() => {
 /* App Layout */
 .app-layout { display: grid; grid-template-rows: 100vh; height: 100vh; overflow: hidden; background-color: #1e1f22; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
 .workbench-layout { gap: 0; }
-.activity-bar { grid-column: 1; display: flex; flex-direction: column; align-items: center; background: linear-gradient(180deg, #1f1f1f 0%, #151515 100%); border-right: 1px solid rgba(255, 255, 255, 0.06); padding: 10px 0 12px; }
+.activity-bar { position: relative; z-index: 50; grid-column: 1; display: flex; flex-direction: column; align-items: center; background: linear-gradient(180deg, #1f1f1f 0%, #151515 100%); border-right: 1px solid rgba(255, 255, 255, 0.06); padding: 10px 0 12px; }
 .activity-bar--right { grid-column: 7; border-right: none; border-left: 1px solid rgba(255, 255, 255, 0.06); }
 .activity-bar__group { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
 .activity-bar__group--top { padding-top: 2px; }
 .activity-bar__group--bottom { margin-top: auto; padding-top: 14px; }
-.activity-bar__button { position: relative; width: 100%; height: 42px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; color: rgba(255, 255, 255, 0.42); cursor: pointer; padding: 0; transition: color 0.14s ease; }
-.activity-bar__button::after { content: ''; position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.14s ease, background-color 0.14s ease, border-color 0.14s ease; pointer-events: none; }
-.activity-bar__button:hover { color: rgba(255, 255, 255, 0.84); background: rgba(255, 255, 255, 0.035); }
-.activity-bar__button:hover::after { opacity: 0.55; }
+.activity-bar__button { position: relative; width: 100%; height: 42px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; color: rgba(255, 255, 255, 0.42); cursor: pointer; padding: 0; transition: color 0.14s ease, background-color 0.14s ease, transform 0.14s ease; }
+.activity-bar__button::before { content: attr(data-tooltip); position: absolute; left: calc(100% + 8px); top: 50%; z-index: 30; max-width: 180px; padding: 5px 8px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(24, 24, 24, 0.96); color: rgba(255, 255, 255, 0.86); font-size: 11px; font-weight: 600; line-height: 1.2; white-space: nowrap; opacity: 0; transform: translate(6px, -50%); transition: opacity 0.12s ease, transform 0.12s ease; pointer-events: none; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
+.activity-bar--right .activity-bar__button::before { left: auto; right: calc(100% + 8px); transform: translate(-6px, -50%); }
+.activity-bar__button::after { content: ''; position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.14s ease, background-color 0.14s ease, border-color 0.14s ease, transform 0.14s ease; pointer-events: none; }
+.activity-bar__button:hover { color: rgba(255, 255, 255, 0.84); background: rgba(255, 255, 255, 0.035); transform: translateY(-1px); }
+.activity-bar__button:hover::before { opacity: 1; transform: translate(0, -50%); }
+.activity-bar--right .activity-bar__button:hover::before { transform: translate(0, -50%); }
+.activity-bar__button:hover::after { opacity: 0.76; transform: translate(-50%, -52%); border-color: rgba(255, 255, 255, 0.16); }
 .activity-bar__button.is-active { color: #f2f2f2; }
 .activity-bar__button.is-active::after { opacity: 1; background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.09); }
-.activity-bar__icon { width: 24px; height: 24px; display: block; opacity: 0.78; transition: transform 0.14s ease, opacity 0.14s ease; }
-.activity-bar__button:hover .activity-bar__icon,
+.activity-bar__icon { width: 24px; height: 24px; display: block; opacity: 0.78; transition: transform 0.14s ease, opacity 0.14s ease, filter 0.14s ease; }
+.activity-bar__button:hover .activity-bar__icon { opacity: 1; transform: translateY(-2px) scale(1.06); filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2)); }
 .activity-bar__button.is-active .activity-bar__icon { opacity: 1; transform: scale(1.02); }
+.activity-bar__button.is-active:hover .activity-bar__icon { transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 3px 10px rgba(255, 255, 255, 0.28)); }
 .activity-bar__button--lib .activity-bar__icon { width: 24px; height: 24px; }
 .activity-bar__button--panel .activity-bar__icon { width: 24px; height: 24px; transform: translateY(0.5px); }
 .activity-bar__button--inspector .activity-bar__icon { width: 22px; height: 22px; }
@@ -1259,11 +1281,16 @@ onUnmounted(() => {
   filter: saturate(0.9) brightness(0.82);
   transition: transform 0.14s ease, opacity 0.14s ease, filter 0.14s ease;
 }
-.activity-bar__button:hover .activity-bar__image-icon,
 .activity-bar__button.is-active .activity-bar__image-icon {
   opacity: 1;
-  filter: saturate(1.06) brightness(1.06) drop-shadow(0 0 8px rgba(255, 215, 0, 0.18));
+  filter: saturate(1.06) brightness(1.06) drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2));
   transform: scale(1.04);
+}
+.activity-bar__button:hover .activity-bar__image-icon,
+.activity-bar__button.is-active:hover .activity-bar__image-icon {
+  opacity: 1;
+  filter: saturate(1.12) brightness(1.12) drop-shadow(0 3px 10px rgba(255, 255, 255, 0.28));
+  transform: translateY(-3px) scale(1.1);
 }
 .workbench-panel { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: #252526; }
 .action-library-panel { grid-column: 2; }

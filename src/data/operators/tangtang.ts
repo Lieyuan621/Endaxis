@@ -348,6 +348,7 @@ const sheet: OperatorSheet = {
                   offset: 0.817,
                   effects: [
                     {
+                      id: 'waterspouts',
                       name: 'waterspouts',
                       kind: 'damageOverTime',
                       element: 'cryo',

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from 'vitest';
-import { getEffectColor, getEffectIcon, getEffectName } from './effectPresets';
+import { getEffectColor, getEffectIcon, getEffectName, resolveEffectLifecycle } from './effectPresets';
 import { i18n } from '@/i18n';
 import type { Effect } from './types';
 
@@ -65,5 +65,18 @@ describe('effect display presets', () => {
     };
 
     expect(getEffectIcon(effect)).toBe('/icons/icon_battle_physical_dmg_up.webp');
+  });
+
+  it('defaults reaction effects to replace stacking', () => {
+    expect(resolveEffectLifecycle({
+      kind: 'reaction',
+    }).stackStrategy).toBe('REPLACE');
+  });
+
+  it('keeps status effects on refresh-duration stacking by default', () => {
+    expect(resolveEffectLifecycle({
+      kind: 'status',
+      id: 'example-status',
+    }).stackStrategy).toBe('REFRESH_DURATION');
   });
 });

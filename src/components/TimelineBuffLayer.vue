@@ -163,12 +163,27 @@ function getItemStyle(buff) {
   z-index: 2;
   flex-shrink: 0;
   pointer-events: auto;
+  transition: transform 0.12s ease, filter 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  will-change: transform;
+}
+
+.timeline-buff-icon-box:hover {
+  z-index: 12;
+  transform: scale(1.18);
+  filter: brightness(1.18);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 4px 12px rgba(0, 0, 0, 0.46);
 }
 
 .timeline-buff-icon {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: filter 0.12s ease;
+}
+
+.timeline-buff-icon-box:hover .timeline-buff-icon {
+  filter: brightness(1.12) saturate(1.08);
 }
 
 .timeline-buff-fallback {
@@ -203,6 +218,12 @@ function getItemStyle(buff) {
   z-index: 1;
   margin-left: 2px;
   pointer-events: auto;
+  transition: filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+.timeline-buff-duration-bar:hover {
+  filter: brightness(1.16) saturate(1.08);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .timeline-buff-striped-bg {

@@ -131,7 +131,9 @@
   --ea-btn-size: 24px;
   --ea-btn-font-size: 14px;
   width: var(--ea-btn-size);
+  min-width: var(--ea-btn-size);
   height: var(--ea-btn-size);
+  flex: 0 0 var(--ea-btn-size);
   padding: 0;
 }
 
@@ -479,6 +481,34 @@
   --ea-btn-color-hover: #fff;
 }
 
+.ea-btn--icon.ea-btn--glass-rect-danger {
+  position: relative;
+  overflow: hidden;
+  font-size: 0;
+}
+
+.ea-btn--icon.ea-btn--glass-rect-danger::before,
+.ea-btn--icon.ea-btn--glass-rect-danger::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 0;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.ea-btn--icon.ea-btn--glass-rect-danger::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.ea-btn--icon.ea-btn--glass-rect-danger::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
 .ea-btn--glass-rect.is-linking {
   --ea-btn-bg: var(--ea-btn-accent);
   --ea-btn-border: var(--ea-btn-accent);
@@ -506,6 +536,86 @@
   --ea-btn-py: 0px;
   --ea-btn-px: 8px;
   height: 22px;
+}
+
+.ea-check-rect {
+  --ea-check-accent: var(--ea-gold);
+  --ea-check-bg: rgba(255, 255, 255, 0.03);
+  --ea-check-bg-hover: rgba(255, 255, 255, 0.06);
+  --ea-check-border: rgba(255, 255, 255, 0.12);
+  --ea-check-color: rgba(255, 255, 255, 0.74);
+
+  align-items: center;
+  background: var(--ea-check-bg);
+  border: 1px solid var(--ea-check-border);
+  border-radius: 0;
+  box-sizing: border-box;
+  color: var(--ea-check-color);
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  min-height: 30px;
+  padding: 6px 8px;
+  user-select: none;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.ea-check-rect:hover {
+  background: var(--ea-check-bg-hover);
+  border-color: color-mix(in srgb, var(--ea-check-accent) 42%, rgba(255, 255, 255, 0.16));
+  color: #fff;
+}
+
+.ea-check-rect:has(input[type='checkbox']:checked) {
+  background: color-mix(in srgb, var(--ea-check-accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ea-check-accent) 42%, transparent);
+  color: var(--ea-check-accent);
+}
+
+.ea-check-rect input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 0;
+  box-sizing: border-box;
+  color: #111;
+  cursor: pointer;
+  display: inline-grid;
+  flex: 0 0 14px;
+  height: 14px;
+  margin: 0;
+  place-content: center;
+  width: 14px;
+}
+
+.ea-check-rect input[type='checkbox']::after {
+  content: '';
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg) scale(0);
+  transform-origin: center;
+  transition: transform 0.12s ease;
+}
+
+.ea-check-rect input[type='checkbox']:checked {
+  background: var(--ea-check-accent);
+  border-color: var(--ea-check-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ea-check-accent) 36%, transparent);
+}
+
+.ea-check-rect input[type='checkbox']:checked::after {
+  transform: rotate(-45deg) scale(1);
+}
+
+.ea-check-rect span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @keyframes ea-pulse {

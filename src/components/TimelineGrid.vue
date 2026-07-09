@@ -1699,6 +1699,23 @@ const currentSpValue = computed(() => {
   return Math.floor(points[points.length - 1].sp)
 })
 
+const currentReturnedSpValue = computed(() => {
+  const time = store.cursorCurrentTime
+  let value = 0
+  for (const entry of store.simLog || []) {
+    if (entry?.type !== 'SP_CHANGE') continue
+    if (Number(entry.time) <= time && entry.payload?.refundSp != null) {
+      value = Number(entry.payload.refundSp) || 0
+    }
+  }
+  return Math.floor(value)
+})
+
+const currentSpReturnText = computed(() => {
+  const value = currentReturnedSpValue.value
+  return value > 0 ? ` (${t('timelineGrid.cursor.spReturn')}: ${value})` : ''
+})
+
 const cachedStaggerData = computed(() => store.staggerSeries?.points || [])
 const currentStaggerValue = computed(() => {
   const time = store.cursorCurrentTime
@@ -2900,7 +2917,7 @@ onUnmounted(() => {
             {{ store.formatAxisTimeLabel(store.cursorCurrentTime) }}
           </div>
 
-          <div class="guide-sp-label">{{ t('timelineGrid.cursor.sp') }}: {{ currentSpValue }}</div>
+          <div class="guide-sp-label">{{ t('timelineGrid.cursor.sp') }}: {{ currentSpValue }}{{ currentSpReturnText }}</div>
           <div class="guide-stagger-label">{{ t('timelineGrid.cursor.stagger') }}: {{ currentStaggerValue }}</div>
 
           <div v-if="cursorGaugeRows.length" class="guide-gauge-panel">

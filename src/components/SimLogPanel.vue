@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useTimelineStore } from '@/stores/timelineStore.js'
 import { formatSimLogEntry } from '@/simulation/formatSimLogEntry.ts'
 import { useI18n } from 'vue-i18n'
@@ -8,23 +8,12 @@ import { formatTimeWithFrames } from '@/utils/time.js'
 const store = useTimelineStore()
 const { t } = useI18n({ useScope: 'global' })
 
-const ACTION_TYPE_ACCENTS = {
-  basicAttack: '#b8b8b8',
-  battleSkill: '#8fd9ff',
-  comboSkill: '#ffd84d',
-  ultimate: '#ff7875',
-  finisher: '#f59e0b',
-  dive: '#5eead4',
-  switch: '#c4b5fd',
-  status: '#b8c4d4',
-  summon: '#5eead4',
-  default: '#a3a3a3',
-}
-
 const displayLog = ref([])
 const lastRefreshedRevision = ref(0)
 const isDirty = ref(false)
 const hasInitializedTypes = ref(false)
+const groupRefs = ref({})
+const openActionId = ref(null)
 
 const keyword = ref('')
 const limit = ref('all')
@@ -89,9 +78,17 @@ function getGroupDamageTotal(group) {
   return group.damage.reduce((sum, entry) => sum + getDamageValue(entry), 0)
 }
 
-function getActionAccent(actionType) {
-  if (!actionType) return ACTION_TYPE_ACCENTS.default
-  return ACTION_TYPE_ACCENTS[actionType] || ACTION_TYPE_ACCENTS.default
+function getActionColor(actionId) {
+  const info = store.getActionById?.(actionId)
+  const node = info?.node
+  if (node?.customColor) return node.customColor
+  if (node?.type === 'comboSkill') return store.getColor('link')
+  if (node?.type === 'finisher') return store.getColor('execution')
+  if (node?.type === 'basicAttack') return store.getColor('attack')
+  if (node?.type === 'dive') return store.getColor('dodge')
+  if (node?.element) return store.getColor(node.element)
+  if (info?.trackId) return store.getCharacterElementColor?.(info.trackId) || store.getColor('default')
+  return store.getColor('default')
 }
 
 function getEntryActionId(entry) {
@@ -101,6 +98,8 @@ function getEntryActionId(entry) {
     case 'ACTION_END':
       return entry.payload?.actionId || null
     case 'DAMAGE_HIT':
+      return entry.payload?.actionId || null
+    case 'CD_REDUCTION':
       return entry.payload?.actionId || null
     case 'STAGGER':
       return entry.payload?.actionId || null
@@ -149,6 +148,15 @@ function formatFrameTime(timeSeconds) {
 
 function formatEntryLine(entry) {
   return formatSimLogEntry(entry, { formatTime: formatFrameTime })
+}
+
+function formatOtherEntryText(entry) {
+  if (entry?.type === 'CD_REDUCTION') {
+    return t('battleLog.ui.cdReductionText', {
+      amount: formatDamageNumber(entry.payload?.reduction),
+    })
+  }
+  return formatEntryLine(entry)
 }
 
 function formatEffectId(effectId) {
@@ -392,6 +400,56 @@ const filteredGroupCount = computed(() => actionGroups.value.groups.length)
 const filteredEntryCount = computed(() => filteredEntries.value.length)
 const hasAnyVisibleData = computed(() => filteredGroupCount.value > 0 || actionGroups.value.orphans.length > 0)
 
+function setGroupRef(actionId, el) {
+  if (!actionId) return
+  if (el) groupRefs.value[actionId] = el
+  else delete groupRefs.value[actionId]
+}
+
+function scrollActionGroupIntoView(actionId) {
+  nextTick(() => {
+    groupRefs.value[actionId]?.scrollIntoView?.({
+      block: 'nearest',
+      behavior: 'smooth',
+    })
+  })
+}
+
+function syncSelectedActionGroup(actionId = store.selectedActionId) {
+  if (!actionId) {
+    openActionId.value = null
+    return
+  }
+
+  const hasGroup = actionGroups.value.groups.some((group) => group.actionId === actionId)
+  if (!hasGroup) {
+    openActionId.value = null
+    return
+  }
+
+  openActionId.value = actionId
+  scrollActionGroupIntoView(actionId)
+}
+
+function onGroupToggle(actionId, event) {
+  const isOpen = !!event?.target?.open
+  if (isOpen) {
+    openActionId.value = actionId
+    return
+  }
+  if (openActionId.value === actionId) {
+    openActionId.value = null
+  }
+}
+
+watch(() => store.selectedActionId, (actionId) => {
+  syncSelectedActionGroup(actionId)
+}, { flush: 'post' })
+
+watch(actionGroups, () => {
+  syncSelectedActionGroup(store.selectedActionId)
+}, { flush: 'post' })
+
 onMounted(() => {
   refresh()
 })
@@ -488,9 +546,11 @@ onMounted(() => {
         <details
           v-for="group in actionGroups.groups"
           :key="group.actionId"
+          :ref="el => setGroupRef(group.actionId, el)"
           class="group simlog-block"
-          :style="{ '--group-accent': getActionAccent(group.actionType) }"
-          open
+          :open="openActionId === group.actionId"
+          :style="{ '--group-accent': getActionColor(group.actionId) }"
+          @toggle="event => onGroupToggle(group.actionId, event)"
         >
           <summary class="group__summary">
             <div class="group__summary-main">
@@ -642,7 +702,7 @@ onMounted(() => {
                 >
                   <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
-                  <span class="event-text">{{ formatEntryLine(entry) }}</span>
+                  <span class="event-text">{{ formatOtherEntryText(entry) }}</span>
                 </div>
               </div>
             </section>
@@ -680,6 +740,7 @@ onMounted(() => {
 
 <style scoped>
 .simlog-panel {
+  --right-panel-container-radius: 0;
   height: 100%;
   min-height: 0;
   display: flex;
@@ -820,6 +881,7 @@ onMounted(() => {
   --ea-btn-py: 4px;
   --ea-btn-px: 10px;
   --ea-btn-font-size: 11px;
+  border-radius: var(--right-panel-container-radius);
   min-height: 24px;
 }
 
@@ -879,6 +941,11 @@ onMounted(() => {
   background-color: #111;
   box-shadow: none;
   border: 1px solid #444;
+  border-radius: var(--right-panel-container-radius);
+}
+
+:deep(.effect-select-dark.simlog-limit-select .el-select__wrapper) {
+  border-radius: var(--right-panel-container-radius);
 }
 
 :deep(.effect-select-dark.simlog-limit-select .el-input__inner),
@@ -929,7 +996,7 @@ onMounted(() => {
 }
 
 .group {
-  border-left-color: color-mix(in srgb, var(--group-accent) 45%, rgba(255, 255, 255, 0.16));
+  border-left-color: color-mix(in srgb, var(--group-accent) 72%, rgba(255, 255, 255, 0.16));
   overflow: hidden;
 }
 
@@ -981,10 +1048,11 @@ onMounted(() => {
 }
 
 .group__action {
-  color: rgba(255, 255, 255, 0.88);
+  color: color-mix(in srgb, var(--group-accent) 88%, #fff);
   font-size: 14px;
   font-weight: 700;
   line-height: 1.25;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--group-accent) 32%, transparent);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1182,6 +1250,16 @@ onMounted(() => {
   white-space: pre-wrap;
   word-break: break-word;
   font-family: 'Roboto Mono', 'Consolas', monospace;
+}
+
+.simlog-dirty,
+.simlog-block,
+.simlog-search,
+.simlog-empty,
+.event-pill,
+.event-tag,
+.simlog-pre {
+  border-radius: var(--right-panel-container-radius);
 }
 
 .simlog-line {

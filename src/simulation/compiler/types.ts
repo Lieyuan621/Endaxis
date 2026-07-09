@@ -156,6 +156,8 @@ export interface Hit {
   stagger: number;
   durationExtension?: number;
   effects?: CompiledEffect[];
+  hideInEditor?: boolean;
+  hiddenInEditor?: boolean;
   _condition?: EffectCondition | EffectCondition[];
   treatAsReaction?: string;
   treatAsSkillType?: string;
