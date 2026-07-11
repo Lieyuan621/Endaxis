@@ -8,6 +8,7 @@ import { projectSpSeries } from "@/simulation/projection/projectSpSeries";
 import { projectStaggerSeries } from "@/simulation/projection/projectStaggerSeries";
 import { projectUltimateSeries } from "@/simulation/projection/projectUltimateSeries";
 import { projectActionBuffs } from "@/simulation/projection/projectActionBuffs";
+import { projectAllComboWindows } from "@/simulation/projection/projectComboWindows";
 import { resolveEffectDisplayKey } from "@/utils/effectDisplay";
 
 interface ProjectOptimizerResultInput {
@@ -391,6 +392,15 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
     }
   }
 
+  const comboWindowLayouts =
+    operatorLog.length > 0 && tracks?.length
+      ? projectAllComboWindows(
+          operatorLog,
+          tracks.filter(t => t?.id).map(t => t.id),
+          duration,
+        )
+      : new Map<string, any>();
+
   return {
     simLog,
     operatorLog,
@@ -403,5 +413,6 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
     enemyEffectLayout,
     enemyAfflictionViz,
     operatorEffectLayouts,
+    comboWindowLayouts,
   };
 }

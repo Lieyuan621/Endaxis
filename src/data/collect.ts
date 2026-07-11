@@ -23,6 +23,7 @@ import type {
   Segment,
   OperatorSheet,
   DamageElement,
+  EffectCondition
 } from './types';
 import { resolveLeveled, isTickGroup, createFinisherEntry, createDiveEntry } from './types';
 import type { TeamInstance, OperatorInstance, WeaponInstance, GearInstance } from '../types';
@@ -869,6 +870,60 @@ export function collectTriggerEffects(
             sourceSkillType: skillKey,
           });
         }
+      }
+
+      // Combo window triggers — inject comboWindow as a regular trigger
+      //  and auto-consume it when the combo skill is used.
+      for (const [skillKey, skill] of Object.entries(op.combatSkills)) {
+        const cw = skill.comboWindow;
+        if (!cw || skillKey !== 'comboSkill') continue;
+
+        const triggers = cw.triggers ?? (cw.trigger ? [cw.trigger] : []);
+        if (triggers.length === 0) continue;
+
+        const cdCondition: EffectCondition = { kind : "comboNotOnCooldown" };
+
+        // Build flat AND-condition array: operator condition(s) + comboNotOnCooldown.
+        const flatConds: EffectCondition[] = [];
+        if (cw.condition) {
+          if (Array.isArray(cw.condition)) flatConds.push(...cw.condition);
+          else flatConds.push(cw.condition);
+        }
+        flatConds.push(cdCondition);
+
+        const windowEffect: Effect = {
+          id: makeEffectId(operatorSlug, 'combo-window'),
+          name: 'comboWindow',
+          kind: 'status', // Maybe add an implicit 'comboWindow' kind is better, but status is enough for now.
+          target: 'owner',
+          duration: cw.duration,
+          condition: flatConds,
+          sourceGroup: 'operator',
+          hide: true,  // rendered via dedicated combo-window bar, not TimelineBuffLayer
+        };
+
+        for (const trigger of triggers) {
+          collected.push({
+            triggerEffect: { trigger, effects: [windowEffect] },
+            sourceSlotIndex: slotIndex,
+            sourceOperatorSlug: operatorSlug,
+            sourceSkillType: skillKey,
+          });
+        }
+
+        // Auto-consume window when the combo skill is used
+        collected.push({
+          triggerEffect: {
+            trigger: { kind: 'onActionStart', skillTypes: 'comboSkill', triggerScope: 'self' },
+            effects: [{
+              kind: 'consume',
+              operatorStatus: makeEffectId(operatorSlug, 'combo-window'),
+            }],
+          },
+          sourceSlotIndex: slotIndex,
+          sourceOperatorSlug: operatorSlug,
+          sourceSkillType: skillKey,
+        });
       }
     }
 

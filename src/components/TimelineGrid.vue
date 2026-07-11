@@ -7,6 +7,7 @@ import ActionConnector from './ActionConnector.vue'
 import ConnectionPreview from './ConnectionPreview.vue'
 import GaugeOverlay from './GaugeOverlay.vue'
 import TimelineBuffLayer from './TimelineBuffLayer.vue'
+import TimelineComboWindowBar from './TimelineComboWindowBar.vue'
 import ContextMenu from './ContextMenu.vue'
 import StatDetailDialog from './StatDetailDialog.vue'
 import HitDamageDetailDialog from './HitDamageDetailDialog.vue'
@@ -3070,6 +3071,10 @@ onUnmounted(() => {
                   :class="{ 'is-moving': isDragStarted && store.isActionSelected(action.instanceId) }"
                 />
               </div>
+              <TimelineComboWindowBar
+                v-if="track.id && store.isOperatorEffectsVisible(index)"
+                :track-id="track.id"
+              />
               <div v-if="store.isOperatorEffectsVisible(index)" class="switch-marker-layer">
                 <div v-for="sw in store.switchEvents.filter(s => s.characterId === track.id)"
                      :key="sw.id"
@@ -4344,7 +4349,7 @@ body.capture-mode .davinci-range {
 .track-divider-handle {
   position: absolute;
   right: 0;
-  height: 6px;
+  height: 12px;
   transform: translateY(-50%);
   cursor: ns-resize;
   pointer-events: auto;

@@ -287,6 +287,11 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      comboWindow: {
+        trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
+        condition: { kind: 'enemyStatus', status: ['vulnerability', 'breach'] },
+        duration: 5,
+      },
       ultimateEnergyGain: 10,
       segments: [
         {

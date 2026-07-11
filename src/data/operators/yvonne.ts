@@ -352,6 +352,11 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      comboWindow: {
+        trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
+        condition: { kind: 'enemyStatus', status: 'solidification' },
+        duration: 5,
+      },
       ultimateEnergyGain: 10,
       segments: [
         {
@@ -371,7 +376,7 @@ const sheet: OperatorSheet = {
                     ? [
                         {
                           id: 'yvonne-combo-ult-energy',
-                          kind: 'ultEnergyGain' as const,
+                          kind: 'ultEnergyGain',
                           value: 10,
                         },
                       ]

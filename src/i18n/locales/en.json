@@ -509,6 +509,7 @@
       "blaze_burst": "Heat Burst",
       "emag_burst": "Electric Burst",
       "cold_burst": "Cryo Burst",
+      "comboWindow": "Combo Window",
       "nature_burst": "Nature Burst",
       "burning": "Combustion",
       "conductive": "Electrification",
