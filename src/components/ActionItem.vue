@@ -105,16 +105,7 @@ function onDamageHitClick(hit) {
   emit('hit-click', hit.data)
 }
 
-// 连携冷却计算
-
-const currentTrack = computed(() => {
-  return store.tracks.find(t => t.actions?.some(a => a.instanceId === props.action.instanceId)) || null
-})
-
-const baseCooldown = computed(() => {
-  const resolved = store.compiledTimeline?.actionMap?.get(props.action.instanceId)
-  return Number(resolved?.node?.baseCooldown ?? props.action.baseCooldown ?? props.action.cooldown) || 0
-})
+// 冷却计算 — 使用编译器预计算的 effective cooldown，仅叠加运行时 sim 缩减
 
 const simCdReduction = computed(() => {
   const log = store.simLog || store.simulation?.simLog || []
@@ -123,35 +114,30 @@ const simCdReduction = computed(() => {
     .reduce((sum, entry) => sum + (Number(entry.payload?.reduction) || 0), 0)
 })
 
+/** Compiled effective cooldown (after passive stats), or null if not yet compiled.
+ *
+ *  Naming trap: `action.cooldown` 原本存的是技能面板原始冷却 (如 25s)，
+ *  但 compileScenario.normalizeAction 把 resolveEffectiveCooldown 的返回值
+ *  展开后覆盖了它 → 变成有效冷却 (如 20s)。原始值则移到新增的 `baseCooldown` 字段。
+ *  所以编译后 resolved.node.cooldown = 有效值，resolved.node.baseCooldown = 原始值。 */
+const compiledCooldown = computed(() => {
+  // NOTE: resolved.node !== props.action — 编译期创建了新对象。
+  // props.action.baseCooldown 为 undefined，必须读 actionMap。
+  const resolved = store.compiledTimeline?.actionMap?.get(props.action.instanceId)
+  const cd = resolved?.node?.cooldown
+  return typeof cd === 'number' ? cd : null
+})
+
 const effectiveComboCooldown = computed(() => {
-  const baseCd = baseCooldown.value
   if (props.action.type !== 'comboSkill') return 0
-  const track = currentTrack.value
-  const clamp = (val) => {
-    const num = Number(val) || 0
-    if (num < 0) return 0
-    if (num > 100) return 100
-    return num
-  }
-  const reduction = Math.max(
-      clamp(track?.stats?.combo_cd_reduction),
-      clamp(track?.stats?.link_cd_reduction),
-      clamp(track?.linkCdReduction),
-      clamp(store.systemConstants.linkCdReduction),
-  )
-  const flat = Math.max(0, Number(track?.stats?.combo_cd_reduction_flat) || 0)
-  const extMult = Math.max(0, Number(track?.stats?.combo_cd_external_mult ?? 1) || 1)
-  return Math.max(0, (baseCd - flat) * (1 - reduction / 100) * extMult - simCdReduction.value)
+  const compiled = compiledCooldown.value
+  return compiled != null ? Math.max(0, compiled - simCdReduction.value) : 0
 })
 
 const effectiveUltimateCooldown = computed(() => {
-  const baseCd = baseCooldown.value
   if (props.action.type !== 'ultimate') return 0
-  const track = store.tracks.find(t => t.actions?.some(a => a.instanceId === props.action.instanceId))
-  const pct = Math.max(0, Math.min(100, Number(track?.stats?.ult_cd_reduction) || 0))
-  const flat = Math.max(0, Number(track?.stats?.ult_cd_reduction_flat) || 0)
-  const extMult = Math.max(0, Number(track?.stats?.ult_cd_external_mult ?? 1) || 1)
-  return Math.max(0, (baseCd - flat) * (1 - pct / 100) * extMult - simCdReduction.value)
+  const compiled = compiledCooldown.value
+  return compiled != null ? Math.max(0, compiled - simCdReduction.value) : 0
 })
 
 // 主体样式计算

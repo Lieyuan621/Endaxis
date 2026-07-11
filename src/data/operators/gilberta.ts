@@ -224,6 +224,15 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      comboWindow: {
+        trigger: {
+          kind: 'onStatusApplied',
+          status: ['combustion', 'electrification', 'solidification', 'corrosion'],
+          target: 'enemy',
+          triggerScope: 'global'
+        },
+        duration: 5,
+      },
       ultimateEnergyGain: 10,
       segments: [
         {

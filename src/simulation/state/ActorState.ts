@@ -6,6 +6,8 @@ export class ActorState implements BaseGameState<ActorSnapshot> {
   public effects: EffectManager;
   private gauge: number;
   private maxGauge: number;
+  /** Accumulated runtime CD reduction per actionId (written by TriggerRegistry). */
+  private cdReductions = new Map<string, number>();
 
   constructor(public readonly snapshotData: ActorSnapshot) {
     this.effects = new EffectManager();
@@ -38,6 +40,15 @@ export class ActorState implements BaseGameState<ActorSnapshot> {
     const next = this.gauge + amount;
     this.gauge = Math.max(0, Math.min(next, this.maxGauge || next));
     return this.gauge;
+  }
+
+  recordCdReduction(actionId: string, amount: number) {
+    const prev = this.cdReductions.get(actionId) ?? 0;
+    this.cdReductions.set(actionId, prev + amount);
+  }
+
+  getCdReduction(actionId: string): number {
+    return this.cdReductions.get(actionId) ?? 0;
   }
 
   snapshot(): ActorSnapshot {

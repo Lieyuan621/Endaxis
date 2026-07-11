@@ -4959,6 +4959,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         return optimizerProjection.value.operatorEffectLayouts
     })
 
+    const comboWindowLayouts = computed(() => {
+        return optimizerProjection.value.comboWindowLayouts
+    })
+
     const timeContext = computed(() => compiledTimeline.value?.timeContext || null);
 
     const globalExtensions = computed(() => {
@@ -5691,6 +5695,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         enemyEffectLayout,
         enemyAfflictionViz,
         operatorEffectLayouts,
+        comboWindowLayouts,
         gaugeSeriesByTrackId,
         simLog,
         operatorLog,

@@ -31,7 +31,7 @@ import type {
 } from '@/simulation/engine/types';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext';
 import { resolveEffectDefaults, resolveEffectLifecycle } from '@/data/effectPresets';
-import type { ActorStats } from '@/simulation/compiler/types';
+import type { ResolvedAction, ActorStats } from '@/simulation/compiler/types';
 import { computeScalingBasis } from '@/data/stats';
 import { computeStats } from '@/data/stats/computeStats';
 import { resolveStatAttributes } from '@/data/collect';
@@ -247,6 +247,23 @@ export function evaluateEffectCondition(
   if (cond.kind === 'actionLinkConsumed') {
     if (!actionId) return false;
     return (ctx.getAction(actionId)?.consumedStacks?.link ?? 0) > 0;
+  }
+  if (cond.kind === 'comboNotOnCooldown') {
+    const actions = ctx.getAllActions();
+    // Find the last combo action on this track (descending by start time)
+    let lastCombo: ResolvedAction | undefined;
+    for (let i = actions.length - 1; i >= 0; i--) {
+      const a = actions[i]!;
+      if (a.trackId === sourceTrackId && a.node.type === 'comboSkill' && !a.node.isDisabled && a.realStartTime <= time) {
+        if (!lastCombo || a.realStartTime > lastCombo.realStartTime) lastCombo = a;
+      }
+    }
+    if (!lastCombo) return true;
+    const startTime = lastCombo.realStartTime;
+    const cd = lastCombo.node.cooldown ?? 0;
+    const cdReduction = ctx.state.getActor(sourceTrackId).getCdReduction(lastCombo.id);
+    const cooldownEnd = startTime + cd - cdReduction;
+    return time >= cooldownEnd;
   }
   if (cond.kind === 'enemyStaggered') {
     return ctx.state.enemy.isBroken(time);

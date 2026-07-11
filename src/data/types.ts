@@ -206,12 +206,17 @@ export interface EnemyStaggeredCondition {
   kind: 'enemyStaggered';
 }
 
+export interface OperatorComboCdCondition {
+  kind: 'comboNotOnCooldown';
+}
+
 export type EffectCondition =
   | EnemyCondition
   | EnemyHpCondition
   | EnemyStaggeredCondition
   | OperatorCondition
   | OperatorHpCondition
+  | OperatorComboCdCondition
   | ActionLinkConsumedCondition
   | NegatedCondition
   | OrCondition;
@@ -815,6 +820,15 @@ export interface CombatSkillEntry {
   ultimateEnergyGain?: number;
   animationTime?: number;
   enhancementTime?: number;
+  /** Combo skill activation window. When the trigger fires, a window of `duration` seconds opens
+   *  during which this combo skill can be used. */
+  comboWindow?: {
+    trigger?: TriggerEvent;
+    /** Multiple triggers — all produce the same window effect. Use instead of `trigger`. */
+    triggers?: TriggerEvent[];
+    condition?: EffectCondition | EffectCondition[];
+    duration: number;
+  };
 }
 
 /**

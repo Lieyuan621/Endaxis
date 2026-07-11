@@ -375,6 +375,11 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      comboWindow: {
+        trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
+        condition: { kind: 'enemyStatus', status: ['electricInfliction', 'electrification'] },
+        duration: 5,
+      },
       segments: [
         {
           duration: 0.7,

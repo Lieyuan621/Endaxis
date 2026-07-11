@@ -196,6 +196,10 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      comboWindow: {
+        trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
+        duration: 5,
+      },
       ultimateEnergyGain: 10,
       segments: [
         {

@@ -579,6 +579,8 @@ export class TriggerRegistry {
       const clamped = Math.min(reduction, remaining);
       if (clamped <= 0) continue;
 
+      ctx.state.getActor(targetTrackId).recordCdReduction(target.node.instanceId, clamped);
+
       ctx.simLog({
         type: 'CD_REDUCTION',
         time,

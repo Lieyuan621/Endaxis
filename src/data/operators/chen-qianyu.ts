@@ -220,6 +220,10 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      comboWindow: {
+        trigger: { kind: 'onStatusApplied', status: 'vulnerability', target: 'enemy', triggerScope: 'global' },
+        duration: 5,
+      },
       ultimateEnergyGain: 10,
       segments: [
         {

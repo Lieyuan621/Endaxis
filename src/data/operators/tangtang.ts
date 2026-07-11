@@ -417,6 +417,15 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      comboWindow: {
+        trigger: {
+          kind: 'onStatusApplied',
+          status: ['cryoInfliction', 'heatBurst', 'cryoBurst', 'electricBurst', 'natureBurst'],
+          target: 'enemy',
+          triggerScope: 'global'
+        },
+        duration: 5,
+      },
       ultimateEnergyGain: 10,
       segments: [
         {
