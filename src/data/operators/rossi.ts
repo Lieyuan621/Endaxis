@@ -402,6 +402,17 @@ const sheet: OperatorSheet = {
                       duration: 0.516,
                       hide: true,
                     },
+                    {
+                      // TODO 二段连携窗口，目前未将两个窗口和两段连携技对应起来
+                      //  后续需要考虑如何对应起来，以及如何与完美连携窗口配合展示？
+                      id: 'rossi-combo-window',
+                      name: 'comboWindow',
+                      kind: 'status',
+                      target: 'owner',
+                      duration: 5,
+                      sourceGroup: 'operator',
+                      hide: true,
+                    }
                   ],
                 },
                 {

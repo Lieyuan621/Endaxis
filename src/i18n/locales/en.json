@@ -1012,6 +1012,11 @@
   "actionItem": {
     "damageHitTooltip": "Damage: {damage}",
     "lockedTitle": "Locked",
-    "disabledTitle": "Disabled"
+    "disabledTitle": "Disabled",
+    "requisiteTitle": {
+      "comboWindow": "Not in combo window",
+      "spInsufficient": "Insufficient SP, need {need}, current {current}",
+      "gaugeInsufficient": "Insufficient gauge, need {need}, current {current}"
+    }
   }
 }

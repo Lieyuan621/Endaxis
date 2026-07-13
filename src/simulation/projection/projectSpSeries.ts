@@ -1,17 +1,19 @@
 import type { GameSnapshot } from "@/simulation/state/types.ts";
 import type { SimLogEntry } from "@/simulation/events/event.types.ts";
 
+export interface SpPoint {
+  time: number;
+  sp: number;
+  actionId?: string;
+  change?: number;
+}
+
 export function projectSpSeries(
   simLog: SimLogEntry[],
   initialSnapshot: GameSnapshot,
   timelineDuration = 120
-) {
-  const spSeries: {
-    time: number;
-    sp: number;
-    actionId?: string;
-    change?: number;
-  }[] = [];
+): SpPoint[] {
+  const spSeries: SpPoint[] = [];
 
   let lastTime = 0;
   let lastValue = initialSnapshot.team.sp;

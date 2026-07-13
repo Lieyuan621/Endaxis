@@ -9,6 +9,7 @@ import { projectStaggerSeries } from "@/simulation/projection/projectStaggerSeri
 import { projectUltimateSeries } from "@/simulation/projection/projectUltimateSeries";
 import { projectActionBuffs } from "@/simulation/projection/projectActionBuffs";
 import { projectAllComboWindows } from "@/simulation/projection/projectComboWindows";
+import { projectRequisiteWarnings } from "@/simulation/projection/projectRequisiteWarnings";
 import { resolveEffectDisplayKey } from "@/utils/effectDisplay";
 
 interface ProjectOptimizerResultInput {
@@ -401,6 +402,13 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
         )
       : new Map<string, any>();
 
+  const requisiteWarnings = projectRequisiteWarnings(
+      tracks || [],
+      comboWindowLayouts,
+      spSeries,
+      gaugeSeriesByTrackId,
+  );
+
   return {
     simLog,
     operatorLog,
@@ -414,5 +422,6 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
     enemyAfflictionViz,
     operatorEffectLayouts,
     comboWindowLayouts,
+    requisiteWarnings,
   };
 }

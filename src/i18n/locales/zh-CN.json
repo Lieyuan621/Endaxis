@@ -1014,6 +1014,11 @@
   "actionItem": {
     "damageHitTooltip": "伤害: {damage}",
     "lockedTitle": "位置已锁定",
-    "disabledTitle": "已禁用：不参与计算"
+    "disabledTitle": "已禁用：不参与计算",
+    "requisiteTitle": {
+      "comboWindow": "不在连携窗口内",
+      "spInsufficient": "技力不足，需要{need}，当前{current}",
+      "gaugeInsufficient": "终结技能量不足，需要{need}，当前{current}"
+    }
   }
 }
