@@ -720,7 +720,7 @@ function handleActionDragStart(startPos, port) {
   right: 2px;
   color: #ff4d4f;
   pointer-events: auto;
-  cursor: help;
+  cursor: default;
 }
 
 .action-item-content {
