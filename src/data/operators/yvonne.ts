@@ -353,8 +353,12 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
-        condition: { kind: 'enemyStatus', status: 'solidification' },
+        triggers: [
+          {
+            trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
+            condition: { kind: 'enemyStatus', status: 'solidification' },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

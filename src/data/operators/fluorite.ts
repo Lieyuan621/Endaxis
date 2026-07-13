@@ -267,17 +267,21 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: {
-          kind: 'onStatusApplied',
-          status: ['cryoInfliction', 'natureInfliction'],
-          target: 'enemy',
-          triggerScope: 'global'
-        },
-        condition: {
-          kind: 'enemyStatus',
-          status: ['cryoInfliction', 'natureInfliction'],
-          stacks: { compare: 'atLeast', count: 2 }
-        },
+        triggers: [
+          {
+            trigger: {
+              kind: 'onStatusApplied',
+              status: ['cryoInfliction', 'natureInfliction'],
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+            condition: {
+              kind: 'enemyStatus',
+              status: ['cryoInfliction', 'natureInfliction'],
+              stacks: { compare: 'atLeast', count: 2 },
+            },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

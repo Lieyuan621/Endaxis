@@ -251,14 +251,17 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: {
-          kind: 'onStatusApplied',
-          status: ['vulnerability', 'lift', 'knockdown', 'crush', 'breach',
-            'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
-          target: 'enemy',
-          triggerScope: 'global'
-        },
-        condition: { kind: 'enemyStatus', status: 'antal-battle-focus' },
+        triggers: [
+          {
+            trigger: {
+              kind: 'onStatusApplied',
+              status: ['vulnerability', 'lift', 'knockdown', 'crush', 'breach',
+                'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

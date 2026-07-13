@@ -225,7 +225,11 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: { kind: 'onStatusApplied', status: 'solidification', target: 'enemy', triggerScope: 'global' },
+        triggers: [
+          {
+            trigger: { kind: 'onStatusApplied', status: 'solidification', target: 'enemy', triggerScope: 'global' },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

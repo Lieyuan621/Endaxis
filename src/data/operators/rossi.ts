@@ -358,18 +358,33 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: {
-          kind: 'onStatusApplied',
-          status: ['vulnerability', 'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
-          target: 'enemy',
-          triggerScope: 'global',
-        },
-        condition: [
-          { kind: 'enemyStatus', status: 'vulnerability' },
+        // "当有敌人同时处于破防和法术附着状态时可以发动"
+        // 实际上在有破防的情况下上法术附着，即便这个附着和之前的附着反应掉了变成异常也算
+        triggers: [
           {
-            kind: 'enemyStatus',
-            status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction']
-          }
+            trigger: {
+              kind: 'onStatusApplied',
+              status: 'vulnerability',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+            condition: {
+              kind: 'enemyStatus',
+              status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+            },
+          },
+          {
+            trigger: {
+              kind: 'onStatusApplied',
+              status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+            condition: {
+              kind: 'enemyStatus',
+              status: 'vulnerability',
+            },
+          },
         ],
         duration: 5,
       },

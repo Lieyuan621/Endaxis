@@ -223,8 +223,12 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: { kind: 'onStatusApplied', status: 'vulnerability', target: 'enemy', triggerScope: 'global' },
-        condition: { kind: 'enemyStatus', status: 'vulnerability', stacks: { compare: 'atLeast', count: 4 } },
+        triggers: [
+          {
+            trigger: { kind: 'onStatusApplied', status: 'vulnerability', target: 'enemy', triggerScope: 'global' },
+            condition: { kind: 'enemyStatus', status: 'vulnerability', stacks: { compare: 'atLeast', count: 4 } },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,
