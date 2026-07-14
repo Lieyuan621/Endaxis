@@ -1,12 +1,18 @@
 import type { SimLogEntry } from "@/simulation/events/event.types.ts";
 import type { GameSnapshot } from "@/simulation/state/types.ts";
 
+export interface GaugePoint {
+  time: number;
+  val: number;
+  ratio: number;
+}
+
 export function projectUltimateSeries(
   simLog: SimLogEntry[],
   initialSnapshot: GameSnapshot,
   actorId: string,
   timelineDuration = 120,
-) {
+): GaugePoint[] {
   const actor = initialSnapshot.actors.find((item) => item.id === actorId);
   if (!actor) {
     return [];
@@ -18,7 +24,7 @@ export function projectUltimateSeries(
     Math.min(Number(actor.resources?.gauge ?? actor.resources?.ultimateEnergy) || 0, maxGauge),
   );
 
-  const points = [
+  const points : GaugePoint[] = [
     { time: 0, val: currentGauge, ratio: currentGauge / maxGauge },
   ];
 

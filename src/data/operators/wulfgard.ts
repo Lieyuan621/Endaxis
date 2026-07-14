@@ -288,12 +288,16 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: {
-          kind: 'onStatusApplied',
-          status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
-          target: 'enemy',
-          triggerScope: 'global'
-        },
+        triggers: [
+          {
+            trigger: {
+              kind: 'onStatusApplied',
+              status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

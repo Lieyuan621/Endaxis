@@ -212,7 +212,11 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: { kind: 'onHit', skillTypes: 'comboSkill', triggerScope: 'global' },
+        triggers: [
+          {
+            trigger: { kind: 'onHit', skillTypes: 'comboSkill', triggerScope: 'global' },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

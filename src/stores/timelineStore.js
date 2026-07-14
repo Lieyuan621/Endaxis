@@ -4963,6 +4963,10 @@ export const useTimelineStore = defineStore('timeline', () => {
         return optimizerProjection.value.comboWindowLayouts
     })
 
+    const requisiteWarnings = computed(() => {
+        return optimizerProjection.value.requisiteWarnings
+    })
+
     const timeContext = computed(() => compiledTimeline.value?.timeContext || null);
 
     const globalExtensions = computed(() => {
@@ -5224,7 +5228,10 @@ export const useTimelineStore = defineStore('timeline', () => {
                 if (sourceTrack.id === trackId) {
                     // Costs are applied at action start.
                     if (action.gaugeCost > 0) {
-                        events.push({ time: snapTimeToFrame(action.startTime), change: -Number(action.gaugeCost) });
+                        // TODO ultimateEnergyCostReduction is scattered — consolidate or just compute max once and always deduct to 0?
+                        const costReduction = Number(track.operatorStatus?.ultimateEnergyCostReduction) || 0;
+                        const effectiveCost = action.gaugeCost * (1 - Math.max(0, Math.min(costReduction, 0.99)));
+                        events.push({ time: snapTimeToFrame(action.startTime), change: -effectiveCost });
                     }
                     // Self gauge gain is applied when the action ends.
                     if (action.gaugeGain > 0) {
@@ -5696,6 +5703,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         enemyAfflictionViz,
         operatorEffectLayouts,
         comboWindowLayouts,
+        requisiteWarnings,
         gaugeSeriesByTrackId,
         simLog,
         operatorLog,

@@ -221,14 +221,18 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
-        condition: {
-          kind: 'not',
-          condition: {
-            kind: 'enemyStatus',
-            status: ['vulnerability', 'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction']
-          }
-        },
+        triggers: [
+          {
+            trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
+            condition: {
+              kind: 'not',
+              condition: {
+                kind: 'enemyStatus',
+                status: ['vulnerability', 'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              },
+            },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

@@ -410,7 +410,11 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: { kind: 'onStatusConsumed', status: 'heatInfliction', target: 'enemy', triggerScope: 'global' },
+        triggers: [
+          {
+            trigger: { kind: 'onStatusConsumed', status: 'heatInfliction', target: 'enemy', triggerScope: 'global' },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

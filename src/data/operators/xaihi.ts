@@ -250,13 +250,17 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: {
-          kind: 'onStatusConsumed',
-          status: 'xaihi-auxiliary-crystal',
-          target: 'self',
-          triggerScope: 'global'
-        },
-        condition: { kind: 'not', condition: { kind: 'operatorStatus', status: 'xaihi-auxiliary-crystal' } },
+        triggers: [
+          {
+            trigger: {
+              kind: 'onStatusConsumed',
+              status: 'xaihi-auxiliary-crystal',
+              target: 'self',
+              triggerScope: 'global',
+            },
+            condition: { kind: 'not', condition: { kind: 'operatorStatus', status: 'xaihi-auxiliary-crystal' } },
+          },
+        ],
         duration: 5,
       },
       ultimateEnergyGain: 10,

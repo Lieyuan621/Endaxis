@@ -16,12 +16,14 @@ import type {
   OperatorEffectApplyEvent,
   OperatorEffectExpireEvent,
 } from '@/simulation/engine/types';
+import { timeToFrame } from '@/utils/time';
 
 export interface ComboWindowSegment {
   start: number;
   end: number;
   duration: number;
   color: string;
+  perfectTiming?: boolean; // this segment is a perfect-timing overlay
 }
 
 export type ComboWindowLayout = ComboWindowSegment[];
@@ -34,19 +36,20 @@ export function projectComboWindows(
   operatorLog: OperatorStateEvent[],
   trackId: string,
   maxTime: number,
+  suffix = 'combo-window',
 ): ComboWindowLayout {
   const markers: Marker[] = [];
 
   for (const e of operatorLog) {
     if (e.type === 'OPERATOR_EFFECT_APPLY' && (e as OperatorEffectApplyEvent).targetTrackId === trackId) {
       const ae = e as OperatorEffectApplyEvent;
-      if (ae.id.endsWith('combo-window')) {
+      if (ae.id.endsWith(suffix)) {
         markers.push({ kind: 'apply', time: ae.time });
       }
     }
     if (e.type === 'OPERATOR_EFFECT_EXPIRE' && (e as OperatorEffectExpireEvent).targetTrackId === trackId) {
       const ee = e as OperatorEffectExpireEvent;
-      if (ee.id.endsWith('combo-window')) {
+      if (ee.id.endsWith(suffix)) {
         markers.push({ kind: 'expire', time: ee.time });
       }
     }
@@ -99,18 +102,61 @@ export function projectComboWindows(
 
 /**
  * Build a map of trackId → ComboWindowLayout for all tracks.
+ * Perfect-timing windows are split into the combo window layout — they appear
+ * as sub-segments within the main window, not as separate bars.
  */
 export function projectAllComboWindows(
   operatorLog: OperatorStateEvent[],
   trackIds: string[],
   maxTime: number,
 ): Map<string, ComboWindowLayout> {
-  const result = new Map<string, ComboWindowLayout>();
+  const comboWindows = new Map<string, ComboWindowLayout>();
   for (const trackId of trackIds) {
-    const layout = projectComboWindows(operatorLog, trackId, maxTime);
-    if (layout.length > 0) {
-      result.set(trackId, layout);
-    }
+    const raw = projectComboWindows(operatorLog, trackId, maxTime, 'combo-window');
+    const pt = projectComboWindows(operatorLog, trackId, maxTime, 'combo-perfect-timing');
+    const layout = mergeWithPerfectTiming(raw, pt);
+    if (layout.length > 0) comboWindows.set(trackId, layout);
   }
-  return result;
+  return comboWindows;
+}
+
+/**
+ * Split combo window segments where perfect-timing overlaps, inserting
+ * perfectTiming-flagged sub-segments.
+ */
+function mergeWithPerfectTiming(
+  combo: ComboWindowSegment[],
+  perfect: ComboWindowSegment[],
+): ComboWindowSegment[] {
+  if (perfect.length === 0) return combo;
+
+  const times = new Set<number>();
+  for (const s of combo) { times.add(s.start); times.add(s.end); }
+  for (const s of perfect) { times.add(s.start); times.add(s.end); }
+  const sorted = [...times].sort((a, b) => a - b);
+
+  const segments: ComboWindowSegment[] = [];
+  for (let i = 1; i < sorted.length; i++) {
+    const start = sorted[i - 1]!;
+    const end = sorted[i]!;
+    // Skip if both ends land on the same frame — no real duration
+    if (timeToFrame(start) === timeToFrame(end)) continue;
+
+    const inCombo = combo.some(s =>
+        timeToFrame(start) >= timeToFrame(s.start) && timeToFrame(end) <= timeToFrame(s.end));
+    const inPerfect = perfect.some(s =>
+        timeToFrame(start) >= timeToFrame(s.start) && timeToFrame(end) <= timeToFrame(s.end));
+    if (!inCombo && !inPerfect) continue;
+    // Only perfect-timing within combo windows (not standalone)
+    if (inPerfect && !inCombo) continue;
+
+    segments.push({
+      start, end,
+      duration: end - start,
+      color: COMBO_WINDOW_COLOR,
+      perfectTiming: inPerfect ? true : undefined,
+    });
+  }
+
+  return segments;
 }

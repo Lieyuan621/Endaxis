@@ -140,6 +140,28 @@ const effectiveUltimateCooldown = computed(() => {
   return compiled != null ? Math.max(0, compiled - simCdReduction.value) : 0
 })
 
+/** Add a warning mark for any unmet prerequisites. */
+const requisiteWarning = computed(() => {
+  return store.requisiteWarnings?.get(props.action.instanceId) ?? null
+})
+
+const requisiteTitle = computed(() => {
+  const w = requisiteWarning.value
+  if (!w) return ''
+  // Format the number with a maximum of 3 decimal places, omitting redundant trailing zeros.
+  const fmt = n => Number(n.toFixed(3)).toString()
+  if (w.kind === 'combo') return t('actionItem.requisiteTitle.comboWindow')
+  if (w.kind === 'sp') return t('actionItem.requisiteTitle.spInsufficient', {
+    need: fmt(w.need ?? 0),
+    current: fmt(w.current ?? 0)
+  })
+  if (w.kind === 'gauge') return t('actionItem.requisiteTitle.gaugeInsufficient', {
+    need: fmt(w.need ?? 0),
+    current: fmt(w.current ?? 0)
+  })
+  return ''
+})
+
 // 主体样式计算
 const PERFECT_LINK_STATUS_IDS = new Set([
   'rossi-combo-perfect-timing-satisfied',
@@ -613,6 +635,14 @@ function handleActionDragStart(startPos, port) {
       </svg>
     </div>
 
+    <div v-if="showDecorations && requisiteWarning" class="status-icon warn-icon" :title="requisiteTitle">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </div>
+
     <template v-if="showDecorations && action.type === 'ultimate' && !action.isDisabled">
       <div class="ultimate-side-bar left-bar" :style="{ backgroundColor: themeColor }"></div>
       <div class="ultimate-side-bar right-bar" :style="{ backgroundColor: themeColor }"></div>
@@ -685,6 +715,12 @@ function handleActionDragStart(startPos, port) {
 }
 .mute-icon {
   right: 2px;
+}
+.warn-icon {
+  right: 2px;
+  color: #ff4d4f;
+  pointer-events: auto;
+  cursor: default;
 }
 
 .action-item-content {

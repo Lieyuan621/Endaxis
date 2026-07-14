@@ -823,10 +823,10 @@ export interface CombatSkillEntry {
   /** Combo skill activation window. When the trigger fires, a window of `duration` seconds opens
    *  during which this combo skill can be used. */
   comboWindow?: {
-    trigger?: TriggerEvent;
-    /** Multiple triggers — all produce the same window effect. Use instead of `trigger`. */
-    triggers?: TriggerEvent[];
-    condition?: EffectCondition | EffectCondition[];
+    triggers: {
+      trigger: TriggerEvent;
+      condition?: EffectCondition | EffectCondition[];
+    }[];
     duration: number;
   };
 }

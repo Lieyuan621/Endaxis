@@ -358,18 +358,33 @@ const sheet: OperatorSheet = {
     },
     comboSkill: {
       comboWindow: {
-        trigger: {
-          kind: 'onStatusApplied',
-          status: ['vulnerability', 'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
-          target: 'enemy',
-          triggerScope: 'global',
-        },
-        condition: [
-          { kind: 'enemyStatus', status: 'vulnerability' },
+        // "当有敌人同时处于破防和法术附着状态时可以发动"
+        // 实际上在有破防的情况下上法术附着，即便这个附着和之前的附着反应掉了变成异常也算
+        triggers: [
           {
-            kind: 'enemyStatus',
-            status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction']
-          }
+            trigger: {
+              kind: 'onStatusApplied',
+              status: 'vulnerability',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+            condition: {
+              kind: 'enemyStatus',
+              status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+            },
+          },
+          {
+            trigger: {
+              kind: 'onStatusApplied',
+              status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+            condition: {
+              kind: 'enemyStatus',
+              status: 'vulnerability',
+            },
+          },
         ],
         duration: 5,
       },
@@ -402,6 +417,17 @@ const sheet: OperatorSheet = {
                       duration: 0.516,
                       hide: true,
                     },
+                    {
+                      // TODO 二段连携窗口，目前未将两个窗口和两段连携技对应起来
+                      //  后续需要考虑如何对应起来，以及如何与完美连携窗口配合展示？
+                      id: 'rossi-combo-window',
+                      name: 'comboWindow',
+                      kind: 'status',
+                      target: 'owner',
+                      duration: 5,
+                      sourceGroup: 'operator',
+                      hide: true,
+                    }
                   ],
                 },
                 {
@@ -562,7 +588,7 @@ const sheet: OperatorSheet = {
               kind: 'status',
               target: 'self',
               duration: 2,
-              icon: '/operators/rossi/avatar.webp',
+              hide: true
             },
           ],
         },

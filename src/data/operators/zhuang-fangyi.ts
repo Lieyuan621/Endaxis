@@ -638,10 +638,15 @@ const sheet: OperatorSheet = {
     comboSkill: {
       comboWindow: {
         triggers: [
-          { kind: 'onFinalStrike', triggerScope: 'global' },
-          { kind: 'onFinisher', triggerScope: 'global' },
+          {
+            trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
+            condition: { kind: 'enemyStatus', status: 'electricInfliction' },
+          },
+          {
+            trigger: { kind: 'onFinisher', triggerScope: 'global' },
+            condition: { kind: 'enemyStatus', status: 'electricInfliction' },
+          },
         ],
-        condition: { kind: 'enemyStatus', status: 'electricInfliction' },
         duration: 5,
       },
       ultimateEnergyGain: 10,
