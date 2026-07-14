@@ -256,6 +256,11 @@ export function getOperatorCombatSkillName(slug: string, skillKey: string, local
   )
 }
 
+export function getOperatorCombatSkillDescription(slug: string, skillKey: string, locale?: string | null) {
+  const entry = getOperatorEntry(slug, locale)
+  return readTrimmedText(entry?.combatSkills?.[skillKey]?.description) || ''
+}
+
 export function getOperatorSubSkillName(slug: string, subSkillKey: string, locale?: string | null, fallback?: string | null) {
   const entry = getOperatorEntry(slug, locale)
   return (
