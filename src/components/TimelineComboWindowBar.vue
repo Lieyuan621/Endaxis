@@ -1,12 +1,14 @@
 <script setup>
 import { useTimelineStore } from '../stores/timelineStore.js'
 import { formatFrameCount } from '@/utils/time.js'
+import { useI18n } from 'vue-i18n'
 
 defineProps({
   trackId: { type: String, required: true },
 })
 
 const store = useTimelineStore()
+const { t } = useI18n({ useScope: 'global' })
 
 function formatDuration(time) {
   if (time >= 1) return store.formatTimeLabel(time)
@@ -22,7 +24,8 @@ function formatDuration(time) {
     <div
       v-for="(cw, cwIdx) in store.comboWindowLayouts.get(trackId)"
       :key="`cw-${trackId}-${cwIdx}`"
-      class="combo-window-bar"
+      :class="['combo-window-bar', { 'perfect-timing-bar': cw.perfectTiming }]"
+      :title="cw.perfectTiming ? t('effects.name.perfectTiming') : t('effects.name.comboWindow')"
       :style="{
         left: `${store.timeToPx(cw.start)}px`,
         width: `${store.timeToPx(cw.end) - store.timeToPx(cw.start)}px`,
@@ -32,7 +35,7 @@ function formatDuration(time) {
       <div class="cw-start-mark"></div>
       <div class="cw-line"></div>
       <div class="cw-end-mark"></div>
-      <span class="cw-duration">{{ formatDuration(cw.duration) }}</span>
+      <span class="cw-duration-text">{{ formatDuration(cw.duration) }}</span>
     </div>
   </div>
 </template>
@@ -55,7 +58,7 @@ function formatDuration(time) {
   display: flex;
   align-items: center;
   transform: translateY(7px);
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .cw-start-mark {
@@ -74,6 +77,45 @@ function formatDuration(time) {
   border-bottom: 2px dashed var(--cw-color);
 }
 
+.perfect-timing-bar .cw-line {
+  position: relative;
+  height: 2px;
+  border-bottom: none;
+  background: repeating-linear-gradient(
+      90deg,
+      var(--cw-color) 0,
+      var(--cw-color) 4px,
+      transparent 4px,
+      transparent 8px
+  );
+  background-size: 8px 100%;
+  animation:
+      dash-flow 0.5s linear infinite;
+}
+
+@keyframes dash-flow {
+  from { background-position-x: 0; }
+  to   { background-position-x: 8px; }
+}
+
+.perfect-timing-bar .cw-line::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cw-color);
+  animation:
+    move-along-path 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes move-along-path {
+  0%   { left: 0; }
+  100% { left: calc(100% - 4px); }
+}
+
 .cw-end-mark {
   position: absolute;
   right: 0;
@@ -84,7 +126,7 @@ function formatDuration(time) {
   background-color: var(--cw-color);
 }
 
-.cw-duration {
+.cw-duration-text {
   position: absolute;
   left: 0;
   top: 4px;

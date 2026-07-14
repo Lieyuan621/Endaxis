@@ -588,7 +588,7 @@ const sheet: OperatorSheet = {
               kind: 'status',
               target: 'self',
               duration: 2,
-              icon: '/operators/rossi/avatar.webp',
+              hide: true
             },
           ],
         },
