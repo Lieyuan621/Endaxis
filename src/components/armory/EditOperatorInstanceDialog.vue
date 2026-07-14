@@ -9,6 +9,8 @@ import {
   getGameWeaponTypeName,
   getOperatorPotentialDescription,
   getOperatorPotentialName,
+  getOperatorCombatSkillDescription,
+  getOperatorCombatSkillName,
   getOperatorTalentDescription,
   getOperatorTalentName,
   getOperatorUiLabel,
@@ -108,7 +110,7 @@ function getSkillIcon(key) {
   return slug && file ? `/operators/${slug}/${file}` : '/icons/default_icon.webp'
 }
 
-function getSkillName(key) {
+function getSkillTypeName(key) {
   return key === 'basicAttack'
     ? t('skillType.attack')
     : key === 'battleSkill'
@@ -116,6 +118,18 @@ function getSkillName(key) {
       : key === 'comboSkill'
         ? t('skillType.link')
         : t('skillType.ultimate')
+}
+
+function getSkillName(key) {
+  const slug = props.instance?.operatorSlug
+  if (!slug) return ''
+  return getOperatorCombatSkillName(slug, key, locale.value) || getSkillTypeName(key)
+}
+
+function getSkillDescription(key) {
+  const slug = props.instance?.operatorSlug
+  if (!slug) return ''
+  return getOperatorCombatSkillDescription(slug, key, locale.value) || ''
 }
 
 function getTalentIcon(groupIdx) {
@@ -303,10 +317,18 @@ function promotedLabel() {
           <div class="section-title">{{ t('armory.common.skills') }}</div>
           <div class="skills-row">
             <div v-for="key in SKILL_ORDER" :key="key" class="skill-card">
-              <div class="skill-icon-frame" :style="{ borderColor: elColor }">
-                <img :src="getSkillIcon(key)" class="skill-icon" />
-              </div>
-              <div class="skill-name">{{ getSkillName(key) }}</div>
+              <el-tooltip placement="top" effect="dark" :show-after="120" popper-class="operator-edit-tooltip-popper">
+                <template #content>
+                  <div class="operator-edit-tooltip">
+                    <div class="operator-edit-tooltip-title">{{ getSkillName(key) }}</div>
+                    <div v-if="getSkillDescription(key)" class="operator-edit-tooltip-desc">{{ getSkillDescription(key) }}</div>
+                  </div>
+                </template>
+                <div class="skill-icon-frame" :style="{ borderColor: elColor }">
+                  <img :src="getSkillIcon(key)" class="skill-icon" />
+                </div>
+              </el-tooltip>
+              <div class="skill-name">{{ getSkillTypeName(key) }}</div>
               <div class="skill-controls">
                 <button class="ea-btn ea-btn--sm ea-btn--glass-rect" :disabled="(instance.skillLevels[key] ?? 1) <= 1" @click="decrementSkill(key)">-</button>
                 <span class="skill-rank">{{ skillLevelLabel(instance.skillLevels[key] ?? 1) }}</span>
@@ -357,23 +379,7 @@ function promotedLabel() {
           </div>
           <div v-for="(group, groupIdx) in talentGroups" :key="groupIdx" class="talent-row">
             <div class="talent-info">
-              <el-tooltip
-                  placement="top"
-                  effect="dark"
-                  :show-after="120"
-                  :disabled="!getTalentTooltipInfo(groupIdx, 1).description"
-                  popper-class="operator-edit-tooltip-popper"
-              >
-                <template #content>
-                  <div class="operator-edit-tooltip">
-                    <div class="operator-edit-tooltip-desc">
-                      {{ getTalentTooltipInfo(groupIdx, 1).description }}
-                    </div>
-                  </div>
-                </template>
-
-                <span class="talent-name">{{ getTalentName(groupIdx) }}</span>
-              </el-tooltip>
+              <span class="talent-name">{{ getTalentName(groupIdx) }}</span>
             </div>
             <div class="talent-nodes">
               <template v-for="lvl in group.levels" :key="lvl">
@@ -461,7 +467,7 @@ function promotedLabel() {
 .section-title { font-size: 11px; font-weight: 700; color: #888; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
 .skills-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 .skill-card { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 120px; }
-.skill-icon-frame { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #555; background: #222228; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.skill-icon-frame { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #555; background: #222228; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
 .skill-icon { width: 48px; height: 48px; object-fit: contain; }
 .skill-name { font-size: 12px; color: #ccc; text-align: center; min-height: 2.6em; display: flex; align-items: center; }
 .skill-controls { display: flex; align-items: center; gap: 6px; }
