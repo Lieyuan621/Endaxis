@@ -1192,42 +1192,42 @@
     "name": "Camille",
     "talents": [
       {
-        "name": "",
-        "description": ""
+        "name": "Hunter of Transgression",
+        "description": "Combo skill Heartstake Thorn improved: When hitting an enemy with hovering Firefang Vesperwings, Camille restores [30 + Intellect × 0.15] HP to himself and grants a Link buff for 15s. When casting Hunter Pursuit, this effect can be triggered even when hitting a target with no hovering Vesperwings."
       },
       {
-        "name": "",
-        "description": ""
+        "name": "Hunter of Transgression",
+        "description": "Combo skill Heartstake Thorn improved: When hitting an enemy with hovering Firefang Vesperwings, Camille restores [60 + Intellect × 0.3] HP to himself and grants a Link buff for 15s. When casting Hunter Pursuit, this effect can be triggered even when hitting a target with no hovering Vesperwings."
       },
       {
-        "name": "",
-        "description": ""
+        "name": "Bloodfount Revival",
+        "description": "Whenever Camille restores HP via a skill, he gains Heat DMG Dealt +2% (max stacks: 5) for 40s while other operators in the team gain 25% of this effect. This effect can reach 5 stacks.\nIf Camille is already at Max HP, each trigger gives 2 stacks of the effect."
       },
       {
-        "name": "",
-        "description": ""
+        "name": "Bloodfount Revival",
+        "description": "Whenever Camille restores HP via a skill, he gains Heat DMG Dealt +4% (max stacks: 5) for 40s while other operators in the team gain 25% of this effect. This effect can reach 5 stacks.\nIf Camille is already at Max HP, each trigger gives 2 stacks of the effect."
       }
     ],
     "potentials": [
       {
-        "name": "",
-        "description": ""
+        "name": "Flame-Anointed Lance",
+        "description": "Battle skill Blazing Exorcism improved: The skill applies Weakness +5% and Heat Susceptibility +5%. Firefang Vesperwings hover duration +15s."
       },
       {
-        "name": "",
-        "description": ""
+        "name": "Tracker of Witch Scent",
+        "description": "Agility +20, Intellect +20."
       },
       {
-        "name": "",
-        "description": ""
+        "name": "Thorned Incapacitor",
+        "description": "Combo skill Heartstake Thorn improved: Length of cooldown -2s. Heartstake Thorn and Hunter Pursuit improved: DMG Multipliers are increased to 1.3 times the original; SP Recoveries are increased to 1.15 times the original."
       },
       {
-        "name": "",
-        "description": ""
+        "name": "Agašlehem's Sigil",
+        "description": "Ultimate Sanguine Downpour improved: Ultimate Energy cost -15%."
       },
       {
-        "name": "",
-        "description": ""
+        "name": "Sanguine Convention",
+        "description": "Talent Bloodfount Revival improved: Heat DMG boost per stack +6%."
       }
     ],
     "combatSkills": {
