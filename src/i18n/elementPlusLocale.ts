@@ -2,9 +2,11 @@ import en from 'element-plus/es/locale/lang/en';
 import ru from 'element-plus/es/locale/lang/ru';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 
-export const SUPPORTED_LOCALES = ['zh-CN', 'en', 'ru'];
+export type SupportedLocale = 'zh-CN' | 'en' | 'ru';
 
-export function normalizeLocale(raw) {
+export const SUPPORTED_LOCALES: SupportedLocale[] = ['zh-CN', 'en', 'ru'];
+
+export function normalizeLocale(raw: unknown): SupportedLocale {
   if (!raw) return 'zh-CN';
   const v = String(raw).trim();
   if (!v) return 'zh-CN';
@@ -17,7 +19,7 @@ export function normalizeLocale(raw) {
   return 'zh-CN';
 }
 
-export function getElementPlusLocale(locale) {
+export function getElementPlusLocale(locale: unknown) {
   const normalized = normalizeLocale(locale);
   if (normalized === 'en') return en;
   if (normalized === 'ru') return ru;

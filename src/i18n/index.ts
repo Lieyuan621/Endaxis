@@ -2,11 +2,11 @@ import { createI18n } from 'vue-i18n';
 import en from './locales/en.json';
 import ru from './locales/ru.json';
 import zhCN from './locales/zh-CN.json';
-import { normalizeLocale, SUPPORTED_LOCALES } from './elementPlusLocale.js';
+import { normalizeLocale, SUPPORTED_LOCALES, type SupportedLocale } from './elementPlusLocale';
 
 const STORAGE_KEY = 'endaxis_locale';
 
-export function detectLocale() {
+export function detectLocale(): SupportedLocale {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return normalizeLocale(saved);
@@ -38,7 +38,7 @@ export const i18n = createI18n({
   },
 });
 
-export function setLocale(locale) {
+export function setLocale(locale: unknown): SupportedLocale {
   const normalized = normalizeLocale(locale);
   i18n.global.locale.value = normalized;
 

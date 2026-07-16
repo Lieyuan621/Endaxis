@@ -1,4 +1,11 @@
-export const PORT_DIRECTIONS = {
+export interface PortDirection {
+  x: number;
+  y: number;
+  cx: number;
+  cy: number;
+}
+
+export const PORT_DIRECTIONS: Record<string, PortDirection> = {
   top: { x: 0.5, y: 0, cx: 0, cy: -1 },
   bottom: { x: 0.5, y: 1, cx: 0, cy: 1 },
   left: { x: 0, y: 0.5, cx: -1, cy: 0 },
@@ -9,7 +16,19 @@ export const PORT_DIRECTIONS = {
   'bottom-right': { x: 1, y: 1, cx: 1, cy: 1 },
 };
 
-export function getRectPos(rect, position) {
+export interface RectLike {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export function getRectPos(rect: RectLike, position: string): Point {
   switch (position) {
     case 'center':
       return {

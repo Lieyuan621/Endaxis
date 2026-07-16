@@ -1,4 +1,4 @@
-export async function compressGzip(str) {
+export async function compressGzip(str: string): Promise<string> {
   const buf = new TextEncoder().encode(str);
 
   const stream = new Blob([buf]).stream().pipeThrough(new CompressionStream('gzip'));
@@ -12,7 +12,7 @@ export async function compressGzip(str) {
     .replace(/=+$/, '');
 }
 
-export async function decompressGzip(str) {
+export async function decompressGzip(str: string): Promise<string> {
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
   while (base64.length % 4) {
     base64 += '=';
