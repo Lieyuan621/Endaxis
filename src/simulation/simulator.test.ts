@@ -4,10 +4,8 @@ import type { Action, ScenarioData, ScenarioTrack } from './compiler/types';
 import { simulate } from './simulator';
 import { TriggerRegistry } from './engine/TriggerRegistry';
 import { compileEndaxisScenario } from './adapters/compileEndaxisScenario';
-import {
-  projectEnemyAfflictionViz,
-  projectOptimizerResult,
-} from './adapters/projectOptimizerResult';
+import { projectOptimizerResult } from './adapters/projectOptimizerResult';
+import { projectEnemyAfflictionViz } from './projection/projectEnemyAfflictionViz';
 import { projectActionBuffs } from './projection/projectActionBuffs';
 import { createDefaultStats } from '@/simulation/defaultActorStats';
 import { collectTriggerEffects, patchCombatSkills } from '@/data/collect';
