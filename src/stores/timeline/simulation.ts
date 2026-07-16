@@ -8,8 +8,8 @@
 import { computed } from 'vue';
 import type { Ref, ComputedRef } from 'vue';
 import { simulate, type InitialEffect } from '@/simulation/simulator';
-import { compileEndaxisScenario } from '@/simulation/adapters/compileEndaxisScenario';
-import { projectOptimizerResult } from '@/simulation/adapters/projectOptimizerResult';
+import { compileEndaxisScenario } from '@/simulation/compileEndaxisScenario';
+import { projectOptimizerResult } from '@/simulation/projection/projectOptimizerResult';
 import type { Track, RosterEntry, ScenarioListEntry } from './types';
 
 // ─── Dependencies ────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ import { simulate, type InitialEffect } from '@/simulation/simulator';
 import type { WeaponInstance, OperatorInstance, GearInstance } from '@/types';
 import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState';
 import { resolveEffectValueStatic } from '@/simulation/events/effectDispatch';
-import { compileEndaxisScenario } from '@/simulation/adapters/compileEndaxisScenario';
+import { compileEndaxisScenario } from '@/simulation/compileEndaxisScenario';
 import { i18n } from '@/i18n';
 import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time';
 import type {

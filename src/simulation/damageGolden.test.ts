@@ -3,7 +3,7 @@ import { compileScenario } from './compiler/compileScenario';
 import type { Action, ScenarioData, ScenarioTrack } from './compiler/types';
 import { simulate } from './simulator';
 import { TriggerRegistry } from './engine/TriggerRegistry';
-import { compileEndaxisScenario } from './adapters/compileEndaxisScenario';
+import { compileEndaxisScenario } from './compileEndaxisScenario';
 import { createDefaultStats } from '@/simulation/defaultActorStats';
 import { collectTriggerEffects, patchCombatSkills } from '@/data/collect';
 import estellaSheet from '@/data/operators/estella';
