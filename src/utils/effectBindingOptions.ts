@@ -1,4 +1,4 @@
-function formatSeconds(value) {
+function formatSeconds(value: unknown): string {
   const num = Number(value);
   if (!Number.isFinite(num)) return '0';
   const rounded = Math.round(num * 10) / 10;
@@ -6,13 +6,50 @@ function formatSeconds(value) {
   return String(rounded);
 }
 
-export function buildEffectBindingOptions(raw, { getEffectName } = {}) {
-  if (!raw || raw.length === 0) return [];
-  const rows = Array.isArray(raw[0]) ? raw : [raw];
+interface BindingEffectLike {
+  _id?: string;
+  type?: string;
+  offset?: number;
+  duration?: number;
+  stacks?: number;
+  [key: string]: unknown;
+}
 
-  const flattened = [];
-  const typeCounts = new Map();
-  const seen = new Set();
+interface BuildEffectBindingOptions {
+  getEffectName?: (type: string, effect: BindingEffectLike) => string | null | undefined;
+}
+
+export interface EffectBindingOption {
+  value: string;
+  label: string;
+  hint: string;
+  description: string;
+  type: string;
+  rowIndex: number;
+  colIndex: number;
+  offset: number;
+  duration: number;
+  stacks: number;
+}
+
+export function buildEffectBindingOptions(
+  raw: BindingEffectLike[] | BindingEffectLike[][] | null | undefined,
+  { getEffectName }: BuildEffectBindingOptions = {},
+): EffectBindingOption[] {
+  if (!raw || raw.length === 0) return [];
+  const rows: BindingEffectLike[][] = Array.isArray(raw[0])
+    ? (raw as BindingEffectLike[][])
+    : [raw as BindingEffectLike[]];
+
+  const flattened: {
+    effect: BindingEffectLike;
+    type: string;
+    id: string;
+    rowIndex: number;
+    colIndex: number;
+  }[] = [];
+  const typeCounts = new Map<string, number>();
+  const seen = new Set<string>();
 
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
     const row = rows[rowIndex];
@@ -29,12 +66,10 @@ export function buildEffectBindingOptions(raw, { getEffectName } = {}) {
     }
   }
 
-  const typeSerials = new Map();
+  const typeSerials = new Map<string, number>();
   return flattened.map(({ effect, type, id, rowIndex, colIndex }) => {
     const baseName =
-      (typeof getEffectName === 'function' ? getEffectName(type, effect) : null) ||
-      type ||
-      'Unknown';
+      (typeof getEffectName === 'function' ? getEffectName(type, effect) : null) || type || 'Unknown';
     const duplicates = (typeCounts.get(type) || 0) > 1;
     const serial = (typeSerials.get(type) || 0) + 1;
     typeSerials.set(type, serial);

@@ -1,4 +1,4 @@
-const crcTable = [];
+const crcTable: number[] = [];
 for (let n = 0; n < 256; n++) {
   let c = n;
   for (let k = 0; k < 8; k++) {
@@ -8,21 +8,31 @@ for (let n = 0; n < 256; n++) {
   crcTable[n] = c;
 }
 
-function crc32(buf) {
+function crc32(buf: Uint8Array): number {
   let crc = 0xffffffff;
   for (let i = 0; i < buf.length; i++) {
-    crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]) & 0xff];
+    crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]!) & 0xff]!;
   }
   return crc ^ 0xffffffff;
 }
 
-function stringToUint8Array(str) {
-  const arr = [];
+function stringToUint8Array(str: string): Uint8Array {
+  const arr: number[] = [];
   for (let i = 0; i < str.length; i++) arr.push(str.charCodeAt(i));
   return new Uint8Array(arr);
 }
 
-export async function addMetadataToPng(pngBlob, key, value) {
+/** Read a 4-byte PNG chunk type tag starting at `offset`. */
+function readChunkTag(bytes: Uint8Array, offset: number): string {
+  return String.fromCharCode(
+    bytes[offset]!,
+    bytes[offset + 1]!,
+    bytes[offset + 2]!,
+    bytes[offset + 3]!,
+  );
+}
+
+export async function addMetadataToPng(pngBlob: Blob, key: string, value: string): Promise<Blob> {
   const arrayBuffer = await pngBlob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
   const dataView = new DataView(arrayBuffer);
@@ -32,12 +42,7 @@ export async function addMetadataToPng(pngBlob, key, value) {
 
   while (offset < uint8Array.length) {
     const length = dataView.getUint32(offset, false);
-    const type = String.fromCharCode(
-      uint8Array[offset + 4],
-      uint8Array[offset + 5],
-      uint8Array[offset + 6],
-      uint8Array[offset + 7],
-    );
+    const type = readChunkTag(uint8Array, offset + 4);
 
     if (type === 'IEND') {
       iendOffset = offset;
@@ -90,7 +95,7 @@ export async function addMetadataToPng(pngBlob, key, value) {
   return new Blob([newBuffer], { type: 'image/png' });
 }
 
-export async function readMetadataFromPng(file, key) {
+export async function readMetadataFromPng(file: Blob, key: string): Promise<string | null> {
   const arrayBuffer = await file.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
   const dataView = new DataView(arrayBuffer);
@@ -99,12 +104,7 @@ export async function readMetadataFromPng(file, key) {
 
   while (offset < uint8Array.length) {
     const length = dataView.getUint32(offset, false);
-    const type = String.fromCharCode(
-      uint8Array[offset + 4],
-      uint8Array[offset + 5],
-      uint8Array[offset + 6],
-      uint8Array[offset + 7],
-    );
+    const type = readChunkTag(uint8Array, offset + 4);
 
     if (type === 'tEXt') {
       const dataOffset = offset + 8;

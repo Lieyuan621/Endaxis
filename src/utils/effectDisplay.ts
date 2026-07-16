@@ -1,11 +1,32 @@
-function addCandidate(out, seen, value) {
+interface StatLike {
+  modifier?: string | null;
+  elements?: string | string[] | null;
+  skillTypes?: string | string[] | null;
+}
+
+interface EffectLike {
+  kind?: string;
+  displayType?: string | null;
+  physicalType?: string | null;
+  element?: string | null;
+  reactionType?: string | null;
+  stat?: StatLike | null;
+  id?: string | null;
+  name?: string | null;
+  type?: string | null;
+  [key: string]: unknown;
+}
+
+type EffectOrKey = string | EffectLike | null | undefined;
+
+function addCandidate(out: string[], seen: Set<string>, value: unknown): void {
   const key = String(value || '').trim();
   if (!key || seen.has(key)) return;
   seen.add(key);
   out.push(key);
 }
 
-function addRuntimeProjectionCandidates(out, seen, value) {
+function addRuntimeProjectionCandidates(out: string[], seen: Set<string>, value: unknown): void {
   const key = toCanonicalUiKey(value);
   if (!key) return;
   if (key.startsWith('state:')) {
@@ -33,7 +54,7 @@ function addRuntimeProjectionCandidates(out, seen, value) {
 
 const ARTS_ELEMENTS = new Set(['heat', 'cryo', 'electric', 'nature']);
 
-function resolveElementScope(elements) {
+function resolveElementScope(elements: string | string[] | null | undefined): string | null {
   if (!elements) return null;
   const arr = Array.isArray(elements) ? elements : [elements];
   if (arr.length === 0) return null;
@@ -41,7 +62,7 @@ function resolveElementScope(elements) {
   return arr[0] || null;
 }
 
-function resolveStatDisplayKey(stat) {
+function resolveStatDisplayKey(stat: StatLike | null | undefined): string | null {
   if (!stat?.modifier) return null;
   if (stat.elements) {
     const elementScope = resolveElementScope(stat.elements);
@@ -56,12 +77,12 @@ function resolveStatDisplayKey(stat) {
   return stat.modifier;
 }
 
-export function toCanonicalUiKey(value) {
+export function toCanonicalUiKey(value: unknown): string | null {
   const key = String(value || '').trim();
   return key || null;
 }
 
-export function resolveEffectDisplayKey(effectOrKey) {
+export function resolveEffectDisplayKey(effectOrKey: EffectOrKey): string {
   if (!effectOrKey) return 'default';
   if (typeof effectOrKey === 'string') return toCanonicalUiKey(effectOrKey) || 'default';
 
@@ -92,9 +113,9 @@ export function resolveEffectDisplayKey(effectOrKey) {
   }
 }
 
-export function getDisplayKeyCandidates(effectOrKey) {
-  const out = [];
-  const seen = new Set();
+export function getDisplayKeyCandidates(effectOrKey: EffectOrKey): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
   addCandidate(out, seen, resolveEffectDisplayKey(effectOrKey) || 'default');
 
   if (typeof effectOrKey === 'string') {
@@ -103,7 +124,7 @@ export function getDisplayKeyCandidates(effectOrKey) {
     return out;
   }
 
-  const effect = effectOrKey || {};
+  const effect: EffectLike = effectOrKey || {};
   [
     effect.displayType,
     resolveStatDisplayKey(effect.stat),

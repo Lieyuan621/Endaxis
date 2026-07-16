@@ -72,34 +72,62 @@ const DIRECT_RUNTIME_KIND_KEYS = Object.freeze([
   'cooldownReductionPercent',
 ]);
 
-const ROUTED_KIND_KEYS = Object.freeze({
+const ROUTED_KIND_KEYS: Record<string, readonly string[]> = {
   status: OTHER_STATUS_DISPLAY_KEYS,
   infliction: CANONICAL_INFLICTION_KEYS,
   burst: CANONICAL_BURST_KEYS,
   reaction: REACTION_KEYS,
   physicalStatus: PHYSICAL_STATUS_KEYS,
-});
+};
 
 const ROUTED_EFFECT_KINDS = new Set(['status', ...Object.keys(ROUTED_KIND_KEYS)]);
 
-function allowedKeysForKind(kind) {
+function allowedKeysForKind(kind: string): Set<string> | null {
   if (ROUTED_KIND_KEYS[kind]) return new Set(ROUTED_KIND_KEYS[kind]);
   if (DIRECT_RUNTIME_KIND_KEYS.includes(kind)) return new Set([kind]);
   return null;
 }
 
-export function shouldRetypeEffectForDisplayKind(kind) {
+export function shouldRetypeEffectForDisplayKind(kind: string): boolean {
   return ROUTED_EFFECT_KINDS.has(kind);
 }
 
-export function filterEffectOptionGroups(groups = [], kind = 'status', currentValue = '') {
+export interface EffectOption {
+  value?: string;
+  [key: string]: unknown;
+}
+
+export interface EffectOptionGroup {
+  options?: EffectOption[];
+  [key: string]: unknown;
+}
+
+/** An option that survived filtering always has a concrete display key. */
+export interface FilteredEffectOption {
+  value: string;
+  [key: string]: unknown;
+}
+
+export interface FilteredEffectOptionGroup {
+  options: FilteredEffectOption[];
+  [key: string]: unknown;
+}
+
+export function filterEffectOptionGroups(
+  groups: EffectOptionGroup[] = [],
+  kind = 'status',
+  currentValue = '',
+): FilteredEffectOptionGroup[] {
   const allowed = allowedKeysForKind(kind);
-  const allowedOrder = allowed ? new Map([...allowed].map((key, index) => [key, index])) : null;
+  const allowedOrder = allowed
+    ? new Map([...allowed].map((key, index): [string, number] => [key, index]))
+    : null;
   const currentKey = String(currentValue || '').trim();
-  const seen = new Set();
+  const seen = new Set<string>();
 
   return groups
     .map(group => {
+      // The filter guarantees every surviving option has a truthy string value.
       const options = (group.options || []).filter(option => {
         const value = option?.value;
         if (!value || seen.has(value)) return false;
@@ -108,7 +136,7 @@ export function filterEffectOptionGroups(groups = [], kind = 'status', currentVa
           : true;
         if (keep) seen.add(value);
         return keep;
-      });
+      }) as FilteredEffectOption[];
       if (allowedOrder) {
         options.sort(
           (a, b) =>
