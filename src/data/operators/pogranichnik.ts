@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { OperatorSheet, TriggerEvent } from '../types';
 
 const STEEL_OATH_HARASS = {
@@ -133,7 +132,7 @@ const sheet: OperatorSheet = {
     {
       levels: 2,
       patches: STEEL_OATH_TRIGGERS.flatMap(trigger => {
-        const ids = STEEL_OATH_EFFECT_IDS[trigger.kind];
+        const ids = STEEL_OATH_EFFECT_IDS[trigger.kind]!;
         return FERVENT_MORALE_MODIFIERS.map(modifier => ({
           kind: 'appendEffect' as const,
           targetEffect: ids.harass,
@@ -638,10 +637,10 @@ const sheet: OperatorSheet = {
       triggers: STEEL_OATH_TRIGGERS.map(trigger => ({
         trigger,
         effects: [
-          { ...STEEL_OATH_HARASS, id: STEEL_OATH_EFFECT_IDS[trigger.kind].harass },
+          { ...STEEL_OATH_HARASS, id: STEEL_OATH_EFFECT_IDS[trigger.kind]!.harass },
           {
             ...STEEL_OATH_DECISIVE_ASSAULT,
-            id: STEEL_OATH_EFFECT_IDS[trigger.kind].decisiveAssault,
+            id: STEEL_OATH_EFFECT_IDS[trigger.kind]!.decisiveAssault,
           },
         ],
       })),
