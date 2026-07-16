@@ -12,7 +12,10 @@
     "preview": "vite preview",
     "convert:images": "node scripts/convert-png-to-webp.js",
     "type-check": "vue-tsc --noEmit --project tsconfig.app.json",
-    "test": "vitest"
+    "test": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@vueuse/core": "^14.1.0",
@@ -30,11 +33,17 @@
     "@types/node": "^25.0.9",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.5",
     "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "vite": "^7.1.11",
     "vite-plugin-vue-devtools": "^8.0.3",
     "vitest": "^4.0.17",
     "vue-tsc": "^3.2.2"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue,json,jsonc,css,scss,html,md}": "prettier --write"
   }
 }
