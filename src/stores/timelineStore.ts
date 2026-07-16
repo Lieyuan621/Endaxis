@@ -108,6 +108,13 @@ import {
   extractRawEntries,
   resolveHitsFromSheet,
 } from '@/stores/timeline/resolveHits';
+import {
+  clampPercent,
+  clampTier9,
+  clampEquipmentRefineTier,
+  createDefaultTracks,
+  normalizeTracks,
+} from '@/stores/timeline/normalizers';
 
 const tr = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
 const getI18nSkillType = (type: string) => {
@@ -128,7 +135,6 @@ const getBasicAttackSegmentName = (groupName: string, index: number, total: numb
 const COLLAPSED_PREP_PX = 18;
 const MIN_PREP_DURATION = FRAME_DURATION;
 const COARSE_SNAP_STEP = FRAME_DURATION * 6;
-const EQUIPMENT_REFINE_MAX_TIER = 3;
 const OPTIMIZER_TO_DISPLAY_TYPE: Record<string, string> = {
   basicAttack: 'attack',
   battleSkill: 'skill',
@@ -585,47 +591,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     },
     { deep: true, throttle: 120 },
   );
-
-  const createEmptyTrack = (): Track => ({
-    id: null,
-    operatorInstanceId: null,
-    actions: [],
-    initialGauge: 0,
-    maxGaugeOverride: null,
-    gaugeEfficiency: 100,
-    originiumArtsPower: 0,
-    weaponId: null,
-    weaponInstanceId: null,
-    weaponCommon1Tier: 1,
-    weaponCommon2Tier: 1,
-    weaponBuffTier: 1,
-    weaponAppliedDeltas: {},
-    equipmentAppliedDeltas: {},
-    stats: createDefaultStats(),
-    equipArmorId: null,
-    equipGlovesId: null,
-    equipAccessory1Id: null,
-    equipAccessory2Id: null,
-    equipArmorInstanceId: null,
-    equipGlovesInstanceId: null,
-    equipAccessory1InstanceId: null,
-    equipAccessory2InstanceId: null,
-    equipArmorRefineTier: 0,
-    equipGlovesRefineTier: 0,
-    equipAccessory1RefineTier: 0,
-    equipAccessory2RefineTier: 0,
-    linkCdReduction: 0,
-    operatorStatus: null,
-    enemyStatus: null,
-    triggerEffects: [],
-  });
-
-  const createDefaultTracks = () => [
-    createEmptyTrack(),
-    createEmptyTrack(),
-    createEmptyTrack(),
-    createEmptyTrack(),
-  ];
 
   const tracks = ref(createDefaultTracks());
   const connections = ref<Connection[]>([]);
@@ -1833,29 +1798,6 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   const timeBlockWidth = computed(() => BASE_BLOCK_WIDTH.value);
 
-  const clampPercent = (val: unknown) => {
-    const num = Number(val) || 0;
-    if (num < 0) return 0;
-    if (num > 100) return 100;
-    return num;
-  };
-
-  const clampTier9 = (val: unknown) => {
-    const num = Math.round(Number(val));
-    if (!Number.isFinite(num)) return 1;
-    if (num < 1) return 1;
-    if (num > 9) return 9;
-    return num;
-  };
-
-  const clampEquipmentRefineTier = (val: unknown) => {
-    const num = Math.round(Number(val));
-    if (!Number.isFinite(num)) return 0;
-    if (num < 0) return 0;
-    if (num > EQUIPMENT_REFINE_MAX_TIER) return EQUIPMENT_REFINE_MAX_TIER;
-    return num;
-  };
-
   const normalizeArray4 = (arr: unknown) => {
     const list = Array.isArray(arr) ? arr.slice(0, 4) : [];
     while (list.length < 4) list.push(0);
@@ -1867,52 +1809,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     while (list.length < 9) list.push(0);
     return list.map(v => Number(v) || 0);
   };
-
-  const normalizeTrack = (track: Partial<Track> | null | undefined) => {
-    if (!track) return createEmptyTrack();
-    const merged = {
-      ...createEmptyTrack(),
-      ...track,
-      actions: track.actions || [],
-    };
-
-    const baseStats = createDefaultStats();
-    const hasIncomingStats = track.stats && typeof track.stats === 'object';
-    merged.stats = { ...baseStats, ...(hasIncomingStats ? track.stats : {}) };
-
-    if (!merged.weaponAppliedDeltas || typeof merged.weaponAppliedDeltas !== 'object')
-      merged.weaponAppliedDeltas = {};
-    if (!merged.equipmentAppliedDeltas || typeof merged.equipmentAppliedDeltas !== 'object')
-      merged.equipmentAppliedDeltas = {};
-    const mergedRecord = merged as Record<string, unknown>;
-    if (!('operatorStatus' in mergedRecord)) mergedRecord.operatorStatus = null;
-    if (!('baseStats' in mergedRecord)) mergedRecord.baseStats = null;
-    if (!('enemyStatus' in mergedRecord)) mergedRecord.enemyStatus = null;
-    if (!Array.isArray(merged.triggerEffects)) merged.triggerEffects = [];
-
-    merged.equipArmorRefineTier = clampEquipmentRefineTier(merged.equipArmorRefineTier);
-    merged.equipGlovesRefineTier = clampEquipmentRefineTier(merged.equipGlovesRefineTier);
-    merged.equipAccessory1RefineTier = clampEquipmentRefineTier(merged.equipAccessory1RefineTier);
-    merged.equipAccessory2RefineTier = clampEquipmentRefineTier(merged.equipAccessory2RefineTier);
-
-    if (!hasIncomingStats) {
-      const eff = Number(track.gaugeEfficiency);
-      if (Number.isFinite(eff)) merged.stats.ult_charge_eff = eff;
-      const link = Number(track.linkCdReduction);
-      if (Number.isFinite(link)) merged.stats.link_cd_reduction = link;
-      const arts = Number(track.originiumArtsPower);
-      if (Number.isFinite(arts)) merged.stats.originium_arts_power = arts;
-    }
-
-    merged.gaugeEfficiency = Number(merged.stats.ult_charge_eff) || 0;
-    merged.linkCdReduction = clampPercent(merged.stats.link_cd_reduction);
-    merged.originiumArtsPower = Number(merged.stats.originium_arts_power) || 0;
-
-    return merged;
-  };
-
-  const normalizeTracks = (list: (Partial<Track> | undefined)[] = []) =>
-    list.map(t => normalizeTrack(t));
 
   interface SlotConfig {
     slotKey: string;
