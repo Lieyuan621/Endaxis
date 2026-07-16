@@ -1,7 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { ElIcon } from 'element-plus'
-import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue';
+import { ElIcon } from 'element-plus';
+import { ArrowUp, ArrowDown } from '@element-plus/icons-vue';
 
 const props = defineProps({
   modelValue: { type: Number, required: true },
@@ -12,13 +12,13 @@ const props = defineProps({
   activeColor: { type: String, default: null },
   borderColor: { type: String, default: null },
   maxWidth: { type: String, default: null },
-  textAlign: { type: String, default: 'center' }
-})
+  textAlign: { type: String, default: 'center' },
+});
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue']);
 
-const isMinDisabled = computed(() => props.modelValue <= props.min)
-const isMaxDisabled = computed(() => props.modelValue >= props.max)
+const isMinDisabled = computed(() => props.modelValue <= props.min);
+const isMaxDisabled = computed(() => props.modelValue >= props.max);
 
 // === Color Logic ===
 function lightenHex(hex, percent) {
@@ -36,7 +36,7 @@ function lightenHex(hex, percent) {
 }
 
 // === Dynamic Classes & Styles ===
-const containerClass = computed(() => ({ 'has-hover': props.enableHover }))
+const containerClass = computed(() => ({ 'has-hover': props.enableHover }));
 
 const containerStyle = computed(() => {
   const style = {};
@@ -55,12 +55,12 @@ const containerStyle = computed(() => {
 });
 
 const inputStyle = computed(() => ({
-  textAlign: props.textAlign
-}))
+  textAlign: props.textAlign,
+}));
 
 // === Continuous Change Logic ===
-const longPressTimer = ref(null)
-const speedUpTimer = ref(null)
+const longPressTimer = ref(null);
+const speedUpTimer = ref(null);
 
 function startChange(changeFn) {
   stopChange();
@@ -85,14 +85,14 @@ function getPrecision(num) {
 }
 
 function updateValue(newValue, fromInput = false) {
-  let finalValue
+  let finalValue;
   if (fromInput && typeof newValue === 'string') {
-      finalValue = parseFloat(newValue)
+    finalValue = parseFloat(newValue);
   } else {
-      const precision = Math.max(getPrecision(props.modelValue), getPrecision(props.step));
-      finalValue = parseFloat(newValue.toFixed(precision));
+    const precision = Math.max(getPrecision(props.modelValue), getPrecision(props.step));
+    finalValue = parseFloat(newValue.toFixed(precision));
   }
-  if(isNaN(finalValue)) return
+  if (isNaN(finalValue)) return;
   finalValue = Math.max(props.min, Math.min(props.max, finalValue));
   emit('update:modelValue', finalValue);
 }
@@ -115,11 +115,11 @@ function handleInput(event) {
 }
 
 function handleBlur(event) {
-    let value = parseFloat(event.target.value)
-    if(isNaN(value)) {
-        value = props.min !== -Infinity ? props.min : 0
-    }
-    updateValue(value)
+  let value = parseFloat(event.target.value);
+  if (isNaN(value)) {
+    value = props.min !== -Infinity ? props.min : 0;
+  }
+  updateValue(value);
 }
 
 function decrement() {
@@ -140,39 +140,34 @@ function increment() {
 </script>
 
 <template>
-  <div
-      class="custom-number-input"
-      :class="containerClass"
-      :style="containerStyle"
-      tabindex="0"
-  >
+  <div class="custom-number-input" :class="containerClass" :style="containerStyle" tabindex="0">
     <div v-if="$slots.prepend" class="prepend-slot"><slot name="prepend"></slot></div>
     <input
-        type="text"
-        class="value-display"
-        :style="inputStyle"
-        :value="modelValue"
-        @input="handleInput"
-        @blur="handleBlur"
+      type="text"
+      class="value-display"
+      :style="inputStyle"
+      :value="modelValue"
+      @input="handleInput"
+      @blur="handleBlur"
     />
     <div class="controls-stack">
       <button
-          class="control-btn increment"
-          @mousedown="startChange(increment)"
-          @mouseup="stopChange"
-          @mouseleave="stopChange"
-          @click.stop="increment"
-          :disabled="isMaxDisabled"
+        class="control-btn increment"
+        @mousedown="startChange(increment)"
+        @mouseup="stopChange"
+        @mouseleave="stopChange"
+        @click.stop="increment"
+        :disabled="isMaxDisabled"
       >
         <el-icon><ArrowUp /></el-icon>
       </button>
       <button
-          class="control-btn decrement"
-          @mousedown="startChange(decrement)"
-          @mouseup="stopChange"
-          @mouseleave="stopChange"
-          @click.stop="decrement"
-          :disabled="isMinDisabled"
+        class="control-btn decrement"
+        @mousedown="startChange(decrement)"
+        @mouseup="stopChange"
+        @mouseleave="stopChange"
+        @click.stop="decrement"
+        :disabled="isMinDisabled"
       >
         <el-icon><ArrowDown /></el-icon>
       </button>
@@ -196,7 +191,9 @@ function increment() {
   overflow: hidden;
   height: 28px;
   box-sizing: border-box;
-  transition: box-shadow 0.2s, background-color 0.2s;
+  transition:
+    box-shadow 0.2s,
+    background-color 0.2s;
   width: 100%;
 }
 
@@ -227,7 +224,9 @@ function increment() {
   height: 100%;
   box-shadow: -1px 0 0 rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
-  transition: box-shadow 0.2s, background-color 0.2s;
+  transition:
+    box-shadow 0.2s,
+    background-color 0.2s;
 }
 
 .control-btn {

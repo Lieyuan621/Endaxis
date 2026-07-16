@@ -1,59 +1,63 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
-import { useTimelineStore } from '../stores/timelineStore.js'
-import { useOperatorStore } from '@/stores/operatorStore'
-import { useWeaponStore } from '@/stores/weaponStore'
-import EditOperatorInstanceDialog from './armory/EditOperatorInstanceDialog.vue'
-import EditWeaponInstanceDialog from './armory/EditWeaponInstanceDialog.vue'
-import EditTrackGearLoadoutDialog from './armory/EditTrackGearLoadoutDialog.vue'
-import { useI18n } from 'vue-i18n'
-import { getOperatorGameName, getWeaponGameName } from '@/data/gameText'
+import { computed, ref, watch } from 'vue';
+import { useTimelineStore } from '../stores/timelineStore.js';
+import { useOperatorStore } from '@/stores/operatorStore';
+import { useWeaponStore } from '@/stores/weaponStore';
+import EditOperatorInstanceDialog from './armory/EditOperatorInstanceDialog.vue';
+import EditWeaponInstanceDialog from './armory/EditWeaponInstanceDialog.vue';
+import EditTrackGearLoadoutDialog from './armory/EditTrackGearLoadoutDialog.vue';
+import { useI18n } from 'vue-i18n';
+import { getOperatorGameName, getWeaponGameName } from '@/data/gameText';
 
-const store = useTimelineStore()
-const operatorStore = useOperatorStore()
-const weaponStore = useWeaponStore()
-const { t, locale } = useI18n()
+const store = useTimelineStore();
+const operatorStore = useOperatorStore();
+const weaponStore = useWeaponStore();
+const { t, locale } = useI18n();
 const props = defineProps({
   onResetPanel: {
     type: Function,
-    default: null
+    default: null,
   },
   onCollapsePanel: {
     type: Function,
-    default: null
-  }
-})
+    default: null,
+  },
+});
 
 function handleResetPanel() {
-  props.onResetPanel?.()
+  props.onResetPanel?.();
 }
 
 function handleCollapsePanel() {
-  props.onCollapsePanel?.()
+  props.onCollapsePanel?.();
 }
 
 // === 核心数据逻辑 ===
-const activeTrack = computed(() => (
+const activeTrack = computed(() =>
   store.activeTrackIndex !== null && store.activeTrackIndex !== undefined
     ? store.tracks[store.activeTrackIndex] || null
-    : store.tracks.find(t => t.id === store.activeTrackId) || null
-))
+    : store.tracks.find(t => t.id === store.activeTrackId) || null,
+);
 const activeCharacter = computed(() => {
-  return activeTrack.value?.id ? (store.characterRoster.find(c => c.id === activeTrack.value.id) || null) : null
-})
-const activeWeapon = computed(() => activeTrack.value?.weaponId ? store.getWeaponById(activeTrack.value.weaponId) : null)
+  return activeTrack.value?.id
+    ? store.characterRoster.find(c => c.id === activeTrack.value.id) || null
+    : null;
+});
+const activeWeapon = computed(() =>
+  activeTrack.value?.weaponId ? store.getWeaponById(activeTrack.value.weaponId) : null,
+);
 const activeOperatorInstance = computed(() => {
-  const instanceId = activeTrack.value?.operatorInstanceId
-  return instanceId ? operatorStore.operators.find(op => op.id === instanceId) || null : null
-})
+  const instanceId = activeTrack.value?.operatorInstanceId;
+  return instanceId ? operatorStore.operators.find(op => op.id === instanceId) || null : null;
+});
 const activeWeaponInstance = computed(() => {
-  const instanceId = activeTrack.value?.weaponInstanceId
-  return instanceId ? weaponStore.weapons.find(weapon => weapon.id === instanceId) || null : null
-})
-const hasActiveCharacter = computed(() => !!(activeTrack.value && activeCharacter.value))
+  const instanceId = activeTrack.value?.weaponInstanceId;
+  return instanceId ? weaponStore.weapons.find(weapon => weapon.id === instanceId) || null : null;
+});
+const hasActiveCharacter = computed(() => !!(activeTrack.value && activeCharacter.value));
 const hasAnyEquipmentEquipped = computed(() => {
-  const t = activeTrack.value
-  if (!t) return false
+  const t = activeTrack.value;
+  if (!t) return false;
   return !!(
     t.equipArmorInstanceId ||
     t.equipGlovesInstanceId ||
@@ -63,38 +67,38 @@ const hasAnyEquipmentEquipped = computed(() => {
     t.equipGlovesId ||
     t.equipAccessory1Id ||
     t.equipAccessory2Id
-  )
-})
+  );
+});
 
 const activeCharacterName = computed(() => {
-  if (!activeCharacter.value) return t('actionLibrary.fallback.noOperator')
-  return getOperatorGameName(activeCharacter.value.id || activeCharacter.value.slug, locale.value)
-})
+  if (!activeCharacter.value) return t('actionLibrary.fallback.noOperator');
+  return getOperatorGameName(activeCharacter.value.id || activeCharacter.value.slug, locale.value);
+});
 const activeWeaponName = computed(() => {
-  if (!activeWeapon.value) return t('actionLibrary.fallback.noWeapon')
-  return getWeaponGameName(activeWeapon.value.canonicalSlug || activeWeapon.value.id, locale.value)
-})
+  if (!activeWeapon.value) return t('actionLibrary.fallback.noWeapon');
+  return getWeaponGameName(activeWeapon.value.canonicalSlug || activeWeapon.value.id, locale.value);
+});
 const activeLibraryTitle = computed(() => {
-  return activeCharacterName.value
-})
+  return activeCharacterName.value;
+});
 
-const showOperatorEditDialog = ref(false)
-const showWeaponEditDialog = ref(false)
-const showGearLoadoutDialog = ref(false)
+const showOperatorEditDialog = ref(false);
+const showWeaponEditDialog = ref(false);
+const showGearLoadoutDialog = ref(false);
 
 function openOperatorEditDialog() {
-  if (!activeOperatorInstance.value) return
-  showOperatorEditDialog.value = true
+  if (!activeOperatorInstance.value) return;
+  showOperatorEditDialog.value = true;
 }
 
 function openWeaponEditDialog() {
-  if (!activeWeaponInstance.value) return
-  showWeaponEditDialog.value = true
+  if (!activeWeaponInstance.value) return;
+  showWeaponEditDialog.value = true;
 }
 
 function openGearLoadoutDialog() {
-  if (!hasAnyEquipmentEquipped.value) return
-  showGearLoadoutDialog.value = true
+  if (!hasAnyEquipmentEquipped.value) return;
+  showGearLoadoutDialog.value = true;
 }
 
 function getFullTypeName(type) {
@@ -109,132 +113,135 @@ function getFullTypeName(type) {
             ? 'execution'
             : type === 'dive'
               ? 'dive'
-              : type
-  const key = `skillType.${displayType}`
-  const out = t(key)
-  return out === key ? t('skillType.unknown') : out
+              : type;
+  const key = `skillType.${displayType}`;
+  const out = t(key);
+  return out === key ? t('skillType.unknown') : out;
 }
 
 // 图标路径
 const WEAPON_ICON_MAP = {
-  'sword': '/icons/icon_attack_sword.webp',
-  'greatsword': '/icons/icon_attack_claym.webp',
-  'polearm': '/icons/icon_attack_lance.webp',
-  'handcannon': '/icons/icon_attack_pistol.webp',
+  sword: '/icons/icon_attack_sword.webp',
+  greatsword: '/icons/icon_attack_claym.webp',
+  polearm: '/icons/icon_attack_lance.webp',
+  handcannon: '/icons/icon_attack_pistol.webp',
   'arts-unit': '/icons/icon_attack_funnel.webp',
-}
+};
 
 const currentWeaponIcon = computed(() => {
-  const wType = activeCharacter.value?.weapon || 'sword'
-  return WEAPON_ICON_MAP[wType] || WEAPON_ICON_MAP['sword']
-})
+  const wType = activeCharacter.value?.weapon || 'sword';
+  return WEAPON_ICON_MAP[wType] || WEAPON_ICON_MAP['sword'];
+});
 
 function getSkillDisplayIcon(skill) {
   if (['basicAttack', 'dive', 'finisher'].includes(skill.type)) {
-    return currentWeaponIcon.value
+    return currentWeaponIcon.value;
   }
-  return skill.icon || ''
+  return skill.icon || '';
 }
 
 function getSkillCardTooltip(skill) {
-  const name = typeof skill?.name === 'string' ? skill.name.trim() : ''
-  const description = typeof skill?.description === 'string' ? skill.description.trim() : ''
-  if (name && description) return `${name}\n\n${description}`
-  return description || name || ''
+  const name = typeof skill?.name === 'string' ? skill.name.trim() : '';
+  const description = typeof skill?.description === 'string' ? skill.description.trim() : '';
+  if (name && description) return `${name}\n\n${description}`;
+  return description || name || '';
 }
 
 // Operator skill library
-const localSkills = ref([])
+const localSkills = ref([]);
 
 function onSkillClick(skillId) {
-  store.selectLibrarySkill(skillId)
+  store.selectLibrarySkill(skillId);
 }
 
 watch(
-    () => [store.activeSkillLibrary, locale.value],
-    (newVal) => {
-      const skills = newVal?.[0]
-      if (skills && skills.length > 0) {
-        localSkills.value = JSON.parse(JSON.stringify(skills.filter(s => !s.hiddenInLibraryGrid)))
-      } else {
-        localSkills.value = []
-      }
-    },
-    { immediate: true, deep: true }
-)
+  () => [store.activeSkillLibrary, locale.value],
+  newVal => {
+    const skills = newVal?.[0];
+    if (skills && skills.length > 0) {
+      localSkills.value = JSON.parse(JSON.stringify(skills.filter(s => !s.hiddenInLibraryGrid)));
+    } else {
+      localSkills.value = [];
+    }
+  },
+  { immediate: true, deep: true },
+);
 
-watch(hasActiveCharacter, (val) => {
+watch(hasActiveCharacter, val => {
   if (!val) {
-    store.selectLibrarySkill(null)
+    store.selectLibrarySkill(null);
   }
-})
+});
 
 // === 拖拽 Ghost 逻辑 ===
 function hexToRgba(hex, alpha) {
-  if (!hex) return `rgba(255,255,255,${alpha})`
-  let c = hex.substring(1).split('')
-  if (c.length === 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]]
-  c = '0x' + c.join('')
-  return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + alpha + ')'
+  if (!hex) return `rgba(255,255,255,${alpha})`;
+  let c = hex.substring(1).split('');
+  if (c.length === 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+  c = '0x' + c.join('');
+  return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + alpha + ')';
 }
 
 function getSkillThemeColor(skill) {
-  if (skill.customColor) return skill.customColor
-  if (skill.type === 'comboSkill') return store.getColor('link')
-  if (skill.type === 'finisher') return store.getColor('execution')
-  if (skill.type === 'basicAttack') return store.getColor('attack')
-  if (skill.type === 'dive') return store.getColor('dodge')
-  if (skill.type === 'battleSkill') return skill.element ? store.getColor(skill.element) : store.getColor('skill')
-  if (skill.type === 'ultimate') return skill.element ? store.getColor(skill.element) : store.getColor('ultimate')
-  if (skill.element) return store.getColor(skill.element)
-  if (activeCharacter.value?.element) return store.getColor(activeCharacter.value.element)
-  return store.getColor('default')
+  if (skill.customColor) return skill.customColor;
+  if (skill.type === 'comboSkill') return store.getColor('link');
+  if (skill.type === 'finisher') return store.getColor('execution');
+  if (skill.type === 'basicAttack') return store.getColor('attack');
+  if (skill.type === 'dive') return store.getColor('dodge');
+  if (skill.type === 'battleSkill')
+    return skill.element ? store.getColor(skill.element) : store.getColor('skill');
+  if (skill.type === 'ultimate')
+    return skill.element ? store.getColor(skill.element) : store.getColor('ultimate');
+  if (skill.element) return store.getColor(skill.element);
+  if (activeCharacter.value?.element) return store.getColor(activeCharacter.value.element);
+  return store.getColor('default');
 }
 
 function formatDurationLabel(val) {
-  const num = Number(val)
-  if (!Number.isFinite(num)) return 0
-  const rounded = Math.round(num * 1000) / 1000
-  return rounded
+  const num = Number(val);
+  if (!Number.isFinite(num)) return 0;
+  const rounded = Math.round(num * 1000) / 1000;
+  return rounded;
 }
 
 function isAttackSegmentDisabled(seg) {
-  return (Number(seg?.duration) || 0) <= 0
+  return (Number(seg?.duration) || 0) <= 0;
 }
 
 function getVisibleAttackSegments(skill) {
-  return Array.isArray(skill?.attackSegments) ? skill.attackSegments : []
+  return Array.isArray(skill?.attackSegments) ? skill.attackSegments : [];
 }
 
 function getVisibleSkillSegments(skill) {
-  if (skill?.kind === 'attack_group') return getVisibleAttackSegments(skill)
-  if (skill?.kind === 'group' && Array.isArray(skill?.segments)) return skill.segments
-  return []
+  if (skill?.kind === 'attack_group') return getVisibleAttackSegments(skill);
+  if (skill?.kind === 'group' && Array.isArray(skill?.segments)) return skill.segments;
+  return [];
 }
 
 function getSegmentChipLabel(seg) {
-  if (seg.type === 'basicAttack') return `${seg.attackSegmentIndex || seg.segmentIndex || ''}A`
-  const suffix = {
-    battleSkill: 'C',
-    comboSkill: 'E',
-    ultimate: 'U',
-    finisher: 'X',
-    dive: 'D',
-  }[seg.type] || '?'
-  return `${seg.segmentIndex || seg.sequenceIndex || ''}${suffix}`
+  if (seg.type === 'basicAttack') return `${seg.attackSegmentIndex || seg.segmentIndex || ''}A`;
+  const suffix =
+    {
+      battleSkill: 'C',
+      comboSkill: 'E',
+      ultimate: 'U',
+      finisher: 'X',
+      dive: 'D',
+    }[seg.type] || '?';
+  return `${seg.segmentIndex || seg.sequenceIndex || ''}${suffix}`;
 }
 
 function onAttackSegmentDragStart(evt, seg) {
   if (isAttackSegmentDisabled(seg)) {
-    evt.preventDefault()
-    return
+    evt.preventDefault();
+    return;
   }
-  onNativeDragStart(evt, seg)
+  onNativeDragStart(evt, seg);
 }
 
 function onAttackSegmentClick(seg) {
-  if (isAttackSegmentDisabled(seg)) return
-  onSkillClick(seg.id)
+  if (isAttackSegmentDisabled(seg)) return;
+  onSkillClick(seg.id);
 }
 
 function onNativeDragStart(evt, skill) {
@@ -243,28 +250,37 @@ function onNativeDragStart(evt, skill) {
 
   const duration = Number(skill.duration) || 0;
   const themeColor = getSkillThemeColor(skill);
-  let dragOffsetX = 0
-  let dragOffsetY = 0
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
 
   const realWidth = (duration || 1) * store.timeBlockWidth;
   ghost.textContent = skill.name || '';
   Object.assign(ghost.style, {
-    position: 'absolute', top: '-9999px', left: '-9999px',
-    width: `${realWidth}px`, height: '50px',
+    position: 'absolute',
+    top: '-9999px',
+    left: '-9999px',
+    width: `${realWidth}px`,
+    height: '50px',
     border: `2px dashed ${themeColor}`,
     backgroundColor: hexToRgba(themeColor, 0.2),
     color: '#ffffff',
     boxShadow: `0 0 10px ${themeColor}`,
     textShadow: `0 1px 2px rgba(0,0,0,0.8)`,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     boxSizing: 'border-box',
-    fontSize: '12px', fontWeight: 'bold', zIndex: '999999', pointerEvents: 'none',
-    fontFamily: 'sans-serif', whiteSpace: 'nowrap',
-    backdropFilter: 'blur(4px)'
+    fontSize: '12px',
+    fontWeight: 'bold',
+    zIndex: '999999',
+    pointerEvents: 'none',
+    fontFamily: 'sans-serif',
+    whiteSpace: 'nowrap',
+    backdropFilter: 'blur(4px)',
   });
   document.body.appendChild(ghost);
-  dragOffsetX = 10
-  dragOffsetY = 25
+  dragOffsetX = 10;
+  dragOffsetY = 25;
   evt.dataTransfer.setDragImage(ghost, dragOffsetX, dragOffsetY);
   evt.dataTransfer.effectAllowed = 'copy';
 
@@ -274,7 +290,7 @@ function onNativeDragStart(evt, skill) {
     weaponId: null,
     dragOffsetX,
     dragOffsetY,
-  }
+  };
 
   store.setDraggingSkill(payload);
   document.body.classList.add('is-lib-dragging');
@@ -286,8 +302,8 @@ function onNativeDragStart(evt, skill) {
 }
 
 function onNativeDragEnd() {
-  store.setDraggingSkill(null)
-  document.body.classList.remove('is-lib-dragging')
+  store.setDraggingSkill(null);
+  document.body.classList.remove('is-lib-dragging');
 }
 </script>
 
@@ -301,7 +317,17 @@ function onNativeDragEnd() {
         </div>
         <div class="header-actions">
           <button type="button" class="header-tool-btn" @click="handleResetPanel">
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>
+            <svg
+              viewBox="0 0 24 24"
+              width="11"
+              height="11"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 3v5h5" />
+            </svg>
           </button>
         </div>
       </div>
@@ -367,23 +393,26 @@ function onNativeDragEnd() {
       </div>
       <div v-if="localSkills.length > 0" class="skill-grid">
         <div
-            v-for="skill in localSkills"
-            :key="skill.id"
-            class="skill-item"
-            :style="{ '--accent-color': getSkillThemeColor(skill) }"
+          v-for="skill in localSkills"
+          :key="skill.id"
+          class="skill-item"
+          :style="{ '--accent-color': getSkillThemeColor(skill) }"
         >
           <div
-              class="skill-card"
-              :class="{ 'is-selected': store.selectedLibrarySkillId === skill.id }"
-              :title="getSkillCardTooltip(skill)"
-              draggable="true"
-              @dragstart="onNativeDragStart($event, skill)"
-              @dragend="onNativeDragEnd"
-              @click="onSkillClick(skill.id)"
+            class="skill-card"
+            :class="{ 'is-selected': store.selectedLibrarySkillId === skill.id }"
+            :title="getSkillCardTooltip(skill)"
+            draggable="true"
+            @dragstart="onNativeDragStart($event, skill)"
+            @dragend="onNativeDragEnd"
+            @click="onSkillClick(skill.id)"
           >
             <div class="card-edge"></div>
             <div class="card-body">
-              <div class="skill-meta"><span v-if="!skill.name.includes(getFullTypeName(skill.type))" class="skill-type">{{ getFullTypeName(skill.type) }}</span>
+              <div class="skill-meta">
+                <span v-if="!skill.name.includes(getFullTypeName(skill.type))" class="skill-type">{{
+                  getFullTypeName(skill.type)
+                }}</span>
                 <span v-else class="skill-type-empty"></span>
                 <span class="skill-time">{{ formatDurationLabel(skill.duration) }}s</span>
               </div>
@@ -396,22 +425,30 @@ function onNativeDragEnd() {
             <div v-else class="card-bg-deco-empty"></div>
           </div>
 
-          <div v-if="getVisibleSkillSegments(skill).length > 1" class="attack-segment-row" @click.stop>
+          <div
+            v-if="getVisibleSkillSegments(skill).length > 1"
+            class="attack-segment-row"
+            @click.stop
+          >
             <div
-                v-for="(seg, idx) in getVisibleSkillSegments(skill)"
-                :key="seg.id"
-                class="attack-segment-chip"
-                :class="{ 'is-selected': store.selectedLibrarySkillId === seg.id, 'is-last': idx === getVisibleSkillSegments(skill).length - 1 }"
-                :draggable="!isAttackSegmentDisabled(seg)"
-                @dragstart="onAttackSegmentDragStart($event, seg)"
-                @dragend="onNativeDragEnd"
-                @click.stop="onAttackSegmentClick(seg)"
-            >{{ getSegmentChipLabel(seg) }}</div>
+              v-for="(seg, idx) in getVisibleSkillSegments(skill)"
+              :key="seg.id"
+              class="attack-segment-chip"
+              :class="{
+                'is-selected': store.selectedLibrarySkillId === seg.id,
+                'is-last': idx === getVisibleSkillSegments(skill).length - 1,
+              }"
+              :draggable="!isAttackSegmentDisabled(seg)"
+              @dragstart="onAttackSegmentDragStart($event, seg)"
+              @dragend="onNativeDragEnd"
+              @click.stop="onAttackSegmentClick(seg)"
+            >
+              {{ getSegmentChipLabel(seg) }}
+            </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -433,15 +470,67 @@ function onNativeDragEnd() {
   display: none;
 }
 /* 头部样式 */
-.lib-header { display: flex; flex-direction: column; gap: 4px; }
-.header-main { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.header-main-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.header-icon-bar { width: 4px; height: 18px; background-color: #ffd700; }
-.char-name { margin: 0; color: #fff; font-size: 18px; letter-spacing: 1px; }
-.header-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; margin-right: -2px; }
-.header-tool-btn { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: 0; background: transparent; color: rgba(255, 255, 255, 0.34); cursor: pointer; padding: 0; transition: color 0.14s ease, background-color 0.14s ease; }
-.header-tool-btn:hover { color: rgba(255, 255, 255, 0.86); background: rgba(255, 255, 255, 0.055); }
-.loadout-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
+.lib-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.header-main-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.header-icon-bar {
+  width: 4px;
+  height: 18px;
+  background-color: #ffd700;
+}
+.char-name {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-right: -2px;
+}
+.header-tool-btn {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.34);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    color 0.14s ease,
+    background-color 0.14s ease;
+}
+.header-tool-btn:hover {
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.055);
+}
+.loadout-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
 .loadout-action-btn {
   background: #1f1f1f;
   border: 1px solid #333;
@@ -452,15 +541,43 @@ function onNativeDragEnd() {
   font-size: 12px;
   transition: all 0.2s ease;
 }
-.loadout-action-btn:hover:not(:disabled) { color: #fff; border-color: #ffd700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.16); }
-.loadout-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.header-divider { height: 2px; background: linear-gradient(90deg, #ffd700 0%, transparent 100%); opacity: 0.3; margin-top: 3px; }
+.loadout-action-btn:hover:not(:disabled) {
+  color: #fff;
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.16);
+}
+.loadout-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.header-divider {
+  height: 2px;
+  background: linear-gradient(90deg, #ffd700 0%, transparent 100%);
+  opacity: 0.3;
+  margin-top: 3px;
+}
 
 /* 技能卡片列表 */
-.skill-section { display: flex; flex-direction: column; gap: 15px; }
-.section-title-box { display: flex; flex-direction: column; border-left: 2px solid #444; padding-left: 10px; }
-.section-title { font-size: 14px; font-weight: bold; color: #ccc; }
-.section-hint { font-size: 10px; color: #555; }
+.skill-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.section-title-box {
+  display: flex;
+  flex-direction: column;
+  border-left: 2px solid #444;
+  padding-left: 10px;
+}
+.section-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ccc;
+}
+.section-hint {
+  font-size: 10px;
+  color: #555;
+}
 
 .skill-grid {
   display: grid;
@@ -566,7 +683,6 @@ function onNativeDragEnd() {
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.12);
 }
 
-
 .skill-type-empty {
   height: 9px;
   flex: 1;
@@ -578,18 +694,68 @@ function onNativeDragEnd() {
 }
 
 .card-edge {
-  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
   background-color: var(--accent-color);
   box-shadow: 2px 0 10px var(--accent-color);
 }
 
-.card-body { padding: 10px 12px 10px 16px; height: 100%; display: flex; flex-direction: column; justify-content: center; box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1); }
+.card-body {
+  padding: 10px 12px 10px 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+}
 
-.skill-meta { display: flex; align-items: center; margin-bottom: 2px; }
-.skill-type { font-size: 9px; color: var(--accent-color); filter: brightness(0.8); font-weight: bold; text-transform: uppercase; opacity: 0.6; }
-.skill-time { position: absolute; top: 5px; right: 21px; width: 38px; display: flex; align-items: center; gap: 4px; font-family: 'Roboto Mono', 'Consolas', monospace; font-size: 10px; font-weight: 500; color: rgba(255, 255, 255, 0.45); z-index: 3; }
-.skill-time::before { content: ''; width: 1px; height: 8px; background: var(--accent-color); opacity: 0.4; }
-.skill-name { font-size: 13px; color: rgba(255, 255, 255, 0.9); font-weight: bold; margin-top: 2px; padding-right: 65px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-meta {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.skill-type {
+  font-size: 9px;
+  color: var(--accent-color);
+  filter: brightness(0.8);
+  font-weight: bold;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.skill-time {
+  position: absolute;
+  top: 5px;
+  right: 21px;
+  width: 38px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  z-index: 3;
+}
+.skill-time::before {
+  content: '';
+  width: 1px;
+  height: 8px;
+  background: var(--accent-color);
+  opacity: 0.4;
+}
+.skill-name {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
+  margin-top: 2px;
+  padding-right: 65px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .card-bg-deco {
   position: absolute;

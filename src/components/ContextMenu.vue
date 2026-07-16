@@ -1,77 +1,79 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
-import { useTimelineStore } from '../stores/timelineStore.js'
-import { ElMessage } from 'element-plus'
-import { useI18n } from 'vue-i18n'
+import { computed, onMounted, onUnmounted } from 'vue';
+import { useTimelineStore } from '../stores/timelineStore.js';
+import { ElMessage } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 
-const store = useTimelineStore()
-const { t } = useI18n({ useScope: 'global' })
+const store = useTimelineStore();
+const { t } = useI18n({ useScope: 'global' });
 
 const menuStyle = computed(() => ({
   left: `${store.contextMenu.x}px`,
-  top: `${store.contextMenu.y}px`
-}))
+  top: `${store.contextMenu.y}px`,
+}));
 
 const targetAction = computed(() => {
-  if (store.contextMenu.targetType === 'enemyBuff') return null
-  if (!store.contextMenu.targetId) return null
-  const info = store.getActionById(store.contextMenu.targetId)
-  return info ? info.node : null
-})
+  if (store.contextMenu.targetType === 'enemyBuff') return null;
+  if (!store.contextMenu.targetId) return null;
+  const info = store.getActionById(store.contextMenu.targetId);
+  return info ? info.node : null;
+});
 
 const targetEnemyBuffAction = computed(() => {
-  if (store.contextMenu.targetType !== 'enemyBuff' || !store.contextMenu.targetId) return null
-  return store.getActionById(store.contextMenu.targetId)?.node || null
-})
+  if (store.contextMenu.targetType !== 'enemyBuff' || !store.contextMenu.targetId) return null;
+  return store.getActionById(store.contextMenu.targetId)?.node || null;
+});
 
 const targetEnemyCarryoverBuff = computed(() => {
-  if (store.contextMenu.targetType !== 'enemyCarryoverBuff' || !store.contextMenu.targetId) return null
-  return store.getInheritedEnemyBuffEntry(store.contextMenu.targetId)
-})
+  if (store.contextMenu.targetType !== 'enemyCarryoverBuff' || !store.contextMenu.targetId)
+    return null;
+  return store.getInheritedEnemyBuffEntry(store.contextMenu.targetId);
+});
 
-const targetEnemyCarryoverBuffDisabled = computed(() => (
-  store.contextMenu.targetType === 'enemyCarryoverBuff'
-  && store.isInheritedEnemyBuffDisabled(store.contextMenu.targetId)
-))
+const targetEnemyCarryoverBuffDisabled = computed(
+  () =>
+    store.contextMenu.targetType === 'enemyCarryoverBuff' &&
+    store.isInheritedEnemyBuffDisabled(store.contextMenu.targetId),
+);
 
 const targetCycleBoundary = computed(() => {
-  if (store.contextMenu.targetType !== 'cycleBoundary') return null
-  return store.cycleBoundaries.find(b => b.id === store.contextMenu.targetId) || null
-})
+  if (store.contextMenu.targetType !== 'cycleBoundary') return null;
+  return store.cycleBoundaries.find(b => b.id === store.contextMenu.targetId) || null;
+});
 
 function handleCreateInheritedScenario() {
-  const result = store.createInheritedScenarioFromCycleBoundary(store.contextMenu.targetId)
+  const result = store.createInheritedScenarioFromCycleBoundary(store.contextMenu.targetId);
 
   if (result?.ok) {
     ElMessage.success({
       message: t('contextMenu.inheritedScenarioCreated'),
       duration: 1000,
-    })
+    });
   } else if (result?.reason === 'limit') {
-    ElMessage.warning({ message: `方案数量已达上限 (${store.MAX_SCENARIOS})`, duration: 1200 })
+    ElMessage.warning({ message: `方案数量已达上限 (${store.MAX_SCENARIOS})`, duration: 1200 });
   } else {
     ElMessage.error({
       message: t('contextMenu.inheritedScenarioFailed'),
       duration: 1200,
-    })
+    });
   }
 
-  close()
+  close();
 }
 
 function close() {
-  store.closeContextMenu()
+  store.closeContextMenu();
 }
 
 // 点击外部关闭
 function onGlobalClick(e) {
   if (!e.target.closest('.custom-context-menu')) {
-    close()
+    close();
   }
 }
 
-onMounted(() => window.addEventListener('click', onGlobalClick))
-onUnmounted(() => window.removeEventListener('click', onGlobalClick))
+onMounted(() => window.addEventListener('click', onGlobalClick));
+onUnmounted(() => window.removeEventListener('click', onGlobalClick));
 
 // ===================================================================================
 // 操作逻辑
@@ -79,63 +81,63 @@ onUnmounted(() => window.removeEventListener('click', onGlobalClick))
 
 function handleCopy() {
   if (!store.isActionSelected(store.contextMenu.targetId)) {
-    store.selectAction(store.contextMenu.targetId)
+    store.selectAction(store.contextMenu.targetId);
   }
-  store.copySelection()
-  ElMessage.success({ message: t('timeline.shortcut.copied'), duration: 800 })
-  close()
+  store.copySelection();
+  ElMessage.success({ message: t('timeline.shortcut.copied'), duration: 800 });
+  close();
 }
 
 function handlePaste() {
-  store.pasteSelection(store.contextMenu.time)
-  ElMessage.success({ message: t('timeline.shortcut.pasted'), duration: 800 })
-  close()
+  store.pasteSelection(store.contextMenu.time);
+  ElMessage.success({ message: t('timeline.shortcut.pasted'), duration: 800 });
+  close();
 }
 
 function handleDelete() {
   if (!store.selectedConnectionId && !store.isActionSelected(store.contextMenu.targetId)) {
-    store.selectAction(store.contextMenu.targetId)
+    store.selectAction(store.contextMenu.targetId);
   }
-  const result = store.removeCurrentSelection()
+  const result = store.removeCurrentSelection();
   if (result && result.total > 0) {
-    ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 })
+    ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 });
   }
-  close()
+  close();
 }
 
 function handleLock() {
-  store.toggleActionLock(store.contextMenu.targetId)
-  close()
+  store.toggleActionLock(store.contextMenu.targetId);
+  close();
 }
 
 function handleMute() {
-  store.toggleActionDisable(store.contextMenu.targetId)
-  close()
+  store.toggleActionDisable(store.contextMenu.targetId);
+  close();
 }
 
 function handleEnemyBuffDelete() {
-  store.clearSelection()
-  store.selectAction(store.contextMenu.targetId)
-  const result = store.removeCurrentSelection()
+  store.clearSelection();
+  store.selectAction(store.contextMenu.targetId);
+  const result = store.removeCurrentSelection();
   if (result?.total > 0) {
-    ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 })
+    ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 });
   }
-  close()
+  close();
 }
 
 function handleEnemyBuffMute() {
-  store.toggleActionDisable(store.contextMenu.targetId)
-  close()
+  store.toggleActionDisable(store.contextMenu.targetId);
+  close();
 }
 
 function handleEnemyCarryoverBuffDelete() {
-  store.removeInheritedEnemyBuff(store.contextMenu.targetId)
-  close()
+  store.removeInheritedEnemyBuff(store.contextMenu.targetId);
+  close();
 }
 
 function handleEnemyCarryoverBuffMute() {
-  store.toggleInheritedEnemyBuffDisable(store.contextMenu.targetId)
-  close()
+  store.toggleInheritedEnemyBuffDisable(store.contextMenu.targetId);
+  close();
 }
 
 const PRESET_COLORS = computed(() => [
@@ -145,19 +147,19 @@ const PRESET_COLORS = computed(() => [
   { val: store.ELEMENT_COLORS.cryo, label: t('timelineGrid.elementFilter.cold') },
   { val: store.ELEMENT_COLORS.electric, label: t('timelineGrid.elementFilter.emag') },
   { val: store.ELEMENT_COLORS.nature, label: t('timelineGrid.elementFilter.nature') },
-])
+]);
 
 function handleColor(color) {
-  store.setActionColor(store.contextMenu.targetId, color)
-  close()
+  store.setActionColor(store.contextMenu.targetId, color);
+  close();
 }
 
 const targetConnection = computed(() => {
-  if (!store.contextMenu.targetId) return null
-  return store.connections.find(c => c.id === store.contextMenu.targetId)
-})
+  if (!store.contextMenu.targetId) return null;
+  return store.connections.find(c => c.id === store.contextMenu.targetId);
+});
 
-const BASE_ARROW_PATH = 'M12 21 L12 3 M12 3 L5 10 M12 3 L19 10'
+const BASE_ARROW_PATH = 'M12 21 L12 3 M12 3 L5 10 M12 3 L19 10';
 
 const DIRECTION_OPTS = computed(() => [
   { val: 'top-left', label: t('connection.portPosition.topLeft'), rotate: -45 },
@@ -169,284 +171,532 @@ const DIRECTION_OPTS = computed(() => [
   { val: 'bottom-left', label: t('connection.portPosition.bottomLeft'), rotate: -135 },
   { val: 'bottom', label: t('connection.portPosition.bottom'), rotate: 180 },
   { val: 'bottom-right', label: t('connection.portPosition.bottomRight'), rotate: 135 },
-])
+]);
 
 function handleSetPort(type, direction) {
   if (targetConnection.value && direction) {
-    store.updateConnectionPort(targetConnection.value.id, type, direction)
-    close()
+    store.updateConnectionPort(targetConnection.value.id, type, direction);
+    close();
   }
 }
 
 function handleAddCycleBoundary() {
-  store.addCycleBoundary(store.contextMenu.time)
-  close()
+  store.addCycleBoundary(store.contextMenu.time);
+  close();
 }
-
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="store.contextMenu.visible"
-         class="custom-context-menu"
-         :style="menuStyle"
-         @click.stop
-         @contextmenu.prevent
-         @mousedown.stop>
+    <div
+      v-if="store.contextMenu.visible"
+      class="custom-context-menu"
+      :style="menuStyle"
+      @click.stop
+      @contextmenu.prevent
+      @mousedown.stop
+    >
+      <template v-if="targetEnemyCarryoverBuff">
+        <div class="menu-header">{{ t('resourceMonitor.modules.enemyStatus') }}</div>
 
-    <template v-if="targetEnemyCarryoverBuff">
-      <div class="menu-header">{{ t('resourceMonitor.modules.enemyStatus') }}</div>
-
-      <div class="menu-item delete-item" @click="handleEnemyCarryoverBuffDelete">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
-            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-          </svg>
-        </span>
-        <span class="label">{{ t('common.delete') }}</span>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="menu-item" @click="handleEnemyCarryoverBuffMute">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line v-if="!targetEnemyCarryoverBuffDisabled" x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-            <path v-else d="M9 12l2 2 4-4"></path>
-          </svg>
-        </span>
-        <span class="label">{{ targetEnemyCarryoverBuffDisabled ? t('contextMenu.enableCalc') : t('contextMenu.disableCalc') }}</span>
-      </div>
-    </template>
-
-    <template v-else-if="targetEnemyBuffAction">
-      <div class="menu-header">{{ targetEnemyBuffAction.name }}</div>
-
-      <div class="menu-item delete-item" @click="handleEnemyBuffDelete">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
-            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-          </svg>
-        </span>
-        <span class="label">{{ t('common.delete') }}</span>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="menu-item" @click="handleEnemyBuffMute">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line v-if="!targetEnemyBuffAction.isDisabled" x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-            <path v-else d="M9 12l2 2 4-4"></path>
-          </svg>
-        </span>
-        <span class="label">{{ targetEnemyBuffAction.isDisabled ? t('contextMenu.enableCalc') : t('contextMenu.disableCalc') }}</span>
-      </div>
-    </template>
-
-    <template v-else-if="targetAction">
-      <div class="menu-header">{{ targetAction.name }}</div>
-
-       <div class="menu-item" @click="handleCopy">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        </span>
-        <span class="label">{{ t('common.copy') }}</span>
-        <span class="shortcut-hint">Ctrl+C</span>
-      </div>
-
-      <div class="menu-item" @click="handlePaste" :class="{ disabled: !store.clipboard }">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-        </span>
-        <span class="label">{{ t('common.paste') }}</span>
-        <span class="shortcut-hint">Ctrl+V</span>
-      </div>
-
-      <div class="menu-item delete-item" @click="handleDelete">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </span>
-        <span class="label">{{ t('common.delete') }}</span>
-        <span class="shortcut-hint">Delete</span>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="menu-item" @click="handleLock">
-        <span class="icon">
-          <svg v-if="targetAction.isLocked" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
-          <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        </span>
-        <span class="label">{{ targetAction.isLocked ? t('contextMenu.unlockPosition') : t('contextMenu.lockPosition') }}</span>
-      </div>
-
-      <div class="menu-item" @click="handleMute">
-        <span class="icon">
-          <svg v-if="targetAction.isDisabled" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9 12l2 2 4-4"></path>
-          </svg>
-          <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-          </svg>
-        </span>
-        <span class="label">{{ targetAction.isDisabled ? t('contextMenu.enableCalc') : t('contextMenu.disableCalc') }}</span>
-      </div>
-
-      <div class="divider"></div>
-      <div class="menu-label">{{ t('contextMenu.color') }}</div>
-      <div class="color-grid">
-        <div v-for="c in PRESET_COLORS" :key="c.val || 'def'"
-             class="color-dot"
-             :style="{ background: c.val || '#555' }"
-             :class="{ 'is-active': targetAction.customColor === c.val }"
-             :title="c.label"
-             @click="handleColor(c.val)">
-          <svg v-if="targetAction.customColor === c.val || (c.val === null && !targetAction.customColor)"
-               viewBox="0 0 24 24" width="12" height="12"
-               stroke="currentColor" stroke-width="3" fill="none">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
+        <div class="menu-item delete-item" @click="handleEnemyCarryoverBuffDelete">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              fill="none"
+              stroke-width="2"
+            >
+              <path
+                d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+              />
+            </svg>
+          </span>
+          <span class="label">{{ t('common.delete') }}</span>
         </div>
-      </div>
-    </template>
 
-    <template v-else-if="targetCycleBoundary">
-      <div class="menu-header">{{ t('contextMenu.cycleBoundary') }}</div>
+        <div class="divider"></div>
 
-      <div class="menu-item" @click="handleCreateInheritedScenario">
-        <span class="icon">⟲</span>
-        <span class="label">{{ t('contextMenu.createInheritedScenario') }}</span>
-      </div>
+        <div class="menu-item" @click="handleEnemyCarryoverBuffMute">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line
+                v-if="!targetEnemyCarryoverBuffDisabled"
+                x1="4.93"
+                y1="4.93"
+                x2="19.07"
+                y2="19.07"
+              ></line>
+              <path v-else d="M9 12l2 2 4-4"></path>
+            </svg>
+          </span>
+          <span class="label">{{
+            targetEnemyCarryoverBuffDisabled
+              ? t('contextMenu.enableCalc')
+              : t('contextMenu.disableCalc')
+          }}</span>
+        </div>
+      </template>
 
-      <div class="divider"></div>
+      <template v-else-if="targetEnemyBuffAction">
+        <div class="menu-header">{{ targetEnemyBuffAction.name }}</div>
 
-      <div class="menu-item delete-item" @click="handleDelete">
-    <span class="icon">
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
-        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-      </svg>
-    </span>
-        <span class="label">{{ t('common.delete') }}</span>
-        <span class="shortcut-hint">Delete</span>
-      </div>
-    </template>
+        <div class="menu-item delete-item" @click="handleEnemyBuffDelete">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              fill="none"
+              stroke-width="2"
+            >
+              <path
+                d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+              />
+            </svg>
+          </span>
+          <span class="label">{{ t('common.delete') }}</span>
+        </div>
 
-    <template v-else-if="targetConnection">
-      <div class="menu-header">{{ t('contextMenu.connectionSettings') }}</div>
+        <div class="divider"></div>
 
-      <div class="menu-item has-submenu">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 9V5 M12 15V19 M9 12H5 M15 12H19"/></svg>
-        </span>
-        <span class="label">{{ t('contextMenu.setSourcePort') }}</span>
-        <span class="arrow">▶</span>
+        <div class="menu-item" @click="handleEnemyBuffMute">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line
+                v-if="!targetEnemyBuffAction.isDisabled"
+                x1="4.93"
+                y1="4.93"
+                x2="19.07"
+                y2="19.07"
+              ></line>
+              <path v-else d="M9 12l2 2 4-4"></path>
+            </svg>
+          </span>
+          <span class="label">{{
+            targetEnemyBuffAction.isDisabled
+              ? t('contextMenu.enableCalc')
+              : t('contextMenu.disableCalc')
+          }}</span>
+        </div>
+      </template>
 
-        <div class="submenu-grid">
-          <div v-for="(opt, i) in DIRECTION_OPTS" :key="i"
-               class="grid-item"
-               :class="{
-                 'is-active': (targetConnection.sourcePort || 'right') === opt.val,
-                 'spacer': opt.isSpacer
-               }"
-               @click="!opt.isSpacer && handleSetPort('source', opt.val)"
-               :title="opt.label">
-            <svg v-if="!opt.isSpacer"
-                 viewBox="0 0 24 24" width="16" height="16"
-                 fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round"
-                 :style="{ transform: `rotate(${opt.rotate}deg)` }"> <path :d="BASE_ARROW_PATH" />
+      <template v-else-if="targetAction">
+        <div class="menu-header">{{ targetAction.name }}</div>
+
+        <div class="menu-item" @click="handleCopy">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </span>
+          <span class="label">{{ t('common.copy') }}</span>
+          <span class="shortcut-hint">Ctrl+C</span>
+        </div>
+
+        <div class="menu-item" @click="handlePaste" :class="{ disabled: !store.clipboard }">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+              ></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+          </span>
+          <span class="label">{{ t('common.paste') }}</span>
+          <span class="shortcut-hint">Ctrl+V</span>
+        </div>
+
+        <div class="menu-item delete-item" @click="handleDelete">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              ></path>
+            </svg>
+          </span>
+          <span class="label">{{ t('common.delete') }}</span>
+          <span class="shortcut-hint">Delete</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="menu-item" @click="handleLock">
+          <span class="icon">
+            <svg
+              v-if="targetAction.isLocked"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </span>
+          <span class="label">{{
+            targetAction.isLocked ? t('contextMenu.unlockPosition') : t('contextMenu.lockPosition')
+          }}</span>
+        </div>
+
+        <div class="menu-item" @click="handleMute">
+          <span class="icon">
+            <svg
+              v-if="targetAction.isDisabled"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9 12l2 2 4-4"></path>
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+            </svg>
+          </span>
+          <span class="label">{{
+            targetAction.isDisabled ? t('contextMenu.enableCalc') : t('contextMenu.disableCalc')
+          }}</span>
+        </div>
+
+        <div class="divider"></div>
+        <div class="menu-label">{{ t('contextMenu.color') }}</div>
+        <div class="color-grid">
+          <div
+            v-for="c in PRESET_COLORS"
+            :key="c.val || 'def'"
+            class="color-dot"
+            :style="{ background: c.val || '#555' }"
+            :class="{ 'is-active': targetAction.customColor === c.val }"
+            :title="c.label"
+            @click="handleColor(c.val)"
+          >
+            <svg
+              v-if="
+                targetAction.customColor === c.val || (c.val === null && !targetAction.customColor)
+              "
+              viewBox="0 0 24 24"
+              width="12"
+              height="12"
+              stroke="currentColor"
+              stroke-width="3"
+              fill="none"
+            >
+              <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
         </div>
-      </div>
+      </template>
 
-      <div class="menu-item has-submenu">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M12 12h.01"/></svg>
-        </span>
-        <span class="label">{{ t('contextMenu.setTargetPort') }}</span>
-        <span class="arrow">▶</span>
+      <template v-else-if="targetCycleBoundary">
+        <div class="menu-header">{{ t('contextMenu.cycleBoundary') }}</div>
 
-        <div class="submenu-grid">
-          <div v-for="(opt, i) in DIRECTION_OPTS" :key="i"
-               class="grid-item"
-               :class="{
-                 'is-active': (targetConnection.targetPort || 'left') === opt.val,
-                 'spacer': opt.isSpacer
-               }"
-               @click="!opt.isSpacer && handleSetPort('target', opt.val)"
-               :title="opt.label">
-            <svg v-if="!opt.isSpacer"
-                 viewBox="0 0 24 24" width="16" height="16"
-                 fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round"
-                 :style="{ transform: `rotate(${opt.rotate}deg)` }">
-              <path :d="BASE_ARROW_PATH" />
+        <div class="menu-item" @click="handleCreateInheritedScenario">
+          <span class="icon">⟲</span>
+          <span class="label">{{ t('contextMenu.createInheritedScenario') }}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="menu-item delete-item" @click="handleDelete">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              fill="none"
+              stroke-width="2"
+            >
+              <path
+                d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+              />
             </svg>
+          </span>
+          <span class="label">{{ t('common.delete') }}</span>
+          <span class="shortcut-hint">Delete</span>
+        </div>
+      </template>
+
+      <template v-else-if="targetConnection">
+        <div class="menu-header">{{ t('contextMenu.connectionSettings') }}</div>
+
+        <div class="menu-item has-submenu">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 9V5 M12 15V19 M9 12H5 M15 12H19" />
+            </svg>
+          </span>
+          <span class="label">{{ t('contextMenu.setSourcePort') }}</span>
+          <span class="arrow">▶</span>
+
+          <div class="submenu-grid">
+            <div
+              v-for="(opt, i) in DIRECTION_OPTS"
+              :key="i"
+              class="grid-item"
+              :class="{
+                'is-active': (targetConnection.sourcePort || 'right') === opt.val,
+                spacer: opt.isSpacer,
+              }"
+              @click="!opt.isSpacer && handleSetPort('source', opt.val)"
+              :title="opt.label"
+            >
+              <svg
+                v-if="!opt.isSpacer"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                :style="{ transform: `rotate(${opt.rotate}deg)` }"
+              >
+                <path :d="BASE_ARROW_PATH" />
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="divider"></div>
-      <div class="menu-item delete-item" @click="handleDelete">
-        <span class="icon"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></span>
-        <span class="label">{{ t('common.delete') }}</span>
-        <span class="shortcut-hint">Delete</span>
-      </div>
-    </template>
+        <div class="menu-item has-submenu">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="5" y="5" width="14" height="14" rx="2" />
+              <path d="M12 12h.01" />
+            </svg>
+          </span>
+          <span class="label">{{ t('contextMenu.setTargetPort') }}</span>
+          <span class="arrow">▶</span>
 
-    <template v-else>
-      <div class="menu-header">{{ t('contextMenu.globalOps') }}</div>
-
-      <div class="menu-item" @click="handlePaste" :class="{ disabled: !store.clipboard }">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-        </span>
-        <span class="label">{{ t('common.paste') }}</span>
-        <span class="shortcut-hint">Ctrl+V</span>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="menu-item" @click="handleAddCycleBoundary">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="2" x2="12" y2="22"></line>
-            <path d="M16 14c2 0 3-1 3-3s-1-3-3-3h-4"></path>
-            <polyline points="14 10 12 8 14 6"></polyline>
-          </svg>
-        </span>
-        <span class="label">{{ t('contextMenu.addCycleBoundary') }}</span>
-      </div>
-
-      <div class="menu-item has-submenu">
-        <span class="icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M8 21H3v-5M21 3l-7 7M3 21l7-7" /></svg>
-        </span>
-        <span class="label">{{ t('contextMenu.addSwitchEvent') }}</span>
-        <span class="arrow">▶</span>
-
-        <div class="submenu-list">
-          <div v-for="track in store.teamTracksInfo"
-               v-show="track.id"
-               :key="track.id"
-               class="submenu-list-item"
-               @click="store.addSwitchEvent(store.contextMenu.time, track.id); close()">
-            <img :src="track.avatar" class="mini-avatar" />
-            <span class="sub-label">{{ track.name }}</span>
+          <div class="submenu-grid">
+            <div
+              v-for="(opt, i) in DIRECTION_OPTS"
+              :key="i"
+              class="grid-item"
+              :class="{
+                'is-active': (targetConnection.targetPort || 'left') === opt.val,
+                spacer: opt.isSpacer,
+              }"
+              @click="!opt.isSpacer && handleSetPort('target', opt.val)"
+              :title="opt.label"
+            >
+              <svg
+                v-if="!opt.isSpacer"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                :style="{ transform: `rotate(${opt.rotate}deg)` }"
+              >
+                <path :d="BASE_ARROW_PATH" />
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
-    </template>
 
+        <div class="divider"></div>
+        <div class="menu-item delete-item" @click="handleDelete">
+          <span class="icon"
+            ><svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              fill="none"
+              stroke-width="2"
+            >
+              <path
+                d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+              /></svg
+          ></span>
+          <span class="label">{{ t('common.delete') }}</span>
+          <span class="shortcut-hint">Delete</span>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="menu-header">{{ t('contextMenu.globalOps') }}</div>
+
+        <div class="menu-item" @click="handlePaste" :class="{ disabled: !store.clipboard }">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+              ></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+          </span>
+          <span class="label">{{ t('common.paste') }}</span>
+          <span class="shortcut-hint">Ctrl+V</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="menu-item" @click="handleAddCycleBoundary">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="2" x2="12" y2="22"></line>
+              <path d="M16 14c2 0 3-1 3-3s-1-3-3-3h-4"></path>
+              <polyline points="14 10 12 8 14 6"></polyline>
+            </svg>
+          </span>
+          <span class="label">{{ t('contextMenu.addCycleBoundary') }}</span>
+        </div>
+
+        <div class="menu-item has-submenu">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M16 3h5v5M8 21H3v-5M21 3l-7 7M3 21l7-7" />
+            </svg>
+          </span>
+          <span class="label">{{ t('contextMenu.addSwitchEvent') }}</span>
+          <span class="arrow">▶</span>
+
+          <div class="submenu-list">
+            <div
+              v-for="track in store.teamTracksInfo"
+              v-show="track.id"
+              :key="track.id"
+              class="submenu-list-item"
+              @click="
+                store.addSwitchEvent(store.contextMenu.time, track.id);
+                close();
+              "
+            >
+              <img :src="track.avatar" class="mini-avatar" />
+              <span class="sub-label">{{ track.name }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
   </Teleport>
 </template>
@@ -573,7 +823,7 @@ function handleAddCycleBoundary() {
   background: #2b2b2b;
   border: 1px solid #444;
   border-radius: 6px;
-  box-shadow: 4px 4px 12px rgba(0,0,0,0.5);
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.5);
   padding: 4px;
   grid-template-columns: repeat(3, 30px);
   grid-template-rows: repeat(3, 30px);
@@ -609,7 +859,7 @@ function handleAddCycleBoundary() {
   background: #2b2b2b;
   border: 1px solid #444;
   border-radius: 6px;
-  box-shadow: 4px 4px 12px rgba(0,0,0,0.5);
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.5);
   padding: 4px 0;
   min-width: 140px;
   z-index: 100;
@@ -656,7 +906,9 @@ function handleAddCycleBoundary() {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.1s, border-color 0.1s;
+  transition:
+    transform 0.1s,
+    border-color 0.1s;
   color: #fff;
 }
 
@@ -668,12 +920,18 @@ function handleAddCycleBoundary() {
 
 .color-dot.is-active {
   border-color: #fff;
-  box-shadow: 0 0 4px rgba(255,255,255,0.5);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .spacer {

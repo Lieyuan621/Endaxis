@@ -1,15 +1,15 @@
-import type { BaseGameState } from "@/simulation/state/BaseGameState.ts";
+import type { BaseGameState } from '@/simulation/state/BaseGameState.ts';
 import type {
   ActorSnapshot,
   EnemyConfig,
   GameSnapshot,
   TeamConfig,
-} from "@/simulation/state/types.ts";
-import { TeamState } from "@/simulation/state/TeamState.ts";
-import { EnemyState } from "@/simulation/state/EnemyState.ts";
-import type { SimulationEngine } from "../engine/SimulationEngine";
-import { ActorState } from "./ActorState";
-import { OperatorEffectState } from "./OperatorEffectState";
+} from '@/simulation/state/types.ts';
+import { TeamState } from '@/simulation/state/TeamState.ts';
+import { EnemyState } from '@/simulation/state/EnemyState.ts';
+import type { SimulationEngine } from '../engine/SimulationEngine';
+import { ActorState } from './ActorState';
+import { OperatorEffectState } from './OperatorEffectState';
 
 export class GameState implements BaseGameState<GameSnapshot> {
   team: TeamState;
@@ -19,11 +19,7 @@ export class GameState implements BaseGameState<GameSnapshot> {
   private currentTime: number = 0;
   private initialSnapshot: GameSnapshot;
 
-  constructor(
-    teamConfig: TeamConfig,
-    enemyConfig: EnemyConfig,
-    _engine: SimulationEngine,
-  ) {
+  constructor(teamConfig: TeamConfig, enemyConfig: EnemyConfig, _engine: SimulationEngine) {
     this.team = new TeamState(teamConfig, _engine);
     this.enemy = new EnemyState(enemyConfig, _engine);
     this.initialSnapshot = this.snapshot();
@@ -76,7 +72,7 @@ export class GameState implements BaseGameState<GameSnapshot> {
     return {
       team: this.team.snapshot(),
       enemy: this.enemy.snapshot(),
-      actors: this.getActors().map((actor) => actor.snapshot()),
+      actors: this.getActors().map(actor => actor.snapshot()),
     };
   }
   exportCarryoverSnapshot(time = this.currentTime) {
@@ -86,7 +82,7 @@ export class GameState implements BaseGameState<GameSnapshot> {
       ...base,
       time,
       enemyCarryover: this.enemy.exportCarryoverSnapshot(time),
-      operatorEffects: this.getActors().map((actor) => ({
+      operatorEffects: this.getActors().map(actor => ({
         trackId: actor.id,
         effects: this.getOperatorEffects(actor.id).exportCarryoverEntries(time),
         oneTimeEffects: this.getOperatorEffects(actor.id).exportCarryoverOneTimeEntries(time),

@@ -30,11 +30,28 @@
   z-index: 5;
 }
 
-.panel-tag-mini.gold { color: var(--ea-gold); border-color: rgba(255, 215, 0, 0.25); }
-.panel-tag-mini.blue { color: var(--ea-info); border-color: rgba(0, 229, 255, 0.25); }
-.panel-tag-mini.red { color: var(--ea-danger-soft); border-color: rgba(255, 120, 117, 0.35); }
-.panel-tag-mini.black { color: rgba(255, 255, 255, 0.9); border-color: rgba(255, 255, 255, 0.22); background: rgba(10, 10, 12, 0.9); }
-.panel-tag-mini.white { color: rgba(255, 255, 255, 0.9); border-color: rgba(255, 255, 255, 0.22); background: rgba(10, 10, 12, 0.9); }
+.panel-tag-mini.gold {
+  color: var(--ea-gold);
+  border-color: rgba(255, 215, 0, 0.25);
+}
+.panel-tag-mini.blue {
+  color: var(--ea-info);
+  border-color: rgba(0, 229, 255, 0.25);
+}
+.panel-tag-mini.red {
+  color: var(--ea-danger-soft);
+  border-color: rgba(255, 120, 117, 0.35);
+}
+.panel-tag-mini.black {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(10, 10, 12, 0.9);
+}
+.panel-tag-mini.white {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(10, 10, 12, 0.9);
+}
 
 .ea-btn {
   --ea-btn-bg: #3a3a3a;
@@ -66,8 +83,13 @@
   user-select: none;
   text-decoration: none;
   box-sizing: border-box;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease,
-    box-shadow 0.2s ease, filter 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
 }
 
 .ea-btn:hover {
@@ -177,31 +199,43 @@
 .ea-btn--outline-muted {
   --ea-btn-radius: 0px;
   --ea-btn-bg:
-    linear-gradient(180deg,
+    linear-gradient(
+      180deg,
       rgba(255, 255, 255, 0.07) 0%,
       rgba(255, 255, 255, 0.035) 55%,
-      rgba(255, 255, 255, 0.02) 100%),
-    radial-gradient(140% 200% at 15% 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    radial-gradient(
+      140% 200% at 15% 0%,
       rgba(255, 255, 255, 0.06) 0%,
       rgba(255, 255, 255, 0.03) 45%,
-      rgba(255, 255, 255, 0.015) 85%),
-    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.015) 85%
+    ),
+    linear-gradient(
+      180deg,
       rgba(0, 0, 0, 0.06) 0%,
       rgba(0, 0, 0, 0.03) 65%,
-      rgba(0, 0, 0, 0.02) 100%);
+      rgba(0, 0, 0, 0.02) 100%
+    );
   --ea-btn-bg-hover:
-    linear-gradient(180deg,
-      rgba(255, 255, 255, 0.10) 0%,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.1) 0%,
       rgba(255, 255, 255, 0.05) 55%,
-      rgba(255, 255, 255, 0.03) 100%),
-    radial-gradient(140% 200% at 15% 0%,
+      rgba(255, 255, 255, 0.03) 100%
+    ),
+    radial-gradient(
+      140% 200% at 15% 0%,
       rgba(255, 255, 255, 0.08) 0%,
       rgba(255, 255, 255, 0.04) 45%,
-      rgba(255, 255, 255, 0.02) 85%),
-    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.02) 85%
+    ),
+    linear-gradient(
+      180deg,
       rgba(0, 0, 0, 0.05) 0%,
       rgba(0, 0, 0, 0.02) 65%,
-      rgba(0, 0, 0, 0.015) 100%);
+      rgba(0, 0, 0, 0.015) 100%
+    );
   --ea-btn-border: rgba(255, 255, 255, 0.16);
   --ea-btn-border-hover: rgba(255, 255, 255, 0.26);
   --ea-btn-color: rgba(255, 255, 255, 0.75);
@@ -212,7 +246,7 @@
   backdrop-filter: blur(6px) saturate(1.06);
   -webkit-backdrop-filter: blur(6px) saturate(1.06);
   box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.20),
+    0 8px 18px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     inset 0 -1px 0 rgba(0, 0, 0, 0.18);
 }
@@ -361,31 +395,43 @@
   --ea-btn-border: color-mix(in srgb, var(--ea-btn-accent) 74%, rgba(255, 255, 255, 0.22));
   --ea-btn-border-hover: color-mix(in srgb, var(--ea-btn-accent) 86%, rgba(255, 255, 255, 0.28));
   --ea-btn-bg:
-    linear-gradient(180deg,
-      rgba(255, 255, 255, 0.20) 0%,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.2) 0%,
       rgba(255, 255, 255, 0.09) 45%,
-      rgba(255, 255, 255, 0.05) 100%),
-    radial-gradient(140% 200% at 15% 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    ),
+    radial-gradient(
+      140% 200% at 15% 0%,
       color-mix(in srgb, var(--ea-btn-accent) 78%, transparent) 0%,
       color-mix(in srgb, var(--ea-btn-accent) 50%, transparent) 45%,
-      rgba(255, 255, 255, 0.02) 85%),
-    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.02) 85%
+    ),
+    linear-gradient(
+      180deg,
       color-mix(in srgb, var(--ea-btn-accent) 62%, rgba(255, 255, 255, 0.08)) 0%,
       color-mix(in srgb, var(--ea-btn-accent) 46%, rgba(255, 255, 255, 0.05)) 60%,
-      color-mix(in srgb, var(--ea-btn-accent) 38%, rgba(255, 255, 255, 0.04)) 100%);
+      color-mix(in srgb, var(--ea-btn-accent) 38%, rgba(255, 255, 255, 0.04)) 100%
+    );
   --ea-btn-bg-hover:
-    linear-gradient(180deg,
+    linear-gradient(
+      180deg,
       rgba(255, 255, 255, 0.25) 0%,
       rgba(255, 255, 255, 0.12) 45%,
-      rgba(255, 255, 255, 0.07) 100%),
-    radial-gradient(140% 200% at 15% 0%,
+      rgba(255, 255, 255, 0.07) 100%
+    ),
+    radial-gradient(
+      140% 200% at 15% 0%,
       color-mix(in srgb, var(--ea-btn-accent) 92%, transparent) 0%,
       color-mix(in srgb, var(--ea-btn-accent) 60%, transparent) 45%,
-      rgba(255, 255, 255, 0.03) 85%),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ea-btn-accent) 68%, rgba(255, 255, 255, 0.10)) 0%,
+      rgba(255, 255, 255, 0.03) 85%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ea-btn-accent) 68%, rgba(255, 255, 255, 0.1)) 0%,
       color-mix(in srgb, var(--ea-btn-accent) 52%, rgba(255, 255, 255, 0.08)) 60%,
-      color-mix(in srgb, var(--ea-btn-accent) 42%, rgba(255, 255, 255, 0.06)) 100%);
+      color-mix(in srgb, var(--ea-btn-accent) 42%, rgba(255, 255, 255, 0.06)) 100%
+    );
 
   position: relative;
   overflow: hidden;
@@ -558,7 +604,10 @@
   min-height: 30px;
   padding: 6px 8px;
   user-select: none;
-  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .ea-check-rect:hover {
@@ -619,9 +668,15 @@
 }
 
 @keyframes ea-pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .ea-btn--glass-cut {

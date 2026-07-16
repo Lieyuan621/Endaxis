@@ -1,5 +1,5 @@
-import type { GameSnapshot } from "@/simulation/state/types.ts";
-import type { SimLogEntry } from "@/simulation/events/event.types.ts";
+import type { GameSnapshot } from '@/simulation/state/types.ts';
+import type { SimLogEntry } from '@/simulation/events/event.types.ts';
 
 export interface SpPoint {
   time: number;
@@ -11,7 +11,7 @@ export interface SpPoint {
 export function projectSpSeries(
   simLog: SimLogEntry[],
   initialSnapshot: GameSnapshot,
-  timelineDuration = 120
+  timelineDuration = 120,
 ): SpPoint[] {
   const spSeries: SpPoint[] = [];
 
@@ -24,10 +24,7 @@ export function projectSpSeries(
   for (let i = 0; i < simLog.length; i++) {
     const entry = simLog[i];
 
-    if (
-      !entry ||
-      (entry.type !== "SP_REGEN_PAUSE" && entry.type !== "SP_CHANGE")
-    ) {
+    if (!entry || (entry.type !== 'SP_REGEN_PAUSE' && entry.type !== 'SP_CHANGE')) {
       continue;
     }
 
@@ -35,9 +32,9 @@ export function projectSpSeries(
 
     let arrivalValue = lastValue;
 
-    if (entry.type === "SP_CHANGE") {
+    if (entry.type === 'SP_CHANGE') {
       arrivalValue = entry.payload.sp - entry.payload.change;
-    } else if (entry.type === "SP_REGEN_PAUSE") {
+    } else if (entry.type === 'SP_REGEN_PAUSE') {
       arrivalValue = entry.payload.sp;
     } else {
       arrivalValue = lastValue;
@@ -57,7 +54,7 @@ export function projectSpSeries(
       }
     }
 
-    if (entry.type === "SP_CHANGE") {
+    if (entry.type === 'SP_CHANGE') {
       lastValue = entry.payload.sp;
       spSeries.push({
         time: now,
@@ -65,7 +62,7 @@ export function projectSpSeries(
         actionId: entry.payload.sourceId,
         change: entry.payload.change,
       });
-    } else if (entry.type === "SP_REGEN_PAUSE") {
+    } else if (entry.type === 'SP_REGEN_PAUSE') {
       lastValue = arrivalValue;
 
       const newFreezeEnd = now + entry.payload.duration;
@@ -78,10 +75,7 @@ export function projectSpSeries(
         if (!nextEntry) {
           break;
         }
-        if (
-          nextEntry.type === "SP_CHANGE" ||
-          nextEntry.type === "SP_REGEN_PAUSE"
-        ) {
+        if (nextEntry.type === 'SP_CHANGE' || nextEntry.type === 'SP_REGEN_PAUSE') {
           nextEventTime = nextEntry.time;
           break;
         }

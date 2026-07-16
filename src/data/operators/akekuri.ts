@@ -219,10 +219,20 @@ const sheet: OperatorSheet = {
       comboWindow: {
         triggers: [
           {
-            trigger: { kind: 'onStatusApplied', status: 'staggered', target: 'enemy', triggerScope: 'global' },
+            trigger: {
+              kind: 'onStatusApplied',
+              status: 'staggered',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
           },
           {
-            trigger: { kind: 'onStatusApplied', status: 'staggerNode', target: 'enemy', triggerScope: 'global' },
+            trigger: {
+              kind: 'onStatusApplied',
+              status: 'staggerNode',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
           },
         ],
         duration: 5,

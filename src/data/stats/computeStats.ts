@@ -201,12 +201,10 @@ export function computeStats(
         const arr = Array.isArray(types) ? types : [types];
         if (!targetSkillType || !arr.includes(targetSkillType as never)) {
           // basicAttack scope also matches finalStrike and dive
-          if (
-            !(
-              arr.includes('basicAttack' as never) &&
-              (targetSkillType === 'finalStrike' || targetSkillType === 'dive')
-            )
-          ) {
+          if (!(
+            arr.includes('basicAttack' as never) &&
+            (targetSkillType === 'finalStrike' || targetSkillType === 'dive')
+          )) {
             return false;
           }
         }
@@ -221,7 +219,7 @@ export function computeStats(
   };
 
   const isCooldownReductionModifier = (modifier: string): boolean =>
-      modifier === 'cooldownReductionFlat' || modifier === 'cooldownReductionPercent';
+    modifier === 'cooldownReductionFlat' || modifier === 'cooldownReductionPercent';
 
   // Accumulate sheet effects
   for (const effect of sheetEffects) {
@@ -230,8 +228,8 @@ export function computeStats(
     const modifier = effect.stat.modifier;
 
     if (
-        !isCooldownReductionModifier(modifier) &&
-        !passesSkillScope(effect.stat as Record<string, unknown>)
+      !isCooldownReductionModifier(modifier) &&
+      !passesSkillScope(effect.stat as Record<string, unknown>)
     ) {
       continue;
     }
@@ -248,8 +246,8 @@ export function computeStats(
     if (modifier === 'attributeFlat' || modifier === 'attributePercent') continue;
 
     if (
-        !isCooldownReductionModifier(modifier) &&
-        !passesSkillScope(mod.stat as Record<string, unknown>)
+      !isCooldownReductionModifier(modifier) &&
+      !passesSkillScope(mod.stat as Record<string, unknown>)
     ) {
       continue;
     }

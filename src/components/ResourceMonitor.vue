@@ -1,187 +1,191 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useTimelineStore } from '../stores/timelineStore.js'
-import CustomNumberInput from './CustomNumberInput.vue'
-import ConnectionPath from './ConnectionPath.vue'
-import HitDamageDetailDialog from './HitDamageDetailDialog.vue'
-import { useI18n } from 'vue-i18n'
-import { getDisplayKeyCandidates } from '@/utils/effectDisplay.js'
-import { getEnemyGameName } from '@/data/gameText'
-import { computeContingencyEnemyHealing } from '@/data/contingencyContracts/criteriaEffects'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useTimelineStore } from '../stores/timelineStore.js';
+import CustomNumberInput from './CustomNumberInput.vue';
+import ConnectionPath from './ConnectionPath.vue';
+import HitDamageDetailDialog from './HitDamageDetailDialog.vue';
+import { useI18n } from 'vue-i18n';
+import { getDisplayKeyCandidates } from '@/utils/effectDisplay.js';
+import { getEnemyGameName } from '@/data/gameText';
+import { computeContingencyEnemyHealing } from '@/data/contingencyContracts/criteriaEffects';
 
-const store = useTimelineStore()
-const { t, locale } = useI18n({ useScope: 'global' })
+const store = useTimelineStore();
+const { t, locale } = useI18n({ useScope: 'global' });
 const props = defineProps({
   expandAllToken: { type: Number, default: 0 },
-})
-const emit = defineEmits(['collapse-panel', 'section-collapse-change'])
-const reactionHitDetailHit = ref(null)
-const showReactionHitDetail = computed(() => reactionHitDetailHit.value !== null)
-const reactionHitDetailBreakdown = computed(() => reactionHitDetailHit.value?._damageBreakdown ?? null)
+});
+const emit = defineEmits(['collapse-panel', 'section-collapse-change']);
+const reactionHitDetailHit = ref(null);
+const showReactionHitDetail = computed(() => reactionHitDetailHit.value !== null);
+const reactionHitDetailBreakdown = computed(
+  () => reactionHitDetailHit.value?._damageBreakdown ?? null,
+);
 
-const MIN_CHART_HEIGHT = 116
-const MAX_CHART_HEIGHT = 520
+const MIN_CHART_HEIGHT = 116;
+const MAX_CHART_HEIGHT = 520;
 
-const monitorRootRef = ref(null)
-const chartViewportRef = ref(null)
-const monitorHeight = ref(0)
-const chartViewportHeight = ref(0)
+const monitorRootRef = ref(null);
+const chartViewportRef = ref(null);
+const monitorHeight = ref(0);
+const chartViewportHeight = ref(0);
 
-let resizeObserver = null
-let resizeRaf = null
-let sectionResizeState = null
+let resizeObserver = null;
+let resizeRaf = null;
+let sectionResizeState = null;
 
 function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max)
+  return Math.min(Math.max(value, min), max);
 }
 
 function openReactionHitDetail(hitData) {
-  if (!hitData?._damageBreakdown) return
-  reactionHitDetailHit.value = hitData
+  if (!hitData?._damageBreakdown) return;
+  reactionHitDetailHit.value = hitData;
 }
 
 function closeReactionHitDetail() {
-  reactionHitDetailHit.value = null
+  reactionHitDetailHit.value = null;
 }
 
 function getReactionHitTitle(hitData) {
-  const damage = Math.floor(Number(hitData?._expectedDamage ?? hitData?._damageBreakdown?.expectedDamage ?? 0) || 0)
-  return damage > 0 ? t('actionItem.damageHitTooltip', { damage: damage.toLocaleString() }) : ''
+  const damage = Math.floor(
+    Number(hitData?._expectedDamage ?? hitData?._damageBreakdown?.expectedDamage ?? 0) || 0,
+  );
+  return damage > 0 ? t('actionItem.damageHitTooltip', { damage: damage.toLocaleString() }) : '';
 }
 
 function beginSectionResize(which, event) {
-  event.preventDefault()
+  event.preventDefault();
   sectionResizeState = {
     upperKey: which.upperKey,
     lowerKey: which.lowerKey,
     startY: event.clientY,
     heights: { ...SECTION_BODY_HEIGHTS.value },
-  }
-  document.body.style.userSelect = 'none'
-  document.body.style.cursor = 'ns-resize'
-  window.addEventListener('pointermove', onSectionResizeMove)
-  window.addEventListener('pointerup', endSectionResize, { once: true })
+  };
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = 'ns-resize';
+  window.addEventListener('pointermove', onSectionResizeMove);
+  window.addEventListener('pointerup', endSectionResize, { once: true });
 }
 
 function onSectionResizeMove(event) {
-  if (!sectionResizeState) return
+  if (!sectionResizeState) return;
 
-  const dy = event.clientY - sectionResizeState.startY
-  const base = sectionResizeState.heights
+  const dy = event.clientY - sectionResizeState.startY;
+  const base = sectionResizeState.heights;
 
-  let aff = base.affliction
-  let stg = base.stagger
-  let sp = base.sp
+  let aff = base.affliction;
+  let stg = base.stagger;
+  let sp = base.sp;
 
   const minMap = {
     affliction: MIN_AFFLICTION_HEIGHT,
     stagger: MIN_STAGGER_HEIGHT,
     sp: MIN_SP_HEIGHT,
-  }
-  const upperKey = sectionResizeState.upperKey
-  const lowerKey = sectionResizeState.lowerKey
-  const pairTotal = base[upperKey] + base[lowerKey]
-  const nextUpper = clamp(base[upperKey] + dy, minMap[upperKey], pairTotal - minMap[lowerKey])
-  const nextLower = pairTotal - nextUpper
+  };
+  const upperKey = sectionResizeState.upperKey;
+  const lowerKey = sectionResizeState.lowerKey;
+  const pairTotal = base[upperKey] + base[lowerKey];
+  const nextUpper = clamp(base[upperKey] + dy, minMap[upperKey], pairTotal - minMap[lowerKey]);
+  const nextLower = pairTotal - nextUpper;
 
-  if (upperKey === 'affliction') aff = nextUpper
-  if (upperKey === 'stagger') stg = nextUpper
-  if (upperKey === 'sp') sp = nextUpper
+  if (upperKey === 'affliction') aff = nextUpper;
+  if (upperKey === 'stagger') stg = nextUpper;
+  if (upperKey === 'sp') sp = nextUpper;
 
-  if (lowerKey === 'affliction') aff = nextLower
-  if (lowerKey === 'stagger') stg = nextLower
-  if (lowerKey === 'sp') sp = nextLower
+  if (lowerKey === 'affliction') aff = nextLower;
+  if (lowerKey === 'stagger') stg = nextLower;
+  if (lowerKey === 'sp') sp = nextLower;
 
   sectionWeights.value = normalizeWeights({
     affliction: aff,
     stagger: stg,
     sp,
-  })
+  });
 }
 
 function endSectionResize() {
-  sectionResizeState = null
-  document.body.style.userSelect = ''
-  document.body.style.cursor = ''
-  window.removeEventListener('pointermove', onSectionResizeMove)
-  persistSectionWeights()
+  sectionResizeState = null;
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
+  window.removeEventListener('pointermove', onSectionResizeMove);
+  persistSectionWeights();
 }
 
 function flushMonitorMetrics() {
-  resizeRaf = null
-  monitorHeight.value = monitorRootRef.value?.clientHeight || 0
-  chartViewportHeight.value = chartViewportRef.value?.clientHeight || 0
+  resizeRaf = null;
+  monitorHeight.value = monitorRootRef.value?.clientHeight || 0;
+  chartViewportHeight.value = chartViewportRef.value?.clientHeight || 0;
 }
 
 function queueMonitorMetrics() {
-  if (resizeRaf !== null) return
-  resizeRaf = requestAnimationFrame(flushMonitorMetrics)
+  if (resizeRaf !== null) return;
+  resizeRaf = requestAnimationFrame(flushMonitorMetrics);
 }
 
 onMounted(() => {
-  queueMonitorMetrics()
-  if (typeof ResizeObserver === 'undefined') return
+  queueMonitorMetrics();
+  if (typeof ResizeObserver === 'undefined') return;
 
   resizeObserver = new ResizeObserver(() => {
-    queueMonitorMetrics()
-  })
+    queueMonitorMetrics();
+  });
 
-  if (monitorRootRef.value) resizeObserver.observe(monitorRootRef.value)
-  if (chartViewportRef.value) resizeObserver.observe(chartViewportRef.value)
-})
+  if (monitorRootRef.value) resizeObserver.observe(monitorRootRef.value);
+  if (chartViewportRef.value) resizeObserver.observe(chartViewportRef.value);
+});
 
 onUnmounted(() => {
   if (resizeObserver) {
-    resizeObserver.disconnect()
-    resizeObserver = null
+    resizeObserver.disconnect();
+    resizeObserver = null;
   }
   if (resizeRaf !== null) {
-    cancelAnimationFrame(resizeRaf)
-    resizeRaf = null
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = null;
   }
-  window.removeEventListener('pointermove', onSectionResizeMove)
-  sectionResizeState = null
-})
+  window.removeEventListener('pointermove', onSectionResizeMove);
+  sectionResizeState = null;
+});
 
 const TOTAL_HEIGHT = computed(() => {
-  const measured = chartViewportHeight.value || 200
-  return clamp(Math.round(measured), MIN_CHART_HEIGHT, MAX_CHART_HEIGHT)
-})
+  const measured = chartViewportHeight.value || 200;
+  return clamp(Math.round(measured), MIN_CHART_HEIGHT, MAX_CHART_HEIGHT);
+});
 
-const SECTION_TOPBAR_HEIGHT = 14
-const SECTION_RESIZE_HANDLE_HEIGHT = 0
+const SECTION_TOPBAR_HEIGHT = 14;
+const SECTION_RESIZE_HANDLE_HEIGHT = 0;
 
 const DEFAULT_SECTION_WEIGHTS = Object.freeze({
   affliction: 2,
   stagger: 1,
   sp: 3,
-})
+});
 
-const MIN_AFFLICTION_HEIGHT = 46
-const MIN_STAGGER_HEIGHT = 26
-const MIN_SP_HEIGHT = 52
-const COLLAPSED_STRIP_HEIGHT = 14
-const SECTION_COLLAPSE_KEY = 'endaxis:resource-monitor-section-collapse:v1'
-const SECTION_KEYS = ['affliction', 'stagger', 'sp']
+const MIN_AFFLICTION_HEIGHT = 46;
+const MIN_STAGGER_HEIGHT = 26;
+const MIN_SP_HEIGHT = 52;
+const COLLAPSED_STRIP_HEIGHT = 14;
+const SECTION_COLLAPSE_KEY = 'endaxis:resource-monitor-section-collapse:v1';
+const SECTION_KEYS = ['affliction', 'stagger', 'sp'];
 
-const SECTION_LAYOUT_KEY = 'endaxis:resource-monitor-sections:v1'
-const sectionWeights = ref({ ...DEFAULT_SECTION_WEIGHTS })
+const SECTION_LAYOUT_KEY = 'endaxis:resource-monitor-sections:v1';
+const sectionWeights = ref({ ...DEFAULT_SECTION_WEIGHTS });
 const sectionCollapsed = ref({
   affliction: false,
   stagger: false,
   sp: false,
-})
+});
 
 function normalizeWeights(next) {
-  const a = Math.max(0.1, Number(next?.affliction) || DEFAULT_SECTION_WEIGHTS.affliction)
-  const s = Math.max(0.1, Number(next?.stagger) || DEFAULT_SECTION_WEIGHTS.stagger)
-  const sp = Math.max(0.1, Number(next?.sp) || DEFAULT_SECTION_WEIGHTS.sp)
-  return { affliction: a, stagger: s, sp }
+  const a = Math.max(0.1, Number(next?.affliction) || DEFAULT_SECTION_WEIGHTS.affliction);
+  const s = Math.max(0.1, Number(next?.stagger) || DEFAULT_SECTION_WEIGHTS.stagger);
+  const sp = Math.max(0.1, Number(next?.sp) || DEFAULT_SECTION_WEIGHTS.sp);
+  return { affliction: a, stagger: s, sp };
 }
 
 function persistSectionWeights() {
   try {
-    localStorage.setItem(SECTION_LAYOUT_KEY, JSON.stringify(sectionWeights.value))
+    localStorage.setItem(SECTION_LAYOUT_KEY, JSON.stringify(sectionWeights.value));
   } catch {
     // ignore
   }
@@ -189,10 +193,10 @@ function persistSectionWeights() {
 
 function restoreSectionWeights() {
   try {
-    const raw = localStorage.getItem(SECTION_LAYOUT_KEY)
-    if (!raw) return
-    const parsed = JSON.parse(raw)
-    sectionWeights.value = normalizeWeights(parsed)
+    const raw = localStorage.getItem(SECTION_LAYOUT_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    sectionWeights.value = normalizeWeights(parsed);
   } catch {
     // ignore
   }
@@ -203,25 +207,25 @@ function normalizeSectionCollapsed(next) {
     affliction: next?.affliction === true,
     stagger: next?.stagger === true,
     sp: next?.sp === true,
-  }
+  };
 }
 
 function areAllSectionsCollapsed(state) {
-  return SECTION_KEYS.every(key => state?.[key] === true)
+  return SECTION_KEYS.every(key => state?.[key] === true);
 }
 
 function getCollapsedSectionCount(state = sectionCollapsed.value) {
-  const normalized = getNormalizedCollapsedState(state)
-  return SECTION_KEYS.reduce((count, key) => count + (normalized[key] ? 1 : 0), 0)
+  const normalized = getNormalizedCollapsedState(state);
+  return SECTION_KEYS.reduce((count, key) => count + (normalized[key] ? 1 : 0), 0);
 }
 
 function emitSectionCollapseChange() {
-  emit('section-collapse-change', getCollapsedSectionCount())
+  emit('section-collapse-change', getCollapsedSectionCount());
 }
 
 function persistSectionCollapsed() {
   try {
-    localStorage.setItem(SECTION_COLLAPSE_KEY, JSON.stringify(sectionCollapsed.value))
+    localStorage.setItem(SECTION_COLLAPSE_KEY, JSON.stringify(sectionCollapsed.value));
   } catch {
     // ignore
   }
@@ -229,149 +233,153 @@ function persistSectionCollapsed() {
 
 function restoreSectionCollapsed() {
   try {
-    const raw = localStorage.getItem(SECTION_COLLAPSE_KEY)
-    if (!raw) return
-    const restored = normalizeSectionCollapsed(JSON.parse(raw))
+    const raw = localStorage.getItem(SECTION_COLLAPSE_KEY);
+    if (!raw) return;
+    const restored = normalizeSectionCollapsed(JSON.parse(raw));
     sectionCollapsed.value = areAllSectionsCollapsed(restored)
       ? { affliction: false, stagger: false, sp: false }
-      : restored
+      : restored;
   } catch {
     // ignore
   }
 }
 
 function getNormalizedCollapsedState(source = sectionCollapsed.value) {
-  return normalizeSectionCollapsed(source)
+  return normalizeSectionCollapsed(source);
 }
 
 function expandAllSections() {
-  sectionCollapsed.value = { affliction: false, stagger: false, sp: false }
-  persistSectionCollapsed()
-  emitSectionCollapseChange()
+  sectionCollapsed.value = { affliction: false, stagger: false, sp: false };
+  persistSectionCollapsed();
+  emitSectionCollapseChange();
 }
 
 function toggleSectionCollapsed(which) {
-  if (!SECTION_KEYS.includes(which)) return
+  if (!SECTION_KEYS.includes(which)) return;
   const next = getNormalizedCollapsedState({
     ...sectionCollapsed.value,
     [which]: !sectionCollapsed.value[which],
-  })
+  });
   if (areAllSectionsCollapsed(next)) {
-    expandAllSections()
-    emit('collapse-panel')
-    return
+    expandAllSections();
+    emit('collapse-panel');
+    return;
   }
-  sectionCollapsed.value = next
-  persistSectionCollapsed()
-  emitSectionCollapseChange()
+  sectionCollapsed.value = next;
+  persistSectionCollapsed();
+  emitSectionCollapseChange();
 }
 
-watch(() => props.expandAllToken, () => {
-  expandAllSections()
-})
+watch(
+  () => props.expandAllToken,
+  () => {
+    expandAllSections();
+  },
+);
 
 onMounted(() => {
-  restoreSectionWeights()
-  restoreSectionCollapsed()
-  emitSectionCollapseChange()
-})
+  restoreSectionWeights();
+  restoreSectionCollapsed();
+  emitSectionCollapseChange();
+});
 
-const activeSectionCollapsed = computed(() => getNormalizedCollapsedState())
-const expandedSectionKeys = computed(() => SECTION_KEYS.filter(key => !activeSectionCollapsed.value[key]))
-const expandedSectionCount = computed(() => expandedSectionKeys.value.length)
+const activeSectionCollapsed = computed(() => getNormalizedCollapsedState());
+const expandedSectionKeys = computed(() =>
+  SECTION_KEYS.filter(key => !activeSectionCollapsed.value[key]),
+);
+const expandedSectionCount = computed(() => expandedSectionKeys.value.length);
 const resizeHandleItems = computed(() => {
   return expandedSectionKeys.value.slice(1).map((lowerKey, index) => ({
     upperKey: expandedSectionKeys.value[index],
     lowerKey,
-  }))
-})
-const visibleResizeHandleCount = computed(() => resizeHandleItems.value.length)
+  }));
+});
+const visibleResizeHandleCount = computed(() => resizeHandleItems.value.length);
 const EXPANDED_SECTION_BODY_SPACE = computed(() => {
   return Math.max(
     96,
-    TOTAL_HEIGHT.value
-      - SECTION_TOPBAR_HEIGHT * expandedSectionCount.value
-      - COLLAPSED_STRIP_HEIGHT * (SECTION_KEYS.length - expandedSectionCount.value)
-      - SECTION_RESIZE_HANDLE_HEIGHT * visibleResizeHandleCount.value,
-  )
-})
+    TOTAL_HEIGHT.value -
+      SECTION_TOPBAR_HEIGHT * expandedSectionCount.value -
+      COLLAPSED_STRIP_HEIGHT * (SECTION_KEYS.length - expandedSectionCount.value) -
+      SECTION_RESIZE_HANDLE_HEIGHT * visibleResizeHandleCount.value,
+  );
+});
 
 const sectionLayout = computed(() => {
-  const collapsed = activeSectionCollapsed.value
-  const expanded = expandedSectionKeys.value
-  const heights = { affliction: 0, stagger: 0, sp: 0 }
+  const collapsed = activeSectionCollapsed.value;
+  const expanded = expandedSectionKeys.value;
+  const heights = { affliction: 0, stagger: 0, sp: 0 };
   const minMap = {
     affliction: MIN_AFFLICTION_HEIGHT,
     stagger: MIN_STAGGER_HEIGHT,
     sp: MIN_SP_HEIGHT,
-  }
-  const expandedContent = Math.max(0, EXPANDED_SECTION_BODY_SPACE.value)
+  };
+  const expandedContent = Math.max(0, EXPANDED_SECTION_BODY_SPACE.value);
 
   if (expanded.length === 1) {
-    heights[expanded[0]] = expandedContent
+    heights[expanded[0]] = expandedContent;
   } else if (expanded.length > 0) {
-    const w = normalizeWeights(sectionWeights.value)
-    const totalWeight = expanded.reduce((sum, key) => sum + w[key], 0)
-    const minSum = expanded.reduce((sum, key) => sum + minMap[key], 0)
+    const w = normalizeWeights(sectionWeights.value);
+    const totalWeight = expanded.reduce((sum, key) => sum + w[key], 0);
+    const minSum = expanded.reduce((sum, key) => sum + minMap[key], 0);
 
     if (expandedContent < minSum) {
-      const scale = expandedContent / Math.max(1, minSum)
-      let remaining = expandedContent
+      const scale = expandedContent / Math.max(1, minSum);
+      let remaining = expandedContent;
       expanded.forEach((key, index) => {
-        const proposed = index === expanded.length - 1
-          ? remaining
-          : Math.max(8, Math.floor(minMap[key] * scale))
-        heights[key] = proposed
-        remaining -= proposed
-      })
+        const proposed =
+          index === expanded.length - 1 ? remaining : Math.max(8, Math.floor(minMap[key] * scale));
+        heights[key] = proposed;
+        remaining -= proposed;
+      });
     } else {
-      expanded.forEach((key) => {
-        heights[key] = Math.round(expandedContent * (w[key] / totalWeight))
-      })
+      expanded.forEach(key => {
+        heights[key] = Math.round(expandedContent * (w[key] / totalWeight));
+      });
 
-      expanded.forEach((key) => {
-        heights[key] = Math.max(minMap[key], heights[key])
-      })
+      expanded.forEach(key => {
+        heights[key] = Math.max(minMap[key], heights[key]);
+      });
 
-      let sum = expanded.reduce((acc, key) => acc + heights[key], 0)
+      let sum = expanded.reduce((acc, key) => acc + heights[key], 0);
       if (sum > expandedContent) {
-        let overflow = sum - expandedContent
-        const shrinkOrder = ['affliction', 'stagger', 'sp'].filter((key) => expanded.includes(key))
-        shrinkOrder.forEach((key) => {
-          if (overflow <= 0) return
-          const reducible = Math.max(0, heights[key] - minMap[key])
-          const take = Math.min(overflow, reducible)
-          heights[key] -= take
-          overflow -= take
-        })
+        let overflow = sum - expandedContent;
+        const shrinkOrder = ['affliction', 'stagger', 'sp'].filter(key => expanded.includes(key));
+        shrinkOrder.forEach(key => {
+          if (overflow <= 0) return;
+          const reducible = Math.max(0, heights[key] - minMap[key]);
+          const take = Math.min(overflow, reducible);
+          heights[key] -= take;
+          overflow -= take;
+        });
       } else if (sum < expandedContent) {
-        heights[expanded[expanded.length - 1]] += expandedContent - sum
+        heights[expanded[expanded.length - 1]] += expandedContent - sum;
       }
     }
   }
 
-  SECTION_KEYS.forEach((key) => {
+  SECTION_KEYS.forEach(key => {
     if (collapsed[key]) {
-      heights[key] = COLLAPSED_STRIP_HEIGHT
+      heights[key] = COLLAPSED_STRIP_HEIGHT;
     }
-  })
+  });
 
-  let cursorTop = 0
-  const ranges = {}
-  SECTION_KEYS.forEach((key) => {
-    const handleBeforeVisible = resizeHandleItems.value.some((item) => item.lowerKey === key)
+  let cursorTop = 0;
+  const ranges = {};
+  SECTION_KEYS.forEach(key => {
+    const handleBeforeVisible = resizeHandleItems.value.some(item => item.lowerKey === key);
     if (handleBeforeVisible) {
-      cursorTop += SECTION_RESIZE_HANDLE_HEIGHT
+      cursorTop += SECTION_RESIZE_HANDLE_HEIGHT;
     }
 
-    const isCollapsed = collapsed[key]
-    const bodyHeight = isCollapsed ? 0 : heights[key]
-    const topbarHeight = isCollapsed ? 0 : SECTION_TOPBAR_HEIGHT
-    const stripHeight = isCollapsed ? COLLAPSED_STRIP_HEIGHT : 0
-    const topbarTop = cursorTop
-    const bodyTop = topbarTop + topbarHeight
-    const bodyBottom = bodyTop + bodyHeight
-    const shellHeight = topbarHeight + bodyHeight + stripHeight
+    const isCollapsed = collapsed[key];
+    const bodyHeight = isCollapsed ? 0 : heights[key];
+    const topbarHeight = isCollapsed ? 0 : SECTION_TOPBAR_HEIGHT;
+    const stripHeight = isCollapsed ? COLLAPSED_STRIP_HEIGHT : 0;
+    const topbarTop = cursorTop;
+    const bodyTop = topbarTop + topbarHeight;
+    const bodyBottom = bodyTop + bodyHeight;
+    const shellHeight = topbarHeight + bodyHeight + stripHeight;
     ranges[key] = {
       topbarTop,
       topbarHeight,
@@ -382,35 +390,35 @@ const sectionLayout = computed(() => {
       shellHeight,
       collapsed: isCollapsed,
       handleBeforeVisible,
-    }
+    };
 
-    cursorTop += shellHeight
-  })
+    cursorTop += shellHeight;
+  });
 
-  return { heights, ranges }
-})
+  return { heights, ranges };
+});
 
-const SECTION_BODY_HEIGHTS = computed(() => sectionLayout.value.heights)
-const sectionRects = computed(() => sectionLayout.value.ranges)
-const chartLabelFontSize = computed(() => 9)
-const warningLabelText = computed(() => t('resourceMonitor.sp.insufficient'))
+const SECTION_BODY_HEIGHTS = computed(() => sectionLayout.value.heights);
+const sectionRects = computed(() => sectionLayout.value.ranges);
+const chartLabelFontSize = computed(() => 9);
+const warningLabelText = computed(() => t('resourceMonitor.sp.insufficient'));
 
 const gridLineTimes = computed(() => {
-  const prep = Number(store.prepDuration) || 0
-  const startBt = -prep
-  const endBt = store.TOTAL_DURATION
-  const start = Math.ceil(startBt / 5) * 5
-  const result = []
+  const prep = Number(store.prepDuration) || 0;
+  const startBt = -prep;
+  const endBt = store.TOTAL_DURATION;
+  const start = Math.ceil(startBt / 5) * 5;
+  const result = [];
   for (let bt = start; bt <= endBt; bt += 5) {
-    result.push(bt + prep)
+    result.push(bt + prep);
   }
-  return result
-})
+  return result;
+});
 
-const COLOR_STAGGER = '#ff7875'
-const COLOR_LIMIT = '#d32f2f'
-const COLOR_SP_MAIN = '#ffd700'
-const COLOR_SP_WARN = '#ff4d4f'
+const COLOR_STAGGER = '#ff7875';
+const COLOR_LIMIT = '#d32f2f';
+const COLOR_SP_MAIN = '#ffd700';
+const COLOR_SP_WARN = '#ff4d4f';
 
 function getMarkerPriority(typeKey) {
   const w = {
@@ -419,97 +427,105 @@ function getMarkerPriority(typeKey) {
     knockdown: 300,
     crush: 200,
     vulnerability: 100,
-  }
-  return w[typeKey] || 0
+  };
+  return w[typeKey] || 0;
 }
 
 function getComboStacksAtTime(segments, time, epsilon = 0.001) {
   return Math.max(
     0,
     ...(segments || [])
-      .filter((seg) =>
-        seg?.typeKey === 'vulnerability' &&
-        seg?.tracksComboState === true &&
-        Number(seg.start) <= time + epsilon &&
-        Number(seg.end) > time + epsilon,
+      .filter(
+        seg =>
+          seg?.typeKey === 'vulnerability' &&
+          seg?.tracksComboState === true &&
+          Number(seg.start) <= time + epsilon &&
+          Number(seg.end) > time + epsilon,
       )
-      .map((seg) => Number(seg.stacks) || 1),
-  )
+      .map(seg => Number(seg.stacks) || 1),
+  );
 }
 
 function getPreviousComboStacksAtTime(segments, time, epsilon = 0.001) {
   return Math.max(
     0,
     ...(segments || [])
-      .filter((seg) =>
-        seg?.typeKey === 'vulnerability' &&
-        seg?.tracksComboState === true &&
-        Number(seg.start) < time - epsilon &&
-        Number(seg.end) > time - epsilon,
+      .filter(
+        seg =>
+          seg?.typeKey === 'vulnerability' &&
+          seg?.tracksComboState === true &&
+          Number(seg.start) < time - epsilon &&
+          Number(seg.end) > time - epsilon,
       )
-      .map((seg) => Number(seg.stacks) || 1),
-  )
+      .map(seg => Number(seg.stacks) || 1),
+  );
 }
 
-const PHYSICAL_REACTION_MARKERS = new Set(['lift', 'knockdown', 'breach', 'crush'])
-const PHYSICAL_STACKING_MARKERS = new Set(['lift', 'knockdown'])
-const PHYSICAL_CONSUMING_MARKERS = new Set(['breach', 'crush'])
-const PHYSICAL_CANONICAL_ICON_KEYS = new Set(['vulnerability', 'lift', 'knockdown', 'breach', 'crush'])
+const PHYSICAL_REACTION_MARKERS = new Set(['lift', 'knockdown', 'breach', 'crush']);
+const PHYSICAL_STACKING_MARKERS = new Set(['lift', 'knockdown']);
+const PHYSICAL_CONSUMING_MARKERS = new Set(['breach', 'crush']);
+const PHYSICAL_CANONICAL_ICON_KEYS = new Set([
+  'vulnerability',
+  'lift',
+  'knockdown',
+  'breach',
+  'crush',
+]);
 
 const afflictionViz = computed(() => {
-  return store.enemyAfflictionViz
-})
+  return store.enemyAfflictionViz;
+});
 function getTypeIcon(typeKey, icon) {
-  const candidates = getDisplayKeyCandidates(typeKey)
-  const canonical = candidates[0]
+  const candidates = getDisplayKeyCandidates(typeKey);
+  const canonical = candidates[0];
   if (PHYSICAL_CANONICAL_ICON_KEYS.has(canonical) && store.iconDatabase?.[canonical]) {
-    return store.iconDatabase[canonical]
+    return store.iconDatabase[canonical];
   }
-  if (icon) return icon
+  if (icon) return icon;
   for (const candidate of candidates) {
-    if (store.iconDatabase?.[candidate]) return store.iconDatabase[candidate]
+    if (store.iconDatabase?.[candidate]) return store.iconDatabase[candidate];
   }
-  return store.iconDatabase?.default || '/icons/default_icon.webp'
+  return store.iconDatabase?.default || '/icons/default_icon.webp';
 }
 
 function getTypeColor(typeKey) {
-  return store.getColor?.(typeKey) || '#aaaaaa'
+  return store.getColor?.(typeKey) || '#aaaaaa';
 }
 
 function getTypeTitle(typeKey) {
-  locale.value
+  locale.value;
   for (const candidate of getDisplayKeyCandidates(typeKey)) {
-    const localeKey = `effects.name.${candidate}`
-    const out = t(localeKey)
-    if (out !== localeKey) return out
+    const localeKey = `effects.name.${candidate}`;
+    const out = t(localeKey);
+    if (out !== localeKey) return out;
   }
-  return String(typeKey || '')
+  return String(typeKey || '');
 }
 
 function getAttachmentLineColors(headTypeKey, tailTypeKey = null) {
   return {
     start: getTypeColor(headTypeKey),
     end: getTypeColor(tailTypeKey || headTypeKey),
-  }
+  };
 }
 
 const afflictionItems = computed(() => {
-  const iconSize = Number(afflictionLayout.value.iconSize) || 20
-  const rowHeight = Number(afflictionLayout.value.rowHeight) || 20
-  const gap = Number(afflictionLayout.value.gap) || 4
-  const epsilon = 0.001
+  const iconSize = Number(afflictionLayout.value.iconSize) || 20;
+  const rowHeight = Number(afflictionLayout.value.rowHeight) || 20;
+  const gap = Number(afflictionLayout.value.gap) || 4;
+  const epsilon = 0.001;
 
-  const out = []
+  const out = [];
   const physicalMarkerTimeKeys = new Set(
-    (afflictionViz.value.physical.markers || []).map((marker) =>
+    (afflictionViz.value.physical.markers || []).map(marker =>
       Math.round((Number(marker.time) || 0) / epsilon),
     ),
-  )
+  );
 
   // segments
   for (const seg of afflictionViz.value.physical.segments || []) {
-    if (seg.tracksComboState) continue
-    const start = Number(seg.start) || 0
+    if (seg.tracksComboState) continue;
+    const start = Number(seg.start) || 0;
     out.push({
       row: 'physical',
       rowIndex: 0,
@@ -524,7 +540,7 @@ const afflictionItems = computed(() => {
       carryoverKey: seg.carryoverKey || null,
       isDisabled: seg.disabled === true,
       hideIcon: physicalMarkerTimeKeys.has(Math.round(start / epsilon)),
-    })
+    });
   }
 
   for (const seg of afflictionViz.value.attachment.segments || []) {
@@ -542,7 +558,7 @@ const afflictionItems = computed(() => {
       carryoverKey: seg.carryoverKey || null,
       isDisabled: seg.disabled === true,
       hideIcon: false,
-    })
+    });
   }
 
   for (const seg of afflictionViz.value.anomalies.segments || []) {
@@ -560,7 +576,7 @@ const afflictionItems = computed(() => {
       carryoverKey: seg.carryoverKey || null,
       isDisabled: seg.disabled === true,
       hideIcon: false,
-    })
+    });
   }
 
   for (const seg of afflictionViz.value.statuses.segments || []) {
@@ -578,20 +594,20 @@ const afflictionItems = computed(() => {
       carryoverKey: seg.carryoverKey || null,
       isDisabled: seg.disabled === true,
       hideIcon: false,
-    })
+    });
   }
 
   // markers (need slotIndex by time group)
   function pushGroupedMarkers(row, markers) {
-    const groups = []
+    const groups = [];
     for (const m of markers || []) {
-      const time = Number(m.time) || 0
-      const typeKey = m.typeKey
-      if (!typeKey) continue
-      let g = groups.find((x) => Math.abs(x.time - time) <= epsilon)
+      const time = Number(m.time) || 0;
+      const typeKey = m.typeKey;
+      if (!typeKey) continue;
+      let g = groups.find(x => Math.abs(x.time - time) <= epsilon);
       if (!g) {
-        g = { time, list: [] }
-        groups.push(g)
+        g = { time, list: [] };
+        groups.push(g);
       }
       g.list.push({
         typeKey,
@@ -602,7 +618,7 @@ const afflictionItems = computed(() => {
         hitData: m.hitData || null,
         damageHits: Array.isArray(m.damageHits) ? m.damageHits : [],
         sourceId: m.sourceId || null,
-      })
+      });
       if (Array.isArray(m.damageHits)) {
         for (const hitData of m.damageHits) {
           g.list.push({
@@ -614,62 +630,67 @@ const afflictionItems = computed(() => {
             hitData,
             damageHits: [],
             sourceId: m.sourceId || null,
-          })
+          });
         }
       }
     }
 
-    groups.sort((a, b) => a.time - b.time)
-    groups.forEach((g) => {
+    groups.sort((a, b) => a.time - b.time);
+    groups.forEach(g => {
       if (row === 'physical') {
         const previousComboStacks = getPreviousComboStacksAtTime(
           afflictionViz.value.physical.segments,
           g.time,
           epsilon,
-        )
+        );
         const activeComboStacks = getComboStacksAtTime(
           afflictionViz.value.physical.segments,
           g.time,
           epsilon,
-        )
-        const comboItems = g.list.filter((x) => !x.isDamageHit && PHYSICAL_REACTION_MARKERS.has(x.typeKey))
+        );
+        const comboItems = g.list.filter(
+          x => !x.isDamageHit && PHYSICAL_REACTION_MARKERS.has(x.typeKey),
+        );
         if (comboItems.length > 0) {
           let representative =
-            [...comboItems].sort((a, b) => getMarkerPriority(b.typeKey) - getMarkerPriority(a.typeKey))[0] ||
-            comboItems[0]
-          let mergedStacks = 1
+            [...comboItems].sort(
+              (a, b) => getMarkerPriority(b.typeKey) - getMarkerPriority(a.typeKey),
+            )[0] || comboItems[0];
+          let mergedStacks = 1;
 
           if (previousComboStacks <= 0) {
-            representative = { typeKey: 'vulnerability', stacks: 1, icon: null }
+            representative = { typeKey: 'vulnerability', stacks: 1, icon: null };
           } else if (PHYSICAL_CONSUMING_MARKERS.has(representative.typeKey)) {
             mergedStacks = Math.min(
               4,
-              Math.max(previousComboStacks, ...comboItems.map((x) => Number(x.stacks) || 1)),
-            )
+              Math.max(previousComboStacks, ...comboItems.map(x => Number(x.stacks) || 1)),
+            );
           } else if (PHYSICAL_STACKING_MARKERS.has(representative.typeKey)) {
-            mergedStacks = Math.min(4, Math.max(activeComboStacks, previousComboStacks + 1))
+            mergedStacks = Math.min(4, Math.max(activeComboStacks, previousComboStacks + 1));
           } else {
             mergedStacks = Math.min(
               4,
               Math.max(activeComboStacks, previousComboStacks, Number(representative?.stacks) || 1),
-            )
+            );
           }
 
-          g.list = g.list.filter((x) =>
-            x.isDamageHit || (x.typeKey !== 'vulnerability' && !PHYSICAL_REACTION_MARKERS.has(x.typeKey)),
-          )
+          g.list = g.list.filter(
+            x =>
+              x.isDamageHit ||
+              (x.typeKey !== 'vulnerability' && !PHYSICAL_REACTION_MARKERS.has(x.typeKey)),
+          );
           g.list.push({
             typeKey: representative?.typeKey || 'vulnerability',
             stacks: Math.max(1, mergedStacks || Number(representative?.stacks) || 1),
             icon: representative?.icon || null,
-          })
+          });
         }
       }
 
-      g.list.sort((a, b) => getMarkerPriority(b.typeKey) - getMarkerPriority(a.typeKey))
-      let iconSlotIndex = 0
+      g.list.sort((a, b) => getMarkerPriority(b.typeKey) - getMarkerPriority(a.typeKey));
+      let iconSlotIndex = 0;
       g.list.forEach((it, idx) => {
-        const slotIndex = it.isDamageHit ? idx : iconSlotIndex++
+        const slotIndex = it.isDamageHit ? idx : iconSlotIndex++;
         out.push({
           row,
           rowIndex: Number(it.row) || 0,
@@ -684,70 +705,70 @@ const afflictionItems = computed(() => {
           hitData: it.hitData || null,
           sourceId: it.sourceId || null,
           hideIcon: false,
-        })
-      })
-    })
+        });
+      });
+    });
   }
 
-  pushGroupedMarkers('physical', afflictionViz.value.physical.markers)
-  pushGroupedMarkers('attach', afflictionViz.value.attachment.markers)
-  pushGroupedMarkers('anomaly', afflictionViz.value.anomalies.markers)
-  pushGroupedMarkers('status', afflictionViz.value.statuses.markers)
+  pushGroupedMarkers('physical', afflictionViz.value.physical.markers);
+  pushGroupedMarkers('attach', afflictionViz.value.attachment.markers);
+  pushGroupedMarkers('anomaly', afflictionViz.value.anomalies.markers);
+  pushGroupedMarkers('status', afflictionViz.value.statuses.markers);
 
   // calculate px/top in-place for rendering
   return out.map((it, idx) => {
-    const leftBase = store.timeToPx(it.startTime)
-    const hiddenIconOffset = !it.isMarker && it.hideIcon ? iconSize : 0
-      const markerOffset = it.isMarker && !it.isDamageHit
-        ? it.slotIndex * (iconSize + 2)
-        : 0
-      const left = leftBase + hiddenIconOffset + markerOffset
+    const leftBase = store.timeToPx(it.startTime);
+    const hiddenIconOffset = !it.isMarker && it.hideIcon ? iconSize : 0;
+    const markerOffset = it.isMarker && !it.isDamageHit ? it.slotIndex * (iconSize + 2) : 0;
+    const left = leftBase + hiddenIconOffset + markerOffset;
 
-    let top = afflictionLayout.value.yPhysical
-    if (it.row === 'attach') top = afflictionLayout.value.yAttachment
-    else if (it.row === 'anomaly') top = afflictionLayout.value.yAnomalyStart + (it.rowIndex || 0) * (rowHeight + gap)
-    else if (it.row === 'status') top = afflictionLayout.value.yStatusStart + (it.rowIndex || 0) * (rowHeight + gap)
+    let top = afflictionLayout.value.yPhysical;
+    if (it.row === 'attach') top = afflictionLayout.value.yAttachment;
+    else if (it.row === 'anomaly')
+      top = afflictionLayout.value.yAnomalyStart + (it.rowIndex || 0) * (rowHeight + gap);
+    else if (it.row === 'status')
+      top = afflictionLayout.value.yStatusStart + (it.rowIndex || 0) * (rowHeight + gap);
 
     const barWidth =
       it.isMarker || !Number.isFinite(it.endTime)
         ? 0
-        : Math.max(0, store.timeToPx(it.endTime) - leftBase - iconSize - 2)
+        : Math.max(0, store.timeToPx(it.endTime) - leftBase - iconSize - 2);
 
-      return {
-        ...it,
-        _key: `${it.row}-${it.isMarker ? 'm' : 's'}-${it.typeKey}-${it.startTime}-${it.rowIndex}-${it.slotIndex}-${idx}`,
-        leftPx: left,
-        topPx: top + Math.floor((rowHeight - iconSize) / 2),
-        diamondTopPx: top + Math.floor((rowHeight - iconSize) / 2) + iconSize - 3,
-        barWidthPx: barWidth,
-      }
-  })
-})
+    return {
+      ...it,
+      _key: `${it.row}-${it.isMarker ? 'm' : 's'}-${it.typeKey}-${it.startTime}-${it.rowIndex}-${it.slotIndex}-${idx}`,
+      leftPx: left,
+      topPx: top + Math.floor((rowHeight - iconSize) / 2),
+      diamondTopPx: top + Math.floor((rowHeight - iconSize) / 2) + iconSize - 3,
+      barWidthPx: barWidth,
+    };
+  });
+});
 
 const afflictionConnectionItems = computed(() => {
-  const iconSize = Number(afflictionLayout.value.iconSize) || 20
-  const epsilon = 0.001
-  const findTailItem = (sourceItem) => {
-    const endTime = Number(sourceItem.endTime)
-    if (!Number.isFinite(endTime)) return null
+  const iconSize = Number(afflictionLayout.value.iconSize) || 20;
+  const epsilon = 0.001;
+  const findTailItem = sourceItem => {
+    const endTime = Number(sourceItem.endTime);
+    if (!Number.isFinite(endTime)) return null;
     return afflictionItems.value
-      .filter((candidate) => candidate._key !== sourceItem._key)
-      .filter((candidate) => !candidate.isDamageHit)
-      .filter((candidate) => Math.abs((Number(candidate.startTime) || 0) - endTime) <= epsilon)
+      .filter(candidate => candidate._key !== sourceItem._key)
+      .filter(candidate => !candidate.isDamageHit)
+      .filter(candidate => Math.abs((Number(candidate.startTime) || 0) - endTime) <= epsilon)
       .sort((a, b) => {
-        const weight = { anomaly: 4, status: 3, physical: 2, attach: 1 }
-        return (weight[b.row] || 0) - (weight[a.row] || 0)
-      })[0]
-  }
+        const weight = { anomaly: 4, status: 3, physical: 2, attach: 1 };
+        return (weight[b.row] || 0) - (weight[a.row] || 0);
+      })[0];
+  };
 
   return afflictionItems.value
-    .filter((it) => !it.isMarker && it.row === 'attach' && it.barWidthPx > 0)
-    .map((it) => {
-      const tail = findTailItem(it)
-      if (!tail) return null
-      const y = it.topPx + iconSize / 2
-      const startX = it.leftPx + iconSize
-      const endX = it.leftPx + iconSize + 2 + it.barWidthPx
+    .filter(it => !it.isMarker && it.row === 'attach' && it.barWidthPx > 0)
+    .map(it => {
+      const tail = findTailItem(it);
+      if (!tail) return null;
+      const y = it.topPx + iconSize / 2;
+      const startX = it.leftPx + iconSize;
+      const endX = it.leftPx + iconSize + 2 + it.barWidthPx;
 
       return {
         key: `${it._key}-link`,
@@ -755,64 +776,66 @@ const afflictionConnectionItems = computed(() => {
         startPoint: { x: startX, y },
         endPoint: { x: endX, y },
         colors: getAttachmentLineColors(it.typeKey, tail.typeKey),
-      }
+      };
     })
-    .filter(Boolean)
-})
+    .filter(Boolean);
+});
 
 const reactedAttachmentKeys = computed(() => {
-  return new Set(afflictionConnectionItems.value.map((item) => item.sourceKey))
-})
+  return new Set(afflictionConnectionItems.value.map(item => item.sourceKey));
+});
 
 function resolveEnemyBuffSourceActionId(item) {
-  if (!item || item.isDamageHit) return null
+  if (!item || item.isDamageHit) return null;
 
-  const epsilon = 0.001
+  const epsilon = 0.001;
   const actionIds = new Set(
     (store.simLog || [])
-      .filter((entry) => entry?.type === 'DAMAGE_HIT')
-      .filter((entry) => Math.abs((Number(entry.time) || 0) - (Number(item.startTime) || 0)) <= epsilon)
-      .filter((entry) => !item.sourceId || entry.payload?.sourceId === item.sourceId)
-      .map((entry) => entry.payload?.actionId)
-      .filter((actionId) => actionId && store.getActionById(actionId)),
-  )
+      .filter(entry => entry?.type === 'DAMAGE_HIT')
+      .filter(
+        entry => Math.abs((Number(entry.time) || 0) - (Number(item.startTime) || 0)) <= epsilon,
+      )
+      .filter(entry => !item.sourceId || entry.payload?.sourceId === item.sourceId)
+      .map(entry => entry.payload?.actionId)
+      .filter(actionId => actionId && store.getActionById(actionId)),
+  );
 
-  return actionIds.size === 1 ? [...actionIds][0] : null
+  return actionIds.size === 1 ? [...actionIds][0] : null;
 }
 
 function openEnemyBuffContextMenu(event, item) {
   if (item?.carryoverKey && store.getInheritedEnemyBuffEntry(item.carryoverKey)) {
-    store.openContextMenu(event, item.carryoverKey, item.startTime, 'enemyCarryoverBuff')
-    return
+    store.openContextMenu(event, item.carryoverKey, item.startTime, 'enemyCarryoverBuff');
+    return;
   }
 
-  const actionId = resolveEnemyBuffSourceActionId(item)
-  if (!actionId) return
-  store.openContextMenu(event, actionId, item.startTime, 'enemyBuff')
+  const actionId = resolveEnemyBuffSourceActionId(item);
+  if (!actionId) return;
+  store.openContextMenu(event, actionId, item.startTime, 'enemyBuff');
 }
 
 const afflictionLayout = computed(() => {
-  const height = Math.max(0, sectionRects.value.affliction?.bodyHeight || 0)
+  const height = Math.max(0, sectionRects.value.affliction?.bodyHeight || 0);
 
-  const header = 0
-  const padding = 0
-  const icon = 20
-  const gap = 4
+  const header = 0;
+  const padding = 0;
+  const icon = 20;
+  const gap = 4;
 
-  const baseRows = 2 // physical + attachment
-  const anomalyRows = Math.max(0, afflictionViz.value.anomalies.rowCount)
-  const statusRows = Math.max(0, afflictionViz.value.statuses.rowCount)
-  const totalRows = baseRows + Math.max(1, anomalyRows) + statusRows
+  const baseRows = 2; // physical + attachment
+  const anomalyRows = Math.max(0, afflictionViz.value.anomalies.rowCount);
+  const statusRows = Math.max(0, afflictionViz.value.statuses.rowCount);
+  const totalRows = baseRows + Math.max(1, anomalyRows) + statusRows;
 
-  const available = Math.max(0, height - header - padding * 2 - gap * (totalRows - 1))
-  const rawRow = Math.floor(available / totalRows)
-  const rowHeight = Math.max(14, Math.min(20, rawRow))
+  const available = Math.max(0, height - header - padding * 2 - gap * (totalRows - 1));
+  const rawRow = Math.floor(available / totalRows);
+  const rowHeight = Math.max(14, Math.min(20, rawRow));
 
-  const startY = header + padding
-  const yPhysical = startY
-  const yAttachment = yPhysical + rowHeight + gap
-  const yAnomalyStart = yAttachment + rowHeight + gap
-  const yStatusStart = yAnomalyStart + Math.max(1, anomalyRows) * (rowHeight + gap)
+  const startY = header + padding;
+  const yPhysical = startY;
+  const yAttachment = yPhysical + rowHeight + gap;
+  const yAnomalyStart = yAttachment + rowHeight + gap;
+  const yStatusStart = yAnomalyStart + Math.max(1, anomalyRows) * (rowHeight + gap);
 
   return {
     height,
@@ -826,171 +849,197 @@ const afflictionLayout = computed(() => {
     yAnomalyStart,
     yStatusStart,
     totalRows,
-  }
-})
+  };
+});
 
 const activeEnemyInfo = computed(() => {
   if (store.activeEnemyId === 'custom') {
-    return { name: t('resourceMonitor.enemy.custom'), avatar: '', isCustom: true }
+    return { name: t('resourceMonitor.enemy.custom'), avatar: '', isCustom: true };
   }
-  const enemy = store.enemyDatabase.find(e => e.id === store.activeEnemyId)
+  const enemy = store.enemyDatabase.find(e => e.id === store.activeEnemyId);
   return enemy
     ? { ...enemy, name: getEnemyGameName(enemy.id, locale.value) }
-    : { name: t('resourceMonitor.enemy.unknown'), avatar: '' }
-})
+    : { name: t('resourceMonitor.enemy.unknown'), avatar: '' };
+});
 
 const staggerResult = computed(() => {
-  return store.staggerSeries
-})
-const staggerPoints = computed(() => staggerResult.value.points || [])
-const lockSegments = computed(() => staggerResult.value.lockSegments || [])
-const nodeSegments = computed(() => staggerResult.value.nodeSegments || [])
-const STAGGER_BODY_HEIGHT = computed(() => Math.max(0, sectionRects.value.stagger?.bodyHeight || 0))
+  return store.staggerSeries;
+});
+const staggerPoints = computed(() => staggerResult.value.points || []);
+const lockSegments = computed(() => staggerResult.value.lockSegments || []);
+const nodeSegments = computed(() => staggerResult.value.nodeSegments || []);
+const STAGGER_BODY_HEIGHT = computed(() =>
+  Math.max(0, sectionRects.value.stagger?.bodyHeight || 0),
+);
 
 const scaleY_Stagger = computed(() => {
-  const max = store.systemConstants.maxStagger
-  if (!max || max <= 0) return 1
-  return STAGGER_BODY_HEIGHT.value / max
-})
+  const max = store.systemConstants.maxStagger;
+  if (!max || max <= 0) return 1;
+  return STAGGER_BODY_HEIGHT.value / max;
+});
 
 const staggerPolyline = computed(() => {
-  if (staggerPoints.value.length === 0) return ''
-  return staggerPoints.value.map(p => {
-    const x = store.timeToPx(p.time)
-    const val = Math.min(p.val, store.systemConstants.maxStagger)
-    const y = STAGGER_BODY_HEIGHT.value - (val * scaleY_Stagger.value)
-    return `${x},${y}`
-  }).join(' ')
-})
+  if (staggerPoints.value.length === 0) return '';
+  return staggerPoints.value
+    .map(p => {
+      const x = store.timeToPx(p.time);
+      const val = Math.min(p.val, store.systemConstants.maxStagger);
+      const y = STAGGER_BODY_HEIGHT.value - val * scaleY_Stagger.value;
+      return `${x},${y}`;
+    })
+    .join(' ');
+});
 
 const staggerArea = computed(() => {
-  if (staggerPoints.value.length === 0) return ''
-  const line = staggerPolyline.value
-  const lastX = store.timeToPx(staggerPoints.value[staggerPoints.value.length - 1].time)
-  return `0,${STAGGER_BODY_HEIGHT.value} ${line} ${lastX},${STAGGER_BODY_HEIGHT.value}`
-})
+  if (staggerPoints.value.length === 0) return '';
+  const line = staggerPolyline.value;
+  const lastX = store.timeToPx(staggerPoints.value[staggerPoints.value.length - 1].time);
+  return `0,${STAGGER_BODY_HEIGHT.value} ${line} ${lastX},${STAGGER_BODY_HEIGHT.value}`;
+});
 
-const nodeZones = computed(() => nodeSegments.value.map(seg => ({
-  x: store.timeToPx(seg.start),
-  width: store.timeToPx(seg.end) - store.timeToPx(seg.start),
-  y: STAGGER_BODY_HEIGHT.value - (seg.thresholdVal * scaleY_Stagger.value)
-})))
+const nodeZones = computed(() =>
+  nodeSegments.value.map(seg => ({
+    x: store.timeToPx(seg.start),
+    width: store.timeToPx(seg.end) - store.timeToPx(seg.start),
+    y: STAGGER_BODY_HEIGHT.value - seg.thresholdVal * scaleY_Stagger.value,
+  })),
+);
 
-const lockZones = computed(() => lockSegments.value.map(seg => ({
-  x: store.timeToPx(seg.start),
-  width: store.timeToPx(seg.end) - store.timeToPx(seg.start)
-})))
-
+const lockZones = computed(() =>
+  lockSegments.value.map(seg => ({
+    x: store.timeToPx(seg.start),
+    width: store.timeToPx(seg.end) - store.timeToPx(seg.start),
+  })),
+);
 
 const spData = computed(() => {
-  return store.spSeries
-})
-const SP_BODY_HEIGHT = computed(() => Math.max(0, sectionRects.value.sp?.bodyHeight || 0))
-const SP_NEGATIVE_BUFFER = 40
-const SP_TOTAL_RANGE = computed(() => 300 + SP_NEGATIVE_BUFFER)
+  return store.spSeries;
+});
+const SP_BODY_HEIGHT = computed(() => Math.max(0, sectionRects.value.sp?.bodyHeight || 0));
+const SP_NEGATIVE_BUFFER = 40;
+const SP_TOTAL_RANGE = computed(() => 300 + SP_NEGATIVE_BUFFER);
 const SP_ZERO_Y = computed(() => {
-  return SP_BODY_HEIGHT.value * (300 / SP_TOTAL_RANGE.value)
-})
-const SP_WARNING_TAG_HEIGHT = 18
+  return SP_BODY_HEIGHT.value * (300 / SP_TOTAL_RANGE.value);
+});
+const SP_WARNING_TAG_HEIGHT = 18;
 
 const scaleY_SP = computed(() => {
-  return SP_BODY_HEIGHT.value / SP_TOTAL_RANGE.value
-})
+  return SP_BODY_HEIGHT.value / SP_TOTAL_RANGE.value;
+});
 
 const spPolyline = computed(() => {
-  if (spData.value.length === 0) return ''
-  return spData.value.map(p => {
-    const x = store.timeToPx(p.time)
-    const y = SP_ZERO_Y.value - (p.sp * scaleY_SP.value)
-    return `${x},${y}`
-  }).join(' ')
-})
+  if (spData.value.length === 0) return '';
+  return spData.value
+    .map(p => {
+      const x = store.timeToPx(p.time);
+      const y = SP_ZERO_Y.value - p.sp * scaleY_SP.value;
+      return `${x},${y}`;
+    })
+    .join(' ');
+});
 
 const spArea = computed(() => {
-  if (spData.value.length === 0) return ''
+  if (spData.value.length === 0) return '';
   const points = spData.value.map(p => {
-    const x = store.timeToPx(p.time)
-    const y = SP_ZERO_Y.value - (p.sp * scaleY_SP.value)
-    return `${x},${y}`
-  })
-  const lastX = store.timeToPx(spData.value[spData.value.length - 1].time)
-  return `0,${SP_ZERO_Y.value} ${points.join(' ')} ${lastX},${SP_ZERO_Y.value}`
-})
+    const x = store.timeToPx(p.time);
+    const y = SP_ZERO_Y.value - p.sp * scaleY_SP.value;
+    return `${x},${y}`;
+  });
+  const lastX = store.timeToPx(spData.value[spData.value.length - 1].time);
+  return `0,${SP_ZERO_Y.value} ${points.join(' ')} ${lastX},${SP_ZERO_Y.value}`;
+});
 
 const spWarningZones = computed(() => {
-  const points = spData.value
+  const points = spData.value;
   return points.flatMap((point, index) => {
     // 只有技力降低到0以下的点会警告
-    if (!(point.sp < 0 && point.change < 0)) return []
+    if (!(point.sp < 0 && point.change < 0)) return [];
     // 技力不足警告放在扣技力前的拐点高度，避免盖住折线图
-    const referenceSp = index === 0 ? point.sp : points[index - 1].sp
-    return [{
-      left: store.timeToPx(point.time),
-      top: getSpWarningTagTop(referenceSp),
-    }]
-  })
-})
+    const referenceSp = index === 0 ? point.sp : points[index - 1].sp;
+    return [
+      {
+        left: store.timeToPx(point.time),
+        top: getSpWarningTagTop(referenceSp),
+      },
+    ];
+  });
+});
 
 function getSpPointY(sp) {
-  return clamp(SP_ZERO_Y.value - (sp * scaleY_SP.value), 0, SP_BODY_HEIGHT.value)
+  return clamp(SP_ZERO_Y.value - sp * scaleY_SP.value, 0, SP_BODY_HEIGHT.value);
 }
 
 function getSpWarningTagTop(sp) {
   const curveY = getSpPointY(sp);
-  const spBodyHeight = SP_BODY_HEIGHT.value
+  const spBodyHeight = SP_BODY_HEIGHT.value;
   // 技力不足警告到折线的间距
-  const gap = clamp(Math.round(spBodyHeight * 0.08), 4, 10)
+  const gap = clamp(Math.round(spBodyHeight * 0.08), 4, 10);
   // 技力不足警告到顶部和底部的最小间距
-  const topPadding = clamp(Math.round(spBodyHeight * 0.07), 4, 10)
-  const bottomPadding = clamp(Math.round(spBodyHeight * 0.09), 6, 12)
-  const preferredTop = curveY - SP_WARNING_TAG_HEIGHT - gap
-  const maxTop = Math.max(topPadding, spBodyHeight - SP_WARNING_TAG_HEIGHT - bottomPadding)
-  return clamp(preferredTop, topPadding, maxTop)
+  const topPadding = clamp(Math.round(spBodyHeight * 0.07), 4, 10);
+  const bottomPadding = clamp(Math.round(spBodyHeight * 0.09), 6, 12);
+  const preferredTop = curveY - SP_WARNING_TAG_HEIGHT - gap;
+  const maxTop = Math.max(topPadding, spBodyHeight - SP_WARNING_TAG_HEIGHT - bottomPadding);
+  return clamp(preferredTop, topPadding, maxTop);
 }
 
 const transformStyle = computed(() => {
   return {
     transform: `translateX(${-store.timelineShift}px)`,
-    willChange: 'transform'
-  }
-})
+    willChange: 'transform',
+  };
+});
 
 const totalDamageDone = computed(() => {
   return (store.simLog || []).reduce((sum, entry) => {
-    if (entry?.type !== 'DAMAGE_HIT') return sum
-    const hit = entry.payload?.hitData
-    return sum + Number(store.getHitDisplayDamage?.(hit) ?? hit?._expectedDamage ?? hit?._damageBreakdown?.expectedDamage ?? 0)
-  }, 0)
-})
+    if (entry?.type !== 'DAMAGE_HIT') return sum;
+    const hit = entry.payload?.hitData;
+    return (
+      sum +
+      Number(
+        store.getHitDisplayDamage?.(hit) ??
+          hit?._expectedDamage ??
+          hit?._damageBreakdown?.expectedDamage ??
+          0,
+      )
+    );
+  }, 0);
+});
 
-const enemyMaxHp = computed(() => Math.max(1, Number(store.effectiveEnemyHp ?? store.systemConstants.enemyHp) || 1))
-const enemyHealingDone = computed(() => computeContingencyEnemyHealing(store.enemyLog || [], {
-  maxHp: enemyMaxHp.value,
-  rate: Number(store.contingencyEnemyHealingRate) || 0,
-  until: Number(store.viewDuration) || Infinity,
-  superArmor: Number(store.effectiveSystemConstants?.superArmor ?? store.systemConstants.superArmor) || 0,
-}))
+const enemyMaxHp = computed(() =>
+  Math.max(1, Number(store.effectiveEnemyHp ?? store.systemConstants.enemyHp) || 1),
+);
+const enemyHealingDone = computed(() =>
+  computeContingencyEnemyHealing(store.enemyLog || [], {
+    maxHp: enemyMaxHp.value,
+    rate: Number(store.contingencyEnemyHealingRate) || 0,
+    until: Number(store.viewDuration) || Infinity,
+    superArmor:
+      Number(store.effectiveSystemConstants?.superArmor ?? store.systemConstants.superArmor) || 0,
+  }),
+);
 const enemyRemainingHp = computed(() => {
-  const remaining = enemyMaxHp.value - totalDamageDone.value + enemyHealingDone.value
-  return Math.max(0, Math.min(enemyMaxHp.value, Math.round(remaining)))
-})
-const enemyHpRatio = computed(() => clamp(enemyRemainingHp.value / enemyMaxHp.value, 0, 1))
+  const remaining = enemyMaxHp.value - totalDamageDone.value + enemyHealingDone.value;
+  return Math.max(0, Math.min(enemyMaxHp.value, Math.round(remaining)));
+});
+const enemyHpRatio = computed(() => clamp(enemyRemainingHp.value / enemyMaxHp.value, 0, 1));
 const currentStaggerValue = computed(() => {
-  const points = staggerPoints.value
-  const last = points[points.length - 1]
-  return Math.round(Number(last?.val) || 0)
-})
+  const points = staggerPoints.value;
+  const last = points[points.length - 1];
+  return Math.round(Number(last?.val) || 0);
+});
 const staggerRatio = computed(() => {
-  const maxStagger = Math.max(1, Number(store.systemConstants.maxStagger) || 1)
-  return clamp(currentStaggerValue.value / maxStagger, 0, 1)
-})
+  const maxStagger = Math.max(1, Number(store.systemConstants.maxStagger) || 1);
+  return clamp(currentStaggerValue.value / maxStagger, 0, 1);
+});
 </script>
 
 <template>
   <div ref="monitorRootRef" class="resource-monitor-layout">
-
     <div class="monitor-sidebar monitor-module-sidebar">
-      <div class="module-meta-shell" :style="{ height: `${sectionRects.affliction.shellHeight}px` }">
+      <div
+        class="module-meta-shell"
+        :style="{ height: `${sectionRects.affliction.shellHeight}px` }"
+      >
         <div v-if="activeSectionCollapsed.affliction" class="module-meta-collapsed">
           {{ t('resourceMonitor.modules.enemyStatus') }}
         </div>
@@ -1000,11 +1049,15 @@ const staggerRatio = computed(() => {
             <div class="enemy-compact-text">
               <div class="enemy-name-line">
                 <span class="enemy-name">{{ activeEnemyInfo.name }}</span>
-                <span v-if="store.activeEnemyId !== 'custom'" class="enemy-level-badge">Lv{{ store.activeEnemyLevel }}</span>
+                <span v-if="store.activeEnemyId !== 'custom'" class="enemy-level-badge"
+                  >Lv{{ store.activeEnemyLevel }}</span
+                >
               </div>
             </div>
           </div>
-          <div class="module-value-text enemy-hp-text">{{ enemyRemainingHp.toLocaleString() }}/{{ enemyMaxHp.toLocaleString() }}</div>
+          <div class="module-value-text enemy-hp-text">
+            {{ enemyRemainingHp.toLocaleString() }}/{{ enemyMaxHp.toLocaleString() }}
+          </div>
           <div class="enemy-hp-bar">
             <div class="enemy-hp-fill" :style="{ width: `${enemyHpRatio * 100}%` }"></div>
           </div>
@@ -1012,7 +1065,7 @@ const staggerRatio = computed(() => {
       </div>
 
       <div
-        v-if="resizeHandleItems.some((item) => item.lowerKey === 'stagger')"
+        v-if="resizeHandleItems.some(item => item.lowerKey === 'stagger')"
         class="module-meta-resize-gap"
       ></div>
       <div class="module-meta-shell" :style="{ height: `${sectionRects.stagger.shellHeight}px` }">
@@ -1021,15 +1074,20 @@ const staggerRatio = computed(() => {
         </div>
         <div v-else class="module-meta-body stagger-meta">
           <div class="module-title orange">{{ t('resourceMonitor.modules.stagger') }}</div>
-          <div class="module-value-text stagger-value-text">{{ currentStaggerValue }}/{{ store.systemConstants.maxStagger }}</div>
+          <div class="module-value-text stagger-value-text">
+            {{ currentStaggerValue }}/{{ store.systemConstants.maxStagger }}
+          </div>
           <div class="enemy-hp-bar stagger-value-bar">
-            <div class="enemy-hp-fill stagger-value-fill" :style="{ width: `${staggerRatio * 100}%` }"></div>
+            <div
+              class="enemy-hp-fill stagger-value-fill"
+              :style="{ width: `${staggerRatio * 100}%` }"
+            ></div>
           </div>
         </div>
       </div>
 
       <div
-        v-if="resizeHandleItems.some((item) => item.lowerKey === 'sp')"
+        v-if="resizeHandleItems.some(item => item.lowerKey === 'sp')"
         class="module-meta-resize-gap"
       ></div>
       <div class="module-meta-shell" :style="{ height: `${sectionRects.sp.shellHeight}px` }">
@@ -1039,11 +1097,23 @@ const staggerRatio = computed(() => {
         <div v-else class="module-meta-body sp-meta">
           <div class="module-control-row">
             <label>{{ t('resourceMonitor.labels.initialSp') }}</label>
-            <CustomNumberInput v-model="store.systemConstants.initialSp" :min="0" :max="300" active-color="#ffd700" class="standard-input" />
+            <CustomNumberInput
+              v-model="store.systemConstants.initialSp"
+              :min="0"
+              :max="300"
+              active-color="#ffd700"
+              class="standard-input"
+            />
           </div>
           <div class="module-control-row">
             <label>{{ t('resourceMonitor.labels.spPerSecond') }}</label>
-            <CustomNumberInput v-model="store.systemConstants.spRegenRate" :step="0.5" :min="0" active-color="#ffd700" class="standard-input" />
+            <CustomNumberInput
+              v-model="store.systemConstants.spRegenRate"
+              :step="0.5"
+              :min="0"
+              active-color="#ffd700"
+              class="standard-input"
+            />
           </div>
         </div>
       </div>
@@ -1051,8 +1121,15 @@ const staggerRatio = computed(() => {
 
     <div ref="chartViewportRef" class="chart-scroll-wrapper">
       <div class="chart-background-layer">
-        <div :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]" class="chart-background-track">
-          <svg class="chart-background-svg" :height="TOTAL_HEIGHT" :width="store.totalTimelineWidthPx">
+        <div
+          :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]"
+          class="chart-background-track"
+        >
+          <svg
+            class="chart-background-svg"
+            :height="TOTAL_HEIGHT"
+            :width="store.totalTimelineWidthPx"
+          >
             <rect
               v-if="store.prepDuration > 0"
               x="0"
@@ -1087,7 +1164,10 @@ const staggerRatio = computed(() => {
 
       <div class="chart-sections-layer">
         <div class="monitor-sections" :style="{ height: TOTAL_HEIGHT + 'px' }">
-          <div class="monitor-section-shell" :style="{ height: `${sectionRects.affliction.shellHeight}px` }">
+          <div
+            class="monitor-section-shell"
+            :style="{ height: `${sectionRects.affliction.shellHeight}px` }"
+          >
             <div v-if="!activeSectionCollapsed.affliction" class="section-topbar">
               <div class="section-topbar-line"></div>
               <button
@@ -1096,7 +1176,10 @@ const staggerRatio = computed(() => {
                 :class="{ 'is-collapsed': activeSectionCollapsed.affliction }"
                 @click="toggleSectionCollapsed('affliction')"
               >
-                <span class="section-toggle-chevron" :class="{ 'is-collapsed': activeSectionCollapsed.affliction }"></span>
+                <span
+                  class="section-toggle-chevron"
+                  :class="{ 'is-collapsed': activeSectionCollapsed.affliction }"
+                ></span>
               </button>
             </div>
             <div
@@ -1117,7 +1200,10 @@ const staggerRatio = computed(() => {
               class="section-body affliction-section-body"
               :style="{ height: `${sectionRects.affliction.bodyHeight}px` }"
             >
-              <div :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]" class="section-content-track">
+              <div
+                :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]"
+                class="section-content-track"
+              >
                 <div
                   class="affliction-connections-overlay"
                   :style="{
@@ -1125,8 +1211,16 @@ const staggerRatio = computed(() => {
                     height: sectionRects.affliction.bodyHeight + 'px',
                   }"
                 >
-                  <svg class="affliction-connections-svg" :height="sectionRects.affliction.bodyHeight" :width="store.totalTimelineWidthPx">
-                    <g v-for="it in afflictionConnectionItems" :key="it.key" style="pointer-events: none;">
+                  <svg
+                    class="affliction-connections-svg"
+                    :height="sectionRects.affliction.bodyHeight"
+                    :width="store.totalTimelineWidthPx"
+                  >
+                    <g
+                      v-for="it in afflictionConnectionItems"
+                      :key="it.key"
+                      style="pointer-events: none"
+                    >
                       <ConnectionPath
                         :id="it.key"
                         :start-point="it.startPoint"
@@ -1153,21 +1247,37 @@ const staggerRatio = computed(() => {
                     :key="it._key"
                     class="anomaly-wrapper affliction-item"
                     :class="{ 'is-damage-hit': it.isDamageHit, 'is-disabled': it.isDisabled }"
-                    :style="{ left: it.leftPx + 'px', top: (it.isDamageHit ? it.diamondTopPx : it.topPx) + 'px' }"
+                    :style="{
+                      left: it.leftPx + 'px',
+                      top: (it.isDamageHit ? it.diamondTopPx : it.topPx) + 'px',
+                    }"
                     :title="it.isDamageHit ? getReactionHitTitle(it.hitData) : ''"
                     @mousedown.stop="it.isDamageHit && openReactionHitDetail(it.hitData)"
                     @contextmenu.stop.prevent="openEnemyBuffContextMenu($event, it)"
                   >
-                    <div v-if="it.isDamageHit" class="enemy-damage-diamond" :class="{ 'link-buffed': it.hitData?.consumedStacks?.link > 0 }"></div>
-                    <div v-else-if="!it.hideIcon" class="anomaly-icon-box" :title="getTypeTitle(it.typeKey)">
+                    <div
+                      v-if="it.isDamageHit"
+                      class="enemy-damage-diamond"
+                      :class="{ 'link-buffed': it.hitData?.consumedStacks?.link > 0 }"
+                    ></div>
+                    <div
+                      v-else-if="!it.hideIcon"
+                      class="anomaly-icon-box"
+                      :title="getTypeTitle(it.typeKey)"
+                    >
                       <img :src="getTypeIcon(it.typeKey, it.icon)" class="anomaly-icon" />
                       <div class="anomaly-stacks">{{ it.stacks || 1 }}</div>
                     </div>
 
                     <div
-                      v-if="!it.isMarker && it.barWidthPx > 0 && !reactedAttachmentKeys.has(it._key)"
+                      v-if="
+                        !it.isMarker && it.barWidthPx > 0 && !reactedAttachmentKeys.has(it._key)
+                      "
                       class="anomaly-duration-bar"
-                      :style="{ width: it.barWidthPx + 'px', backgroundColor: getTypeColor(it.typeKey) }"
+                      :style="{
+                        width: it.barWidthPx + 'px',
+                        backgroundColor: getTypeColor(it.typeKey),
+                      }"
                       :title="getTypeTitle(it.typeKey)"
                     >
                       <div class="striped-bg"></div>
@@ -1179,11 +1289,19 @@ const staggerRatio = computed(() => {
           </div>
 
           <div
-            v-if="resizeHandleItems.some((item) => item.lowerKey === 'stagger')"
+            v-if="resizeHandleItems.some(item => item.lowerKey === 'stagger')"
             class="section-resize-handle"
-            @pointerdown="beginSectionResize(resizeHandleItems.find((item) => item.lowerKey === 'stagger'), $event)"
+            @pointerdown="
+              beginSectionResize(
+                resizeHandleItems.find(item => item.lowerKey === 'stagger'),
+                $event,
+              )
+            "
           ></div>
-          <div class="monitor-section-shell" :style="{ height: `${sectionRects.stagger.shellHeight}px` }">
+          <div
+            class="monitor-section-shell"
+            :style="{ height: `${sectionRects.stagger.shellHeight}px` }"
+          >
             <div v-if="!activeSectionCollapsed.stagger" class="section-topbar">
               <div class="section-topbar-line"></div>
               <button
@@ -1192,7 +1310,10 @@ const staggerRatio = computed(() => {
                 :class="{ 'is-collapsed': activeSectionCollapsed.stagger }"
                 @click="toggleSectionCollapsed('stagger')"
               >
-                <span class="section-toggle-chevron" :class="{ 'is-collapsed': activeSectionCollapsed.stagger }"></span>
+                <span
+                  class="section-toggle-chevron"
+                  :class="{ 'is-collapsed': activeSectionCollapsed.stagger }"
+                ></span>
               </button>
             </div>
             <div
@@ -1213,20 +1334,51 @@ const staggerRatio = computed(() => {
               class="section-body stagger-section-body"
               :style="{ height: `${sectionRects.stagger.bodyHeight}px` }"
             >
-              <div :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]" class="section-content-track">
-                <svg class="section-body-svg" :height="sectionRects.stagger.bodyHeight" :width="store.totalTimelineWidthPx">
+              <div
+                :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]"
+                class="section-content-track"
+              >
+                <svg
+                  class="section-body-svg"
+                  :height="sectionRects.stagger.bodyHeight"
+                  :width="store.totalTimelineWidthPx"
+                >
                   <defs>
                     <linearGradient id="stagger-grad-monitor" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" :stop-color="COLOR_STAGGER" stop-opacity="0.5" />
                       <stop offset="100%" :stop-color="COLOR_STAGGER" stop-opacity="0.1" />
                     </linearGradient>
-                    <pattern id="stun-pattern-monitor" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <pattern
+                      id="stun-pattern-monitor"
+                      width="10"
+                      height="10"
+                      patternUnits="userSpaceOnUse"
+                      patternTransform="rotate(45)"
+                    >
                       <rect width="10" height="10" fill="#ff9c6e" fill-opacity="0.1" />
-                      <rect width="2" height="10" transform="translate(0,0)" fill="#ffd591" fill-opacity="0.6"></rect>
+                      <rect
+                        width="2"
+                        height="10"
+                        transform="translate(0,0)"
+                        fill="#ffd591"
+                        fill-opacity="0.6"
+                      ></rect>
                     </pattern>
-                    <pattern id="node-stripe-pattern-monitor" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <pattern
+                      id="node-stripe-pattern-monitor"
+                      width="8"
+                      height="8"
+                      patternUnits="userSpaceOnUse"
+                      patternTransform="rotate(45)"
+                    >
                       <rect width="8" height="8" fill="#fa8c16" fill-opacity="0.05" />
-                      <rect width="2" height="8" transform="translate(0,0)" fill="#fa8c16" fill-opacity="0.5"></rect>
+                      <rect
+                        width="2"
+                        height="8"
+                        transform="translate(0,0)"
+                        fill="#fa8c16"
+                        fill-opacity="0.5"
+                      ></rect>
                     </pattern>
                   </defs>
 
@@ -1257,19 +1409,27 @@ const staggerRatio = computed(() => {
                       font-size="10"
                       font-weight="900"
                       text-anchor="middle"
-                      style="text-shadow: 0 0 2px #ff7a45; letter-spacing: 1px;"
+                      style="text-shadow: 0 0 2px #ff7a45; letter-spacing: 1px"
                     >
                       WEAK
                     </text>
                   </g>
 
                   <polygon :points="staggerArea" fill="url(#stagger-grad-monitor)" />
-                  <polyline :points="staggerPolyline" fill="none" :stroke="COLOR_STAGGER" stroke-width="2" />
+                  <polyline
+                    :points="staggerPolyline"
+                    fill="none"
+                    :stroke="COLOR_STAGGER"
+                    stroke-width="2"
+                  />
                   <circle
                     v-for="(point, index) in staggerPoints"
                     :key="`stagger-point-${index}`"
                     :cx="store.timeToPx(point.time)"
-                    :cy="STAGGER_BODY_HEIGHT - (Math.min(point.val, store.systemConstants.maxStagger) * scaleY_Stagger)"
+                    :cy="
+                      STAGGER_BODY_HEIGHT -
+                      Math.min(point.val, store.systemConstants.maxStagger) * scaleY_Stagger
+                    "
                     r="2"
                     :fill="COLOR_STAGGER"
                   />
@@ -1279,11 +1439,19 @@ const staggerRatio = computed(() => {
           </div>
 
           <div
-            v-if="resizeHandleItems.some((item) => item.lowerKey === 'sp')"
+            v-if="resizeHandleItems.some(item => item.lowerKey === 'sp')"
             class="section-resize-handle"
-            @pointerdown="beginSectionResize(resizeHandleItems.find((item) => item.lowerKey === 'sp'), $event)"
+            @pointerdown="
+              beginSectionResize(
+                resizeHandleItems.find(item => item.lowerKey === 'sp'),
+                $event,
+              )
+            "
           ></div>
-          <div class="monitor-section-shell" :style="{ height: `${sectionRects.sp.shellHeight}px` }">
+          <div
+            class="monitor-section-shell"
+            :style="{ height: `${sectionRects.sp.shellHeight}px` }"
+          >
             <div v-if="!activeSectionCollapsed.sp" class="section-topbar">
               <div class="section-topbar-line"></div>
               <button
@@ -1292,7 +1460,10 @@ const staggerRatio = computed(() => {
                 :class="{ 'is-collapsed': activeSectionCollapsed.sp }"
                 @click="toggleSectionCollapsed('sp')"
               >
-                <span class="section-toggle-chevron" :class="{ 'is-collapsed': activeSectionCollapsed.sp }"></span>
+                <span
+                  class="section-toggle-chevron"
+                  :class="{ 'is-collapsed': activeSectionCollapsed.sp }"
+                ></span>
               </button>
             </div>
             <div
@@ -1313,8 +1484,15 @@ const staggerRatio = computed(() => {
               class="section-body sp-section-body"
               :style="{ height: `${sectionRects.sp.bodyHeight}px` }"
             >
-              <div :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]" class="section-content-track">
-                <svg class="section-body-svg" :height="sectionRects.sp.bodyHeight" :width="store.totalTimelineWidthPx">
+              <div
+                :style="[transformStyle, { width: store.totalTimelineWidthPx + 'px' }]"
+                class="section-content-track"
+              >
+                <svg
+                  class="section-body-svg"
+                  :height="sectionRects.sp.bodyHeight"
+                  :width="store.totalTimelineWidthPx"
+                >
                   <defs>
                     <linearGradient id="sp-fill-gradient-monitor" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" :stop-color="COLOR_SP_MAIN" stop-opacity="0.3" />
@@ -1322,12 +1500,45 @@ const staggerRatio = computed(() => {
                     </linearGradient>
                   </defs>
 
-                  <line x1="0" :y1="SP_ZERO_Y - (300 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="SP_ZERO_Y - (300 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2" />
-                  <line x1="0" :y1="SP_ZERO_Y - (200 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="SP_ZERO_Y - (200 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2" />
-                  <line x1="0" :y1="SP_ZERO_Y - (100 * scaleY_SP)" :x2="store.totalTimelineWidthPx" :y2="SP_ZERO_Y - (100 * scaleY_SP)" stroke="#444" stroke-width="1" stroke-dasharray="2" />
+                  <line
+                    x1="0"
+                    :y1="SP_ZERO_Y - 300 * scaleY_SP"
+                    :x2="store.totalTimelineWidthPx"
+                    :y2="SP_ZERO_Y - 300 * scaleY_SP"
+                    stroke="#444"
+                    stroke-width="1"
+                    stroke-dasharray="2"
+                  />
+                  <line
+                    x1="0"
+                    :y1="SP_ZERO_Y - 200 * scaleY_SP"
+                    :x2="store.totalTimelineWidthPx"
+                    :y2="SP_ZERO_Y - 200 * scaleY_SP"
+                    stroke="#444"
+                    stroke-width="1"
+                    stroke-dasharray="2"
+                  />
+                  <line
+                    x1="0"
+                    :y1="SP_ZERO_Y - 100 * scaleY_SP"
+                    :x2="store.totalTimelineWidthPx"
+                    :y2="SP_ZERO_Y - 100 * scaleY_SP"
+                    stroke="#444"
+                    stroke-width="1"
+                    stroke-dasharray="2"
+                  />
 
-                  <text x="5" :y="SP_ZERO_Y - (300 * scaleY_SP) + 12" fill="#888" :font-size="chartLabelFontSize">MAX(300)</text>
-                  <text x="5" :y="SP_ZERO_Y - 4" fill="#666" :font-size="chartLabelFontSize">0</text>
+                  <text
+                    x="5"
+                    :y="SP_ZERO_Y - 300 * scaleY_SP + 12"
+                    fill="#888"
+                    :font-size="chartLabelFontSize"
+                  >
+                    MAX(300)
+                  </text>
+                  <text x="5" :y="SP_ZERO_Y - 4" fill="#666" :font-size="chartLabelFontSize">
+                    0
+                  </text>
 
                   <rect
                     x="0"
@@ -1338,13 +1549,19 @@ const staggerRatio = computed(() => {
                   />
 
                   <polygon :points="spArea" fill="url(#sp-fill-gradient-monitor)" />
-                  <polyline :points="spPolyline" fill="none" :stroke="COLOR_SP_MAIN" stroke-width="2" stroke-linejoin="round" />
+                  <polyline
+                    :points="spPolyline"
+                    fill="none"
+                    :stroke="COLOR_SP_MAIN"
+                    stroke-width="2"
+                    stroke-linejoin="round"
+                  />
 
                   <circle
                     v-for="(point, index) in spData"
                     :key="`sp-point-${index}`"
                     :cx="store.timeToPx(point.time)"
-                    :cy="SP_ZERO_Y - (point.sp * scaleY_SP)"
+                    :cy="SP_ZERO_Y - point.sp * scaleY_SP"
                     r="2"
                     :fill="point.sp < 0 ? COLOR_SP_WARN : COLOR_SP_MAIN"
                   />
@@ -1354,11 +1571,26 @@ const staggerRatio = computed(() => {
                   v-for="(warning, index) in spWarningZones"
                   :key="`warning-${index}`"
                   class="warning-tag"
-                  :style="{ left: warning.left + 'px', top: warning.top + 'px', color: COLOR_SP_WARN }"
+                  :style="{
+                    left: warning.left + 'px',
+                    top: warning.top + 'px',
+                    color: COLOR_SP_WARN,
+                  }"
                 >
                   <span class="warn-icon">
-                    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="10"
+                      height="10"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                      ></path>
                       <line x1="12" y1="9" x2="12" y2="13"></line>
                       <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
@@ -1378,7 +1610,6 @@ const staggerRatio = computed(() => {
       :hit-data="reactionHitDetailHit"
       @update:visible="closeReactionHitDetail"
     />
-
   </div>
 </template>
 
@@ -1391,7 +1622,10 @@ const staggerRatio = computed(() => {
   background: #1a1a1a;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   box-sizing: border-box;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    sans-serif;
   min-height: 0;
   overflow: hidden;
 }
@@ -1433,9 +1667,17 @@ const staggerRatio = computed(() => {
   border-left: 3px solid rgba(255, 255, 255, 0.18);
 }
 
-.enemy-status-meta { border-left-color: #ff7875; }
-.stagger-meta { border-left-color: #ff9c6e; justify-content: center; }
-.sp-meta { border-left-color: #ffd700; justify-content: center; }
+.enemy-status-meta {
+  border-left-color: #ff7875;
+}
+.stagger-meta {
+  border-left-color: #ff9c6e;
+  justify-content: center;
+}
+.sp-meta {
+  border-left-color: #ffd700;
+  justify-content: center;
+}
 
 .module-meta-collapsed {
   height: 100%;
@@ -1461,9 +1703,15 @@ const staggerRatio = computed(() => {
   white-space: nowrap;
 }
 
-.module-title.red { color: #ff7875; }
-.module-title.orange { color: #ff9c6e; }
-.module-title.gold { color: #ffd700; }
+.module-title.red {
+  color: #ff7875;
+}
+.module-title.orange {
+  color: #ff9c6e;
+}
+.module-title.gold {
+  color: #ffd700;
+}
 
 .enemy-compact {
   display: flex;
@@ -1577,12 +1825,15 @@ const staggerRatio = computed(() => {
   position: relative;
 }
 
-.enemy-select-module:hover { background: rgba(255, 255, 255, 0.08); }
+.enemy-select-module:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 
 .module-deco-line {
   position: absolute;
   left: 0;
-  top: 8px; bottom: 8px;
+  top: 8px;
+  bottom: 8px;
   width: 2px;
   background: #ffd700;
   box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
@@ -1636,8 +1887,12 @@ const staggerRatio = computed(() => {
   flex-shrink: 0;
 }
 
-.section-container.border-red { border-left-color: #ff7875; }
-.section-container.border-gold { border-left-color: #ffd700; }
+.section-container.border-red {
+  border-left-color: #ff7875;
+}
+.section-container.border-gold {
+  border-left-color: #ffd700;
+}
 
 .attribute-grid-mini {
   display: flex;
@@ -1922,13 +2177,18 @@ const staggerRatio = computed(() => {
   z-index: 10;
   flex-shrink: 0;
   pointer-events: auto;
-  transition: filter 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    filter 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .anomaly-icon-box:hover {
   filter: brightness(1.18);
   border-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 4px 12px rgba(0, 0, 0, 0.46);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.46);
 }
 
 .anomaly-icon {
@@ -1967,12 +2227,16 @@ const staggerRatio = computed(() => {
   z-index: 1;
   margin-left: 2px;
   pointer-events: auto;
-  transition: filter 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    filter 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .anomaly-duration-bar:hover {
   filter: brightness(1.16) saturate(1.08);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .striped-bg {
@@ -2009,18 +2273,40 @@ const staggerRatio = computed(() => {
   gap: 3px;
   line-height: 1;
   border: 1px solid rgba(255, 77, 79, 0.3);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
 }
 
 @keyframes scan {
-  0% { transform: translateY(-10cqh); }
-  100% { transform: translateY(110cqh); }
+  0% {
+    transform: translateY(-10cqh);
+  }
+  100% {
+    transform: translateY(110cqh);
+  }
 }
 
-.stun-bg-anim { animation: stun-flash 2s infinite alternate; }
-@keyframes stun-flash { 0% { fill-opacity: 0.1; } 100% { fill-opacity: 0.3; } }
+.stun-bg-anim {
+  animation: stun-flash 2s infinite alternate;
+}
+@keyframes stun-flash {
+  0% {
+    fill-opacity: 0.1;
+  }
+  100% {
+    fill-opacity: 0.3;
+  }
+}
 
-.node-bar-anim { animation: node-pulse 1.5s infinite alternate; }
-@keyframes node-pulse { 0% { opacity: 0.4; } 100% { opacity: 0.8; } }
+.node-bar-anim {
+  animation: node-pulse 1.5s infinite alternate;
+}
+@keyframes node-pulse {
+  0% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
 </style>

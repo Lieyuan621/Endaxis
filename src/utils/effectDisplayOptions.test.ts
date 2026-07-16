@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { filterEffectOptionGroups } from './effectDisplayOptions'
+import { describe, expect, it } from 'vitest';
+import { filterEffectOptionGroups } from './effectDisplayOptions';
 
 const groups = [
   {
@@ -41,30 +41,35 @@ const groups = [
       { label: 'crit', value: 'critRate' },
     ],
   },
-]
+];
 
 function optionValues(filteredGroups: Array<{ options: Array<{ value: string }> }>) {
-  return filteredGroups.flatMap(group => group.options.map(option => option.value))
+  return filteredGroups.flatMap(group => group.options.map(option => option.value));
 }
 
 describe('effect display option filtering', () => {
   it('shows only canonical arts infliction display types for infliction effects', () => {
-    const values = optionValues(filterEffectOptionGroups(groups, 'infliction'))
+    const values = optionValues(filterEffectOptionGroups(groups, 'infliction'));
 
-    expect(values).toEqual(['heat_infliction', 'cryo_infliction', 'electric_infliction', 'nature_infliction'])
-  })
+    expect(values).toEqual([
+      'heat_infliction',
+      'cryo_infliction',
+      'electric_infliction',
+      'nature_infliction',
+    ]);
+  });
 
   it('keeps stat display types out of routed and runtime effect kind filters', () => {
     expect(optionValues(filterEffectOptionGroups(groups, 'status'))).toEqual([
       'dmgBonus:physical',
       'dmgBonus:arts',
       'waterspouts',
-    ])
+    ]);
 
     expect(optionValues(filterEffectOptionGroups(groups, 'ultEnergyGain'))).toEqual([
       'ultEnergyGain',
-    ])
-  })
+    ]);
+  });
 
   it('uses four canonical physical anomaly display types', () => {
     expect(optionValues(filterEffectOptionGroups(groups, 'physicalStatus'))).toEqual([
@@ -72,16 +77,12 @@ describe('effect display option filtering', () => {
       'crush',
       'lift',
       'knockdown',
-    ])
-  })
+    ]);
+  });
 
   it('keeps the current legacy physical vulnerability value displayable without adding it by default', () => {
-    expect(optionValues(filterEffectOptionGroups(groups, 'physicalStatus', 'vulnerability'))).toEqual([
-      'breach',
-      'crush',
-      'lift',
-      'knockdown',
-      'vulnerability',
-    ])
-  })
-})
+    expect(
+      optionValues(filterEffectOptionGroups(groups, 'physicalStatus', 'vulnerability')),
+    ).toEqual(['breach', 'crush', 'lift', 'knockdown', 'vulnerability']);
+  });
+});

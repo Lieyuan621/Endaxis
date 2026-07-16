@@ -219,10 +219,7 @@ export class OperatorEffectState {
     this.oneTimeEffects.set(entry.id, {
       ...entry,
       stacks: newStacks,
-      expiresAt: Math.max(
-          Number(existing?.expiresAt) || 0,
-          Number(entry.expiresAt) || Infinity,
-      ),
+      expiresAt: Math.max(Number(existing?.expiresAt) || 0, Number(entry.expiresAt) || Infinity),
       sourceId: entry.sourceId || existing?.sourceId || this.trackId,
       effect: entry.effect ?? existing?.effect,
     });
@@ -233,9 +230,9 @@ export class OperatorEffectState {
   /** Consume all one-time effects matching the action. `type` scope matches `entry.skillTypes`;
    *  `skillId` scope matches `entry.skillId`. Returns consumed stat contributions with their ids. */
   consumeOneTime(
-      type: string | undefined,
-      skillId: string | undefined,
-      time = 0,
+    type: string | undefined,
+    skillId: string | undefined,
+    time = 0,
   ): (ConsumedStatEffect & { id: string })[] {
     const consumed: (ConsumedStatEffect & { id: string })[] = [];
     for (const [key, entry] of this.oneTimeEffects) {
@@ -277,8 +274,8 @@ export class OperatorEffectState {
 
   exportCarryoverEntries(currentTime: number): OperatorStatusEntry[] {
     const regular = [...this.effects.values()]
-        .filter(entry => currentTime < entry.expiresAt)
-        .map(entry => ({ ...entry }));
+      .filter(entry => currentTime < entry.expiresAt)
+      .map(entry => ({ ...entry }));
 
     const independent: OperatorStatusEntry[] = [];
 

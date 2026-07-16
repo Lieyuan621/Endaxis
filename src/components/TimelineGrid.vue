@@ -1,25 +1,25 @@
 <script setup>
-import { ref, provide, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
-import { refThrottled } from '@vueuse/core'
-import { useTimelineStore } from '../stores/timelineStore.js'
-import ActionItem from './ActionItem.vue'
-import ActionConnector from './ActionConnector.vue'
-import ConnectionPreview from './ConnectionPreview.vue'
-import GaugeOverlay from './GaugeOverlay.vue'
-import TimelineBuffLayer from './TimelineBuffLayer.vue'
-import TimelineComboWindowBar from './TimelineComboWindowBar.vue'
-import ContextMenu from './ContextMenu.vue'
-import StatDetailDialog from './StatDetailDialog.vue'
-import HitDamageDetailDialog from './HitDamageDetailDialog.vue'
-import CustomNumberInput from './CustomNumberInput.vue'
-import { ElMessage } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
-import { useDragConnection } from '@/composables/useDragConnection.js'
-import { useI18n } from 'vue-i18n'
-import { snapMs } from '@/utils/precision.js'
-import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time.js'
-import { toLegacyDisplayType } from '@/utils/hitModel.js'
-import { getGearPiece, getEnemy, getOperator } from '@/data'
+import { ref, provide, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
+import { refThrottled } from '@vueuse/core';
+import { useTimelineStore } from '../stores/timelineStore.js';
+import ActionItem from './ActionItem.vue';
+import ActionConnector from './ActionConnector.vue';
+import ConnectionPreview from './ConnectionPreview.vue';
+import GaugeOverlay from './GaugeOverlay.vue';
+import TimelineBuffLayer from './TimelineBuffLayer.vue';
+import TimelineComboWindowBar from './TimelineComboWindowBar.vue';
+import ContextMenu from './ContextMenu.vue';
+import StatDetailDialog from './StatDetailDialog.vue';
+import HitDamageDetailDialog from './HitDamageDetailDialog.vue';
+import CustomNumberInput from './CustomNumberInput.vue';
+import { ElMessage } from 'element-plus';
+import { Search } from '@element-plus/icons-vue';
+import { useDragConnection } from '@/composables/useDragConnection.js';
+import { useI18n } from 'vue-i18n';
+import { snapMs } from '@/utils/precision.js';
+import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time.js';
+import { toLegacyDisplayType } from '@/utils/hitModel.js';
+import { getGearPiece, getEnemy, getOperator } from '@/data';
 import {
   getGameClassName,
   getGameElementName,
@@ -30,248 +30,264 @@ import {
   getGearSetGameName,
   getOperatorGameName,
   getWeaponGameName,
-} from '@/data/gameText'
+} from '@/data/gameText';
 
-const store = useTimelineStore()
-const connectionHandler = useDragConnection()
-const { t, locale } = useI18n()
+const store = useTimelineStore();
+const connectionHandler = useDragConnection();
+const { t, locale } = useI18n();
 
 // ===================================================================================
 // 初始化与常量
 // ===================================================================================
 
-const TIME_BLOCK_WIDTH = computed(() => store.timeBlockWidth)
-provide('TIME_BLOCK_WIDTH', TIME_BLOCK_WIDTH)
+const TIME_BLOCK_WIDTH = computed(() => store.timeBlockWidth);
+provide('TIME_BLOCK_WIDTH', TIME_BLOCK_WIDTH);
 
 // Refs
-const tracksContentRef = ref(null)
-const timeRulerWrapperRef = ref(null)
-const tracksHeaderRef = ref(null)
-const trackLaneRefs = ref([])
+const tracksContentRef = ref(null);
+const timeRulerWrapperRef = ref(null);
+const tracksHeaderRef = ref(null);
+const trackLaneRefs = ref([]);
 
 // Render State
-const svgRenderKey = ref(0)
-const scrollbarHeight = ref(0)
-const isCursorVisible = ref(false)
-const hitDetailHit = ref(null)
-const showHitDetail = computed(() => hitDetailHit.value !== null)
-const hitDetailBreakdown = computed(() => hitDetailHit.value?._damageBreakdown ?? null)
+const svgRenderKey = ref(0);
+const scrollbarHeight = ref(0);
+const isCursorVisible = ref(false);
+const hitDetailHit = ref(null);
+const showHitDetail = computed(() => hitDetailHit.value !== null);
+const hitDetailBreakdown = computed(() => hitDetailHit.value?._damageBreakdown ?? null);
 
 function openHitDetail(hitData) {
-  hitDetailHit.value = hitData
+  hitDetailHit.value = hitData;
 }
 
 function closeHitDetail() {
-  hitDetailHit.value = null
+  hitDetailHit.value = null;
 }
 
 // Drag State
-const isMouseDown = ref(false)
-const isDragStarted = ref(false)
-const movingActionId = ref(null)
-const movingTrackId = ref(null)
-const initialMouseX = ref(0)
-const initialMouseY = ref(0)
-const dragThreshold = 5
-const wasSelectedOnPress = ref(false)
-const wasCycleSelectedOnPress = ref(false)
-const wasSwitchSelectedOnPress = ref(false)
-const dragStartTimes = new Map()
-const isAltDown = ref(false)
-const isShiftDown = ref(false)
-const hoveredContext = ref(null)
-const draggingCycleBoundaryId = ref(null)
-const draggingSwitchEventId = ref(null)
-const switchEventDragOffsetX = ref(0)
-const cycleBoundaryDragOffsetX = ref(0)
-const dragStartMouseTime = ref(0)
+const isMouseDown = ref(false);
+const isDragStarted = ref(false);
+const movingActionId = ref(null);
+const movingTrackId = ref(null);
+const initialMouseX = ref(0);
+const initialMouseY = ref(0);
+const dragThreshold = 5;
+const wasSelectedOnPress = ref(false);
+const wasCycleSelectedOnPress = ref(false);
+const wasSwitchSelectedOnPress = ref(false);
+const dragStartTimes = new Map();
+const isAltDown = ref(false);
+const isShiftDown = ref(false);
+const hoveredContext = ref(null);
+const draggingCycleBoundaryId = ref(null);
+const draggingSwitchEventId = ref(null);
+const switchEventDragOffsetX = ref(0);
+const cycleBoundaryDragOffsetX = ref(0);
+const dragStartMouseTime = ref(0);
 
 // === 边缘自动滚动相关状态 ===
-const autoScrollSpeed = ref(0)
-let autoScrollRaf = null
-let lastMouseX = 0
-let lastMouseY = 0
-const SCROLL_ZONE = 50
-const MAX_SCROLL_SPEED = 15
+const autoScrollSpeed = ref(0);
+let autoScrollRaf = null;
+let lastMouseX = 0;
+let lastMouseY = 0;
+const SCROLL_ZONE = 50;
+const MAX_SCROLL_SPEED = 15;
 
-const TRACK_HEIGHT = 50
-const TRACK_ROW_BASE_PADDING = 30
-const TRACK_ROW_MIN_PADDING = 8
-const TRACK_ROW_BASE_HEIGHT = TRACK_HEIGHT + TRACK_ROW_BASE_PADDING * 2
-const TRACK_ROW_MIN_HEIGHT = TRACK_HEIGHT + TRACK_ROW_MIN_PADDING * 2
-const OPERATOR_BUFF_ROW_HEIGHT = 24
-const EQUIPMENT_BUFF_LANE_PITCH = 22
-const BUFF_LAYER_MARGIN = 4
-const TRACKS_VERTICAL_PADDING = 20
-const TRACK_LAYOUT_KEY = 'endaxis:timeline-track-row-heights:v1'
-let resizeObserver = []
-let trackResizeState = null
+const TRACK_HEIGHT = 50;
+const TRACK_ROW_BASE_PADDING = 30;
+const TRACK_ROW_MIN_PADDING = 8;
+const TRACK_ROW_BASE_HEIGHT = TRACK_HEIGHT + TRACK_ROW_BASE_PADDING * 2;
+const TRACK_ROW_MIN_HEIGHT = TRACK_HEIGHT + TRACK_ROW_MIN_PADDING * 2;
+const OPERATOR_BUFF_ROW_HEIGHT = 24;
+const EQUIPMENT_BUFF_LANE_PITCH = 22;
+const BUFF_LAYER_MARGIN = 4;
+const TRACKS_VERTICAL_PADDING = 20;
+const TRACK_LAYOUT_KEY = 'endaxis:timeline-track-row-heights:v1';
+let resizeObserver = [];
+let trackResizeState = null;
 
 // Box Select State
-const isBoxSelecting = ref(false)
-const boxStart = ref({ x: 0, y: 0 })
-const boxRect = ref({ left: 0, top: 0, width: 0, height: 0 })
+const isBoxSelecting = ref(false);
+const boxStart = ref({ x: 0, y: 0 });
+const boxRect = ref({ left: 0, top: 0, width: 0, height: 0 });
 
-const draggingTrackOrderIndex = ref(null)
-const reorderDropTargetIndex = ref(null)
-const isResizingPrep = ref(false)
-const prepDurationPreview = ref(null)
+const draggingTrackOrderIndex = ref(null);
+const reorderDropTargetIndex = ref(null);
+const isResizingPrep = ref(false);
+const prepDurationPreview = ref(null);
 
 function onReorderDragStart(evt, index) {
-  draggingTrackOrderIndex.value = index
-  evt.dataTransfer.effectAllowed = 'move'
-  
-  const trackInfoEl = evt.target.closest('.track-info')
+  draggingTrackOrderIndex.value = index;
+  evt.dataTransfer.effectAllowed = 'move';
+
+  const trackInfoEl = evt.target.closest('.track-info');
   if (trackInfoEl) {
-    const rect = trackInfoEl.getBoundingClientRect()
-    const offsetX = evt.clientX - rect.left
-    const offsetY = evt.clientY - rect.top
-    evt.dataTransfer.setDragImage(trackInfoEl, offsetX, offsetY)
+    const rect = trackInfoEl.getBoundingClientRect();
+    const offsetX = evt.clientX - rect.left;
+    const offsetY = evt.clientY - rect.top;
+    evt.dataTransfer.setDragImage(trackInfoEl, offsetX, offsetY);
   }
 }
 
 function onReorderDragOver(evt, index) {
-  if (draggingTrackOrderIndex.value === null) return
-  evt.preventDefault() // Allow drop
-  evt.dataTransfer.dropEffect = 'move'
-  reorderDropTargetIndex.value = index
+  if (draggingTrackOrderIndex.value === null) return;
+  evt.preventDefault(); // Allow drop
+  evt.dataTransfer.dropEffect = 'move';
+  reorderDropTargetIndex.value = index;
 }
 
 function onReorderDrop(evt, targetIndex) {
-  evt.preventDefault()
+  evt.preventDefault();
   if (draggingTrackOrderIndex.value !== null && draggingTrackOrderIndex.value !== targetIndex) {
-    store.moveTrack(draggingTrackOrderIndex.value, targetIndex)
+    store.moveTrack(draggingTrackOrderIndex.value, targetIndex);
   }
-  resetReorderState()
+  resetReorderState();
 }
 
 function onReorderDragEnd() {
-  resetReorderState()
+  resetReorderState();
 }
 
 function resetReorderState() {
-  draggingTrackOrderIndex.value = null
-  reorderDropTargetIndex.value = null
+  draggingTrackOrderIndex.value = null;
+  reorderDropTargetIndex.value = null;
 }
 
 function moveTrackUp(index) {
-  if (index > 0) store.moveTrack(index, index - 1)
+  if (index > 0) store.moveTrack(index, index - 1);
 }
 
 function moveTrackDown(index) {
-  if (index < store.tracks.length - 1) store.moveTrack(index, index + 1)
+  if (index < store.tracks.length - 1) store.moveTrack(index, index + 1);
 }
 
 function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max)
+  return Math.min(Math.max(value, min), max);
 }
 
 function normalizeTrackWeights(weights, count = store.tracks.length) {
-  const safeCount = Math.max(0, Number(count) || 0)
+  const safeCount = Math.max(0, Number(count) || 0);
   return Array.from({ length: safeCount }, (_, index) => {
-    const raw = Array.isArray(weights) ? weights[index] : null
-    const parsed = Number(raw)
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
-  })
+    const raw = Array.isArray(weights) ? weights[index] : null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  });
 }
 
-const trackHeightWeights = ref([])
-const tracksViewportHeight = ref(0)
-const draggingTrackResizeIndex = ref(null)
-const trackRowHeightPreview = ref(null)
+const trackHeightWeights = ref([]);
+const tracksViewportHeight = ref(0);
+const draggingTrackResizeIndex = ref(null);
+const trackRowHeightPreview = ref(null);
 
 function restoreTrackLayoutWeights() {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') return;
   try {
-    const raw = window.localStorage.getItem(TRACK_LAYOUT_KEY)
-    if (!raw) return
-    trackHeightWeights.value = normalizeTrackWeights(JSON.parse(raw))
+    const raw = window.localStorage.getItem(TRACK_LAYOUT_KEY);
+    if (!raw) return;
+    trackHeightWeights.value = normalizeTrackWeights(JSON.parse(raw));
   } catch {
-    trackHeightWeights.value = normalizeTrackWeights([])
+    trackHeightWeights.value = normalizeTrackWeights([]);
   }
 }
 
 function persistTrackLayoutWeights() {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(TRACK_LAYOUT_KEY, JSON.stringify(trackHeightWeights.value))
+    window.localStorage.setItem(TRACK_LAYOUT_KEY, JSON.stringify(trackHeightWeights.value));
   } catch {
     // ignore
   }
 }
 
-watch(() => store.tracks.length, (count) => {
-  trackHeightWeights.value = normalizeTrackWeights(trackHeightWeights.value, count)
-}, { immediate: true })
+watch(
+  () => store.tracks.length,
+  count => {
+    trackHeightWeights.value = normalizeTrackWeights(trackHeightWeights.value, count);
+  },
+  { immediate: true },
+);
 
 const trackRowHeights = computed(() => {
-  const count = store.tracks.length
-  if (!count) return []
+  const count = store.tracks.length;
+  if (!count) return [];
 
-  const weights = normalizeTrackWeights(trackHeightWeights.value, count)
+  const weights = normalizeTrackWeights(trackHeightWeights.value, count);
   const totalHeight = Math.max(
     (tracksViewportHeight.value || 0) - TRACKS_VERTICAL_PADDING * 2,
-    count * TRACK_ROW_MIN_HEIGHT
-  )
-  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0) || count
-  const heights = new Array(count).fill(TRACK_ROW_MIN_HEIGHT)
-  let remaining = totalHeight
+    count * TRACK_ROW_MIN_HEIGHT,
+  );
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0) || count;
+  const heights = new Array(count).fill(TRACK_ROW_MIN_HEIGHT);
+  let remaining = totalHeight;
 
   for (let index = 0; index < count; index += 1) {
     if (index === count - 1) {
-      heights[index] = remaining
-      break
+      heights[index] = remaining;
+      break;
     }
 
-    const portion = Math.round(totalHeight * (weights[index] / totalWeight))
-    const applied = clamp(portion, TRACK_ROW_MIN_HEIGHT, remaining - ((count - index - 1) * TRACK_ROW_MIN_HEIGHT))
-    heights[index] = applied
-    remaining -= applied
+    const portion = Math.round(totalHeight * (weights[index] / totalWeight));
+    const applied = clamp(
+      portion,
+      TRACK_ROW_MIN_HEIGHT,
+      remaining - (count - index - 1) * TRACK_ROW_MIN_HEIGHT,
+    );
+    heights[index] = applied;
+    remaining -= applied;
   }
 
-  return heights
-})
+  return heights;
+});
 
 const displayTrackRowHeights = computed(() => {
-  const preview = trackRowHeightPreview.value
-  if (Array.isArray(preview) && preview.length === store.tracks.length) return preview
-  return trackRowHeights.value
-})
+  const preview = trackRowHeightPreview.value;
+  if (Array.isArray(preview) && preview.length === store.tracks.length) return preview;
+  return trackRowHeights.value;
+});
 
 const trackDividerOffsets = computed(() => {
-  const offsets = []
-  let cumulative = TRACKS_VERTICAL_PADDING
+  const offsets = [];
+  let cumulative = TRACKS_VERTICAL_PADDING;
 
   for (let index = 0; index < displayTrackRowHeights.value.length - 1; index += 1) {
-    cumulative += displayTrackRowHeights.value[index]
-    offsets.push(cumulative)
+    cumulative += displayTrackRowHeights.value[index];
+    offsets.push(cumulative);
   }
 
-  return offsets
-})
+  return offsets;
+});
 
 function getTrackRowStyle(index) {
-  const requestedRowHeight = displayTrackRowHeights.value[index] ?? TRACK_ROW_BASE_HEIGHT
-  const basePadding = Math.max(TRACK_ROW_MIN_PADDING, (requestedRowHeight - TRACK_HEIGHT) / 2)
-  const { topPadding, bottomPadding, rowHeight } = getTrackBuffAdjustedRowMetrics(index, basePadding, requestedRowHeight)
+  const requestedRowHeight = displayTrackRowHeights.value[index] ?? TRACK_ROW_BASE_HEIGHT;
+  const basePadding = Math.max(TRACK_ROW_MIN_PADDING, (requestedRowHeight - TRACK_HEIGHT) / 2);
+  const { topPadding, bottomPadding, rowHeight } = getTrackBuffAdjustedRowMetrics(
+    index,
+    basePadding,
+    requestedRowHeight,
+  );
   return {
     '--track-height': `${TRACK_HEIGHT}px`,
     '--track-row-height': `${rowHeight}px`,
     '--track-row-padding-top': `${topPadding}px`,
     '--track-row-padding-bottom': `${bottomPadding}px`,
-  }
+  };
 }
 
 function getTrackInfoStyle(index) {
-  const requestedRowHeight = displayTrackRowHeights.value[index] ?? TRACK_ROW_BASE_HEIGHT
-  const basePadding = Math.max(TRACK_ROW_MIN_PADDING, (requestedRowHeight - TRACK_HEIGHT) / 2)
-  const { topPadding, bottomPadding, rowHeight } = getTrackBuffAdjustedRowMetrics(index, basePadding, requestedRowHeight)
+  const requestedRowHeight = displayTrackRowHeights.value[index] ?? TRACK_ROW_BASE_HEIGHT;
+  const basePadding = Math.max(TRACK_ROW_MIN_PADDING, (requestedRowHeight - TRACK_HEIGHT) / 2);
+  const { topPadding, bottomPadding, rowHeight } = getTrackBuffAdjustedRowMetrics(
+    index,
+    basePadding,
+    requestedRowHeight,
+  );
   return {
     '--track-height': `${TRACK_HEIGHT}px`,
     '--track-row-height': `${rowHeight}px`,
     '--track-row-padding-top': `${topPadding}px`,
     '--track-row-padding-bottom': `${bottomPadding}px`,
-  }
+  };
 }
 
 function getTrackBuffAdjustedRowMetrics(index, basePadding, requestedRowHeight) {
@@ -279,107 +295,112 @@ function getTrackBuffAdjustedRowMetrics(index, basePadding, requestedRowHeight) 
     topPadding: basePadding,
     bottomPadding: basePadding,
     rowHeight: requestedRowHeight,
-  }
+  };
 }
 
 function beginTrackResize(index, event) {
-  if (event.button !== 0) return
-  event.preventDefault()
-  const rowHeights = trackRowHeights.value
-  if (!rowHeights[index] || !rowHeights[index + 1]) return
+  if (event.button !== 0) return;
+  event.preventDefault();
+  const rowHeights = trackRowHeights.value;
+  if (!rowHeights[index] || !rowHeights[index + 1]) return;
 
-  draggingTrackResizeIndex.value = index
-  trackRowHeightPreview.value = [...rowHeights]
+  draggingTrackResizeIndex.value = index;
+  trackRowHeightPreview.value = [...rowHeights];
   trackResizeState = {
     index,
     startY: event.clientY,
     rowHeights: [...rowHeights],
-  }
-  document.body.style.userSelect = 'none'
-  document.body.style.cursor = 'ns-resize'
-  window.addEventListener('pointermove', onTrackResizeMove)
-  window.addEventListener('pointerup', endTrackResize)
+  };
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = 'ns-resize';
+  window.addEventListener('pointermove', onTrackResizeMove);
+  window.addEventListener('pointerup', endTrackResize);
 }
 
 function onTrackResizeMove(event) {
-  if (!trackResizeState) return
+  if (!trackResizeState) return;
 
-  const { index, startY, rowHeights } = trackResizeState
-  const dy = event.clientY - startY
-  const nextHeights = [...rowHeights]
-  const pairTotal = rowHeights[index] + rowHeights[index + 1]
-  const upper = clamp(rowHeights[index] + dy, TRACK_ROW_MIN_HEIGHT, pairTotal - TRACK_ROW_MIN_HEIGHT)
-  nextHeights[index] = upper
-  nextHeights[index + 1] = pairTotal - upper
-  trackRowHeightPreview.value = nextHeights
+  const { index, startY, rowHeights } = trackResizeState;
+  const dy = event.clientY - startY;
+  const nextHeights = [...rowHeights];
+  const pairTotal = rowHeights[index] + rowHeights[index + 1];
+  const upper = clamp(
+    rowHeights[index] + dy,
+    TRACK_ROW_MIN_HEIGHT,
+    pairTotal - TRACK_ROW_MIN_HEIGHT,
+  );
+  nextHeights[index] = upper;
+  nextHeights[index + 1] = pairTotal - upper;
+  trackRowHeightPreview.value = nextHeights;
 }
 
 function endTrackResize() {
-  const preview = Array.isArray(trackRowHeightPreview.value) ? trackRowHeightPreview.value : null
+  const preview = Array.isArray(trackRowHeightPreview.value) ? trackRowHeightPreview.value : null;
   if (preview && preview.length === store.tracks.length) {
-    trackHeightWeights.value = normalizeTrackWeights(preview, preview.length)
+    trackHeightWeights.value = normalizeTrackWeights(preview, preview.length);
   }
-  trackResizeState = null
-  trackRowHeightPreview.value = null
-  draggingTrackResizeIndex.value = null
-  document.body.style.userSelect = ''
-  document.body.style.cursor = ''
-  window.removeEventListener('pointermove', onTrackResizeMove)
-  window.removeEventListener('pointerup', endTrackResize)
-  persistTrackLayoutWeights()
+  trackResizeState = null;
+  trackRowHeightPreview.value = null;
+  draggingTrackResizeIndex.value = null;
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
+  window.removeEventListener('pointermove', onTrackResizeMove);
+  window.removeEventListener('pointerup', endTrackResize);
+  persistTrackLayoutWeights();
 }
 
 function resetTrackLayoutWeights() {
-  trackRowHeightPreview.value = null
-  trackHeightWeights.value = normalizeTrackWeights([])
-  persistTrackLayoutWeights()
+  trackRowHeightPreview.value = null;
+  trackHeightWeights.value = normalizeTrackWeights([]);
+  persistTrackLayoutWeights();
 }
-
 
 // ===================================================================================
 // 干员选择弹窗逻辑
 // ===================================================================================
 
-const isSelectorVisible = ref(false)
-const targetTrackIndex = ref(null)
-const searchQuery = ref('')
-const filterElement = ref('ALL')
-const filterClass = ref('ALL')
-const isWeaponSelectorVisible = ref(false)
-const weaponTargetIndex = ref(null)
-const weaponSearchQuery = ref('')
-const isEquipmentSelectorVisible = ref(false)
-const equipmentTargetIndex = ref(null)
-const equipmentSlotKey = ref('armor') // 'armor' | 'gloves' | 'accessory1' | 'accessory2'
-const equipmentSearchQuery = ref('')
-const equipmentCategoryFilter = ref('ALL')
-const equipmentAffixFilter = ref('ALL')
-const equipmentLevelFilter = ref('ALL')
-const equipmentPendingRefineTier = ref(0)
-const statDetailTrackIndex = ref(null)
+const isSelectorVisible = ref(false);
+const targetTrackIndex = ref(null);
+const searchQuery = ref('');
+const filterElement = ref('ALL');
+const filterClass = ref('ALL');
+const isWeaponSelectorVisible = ref(false);
+const weaponTargetIndex = ref(null);
+const weaponSearchQuery = ref('');
+const isEquipmentSelectorVisible = ref(false);
+const equipmentTargetIndex = ref(null);
+const equipmentSlotKey = ref('armor'); // 'armor' | 'gloves' | 'accessory1' | 'accessory2'
+const equipmentSearchQuery = ref('');
+const equipmentCategoryFilter = ref('ALL');
+const equipmentAffixFilter = ref('ALL');
+const equipmentLevelFilter = ref('ALL');
+const equipmentPendingRefineTier = ref(0);
+const statDetailTrackIndex = ref(null);
 
 const isStatDetailVisible = computed({
   get: () => statDetailTrackIndex.value !== null,
-  set: (visible) => {
-    if (!visible) statDetailTrackIndex.value = null
+  set: visible => {
+    if (!visible) statDetailTrackIndex.value = null;
   },
-})
+});
 
-const statDetailTrack = computed(() => (
-  statDetailTrackIndex.value !== null ? store.tracks[statDetailTrackIndex.value] || null : null
-))
+const statDetailTrack = computed(() =>
+  statDetailTrackIndex.value !== null ? store.tracks[statDetailTrackIndex.value] || null : null,
+);
 
-const statDetailTrackInfo = computed(() => (
-  statDetailTrackIndex.value !== null ? store.teamTracksInfo[statDetailTrackIndex.value] || null : null
-))
+const statDetailTrackInfo = computed(() =>
+  statDetailTrackIndex.value !== null
+    ? store.teamTracksInfo[statDetailTrackIndex.value] || null
+    : null,
+);
 
 function openStatDetail(index) {
-  const track = store.tracks[index]
-  if (!track?.id || !track.operatorStatus) return
-  statDetailTrackIndex.value = index
+  const track = store.tracks[index];
+  if (!track?.id || !track.operatorStatus) return;
+  statDetailTrackIndex.value = index;
 }
 
-const EQUIPMENT_LEVELS = [70, 50, 36, 28, 20, 10]
+const EQUIPMENT_LEVELS = [70, 50, 36, 28, 20, 10];
 const EQUIPMENT_LEVEL_COLORS = {
   70: '#ffd700',
   50: '#b37feb',
@@ -387,7 +408,7 @@ const EQUIPMENT_LEVEL_COLORS = {
   28: '#73c94f',
   20: '#95de64',
   10: '#888888',
-}
+};
 const EQUIPMENT_AFFIX_FILTER_GROUPS = [
   {
     key: 'elementDamage',
@@ -410,9 +431,7 @@ const EQUIPMENT_AFFIX_FILTER_GROUPS = [
   },
   {
     key: 'brokenDamage',
-    items: [
-      { value: 'broken_dmg_bonus', accent: '#fb7185' },
-    ],
+    items: [{ value: 'broken_dmg_bonus', accent: '#fb7185' }],
   },
   {
     key: 'ability',
@@ -423,27 +442,19 @@ const EQUIPMENT_AFFIX_FILTER_GROUPS = [
   },
   {
     key: 'attack',
-    items: [
-      { value: 'attack', accent: '#991b1b' },
-    ],
+    items: [{ value: 'attack', accent: '#991b1b' }],
   },
   {
     key: 'crit',
-    items: [
-      { value: 'crit_rate', accent: '#f43f5e' },
-    ],
+    items: [{ value: 'crit_rate', accent: '#f43f5e' }],
   },
   {
     key: 'artsPower',
-    items: [
-      { value: 'originium_arts_power', accent: '#a78bfa' },
-    ],
+    items: [{ value: 'originium_arts_power', accent: '#a78bfa' }],
   },
   {
     key: 'ultimateCharge',
-    items: [
-      { value: 'ult_charge_eff', accent: '#38bdf8' },
-    ],
+    items: [{ value: 'ult_charge_eff', accent: '#38bdf8' }],
   },
   {
     key: 'survival',
@@ -453,8 +464,8 @@ const EQUIPMENT_AFFIX_FILTER_GROUPS = [
       { value: 'healing_effect', accent: '#4ade80' },
     ],
   },
-]
-const EQUIPMENT_REFINE_TIERS = [0, 1, 2, 3]
+];
+const EQUIPMENT_REFINE_TIERS = [0, 1, 2, 3];
 
 const EQUIPMENT_PRIMARY_STAT_ICON_MAP = {
   primary_ability: '/icons/icon_battle_primary_attribute_all_up.webp',
@@ -463,7 +474,7 @@ const EQUIPMENT_PRIMARY_STAT_ICON_MAP = {
   agility: '/icons/icon_attribute_agi.webp',
   intellect: '/icons/icon_attribute_wisd.webp',
   will: '/icons/icon_attribute_will.webp',
-}
+};
 
 const EQUIPMENT_BONUS_STAT_ICON_MAP = {
   primary_ability: '/icons/icon_battle_primary_attribute_all_up.webp',
@@ -499,45 +510,47 @@ const EQUIPMENT_BONUS_STAT_ICON_MAP = {
   susceptibility_cryo: '/icons/icon_battle_affix_cryst_vulnerable.webp',
   susceptibility_electric: '/icons/icon_battle_affix_pulse_vulnerable.webp',
   susceptibility_nature: '/icons/icon_battle_affix_natural_vulnerable.webp',
-}
+};
 
 function getEquipmentAffixIconSrc(modifierId) {
-  return EQUIPMENT_PRIMARY_STAT_ICON_MAP[modifierId]
-    || EQUIPMENT_BONUS_STAT_ICON_MAP[modifierId]
-    || '/icons/default_icon.webp'
+  return (
+    EQUIPMENT_PRIMARY_STAT_ICON_MAP[modifierId] ||
+    EQUIPMENT_BONUS_STAT_ICON_MAP[modifierId] ||
+    '/icons/default_icon.webp'
+  );
 }
 
 function normalizeSearchText(value) {
   return String(value || '')
     .toLowerCase()
-    .replace(/[\s_-]+/g, '')
+    .replace(/[\s_-]+/g, '');
 }
 
 function normalizeEquipmentStatArray(value) {
-  if (Array.isArray(value)) return value.filter(Boolean)
-  return value ? [value] : []
+  if (Array.isArray(value)) return value.filter(Boolean);
+  return value ? [value] : [];
 }
 
 function normalizeEquipmentAttributeId(attribute) {
-  if (attribute === 'main') return 'primary_ability'
-  if (attribute === 'sub') return 'secondary_ability'
-  if (['strength', 'agility', 'intellect', 'will'].includes(attribute)) return attribute
-  return ''
+  if (attribute === 'main') return 'primary_ability';
+  if (attribute === 'sub') return 'secondary_ability';
+  if (['strength', 'agility', 'intellect', 'will'].includes(attribute)) return attribute;
+  return '';
 }
 
 function isEquipmentAttributeStat(stat) {
-  return stat?.modifier === 'attributeFlat' || stat?.modifier === 'attributePercent'
+  return stat?.modifier === 'attributeFlat' || stat?.modifier === 'attributePercent';
 }
 
 function getEquipmentDialogOperator(track) {
-  if (!track?.id) return null
-  return getOperator(track.id) || null
+  if (!track?.id) return null;
+  return getOperator(track.id) || null;
 }
 
-const CORE_ATTRIBUTES = new Set(['strength', 'agility', 'intellect', 'will'])
+const CORE_ATTRIBUTES = new Set(['strength', 'agility', 'intellect', 'will']);
 
 function getEquipmentAbilityMatch(eq, operator) {
-  const piece = getGearPiece(eq?.canonicalId || eq?.canonicalGearPieceId || eq?.id)
+  const piece = getGearPiece(eq?.canonicalId || eq?.canonicalGearPieceId || eq?.id);
 
   if (!piece || !operator) {
     return {
@@ -547,67 +560,58 @@ function getEquipmentAbilityMatch(eq, operator) {
       attributeLineCount: 0,
       unmatchedAttributeLineCount: 0,
       type: '',
-    }
+    };
   }
 
   const mainAttribute =
-      operator?.mainAttribute
-      || operator?.primaryAbility
-      || operator?.primaryAttribute
-      || ''
+    operator?.mainAttribute || operator?.primaryAbility || operator?.primaryAttribute || '';
 
   const subAttribute =
-      operator?.subAttribute
-      || operator?.secondaryAbility
-      || operator?.secondaryAttribute
-      || ''
+    operator?.subAttribute || operator?.secondaryAbility || operator?.secondaryAttribute || '';
 
-  let primaryMatched = false
-  let secondaryMatched = false
-  let attributeLineCount = 0
-  let unmatchedAttributeLineCount = 0
+  let primaryMatched = false;
+  let secondaryMatched = false;
+  let attributeLineCount = 0;
+  let unmatchedAttributeLineCount = 0;
 
-  const skills = [piece.skill1, piece.skill2, piece.skill3].filter(Boolean)
+  const skills = [piece.skill1, piece.skill2, piece.skill3].filter(Boolean);
 
   for (const skill of skills) {
-    const effects = Array.isArray(skill?.effects) ? skill.effects : []
+    const effects = Array.isArray(skill?.effects) ? skill.effects : [];
 
-    const visibleEffects = mergeEquipmentElementPairEffects(effects)
-        .filter(effect => effect?.kind === 'status')
+    const visibleEffects = mergeEquipmentElementPairEffects(effects).filter(
+      effect => effect?.kind === 'status',
+    );
 
     for (const effect of visibleEffects) {
-      const stat = effect?.stat
-      if (!isEquipmentAttributeStat(stat)) continue
+      const stat = effect?.stat;
+      if (!isEquipmentAttributeStat(stat)) continue;
 
-      const attrs = normalizeEquipmentStatArray(stat.attribute)
-          .filter(attr => CORE_ATTRIBUTES.has(attr))
+      const attrs = normalizeEquipmentStatArray(stat.attribute).filter(attr =>
+        CORE_ATTRIBUTES.has(attr),
+      );
 
-      if (attrs.length === 0) continue
+      if (attrs.length === 0) continue;
 
-      attributeLineCount += 1
+      attributeLineCount += 1;
 
-      const matchedPrimary = Boolean(mainAttribute && attrs.includes(mainAttribute))
-      const matchedSecondary = Boolean(subAttribute && attrs.includes(subAttribute))
+      const matchedPrimary = Boolean(mainAttribute && attrs.includes(mainAttribute));
+      const matchedSecondary = Boolean(subAttribute && attrs.includes(subAttribute));
 
-      if (matchedPrimary) primaryMatched = true
-      if (matchedSecondary) secondaryMatched = true
+      if (matchedPrimary) primaryMatched = true;
+      if (matchedSecondary) secondaryMatched = true;
 
       if (!matchedPrimary && !matchedSecondary) {
-        unmatchedAttributeLineCount += 1
+        unmatchedAttributeLineCount += 1;
       }
     }
   }
 
-  const allAttributeLinesMatched =
-      attributeLineCount > 0
-      && unmatchedAttributeLineCount === 0
+  const allAttributeLinesMatched = attributeLineCount > 0 && unmatchedAttributeLineCount === 0;
 
   const strongMatch =
-      allAttributeLinesMatched
-      && (
-          (primaryMatched && secondaryMatched)
-          || (attributeLineCount === 1 && primaryMatched)
-      )
+    allAttributeLinesMatched &&
+    ((primaryMatched && secondaryMatched) || (attributeLineCount === 1 && primaryMatched));
 
   return {
     matched: strongMatch,
@@ -616,183 +620,188 @@ function getEquipmentAbilityMatch(eq, operator) {
     attributeLineCount,
     unmatchedAttributeLineCount,
     type: strongMatch ? 'both' : '',
-  }
+  };
 }
 
 function sameEquipmentValue(a, b) {
-  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }
 
 function getEquipmentElementPairId(elements) {
-  const set = new Set(elements)
-  if (set.size !== 2) return ''
-  if (set.has('heat') && set.has('nature')) return 'heat_nature_dmg_bonus'
-  if (set.has('cryo') && set.has('electric')) return 'cryo_electric_dmg_bonus'
-  return ''
+  const set = new Set(elements);
+  if (set.size !== 2) return '';
+  if (set.has('heat') && set.has('nature')) return 'heat_nature_dmg_bonus';
+  if (set.has('cryo') && set.has('electric')) return 'cryo_electric_dmg_bonus';
+  return '';
 }
 
 function isEquipmentArtsDmgElements(elements) {
-  const set = new Set(normalizeEquipmentStatArray(elements))
+  const set = new Set(normalizeEquipmentStatArray(elements));
   return (
-      set.size === 4
-      && set.has('heat')
-      && set.has('cryo')
-      && set.has('electric')
-      && set.has('nature')
-  )
+    set.size === 4 && set.has('heat') && set.has('cryo') && set.has('electric') && set.has('nature')
+  );
 }
 
 function isEquipmentPairModifierId(modifierId) {
-  return modifierId === 'heat_nature_dmg_bonus' || modifierId === 'cryo_electric_dmg_bonus'
+  return modifierId === 'heat_nature_dmg_bonus' || modifierId === 'cryo_electric_dmg_bonus';
 }
 
 function mergeEquipmentElementPairEffects(effects) {
-  const out = []
-  const used = new Set()
+  const out = [];
+  const used = new Set();
   effects.forEach((effect, index) => {
-    if (used.has(index)) return
-    const stat = effect?.stat
-    const element = typeof stat?.elements === 'string' ? stat.elements : ''
+    if (used.has(index)) return;
+    const stat = effect?.stat;
+    const element = typeof stat?.elements === 'string' ? stat.elements : '';
     if (stat?.modifier !== 'dmgBonus' || !element) {
-      out.push(effect)
-      return
+      out.push(effect);
+      return;
     }
 
     const pairIndex = effects.findIndex((candidate, candidateIndex) => {
-      if (candidateIndex <= index || used.has(candidateIndex)) return false
-      const candidateStat = candidate?.stat
-      if (candidateStat?.modifier !== 'dmgBonus') return false
-      const candidateElement = typeof candidateStat?.elements === 'string' ? candidateStat.elements : ''
-      if (!candidateElement) return false
-      if (!sameEquipmentValue(effect.value, candidate.value)) return false
-      return !!getEquipmentElementPairId([element, candidateElement])
-    })
+      if (candidateIndex <= index || used.has(candidateIndex)) return false;
+      const candidateStat = candidate?.stat;
+      if (candidateStat?.modifier !== 'dmgBonus') return false;
+      const candidateElement =
+        typeof candidateStat?.elements === 'string' ? candidateStat.elements : '';
+      if (!candidateElement) return false;
+      if (!sameEquipmentValue(effect.value, candidate.value)) return false;
+      return !!getEquipmentElementPairId([element, candidateElement]);
+    });
 
     if (pairIndex < 0) {
-      out.push(effect)
-      return
+      out.push(effect);
+      return;
     }
 
-    used.add(index)
-    used.add(pairIndex)
+    used.add(index);
+    used.add(pairIndex);
     out.push({
       ...effect,
       stat: {
         ...stat,
         elements: [element, effects[pairIndex].stat.elements],
       },
-    })
-  })
-  return out
+    });
+  });
+  return out;
 }
 
 function getEquipmentDmgBonusModifierIds(stat) {
-  const elements = normalizeEquipmentStatArray(stat?.elements)
+  const elements = normalizeEquipmentStatArray(stat?.elements);
   if (elements.length > 0) {
     if (isEquipmentArtsDmgElements(elements)) {
-      return ['arts_dmg']
+      return ['arts_dmg'];
     }
-    const pairId = getEquipmentElementPairId(elements)
-    if (pairId) return [pairId]
-    const mapped = elements.map((element) => ({
-      physical: 'physical_dmg',
-      heat: 'blaze_dmg',
-      cryo: 'cold_dmg',
-      electric: 'emag_dmg',
-      nature: 'nature_dmg',
-    })[element]).filter(Boolean)
-    return mapped.length > 0 ? mapped : ['all_skill_dmg_bonus']
+    const pairId = getEquipmentElementPairId(elements);
+    if (pairId) return [pairId];
+    const mapped = elements
+      .map(
+        element =>
+          ({
+            physical: 'physical_dmg',
+            heat: 'blaze_dmg',
+            cryo: 'cold_dmg',
+            electric: 'emag_dmg',
+            nature: 'nature_dmg',
+          })[element],
+      )
+      .filter(Boolean);
+    return mapped.length > 0 ? mapped : ['all_skill_dmg_bonus'];
   }
 
-  const skillTypes = normalizeEquipmentStatArray(stat?.skillTypes)
+  const skillTypes = normalizeEquipmentStatArray(stat?.skillTypes);
   if (skillTypes.length > 0) {
     if (skillTypes.length === 1) {
-      return [{
-        basicAttack: 'attack_dmg_bonus',
-        battleSkill: 'skill_dmg_bonus',
-        comboSkill: 'link_dmg_bonus',
-        ultimate: 'ultimate_dmg_bonus',
-      }[skillTypes[0]] || 'all_skill_dmg_bonus']
+      return [
+        {
+          basicAttack: 'attack_dmg_bonus',
+          battleSkill: 'skill_dmg_bonus',
+          comboSkill: 'link_dmg_bonus',
+          ultimate: 'ultimate_dmg_bonus',
+        }[skillTypes[0]] || 'all_skill_dmg_bonus',
+      ];
     }
     if (
-        skillTypes.includes('battleSkill')
-        && skillTypes.includes('comboSkill')
-        && skillTypes.includes('ultimate')
+      skillTypes.includes('battleSkill') &&
+      skillTypes.includes('comboSkill') &&
+      skillTypes.includes('ultimate')
     ) {
-      return ['all_skill_dmg_bonus']
+      return ['all_skill_dmg_bonus'];
     }
   }
 
-  return ['all_skill_dmg_bonus']
+  return ['all_skill_dmg_bonus'];
 }
 
 function getEquipmentEffectModifierIds(stat) {
-  if (!stat?.modifier) return []
+  if (!stat?.modifier) return [];
   if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
     return normalizeEquipmentStatArray(stat.attribute)
       .map(normalizeEquipmentAttributeId)
-      .filter(Boolean)
+      .filter(Boolean);
   }
-  if (stat.modifier === 'atkFlat' || stat.modifier === 'atkPercent') return ['attack']
-  if (stat.modifier === 'flatHp' || stat.modifier === 'hpPercent') return ['hp']
-  if (stat.modifier === 'critRate') return ['crit_rate']
-  if (stat.modifier === 'critDmg') return ['crit_dmg']
-  if (stat.modifier === 'artsIntensity') return ['originium_arts_power']
-  if (stat.modifier === 'ultimateGainEfficiency') return ['ult_charge_eff']
-  if (stat.modifier === 'heal') return ['healing_effect']
-  if (stat.modifier === 'protection') return ['final_dmg_reduction']
-  if (stat.modifier === 'dmgBonus') return getEquipmentDmgBonusModifierIds(stat)
+  if (stat.modifier === 'atkFlat' || stat.modifier === 'atkPercent') return ['attack'];
+  if (stat.modifier === 'flatHp' || stat.modifier === 'hpPercent') return ['hp'];
+  if (stat.modifier === 'critRate') return ['crit_rate'];
+  if (stat.modifier === 'critDmg') return ['crit_dmg'];
+  if (stat.modifier === 'artsIntensity') return ['originium_arts_power'];
+  if (stat.modifier === 'ultimateGainEfficiency') return ['ult_charge_eff'];
+  if (stat.modifier === 'heal') return ['healing_effect'];
+  if (stat.modifier === 'protection') return ['final_dmg_reduction'];
+  if (stat.modifier === 'dmgBonus') return getEquipmentDmgBonusModifierIds(stat);
   if (stat.modifier === 'susceptibility') {
-    const elements = normalizeEquipmentStatArray(stat.elements)
+    const elements = normalizeEquipmentStatArray(stat.elements);
     return elements.length > 0
       ? elements.map(element => `susceptibility_${element}`)
-      : ['susceptibility']
+      : ['susceptibility'];
   }
-  return [stat.modifier]
+  return [stat.modifier];
 }
 
 function trOrFallback(key, fallback) {
-  const out = t(key)
-  return out === key ? fallback : out
+  const out = t(key);
+  return out === key ? fallback : out;
 }
 
 function getEquipmentModifierLabel(modifierId) {
   return trOrFallback(
-      `timelineGrid.equipmentDialog.affixFilters.${modifierId}`,
-      trOrFallback(`stats.${modifierId}`, modifierId)
-  )
+    `timelineGrid.equipmentDialog.affixFilters.${modifierId}`,
+    trOrFallback(`stats.${modifierId}`, modifierId),
+  );
 }
 
 function getEquipmentEffectLabel(stat, modifierId) {
-  if (!stat?.modifier) return getEquipmentModifierLabel(modifierId)
+  if (!stat?.modifier) return getEquipmentModifierLabel(modifierId);
   if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
-    const attr = normalizeEquipmentStatArray(stat.attribute)[0]
-    const normalizedAttr = normalizeEquipmentAttributeId(attr)
+    const attr = normalizeEquipmentStatArray(stat.attribute)[0];
+    const normalizedAttr = normalizeEquipmentAttributeId(attr);
     if (normalizedAttr === 'primary_ability' || normalizedAttr === 'secondary_ability') {
-      return getEquipmentModifierLabel(normalizedAttr)
+      return getEquipmentModifierLabel(normalizedAttr);
     }
-    if (attr) return getGameAttributeName(attr, locale.value)
+    if (attr) return getGameAttributeName(attr, locale.value);
   }
   if (stat.modifier === 'dmgBonus') {
-    return getEquipmentModifierLabel(modifierId)
+    return getEquipmentModifierLabel(modifierId);
   }
 
   if (stat.modifier === 'susceptibility') {
-    const elements = normalizeEquipmentStatArray(stat.elements)
+    const elements = normalizeEquipmentStatArray(stat.elements);
     if (elements.length === 1) {
       return trOrFallback(
-          `game.stat.susceptibility:${elements[0]}`,
-          trOrFallback('game.stat.susceptibility', '脆弱')
-      )
+        `game.stat.susceptibility:${elements[0]}`,
+        trOrFallback('game.stat.susceptibility', '脆弱'),
+      );
     }
-    return trOrFallback('game.stat.susceptibility', '脆弱')
+    return trOrFallback('game.stat.susceptibility', '脆弱');
   }
 
-  if (stat.modifier === 'artsIntensity') return getEquipmentModifierLabel('originium_arts_power')
-  if (stat.modifier === 'ultimateGainEfficiency') return getEquipmentModifierLabel('ult_charge_eff')
-  if (stat.modifier === 'heal') return getEquipmentModifierLabel('healing_effect')
-  if (stat.modifier === 'protection') return getEquipmentModifierLabel('final_dmg_reduction')
-  return getEquipmentModifierLabel(modifierId)
+  if (stat.modifier === 'artsIntensity') return getEquipmentModifierLabel('originium_arts_power');
+  if (stat.modifier === 'ultimateGainEfficiency')
+    return getEquipmentModifierLabel('ult_charge_eff');
+  if (stat.modifier === 'heal') return getEquipmentModifierLabel('healing_effect');
+  if (stat.modifier === 'protection') return getEquipmentModifierLabel('final_dmg_reduction');
+  return getEquipmentModifierLabel(modifierId);
 }
 
 function equipmentValueNeedsPercent(stat) {
@@ -807,36 +816,35 @@ function equipmentValueNeedsPercent(stat) {
     'susceptibility',
     'heal',
     'protection',
-  ].includes(stat?.modifier)
+  ].includes(stat?.modifier);
 }
 
 function formatEquipmentNumber(value) {
-  const num = Number(value)
-  if (!Number.isFinite(num)) return String(value ?? '')
-  if (Math.abs(num - Math.round(num)) < 0.0001) return String(Math.round(num))
-  return num.toFixed(1).replace(/\.0$/, '')
+  const num = Number(value);
+  if (!Number.isFinite(num)) return String(value ?? '');
+  if (Math.abs(num - Math.round(num)) < 0.0001) return String(Math.round(num));
+  return num.toFixed(1).replace(/\.0$/, '');
 }
 
 function formatEquipmentEffectValue(effect) {
-  const rawValues = Array.isArray(effect?.value) ? effect.value : [effect?.value]
-  const values = rawValues.filter(v => v !== undefined && v !== null)
-  if (values.length === 0) return ''
-  const suffix = equipmentValueNeedsPercent(effect?.stat) ? '%' : ''
-  return values.map(value => `+${formatEquipmentNumber(value)}${suffix}`).join(' / ')
+  const rawValues = Array.isArray(effect?.value) ? effect.value : [effect?.value];
+  const values = rawValues.filter(v => v !== undefined && v !== null);
+  if (values.length === 0) return '';
+  const suffix = equipmentValueNeedsPercent(effect?.stat) ? '%' : '';
+  return values.map(value => `+${formatEquipmentNumber(value)}${suffix}`).join(' / ');
 }
 
 function getEquipmentPieceAffixRows(eq) {
-  const piece = getGearPiece(eq?.canonicalId || eq?.canonicalGearPieceId || eq?.id)
-  if (!piece) return []
-  return [piece.skill1, piece.skill2, piece.skill3]
-    .filter(Boolean)
-    .flatMap((skill, slotIndex) => {
-      const effects = Array.isArray(skill?.effects) ? skill.effects : []
-      return mergeEquipmentElementPairEffects(effects)
-        .filter(effect => effect?.kind === 'status')
-        .flatMap((effect, effectIndex) => getEquipmentEffectModifierIds(effect.stat).map((modifierId) => {
-          const label = getEquipmentEffectLabel(effect.stat, modifierId)
-          const valueText = formatEquipmentEffectValue(effect)
+  const piece = getGearPiece(eq?.canonicalId || eq?.canonicalGearPieceId || eq?.id);
+  if (!piece) return [];
+  return [piece.skill1, piece.skill2, piece.skill3].filter(Boolean).flatMap((skill, slotIndex) => {
+    const effects = Array.isArray(skill?.effects) ? skill.effects : [];
+    return mergeEquipmentElementPairEffects(effects)
+      .filter(effect => effect?.kind === 'status')
+      .flatMap((effect, effectIndex) =>
+        getEquipmentEffectModifierIds(effect.stat).map(modifierId => {
+          const label = getEquipmentEffectLabel(effect.stat, modifierId);
+          const valueText = formatEquipmentEffectValue(effect);
           return {
             key: `${eq?.id || 'eq'}-${slotIndex}-${effectIndex}-${modifierId}`,
             modifierId,
@@ -845,37 +853,38 @@ function getEquipmentPieceAffixRows(eq) {
             src: isEquipmentPairModifierId(modifierId) ? '' : getEquipmentAffixIconSrc(modifierId),
             marker: isEquipmentPairModifierId(modifierId) ? 'hollow-dot' : 'image',
             title: valueText ? `${label} ${valueText}` : label,
-          }
-        }))
-    })
+          };
+        }),
+      );
+  });
 }
 
 function getEquipmentAffixRows(eq) {
-  return getEquipmentPieceAffixRows(eq)
+  return getEquipmentPieceAffixRows(eq);
 }
 
 function getEquipmentPrimaryAffixIconStack(eq) {
-  return getEquipmentAffixRows(eq)
+  return getEquipmentAffixRows(eq);
 }
 
-const isGameTimeCollapsed = ref(true)
-const showGameTime = computed(() => !isGameTimeCollapsed.value || store.isCapturing)
-const gridRowHeight = computed(() => showGameTime.value ? '60px' : '48px')
+const isGameTimeCollapsed = ref(true);
+const showGameTime = computed(() => !isGameTimeCollapsed.value || store.isCapturing);
+const gridRowHeight = computed(() => (showGameTime.value ? '60px' : '48px'));
 
 const ELEMENT_FILTERS = computed(() => {
-  locale.value
+  locale.value;
   return [
     { label: t('timelineGrid.elementFilter.all'), value: 'ALL', color: '#888' },
     { label: getGameElementName('physical', locale.value), value: 'physical', color: '#e0e0e0' },
     { label: getGameElementName('heat', locale.value), value: 'heat', color: '#ff4d4f' },
     { label: getGameElementName('cryo', locale.value), value: 'cryo', color: '#00e5ff' },
     { label: getGameElementName('electric', locale.value), value: 'electric', color: '#ffd700' },
-    { label: getGameElementName('nature', locale.value), value: 'nature', color: '#52c41a' }
-  ]
-})
+    { label: getGameElementName('nature', locale.value), value: 'nature', color: '#52c41a' },
+  ];
+});
 
 const CLASS_FILTERS = computed(() => {
-  locale.value
+  locale.value;
   return [
     { label: t('timelineGrid.classFilter.all'), value: 'ALL' },
     { label: getGameClassName('guard', locale.value), value: 'guard' },
@@ -884,8 +893,8 @@ const CLASS_FILTERS = computed(() => {
     { label: getGameClassName('vanguard', locale.value), value: 'vanguard' },
     { label: getGameClassName('striker', locale.value), value: 'striker' },
     { label: getGameClassName('supporter', locale.value), value: 'supporter' },
-  ]
-})
+  ];
+});
 
 const OPERATOR_ELEMENT_ICON_MAP = {
   physical: '/icons/icon_element_physical.webp',
@@ -893,113 +902,113 @@ const OPERATOR_ELEMENT_ICON_MAP = {
   cryo: '/icons/icon_element_cryo.webp',
   electric: '/icons/icon_element_electric.webp',
   nature: '/icons/icon_element_nature.webp',
-}
+};
 
 function getOperatorElementIcon(element) {
-  return OPERATOR_ELEMENT_ICON_MAP[element] || OPERATOR_ELEMENT_ICON_MAP.physical
+  return OPERATOR_ELEMENT_ICON_MAP[element] || OPERATOR_ELEMENT_ICON_MAP.physical;
 }
 
 function getOperatorElementBadgeColor(element) {
-  if (element === 'physical') return '#8c8c8c'
-  return store.getColor(element)
+  if (element === 'physical') return '#8c8c8c';
+  return store.getColor(element);
 }
 
 function openCharacterSelector(index) {
-  store.selectTrack(index)
-  targetTrackIndex.value = index
-  searchQuery.value = ''
-  filterElement.value = 'ALL'
-  filterClass.value = 'ALL'
-  isSelectorVisible.value = true
+  store.selectTrack(index);
+  targetTrackIndex.value = index;
+  searchQuery.value = '';
+  filterElement.value = 'ALL';
+  filterClass.value = 'ALL';
+  isSelectorVisible.value = true;
 }
 
 function confirmCharacterSelection(charId) {
   if (targetTrackIndex.value !== null) {
-    const oldId = store.tracks[targetTrackIndex.value].id
-    store.changeTrackOperator(targetTrackIndex.value, oldId, charId)
+    const oldId = store.tracks[targetTrackIndex.value].id;
+    store.changeTrackOperator(targetTrackIndex.value, oldId, charId);
   }
-  isSelectorVisible.value = false
+  isSelectorVisible.value = false;
 }
 
 function removeOperator() {
   if (targetTrackIndex.value !== null) {
-    store.clearTrack(targetTrackIndex.value)
+    store.clearTrack(targetTrackIndex.value);
   }
-  isSelectorVisible.value = false
+  isSelectorVisible.value = false;
 }
 
 function openWeaponSelector(index) {
-  if (!store.tracks[index] || !store.tracks[index].id) return
-  store.selectTrack(index)
-  weaponTargetIndex.value = index
-  weaponSearchQuery.value = ''
-  isWeaponSelectorVisible.value = true
+  if (!store.tracks[index] || !store.tracks[index].id) return;
+  store.selectTrack(index);
+  weaponTargetIndex.value = index;
+  weaponSearchQuery.value = '';
+  isWeaponSelectorVisible.value = true;
 }
 
 function confirmWeaponSelection(weaponId) {
   if (weaponTargetIndex.value !== null) {
-    const track = store.tracks[weaponTargetIndex.value]
+    const track = store.tracks[weaponTargetIndex.value];
     if (track && track.id) {
-      store.updateTrackWeapon(track.id, weaponId)
+      store.updateTrackWeapon(track.id, weaponId);
     }
   }
-  isWeaponSelectorVisible.value = false
+  isWeaponSelectorVisible.value = false;
 }
 
 function removeWeapon() {
   if (weaponTargetIndex.value !== null) {
-    const track = store.tracks[weaponTargetIndex.value]
+    const track = store.tracks[weaponTargetIndex.value];
     if (track && track.id) {
-      store.updateTrackWeapon(track.id, null)
+      store.updateTrackWeapon(track.id, null);
     }
   }
-  isWeaponSelectorVisible.value = false
+  isWeaponSelectorVisible.value = false;
 }
 
 function openEquipmentSelector(index, slotKey) {
-  if (!store.tracks[index] || !store.tracks[index].id) return
-  store.selectTrack(index)
-  equipmentTargetIndex.value = index
-  equipmentSlotKey.value = slotKey
-  equipmentSearchQuery.value = ''
-  equipmentCategoryFilter.value = 'ALL'
-  equipmentAffixFilter.value = 'ALL'
-  equipmentLevelFilter.value = 'ALL'
-  equipmentPendingRefineTier.value = getEquipmentTierForTrack(store.tracks[index], slotKey)
-  isEquipmentSelectorVisible.value = true
+  if (!store.tracks[index] || !store.tracks[index].id) return;
+  store.selectTrack(index);
+  equipmentTargetIndex.value = index;
+  equipmentSlotKey.value = slotKey;
+  equipmentSearchQuery.value = '';
+  equipmentCategoryFilter.value = 'ALL';
+  equipmentAffixFilter.value = 'ALL';
+  equipmentLevelFilter.value = 'ALL';
+  equipmentPendingRefineTier.value = getEquipmentTierForTrack(store.tracks[index], slotKey);
+  isEquipmentSelectorVisible.value = true;
 }
 
 function confirmEquipmentSelection(equipmentId) {
   if (equipmentTargetIndex.value !== null) {
-    const track = store.tracks[equipmentTargetIndex.value]
+    const track = store.tracks[equipmentTargetIndex.value];
     if (track && track.id) {
-      store.updateTrackEquipment(track.id, equipmentSlotKey.value, equipmentId)
+      store.updateTrackEquipment(track.id, equipmentSlotKey.value, equipmentId);
       if (equipmentId) {
         store.updateTrackEquipmentTier(
-            track.id,
-            equipmentSlotKey.value,
-            equipmentPendingRefineTier.value,
-        )
+          track.id,
+          equipmentSlotKey.value,
+          equipmentPendingRefineTier.value,
+        );
       }
     }
   }
-  isEquipmentSelectorVisible.value = false
+  isEquipmentSelectorVisible.value = false;
 }
 
 function removeEquipment() {
   if (equipmentTargetIndex.value !== null) {
-    const track = store.tracks[equipmentTargetIndex.value]
+    const track = store.tracks[equipmentTargetIndex.value];
     if (track && track.id) {
-      store.updateTrackEquipment(track.id, equipmentSlotKey.value, null)
+      store.updateTrackEquipment(track.id, equipmentSlotKey.value, null);
     }
   }
-  equipmentPendingRefineTier.value = 0
-  isEquipmentSelectorVisible.value = false
+  equipmentPendingRefineTier.value = 0;
+  isEquipmentSelectorVisible.value = false;
 }
 
 const operatorSelectorItems = computed(() => {
-  locale.value
-  return (store.characterRoster || []).map((char) => ({
+  locale.value;
+  return (store.characterRoster || []).map(char => ({
     id: char.id,
     canonicalId: char.id,
     name: getOperatorGameName(char.id || char.slug, locale.value),
@@ -1018,51 +1027,55 @@ const operatorSelectorItems = computed(() => {
       getGameElementName(char.element, locale.value),
       getGameClassName(char.class, locale.value),
       getGameWeaponTypeName(char.weapon, locale.value),
-    ].map(normalizeSearchText).filter(Boolean),
+    ]
+      .map(normalizeSearchText)
+      .filter(Boolean),
     raw: char,
-  }))
-})
+  }));
+});
 
 function getOperatorAvatarById(operatorId) {
-  return operatorSelectorItems.value.find(item => item.id === operatorId)?.avatar || ''
+  return operatorSelectorItems.value.find(item => item.id === operatorId)?.avatar || '';
 }
 
 const filteredListFlat = computed(() => {
-  let list = operatorSelectorItems.value
+  let list = operatorSelectorItems.value;
   if (filterElement.value !== 'ALL') {
-    list = list.filter(c => c.element === filterElement.value)
+    list = list.filter(c => c.element === filterElement.value);
   }
   if (filterClass.value !== 'ALL') {
-    list = list.filter(c => c.class === filterClass.value)
+    list = list.filter(c => c.class === filterClass.value);
   }
   if (searchQuery.value) {
-    const q = normalizeSearchText(searchQuery.value)
-    list = list.filter(c => c.searchTerms.some(term => term.includes(q)))
+    const q = normalizeSearchText(searchQuery.value);
+    list = list.filter(c => c.searchTerms.some(term => term.includes(q)));
   }
-  return [...list].sort((a, b) => (b.rarity || 0) - (a.rarity || 0))
-})
+  return [...list].sort((a, b) => (b.rarity || 0) - (a.rarity || 0));
+});
 
 const rosterByRarity = computed(() => {
-  const groups = {}
+  const groups = {};
   filteredListFlat.value.forEach(char => {
-    const r = char.rarity || 1
-    if (!groups[r]) groups[r] = []
-    groups[r].push(char)
-  })
-  const levels = Object.keys(groups).map(Number).sort((a, b) => b - a)
-  return levels.map(level => ({ level: level, list: groups[level] }))
-})
+    const r = char.rarity || 1;
+    if (!groups[r]) groups[r] = [];
+    groups[r].push(char);
+  });
+  const levels = Object.keys(groups)
+    .map(Number)
+    .sort((a, b) => b - a);
+  return levels.map(level => ({ level: level, list: groups[level] }));
+});
 
 function getRarityBaseColor(rarity) {
-  if (rarity === 6) return '#FFD700'
-  if (rarity === 5) return '#ffc400'
-  if (rarity === 4) return '#d8b4fe'
-  return '#a0a0a0'
+  if (rarity === 6) return '#FFD700';
+  if (rarity === 5) return '#ffc400';
+  if (rarity === 4) return '#d8b4fe';
+  return '#a0a0a0';
 }
 
 const weaponSelectorItems = computed(() => {
-  locale.value
-  return (store.weaponDatabase || []).map((weapon) => ({
+  locale.value;
+  return (store.weaponDatabase || []).map(weapon => ({
     id: weapon.id,
     canonicalId: weapon.canonicalSlug || weapon.id,
     name: getWeaponGameName(weapon.canonicalSlug || weapon.id, locale.value),
@@ -1075,109 +1088,114 @@ const weaponSelectorItems = computed(() => {
       weapon.id,
       weapon.canonicalSlug,
       getGameWeaponTypeName(weapon.type, locale.value),
-    ].map(normalizeSearchText).filter(Boolean),
+    ]
+      .map(normalizeSearchText)
+      .filter(Boolean),
     raw: weapon,
-  }))
-})
+  }));
+});
 
 const weaponCandidates = computed(() => {
-  if (weaponTargetIndex.value === null) return []
-  const track = store.tracks[weaponTargetIndex.value]
-  if (!track || !track.id) return []
-  const char = operatorSelectorItems.value.find(c => c.id === track.id)
-  const requiredType = char?.weapon
-  let list = weaponSelectorItems.value
-  if (requiredType) list = list.filter(w => w.type === requiredType)
+  if (weaponTargetIndex.value === null) return [];
+  const track = store.tracks[weaponTargetIndex.value];
+  if (!track || !track.id) return [];
+  const char = operatorSelectorItems.value.find(c => c.id === track.id);
+  const requiredType = char?.weapon;
+  let list = weaponSelectorItems.value;
+  if (requiredType) list = list.filter(w => w.type === requiredType);
   if (weaponSearchQuery.value) {
-    const q = normalizeSearchText(weaponSearchQuery.value)
-    list = list.filter(w => w.searchTerms.some(term => term.includes(q)))
+    const q = normalizeSearchText(weaponSearchQuery.value);
+    list = list.filter(w => w.searchTerms.some(term => term.includes(q)));
   }
-  return [...list].sort((a, b) => (b.rarity || 0) - (a.rarity || 0))
-})
+  return [...list].sort((a, b) => (b.rarity || 0) - (a.rarity || 0));
+});
 
 const weaponRosterByRarity = computed(() => {
-  const groups = {}
+  const groups = {};
   weaponCandidates.value.forEach(weapon => {
-    const rarity = getWeaponRarity(weapon)
-    if (!groups[rarity]) groups[rarity] = []
-    groups[rarity].push(weapon)
-  })
-  const levels = Object.keys(groups).map(Number).sort((a, b) => b - a)
-  return levels.map(level => ({ level, list: groups[level] }))
-})
+    const rarity = getWeaponRarity(weapon);
+    if (!groups[rarity]) groups[rarity] = [];
+    groups[rarity].push(weapon);
+  });
+  const levels = Object.keys(groups)
+    .map(Number)
+    .sort((a, b) => b - a);
+  return levels.map(level => ({ level, list: groups[level] }));
+});
 
 const currentWeaponForDialog = computed(() => {
-  if (weaponTargetIndex.value === null) return null
-  return getWeaponForTrack(store.tracks[weaponTargetIndex.value])
-})
+  if (weaponTargetIndex.value === null) return null;
+  return getWeaponForTrack(store.tracks[weaponTargetIndex.value]);
+});
 
 function getWeaponForTrack(track) {
-  if (!track || !track.weaponId) return null
-  return store.getWeaponById(track.weaponId)
+  if (!track || !track.weaponId) return null;
+  return store.getWeaponById(track.weaponId);
 }
 
 function getWeaponRarity(weapon) {
-  return Math.max(3, weapon?.rarity || 3)
+  return Math.max(3, weapon?.rarity || 3);
 }
 
 function isWeaponEquipped(weaponId) {
-  if (weaponTargetIndex.value === null) return false
-  const track = store.tracks[weaponTargetIndex.value]
-  return !!track && track.weaponId === weaponId
+  if (weaponTargetIndex.value === null) return false;
+  const track = store.tracks[weaponTargetIndex.value];
+  return !!track && track.weaponId === weaponId;
 }
 
 function getEquipmentForTrack(track, slotKey) {
-  if (!track) return null
-  let eqId = null
-  if (slotKey === 'armor') eqId = track.equipArmorId
-  else if (slotKey === 'gloves') eqId = track.equipGlovesId
-  else if (slotKey === 'accessory1') eqId = track.equipAccessory1Id
-  else if (slotKey === 'accessory2') eqId = track.equipAccessory2Id
-  return store.getEquipmentById(eqId)
+  if (!track) return null;
+  let eqId = null;
+  if (slotKey === 'armor') eqId = track.equipArmorId;
+  else if (slotKey === 'gloves') eqId = track.equipGlovesId;
+  else if (slotKey === 'accessory1') eqId = track.equipAccessory1Id;
+  else if (slotKey === 'accessory2') eqId = track.equipAccessory2Id;
+  return store.getEquipmentById(eqId);
 }
 
 function getEquipmentTierForTrack(track, slotKey) {
-  if (!track) return 0
-  if (slotKey === 'armor') return Number(track.equipArmorRefineTier) || 0
-  if (slotKey === 'gloves') return Number(track.equipGlovesRefineTier) || 0
-  if (slotKey === 'accessory1') return Number(track.equipAccessory1RefineTier) || 0
-  if (slotKey === 'accessory2') return Number(track.equipAccessory2RefineTier) || 0
-  return 0
+  if (!track) return 0;
+  if (slotKey === 'armor') return Number(track.equipArmorRefineTier) || 0;
+  if (slotKey === 'gloves') return Number(track.equipGlovesRefineTier) || 0;
+  if (slotKey === 'accessory1') return Number(track.equipAccessory1RefineTier) || 0;
+  if (slotKey === 'accessory2') return Number(track.equipAccessory2RefineTier) || 0;
+  return 0;
 }
 
 function getInitialGaugeMax(track) {
-  if (!track?.id) return 0
-  return Math.max(0, Number(store.getTrackGaugeMax(track.id)) || 0)
+  if (!track?.id) return 0;
+  return Math.max(0, Number(store.getTrackGaugeMax(track.id)) || 0);
 }
 
 function getInitialGaugeValue(track) {
-  const max = getInitialGaugeMax(track)
-  const value = Math.max(0, Number(track?.initialGauge) || 0)
-  return max > 0 ? Math.min(value, max) : value
+  const max = getInitialGaugeMax(track);
+  const value = Math.max(0, Number(track?.initialGauge) || 0);
+  return max > 0 ? Math.min(value, max) : value;
 }
 
 function updateInitialGauge(track, value) {
-  if (!track?.id) return
-  store.updateTrackInitialGauge(track.id, value)
+  if (!track?.id) return;
+  store.updateTrackInitialGauge(track.id, value);
 }
 
 const equipmentSlotType = computed(() => {
-  if (equipmentSlotKey.value === 'accessory1' || equipmentSlotKey.value === 'accessory2') return 'accessory'
-  return equipmentSlotKey.value
-})
+  if (equipmentSlotKey.value === 'accessory1' || equipmentSlotKey.value === 'accessory2')
+    return 'accessory';
+  return equipmentSlotKey.value;
+});
 
 const equipmentSlotLabel = computed(() => {
-  locale.value
-  if (equipmentSlotKey.value === 'armor') return t('timelineGrid.equipmentSlot.armor')
-  if (equipmentSlotKey.value === 'gloves') return t('timelineGrid.equipmentSlot.gloves')
-  if (equipmentSlotKey.value === 'accessory1') return t('timelineGrid.equipmentSlot.accessory1')
-  if (equipmentSlotKey.value === 'accessory2') return t('timelineGrid.equipmentSlot.accessory2')
-  return t('timelineGrid.equipmentSlot.equipment')
-})
+  locale.value;
+  if (equipmentSlotKey.value === 'armor') return t('timelineGrid.equipmentSlot.armor');
+  if (equipmentSlotKey.value === 'gloves') return t('timelineGrid.equipmentSlot.gloves');
+  if (equipmentSlotKey.value === 'accessory1') return t('timelineGrid.equipmentSlot.accessory1');
+  if (equipmentSlotKey.value === 'accessory2') return t('timelineGrid.equipmentSlot.accessory2');
+  return t('timelineGrid.equipmentSlot.equipment');
+});
 
 const equipmentSelectorItems = computed(() => {
-  locale.value
-  return (store.equipmentDatabase || []).map((eq) => ({
+  locale.value;
+  return (store.equipmentDatabase || []).map(eq => ({
     id: eq.id,
     canonicalId: eq.canonicalGearPieceId || eq.id,
     name: getGearPieceGameName(eq.canonicalGearPieceId || eq.id, locale.value),
@@ -1195,42 +1213,44 @@ const equipmentSelectorItems = computed(() => {
       eq.category,
       eq.category ? getGearSetGameName(eq.category, locale.value) : '',
       getGameSlotTypeName(eq.slot, locale.value),
-    ].map(normalizeSearchText).filter(Boolean),
+    ]
+      .map(normalizeSearchText)
+      .filter(Boolean),
     raw: eq,
-  }))
-})
+  }));
+});
 
 const equipmentCandidates = computed(() => {
-  if (equipmentTargetIndex.value === null) return []
-  const track = store.tracks[equipmentTargetIndex.value]
-  if (!track || !track.id) return []
+  if (equipmentTargetIndex.value === null) return [];
+  const track = store.tracks[equipmentTargetIndex.value];
+  if (!track || !track.id) return [];
 
-  const operator = getEquipmentDialogOperator(track)
+  const operator = getEquipmentDialogOperator(track);
 
-  let list = equipmentSelectorItems.value
-  list = list.filter(e => e.slot === equipmentSlotType.value)
+  let list = equipmentSelectorItems.value;
+  list = list.filter(e => e.slot === equipmentSlotType.value);
 
   if (equipmentCategoryFilter.value !== 'ALL') {
     if (equipmentCategoryFilter.value === '__UNCAT__') {
-      const known = new Set(store.equipmentCategories || [])
-      list = list.filter(e => !e.category || !known.has(e.category))
+      const known = new Set(store.equipmentCategories || []);
+      list = list.filter(e => !e.category || !known.has(e.category));
     } else {
-      list = list.filter(e => e.category === equipmentCategoryFilter.value)
+      list = list.filter(e => e.category === equipmentCategoryFilter.value);
     }
   }
 
   if (equipmentAffixFilter.value !== 'ALL') {
-    list = list.filter(e => equipmentMatchesAffixFilter(e, equipmentAffixFilter.value))
+    list = list.filter(e => equipmentMatchesAffixFilter(e, equipmentAffixFilter.value));
   }
 
   if (equipmentLevelFilter.value !== 'ALL') {
-    const targetLv = Number(equipmentLevelFilter.value)
-    list = list.filter(e => Number(e.level) === targetLv)
+    const targetLv = Number(equipmentLevelFilter.value);
+    list = list.filter(e => Number(e.level) === targetLv);
   }
 
   if (equipmentSearchQuery.value) {
-    const q = normalizeSearchText(equipmentSearchQuery.value)
-    list = list.filter(e => e.searchTerms.some(term => term.includes(q)))
+    const q = normalizeSearchText(equipmentSearchQuery.value);
+    list = list.filter(e => e.searchTerms.some(term => term.includes(q)));
   }
 
   return [...list]
@@ -1239,105 +1259,121 @@ const equipmentCandidates = computed(() => {
       abilityMatch: getEquipmentAbilityMatch(eq, operator),
     }))
     .sort((a, b) => {
-      const lvDiff = (Number(b.level) || 0) - (Number(a.level) || 0)
-      if (lvDiff !== 0) return lvDiff
-      return (a.name || '').localeCompare(b.name || '')
-    })
-})
+      const lvDiff = (Number(b.level) || 0) - (Number(a.level) || 0);
+      if (lvDiff !== 0) return lvDiff;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+});
 
 const equipmentRosterByLevel = computed(() => {
-  const groups = {}
+  const groups = {};
   equipmentCandidates.value.forEach(eq => {
-    const level = Number(eq.level) || 0
-    if (!groups[level]) groups[level] = []
-    groups[level].push(eq)
-  })
-  const levels = Object.keys(groups).map(Number).sort((a, b) => b - a)
-  return levels.map(level => ({ level, list: groups[level] }))
-})
+    const level = Number(eq.level) || 0;
+    if (!groups[level]) groups[level] = [];
+    groups[level].push(eq);
+  });
+  const levels = Object.keys(groups)
+    .map(Number)
+    .sort((a, b) => b - a);
+  return levels.map(level => ({ level, list: groups[level] }));
+});
 
 const currentEquipmentForDialog = computed(() => {
-  if (equipmentTargetIndex.value === null) return null
-  return getEquipmentForTrack(store.tracks[equipmentTargetIndex.value], equipmentSlotKey.value)
-})
+  if (equipmentTargetIndex.value === null) return null;
+  return getEquipmentForTrack(store.tracks[equipmentTargetIndex.value], equipmentSlotKey.value);
+});
 
 const currentEquipmentTierForDialog = computed(() => {
-  return equipmentPendingRefineTier.value
-})
+  return equipmentPendingRefineTier.value;
+});
 
 function setCurrentEquipmentTierForDialog(tier) {
-  const nextTier = Math.max(0, Math.min(3, Number(tier) || 0))
-  equipmentPendingRefineTier.value = nextTier
-  if (equipmentTargetIndex.value === null) return
-  const track = store.tracks[equipmentTargetIndex.value]
-  if (!track?.id) return
-  if (!currentEquipmentForDialog.value) return
+  const nextTier = Math.max(0, Math.min(3, Number(tier) || 0));
+  equipmentPendingRefineTier.value = nextTier;
+  if (equipmentTargetIndex.value === null) return;
+  const track = store.tracks[equipmentTargetIndex.value];
+  if (!track?.id) return;
+  if (!currentEquipmentForDialog.value) return;
 
-  store.updateTrackEquipmentTier(track.id, equipmentSlotKey.value, nextTier)
+  store.updateTrackEquipmentTier(track.id, equipmentSlotKey.value, nextTier);
 }
 function getEquipmentLevelColor(level) {
-  const key = Number(level)
-  return EQUIPMENT_LEVEL_COLORS[key] || '#888'
+  const key = Number(level);
+  return EQUIPMENT_LEVEL_COLORS[key] || '#888';
 }
 
 function isEquipmentEquipped(equipmentId) {
-  if (equipmentTargetIndex.value === null) return false
-  const track = store.tracks[equipmentTargetIndex.value]
-  const current = getEquipmentForTrack(track, equipmentSlotKey.value)
-  return !!current && (current.id === equipmentId || current.canonicalGearPieceId === equipmentId)
+  if (equipmentTargetIndex.value === null) return false;
+  const track = store.tracks[equipmentTargetIndex.value];
+  const current = getEquipmentForTrack(track, equipmentSlotKey.value);
+  return !!current && (current.id === equipmentId || current.canonicalGearPieceId === equipmentId);
 }
 
 // ===================================================================================
 // 核心逻辑：操作轴计算
 // ===================================================================================
 
-const PERFECT_LINK_STATUS_IDS = new Set([
-  'rossi-combo-perfect-timing-satisfied',
-])
+const PERFECT_LINK_STATUS_IDS = new Set(['rossi-combo-perfect-timing-satisfied']);
 
 function isPerfectLinkAction(action) {
-  if (!action || toLegacyDisplayType(action.type) !== 'link') return false
-  const id = action.instanceId
-  if (!id) return false
-  return (store.operatorLog || []).some((entry) => (
-    entry?.type === 'OPERATOR_EFFECT_APPLY' &&
-    entry?.actionId === id &&
-    PERFECT_LINK_STATUS_IDS.has(entry?.id)
-  ))
+  if (!action || toLegacyDisplayType(action.type) !== 'link') return false;
+  const id = action.instanceId;
+  if (!id) return false;
+  return (store.operatorLog || []).some(
+    entry =>
+      entry?.type === 'OPERATOR_EFFECT_APPLY' &&
+      entry?.actionId === id &&
+      PERFECT_LINK_STATUS_IDS.has(entry?.id),
+  );
 }
 
 const operationMarkers = computed(() => {
-  let rawMarkers = []
+  let rawMarkers = [];
 
   store.tracks.forEach((track, index) => {
-    if (!track.id) return
-    const keyNum = index + 1
+    if (!track.id) return;
+    const keyNum = index + 1;
 
     track.actions.forEach(action => {
-      if ((action.triggerWindow || 0) < 0) return
+      if ((action.triggerWindow || 0) < 0) return;
 
-      const displayType = toLegacyDisplayType(action.type)
-      let label = '', isHold = false, customClass = ''
+      const displayType = toLegacyDisplayType(action.type);
+      let label = '',
+        isHold = false,
+        customClass = '';
       if (displayType === 'skill') {
-        label = `${keyNum}`; customClass = 'op-skill'
+        label = `${keyNum}`;
+        customClass = 'op-skill';
       } else if (displayType === 'link') {
-        label = 'E'; customClass = 'op-link'
+        label = 'E';
+        customClass = 'op-link';
       } else if (displayType === 'ultimate') {
-        label = `${keyNum} (Hold)`; isHold = true; customClass = 'op-ultimate'
-      } else return
+        label = `${keyNum} (Hold)`;
+        isHold = true;
+        customClass = 'op-ultimate';
+      } else return;
 
       rawMarkers.push({
         id: `op-${action.instanceId}`,
         left: store.timeToPx(action.startTime || 0),
         width: isHold ? null : 24,
-        right: store.timeToPx(action.startTime || 0) + (isHold ? (store.timeToPx((action.startTime || 0) + (action.duration || 0)) - store.timeToPx(action.startTime || 0)) : 24),
-        label, isHold, customClass,
+        right:
+          store.timeToPx(action.startTime || 0) +
+          (isHold
+            ? store.timeToPx((action.startTime || 0) + (action.duration || 0)) -
+              store.timeToPx(action.startTime || 0)
+            : 24),
+        label,
+        isHold,
+        customClass,
         perfectLink: isPerfectLinkAction(action),
-        top: 0, height: 14, fontSize: 9
-      })
-    })
+        top: 0,
+        height: 14,
+        fontSize: 9,
+      });
+    });
 
-    const mySwitchEvents = (store.switchEvents || []).filter(sw => sw.characterId === track.id)
+    const mySwitchEvents = (store.switchEvents || []).filter(sw => sw.characterId === track.id);
 
     mySwitchEvents.forEach(sw => {
       rawMarkers.push({
@@ -1348,108 +1384,143 @@ const operationMarkers = computed(() => {
         label: `F${keyNum}`,
         isHold: false,
         customClass: 'op-switch',
-        top: 0, height: 14, fontSize: 9
-      })
-    })
-  })
+        top: 0,
+        height: 14,
+        fontSize: 9,
+      });
+    });
+  });
 
-  rawMarkers.sort((a, b) => a.left - b.left)
-  const finalMarkers = []
-  let cluster = []
-  let clusterMaxRight = -1
-  const processCluster = (group) => {
-    if (group.length === 0) return
-    const levels = []
+  rawMarkers.sort((a, b) => a.left - b.left);
+  const finalMarkers = [];
+  let cluster = [];
+  let clusterMaxRight = -1;
+  const processCluster = group => {
+    if (group.length === 0) return;
+    const levels = [];
     group.forEach(m => {
-      let placed = false
+      let placed = false;
       for (let i = 0; i < levels.length; i++) {
-        if (levels[i] + 1 <= m.left) { m.rowIndex = i; levels[i] = m.right; placed = true; break }
+        if (levels[i] + 1 <= m.left) {
+          m.rowIndex = i;
+          levels[i] = m.right;
+          placed = true;
+          break;
+        }
       }
-      if (!placed) { m.rowIndex = levels.length; levels.push(m.right) }
-    })
-    const depth = levels.length
-    let h, step, fs
-    if (depth <= 2) { h = 14; step = 16; fs = 9; }
-    else if (depth === 3) { h = 12; step = 13; fs = 9; }
-    else { h = 10; step = 10; fs = 8; }
-    group.forEach(m => { m.height = h; m.top = m.rowIndex * step; m.fontSize = fs; finalMarkers.push(m) })
-  }
-  rawMarkers.forEach(m => {
-    if (cluster.length === 0) { cluster.push(m); clusterMaxRight = m.right } else {
-      if (m.left < clusterMaxRight) { cluster.push(m); clusterMaxRight = Math.max(clusterMaxRight, m.right) } else { processCluster(cluster); cluster = [m]; clusterMaxRight = m.right }
+      if (!placed) {
+        m.rowIndex = levels.length;
+        levels.push(m.right);
+      }
+    });
+    const depth = levels.length;
+    let h, step, fs;
+    if (depth <= 2) {
+      h = 14;
+      step = 16;
+      fs = 9;
+    } else if (depth === 3) {
+      h = 12;
+      step = 13;
+      fs = 9;
+    } else {
+      h = 10;
+      step = 10;
+      fs = 8;
     }
-  })
-  processCluster(cluster)
-  return finalMarkers
-})
+    group.forEach(m => {
+      m.height = h;
+      m.top = m.rowIndex * step;
+      m.fontSize = fs;
+      finalMarkers.push(m);
+    });
+  };
+  rawMarkers.forEach(m => {
+    if (cluster.length === 0) {
+      cluster.push(m);
+      clusterMaxRight = m.right;
+    } else {
+      if (m.left < clusterMaxRight) {
+        cluster.push(m);
+        clusterMaxRight = Math.max(clusterMaxRight, m.right);
+      } else {
+        processCluster(cluster);
+        cluster = [m];
+        clusterMaxRight = m.right;
+      }
+    }
+  });
+  processCluster(cluster);
+  return finalMarkers;
+});
 
 // ===================================================================================
 // 辅助计算属性 & 事件处理
 // ===================================================================================
 
 const equipmentAffixFilterGroups = computed(() => {
-  locale.value
+  locale.value;
   return EQUIPMENT_AFFIX_FILTER_GROUPS.map(group => ({
     ...group,
     items: group.items.map(item => ({
       ...item,
       label: getEquipmentAffixFilterLabel(item.value),
     })),
-  }))
-})
+  }));
+});
 
 function getEquipmentAffixFilterLabel(filterId) {
   return trOrFallback(
-      `timelineGrid.equipmentDialog.affixFilters.${filterId}`,
-      getEquipmentModifierLabel(filterId)
-  )
+    `timelineGrid.equipmentDialog.affixFilters.${filterId}`,
+    getEquipmentModifierLabel(filterId),
+  );
 }
 
 function getEquipmentAffixModifierIds(eq) {
   return getEquipmentAffixRows(eq)
-      .map(row => row.modifierId)
-      .filter(Boolean)
+    .map(row => row.modifierId)
+    .filter(Boolean);
 }
 
 function equipmentMatchesAffixFilter(eq, filterId) {
-  if (!filterId || filterId === 'ALL') return true
-  return getEquipmentAffixModifierIds(eq).includes(filterId)
+  if (!filterId || filterId === 'ALL') return true;
+  return getEquipmentAffixModifierIds(eq).includes(filterId);
 }
 
 const totalWidthComputed = computed(() => {
-  return store.totalTimelineWidthPx
-})
+  return store.totalTimelineWidthPx;
+});
 
-const activePrepDuration = computed(() => (
-  prepDurationPreview.value !== null ? prepDurationPreview.value : store.prepDuration
-))
+const activePrepDuration = computed(() =>
+  prepDurationPreview.value !== null ? prepDurationPreview.value : store.prepDuration,
+);
 
 const prepZoneWidthPxRounded = computed(() => {
-  const dur = Number(activePrepDuration.value) || 0
-  if (dur <= 0) return 0
-  if (store.prepExpanded) return Math.round(dur * store.timeBlockWidth)
-  return Math.round(store.prepZoneWidthPx)
-})
+  const dur = Number(activePrepDuration.value) || 0;
+  if (dur <= 0) return 0;
+  if (store.prepExpanded) return Math.round(dur * store.timeBlockWidth);
+  return Math.round(store.prepZoneWidthPx);
+});
 
 const transformStyle = computed(() => {
   return {
     transform: `translateX(${-store.timelineShift}px)`,
-    willChange: 'transform'
-  }
-})
+    willChange: 'transform',
+  };
+});
 
 const getTrackLaneStyle = computed(() => {
-  const w = TIME_BLOCK_WIDTH.value
-  const totalWidth = totalWidthComputed.value
+  const w = TIME_BLOCK_WIDTH.value;
+  const totalWidth = totalWidthComputed.value;
 
   return {
     width: `${totalWidth}px`,
     backgroundImage: `linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 0)`,
     backgroundSize: `${w}px 100%`,
     backgroundRepeat: 'repeat-x',
-    imageRendering: 'auto'
-  }
-})
+    imageRendering: 'auto',
+  };
+});
 
 function getViewWindow({ bufferPx = 0 } = {}) {
   const totalPx = store.totalTimelineWidthPx;
@@ -1460,8 +1531,8 @@ function getViewWindow({ bufferPx = 0 } = {}) {
       startPx: 0,
       endPx: totalPx,
       startTime: 0,
-      endTime: totalSeconds
-    }
+      endTime: totalSeconds,
+    };
   }
 
   const timelineWidth = store.timelineRect.width;
@@ -1474,30 +1545,30 @@ function getViewWindow({ bufferPx = 0 } = {}) {
     startPx,
     endPx,
     startTime: store.pxToTime(startPx),
-    endTime: store.pxToTime(endPx)
-  }
+    endTime: store.pxToTime(endPx),
+  };
 }
 
 const rawDynamicTicks = computed(() => {
   const width = TIME_BLOCK_WIDTH.value;
   const viewWindow = getViewWindow({ bufferPx: 100 });
 
-  const prep = activePrepDuration.value || 0
+  const prep = activePrepDuration.value || 0;
   const realStartVT = viewWindow.startTime;
   const realEndVT = viewWindow.endTime;
 
-  const btStart = realStartVT - prep
-  const btEnd = realEndVT - prep
+  const btStart = realStartVT - prep;
+  const btEnd = realEndVT - prep;
 
   const gameStartVT = store.toGameTime(realStartVT);
-  const gameStartBT = gameStartVT - prep
+  const gameStartBT = gameStartVT - prep;
 
   let subDivision = 1;
   if (width >= 800) subDivision = 60;
   else if (width >= 200) subDivision = 10;
   else if (width >= 100) subDivision = 2;
 
-  const minBtForTicks = (!store.prepExpanded && prep > 0) ? 0 : Math.min(btStart, gameStartBT)
+  const minBtForTicks = !store.prepExpanded && prep > 0 ? 0 : Math.min(btStart, gameStartBT);
   const startStep = Math.floor(minBtForTicks * subDivision);
   const endStep = Math.ceil(btEnd * subDivision);
 
@@ -1508,7 +1579,7 @@ const rawDynamicTicks = computed(() => {
     const bt = i / subDivision;
     let type = '';
     let label = '';
-    const isIntegerSecond = (i % subDivision === 0);
+    const isIntegerSecond = i % subDivision === 0;
 
     if (isIntegerSecond) {
       const secondValue = Math.round(bt);
@@ -1521,7 +1592,6 @@ const rawDynamicTicks = computed(() => {
       } else {
         type = 'major-dim';
       }
-
     } else {
       if (subDivision === 2) {
         type = 'tenth';
@@ -1544,20 +1614,20 @@ const rawDynamicTicks = computed(() => {
       }
     }
 
-    const realVT = bt + prep
+    const realVT = bt + prep;
     if (!store.prepExpanded && prep > 0 && bt < -0.0001) {
-      continue
+      continue;
     }
-    const realX = store.timeToPx(realVT)
+    const realX = store.timeToPx(realVT);
 
     realTicks.push({
       time: bt,
       type,
       label,
-      x: realX
+      x: realX,
     });
 
-    const gameVT = bt + prep
+    const gameVT = bt + prep;
     const mappedRealVT = store.toRealTime(gameVT);
 
     // 游戏时间相对现实时间有偏移，所以再检查一次窗口边界
@@ -1566,7 +1636,7 @@ const rawDynamicTicks = computed(() => {
         time: bt,
         type,
         label,
-        x: store.timeToPx(mappedRealVT)
+        x: store.timeToPx(mappedRealVT),
       });
     }
   }
@@ -1576,262 +1646,275 @@ const rawDynamicTicks = computed(() => {
 
 const dynamicTicks = refThrottled(rawDynamicTicks, 100);
 
-function forceSvgUpdate() { svgRenderKey.value++ }
+function forceSvgUpdate() {
+  svgRenderKey.value++;
+}
 
 function updateScrollbarHeight() {
   if (tracksContentRef.value) {
-    const el = tracksContentRef.value
-    const height = el.offsetHeight - el.clientHeight
-    scrollbarHeight.value = height > 0 ? height : 0
+    const el = tracksContentRef.value;
+    const height = el.offsetHeight - el.clientHeight;
+    scrollbarHeight.value = height > 0 ? height : 0;
   }
 }
 
 function calculateTimeFromClient(clientX, clientY, offsetX = 0, fixedStep = null) {
-  const mouseXInTrack = store.toTimelineSpace(clientX - offsetX, clientY).x
+  const mouseXInTrack = store.toTimelineSpace(clientX - offsetX, clientY).x;
 
-  const rawTime = store.pxToTime(mouseXInTrack)
+  const rawTime = store.pxToTime(mouseXInTrack);
 
-  const step = fixedStep !== null ? fixedStep : store.snapStep
+  const step = fixedStep !== null ? fixedStep : store.snapStep;
 
-  const inverse = 1 / step
-  let startTime = Math.round(rawTime * inverse) / inverse
-  if (startTime < 0) startTime = 0
+  const inverse = 1 / step;
+  let startTime = Math.round(rawTime * inverse) / inverse;
+  if (startTime < 0) startTime = 0;
 
-  return snapTimeToFrame(startTime)
+  return snapTimeToFrame(startTime);
 }
 
 function calculateTimeFromEvent(evt, fixedStep = null) {
-  return calculateTimeFromClient(evt.clientX, evt.clientY, 0, fixedStep)
+  return calculateTimeFromClient(evt.clientX, evt.clientY, 0, fixedStep);
 }
 
 function onPrepResizeMouseDown(evt) {
-  if (!store.prepExpanded) return
-  if (store.prepDuration <= 0) return
-  evt.stopPropagation()
-  evt.preventDefault()
-  isResizingPrep.value = true
-  prepDurationPreview.value = Number(store.prepDuration) || 0
-  document.body.classList.add('is-dragging')
-  document.body.style.cursor = 'ew-resize'
-  window.addEventListener('mousemove', onPrepResizeMouseMove)
-  window.addEventListener('mouseup', onPrepResizeMouseUp)
+  if (!store.prepExpanded) return;
+  if (store.prepDuration <= 0) return;
+  evt.stopPropagation();
+  evt.preventDefault();
+  isResizingPrep.value = true;
+  prepDurationPreview.value = Number(store.prepDuration) || 0;
+  document.body.classList.add('is-dragging');
+  document.body.style.cursor = 'ew-resize';
+  window.addEventListener('mousemove', onPrepResizeMouseMove);
+  window.addEventListener('mouseup', onPrepResizeMouseUp);
 }
 
 function onPrepResizeMouseMove(evt) {
-  if (!isResizingPrep.value) return
-  const newDuration = calculateTimeFromEvent(evt, store.snapStep)
-  prepDurationPreview.value = newDuration
+  if (!isResizingPrep.value) return;
+  const newDuration = calculateTimeFromEvent(evt, store.snapStep);
+  prepDurationPreview.value = newDuration;
 }
 
 function onPrepResizeMouseUp() {
-  if (!isResizingPrep.value) return
-  const finalDuration = prepDurationPreview.value
-  isResizingPrep.value = false
-  prepDurationPreview.value = null
-  document.body.classList.remove('is-dragging')
-  document.body.style.cursor = ''
-  window.removeEventListener('mousemove', onPrepResizeMouseMove)
-  window.removeEventListener('mouseup', onPrepResizeMouseUp)
+  if (!isResizingPrep.value) return;
+  const finalDuration = prepDurationPreview.value;
+  isResizingPrep.value = false;
+  prepDurationPreview.value = null;
+  document.body.classList.remove('is-dragging');
+  document.body.style.cursor = '';
+  window.removeEventListener('mousemove', onPrepResizeMouseMove);
+  window.removeEventListener('mouseup', onPrepResizeMouseUp);
   if (finalDuration !== null) {
-    store.setPrepDuration(finalDuration)
+    store.setPrepDuration(finalDuration);
   }
 }
 
-const isPrepDurationEditorOpen = ref(false)
-const prepDurationDraft = ref('')
-const prepDurationInputRef = ref(null)
+const isPrepDurationEditorOpen = ref(false);
+const prepDurationDraft = ref('');
+const prepDurationInputRef = ref(null);
 
 function openPrepDurationEditor() {
-  prepDurationDraft.value = String(timeToFrame(activePrepDuration.value))
-  isPrepDurationEditorOpen.value = true
-  nextTick(() => prepDurationInputRef.value?.focus?.())
+  prepDurationDraft.value = String(timeToFrame(activePrepDuration.value));
+  isPrepDurationEditorOpen.value = true;
+  nextTick(() => prepDurationInputRef.value?.focus?.());
 }
 
 function closePrepDurationEditor() {
-  isPrepDurationEditorOpen.value = false
+  isPrepDurationEditorOpen.value = false;
 }
 
 function applyPrepDurationDraft() {
-  const frames = Number(prepDurationDraft.value)
-  if (!Number.isFinite(frames)) return
-  store.setPrepDuration(frameToTime(frames))
-  closePrepDurationEditor()
+  const frames = Number(prepDurationDraft.value);
+  if (!Number.isFinite(frames)) return;
+  store.setPrepDuration(frameToTime(frames));
+  closePrepDurationEditor();
 }
 
-const fakeScrollbarRef = ref(null)
+const fakeScrollbarRef = ref(null);
 
-let ticking = false
+let ticking = false;
 function onFakeScroll(e) {
-  if (ticking) return
-  ticking = true
-  store.setTimelineShift(e.target.scrollLeft)
+  if (ticking) return;
+  ticking = true;
+  store.setTimelineShift(e.target.scrollLeft);
   requestAnimationFrame(() => {
-    ticking = false
-  })
+    ticking = false;
+  });
 }
 
-watch(() => store.timelineShift, (val) => {
-  if (fakeScrollbarRef.value) {
-    fakeScrollbarRef.value.scrollLeft = val
-  }
-})
+watch(
+  () => store.timelineShift,
+  val => {
+    if (fakeScrollbarRef.value) {
+      fakeScrollbarRef.value.scrollLeft = val;
+    }
+  },
+);
 
-watch(() => store.timelineScrollTop, (val) => {
-  if (tracksHeaderRef.value) {
-    tracksHeaderRef.value.scrollTop = val
-  }
-  if (tracksContentRef.value && Math.abs(tracksContentRef.value.scrollTop - val) > 1) {
-    tracksContentRef.value.scrollTop = val
-  }
-})
+watch(
+  () => store.timelineScrollTop,
+  val => {
+    if (tracksHeaderRef.value) {
+      tracksHeaderRef.value.scrollTop = val;
+    }
+    if (tracksContentRef.value && Math.abs(tracksContentRef.value.scrollTop - val) > 1) {
+      tracksContentRef.value.scrollTop = val;
+    }
+  },
+);
 
 function syncVerticalScroll() {
   if (tracksContentRef.value) {
-    const top = tracksContentRef.value.scrollTop
-    store.setScrollTop(top)
+    const top = tracksContentRef.value.scrollTop;
+    store.setScrollTop(top);
   }
 }
 
-
 function onActionContextMenu(evt, action) {
   if (!store.multiSelectedIds.has(action.instanceId)) {
-    store.selectAction(action.instanceId)
+    store.selectAction(action.instanceId);
   }
-  store.openContextMenu(evt, action.instanceId)
+  store.openContextMenu(evt, action.instanceId);
 }
 // ===================================================================================
 // 鼠标与拖拽逻辑
 // ===================================================================================
 
-const cachedSpData = computed(() => store.spSeries || [])
+const cachedSpData = computed(() => store.spSeries || []);
 const currentSpValue = computed(() => {
-  const time = store.cursorCurrentTime
-  const points = cachedSpData.value
+  const time = store.cursorCurrentTime;
+  const points = cachedSpData.value;
   if (!points || points.length === 0) {
-    const val = Number(store.systemConstants.initialSp)
-    return isNaN(val) ? 200 : val
+    const val = Number(store.systemConstants.initialSp);
+    return isNaN(val) ? 200 : val;
   }
   for (let i = 0; i < points.length - 1; i++) {
-    const p1 = points[i]; const p2 = points[i+1]
+    const p1 = points[i];
+    const p2 = points[i + 1];
     if (time >= p1.time && time < p2.time) {
-      const progress = (time - p1.time) / (p2.time - p1.time)
-      const val = p1.sp + (p2.sp - p1.sp) * progress
-      return Math.floor(val)
+      const progress = (time - p1.time) / (p2.time - p1.time);
+      const val = p1.sp + (p2.sp - p1.sp) * progress;
+      return Math.floor(val);
     }
   }
-  return Math.floor(points[points.length - 1].sp)
-})
+  return Math.floor(points[points.length - 1].sp);
+});
 
 const currentReturnedSpValue = computed(() => {
-  const time = store.cursorCurrentTime
-  let value = 0
+  const time = store.cursorCurrentTime;
+  let value = 0;
   for (const entry of store.simLog || []) {
-    if (entry?.type !== 'SP_CHANGE') continue
+    if (entry?.type !== 'SP_CHANGE') continue;
     if (Number(entry.time) <= time && entry.payload?.refundSp != null) {
-      value = Number(entry.payload.refundSp) || 0
+      value = Number(entry.payload.refundSp) || 0;
     }
   }
-  return Math.floor(value)
-})
+  return Math.floor(value);
+});
 
 const currentSpReturnText = computed(() => {
-  const value = currentReturnedSpValue.value
-  return value > 0 ? ` (${t('timelineGrid.cursor.spReturn')}: ${value})` : ''
-})
+  const value = currentReturnedSpValue.value;
+  return value > 0 ? ` (${t('timelineGrid.cursor.spReturn')}: ${value})` : '';
+});
 
-const cachedStaggerData = computed(() => store.staggerSeries?.points || [])
+const cachedStaggerData = computed(() => store.staggerSeries?.points || []);
 const currentStaggerValue = computed(() => {
-  const time = store.cursorCurrentTime
-  const points = cachedStaggerData.value
-  if (!points || points.length === 0) return 0
+  const time = store.cursorCurrentTime;
+  const points = cachedStaggerData.value;
+  if (!points || points.length === 0) return 0;
   for (let i = 0; i < points.length - 1; i++) {
-    const p1 = points[i]
-    const p2 = points[i+1]
+    const p1 = points[i];
+    const p2 = points[i + 1];
     if (time >= p1.time && time < p2.time) {
-      return Math.floor(p1.val)
+      return Math.floor(p1.val);
     }
   }
-  return Math.floor(points[points.length - 1].val)
-})
+  return Math.floor(points[points.length - 1].val);
+});
 const currentEnemyMaxHp = computed(() => {
-  return Number(store.systemConstants.enemyHp ?? 0) || 0
-})
+  return Number(store.systemConstants.enemyHp ?? 0) || 0;
+});
 
 const currentEnemyDamageTaken = computed(() => {
-  const time = store.cursorCurrentTime
+  const time = store.cursorCurrentTime;
 
   return (store.simLog || [])
-      .filter(entry => entry.type === 'DAMAGE_HIT' && Number(entry.time) <= time)
-      .reduce((sum, entry) => {
-        const hitData = entry.payload?.hitData
-        const damage = Number(store.getHitDisplayDamage?.(hitData) ?? hitData?._expectedDamage ?? 0) || 0
-        return sum + damage
-      }, 0)
-})
+    .filter(entry => entry.type === 'DAMAGE_HIT' && Number(entry.time) <= time)
+    .reduce((sum, entry) => {
+      const hitData = entry.payload?.hitData;
+      const damage =
+        Number(store.getHitDisplayDamage?.(hitData) ?? hitData?._expectedDamage ?? 0) || 0;
+      return sum + damage;
+    }, 0);
+});
 
 const currentEnemyHp = computed(() => {
-  const maxHp = currentEnemyMaxHp.value
-  if (!maxHp) return 0
-  return Math.max(0, Math.floor(maxHp - currentEnemyDamageTaken.value))
-})
+  const maxHp = currentEnemyMaxHp.value;
+  if (!maxHp) return 0;
+  return Math.max(0, Math.floor(maxHp - currentEnemyDamageTaken.value));
+});
 
 const currentEnemyHpText = computed(() => {
-  const maxHp = currentEnemyMaxHp.value
-  if (!maxHp) return ''
-  return `${currentEnemyHp.value.toLocaleString()} / ${maxHp.toLocaleString()}`
-})
+  const maxHp = currentEnemyMaxHp.value;
+  if (!maxHp) return '';
+  return `${currentEnemyHp.value.toLocaleString()} / ${maxHp.toLocaleString()}`;
+});
 
 function getStepPointAtTime(points, time) {
-  if (!points || points.length === 0) return null
+  if (!points || points.length === 0) return null;
 
-  let lo = 0
-  let hi = points.length - 1
+  let lo = 0;
+  let hi = points.length - 1;
   while (lo <= hi) {
-    const mid = (lo + hi) >> 1
-    if ((Number(points[mid].time) || 0) <= time) lo = mid + 1
-    else hi = mid - 1
+    const mid = (lo + hi) >> 1;
+    if ((Number(points[mid].time) || 0) <= time) lo = mid + 1;
+    else hi = mid - 1;
   }
 
-  return points[Math.max(0, hi)] || null
+  return points[Math.max(0, hi)] || null;
 }
 
 function toMutedRgba(color, alpha = 0.78) {
-  const c = String(color || '').trim()
-  if (!c) return `rgba(255,255,255,${alpha})`
+  const c = String(color || '').trim();
+  if (!c) return `rgba(255,255,255,${alpha})`;
 
   if (c.startsWith('#')) {
-    const hex = c.slice(1)
-    const expanded = (hex.length === 3)
-      ? hex.split('').map(ch => ch + ch).join('')
-      : hex
+    const hex = c.slice(1);
+    const expanded =
+      hex.length === 3
+        ? hex
+            .split('')
+            .map(ch => ch + ch)
+            .join('')
+        : hex;
 
     if (expanded.length === 6) {
-      const r = parseInt(expanded.slice(0, 2), 16)
-      const g = parseInt(expanded.slice(2, 4), 16)
-      const b = parseInt(expanded.slice(4, 6), 16)
-      if ([r, g, b].every(Number.isFinite)) return `rgba(${r},${g},${b},${alpha})`
+      const r = parseInt(expanded.slice(0, 2), 16);
+      const g = parseInt(expanded.slice(2, 4), 16);
+      const b = parseInt(expanded.slice(4, 6), 16);
+      if ([r, g, b].every(Number.isFinite)) return `rgba(${r},${g},${b},${alpha})`;
     }
   }
 
-  return c
+  return c;
 }
 
 const cursorGaugeRows = computed(() => {
-  const time = snapTimeToFrame(store.cursorCurrentTime)
-  const rows = []
+  const time = snapTimeToFrame(store.cursorCurrentTime);
+  const rows = [];
 
   for (const track of store.teamTracksInfo) {
-    if (!track?.id) continue
+    if (!track?.id) continue;
 
-    const points = store.gaugeSeriesByTrackId.get(track.id) || []
-    const point = getStepPointAtTime(points, time)
-    const val = snapMs(point?.val ?? 0)
+    const points = store.gaugeSeriesByTrackId.get(track.id) || [];
+    const point = getStepPointAtTime(points, time);
+    const val = snapMs(point?.val ?? 0);
 
-    const max = store.getTrackGaugeMax(track.id)
-    const baseColor = store.getCharacterElementColor(track.id)
-    const isFull = max > 0 && val >= max - 1e-9
-    const colorMuted = toMutedRgba(baseColor, 0.78)
-    const colorFull = toMutedRgba(baseColor, 1)
+    const max = store.getTrackGaugeMax(track.id);
+    const baseColor = store.getCharacterElementColor(track.id);
+    const isFull = max > 0 && val >= max - 1e-9;
+    const colorMuted = toMutedRgba(baseColor, 0.78);
+    const colorFull = toMutedRgba(baseColor, 1);
 
     rows.push({
       id: track.id,
@@ -1842,101 +1925,116 @@ const cursorGaugeRows = computed(() => {
       colorFull,
       val,
       max,
-    })
+    });
   }
 
-  return rows
-})
+  return rows;
+});
 
 function onGridMouseMove(evt) {
-  store.setCursorPosition(evt.clientX, evt.clientY)
-  isCursorVisible.value = true
+  store.setCursorPosition(evt.clientX, evt.clientY);
+  isCursorVisible.value = true;
 }
-function onGridMouseLeave() { isCursorVisible.value = false }
+function onGridMouseLeave() {
+  isCursorVisible.value = false;
+}
 
 function onContentMouseDown(evt) {
   if (store.isBoxSelectMode) {
-    evt.stopPropagation(); evt.preventDefault()
-    isBoxSelecting.value = true
-    boxStart.value = store.toTimelineSpace(evt.clientX, evt.clientY)
-    boxRect.value = { left: boxStart.value.x, top: boxStart.value.y, width: 0, height: 0 }
-    window.addEventListener('mousemove', onBoxMouseMove)
-    window.addEventListener('mouseup', onBoxMouseUp)
-    return
+    evt.stopPropagation();
+    evt.preventDefault();
+    isBoxSelecting.value = true;
+    boxStart.value = store.toTimelineSpace(evt.clientX, evt.clientY);
+    boxRect.value = { left: boxStart.value.x, top: boxStart.value.y, width: 0, height: 0 };
+    window.addEventListener('mousemove', onBoxMouseMove);
+    window.addEventListener('mouseup', onBoxMouseUp);
+    return;
   }
-  onBackgroundClick(evt)
+  onBackgroundClick(evt);
 }
 
 function onCycleLineMouseDown(evt, boundaryId) {
-  evt.stopPropagation()
-  evt.preventDefault()
-  if (evt.button !== 0) return
+  evt.stopPropagation();
+  evt.preventDefault();
+  if (evt.button !== 0) return;
 
-  wasCycleSelectedOnPress.value = (store.selectedCycleBoundaryId === boundaryId)
+  wasCycleSelectedOnPress.value = store.selectedCycleBoundaryId === boundaryId;
 
   if (!wasCycleSelectedOnPress.value) {
-    store.selectCycleBoundary(boundaryId)
+    store.selectCycleBoundary(boundaryId);
   }
 
-  const boundary = store.cycleBoundaries.find((item) => item.id === boundaryId)
-  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY)
-  cycleBoundaryDragOffsetX.value = mousePos.x - store.timeToPx(Number(boundary?.time) || 0)
-  draggingCycleBoundaryId.value = boundaryId
-  initialMouseX.value = evt.clientX
-  initialMouseY.value = evt.clientY
-  isDragStarted.value = false
-  isMouseDown.value = true
-  document.body.classList.add('is-dragging')
+  const boundary = store.cycleBoundaries.find(item => item.id === boundaryId);
+  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY);
+  cycleBoundaryDragOffsetX.value = mousePos.x - store.timeToPx(Number(boundary?.time) || 0);
+  draggingCycleBoundaryId.value = boundaryId;
+  initialMouseX.value = evt.clientX;
+  initialMouseY.value = evt.clientY;
+  isDragStarted.value = false;
+  isMouseDown.value = true;
+  document.body.classList.add('is-dragging');
 
-  window.addEventListener('mousemove', onWindowMouseMove)
-  window.addEventListener('mouseup', onWindowMouseUp)
-  window.addEventListener('blur', onWindowMouseUp)
+  window.addEventListener('mousemove', onWindowMouseMove);
+  window.addEventListener('mouseup', onWindowMouseUp);
+  window.addEventListener('blur', onWindowMouseUp);
 }
 
 function onBoxMouseMove(evt) {
-  if (!isBoxSelecting.value) return
-  const current = store.toTimelineSpace(evt.clientX, evt.clientY)
-  const left = Math.min(boxStart.value.x, current.x)
-  const top = Math.min(boxStart.value.y, current.y)
+  if (!isBoxSelecting.value) return;
+  const current = store.toTimelineSpace(evt.clientX, evt.clientY);
+  const left = Math.min(boxStart.value.x, current.x);
+  const top = Math.min(boxStart.value.y, current.y);
   boxRect.value = {
-    left, top,
+    left,
+    top,
     width: Math.abs(current.x - boxStart.value.x),
-    height: Math.abs(current.y - boxStart.value.y)
-  }
+    height: Math.abs(current.y - boxStart.value.y),
+  };
 }
 
 function onBoxMouseUp() {
-  isBoxSelecting.value = false
-  window.removeEventListener('mousemove', onBoxMouseMove)
-  window.removeEventListener('mouseup', onBoxMouseUp)
-  const box = boxRect.value
+  isBoxSelecting.value = false;
+  window.removeEventListener('mousemove', onBoxMouseMove);
+  window.removeEventListener('mouseup', onBoxMouseUp);
+  const box = boxRect.value;
   const selection = {
     left: box.width > 0 ? box.left : box.left + box.width,
     top: box.height > 0 ? box.top : box.top + box.height,
     right: box.width > 0 ? box.left + box.width : box.left,
-    bottom: box.height > 0 ? box.top + box.height : box.top
-  }
-  if (selection.left > selection.right) [selection.left, selection.right] = [selection.right, selection.left]
-  if (selection.top > selection.bottom) [selection.top, selection.bottom] = [selection.bottom, selection.top]
-  const foundIds = []
+    bottom: box.height > 0 ? box.top + box.height : box.top,
+  };
+  if (selection.left > selection.right)
+    [selection.left, selection.right] = [selection.right, selection.left];
+  if (selection.top > selection.bottom)
+    [selection.top, selection.bottom] = [selection.bottom, selection.top];
+  const foundIds = [];
   store.tracks.forEach((track, trackIndex) => {
-    const trackEl = document.getElementById(`track-row-${trackIndex}`)
-    if (!trackEl) return
-    const trackRect = trackEl.getBoundingClientRect()
-    const containerRect = store.timelineRect
-    const trackRelativeTop = (trackRect.top - containerRect.top) + store.timelineScrollTop
-    const trackRelativeBottom = trackRelativeTop + trackRect.height
-    if (trackRelativeBottom < selection.top || trackRelativeTop > selection.bottom) return
+    const trackEl = document.getElementById(`track-row-${trackIndex}`);
+    if (!trackEl) return;
+    const trackRect = trackEl.getBoundingClientRect();
+    const containerRect = store.timelineRect;
+    const trackRelativeTop = trackRect.top - containerRect.top + store.timelineScrollTop;
+    const trackRelativeBottom = trackRelativeTop + trackRect.height;
+    if (trackRelativeBottom < selection.top || trackRelativeTop > selection.bottom) return;
     track.actions.forEach(action => {
-      const rect = store.nodeRects[action.instanceId]?.rect
-      const startPixel = rect ? rect.left : store.timeToPx(action.startTime)
-      const endPixel = rect ? rect.right : store.timeToPx(store.getShiftedEndTime(action.startTime, action.duration, action.instanceId))
-      if (startPixel < selection.right && endPixel > selection.left) foundIds.push(action.instanceId)
-    })
-  })
-  if (foundIds.length > 0) { store.setMultiSelection(foundIds); ElMessage.success(t('timelineGrid.selection.selectedCount', { count: foundIds.length })) }
-  else { store.clearSelection() }
-  boxRect.value = { left: 0, top: 0, width: 0, height: 0 }
+      const rect = store.nodeRects[action.instanceId]?.rect;
+      const startPixel = rect ? rect.left : store.timeToPx(action.startTime);
+      const endPixel = rect
+        ? rect.right
+        : store.timeToPx(
+            store.getShiftedEndTime(action.startTime, action.duration, action.instanceId),
+          );
+      if (startPixel < selection.right && endPixel > selection.left)
+        foundIds.push(action.instanceId);
+    });
+  });
+  if (foundIds.length > 0) {
+    store.setMultiSelection(foundIds);
+    ElMessage.success(t('timelineGrid.selection.selectedCount', { count: foundIds.length }));
+  } else {
+    store.clearSelection();
+  }
+  boxRect.value = { left: 0, top: 0, width: 0, height: 0 };
 }
 
 // ===================================================================================
@@ -1945,63 +2043,64 @@ function onBoxMouseUp() {
 
 const zoomValue = computed({
   get: () => store.timeBlockWidth,
-  set: (val) => store.setBaseBlockWidth(val)
-})
+  set: val => store.setBaseBlockWidth(val),
+});
 
 function adjustZoom(delta, anchorTime = null) {
-  const oldWidth = store.timeBlockWidth
+  const oldWidth = store.timeBlockWidth;
 
   if (anchorTime === null) {
-    const viewportCenterX = store.timelineShift + store.timelineRect.width / 2
-    anchorTime = store.pxToTime(viewportCenterX)
+    const viewportCenterX = store.timelineShift + store.timelineRect.width / 2;
+    anchorTime = store.pxToTime(viewportCenterX);
   }
 
-  const anchorOffsetInViewport = store.timeToPx(anchorTime) - store.timelineShift
+  const anchorOffsetInViewport = store.timeToPx(anchorTime) - store.timelineShift;
 
-  const newVal = oldWidth + delta
-  store.setBaseBlockWidth(newVal)
+  const newVal = oldWidth + delta;
+  store.setBaseBlockWidth(newVal);
 
-  const newWidth = store.timeBlockWidth
+  const newWidth = store.timeBlockWidth;
 
-  const newScrollLeft = store.timeToPx(anchorTime) - anchorOffsetInViewport
+  const newScrollLeft = store.timeToPx(anchorTime) - anchorOffsetInViewport;
 
   nextTick(() => {
-    store.setTimelineShift(newScrollLeft)
-  })
+    store.setTimelineShift(newScrollLeft);
+  });
 }
 function handleWheel(e) {
   if (e.ctrlKey) {
-    e.preventDefault()
+    e.preventDefault();
 
-    const timeAtMouse = store.cursorCurrentTime
+    const timeAtMouse = store.cursorCurrentTime;
 
-    const zoomSpeed = 0.15
-    const direction = e.deltaY < 0 ? 1 : -1
-    const delta = Math.round(store.timeBlockWidth * zoomSpeed * direction)
+    const zoomSpeed = 0.15;
+    const direction = e.deltaY < 0 ? 1 : -1;
+    const delta = Math.round(store.timeBlockWidth * zoomSpeed * direction);
 
-    adjustZoom(delta, timeAtMouse)
+    adjustZoom(delta, timeAtMouse);
   }
 }
 
 function handleTrackWheel(e) {
-  if (ticking) return
+  if (ticking) return;
 
-  ticking = true
+  ticking = true;
   requestAnimationFrame(() => {
-    ticking = false
-  })
+    ticking = false;
+  });
 
   if (e.ctrlKey) {
-    handleWheel(e); return
+    handleWheel(e);
+    return;
   }
 
   if (Math.abs(e.deltaX) > 0 || e.shiftKey) {
-    e.preventDefault()
-    let delta = e.deltaX
-    if (e.shiftKey && delta === 0) delta = e.deltaY
+    e.preventDefault();
+    let delta = e.deltaX;
+    if (e.shiftKey && delta === 0) delta = e.deltaY;
 
-    const newLeft = store.timelineShift + delta
-    store.setTimelineShift(newLeft)
+    const newLeft = store.timelineShift + delta;
+    store.setTimelineShift(newLeft);
   }
 }
 
@@ -2017,59 +2116,59 @@ const alignGuide = ref({
   label: '',
   type: '', // 'snap' | 'align'
   color: '',
-  targetRect: null
-})
+  targetRect: null,
+});
 
 function updateAlignGuide(evt, action) {
-  hoveredContext.value = { action, clientX: evt.clientX }
+  hoveredContext.value = { action, clientX: evt.clientX };
 
   if (!isAltDown.value || !store.selectedActionId || store.selectedActionId === action.instanceId) {
-    alignGuide.value.visible = false
-    return
+    alignGuide.value.visible = false;
+    return;
   }
 
-  const actionLayout = store.getNodeRect(action.instanceId)
-  if (!actionLayout) return
+  const actionLayout = store.getNodeRect(action.instanceId);
+  if (!actionLayout) return;
 
-  const rect = actionLayout.rect
-  const relLeft = rect.left
-  const relTop = rect.top
+  const rect = actionLayout.rect;
+  const relLeft = rect.left;
+  const relTop = rect.top;
 
-  const clickX = store.toTimelineSpace(evt.clientX, evt.clientY).x - rect.left
-  const isClickLeft = clickX < (rect.width / 2)
-  const isShift = isShiftDown.value
+  const clickX = store.toTimelineSpace(evt.clientX, evt.clientY).x - rect.left;
+  const isClickLeft = clickX < rect.width / 2;
+  const isShift = isShiftDown.value;
 
-  let guideX = 0
-  let label = ''
-  let type = ''
-  let color = ''
-  let iconKey = ''
+  let guideX = 0;
+  let label = '';
+  let type = '';
+  let color = '';
+  let iconKey = '';
 
   if (!isShift) {
     // 磁吸模式 (Snap)
-    type = 'snap'
-    color = '#00e5ff'
+    type = 'snap';
+    color = '#00e5ff';
     if (isClickLeft) {
-      guideX = relLeft
-      label = t('timelineGrid.alignGuide.snapFront')
-      iconKey = 'snap-left'
+      guideX = relLeft;
+      label = t('timelineGrid.alignGuide.snapFront');
+      iconKey = 'snap-left';
     } else {
-      guideX = relLeft + rect.width
-      label = t('timelineGrid.alignGuide.snapBack')
-      iconKey = 'snap-right'
+      guideX = relLeft + rect.width;
+      label = t('timelineGrid.alignGuide.snapBack');
+      iconKey = 'snap-right';
     }
   } else {
     // 对齐模式 (Align)
-    type = 'align'
-    color = '#ff00ff'
+    type = 'align';
+    color = '#ff00ff';
     if (isClickLeft) {
-      guideX = relLeft
-      label = t('timelineGrid.alignGuide.alignLeft')
-      iconKey = 'align-left'
+      guideX = relLeft;
+      label = t('timelineGrid.alignGuide.alignLeft');
+      iconKey = 'align-left';
     } else {
-      guideX = relLeft + rect.width
-      label = t('timelineGrid.alignGuide.alignRight')
-      iconKey = 'align-right'
+      guideX = relLeft + rect.width;
+      label = t('timelineGrid.alignGuide.alignRight');
+      iconKey = 'align-right';
     }
   }
 
@@ -2082,589 +2181,751 @@ function updateAlignGuide(evt, action) {
     iconKey,
     type,
     color,
-    targetRect: { left: relLeft, top: relTop, width: rect.width, height: rect.height }
-  }
+    targetRect: { left: relLeft, top: relTop, width: rect.width, height: rect.height },
+  };
 }
 
 function hideAlignGuide() {
-  alignGuide.value.visible = false
-  hoveredContext.value = null
+  alignGuide.value.visible = false;
+  hoveredContext.value = null;
 }
 
 function recalcAlignGuide() {
   if (hoveredContext.value) {
-    const { action, clientX } = hoveredContext.value
-    updateAlignGuide({ clientX }, action)
+    const { action, clientX } = hoveredContext.value;
+    updateAlignGuide({ clientX }, action);
   }
 }
 
 function onBackgroundContextMenu(evt) {
-  evt.preventDefault()
+  evt.preventDefault();
 
-  if (isBoxSelecting.value || isDragStarted.value) return
+  if (isBoxSelecting.value || isDragStarted.value) return;
 
-  const cursorPos = store.toTimelineSpace(evt.clientX, evt.clientY)
-  const rawTime = store.pxToTime(cursorPos.x)
+  const cursorPos = store.toTimelineSpace(evt.clientX, evt.clientY);
+  const rawTime = store.pxToTime(cursorPos.x);
 
-  const snap = store.snapStep
-  let clickTime = Math.round(rawTime / snap) * snap
-  clickTime = snapTimeToFrame(Math.max(0, clickTime))
-  store.openContextMenu(evt, null, clickTime)
+  const snap = store.snapStep;
+  let clickTime = Math.round(rawTime / snap) * snap;
+  clickTime = snapTimeToFrame(Math.max(0, clickTime));
+  store.openContextMenu(evt, null, clickTime);
 }
 
 function onActionMouseDown(evt, track, action) {
-  evt.stopPropagation()
+  evt.stopPropagation();
   if (action.isLocked) {
     if (evt.button === 0) {
-      store.selectAction(action.instanceId)
-      ElMessage.warning({ message: t('timelineGrid.action.locked'), duration: 1000, grouping: true })
-      return
+      store.selectAction(action.instanceId);
+      ElMessage.warning({
+        message: t('timelineGrid.action.locked'),
+        duration: 1000,
+        grouping: true,
+      });
+      return;
     }
   }
 
-  const actionLayout = store.getNodeRect(action.instanceId)
-  if (!actionLayout) return
+  const actionLayout = store.getNodeRect(action.instanceId);
+  if (!actionLayout) return;
 
-  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY)
+  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY);
 
   if (isAltDown.value) {
     if (store.selectedActionId && store.selectedActionId !== action.instanceId) {
-      const rect = actionLayout.rect
-      const clickX = mousePos.x - rect.left
-      const isClickLeft = clickX < (rect.width / 2)
-      const isShift = isShiftDown.value
+      const rect = actionLayout.rect;
+      const clickX = mousePos.x - rect.left;
+      const isClickLeft = clickX < rect.width / 2;
+      const isShift = isShiftDown.value;
 
-      let alignMode = ''
-      let msg = ''
+      let alignMode = '';
+      let msg = '';
 
       if (!isShift) {
-        if (isClickLeft) { alignMode = 'RL'; msg = t('timelineGrid.alignResult.snappedFront') }
-        else { alignMode = 'LR'; msg = t('timelineGrid.alignResult.snappedBack') }
+        if (isClickLeft) {
+          alignMode = 'RL';
+          msg = t('timelineGrid.alignResult.snappedFront');
+        } else {
+          alignMode = 'LR';
+          msg = t('timelineGrid.alignResult.snappedBack');
+        }
       } else {
-        if (isClickLeft) { alignMode = 'LL'; msg = t('timelineGrid.alignResult.alignedLeft') }
-        else { alignMode = 'RR'; msg = t('timelineGrid.alignResult.alignedRight') }
+        if (isClickLeft) {
+          alignMode = 'LL';
+          msg = t('timelineGrid.alignResult.alignedLeft');
+        } else {
+          alignMode = 'RR';
+          msg = t('timelineGrid.alignResult.alignedRight');
+        }
       }
 
-      const success = store.alignActionToTarget(action.instanceId, alignMode)
+      const success = store.alignActionToTarget(action.instanceId, alignMode);
       if (success) {
-        ElMessage.success(msg)
-        hideAlignGuide()
+        ElMessage.success(msg);
+        hideAlignGuide();
       } else {
-        ElMessage.warning(t('timelineGrid.alignResult.unchanged'))
+        ElMessage.warning(t('timelineGrid.alignResult.unchanged'));
       }
     }
-    return
+    return;
   }
 
-  if (connectionHandler.isDragging.value) return
-  if (evt.button !== 0) return
+  if (connectionHandler.isDragging.value) return;
+  if (evt.button !== 0) return;
 
-  const offset = mousePos.x - actionLayout.rect.left
+  const offset = mousePos.x - actionLayout.rect.left;
 
   setTimeout(() => {
-    wasSelectedOnPress.value = store.multiSelectedIds.has(action.instanceId)
+    wasSelectedOnPress.value = store.multiSelectedIds.has(action.instanceId);
 
     if (!store.multiSelectedIds.has(action.instanceId)) {
-      store.selectAction(action.instanceId)
+      store.selectAction(action.instanceId);
     }
 
-    isMouseDown.value = true
-    isDragStarted.value = false
-    movingActionId.value = action.instanceId
-    movingTrackId.value = track.id
-    initialMouseY.value = evt.clientY
+    isMouseDown.value = true;
+    isDragStarted.value = false;
+    movingActionId.value = action.instanceId;
+    movingTrackId.value = track.id;
+    initialMouseY.value = evt.clientY;
 
-    dragStartTimes.clear()
+    dragStartTimes.clear();
     store.tracks.forEach(t => {
       t.actions.forEach(a => {
-        if (a.logicalStartTime === undefined) a.logicalStartTime = a.startTime
-        dragStartTimes.set(a.instanceId, a.logicalStartTime)
-      })
-    })
+        if (a.logicalStartTime === undefined) a.logicalStartTime = a.startTime;
+        dragStartTimes.set(a.instanceId, a.logicalStartTime);
+      });
+    });
 
-    initialMouseX.value = evt.clientX
-    dragStartMouseTime.value = store.pxToTime(mousePos.x)
+    initialMouseX.value = evt.clientX;
+    dragStartMouseTime.value = store.pxToTime(mousePos.x);
 
-    window.addEventListener('mousemove', onWindowMouseMove)
-    window.addEventListener('mouseup', onWindowMouseUp)
-    window.addEventListener('blur', onWindowMouseUp)
-  }, 0)
+    window.addEventListener('mousemove', onWindowMouseMove);
+    window.addEventListener('mouseup', onWindowMouseUp);
+    window.addEventListener('blur', onWindowMouseUp);
+  }, 0);
 }
 
 function updateDragPosition(clientX) {
   if (!isDragStarted.value || !movingActionId.value) return;
 
-  const timelineX = store.toTimelineSpace(clientX, initialMouseY.value).x
-  const mouseTime = store.pxToTime(timelineX)
-  const deltaTime = mouseTime - dragStartMouseTime.value
+  const timelineX = store.toTimelineSpace(clientX, initialMouseY.value).x;
+  const mouseTime = store.pxToTime(timelineX);
+  const deltaTime = mouseTime - dragStartMouseTime.value;
 
-  const selectedIds = store.multiSelectedIds
-  const snap = store.snapStep
-  const minStartTime = getMinSkillStartTime()
+  const selectedIds = store.multiSelectedIds;
+  const snap = store.snapStep;
+  const minStartTime = getMinSkillStartTime();
 
-  const dragTargets = []
+  const dragTargets = [];
 
   store.tracks.forEach(t => {
     t.actions.forEach(a => {
       if (selectedIds.has(a.instanceId) && !a.isLocked) {
-        const orgLogical = dragStartTimes.get(a.instanceId)
-        if (!Number.isFinite(Number(orgLogical))) return
+        const orgLogical = dragStartTimes.get(a.instanceId);
+        if (!Number.isFinite(Number(orgLogical))) return;
 
         dragTargets.push({
           action: a,
           targetTime: Number(orgLogical) + deltaTime,
-        })
+        });
       }
-    })
-  })
+    });
+  });
 
-  if (dragTargets.length === 0) return
+  if (dragTargets.length === 0) return;
 
-  const earliestTargetTime = Math.min(...dragTargets.map(item => item.targetTime))
-  const groupOffset = earliestTargetTime < minStartTime
-      ? minStartTime - earliestTargetTime
-      : 0
+  const earliestTargetTime = Math.min(...dragTargets.map(item => item.targetTime));
+  const groupOffset = earliestTargetTime < minStartTime ? minStartTime - earliestTargetTime : 0;
 
   dragTargets.forEach(({ action, targetTime }) => {
-    const shiftedTargetTime = targetTime + groupOffset
-    const snappedTime = Math.round(shiftedTargetTime / snap) * snap
+    const shiftedTargetTime = targetTime + groupOffset;
+    const snappedTime = Math.round(shiftedTargetTime / snap) * snap;
 
-    action.logicalStartTime = Math.max(
-        minStartTime,
-        snapTimeToFrame(snappedTime),
-    )
-  })
+    action.logicalStartTime = Math.max(minStartTime, snapTimeToFrame(snappedTime));
+  });
 
-  store.refreshAllActionShifts()
+  store.refreshAllActionShifts();
 
-  nextTick(() => svgRenderKey.value++)
+  nextTick(() => svgRenderKey.value++);
 }
 
 function updateSwitchMarkerPosition(clientX, clientY) {
-  let newTime = calculateTimeFromClient(clientX, clientY, switchEventDragOffsetX.value, store.snapStep)
-  if (newTime > store.viewDuration) newTime = store.viewDuration
-  if (newTime < 0) newTime = 0
-  newTime = snapTimeToFrame(newTime)
-  store.updateSwitchEvent(draggingSwitchEventId.value, newTime)
+  let newTime = calculateTimeFromClient(
+    clientX,
+    clientY,
+    switchEventDragOffsetX.value,
+    store.snapStep,
+  );
+  if (newTime > store.viewDuration) newTime = store.viewDuration;
+  if (newTime < 0) newTime = 0;
+  newTime = snapTimeToFrame(newTime);
+  store.updateSwitchEvent(draggingSwitchEventId.value, newTime);
 }
 
 function updateCycleBoundaryPosition(clientX, clientY) {
-  let newTime = calculateTimeFromClient(clientX, clientY, cycleBoundaryDragOffsetX.value, store.snapStep)
-  if (newTime > store.viewDuration) newTime = store.viewDuration
-  if (newTime < 0) newTime = 0
-  newTime = snapTimeToFrame(newTime)
-  store.updateCycleBoundary(draggingCycleBoundaryId.value, newTime)
+  let newTime = calculateTimeFromClient(
+    clientX,
+    clientY,
+    cycleBoundaryDragOffsetX.value,
+    store.snapStep,
+  );
+  if (newTime > store.viewDuration) newTime = store.viewDuration;
+  if (newTime < 0) newTime = 0;
+  newTime = snapTimeToFrame(newTime);
+  store.updateCycleBoundary(draggingCycleBoundaryId.value, newTime);
 }
 
 function updateDragAutoScroll(clientX) {
-  if (!tracksContentRef.value) return
-  const rect = store.timelineRect
+  if (!tracksContentRef.value) return;
+  const rect = store.timelineRect;
   if (clientX < rect.left + SCROLL_ZONE) {
-    const ratio = 1 - (Math.max(0, clientX - rect.left) / SCROLL_ZONE)
-    autoScrollSpeed.value = -Math.max(2, ratio * MAX_SCROLL_SPEED)
-  }
-  else if (clientX > rect.right - SCROLL_ZONE) {
-    const ratio = 1 - (Math.max(0, rect.right - clientX) / SCROLL_ZONE)
-    autoScrollSpeed.value = Math.max(2, ratio * MAX_SCROLL_SPEED)
-  }
-  else {
-    autoScrollSpeed.value = 0
+    const ratio = 1 - Math.max(0, clientX - rect.left) / SCROLL_ZONE;
+    autoScrollSpeed.value = -Math.max(2, ratio * MAX_SCROLL_SPEED);
+  } else if (clientX > rect.right - SCROLL_ZONE) {
+    const ratio = 1 - Math.max(0, rect.right - clientX) / SCROLL_ZONE;
+    autoScrollSpeed.value = Math.max(2, ratio * MAX_SCROLL_SPEED);
+  } else {
+    autoScrollSpeed.value = 0;
   }
   if (autoScrollSpeed.value !== 0 && !autoScrollRaf) {
-    performAutoScroll()
+    performAutoScroll();
   }
 }
 
 function performAutoScroll() {
   if (autoScrollSpeed.value === 0) {
-    cancelAnimationFrame(autoScrollRaf)
-    autoScrollRaf = null
-    return
+    cancelAnimationFrame(autoScrollRaf);
+    autoScrollRaf = null;
+    return;
   }
-  const newShift = store.timelineShift + autoScrollSpeed.value
-  store.setTimelineShift(newShift)
-  if (draggingSwitchEventId.value) updateSwitchMarkerPosition(lastMouseX, lastMouseY)
-  else if (draggingCycleBoundaryId.value) updateCycleBoundaryPosition(lastMouseX, lastMouseY)
-  else updateDragPosition(lastMouseX)
-  autoScrollRaf = requestAnimationFrame(performAutoScroll)
+  const newShift = store.timelineShift + autoScrollSpeed.value;
+  store.setTimelineShift(newShift);
+  if (draggingSwitchEventId.value) updateSwitchMarkerPosition(lastMouseX, lastMouseY);
+  else if (draggingCycleBoundaryId.value) updateCycleBoundaryPosition(lastMouseX, lastMouseY);
+  else updateDragPosition(lastMouseX);
+  autoScrollRaf = requestAnimationFrame(performAutoScroll);
 }
 
 function onSwitchMarkerMouseDown(evt, id) {
-  evt.stopPropagation()
-  evt.preventDefault()
-  if (evt.button !== 0) return
+  evt.stopPropagation();
+  evt.preventDefault();
+  if (evt.button !== 0) return;
 
-  wasSwitchSelectedOnPress.value = (store.selectedSwitchEventId === id)
+  wasSwitchSelectedOnPress.value = store.selectedSwitchEventId === id;
 
   if (!wasSwitchSelectedOnPress.value) {
-    store.selectSwitchEvent(id)
+    store.selectSwitchEvent(id);
   }
-  const sw = store.switchEvents.find((item) => item.id === id)
-  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY)
-  switchEventDragOffsetX.value = mousePos.x - store.timeToPx(Number(sw?.time) || 0)
-  draggingSwitchEventId.value = id
-  initialMouseX.value = evt.clientX
-  initialMouseY.value = evt.clientY
-  isDragStarted.value = false
-  isMouseDown.value = true
+  const sw = store.switchEvents.find(item => item.id === id);
+  const mousePos = store.toTimelineSpace(evt.clientX, evt.clientY);
+  switchEventDragOffsetX.value = mousePos.x - store.timeToPx(Number(sw?.time) || 0);
+  draggingSwitchEventId.value = id;
+  initialMouseX.value = evt.clientX;
+  initialMouseY.value = evt.clientY;
+  isDragStarted.value = false;
+  isMouseDown.value = true;
 
-  document.body.classList.add('is-dragging')
+  document.body.classList.add('is-dragging');
 
-  window.addEventListener('mousemove', onWindowMouseMove)
-  window.addEventListener('mouseup', onWindowMouseUp)
-  window.addEventListener('blur', onWindowMouseUp)
+  window.addEventListener('mousemove', onWindowMouseMove);
+  window.addEventListener('mouseup', onWindowMouseUp);
+  window.addEventListener('blur', onWindowMouseUp);
 }
 
 function onWindowMouseMove(evt) {
-  lastMouseX = evt.clientX
-  lastMouseY = evt.clientY
+  lastMouseX = evt.clientX;
+  lastMouseY = evt.clientY;
 
   if (draggingSwitchEventId.value) {
     if (!isDragStarted.value) {
-      const dist = Math.sqrt(Math.pow(evt.clientX - initialMouseX.value, 2) + Math.pow(evt.clientY - initialMouseY.value, 2))
-      if (dist > dragThreshold) isDragStarted.value = true; else return
+      const dist = Math.sqrt(
+        Math.pow(evt.clientX - initialMouseX.value, 2) +
+          Math.pow(evt.clientY - initialMouseY.value, 2),
+      );
+      if (dist > dragThreshold) isDragStarted.value = true;
+      else return;
     }
-    updateDragAutoScroll(evt.clientX)
+    updateDragAutoScroll(evt.clientX);
     if (autoScrollSpeed.value === 0) {
-      updateSwitchMarkerPosition(evt.clientX, evt.clientY)
+      updateSwitchMarkerPosition(evt.clientX, evt.clientY);
     }
-    return
+    return;
   }
   if (draggingCycleBoundaryId.value) {
     if (!isDragStarted.value) {
-      const dist = Math.sqrt(Math.pow(evt.clientX - initialMouseX.value, 2) + Math.pow(evt.clientY - initialMouseY.value, 2))
+      const dist = Math.sqrt(
+        Math.pow(evt.clientX - initialMouseX.value, 2) +
+          Math.pow(evt.clientY - initialMouseY.value, 2),
+      );
       if (dist > dragThreshold) {
-        isDragStarted.value = true
+        isDragStarted.value = true;
       } else {
-        return
+        return;
       }
     }
-    updateDragAutoScroll(evt.clientX)
+    updateDragAutoScroll(evt.clientX);
     if (autoScrollSpeed.value === 0) {
-      updateCycleBoundaryPosition(evt.clientX, evt.clientY)
+      updateCycleBoundaryPosition(evt.clientX, evt.clientY);
     }
-    return
+    return;
   }
-  if (!isMouseDown.value) return
-  if (evt.buttons === 0) { onWindowMouseUp(evt); return }
-  const target = evt.target
-  const isForm = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-  const isSidebar = target && (target.closest('.properties-sidebar') || target.closest('.action-library'))
-  if (isForm || isSidebar) { onWindowMouseUp(evt); return }
+  if (!isMouseDown.value) return;
+  if (evt.buttons === 0) {
+    onWindowMouseUp(evt);
+    return;
+  }
+  const target = evt.target;
+  const isForm =
+    target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'SELECT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable);
+  const isSidebar =
+    target && (target.closest('.properties-sidebar') || target.closest('.action-library'));
+  if (isForm || isSidebar) {
+    onWindowMouseUp(evt);
+    return;
+  }
 
   if (!isDragStarted.value) {
-    const dist = Math.sqrt(Math.pow(evt.clientX - initialMouseX.value, 2) + Math.pow(evt.clientY - initialMouseY.value, 2))
-    if (dist > dragThreshold) isDragStarted.value = true; else return
+    const dist = Math.sqrt(
+      Math.pow(evt.clientX - initialMouseX.value, 2) +
+        Math.pow(evt.clientY - initialMouseY.value, 2),
+    );
+    if (dist > dragThreshold) isDragStarted.value = true;
+    else return;
   }
 
   if (tracksContentRef.value) {
-    updateDragAutoScroll(evt.clientX)
+    updateDragAutoScroll(evt.clientX);
   }
 
   if (autoScrollSpeed.value === 0) {
-    updateDragPosition(evt.clientX)
+    updateDragPosition(evt.clientX);
   }
 }
 
 function onGlobalWindowMouseUp(event) {
   if (connectionHandler.isDragging.value && event && event.target.tagName !== 'BUTTON') {
-      connectionHandler.cancelDrag() 
+    connectionHandler.cancelDrag();
   }
 }
 
 function onWindowMouseUp(event) {
-  autoScrollSpeed.value = 0
-  if (autoScrollRaf) { cancelAnimationFrame(autoScrollRaf); autoScrollRaf = null }
+  autoScrollSpeed.value = 0;
+  if (autoScrollRaf) {
+    cancelAnimationFrame(autoScrollRaf);
+    autoScrollRaf = null;
+  }
 
   if (draggingSwitchEventId.value) {
     if (!isDragStarted.value && wasSwitchSelectedOnPress.value) {
-      store.selectSwitchEvent(draggingSwitchEventId.value)
+      store.selectSwitchEvent(draggingSwitchEventId.value);
     }
 
     if (isDragStarted.value) {
-      store.commitState()
+      store.commitState();
     }
 
-    isDragStarted.value = false
-    draggingSwitchEventId.value = null
-    switchEventDragOffsetX.value = 0
-    document.body.classList.remove('is-dragging')
-    window.removeEventListener('mousemove', onWindowMouseMove)
-    window.removeEventListener('mouseup', onWindowMouseUp)
-    window.removeEventListener('blur', onWindowMouseUp)
-    isMouseDown.value = false
+    isDragStarted.value = false;
+    draggingSwitchEventId.value = null;
+    switchEventDragOffsetX.value = 0;
+    document.body.classList.remove('is-dragging');
+    window.removeEventListener('mousemove', onWindowMouseMove);
+    window.removeEventListener('mouseup', onWindowMouseUp);
+    window.removeEventListener('blur', onWindowMouseUp);
+    isMouseDown.value = false;
 
-    return
+    return;
   }
 
   if (draggingCycleBoundaryId.value) {
-
     if (!isDragStarted.value && wasCycleSelectedOnPress.value) {
-      store.selectCycleBoundary(draggingCycleBoundaryId.value)
+      store.selectCycleBoundary(draggingCycleBoundaryId.value);
     }
 
     if (isDragStarted.value) {
-      store.commitState()
+      store.commitState();
     }
 
-    isDragStarted.value = false
-    draggingCycleBoundaryId.value = null
-    cycleBoundaryDragOffsetX.value = 0
-    document.body.classList.remove('is-dragging')
-    window.removeEventListener('mousemove', onWindowMouseMove)
-    window.removeEventListener('mouseup', onWindowMouseUp)
-    window.removeEventListener('blur', onWindowMouseUp)
-    isMouseDown.value = false
-    return
+    isDragStarted.value = false;
+    draggingCycleBoundaryId.value = null;
+    cycleBoundaryDragOffsetX.value = 0;
+    document.body.classList.remove('is-dragging');
+    window.removeEventListener('mousemove', onWindowMouseMove);
+    window.removeEventListener('mouseup', onWindowMouseUp);
+    window.removeEventListener('blur', onWindowMouseUp);
+    isMouseDown.value = false;
+    return;
   }
 
-  const _wasDragging = isDragStarted.value
+  const _wasDragging = isDragStarted.value;
   try {
     if (!isDragStarted.value && movingActionId.value) {
       if (wasSelectedOnPress.value) {
-        store.selectAction(movingActionId.value)
+        store.selectAction(movingActionId.value);
       }
-    } else if (_wasDragging) { store.commitState() }
-  } catch (error) { console.error("MouseUp Error:", error) } finally {
-    dragStartTimes.clear()
-    isMouseDown.value = false; isDragStarted.value = false; movingActionId.value = null; movingTrackId.value = null
-    window.removeEventListener('mousemove', onWindowMouseMove)
-    window.removeEventListener('mouseup', onWindowMouseUp)
-    window.removeEventListener('blur', onWindowMouseUp)
+    } else if (_wasDragging) {
+      store.commitState();
+    }
+  } catch (error) {
+    console.error('MouseUp Error:', error);
+  } finally {
+    dragStartTimes.clear();
+    isMouseDown.value = false;
+    isDragStarted.value = false;
+    movingActionId.value = null;
+    movingTrackId.value = null;
+    window.removeEventListener('mousemove', onWindowMouseMove);
+    window.removeEventListener('mouseup', onWindowMouseUp);
+    window.removeEventListener('blur', onWindowMouseUp);
   }
-  if (_wasDragging) window.addEventListener('click', captureClick, {capture: true, once: true})
+  if (_wasDragging) window.addEventListener('click', captureClick, { capture: true, once: true });
 }
 
-function captureClick(e) { e.stopPropagation(); e.preventDefault() }
+function captureClick(e) {
+  e.stopPropagation();
+  e.preventDefault();
+}
 
 function getMinSkillStartTime() {
-  if (store.prepExpanded) return 0
-  return snapTimeToFrame(Math.max(0, Number(store.prepDuration) || 0))
+  if (store.prepExpanded) return 0;
+  return snapTimeToFrame(Math.max(0, Number(store.prepDuration) || 0));
 }
 
 function clampSkillStartTime(time) {
-  const raw = Number(time) || 0
-  return Math.max(getMinSkillStartTime(), snapTimeToFrame(raw))
+  const raw = Number(time) || 0;
+  return Math.max(getMinSkillStartTime(), snapTimeToFrame(raw));
 }
 
 function calculateTimeFromDropEvent(evt, skill, fixedStep = null) {
-  const offsetX = Number(skill?.dragOffsetX) || 0
-  const mouseXInTrack = store.toTimelineSpace((evt?.clientX || 0) - offsetX, evt?.clientY || 0).x
+  const offsetX = Number(skill?.dragOffsetX) || 0;
+  const mouseXInTrack = store.toTimelineSpace((evt?.clientX || 0) - offsetX, evt?.clientY || 0).x;
 
-  const rawTime = store.pxToTime(mouseXInTrack)
+  const rawTime = store.pxToTime(mouseXInTrack);
 
-  const step = fixedStep !== null ? fixedStep : store.snapStep
-  const inverse = 1 / step
-  let startTime = Math.round(rawTime * inverse) / inverse
-  startTime = clampSkillStartTime(startTime)
-  return startTime
+  const step = fixedStep !== null ? fixedStep : store.snapStep;
+  const inverse = 1 / step;
+  let startTime = Math.round(rawTime * inverse) / inverse;
+  startTime = clampSkillStartTime(startTime);
+  return startTime;
 }
 
 function onTrackDrop(track, index, evt) {
-  const skill = store.draggingSkillData; if (!skill || store.activeTrackIndex !== index) return
-  const startTime = calculateTimeFromDropEvent(evt, skill)
-  store.addSkillToTrack(track.id, skill, startTime)
-  nextTick(() => forceSvgUpdate())
+  const skill = store.draggingSkillData;
+  if (!skill || store.activeTrackIndex !== index) return;
+  const startTime = calculateTimeFromDropEvent(evt, skill);
+  store.addSkillToTrack(track.id, skill, startTime);
+  nextTick(() => forceSvgUpdate());
 }
-function onTrackDragOver(evt) { evt.preventDefault(); evt.dataTransfer.dropEffect = 'copy' }
+function onTrackDragOver(evt) {
+  evt.preventDefault();
+  evt.dataTransfer.dropEffect = 'copy';
+}
 
 function onBackgroundClick(event) {
-  if (!event || event.target === tracksContentRef.value || event.target.classList.contains('track-row') || event.target.classList.contains('time-block')) {
-    store.selectTrack(null)
+  if (
+    !event ||
+    event.target === tracksContentRef.value ||
+    event.target.classList.contains('track-row') ||
+    event.target.classList.contains('time-block')
+  ) {
+    store.selectTrack(null);
   }
 }
 
 function handleKeyDown(event) {
-  const target = event.target
-  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
+  const target = event.target;
+  if (
+    target &&
+    (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+  )
+    return;
 
-  const hasSelection = store.selectedActionId || store.multiSelectedIds.size > 0 || store.selectedConnectionId || store.selectedCycleBoundaryId || store.selectedSwitchEventId
-  const hasNudgeTarget = store.selectedActionId || store.multiSelectedIds.size > 0 || store.selectedCycleBoundaryId || store.selectedSwitchEventId
-  if (!hasSelection) return
+  const hasSelection =
+    store.selectedActionId ||
+    store.multiSelectedIds.size > 0 ||
+    store.selectedConnectionId ||
+    store.selectedCycleBoundaryId ||
+    store.selectedSwitchEventId;
+  const hasNudgeTarget =
+    store.selectedActionId ||
+    store.multiSelectedIds.size > 0 ||
+    store.selectedCycleBoundaryId ||
+    store.selectedSwitchEventId;
+  if (!hasSelection) return;
 
   if (event.key === 'Delete' || event.key === 'Backspace') {
     event.preventDefault();
     const result = store.removeCurrentSelection();
     if (result && result.total > 0) {
-      ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 })
+      ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 });
     }
   }
   if (hasNudgeTarget) {
-    if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') { event.preventDefault(); store.nudgeSelection(-1) }
-    if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') { event.preventDefault(); store.nudgeSelection(1) }
+    if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') {
+      event.preventDefault();
+      store.nudgeSelection(-1);
+    }
+    if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      store.nudgeSelection(1);
+    }
   }
 }
 
 function handleGlobalKeyUp(e) {
   if (e.key === 'Alt') {
     isAltDown.value = false;
-    hideAlignGuide()
+    hideAlignGuide();
   }
   if (e.key === 'Shift') {
     isShiftDown.value = false;
-    recalcAlignGuide()
+    recalcAlignGuide();
   }
 }
 
 function resetModifierKeys() {
-  isAltDown.value = false
-  isShiftDown.value = false
-  hideAlignGuide()
+  isAltDown.value = false;
+  isShiftDown.value = false;
+  hideAlignGuide();
 }
 
 function handleGlobalKeyDownWrapper(e) {
   if (e.key === 'Alt') {
-    e.preventDefault()
-    isAltDown.value = true
-    recalcAlignGuide()
+    e.preventDefault();
+    isAltDown.value = true;
+    recalcAlignGuide();
   }
   if (e.key === 'Shift') {
-    isShiftDown.value = true
-    recalcAlignGuide()
+    isShiftDown.value = true;
+    recalcAlignGuide();
   }
-  handleKeyDown(e)
+  handleKeyDown(e);
 }
 
 function updateTrackRects() {
   trackLaneRefs.value.forEach(ref => {
-    const idx = ref.dataset.trackIndex
-    const rect = ref.getBoundingClientRect()
-    const style = window.getComputedStyle(ref)
+    const idx = ref.dataset.trackIndex;
+    const rect = ref.getBoundingClientRect();
+    const style = window.getComputedStyle(ref);
     // 排除border
-    let borderTop = parseInt(style.borderTopWidth)
-    let borderBottom = parseInt(style.borderBottomWidth)
+    let borderTop = parseInt(style.borderTopWidth);
+    let borderBottom = parseInt(style.borderBottomWidth);
 
-    if (Number.isNaN(borderTop)) borderTop = 0
-    if (Number.isNaN(borderBottom)) borderBottom = 0
-      
+    if (Number.isNaN(borderTop)) borderTop = 0;
+    if (Number.isNaN(borderBottom)) borderBottom = 0;
+
     const data = {
       top: rect.top + borderTop,
       bottom: rect.bottom - borderBottom,
       left: rect.left,
       right: rect.right,
       width: rect.width,
-      height: rect.height - borderTop - borderBottom
-    }
-    store.setTrackLaneRect(idx, data)
-  })
+      height: rect.height - borderTop - borderBottom,
+    };
+    store.setTrackLaneRect(idx, data);
+  });
 }
 
 function onCycleBoundaryContextMenu(evt, boundaryId) {
-  const boundary = store.cycleBoundaries.find((item) => item.id === boundaryId)
-  if (!boundary) return
+  const boundary = store.cycleBoundaries.find(item => item.id === boundaryId);
+  if (!boundary) return;
 
-  store.selectCycleBoundary(boundaryId)
-  store.openContextMenu(evt, boundaryId, Number(boundary.time) || 0, 'cycleBoundary')
+  store.selectCycleBoundary(boundaryId);
+  store.openContextMenu(evt, boundaryId, Number(boundary.time) || 0, 'cycleBoundary');
 }
 
 const activeFreezeRegions = computed(() => {
-  const selectedIds = store.multiSelectedIds
-  const hoveredId = store.hoveredActionId
-  if (selectedIds.size === 0 && !hoveredId) return []
+  const selectedIds = store.multiSelectedIds;
+  const hoveredId = store.hoveredActionId;
+  if (selectedIds.size === 0 && !hoveredId) return [];
   return store.globalExtensions.filter(ext => {
-    return ext.sourceId === hoveredId || selectedIds.has(ext.sourceId)
-  })
-})
+    return ext.sourceId === hoveredId || selectedIds.has(ext.sourceId);
+  });
+});
 
-watch(() => store.timeBlockWidth, () => { nextTick(() => { forceSvgUpdate(); updateScrollbarHeight() }) })
-watch(() => [store.tracks, store.connections], () => { nextTick(() => { forceSvgUpdate() }) }, { deep: true })
-watch(() => trackRowHeights.value.slice(), () => {
-  nextTick(() => {
-    updateTrackRects()
-    forceSvgUpdate()
-  })
-})
+watch(
+  () => store.timeBlockWidth,
+  () => {
+    nextTick(() => {
+      forceSvgUpdate();
+      updateScrollbarHeight();
+    });
+  },
+);
+watch(
+  () => [store.tracks, store.connections],
+  () => {
+    nextTick(() => {
+      forceSvgUpdate();
+    });
+  },
+  { deep: true },
+);
+watch(
+  () => trackRowHeights.value.slice(),
+  () => {
+    nextTick(() => {
+      updateTrackRects();
+      forceSvgUpdate();
+    });
+  },
+);
 
 onMounted(() => {
-  restoreTrackLayoutWeights()
+  restoreTrackLayoutWeights();
   if (tracksContentRef.value) {
-    tracksContentRef.value.addEventListener('scroll', syncVerticalScroll)
-    tracksViewportHeight.value = tracksContentRef.value.clientHeight || 0
+    tracksContentRef.value.addEventListener('scroll', syncVerticalScroll);
+    tracksViewportHeight.value = tracksContentRef.value.clientHeight || 0;
 
-    const tracksResizeObserver = new ResizeObserver(([entry]) => { 
-      const rect = entry.target.getBoundingClientRect()
-      tracksViewportHeight.value = entry.target.clientHeight || rect.height || 0
+    const tracksResizeObserver = new ResizeObserver(([entry]) => {
+      const rect = entry.target.getBoundingClientRect();
+      tracksViewportHeight.value = entry.target.clientHeight || rect.height || 0;
 
-      updateTrackRects()
+      updateTrackRects();
 
-      store.setTimelineRect(rect.width, rect.height, rect.top, rect.right, rect.bottom, rect.left)
-      forceSvgUpdate(); updateScrollbarHeight();
-    })
+      store.setTimelineRect(rect.width, rect.height, rect.top, rect.right, rect.bottom, rect.left);
+      forceSvgUpdate();
+      updateScrollbarHeight();
+    });
 
-    tracksResizeObserver.observe(tracksContentRef.value)
-    resizeObserver.push(tracksResizeObserver)
-    updateScrollbarHeight()
+    tracksResizeObserver.observe(tracksContentRef.value);
+    resizeObserver.push(tracksResizeObserver);
+    updateScrollbarHeight();
   }
 
-  window.addEventListener('keydown', handleGlobalKeyDownWrapper)
-  window.addEventListener('keyup', handleGlobalKeyUp)
-  window.addEventListener('blur', resetModifierKeys)
-  window.addEventListener('mouseup', onGlobalWindowMouseUp)
-})
+  window.addEventListener('keydown', handleGlobalKeyDownWrapper);
+  window.addEventListener('keyup', handleGlobalKeyUp);
+  window.addEventListener('blur', resetModifierKeys);
+  window.addEventListener('mouseup', onGlobalWindowMouseUp);
+});
 onUnmounted(() => {
   if (tracksContentRef.value) {
     // tracksContentRef.value.removeEventListener('scroll', syncRulerScroll);
     tracksContentRef.value.removeEventListener('scroll', syncVerticalScroll);
     // tracksContentRef.value.removeEventListener('wheel', handleWheel)
   }
-  resizeObserver.forEach(obs => obs.disconnect())
-  resizeObserver = []
-  window.removeEventListener('keydown', handleGlobalKeyDownWrapper)
-  window.removeEventListener('keyup', handleGlobalKeyUp)
-  window.removeEventListener('mousemove', onWindowMouseMove)
-  window.removeEventListener('mouseup', onWindowMouseUp)
-  window.removeEventListener('mousemove', onBoxMouseMove)
-  window.removeEventListener('mouseup', onBoxMouseUp)
-  window.removeEventListener('blur', resetModifierKeys)
-  window.removeEventListener('mouseup', onGlobalWindowMouseUp)
-  window.removeEventListener('mousemove', onPrepResizeMouseMove)
-  window.removeEventListener('mouseup', onPrepResizeMouseUp)
-  window.removeEventListener('pointermove', onTrackResizeMove)
-  window.removeEventListener('pointerup', endTrackResize)
-  document.body.style.userSelect = ''
-  document.body.style.cursor = ''
-})
+  resizeObserver.forEach(obs => obs.disconnect());
+  resizeObserver = [];
+  window.removeEventListener('keydown', handleGlobalKeyDownWrapper);
+  window.removeEventListener('keyup', handleGlobalKeyUp);
+  window.removeEventListener('mousemove', onWindowMouseMove);
+  window.removeEventListener('mouseup', onWindowMouseUp);
+  window.removeEventListener('mousemove', onBoxMouseMove);
+  window.removeEventListener('mouseup', onBoxMouseUp);
+  window.removeEventListener('blur', resetModifierKeys);
+  window.removeEventListener('mouseup', onGlobalWindowMouseUp);
+  window.removeEventListener('mousemove', onPrepResizeMouseMove);
+  window.removeEventListener('mouseup', onPrepResizeMouseUp);
+  window.removeEventListener('pointermove', onTrackResizeMove);
+  window.removeEventListener('pointerup', endTrackResize);
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
+});
 </script>
 
 <template>
   <div class="timeline-grid-layout" :style="{ gridTemplateRows: `${gridRowHeight} 1fr` }">
     <div class="corner-placeholder">
-        <div class="corner-controls">
-          <div class="corner-button-row">
-            <button class="mini-tool-btn" :class="{ 'is-active': store.showCursorGuide }" @click="store.toggleCursorGuide" :title="t('timelineGrid.toolbar.cursorGuide')">
-              <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="6" x2="12" y2="18"></line><line x1="6" y1="12" x2="18" y2="12"></line></svg>
-            </button>
-          
-          <button class="mini-tool-btn" :class="{ 'is-active': store.isBoxSelectMode }" @click="store.toggleBoxSelectMode" :title="t('timelineGrid.toolbar.boxSelect')">
-            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 4"/><path d="M8 12h8" stroke-width="1.5"/><path d="M12 8v8" stroke-width="1.5"/></svg>
-          </button>
-          
-          <button class="mini-tool-btn" :class="{ 'is-active': store.snapStep < 0.1 }" @click="store.toggleSnapStep" :title="t('timelineGrid.toolbar.snapPrecision')">
-            <span class="btn-text">{{ store.snapStep < 0.05 ? '1f' : '0.1s' }}</span>
-          </button>
-          
-          <button class="mini-tool-btn" :class="{ 'is-active': connectionHandler.toolEnabled.value }" @click="store.toggleConnectionTool" :title="t('timelineGrid.toolbar.connectionTool')">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M5 4h14c3 0 3 8 0 8h-14c-3 0-3 8 0 8h14" /><circle cx="5" cy="4" r="2" fill="currentColor"/><circle cx="19" cy="20" r="2" fill="currentColor"/></svg>
+      <div class="corner-controls">
+        <div class="corner-button-row">
+          <button
+            class="mini-tool-btn"
+            :class="{ 'is-active': store.showCursorGuide }"
+            @click="store.toggleCursorGuide"
+            :title="t('timelineGrid.toolbar.cursorGuide')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="12"
+              height="12"
+              stroke="currentColor"
+              stroke-width="2.5"
+              fill="none"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="6" x2="12" y2="18"></line>
+              <line x1="6" y1="12" x2="18" y2="12"></line>
+            </svg>
           </button>
 
+          <button
+            class="mini-tool-btn"
+            :class="{ 'is-active': store.isBoxSelectMode }"
+            @click="store.toggleBoxSelectMode"
+            :title="t('timelineGrid.toolbar.boxSelect')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="12"
+              height="12"
+              stroke="currentColor"
+              stroke-width="2.5"
+              fill="none"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 4" />
+              <path d="M8 12h8" stroke-width="1.5" />
+              <path d="M12 8v8" stroke-width="1.5" />
+            </svg>
+          </button>
+
+          <button
+            class="mini-tool-btn"
+            :class="{ 'is-active': store.snapStep < 0.1 }"
+            @click="store.toggleSnapStep"
+            :title="t('timelineGrid.toolbar.snapPrecision')"
+          >
+            <span class="btn-text">{{ store.snapStep < 0.05 ? '1f' : '0.1s' }}</span>
+          </button>
+
+          <button
+            class="mini-tool-btn"
+            :class="{ 'is-active': connectionHandler.toolEnabled.value }"
+            @click="store.toggleConnectionTool"
+            :title="t('timelineGrid.toolbar.connectionTool')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            >
+              <path d="M5 4h14c3 0 3 8 0 8h-14c-3 0-3 8 0 8h14" />
+              <circle cx="5" cy="4" r="2" fill="currentColor" />
+              <circle cx="19" cy="20" r="2" fill="currentColor" />
+            </svg>
+          </button>
         </div>
-        
+
         <div class="corner-zoom-row">
           <div class="zoom-info-line">
             <span class="zoom-label">SCALE</span>
             <span class="zoom-value">{{ Math.round((store.timeBlockWidth / 50) * 100) }}%</span>
           </div>
           <div class="zoom-slider-container">
-            <span class="zoom-icon" @click="adjustZoom(-Math.max(1, Math.round(store.timeBlockWidth * 0.1)), null)"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg></span>
+            <span
+              class="zoom-icon"
+              @click="adjustZoom(-Math.max(1, Math.round(store.timeBlockWidth * 0.1)), null)"
+              ><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+                <path d="M19 13H5v-2h14v2z" /></svg
+            ></span>
             <input
-            type="range"
-            class="davinci-range"
-            :min="store.ZOOM_LIMITS.MIN"
-            :max="store.ZOOM_LIMITS.MAX"
-            step="1"
-            v-model.number="zoomValue"
+              type="range"
+              class="davinci-range"
+              :min="store.ZOOM_LIMITS.MIN"
+              :max="store.ZOOM_LIMITS.MAX"
+              step="1"
+              v-model.number="zoomValue"
             />
-            <span class="zoom-icon" @click="adjustZoom(Math.max(1, Math.round(store.timeBlockWidth * 0.1)), null)"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></span>
+            <span
+              class="zoom-icon"
+              @click="adjustZoom(Math.max(1, Math.round(store.timeBlockWidth * 0.1)), null)"
+              ><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg
+            ></span>
           </div>
         </div>
       </div>
@@ -2672,157 +2933,323 @@ onUnmounted(() => {
 
     <div class="time-ruler-wrapper" ref="timeRulerWrapperRef" @click="store.selectTrack(null)">
       <div class="ruler-content-container" :style="transformStyle">
-      <div v-if="activePrepDuration > 0" class="prep-zone-bg prep-zone-bg--ruler" :style="{ width: `${prepZoneWidthPxRounded}px` }"></div>
-       <div v-if="activePrepDuration > 0" class="battle-start-line battle-start-line--ruler" :style="{ left: `${prepZoneWidthPxRounded}px` }">
-         <div v-if="store.prepExpanded" class="battle-start-handle" @mousedown.stop.prevent="onPrepResizeMouseDown"></div>
-       </div>
-       <div
-         v-if="activePrepDuration > 0 && store.prepExpanded"
-         class="prep-ruler-controls"
-         :style="{ left: `${prepZoneWidthPxRounded}px` }"
-       >
-          <button type="button" class="prep-mini-btn" :title="t('timelineGrid.prep.setDurationTitle')" @click.stop="openPrepDurationEditor">
-           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-             <circle cx="12" cy="12" r="9"></circle>
-             <path d="M12 7v6l4 2"></path>
-           </svg>
-         </button>
-       </div>
-       <div v-if="activePrepDuration > 0 && !store.prepExpanded" class="prep-zone-controls" :style="{ width: `${prepZoneWidthPxRounded}px`, bottom: showGameTime ? '40px' : '20px' }">
-          <button type="button" class="prep-mini-btn" :title="t('timelineGrid.prep.setDurationTitle')" @click.stop="openPrepDurationEditor">
-           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-             <circle cx="12" cy="12" r="9"></circle>
-             <path d="M12 7v6l4 2"></path>
-           </svg>
-         </button>
-       </div>
-
-      <div v-if="isPrepDurationEditorOpen" class="prep-duration-popover" :style="{ left: `${prepZoneWidthPxRounded + 8}px` }" @mousedown.stop>
-        <input
-          ref="prepDurationInputRef"
-          v-model="prepDurationDraft"
-          class="prep-duration-input"
-          type="number"
-          min="1"
-          step="1"
-          @keydown.enter.prevent="applyPrepDurationDraft"
-          @keydown.esc.prevent="closePrepDurationEditor"
-          @blur="applyPrepDurationDraft"
-        />
-        <span class="prep-duration-unit">f</span>
-      </div>
-
-      <div v-if="activePrepDuration > 0" class="prep-rtgt-wrapper" :style="{ width: `${prepZoneWidthPxRounded}px` }">
-        <div v-if="showGameTime" class="prep-rtgt-row prep-rtgt-row--game">
-           <button type="button" class="timeline-label interactable" :title="t('timelineGrid.ruler.gameTimeCollapseTitle')" @click.stop="isGameTimeCollapsed = true">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-              <text x="12" y="20" font-size="20" fill="currentColor" text-anchor="middle" font-weight="bold" font-family="sans-serif">G</text>
+        <div
+          v-if="activePrepDuration > 0"
+          class="prep-zone-bg prep-zone-bg--ruler"
+          :style="{ width: `${prepZoneWidthPxRounded}px` }"
+        ></div>
+        <div
+          v-if="activePrepDuration > 0"
+          class="battle-start-line battle-start-line--ruler"
+          :style="{ left: `${prepZoneWidthPxRounded}px` }"
+        >
+          <div
+            v-if="store.prepExpanded"
+            class="battle-start-handle"
+            @mousedown.stop.prevent="onPrepResizeMouseDown"
+          ></div>
+        </div>
+        <div
+          v-if="activePrepDuration > 0 && store.prepExpanded"
+          class="prep-ruler-controls"
+          :style="{ left: `${prepZoneWidthPxRounded}px` }"
+        >
+          <button
+            type="button"
+            class="prep-mini-btn"
+            :title="t('timelineGrid.prep.setDurationTitle')"
+            @click.stop="openPrepDurationEditor"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v6l4 2"></path>
             </svg>
-            <span class="collapse-hint-icon">
-              <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </span>
           </button>
         </div>
-        <div class="prep-rtgt-row prep-rtgt-row--real">
-          <template v-if="showGameTime">
-            <div class="timeline-label" :title="t('timelineGrid.ruler.realTimeTitle')">
+        <div
+          v-if="activePrepDuration > 0 && !store.prepExpanded"
+          class="prep-zone-controls"
+          :style="{ width: `${prepZoneWidthPxRounded}px`, bottom: showGameTime ? '40px' : '20px' }"
+        >
+          <button
+            type="button"
+            class="prep-mini-btn"
+            :title="t('timelineGrid.prep.setDurationTitle')"
+            @click.stop="openPrepDurationEditor"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v6l4 2"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div
+          v-if="isPrepDurationEditorOpen"
+          class="prep-duration-popover"
+          :style="{ left: `${prepZoneWidthPxRounded + 8}px` }"
+          @mousedown.stop
+        >
+          <input
+            ref="prepDurationInputRef"
+            v-model="prepDurationDraft"
+            class="prep-duration-input"
+            type="number"
+            min="1"
+            step="1"
+            @keydown.enter.prevent="applyPrepDurationDraft"
+            @keydown.esc.prevent="closePrepDurationEditor"
+            @blur="applyPrepDurationDraft"
+          />
+          <span class="prep-duration-unit">f</span>
+        </div>
+
+        <div
+          v-if="activePrepDuration > 0"
+          class="prep-rtgt-wrapper"
+          :style="{ width: `${prepZoneWidthPxRounded}px` }"
+        >
+          <div v-if="showGameTime" class="prep-rtgt-row prep-rtgt-row--game">
+            <button
+              type="button"
+              class="timeline-label interactable"
+              :title="t('timelineGrid.ruler.gameTimeCollapseTitle')"
+              @click.stop="isGameTimeCollapsed = true"
+            >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                <text x="12" y="20" font-size="20" fill="currentColor" text-anchor="middle" font-weight="bold" font-family="sans-serif">R</text>
+                <text
+                  x="12"
+                  y="20"
+                  font-size="20"
+                  fill="currentColor"
+                  text-anchor="middle"
+                  font-weight="bold"
+                  font-family="sans-serif"
+                >
+                  G
+                </text>
               </svg>
-            </div>
-          </template>
-          <template v-else>
-            <button type="button" class="timeline-label interactable expand-btn" :title="t('timelineGrid.ruler.gameTimeExpandTitle')" @click.stop="isGameTimeCollapsed = false">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="18 15 12 9 6 15"></polyline>
-              </svg>
+              <span class="collapse-hint-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="10"
+                  height="10"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  fill="none"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
             </button>
-          </template>
+          </div>
+          <div class="prep-rtgt-row prep-rtgt-row--real">
+            <template v-if="showGameTime">
+              <div class="timeline-label" :title="t('timelineGrid.ruler.realTimeTitle')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                  <text
+                    x="12"
+                    y="20"
+                    font-size="20"
+                    fill="currentColor"
+                    text-anchor="middle"
+                    font-weight="bold"
+                    font-family="sans-serif"
+                  >
+                    R
+                  </text>
+                </svg>
+              </div>
+            </template>
+            <template v-else>
+              <button
+                type="button"
+                class="timeline-label interactable expand-btn"
+                :title="t('timelineGrid.ruler.gameTimeExpandTitle')"
+                @click.stop="isGameTimeCollapsed = false"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+              </button>
+            </template>
+          </div>
         </div>
-      </div>
-      <div v-show="showGameTime" class="time-ruler-track game-time" :style="{ width: `${totalWidthComputed}px` }">
-        <div v-for="(ext, idx) in store.globalExtensions"
-             :key="idx"
-             class="freeze-region-dim timeline"
-             :style="{
-             left: `${store.timeToPx(ext.time)}px`,
-             width: `${store.timeToPx(ext.time + ext.amount) - store.timeToPx(ext.time)}px`}">
+        <div
+          v-show="showGameTime"
+          class="time-ruler-track game-time"
+          :style="{ width: `${totalWidthComputed}px` }"
+        >
+          <div
+            v-for="(ext, idx) in store.globalExtensions"
+            :key="idx"
+            class="freeze-region-dim timeline"
+            :style="{
+              left: `${store.timeToPx(ext.time)}px`,
+              width: `${store.timeToPx(ext.time + ext.amount) - store.timeToPx(ext.time)}px`,
+            }"
+          ></div>
+          <div
+            v-for="tick in dynamicTicks.gameTicks"
+            :key="tick.time"
+            class="tick-line"
+            :class="tick.type"
+            :style="{ left: `${Math.round(tick.x)}px` }"
+          >
+            <span v-if="tick.label" class="tick-label">{{ tick.label }}</span>
+          </div>
         </div>
-        <div v-for="tick in dynamicTicks.gameTicks"
-             :key="tick.time"
-             class="tick-line"
-             :class="tick.type"
-             :style="{ left: `${Math.round(tick.x)}px` }">
-           <span v-if="tick.label" class="tick-label">{{ tick.label }}</span>
+        <div class="time-ruler-track" :style="{ width: `${totalWidthComputed}px` }">
+          <div
+            v-for="tick in dynamicTicks.realTicks"
+            :key="tick.time"
+            class="tick-line"
+            :class="tick.type"
+            :style="{ left: `${Math.round(tick.x)}px` }"
+          >
+            <span v-if="tick.label" class="tick-label">{{ tick.label }}</span>
+          </div>
         </div>
-      </div>
-      <div class="time-ruler-track" :style="{ width: `${totalWidthComputed}px` }">
-        <div v-for="tick in dynamicTicks.realTicks"
-             :key="tick.time"
-             class="tick-line"
-             :class="tick.type"
-             :style="{ left: `${Math.round(tick.x)}px` }">
-          <span v-if="tick.label" class="tick-label">{{ tick.label }}</span>
+        <div class="operation-layer">
+          <div
+            v-for="op in operationMarkers"
+            :key="op.id"
+            class="key-cap"
+            :class="[op.customClass, { 'is-hold': op.isHold, 'is-perfect-link': op.perfectLink }]"
+            :style="{
+              left: `${op.left}px`,
+              top: `${op.top}px`,
+              width: op.width ? `${op.width}px` : 'auto',
+              height: `${op.height}px`,
+              fontSize: `${op.fontSize}px`,
+            }"
+          >
+            <span class="key-text">{{ op.label }}</span>
+          </div>
         </div>
-      </div>
-      <div class="operation-layer">
-        <div v-for="op in operationMarkers" :key="op.id" class="key-cap"
-             :class="[op.customClass, { 'is-hold': op.isHold, 'is-perfect-link': op.perfectLink }]"
-             :style="{ left: `${op.left}px`, top: `${op.top}px`, width: op.width ? `${op.width}px` : 'auto', height: `${op.height}px`, fontSize: `${op.fontSize}px` }">
-          <span class="key-text">{{ op.label }}</span>
-        </div>
-      </div>
       </div>
     </div>
 
-    <div class="tracks-header-sticky" ref="tracksHeaderRef" @click="store.selectTrack(null)"
-         :style="{ paddingBottom: `${20 + scrollbarHeight}px` }">
-      <div v-for="(track, index) in store.teamTracksInfo" :key="index" class="track-info"
-           :style="getTrackInfoStyle(index)"
-           @click.stop="store.selectTrack(index)"
-           :class="{ 
-             'is-active': index === store.activeTrackIndex,
-             'is-reorder-target': reorderDropTargetIndex === index && draggingTrackOrderIndex !== index,
-             'is-reorder-source': draggingTrackOrderIndex === index
-           }"
-           @dragover="onReorderDragOver($event, index)"
-           @drop="onReorderDrop($event, index)"
-           @dragend="onReorderDragEnd">
-
+    <div
+      class="tracks-header-sticky"
+      ref="tracksHeaderRef"
+      @click="store.selectTrack(null)"
+      :style="{ paddingBottom: `${20 + scrollbarHeight}px` }"
+    >
+      <div
+        v-for="(track, index) in store.teamTracksInfo"
+        :key="index"
+        class="track-info"
+        :style="getTrackInfoStyle(index)"
+        @click.stop="store.selectTrack(index)"
+        :class="{
+          'is-active': index === store.activeTrackIndex,
+          'is-reorder-target':
+            reorderDropTargetIndex === index && draggingTrackOrderIndex !== index,
+          'is-reorder-source': draggingTrackOrderIndex === index,
+        }"
+        @dragover="onReorderDragOver($event, index)"
+        @drop="onReorderDrop($event, index)"
+        @dragend="onReorderDragEnd"
+      >
         <div class="track-controls">
-           <div class="reorder-btn arrow-btn up-btn" @click.stop="moveTrackUp(index)" :class="{ disabled: index === 0 }" :title="t('common.moveUp')">
-              <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none"><polyline points="18 15 12 9 6 15"></polyline></svg>
-           </div>
-           
-           <div class="drag-handle" draggable="true" @dragstart="onReorderDragStart($event, index)">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><circle cx="8" cy="4" r="2"></circle><circle cx="8" cy="12" r="2"></circle><circle cx="8" cy="20" r="2"></circle><circle cx="16" cy="4" r="2"></circle><circle cx="16" cy="12" r="2"></circle><circle cx="16" cy="20" r="2"></circle></svg>
-           </div>
+          <div
+            class="reorder-btn arrow-btn up-btn"
+            @click.stop="moveTrackUp(index)"
+            :class="{ disabled: index === 0 }"
+            :title="t('common.moveUp')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="10"
+              height="10"
+              stroke="currentColor"
+              stroke-width="3"
+              fill="none"
+            >
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </div>
 
-           <div class="reorder-btn arrow-btn down-btn" @click.stop="moveTrackDown(index)" :class="{ disabled: index === store.tracks.length - 1 }" :title="t('common.moveDown')">
-              <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>
-           </div>
+          <div class="drag-handle" draggable="true" @dragstart="onReorderDragStart($event, index)">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+              <circle cx="8" cy="4" r="2"></circle>
+              <circle cx="8" cy="12" r="2"></circle>
+              <circle cx="8" cy="20" r="2"></circle>
+              <circle cx="16" cy="4" r="2"></circle>
+              <circle cx="16" cy="12" r="2"></circle>
+              <circle cx="16" cy="20" r="2"></circle>
+            </svg>
+          </div>
+
+          <div
+            class="reorder-btn arrow-btn down-btn"
+            @click.stop="moveTrackDown(index)"
+            :class="{ disabled: index === store.tracks.length - 1 }"
+            :title="t('common.moveDown')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="10"
+              height="10"
+              stroke="currentColor"
+              stroke-width="3"
+              fill="none"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
         </div>
 
         <div class="char-select-trigger">
           <div class="operator-main-block">
             <div class="initial-gauge-slot">
               <div
-                  v-if="track.id"
-                  class="initial-gauge-control"
-                  :title="t('timelineGrid.track.initialGauge')"
-                  @click.stop
+                v-if="track.id"
+                class="initial-gauge-control"
+                :title="t('timelineGrid.track.initialGauge')"
+                @click.stop
               >
-                <span class="initial-gauge-label">{{ t('timelineGrid.track.initialGaugeShort') }}</span>
+                <span class="initial-gauge-label">{{
+                  t('timelineGrid.track.initialGaugeShort')
+                }}</span>
                 <div class="initial-gauge-input-wrap">
                   <CustomNumberInput
-                      :model-value="getInitialGaugeValue(track)"
-                      :min="0"
-                      :max="getInitialGaugeMax(track)"
-                      :step="1"
-                      active-color="#7dd3fc"
-                      border-color="#7dd3fc"
-                      text-align="center"
-                      @update:model-value="val => updateInitialGauge(track, val)"
+                    :model-value="getInitialGaugeValue(track)"
+                    :min="0"
+                    :max="getInitialGaugeMax(track)"
+                    :step="1"
+                    active-color="#7dd3fc"
+                    border-color="#7dd3fc"
+                    text-align="center"
+                    @update:model-value="val => updateInitialGauge(track, val)"
                   />
                 </div>
                 <span class="initial-gauge-max">/{{ getInitialGaugeMax(track) }}</span>
@@ -2830,71 +3257,132 @@ onUnmounted(() => {
             </div>
 
             <div class="operator-row">
-              <div class="trigger-avatar-box" @click.stop="openCharacterSelector(index)" :title="t('timelineGrid.track.changeOperatorTooltip')">
-                <img v-if="track.id" :src="track.avatar" class="avatar-image" :alt="track.name"/>
+              <div
+                class="trigger-avatar-box"
+                @click.stop="openCharacterSelector(index)"
+                :title="t('timelineGrid.track.changeOperatorTooltip')"
+              >
+                <img v-if="track.id" :src="track.avatar" class="avatar-image" :alt="track.name" />
                 <div v-else class="avatar-placeholder"></div>
                 <div class="avatar-change-hint" v-if="track.id">
-                  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
                     <path d="M21.5 2v6h-6"></path>
                     <path d="M21.5 8A10 10 0 0 0 3 8"></path>
                     <path d="M2.5 22v-6h6"></path>
                     <path d="M2.5 16A10 10 0 0 0 21 16"></path>
                   </svg>
                 </div>
-            </div>
+              </div>
               <div class="trigger-info" @click="!track.id && openCharacterSelector(index)">
                 <button
-                    v-if="store.tracks[index]?.id"
-                    type="button"
-                    class="track-stat-detail-btn"
-                    :disabled="!store.tracks[index]?.operatorStatus"
-                    :title="t('statDetail.button')"
-                    @click.stop="openStatDetail(index)"
+                  v-if="store.tracks[index]?.id"
+                  type="button"
+                  class="track-stat-detail-btn"
+                  :disabled="!store.tracks[index]?.operatorStatus"
+                  :title="t('statDetail.button')"
+                  @click.stop="openStatDetail(index)"
                 >
                   {{ t('statDetail.button') }}
                 </button>
-                <span class="trigger-name">{{ track.name || t('timelineGrid.track.selectOperator') }}</span>
+                <span class="trigger-name">{{
+                  track.name || t('timelineGrid.track.selectOperator')
+                }}</span>
               </div>
             </div>
           </div>
-        <div v-if="track.id" class="gear-panel">
-          <div class="gear-row">
-            <div class="weapon-slot-compact" @click.stop="openWeaponSelector(index)" :title="t('timelineGrid.track.selectWeaponTooltip')">
-              <div class="weapon-box" :class="getWeaponForTrack(track) ? '' : 'weapon-empty'">
-                <img v-if="getWeaponForTrack(track)?.icon" :src="getWeaponForTrack(track).icon" @error="e=>e.target.style.display='none'" />
-                <div v-else class="weapon-placeholder"></div>
-              </div>
-            </div>
-            <div class="equip-slots-compact">
-              <div class="equip-grid">
-                <div class="equip-box" :class="getEquipmentForTrack(track, 'armor') ? '' : 'equip-empty'" @click.stop="openEquipmentSelector(index, 'armor')" :title="t('timelineGrid.equipmentSlot.armor')">
-                  <img v-if="getEquipmentForTrack(track, 'armor')?.icon" :src="getEquipmentForTrack(track, 'armor').icon" @error="e=>e.target.style.display='none'" />
-                  <div v-else class="equip-placeholder"></div>
-                </div>
-                <div class="equip-box" :class="getEquipmentForTrack(track, 'gloves') ? '' : 'equip-empty'" @click.stop="openEquipmentSelector(index, 'gloves')" :title="t('timelineGrid.equipmentSlot.gloves')">
-                  <img v-if="getEquipmentForTrack(track, 'gloves')?.icon" :src="getEquipmentForTrack(track, 'gloves').icon" @error="e=>e.target.style.display='none'" />
-                  <div v-else class="equip-placeholder"></div>
-                </div>
-                <div class="equip-box" :class="getEquipmentForTrack(track, 'accessory1') ? '' : 'equip-empty'" @click.stop="openEquipmentSelector(index, 'accessory1')" :title="t('timelineGrid.equipmentSlot.accessory1')">
-                  <img v-if="getEquipmentForTrack(track, 'accessory1')?.icon" :src="getEquipmentForTrack(track, 'accessory1').icon" @error="e=>e.target.style.display='none'" />
-                  <div v-else class="equip-placeholder"></div>
-                </div>
-                <div class="equip-box" :class="getEquipmentForTrack(track, 'accessory2') ? '' : 'equip-empty'" @click.stop="openEquipmentSelector(index, 'accessory2')" :title="t('timelineGrid.equipmentSlot.accessory2')">
-                  <img v-if="getEquipmentForTrack(track, 'accessory2')?.icon" :src="getEquipmentForTrack(track, 'accessory2').icon" @error="e=>e.target.style.display='none'" />
-                  <div v-else class="equip-placeholder"></div>
+          <div v-if="track.id" class="gear-panel">
+            <div class="gear-row">
+              <div
+                class="weapon-slot-compact"
+                @click.stop="openWeaponSelector(index)"
+                :title="t('timelineGrid.track.selectWeaponTooltip')"
+              >
+                <div class="weapon-box" :class="getWeaponForTrack(track) ? '' : 'weapon-empty'">
+                  <img
+                    v-if="getWeaponForTrack(track)?.icon"
+                    :src="getWeaponForTrack(track).icon"
+                    @error="e => (e.target.style.display = 'none')"
+                  />
+                  <div v-else class="weapon-placeholder"></div>
                 </div>
               </div>
+              <div class="equip-slots-compact">
+                <div class="equip-grid">
+                  <div
+                    class="equip-box"
+                    :class="getEquipmentForTrack(track, 'armor') ? '' : 'equip-empty'"
+                    @click.stop="openEquipmentSelector(index, 'armor')"
+                    :title="t('timelineGrid.equipmentSlot.armor')"
+                  >
+                    <img
+                      v-if="getEquipmentForTrack(track, 'armor')?.icon"
+                      :src="getEquipmentForTrack(track, 'armor').icon"
+                      @error="e => (e.target.style.display = 'none')"
+                    />
+                    <div v-else class="equip-placeholder"></div>
+                  </div>
+                  <div
+                    class="equip-box"
+                    :class="getEquipmentForTrack(track, 'gloves') ? '' : 'equip-empty'"
+                    @click.stop="openEquipmentSelector(index, 'gloves')"
+                    :title="t('timelineGrid.equipmentSlot.gloves')"
+                  >
+                    <img
+                      v-if="getEquipmentForTrack(track, 'gloves')?.icon"
+                      :src="getEquipmentForTrack(track, 'gloves').icon"
+                      @error="e => (e.target.style.display = 'none')"
+                    />
+                    <div v-else class="equip-placeholder"></div>
+                  </div>
+                  <div
+                    class="equip-box"
+                    :class="getEquipmentForTrack(track, 'accessory1') ? '' : 'equip-empty'"
+                    @click.stop="openEquipmentSelector(index, 'accessory1')"
+                    :title="t('timelineGrid.equipmentSlot.accessory1')"
+                  >
+                    <img
+                      v-if="getEquipmentForTrack(track, 'accessory1')?.icon"
+                      :src="getEquipmentForTrack(track, 'accessory1').icon"
+                      @error="e => (e.target.style.display = 'none')"
+                    />
+                    <div v-else class="equip-placeholder"></div>
+                  </div>
+                  <div
+                    class="equip-box"
+                    :class="getEquipmentForTrack(track, 'accessory2') ? '' : 'equip-empty'"
+                    @click.stop="openEquipmentSelector(index, 'accessory2')"
+                    :title="t('timelineGrid.equipmentSlot.accessory2')"
+                  >
+                    <img
+                      v-if="getEquipmentForTrack(track, 'accessory2')?.icon"
+                      :src="getEquipmentForTrack(track, 'accessory2').icon"
+                      @error="e => (e.target.style.display = 'none')"
+                    />
+                    <div v-else class="equip-placeholder"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="gear-hint-row">
-            <div class="set-bonus-hint" :class="{ 'is-hidden': !store.getActiveSetBonusCategories(track.id)?.length }">
-              {{ t('timelineGrid.track.setBonusActive') }}
+            <div class="gear-hint-row">
+              <div
+                class="set-bonus-hint"
+                :class="{ 'is-hidden': !store.getActiveSetBonusCategories(track.id)?.length }"
+              >
+                {{ t('timelineGrid.track.setBonusActive') }}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
       </div>
     </div>
 
@@ -2911,8 +3399,15 @@ onUnmounted(() => {
       @update:visible="closeHitDetail"
     />
 
-    <div class="tracks-content-viewport" ref="tracksContentRef" @mousedown="onContentMouseDown" @wheel="handleTrackWheel"
-         @mousemove="onGridMouseMove" @mouseleave="onGridMouseLeave" @contextmenu="onBackgroundContextMenu">
+    <div
+      class="tracks-content-viewport"
+      ref="tracksContentRef"
+      @mousedown="onContentMouseDown"
+      @wheel="handleTrackWheel"
+      @mousemove="onGridMouseMove"
+      @mouseleave="onGridMouseLeave"
+      @contextmenu="onBackgroundContextMenu"
+    >
       <div v-if="trackDividerOffsets.length" class="track-divider-overlay" aria-hidden="true">
         <div
           v-for="(offset, index) in trackDividerOffsets"
@@ -2932,24 +3427,37 @@ onUnmounted(() => {
       </div>
 
       <div class="tracks-content-scroller" :style="transformStyle">
-        <div v-if="store.showCursorGuide && !store.isBoxSelectMode" class="cursor-guide"
-             :style="{ transform: `translateX(${store.cursorPosTimeline.x}px)` }"
-             v-show="isCursorVisible">
-
+        <div
+          v-if="store.showCursorGuide && !store.isBoxSelectMode"
+          class="cursor-guide"
+          :style="{ transform: `translateX(${store.cursorPosTimeline.x}px)` }"
+          v-show="isCursorVisible"
+        >
           <div class="guide-time-label">
             {{ store.formatAxisTimeLabel(store.cursorCurrentTime) }}
           </div>
 
-          <div class="guide-sp-label">{{ t('timelineGrid.cursor.sp') }}: {{ currentSpValue }}{{ currentSpReturnText }}</div>
-          <div class="guide-stagger-label">{{ t('timelineGrid.cursor.stagger') }}: {{ currentStaggerValue }}</div>
+          <div class="guide-sp-label">
+            {{ t('timelineGrid.cursor.sp') }}: {{ currentSpValue }}{{ currentSpReturnText }}
+          </div>
+          <div class="guide-stagger-label">
+            {{ t('timelineGrid.cursor.stagger') }}: {{ currentStaggerValue }}
+          </div>
 
           <div v-if="cursorGaugeRows.length" class="guide-gauge-panel">
             <div class="guide-gauge-title">{{ t('timelineGrid.cursor.gauge') }}</div>
             <div class="guide-gauge-grid">
               <div v-for="row in cursorGaugeRows" :key="row.id" class="guide-gauge-grid-row">
-                <span class="guide-gauge-name" :class="{ 'is-full': row.isFull }" :style="{ color: row.color, '--row-color': row.color }">{{ row.name }}</span>
+                <span
+                  class="guide-gauge-name"
+                  :class="{ 'is-full': row.isFull }"
+                  :style="{ color: row.color, '--row-color': row.color }"
+                  >{{ row.name }}</span
+                >
                 <span class="guide-gauge-value" :class="{ 'is-full': row.isFull }">
-                  <span class="guide-gauge-current" :style="{ color: row.color }">{{ row.val }}</span>
+                  <span class="guide-gauge-current" :style="{ color: row.color }">{{
+                    row.val
+                  }}</span>
                   <span class="guide-gauge-sep">/</span>
                   <span class="guide-gauge-max">{{ row.max }}</span>
                 </span>
@@ -2961,62 +3469,143 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-for="boundary in store.cycleBoundaries"
-             :key="boundary.id"
-             class="cycle-guide"
-             :class="{ 'is-selected': boundary.id === store.selectedCycleBoundaryId }"
-             :style="{ left: `${store.timeToPx(boundary.time)}px` }"
-             @mousedown="onCycleLineMouseDown($event, boundary.id)"
-             @contextmenu.stop.prevent="onCycleBoundaryContextMenu($event, boundary.id)">
-
+        <div
+          v-for="boundary in store.cycleBoundaries"
+          :key="boundary.id"
+          class="cycle-guide"
+          :class="{ 'is-selected': boundary.id === store.selectedCycleBoundaryId }"
+          :style="{ left: `${store.timeToPx(boundary.time)}px` }"
+          @mousedown="onCycleLineMouseDown($event, boundary.id)"
+          @contextmenu.stop.prevent="onCycleBoundaryContextMenu($event, boundary.id)"
+        >
           <div class="cycle-label-time">{{ store.formatAxisTimeLabel(boundary.time) }}</div>
           <div class="cycle-label-text">{{ t('timelineGrid.cycleBoundary') }}</div>
           <div class="cycle-hit-area"></div>
         </div>
 
         <div v-if="alignGuide.visible" class="align-guide-layer">
-          <div class="target-highlight-box"
-               :style="{
-                 left: `${alignGuide.targetRect.left}px`,
-                 top: `${alignGuide.targetRect.top}px`,
-                 width: `${alignGuide.targetRect.width}px`,
-                 height: `${alignGuide.targetRect.height}px`,
-                 color: alignGuide.color
-               }">
-          </div>
+          <div
+            class="target-highlight-box"
+            :style="{
+              left: `${alignGuide.targetRect.left}px`,
+              top: `${alignGuide.targetRect.top}px`,
+              width: `${alignGuide.targetRect.width}px`,
+              height: `${alignGuide.targetRect.height}px`,
+              color: alignGuide.color,
+            }"
+          ></div>
 
-          <div class="guide-line-vertical"
-               :style="{ left: `${alignGuide.x}px`, color: alignGuide.color }">
-          </div>
+          <div
+            class="guide-line-vertical"
+            :style="{ left: `${alignGuide.x}px`, color: alignGuide.color }"
+          ></div>
 
-          <div class="guide-float-label"
-               :style="{
-                 left: `${alignGuide.x}px`,
-                 top: `${alignGuide.top - 28}px`,
-                 backgroundColor: alignGuide.color,
-                 '--arrow-color': alignGuide.color
-               }">
-
+          <div
+            class="guide-float-label"
+            :style="{
+              left: `${alignGuide.x}px`,
+              top: `${alignGuide.top - 28}px`,
+              backgroundColor: alignGuide.color,
+              '--arrow-color': alignGuide.color,
+            }"
+          >
             <span class="guide-icon">
-              <svg v-if="alignGuide.iconKey === 'snap-left'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline><line x1="21" y1="4" x2="21" y2="20"></line></svg>
+              <svg
+                v-if="alignGuide.iconKey === 'snap-left'"
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M19 12H5"></path>
+                <polyline points="12 19 5 12 12 5"></polyline>
+                <line x1="21" y1="4" x2="21" y2="20"></line>
+              </svg>
 
-              <svg v-if="alignGuide.iconKey === 'snap-right'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><polyline points="12 5 19 12 12 19"></polyline><line x1="3" y1="4" x2="3" y2="20"></line></svg>
+              <svg
+                v-if="alignGuide.iconKey === 'snap-right'"
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 12h14"></path>
+                <polyline points="12 5 19 12 12 19"></polyline>
+                <line x1="3" y1="4" x2="3" y2="20"></line>
+              </svg>
 
-              <svg v-if="alignGuide.iconKey === 'align-left'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="18" x2="3" y2="18"></line><line x1="6" y1="2" x2="6" y2="22"></line></svg>
+              <svg
+                v-if="alignGuide.iconKey === 'align-left'"
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="21" y1="6" x2="3" y2="6"></line>
+                <line x1="21" y1="18" x2="3" y2="18"></line>
+                <line x1="6" y1="2" x2="6" y2="22"></line>
+              </svg>
 
-              <svg v-if="alignGuide.iconKey === 'align-right'" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="18" x2="3" y2="18"></line><line x1="18" y1="2" x2="18" y2="22"></line></svg>
+              <svg
+                v-if="alignGuide.iconKey === 'align-right'"
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="21" y1="6" x2="3" y2="6"></line>
+                <line x1="21" y1="18" x2="3" y2="18"></line>
+                <line x1="18" y1="2" x2="18" y2="22"></line>
+              </svg>
             </span>
 
             <span class="guide-text">{{ alignGuide.label }}</span>
           </div>
         </div>
 
-        <div v-if="isBoxSelecting" class="selection-box-overlay" :style="{ left: `${boxRect.left}px`, top: `${boxRect.top}px`, width: `${boxRect.width}px`, height: `${boxRect.height}px` }"></div>
+        <div
+          v-if="isBoxSelecting"
+          class="selection-box-overlay"
+          :style="{
+            left: `${boxRect.left}px`,
+            top: `${boxRect.top}px`,
+            width: `${boxRect.width}px`,
+            height: `${boxRect.height}px`,
+          }"
+        ></div>
 
         <div class="tracks-content">
-          <div v-if="activePrepDuration > 0" class="prep-zone-bg prep-zone-bg--content" :style="{ width: `${prepZoneWidthPxRounded}px` }"></div>
-          <div v-if="activePrepDuration > 0" class="battle-start-line battle-start-line--content" :style="{ left: `${prepZoneWidthPxRounded}px` }">
-            <div v-if="store.prepExpanded" class="battle-start-handle" @mousedown.stop.prevent="onPrepResizeMouseDown"></div>
+          <div
+            v-if="activePrepDuration > 0"
+            class="prep-zone-bg prep-zone-bg--content"
+            :style="{ width: `${prepZoneWidthPxRounded}px` }"
+          ></div>
+          <div
+            v-if="activePrepDuration > 0"
+            class="battle-start-line battle-start-line--content"
+            :style="{ left: `${prepZoneWidthPxRounded}px` }"
+          >
+            <div
+              v-if="store.prepExpanded"
+              class="battle-start-handle"
+              @mousedown.stop.prevent="onPrepResizeMouseDown"
+            ></div>
           </div>
           <div
             v-if="activePrepDuration > 0 && !store.prepExpanded"
@@ -3024,8 +3613,22 @@ onUnmounted(() => {
             :style="{ width: `${prepZoneWidthPxRounded}px` }"
           >
             <div class="prep-collapsed-text">{{ t('timelineGrid.prep.title') }}</div>
-            <button type="button" class="prep-collapsed-toggle" @click.stop="store.togglePrepExpanded" :title="t('timelineGrid.prep.expand')">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <button
+              type="button"
+              class="prep-collapsed-toggle"
+              @click.stop="store.togglePrepExpanded"
+              :title="t('timelineGrid.prep.expand')"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <polyline points="8 6 16 12 8 18"></polyline>
               </svg>
             </button>
@@ -3037,8 +3640,22 @@ onUnmounted(() => {
             class="prep-expanded-collapse"
             :style="{ left: `${Math.max(0, prepZoneWidthPxRounded - 18)}px` }"
           >
-            <button type="button" class="prep-mini-btn" :title="t('timelineGrid.prep.collapseTitle')" @click.stop="store.togglePrepExpanded">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <button
+              type="button"
+              class="prep-mini-btn"
+              :title="t('timelineGrid.prep.collapseTitle')"
+              @click.stop="store.togglePrepExpanded"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <polyline points="16 6 8 12 16 18"></polyline>
               </svg>
             </button>
@@ -3046,29 +3663,66 @@ onUnmounted(() => {
           <ContextMenu />
           <svg class="connections-svg">
             <template v-if="tracksContentRef">
-              <ActionConnector v-for="conn in store.connections" :key="conn.id" :connection="conn" :render-key="svgRenderKey"/>
+              <ActionConnector
+                v-for="conn in store.connections"
+                :key="conn.id"
+                :connection="conn"
+                :render-key="svgRenderKey"
+              />
               <ConnectionPreview v-if="connectionHandler.isDragging" />
             </template>
           </svg>
 
-          <div v-for="(track, index) in store.tracks" :key="index" class="track-row" :id="`track-row-${index}`" :style="getTrackRowStyle(index)"
-               :class="{ 'is-active-drop': index === store.activeTrackIndex,'is-last-track': index === store.tracks.length - 1 }" @dragover="onTrackDragOver" @drop="onTrackDrop(track, index, $event)">
+          <div
+            v-for="(track, index) in store.tracks"
+            :key="index"
+            class="track-row"
+            :id="`track-row-${index}`"
+            :style="getTrackRowStyle(index)"
+            :class="{
+              'is-active-drop': index === store.activeTrackIndex,
+              'is-last-track': index === store.tracks.length - 1,
+            }"
+            @dragover="onTrackDragOver"
+            @drop="onTrackDrop(track, index, $event)"
+          >
             <TimelineBuffLayer
               v-if="track.id && store.isOperatorEffectsVisible(index)"
               :track-id="track.id"
               placement="upper"
             />
-            <div class="track-lane" :style="getTrackLaneStyle" ref="trackLaneRefs" :data-track-index="index" :data-track-id="track.id">
-              <GaugeOverlay v-if="track.id && store.isOperatorEffectsVisible(index)" :track-id="track.id"/>
+            <div
+              class="track-lane"
+              :style="getTrackLaneStyle"
+              ref="trackLaneRefs"
+              :data-track-index="index"
+              :data-track-id="track.id"
+            >
+              <GaugeOverlay
+                v-if="track.id && store.isOperatorEffectsVisible(index)"
+                :track-id="track.id"
+              />
               <div class="actions-container">
-                <ActionItem v-memo="[action, store.isOperatorEffectsVisible(index)]" v-for="action in track.actions" :key="action.instanceId" :action="action"
+                <ActionItem
+                  v-memo="[action, store.isOperatorEffectsVisible(index)]"
+                  v-for="action in track.actions"
+                  :key="action.instanceId"
+                  :action="action"
                   :show-decorations="store.isOperatorEffectsVisible(index)"
                   @hit-click="openHitDetail"
                   @mousedown="onActionMouseDown($event, track, action)"
-                  @mousemove="updateAlignGuide($event, action, $el.querySelector(`#action-${action.instanceId}`))"
+                  @mousemove="
+                    updateAlignGuide(
+                      $event,
+                      action,
+                      $el.querySelector(`#action-${action.instanceId}`),
+                    )
+                  "
                   @mouseleave="hideAlignGuide"
                   @contextmenu.prevent.stop="onActionContextMenu($event, action)"
-                  :class="{ 'is-moving': isDragStarted && store.isActionSelected(action.instanceId) }"
+                  :class="{
+                    'is-moving': isDragStarted && store.isActionSelected(action.instanceId),
+                  }"
                 />
               </div>
               <TimelineComboWindowBar
@@ -3076,13 +3730,17 @@ onUnmounted(() => {
                 :track-id="track.id"
               />
               <div v-if="store.isOperatorEffectsVisible(index)" class="switch-marker-layer">
-                <div v-for="sw in store.switchEvents.filter(s => s.characterId === track.id)"
-                     :key="sw.id"
-                     class="switch-tag"
-                     :class="{ 'is-selected': sw.id === store.selectedSwitchEventId, 'is-dragging': sw.id === draggingSwitchEventId }"
-                     :style="{ left: `${store.timeToPx(sw.time)}px` }"
-                     @mousedown.stop="onSwitchMarkerMouseDown($event, sw.id)">
-
+                <div
+                  v-for="sw in store.switchEvents.filter(s => s.characterId === track.id)"
+                  :key="sw.id"
+                  class="switch-tag"
+                  :class="{
+                    'is-selected': sw.id === store.selectedSwitchEventId,
+                    'is-dragging': sw.id === draggingSwitchEventId,
+                  }"
+                  :style="{ left: `${store.timeToPx(sw.time)}px` }"
+                  @mousedown.stop="onSwitchMarkerMouseDown($event, sw.id)"
+                >
                   <div class="tag-avatar">
                     <img :src="getOperatorAvatarById(sw.characterId)" />
                   </div>
@@ -3099,12 +3757,15 @@ onUnmounted(() => {
           </div>
 
           <div class="global-freeze-layer">
-            <div v-for="(ext, idx) in activeFreezeRegions"
-                 :key="idx"
-                 class="freeze-region-dim"
-                 :style="{
-                 left: `${store.timeToPx(ext.time)}px`,
-                 width: `${store.timeToPx(ext.time + ext.amount) - store.timeToPx(ext.time)}px`}">
+            <div
+              v-for="(ext, idx) in activeFreezeRegions"
+              :key="idx"
+              class="freeze-region-dim"
+              :style="{
+                left: `${store.timeToPx(ext.time)}px`,
+                width: `${store.timeToPx(ext.time + ext.amount) - store.timeToPx(ext.time)}px`,
+              }"
+            >
               <div class="freeze-duration-label">
                 {{ store.formatTimeLabel(ext.amount) }}
               </div>
@@ -3118,37 +3779,93 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <el-dialog v-model="isSelectorVisible" :title="t('timelineGrid.operatorDialog.title')" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
+    <el-dialog
+      v-model="isSelectorVisible"
+      :title="t('timelineGrid.operatorDialog.title')"
+      width="600px"
+      align-center
+      class="char-selector-dialog"
+      :append-to-body="true"
+    >
       <div class="selector-header">
         <div class="header-left-group">
-          <el-input v-model="searchQuery" :placeholder="t('timelineGrid.operatorDialog.searchPlaceholder')" :prefix-icon="Search" clearable style="width: 180px" />
-          <button class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift" @click="removeOperator" :title="t('timelineGrid.operatorDialog.clearTrack')">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-              <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <el-input
+            v-model="searchQuery"
+            :placeholder="t('timelineGrid.operatorDialog.searchPlaceholder')"
+            :prefix-icon="Search"
+            clearable
+            style="width: 180px"
+          />
+          <button
+            class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift"
+            @click="removeOperator"
+            :title="t('timelineGrid.operatorDialog.clearTrack')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            >
+              <path d="M3 6h18"></path>
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              ></path>
             </svg>
             {{ t('common.unequip') }}
           </button>
         </div>
         <div class="element-filters">
-          <button v-for="elm in ELEMENT_FILTERS" :key="elm.value" class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': filterElement === elm.value }" :style="{ '--ea-btn-accent': elm.color }" @click="filterElement = elm.value">
+          <button
+            v-for="elm in ELEMENT_FILTERS"
+            :key="elm.value"
+            class="ea-btn ea-btn--glass-cut"
+            :class="{ 'is-active': filterElement === elm.value }"
+            :style="{ '--ea-btn-accent': elm.color }"
+            @click="filterElement = elm.value"
+          >
             {{ elm.label }}
           </button>
         </div>
         <div class="class-filters">
-          <button v-for="cls in CLASS_FILTERS" :key="cls.value" class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': filterClass === cls.value }" @click="filterClass = cls.value">
+          <button
+            v-for="cls in CLASS_FILTERS"
+            :key="cls.value"
+            class="ea-btn ea-btn--glass-cut"
+            :class="{ 'is-active': filterClass === cls.value }"
+            @click="filterClass = cls.value"
+          >
             {{ cls.label }}
           </button>
         </div>
       </div>
       <div class="roster-scroll-container">
         <template v-for="group in rosterByRarity" :key="group.level">
-          <div class="rarity-header" :class="`header-rarity-${group.level}`" :style="{ color: getRarityBaseColor(group.level) }">
+          <div
+            class="rarity-header"
+            :class="`header-rarity-${group.level}`"
+            :style="{ color: getRarityBaseColor(group.level) }"
+          >
             <span class="rarity-label">{{ group.level }} ★</span>
             <div class="rarity-line"></div>
           </div>
           <div class="roster-grid">
-            <div v-for="char in group.list" :key="char.id" class="roster-card" :class="[{ 'is-selected': store.tracks.some(t => t.id === char.id) }, `rarity-${char.rarity}-style`]" @click="confirmCharacterSelection(char.id)">
-              <div class="card-avatar-wrapper" :style="char.rarity === 6 ? {} : { borderColor: getRarityBaseColor(char.rarity) }">
+            <div
+              v-for="char in group.list"
+              :key="char.id"
+              class="roster-card"
+              :class="[
+                { 'is-selected': store.tracks.some(t => t.id === char.id) },
+                `rarity-${char.rarity}-style`,
+              ]"
+              @click="confirmCharacterSelection(char.id)"
+            >
+              <div
+                class="card-avatar-wrapper"
+                :style="char.rarity === 6 ? {} : { borderColor: getRarityBaseColor(char.rarity) }"
+              >
                 <img :src="char.avatar" loading="lazy" />
                 <div
                   class="element-badge"
@@ -3160,21 +3877,53 @@ onUnmounted(() => {
                 </div>
               </div>
               <div class="card-name">{{ char.name }}</div>
-              <div v-if="store.tracks.some(t => t.id === char.id)" class="in-team-tag">{{ t('timelineGrid.operatorDialog.inTeam') }}</div>
+              <div v-if="store.tracks.some(t => t.id === char.id)" class="in-team-tag">
+                {{ t('timelineGrid.operatorDialog.inTeam') }}
+              </div>
             </div>
           </div>
         </template>
-        <div v-if="rosterByRarity.length === 0" class="empty-roster">{{ t('timelineGrid.operatorDialog.empty') }}</div>
+        <div v-if="rosterByRarity.length === 0" class="empty-roster">
+          {{ t('timelineGrid.operatorDialog.empty') }}
+        </div>
       </div>
     </el-dialog>
 
-    <el-dialog v-model="isWeaponSelectorVisible" :title="t('timelineGrid.weaponDialog.title')" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
+    <el-dialog
+      v-model="isWeaponSelectorVisible"
+      :title="t('timelineGrid.weaponDialog.title')"
+      width="600px"
+      align-center
+      class="char-selector-dialog"
+      :append-to-body="true"
+    >
       <div class="selector-header">
         <div class="header-left-group">
-          <el-input v-model="weaponSearchQuery" :placeholder="t('timelineGrid.weaponDialog.searchPlaceholder')" :prefix-icon="Search" clearable style="width: 180px" />
-          <button class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift" :disabled="!currentWeaponForDialog" @click="removeWeapon" :title="t('timelineGrid.weaponDialog.unequipTooltip')">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-              <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <el-input
+            v-model="weaponSearchQuery"
+            :placeholder="t('timelineGrid.weaponDialog.searchPlaceholder')"
+            :prefix-icon="Search"
+            clearable
+            style="width: 180px"
+          />
+          <button
+            class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift"
+            :disabled="!currentWeaponForDialog"
+            @click="removeWeapon"
+            :title="t('timelineGrid.weaponDialog.unequipTooltip')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            >
+              <path d="M3 6h18"></path>
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              ></path>
             </svg>
             {{ t('common.unequip') }}
           </button>
@@ -3182,31 +3931,80 @@ onUnmounted(() => {
       </div>
       <div class="roster-scroll-container">
         <template v-for="group in weaponRosterByRarity" :key="group.level">
-          <div class="rarity-header" :class="`header-rarity-${group.level}`" :style="{ color: getRarityBaseColor(group.level) }">
+          <div
+            class="rarity-header"
+            :class="`header-rarity-${group.level}`"
+            :style="{ color: getRarityBaseColor(group.level) }"
+          >
             <span class="rarity-label">{{ group.level }} ★</span>
-          <div class="rarity-line"></div>
-        </div>
-        <div class="roster-grid">
-          <div v-for="weapon in group.list" :key="weapon.id" class="roster-card" :class="[`rarity-${getWeaponRarity(weapon)}-style`]" @click="confirmWeaponSelection(weapon.id)">
-            <div class="card-avatar-wrapper" :style="getWeaponRarity(weapon) === 6 ? {} : { borderColor: getRarityBaseColor(getWeaponRarity(weapon)) }">
-              <img :src="weapon.icon || '/weapons/default.webp'" loading="lazy" />
-            </div>
-            <div class="card-name">{{ weapon.name }}</div>
-            <div v-if="isWeaponEquipped(weapon.id)" class="in-team-tag weapon-equipped">{{ t('timelineGrid.weaponDialog.equipped') }}</div>
+            <div class="rarity-line"></div>
           </div>
+          <div class="roster-grid">
+            <div
+              v-for="weapon in group.list"
+              :key="weapon.id"
+              class="roster-card"
+              :class="[`rarity-${getWeaponRarity(weapon)}-style`]"
+              @click="confirmWeaponSelection(weapon.id)"
+            >
+              <div
+                class="card-avatar-wrapper"
+                :style="
+                  getWeaponRarity(weapon) === 6
+                    ? {}
+                    : { borderColor: getRarityBaseColor(getWeaponRarity(weapon)) }
+                "
+              >
+                <img :src="weapon.icon || '/weapons/default.webp'" loading="lazy" />
+              </div>
+              <div class="card-name">{{ weapon.name }}</div>
+              <div v-if="isWeaponEquipped(weapon.id)" class="in-team-tag weapon-equipped">
+                {{ t('timelineGrid.weaponDialog.equipped') }}
+              </div>
+            </div>
+          </div>
+        </template>
+        <div v-if="weaponRosterByRarity.length === 0" class="empty-roster">
+          {{ t('timelineGrid.weaponDialog.empty') }}
         </div>
-      </template>
-      <div v-if="weaponRosterByRarity.length === 0" class="empty-roster">{{ t('timelineGrid.weaponDialog.empty') }}</div>
-    </div>
+      </div>
     </el-dialog>
 
-    <el-dialog v-model="isEquipmentSelectorVisible" :title="t('timelineGrid.equipmentDialog.title', { slot: equipmentSlotLabel })" width="600px" align-center class="char-selector-dialog" :append-to-body="true">
+    <el-dialog
+      v-model="isEquipmentSelectorVisible"
+      :title="t('timelineGrid.equipmentDialog.title', { slot: equipmentSlotLabel })"
+      width="600px"
+      align-center
+      class="char-selector-dialog"
+      :append-to-body="true"
+    >
       <div class="selector-header">
         <div class="header-left-group">
-          <el-input v-model="equipmentSearchQuery" :placeholder="t('timelineGrid.equipmentDialog.searchPlaceholder')" :prefix-icon="Search" clearable style="width: 180px" />
-          <button class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift" :disabled="!currentEquipmentForDialog" @click="removeEquipment" :title="t('timelineGrid.equipmentDialog.unequipTooltip')">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-              <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <el-input
+            v-model="equipmentSearchQuery"
+            :placeholder="t('timelineGrid.equipmentDialog.searchPlaceholder')"
+            :prefix-icon="Search"
+            clearable
+            style="width: 180px"
+          />
+          <button
+            class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift"
+            :disabled="!currentEquipmentForDialog"
+            @click="removeEquipment"
+            :title="t('timelineGrid.equipmentDialog.unequipTooltip')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            >
+              <path d="M3 6h18"></path>
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              ></path>
             </svg>
             {{ t('common.unequip') }}
           </button>
@@ -3227,38 +4025,61 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="element-filters">
-          <button class="ea-btn ea-btn--glass-cut equipment-filter-chip" :class="{ 'is-active': equipmentCategoryFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentCategoryFilter = 'ALL'">{{ t('timelineGrid.equipmentDialog.allCategories') }}</button>
-          <button class="ea-btn ea-btn--glass-cut equipment-filter-chip" :class="{ 'is-active': equipmentCategoryFilter === '__UNCAT__' }" :style="{ '--ea-btn-accent': '#888' }" @click="equipmentCategoryFilter = '__UNCAT__'">{{ t('timelineGrid.equipmentDialog.uncategorized') }}</button>
-          <button v-for="cat in store.equipmentCategories" :key="`eqcat_${cat}`" class="ea-btn ea-btn--glass-cut" :class="{ 'is-active': equipmentCategoryFilter === cat }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentCategoryFilter = cat">{{ store.getSetBonusDisplayName ? store.getSetBonusDisplayName(cat) : cat }}</button>
+          <button
+            class="ea-btn ea-btn--glass-cut equipment-filter-chip"
+            :class="{ 'is-active': equipmentCategoryFilter === 'ALL' }"
+            :style="{ '--ea-btn-accent': '#2dd4bf' }"
+            @click="equipmentCategoryFilter = 'ALL'"
+          >
+            {{ t('timelineGrid.equipmentDialog.allCategories') }}
+          </button>
+          <button
+            class="ea-btn ea-btn--glass-cut equipment-filter-chip"
+            :class="{ 'is-active': equipmentCategoryFilter === '__UNCAT__' }"
+            :style="{ '--ea-btn-accent': '#888' }"
+            @click="equipmentCategoryFilter = '__UNCAT__'"
+          >
+            {{ t('timelineGrid.equipmentDialog.uncategorized') }}
+          </button>
+          <button
+            v-for="cat in store.equipmentCategories"
+            :key="`eqcat_${cat}`"
+            class="ea-btn ea-btn--glass-cut"
+            :class="{ 'is-active': equipmentCategoryFilter === cat }"
+            :style="{ '--ea-btn-accent': '#2dd4bf' }"
+            @click="equipmentCategoryFilter = cat"
+          >
+            {{ store.getSetBonusDisplayName ? store.getSetBonusDisplayName(cat) : cat }}
+          </button>
         </div>
         <div class="equipment-affix-filter-section">
           <div class="equipment-affix-filter-strip">
             <button
-                class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-                :class="{ 'is-active': equipmentAffixFilter === 'ALL' }"
-                :style="{ '--ea-btn-accent': '#2dd4bf' }"
-                @click="equipmentAffixFilter = 'ALL'"
+              class="ea-btn ea-btn--glass-cut equipment-filter-chip"
+              :class="{ 'is-active': equipmentAffixFilter === 'ALL' }"
+              :style="{ '--ea-btn-accent': '#2dd4bf' }"
+              @click="equipmentAffixFilter = 'ALL'"
             >
               {{ t('timelineGrid.equipmentDialog.allAffixes') }}
             </button>
 
             <template
-                v-for="(group, groupIndex) in equipmentAffixFilterGroups"
-                :key="`eq_affix_group_${group.key}`"
+              v-for="(group, groupIndex) in equipmentAffixFilterGroups"
+              :key="`eq_affix_group_${group.key}`"
             >
-      <span
-          v-if="groupIndex > 0"
-          class="equipment-affix-filter-divider"
-          aria-hidden="true"
-      />
+              <span
+                v-if="groupIndex > 0"
+                class="equipment-affix-filter-divider"
+                aria-hidden="true"
+              />
 
               <button
-                  v-for="option in group.items"
-                  :key="`eq_affix_filter_${option.value}`"
-                  class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-                  :class="{ 'is-active': equipmentAffixFilter === option.value }"
-                  :style="{ '--ea-btn-accent': option.accent }"
-                  @click="equipmentAffixFilter = option.value"
+                v-for="option in group.items"
+                :key="`eq_affix_filter_${option.value}`"
+                class="ea-btn ea-btn--glass-cut equipment-filter-chip"
+                :class="{ 'is-active': equipmentAffixFilter === option.value }"
+                :style="{ '--ea-btn-accent': option.accent }"
+                @click="equipmentAffixFilter = option.value"
               >
                 {{ option.label }}
               </button>
@@ -3266,8 +4087,24 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="element-filters">
-          <button class="ea-btn ea-btn--glass-cut equipment-filter-chip" :class="{ 'is-active': equipmentLevelFilter === 'ALL' }" :style="{ '--ea-btn-accent': '#2dd4bf' }" @click="equipmentLevelFilter = 'ALL'">{{ t('timelineGrid.equipmentDialog.allLevels') }}</button>
-          <button v-for="lv in EQUIPMENT_LEVELS" :key="`eqlv_${lv}`" class="ea-btn ea-btn--glass-cut equipment-filter-chip" :class="{ 'is-active': equipmentLevelFilter === lv }" :style="{ '--ea-btn-accent': getEquipmentLevelColor(lv) }" @click="equipmentLevelFilter = lv">Lv{{ lv }}</button>
+          <button
+            class="ea-btn ea-btn--glass-cut equipment-filter-chip"
+            :class="{ 'is-active': equipmentLevelFilter === 'ALL' }"
+            :style="{ '--ea-btn-accent': '#2dd4bf' }"
+            @click="equipmentLevelFilter = 'ALL'"
+          >
+            {{ t('timelineGrid.equipmentDialog.allLevels') }}
+          </button>
+          <button
+            v-for="lv in EQUIPMENT_LEVELS"
+            :key="`eqlv_${lv}`"
+            class="ea-btn ea-btn--glass-cut equipment-filter-chip"
+            :class="{ 'is-active': equipmentLevelFilter === lv }"
+            :style="{ '--ea-btn-accent': getEquipmentLevelColor(lv) }"
+            @click="equipmentLevelFilter = lv"
+          >
+            Lv{{ lv }}
+          </button>
         </div>
       </div>
       <div class="roster-scroll-container">
@@ -3278,10 +4115,12 @@ onUnmounted(() => {
           </div>
           <div class="roster-grid">
             <div
-                v-for="eq in group.list"
-                :key="eq.id"
-                class="roster-card equipment-roster-card"
-                :class="{ 'is-ability-match-both': eq.abilityMatch?.type === 'both', }" @click="confirmEquipmentSelection(eq.id)">
+              v-for="eq in group.list"
+              :key="eq.id"
+              class="roster-card equipment-roster-card"
+              :class="{ 'is-ability-match-both': eq.abilityMatch?.type === 'both' }"
+              @click="confirmEquipmentSelection(eq.id)"
+            >
               <el-tooltip
                 placement="top-start"
                 effect="dark"
@@ -3302,23 +4141,40 @@ onUnmounted(() => {
                         viewBox="0 0 12 12"
                         aria-hidden="true"
                       >
-                        <circle cx="6" cy="6" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+                        <circle
+                          cx="6"
+                          cy="6"
+                          r="3.25"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                        />
                       </svg>
-                      <img v-else class="equipment-affix-tooltip-icon" :src="row.src" loading="lazy" />
+                      <img
+                        v-else
+                        class="equipment-affix-tooltip-icon"
+                        :src="row.src"
+                        loading="lazy"
+                      />
                       <span class="equipment-affix-tooltip-label">{{ row.label }}</span>
                       <strong class="equipment-affix-tooltip-value">{{ row.valueText }}</strong>
                     </div>
                   </div>
                 </template>
                 <div
-                    class="card-avatar-wrapper"
-                    :class="{ 'is-ability-match-both': eq.abilityMatch?.type === 'both',}" :style="{ borderColor: getEquipmentLevelColor(eq.level) }">
+                  class="card-avatar-wrapper"
+                  :class="{ 'is-ability-match-both': eq.abilityMatch?.type === 'both' }"
+                  :style="{ borderColor: getEquipmentLevelColor(eq.level) }"
+                >
                   <div class="eq-affix-icon-stack">
                     <div
                       v-for="icon in getEquipmentPrimaryAffixIconStack(eq)"
                       :key="`eq_affix_${eq.id}_${icon.key || icon.modifierId}`"
                       class="eq-affix-icon-cell"
-                      :class="{ 'has-img': !!icon.src, 'has-hollow-marker': icon.marker === 'hollow-dot' }"
+                      :class="{
+                        'has-img': !!icon.src,
+                        'has-hollow-marker': icon.marker === 'hollow-dot',
+                      }"
                       :title="icon.title"
                     >
                       <span class="eq-affix-icon-dot" aria-hidden="true"></span>
@@ -3328,15 +4184,27 @@ onUnmounted(() => {
                         viewBox="0 0 12 12"
                         aria-hidden="true"
                       >
-                        <circle cx="6" cy="6" r="3" fill="none" stroke="currentColor" stroke-width="1.4" />
+                        <circle
+                          cx="6"
+                          cy="6"
+                          r="3"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.4"
+                        />
                       </svg>
                       <img
                         v-else-if="icon.src"
                         class="eq-affix-icon-img"
                         :src="icon.src"
                         loading="lazy"
-                        @load="e=>e.target.closest('.eq-affix-icon-cell')?.classList.remove('img-failed')"
-                        @error="e=>e.target.closest('.eq-affix-icon-cell')?.classList.add('img-failed')"
+                        @load="
+                          e =>
+                            e.target.closest('.eq-affix-icon-cell')?.classList.remove('img-failed')
+                        "
+                        @error="
+                          e => e.target.closest('.eq-affix-icon-cell')?.classList.add('img-failed')
+                        "
                       />
                     </div>
                   </div>
@@ -3344,11 +4212,15 @@ onUnmounted(() => {
                 </div>
               </el-tooltip>
               <div class="card-name">{{ eq.name }}</div>
-              <div v-if="isEquipmentEquipped(eq.id)" class="in-team-tag weapon-equipped">{{ t('timelineGrid.weaponDialog.equipped') }}</div>
+              <div v-if="isEquipmentEquipped(eq.id)" class="in-team-tag weapon-equipped">
+                {{ t('timelineGrid.weaponDialog.equipped') }}
+              </div>
             </div>
           </div>
         </template>
-        <div v-if="equipmentRosterByLevel.length === 0" class="empty-roster">{{ t('timelineGrid.equipmentDialog.empty') }}</div>
+        <div v-if="equipmentRosterByLevel.length === 0" class="empty-roster">
+          {{ t('timelineGrid.equipmentDialog.empty') }}
+        </div>
       </div>
     </el-dialog>
   </div>
@@ -3500,7 +4372,7 @@ onUnmounted(() => {
   border-radius: 50%;
   cursor: pointer;
   border: 1px solid #333;
-  box-shadow: 0 0 2px rgba(0,0,0,0.5);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   transition: transform 0.1s;
 }
 
@@ -4160,7 +5032,10 @@ body.capture-mode .davinci-range {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.14s ease, border-color 0.14s ease, background-color 0.14s ease;
+  transition:
+    color 0.14s ease,
+    border-color 0.14s ease,
+    background-color 0.14s ease;
 }
 
 .track-stat-detail-btn:hover:not(:disabled) {
@@ -4197,12 +5072,44 @@ body.capture-mode .davinci-range {
   overflow: visible;
 }
 
-.weapon-slot-compact { cursor: pointer; flex: 0 0 auto; }
-.weapon-box { width: 32px; height: 32px; border-radius: 6px; background: #444; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid #555; box-sizing: border-box; transition: border-color 0.2s, background 0.2s; position: relative; }
-.weapon-box.weapon-empty { border: 2px dashed #666; }
-.weapon-slot-compact:hover .weapon-box { border-color: #ffd700; background: #555; box-shadow: none; }
-.weapon-box img { width: 100%; height: 100%; object-fit: cover; }
-.weapon-placeholder { width: 100%; height: 100%; position: relative; }
+.weapon-slot-compact {
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.weapon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid #555;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+  position: relative;
+}
+.weapon-box.weapon-empty {
+  border: 2px dashed #666;
+}
+.weapon-slot-compact:hover .weapon-box {
+  border-color: #ffd700;
+  background: #555;
+  box-shadow: none;
+}
+.weapon-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.weapon-placeholder {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
 .weapon-placeholder::before,
 .weapon-placeholder::after {
   content: '';
@@ -4213,16 +5120,34 @@ body.capture-mode .davinci-range {
   border-radius: 1px;
   transition: background 0.2s;
 }
-.weapon-placeholder::before { width: 16px; height: 2px; transform: translate(-50%, -50%); }
-.weapon-placeholder::after { width: 2px; height: 16px; transform: translate(-50%, -50%); }
+.weapon-placeholder::before {
+  width: 16px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+.weapon-placeholder::after {
+  width: 2px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+}
 .weapon-slot-compact:hover .weapon-placeholder::before,
 .weapon-slot-compact:hover .weapon-placeholder::after {
   background: #ffd700;
 }
 
-.equip-slots-compact { pointer-events: auto; flex: 1 1 auto; min-width: 0; }
+.equip-slots-compact {
+  pointer-events: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
-.equip-grid { display: flex; align-items: center; gap: var(--gear-gap); padding: 0; flex-wrap: nowrap; }
+.equip-grid {
+  display: flex;
+  align-items: center;
+  gap: var(--gear-gap);
+  padding: 0;
+  flex-wrap: nowrap;
+}
 
 .equip-box {
   width: 22px;
@@ -4271,10 +5196,20 @@ body.capture-mode .davinci-range {
   border-radius: 1px;
   transition: background 0.2s;
 }
-.equip-placeholder::before { width: 12px; height: 2px; transform: translate(-50%, -50%); }
-.equip-placeholder::after { width: 2px; height: 12px; transform: translate(-50%, -50%); }
+.equip-placeholder::before {
+  width: 12px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+.equip-placeholder::after {
+  width: 2px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+}
 .equip-box:hover .equip-placeholder::before,
-.equip-box:hover .equip-placeholder::after { background: #2dd4bf; }
+.equip-box:hover .equip-placeholder::after {
+  background: #2dd4bf;
+}
 
 .equipment-tier-picker {
   display: flex;
@@ -4302,7 +5237,9 @@ body.capture-mode .davinci-range {
   line-height: 1;
 }
 
-.gear-hint-row { height: 22px; }
+.gear-hint-row {
+  height: 22px;
+}
 
 .set-bonus-hint {
   height: 22px;
@@ -4319,7 +5256,9 @@ body.capture-mode .davinci-range {
   text-overflow: ellipsis;
 }
 
-.set-bonus-hint.is-hidden { visibility: hidden; }
+.set-bonus-hint.is-hidden {
+  visibility: hidden;
+}
 
 /* ==========================================================================
    5. Main Content Scroller
@@ -4364,7 +5303,9 @@ body.capture-mode .davinci-range {
   pointer-events: none;
   background: rgba(255, 255, 255, 0.08);
   transform: translateY(-50%);
-  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    background-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .track-divider-handle:hover .track-divider-line,
@@ -4387,8 +5328,12 @@ body.capture-mode .davinci-range {
   opacity: 0.7;
   transition: opacity 0.2s;
 }
-.timeline-horizontal-scrollbar:hover { opacity: 1; }
-.scrollbar-spacer { height: 1px; }
+.timeline-horizontal-scrollbar:hover {
+  opacity: 1;
+}
+.scrollbar-spacer {
+  height: 1px;
+}
 
 .tracks-content {
   position: relative;
@@ -4533,7 +5478,11 @@ body.capture-mode .davinci-range {
   background-image: var(--g-h), var(--g-h), var(--g-v), var(--g-v);
   background-position: top, bottom, left, right;
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  background-size: 10px 1px, 10px 1px, 1px 10px, 1px 10px;
+  background-size:
+    10px 1px,
+    10px 1px,
+    1px 10px,
+    1px 10px;
 }
 
 /* ==========================================================================
@@ -4617,11 +5566,13 @@ body.capture-mode .davinci-range {
   color: #fff;
   font-weight: bold;
   font-family: Consolas, Monaco, monospace;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
   opacity: 0.95;
   z-index: 1;
-  transition: top 0.2s, height 0.2s;
+  transition:
+    top 0.2s,
+    height 0.2s;
 }
 
 .key-cap.op-skill {
@@ -4642,7 +5593,9 @@ body.capture-mode .davinci-range {
   background: rgba(255, 236, 122, 0.36);
   border-color: #fff2a8;
   color: #fff7cf;
-  box-shadow: 0 0 0 1px rgba(255, 242, 168, 0.85), 0 0 12px rgba(255, 215, 0, 0.85);
+  box-shadow:
+    0 0 0 1px rgba(255, 242, 168, 0.85),
+    0 0 12px rgba(255, 215, 0, 0.85);
   animation: perfect-link-pulse 1.15s ease-in-out infinite;
 }
 
@@ -4659,7 +5612,7 @@ body.capture-mode .davinci-range {
   background: #3a3a3a;
   border: 1px solid #888;
   border-radius: 2px;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
 }
 
@@ -4672,7 +5625,8 @@ body.capture-mode .davinci-range {
 }
 
 @keyframes perfect-link-pulse {
-  0%, 100% {
+  0%,
+  100% {
     filter: brightness(1);
   }
   50% {
@@ -4792,10 +5746,10 @@ body.capture-mode .davinci-range {
   padding-right: 14px;
   white-space: nowrap;
   clip-path: polygon(
-      var(--equipment-filter-cut-size) 0,
-      100% 0,
-      calc(100% - var(--equipment-filter-cut-size)) 100%,
-      0 100%
+    var(--equipment-filter-cut-size) 0,
+    100% 0,
+    calc(100% - var(--equipment-filter-cut-size)) 100%,
+    0 100%
   );
 }
 
@@ -4814,12 +5768,7 @@ body.capture-mode .davinci-range {
   bottom: 4px;
   left: 50%;
   width: 1px;
-  background: linear-gradient(
-      180deg,
-      transparent,
-      rgba(255, 255, 255, 0.32),
-      transparent
-  );
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.32), transparent);
   transform: translateX(-50%) skewX(var(--equipment-filter-divider-skew));
   transform-origin: center;
 }
@@ -4872,19 +5821,14 @@ body.capture-mode .davinci-range {
 }
 
 .header-rarity-6 .rarity-label {
-  background: linear-gradient(45deg, #FFD700, #FF8C00, #FF4500);
+  background: linear-gradient(45deg, #ffd700, #ff8c00, #ff4500);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent !important;
 }
 
 .header-rarity-6 .rarity-line {
-  background: linear-gradient(90deg,
-  #FF4500 0%,
-  #FF8C00 30%,
-  #FFD700 60%,
-  transparent 100%
-  );
+  background: linear-gradient(90deg, #ff4500 0%, #ff8c00 30%, #ffd700 60%, transparent 100%);
   opacity: 0.7;
   height: 2px;
   clip-path: polygon(0 0, 100% 50%, 0 100%);
@@ -4925,9 +5869,9 @@ body.capture-mode .davinci-range {
 .equipment-roster-card .card-avatar-wrapper.is-ability-match-both {
   border-color: #ffd700 !important;
   box-shadow:
-      0 0 0 2px rgba(255, 215, 0, 0.95),
-      0 0 18px rgba(255, 215, 0, 0.55),
-      inset 0 0 10px rgba(255, 215, 0, 0.2);
+    0 0 0 2px rgba(255, 215, 0, 0.95),
+    0 0 18px rgba(255, 215, 0, 0.55),
+    inset 0 0 10px rgba(255, 215, 0, 0.2);
 }
 
 .card-avatar-wrapper > img {
@@ -5135,8 +6079,8 @@ body.capture-mode .davinci-range {
 .rarity-6-style .card-avatar-wrapper {
   border: 1px solid transparent;
   background:
-      linear-gradient(#111, #111) padding-box,
-      linear-gradient(135deg, #FFD700, #FF8C00, #FF4500) border-box;
+    linear-gradient(#111, #111) padding-box,
+    linear-gradient(135deg, #ffd700, #ff8c00, #ff4500) border-box;
   box-shadow: 0 4px 12px rgba(255, 140, 0, 0.2);
 }
 
@@ -5187,7 +6131,10 @@ body.capture-mode .davinci-range {
 .target-highlight-box::after {
   content: '';
   position: absolute;
-  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
   border: 1px solid inherit;
   border-radius: 5px;
   opacity: 0.6;
@@ -5208,7 +6155,9 @@ body.capture-mode .davinci-range {
   pointer-events: auto;
   cursor: grab;
   z-index: 4;
-  transition: background-color 0.1s, box-shadow 0.1s;
+  transition:
+    background-color 0.1s,
+    box-shadow 0.1s;
 }
 
 .cycle-guide:hover {
@@ -5219,7 +6168,9 @@ body.capture-mode .davinci-range {
 
 .cycle-guide.is-selected {
   background: #fff;
-  box-shadow: 0 0 8px #fff, 0 0 12px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 8px #fff,
+    0 0 12px rgba(255, 255, 255, 0.5);
   z-index: 30;
   width: 2px;
 }
@@ -5249,7 +6200,7 @@ body.capture-mode .davinci-range {
   white-space: nowrap;
   line-height: 1;
   pointer-events: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .cycle-label-text {
@@ -5281,32 +6232,62 @@ body.capture-mode .davinci-range {
   z-index: 20;
 }
 @keyframes pulse-border {
-  0% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.02); }
-  100% { opacity: 0.4; transform: scale(1); }
+  0% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
 }
 
 /* ==========================================================================
    12. Switch Marker Styles
    ========================================================================== */
 .switch-marker-layer {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 .switch-tag {
-  position: absolute; top: -42px;
-  display: flex; flex-direction: column; align-items: center;
+  position: absolute;
+  top: -42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 2px;
-  pointer-events: auto; cursor: grab; z-index: 30; transform: translateX(-50%); transition: transform 0.1s;
+  pointer-events: auto;
+  cursor: grab;
+  z-index: 30;
+  transform: translateX(-50%);
+  transition: transform 0.1s;
 }
 .switch-tag.is-dragging {
   transition: none;
   cursor: grabbing;
 }
 .tag-avatar {
-  width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d3adff;
-  background: #222; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #d3adff;
+  background: #222;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
-.tag-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.tag-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .tag-time {
   font-size: 9px;
   color: #f0dcff;
@@ -5317,7 +6298,7 @@ body.capture-mode .davinci-range {
   border-radius: 10px;
   line-height: 1.2;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   white-space: nowrap;
 }
 .tag-pointer {
@@ -5326,10 +6307,11 @@ body.capture-mode .davinci-range {
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-top: 7px solid #d3adff;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 .switch-tag.is-selected .tag-avatar {
-  border-color: #fff; box-shadow: 0 0 8px #fff;
+  border-color: #fff;
+  box-shadow: 0 0 8px #fff;
 }
 .switch-tag.is-selected .tag-time {
   color: #fff;
@@ -5348,11 +6330,12 @@ body.capture-mode .davinci-range {
   top: -100px;
   bottom: -100px;
   width: 1px;
-  background: linear-gradient(to bottom,
-  transparent,
-  currentColor 20%,
-  currentColor 80%,
-  transparent
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    currentColor 20%,
+    currentColor 80%,
+    transparent
   );
   pointer-events: none;
   box-shadow: 0 0 6px currentColor;
@@ -5375,7 +6358,9 @@ body.capture-mode .davinci-range {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 2002;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: left 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.15s ease-out;
+  transition:
+    left 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),
+    top 0.15s ease-out;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -5421,7 +6406,9 @@ body.capture-mode .davinci-range {
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
   pointer-events: none;
   animation: fadeIn 0.2s ease-out;
-  transition: left 0.1s, width 0.1s;
+  transition:
+    left 0.1s,
+    width 0.1s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5453,8 +6440,12 @@ body.capture-mode .davinci-range {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 30px) {

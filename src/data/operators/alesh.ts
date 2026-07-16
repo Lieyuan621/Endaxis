@@ -316,7 +316,13 @@ const sheet: OperatorSheet = {
           {
             trigger: {
               kind: 'onStatusConsumed',
-              status: ['combustion', 'electrification', 'solidification', 'corrosion', 'originiumCrystals'],
+              status: [
+                'combustion',
+                'electrification',
+                'solidification',
+                'corrosion',
+                'originiumCrystals',
+              ],
               target: 'enemy',
               triggerScope: 'global',
             },

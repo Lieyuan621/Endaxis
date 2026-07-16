@@ -1,23 +1,17 @@
-import { describe, expect, it } from "vitest";
-import {
-  getGearPieceList,
-  getGearSet,
-  getOperator,
-  getOperatorList,
-  getWeaponList,
-} from "@/data";
-import { collectEffects, collectTriggerEffects, patchCombatSkills } from "@/data/collect";
-import type { Effect, TriggerEffect } from "@/data/types";
-import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from "@/types";
-import { extractRawEntries, resolveHitsFromSheet } from "@/stores/timeline/resolveHits";
-import { compileScenario } from "./compiler/compileScenario";
-import type { Action, ScenarioData, ScenarioTrack } from "./compiler/types";
-import { simulate } from "./simulator";
-import type { InitialEffect } from "./simulator";
-import { TriggerRegistry } from "./engine/TriggerRegistry";
-import { createDefaultStats } from "@/simulation/defaultActorStats";
-import type { BaseStatValues } from "@/data/stats/types";
-import { i18n } from "@/i18n";
+import { describe, expect, it } from 'vitest';
+import { getGearPieceList, getGearSet, getOperator, getOperatorList, getWeaponList } from '@/data';
+import { collectEffects, collectTriggerEffects, patchCombatSkills } from '@/data/collect';
+import type { Effect, TriggerEffect } from '@/data/types';
+import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from '@/types';
+import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
+import { compileScenario } from './compiler/compileScenario';
+import type { Action, ScenarioData, ScenarioTrack } from './compiler/types';
+import { simulate } from './simulator';
+import type { InitialEffect } from './simulator';
+import { TriggerRegistry } from './engine/TriggerRegistry';
+import { createDefaultStats } from '@/simulation/defaultActorStats';
+import type { BaseStatValues } from '@/data/stats/types';
+import { i18n } from '@/i18n';
 
 type RuntimeTriggerEntry = {
   sourceTrackId: string;
@@ -42,18 +36,18 @@ const BASE_STATS: BaseStatValues = {
     intellect: 100,
     will: 100,
   },
-  mainAttributeName: "agility",
-  secondaryAttributeName: "intellect",
+  mainAttributeName: 'agility',
+  secondaryAttributeName: 'intellect',
 };
 
-i18n.global.mergeLocaleMessage("zh-CN", {
+i18n.global.mergeLocaleMessage('zh-CN', {
   game: {
-    slotType: { armor: "Armor", gloves: "Gloves", kit: "Kit", kit1: "Kit 1", kit2: "Kit 2" },
-    stat: { defense: "Defense" },
+    slotType: { armor: 'Armor', gloves: 'Gloves', kit: 'Kit', kit1: 'Kit 1', kit2: 'Kit 2' },
+    stat: { defense: 'Defense' },
   },
 });
 
-function createAction(id: string, type: Action["type"], patch: Partial<Action> = {}): Action {
+function createAction(id: string, type: Action['type'], patch: Partial<Action> = {}): Action {
   const startTime = Number(patch.startTime) || 0;
   return {
     id,
@@ -66,8 +60,8 @@ function createAction(id: string, type: Action["type"], patch: Partial<Action> =
     cooldown: 0,
     spCost: 0,
     spGain: 0,
-    spGainKind: "recover",
-    element: "physical",
+    spGainKind: 'recover',
+    element: 'physical',
     gaugeCost: 0,
     gaugeGain: 0,
     teamGaugeGain: 0,
@@ -89,7 +83,7 @@ function createTrack(
   const stats = {
     ...createDefaultStats(),
     ...(patch.stats || {}),
-  } as ScenarioTrack["stats"];
+  } as ScenarioTrack['stats'];
 
   return {
     id,
@@ -117,7 +111,7 @@ function simulateTracks(
 ) {
   const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
   const baseStatsByTrack = new Map<string, BaseStatValues>(
-    actors.map((actor) => [actor.id, BASE_STATS]),
+    actors.map(actor => [actor.id, BASE_STATS]),
   );
   return simulate(
     timeline,
@@ -169,13 +163,13 @@ function createWeaponInstance(weaponSlug: string): WeaponInstance {
 }
 
 function createTeam(
-  operatorSlug = "estella",
+  operatorSlug = 'estella',
   weaponSlug: string | null = null,
-  gearIds: Partial<TeamInstance["slots"][number]["gear"]> = {},
+  gearIds: Partial<TeamInstance['slots'][number]['gear']> = {},
 ): TeamInstance {
   return {
-    id: "team",
-    name: "Runtime sweep",
+    id: 'team',
+    name: 'Runtime sweep',
     slots: [
       {
         operatorId: `op_${operatorSlug}`,
@@ -187,9 +181,21 @@ function createTeam(
           kit2: gearIds.kit2 ?? null,
         },
       },
-      { operatorId: null, weaponId: null, gear: { armor: null, gloves: null, kit1: null, kit2: null } },
-      { operatorId: null, weaponId: null, gear: { armor: null, gloves: null, kit1: null, kit2: null } },
-      { operatorId: null, weaponId: null, gear: { armor: null, gloves: null, kit1: null, kit2: null } },
+      {
+        operatorId: null,
+        weaponId: null,
+        gear: { armor: null, gloves: null, kit1: null, kit2: null },
+      },
+      {
+        operatorId: null,
+        weaponId: null,
+        gear: { armor: null, gloves: null, kit1: null, kit2: null },
+      },
+      {
+        operatorId: null,
+        weaponId: null,
+        gear: { armor: null, gloves: null, kit1: null, kit2: null },
+      },
     ],
   };
 }
@@ -200,9 +206,9 @@ function toRuntimeTriggers(
   weapons: WeaponInstance[] = [],
   gear: GearInstance[] = [],
 ): RuntimeTriggerEntry[] {
-  return collectTriggerEffects(team, operators, weapons, gear, new Map()).map((entry) => ({
+  return collectTriggerEffects(team, operators, weapons, gear, new Map()).map(entry => ({
     ...entry,
-    sourceTrackId: "alpha",
+    sourceTrackId: 'alpha',
   }));
 }
 
@@ -212,40 +218,39 @@ function toRuntimeInitialEffects(
   weapons: WeaponInstance[] = [],
   gear: GearInstance[] = [],
 ): InitialEffect[] {
-  const enemyStatModifiers = new Set(["susceptibility", "increasedDmgTaken", "resistanceShred"]);
-  return collectEffects(team, operators, weapons, gear)
-    .flatMap((entry): InitialEffect[] => {
-      const effect = entry.effect as any;
-      if (!effect || effect.kind !== "status" || effect.condition || !effect.stat) return [];
-      const rawTarget = effect.target;
-      const scope = typeof rawTarget === "string" ? rawTarget : rawTarget?.scope;
-      if (scope === "enemy") return [];
-      if (enemyStatModifiers.has(effect.stat?.modifier)) return [];
+  const enemyStatModifiers = new Set(['susceptibility', 'increasedDmgTaken', 'resistanceShred']);
+  return collectEffects(team, operators, weapons, gear).flatMap((entry): InitialEffect[] => {
+    const effect = entry.effect as any;
+    if (!effect || effect.kind !== 'status' || effect.condition || !effect.stat) return [];
+    const rawTarget = effect.target;
+    const scope = typeof rawTarget === 'string' ? rawTarget : rawTarget?.scope;
+    if (scope === 'enemy') return [];
+    if (enemyStatModifiers.has(effect.stat?.modifier)) return [];
 
-      const targetTrackIds = scope === "team" ? ["alpha"] : ["alpha"];
-      return targetTrackIds.map((targetTrackId) => ({
-        targetTrackId,
-        id: effect.id,
-        stat: effect.stat,
-        value: Number(effect.value) || 0,
-        sourceId: "alpha",
-        effect: { ...effect, hide: true },
-        stacks: effect.stacks,
-        maxStacks: effect.maxStacks,
-        stackStrategy: effect.stackStrategy,
-      }));
-    });
+    const targetTrackIds = scope === 'team' ? ['alpha'] : ['alpha'];
+    return targetTrackIds.map(targetTrackId => ({
+      targetTrackId,
+      id: effect.id,
+      stat: effect.stat,
+      value: Number(effect.value) || 0,
+      sourceId: 'alpha',
+      effect: { ...effect, hide: true },
+      stacks: effect.stacks,
+      maxStacks: effect.maxStacks,
+      stackStrategy: effect.stackStrategy,
+    }));
+  });
 }
 
 function triggerExerciseActions(): Action[] {
   return [
-    createAction("basic", "basicAttack", {
+    createAction('basic', 'basicAttack', {
       startTime: 0,
       hits: [{ offset: 0, multiplier: 100, spRecovery: 10, spReturn: 0, stagger: 5 }],
     }),
-    createAction("battle", "battleSkill", {
+    createAction('battle', 'battleSkill', {
       startTime: 1,
-      element: "heat",
+      element: 'heat',
       hits: [
         {
           offset: 0,
@@ -254,12 +259,12 @@ function triggerExerciseActions(): Action[] {
           spReturn: 0,
           stagger: 5,
           effects: [
-            { kind: "infliction", element: "heat", stacks: 1 } as Effect,
+            { kind: 'infliction', element: 'heat', stacks: 1 } as Effect,
             {
-              id: "runtime-sweep-self-status",
-              kind: "status",
-              stat: { modifier: "link" },
-              target: "self",
+              id: 'runtime-sweep-self-status',
+              kind: 'status',
+              stat: { modifier: 'link' },
+              target: 'self',
               value: 1,
               duration: 3,
             } as Effect,
@@ -267,7 +272,7 @@ function triggerExerciseActions(): Action[] {
         },
       ],
     }),
-    createAction("combo", "comboSkill", {
+    createAction('combo', 'comboSkill', {
       startTime: 2,
       hits: [
         {
@@ -276,20 +281,20 @@ function triggerExerciseActions(): Action[] {
           spRecovery: 10,
           spReturn: 0,
           stagger: 5,
-          effects: [{ kind: "physicalStatus", physicalType: "lift" } as Effect],
+          effects: [{ kind: 'physicalStatus', physicalType: 'lift' } as Effect],
         },
       ],
     }),
-    createAction("ultimate", "ultimate", {
+    createAction('ultimate', 'ultimate', {
       startTime: 3,
-      element: "electric",
+      element: 'electric',
       hits: [{ offset: 0, multiplier: 100, spRecovery: 10, spReturn: 0, stagger: 5 }],
     }),
-    createAction("finisher", "finisher", {
+    createAction('finisher', 'finisher', {
       startTime: 4,
       hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
     }),
-    createAction("dive", "dive", {
+    createAction('dive', 'dive', {
       startTime: 5,
       hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
     }),
@@ -308,8 +313,8 @@ function expectNoFailures(failures: SweepFailure[]) {
   expect(failures, JSON.stringify(failures, null, 2)).toEqual([]);
 }
 
-describe("optimizer-native full runtime coverage sweep", () => {
-  it("resolves and simulates every operator combat skill segment", () => {
+describe('optimizer-native full runtime coverage sweep', () => {
+  it('resolves and simulates every operator combat skill segment', () => {
     const failures: SweepFailure[] = [];
 
     for (const { slug } of getOperatorList()) {
@@ -317,7 +322,10 @@ describe("optimizer-native full runtime coverage sweep", () => {
       if (!sheet) continue;
       const patched = patchCombatSkills(sheet, {
         talentStates: Object.fromEntries(
-          (sheet.talents ?? []).map((group, index) => [String(index), Math.max(1, group.levels ?? 1)]),
+          (sheet.talents ?? []).map((group, index) => [
+            String(index),
+            Math.max(1, group.levels ?? 1),
+          ]),
         ),
         potential: sheet.potentials?.length ?? 0,
       });
@@ -330,19 +338,24 @@ describe("optimizer-native full runtime coverage sweep", () => {
             const hits = resolveHitsFromSheet([], rawEntries, 11, { preserveCondition: true });
             const segment = segments[segmentIndex];
             simulateTracks([
-              createTrack("alpha", [
-                createAction(`${slug}_${skillKey}_${segmentIndex}`, skill.type as Action["type"], {
+              createTrack('alpha', [
+                createAction(`${slug}_${skillKey}_${segmentIndex}`, skill.type as Action['type'], {
                   element:
                     segment?.damageGroups?.find((group: any) => group?.element)?.element ??
                     sheet.element ??
-                    "physical",
+                    'physical',
                   duration: Number(segment?.duration) || 1,
                   hits,
                 }),
               ]),
             ]);
           } catch (error) {
-            recordFailure(failures, "operator-skill", `${slug}:${skillKey}:segment${segmentIndex}`, error);
+            recordFailure(
+              failures,
+              'operator-skill',
+              `${slug}:${skillKey}:segment${segmentIndex}`,
+              error,
+            );
           }
         }
       }
@@ -351,34 +364,34 @@ describe("optimizer-native full runtime coverage sweep", () => {
     expectNoFailures(failures);
   });
 
-  it("collects and simulates every weapon trigger sheet", () => {
+  it('collects and simulates every weapon trigger sheet', () => {
     const failures: SweepFailure[] = [];
-    const operator = createOperatorInstance("estella");
+    const operator = createOperatorInstance('estella');
 
     for (const { slug } of getWeaponList()) {
       try {
         const weapon = createWeaponInstance(slug);
-        const team = createTeam("estella", slug);
+        const team = createTeam('estella', slug);
         const triggerEntries = toRuntimeTriggers(team, [operator], [weapon]);
         simulateTracks(
-          [createTrack("alpha", triggerExerciseActions(), { triggerEffects: triggerEntries })],
+          [createTrack('alpha', triggerExerciseActions(), { triggerEffects: triggerEntries })],
           triggerEntries,
         );
       } catch (error) {
-        recordFailure(failures, "weapon-trigger", slug, error);
+        recordFailure(failures, 'weapon-trigger', slug, error);
       }
     }
 
     expectNoFailures(failures);
   });
 
-  it("collects and simulates every 3-piece gear-set trigger sheet", () => {
+  it('collects and simulates every 3-piece gear-set trigger sheet', () => {
     const failures: SweepFailure[] = [];
-    const operator = createOperatorInstance("estella");
+    const operator = createOperatorInstance('estella');
     const piecesBySet = new Map<string, string[]>();
 
     for (const piece of getGearPieceList()) {
-      if (!piece.setSlug || piece.setSlug === "no-set-bonuses") continue;
+      if (!piece.setSlug || piece.setSlug === 'no-set-bonuses') continue;
       const list = piecesBySet.get(piece.setSlug) ?? [];
       list.push(piece.slug);
       piecesBySet.set(piece.setSlug, list);
@@ -392,27 +405,27 @@ describe("optimizer-native full runtime coverage sweep", () => {
           gearPieceId: pieceSlug,
           artificingLevels: [],
         }));
-        const team = createTeam("estella", null, {
+        const team = createTeam('estella', null, {
           armor: gearInstances[0]?.id ?? null,
           gloves: gearInstances[1]?.id ?? null,
           kit1: gearInstances[2]?.id ?? null,
         });
         const triggerEntries = toRuntimeTriggers(team, [operator], [], gearInstances);
         simulateTracks(
-          [createTrack("alpha", triggerExerciseActions(), { triggerEffects: triggerEntries })],
+          [createTrack('alpha', triggerExerciseActions(), { triggerEffects: triggerEntries })],
           triggerEntries,
         );
       } catch (error) {
-        recordFailure(failures, "gear-set-trigger", setSlug, error);
+        recordFailure(failures, 'gear-set-trigger', setSlug, error);
       }
     }
 
     expectNoFailures(failures);
   });
 
-  it("collects and simulates passive runtime initial effects for every operator, weapon, and gear piece", () => {
+  it('collects and simulates passive runtime initial effects for every operator, weapon, and gear piece', () => {
     const failures: SweepFailure[] = [];
-    const baseAction = createAction("passive_runtime_hit", "battleSkill", {
+    const baseAction = createAction('passive_runtime_hit', 'battleSkill', {
       hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
     });
 
@@ -421,34 +434,34 @@ describe("optimizer-native full runtime coverage sweep", () => {
         const operator = createOperatorInstance(slug);
         const team = createTeam(slug);
         const initialEffects = toRuntimeInitialEffects(team, [operator]);
-        simulateTracks([createTrack("alpha", [baseAction])], [], initialEffects);
+        simulateTracks([createTrack('alpha', [baseAction])], [], initialEffects);
       } catch (error) {
-        recordFailure(failures, "operator-passive", slug, error);
+        recordFailure(failures, 'operator-passive', slug, error);
       }
     }
 
-    const operator = createOperatorInstance("estella");
+    const operator = createOperatorInstance('estella');
     for (const { slug } of getWeaponList()) {
       try {
         const weapon = createWeaponInstance(slug);
-        const team = createTeam("estella", slug);
+        const team = createTeam('estella', slug);
         const initialEffects = toRuntimeInitialEffects(team, [operator], [weapon]);
-        simulateTracks([createTrack("alpha", [baseAction])], [], initialEffects);
+        simulateTracks([createTrack('alpha', [baseAction])], [], initialEffects);
       } catch (error) {
-        recordFailure(failures, "weapon-passive", slug, error);
+        recordFailure(failures, 'weapon-passive', slug, error);
       }
     }
 
     for (const piece of getGearPieceList()) {
       try {
         const gear: GearInstance[] = [
-          { id: "gear_piece", gearPieceId: piece.slug, artificingLevels: [3, 3, 3] },
+          { id: 'gear_piece', gearPieceId: piece.slug, artificingLevels: [3, 3, 3] },
         ];
-        const team = createTeam("estella", null, { armor: "gear_piece" });
+        const team = createTeam('estella', null, { armor: 'gear_piece' });
         const initialEffects = toRuntimeInitialEffects(team, [operator], [], gear);
-        simulateTracks([createTrack("alpha", [baseAction])], [], initialEffects);
+        simulateTracks([createTrack('alpha', [baseAction])], [], initialEffects);
       } catch (error) {
-        recordFailure(failures, "gear-piece-passive", piece.slug, error);
+        recordFailure(failures, 'gear-piece-passive', piece.slug, error);
       }
     }
 

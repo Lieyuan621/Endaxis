@@ -1,28 +1,28 @@
 <script setup>
-import { computed, onMounted } from 'vue'
-import { useTimelineStore } from './stores/timelineStore.js'
-import { useI18n } from 'vue-i18n'
-import { getElementPlusLocale } from '@/i18n/elementPlusLocale.js'
+import { computed, onMounted } from 'vue';
+import { useTimelineStore } from './stores/timelineStore.js';
+import { useI18n } from 'vue-i18n';
+import { getElementPlusLocale } from '@/i18n/elementPlusLocale.js';
 
-const store = useTimelineStore()
-const { locale } = useI18n({ useScope: 'global' })
-const elementLocale = computed(() => getElementPlusLocale(locale.value))
+const store = useTimelineStore();
+const { locale } = useI18n({ useScope: 'global' });
+const elementLocale = computed(() => getElementPlusLocale(locale.value));
 
 onMounted(async () => {
   // 1. 先初始化基础游戏数据
-  await store.fetchGameData()
+  await store.fetchGameData();
 
   // 2. 尝试读取浏览器缓存
-  store.loadFromBrowser()
+  store.loadFromBrowser();
 
   // 3. 无论是否读取成功，都开启监听以进行后续的自动保存
-  store.initAutoSave()
-})
+  store.initAutoSave();
+});
 </script>
 
 <template>
   <el-config-provider :locale="elementLocale">
-    <router-view/>
+    <router-view />
   </el-config-provider>
 </template>
 
@@ -34,7 +34,7 @@ html,
   padding: 0;
   width: 100%;
   height: 100vh;
-  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: #18181c;
   color: #f0f0f0;
   overflow: hidden;

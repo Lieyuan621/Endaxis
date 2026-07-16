@@ -262,10 +262,20 @@ const sheet: OperatorSheet = {
       comboWindow: {
         triggers: [
           {
-            trigger: { kind: 'onStatusApplied', status: 'electrification', target: 'enemy', triggerScope: 'global' },
+            trigger: {
+              kind: 'onStatusApplied',
+              status: 'electrification',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
           },
           {
-            trigger: { kind: 'onStatusConsumed', status: 'electrification', target: 'enemy', triggerScope: 'global' },
+            trigger: {
+              kind: 'onStatusConsumed',
+              status: 'electrification',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
           },
         ],
         duration: 5,

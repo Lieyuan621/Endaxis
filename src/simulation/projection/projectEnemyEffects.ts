@@ -74,8 +74,22 @@ type InflictionTracker = {
   carryoverKey?: string;
   disabled?: boolean;
 };
-type VulnTracker = { start: number; stacks: number; expiresAt: number; sourceId: string; carryoverKey?: string; disabled?: boolean };
-type DebuffTracker = { start: number; level: number; expiresAt: number; sourceId: string; carryoverKey?: string; disabled?: boolean };
+type VulnTracker = {
+  start: number;
+  stacks: number;
+  expiresAt: number;
+  sourceId: string;
+  carryoverKey?: string;
+  disabled?: boolean;
+};
+type DebuffTracker = {
+  start: number;
+  level: number;
+  expiresAt: number;
+  sourceId: string;
+  carryoverKey?: string;
+  disabled?: boolean;
+};
 
 function syntheticInfliction(element: ArtsElement): InflictionEffect {
   return { kind: 'infliction', element };
@@ -200,7 +214,10 @@ function makeDamageHitMarker(
 
 function getStateDisplayKey(effect: Effect, fallbackId: string): string {
   const raw = effect as Effect & { displayType?: string; name?: string; type?: string };
-  return String(raw.displayType || raw.name || raw.type || raw.id || fallbackId || 'status').trim() || 'status';
+  return (
+    String(raw.displayType || raw.name || raw.type || raw.id || fallbackId || 'status').trim() ||
+    'status'
+  );
 }
 
 function getEnemyStatusTypeKey(resolved: Effect, effectId: string): string {
@@ -472,7 +489,14 @@ export function projectFromSimLog(
             debuffType === 'breach' ? EnemyEffectGroup.BREACH : EnemyEffectGroup.REACTION;
           segments.push(makeDebuffSeg(debuffType, existing, group, corrosionTicks));
         }
-        openDebuffs.set(debuffType, { start: time, level, expiresAt, sourceId, carryoverKey, disabled });
+        openDebuffs.set(debuffType, {
+          start: time,
+          level,
+          expiresAt,
+          sourceId,
+          carryoverKey,
+          disabled,
+        });
         break;
       }
     }

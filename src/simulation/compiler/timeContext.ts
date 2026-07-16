@@ -1,4 +1,4 @@
-import type { TimeExtension } from "./types";
+import type { TimeExtension } from './types';
 
 function round(num: number, factor: number = 1000): number {
   return Math.round(num * factor) / factor;
@@ -32,7 +32,7 @@ export class TimeContext {
 
   toRealTime(gameTime: number): number {
     const reversedExtensions = [...this.extensions].reverse();
-    const breakPoint = reversedExtensions.find((e) => e.gameTime <= gameTime);
+    const breakPoint = reversedExtensions.find(e => e.gameTime <= gameTime);
 
     if (!breakPoint) return gameTime;
 
@@ -46,7 +46,7 @@ export class TimeContext {
   getShiftedEndTime(
     startTime: number,
     duration: number,
-    excludeActionId: string | null = null
+    excludeActionId: string | null = null,
   ): number {
     let currentTimeLimit = startTime + duration;
     const processedExtensions = new Set<string>();

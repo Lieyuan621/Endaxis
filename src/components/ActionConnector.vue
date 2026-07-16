@@ -1,238 +1,260 @@
 <script setup>
-import { computed } from 'vue'
-import ConnectionPath from './ConnectionPath.vue'
-import { useTimelineStore } from '../stores/timelineStore.js'
-import { useDragConnection } from '../composables/useDragConnection.js'
-import { PORT_DIRECTIONS } from '@/utils/layoutUtils.js'
-import { toLegacyDisplayType } from '@/utils/hitModel.js'
+import { computed } from 'vue';
+import ConnectionPath from './ConnectionPath.vue';
+import { useTimelineStore } from '../stores/timelineStore.js';
+import { useDragConnection } from '../composables/useDragConnection.js';
+import { PORT_DIRECTIONS } from '@/utils/layoutUtils.js';
+import { toLegacyDisplayType } from '@/utils/hitModel.js';
 
 const props = defineProps({
   connection: { type: Object, required: true },
-  renderKey: { type: Number }
-})
+  renderKey: { type: Number },
+});
 
-const store = useTimelineStore()
-const connectionHandler = useDragConnection()
+const store = useTimelineStore();
+const connectionHandler = useDragConnection();
 
-const isSelected = computed(() => store.selectedConnectionId === props.connection.id)
+const isSelected = computed(() => store.selectedConnectionId === props.connection.id);
 
 const getEndpointId = (conn, side) => {
-  if (!conn) return null
-  if (side === 'from') return conn.fromNodeId || conn.fromEffectId || conn.from || null
-  return conn.toNodeId || conn.toEffectId || conn.to || null
-}
+  if (!conn) return null;
+  if (side === 'from') return conn.fromNodeId || conn.fromEffectId || conn.from || null;
+  return conn.toNodeId || conn.toEffectId || conn.to || null;
+};
 
 const connectionTouchesHoveredAction = (conn, actionId) => {
-  const fromId = getEndpointId(conn, 'from')
-  const toId = getEndpointId(conn, 'to')
-  if (!actionId || !fromId || !toId) return false
+  const fromId = getEndpointId(conn, 'from');
+  const toId = getEndpointId(conn, 'to');
+  if (!actionId || !fromId || !toId) return false;
 
-  const fromNode = store.resolveNode(fromId)
-  const toNode = store.resolveNode(toId)
+  const fromNode = store.resolveNode(fromId);
+  const toNode = store.resolveNode(toId);
 
-  const match = (node) => {
-    if (!node) return false
-    if (node.type === 'action') return node.id === actionId
-    if (node.type === 'effect') return node.actionId === actionId
-    return false
-  }
+  const match = node => {
+    if (!node) return false;
+    if (node.type === 'action') return node.id === actionId;
+    if (node.type === 'effect') return node.actionId === actionId;
+    return false;
+  };
 
-  return match(fromNode) || match(toNode)
-}
+  return match(fromNode) || match(toNode);
+};
 
 const isRelatedToHover = computed(() => {
-  const hoverId = store.hoveredActionId
-  if (!hoverId) return false
-  return connectionTouchesHoveredAction(props.connection, hoverId)
-})
+  const hoverId = store.hoveredActionId;
+  if (!hoverId) return false;
+  return connectionTouchesHoveredAction(props.connection, hoverId);
+});
 
 const isDimmed = computed(() => {
-  return store.hoveredActionId && !isRelatedToHover.value && !isSelected.value && !connectionHandler.isDragging.value
-})
+  return (
+    store.hoveredActionId &&
+    !isRelatedToHover.value &&
+    !isSelected.value &&
+    !connectionHandler.isDragging.value
+  );
+});
 
-const getTrackInfoByNodeId = (nodeId) => {
-  const info = store.resolveNode(nodeId)
-  if (!info) return { trackIndex: null, type: null }
+const getTrackInfoByNodeId = nodeId => {
+  const info = store.resolveNode(nodeId);
+  if (!info) return { trackIndex: null, type: null };
   if (info.type === 'action') {
     return {
       trackIndex: Number.isInteger(info.trackIndex) ? info.trackIndex : null,
       type: info.type,
-    }
+    };
   }
   if (info.type === 'effect') {
-    const actionWrap = store.getActionById(info.actionId)
+    const actionWrap = store.getActionById(info.actionId);
     return {
       trackIndex: Number.isInteger(actionWrap?.trackIndex) ? actionWrap.trackIndex : null,
       type: info.type,
-    }
+    };
   }
-  return { trackIndex: null, type: info.type }
-}
+  return { trackIndex: null, type: info.type };
+};
 
 const isConnectionVisible = computed(() => {
-  const fromId = getEndpointId(props.connection, 'from')
-  const toId = getEndpointId(props.connection, 'to')
-  const fromInfo = fromId ? getTrackInfoByNodeId(fromId) : { trackIndex: null, type: null }
-  const toInfo = toId ? getTrackInfoByNodeId(toId) : { trackIndex: null, type: null }
+  const fromId = getEndpointId(props.connection, 'from');
+  const toId = getEndpointId(props.connection, 'to');
+  const fromInfo = fromId ? getTrackInfoByNodeId(fromId) : { trackIndex: null, type: null };
+  const toInfo = toId ? getTrackInfoByNodeId(toId) : { trackIndex: null, type: null };
 
-  if (fromInfo.type === 'effect' && fromInfo.trackIndex !== null && !store.isOperatorEffectsVisible(fromInfo.trackIndex)) return false
-  if (toInfo.type === 'effect' && toInfo.trackIndex !== null && !store.isOperatorEffectsVisible(toInfo.trackIndex)) return false
-  return true
-})
+  if (
+    fromInfo.type === 'effect' &&
+    fromInfo.trackIndex !== null &&
+    !store.isOperatorEffectsVisible(fromInfo.trackIndex)
+  )
+    return false;
+  if (
+    toInfo.type === 'effect' &&
+    toInfo.trackIndex !== null &&
+    !store.isOperatorEffectsVisible(toInfo.trackIndex)
+  )
+    return false;
+  return true;
+});
 
-const getTrackCenterY = (trackIndex) => {
-  const trackRect = store.trackLaneRects[trackIndex]
-  if (!trackRect) return 0
-  return trackRect.top + (trackRect.height / 2)
-}
+const getTrackCenterY = trackIndex => {
+  const trackRect = store.trackLaneRects[trackIndex];
+  if (!trackRect) return 0;
+  return trackRect.top + trackRect.height / 2;
+};
 
 const resolveColor = (info, effectId) => {
-  if (!info) return store.getColor('default')
+  if (!info) return store.getColor('default');
 
   if (info.type === 'effect') {
-    const effectType = info.node?.type
-    return effectType ? store.getColor(effectType) : store.getColor('default')
+    const effectType = info.node?.type;
+    return effectType ? store.getColor(effectType) : store.getColor('default');
   }
 
-  const { node: action, trackIndex } = info
-  if (!action) return store.getColor('default')
+  const { node: action, trackIndex } = info;
+  if (!action) return store.getColor('default');
 
-  const displayType = toLegacyDisplayType(action.type)
-  if (displayType === 'link') return store.getColor('link')
-  if (displayType === 'execution') return store.getColor('execution')
-  if (displayType === 'attack') return store.getColor('attack')
-  if (displayType === 'dive') return store.getColor('dodge')
-  if (displayType === 'skill') return store.getColor('skill')
-  if (displayType === 'ultimate') return store.getColor('ultimate')
-  if (action.element) return store.getColor(action.element)
+  const displayType = toLegacyDisplayType(action.type);
+  if (displayType === 'link') return store.getColor('link');
+  if (displayType === 'execution') return store.getColor('execution');
+  if (displayType === 'attack') return store.getColor('attack');
+  if (displayType === 'dive') return store.getColor('dodge');
+  if (displayType === 'skill') return store.getColor('skill');
+  if (displayType === 'ultimate') return store.getColor('ultimate');
+  if (action.element) return store.getColor(action.element);
   if (trackIndex !== undefined && trackIndex !== null) {
-    const track = store.tracks[trackIndex]
-    if (track && track.id) return store.getCharacterElementColor(track.id)
+    const track = store.tracks[trackIndex];
+    if (track && track.id) return store.getCharacterElementColor(track.id);
   }
-  return store.getColor(displayType || action.type)
-}
+  return store.getColor(displayType || action.type);
+};
 
 function onContextMenu(evt) {
   if (store.selectedConnectionId !== props.connection.id) {
-    store.selectConnection(props.connection.id)
+    store.selectConnection(props.connection.id);
   }
-  store.openContextMenu(evt, props.connection.id)
+  store.openContextMenu(evt, props.connection.id);
 }
 
 const getRectByNodeId = (nodeId, { connection = null, isSource = false } = {}) => {
-  const info = store.resolveNode(nodeId)
-  if (!info) return null
+  const info = store.resolveNode(nodeId);
+  if (!info) return null;
 
   if (info.type === 'action') {
-    const layout = store.nodeRects[nodeId]
-    return layout?.rect || null
+    const layout = store.nodeRects[nodeId];
+    return layout?.rect || null;
   }
 
   if (info.type === 'effect') {
     if (isSource && connection?.isConsumption) {
-      const transferId = `${nodeId}_transfer`
-      const transferLayout = store.effectLayouts.get(transferId)
-      if (transferLayout?.rect) return transferLayout.rect
+      const transferId = `${nodeId}_transfer`;
+      const transferLayout = store.effectLayouts.get(transferId);
+      if (transferLayout?.rect) return transferLayout.rect;
     }
-    const layout = store.effectLayouts.get(nodeId)
-    return layout?.rect || null
+    const layout = store.effectLayouts.get(nodeId);
+    return layout?.rect || null;
   }
 
-  return null
-}
+  return null;
+};
 
 const calculatePoint = (nodeId, isSource, connection = null) => {
-  const info = store.resolveNode(nodeId)
-  if (!info) return null
+  const info = store.resolveNode(nodeId);
+  if (!info) return null;
 
   if (!isSource && info.type === 'action') {
-    const action = info.node
-    const rawTw = action?.triggerWindow || 0
-    const hasTriggerWindow = Math.abs(Number(rawTw)) > 0.001
+    const action = info.node;
+    const rawTw = action?.triggerWindow || 0;
+    const hasTriggerWindow = Math.abs(Number(rawTw)) > 0.001;
     if (hasTriggerWindow) {
-      const layout = store.nodeRects[nodeId]
+      const layout = store.nodeRects[nodeId];
       if (layout && layout.triggerWindow && layout.triggerWindow.hasWindow) {
-        return { x: layout.triggerWindow.rect.left, y: layout.triggerWindow.rect.top, dir: PORT_DIRECTIONS.left }
+        return {
+          x: layout.triggerWindow.rect.left,
+          y: layout.triggerWindow.rect.top,
+          dir: PORT_DIRECTIONS.left,
+        };
       }
     }
   }
 
-  const rect = getRectByNodeId(nodeId, { connection, isSource })
+  const rect = getRectByNodeId(nodeId, { connection, isSource });
   if (rect) {
-    const userPort = isSource ? connection?.sourcePort : connection?.targetPort
-    const defaultPort = isSource ? 'right' : 'left'
-    const dirKey = userPort || defaultPort
-    const config = PORT_DIRECTIONS[dirKey] || PORT_DIRECTIONS[defaultPort]
+    const userPort = isSource ? connection?.sourcePort : connection?.targetPort;
+    const defaultPort = isSource ? 'right' : 'left';
+    const dirKey = userPort || defaultPort;
+    const config = PORT_DIRECTIONS[dirKey] || PORT_DIRECTIONS[defaultPort];
 
     return {
-      x: rect.left + (rect.width * config.x),
-      y: rect.top + (rect.height * config.y),
-      dir: config
-    }
+      x: rect.left + rect.width * config.x,
+      y: rect.top + rect.height * config.y,
+      dir: config,
+    };
   }
 
   if (info.type === 'action') {
-    const timePoint = isSource ? (Number(info.node.startTime) || 0) + (Number(info.node.duration) || 0) : (Number(info.node.startTime) || 0)
+    const timePoint = isSource
+      ? (Number(info.node.startTime) || 0) + (Number(info.node.duration) || 0)
+      : Number(info.node.startTime) || 0;
     return {
       x: timePoint * store.timeBlockWidth,
       y: getTrackCenterY(info.trackIndex),
-      dir: isSource ? PORT_DIRECTIONS.right : PORT_DIRECTIONS.left
-    }
+      dir: isSource ? PORT_DIRECTIONS.right : PORT_DIRECTIONS.left,
+    };
   }
 
   if (info.type === 'effect') {
-    const actionWrap = store.getActionById(info.actionId)
-    const baseStart = Number(actionWrap?.node?.startTime) || 0
-    const offset = Number(info.node?.offset) || 0
-    const t = store.getShiftedEndTime(baseStart, offset, info.actionId)
+    const actionWrap = store.getActionById(info.actionId);
+    const baseStart = Number(actionWrap?.node?.startTime) || 0;
+    const offset = Number(info.node?.offset) || 0;
+    const t = store.getShiftedEndTime(baseStart, offset, info.actionId);
     return {
       x: t * store.timeBlockWidth,
       y: getTrackCenterY(actionWrap?.trackIndex ?? 0),
-      dir: isSource ? PORT_DIRECTIONS.right : PORT_DIRECTIONS.left
-    }
+      dir: isSource ? PORT_DIRECTIONS.right : PORT_DIRECTIONS.left,
+    };
   }
 
-  return null
-}
+  return null;
+};
 
 const coordinateInfo = computed(() => {
-  const _trigger = props.renderKey
-  const conn = props.connection
+  const _trigger = props.renderKey;
+  const conn = props.connection;
 
-  const fromId = getEndpointId(conn, 'from')
-  const toId = getEndpointId(conn, 'to')
+  const fromId = getEndpointId(conn, 'from');
+  const toId = getEndpointId(conn, 'to');
 
-  const start = fromId ? calculatePoint(fromId, true, conn) : null
-  const end = toId ? calculatePoint(toId, false, conn) : null
+  const start = fromId ? calculatePoint(fromId, true, conn) : null;
+  const end = toId ? calculatePoint(toId, false, conn) : null;
 
-  if (!start || !end) return null
+  if (!start || !end) return null;
 
-  const colorStart = resolveColor(store.resolveNode(fromId))
-  const colorEnd = resolveColor(store.resolveNode(toId))
+  const colorStart = resolveColor(store.resolveNode(fromId));
+  const colorEnd = resolveColor(store.resolveNode(toId));
 
   return {
     startPoint: { x: start.x, y: start.y },
     endPoint: { x: end.x, y: end.y },
-    startDirection: start.dir, 
+    startDirection: start.dir,
     endDirection: end.dir,
-    colors: { start: colorStart, end: colorEnd }
-  }
-})
+    colors: { start: colorStart, end: colorEnd },
+  };
+});
 
 function onSelectClick() {
-  store.selectConnection(props.connection.id)
+  store.selectConnection(props.connection.id);
 }
 
-const onDragTarget = (evt) => {
-  connectionHandler.moveConnectionEnd(props.connection.id, coordinateInfo.value.startPoint)
-}
+const onDragTarget = evt => {
+  connectionHandler.moveConnectionEnd(props.connection.id, coordinateInfo.value.startPoint);
+};
 </script>
 
 <template>
   <ConnectionPath
     v-if="coordinateInfo && isConnectionVisible"
     :id="connection.id"
-    :is-consumption="connection.isConsumption"  :start-point="coordinateInfo.startPoint"
+    :is-consumption="connection.isConsumption"
+    :start-point="coordinateInfo.startPoint"
     :end-point="coordinateInfo.endPoint"
     :start-direction="coordinateInfo.startDirection"
     :end-direction="coordinateInfo.endDirection"

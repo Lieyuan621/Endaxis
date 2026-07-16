@@ -1,16 +1,16 @@
-import { buildByTypeKey } from "@/simulation/projection/effectLayout";
-import { projectFromSimLog, layoutEnemyEffects } from "@/simulation/projection/projectEnemyEffects";
+import { buildByTypeKey } from '@/simulation/projection/effectLayout';
+import { projectFromSimLog, layoutEnemyEffects } from '@/simulation/projection/projectEnemyEffects';
 import {
   projectOperatorEffects,
   layoutOperatorEffects,
-} from "@/simulation/projection/projectOperatorEffects";
-import { projectSpSeries } from "@/simulation/projection/projectSpSeries";
-import { projectStaggerSeries } from "@/simulation/projection/projectStaggerSeries";
-import { projectUltimateSeries } from "@/simulation/projection/projectUltimateSeries";
-import { projectActionBuffs } from "@/simulation/projection/projectActionBuffs";
-import { projectAllComboWindows } from "@/simulation/projection/projectComboWindows";
-import { projectRequisiteWarnings } from "@/simulation/projection/projectRequisiteWarnings";
-import { resolveEffectDisplayKey } from "@/utils/effectDisplay";
+} from '@/simulation/projection/projectOperatorEffects';
+import { projectSpSeries } from '@/simulation/projection/projectSpSeries';
+import { projectStaggerSeries } from '@/simulation/projection/projectStaggerSeries';
+import { projectUltimateSeries } from '@/simulation/projection/projectUltimateSeries';
+import { projectActionBuffs } from '@/simulation/projection/projectActionBuffs';
+import { projectAllComboWindows } from '@/simulation/projection/projectComboWindows';
+import { projectRequisiteWarnings } from '@/simulation/projection/projectRequisiteWarnings';
+import { resolveEffectDisplayKey } from '@/utils/effectDisplay';
 
 interface ProjectOptimizerResultInput {
   simulation: any;
@@ -36,7 +36,7 @@ interface EnemyAfflictionMarker {
 }
 
 interface EnemyAfflictionSegment {
-  kind: "physical" | "attachment" | "anomaly" | "status";
+  kind: 'physical' | 'attachment' | 'anomaly' | 'status';
   typeKey: string;
   stacks: number;
   start: number;
@@ -54,9 +54,9 @@ interface EnemyAfflictionGroup {
   rowByTypeKey?: Map<string, number>;
 }
 
-const PHYSICAL_REACTION_KEYS = new Set(["lift", "knockdown", "breach", "crush"]);
-const PHYSICAL_STACKING_KEYS = new Set(["lift", "knockdown"]);
-const PHYSICAL_CONSUMING_KEYS = new Set(["breach", "crush"]);
+const PHYSICAL_REACTION_KEYS = new Set(['lift', 'knockdown', 'breach', 'crush']);
+const PHYSICAL_STACKING_KEYS = new Set(['lift', 'knockdown']);
+const PHYSICAL_CONSUMING_KEYS = new Set(['breach', 'crush']);
 const PHYSICAL_MARKER_PRIORITY: Record<string, number> = {
   breach: 500,
   lift: 400,
@@ -108,23 +108,21 @@ function getEnemySegmentTypeKey(segment: any) {
     if (resolved) return resolved;
   }
 
-  const raw = String(segment?.typeKey || "");
-  if (raw.includes(":")) return raw.split(":").pop();
-  if (raw === "physical_combo") return "vulnerability";
-  return raw || "default";
+  const raw = String(segment?.typeKey || '');
+  if (raw.includes(':')) return raw.split(':').pop();
+  if (raw === 'physical_combo') return 'vulnerability';
+  return raw || 'default';
 }
 
 export function projectEnemyAfflictionViz(layout: any) {
   const out = emptyEnemyAfflictionViz();
   const rowMax = { anomaly: -1, status: -1 };
   const epsilon = 0.001;
-  const segments = Array.isArray(layout?.positionedSegments)
-    ? layout.positionedSegments
-    : [];
+  const segments = Array.isArray(layout?.positionedSegments) ? layout.positionedSegments : [];
 
   for (const segment of segments) {
     const typeKey = getEnemySegmentTypeKey(segment);
-    if (!typeKey || typeKey === "default") continue;
+    if (!typeKey || typeKey === 'default') continue;
 
     const start = Number(segment.start) || 0;
     const end = Number(segment.end) || start;
@@ -139,35 +137,75 @@ export function projectEnemyAfflictionViz(layout: any) {
       end,
       icon,
       row,
-      tracksComboState: typeKey === "vulnerability",
+      tracksComboState: typeKey === 'vulnerability',
       sourceId: segment.sourceId,
       carryoverKey: segment.carryoverKey,
       disabled: segment.disabled === true,
     };
 
     if (segment.group === 0 || segment.group === 1) {
-      if (isMarker) out.physical.markers.push({ typeKey, time: start, stacks, icon, row, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData, sourceId: segment.sourceId });
-      else out.physical.segments.push({ ...base, kind: "physical" });
+      if (isMarker)
+        out.physical.markers.push({
+          typeKey,
+          time: start,
+          stacks,
+          icon,
+          row,
+          isDamageHit: !!segment.isDamageHit,
+          hitData: segment.hitData,
+          sourceId: segment.sourceId,
+        });
+      else out.physical.segments.push({ ...base, kind: 'physical' });
       continue;
     }
 
     if (segment.group === 2) {
-      if (isMarker) out.attachment.markers.push({ typeKey, time: start, stacks, icon, row, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData, sourceId: segment.sourceId });
-      else out.attachment.segments.push({ ...base, kind: "attachment" });
+      if (isMarker)
+        out.attachment.markers.push({
+          typeKey,
+          time: start,
+          stacks,
+          icon,
+          row,
+          isDamageHit: !!segment.isDamageHit,
+          hitData: segment.hitData,
+          sourceId: segment.sourceId,
+        });
+      else out.attachment.segments.push({ ...base, kind: 'attachment' });
       continue;
     }
 
     if (segment.group === 3) {
       rowMax.anomaly = Math.max(rowMax.anomaly, row);
-      if (isMarker) out.anomalies.markers.push({ typeKey, time: start, stacks, icon, row, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData, sourceId: segment.sourceId });
-      else out.anomalies.segments.push({ ...base, kind: "anomaly" });
+      if (isMarker)
+        out.anomalies.markers.push({
+          typeKey,
+          time: start,
+          stacks,
+          icon,
+          row,
+          isDamageHit: !!segment.isDamageHit,
+          hitData: segment.hitData,
+          sourceId: segment.sourceId,
+        });
+      else out.anomalies.segments.push({ ...base, kind: 'anomaly' });
       continue;
     }
 
     if (segment.group === 4) {
       rowMax.status = Math.max(rowMax.status, row);
-      if (isMarker) out.statuses.markers.push({ typeKey, time: start, stacks, icon, row, isDamageHit: !!segment.isDamageHit, hitData: segment.hitData, sourceId: segment.sourceId });
-      else out.statuses.segments.push({ ...base, kind: "status" });
+      if (isMarker)
+        out.statuses.markers.push({
+          typeKey,
+          time: start,
+          stacks,
+          icon,
+          row,
+          isDamageHit: !!segment.isDamageHit,
+          hitData: segment.hitData,
+          sourceId: segment.sourceId,
+        });
+      else out.statuses.segments.push({ ...base, kind: 'status' });
     }
   }
 
@@ -186,12 +224,12 @@ function getActivePhysicalComboStacks(
     0,
     ...segments
       .filter(
-        (segment) =>
+        segment =>
           segment.tracksComboState === true &&
           segment.start <= time + epsilon &&
           segment.end > time + epsilon,
       )
-      .map((segment) => Number(segment.stacks) || 1),
+      .map(segment => Number(segment.stacks) || 1),
   );
 }
 
@@ -204,12 +242,12 @@ function getPreviousPhysicalComboStacks(
     0,
     ...segments
       .filter(
-        (segment) =>
+        segment =>
           segment.tracksComboState === true &&
           segment.start < time - epsilon &&
           segment.end > time - epsilon,
       )
-      .map((segment) => Number(segment.stacks) || 1),
+      .map(segment => Number(segment.stacks) || 1),
   );
 }
 
@@ -222,12 +260,12 @@ function getRepresentativePhysicalMarker(
   previousStacks: number,
   activeStacks: number,
 ): EnemyAfflictionMarker | null {
-  const physicalMarkers = markers.filter((marker) => PHYSICAL_REACTION_KEYS.has(marker.typeKey));
+  const physicalMarkers = markers.filter(marker => PHYSICAL_REACTION_KEYS.has(marker.typeKey));
   if (physicalMarkers.length === 0) return null;
 
   if (previousStacks <= 0) {
     return {
-      typeKey: "vulnerability",
+      typeKey: 'vulnerability',
       time: physicalMarkers[0]!.time,
       stacks: 1,
       icon: null,
@@ -246,7 +284,7 @@ function getRepresentativePhysicalMarker(
       time: representative.time,
       stacks: Math.min(
         4,
-        Math.max(previousStacks, ...physicalMarkers.map((marker) => Number(marker.stacks) || 1)),
+        Math.max(previousStacks, ...physicalMarkers.map(marker => Number(marker.stacks) || 1)),
       ),
       icon: representative.icon,
       row: 0,
@@ -288,12 +326,12 @@ function normalizePhysicalMarkers(group: EnemyAfflictionGroup) {
   }
 
   group.markers = Array.from(groups.values())
-    .map((markers) => {
+    .map(markers => {
       const time = Number(markers[0]?.time) || 0;
       const damageHits = markers
-        .filter((marker) => marker.isDamageHit && marker.hitData)
+        .filter(marker => marker.isDamageHit && marker.hitData)
         .sort((a, b) => getPhysicalMarkerPriority(b.typeKey) - getPhysicalMarkerPriority(a.typeKey))
-        .map((marker) => marker.hitData);
+        .map(marker => marker.hitData);
       const withDamageHits = (marker: EnemyAfflictionMarker) =>
         damageHits.length > 0 ? { ...marker, time, damageHits } : { ...marker, time };
 
@@ -302,9 +340,11 @@ function normalizePhysicalMarkers(group: EnemyAfflictionGroup) {
       const representative = getRepresentativePhysicalMarker(markers, previousStacks, activeStacks);
       if (representative) return withDamageHits(representative);
 
-      return withDamageHits([...markers].sort(
-        (a, b) => getPhysicalMarkerPriority(b.typeKey) - getPhysicalMarkerPriority(a.typeKey),
-      )[0]!);
+      return withDamageHits(
+        [...markers].sort(
+          (a, b) => getPhysicalMarkerPriority(b.typeKey) - getPhysicalMarkerPriority(a.typeKey),
+        )[0]!,
+      );
     })
     .sort((a, b) => a.time - b.time);
 }
@@ -315,8 +355,8 @@ function clipProjection<S extends { start: number; end: number; typeKey: string 
 ): { segments: S[]; byTypeKey: Map<string, S[]> } {
   if (maxTime == null) return projection;
   const clipped = projection.segments
-    .filter((segment) => segment.start < maxTime)
-    .map((segment) => (segment.end > maxTime ? { ...segment, end: maxTime } : segment));
+    .filter(segment => segment.start < maxTime)
+    .map(segment => (segment.end > maxTime ? { ...segment, end: maxTime } : segment));
   return { segments: clipped, byTypeKey: buildByTypeKey(clipped) };
 }
 
@@ -340,10 +380,10 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
     initialSnapshot && Number(prepDuration) > 0
       ? [
           {
-            type: "SP_REGEN_PAUSE",
+            type: 'SP_REGEN_PAUSE',
             time: 0,
             payload: {
-              sourceId: "prep",
+              sourceId: 'prep',
               duration: Number(prepDuration) || 0,
               sp: initialSnapshot.team.sp,
             },
@@ -378,7 +418,9 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
       ? clipProjection(projectFromSimLog(enemyLog, simLog), simulationEndline)
       : { segments: [], byTypeKey: new Map() };
   const enemyEffectLayout =
-    simulation && compiledScenario ? layoutEnemyEffects(enemyEffectProjection as any) : emptyEnemyEffectLayout();
+    simulation && compiledScenario
+      ? layoutEnemyEffects(enemyEffectProjection as any)
+      : emptyEnemyEffectLayout();
   const enemyAfflictionViz = projectEnemyAfflictionViz(enemyEffectLayout);
 
   const operatorEffectLayouts = new Map<string, any>();
@@ -403,10 +445,10 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
       : new Map<string, any>();
 
   const requisiteWarnings = projectRequisiteWarnings(
-      tracks || [],
-      comboWindowLayouts,
-      spSeries,
-      gaugeSeriesByTrackId,
+    tracks || [],
+    comboWindowLayouts,
+    spSeries,
+    gaugeSeriesByTrackId,
   );
 
   return {

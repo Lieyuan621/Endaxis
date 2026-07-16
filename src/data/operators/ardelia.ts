@@ -228,7 +228,13 @@ const sheet: OperatorSheet = {
               kind: 'not',
               condition: {
                 kind: 'enemyStatus',
-                status: ['vulnerability', 'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+                status: [
+                  'vulnerability',
+                  'heatInfliction',
+                  'cryoInfliction',
+                  'electricInfliction',
+                  'natureInfliction',
+                ],
               },
             },
           },

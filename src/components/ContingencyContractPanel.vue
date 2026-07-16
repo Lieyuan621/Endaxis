@@ -1,309 +1,322 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   getContingencyContractSeasons,
   getContractTagDisabledReason,
   getDefaultContingencyContractSeason,
   getSelectedContractScore,
   type ContingencyContractTag,
-} from '@/data/contingencyContracts'
-import { useTimelineStore } from '@/stores/timelineStore'
+} from '@/data/contingencyContracts';
+import { useTimelineStore } from '@/stores/timelineStore';
 
-const { t } = useI18n({ useScope: 'global' })
-const store = useTimelineStore()
+const { t } = useI18n({ useScope: 'global' });
+const store = useTimelineStore();
 
-const seasons = getContingencyContractSeasons()
-const defaultSeason = getDefaultContingencyContractSeason()
-const activeSeasonId = ref(defaultSeason?.id ?? seasons[0]?.id ?? '')
+const seasons = getContingencyContractSeasons();
+const defaultSeason = getDefaultContingencyContractSeason();
+const activeSeasonId = ref(defaultSeason?.id ?? seasons[0]?.id ?? '');
 // Backed by the timeline store (persisted per-scenario, fed into the damage simulation).
 const selectedTagIds = computed<Set<number>>({
   get: () => new Set(store.contingencyContractTags),
-  set: (val) => store.setContingencyContractTags(Array.from(val)),
-})
+  set: val => store.setContingencyContractTags(Array.from(val)),
+});
 
-const CONTRACT_COLUMN_WIDTH = 76
-const CONTRACT_COLUMN_GAP = 12
-const CONTRACT_ROW_HEIGHT = 52
-const CONTRACT_ROW_GAP = 22
-const CONTRACT_TAG_WIDTH = 58
-const CONTRACT_TAG_HEIGHT = 52
-const CONTRACT_MAX_SCORE_ROW = 3
+const CONTRACT_COLUMN_WIDTH = 76;
+const CONTRACT_COLUMN_GAP = 12;
+const CONTRACT_ROW_HEIGHT = 52;
+const CONTRACT_ROW_GAP = 22;
+const CONTRACT_TAG_WIDTH = 58;
+const CONTRACT_TAG_HEIGHT = 52;
+const CONTRACT_MAX_SCORE_ROW = 3;
 
-const activeSeason = computed(() =>
-  seasons.find(season => season.id === activeSeasonId.value) ?? defaultSeason ?? seasons[0] ?? null,
-)
+const activeSeason = computed(
+  () =>
+    seasons.find(season => season.id === activeSeasonId.value) ??
+    defaultSeason ??
+    seasons[0] ??
+    null,
+);
 
 const activeTagMap = computed(() => {
-  const season = activeSeason.value
-  return new Map((season?.groups ?? []).flatMap(group => group.tags).map(tag => [tag.id, tag]))
-})
+  const season = activeSeason.value;
+  return new Map((season?.groups ?? []).flatMap(group => group.tags).map(tag => [tag.id, tag]));
+});
 
 const selectedScore = computed(() => {
-  const season = activeSeason.value
-  return season ? getSelectedContractScore(season, selectedTagIds.value) : 0
-})
+  const season = activeSeason.value;
+  return season ? getSelectedContractScore(season, selectedTagIds.value) : 0;
+});
 
 const selectedTags = computed(() => {
-  const season = activeSeason.value
-  if (!season) return []
-  return season.groups.flatMap(group => group.tags).filter(tag => selectedTagIds.value.has(tag.id))
-})
+  const season = activeSeason.value;
+  if (!season) return [];
+  return season.groups.flatMap(group => group.tags).filter(tag => selectedTagIds.value.has(tag.id));
+});
 
 const tagCells = computed(() => {
-  const season = activeSeason.value
-  if (!season) return []
+  const season = activeSeason.value;
+  if (!season) return [];
 
-  return season.groups.flatMap((group, columnIndex) => group.tags.map(tag => {
-    const rowIndex = Math.max(0, Math.min(CONTRACT_MAX_SCORE_ROW - 1, Math.round(Number(tag.score) || 1) - 1))
-    const columnLeft = columnIndex * (CONTRACT_COLUMN_WIDTH + CONTRACT_COLUMN_GAP)
-    return {
-      tag,
-      columnIndex,
-      rowIndex,
-      left: columnLeft + Math.round((CONTRACT_COLUMN_WIDTH - CONTRACT_TAG_WIDTH) / 2),
-      top: rowIndex * (CONTRACT_ROW_HEIGHT + CONTRACT_ROW_GAP),
-    }
-  }))
-})
+  return season.groups.flatMap((group, columnIndex) =>
+    group.tags.map(tag => {
+      const rowIndex = Math.max(
+        0,
+        Math.min(CONTRACT_MAX_SCORE_ROW - 1, Math.round(Number(tag.score) || 1) - 1),
+      );
+      const columnLeft = columnIndex * (CONTRACT_COLUMN_WIDTH + CONTRACT_COLUMN_GAP);
+      return {
+        tag,
+        columnIndex,
+        rowIndex,
+        left: columnLeft + Math.round((CONTRACT_COLUMN_WIDTH - CONTRACT_TAG_WIDTH) / 2),
+        top: rowIndex * (CONTRACT_ROW_HEIGHT + CONTRACT_ROW_GAP),
+      };
+    }),
+  );
+});
 
 const contractGridWidth = computed(() => {
-  const columnCount = activeSeason.value?.groups.length ?? 0
+  const columnCount = activeSeason.value?.groups.length ?? 0;
   return columnCount > 0
     ? columnCount * CONTRACT_COLUMN_WIDTH + (columnCount - 1) * CONTRACT_COLUMN_GAP
-    : 0
-})
+    : 0;
+});
 
 const contractGridHeight = computed(
-  () => CONTRACT_MAX_SCORE_ROW * CONTRACT_ROW_HEIGHT + (CONTRACT_MAX_SCORE_ROW - 1) * CONTRACT_ROW_GAP,
-)
+  () =>
+    CONTRACT_MAX_SCORE_ROW * CONTRACT_ROW_HEIGHT + (CONTRACT_MAX_SCORE_ROW - 1) * CONTRACT_ROW_GAP,
+);
 
 const conflictConnectors = computed(() => {
-  const byConflict = new Map<string, typeof tagCells.value>()
+  const byConflict = new Map<string, typeof tagCells.value>();
   for (const cell of tagCells.value) {
-    if (!cell.tag.conflictId) continue
-    const list = byConflict.get(cell.tag.conflictId) ?? []
-    list.push(cell)
-    byConflict.set(cell.tag.conflictId, list)
+    if (!cell.tag.conflictId) continue;
+    const list = byConflict.get(cell.tag.conflictId) ?? [];
+    list.push(cell);
+    byConflict.set(cell.tag.conflictId, list);
   }
 
   const connectors: Array<{
-    key: string
-    kind: 'horizontal' | 'vertical'
-    left: number
-    top: number
-    width?: number
-    height?: number
-  }> = []
+    key: string;
+    kind: 'horizontal' | 'vertical';
+    left: number;
+    top: number;
+    width?: number;
+    height?: number;
+  }> = [];
 
   for (const [conflictId, cells] of byConflict) {
-    const byRow = new Map<number, typeof cells>()
-    const byColumn = new Map<number, typeof cells>()
+    const byRow = new Map<number, typeof cells>();
+    const byColumn = new Map<number, typeof cells>();
 
     for (const cell of cells) {
-      const rowCells = byRow.get(cell.rowIndex) ?? []
-      rowCells.push(cell)
-      byRow.set(cell.rowIndex, rowCells)
+      const rowCells = byRow.get(cell.rowIndex) ?? [];
+      rowCells.push(cell);
+      byRow.set(cell.rowIndex, rowCells);
 
-      const columnCells = byColumn.get(cell.columnIndex) ?? []
-      columnCells.push(cell)
-      byColumn.set(cell.columnIndex, columnCells)
+      const columnCells = byColumn.get(cell.columnIndex) ?? [];
+      columnCells.push(cell);
+      byColumn.set(cell.columnIndex, columnCells);
     }
 
     for (const [rowIndex, rowCells] of byRow) {
-      rowCells.sort((a, b) => a.columnIndex - b.columnIndex)
+      rowCells.sort((a, b) => a.columnIndex - b.columnIndex);
       for (let index = 0; index < rowCells.length - 1; index += 1) {
-        const current = rowCells[index]
-        const next = rowCells[index + 1]
-        if (!current || !next || current.columnIndex === next.columnIndex) continue
-        const left = current.left + CONTRACT_TAG_WIDTH
-        const width = next.left - left
-        if (width <= 0) continue
+        const current = rowCells[index];
+        const next = rowCells[index + 1];
+        if (!current || !next || current.columnIndex === next.columnIndex) continue;
+        const left = current.left + CONTRACT_TAG_WIDTH;
+        const width = next.left - left;
+        if (width <= 0) continue;
         connectors.push({
           key: `${conflictId}-h-${rowIndex}-${current.columnIndex}-${next.columnIndex}`,
           kind: 'horizontal',
           left,
           top: current.top + Math.round(CONTRACT_TAG_HEIGHT / 2) - 7,
           width,
-        })
+        });
       }
     }
 
     for (const [columnIndex, columnCells] of byColumn) {
-      columnCells.sort((a, b) => a.rowIndex - b.rowIndex)
+      columnCells.sort((a, b) => a.rowIndex - b.rowIndex);
       for (let index = 0; index < columnCells.length - 1; index += 1) {
-        const current = columnCells[index]
-        const next = columnCells[index + 1]
-        if (!current || !next || current.rowIndex === next.rowIndex) continue
-        const top = current.top + CONTRACT_TAG_HEIGHT
-        const height = next.top - top
-        if (height <= 0) continue
+        const current = columnCells[index];
+        const next = columnCells[index + 1];
+        if (!current || !next || current.rowIndex === next.rowIndex) continue;
+        const top = current.top + CONTRACT_TAG_HEIGHT;
+        const height = next.top - top;
+        if (height <= 0) continue;
         connectors.push({
           key: `${conflictId}-v-${columnIndex}-${current.rowIndex}-${next.rowIndex}`,
           kind: 'vertical',
           left: current.left + Math.round(CONTRACT_TAG_WIDTH / 2) - 7,
           top,
           height,
-        })
+        });
       }
     }
   }
 
-  return connectors
-})
+  return connectors;
+});
 
 watch(activeSeasonId, () => {
-  selectedTagIds.value = new Set()
-})
+  selectedTagIds.value = new Set();
+});
 
 type ContractDescriptionPart = {
-  text: string
-  highlighted: boolean
-}
+  text: string;
+  highlighted: boolean;
+};
 
 function getTagBlackboardValue(tag: ContingencyContractTag, key: string): number | null {
   for (const term of tag.terms) {
-    const entry = term.blackboard.find(item => item.key === key)
-    if (entry) return Number(entry.value)
+    const entry = term.blackboard.find(item => item.key === key);
+    if (entry) return Number(entry.value);
   }
-  return null
+  return null;
 }
 
-function evaluateContractExpression(expression: string, tag: ContingencyContractTag): number | null {
-  const tokens = expression.match(/[+-]?[^+-]+/g) ?? []
-  if (tokens.length === 0) return null
+function evaluateContractExpression(
+  expression: string,
+  tag: ContingencyContractTag,
+): number | null {
+  const tokens = expression.match(/[+-]?[^+-]+/g) ?? [];
+  if (tokens.length === 0) return null;
 
-  let total = 0
+  let total = 0;
   for (const rawToken of tokens) {
-    const sign = rawToken.startsWith('-') ? -1 : 1
-    const token = rawToken.replace(/^[+-]/, '').trim()
-    if (!token) continue
+    const sign = rawToken.startsWith('-') ? -1 : 1;
+    const token = rawToken.replace(/^[+-]/, '').trim();
+    if (!token) continue;
 
-    const numeric = Number(token)
+    const numeric = Number(token);
     if (Number.isFinite(numeric)) {
-      total += sign * numeric
-      continue
+      total += sign * numeric;
+      continue;
     }
 
-    const value = getTagBlackboardValue(tag, token)
-    if (value == null || !Number.isFinite(value)) return null
-    total += sign * value
+    const value = getTagBlackboardValue(tag, token);
+    if (value == null || !Number.isFinite(value)) return null;
+    total += sign * value;
   }
 
-  return total
+  return total;
 }
 
 function formatContractValue(value: number, format: string): string {
-  if (format === '0%') return `${Math.round(value * 100)}%`
-  if (format === '0') return `${Math.round(value)}`
-  return `${value}`
+  if (format === '0%') return `${Math.round(value * 100)}%`;
+  if (format === '0') return `${Math.round(value)}`;
+  return `${value}`;
 }
 
 function resolveContractPlaceholder(content: string, currentTag: ContingencyContractTag): string {
-  let targetTag = currentTag
-  let expressionWithFormat = content
+  let targetTag = currentTag;
+  let expressionWithFormat = content;
 
-  const referenceMatch = content.match(/^@(\d+)@(.+)$/)
+  const referenceMatch = content.match(/^@(\d+)@(.+)$/);
   if (referenceMatch?.[1] && referenceMatch[2]) {
-    targetTag = activeTagMap.value.get(Number(referenceMatch[1])) ?? currentTag
-    expressionWithFormat = referenceMatch[2]
+    targetTag = activeTagMap.value.get(Number(referenceMatch[1])) ?? currentTag;
+    expressionWithFormat = referenceMatch[2];
   }
 
-  const separatorIndex = expressionWithFormat.lastIndexOf(':')
-  if (separatorIndex < 0) return ''
+  const separatorIndex = expressionWithFormat.lastIndexOf(':');
+  if (separatorIndex < 0) return '';
 
-  const expression = expressionWithFormat.slice(0, separatorIndex)
-  const format = expressionWithFormat.slice(separatorIndex + 1)
-  const value = evaluateContractExpression(expression, targetTag)
-  return value == null ? '' : formatContractValue(value, format)
+  const expression = expressionWithFormat.slice(0, separatorIndex);
+  const format = expressionWithFormat.slice(separatorIndex + 1);
+  const value = evaluateContractExpression(expression, targetTag);
+  return value == null ? '' : formatContractValue(value, format);
 }
 
 function renderDescriptionText(text: string, tag: ContingencyContractTag): string {
   return text
     .replace(/\{([^}]+)\}/g, (_, content: string) => resolveContractPlaceholder(content, tag))
-    .replace(/<[^>]+>/g, '')
+    .replace(/<[^>]+>/g, '');
 }
 
 function renderContractDescriptionParts(tag: ContingencyContractTag): ContractDescriptionPart[] {
-  const raw = tag.rawDescription || tag.description || t('contingencyContract.noDescription')
-  const parts: ContractDescriptionPart[] = []
-  const colorPattern = /<color=[^>]+>(.*?)<\/color>/g
-  let cursor = 0
-  let match: RegExpExecArray | null
+  const raw = tag.rawDescription || tag.description || t('contingencyContract.noDescription');
+  const parts: ContractDescriptionPart[] = [];
+  const colorPattern = /<color=[^>]+>(.*?)<\/color>/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
 
   while ((match = colorPattern.exec(raw)) != null) {
     if (match.index > cursor) {
-      const text = renderDescriptionText(raw.slice(cursor, match.index), tag)
-      if (text) parts.push({ text, highlighted: false })
+      const text = renderDescriptionText(raw.slice(cursor, match.index), tag);
+      if (text) parts.push({ text, highlighted: false });
     }
 
-    const text = renderDescriptionText(match[1] ?? '', tag)
-    if (text) parts.push({ text, highlighted: true })
-    cursor = match.index + match[0].length
+    const text = renderDescriptionText(match[1] ?? '', tag);
+    if (text) parts.push({ text, highlighted: true });
+    cursor = match.index + match[0].length;
   }
 
   if (cursor < raw.length) {
-    const text = renderDescriptionText(raw.slice(cursor), tag)
-    if (text) parts.push({ text, highlighted: false })
+    const text = renderDescriptionText(raw.slice(cursor), tag);
+    if (text) parts.push({ text, highlighted: false });
   }
 
   return parts.length > 0
     ? parts
-    : [{ text: tag.description || t('contingencyContract.noDescription'), highlighted: false }]
+    : [{ text: tag.description || t('contingencyContract.noDescription'), highlighted: false }];
 }
 
 function getDisabledReason(tag: ContingencyContractTag): string {
-  const season = activeSeason.value
-  return season ? getContractTagDisabledReason(season, tag, selectedTagIds.value) : ''
+  const season = activeSeason.value;
+  return season ? getContractTagDisabledReason(season, tag, selectedTagIds.value) : '';
 }
 
 function isSelected(tagId: number): boolean {
-  return selectedTagIds.value.has(tagId)
+  return selectedTagIds.value.has(tagId);
 }
 
 function canSelect(tag: ContingencyContractTag): boolean {
-  const reason = getDisabledReason(tag)
-  return !reason || reason.startsWith('Conflict:')
+  const reason = getDisabledReason(tag);
+  return !reason || reason.startsWith('Conflict:');
 }
 
 function isConflictMuted(tag: ContingencyContractTag): boolean {
-  if (isSelected(tag.id)) return false
-  return getDisabledReason(tag).startsWith('Conflict:')
+  if (isSelected(tag.id)) return false;
+  return getDisabledReason(tag).startsWith('Conflict:');
 }
 
 function toggleTag(tag: ContingencyContractTag) {
-  const next = new Set(selectedTagIds.value)
+  const next = new Set(selectedTagIds.value);
   if (next.has(tag.id)) {
-    next.delete(tag.id)
-    selectedTagIds.value = next
-    return
+    next.delete(tag.id);
+    selectedTagIds.value = next;
+    return;
   }
-  if (!canSelect(tag)) return
+  if (!canSelect(tag)) return;
 
   if (tag.conflictId) {
     for (const selectedId of Array.from(next)) {
-      const selectedTag = activeTagMap.value.get(selectedId)
-      if (selectedTag?.conflictId === tag.conflictId) next.delete(selectedId)
+      const selectedTag = activeTagMap.value.get(selectedId);
+      if (selectedTag?.conflictId === tag.conflictId) next.delete(selectedId);
     }
   }
 
-  next.add(tag.id)
-  selectedTagIds.value = next
+  next.add(tag.id);
+  selectedTagIds.value = next;
 }
 
 function removeTag(tagId: number) {
-  const next = new Set(selectedTagIds.value)
-  next.delete(tagId)
-  selectedTagIds.value = next
+  const next = new Set(selectedTagIds.value);
+  next.delete(tagId);
+  selectedTagIds.value = next;
 }
 
 function clearSelection() {
-  selectedTagIds.value = new Set()
+  selectedTagIds.value = new Set();
 }
 
 function hideBrokenImage(event: Event) {
-  const target = event.target
-  if (target instanceof HTMLImageElement) target.style.display = 'none'
+  const target = event.target;
+  if (target instanceof HTMLImageElement) target.style.display = 'none';
 }
 </script>
 
@@ -311,7 +324,10 @@ function hideBrokenImage(event: Event) {
   <section class="cc-panel">
     <div v-if="activeSeason" class="cc-body">
       <div class="cc-groups">
-        <div class="cc-grid" :style="{ width: `${contractGridWidth}px`, height: `${contractGridHeight}px` }">
+        <div
+          class="cc-grid"
+          :style="{ width: `${contractGridWidth}px`, height: `${contractGridHeight}px` }"
+        >
           <div
             v-for="connector in conflictConnectors"
             :key="connector.key"
@@ -335,8 +351,18 @@ function hideBrokenImage(event: Event) {
             >
               <line x1="0.5" y1="2" x2="0.5" y2="5" />
               <line x1="0.5" y1="9" x2="0.5" y2="12" />
-              <line :x1="(connector.width ?? 0) - 0.5" y1="2" :x2="(connector.width ?? 0) - 0.5" y2="5" />
-              <line :x1="(connector.width ?? 0) - 0.5" y1="9" :x2="(connector.width ?? 0) - 0.5" y2="12" />
+              <line
+                :x1="(connector.width ?? 0) - 0.5"
+                y1="2"
+                :x2="(connector.width ?? 0) - 0.5"
+                y2="5"
+              />
+              <line
+                :x1="(connector.width ?? 0) - 0.5"
+                y1="9"
+                :x2="(connector.width ?? 0) - 0.5"
+                y2="12"
+              />
               <line x1="0.5" y1="7" :x2="(connector.width ?? 0) - 0.5" y2="7" />
             </svg>
             <svg
@@ -349,8 +375,18 @@ function hideBrokenImage(event: Event) {
             >
               <line x1="2" y1="0.5" x2="5" y2="0.5" />
               <line x1="9" y1="0.5" x2="12" y2="0.5" />
-              <line x1="2" :y1="(connector.height ?? 0) - 0.5" x2="5" :y2="(connector.height ?? 0) - 0.5" />
-              <line x1="9" :y1="(connector.height ?? 0) - 0.5" x2="12" :y2="(connector.height ?? 0) - 0.5" />
+              <line
+                x1="2"
+                :y1="(connector.height ?? 0) - 0.5"
+                x2="5"
+                :y2="(connector.height ?? 0) - 0.5"
+              />
+              <line
+                x1="9"
+                :y1="(connector.height ?? 0) - 0.5"
+                x2="12"
+                :y2="(connector.height ?? 0) - 0.5"
+              />
               <line x1="7" y1="0.5" x2="7" :y2="(connector.height ?? 0) - 0.5" />
             </svg>
           </div>
@@ -375,7 +411,8 @@ function hideBrokenImage(event: Event) {
                       v-for="(part, index) in renderContractDescriptionParts(cell.tag)"
                       :key="`${cell.tag.id}-tooltip-desc-${index}`"
                       :class="{ 'is-highlight': part.highlighted }"
-                    >{{ part.text }}</span>
+                      >{{ part.text }}</span
+                    >
                   </div>
                 </div>
               </template>
@@ -390,7 +427,13 @@ function hideBrokenImage(event: Event) {
                 @click="toggleTag(cell.tag)"
               >
                 <span class="cc-tag-check">&#10003;</span>
-                <img v-if="cell.tag.iconPath" :src="cell.tag.iconPath" alt="" aria-hidden="true" @error="hideBrokenImage" />
+                <img
+                  v-if="cell.tag.iconPath"
+                  :src="cell.tag.iconPath"
+                  alt=""
+                  aria-hidden="true"
+                  @error="hideBrokenImage"
+                />
                 <span v-else class="cc-tag-icon-fallback">{{ cell.tag.score }}</span>
                 <span v-if="cell.tag.roman" class="cc-tag-roman">{{ cell.tag.roman }}</span>
                 <span class="cc-tag-score">+{{ cell.tag.score }}</span>
@@ -417,7 +460,13 @@ function hideBrokenImage(event: Event) {
         </div>
         <div v-if="selectedTags.length" class="cc-selected-list">
           <div v-for="tag in selectedTags" :key="tag.id" class="cc-selected-row">
-            <img v-if="tag.iconPath" :src="tag.iconPath" alt="" aria-hidden="true" @error="hideBrokenImage" />
+            <img
+              v-if="tag.iconPath"
+              :src="tag.iconPath"
+              alt=""
+              aria-hidden="true"
+              @error="hideBrokenImage"
+            />
             <div class="cc-selected-content">
               <div class="cc-selected-title">
                 <span>{{ tag.name }}</span>
@@ -428,7 +477,8 @@ function hideBrokenImage(event: Event) {
                   v-for="(part, index) in renderContractDescriptionParts(tag)"
                   :key="`${tag.id}-selected-desc-${index}`"
                   :class="{ 'is-highlight': part.highlighted }"
-                >{{ part.text }}</span>
+                  >{{ part.text }}</span
+                >
               </div>
             </div>
             <button
@@ -594,7 +644,9 @@ function hideBrokenImage(event: Event) {
   opacity: 0;
 }
 
-.cc-tag.is-selected .cc-tag-check { opacity: 1; }
+.cc-tag.is-selected .cc-tag-check {
+  opacity: 1;
+}
 
 .cc-tag-roman {
   position: absolute;
@@ -625,7 +677,9 @@ function hideBrokenImage(event: Event) {
   scrollbar-width: none;
 }
 
-.cc-detail::-webkit-scrollbar { display: none; }
+.cc-detail::-webkit-scrollbar {
+  display: none;
+}
 
 .cc-detail-toolbar {
   display: grid;
@@ -735,7 +789,6 @@ function hideBrokenImage(event: Event) {
 .cc-selected-remove {
   align-self: center;
 }
-
 
 .cc-detail-empty {
   height: 100%;

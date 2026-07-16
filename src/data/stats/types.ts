@@ -73,11 +73,7 @@ export interface SheetStatEffect {
  */
 export interface ScopedDamageModifier {
   modifier:
-    | 'dmgBonus'
-    | 'ampBonus'
-    | 'directMultiplier'
-    | 'resistanceIgnore'
-    | 'susceptibilityAmplify';
+    'dmgBonus' | 'ampBonus' | 'directMultiplier' | 'resistanceIgnore' | 'susceptibilityAmplify';
   value: number;
   elements?: DamageElement | DamageElement[];
   skillTypes?: SkillType | SkillType[] | 'nonSkill';

@@ -10,9 +10,7 @@ export class UltEnergyHandler implements EventHandler<UltEnergyChangeEvent> {
       return;
     }
     const stats = actor.snapshot().stats as any;
-    const efficiency = rawChange > 0
-        ? Math.max(0, Number(stats?.ult_charge_eff) || 100) / 100
-        : 1;
+    const efficiency = rawChange > 0 ? Math.max(0, Number(stats?.ult_charge_eff) || 100) / 100 : 1;
     const change = rawChange * efficiency;
     const gauge = actor.modifyGauge(change);
 

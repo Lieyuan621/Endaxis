@@ -255,8 +255,17 @@ const sheet: OperatorSheet = {
           {
             trigger: {
               kind: 'onStatusApplied',
-              status: ['vulnerability', 'lift', 'knockdown', 'crush', 'breach',
-                'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              status: [
+                'vulnerability',
+                'lift',
+                'knockdown',
+                'crush',
+                'breach',
+                'heatInfliction',
+                'cryoInfliction',
+                'electricInfliction',
+                'natureInfliction',
+              ],
               target: 'enemy',
               triggerScope: 'global',
             },

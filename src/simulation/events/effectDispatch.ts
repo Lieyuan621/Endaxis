@@ -254,7 +254,12 @@ export function evaluateEffectCondition(
     let lastCombo: ResolvedAction | undefined;
     for (let i = actions.length - 1; i >= 0; i--) {
       const a = actions[i]!;
-      if (a.trackId === sourceTrackId && a.node.type === 'comboSkill' && !a.node.isDisabled && a.realStartTime <= time) {
+      if (
+        a.trackId === sourceTrackId &&
+        a.node.type === 'comboSkill' &&
+        !a.node.isDisabled &&
+        a.realStartTime <= time
+      ) {
         if (!lastCombo || a.realStartTime > lastCombo.realStartTime) lastCombo = a;
       }
     }
@@ -470,11 +475,7 @@ export function scheduleConsumption(
       }
       if (!id) continue;
       const trackIds =
-        condition.consumeScope === 'team'
-          ? ctx.allTrackIds
-          : consumeFromId
-            ? [consumeFromId]
-            : [];
+        condition.consumeScope === 'team' ? ctx.allTrackIds : consumeFromId ? [consumeFromId] : [];
       const anyPresent = trackIds.some(
         trackId => ctx.getOperatorEffects(trackId).getStacks(id, time) > 0,
       );
@@ -1357,7 +1358,13 @@ export function dispatchSingleActorEffect(
 
     if (duration <= 0) {
       if (resolved.stat?.modifier === 'heal' && !resolved.silent) {
-        dc.onInstantHeal?.(getRuntimeEffectId(resolved), resolved.stat, sourceTrackId, time, skillType);
+        dc.onInstantHeal?.(
+          getRuntimeEffectId(resolved),
+          resolved.stat,
+          sourceTrackId,
+          time,
+          skillType,
+        );
       }
       return;
     }

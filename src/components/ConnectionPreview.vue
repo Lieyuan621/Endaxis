@@ -1,114 +1,121 @@
 <script setup>
-import { computed } from 'vue'
-import { useTimelineStore } from '../stores/timelineStore.js'
-import ConnectionPath from './ConnectionPath.vue'
-import { useDragConnection } from '@/composables/useDragConnection.js'
-import { PORT_DIRECTIONS } from '@/utils/layoutUtils.js'
-import { toLegacyDisplayType } from '@/utils/hitModel.js'
+import { computed } from 'vue';
+import { useTimelineStore } from '../stores/timelineStore.js';
+import ConnectionPath from './ConnectionPath.vue';
+import { useDragConnection } from '@/composables/useDragConnection.js';
+import { PORT_DIRECTIONS } from '@/utils/layoutUtils.js';
+import { toLegacyDisplayType } from '@/utils/hitModel.js';
 
-const props = defineProps({})
-const store = useTimelineStore()
-const connectionHandler = useDragConnection()
+const props = defineProps({});
+const store = useTimelineStore();
+const connectionHandler = useDragConnection();
 
 const startPoint = computed(() => {
-  const state = connectionHandler.state.value
-  
+  const state = connectionHandler.state.value;
+
   if (!connectionHandler.isDragging.value) {
-    return null
+    return null;
   }
 
   return {
     x: state.startPoint.x,
     y: state.startPoint.y,
-    dir: PORT_DIRECTIONS[state.sourcePort]
-  }
-})
+    dir: PORT_DIRECTIONS[state.sourcePort],
+  };
+});
 
 const mousePoint = computed(() => {
-  const snapState = connectionHandler.snapState.value
-  const dir = PORT_DIRECTIONS[snapState.targetPort ?? 'left']
+  const snapState = connectionHandler.snapState.value;
+  const dir = PORT_DIRECTIONS[snapState.targetPort ?? 'left'];
 
   if (snapState.isActive && snapState.snapPos) {
-    return { 
-      x: snapState.snapPos.x, 
-      y: snapState.snapPos.y, 
-      dir 
-    }
+    return {
+      x: snapState.snapPos.x,
+      y: snapState.snapPos.y,
+      dir,
+    };
   }
 
-  const timelinePoint = store.toTimelineSpace(store.cursorPosition.x, store.cursorPosition.y)
+  const timelinePoint = store.toTimelineSpace(store.cursorPosition.x, store.cursorPosition.y);
 
-  return { 
-    x: timelinePoint.x, 
-    y: timelinePoint.y, 
-    dir 
-  }
-})
+  return {
+    x: timelinePoint.x,
+    y: timelinePoint.y,
+    dir,
+  };
+});
 
 function getActionColor(action) {
-  const displayType = toLegacyDisplayType(action?.type)
-  if (displayType === 'link') return store.getColor('link')
-  if (displayType === 'execution') return store.getColor('execution')
-  if (displayType === 'attack') return store.getColor('attack')
-  if (displayType === 'dive') return store.getColor('dodge')
-  if (displayType === 'skill') return store.getColor('skill')
-  if (displayType === 'ultimate') return store.getColor('ultimate')
-  if (action.element) return store.getColor(action.element)
-  return store.getColor('default')
+  const displayType = toLegacyDisplayType(action?.type);
+  if (displayType === 'link') return store.getColor('link');
+  if (displayType === 'execution') return store.getColor('execution');
+  if (displayType === 'attack') return store.getColor('attack');
+  if (displayType === 'dive') return store.getColor('dodge');
+  if (displayType === 'skill') return store.getColor('skill');
+  if (displayType === 'ultimate') return store.getColor('ultimate');
+  if (action.element) return store.getColor(action.element);
+  return store.getColor('default');
 }
 
 function getColors() {
-  let startColor = store.getColor('default')
-  let endColor = store.getColor('default')
+  let startColor = store.getColor('default');
+  let endColor = store.getColor('default');
 
-  const fromNode = store.resolveNode(connectionHandler.state.value.sourceId)
-  const toNode = store.resolveNode(connectionHandler.snapState.value.targetId)
+  const fromNode = store.resolveNode(connectionHandler.state.value.sourceId);
+  const toNode = store.resolveNode(connectionHandler.snapState.value.targetId);
 
   if (fromNode) {
     if (fromNode.type === 'action') {
-      startColor = getActionColor(fromNode.node)
+      startColor = getActionColor(fromNode.node);
     } else if (fromNode.type === 'status') {
-      startColor = fromNode.node?.color || store.getColor('default')
+      startColor = fromNode.node?.color || store.getColor('default');
     } else {
-      startColor = store.getColor(fromNode.node.type)
+      startColor = store.getColor(fromNode.node.type);
     }
   }
   if (toNode) {
     if (toNode.type === 'action') {
-      endColor = getActionColor(toNode.node)
+      endColor = getActionColor(toNode.node);
     } else if (toNode.type === 'status') {
-      endColor = toNode.node?.color || store.getColor('default')
+      endColor = toNode.node?.color || store.getColor('default');
     } else {
-      endColor = store.getColor(toNode.node.type)
+      endColor = store.getColor(toNode.node.type);
     }
   }
 
-  return { start: startColor, end: endColor }
+  return { start: startColor, end: endColor };
 }
 
 const pathProps = computed(() => {
   if (!connectionHandler.isDragging.value || !startPoint.value) {
-    return null
+    return null;
   }
 
-  const start = startPoint.value
-  const end = mousePoint.value
+  const start = startPoint.value;
+  const end = mousePoint.value;
 
   return {
     startPoint: { x: start.x, y: start.y },
     endPoint: { x: end.x, y: end.y },
     startDirection: start.dir,
     endDirection: end.dir,
-    colors: getColors()
-  }
-})
+    colors: getColors(),
+  };
+});
 </script>
 
 <template>
-  <ConnectionPath v-if="pathProps" id="drag-preview-line" :start-point="pathProps.startPoint"
-    :end-point="pathProps.endPoint" :start-direction="pathProps.startDirection" :end-direction="pathProps.endDirection"
-    :colors="pathProps.colors" :is-preview="true" style="pointer-events: none;" />
+  <ConnectionPath
+    v-if="pathProps"
+    id="drag-preview-line"
+    :start-point="pathProps.startPoint"
+    :end-point="pathProps.endPoint"
+    :start-direction="pathProps.startDirection"
+    :end-direction="pathProps.endDirection"
+    :colors="pathProps.colors"
+    :is-preview="true"
+    style="pointer-events: none"
+  />
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

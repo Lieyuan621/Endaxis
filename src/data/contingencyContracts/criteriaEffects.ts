@@ -36,7 +36,10 @@ const FROZEN_ICON = '/icons/icon_battle_debuff_frozen.webp';
  *  carrying this hidden status as the controlled operator accrues no Heat Loss Cryo (so never Freezes). */
 export const CRYO_INFLICTION_IMMUNE_ID = 'cryo-infliction-immune';
 
-function heatLossMechanism(group: number, skillType: 'battleSkill' | 'comboSkill'): CriterionMechanism {
+function heatLossMechanism(
+  group: number,
+  skillType: 'battleSkill' | 'comboSkill',
+): CriterionMechanism {
   const cryoId = HEAT_LOSS_CRYO_ID;
   const toggleId = `cc:${group}:toggle`;
   const frozenId = FROZEN_ID;
@@ -78,7 +81,12 @@ function heatLossMechanism(group: number, skillType: 'battleSkill' | 'comboSkill
     // Level-invariant: at the 4th Cryo stack, consume all Cryo and apply Frozen (display-only).
     triggers: [
       {
-        trigger: { kind: 'onStatusApplied', status: cryoId, target: 'self', triggerScope: 'global' },
+        trigger: {
+          kind: 'onStatusApplied',
+          status: cryoId,
+          target: 'self',
+          triggerScope: 'global',
+        },
         effects: [
           {
             kind: 'status',
@@ -148,15 +156,16 @@ function lysisMechanism(element: 'heat' | 'nature' | 'electric' | 'physical'): C
     target: 'controlled' as const,
     ...(consume ? { consume: true } : {}),
   });
-  const dispelCarrier = (): Effect => ({
-    kind: 'status',
-    id: `cc:dispel:${element}`,
-    target: 'controlled',
-    duration: 0,
-    hide: true,
-    silent: true,
-    condition: frozenCondition(true),
-  } as Effect);
+  const dispelCarrier = (): Effect =>
+    ({
+      kind: 'status',
+      id: `cc:dispel:${element}`,
+      target: 'controlled',
+      duration: 0,
+      hide: true,
+      silent: true,
+      condition: frozenCondition(true),
+    }) as Effect;
 
   return {
     levelCount: 1,
@@ -164,7 +173,12 @@ function lysisMechanism(element: 'heat' | 'nature' | 'electric' | 'physical'): C
       // Extend: when the operator Freeze lands, replace it with the longer 15s window. `silent` so the
       // re-apply doesn't re-fire onStatusApplied (no extend→extend loop); it still renders.
       {
-        trigger: { kind: 'onStatusApplied', status: FROZEN_ID, target: 'self', triggerScope: 'global' },
+        trigger: {
+          kind: 'onStatusApplied',
+          status: FROZEN_ID,
+          target: 'self',
+          triggerScope: 'global',
+        },
         effects: [
           {
             kind: 'status',
@@ -245,21 +259,19 @@ export const CRITERION_MECHANISMS: Record<number, CriterionMechanism> = {
   //    matching-type DMG -45% / -90% for 10s. ─────────────────────────────────────
   1009: {
     levelCount: 2,
-    triggers: INFLICTION_PAIRS.map(
-      ([status, element]): TriggerEffect => ({
-        trigger: { kind: 'onStatusApplied', status, target: 'enemy', triggerScope: 'global' },
-        effects: [
-          {
-            kind: 'status',
-            stat: { modifier: 'dmgBonus', elements: [element] },
-            target: 'self',
-            value: [-45, -90],
-            duration: 10,
-            external: true,
-          },
-        ],
-      }),
-    ),
+    triggers: INFLICTION_PAIRS.map(([status, element]): TriggerEffect => ({
+      trigger: { kind: 'onStatusApplied', status, target: 'enemy', triggerScope: 'global' },
+      effects: [
+        {
+          kind: 'status',
+          stat: { modifier: 'dmgBonus', elements: [element] },
+          target: 'self',
+          value: [-45, -90],
+          duration: 10,
+          external: true,
+        },
+      ],
+    })),
   },
 
   // ── Bent Edges (队列：折刃) — each ultimate cast: subsequent ultimate DMG -50% / -100%. ──
@@ -316,27 +328,25 @@ export const CRITERION_MECHANISMS: Record<number, CriterionMechanism> = {
   //    Infliction once every 5s. ───────────────────────────────────────────────────
   1010: {
     levelCount: 1,
-    triggers: INFLICTION_PAIRS.map(
-      ([listen, element]): TriggerEffect => ({
-        trigger: {
-          kind: 'onStatusApplied',
-          status: listen,
+    triggers: INFLICTION_PAIRS.map(([listen, element]): TriggerEffect => ({
+      trigger: {
+        kind: 'onStatusApplied',
+        status: listen,
+        target: 'enemy',
+        triggerScope: 'global',
+      },
+      effects: [
+        {
+          kind: 'status',
+          id: `inflictionBarrier-${element}`,
+          stat: { modifier: 'inflictionBarrier', elements: element },
           target: 'enemy',
-          triggerScope: 'global',
+          duration: 5,
+          silent: true,
+          hide: true,
         },
-        effects: [
-          {
-            kind: 'status',
-            id: `inflictionBarrier-${element}`,
-            stat: { modifier: 'inflictionBarrier', elements: element },
-            target: 'enemy',
-            duration: 5,
-            silent: true,
-            hide: true,
-          },
-        ],
-      }),
-    ),
+      ],
+    })),
   },
 
   // ── Overclock (环境：过速) — Combo Skill cooldown ×0.4 (-60%); Battle Skill DMG -60%. ──
@@ -398,7 +408,12 @@ export const CRITERION_MECHANISMS: Record<number, CriterionMechanism> = {
       };
       return [
         {
-          trigger: { kind: 'onStatusApplied', status: key, target: 'enemy', triggerScope: 'global' },
+          trigger: {
+            kind: 'onStatusApplied',
+            status: key,
+            target: 'enemy',
+            triggerScope: 'global',
+          },
           effects: [
             {
               ...base,
@@ -412,7 +427,12 @@ export const CRITERION_MECHANISMS: Record<number, CriterionMechanism> = {
           effects: [{ ...base, value: 0 }],
         },
         {
-          trigger: { kind: 'onStatusConsumed', status: key, target: 'enemy', triggerScope: 'global' },
+          trigger: {
+            kind: 'onStatusConsumed',
+            status: key,
+            target: 'enemy',
+            triggerScope: 'global',
+          },
           effects: [{ ...base, value: 0 }],
         },
       ];
@@ -473,17 +493,14 @@ const SURGE_DAMAGE_CAP = Object.freeze({
   ratio: 0.25,
 });
 
-const CONTROL_PHYSICAL_TYPES = new Set(["lift", "knockdown"]);
-const CONTROL_DEBUFF_TYPES = new Set(["solidification"]);
-const CONTROL_STATUS_IDS = new Set([
-  "endministrator-originium-crystals",
-  "tangtang-oldenStare",
-]);
+const CONTROL_PHYSICAL_TYPES = new Set(['lift', 'knockdown']);
+const CONTROL_DEBUFF_TYPES = new Set(['solidification']);
+const CONTROL_STATUS_IDS = new Set(['endministrator-originium-crystals', 'tangtang-oldenStare']);
 
 const FROZEN_CONTROL_SUPER_ARMOR_LIMIT = 20;
 const PHYSICAL_CONTROL_SUPER_ARMOR_LIMIT = 30;
 const CONTROL_STATUS_SUPER_ARMOR_LIMITS = new Map<string, number>([
-  ["endministrator-originium-crystals", FROZEN_CONTROL_SUPER_ARMOR_LIMIT],
+  ['endministrator-originium-crystals', FROZEN_CONTROL_SUPER_ARMOR_LIMIT],
 ]);
 
 export interface EnemyDamageCapConfig {
@@ -512,12 +529,12 @@ export function getSelectedCriterionLevel(
 
 export function getContingencyEnemyHpMultiplier(tagIds: readonly unknown[] | undefined): number {
   const level = getSelectedCriterionLevel(tagIds, 9001, VITALITY_HP_MULTIPLIERS.length);
-  return level == null ? 1 : VITALITY_HP_MULTIPLIERS[level] ?? 1;
+  return level == null ? 1 : (VITALITY_HP_MULTIPLIERS[level] ?? 1);
 }
 
 export function getContingencyEnemyHealingRate(tagIds: readonly unknown[] | undefined): number {
   const level = getSelectedCriterionLevel(tagIds, 1011, HEALING_RATES.length);
-  return level == null ? 0 : HEALING_RATES[level] ?? 0;
+  return level == null ? 0 : (HEALING_RATES[level] ?? 0);
 }
 
 export function getContingencyEnemyDamageCap(
@@ -549,7 +566,7 @@ function finiteInterval(start: unknown, end: unknown, until: number): EnemyContr
 }
 
 function getBaseRuntimeStatusId(statusId: unknown): string {
-  return String(statusId ?? "").split("@")[0] ?? "";
+  return String(statusId ?? '').split('@')[0] ?? '';
 }
 
 function isControlStatusId(statusId: unknown): boolean {
@@ -571,7 +588,7 @@ export function buildContingencyEnemyControlIntervals(
   const intervals: EnemyControlInterval[] = [];
 
   for (const event of enemyLog || []) {
-    if (event.type === "PHYSICAL_STATUS" && CONTROL_PHYSICAL_TYPES.has(event.physicalType)) {
+    if (event.type === 'PHYSICAL_STATUS' && CONTROL_PHYSICAL_TYPES.has(event.physicalType)) {
       if (event.actualControl === false) continue;
       if (armor >= PHYSICAL_CONTROL_SUPER_ARMOR_LIMIT) continue;
       const duration = Number(event.effectiveDuration) || 0;
@@ -580,14 +597,14 @@ export function buildContingencyEnemyControlIntervals(
       continue;
     }
 
-    if (event.type === "DEBUFF_APPLY" && CONTROL_DEBUFF_TYPES.has(event.debuffType)) {
+    if (event.type === 'DEBUFF_APPLY' && CONTROL_DEBUFF_TYPES.has(event.debuffType)) {
       if (armor > FROZEN_CONTROL_SUPER_ARMOR_LIMIT) continue;
       const interval = finiteInterval(event.time, event.expiresAt, limit);
       if (interval) intervals.push(interval);
       continue;
     }
 
-    if (event.type === "ENEMY_STATUS_APPLY" && isControlStatusId(event.id)) {
+    if (event.type === 'ENEMY_STATUS_APPLY' && isControlStatusId(event.id)) {
       if (!canControlByStatus(event.id, armor)) continue;
       const interval = finiteInterval(event.time, event.expiresAt, limit);
       if (interval) intervals.push(interval);
@@ -634,9 +651,10 @@ export function computeContingencyEnemyHealing(
 /** True when the given numeric groupId has a damage-model mechanism (effects or triggers) implemented. */
 export function hasCriterionMechanism(groupId: number): boolean {
   const mech = CRITERION_MECHANISMS[groupId];
-  return !!mech && (
-    (mech.effects?.length ?? 0) > 0
-    || (mech.triggers?.length ?? 0) > 0
-    || (mech.triggersByLevel?.some(level => level.length > 0) ?? false)
+  return (
+    !!mech &&
+    ((mech.effects?.length ?? 0) > 0 ||
+      (mech.triggers?.length ?? 0) > 0 ||
+      (mech.triggersByLevel?.some(level => level.length > 0) ?? false))
   );
 }

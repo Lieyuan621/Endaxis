@@ -135,11 +135,7 @@ function expandLegacyWeaponAliases(value: string | null | undefined): string[] {
   const raw = String(value).trim();
   if (!raw) return [];
 
-  const out = new Set([
-    raw,
-    raw.toLowerCase(),
-    normalizeLookupKey(raw),
-  ]);
+  const out = new Set([raw, raw.toLowerCase(), normalizeLookupKey(raw)]);
 
   const replacements: Array<[string, string]> = [
     ['wpn_claym_', 'wpn_greatsword_'],
@@ -178,7 +174,14 @@ function expandLegacyWeaponAliases(value: string | null | undefined): string[] {
 const operatorSlugAliases: Record<string, string> = Object.fromEntries(
   Object.entries(operatorSheets).flatMap(([slug, sheet]) => {
     const aliases = new Set(
-      [slug, slug.toLowerCase(), normalizeLookupKey(slug), sheet.gameId, String(sheet.gameId || '').toLowerCase(), normalizeLookupKey(sheet.gameId)].filter(Boolean),
+      [
+        slug,
+        slug.toLowerCase(),
+        normalizeLookupKey(slug),
+        sheet.gameId,
+        String(sheet.gameId || '').toLowerCase(),
+        normalizeLookupKey(sheet.gameId),
+      ].filter(Boolean),
     );
     return [...aliases].map(alias => [alias, slug]);
   }),
@@ -194,7 +197,15 @@ const weaponSheets: Record<string, WeaponSheet> = Object.fromEntries(
 const weaponSlugAliases: Record<string, string> = Object.fromEntries(
   Object.entries(weaponSheets).flatMap(([slug, sheet]) => {
     const iconBasename = getIconBasename(sheet.icon);
-    const aliases = new Set([slug, slug.toLowerCase(), normalizeLookupKey(slug), iconBasename, normalizeLookupKey(iconBasename)].filter(Boolean));
+    const aliases = new Set(
+      [
+        slug,
+        slug.toLowerCase(),
+        normalizeLookupKey(slug),
+        iconBasename,
+        normalizeLookupKey(iconBasename),
+      ].filter(Boolean),
+    );
     return [...aliases].map(alias => [alias, slug]);
   }),
 );
@@ -240,7 +251,12 @@ export function getOperator(slug: string): OperatorSheet | undefined {
 
 export function resolveOperatorSlug(slug: string | null | undefined): string | null {
   if (!slug) return null;
-  return operatorSlugAliases[slug] || operatorSlugAliases[String(slug).toLowerCase()] || operatorSlugAliases[normalizeLookupKey(slug)] || null;
+  return (
+    operatorSlugAliases[slug] ||
+    operatorSlugAliases[String(slug).toLowerCase()] ||
+    operatorSlugAliases[normalizeLookupKey(slug)] ||
+    null
+  );
 }
 
 export function getOperatorList(): OperatorListEntry[] {
@@ -325,7 +341,15 @@ const gearPieceSheets: Record<string, GearPieceSheet> = Object.fromEntries(
 const gearPieceSlugAliases: Record<string, string> = Object.fromEntries(
   Object.entries(gearPieceSheets).flatMap(([slug, piece]) => {
     const iconBasename = getIconBasename(piece.icon);
-    const aliases = new Set([slug, slug.toLowerCase(), normalizeLookupKey(slug), iconBasename, normalizeLookupKey(iconBasename)].filter(Boolean));
+    const aliases = new Set(
+      [
+        slug,
+        slug.toLowerCase(),
+        normalizeLookupKey(slug),
+        iconBasename,
+        normalizeLookupKey(iconBasename),
+      ].filter(Boolean),
+    );
     return [...aliases].map(alias => [alias, slug]);
   }),
 );
@@ -337,7 +361,12 @@ export function getGearPiece(slug: string): GearPieceSheet | undefined {
 
 export function resolveGearPieceSlug(slug: string | null | undefined): string | null {
   if (!slug) return null;
-  return gearPieceSlugAliases[slug] || gearPieceSlugAliases[String(slug).toLowerCase()] || gearPieceSlugAliases[normalizeLookupKey(slug)] || null;
+  return (
+    gearPieceSlugAliases[slug] ||
+    gearPieceSlugAliases[String(slug).toLowerCase()] ||
+    gearPieceSlugAliases[normalizeLookupKey(slug)] ||
+    null
+  );
 }
 
 export function getGearPieceList(): GearPieceListEntry[] {

@@ -1,74 +1,76 @@
 <script setup>
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { getGearPiece, getQualityTier } from '@/data'
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { getGearPiece, getQualityTier } from '@/data';
 import {
   getGameQualityName,
   getGameSlotTypeName,
   getGearPieceGameName,
   getGearSetGameName,
-} from '@/data/gameText'
+} from '@/data/gameText';
 import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
-} from '@/utils/equipmentEffectDisplay'
-import { resolveLeveled } from '@/data/types'
-import { useGearStore } from '@/stores/gearStore'
-import { qualityColors } from '@/utils/theme'
+} from '@/utils/equipmentEffectDisplay';
+import { resolveLeveled } from '@/data/types';
+import { useGearStore } from '@/stores/gearStore';
+import { qualityColors } from '@/utils/theme';
 
 const props = defineProps({
   instance: { type: Object, default: null },
   visible: { type: Boolean, default: false },
-})
+});
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible']);
 
-const gearStore = useGearStore()
-const { t, locale } = useI18n()
+const gearStore = useGearStore();
+const { t, locale } = useI18n();
 
-const piece = computed(() => (props.instance ? getGearPiece(props.instance.gearPieceId) : null))
-const quality = computed(() => (piece.value ? getQualityTier(piece.value.levelRequirement) : 'green'))
-const isGold = computed(() => quality.value === 'gold')
-const color = computed(() => qualityColors[quality.value] ?? '#888')
+const piece = computed(() => (props.instance ? getGearPiece(props.instance.gearPieceId) : null));
+const quality = computed(() =>
+  piece.value ? getQualityTier(piece.value.levelRequirement) : 'green',
+);
+const isGold = computed(() => quality.value === 'gold');
+const color = computed(() => qualityColors[quality.value] ?? '#888');
 
 const skillSlots = computed(() => {
-  const currentPiece = piece.value
-  if (!currentPiece) return []
+  const currentPiece = piece.value;
+  if (!currentPiece) return [];
   return [currentPiece.skill1, currentPiece.skill2, currentPiece.skill3]
     .filter(Boolean)
-    .map(skill => (skill.effects || []).filter(effect => effect.kind === 'status'))
-})
+    .map(skill => (skill.effects || []).filter(effect => effect.kind === 'status'));
+});
 
 function formatStatLabel(effect) {
-  return formatEquipmentEffectLabel(effect, t, locale.value)
+  return formatEquipmentEffectLabel(effect, t, locale.value);
 }
 
 function update(updates) {
-  if (props.instance) gearStore.updateGear(props.instance.id, updates)
+  if (props.instance) gearStore.updateGear(props.instance.id, updates);
 }
 
 function maxOut() {
-  if (!props.instance || !piece.value || !isGold.value) return
-  update({ artificingLevels: skillSlots.value.map(() => 3) })
+  if (!props.instance || !piece.value || !isGold.value) return;
+  update({ artificingLevels: skillSlots.value.map(() => 3) });
 }
 
 function setArtificingLevel(slotIdx, slotLevel) {
-  if (!props.instance || !isGold.value) return
-  const current = props.instance.artificingLevels[slotIdx] ?? 0
-  const nextLevel = slotLevel === current ? slotLevel - 1 : slotLevel
-  const levels = [...(props.instance.artificingLevels ?? [])]
-  while (levels.length <= slotIdx) levels.push(0)
-  levels[slotIdx] = nextLevel
-  update({ artificingLevels: levels })
+  if (!props.instance || !isGold.value) return;
+  const current = props.instance.artificingLevels[slotIdx] ?? 0;
+  const nextLevel = slotLevel === current ? slotLevel - 1 : slotLevel;
+  const levels = [...(props.instance.artificingLevels ?? [])];
+  while (levels.length <= slotIdx) levels.push(0);
+  levels[slotIdx] = nextLevel;
+  update({ artificingLevels: levels });
 }
 
 function slotClass(slotIdx, slotLevel) {
-  const current = props.instance?.artificingLevels[slotIdx] ?? 0
-  return slotLevel <= current ? 'slot-active' : 'slot-empty'
+  const current = props.instance?.artificingLevels[slotIdx] ?? 0;
+  return slotLevel <= current ? 'slot-active' : 'slot-empty';
 }
 
 function formatStatValue(effect, value) {
-  return formatEquipmentEffectStatValue(effect, value)
+  return formatEquipmentEffectStatValue(effect, value);
 }
 </script>
 
@@ -87,11 +89,17 @@ function formatStatValue(effect, value) {
             <img :src="piece.icon" class="portrait" />
           </div>
           <div class="header-info">
-            <div class="name">{{ getGearPieceGameName(instance.gearPieceId, locale) || instance.gearPieceId }}</div>
+            <div class="name">
+              {{ getGearPieceGameName(instance.gearPieceId, locale) || instance.gearPieceId }}
+            </div>
             <div class="tags">
-              <span class="tag" :style="{ color, borderColor: color }">{{ getGameQualityName(quality, locale) }}</span>
+              <span class="tag" :style="{ color, borderColor: color }">{{
+                getGameQualityName(quality, locale)
+              }}</span>
               <span class="tag">{{ getGameSlotTypeName(piece.slotType, locale) }}</span>
-              <span v-if="piece.setSlug" class="tag">{{ getGearSetGameName(piece.setSlug, locale) }}</span>
+              <span v-if="piece.setSlug" class="tag">{{
+                getGearSetGameName(piece.setSlug, locale)
+              }}</span>
             </div>
             <div v-if="piece.defense" class="row">
               <span class="section-label">{{ t('armory.common.defense') }}</span>
@@ -107,7 +115,12 @@ function formatStatValue(effect, value) {
               <span class="stat-name">
                 {{ formatStatLabel(slot[0]) }}
                 <span v-if="slot[0]" class="stat-value-inline">
-                  +{{ formatStatValue(slot[0], resolveLeveled(slot[0].value, instance.artificingLevels[slotIdx] ?? 0)) }}
+                  +{{
+                    formatStatValue(
+                      slot[0],
+                      resolveLeveled(slot[0].value, instance.artificingLevels[slotIdx] ?? 0),
+                    )
+                  }}
                 </span>
               </span>
             </div>
@@ -134,37 +147,157 @@ function formatStatValue(effect, value) {
 
     <template #footer>
       <div class="footer">
-        <button v-if="isGold" class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill" @click="maxOut">{{ t('common.max') }}</button>
-        <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">{{ t('common.close') }}</button>
+        <button
+          v-if="isGold"
+          class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill"
+          @click="maxOut"
+        >
+          {{ t('common.max') }}
+        </button>
+        <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">
+          {{ t('common.close') }}
+        </button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <style scoped>
-.layout { display: flex; flex-direction: column; gap: 20px; }
-.header { display: flex; gap: 20px; align-items: flex-start; }
-.portrait-frame { width: 100px; min-width: 100px; height: 100px; border: 2px solid #555; overflow: hidden; background: #1a1a1e; display: flex; align-items: center; justify-content: center; }
-.portrait { width: 80%; height: 80%; object-fit: contain; }
-.header-info { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.name { font-size: 20px; font-weight: 700; color: #f0f0f0; }
-.tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.tag { display: inline-flex; align-items: center; padding: 2px 10px; font-size: 11px; border: 1px solid #555; color: #bbb; background: rgba(255,255,255,0.04); }
-.row { display: flex; align-items: center; gap: 8px; }
-.section-label { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
-.value { font-size: 16px; font-weight: 700; color: #f0f0f0; }
-.section { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 16px; }
-.section-title { font-size: 11px; font-weight: 700; color: #888; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
-.stat-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-.stat-row:last-child { border-bottom: none; }
-.stat-info { flex: 1; min-width: 0; }
-.stat-name { font-size: 13px; font-weight: 600; color: #e0e0e0; }
-.stat-value-inline { font-weight: 400; color: #aaa; margin-left: 6px; }
-.stat-bar-area { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.stat-slots { display: flex; gap: 3px; }
-.art-slot { font-family: 'Roboto Mono', monospace; }
-.art-slot:not(.is-active) { color: transparent; }
-.stat-level { font-size: 13px; font-weight: 700; color: #ccc; min-width: 24px; text-align: right; font-family: 'Roboto Mono', monospace; }
-.stat-locked { color: #777; font-size: 12px; }
-.footer { display: flex; justify-content: flex-end; gap: 8px; width: 100%; }
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.header {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.portrait-frame {
+  width: 100px;
+  min-width: 100px;
+  height: 100px;
+  border: 2px solid #555;
+  overflow: hidden;
+  background: #1a1a1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.portrait {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+.header-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0f0f0;
+}
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: 11px;
+  border: 1px solid #555;
+  color: #bbb;
+  background: rgba(255, 255, 255, 0.04);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label {
+  font-size: 11px;
+  color: #888;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f0f0f0;
+}
+.section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px;
+}
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.stat-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.stat-row:last-child {
+  border-bottom: none;
+}
+.stat-info {
+  flex: 1;
+  min-width: 0;
+}
+.stat-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+.stat-value-inline {
+  font-weight: 400;
+  color: #aaa;
+  margin-left: 6px;
+}
+.stat-bar-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.stat-slots {
+  display: flex;
+  gap: 3px;
+}
+.art-slot {
+  font-family: 'Roboto Mono', monospace;
+}
+.art-slot:not(.is-active) {
+  color: transparent;
+}
+.stat-level {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ccc;
+  min-width: 24px;
+  text-align: right;
+  font-family: 'Roboto Mono', monospace;
+}
+.stat-locked {
+  color: #777;
+  font-size: 12px;
+}
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
 </style>

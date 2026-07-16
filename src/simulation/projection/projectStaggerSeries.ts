@@ -1,6 +1,6 @@
-import type { EnemyConfig } from "@/simulation/state/types.ts";
-import type { GameSnapshot } from "@/simulation/state/types.ts";
-import type { SimLogEntry } from "@/simulation/events/event.types.ts";
+import type { EnemyConfig } from '@/simulation/state/types.ts';
+import type { GameSnapshot } from '@/simulation/state/types.ts';
+import type { SimLogEntry } from '@/simulation/events/event.types.ts';
 
 export interface StaggerData {
   points: { time: number; val: number }[];
@@ -18,7 +18,7 @@ export function projectStaggerSeries(
   logs: SimLogEntry[],
   initial: GameSnapshot,
   { maxStagger, staggerNodeCount }: EnemyConfig,
-  timelineDuration: number = 120
+  timelineDuration: number = 120,
 ): StaggerData {
   const points: { time: number; val: number }[] = [];
   const lockSegments: { start: number; end: number }[] = [];
@@ -35,8 +35,8 @@ export function projectStaggerSeries(
 
   let currentStagger = initial.enemy.stagger;
 
-  logs.forEach((log) => {
-    if (log.type === "STAGGER") {
+  logs.forEach(log => {
+    if (log.type === 'STAGGER') {
       points.push({ time: log.time, val: currentStagger });
 
       currentStagger = log.payload.stagger;
@@ -49,10 +49,7 @@ export function projectStaggerSeries(
         });
       }
 
-      if (
-        log.payload.nodeReachedIndex !== undefined &&
-        log.payload.nodeEndTime
-      ) {
+      if (log.payload.nodeReachedIndex !== undefined && log.payload.nodeEndTime) {
         nodeSegments.push({
           start: log.time,
           end: log.payload.nodeEndTime,

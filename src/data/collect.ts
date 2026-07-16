@@ -23,19 +23,15 @@ import type {
   Segment,
   OperatorSheet,
   DamageElement,
-  EffectCondition
+  EffectCondition,
 } from './types';
 import { resolveLeveled, isTickGroup, createFinisherEntry, createDiveEntry } from './types';
 import type { TeamInstance, OperatorInstance, WeaponInstance, GearInstance } from '../types';
-import {getOperator, getWeapon, getGearPiece, getGearSet, resolveOperatorSlug} from './index';
+import { getOperator, getWeapon, getGearPiece, getGearSet, resolveOperatorSlug } from './index';
 import { resolveEffectDefaults } from './effectPresets';
 import { uid } from '@/utils/uid';
 import { i18n } from '@/i18n';
-import {
-  getGearSetGameName,
-  getOperatorPotentialName,
-  getOperatorTalentName,
-} from './gameText';
+import { getGearSetGameName, getOperatorPotentialName, getOperatorTalentName } from './gameText';
 
 export interface CollectedEffect {
   effect: ResolvedEffect;
@@ -190,7 +186,10 @@ export function collectEffects(
         const talentName = getOperatorTalentName(operatorSlug, talentFlatIndex, idx);
         for (const [patchIdx, patch] of (group.patches ?? []).entries()) {
           collectedPatches.push(
-              ensurePatchEffectIds(patch, makeEffectId(operatorSlug, `talent${groupIdx}`, `patch${patchIdx}`)),
+            ensurePatchEffectIds(
+              patch,
+              makeEffectId(operatorSlug, `talent${groupIdx}`, `patch${patchIdx}`),
+            ),
           );
         }
         for (let effIdx = 0; effIdx < (group.effects?.length ?? 0); effIdx++) {
@@ -218,7 +217,10 @@ export function collectEffects(
         const potentialName = getOperatorPotentialName(operatorSlug, i);
         for (const [patchIdx, patch] of (op.potentials[i].patches ?? []).entries()) {
           collectedPatches.push(
-              ensurePatchEffectIds(patch, makeEffectId(operatorSlug, `potential${i}`, `patch${patchIdx}`)),
+            ensurePatchEffectIds(
+              patch,
+              makeEffectId(operatorSlug, `potential${i}`, `patch${patchIdx}`),
+            ),
           );
         }
         for (let effIdx = 0; effIdx < (op.potentials[i].effects?.length ?? 0); effIdx++) {
@@ -365,8 +367,7 @@ export function collectEffects(
  */
 export function resolveStatAttributes(stat, mainAttribute, subAttribute) {
   if (!stat || !('attribute' in stat)) return stat;
-  const map = (a) =>
-    a === 'main' ? (mainAttribute ?? a) : a === 'sub' ? (subAttribute ?? a) : a;
+  const map = a => (a === 'main' ? (mainAttribute ?? a) : a === 'sub' ? (subAttribute ?? a) : a);
   const attr = stat.attribute;
   const resolved = Array.isArray(attr) ? attr.map(map) : map(attr);
   if (resolved === attr) return stat;
@@ -881,7 +882,7 @@ export function collectTriggerEffects(
         const triggers = cw.triggers;
         if (!triggers || triggers.length === 0) continue;
 
-        const cdCondition: EffectCondition = { kind : "comboNotOnCooldown" };
+        const cdCondition: EffectCondition = { kind: 'comboNotOnCooldown' };
 
         for (const entry of triggers) {
           const trigger = entry.trigger;
@@ -901,7 +902,7 @@ export function collectTriggerEffects(
             duration: cw.duration,
             condition: flatConds,
             sourceGroup: 'operator',
-            hide: true,  // rendered via dedicated combo-window bar, not TimelineBuffLayer
+            hide: true, // rendered via dedicated combo-window bar, not TimelineBuffLayer
           };
 
           collected.push({
@@ -916,10 +917,12 @@ export function collectTriggerEffects(
         collected.push({
           triggerEffect: {
             trigger: { kind: 'onActionStart', skillTypes: 'comboSkill', triggerScope: 'self' },
-            effects: [{
-              kind: 'consume',
-              operatorStatus: makeEffectId(operatorSlug, 'combo-window'),
-            }],
+            effects: [
+              {
+                kind: 'consume',
+                operatorStatus: makeEffectId(operatorSlug, 'combo-window'),
+              },
+            ],
           },
           sourceSlotIndex: slotIndex,
           sourceOperatorSlug: operatorSlug,
@@ -1134,16 +1137,14 @@ function ensureEffectId<T extends { id?: string }>(effect: T, fallback: string):
  * Non-patchHit patches pass through unchanged.
  */
 function ensurePatchEffectIds(patch: Patch, baseId: string): Patch {
-  if (patch.kind !== 'patchHit' || !patch.hit?.effects?.length) return patch
+  if (patch.kind !== 'patchHit' || !patch.hit?.effects?.length) return patch;
   return {
     ...patch,
     hit: {
       ...patch.hit,
-      effects: patch.hit.effects.map((e, i) =>
-          e.id ? e : { ...e, id: `${baseId}-effect${i}` },
-      ),
+      effects: patch.hit.effects.map((e, i) => (e.id ? e : { ...e, id: `${baseId}-effect${i}` })),
     },
-  }
+  };
 }
 
 /** Stamp IDs on a trigger effect and any inner damageHit.hit.effects. */
@@ -1355,17 +1356,22 @@ export function patchCombatSkills(
     const state = opInst.talentStates[String(groupIdx)];
     if (!state || state <= 0) continue;
     const idx = state - 1;
-    for (const [patchIdx, patch] of (op.talents[groupIdx].patches ?? []).entries()) patches.push({
-      patch: ensurePatchEffectIds(patch, makeEffectId(slug, `talent${groupIdx}`, `patch${patchIdx}`)),
-      idx,
-    });
+    for (const [patchIdx, patch] of (op.talents[groupIdx].patches ?? []).entries())
+      patches.push({
+        patch: ensurePatchEffectIds(
+          patch,
+          makeEffectId(slug, `talent${groupIdx}`, `patch${patchIdx}`),
+        ),
+        idx,
+      });
   }
   for (let i = 0; i < op.potentials.length; i++) {
     if (i + 1 > opInst.potential) continue;
-    for (const [patchIdx, patch] of (op.potentials[i].patches ?? []).entries()) patches.push({
-      patch: ensurePatchEffectIds(patch, makeEffectId(slug, `potential${i}`, `patch${patchIdx}`)),
-      idx: 0,
-    });
+    for (const [patchIdx, patch] of (op.potentials[i].patches ?? []).entries())
+      patches.push({
+        patch: ensurePatchEffectIds(patch, makeEffectId(slug, `potential${i}`, `patch${patchIdx}`)),
+        idx: 0,
+      });
   }
 
   if (patches.length === 0)

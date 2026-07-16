@@ -7,14 +7,8 @@
       "name": "<size=+4><color=#fff100>此活动为高难挑战活动</color></size>",
       "description": "此活动为高难挑战活动",
       "tagMaxColumn": 24,
-      "scoreBand": [
-        25,
-        35
-      ],
-      "rangeArray": [
-        20,
-        35
-      ],
+      "scoreBand": [25, 35],
+      "rangeArray": [20, 35],
       "keyLocks": {
         "key2": {
           "id": "key2",
@@ -1133,9 +1127,7 @@
               "roman": "",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 1,
               "unlockActivityStage": "",
               "conflictId": "",
@@ -1169,9 +1161,7 @@
               "roman": "",
               "score": 2,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 1,
               "unlockActivityStage": "",
               "conflictId": "",
@@ -1205,9 +1195,7 @@
               "roman": "Ⅰ",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 1,
               "unlockActivityStage": "",
               "conflictId": "c1015",
@@ -1241,9 +1229,7 @@
               "roman": "Ⅱ",
               "score": 2,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 1,
               "unlockActivityStage": "",
               "conflictId": "c1015",
@@ -1283,9 +1269,7 @@
               "roman": "Ⅰ",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1003",
@@ -1319,9 +1303,7 @@
               "roman": "Ⅱ",
               "score": 2,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1003",
@@ -1361,9 +1343,7 @@
               "roman": "Ⅰ",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1004",
@@ -1397,9 +1377,7 @@
               "roman": "Ⅱ",
               "score": 2,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1004",
@@ -1439,9 +1417,7 @@
               "roman": "",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1017c1019",
@@ -1480,9 +1456,7 @@
               "roman": "",
               "score": 2,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "activity_contingency_contract_0_stage_2",
               "conflictId": "",
@@ -1516,9 +1490,7 @@
               "roman": "",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1017c1019",
@@ -1563,9 +1535,7 @@
               "roman": "",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1017c1019",
@@ -1610,9 +1580,7 @@
               "roman": "",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1017c1019",
@@ -1657,9 +1625,7 @@
               "roman": "Ⅰ",
               "score": 1,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1011",
@@ -1693,9 +1659,7 @@
               "roman": "Ⅱ",
               "score": 2,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "",
               "conflictId": "c1011",
@@ -1735,9 +1699,7 @@
               "roman": "Ⅰ",
               "score": 2,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "activity_contingency_contract_0_stage_2",
               "conflictId": "c1022",
@@ -1765,9 +1727,7 @@
               "roman": "Ⅱ",
               "score": 3,
               "keyId": "",
-              "lockIds": [
-                "key2"
-              ],
+              "lockIds": ["key2"],
               "unlockScore": 10,
               "unlockActivityStage": "activity_contingency_contract_0_stage_2",
               "conflictId": "c1022",

@@ -1,9 +1,6 @@
-import type { CalculationResult, StaggerContext } from "./type";
+import type { CalculationResult, StaggerContext } from './type';
 
-export type ModifierFn<TContext> = (
-  ctx: TContext,
-  receipt: CalculationResult,
-) => void;
+export type ModifierFn<TContext> = (ctx: TContext, receipt: CalculationResult) => void;
 
 export class CalculationPipeline<TContext> {
   private modifiers: ModifierFn<TContext>[] = [];
@@ -18,8 +15,8 @@ export class CalculationPipeline<TContext> {
       finalValue: initialBase,
       breakdown: [
         {
-          source: "Base Value",
-          type: "BASE",
+          source: 'Base Value',
+          type: 'BASE',
           value: initialBase,
           contribution: initialBase,
         },
@@ -35,14 +32,9 @@ export class CalculationPipeline<TContext> {
   }
 }
 
-export const OriginiumArtsModifier: ModifierFn<StaggerContext> = (
-  ctx,
-  result,
-) => {
+export const OriginiumArtsModifier: ModifierFn<StaggerContext> = (ctx, result) => {
   const effects = (ctx.target as any).effects;
-  const hasKnock =
-    effects?.hasTag?.("PHYSICAL_LIFT") ||
-    effects?.hasTag?.("PHYSICAL_KNOCK_DOWN");
+  const hasKnock = effects?.hasTag?.('PHYSICAL_LIFT') || effects?.hasTag?.('PHYSICAL_KNOCK_DOWN');
 
   if (!hasKnock) return;
 
@@ -59,8 +51,8 @@ export const OriginiumArtsModifier: ModifierFn<StaggerContext> = (
   result.finalValue = newValue;
 
   result.breakdown.push({
-    source: "Knock Bonus",
-    type: "MULTIPLIER",
+    source: 'Knock Bonus',
+    type: 'MULTIPLIER',
     value: multiplier,
     contribution: contribution,
   });

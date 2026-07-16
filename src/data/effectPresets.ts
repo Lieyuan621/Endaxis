@@ -320,8 +320,13 @@ interface ResolvedLifecycle {
   icd: number;
 }
 
-export function getDefaultStackStrategy(effect?: Pick<EffectBase, 'kind'>): 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE' {
-  return DEFAULT_STACK_STRATEGIES[effect?.kind as keyof typeof DEFAULT_STACK_STRATEGIES] ?? 'REFRESH_DURATION';
+export function getDefaultStackStrategy(
+  effect?: Pick<EffectBase, 'kind'>,
+): 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE' {
+  return (
+    DEFAULT_STACK_STRATEGIES[effect?.kind as keyof typeof DEFAULT_STACK_STRATEGIES] ??
+    'REFRESH_DURATION'
+  );
 }
 
 export function resolveEffectLifecycle(effect: EffectBase): ResolvedLifecycle {
@@ -364,7 +369,11 @@ function getEffectLocaleKey(effect: Effect): string {
 }
 
 export function getEffectName(effect: Effect): string {
-  const key = effect.name ?? (isNegativeDmgBonusEffect(effect) ? getNegativeDmgBonusLocaleKey(effect) : getEffectLocaleKey(effect));
+  const key =
+    effect.name ??
+    (isNegativeDmgBonusEffect(effect)
+      ? getNegativeDmgBonusLocaleKey(effect)
+      : getEffectLocaleKey(effect));
   const { t, te } = i18n.global;
   // Try effects.name.{key} first (short camelCase keys like 'originiumCrystals')
   const effectsLocaleKey = `effects.name.${key}`;

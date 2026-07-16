@@ -73,7 +73,9 @@ function loadFromStorage(): OperatorInstance[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.state && Array.isArray(parsed.state.operators)) {
-        return migrateOperatorSlugs(migrateTrustLevel(migrateTalentStates(migrateSkillLevels(parsed.state.operators))));
+        return migrateOperatorSlugs(
+          migrateTrustLevel(migrateTalentStates(migrateSkillLevels(parsed.state.operators))),
+        );
       }
     }
   } catch {
@@ -172,7 +174,9 @@ export const useOperatorStore = defineStore('operators', () => {
     }
 
     // Clamp talent states to valid range and migrate legacy string values
-    const talentGroups = getOperatorTalentGroups(resolveOperatorSlug(o.operatorSlug) || o.operatorSlug);
+    const talentGroups = getOperatorTalentGroups(
+      resolveOperatorSlug(o.operatorSlug) || o.operatorSlug,
+    );
     const legacyMap: Record<string, number> = { inactive: 0, active: 1, upgraded: 2 };
     for (let i = 0; i < talentGroups.length; i++) {
       const key = String(i);

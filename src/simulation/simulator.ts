@@ -1,23 +1,23 @@
-import type { TeamConfig, EnemyConfig, ActorSnapshot } from "./state/types.ts";
-import { createEngine } from "./engine/createEngine.ts";
-import type { ResolvedTimeline, ResolvedHit } from "./compiler/types.ts";
-import { isBattleSkillLikeAction } from "./compiler/types.ts";
+import type { TeamConfig, EnemyConfig, ActorSnapshot } from './state/types.ts';
+import { createEngine } from './engine/createEngine.ts';
+import type { ResolvedTimeline, ResolvedHit } from './compiler/types.ts';
+import { isBattleSkillLikeAction } from './compiler/types.ts';
 import {
   getReactionDamageElement,
   getReactionMultiplier,
-} from "@/data/stats/computeReactionDamage";
-import type { TriggerRegistry } from "./engine/TriggerRegistry";
-import type { Effect, OperatorStat, ResolvedEffect } from "@/data/types";
-import { isEnemyEffect } from "@/data/types";
-import { resolveEffectDefaults, resolveEffectLifecycle } from "@/data/effectPresets";
-import type { EnemyEffectApplyEvent } from "@/simulation/engine/types";
-import type { BaseStatValues } from "@/data/stats/types";
-import type { EnemyResistance } from "@/data/enemyResistance";
-import { normalizeEnemyResistance } from "@/data/enemyResistance";
-import type { ControlSegment } from "@/stores/timeline/controlledOperator";
+} from '@/data/stats/computeReactionDamage';
+import type { TriggerRegistry } from './engine/TriggerRegistry';
+import type { Effect, OperatorStat, ResolvedEffect } from '@/data/types';
+import { isEnemyEffect } from '@/data/types';
+import { resolveEffectDefaults, resolveEffectLifecycle } from '@/data/effectPresets';
+import type { EnemyEffectApplyEvent } from '@/simulation/engine/types';
+import type { BaseStatValues } from '@/data/stats/types';
+import type { EnemyResistance } from '@/data/enemyResistance';
+import { normalizeEnemyResistance } from '@/data/enemyResistance';
+import type { ControlSegment } from '@/stores/timeline/controlledOperator';
 
 export interface InitialEffect {
-  kind?: "status" | "oneTime";
+  kind?: 'status' | 'oneTime';
   targetTrackId: string;
   id: string;
   stat?: OperatorStat;
@@ -26,7 +26,7 @@ export interface InitialEffect {
   effect?: any;
   stacks?: number;
   maxStacks?: number;
-  stackStrategy?: "REFRESH_DURATION" | "INDEPENDENT" | "REPLACE";
+  stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
   remainingDuration?: number;
   expiresAt?: number;
   consumedStacks?: Record<string, number>;
@@ -44,7 +44,7 @@ interface SimulationOptions {
   enemyDef?: number;
   enemyResistance?: EnemyResistance;
   endlineTime?: number;
-  lmdiAttributionMode?: "stacks" | "applier";
+  lmdiAttributionMode?: 'stacks' | 'applier';
   controlledOperatorSegments?: ControlSegment[];
 }
 
@@ -62,13 +62,13 @@ function buildBeforeDamageEnemyEffectEvents(
   const events: EnemyEffectApplyEvent[] = [];
 
   for (const effect of effects) {
-    if (effect.applyTiming !== "beforeDamage") continue;
+    if (effect.applyTiming !== 'beforeDamage') continue;
     if (!isEnemyEffect(effect)) continue;
 
     const resolved = resolveEffectDefaults(effect as any) as Effect | ResolvedEffect;
     const lifecycle = resolveEffectLifecycle(resolved);
     const base = {
-      type: "ENEMY_EFFECT_APPLY" as const,
+      type: 'ENEMY_EFFECT_APPLY' as const,
       time,
       sourceId,
       sourceSkillType: skillType,
@@ -77,30 +77,30 @@ function buildBeforeDamageEnemyEffectEvents(
     };
 
     switch (resolved.kind) {
-      case "infliction":
+      case 'infliction':
         events.push({
           ...base,
-          kind: "infliction",
+          kind: 'infliction',
           element: resolved.element,
           stacks: lifecycle.stacks,
           effectiveDuration: lifecycle.duration,
         });
         break;
-      case "physicalStatus":
+      case 'physicalStatus':
         events.push({
           ...base,
-          kind: "physicalStatus",
+          kind: 'physicalStatus',
           physicalType: resolved.physicalType,
           forced: resolved.forced,
           effectiveness:
-            typeof resolved.effectiveness === "number" ? resolved.effectiveness : undefined,
+            typeof resolved.effectiveness === 'number' ? resolved.effectiveness : undefined,
           effectiveDuration: lifecycle.duration,
         });
         break;
-      case "reaction":
+      case 'reaction':
         events.push({
           ...base,
-          kind: "reaction",
+          kind: 'reaction',
           reactionType: resolved.reactionType as any,
           level: resolved.defaultLevel ?? 1,
           requiresInfliction: resolved.requiresInfliction,
@@ -109,14 +109,14 @@ function buildBeforeDamageEnemyEffectEvents(
           forced: true,
         });
         break;
-      case "status":
+      case 'status':
         events.push({
           ...base,
-          kind: "status",
-          id: resolved.id || resolved.name || "status",
+          kind: 'status',
+          id: resolved.id || resolved.name || 'status',
           stat: resolved.stat as any,
-          value: typeof resolved.value === "number" ? resolved.value : 0,
-          stacks: typeof lifecycle.stacks === "number" ? lifecycle.stacks : 1,
+          value: typeof resolved.value === 'number' ? resolved.value : 0,
+          stacks: typeof lifecycle.stacks === 'number' ? lifecycle.stacks : 1,
           maxStacks: lifecycle.maxStacks,
           expiresAt: time + lifecycle.duration,
           icon: Array.isArray(resolved.icon) ? resolved.icon[0] : resolved.icon,
@@ -191,21 +191,19 @@ export function simulate(
 
       const nodeCount = Number(enemy.config?.staggerNodeCount) || 0;
       const maxStagger = Number(enemy.config?.maxStagger) || 0;
-      const nodeStep = nodeCount > 0 && maxStagger > 0
-          ? maxStagger / (nodeCount + 1)
-          : 0;
+      const nodeStep = nodeCount > 0 && maxStagger > 0 ? maxStagger / (nodeCount + 1) : 0;
 
       const nodeReachedIndex =
-          breakRemaining <= 0 && lockRemaining > 0 && nodeStep > 0
-              ? Math.max(1, Math.floor(staggerValue / nodeStep + 0.0001))
-              : undefined;
+        breakRemaining <= 0 && lockRemaining > 0 && nodeStep > 0
+          ? Math.max(1, Math.floor(staggerValue / nodeStep + 0.0001))
+          : undefined;
 
       engine.logSimEntry({
-        type: "STAGGER",
+        type: 'STAGGER',
         time: applyTime,
         payload: {
-          actorId: "carryover",
-          actionId: "carryover:enemy-stagger",
+          actorId: 'carryover',
+          actionId: 'carryover:enemy-stagger',
           amount: 0,
           stagger: staggerValue,
           isBroken: breakRemaining > 0,
@@ -228,16 +226,16 @@ export function simulate(
 
     const infliction = initialEnemyState.infliction;
     if (infliction && finiteRemaining(infliction) > 0) {
-      const carryoverKey = "infliction";
+      const carryoverKey = 'infliction';
       const disabled = disabledEffects.has(carryoverKey);
       const expiresAt = toExpiresAt(infliction, applyTime);
 
       log({
-        type: "INFLICTION_APPLY",
+        type: 'INFLICTION_APPLY',
         time: applyTime,
         element: infliction.element,
         stacks: Number(infliction.stacks) || 1,
-        sourceId: infliction.sourceQueue?.[0]?.sourceId || infliction.sourceId || "",
+        sourceId: infliction.sourceQueue?.[0]?.sourceId || infliction.sourceId || '',
         expiresAt,
         effectiveDuration: finiteRemaining(infliction),
         carryoverKey,
@@ -246,9 +244,9 @@ export function simulate(
 
       if (!disabled) {
         enqueueExpire({
-          type: "ENEMY_EFFECT_EXPIRE",
+          type: 'ENEMY_EFFECT_EXPIRE',
           time: expiresAt,
-          kind: "infliction",
+          kind: 'infliction',
           element: infliction.element,
           consumed: false,
         });
@@ -257,26 +255,26 @@ export function simulate(
 
     const vulnerability = initialEnemyState.vulnerability;
     if (vulnerability && finiteRemaining(vulnerability) > 0) {
-      const carryoverKey = "vulnerability";
+      const carryoverKey = 'vulnerability';
       const disabled = disabledEffects.has(carryoverKey);
       const expiresAt = toExpiresAt(vulnerability, applyTime);
 
       log({
-        type: "VULNERABILITY_CHANGE",
+        type: 'VULNERABILITY_CHANGE',
         time: applyTime,
         stacks: Number(vulnerability.stacks) || 1,
         expiresAt,
-        trigger: "lift",
-        sourceId: vulnerability.sourceQueue?.[0]?.sourceId || vulnerability.sourceId || "",
+        trigger: 'lift',
+        sourceId: vulnerability.sourceQueue?.[0]?.sourceId || vulnerability.sourceId || '',
         carryoverKey,
         disabled,
       });
 
       if (!disabled) {
         enqueueExpire({
-          type: "ENEMY_EFFECT_EXPIRE",
+          type: 'ENEMY_EFFECT_EXPIRE',
           time: expiresAt,
-          kind: "vulnerability",
+          kind: 'vulnerability',
           consumed: false,
         });
       }
@@ -290,10 +288,10 @@ export function simulate(
       const carryoverKey = `debuff:${debuffType}`;
       const disabled = disabledEffects.has(carryoverKey);
       const expiresAt = toExpiresAt(entry, applyTime);
-      const sourceId = entry.sourceId || "";
+      const sourceId = entry.sourceId || '';
 
       log({
-        type: "DEBUFF_APPLY",
+        type: 'DEBUFF_APPLY',
         time: applyTime,
         debuffType,
         level: Number(entry.level) || 1,
@@ -305,31 +303,31 @@ export function simulate(
 
       if (!disabled) {
         enqueueExpire({
-          type: "ENEMY_EFFECT_EXPIRE",
+          type: 'ENEMY_EFFECT_EXPIRE',
           time: expiresAt,
-          kind: "debuff",
+          kind: 'debuff',
           debuffType,
           consumed: false,
         });
       }
     };
 
-    logDebuff("electrification", debuffs.electrification);
-    logDebuff("solidification", debuffs.solidification);
-    logDebuff("breach", debuffs.breach);
-    logDebuff("corrosion", debuffs.corrosion);
-    logDebuff("combustion", debuffs.combustion);
+    logDebuff('electrification', debuffs.electrification);
+    logDebuff('solidification', debuffs.solidification);
+    logDebuff('breach', debuffs.breach);
+    logDebuff('corrosion', debuffs.corrosion);
+    logDebuff('combustion', debuffs.combustion);
 
     const corrosion = debuffs.corrosion;
-    if (corrosion && finiteRemaining(corrosion) > 0 && !disabledEffects.has("debuff:corrosion")) {
+    if (corrosion && finiteRemaining(corrosion) > 0 && !disabledEffects.has('debuff:corrosion')) {
       const expiresAt = toExpiresAt(corrosion, applyTime);
       const nextTickDelay = Math.max(0, Number(corrosion.nextTickDelay) || 1);
       const firstTickTime = applyTime + nextTickDelay;
 
       log({
-        type: "CORROSION_TICK",
+        type: 'CORROSION_TICK',
         time: applyTime,
-        sourceId: corrosion.sourceId || "",
+        sourceId: corrosion.sourceId || '',
         resShred: Number(corrosion.currentResShred) || 0,
         level: Number(corrosion.level) || 1,
         tickIndex: 0,
@@ -337,68 +335,72 @@ export function simulate(
 
       if (firstTickTime < expiresAt) {
         engine.enqueue(
-            {
-              type: "CORROSION_TICK",
-              time: firstTickTime,
-              payload: {
-                sourceId: corrosion.sourceId || "",
-                perSecond: Number(corrosion.perSecond) || 0,
-                maxShred: Number(corrosion.maxShred) || 0,
-                tickIndex: 1,
-                expiresAt,
-              },
+          {
+            type: 'CORROSION_TICK',
+            time: firstTickTime,
+            payload: {
+              sourceId: corrosion.sourceId || '',
+              perSecond: Number(corrosion.perSecond) || 0,
+              maxShred: Number(corrosion.maxShred) || 0,
+              tickIndex: 1,
+              expiresAt,
             },
-            1,
+          },
+          1,
         );
       }
     }
 
     const combustion = debuffs.combustion;
-    if (combustion && finiteRemaining(combustion) > 0 && !disabledEffects.has("debuff:combustion")) {
+    if (
+      combustion &&
+      finiteRemaining(combustion) > 0 &&
+      !disabledEffects.has('debuff:combustion')
+    ) {
       const expiresAt = toExpiresAt(combustion, applyTime);
       const level = Math.max(1, Math.min(4, Number(combustion.level) || 1));
-      const sourceId = combustion.sourceId || "";
+      const sourceId = combustion.sourceId || '';
       const effectiveness = combustion.effectiveness;
 
       let tickTime = applyTime + Math.max(0, Number(combustion.nextTickDelay) || 1);
       let tickIndex = 1;
 
       while (tickTime <= expiresAt + 0.0001 && tickIndex <= 20) {
-        const multiplier = getReactionMultiplier("combustion_dot" as any, level);
-        const element = getReactionDamageElement("combustion_dot" as any);
+        const multiplier = getReactionMultiplier('combustion_dot' as any, level);
+        const element = getReactionDamageElement('combustion_dot' as any);
 
         engine.enqueue(
-            {
-              type: "DAMAGE_HIT",
-              time: tickTime,
-              payload: {
-                targetId: "boss",
-                sourceId,
+          {
+            type: 'DAMAGE_HIT',
+            time: tickTime,
+            payload: {
+              targetId: 'boss',
+              sourceId,
+              stagger: 0,
+              hitData: {
+                offset: 0,
+                multiplier,
+                spRecovery: 0,
+                spReturn: 0,
                 stagger: 0,
-                hitData: {
-                  offset: 0,
-                  multiplier,
-                  spRecovery: 0,
-                  spReturn: 0,
-                  stagger: 0,
-                  realTime: tickTime,
-                  realOffset: 0,
-                  time: tickTime,
-                  triggered: true,
-                  triggeredBy: "reaction:combustion_dot",
-                  _reactionMeta: {
-                    reactionType: "combustion_dot",
-                    level,
-                    element,
-                    effectiveness,
-                    consumedStackSources: combustion.consumedStackSources,
-                  },
-                  _canCrit: false,
-                } as ResolvedHit,
-                actionId: combustion.actionId || `reaction:combustion_dot:carryover:${tickTime}`,
-              },
+                realTime: tickTime,
+                realOffset: 0,
+                time: tickTime,
+                triggered: true,
+                triggeredBy: 'reaction:combustion_dot',
+                _reactionMeta: {
+                  reactionType: 'combustion_dot',
+                  level,
+                  element,
+                  effectiveness,
+                  consumedStackSources: combustion.consumedStackSources,
+                },
+                _canCrit: false,
+              } as ResolvedHit,
+              actionId: combustion.actionId || `reaction:combustion_dot:carryover:${tickTime}`,
             },
-            0,
+          },
+          0,
         );
 
         tickIndex += 1;
@@ -414,7 +416,7 @@ export function simulate(
       const expiresAt = toExpiresAt(raw, applyTime);
 
       log({
-        type: "ENEMY_STATUS_APPLY",
+        type: 'ENEMY_STATUS_APPLY',
         time: applyTime,
         id: raw.id,
         stat: raw.stat,
@@ -422,7 +424,7 @@ export function simulate(
         stacks: Math.max(1, Number(raw.stacks) || 1),
         maxStacks: Math.max(1, Number(raw.maxStacks) || 1),
         expiresAt,
-        sourceId: raw.sourceId || "",
+        sourceId: raw.sourceId || '',
         icon: raw.icon,
         effect: raw.effect,
         carryoverKey,
@@ -431,9 +433,9 @@ export function simulate(
 
       if (!disabled) {
         enqueueExpire({
-          type: "ENEMY_EFFECT_EXPIRE",
+          type: 'ENEMY_EFFECT_EXPIRE',
           time: expiresAt,
-          kind: "status",
+          kind: 'status',
           id: raw.id,
           consumed: false,
         });
@@ -441,7 +443,7 @@ export function simulate(
     }
   }
 
-  initialEffects.forEach((effect) => {
+  initialEffects.forEach(effect => {
     if (!effect?.targetTrackId || !effect.id) return;
 
     const remainingDuration = Number(effect.remainingDuration);
@@ -451,23 +453,19 @@ export function simulate(
     const hasExplicitExpiresAt = Number.isFinite(explicitExpiresAt);
     const hasFiniteDuration = hasRemainingDuration || hasExplicitExpiresAt;
 
-    const applyTime = hasFiniteDuration
-        ? Math.max(0, Number(teamConfig.prepDuration) || 0)
-        : 0;
+    const applyTime = hasFiniteDuration ? Math.max(0, Number(teamConfig.prepDuration) || 0) : 0;
 
     const duration = hasRemainingDuration
-        ? Math.max(0, remainingDuration)
-        : hasExplicitExpiresAt
-            ? Math.max(0, explicitExpiresAt)
-            : Infinity;
+      ? Math.max(0, remainingDuration)
+      : hasExplicitExpiresAt
+        ? Math.max(0, explicitExpiresAt)
+        : Infinity;
 
     if (hasFiniteDuration && duration <= 0) return;
 
-    const expiresAt = hasFiniteDuration
-        ? applyTime + duration
-        : Infinity;
+    const expiresAt = hasFiniteDuration ? applyTime + duration : Infinity;
 
-    if (effect.kind === "oneTime") {
+    if (effect.kind === 'oneTime') {
       const state = engine.getState().getOperatorEffects(effect.targetTrackId);
 
       const cumulativeStacks = state.applyOneTime({
@@ -484,7 +482,7 @@ export function simulate(
       });
 
       engine.logOperatorEvent({
-        type: "OPERATOR_EFFECT_APPLY",
+        type: 'OPERATOR_EFFECT_APPLY',
         time: applyTime,
         targetTrackId: effect.targetTrackId,
         id: effect.id,
@@ -503,7 +501,7 @@ export function simulate(
     }
 
     engine.enqueue({
-      type: "OPERATOR_EFFECT_APPLY",
+      type: 'OPERATOR_EFFECT_APPLY',
       time: applyTime,
       targetTrackId: effect.targetTrackId,
       id: effect.id,
@@ -513,12 +511,14 @@ export function simulate(
       maxStacks: Math.max(1, Number(effect.maxStacks) || 1),
       expiresAt,
       sourceId: effect.sourceId || effect.targetTrackId,
-      effect: effect.effect ?? ({
-        kind: "status",
-        id: effect.id,
-        target: { scope: "self" },
-        hide: !hasFiniteDuration,
-      } as any),
+      effect:
+        effect.effect ??
+        ({
+          kind: 'status',
+          id: effect.id,
+          target: { scope: 'self' },
+          hide: !hasFiniteDuration,
+        } as any),
       stackStrategy: effect.stackStrategy,
       consumedStacks: effect.consumedStacks,
       silent: !hasFiniteDuration,
@@ -527,19 +527,19 @@ export function simulate(
     });
   });
 
-  const actorIds = actors.map((actor) => actor.id);
+  const actorIds = actors.map(actor => actor.id);
   const actorMetaById = new Map(actors.map(actor => [actor.id, actor]));
 
-  timeline.actions.forEach((action) => {
+  timeline.actions.forEach(action => {
     // Keep disabled actions in the compiled timeline for editor rendering, but
     // never let them enter the simulator event queue.
     if (action.node.isDisabled) return;
 
     engine.enqueue({
-      type: "ACTION_START",
+      type: 'ACTION_START',
       time: action.realStartTime,
       payload: {
-        skillId: action.node.skillId || action.node.id || "",
+        skillId: action.node.skillId || action.node.id || '',
         actionId: action.id,
         spCost: action.node.spCost,
         actorId: action.trackId,
@@ -550,7 +550,7 @@ export function simulate(
 
     if (Number(action.node.gaugeCost) > 0) {
       engine.enqueue({
-        type: "ULT_ENERGY_CHANGE",
+        type: 'ULT_ENERGY_CHANGE',
         time: action.realStartTime,
         payload: {
           actorId: action.trackId,
@@ -567,10 +567,10 @@ export function simulate(
     const actionEndTime = action.realStartTime + action.realDuration + optimisticExtension;
 
     engine.enqueue({
-      type: "ACTION_END",
+      type: 'ACTION_END',
       time: actionEndTime,
       payload: {
-        skillId: action.node.skillId || action.node.id || "",
+        skillId: action.node.skillId || action.node.id || '',
         actionId: action.id,
         actorId: action.trackId,
         type: action.node.type,
@@ -579,15 +579,15 @@ export function simulate(
 
     if (Number(action.node.spGain) > 0) {
       engine.enqueue({
-        type: "SP_CHANGE",
+        type: 'SP_CHANGE',
         time: actionEndTime,
         payload: {
           actorId: action.trackId,
           spChange: Number(action.node.spGain) || 0,
-          reason: "skill",
+          reason: 'skill',
           sourceId: action.id,
           parent: null as any,
-          spType: action.node.spGainKind === "refund" ? "return" : "recovery",
+          spType: action.node.spGainKind === 'refund' ? 'return' : 'recovery',
           skillType: action.node.type,
           skillId: action.node.skillId || action.node.id,
         },
@@ -598,7 +598,7 @@ export function simulate(
 
     if (allowFixedActionUltEnergy && Number(action.node.gaugeGain) > 0) {
       engine.enqueue({
-        type: "ULT_ENERGY_CHANGE",
+        type: 'ULT_ENERGY_CHANGE',
         time: action.realStartTime + action.realDuration,
         payload: {
           actorId: action.trackId,
@@ -609,12 +609,12 @@ export function simulate(
     }
 
     if (allowFixedActionUltEnergy && Number(action.node.teamGaugeGain) > 0) {
-      actorIds.forEach((actorId) => {
+      actorIds.forEach(actorId => {
         if (actorId === action.trackId) return;
         const targetActor = actorMetaById.get(actorId);
         if (targetActor?.acceptTeamUltEnergy === false) return;
         engine.enqueue({
-          type: "ULT_ENERGY_CHANGE",
+          type: 'ULT_ENERGY_CHANGE',
           time: action.realStartTime + action.realDuration,
           payload: {
             actorId,
@@ -625,7 +625,7 @@ export function simulate(
       });
     }
 
-    action.resolvedHits.forEach((hit) => {
+    action.resolvedHits.forEach(hit => {
       for (const event of buildBeforeDamageEnemyEffectEvents(
         hit.effects,
         Math.max(0, hit.realTime - BEFORE_DAMAGE_EPSILON),
@@ -638,11 +638,11 @@ export function simulate(
       }
 
       engine.enqueue({
-        type: "DAMAGE_HIT",
+        type: 'DAMAGE_HIT',
         time: hit.realTime,
         payload: {
           sourceId: action.trackId,
-          targetId: "boss",
+          targetId: 'boss',
           stagger: hit.stagger,
           hitData: hit,
           actionId: action.id,

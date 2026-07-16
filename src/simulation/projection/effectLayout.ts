@@ -160,7 +160,6 @@ export function layoutEffects<S extends EffectSegmentBase>(
     for (const seg of segments) positionedSegments.push({ ...seg, subRow, y });
   }
 
-  const totalHeight =
-    (groupOffsets[groupCount - 1] ?? 0) + (groupHeights[groupCount - 1] ?? 0);
+  const totalHeight = (groupOffsets[groupCount - 1] ?? 0) + (groupHeights[groupCount - 1] ?? 0);
   return { positionedSegments, totalHeight, groupHeights };
 }

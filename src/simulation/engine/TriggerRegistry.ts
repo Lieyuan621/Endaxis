@@ -215,14 +215,14 @@ export class TriggerRegistry {
       if (trigger.kind !== 'onFinisher') continue;
 
       this.dispatch(
-          entry.triggerEffect.effects,
-          event.time,
-          entry.sourceTrackId,
-          ctx,
-          1,
-          undefined,
-          entry.sourceSkillType,
-          actorId,
+        entry.triggerEffect.effects,
+        event.time,
+        entry.sourceTrackId,
+        ctx,
+        1,
+        undefined,
+        entry.sourceSkillType,
+        actorId,
       );
     }
   }
@@ -461,7 +461,8 @@ export class TriggerRegistry {
       }
 
       // Condition check
-      if (!evaluateEffectCondition(resolved.condition, time, sourceTrackId, ctx, enemySnap)) continue;
+      if (!evaluateEffectCondition(resolved.condition, time, sourceTrackId, ctx, enemySnap))
+        continue;
 
       // Schedule consumption if the condition (or any element of a compound condition) has consume.
       const cond = resolved.condition;

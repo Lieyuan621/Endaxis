@@ -41,13 +41,19 @@ export function projectComboWindows(
   const markers: Marker[] = [];
 
   for (const e of operatorLog) {
-    if (e.type === 'OPERATOR_EFFECT_APPLY' && (e as OperatorEffectApplyEvent).targetTrackId === trackId) {
+    if (
+      e.type === 'OPERATOR_EFFECT_APPLY' &&
+      (e as OperatorEffectApplyEvent).targetTrackId === trackId
+    ) {
       const ae = e as OperatorEffectApplyEvent;
       if (ae.id.endsWith(suffix)) {
         markers.push({ kind: 'apply', time: ae.time });
       }
     }
-    if (e.type === 'OPERATOR_EFFECT_EXPIRE' && (e as OperatorEffectExpireEvent).targetTrackId === trackId) {
+    if (
+      e.type === 'OPERATOR_EFFECT_EXPIRE' &&
+      (e as OperatorEffectExpireEvent).targetTrackId === trackId
+    ) {
       const ee = e as OperatorEffectExpireEvent;
       if (ee.id.endsWith(suffix)) {
         markers.push({ kind: 'expire', time: ee.time });
@@ -131,8 +137,14 @@ function mergeWithPerfectTiming(
   if (perfect.length === 0) return combo;
 
   const times = new Set<number>();
-  for (const s of combo) { times.add(s.start); times.add(s.end); }
-  for (const s of perfect) { times.add(s.start); times.add(s.end); }
+  for (const s of combo) {
+    times.add(s.start);
+    times.add(s.end);
+  }
+  for (const s of perfect) {
+    times.add(s.start);
+    times.add(s.end);
+  }
   const sorted = [...times].sort((a, b) => a - b);
 
   const segments: ComboWindowSegment[] = [];
@@ -142,16 +154,19 @@ function mergeWithPerfectTiming(
     // Skip if both ends land on the same frame — no real duration
     if (timeToFrame(start) === timeToFrame(end)) continue;
 
-    const inCombo = combo.some(s =>
-        timeToFrame(start) >= timeToFrame(s.start) && timeToFrame(end) <= timeToFrame(s.end));
-    const inPerfect = perfect.some(s =>
-        timeToFrame(start) >= timeToFrame(s.start) && timeToFrame(end) <= timeToFrame(s.end));
+    const inCombo = combo.some(
+      s => timeToFrame(start) >= timeToFrame(s.start) && timeToFrame(end) <= timeToFrame(s.end),
+    );
+    const inPerfect = perfect.some(
+      s => timeToFrame(start) >= timeToFrame(s.start) && timeToFrame(end) <= timeToFrame(s.end),
+    );
     if (!inCombo && !inPerfect) continue;
     // Only perfect-timing within combo windows (not standalone)
     if (inPerfect && !inCombo) continue;
 
     segments.push({
-      start, end,
+      start,
+      end,
       duration: end - start,
       color: COMBO_WINDOW_COLOR,
       perfectTiming: inPerfect ? true : undefined,

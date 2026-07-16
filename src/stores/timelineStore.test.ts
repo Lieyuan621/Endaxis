@@ -1,12 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createPinia, setActivePinia } from "pinia";
-import { useTimelineStore } from "./timelineStore";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { useTimelineStore } from './timelineStore';
 
-describe("timeline skill library editing", () => {
+describe('timeline skill library editing', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     const storage = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
+    vi.stubGlobal('localStorage', {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => {
         storage.set(key, String(value));
@@ -20,11 +20,11 @@ describe("timeline skill library editing", () => {
     });
   });
 
-  it("exposes segmented skill children as editable library models", async () => {
+  it('exposes segmented skill children as editable library models', async () => {
     const store = useTimelineStore();
     await store.fetchGameData();
 
-    store.changeTrackOperator(0, null, "zhuang-fangyi");
+    store.changeTrackOperator(0, null, 'zhuang-fangyi');
     store.selectTrack(0);
 
     const groupedSkill = store.activeSkillLibrary.find(
@@ -64,7 +64,7 @@ describe("timeline skill library editing", () => {
     expect(editedSegment.duration).toBe(2.25);
     expect(editedSegment.hits).toMatchObject(editedHits);
 
-    store.addSkillToTrack("zhuang-fangyi", editedSegment, 1);
+    store.addSkillToTrack('zhuang-fangyi', editedSegment, 1);
     const insertedAction = store.tracks[0]!.actions.find(
       (action: any) => action.id === firstSegment.id,
     ) as any;
@@ -74,48 +74,53 @@ describe("timeline skill library editing", () => {
     expect(insertedAction.hits).toMatchObject(editedHits);
   });
 
-  it("names generic basic attacks as 普攻 and only the final segment as 重击", async () => {
+  it('names generic basic attacks as 普攻 and only the final segment as 重击', async () => {
     const store = useTimelineStore();
     await store.fetchGameData();
 
-    store.changeTrackOperator(0, null, "zhuang-fangyi");
+    store.changeTrackOperator(0, null, 'zhuang-fangyi');
     store.selectTrack(0);
 
     const basicAttackGroup = store.activeSkillLibrary.find(
-      (skill: any) => skill.type === "basicAttack" && skill.kind === "attack_group",
+      (skill: any) => skill.type === 'basicAttack' && skill.kind === 'attack_group',
     ) as any;
 
     expect(basicAttackGroup).toBeTruthy();
-    expect(basicAttackGroup.name).toBe("普攻");
+    expect(basicAttackGroup.name).toBe('普攻');
 
-    store.addSkillToTrack("zhuang-fangyi", basicAttackGroup, 1);
+    store.addSkillToTrack('zhuang-fangyi', basicAttackGroup, 1);
     const insertedSegments = store.tracks[0]!.actions.filter(
       (action: any) => action.attackGroupInstanceId,
     ) as any[];
 
     expect(insertedSegments.length).toBeGreaterThan(1);
-    expect(insertedSegments.at(-1)?.name).toBe("重击");
-    expect(insertedSegments.slice(0, -1).every((action: any) => action.name.startsWith("普攻 "))).toBe(true);
+    expect(insertedSegments.at(-1)?.name).toBe('重击');
+    expect(
+      insertedSegments.slice(0, -1).every((action: any) => action.name.startsWith('普攻 ')),
+    ).toBe(true);
   });
 
-  it("resolves Wulfgard derived hit effects before exposing skills to the editor", async () => {
+  it('resolves Wulfgard derived hit effects before exposing skills to the editor', async () => {
     const store = useTimelineStore();
     await store.fetchGameData();
 
-    store.changeTrackOperator(0, null, "wulfgard");
+    store.changeTrackOperator(0, null, 'wulfgard');
     store.selectTrack(0);
 
     const battleSkill = store.activeSkillLibrary.find(
-      (skill: any) => skill.type === "battleSkill",
+      (skill: any) => skill.type === 'battleSkill',
     ) as any;
     const effects = (battleSkill?.hits || []).flatMap((hit: any) => hit.effects || []);
 
-    expect(effects.some((effect: any) => effect.kind === "derived")).toBe(false);
-    expect(effects.some((effect: any) => effect.displayType === "derived")).toBe(false);
-    expect(effects.some((effect: any) =>
-      effect.name === "scorchingFangs" &&
-      effect.kind === "status" &&
-      effect.displayType === "dmgBonus:heat",
-    )).toBe(true);
+    expect(effects.some((effect: any) => effect.kind === 'derived')).toBe(false);
+    expect(effects.some((effect: any) => effect.displayType === 'derived')).toBe(false);
+    expect(
+      effects.some(
+        (effect: any) =>
+          effect.name === 'scorchingFangs' &&
+          effect.kind === 'status' &&
+          effect.displayType === 'dmgBonus:heat',
+      ),
+    ).toBe(true);
   });
 });

@@ -301,8 +301,17 @@ const sheet: OperatorSheet = {
       comboWindow: {
         triggers: [
           {
-            trigger: { kind: 'onStatusApplied', status: 'cryoInfliction', target: 'enemy', triggerScope: 'global' },
-            condition: { kind: 'enemyStatus', status: 'cryoInfliction', stacks: { compare: 'atLeast', count: 3 } },
+            trigger: {
+              kind: 'onStatusApplied',
+              status: 'cryoInfliction',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+            condition: {
+              kind: 'enemyStatus',
+              status: 'cryoInfliction',
+              stacks: { compare: 'atLeast', count: 3 },
+            },
           },
         ],
         duration: 5,
