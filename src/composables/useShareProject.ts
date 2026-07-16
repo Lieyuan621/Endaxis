@@ -17,19 +17,20 @@ export function useShareProject() {
       ElMessage.success(t('timeline.share.copied'));
     } catch (e) {
       console.error(e);
-      ElMessage.error(t('timeline.share.copyFailed', { msg: e?.message || '' }));
+      const msg = e instanceof Error ? e.message : '';
+      ElMessage.error(t('timeline.share.copyFailed', { msg }));
     }
   }
 
   // 2. 解析导入分享码
-  function importFromCode(code) {
+  async function importFromCode(code: string): Promise<boolean> {
     if (!code) {
       ElMessage.warning(t('timeline.share.inputRequired'));
       return false;
     }
 
-    // 调用 Store 里的解压和合并逻辑
-    const success = store.importShareString(code);
+    // 调用 Store 里的解压和合并逻辑（importShareString 是异步的，必须 await）
+    const success = await store.importShareString(code);
 
     if (success) {
       ElMessage.success(t('timeline.share.imported'));

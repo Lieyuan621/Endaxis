@@ -1,19 +1,35 @@
 import { getGameAttributeName } from '@/data/gameText';
 import { getEffectName } from '@/data/effectPresets';
 
-export function normalizeEquipmentStatArray(value) {
+type TranslateFn = (key: string, named?: Record<string, unknown>) => string;
+
+interface EquipmentStatLike {
+  modifier?: string;
+  elements?: string | string[] | null;
+  skillTypes?: string | string[] | null;
+  attribute?: string | string[] | null;
+}
+
+interface EquipmentEffectLike {
+  stat?: EquipmentStatLike | null;
+  [key: string]: unknown;
+}
+
+export function normalizeEquipmentStatArray(
+  value: string | string[] | null | undefined,
+): string[] {
   if (Array.isArray(value)) return value.filter(Boolean);
   return value ? [value] : [];
 }
 
-export function normalizeEquipmentAttributeId(attribute) {
+export function normalizeEquipmentAttributeId(attribute: string): string {
   if (attribute === 'main') return 'primary_ability';
   if (attribute === 'sub') return 'secondary_ability';
   if (['strength', 'agility', 'intellect', 'will'].includes(attribute)) return attribute;
   return '';
 }
 
-function getEquipmentElementPairId(elements) {
+function getEquipmentElementPairId(elements: string[]): string {
   const set = new Set(elements);
   if (set.size !== 2) return '';
   if (set.has('heat') && set.has('nature')) return 'heat_nature_dmg_bonus';
@@ -21,14 +37,29 @@ function getEquipmentElementPairId(elements) {
   return '';
 }
 
-function isEquipmentArtsDmgElements(elements) {
+function isEquipmentArtsDmgElements(elements: string | string[] | null | undefined): boolean {
   const set = new Set(normalizeEquipmentStatArray(elements));
   return (
     set.size === 4 && set.has('heat') && set.has('cryo') && set.has('electric') && set.has('nature')
   );
 }
 
-function getEquipmentDmgBonusModifierIds(stat) {
+const ELEMENT_DMG_MODIFIER_IDS: Record<string, string> = {
+  physical: 'physical_dmg',
+  heat: 'blaze_dmg',
+  cryo: 'cold_dmg',
+  electric: 'emag_dmg',
+  nature: 'nature_dmg',
+};
+
+const SKILL_TYPE_DMG_MODIFIER_IDS: Record<string, string> = {
+  basicAttack: 'attack_dmg_bonus',
+  battleSkill: 'skill_dmg_bonus',
+  comboSkill: 'link_dmg_bonus',
+  ultimate: 'ultimate_dmg_bonus',
+};
+
+function getEquipmentDmgBonusModifierIds(stat: EquipmentStatLike): string[] {
   const elements = normalizeEquipmentStatArray(stat?.elements);
 
   if (elements.length > 0) {
@@ -40,17 +71,8 @@ function getEquipmentDmgBonusModifierIds(stat) {
     if (pairId) return [pairId];
 
     const mapped = elements
-      .map(
-        element =>
-          ({
-            physical: 'physical_dmg',
-            heat: 'blaze_dmg',
-            cryo: 'cold_dmg',
-            electric: 'emag_dmg',
-            nature: 'nature_dmg',
-          })[element],
-      )
-      .filter(Boolean);
+      .map(element => ELEMENT_DMG_MODIFIER_IDS[element])
+      .filter((id): id is string => Boolean(id));
 
     return mapped.length > 0 ? mapped : ['all_skill_dmg_bonus'];
   }
@@ -59,14 +81,7 @@ function getEquipmentDmgBonusModifierIds(stat) {
 
   if (skillTypes.length > 0) {
     if (skillTypes.length === 1) {
-      return [
-        {
-          basicAttack: 'attack_dmg_bonus',
-          battleSkill: 'skill_dmg_bonus',
-          comboSkill: 'link_dmg_bonus',
-          ultimate: 'ultimate_dmg_bonus',
-        }[skillTypes[0]] || 'all_skill_dmg_bonus',
-      ];
+      return [SKILL_TYPE_DMG_MODIFIER_IDS[skillTypes[0]!] || 'all_skill_dmg_bonus'];
     }
 
     if (
@@ -81,7 +96,7 @@ function getEquipmentDmgBonusModifierIds(stat) {
   return ['all_skill_dmg_bonus'];
 }
 
-export function getEquipmentEffectModifierIds(stat) {
+export function getEquipmentEffectModifierIds(stat: EquipmentStatLike | null | undefined): string[] {
   if (!stat?.modifier) return [];
 
   if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
@@ -110,12 +125,12 @@ export function getEquipmentEffectModifierIds(stat) {
   return [stat.modifier];
 }
 
-function trOrFallback(t, key, fallback) {
+function trOrFallback(t: TranslateFn | undefined, key: string, fallback: string): string {
   const out = typeof t === 'function' ? t(key) : key;
   return out === key ? fallback : out;
 }
 
-export function getEquipmentModifierLabel(modifierId, t) {
+export function getEquipmentModifierLabel(modifierId: string, t: TranslateFn | undefined): string {
   return trOrFallback(
     t,
     `timelineGrid.equipmentDialog.affixFilters.${modifierId}`,
@@ -123,15 +138,19 @@ export function getEquipmentModifierLabel(modifierId, t) {
   );
 }
 
-export function formatEquipmentEffectLabel(effect, t, locale) {
+export function formatEquipmentEffectLabel(
+  effect: EquipmentEffectLike | null | undefined,
+  t: TranslateFn | undefined,
+  locale?: string,
+): string {
   const stat = effect?.stat;
   if (!stat) return trOrFallback(t, 'common.unknown', 'Unknown');
 
-  const modifierId = getEquipmentEffectModifierIds(stat)[0] || stat.modifier;
+  const modifierId = getEquipmentEffectModifierIds(stat)[0] || stat.modifier || '';
 
   if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
     const attr = normalizeEquipmentStatArray(stat.attribute)[0];
-    const normalizedAttr = normalizeEquipmentAttributeId(attr);
+    const normalizedAttr = normalizeEquipmentAttributeId(attr ?? '');
 
     if (normalizedAttr === 'primary_ability' || normalizedAttr === 'secondary_ability') {
       return getEquipmentModifierLabel(normalizedAttr, t);
@@ -158,17 +177,19 @@ export function formatEquipmentEffectLabel(effect, t, locale) {
     return trOrFallback(t, 'game.stat.susceptibility', '脆弱');
   }
 
-  if (stat.modifier === 'artsIntensity')
-    return getEquipmentModifierLabel('originium_arts_power', t);
+  if (stat.modifier === 'artsIntensity') return getEquipmentModifierLabel('originium_arts_power', t);
   if (stat.modifier === 'ultimateGainEfficiency')
     return getEquipmentModifierLabel('ult_charge_eff', t);
   if (stat.modifier === 'heal') return getEquipmentModifierLabel('healing_effect', t);
   if (stat.modifier === 'protection') return getEquipmentModifierLabel('final_dmg_reduction', t);
 
-  return getEquipmentModifierLabel(modifierId, t) || getEffectName(effect);
+  return (
+    getEquipmentModifierLabel(modifierId, t) ||
+    getEffectName(effect as unknown as Parameters<typeof getEffectName>[0])
+  );
 }
 
-export function equipmentValueNeedsPercent(stat) {
+export function equipmentValueNeedsPercent(stat: EquipmentStatLike | null | undefined): boolean {
   return [
     'attributePercent',
     'atkPercent',
@@ -180,17 +201,20 @@ export function equipmentValueNeedsPercent(stat) {
     'susceptibility',
     'heal',
     'protection',
-  ].includes(stat?.modifier);
+  ].includes(stat?.modifier ?? '');
 }
 
-export function formatEquipmentNumber(value) {
+export function formatEquipmentNumber(value: unknown): string {
   const num = Number(value);
   if (!Number.isFinite(num)) return String(value ?? '');
   if (Math.abs(num - Math.round(num)) < 0.0001) return String(Math.round(num));
   return num.toFixed(1).replace(/\.0$/, '');
 }
 
-export function formatEquipmentEffectStatValue(effect, value) {
+export function formatEquipmentEffectStatValue(
+  effect: EquipmentEffectLike | null | undefined,
+  value: unknown,
+): string {
   const suffix = equipmentValueNeedsPercent(effect?.stat) ? '%' : '';
   return `${formatEquipmentNumber(value)}${suffix}`;
 }

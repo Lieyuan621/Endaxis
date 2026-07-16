@@ -734,8 +734,8 @@ function openImportShareDialog() {
   importShareDialogVisible.value = true;
 }
 
-function handleImportShare() {
-  const success = importFromCode(shareCodeInput.value);
+async function handleImportShare() {
+  const success = await importFromCode(shareCodeInput.value);
   if (success) {
     importShareDialogVisible.value = false;
     shareCodeInput.value = ''; // 成功后清空
