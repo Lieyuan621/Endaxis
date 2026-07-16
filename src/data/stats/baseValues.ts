@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { OperatorInstance, WeaponInstance } from '../../types';
 import type { Attributes, BaseStatValues } from './types';
 import { getOperator, getWeapon } from '../index';
@@ -26,7 +25,7 @@ export function getPromotionCount(level: number, promoted: boolean): number {
 export function getTrustAttrBonus(trustLevel: number): number {
   const clamped = Math.min(Math.max(0, trustLevel), PROMOTION_ATTR_BONUS.length);
   let total = 0;
-  for (let i = 0; i < clamped; i++) total += PROMOTION_ATTR_BONUS[i];
+  for (let i = 0; i < clamped; i++) total += PROMOTION_ATTR_BONUS[i] ?? 0;
   return total;
 }
 

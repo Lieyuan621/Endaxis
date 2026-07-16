@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type {
   Effect,
   ResolvedEffect,
@@ -162,7 +161,7 @@ const REACTION_DURATIONS: Record<string, number | number[]> = {
 export function getReactionDuration(type: string, level: number): number {
   const entry = REACTION_DURATIONS[type];
   if (typeof entry === 'number') return entry;
-  if (Array.isArray(entry)) return entry[Math.max(0, Math.min(level - 1, entry.length - 1))];
+  if (Array.isArray(entry)) return entry[Math.max(0, Math.min(level - 1, entry.length - 1))] ?? 0;
   return 0;
 }
 
@@ -189,7 +188,7 @@ function isNegativeDmgBonusEffect(effect: Effect | ResolvedEffect): boolean {
 
 function getNegativeDmgBonusLocaleKey(effect: Effect): string {
   if (effect.kind !== 'status' || !effect.stat) return 'dmgBonusDown';
-  return getStatPresetKey({ ...effect.stat, modifier: 'dmgBonusDown' } as EffectStat);
+  return getStatPresetKey({ ...effect.stat, modifier: 'dmgBonusDown' } as unknown as EffectStat);
 }
 
 function getNegativeDmgBonusIcon(effect: Effect): string {
@@ -234,6 +233,7 @@ export function getEffectPresetKey(effect: Effect): string {
     case 'consume':
       return effect.id ?? 'consume';
   }
+  return effect.id ?? effect.kind;
 }
 
 export function getEffectIcon(effect: Effect, currentStacks?: number): string {
@@ -267,6 +267,7 @@ export function getEffectIcon(effect: Effect, currentStacks?: number): string {
     case 'consume':
       return FALLBACK_ICON;
   }
+  return FALLBACK_ICON;
 }
 
 export function resolveEffectDefaults(effect: ResolvedEffect): ResolvedEffect;
@@ -366,6 +367,7 @@ function getEffectLocaleKey(effect: Effect): string {
     case 'consume':
       return effect.id ?? effect.kind;
   }
+  return effect.id ?? effect.kind;
 }
 
 export function getEffectName(effect: Effect): string {

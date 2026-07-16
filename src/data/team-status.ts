@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { OperatorStatus, ComputedEnemyStatus } from '../types';
 import type { TeamInstance, OperatorInstance, WeaponInstance, GearInstance } from '../types';
 import type { StatusEffect, ResolvedStatusEffect, operatorClass } from './types';
@@ -126,7 +125,7 @@ export function getTeamStatus(
     const skillId = isTarget ? targetSkillId : undefined;
 
     const base = getBaseStatValues(opInst, wInst);
-    return computeStats(base, toSheetEffects(slotEffects[slotIndex]), [], type, skillId);
+    return computeStats(base, toSheetEffects(slotEffects[slotIndex] ?? []), [], type, skillId);
   });
 
   // 4b. Resolve enemy status
@@ -182,7 +181,7 @@ export function getTeamStatusBatch(
       const sid = isTarget ? skillId : undefined;
 
       const base = getBaseStatValues(opInst, wInst);
-      return computeStats(base, slotSheetEffects[slotIndex], [], t, sid);
+      return computeStats(base, slotSheetEffects[slotIndex] ?? [], [], t, sid);
     });
     results.set(skillId, { operatorStatuses, enemyStatus });
   }
@@ -246,7 +245,7 @@ function partitionByTarget(
           const cls = slotClasses[i];
           if (!cls || !classes.includes(cls)) continue;
         }
-        slotEffects[i].push(resolveForSlot(ce, i));
+        slotEffects[i]!.push(resolveForSlot(ce, i));
       }
     } else {
       // 'self' (default) — only to source slot

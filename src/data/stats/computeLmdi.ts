@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * LMDI (Logarithmic Mean Divisia Index) decomposition for damage contribution.
  *
