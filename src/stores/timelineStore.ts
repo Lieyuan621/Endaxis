@@ -3,15 +3,40 @@ import { ref, computed, watch, toRaw } from 'vue';
 import { watchThrottled } from '@vueuse/core';
 import { compressGzip, decompressGzip } from '@/utils/gzipUtils';
 import { createDefaultStats } from '@/simulation/defaultActorStats';
-import { simulate } from '@/simulation/simulator';
+import { simulate, type InitialEffect } from '@/simulation/simulator';
+import type { WeaponInstance, OperatorInstance, GearInstance } from '@/types';
 import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState';
 import { resolveEffectValueStatic } from '@/simulation/events/effectDispatch';
 import { compileEndaxisScenario } from '@/simulation/adapters/compileEndaxisScenario';
 import { projectOptimizerResult } from '@/simulation/adapters/projectOptimizerResult';
 import { i18n } from '@/i18n';
-import { snapMs } from '@/utils/precision.js';
-import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time.js';
-import { deserializeProjectData, serializeProjectData } from '@/utils/timeSerialization.js';
+import { snapMs } from '@/utils/precision';
+import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time';
+import { deserializeProjectData, serializeProjectData } from '@/utils/timeSerialization';
+import type {
+  TimelineAction,
+  Track,
+  TrackStatusState,
+  TriggerEffectEntry,
+  Connection,
+  RosterEntry,
+  ScenarioListEntry,
+  ScenarioData,
+  ScenarioSnapshot,
+  EnemyConfigState,
+  SwitchEvent,
+  CycleBoundary,
+} from '@/stores/timeline/types';
+
+/** Context passed to an ultimate-enhancement extender. */
+interface UltEnhancerContext {
+  track: Track | null | undefined;
+  enhStart: number;
+  baseDuration: number;
+  ultimateAction: TimelineAction;
+  getShiftedEndTime: (start: number, duration: number, instanceId?: string) => number;
+}
+type UltEnhancer = (context: UltEnhancerContext) => number;
 import { useOperatorStore } from '@/stores/operatorStore';
 import { useWeaponStore } from '@/stores/weaponStore';
 import { useGearStore } from '@/stores/gearStore';
@@ -35,7 +60,6 @@ import {
   resolveGearPieceSlug,
   getWeaponList as getTimelineWeaponList,
   getGearPieceList as getTimelineGearPieceList,
-  getEquipmentCategories as getTimelineEquipmentCategories,
   getEquipmentCategoryConfigs as getTimelineEquipmentCategoryConfigs,
   getIconDatabase as getTimelineIconDatabase,
   getSystemConstants as getTimelineSystemConstants,
@@ -45,14 +69,10 @@ import {
 import {
   getEnemyGameName,
   getGearPieceGameName,
-  getGearSetConditionalText,
   getGearSetGameName,
-  getGearSetPassiveText,
-  getGearSetZhName,
   getOperatorGameName,
   getOperatorSubSkillName,
   getWeaponGameName,
-  getWeaponSkillDescription,
   getWeaponSkillPrefix,
   getWeaponSkillName,
 } from '@/data/gameText';
@@ -71,11 +91,17 @@ import {
   buildEffectiveEnemySystemConstants,
   getContingencyEnemyHealingRate,
 } from '@/data/contingencyContracts/criteriaEffects';
-import { isEnemyEffect } from '@/data/types';
+import {
+  isEnemyEffect,
+  type Segment,
+  type OperatorSheet,
+  type WeaponSheet,
+  type GearPieceSheet,
+} from '@/data/types';
 import { createDefaultEnemyResistance, normalizeEnemyResistance } from '@/data/enemyResistance';
 import { getBaseStatValues } from '@/data/stats/baseValues';
 import { computeStats } from '@/data/stats/computeStats';
-import { getSkillBounds, clampSkillLevel } from '@/utils/weaponBounds';
+import { getSkillBounds } from '@/utils/weaponBounds';
 import {
   buildResolvedSegmentPayload,
   extractAggregateRawEntries,
@@ -83,8 +109,8 @@ import {
   resolveHitsFromSheet,
 } from '@/stores/timeline/resolveHits';
 
-const tr = (key, params) => i18n.global.t(key, params);
-const getI18nSkillType = type => {
+const tr = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
+const getI18nSkillType = (type: string) => {
   const displayType = OPTIMIZER_TO_DISPLAY_TYPE[type] || type;
   const key = `skillType.${displayType}`;
   const out = tr(key);
@@ -93,7 +119,7 @@ const getI18nSkillType = type => {
 
 const uid = () => Math.random().toString(36).substring(2, 9);
 const FINAL_BASIC_ATTACK_SEGMENT_NAME = '重击';
-const getBasicAttackSegmentName = (groupName, index, total) => {
+const getBasicAttackSegmentName = (groupName: string, index: number, total: number) => {
   const oneBasedIndex = Number(index) || 0;
   const segmentTotal = Number(total) || 0;
   if (segmentTotal > 0 && oneBasedIndex === segmentTotal) return FINAL_BASIC_ATTACK_SEGMENT_NAME;
@@ -103,7 +129,7 @@ const COLLAPSED_PREP_PX = 18;
 const MIN_PREP_DURATION = FRAME_DURATION;
 const COARSE_SNAP_STEP = FRAME_DURATION * 6;
 const EQUIPMENT_REFINE_MAX_TIER = 3;
-const OPTIMIZER_TO_DISPLAY_TYPE = {
+const OPTIMIZER_TO_DISPLAY_TYPE: Record<string, string> = {
   basicAttack: 'attack',
   battleSkill: 'skill',
   comboSkill: 'link',
@@ -114,15 +140,25 @@ const OPTIMIZER_TO_DISPLAY_TYPE = {
 const DEFAULT_BATTLE_SKILL_UE = 0;
 const DEFAULT_COMBO_SKILL_UE = 0;
 const LEGACY_WEAPON_STATUS_KEY = `weapon${'Statuses'}`;
-const resolveActionOptimizerSkillType = action => {
+const resolveActionOptimizerSkillType = (action: { type?: string } | null | undefined) => {
   if (!action) return null;
   return action.type || null;
 };
-const isComboLikeAction = action => resolveActionOptimizerSkillType(action) === 'comboSkill';
-const isUltimateLikeAction = action => resolveActionOptimizerSkillType(action) === 'ultimate';
+const isComboLikeAction = (action: { type?: string } | null | undefined) =>
+  resolveActionOptimizerSkillType(action) === 'comboSkill';
+const isUltimateLikeAction = (action: { type?: string } | null | undefined) =>
+  resolveActionOptimizerSkillType(action) === 'ultimate';
 
-const createOwnSkillLinkEnhancer = ({ linkSubtract = 0.0 } = {}) => {
-  return ({ track, enhStart, baseDuration, ultimateAction, getShiftedEndTime }) => {
+const createOwnSkillLinkEnhancer = ({
+  linkSubtract = 0.0,
+}: { linkSubtract?: number } = {}): UltEnhancer => {
+  return ({
+    track,
+    enhStart,
+    baseDuration,
+    ultimateAction,
+    getShiftedEndTime,
+  }: UltEnhancerContext) => {
     const epsilon = 0.0001;
     const processed = new Set();
     let extraDuration = 0;
@@ -166,28 +202,28 @@ const createOwnSkillLinkEnhancer = ({ linkSubtract = 0.0 } = {}) => {
 
 const laevatainEnhancementExtender = createOwnSkillLinkEnhancer({ linkSubtract: 0 });
 
-const ULTIMATE_ENHANCEMENT_EXTENDERS = {
+const ULTIMATE_ENHANCEMENT_EXTENDERS: Record<string, UltEnhancer> = {
   laevatain: laevatainEnhancementExtender,
 };
 
-function getUltimateEnhancementExtender(trackId) {
+function getUltimateEnhancementExtender(trackId: string | null | undefined) {
   const key = String(trackId ?? '').trim();
   return (
     ULTIMATE_ENHANCEMENT_EXTENDERS[key] ?? ULTIMATE_ENHANCEMENT_EXTENDERS[key.toLowerCase()] ?? null
   );
 }
 
-function shiftSnapshotTimes(snapshot, delta) {
+function shiftSnapshotTimes(snapshot: ScenarioSnapshot | null | undefined, delta: number) {
   const d = Number(delta) || 0;
   if (!snapshot || !Number.isFinite(d) || d === 0) return snapshot;
 
-  const shiftVal = v => {
+  const shiftVal = (v: unknown) => {
     const n = Number(v) || 0;
     const out = n + d;
     return out < 0 ? 0 : out;
   };
 
-  const shiftStartLike = obj => {
+  const shiftStartLike = (obj: Record<string, unknown> | null | undefined) => {
     if (!obj || typeof obj !== 'object') return;
     if (obj.startTime !== undefined) obj.startTime = shiftVal(obj.startTime);
     if (obj.logicalStartTime !== undefined) obj.logicalStartTime = shiftVal(obj.logicalStartTime);
@@ -212,10 +248,13 @@ function shiftSnapshotTimes(snapshot, delta) {
   return snapshot;
 }
 
-function normalizePrepConfig(snapshot) {
+function normalizePrepConfig(snapshot: ScenarioSnapshot | null | undefined): {
+  snapshot: ScenarioSnapshot;
+  migrated: boolean;
+} {
   const hasPrep =
     snapshot && (snapshot.prepDuration !== undefined || snapshot.prepExpanded !== undefined);
-  if (hasPrep) {
+  if (hasPrep && snapshot) {
     const dur = Number(snapshot.prepDuration);
     if (Number.isFinite(dur)) {
       const clamped = Math.max(MIN_PREP_DURATION, dur);
@@ -231,24 +270,28 @@ function normalizePrepConfig(snapshot) {
   }
 
   // Legacy project: assume old "0s == battle start", migrate to default prepDuration=5
-  const migratedSnapshot = snapshot || {};
+  const migratedSnapshot: ScenarioSnapshot = snapshot || {};
   migratedSnapshot.prepDuration = 5;
   migratedSnapshot.prepExpanded = true;
   shiftSnapshotTimes(migratedSnapshot, 5);
   return { snapshot: migratedSnapshot, migrated: true };
 }
 
-function dropLegacyTimedStatusData(snapshot) {
+function dropLegacyTimedStatusData(snapshot: ScenarioSnapshot | null | undefined) {
   if (!snapshot || typeof snapshot !== 'object') return snapshot;
   delete snapshot[LEGACY_WEAPON_STATUS_KEY];
   return snapshot;
 }
 
-function cloneJsonData(value) {
+function cloneJsonData<T>(value: T): T {
   return value == null ? value : JSON.parse(JSON.stringify(value));
 }
 
-function resolveLevelNumber(value, levelIndex = 0, fallback = 0) {
+function resolveLevelNumber(
+  value: number | number[] | null | undefined,
+  levelIndex = 0,
+  fallback = 0,
+): number {
   const raw = Array.isArray(value)
     ? value[Math.max(0, Math.min(levelIndex, value.length - 1))]
     : value;
@@ -256,21 +299,21 @@ function resolveLevelNumber(value, levelIndex = 0, fallback = 0) {
   return Number.isFinite(num) ? num : fallback;
 }
 
-function cloneActionHits(rawHits = [], effectIdMap = null) {
-  const clonedHits = cloneJsonData(rawHits) || [];
+function cloneActionHits(rawHits: unknown[] = [], effectIdMap: Map<string, string> | null = null) {
+  const clonedHits = (cloneJsonData(rawHits) as Record<string, unknown>[]) || [];
   clonedHits.forEach(hit => {
     const effects = Array.isArray(hit?.effects) ? hit.effects : [];
-    effects.forEach(effect => {
+    effects.forEach((effect: Record<string, unknown>) => {
       if (!effect) return;
-      const oldId = effect._id;
+      const oldId = effect._id as string | undefined;
       effect._id = uid();
-      if (effectIdMap && oldId) effectIdMap.set(oldId, effect._id);
+      if (effectIdMap && oldId) effectIdMap.set(oldId, effect._id as string);
     });
   });
   return clonedHits;
 }
 
-function humanizeIdentifier(value) {
+function humanizeIdentifier(value: unknown): string {
   if (!value) return '';
   return String(value)
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -280,11 +323,15 @@ function humanizeIdentifier(value) {
     .replace(/\b\w/g, char => char.toUpperCase());
 }
 
-function translateOperatorDisplayName(slug) {
+function translateOperatorDisplayName(slug: string) {
   return getOperatorGameName(slug);
 }
 
-function getOperatorSkillIcon(slug, optimizerSkillType, skill) {
+function getOperatorSkillIcon(
+  slug: string,
+  optimizerSkillType: string,
+  skill: Record<string, unknown> | null | undefined,
+) {
   if (typeof skill?.icon === 'string' && skill.icon.trim()) return skill.icon.trim();
   if (optimizerSkillType === 'battleSkill') return `/operators/${slug}/battle.webp`;
   if (optimizerSkillType === 'comboSkill') return `/operators/${slug}/combo.webp`;
@@ -317,20 +364,23 @@ export const useTimelineStore = defineStore('timeline', () => {
     resistance: createDefaultEnemyResistance(),
   };
 
-  function normalizeEnemyConfig(base, patch = {}) {
+  function normalizeEnemyConfig(
+    base: Record<string, unknown> | null | undefined,
+    patch: Record<string, unknown> = {},
+  ): EnemyConfigState {
     return {
       ...base,
       ...(patch || {}),
       resistance: normalizeEnemyResistance(patch?.resistance ?? base?.resistance),
-    };
+    } as EnemyConfigState;
   }
 
   function createDefaultSystemConstantsState() {
     return normalizeEnemyConfig(DEFAULT_SYSTEM_CONSTANTS);
   }
 
-  const systemConstants = ref(createDefaultSystemConstantsState());
-  const customEnemyParams = ref(
+  const systemConstants = ref<EnemyConfigState>(createDefaultSystemConstantsState());
+  const customEnemyParams = ref<EnemyConfigState>(
     normalizeEnemyConfig({
       maxStagger: 100,
       staggerNodeCount: 0,
@@ -380,7 +430,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return COLLAPSED_PREP_PX;
   });
 
-  function timeToPx(time) {
+  function timeToPx(time: number) {
     const t = Number(time) || 0;
     const dur = Number(prepDuration.value) || 0;
     const width = timeBlockWidth.value;
@@ -389,7 +439,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return COLLAPSED_PREP_PX + (t - dur) * width;
   }
 
-  function pxToTime(px) {
+  function pxToTime(px: number) {
     const x = Number(px) || 0;
     const dur = Number(prepDuration.value) || 0;
     const width = timeBlockWidth.value;
@@ -400,17 +450,17 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   const totalTimelineWidthPx = computed(() => timeToPx(viewDuration.value));
 
-  function toBattleTime(viewTime) {
+  function toBattleTime(viewTime: number) {
     return (Number(viewTime) || 0) - (Number(prepDuration.value) || 0);
   }
 
-  function formatAxisTimeLabel(viewTime) {
+  function formatAxisTimeLabel(viewTime: number) {
     const bt = toBattleTime(viewTime);
     if (!Number.isFinite(bt)) return '';
     return formatTimeWithFrames(bt);
   }
 
-  const ELEMENT_COLORS = {
+  const ELEMENT_COLORS: Record<string, string> = {
     heat: '#ff4d4f',
     cryo: '#00e5ff',
     electric: '#ffbf00',
@@ -448,7 +498,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     vulnerability: '#d9d9d9',
   };
 
-  const getColor = key => {
+  const getColor = (key: string) => {
     return ELEMENT_COLORS[key] || ELEMENT_COLORS.default;
   };
 
@@ -464,14 +514,14 @@ export const useTimelineStore = defineStore('timeline', () => {
   // ===================================================================================
 
   const isLoading = ref(true);
-  const characterRoster = ref([]);
-  const iconDatabase = ref({});
-  const enemyDatabase = ref([]);
-  const weaponDatabase = ref([]);
-  const equipmentDatabase = ref([]);
-  const equipmentCategories = ref([]);
-  const equipmentCategoryConfigs = ref({});
-  const misc = ref({
+  const characterRoster = ref<RosterEntry[]>([]);
+  const iconDatabase = ref<Record<string, string>>({});
+  const enemyDatabase = ref<Record<string, unknown>[]>([]);
+  const weaponDatabase = ref<Record<string, unknown>[]>([]);
+  const equipmentDatabase = ref<Record<string, unknown>[]>([]);
+  const equipmentCategories = ref<string[]>([]);
+  const equipmentCategoryConfigs = ref<Record<string, unknown>>({});
+  const misc = ref<Record<string, unknown>>({
     modifierDefs: [],
     weaponCommonModifiers: {},
     equipmentTemplates: {
@@ -484,23 +534,27 @@ export const useTimelineStore = defineStore('timeline', () => {
   });
   const activeEnemyId = ref('custom');
   const activeEnemyLevel = ref(90);
-  const enemyCategories = ref([]);
-  const cycleBoundaries = ref([]);
+  const enemyCategories = ref<string[]>([]);
+  const cycleBoundaries = ref<CycleBoundary[]>([]);
 
   const activeScenarioId = ref('default_sc');
-  function normalizeEnemyLevel(level) {
+  function normalizeEnemyLevel(level: unknown) {
     const num = Number(level);
     if ([1, 20, 40, 60, 80, 90].includes(num)) return num;
     return 90;
   }
 
-  function getEnemyHpForLevel(enemy, enemySheet, level) {
+  function getEnemyHpForLevel(
+    enemy: { levelHp?: unknown } | null | undefined,
+    enemySheet: { levelHp?: unknown } | null | undefined,
+    level: unknown,
+  ) {
     const normalizedLevel = normalizeEnemyLevel(level);
-    const levelHp = enemy?.levelHp ?? enemySheet?.levelHp;
+    const levelHp = (enemy?.levelHp ?? enemySheet?.levelHp) as Record<number, number> | undefined;
     return Number(levelHp?.[normalizedLevel]) || 0;
   }
 
-  const scenarioList = ref([
+  const scenarioList = ref<ScenarioListEntry[]>([
     { id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null },
   ]);
 
@@ -532,7 +586,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     { deep: true, throttle: 120 },
   );
 
-  const createEmptyTrack = () => ({
+  const createEmptyTrack = (): Track => ({
     id: null,
     operatorInstanceId: null,
     actions: [],
@@ -574,16 +628,16 @@ export const useTimelineStore = defineStore('timeline', () => {
   ];
 
   const tracks = ref(createDefaultTracks());
-  const connections = ref([]);
-  const characterOverrides = ref({});
-  const weaponOverrides = ref({});
-  const equipmentCategoryOverrides = ref({});
-  const runtimeInitialEffects = ref([]);
+  const connections = ref<Connection[]>([]);
+  const characterOverrides = ref<Record<string, unknown>>({});
+  const weaponOverrides = ref<Record<string, unknown>>({});
+  const equipmentCategoryOverrides = ref<Record<string, unknown>>({});
+  const runtimeInitialEffects = ref<Record<string, unknown>[]>([]);
   // Selected Contingency Contract criteria tags (numeric tag ids, e.g. 102803). The criterion
   // group + level is derived from the id: group = Math.floor(id/100), level = id % 100.
-  const contingencyContractTags = ref([]);
+  const contingencyContractTags = ref<number[]>([]);
 
-  function setContingencyContractTags(tagIds) {
+  function setContingencyContractTags(tagIds: unknown) {
     contingencyContractTags.value = Array.isArray(tagIds)
       ? tagIds.map(Number).filter(Number.isFinite)
       : [];
@@ -612,10 +666,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     { deep: true },
   );
 
-  const inheritedInitialEffects = ref([]);
-  const inheritedInitialEnemyState = ref(null);
-  const simulationEndline = ref(null);
-  const lmdiAttributionMode = ref('stacks');
+  const inheritedInitialEffects = ref<Record<string, unknown>[]>([]);
+  const inheritedInitialEnemyState = ref<Record<string, unknown> | null>(null);
+  const simulationEndline = ref<number | null>(null);
+  const lmdiAttributionMode = ref<'stacks' | 'applier'>('stacks');
 
   const connectionMap = computed(() => {
     const map = new Map();
@@ -629,6 +683,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const map = new Map();
     for (let i = 0; i < tracks.value.length; i++) {
       const track = tracks.value[i];
+      if (!track) continue;
       for (const action of track.actions) {
         map.set(action.instanceId, {
           trackId: track.id,
@@ -647,8 +702,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     for (const track of tracks.value) {
       for (const action of track.actions) {
         let currentFlatIndex = 0;
-        for (let i = 0; i < (action.hits || []).length; i++) {
-          const hit = action.hits[i];
+        const hits = action.hits || [];
+        for (let i = 0; i < hits.length; i++) {
+          const hit = hits[i] as Record<string, unknown> | undefined;
           const effects = Array.isArray(hit?.effects) ? hit.effects : [];
           for (let j = 0; j < effects.length; j++) {
             const effect = effects[j];
@@ -669,28 +725,28 @@ export const useTimelineStore = defineStore('timeline', () => {
     return map;
   });
 
-  function setBaseBlockWidth(val) {
+  function setBaseBlockWidth(val: number) {
     const sanitizedVal = Math.min(ZOOM_LIMITS.MAX, Math.max(ZOOM_LIMITS.MIN, val));
     BASE_BLOCK_WIDTH.value = sanitizedVal;
   }
 
-  function getConnectionById(connectionId) {
+  function getConnectionById(connectionId: string) {
     return connectionMap.value.get(connectionId);
   }
 
-  function getActionById(actionId) {
+  function getActionById(actionId: string) {
     return actionMap.value.get(actionId);
   }
 
-  function getEffectById(effectId) {
+  function getEffectById(effectId: string) {
     return effectsMap.value.get(effectId);
   }
 
-  function resolveNode(nodeId) {
+  function resolveNode(nodeId: string) {
     return getActionById(nodeId) || getEffectById(nodeId);
   }
 
-  function getNodesOfConnection(connectionId) {
+  function getNodesOfConnection(connectionId: string) {
     const conn = getConnectionById(connectionId);
     if (!conn) {
       return { fromNode: null, toNode: null };
@@ -705,15 +761,15 @@ export const useTimelineStore = defineStore('timeline', () => {
     return { fromNode, toNode };
   }
 
-  function _getConnectionEndpointId(conn, side) {
+  function _getConnectionEndpointId(conn: Connection | null | undefined, side: 'from' | 'to') {
     if (!conn) return null;
     if (side === 'from') return conn.fromNodeId || conn.fromEffectId || conn.from || null;
     return conn.toNodeId || conn.toEffectId || conn.to || null;
   }
 
-  function normalizeConnection(rawConn) {
+  function normalizeConnection(rawConn: Partial<Connection> | null | undefined): Connection | null {
     if (!rawConn) return null;
-    const conn = { ...rawConn };
+    const conn = { ...rawConn } as Connection;
 
     const fromId = _getConnectionEndpointId(conn, 'from');
     const toId = _getConnectionEndpointId(conn, 'to');
@@ -748,9 +804,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     return conn;
   }
 
-  function normalizeConnections(list) {
+  function normalizeConnections(list: unknown) {
     if (!Array.isArray(list)) return [];
-    const out = [];
+    const out: Connection[] = [];
     for (const conn of list) {
       const normalized = normalizeConnection(conn);
       if (normalized) out.push(normalized);
@@ -769,13 +825,16 @@ export const useTimelineStore = defineStore('timeline', () => {
     return before - connections.value.length;
   }
 
-  function _connectionTouchesAnyActionId(conn, actionIds) {
+  function _connectionTouchesAnyActionId(
+    conn: Connection | null | undefined,
+    actionIds: Set<string> | null | undefined,
+  ) {
     if (!conn || !actionIds || actionIds.size === 0) return false;
     const fromId = _getConnectionEndpointId(conn, 'from');
     const toId = _getConnectionEndpointId(conn, 'to');
     if (!fromId || !toId) return false;
 
-    const check = nodeId => {
+    const check = (nodeId: string) => {
       const node = resolveNode(nodeId);
       if (!node) return false;
       if (node.type === 'action') return actionIds.has(node.id);
@@ -786,7 +845,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return check(fromId) || check(toId);
   }
 
-  function updateTrackGaugeEfficiency(trackId, value) {
+  function updateTrackGaugeEfficiency(trackId: string, _value: unknown) {
     const track = tracks.value.find(t => t.id === trackId);
     if (track) {
       recomputeAllTrackOperatorStatuses();
@@ -794,7 +853,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function updateTrackOriginiumArtsPower(trackId, value) {
+  function updateTrackOriginiumArtsPower(trackId: string, _value: unknown) {
     const track = tracks.value.find(t => t.id === trackId);
     if (track) {
       recomputeAllTrackOperatorStatuses();
@@ -802,7 +861,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function updateTrackLinkCdReduction(trackId, value) {
+  function updateTrackLinkCdReduction(trackId: string, _value: unknown) {
     const track = tracks.value.find(t => t.id === trackId);
     if (track) {
       recomputeAllTrackOperatorStatuses();
@@ -810,7 +869,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function updateTrackWeapon(trackId, weaponId) {
+  function updateTrackWeapon(trackId: string, weaponId: string | null | undefined) {
     const track = tracks.value.find(t => t.id === trackId);
     if (track) {
       track.weaponId = resolveWeaponSlug(weaponId) || weaponId || null;
@@ -835,7 +894,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function updateTrackWeaponTier(trackId, part, tier) {
+  function updateTrackWeaponTier(trackId: string, part: string, tier: number) {
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return;
     const nextTier = clampTier9(tier);
@@ -857,7 +916,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function updateTrackEquipment(trackId, slotKey, equipmentId) {
+  function updateTrackEquipment(
+    trackId: string,
+    slotKey: string,
+    equipmentId: string | null | undefined,
+  ) {
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return;
 
@@ -876,7 +939,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       projectTrackGearSlotFromInstance(track, slotConfig, null);
     } else {
       const existing = track[slotConfig.instanceKey]
-        ? findGearInstance(track[slotConfig.instanceKey])
+        ? findGearInstance(track[slotConfig.instanceKey] as string | null | undefined)
         : null;
       if (
         existing &&
@@ -893,7 +956,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function updateTrackEquipmentTier(trackId, slotKey, tier, { commit = true } = {}) {
+  function updateTrackEquipmentTier(
+    trackId: string,
+    slotKey: string,
+    tier: number,
+    { commit = true }: { commit?: boolean } = {},
+  ) {
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return;
 
@@ -901,7 +969,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     if (!slotConfig) return;
 
     let gearInst = track[slotConfig.instanceKey]
-      ? findGearInstance(track[slotConfig.instanceKey])
+      ? findGearInstance(track[slotConfig.instanceKey] as string | null | undefined)
       : null;
     if (!gearInst && track[slotConfig.idKey]) {
       gearInst = replaceTrackGearInstance(track, slotConfig);
@@ -923,13 +991,13 @@ export const useTimelineStore = defineStore('timeline', () => {
   // Interaction state
   // ===================================================================================
 
-  const activeTrackId = ref(null);
-  const activeTrackIndex = ref(null);
+  const activeTrackId = ref<string | null>(null);
+  const activeTrackIndex = ref<number | null>(null);
   const timelineScrollTop = ref(0);
   const timelineShift = ref(0);
   const timelineRect = ref({ width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 });
 
-  const trackLaneRects = ref({});
+  const trackLaneRects = ref<Record<string, unknown>>({});
 
   const showCursorGuide = ref(false);
   const OPERATOR_EFFECTS_VISIBLE_KEY = 'endaxis:operator-effects-visible:v1';
@@ -937,24 +1005,24 @@ export const useTimelineStore = defineStore('timeline', () => {
   const cursorPosition = ref({ x: 0, y: 0 });
   const snapStep = ref(FRAME_DURATION);
 
-  const draggingSkillData = ref(null);
+  const draggingSkillData = ref<Record<string, unknown> | null>(null);
 
-  const selectedConnectionId = ref(null);
-  const selectedActionId = ref(null);
-  const selectedLibrarySkillId = ref(null);
-  const selectedAnomalyId = ref(null);
+  const selectedConnectionId = ref<string | null>(null);
+  const selectedActionId = ref<string | null>(null);
+  const selectedLibrarySkillId = ref<string | null>(null);
+  const selectedAnomalyId = ref<string | null>(null);
 
-  const selectedCycleBoundaryId = ref(null);
-  const switchEvents = ref([]);
-  const selectedSwitchEventId = ref(null);
+  const selectedCycleBoundaryId = ref<string | null>(null);
+  const switchEvents = ref<SwitchEvent[]>([]);
+  const selectedSwitchEventId = ref<string | null>(null);
 
-  const multiSelectedIds = ref(new Set());
+  const multiSelectedIds = ref<Set<string>>(new Set());
   const isBoxSelectMode = ref(false);
-  const clipboard = ref(null);
+  const clipboard = ref<unknown>(null);
 
   const isCapturing = ref(false);
 
-  const hoveredActionId = ref(null);
+  const hoveredActionId = ref<string | null>(null);
 
   const cursorPosTimeline = computed(() => {
     return toTimelineSpace(cursorPosition.value.x, cursorPosition.value.y);
@@ -966,7 +1034,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return snapTimeToFrame(clamped);
   });
 
-  function setIsCapturing(val) {
+  function setIsCapturing(val: boolean) {
     isCapturing.value = val;
   }
 
@@ -974,7 +1042,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     return Math.max(4, Array.isArray(tracks.value) ? tracks.value.length : 0);
   }
 
-  function normalizeOperatorEffectsVisible(source, length = getOperatorEffectsTrackCount()) {
+  function normalizeOperatorEffectsVisible(
+    source: unknown[] | null | undefined,
+    length = getOperatorEffectsTrackCount(),
+  ) {
     const targetLength = Math.max(1, Number(length) || 0);
     return Array.from({ length: targetLength }, (_, index) => source?.[index] !== false);
   }
@@ -1012,7 +1083,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function isOperatorEffectsVisible(index) {
+  function isOperatorEffectsVisible(index: number) {
     ensureOperatorEffectsVisible();
     return operatorEffectsVisible.value[index] !== false;
   }
@@ -1026,20 +1097,21 @@ export const useTimelineStore = defineStore('timeline', () => {
     { immediate: true },
   );
 
-  const isActionSelected = id => selectedActionId.value === id || multiSelectedIds.value.has(id);
+  const isActionSelected = (id: string) =>
+    selectedActionId.value === id || multiSelectedIds.value.has(id);
 
   // ===================================================================================
   // History state (undo/redo)
   // ===================================================================================
 
-  const historyStack = ref([]);
+  const historyStack = ref<string[]>([]);
   const historyIndex = ref(-1);
   const MAX_HISTORY = 50;
 
   function commitState() {
     const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
     if (currentScenario) {
-      currentScenario.data = _createSnapshot();
+      currentScenario.data = _createSnapshot() ?? null;
     }
 
     const snapshot = JSON.stringify({
@@ -1082,18 +1154,19 @@ export const useTimelineStore = defineStore('timeline', () => {
   function undo() {
     if (historyIndex.value <= 0) return;
     historyIndex.value--;
-    const prevSnapshot = JSON.parse(historyStack.value[historyIndex.value]);
+    const prevSnapshot = JSON.parse(historyStack.value[historyIndex.value]!);
     restoreState(prevSnapshot);
   }
 
   function redo() {
     if (historyIndex.value >= historyStack.value.length - 1) return;
     historyIndex.value++;
-    const nextSnapshot = JSON.parse(historyStack.value[historyIndex.value]);
+    const nextSnapshot = JSON.parse(historyStack.value[historyIndex.value]!);
     restoreState(nextSnapshot);
   }
 
-  function restoreState(snapshot) {
+  function restoreState(snapshot: ScenarioSnapshot | null | undefined) {
+    if (!snapshot) return;
     const rawPrep = Number(snapshot?.prepDuration);
     if (
       snapshot?.prepDuration !== undefined &&
@@ -1153,7 +1226,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   // Scenario management
   // ===================================================================================
 
-  function _createSnapshot() {
+  function _createSnapshot(): ScenarioSnapshot {
     return dropLegacyTimedStatusData(
       JSON.parse(
         JSON.stringify({
@@ -1178,13 +1251,14 @@ export const useTimelineStore = defineStore('timeline', () => {
           gears: gearStore.gears,
         }),
       ),
-    );
+    ) as ScenarioSnapshot;
   }
 
-  function _loadSnapshot(data) {
+  function _loadSnapshot(data: ScenarioData | null | undefined) {
     if (!data) return;
     const normalized = normalizePrepConfig(JSON.parse(JSON.stringify(data)));
     const incoming = dropLegacyTimedStatusData(normalized.snapshot);
+    if (!incoming) return;
 
     restoreArmoryFromSnapshot(incoming);
     const incomingTracks = incoming.tracks
@@ -1240,7 +1314,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   // ===================================================================================
   const enableConnectionTool = ref(false);
 
-  const validConnectionTargetIds = ref(new Set());
+  const validConnectionTargetIds = ref<Set<string>>(new Set());
 
   const connectionDragState = ref({
     isDragging: false,
@@ -1262,7 +1336,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     enableConnectionTool.value = !enableConnectionTool.value;
   }
 
-  function createConnection(fromPortDir, targetPortDir, isConsumption = false, connectionData) {
+  function createConnection(
+    fromPortDir: string | null | undefined,
+    targetPortDir: string | null | undefined,
+    isConsumption = false,
+    connectionData?: Partial<Connection>,
+  ) {
     const rawConn = {
       id: `conn_${uid()}`,
       isConsumption,
@@ -1277,12 +1356,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function switchScenario(targetId) {
+  function switchScenario(targetId: string) {
     if (targetId === activeScenarioId.value) return;
 
     const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
     if (currentScenario) {
-      currentScenario.data = _createSnapshot();
+      currentScenario.data = _createSnapshot() ?? null;
     }
 
     const targetScenario = scenarioList.value.find(s => s.id === targetId);
@@ -1338,7 +1417,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function duplicateScenario(sourceId) {
+  function duplicateScenario(sourceId: string) {
     if (scenarioList.value.length >= MAX_SCENARIOS) return;
 
     const currentActive = scenarioList.value.find(s => s.id === activeScenarioId.value);
@@ -1360,7 +1439,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function deleteScenario(targetId) {
+  function deleteScenario(targetId: string) {
     if (scenarioList.value.length <= 1) return;
 
     const idx = scenarioList.value.findIndex(s => s.id === targetId);
@@ -1368,24 +1447,28 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     if (targetId === activeScenarioId.value) {
       const nextSc = scenarioList.value[idx - 1] || scenarioList.value[idx + 1];
-      switchScenario(nextSc.id);
+      if (nextSc) switchScenario(nextSc.id);
     }
     scenarioList.value.splice(idx, 1);
   }
 
-  function clampNumber(value, min, max) {
+  function clampNumber(value: unknown, min: number, max: number) {
     const num = Number(value);
     if (!Number.isFinite(num)) return min;
     return Math.max(min, Math.min(num, max));
   }
 
-  function collectActionNodeIds(action, out) {
+  function collectActionNodeIds(
+    action: TimelineAction | null | undefined,
+    out: Set<string> | null | undefined,
+  ) {
     if (!action || !out) return;
 
     if (action.instanceId) out.add(action.instanceId);
 
-    const collectEffect = effect => {
-      if (effect?._id) out.add(effect._id);
+    const collectEffect = (effect: Record<string, unknown> | null | undefined) => {
+      const id = effect?._id;
+      if (id) out.add(id as string);
     };
 
     if (Array.isArray(action.effects)) {
@@ -1394,14 +1477,52 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     if (Array.isArray(action.hits)) {
       action.hits.forEach(hit => {
-        if (Array.isArray(hit?.effects)) {
-          hit.effects.forEach(collectEffect);
+        const effects = (hit as Record<string, unknown> | undefined)?.effects;
+        if (Array.isArray(effects)) {
+          effects.forEach(collectEffect);
         }
       });
     }
   }
 
-  function buildInheritedResourceSnapshotAt(boundaryTime, sourceSnapshot) {
+  // ── Cross-scenario inheritance boundary types ──
+  // The simulation state's carryover snapshot (loose; crosses the sim boundary).
+  interface SimStateSnapshot {
+    team?: { sp?: number; maxSp?: number };
+    actors?: { id: string; resources?: { gauge?: number; maxGauge?: number } }[];
+    operatorEffects?: InheritedOperatorEffectGroup[];
+    enemyCarryover?: unknown;
+    [key: string]: unknown;
+  }
+  interface InheritedOperatorEffectEntry {
+    id?: string;
+    expiresAt?: number;
+    stat?: unknown;
+    value?: number;
+    sourceId?: string;
+    effect?: unknown;
+    stacks?: number;
+    [key: string]: unknown;
+  }
+  interface InheritedOperatorEffectGroup {
+    trackId?: string;
+    effects?: InheritedOperatorEffectEntry[];
+    oneTimeEffects?: InheritedOperatorEffectEntry[];
+    [key: string]: unknown;
+  }
+  // The resource snapshot inherited into a new scenario at a cycle boundary.
+  interface InheritedResourceSnapshot {
+    time: number;
+    team: { sp: number; maxSp: number };
+    actors: { id: string; gauge: number; maxGauge: number }[];
+    operatorEffects: InheritedOperatorEffectGroup[];
+    enemyCarryover: unknown;
+  }
+
+  function buildInheritedResourceSnapshotAt(
+    boundaryTime: number,
+    sourceSnapshot: ScenarioSnapshot,
+  ): InheritedResourceSnapshot | null {
     const time = Math.max(0, Number(boundaryTime) || 0);
 
     const compiled = compileEndaxisScenario({
@@ -1417,14 +1538,16 @@ export const useTimelineStore = defineStore('timeline', () => {
       runtimeInitialEffects: [
         ...runtimeInitialEffects.value,
         ...(sourceSnapshot.inheritedInitialEffects || []),
-      ],
+      ] as unknown as InitialEffect[],
       runtimeInitialEnemyState:
         sourceSnapshot.inheritedInitialEnemyState || inheritedInitialEnemyState.value,
       simulationEndline: time,
       lmdiAttributionMode: lmdiAttributionMode.value,
       controlledOperatorSegments: buildControlledOperatorSegments(
         (sourceSnapshot.tracks || tracks.value)?.[0]?.id ?? null,
-        sourceSnapshot.switchEvents || [],
+        (sourceSnapshot.switchEvents || []) as unknown as Parameters<
+          typeof buildControlledOperatorSegments
+        >[1],
       ),
     });
 
@@ -1449,9 +1572,9 @@ export const useTimelineStore = defineStore('timeline', () => {
       },
     );
 
-    const finalSnapshot = result.state?.exportCarryoverSnapshot
+    const finalSnapshot = (result.state?.exportCarryoverSnapshot
       ? result.state.exportCarryoverSnapshot(time)
-      : result.state?.snapshot?.();
+      : result.state?.snapshot?.()) as unknown as SimStateSnapshot | null | undefined;
     if (!finalSnapshot) return null;
 
     return {
@@ -1470,11 +1593,15 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function createInheritedScenarioData(sourceSnapshot, inheritedState, boundaryTime) {
+  function createInheritedScenarioData(
+    sourceSnapshot: ScenarioSnapshot,
+    inheritedState: InheritedResourceSnapshot | null | undefined,
+    boundaryTime: number,
+  ) {
     const time = Math.max(0, Number(boundaryTime) || 0);
     const epsilon = 0.0001;
 
-    const next = JSON.parse(JSON.stringify(sourceSnapshot));
+    const next: ScenarioSnapshot = JSON.parse(JSON.stringify(sourceSnapshot));
 
     const sourcePrepDuration = Number(sourceSnapshot.prepDuration ?? prepDuration.value);
     const nextPrepDuration = Math.max(
@@ -1484,15 +1611,15 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const actorGaugeById = new Map((inheritedState?.actors || []).map(actor => [actor.id, actor]));
 
-    const shiftTime = value => {
+    const shiftTime = (value: unknown) => {
       const battleOffset = Math.max(0, (Number(value) || 0) - time);
       return snapTimeToFrame(nextPrepDuration + battleOffset);
     };
 
-    const keptNodeIds = new Set();
+    const keptNodeIds = new Set<string>();
 
     next.tracks = (next.tracks || []).map(track => {
-      const inheritedActor = actorGaugeById.get(track.id);
+      const inheritedActor = actorGaugeById.get(track.id ?? '');
 
       const shiftedActions = (track.actions || [])
         .filter(action => {
@@ -1519,7 +1646,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       if (inheritedActor) {
         const charInfo = characterRoster.value.find(c => c.id === track.id);
         const maxGauge = charInfo
-          ? resolveGaugeMax(track.id, track, charInfo)
+          ? resolveGaugeMax(track.id ?? '', track, charInfo)
           : Number(inheritedActor.maxGauge) || Number(track.maxGaugeOverride) || 100;
 
         initialGauge = clampNumber(inheritedActor.gauge, 0, maxGauge);
@@ -1535,7 +1662,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     next.connections = (next.connections || []).filter(conn => {
       const fromId = _getConnectionEndpointId(conn, 'from');
       const toId = _getConnectionEndpointId(conn, 'to');
-      return keptNodeIds.has(fromId) && keptNodeIds.has(toId);
+      return keptNodeIds.has(fromId ?? '') && keptNodeIds.has(toId ?? '');
     });
 
     next.switchEvents = (next.switchEvents || [])
@@ -1566,7 +1693,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return next;
   }
 
-  function createInheritedScenarioFromCycleBoundary(boundaryId) {
+  function createInheritedScenarioFromCycleBoundary(boundaryId: string) {
     if (scenarioList.value.length >= MAX_SCENARIOS) {
       return {
         ok: false,
@@ -1631,7 +1758,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function buildInheritedOperatorInitialEffects(inheritedState) {
+  function buildInheritedOperatorInitialEffects(
+    inheritedState: InheritedResourceSnapshot | null | undefined,
+  ) {
     if (!inheritedState) return [];
 
     const sourceTime = Math.max(0, Number(inheritedState.time) || 0);
@@ -1704,19 +1833,14 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   const timeBlockWidth = computed(() => BASE_BLOCK_WIDTH.value);
 
-  const ensureEffectId = effect => {
-    if (!effect._id) effect._id = uid();
-    return effect._id;
-  };
-
-  const clampPercent = val => {
+  const clampPercent = (val: unknown) => {
     const num = Number(val) || 0;
     if (num < 0) return 0;
     if (num > 100) return 100;
     return num;
   };
 
-  const clampTier9 = val => {
+  const clampTier9 = (val: unknown) => {
     const num = Math.round(Number(val));
     if (!Number.isFinite(num)) return 1;
     if (num < 1) return 1;
@@ -1724,7 +1848,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return num;
   };
 
-  const clampEquipmentRefineTier = val => {
+  const clampEquipmentRefineTier = (val: unknown) => {
     const num = Math.round(Number(val));
     if (!Number.isFinite(num)) return 0;
     if (num < 0) return 0;
@@ -1732,19 +1856,19 @@ export const useTimelineStore = defineStore('timeline', () => {
     return num;
   };
 
-  const normalizeArray4 = arr => {
+  const normalizeArray4 = (arr: unknown) => {
     const list = Array.isArray(arr) ? arr.slice(0, 4) : [];
     while (list.length < 4) list.push(0);
     return list.map(v => Number(v) || 0);
   };
 
-  const normalizeArray9 = arr => {
+  const normalizeArray9 = (arr: unknown) => {
     const list = Array.isArray(arr) ? arr.slice(0, 9) : [];
     while (list.length < 9) list.push(0);
     return list.map(v => Number(v) || 0);
   };
 
-  const normalizeTrack = track => {
+  const normalizeTrack = (track: Partial<Track> | null | undefined) => {
     if (!track) return createEmptyTrack();
     const merged = {
       ...createEmptyTrack(),
@@ -1760,9 +1884,10 @@ export const useTimelineStore = defineStore('timeline', () => {
       merged.weaponAppliedDeltas = {};
     if (!merged.equipmentAppliedDeltas || typeof merged.equipmentAppliedDeltas !== 'object')
       merged.equipmentAppliedDeltas = {};
-    if (!('operatorStatus' in merged)) merged.operatorStatus = null;
-    if (!('baseStats' in merged)) merged.baseStats = null;
-    if (!('enemyStatus' in merged)) merged.enemyStatus = null;
+    const mergedRecord = merged as Record<string, unknown>;
+    if (!('operatorStatus' in mergedRecord)) mergedRecord.operatorStatus = null;
+    if (!('baseStats' in mergedRecord)) mergedRecord.baseStats = null;
+    if (!('enemyStatus' in mergedRecord)) mergedRecord.enemyStatus = null;
     if (!Array.isArray(merged.triggerEffects)) merged.triggerEffects = [];
 
     merged.equipArmorRefineTier = clampEquipmentRefineTier(merged.equipArmorRefineTier);
@@ -1786,9 +1911,18 @@ export const useTimelineStore = defineStore('timeline', () => {
     return merged;
   };
 
-  const normalizeTracks = (list = []) => list.map(t => normalizeTrack(t));
+  const normalizeTracks = (list: (Partial<Track> | undefined)[] = []) =>
+    list.map(t => normalizeTrack(t));
 
-  const TRACK_GEAR_SLOTS = [
+  interface SlotConfig {
+    slotKey: string;
+    idKey: string;
+    instanceKey: string;
+    tierKey: string;
+    teamKey?: string;
+  }
+
+  const TRACK_GEAR_SLOTS: SlotConfig[] = [
     {
       slotKey: 'armor',
       idKey: 'equipArmorId',
@@ -1834,15 +1968,15 @@ export const useTimelineStore = defineStore('timeline', () => {
     },
   });
 
-  function createMaxOperatorInstanceData(operatorSlug) {
+  function createMaxOperatorInstanceData(operatorSlug: string): Omit<OperatorInstance, 'id'> {
     const resolvedSlug = resolveOperatorSlug(operatorSlug) || operatorSlug;
     const op = getOperatorSheet(resolvedSlug);
-    const skillLevels = {};
+    const skillLevels: Record<string, number> = {};
     for (const key of Object.keys(op?.combatSkills || {})) {
       skillLevels[key] = 12;
     }
 
-    const talentStates = {};
+    const talentStates: Record<string, number> = {};
     const talentGroups = getOperatorTalentGroups(operatorSlug) || [];
     for (let i = 0; i < talentGroups.length; i++) {
       talentStates[String(i)] = talentGroups[i]?.levels ?? 0;
@@ -1859,7 +1993,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function createWeaponInstanceData(track, weaponSlug) {
+  function createWeaponInstanceData(_track: Track, weaponSlug: string): Omit<WeaponInstance, 'id'> {
     const resolvedSlug = resolveWeaponSlug(weaponSlug) || weaponSlug;
     const weaponSheet = getWeaponSheet(resolvedSlug);
     const rarity = Number(weaponSheet?.rarity) || 6;
@@ -1877,24 +2011,31 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function createGearArtificingLevels(tier) {
+  function createGearArtificingLevels(tier: number) {
     const level = clampEquipmentRefineTier(tier);
     return [level, level, level, level];
   }
 
-  function createGearInstanceData(track, slotConfig, gearPieceId) {
+  function createGearInstanceData(
+    track: Track,
+    slotConfig: SlotConfig,
+    gearPieceId: string,
+  ): Omit<GearInstance, 'id'> {
     const resolvedGearPieceId = resolveGearPieceSlug(gearPieceId) || gearPieceId;
     const piece = getGearPiece(resolvedGearPieceId);
     return {
       gearPieceId: resolvedGearPieceId,
       artificingLevels:
         piece && Number(piece.levelRequirement) >= 70
-          ? createGearArtificingLevels(track?.[slotConfig.tierKey])
+          ? createGearArtificingLevels(Number(track?.[slotConfig.tierKey]))
           : [],
     };
   }
 
-  function projectTrackWeaponFromInstance(track, weaponInstance = null) {
+  function projectTrackWeaponFromInstance(
+    track: Track | null | undefined,
+    weaponInstance: WeaponInstance | null = null,
+  ) {
     if (!track) return;
     const wpInst =
       weaponInstance ||
@@ -1913,11 +2054,17 @@ export const useTimelineStore = defineStore('timeline', () => {
     track.weaponBuffTier = clampTier9(wpInst.skill3Level ?? 1);
   }
 
-  function projectTrackGearSlotFromInstance(track, slotConfig, gearInstance = null) {
+  function projectTrackGearSlotFromInstance(
+    track: Track | null | undefined,
+    slotConfig: SlotConfig,
+    gearInstance: GearInstance | null = null,
+  ) {
     if (!track || !slotConfig) return;
     const gearInst =
       gearInstance ||
-      (track[slotConfig.instanceKey] ? findGearInstance(track[slotConfig.instanceKey]) : null);
+      (track[slotConfig.instanceKey]
+        ? findGearInstance(track[slotConfig.instanceKey] as string | null | undefined)
+        : null);
     if (!gearInst) {
       track[slotConfig.idKey] = null;
       track[slotConfig.tierKey] = 0;
@@ -1925,14 +2072,16 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     track[slotConfig.idKey] = resolveGearPieceSlug(gearInst.gearPieceId) || gearInst.gearPieceId;
-    const piece = getGearPiece(track[slotConfig.idKey]);
+    const piece = getGearPiece(track[slotConfig.idKey] as string);
     const levels = Array.isArray(gearInst.artificingLevels) ? gearInst.artificingLevels : [];
     const projectedTier =
-      levels.length > 0 ? Math.max(...levels.map(level => clampEquipmentRefineTier(level))) : 0;
+      levels.length > 0
+        ? Math.max(...levels.map((level: unknown) => clampEquipmentRefineTier(level)))
+        : 0;
     track[slotConfig.tierKey] = piece && Number(piece.levelRequirement) >= 70 ? projectedTier : 0;
   }
 
-  function projectTrackLoadoutFromInstances(track) {
+  function projectTrackLoadoutFromInstances(track: Track | null | undefined) {
     if (!track) return;
     projectTrackWeaponFromInstance(track);
     for (const slotConfig of TRACK_GEAR_SLOTS) {
@@ -1940,8 +2089,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function replaceTrackWeaponInstance(track) {
-    if (!track?.weaponId) {
+  function replaceTrackWeaponInstance(track: Track | null | undefined) {
+    if (!track) return null;
+    if (!track.weaponId) {
       track.weaponInstanceId = null;
       return null;
     }
@@ -1951,8 +2101,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     return instance;
   }
 
-  function replaceTrackGearInstance(track, slotConfig) {
-    const gearPieceId = track?.[slotConfig.idKey];
+  function replaceTrackGearInstance(track: Track | null | undefined, slotConfig: SlotConfig) {
+    if (!track) return null;
+    const gearPieceId = track[slotConfig.idKey] as string | null | undefined;
     if (!gearPieceId) {
       track[slotConfig.instanceKey] = null;
       return null;
@@ -1963,7 +2114,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return instance;
   }
 
-  function hydrateTrackInstances(track) {
+  function hydrateTrackInstances(track: Track | null | undefined) {
     if (!track) return;
 
     let opInst = track.operatorInstanceId ? findOperatorInstance(track.operatorInstanceId) : null;
@@ -2012,13 +2163,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     for (const slotConfig of TRACK_GEAR_SLOTS) {
-      const normalizedGearPieceId =
-        resolveGearPieceSlug(track[slotConfig.idKey]) || track[slotConfig.idKey];
-      if (normalizedGearPieceId !== track[slotConfig.idKey]) {
+      const currentGearPieceId = track[slotConfig.idKey] as string | null | undefined;
+      const normalizedGearPieceId = resolveGearPieceSlug(currentGearPieceId) || currentGearPieceId;
+      if (normalizedGearPieceId !== currentGearPieceId) {
         track[slotConfig.idKey] = normalizedGearPieceId;
       }
       let gearInst = track[slotConfig.instanceKey]
-        ? findGearInstance(track[slotConfig.instanceKey])
+        ? findGearInstance(track[slotConfig.instanceKey] as string | null | undefined)
         : null;
       if (gearInst && gearInst.gearPieceId !== track[slotConfig.idKey]) {
         gearInst = null;
@@ -2035,7 +2186,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     projectTrackLoadoutFromInstances(track);
   }
 
-  function restoreArmoryFromSnapshot(snapshot) {
+  function restoreArmoryFromSnapshot(snapshot: ScenarioSnapshot | null | undefined) {
     if (Array.isArray(snapshot?.operators)) operatorStore.setAll(snapshot.operators);
     else operatorStore.clearAll();
 
@@ -2046,7 +2197,29 @@ export const useTimelineStore = defineStore('timeline', () => {
     else gearStore.clearAll();
   }
 
-  function applyOperatorStatusProjection(track, status) {
+  interface TrackOperatorStatus {
+    attributes?: { strength?: number; agility?: number; intellect?: number; will?: number };
+    mainAttribute?: number;
+    secondaryAttribute?: number;
+    attack?: number;
+    health?: number;
+    critRate?: number;
+    critDmg?: number;
+    artsIntensity?: number;
+    ultimateGainEfficiency?: number;
+    comboCdReductionPercent?: number;
+    comboCdReductionFlat?: number;
+    ultCdReductionPercent?: number;
+    ultCdReductionFlat?: number;
+    comboCdExternalMult?: number;
+    ultCdExternalMult?: number;
+    [key: string]: unknown;
+  }
+
+  function applyOperatorStatusProjection(
+    track: Track,
+    status: TrackOperatorStatus | null | undefined,
+  ) {
     if (!track.stats || typeof track.stats !== 'object') {
       track.stats = createDefaultStats();
     }
@@ -2106,7 +2279,47 @@ export const useTimelineStore = defineStore('timeline', () => {
     track.linkCdReduction = clampPercent(track.stats.link_cd_reduction);
   }
 
-  function buildTimelineArmoryContext() {
+  interface TrackMeta {
+    slotIndex: number;
+    operatorSlug: string;
+    class: string | null;
+    element: string | null;
+    mainAttribute: number | null;
+    subAttribute: number | null;
+  }
+  interface ArmoryContext {
+    team: { id: string; name: string; slots: unknown[] };
+    operatorInstances: OperatorInstance[];
+    weaponInstances: WeaponInstance[];
+    gearInstances: GearInstance[];
+    slotTrackIds: (string | null)[];
+    trackMetaById: Map<string, TrackMeta>;
+  }
+  // A collected effect entry crossing the (loosely-typed) collect.ts boundary.
+  interface CollectEffectStat {
+    modifier?: string;
+    [key: string]: unknown;
+  }
+  interface CollectRuntimeEffect {
+    kind?: string;
+    condition?: unknown;
+    stat?: CollectEffectStat | null;
+    target?: string | { scope?: string; classes?: string[] } | null;
+    id?: string;
+    stacks?: number;
+    maxStacks?: number;
+    stackStrategy?: unknown;
+    external?: unknown;
+    [key: string]: unknown;
+  }
+  interface CollectedEffectEntry {
+    effect?: CollectRuntimeEffect;
+    sourceSlotIndex: number;
+    sourceOperatorSlug?: string;
+    [key: string]: unknown;
+  }
+
+  function buildTimelineArmoryContext(): ArmoryContext {
     const emptySlot = {
       operatorId: null,
       weaponId: null,
@@ -2129,15 +2342,21 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     for (let index = 0; index < Math.min(tracks.value.length, 4); index++) {
       const track = tracks.value[index];
-      const opInst = track?.operatorInstanceId
+      if (!track) continue;
+      const opInst = track.operatorInstanceId
         ? findOperatorInstance(track.operatorInstanceId)
         : null;
       if (!opInst) continue;
 
       const wpInst = track.weaponInstanceId ? findWeaponInstance(track.weaponInstanceId) : null;
-      const gear = { armor: null, gloves: null, kit1: null, kit2: null };
+      const gear: Record<string, string | null> = {
+        armor: null,
+        gloves: null,
+        kit1: null,
+        kit2: null,
+      };
       for (const slotConfig of TRACK_GEAR_SLOTS) {
-        const gearInstId = track[slotConfig.instanceKey];
+        const gearInstId = track[slotConfig.instanceKey] as string | null | undefined;
         const gearInst = gearInstId ? findGearInstance(gearInstId) : null;
         if (!gearInst) continue;
         gear[slotConfig.teamKey || slotConfig.slotKey] = gearInst.id;
@@ -2160,8 +2379,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         operatorSlug: opInst.operatorSlug,
         class: operatorSheet?.class || null,
         element: operatorSheet?.element || null,
-        mainAttribute: operatorSheet?.mainAttribute || operatorSheet?.primaryAttribute || null,
-        subAttribute: operatorSheet?.subAttribute || operatorSheet?.secondaryAttribute || null,
+        mainAttribute: operatorSheet?.mainAttribute || null,
+        subAttribute: operatorSheet?.subAttribute || null,
       });
 
       if (!operatorIds.has(opInst.id)) {
@@ -2184,7 +2403,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function buildOperatorEffectById(operatorSlug, operatorInstance) {
+  function buildOperatorEffectById(
+    operatorSlug: string,
+    operatorInstance: OperatorInstance | null | undefined,
+  ) {
     if (!operatorSlug || !operatorInstance) return undefined;
     const instance = {
       ...toRaw(operatorInstance),
@@ -2211,9 +2433,20 @@ export const useTimelineStore = defineStore('timeline', () => {
       ],
     };
     try {
-      const collectedEffects = collectEffects(team, [instance], [], []);
+      const collectedEffects = collectEffects(
+        team as Parameters<typeof collectEffects>[0],
+        [instance],
+        [],
+        [],
+      );
       const effectById = buildEffectById(collectedEffects);
-      const collectedTriggers = collectTriggerEffects(team, [instance], [], [], effectById);
+      const collectedTriggers = collectTriggerEffects(
+        team as Parameters<typeof collectTriggerEffects>[0],
+        [instance],
+        [],
+        [],
+        effectById,
+      );
       collectedTriggers.forEach(entry => {
         (entry.triggerEffect?.effects || []).forEach(effect => {
           if (effect?.id) {
@@ -2233,15 +2466,16 @@ export const useTimelineStore = defineStore('timeline', () => {
   }
 
   function resolveInitialEffectTargetTrackIds(
-    effect,
-    sourceSlotIndex,
-    slotTrackIds,
-    trackMetaById,
+    effect: CollectRuntimeEffect,
+    sourceSlotIndex: number,
+    slotTrackIds: (string | null)[],
+    trackMetaById: Map<string, TrackMeta>,
   ) {
     const sourceTrackId = slotTrackIds[sourceSlotIndex] || null;
     const rawTarget = effect?.target;
-    const scope = typeof rawTarget === 'string' ? rawTarget : rawTarget?.scope;
-    const allowedClasses = Array.isArray(rawTarget?.classes) ? rawTarget.classes : null;
+    const targetObj = typeof rawTarget === 'object' && rawTarget ? rawTarget : null;
+    const scope = typeof rawTarget === 'string' ? rawTarget : targetObj?.scope;
+    const allowedClasses = Array.isArray(targetObj?.classes) ? targetObj.classes : null;
 
     const candidateTrackIds = [...trackMetaById.keys()].filter(trackId => {
       if (!allowedClasses?.length) return true;
@@ -2273,7 +2507,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function buildInitialRuntimeEffectsFromCollected(collectedEffects, armoryContext) {
+  function buildInitialRuntimeEffectsFromCollected(
+    collectedEffects: CollectedEffectEntry[],
+    armoryContext: ArmoryContext,
+  ) {
     const ENEMY_STAT_MODIFIERS = new Set([
       'susceptibility',
       'increasedDmgTaken',
@@ -2292,7 +2529,10 @@ export const useTimelineStore = defineStore('timeline', () => {
 
       const sourceActorId = armoryContext.slotTrackIds[ce.sourceSlotIndex] || null;
       if (!sourceActorId) return [];
-      const value = resolveEffectValueStatic(effect, actorStatsMap.get(sourceActorId));
+      const value = resolveEffectValueStatic(
+        effect as Parameters<typeof resolveEffectValueStatic>[0],
+        actorStatsMap.get(sourceActorId) as Parameters<typeof resolveEffectValueStatic>[1],
+      );
       const runtimeEffect = {
         ...effect,
         hide: true,
@@ -2308,7 +2548,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         .map(targetId => {
           const targetMeta = armoryContext.trackMetaById.get(targetId);
           const resolvedStat = resolveStatAttributes(
-            effect.stat,
+            effect.stat as Parameters<typeof resolveStatAttributes>[0],
             targetMeta?.mainAttribute,
             targetMeta?.subAttribute,
           );
@@ -2328,15 +2568,18 @@ export const useTimelineStore = defineStore('timeline', () => {
     });
   }
 
-  function buildConditionalPassiveTriggerEffectsFromCollected(collectedEffects, armoryContext) {
-    const out = [];
+  function buildConditionalPassiveTriggerEffectsFromCollected(
+    collectedEffects: CollectedEffectEntry[],
+    armoryContext: ArmoryContext,
+  ) {
+    const out: Record<string, unknown>[] = [];
 
     collectedEffects.forEach(ce => {
       const effect = ce?.effect;
       if (!effect || effect.kind !== 'status' || !effect.condition) return;
       if (Array.isArray(effect.condition)) return;
 
-      let cond = effect.condition;
+      let cond = effect.condition as { kind?: string; status?: unknown; [key: string]: unknown };
       if (cond.kind === 'enemyStaggered') {
         cond = { kind: 'enemyStatus', status: 'staggered' };
       }
@@ -2345,7 +2588,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       const sourceTrackId = armoryContext.slotTrackIds[ce.sourceSlotIndex] || null;
       if (!sourceTrackId) return;
 
-      const isEnemyTarget = isEnemyEffect(effect);
+      const isEnemyTarget = isEnemyEffect(effect as Parameters<typeof isEnemyEffect>[0]);
       const idempotencyCondition = isEnemyTarget
         ? { kind: 'not', condition: { kind: 'enemyStatus', status: effect.id } }
         : { kind: 'not', condition: { kind: 'operatorStatus', status: effect.id } };
@@ -2365,7 +2608,9 @@ export const useTimelineStore = defineStore('timeline', () => {
       const removeCondition = cond.stacks
         ? { kind: 'not', condition: { kind: cond.kind, status: cond.status, stacks: cond.stacks } }
         : undefined;
-      const isTeamScoped = effect.target === 'team' || effect.target?.scope === 'team';
+      const isTeamScoped =
+        effect.target === 'team' ||
+        (typeof effect.target === 'object' && effect.target?.scope === 'team');
       const removeEffect = isEnemyTarget
         ? {
             kind: 'consume',
@@ -2404,8 +2649,8 @@ export const useTimelineStore = defineStore('timeline', () => {
   // Contract criteria. The criterion group + level index is derived from each tag id:
   // group = Math.floor(id/100), levelIdx = (id % 100) - 1 (scalar-valued criteria are idx-invariant).
   function buildContingencyCriteriaInjection() {
-    const effects = [];
-    const triggers = [];
+    const effects: Record<string, unknown>[] = [];
+    const triggers: Record<string, unknown>[] = [];
     const firstTrackId = tracks.value[0]?.id || null;
     const seenGroups = new Set();
     for (const rawId of contingencyContractTags.value || []) {
@@ -2456,8 +2701,9 @@ export const useTimelineStore = defineStore('timeline', () => {
       }
     });
 
-    const computeFallbackStatus = track => {
-      const opInst = track?.operatorInstanceId
+    const computeFallbackStatus = (track: Track | null | undefined) => {
+      if (!track) return null;
+      const opInst = track.operatorInstanceId
         ? findOperatorInstance(track.operatorInstanceId)
         : null;
       if (!opInst) return null;
@@ -2470,21 +2716,25 @@ export const useTimelineStore = defineStore('timeline', () => {
     try {
       const conditions = createDefaultTeamConditions();
 
-      const collected = collectEffects(team, operatorInstances, weaponInstances, gearInstances);
+      const collected = collectEffects(
+        team as Parameters<typeof collectEffects>[0],
+        operatorInstances,
+        weaponInstances,
+        gearInstances,
+      );
+      const stateToggles = conditions.operatorStatusState.stateToggles as Record<string, boolean>;
       for (const ce of collected) {
         const cond = ce?.effect?.condition;
         if (!cond || Array.isArray(cond)) continue;
         if (cond.kind === 'operatorStatus') {
-          conditions.operatorStatusState.stateToggles[
-            `${ce.sourceSlotIndex}::${statusToKey(cond.status)}`
-          ] = true;
+          stateToggles[`${ce.sourceSlotIndex}::${statusToKey(cond.status)}`] = true;
         }
       }
 
       const cc = buildContingencyCriteriaInjection();
 
       const result = getTeamStatus(
-        team,
+        team as Parameters<typeof getTeamStatus>[0],
         operatorInstances,
         weaponInstances,
         gearInstances,
@@ -2492,28 +2742,30 @@ export const useTimelineStore = defineStore('timeline', () => {
         undefined,
         undefined,
         undefined,
-        cc.effects,
+        cc.effects as unknown as Parameters<typeof getTeamStatus>[8],
       );
       const effectById = buildEffectById(collected);
       const collectedTriggers = collectTriggerEffects(
-        team,
+        team as Parameters<typeof collectTriggerEffects>[0],
         operatorInstances,
         weaponInstances,
         gearInstances,
         effectById,
       );
       const conditionalPassiveTriggers = buildConditionalPassiveTriggerEffectsFromCollected(
-        collected,
+        collected as unknown as CollectedEffectEntry[],
         armoryContext,
       );
-      const serializedTriggers = cloneJsonData([
-        ...collectedTriggers,
-        ...conditionalPassiveTriggers,
-      ]).map(cte => ({
+      const serializedTriggers = (
+        cloneJsonData([...collectedTriggers, ...conditionalPassiveTriggers]) as Record<
+          string,
+          unknown
+        >[]
+      ).map((cte: Record<string, unknown>): Record<string, unknown> => ({
         ...cte,
         sourceTrackId:
           cte?.sourceTrackId ||
-          tracks.value[cte?.sourceSlotIndex]?.id ||
+          tracks.value[cte?.sourceSlotIndex as number]?.id ||
           cte?.sourceOperatorSlug ||
           null,
       }));
@@ -2523,14 +2775,17 @@ export const useTimelineStore = defineStore('timeline', () => {
       // to a 0 duration and silently drops the status (breaks Bent Edges, Wrap).
       const allTriggers = [...serializedTriggers, ...structuredClone(cc.triggers)];
       runtimeInitialEffects.value = buildInitialRuntimeEffectsFromCollected(
-        [...collected, ...cc.effects],
+        [...collected, ...cc.effects] as unknown as CollectedEffectEntry[],
         armoryContext,
       );
       tracks.value.forEach((track, index) => {
         const fallbackStatus = computeFallbackStatus(track);
-        track.enemyStatus = cloneJsonData(result.enemyStatus);
-        track.triggerEffects = allTriggers || [];
-        applyOperatorStatusProjection(track, result.operatorStatuses?.[index] || fallbackStatus);
+        track.enemyStatus = cloneJsonData(result.enemyStatus) as unknown as TrackStatusState;
+        track.triggerEffects = (allTriggers || []) as unknown as TriggerEffectEntry[];
+        applyOperatorStatusProjection(
+          track,
+          (result.operatorStatuses?.[index] || fallbackStatus) as TrackOperatorStatus | null,
+        );
         refreshTrackActionPayloads(track);
       });
     } catch (error) {
@@ -2539,13 +2794,16 @@ export const useTimelineStore = defineStore('timeline', () => {
       tracks.value.forEach(track => {
         track.enemyStatus = null;
         track.triggerEffects = [];
-        applyOperatorStatusProjection(track, computeFallbackStatus(track));
+        applyOperatorStatusProjection(
+          track,
+          computeFallbackStatus(track) as TrackOperatorStatus | null,
+        );
         refreshTrackActionPayloads(track);
       });
     }
   }
 
-  function getTrackPatchedSkills(track) {
+  function getTrackPatchedSkills(track: Track | null | undefined) {
     if (!track?.id || !track?.operatorInstanceId) return null;
     const operator = getOperatorSheet(track.id);
     const operatorInstance = findOperatorInstance(track.operatorInstanceId);
@@ -2560,12 +2818,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function getActionSourceSkillKey(action) {
+  function getActionSourceSkillKey(action: TimelineAction | null | undefined) {
     if (!action) return null;
     return action.sourceSkillKey || action.skillId || action.type || null;
   }
 
-  function getActionSegmentIndex(action) {
+  function getActionSegmentIndex(action: TimelineAction | null | undefined) {
     const raw =
       action?.segmentIndex ??
       action?.attackSegmentIndex ??
@@ -2575,7 +2833,22 @@ export const useTimelineStore = defineStore('timeline', () => {
     return index > 0 ? index - 1 : null;
   }
 
-  function resolveActionRefreshPayload(skillIdBase, flatSkill, action, levelIndex) {
+  interface FlatSkillLike {
+    segments?: (Segment | undefined)[];
+    levelKey?: string;
+    cooldown?: number | number[];
+    type?: string;
+    animationTime?: number;
+    enhancementTime?: number;
+    [key: string]: unknown;
+  }
+
+  function resolveActionRefreshPayload(
+    skillIdBase: string,
+    flatSkill: FlatSkillLike | null | undefined,
+    action: TimelineAction,
+    levelIndex: number,
+  ) {
     const segmentIndex = getActionSegmentIndex(action);
     if (segmentIndex !== null) {
       const segment = flatSkill?.segments?.[segmentIndex];
@@ -2599,7 +2872,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function refreshTrackActionPayloads(track) {
+  function refreshTrackActionPayloads(track: Track | null | undefined) {
+    if (!track) return;
     const patched = getTrackPatchedSkills(track);
     if (!patched) return;
 
@@ -2611,11 +2885,11 @@ export const useTimelineStore = defineStore('timeline', () => {
       const flatSkill = sourceSkillKey ? flatSkills?.[sourceSkillKey] : null;
       if (!flatSkill) return;
 
-      const rawLevel = Number(skillLevels?.[flatSkill.levelKey] ?? 1);
+      const rawLevel = Number(skillLevels?.[flatSkill.levelKey ?? ''] ?? 1);
       const levelIndex = Math.max(0, Math.min((Number.isFinite(rawLevel) ? rawLevel : 1) - 1, 11));
       const refreshPayload = resolveActionRefreshPayload(
-        sourceSkillKey,
-        flatSkill,
+        sourceSkillKey!,
+        flatSkill as unknown as Parameters<typeof resolveActionRefreshPayload>[1],
         action,
         levelIndex,
       );
@@ -2625,8 +2899,10 @@ export const useTimelineStore = defineStore('timeline', () => {
       }
 
       action.hits = resolveHitsFromSheet(
-        Array.isArray(action.hits) ? action.hits : [],
-        refreshPayload.rawEntries,
+        (Array.isArray(action.hits) ? action.hits : []) as unknown as Parameters<
+          typeof resolveHitsFromSheet
+        >[0],
+        refreshPayload.rawEntries as unknown as Parameters<typeof resolveHitsFromSheet>[1],
         levelIndex,
         { preserveCondition: true },
       );
@@ -2648,13 +2924,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     });
   }
 
-  const getCharacterElementColor = characterId => {
+  const getCharacterElementColor = (characterId: string) => {
     const charInfo = characterRoster.value.find(c => c.id === characterId);
     if (!charInfo || !charInfo.element) return ELEMENT_COLORS.default;
     return getColor(charInfo.element);
   };
 
-  const getWeaponById = weaponId => {
+  const getWeaponById = (weaponId: string | null | undefined) => {
     if (!weaponId) return null;
     const resolvedId = resolveWeaponSlug(weaponId) || weaponId;
     return (
@@ -2668,15 +2944,16 @@ export const useTimelineStore = defineStore('timeline', () => {
     );
   };
 
-  const getModifierLabel = modifierId => {
-    const found = (misc.value?.modifierDefs || []).find(d => d.id === modifierId);
+  const getModifierLabel = (modifierId: string) => {
+    const defs = (misc.value?.modifierDefs || []) as { id?: string; label?: string }[];
+    const found = defs.find(d => d.id === modifierId);
     if (found?.label) return found.label;
     const translated = tr(`stats.${modifierId}`);
     if (translated !== `stats.${modifierId}`) return translated;
     return modifierId || '';
   };
 
-  const normalizeWeaponCommonSlots = slots => {
+  const normalizeWeaponCommonSlots = (slots: unknown) => {
     const list = Array.isArray(slots) ? slots.slice(0, 2) : [];
     while (list.length < 2) list.push({});
     return list.map(s => ({
@@ -2690,7 +2967,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }));
   };
 
-  const normalizeWeaponBuffBonuses = bonuses => {
+  const normalizeWeaponBuffBonuses = (bonuses: unknown) => {
     if (!Array.isArray(bonuses)) return [];
     return bonuses
       .map(b => ({
@@ -2705,9 +2982,12 @@ export const useTimelineStore = defineStore('timeline', () => {
       .filter(b => b.modifierId);
   };
 
-  const normalizeWeaponCommonModifiersTable = table => {
-    const safe = table && typeof table === 'object' ? table : {};
-    const out = {};
+  const normalizeWeaponCommonModifiersTable = (table: unknown) => {
+    const safe = (table && typeof table === 'object' ? table : {}) as Record<
+      string,
+      Record<string, unknown> | undefined
+    >;
+    const out: Record<string, unknown> = {};
     for (const [key, entry] of Object.entries(safe)) {
       if (!key) continue;
       out[key] = {
@@ -2719,11 +2999,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     return out;
   };
 
-  const normalizeEquipmentAdapterTable = table => {
-    const safe = table && typeof table === 'object' ? table : {};
-    const out = {};
-    const normalizeOne = entry => {
-      const raw = entry && typeof entry === 'object' ? entry : {};
+  const normalizeEquipmentAdapterTable = (table: unknown) => {
+    const safe = (table && typeof table === 'object' ? table : {}) as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    const normalizeOne = (entry: unknown) => {
+      const raw = (entry && typeof entry === 'object' ? entry : {}) as Record<string, unknown>;
       return {
         armorSingle: normalizeArray4(raw.armorSingle),
         armorDual: normalizeArray4(raw.armorDual),
@@ -2740,13 +3020,19 @@ export const useTimelineStore = defineStore('timeline', () => {
     return out;
   };
 
-  const normalizeDomainConfig = incoming => {
-    const safe = incoming && typeof incoming === 'object' ? incoming : {};
-    const normalizeDomain = domainLike => {
-      const raw = domainLike && typeof domainLike === 'object' ? domainLike : {};
+  const normalizeDomainConfig = (incoming: unknown) => {
+    const safe = (incoming && typeof incoming === 'object' ? incoming : {}) as Record<
+      string,
+      unknown
+    >;
+    const normalizeDomain = (domainLike: unknown) => {
+      const raw = (domainLike && typeof domainLike === 'object' ? domainLike : {}) as Record<
+        string,
+        unknown
+      >;
       const enabledRaw = Array.isArray(raw.enabled) ? raw.enabled : [];
-      const enabled = [];
-      const seen = new Set();
+      const enabled: string[] = [];
+      const seen = new Set<string>();
       for (const idLike of enabledRaw) {
         const id = typeof idLike === 'string' ? idLike.trim() : '';
         if (!id) continue;
@@ -2754,8 +3040,11 @@ export const useTimelineStore = defineStore('timeline', () => {
         seen.add(id);
         enabled.push(id);
       }
-      const unitsRaw = raw.units && typeof raw.units === 'object' ? raw.units : {};
-      const units = {};
+      const unitsRaw = (raw.units && typeof raw.units === 'object' ? raw.units : {}) as Record<
+        string,
+        unknown
+      >;
+      const units: Record<string, string> = {};
       for (const [id, unit] of Object.entries(unitsRaw)) {
         if (!id) continue;
         if (unit !== 'flat' && unit !== 'percent') continue;
@@ -2770,13 +3059,16 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   };
 
-  const normalizeEquipmentAffixes = (level, affixesLike) => {
-    const safe = affixesLike && typeof affixesLike === 'object' ? affixesLike : {};
+  const normalizeEquipmentAffixes = (level: unknown, affixesLike: unknown) => {
+    const safe = (affixesLike && typeof affixesLike === 'object' ? affixesLike : {}) as Record<
+      string,
+      unknown
+    >;
     const is70 = Number(level) === 70;
     const size = is70 ? 4 : 1;
 
-    const normalizePrimary = input => {
-      const raw = input && typeof input === 'object' ? input : {};
+    const normalizePrimary = (input: unknown) => {
+      const raw = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
       const modifierId =
         typeof raw.modifierId === 'string' && raw.modifierId.trim()
           ? raw.modifierId.trim()
@@ -2792,15 +3084,15 @@ export const useTimelineStore = defineStore('timeline', () => {
       };
     };
 
-    const normalizeAdapter = input => {
-      const raw = input && typeof input === 'object' ? input : {};
+    const normalizeAdapter = (input: unknown) => {
+      const raw = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
       const baseVals = is70
         ? normalizeArray4(raw.values)
         : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0];
       const baseValues = baseVals.slice(0, size);
 
       const entriesRaw = Array.isArray(raw.entries) ? raw.entries : null;
-      let entries = [];
+      let entries: Record<string, unknown>[] = [];
 
       if (entriesRaw) {
         entries = entriesRaw.map(e => {
@@ -2822,7 +3114,7 @@ export const useTimelineStore = defineStore('timeline', () => {
           : raw.modifierId
             ? [raw.modifierId]
             : [];
-        const cleaned = [];
+        const cleaned: string[] = [];
         for (const id of ids) {
           if (typeof id !== 'string') continue;
           const trimmed = id.trim();
@@ -2832,8 +3124,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         entries = cleaned.map(modifierId => ({ modifierId, values: [...baseValues] }));
       }
 
-      const seen = new Set();
-      const cleanedEntries = [];
+      const seen = new Set<string>();
+      const cleanedEntries: Record<string, unknown>[] = [];
       for (const ent of entries) {
         const modifierId = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : '';
         if (!modifierId) continue;
@@ -2859,39 +3151,47 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   };
 
-  const normalizeEquipmentDatabase = list => {
+  const normalizeEquipmentDatabase = (list: unknown) => {
     const safe = Array.isArray(list) ? list : [];
     return safe.map(eq => {
-      const base = { ...(eq || {}) };
-      base.canonicalGearPieceId = resolveGearPieceSlug(base.id) || null;
+      const base = { ...(eq || {}) } as Record<string, unknown>;
+      base.canonicalGearPieceId =
+        resolveGearPieceSlug(base.id as string | null | undefined) || null;
       const is70 = Number(base.level) === 70;
       const legacy = base.affixes70 && typeof base.affixes70 === 'object' ? base.affixes70 : null;
       const affixesInput =
         base.affixes && typeof base.affixes === 'object' ? base.affixes : legacy || null;
       if (affixesInput) {
-        base.affixes = normalizeEquipmentAffixes(base.level, affixesInput);
+        const affixes = normalizeEquipmentAffixes(base.level, affixesInput);
+        base.affixes = affixes;
         if (!is70) {
-          base.affixes.primary1.values = base.affixes.primary1.values.slice(0, 1);
-          base.affixes.primary2.values = base.affixes.primary2.values.slice(0, 1);
-          base.affixes.adapter.values = base.affixes.adapter.values.slice(0, 1);
-          if (Array.isArray(base.affixes.adapter.entries)) {
-            base.affixes.adapter.entries.forEach(e => {
-              if (Array.isArray(e?.values)) e.values = e.values.slice(0, 1);
-            });
-          }
+          affixes.primary1.values = affixes.primary1.values.slice(0, 1);
+          affixes.primary2.values = affixes.primary2.values.slice(0, 1);
+          affixes.adapter.values = affixes.adapter.values.slice(0, 1);
+          affixes.adapter.entries.forEach(e => {
+            if (Array.isArray(e?.values)) e.values = e.values.slice(0, 1);
+          });
         }
       }
       return base;
     });
   };
 
-  const normalizeEquipmentTemplates = (templatesLike, fallback = null) => {
-    const safe = templatesLike && typeof templatesLike === 'object' ? templatesLike : {};
-    const fb = fallback && typeof fallback === 'object' ? fallback : {};
+  const normalizeEquipmentTemplates = (templatesLike: unknown, fallback: unknown = null) => {
+    const safe = (
+      templatesLike && typeof templatesLike === 'object' ? templatesLike : {}
+    ) as Record<string, unknown>;
+    const fb = (fallback && typeof fallback === 'object' ? fallback : {}) as Record<
+      string,
+      unknown
+    >;
 
-    const normalizeOne = (input, fbInput) => {
-      const raw = input && typeof input === 'object' ? input : {};
-      const fbRaw = fbInput && typeof fbInput === 'object' ? fbInput : {};
+    const normalizeOne = (input: unknown, fbInput: unknown) => {
+      const raw = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+      const fbRaw = (fbInput && typeof fbInput === 'object' ? fbInput : {}) as Record<
+        string,
+        unknown
+      >;
       return {
         primary1: normalizeArray4(raw.primary1 ?? fbRaw.primary1),
         primary2: normalizeArray4(raw.primary2 ?? fbRaw.primary2),
@@ -2906,8 +3206,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   };
 
-  const normalizeEquipmentMiscConfig = incoming => {
-    const safe = incoming && typeof incoming === 'object' ? incoming : {};
+  const normalizeEquipmentMiscConfig = (incoming: unknown) => {
+    const safe = (incoming && typeof incoming === 'object' ? incoming : {}) as Record<
+      string,
+      unknown
+    >;
 
     if (safe.equipmentTemplates || safe.equipmentAdapterTable) {
       return {
@@ -2942,20 +3245,25 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const legacyDeltas = normalizeArray4(safe.equipmentRefineDeltas);
     legacyDeltas[0] = 0;
-    const legacyDefaults =
+    const legacyDefaults = (
       safe.equipment70SlotDefaults && typeof safe.equipment70SlotDefaults === 'object'
         ? safe.equipment70SlotDefaults
-        : {};
+        : {}
+    ) as Record<string, unknown>;
 
-    const buildFromLegacy = (slotKey, baseFallback) => {
-      const raw =
+    const buildFromLegacy = (
+      slotKey: string,
+      baseFallback: { primary1?: number; primary2?: number; primary1Single?: number },
+    ) => {
+      const raw = (
         legacyDefaults[slotKey] && typeof legacyDefaults[slotKey] === 'object'
           ? legacyDefaults[slotKey]
-          : {};
+          : {}
+      ) as Record<string, unknown>;
       const p1 = Number(raw.primary1 ?? baseFallback.primary1) || 0;
       const p2 = Number(raw.primary2 ?? baseFallback.primary2) || 0;
       const p1s = Number(raw.primary1Single ?? baseFallback.primary1Single) || 0;
-      const ladder = base =>
+      const ladder = (base: unknown) =>
         [0, 1, 2, 3].map(t => (Number(base) || 0) + (Number(legacyDeltas[t]) || 0));
       return { primary1: ladder(p1), primary2: ladder(p2), primary1Single: ladder(p1s) };
     };
@@ -2975,10 +3283,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   };
 
-  const normalizeModifierDefs = defs => {
+  const normalizeModifierDefs = (defs: unknown) => {
     const list = Array.isArray(defs) ? defs : [];
-    const seen = new Set();
-    const out = [];
+    const seen = new Set<string>();
+    const out: { id: string; label: unknown; note: unknown; domainTags: unknown }[] = [];
     for (const def of list) {
       const id =
         typeof def?.id === 'string'
@@ -2996,8 +3304,9 @@ export const useTimelineStore = defineStore('timeline', () => {
   const buildOptimizerCharacterRoster = () => {
     const optimizerCharacters = getTimelineOperatorList().map(entry => {
       const slug = resolveOperatorSlug(entry?.slug) || entry?.slug;
-      const operator = getOperatorSheet(slug) || {};
-      const ultimateSkill = operator?.combatSkills?.ultimate || {};
+      const operator = (getOperatorSheet(slug) || {}) as Partial<OperatorSheet> &
+        Record<string, unknown>;
+      const ultimateSkill = operator?.combatSkills?.ultimate;
       const maxUltimateGauge = Number(ultimateSkill?.ultimateEnergyCost) || 100;
       const acceptTeamGauge = operator?.acceptTeamUltEnergy !== false;
 
@@ -3028,7 +3337,8 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   const buildOptimizerWeaponDatabase = () => {
     return getTimelineWeaponList().map(entry => {
-      const weapon = getWeaponSheet(entry.slug) || {};
+      const weapon = (getWeaponSheet(entry.slug) || {}) as Partial<WeaponSheet> &
+        Record<string, unknown>;
       return {
         id: entry.slug,
         canonicalSlug: entry.slug,
@@ -3048,7 +3358,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   const buildOptimizerEquipmentDatabase = () => {
     const list = getTimelineGearPieceList().map(entry => {
-      const piece = getGearPiece(entry.slug) || {};
+      const piece = (getGearPiece(entry.slug) || {}) as Partial<GearPieceSheet>;
       return {
         id: entry.slug,
         canonicalGearPieceId: entry.slug,
@@ -3082,7 +3392,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     return getTimelineEnemyList().map(enemy => ({
       ...cloneJsonData(enemy),
       name: getEnemyGameName(enemy.id),
-      executionRecovery: Number(enemy.executionRecovery) || Number(enemy.finisherRecovery) || 25,
+      executionRecovery:
+        Number((enemy as { executionRecovery?: number }).executionRecovery) ||
+        Number(enemy.finisherRecovery) ||
+        25,
       resistance: normalizeEnemyResistance(enemy.resistance),
     }));
   };
@@ -3093,26 +3406,21 @@ export const useTimelineStore = defineStore('timeline', () => {
     weaponDatabase.value = buildOptimizerWeaponDatabase();
     equipmentDatabase.value = buildOptimizerEquipmentDatabase();
     equipmentCategories.value = [
-      ...new Set(equipmentDatabase.value.map(item => item?.category).filter(Boolean)),
-    ];
+      ...new Set(
+        equipmentDatabase.value.map(item => item?.category as string | undefined).filter(Boolean),
+      ),
+    ] as string[];
     equipmentCategoryConfigs.value = cloneJsonData(getTimelineEquipmentCategoryConfigs()) || {};
     misc.value = buildOptimizerMisc();
     enemyDatabase.value = buildOptimizerEnemyDatabase();
     enemyCategories.value = [
-      ...new Set(enemyDatabase.value.map(enemy => enemy?.category).filter(Boolean)),
-    ];
+      ...new Set(
+        enemyDatabase.value.map(enemy => enemy?.category as string | undefined).filter(Boolean),
+      ),
+    ] as string[];
   };
 
-  const computeWeaponDeltasForTrack = track => {
-    return {};
-  };
-
-  const applyWeaponDeltasToTrack = (track, newDeltas) => {
-    if (!track) return;
-    track.weaponAppliedDeltas = { ...(newDeltas || {}) };
-  };
-
-  function syncTrackWeaponModifiers(trackId) {
+  function syncTrackWeaponModifiers(trackId: string | null | undefined) {
     if (!trackId) return;
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return;
@@ -3146,7 +3454,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     if (commit) commitState();
   }
 
-  const getEquipmentById = equipmentId => {
+  const getEquipmentById = (equipmentId: string | null | undefined) => {
     if (!equipmentId) return null;
     const resolvedId = resolveGearPieceSlug(equipmentId) || equipmentId;
     return (
@@ -3160,40 +3468,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     );
   };
 
-  const getEquipmentIdForSlot = (track, slotKey) => {
-    if (!track) return null;
-    if (slotKey === 'armor') return track.equipArmorId;
-    if (slotKey === 'gloves') return track.equipGlovesId;
-    if (slotKey === 'accessory1') return track.equipAccessory1Id;
-    if (slotKey === 'accessory2') return track.equipAccessory2Id;
-    return null;
-  };
-
-  const getEquipmentRefineTierForSlot = (track, slotKey) => {
-    if (!track) return 0;
-    if (slotKey === 'armor') return clampEquipmentRefineTier(track.equipArmorRefineTier);
-    if (slotKey === 'gloves') return clampEquipmentRefineTier(track.equipGlovesRefineTier);
-    if (slotKey === 'accessory1') return clampEquipmentRefineTier(track.equipAccessory1RefineTier);
-    if (slotKey === 'accessory2') return clampEquipmentRefineTier(track.equipAccessory2RefineTier);
-    return 0;
-  };
-
-  const computeEquipmentDeltasForTrack = track => {
-    return {};
-  };
-
-  const applyEquipmentDeltasToTrack = (track, newDeltas) => {
-    if (!track) return;
-    track.equipmentAppliedDeltas = { ...(newDeltas || {}) };
-  };
-
-  function syncTrackEquipmentModifiers(trackId) {
+  function syncTrackEquipmentModifiers(trackId: string | null | undefined) {
     if (!trackId) return;
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return;
     for (const slotConfig of TRACK_GEAR_SLOTS) {
       const gearPieceId = track[slotConfig.idKey];
-      const piece = gearPieceId ? getGearPiece(gearPieceId) : null;
       if (!gearPieceId) {
         track[slotConfig.instanceKey] = null;
         projectTrackGearSlotFromInstance(track, slotConfig, null);
@@ -3201,7 +3481,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       }
 
       const existing = track[slotConfig.instanceKey]
-        ? findGearInstance(track[slotConfig.instanceKey])
+        ? findGearInstance(track[slotConfig.instanceKey] as string | null | undefined)
         : null;
       if (existing && existing.gearPieceId === gearPieceId) {
         projectTrackGearSlotFromInstance(track, slotConfig, existing);
@@ -3221,43 +3501,24 @@ export const useTimelineStore = defineStore('timeline', () => {
     if (commit) commitState();
   }
 
-  const getEquipmentCategoryConfig = category => {
-    if (!category) return null;
-    return (
-      equipmentCategoryConfigs.value?.[category] ||
-      equipmentCategoryConfigs.value?.[getGearSetZhName(category)] ||
-      null
-    );
-  };
-
-  const getEquipmentCategoryOverride = category => {
-    if (!category) return null;
-    return equipmentCategoryOverrides.value?.[category] || null;
-  };
-
-  function updateEquipmentCategoryOverride(category, patch) {
+  function updateEquipmentCategoryOverride(
+    category: string | null | undefined,
+    patch: Record<string, unknown> | null | undefined,
+  ) {
     if (!category || !patch) return;
     if (!equipmentCategoryOverrides.value) equipmentCategoryOverrides.value = {};
     if (!equipmentCategoryOverrides.value[category])
       equipmentCategoryOverrides.value[category] = {};
-    Object.assign(equipmentCategoryOverrides.value[category], patch);
+    Object.assign(equipmentCategoryOverrides.value[category] as object, patch);
     commitState();
   }
 
-  const getSetBonusDisplayName = category => {
+  const getSetBonusDisplayName = (category: string | null | undefined) => {
     if (!category) return '';
     return getGearSetGameName(category);
   };
 
-  const getSetBonusDescription = category => {
-    if (!category) return '';
-    const parts = [getGearSetPassiveText(category), getGearSetConditionalText(category)].filter(
-      Boolean,
-    );
-    return parts.join('\n');
-  };
-
-  const getTrackEquipmentIds = trackId => {
+  const getTrackEquipmentIds = (trackId: string | null | undefined) => {
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return [];
     return [
@@ -3268,43 +3529,16 @@ export const useTimelineStore = defineStore('timeline', () => {
     ].filter(Boolean);
   };
 
-  const getActiveSetBonusCategories = trackId => {
+  const getActiveSetBonusCategories = (trackId: string | null | undefined) => {
     const ids = getTrackEquipmentIds(trackId);
-    const counts = new Map();
+    const counts = new Map<string, number>();
     for (const id of ids) {
-      const eq = getEquipmentById(id);
-      const cat = eq?.category;
+      const eq = getEquipmentById(id as string | null | undefined);
+      const cat = eq?.category as string | undefined;
       if (!cat) continue;
       counts.set(cat, (counts.get(cat) || 0) + 1);
     }
     return [...counts.entries()].filter(([, count]) => count >= 3).map(([cat]) => cat);
-  };
-
-  const getSetBonusDuration = category => {
-    const override = getEquipmentCategoryOverride(category);
-    const cfg = getEquipmentCategoryConfig(category);
-    const duration = override?.setBonus?.duration ?? cfg?.setBonus?.duration;
-    const num = Number(duration);
-    return Number.isFinite(num) ? Math.max(0, num) : 0;
-  };
-
-  const getSetBonusIcon = (trackId, category) => {
-    const track = tracks.value.find(t => t.id === trackId);
-    if (!track || !category) return '';
-
-    const equippedIds = [
-      track.equipArmorId,
-      track.equipGlovesId,
-      track.equipAccessory1Id,
-      track.equipAccessory2Id,
-    ].filter(Boolean);
-    for (const id of equippedIds) {
-      const eq = getEquipmentById(id);
-      if (eq?.category === category && eq?.icon) return eq.icon;
-    }
-
-    const fallback = equipmentDatabase.value.find(e => e.category === category && e.icon);
-    return fallback?.icon || '';
   };
 
   const teamTracksInfo = computed(() =>
@@ -3316,7 +3550,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       return {
         ...track,
         ...charInfo,
-        name: getOperatorGameName(charInfo.id || charInfo.slug || track.id),
+        name: getOperatorGameName(String(charInfo.id || charInfo.slug || track.id || '')),
       };
     }),
   );
@@ -3325,12 +3559,19 @@ export const useTimelineStore = defineStore('timeline', () => {
   // The initial controlled operator is the first track's operator; each switch event changes
   // control from its time onward. Derived from existing state — nothing extra is persisted.
   const controlledOperatorSegments = computed(() =>
-    buildControlledOperatorSegments(tracks.value[0]?.id ?? null, switchEvents.value),
+    buildControlledOperatorSegments(
+      tracks.value[0]?.id ?? null,
+      switchEvents.value as unknown as Parameters<typeof buildControlledOperatorSegments>[1],
+    ),
   );
 
   /** Returns the controlled operator (track id) at the given time, or null if none. */
-  function getControlledOperatorAt(time) {
-    return resolveControlledOperatorAt(tracks.value[0]?.id ?? null, switchEvents.value, time);
+  function getControlledOperatorAt(time: number) {
+    return resolveControlledOperatorAt(
+      tracks.value[0]?.id ?? null,
+      switchEvents.value as unknown as Parameters<typeof resolveControlledOperatorAt>[1],
+      time,
+    );
   }
 
   const activeWeapon = computed(() => {
@@ -3342,7 +3583,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return getWeaponById(track.weaponId) || null;
   });
 
-  const formatTimeLabel = time => {
+  const formatTimeLabel = (time: number | null | undefined) => {
     if (time === undefined || time === null) return '';
     return formatTimeWithFrames(time);
   };
@@ -3367,7 +3608,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       displayInstance,
       buildOperatorEffectById(activeChar.id, displayInstance),
     );
-    const TYPE_ORDER = {
+    const TYPE_ORDER: Record<string, number> = {
       basicAttack: 1,
       dive: 2,
       finisher: 3,
@@ -3376,22 +3617,50 @@ export const useTimelineStore = defineStore('timeline', () => {
       ultimate: 6,
     };
 
-    const getLevelIndex = skill => {
+    const getLevelIndex = (skill: Record<string, any>) => {
       const rawLevel = Number(displayInstance?.skillLevels?.[skill?.levelKey] ?? 1);
       return Math.max(0, Math.min((Number.isFinite(rawLevel) ? rawLevel : 1) - 1, 11));
     };
 
-    const buildSegmentModels = (skillIdBase, skill, levelIndex) => {
+    const buildSegmentModels = (
+      skillIdBase: string,
+      skill: Record<string, unknown>,
+      levelIndex: number,
+    ) => {
       const resolved = buildResolvedSegmentPayload(skillIdBase, skill, levelIndex);
       return {
         ...resolved,
         element: resolved.element || activeChar.element || 'physical',
-        segmentPayloads: (resolved.segmentPayloads || []).map(segment => ({
-          ...segment,
-          element: segment.element || activeChar.element || 'physical',
-        })),
+        segmentPayloads: (resolved.segmentPayloads || []).map(
+          (segment): Record<string, unknown> => ({
+            ...segment,
+            element: segment.element || activeChar.element || 'physical',
+          }),
+        ),
       };
     };
+
+    interface BuildBaseActionInput {
+      id: string;
+      type: string;
+      name: string;
+      skillId: string;
+      // element/payload/numeric fields flow from loosely-typed sheet data.
+      element?: any;
+      icon?: any;
+      duration?: any;
+      cooldown?: any;
+      spCost?: any;
+      gaugeCost?: any;
+      gaugeGain?: any;
+      teamGaugeGain?: any;
+      enhancementTime?: any;
+      animationTime?: any;
+      payload?: any;
+      override?: Record<string, unknown>;
+      extra?: Record<string, unknown>;
+      sourceSkillKey?: string;
+    }
 
     const buildBaseAction = ({
       id,
@@ -3412,7 +3681,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       override = {},
       extra = {},
       sourceSkillKey = skillId,
-    }) => {
+    }: BuildBaseActionInput): Record<string, unknown> => {
       const safePayload = payload || { hits: [] };
       return {
         id,
@@ -3420,8 +3689,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         skillId,
         name,
         librarySource: 'character',
-        element: element || activeChar.element || 'physical',
-        icon: icon || '',
+        element: (element as string) || activeChar.element || 'physical',
+        icon: (icon as string) || '',
         duration,
         cooldown,
         spCost,
@@ -3437,7 +3706,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       };
     };
 
-    const buildSkillDisplayName = (skill, isStandard) => {
+    const buildSkillDisplayName = (skill: Record<string, any>, isStandard: boolean) => {
       if (isStandard) {
         return getI18nSkillType(skill.type || 'unknown');
       }
@@ -3448,7 +3717,10 @@ export const useTimelineStore = defineStore('timeline', () => {
       return humanizeIdentifier(fallback) || getI18nSkillType(skill.type || 'unknown');
     };
 
-    const buildStandardOrVariantSkill = (skill, { isStandard = false } = {}) => {
+    const buildStandardOrVariantSkill = (
+      skill: Record<string, any> | null | undefined,
+      { isStandard = false }: { isStandard?: boolean } = {},
+    ) => {
       if (!skill?.type) return null;
 
       const skillIdBase = isStandard
@@ -3478,23 +3750,32 @@ export const useTimelineStore = defineStore('timeline', () => {
             ? Number(skill?.animationTime) || 0.5
             : Number(skill?.animationTime) || 0,
       };
-      const globalOverride = characterOverrides.value[skillIdBase] || {};
+      const globalOverride = (characterOverrides.value[skillIdBase] || {}) as Record<
+        string,
+        unknown
+      >;
 
       if (skill.type === 'basicAttack') {
-        const groupOverrideRaw = characterOverrides.value[skillIdBase] || {};
-        const { duration: _ignoredDuration, ...groupOverride } =
-          groupOverrideRaw && typeof groupOverrideRaw === 'object' ? groupOverrideRaw : {};
+        const groupOverrideRaw = (characterOverrides.value[skillIdBase] || {}) as Record<
+          string,
+          unknown
+        >;
+        const { duration: _ignoredDuration, ...groupOverride } = groupOverrideRaw;
         const attackGroupName = displayName;
 
         const segmentTotal = segmentData.segmentPayloads.length;
         const segmentSkills = segmentData.segmentPayloads.map((segmentInfo, idx) => {
-          const segOverride = characterOverrides.value[segmentInfo.id] || {};
+          const segmentId = segmentInfo.id as string;
+          const segOverride = (characterOverrides.value[segmentId] || {}) as Record<
+            string,
+            unknown
+          >;
           const mergedOverride = {
             ...groupOverride,
-            ...(segOverride && typeof segOverride === 'object' ? segOverride : {}),
+            ...segOverride,
           };
           return buildBaseAction({
-            id: segmentInfo.id,
+            id: segmentId,
             type: 'basicAttack',
             skillId,
             name: getBasicAttackSegmentName(attackGroupName, idx + 1, segmentTotal),
@@ -3514,7 +3795,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
         const enabledSegments = segmentSkills
           .filter(segment => (Number(segment.duration) || 0) > 0)
-          .map((segment, idx, list) => ({
+          .map((segment, idx, list): Record<string, unknown> => ({
             ...segment,
             attackSequenceIndex: idx + 1,
             attackSequenceTotal: list.length,
@@ -3544,8 +3825,12 @@ export const useTimelineStore = defineStore('timeline', () => {
       const multiSegmentTypes = new Set(['battleSkill', 'comboSkill', 'ultimate']);
       if (multiSegmentTypes.has(skill.type) && segmentData.segmentPayloads.length >= 2) {
         const segments = segmentData.segmentPayloads.map((segmentInfo, idx, list) => {
-          const segOverride = characterOverrides.value[segmentInfo.id] || {};
-          const segmentSkillId = segmentInfo.skillId || skillId;
+          const segmentId = segmentInfo.id as string;
+          const segOverride = (characterOverrides.value[segmentId] || {}) as Record<
+            string,
+            unknown
+          >;
+          const segmentSkillId = (segmentInfo.skillId as string) || skillId;
           const segmentSpCost =
             skill.type === 'battleSkill'
               ? (segmentInfo.spCost ?? baseDefaults.spCost)
@@ -3561,7 +3846,7 @@ export const useTimelineStore = defineStore('timeline', () => {
                   ? baseDefaults.gaugeGain
                   : 0;
           return buildBaseAction({
-            id: segmentInfo.id,
+            id: segmentId,
             type: actionType,
             skillId: segmentSkillId,
             name: `${displayName} ${idx + 1}`,
@@ -3649,25 +3934,30 @@ export const useTimelineStore = defineStore('timeline', () => {
       'comboSkill',
       'ultimate',
     ];
+    const isSkill = (s: Record<string, unknown> | null): s is Record<string, unknown> => Boolean(s);
     const standardSkills = standardSkillOrder
-      .map(skillKey => buildStandardOrVariantSkill(flatSkills[skillKey], { isStandard: true }))
-      .filter(Boolean);
+      .map(skillKey =>
+        buildStandardOrVariantSkill(flatSkills[skillKey] as Record<string, any> | undefined, {
+          isStandard: true,
+        }),
+      )
+      .filter(isSkill);
 
-    const variantSkills = Object.values(flatSkills)
-      .filter(skill => !standardSkillOrder.includes(skill?.skillKey))
+    const variantSkills = (Object.values(flatSkills) as Record<string, any>[])
+      .filter(skill => !standardSkillOrder.includes(skill?.skillKey ?? ''))
       .map(skill => buildStandardOrVariantSkill(skill, { isStandard: false }))
-      .filter(Boolean);
+      .filter(isSkill);
 
     const visibleSkills = [...standardSkills, ...variantSkills].sort((a, b) => {
-      const weightA = TYPE_ORDER[a.type] || 99;
-      const weightB = TYPE_ORDER[b.type] || 99;
+      const weightA = TYPE_ORDER[a.type as string] || 99;
+      const weightB = TYPE_ORDER[b.type as string] || 99;
 
       if (weightA !== weightB) {
         return weightA - weightB;
       }
 
-      const isVariantA = a.id.includes('_variant_');
-      const isVariantB = b.id.includes('_variant_');
+      const isVariantA = String(a.id).includes('_variant_');
+      const isVariantB = String(b.id).includes('_variant_');
 
       if (isVariantA !== isVariantB) {
         return isVariantA ? 1 : -1;
@@ -3676,7 +3966,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       return 0;
     });
 
-    const hiddenSkillChildren = [];
+    const hiddenSkillChildren: Record<string, unknown>[] = [];
     const seenChildIds = new Set(visibleSkills.map(skill => skill.id));
     visibleSkills.forEach(skill => {
       const children = [
@@ -3693,7 +3983,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return [...visibleSkills, ...hiddenSkillChildren];
   });
 
-  function applyEnemyPreset(enemyId) {
+  function applyEnemyPreset(enemyId: string) {
     if (enemyId === activeEnemyId.value) return;
 
     activeEnemyId.value = enemyId;
@@ -3709,11 +3999,11 @@ export const useTimelineStore = defineStore('timeline', () => {
       const enemy = enemyDatabase.value.find(e => e.id === enemyId);
       if (enemy) {
         const enemySheet = getEnemy(enemyId);
-        systemConstants.value.maxStagger = enemy.maxStagger;
-        systemConstants.value.staggerNodeCount = enemy.staggerNodeCount;
-        systemConstants.value.staggerNodeDuration = enemy.staggerNodeDuration;
-        systemConstants.value.staggerBreakDuration = enemy.staggerBreakDuration;
-        systemConstants.value.executionRecovery = enemy.executionRecovery;
+        systemConstants.value.maxStagger = enemy.maxStagger as number;
+        systemConstants.value.staggerNodeCount = enemy.staggerNodeCount as number;
+        systemConstants.value.staggerNodeDuration = enemy.staggerNodeDuration as number;
+        systemConstants.value.staggerBreakDuration = enemy.staggerBreakDuration as number;
+        systemConstants.value.executionRecovery = enemy.executionRecovery as number;
         systemConstants.value.enemyHp = getEnemyHpForLevel(
           enemy,
           enemySheet,
@@ -3728,11 +4018,11 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     inheritedInitialEnemyState.value = resetEnemyStaggerCarryover(
       inheritedInitialEnemyState.value,
-      systemConstants.value,
+      systemConstants.value as unknown as Parameters<typeof resetEnemyStaggerCarryover>[1],
     );
   }
 
-  function setActiveEnemyLevel(level) {
+  function setActiveEnemyLevel(level: unknown) {
     activeEnemyLevel.value = normalizeEnemyLevel(level);
     if (activeEnemyId.value === 'custom') return;
 
@@ -3748,34 +4038,41 @@ export const useTimelineStore = defineStore('timeline', () => {
   // Entity CRUD operations
   // ===================================================================================
 
-  function setTimelineShift(val) {
+  function setTimelineShift(val: number) {
     const width = totalTimelineWidthPx.value;
     const maxShift = Math.max(0, width - timelineRect.value.width);
     timelineShift.value = Math.min(Math.max(0, val), maxShift);
   }
-  function setScrollTop(val) {
+  function setScrollTop(val: number) {
     timelineScrollTop.value = val;
   }
   function resetTimelineViewport() {
     setTimelineShift(0);
     setScrollTop(0);
   }
-  function setTimelineRect(width, height, top, right, bottom, left) {
+  function setTimelineRect(
+    width: number,
+    height: number,
+    top: number,
+    right: number,
+    bottom: number,
+    left: number,
+  ) {
     timelineRect.value = { width, height, top, left, right, bottom };
   }
-  function setTrackLaneRect(trackId, rect) {
+  function setTrackLaneRect(trackId: string, rect: unknown) {
     trackLaneRects.value[trackId] = rect;
   }
-  function setNodeRect(nodeId, rect) {
-    nodeRects.value[nodeId] = rect;
+  function setNodeRect(nodeId: string, rect: unknown) {
+    (nodeRects.value as Record<string, unknown>)[nodeId] = rect;
   }
-  function setCursorPosition(x, y) {
+  function setCursorPosition(x: number, y: number) {
     cursorPosition.value = { x, y };
   }
   function toggleCursorGuide() {
     showCursorGuide.value = !showCursorGuide.value;
   }
-  function toggleOperatorEffectsVisible(index) {
+  function toggleOperatorEffectsVisible(index: number) {
     const normalized = normalizeOperatorEffectsVisible(operatorEffectsVisible.value);
     if (index < 0 || index >= normalized.length) return;
     normalized[index] = !normalized[index];
@@ -3794,11 +4091,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function setDraggingSkill(skill) {
+  function setDraggingSkill(skill: Record<string, unknown>) {
     draggingSkillData.value = skill;
   }
 
-  function selectTrack(trackRef) {
+  function selectTrack(trackRef: number | string | null) {
     if (trackRef === null || trackRef === undefined) {
       activeTrackIndex.value = null;
       activeTrackId.value = null;
@@ -3820,7 +4117,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     clearSelection();
   }
 
-  function selectLibrarySkill(skillId) {
+  function selectLibrarySkill(skillId: string) {
     const isSame = selectedLibrarySkillId.value === skillId;
     if (skillId) {
       clearSelection();
@@ -3830,7 +4127,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function selectAction(instanceId) {
+  function selectAction(instanceId: string) {
     const isSame = instanceId === selectedActionId.value;
     clearSelection();
     if (!isSame) {
@@ -3839,11 +4136,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function setSelectedAnomalyId(id) {
+  function setSelectedAnomalyId(id: string) {
     selectedAnomalyId.value = id;
   }
 
-  function selectAnomaly(instanceId, rowIndex, colIndex) {
+  function selectAnomaly(instanceId: string, rowIndex: number, colIndex: number) {
     clearSelection();
 
     selectedActionId.value = instanceId;
@@ -3852,7 +4149,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const track = tracks.value.find(t => t.actions.some(a => a.instanceId === instanceId));
     const action = track?.actions.find(a => a.instanceId === instanceId);
 
-    const hit = action?.hits?.[rowIndex];
+    const hit = action?.hits?.[rowIndex] as Record<string, unknown> | undefined;
     if (hit && Array.isArray(hit.effects)) {
       const effect = hit.effects[colIndex];
       if (effect) {
@@ -3862,7 +4159,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function selectConnection(connId) {
+  function selectConnection(connId: string) {
     const isSame = selectedConnectionId.value === connId;
     clearSelection();
     if (!isSame) {
@@ -3870,7 +4167,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function addSwitchEvent(time, characterId) {
+  function addSwitchEvent(time: number, characterId: string) {
     switchEvents.value.push({
       id: `sw_${uid()}`,
       time: time,
@@ -3879,14 +4176,14 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function updateSwitchEvent(id, time) {
+  function updateSwitchEvent(id: string, time: number) {
     const event = switchEvents.value.find(e => e.id === id);
     if (event) {
       event.time = time;
     }
   }
 
-  function selectSwitchEvent(id) {
+  function selectSwitchEvent(id: string) {
     const isSame = selectedSwitchEventId.value === id;
     clearSelection();
     if (!isSame) {
@@ -3894,7 +4191,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function selectCycleBoundary(id) {
+  function selectCycleBoundary(id: string) {
     const isSame = selectedCycleBoundaryId.value === id;
     clearSelection();
     if (!isSame) {
@@ -3902,7 +4199,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function addCycleBoundary(time) {
+  function addCycleBoundary(time: number) {
     cycleBoundaries.value.push({
       id: `cb_${uid()}`,
       time: time,
@@ -3910,21 +4207,21 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function updateCycleBoundary(id, time) {
+  function updateCycleBoundary(id: string, time: number) {
     const boundary = cycleBoundaries.value.find(b => b.id === id);
     if (boundary) {
       boundary.time = time;
     }
   }
 
-  function setHoveredAction(id) {
+  function setHoveredAction(id: string) {
     hoveredActionId.value = id;
   }
 
-  function setMultiSelection(idsArray) {
+  function setMultiSelection(idsArray: string[]) {
     multiSelectedIds.value = new Set(idsArray);
     if (idsArray.length === 1) {
-      selectedActionId.value = idsArray[0];
+      selectedActionId.value = idsArray[0] ?? null;
     } else {
       selectedActionId.value = null;
     }
@@ -3941,13 +4238,13 @@ export const useTimelineStore = defineStore('timeline', () => {
   }
 
   function normalizeComboLinksInTracks() {
-    const byGroup = new Map();
+    const byGroup = new Map<string, { action: TimelineAction; track: Track }[]>();
     tracks.value.forEach(track => {
       (track.actions || []).forEach(action => {
-        const gid = action?.comboGroupId;
+        const gid = action?.comboGroupId as string | undefined;
         if (!gid) return;
         if (!byGroup.has(gid)) byGroup.set(gid, []);
-        byGroup.get(gid).push({ action, track });
+        byGroup.get(gid)!.push({ action, track });
       });
     });
 
@@ -3960,7 +4257,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       const total = Math.max(maxIndex, ...totals, 0);
       if (total < 2) continue;
 
-      const used = new Set();
+      const used = new Set<number>();
       let valid = true;
       actions.forEach(a => {
         const idx = Number(a.comboSegmentIndex) || 0;
@@ -3977,7 +4274,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         .sort((a, b) => (Number(a.comboSegmentIndex) || 0) - (Number(b.comboSegmentIndex) || 0));
 
       if (!valid) {
-        const clearCombo = a => {
+        const clearCombo = (a: TimelineAction) => {
           delete a.comboGroupId;
           delete a.comboSegmentIndex;
           delete a.comboSegmentTotal;
@@ -4000,13 +4297,14 @@ export const useTimelineStore = defineStore('timeline', () => {
 
       sorted.forEach((a, i) => {
         a.comboSegmentTotal = total;
-        a.comboPrevId = i > 0 ? sorted[i - 1].instanceId : null;
-        a.comboNextId = i < total - 1 ? sorted[i + 1].instanceId : null;
+        a.comboPrevId = i > 0 ? (sorted[i - 1]?.instanceId ?? null) : null;
+        a.comboNextId = i < total - 1 ? (sorted[i + 1]?.instanceId ?? null) : null;
       });
 
       if (linked) {
         for (let i = 0; i < total; i++) {
           const a = sorted[i];
+          if (!a) continue;
           if (i === total - 1) {
             a.comboFollowupDelay = 0;
             continue;
@@ -4023,21 +4321,24 @@ export const useTimelineStore = defineStore('timeline', () => {
     return snapTimeToFrame(Math.max(0, Number(prepDuration.value) || 0));
   }
 
-  function clampSkillStartTime(time) {
+  function clampSkillStartTime(time: number) {
     const raw = Number(time) || 0;
     return Math.max(getMinSkillStartTime(), snapTimeToFrame(raw));
   }
 
-  function addSkillToTrack(trackId, skill, startTime) {
+  function addSkillToTrack(trackId: string, skill: Record<string, any>, startTime: number) {
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return;
 
     const actionStartTime = clampSkillStartTime(startTime);
-    const cloneEffectsForAction = skillForClone => {
+    const cloneEffectsForAction = (skillForClone: Record<string, any>) => {
       return cloneActionHits(skillForClone.hits);
     };
 
-    const createActionFromSkill = (skillForCreate, actionStartTime) => {
+    const createActionFromSkill = (
+      skillForCreate: Record<string, any>,
+      actionStartTime: number,
+    ): TimelineAction => {
       return {
         ...skillForCreate,
         instanceId: `inst_${uid()}`,
@@ -4053,7 +4354,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       const rawSegments = skill.segments.filter(Boolean);
       if (rawSegments.length < 2) return;
 
-      const mergeSeg = seg => {
+      const mergeSeg = (seg: Record<string, any>) => {
         const merged = { ...skill, ...(seg || {}) };
         delete merged.segments;
         delete merged.followupDelay;
@@ -4062,18 +4363,18 @@ export const useTimelineStore = defineStore('timeline', () => {
 
       const segmentSkills = rawSegments.map(mergeSeg);
 
-      const getDelayAfter = (rawSeg, index, total) => {
+      const getDelayAfter = (rawSeg: Record<string, any>, index: number, total: number) => {
         if (index >= total - 1) return 0;
         const segDelayRaw = Number(rawSeg?.followupDelay);
         if (!Number.isFinite(segDelayRaw)) return 0;
         return snapTimeToFrame(Math.max(0, segDelayRaw));
       };
 
-      const inserted = [];
+      const inserted: TimelineAction[] = [];
       let cursor = actionStartTime;
 
       for (let i = 0; i < segmentSkills.length; i++) {
-        const segSkill = segmentSkills[i];
+        const segSkill = segmentSkills[i]!;
         const action = createActionFromSkill(segSkill, cursor);
         const delay = getDelayAfter(rawSegments[i], i, segmentSkills.length);
 
@@ -4162,7 +4463,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   }
 
   function removeCurrentSelection() {
-    const itemsToPull = [];
+    const itemsToPull: { time: number; amount: number }[] = [];
 
     const targets = new Set(multiSelectedIds.value);
     if (selectedActionId.value) targets.add(selectedActionId.value);
@@ -4174,7 +4475,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       if (action.comboGroupId && action.comboLinked !== false) {
         tracks.value.forEach(t =>
           (t.actions || []).forEach(a => {
-            if (a?.comboGroupId === action.comboGroupId) targets.add(a.instanceId);
+            if (a?.comboGroupId === action.comboGroupId && a.instanceId) targets.add(a.instanceId);
           }),
         );
       }
@@ -4213,7 +4514,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       tracks.value.forEach(track => {
         if (!track.actions || track.actions.length === 0) return;
         const initialLen = track.actions.length;
-        track.actions = track.actions.filter(a => !targets.has(a.instanceId));
+        track.actions = track.actions.filter(a => !targets.has(a.instanceId ?? ''));
         if (track.actions.length < initialLen) {
           actionCount += initialLen - track.actions.length;
         }
@@ -4246,7 +4547,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return { actionCount, connCount, total: actionCount + connCount };
   }
 
-  function moveTrack(fromIndex, toIndex) {
+  function moveTrack(fromIndex: number, toIndex: number) {
     if (
       fromIndex === toIndex ||
       fromIndex < 0 ||
@@ -4257,8 +4558,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       return;
     }
 
-    const temp = tracks.value[fromIndex];
-    tracks.value[fromIndex] = tracks.value[toIndex];
+    const temp = tracks.value[fromIndex]!;
+    tracks.value[fromIndex] = tracks.value[toIndex]!;
     tracks.value[toIndex] = temp;
 
     if (activeTrackIndex.value === fromIndex) activeTrackIndex.value = toIndex;
@@ -4270,12 +4571,20 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function pasteSelection(targetStartTime = null) {
+  function pasteSelection(targetStartTime: number | null = null) {
     if (!clipboard.value) return;
-    const { actions, connections: clipConns, baseTime } = clipboard.value;
-    const idMap = new Map();
-    const globalEffectIdMap = new Map();
-    const pasted = [];
+    const {
+      actions,
+      connections: clipConns,
+      baseTime,
+    } = clipboard.value as {
+      actions: any[];
+      connections: any[];
+      baseTime: number;
+    };
+    const idMap = new Map<string, string>();
+    const globalEffectIdMap = new Map<string, string>();
+    const pasted: TimelineAction[] = [];
 
     let timeDelta = 0;
     if (targetStartTime !== null) {
@@ -4304,11 +4613,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     });
 
     if (pasted.length > 0) {
-      const groupMap = new Map();
+      const groupMap = new Map<string, string>();
 
       pasted.forEach(a => {
         if (!a || !a.comboGroupId) return;
-        const oldGroup = a.comboGroupId;
+        const oldGroup = a.comboGroupId as string;
         if (!groupMap.has(oldGroup)) groupMap.set(oldGroup, `combo_${uid()}`);
         a.comboGroupId = groupMap.get(oldGroup);
         delete a.comboPrevId;
@@ -4344,7 +4653,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function updateConnectionPort(connectionId, portType, direction) {
+  function updateConnectionPort(connectionId: string, portType: string, direction: string) {
     const conn = connections.value.find(c => c.id === connectionId);
     if (conn) {
       if (portType === 'source') {
@@ -4356,12 +4665,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function removeConnection(connId) {
+  function removeConnection(connId: string) {
     connections.value = connections.value.filter(c => c.id !== connId);
     commitState();
   }
 
-  function updateConnection(id, payload) {
+  function updateConnection(id: string, payload: Record<string, unknown>) {
     const conn = connections.value.find(c => c.id === id);
     if (conn) {
       Object.assign(conn, payload);
@@ -4369,8 +4678,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function updateAction(actionId, patch) {
-    const locate = id => {
+  function updateAction(actionId: string, patch: Record<string, unknown>) {
+    const locate = (id: string) => {
       for (const t of tracks.value) {
         const idx = t.actions.findIndex(a => a.instanceId === id);
         if (idx !== -1) return { action: t.actions[idx], track: t };
@@ -4378,8 +4687,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       return null;
     };
 
-    const getGroup = groupId => {
-      const out = [];
+    const getGroup = (groupId: string | null | undefined) => {
+      const out: { action: TimelineAction; track: Track }[] = [];
       if (!groupId) return out;
       tracks.value.forEach(t => {
         (t.actions || []).forEach(a => {
@@ -4395,7 +4704,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const found = wrap.action;
     const foundTrack = wrap.track;
 
-    const has = key => patch && Object.prototype.hasOwnProperty.call(patch, key);
+    const has = (key: string) => patch && Object.prototype.hasOwnProperty.call(patch, key);
     const startTouched = has('startTime');
     const durationTouched = has('duration');
     const delayTouched = has('comboFollowupDelay');
@@ -4404,7 +4713,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const isCombo = !!found.comboGroupId && Number(found.comboSegmentIndex) > 0;
     const oldStart = Number(found.startTime) || 0;
 
-    const applyStart = (action, nextStart) => {
+    const applyStart = (action: TimelineAction | undefined, nextStart: number) => {
       if (!action) return false;
       const raw = Number(nextStart);
       if (!Number.isFinite(raw)) return false;
@@ -4416,7 +4725,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       return true;
     };
 
-    const computeEnd = action => {
+    const computeEnd = (action: TimelineAction | undefined) => {
       const st = Number(action?.startTime) || 0;
       const dur = Number(action?.duration) || 0;
       return getShiftedEndTime(st, dur, action?.instanceId);
@@ -4439,8 +4748,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       if (idx0 !== -1 && total >= 2) {
         sorted.forEach((a, i) => {
           a.comboSegmentTotal = total;
-          a.comboPrevId = i > 0 ? sorted[i - 1].instanceId : null;
-          a.comboNextId = i < total - 1 ? sorted[i + 1].instanceId : null;
+          a.comboPrevId = i > 0 ? sorted[i - 1]!.instanceId : null;
+          a.comboNextId = i < total - 1 ? sorted[i + 1]!.instanceId : null;
         });
 
         if (linkTouched) {
@@ -4452,14 +4761,16 @@ export const useTimelineStore = defineStore('timeline', () => {
             // derive delays from current layout, then snap chain positions
             for (let i = 0; i < total - 1; i++) {
               const end = computeEnd(sorted[i]);
-              const nextStart = Number(sorted[i + 1].startTime) || 0;
-              sorted[i].comboFollowupDelay = snapTimeToFrame(Math.max(0, nextStart - end));
+              const nextStart = Number(sorted[i + 1]!.startTime) || 0;
+              sorted[i]!.comboFollowupDelay = snapTimeToFrame(Math.max(0, nextStart - end));
             }
-            sorted[total - 1].comboFollowupDelay = 0;
+            sorted[total - 1]!.comboFollowupDelay = 0;
             for (let i = 0; i < total - 1; i++) {
               const end = computeEnd(sorted[i]);
-              const delay = snapTimeToFrame(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0));
-              sorted[i].comboFollowupDelay = delay;
+              const delay = snapTimeToFrame(
+                Math.max(0, Number(sorted[i]!.comboFollowupDelay) || 0),
+              );
+              sorted[i]!.comboFollowupDelay = delay;
               anyStartChanged =
                 applyStart(sorted[i + 1], snapTimeToFrame(end + delay)) || anyStartChanged;
             }
@@ -4477,9 +4788,9 @@ export const useTimelineStore = defineStore('timeline', () => {
               for (let i = idx0; i < total - 1; i++) {
                 const end = computeEnd(sorted[i]);
                 const delay = snapTimeToFrame(
-                  Math.max(0, Number(sorted[i].comboFollowupDelay) || 0),
+                  Math.max(0, Number(sorted[i]!.comboFollowupDelay) || 0),
                 );
-                sorted[i].comboFollowupDelay = delay;
+                sorted[i]!.comboFollowupDelay = delay;
                 anyStartChanged =
                   applyStart(sorted[i + 1], snapTimeToFrame(end + delay)) || anyStartChanged;
               }
@@ -4504,15 +4815,15 @@ export const useTimelineStore = defineStore('timeline', () => {
               const desiredDelay = snapTimeToFrame(
                 Math.max(0, (Number(found.startTime) || 0) - prevEnd),
               );
-              prev.comboFollowupDelay = desiredDelay;
+              prev!.comboFollowupDelay = desiredDelay;
               anyStartChanged =
                 applyStart(found, snapTimeToFrame(prevEnd + desiredDelay)) || anyStartChanged;
               for (let i = idx0; i < total - 1; i++) {
                 const end = computeEnd(sorted[i]);
                 const delay = snapTimeToFrame(
-                  Math.max(0, Number(sorted[i].comboFollowupDelay) || 0),
+                  Math.max(0, Number(sorted[i]!.comboFollowupDelay) || 0),
                 );
-                sorted[i].comboFollowupDelay = delay;
+                sorted[i]!.comboFollowupDelay = delay;
                 anyStartChanged =
                   applyStart(sorted[i + 1], snapTimeToFrame(end + delay)) || anyStartChanged;
               }
@@ -4522,8 +4833,10 @@ export const useTimelineStore = defineStore('timeline', () => {
           if (durationTouched && idx0 < total - 1) {
             for (let i = idx0; i < total - 1; i++) {
               const end = computeEnd(sorted[i]);
-              const delay = snapTimeToFrame(Math.max(0, Number(sorted[i].comboFollowupDelay) || 0));
-              sorted[i].comboFollowupDelay = delay;
+              const delay = snapTimeToFrame(
+                Math.max(0, Number(sorted[i]!.comboFollowupDelay) || 0),
+              );
+              sorted[i]!.comboFollowupDelay = delay;
               anyStartChanged =
                 applyStart(sorted[i + 1], snapTimeToFrame(end + delay)) || anyStartChanged;
             }
@@ -4548,10 +4861,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function updateLibrarySkill(skillId, props) {
+  function updateLibrarySkill(skillId: string, props: Record<string, unknown>) {
     const targetMap = characterOverrides.value;
     if (!targetMap[skillId]) targetMap[skillId] = {};
-    Object.assign(targetMap[skillId], props);
+    Object.assign(targetMap[skillId] as object, props);
     tracks.value.forEach(track => {
       if (!track.actions) return;
       track.actions.forEach(action => {
@@ -4563,7 +4876,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function changeTrackOperator(trackIndex, oldOperatorId, newOperatorId) {
+  function changeTrackOperator(
+    trackIndex: number,
+    oldOperatorId: string | null | undefined,
+    newOperatorId: string | null | undefined,
+  ) {
     const track = tracks.value[trackIndex];
     if (track) {
       const normalizedOldOperatorId = resolveOperatorSlug(oldOperatorId) || oldOperatorId || null;
@@ -4578,7 +4895,9 @@ export const useTimelineStore = defineStore('timeline', () => {
         alert(tr('timelineGrid.track.operatorAlreadyInUse'));
         return;
       }
-      const actionIdsToDelete = new Set(track.actions.map(a => a.instanceId));
+      const actionIdsToDelete = new Set(
+        track.actions.map(a => a.instanceId).filter((id): id is string => Boolean(id)),
+      );
       if (actionIdsToDelete.size > 0) {
         connections.value = connections.value.filter(
           conn => !_connectionTouchesAnyActionId(conn, actionIdsToDelete),
@@ -4625,11 +4944,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function clearTrack(trackIndex) {
+  function clearTrack(trackIndex: number) {
     const track = tracks.value[trackIndex];
     if (!track) return;
     const oldOperatorId = track.id;
-    const actionIdsToDelete = new Set(track.actions.map(a => a.instanceId));
+    const actionIdsToDelete = new Set(
+      track.actions.map(a => a.instanceId).filter((id): id is string => Boolean(id)),
+    );
     if (actionIdsToDelete.size > 0) {
       connections.value = connections.value.filter(
         conn => !_connectionTouchesAnyActionId(conn, actionIdsToDelete),
@@ -4673,7 +4994,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function updateTrackMaxGauge(trackId, value) {
+  function updateTrackMaxGauge(trackId: string, value: number) {
     const track = tracks.value.find(t => t.id === trackId);
     if (track) {
       track.maxGaugeOverride = value;
@@ -4681,13 +5002,13 @@ export const useTimelineStore = defineStore('timeline', () => {
       commitState();
     }
   }
-  function clampTrackInitialGauge(track, value) {
+  function clampTrackInitialGauge(track: Track | null | undefined, value: unknown) {
     const max = track?.id ? getTrackGaugeMax(track.id) : 0;
     const num = Number(value);
     if (!Number.isFinite(num)) return 0;
     return Math.max(0, Math.min(num, max > 0 ? max : num));
   }
-  function updateTrackInitialGauge(trackId, value) {
+  function updateTrackInitialGauge(trackId: string, value: unknown) {
     const track = tracks.value.find(t => t.id === trackId);
     if (track) {
       track.initialGauge = clampTrackInitialGauge(track, value);
@@ -4695,8 +5016,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function removeAnomaly(instanceId, rowIndex, colIndex) {
-    let action = null;
+  function removeAnomaly(instanceId: string, rowIndex: number, colIndex: number) {
+    let action: TimelineAction | null = null;
     for (const track of tracks.value) {
       const found = track.actions.find(a => a.instanceId === instanceId);
       if (found) {
@@ -4705,7 +5026,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       }
     }
     if (!action) return;
-    const hit = action.hits?.[rowIndex];
+    const hit = action.hits?.[rowIndex] as Record<string, unknown> | undefined;
     const effects = Array.isArray(hit?.effects) ? hit.effects : [];
     if (!effects[colIndex]) return;
 
@@ -4727,7 +5048,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function nudgeSelection(direction) {
+  function nudgeSelection(direction: number) {
     const targets = new Set(multiSelectedIds.value);
     if (selectedActionId.value) targets.add(selectedActionId.value);
 
@@ -4766,7 +5087,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     tracks.value.forEach(track => {
       track.actions.forEach(action => {
-        if (targets.has(action.instanceId) && !action.isLocked) {
+        if (targets.has(action.instanceId ?? '') && !action.isLocked) {
           if (action.logicalStartTime === undefined) action.logicalStartTime = action.startTime;
 
           let newLogicalTime = snapTimeToFrame(action.logicalStartTime + delta);
@@ -4790,18 +5111,18 @@ export const useTimelineStore = defineStore('timeline', () => {
     const targetIds = new Set(multiSelectedIds.value);
     if (selectedActionId.value) targetIds.add(selectedActionId.value);
     if (targetIds.size === 0) return;
-    const copiedActions = [];
+    const copiedActions: { trackIndex: number; data: TimelineAction }[] = [];
     let minStartTime = Infinity;
     tracks.value.forEach((track, trackIndex) => {
       track.actions.forEach(action => {
-        if (targetIds.has(action.instanceId)) {
+        if (action.instanceId && targetIds.has(action.instanceId)) {
           copiedActions.push({ trackIndex: trackIndex, data: JSON.parse(JSON.stringify(action)) });
           if (action.startTime < minStartTime) minStartTime = action.startTime;
         }
       });
     });
     const copiedConnections = connections.value
-      .filter(conn => targetIds.has(conn.from) && targetIds.has(conn.to))
+      .filter(conn => targetIds.has(conn.from ?? '') && targetIds.has(conn.to ?? ''))
       .map(conn => JSON.parse(JSON.stringify(conn)));
     clipboard.value = {
       actions: copiedActions,
@@ -4810,7 +5131,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function alignActionToTarget(targetInstanceId, alignMode) {
+  function alignActionToTarget(targetInstanceId: string, alignMode: string) {
     const sourceId = selectedActionId.value;
     if (!sourceId || sourceId === targetInstanceId) return false;
 
@@ -4854,7 +5175,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       sourceAction.logicalStartTime = newStartTime;
       refreshAllActionShifts();
 
-      tracks.value[sourceInfo.trackIndex].actions.sort((a, b) => a.startTime - b.startTime);
+      tracks.value[sourceInfo.trackIndex]!.actions.sort((a, b) => a.startTime - b.startTime);
       commitState();
       return true;
     }
@@ -4862,10 +5183,25 @@ export const useTimelineStore = defineStore('timeline', () => {
   }
 
   function buildVisibleEndMap(
-    items,
-    { getId, getTrackIndex, getStart, getEnd, isVisible = () => true },
+    items: any[],
+    {
+      getId,
+      getTrackIndex,
+      getStart,
+      getEnd,
+      isVisible = () => true,
+    }: {
+      getId: (item: any) => string;
+      getTrackIndex: (item: any) => number;
+      getStart: (item: any) => number;
+      getEnd: (item: any) => number;
+      isVisible?: (item: any) => boolean;
+    },
   ) {
-    const trackBuckets = new Map();
+    const trackBuckets = new Map<
+      number,
+      { item: any; originalIndex: number; start: number; end: number }[]
+    >();
     items.forEach((item, originalIndex) => {
       if (!item || !isVisible(item)) return;
       const trackIndex = Number(getTrackIndex(item));
@@ -4874,7 +5210,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       const end = Number(getEnd(item)) || start;
       const normalizedEnd = end < start ? start : end;
       if (!trackBuckets.has(trackIndex)) trackBuckets.set(trackIndex, []);
-      trackBuckets.get(trackIndex).push({
+      trackBuckets.get(trackIndex)!.push({
         item,
         originalIndex,
         start,
@@ -4882,7 +5218,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       });
     });
 
-    const visibleEndMap = new Map();
+    const visibleEndMap = new Map<string, number>();
     trackBuckets.forEach(bucket => {
       bucket.sort((a, b) => {
         if (a.start !== b.start) return a.start - b.start;
@@ -4900,40 +5236,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     return visibleEndMap;
   }
 
-  function buildNextStartMap(items, { getId, getTrackIndex, getStart, isVisible = () => true }) {
-    const trackBuckets = new Map();
-    items.forEach((item, originalIndex) => {
-      if (!item || !isVisible(item)) return;
-      const trackIndex = Number(getTrackIndex(item));
-      if (!Number.isFinite(trackIndex)) return;
-      const start = Number(getStart(item)) || 0;
-      if (!trackBuckets.has(trackIndex)) trackBuckets.set(trackIndex, []);
-      trackBuckets.get(trackIndex).push({
-        item,
-        originalIndex,
-        start,
-      });
-    });
-
-    const nextStartMap = new Map();
-    trackBuckets.forEach(bucket => {
-      bucket.sort((a, b) => {
-        if (a.start !== b.start) return a.start - b.start;
-        return a.originalIndex - b.originalIndex;
-      });
-
-      bucket.forEach((entry, idx) => {
-        const nextEntry = bucket[idx + 1];
-        nextStartMap.set(getId(entry.item), nextEntry ? nextEntry.start : Infinity);
-      });
-    });
-
-    return nextStartMap;
-  }
-
   const newActionCoverStartMap = computed(() => {
     const map = new Map();
-    (compiledTimeline.value.actions || []).forEach(action => {
+    (compiledTimeline.value?.actions || []).forEach(action => {
       const interruptTime = Number(action?.interruptTime);
       if (Number.isFinite(interruptTime)) {
         map.set(action.id, interruptTime);
@@ -4942,12 +5247,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     return map;
   });
 
-  function getActionCoverStartTime(actionId) {
+  function getActionCoverStartTime(actionId: string) {
     const value = newActionCoverStartMap.value.get(actionId);
-    return Number.isFinite(value) ? value : null;
+    return Number.isFinite(value) ? (value as number) : null;
   }
 
-  function getResolvedActionVisualEndTime(resolvedAction) {
+  function getResolvedActionVisualEndTime(resolvedAction: Record<string, any> | null | undefined) {
     if (!resolvedAction) return null;
 
     const simEnd = simulation.value?.actionEndTimes?.get(resolvedAction.id);
@@ -4959,7 +5264,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return start + duration;
   }
 
-  function getActionVisualEndTime(actionId) {
+  function getActionVisualEndTime(actionId: string | null | undefined) {
     if (!actionId) return null;
     const resolvedAction = compiledTimeline.value?.actionMap?.get(actionId);
     if (resolvedAction) return getResolvedActionVisualEndTime(resolvedAction);
@@ -4970,7 +5275,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return (Number(action.startTime) || 0) + (Number(action.duration) || 0);
   }
 
-  function getActionVisualDuration(actionId) {
+  function getActionVisualDuration(actionId: string | null | undefined) {
     if (!actionId) return null;
     const resolvedAction = compiledTimeline.value?.actionMap?.get(actionId);
     const visualEnd = getActionVisualEndTime(actionId);
@@ -4986,15 +5291,15 @@ export const useTimelineStore = defineStore('timeline', () => {
   });
 
   const newNodeRects = computed(() => {
-    const rects = {};
+    const rects: Record<string, unknown> = {};
     const ACTION_BORDER = 2;
     const LINE_GAP = 6;
     const LINE_HEIGHT = 2;
-    const visibleEndMap = buildVisibleEndMap(compiledTimeline.value.actions || [], {
+    const visibleEndMap = buildVisibleEndMap(compiledTimeline.value?.actions || [], {
       getId: action => action.id,
       getTrackIndex: action => action.trackIndex,
       getStart: action => action.realStartTime,
-      getEnd: action => getResolvedActionVisualEndTime(action),
+      getEnd: action => getResolvedActionVisualEndTime(action) ?? 0,
     });
 
     const actions = compiledTimeline.value?.actions || [];
@@ -5002,14 +5307,15 @@ export const useTimelineStore = defineStore('timeline', () => {
     actions.forEach(resAction => {
       const left = timeToPx(resAction.realStartTime);
       const visibleEnd =
-        visibleEndMap.get(resAction.id) ?? getResolvedActionVisualEndTime(resAction);
+        visibleEndMap.get(resAction.id) ?? getResolvedActionVisualEndTime(resAction) ?? 0;
       const width = timeToPx(visibleEnd) - timeToPx(resAction.realStartTime);
       const finalWidth = width < 2 ? 2 : width;
-      const trackRect = trackLaneRects.value[resAction.trackIndex];
+      const trackRect = trackLaneRects.value[resAction.trackIndex] as
+        { top?: number; height?: number } | undefined;
 
       let y = 0;
       if (trackRect) {
-        y = trackRect.top;
+        y = trackRect.top ?? 0;
       }
 
       const rect = {
@@ -5019,32 +5325,6 @@ export const useTimelineStore = defineStore('timeline', () => {
         height: trackRect?.height ?? 0,
         top: y - timelineRect.value.top,
       };
-
-      let triggerWindowLayout = { hasWindow: false };
-      if (resAction.triggerWindow && resAction.triggerWindow.hasWindow) {
-        const twDuration = resAction.triggerWindow.duration;
-        const twStart = Math.max(0, resAction.realStartTime - twDuration);
-        const twWidth = timeToPx(resAction.realStartTime) - timeToPx(twStart);
-
-        const barYRelative = ACTION_BORDER + LINE_GAP - LINE_HEIGHT / 2;
-
-        const leftEdge = -ACTION_BORDER;
-        const barY = rect.top + rect.height + barYRelative - ACTION_BORDER;
-        const triggerBarRight = rect.left + leftEdge;
-        const triggerBarLeft = triggerBarRight - twWidth;
-
-        triggerWindowLayout = {
-          rect: {
-            left: triggerBarLeft,
-            right: triggerBarRight,
-            top: barY,
-            height: LINE_HEIGHT,
-            width: twWidth,
-          },
-          localTransform: `translate(${leftEdge - twWidth}px, ${barYRelative}px)`,
-          hasWindow: true,
-        };
-      }
 
       const barYRelative = ACTION_BORDER + LINE_GAP - LINE_HEIGHT / 2;
       const leftEdge = -ACTION_BORDER;
@@ -5079,7 +5359,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const actions = compiledTimeline.value?.actions || [];
 
     actions.forEach(resAction => {
-      const actionRect = nodeRects.value[resAction.id]?.rect;
+      const actionRect = (nodeRects.value[resAction.id] as { rect?: any } | undefined)?.rect;
       if (!actionRect) return;
 
       resAction.effects.forEach(effect => {
@@ -5147,21 +5427,21 @@ export const useTimelineStore = defineStore('timeline', () => {
     return layoutMap;
   });
 
-  function getNodeRect(id) {
+  function getNodeRect(id: string) {
     if (nodeRects.value[id]) return nodeRects.value[id];
     const effectLayout = effectLayouts.value.get(id);
     if (effectLayout) return effectLayout.rect;
     return null;
   }
 
-  function toTimelineSpace(viewX, viewY) {
+  function toTimelineSpace(viewX: number, viewY: number) {
     return {
       x: viewX - timelineRect.value.left + timelineShift.value,
       y: viewY - timelineRect.value.top + timelineScrollTop.value,
     };
   }
 
-  function toViewportSpace(timelineX, timelineY) {
+  function toViewportSpace(timelineX: number, timelineY: number) {
     return {
       x: timelineX - timelineShift.value + timelineRect.value.left,
       y: timelineY - timelineScrollTop.value + timelineRect.value.top,
@@ -5171,7 +5451,14 @@ export const useTimelineStore = defineStore('timeline', () => {
   // ===================================================================================
   // Context menu state
   // ===================================================================================
-  const contextMenu = ref({
+  const contextMenu = ref<{
+    visible: boolean;
+    x: number;
+    y: number;
+    targetId: string | null;
+    targetType: string | null;
+    time: number;
+  }>({
     visible: false,
     x: 0,
     y: 0,
@@ -5180,7 +5467,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     time: 0,
   });
 
-  function openContextMenu(evt, instanceId = null, time = 0, targetType = null) {
+  function openContextMenu(
+    evt: MouseEvent,
+    instanceId: string | null = null,
+    time = 0,
+    targetType: string | null = null,
+  ) {
     contextMenu.value = {
       visible: true,
       x: evt.clientX,
@@ -5199,7 +5491,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   // Action property toggles (lock, disable, color)
   // ===================================================================================
 
-  function toggleActionLock(instanceId) {
+  function toggleActionLock(instanceId: string) {
     const info = getActionById(instanceId);
     if (info) {
       info.node.isLocked = !info.node.isLocked;
@@ -5207,7 +5499,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function toggleActionDisable(instanceId) {
+  function toggleActionDisable(instanceId: string) {
     const info = getActionById(instanceId);
     if (info) {
       info.node.isDisabled = !info.node.isDisabled;
@@ -5215,8 +5507,17 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function getInheritedEnemyBuffEntry(key) {
-    const snapshot = inheritedInitialEnemyState.value;
+  interface InheritedEnemyState {
+    infliction?: unknown;
+    vulnerability?: unknown;
+    debuffs?: Record<string, unknown> | null;
+    statuses?: { id?: string; [key: string]: unknown }[];
+    disabledEffects?: string[];
+    [key: string]: unknown;
+  }
+
+  function getInheritedEnemyBuffEntry(key: string) {
+    const snapshot = inheritedInitialEnemyState.value as InheritedEnemyState | null;
     if (!snapshot || !key) return null;
     if (key === 'infliction') return snapshot.infliction || null;
     if (key === 'vulnerability') return snapshot.vulnerability || null;
@@ -5228,17 +5529,16 @@ export const useTimelineStore = defineStore('timeline', () => {
     return null;
   }
 
-  function isInheritedEnemyBuffDisabled(key) {
-    return (
-      Array.isArray(inheritedInitialEnemyState.value?.disabledEffects) &&
-      inheritedInitialEnemyState.value.disabledEffects.includes(key)
-    );
+  function isInheritedEnemyBuffDisabled(key: string) {
+    const snapshot = inheritedInitialEnemyState.value as InheritedEnemyState | null;
+    return Array.isArray(snapshot?.disabledEffects) && snapshot.disabledEffects.includes(key);
   }
 
-  function toggleInheritedEnemyBuffDisable(key) {
+  function toggleInheritedEnemyBuffDisable(key: string) {
     if (!getInheritedEnemyBuffEntry(key)) return false;
-    const snapshot = inheritedInitialEnemyState.value;
-    const disabled = new Set(
+    const snapshot = inheritedInitialEnemyState.value as InheritedEnemyState | null;
+    if (!snapshot) return false;
+    const disabled = new Set<string>(
       Array.isArray(snapshot.disabledEffects) ? snapshot.disabledEffects : [],
     );
     if (disabled.has(key)) disabled.delete(key);
@@ -5248,8 +5548,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     return true;
   }
 
-  function removeInheritedEnemyBuff(key) {
-    const snapshot = inheritedInitialEnemyState.value;
+  function removeInheritedEnemyBuff(key: string) {
+    const snapshot = inheritedInitialEnemyState.value as InheritedEnemyState | null;
     if (!snapshot || !getInheritedEnemyBuffEntry(key)) return false;
 
     if (key === 'infliction') snapshot.infliction = null;
@@ -5266,7 +5566,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return true;
   }
 
-  function setActionColor(instanceId, color) {
+  function setActionColor(instanceId: string, color: string) {
     const info = getActionById(instanceId);
     if (info) {
       info.node.customColor = color;
@@ -5274,20 +5574,20 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function isHitForcedCrit(actionInstanceId, hitIndex) {
+  function isHitForcedCrit(actionInstanceId: string, hitIndex: number) {
     if (!actionInstanceId || hitIndex == null) return false;
     const info = getActionById(actionInstanceId);
     return Array.isArray(info?.node?.forcedCritHits) && info.node.forcedCritHits.includes(hitIndex);
   }
 
-  function toggleHitForcedCrit(actionInstanceId, hitIndex) {
+  function toggleHitForcedCrit(actionInstanceId: string, hitIndex: number) {
     if (!actionInstanceId || hitIndex == null) return;
     const info = getActionById(actionInstanceId);
     if (!info?.node) return;
 
     const list = Array.isArray(info.node.forcedCritHits) ? info.node.forcedCritHits : [];
     if (list.includes(hitIndex)) {
-      const next = list.filter(item => item !== hitIndex);
+      const next = list.filter((item: number) => item !== hitIndex);
       if (next.length) info.node.forcedCritHits = next;
       else delete info.node.forcedCritHits;
     } else {
@@ -5296,7 +5596,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function getHitDisplayDamage(hit) {
+  function getHitDisplayDamage(hit: Record<string, any> | null | undefined) {
     if (!hit) return 0;
     if (isHitForcedCrit(hit._actionInstanceId, hit._hitIndex) && hit._damageBreakdown) {
       return hit._damageBreakdown.critDamage;
@@ -5317,7 +5617,10 @@ export const useTimelineStore = defineStore('timeline', () => {
       systemConstants: effectiveSystemConstants.value,
       prepDuration: prepDuration.value,
       activeEnemyId: activeEnemyId.value,
-      runtimeInitialEffects: [...runtimeInitialEffects.value, ...inheritedInitialEffects.value],
+      runtimeInitialEffects: [
+        ...runtimeInitialEffects.value,
+        ...inheritedInitialEffects.value,
+      ] as unknown as InitialEffect[],
       runtimeInitialEnemyState: inheritedInitialEnemyState.value,
       simulationEndline: simulationEndline.value,
       lmdiAttributionMode: lmdiAttributionMode.value,
@@ -5417,7 +5720,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return compiledTimeline.value?.timeExtensions || [];
   });
 
-  function refreshAllActionShifts(excludeIds = []) {
+  function refreshAllActionShifts(excludeIds: string | (string | undefined)[] = []) {
     const excludeSet = new Set(Array.isArray(excludeIds) ? excludeIds : [excludeIds]);
 
     const allActions = tracks.value
@@ -5437,21 +5740,21 @@ export const useTimelineStore = defineStore('timeline', () => {
     stopSources.forEach((source, index) => {
       const nextSource = stopSources[index + 1];
 
-      const physicalStart = Math.max(source.logicalStartTime, lastPhysicalEnd);
+      const physicalStart = Math.max(source.logicalStartTime!, lastPhysicalEnd);
 
       let amount = 0;
       if (isUltimateLikeAction(source)) {
         amount = Number(source.animationTime) || 1.5;
       } else {
         if (nextSource) {
-          const gap = nextSource.logicalStartTime - source.logicalStartTime;
+          const gap = nextSource.logicalStartTime! - source.logicalStartTime!;
           amount = Math.min(0.5, Math.max(0.1, snapTimeToFrame(gap)));
         } else {
           amount = 0.5;
         }
       }
 
-      const shift = physicalStart - source.logicalStartTime;
+      const shift = physicalStart - source.logicalStartTime!;
       sourceShiftMap.set(source.instanceId, {
         shift,
         amount,
@@ -5467,7 +5770,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
       const activeSource = [...stopSources]
         .reverse()
-        .find(s => s.logicalStartTime <= a.logicalStartTime);
+        .find(s => s.logicalStartTime! <= a.logicalStartTime!);
 
       if (activeSource) {
         const ctx = sourceShiftMap.get(activeSource.instanceId);
@@ -5475,18 +5778,22 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (a.instanceId === activeSource.instanceId) {
           a.startTime = snapTimeToFrame(ctx.physicalStart);
         } else {
-          const normalShiftedTime = a.logicalStartTime + ctx.shift;
+          const normalShiftedTime = a.logicalStartTime! + ctx.shift;
           a.startTime = snapTimeToFrame(Math.max(normalShiftedTime, ctx.physicalEnd));
         }
       } else {
-        a.startTime = a.logicalStartTime;
+        a.startTime = a.logicalStartTime!;
       }
     });
 
     tracks.value.forEach(t => t.actions.sort((a, b) => a.startTime - b.startTime));
   }
 
-  function getShiftedEndTime(startTime, duration, excludeActionId = null) {
+  function getShiftedEndTime(
+    startTime: number,
+    duration: number,
+    excludeActionId: string | null | undefined = null,
+  ): number {
     return timeContext.value
       ? timeContext.value.getShiftedEndTime(startTime, duration, excludeActionId)
       : startTime + duration;
@@ -5495,12 +5802,15 @@ export const useTimelineStore = defineStore('timeline', () => {
   const ultimateEnhancementMetricsMap = computed(() => {
     const map = new Map();
 
-    const getMetrics = (trackId, action) => {
+    const getMetrics = (
+      trackId: string | null | undefined,
+      action: TimelineAction | null | undefined,
+    ) => {
       if (!action || !isUltimateLikeAction(action)) return null;
       const baseDuration = Number(action.enhancementTime) || 0;
       if (baseDuration <= 0) return null;
 
-      const resolvedAction = compiledTimeline.value?.actionMap?.get(action.instanceId);
+      const resolvedAction = compiledTimeline.value?.actionMap?.get(action.instanceId ?? '');
       const start = Number(resolvedAction?.realStartTime ?? action.startTime) || 0;
       const freezeDuration = Number(action.animationTime || action.duration) || 0;
       const enhStart = getShiftedEndTime(start, freezeDuration, action.instanceId);
@@ -5545,19 +5855,23 @@ export const useTimelineStore = defineStore('timeline', () => {
     return map;
   });
 
-  function getUltimateEnhancementMetrics(actionInstanceId) {
+  function getUltimateEnhancementMetrics(actionInstanceId: string) {
     return ultimateEnhancementMetricsMap.value.get(actionInstanceId) || null;
   }
 
-  function toGameTime(realTimeS) {
+  function toGameTime(realTimeS: number) {
     return timeContext.value ? timeContext.value.toGameTime(realTimeS) : realTimeS;
   }
 
-  function toRealTime(gameTimeS) {
+  function toRealTime(gameTimeS: number) {
     return timeContext.value ? timeContext.value.toRealTime(gameTimeS) : gameTimeS;
   }
 
-  function pushSubsequentActions(triggerTime, amount, excludeIds = []) {
+  function pushSubsequentActions(
+    triggerTime: number,
+    amount: number,
+    excludeIds: string | (string | undefined)[] = [],
+  ) {
     const excludeSet = new Set(Array.isArray(excludeIds) ? excludeIds : [excludeIds]);
     tracks.value.forEach(track => {
       track.actions.forEach(action => {
@@ -5574,7 +5888,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     });
   }
 
-  function pullSubsequentActions(triggerTime, amount, excludeIds = []) {
+  function pullSubsequentActions(
+    triggerTime: number,
+    amount: number,
+    excludeIds: string | (string | undefined)[] = [],
+  ) {
     if (amount <= 0) return;
     const excludeSet = new Set(Array.isArray(excludeIds) ? excludeIds : [excludeIds]);
     tracks.value.forEach(track => {
@@ -5592,9 +5910,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     });
   }
 
-  function resolveGaugeMax(trackId, track, charInfo) {
+  function resolveGaugeMax(trackId: string, track: Track, charInfo: RosterEntry) {
     const libId = `${trackId}_ultimate`;
-    const override = characterOverrides.value[libId];
+    const override = characterOverrides.value[libId] as { gaugeCost?: number } | undefined;
 
     const manualOverride = Number(track.maxGaugeOverride);
     if (Number.isFinite(manualOverride) && manualOverride > 0) {
@@ -5613,7 +5931,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return Math.max(1, Math.ceil(reducedMax));
   }
 
-  function getTrackGaugeMax(trackId) {
+  function getTrackGaugeMax(trackId: string) {
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return 0;
     const charInfo = characterRoster.value.find(c => c.id === trackId);
@@ -5625,7 +5943,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return optimizerProjection.value.gaugeSeriesByTrackId;
   });
 
-  function calculateGaugeData(trackId) {
+  function calculateGaugeData(trackId: string) {
     const track = tracks.value.find(t => t.id === trackId);
     if (!track) return [];
 
@@ -5637,7 +5955,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const GAUGE_MAX = resolveGaugeMax(trackId, track, charInfo);
 
     // Add a prep-time pause event so projected SP matches the frozen opening window.
-    const blockWindows = [];
+    const blockWindows: { start: number; end: number; sourceId: string | undefined }[] = [];
     if (track.actions) {
       track.actions.forEach(action => {
         if (isUltimateLikeAction(action) && !action.isDisabled) {
@@ -5645,9 +5963,9 @@ export const useTimelineStore = defineStore('timeline', () => {
           const animT = Number(action.animationTime || 0);
           const enhT = Number(action.enhancementTime || 0);
 
-          let end = null;
+          let end: number | null = null;
           if (typeof getUltimateEnhancementExtender(trackId) === 'function' && enhT > 0) {
-            const metrics = getUltimateEnhancementMetrics(action.instanceId);
+            const metrics = getUltimateEnhancementMetrics(action.instanceId ?? '');
             if (metrics?.finalEnd) end = snapTimeToFrame(metrics.finalEnd);
           }
 
@@ -5662,7 +5980,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       });
     }
 
-    const isBlocked = (time, excludeId = null) => {
+    const isBlocked = (time: number, excludeId: string | null | undefined = null) => {
       const t = snapTimeToFrame(time);
       const epsilon = 0.0001;
       return blockWindows.some(
@@ -5670,7 +5988,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       );
     };
 
-    const events = [];
+    const events: { time: number; change: number }[] = [];
     tracks.value.forEach(sourceTrack => {
       if (!sourceTrack.actions) return;
       sourceTrack.actions.forEach(action => {
@@ -5679,39 +5997,39 @@ export const useTimelineStore = defineStore('timeline', () => {
         // Apply gauge changes caused by this track's own actions.
         if (sourceTrack.id === trackId) {
           // Costs are applied at action start.
-          if (action.gaugeCost > 0) {
+          if ((action.gaugeCost ?? 0) > 0) {
             // TODO ultimateEnergyCostReduction is scattered — consolidate or just compute max once and always deduct to 0?
             const costReduction = Number(track.operatorStatus?.ultimateEnergyCostReduction) || 0;
             const effectiveCost =
-              action.gaugeCost * (1 - Math.max(0, Math.min(costReduction, 0.99)));
+              (action.gaugeCost ?? 0) * (1 - Math.max(0, Math.min(costReduction, 0.99)));
             events.push({ time: snapTimeToFrame(action.startTime), change: -effectiveCost });
           }
           // Self gauge gain is applied when the action ends.
-          if (action.gaugeGain > 0) {
+          if ((action.gaugeGain ?? 0) > 0) {
             const triggerTime = getShiftedEndTime(
               action.startTime,
-              action.duration,
+              action.duration ?? 0,
               action.instanceId,
             );
             if (!isBlocked(triggerTime, action.instanceId)) {
               events.push({
                 time: snapTimeToFrame(triggerTime),
-                change: action.gaugeGain * efficiency,
+                change: (action.gaugeGain ?? 0) * efficiency,
               });
             }
           }
         }
         // Team gauge gain from allies applies to receivers that accept it.
-        else if (action.teamGaugeGain > 0 && canAcceptTeamGauge) {
+        else if ((action.teamGaugeGain ?? 0) > 0 && canAcceptTeamGauge) {
           const triggerTime = getShiftedEndTime(
             action.startTime,
-            action.duration,
+            action.duration ?? 0,
             action.instanceId,
           );
           if (!isBlocked(triggerTime, action.instanceId)) {
             events.push({
               time: snapTimeToFrame(triggerTime),
-              change: action.teamGaugeGain * efficiency,
+              change: (action.teamGaugeGain ?? 0) * efficiency,
             });
           }
         }
@@ -5743,7 +6061,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function setPrepDuration(newDuration, { commit = true } = {}) {
+  function setPrepDuration(newDuration: number, { commit = true }: { commit?: boolean } = {}) {
     const next = Math.max(MIN_PREP_DURATION, Number(newDuration) || 0);
     const prev = Math.max(MIN_PREP_DURATION, Number(prepDuration.value) || 0);
     if (Math.abs(next - prev) < 0.0001) return;
@@ -5770,7 +6088,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     const minAllowedDelta = -minTime;
     const appliedDelta = Math.max(delta, minAllowedDelta);
 
-    const shiftVal = v => {
+    const shiftVal = (v: unknown) => {
       const n = Number(v) || 0;
       const out = n + appliedDelta;
       return out < 0 ? 0 : out;
@@ -5849,7 +6167,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       ]) => {
         if (isLoading.value) return;
 
-        const listToSave = JSON.parse(JSON.stringify(newScList));
+        const listToSave: any[] = JSON.parse(JSON.stringify(newScList));
         listToSave.forEach(sc => {
           if (sc?.data) dropLegacyTimedStatusData(sc.data);
         });
@@ -5898,7 +6216,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       try {
-        const data = deserializeProjectData(JSON.parse(raw));
+        const data = deserializeProjectData(JSON.parse(raw)) as {
+          scenarioList?: any[];
+          systemConstants?: Record<string, unknown>;
+          activeEnemyLevel?: unknown;
+          activeScenarioId?: string;
+        };
 
         if (!data.scenarioList) return false;
 
@@ -5917,7 +6240,7 @@ export const useTimelineStore = defineStore('timeline', () => {
           }
           return cloned;
         });
-        activeScenarioId.value = data.activeScenarioId || scenarioList.value[0].id;
+        activeScenarioId.value = data.activeScenarioId || scenarioList.value[0]!.id;
 
         const currentSc = scenarioList.value.find(s => s.id === activeScenarioId.value);
         if (currentSc && currentSc.data) {
@@ -5996,8 +6319,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function getProjectData({ includeScenarios = null } = {}) {
-    let listToExport = JSON.parse(JSON.stringify(scenarioList.value));
+  function getProjectData({
+    includeScenarios = null,
+  }: { includeScenarios?: string | string[] | null } = {}) {
+    let listToExport: any[] = JSON.parse(JSON.stringify(scenarioList.value));
     listToExport.forEach(sc => {
       if (sc?.data) dropLegacyTimedStatusData(sc.data);
     });
@@ -6044,7 +6369,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
-  function exportProject({ filename } = {}) {
+  function exportProject({ filename }: { filename?: string } = {}) {
     const projectData = serializeProjectData(getProjectData());
 
     const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
@@ -6059,13 +6384,15 @@ export const useTimelineStore = defineStore('timeline', () => {
     URL.revokeObjectURL(link.href);
   }
 
-  async function exportShareString({ includeScenarios = null } = {}) {
+  async function exportShareString({
+    includeScenarios = null,
+  }: { includeScenarios?: string | string[] | null } = {}) {
     const projectData = serializeProjectData(getProjectData({ includeScenarios }));
     const jsonString = JSON.stringify(projectData);
     return await compressGzip(jsonString);
   }
 
-  async function importShareString(compressedStr) {
+  async function importShareString(compressedStr: string) {
     try {
       const jsonString = await decompressGzip(compressedStr);
       if (!jsonString) return false;
@@ -6078,9 +6405,16 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function loadProjectData(data) {
+  function loadProjectData(data: unknown) {
     try {
-      const normalizedData = deserializeProjectData(data);
+      const normalizedData = deserializeProjectData(data) as {
+        systemConstants?: Record<string, unknown>;
+        activeEnemyId?: string;
+        activeEnemyLevel?: unknown;
+        customEnemyParams?: Record<string, unknown>;
+        scenarioList?: any[];
+        activeScenarioId?: string;
+      };
 
       if (normalizedData.systemConstants) {
         systemConstants.value = normalizeEnemyConfig(
@@ -6114,8 +6448,8 @@ export const useTimelineStore = defineStore('timeline', () => {
           return cloned;
         });
         const validId = scenarioList.value.find(s => s.id === normalizedData.activeScenarioId)
-          ? normalizedData.activeScenarioId
-          : scenarioList.value[0].id;
+          ? normalizedData.activeScenarioId!
+          : scenarioList.value[0]!.id;
         activeScenarioId.value = validId;
 
         const currentSc = scenarioList.value.find(s => s.id === activeScenarioId.value);
@@ -6145,12 +6479,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  async function importProject(file) {
+  async function importProject(file: Blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = e => {
+      reader.onload = () => {
         try {
-          const data = JSON.parse(e.target.result);
+          const data = JSON.parse(reader.result as string);
           const success = loadProjectData(data);
           if (success) resolve(true);
           else reject(new Error('Invalid data structure'));
