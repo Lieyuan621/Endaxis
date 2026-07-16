@@ -8,7 +8,6 @@ import type { WeaponInstance, OperatorInstance, GearInstance } from '@/types';
 import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState';
 import { resolveEffectValueStatic } from '@/simulation/events/effectDispatch';
 import { compileEndaxisScenario } from '@/simulation/adapters/compileEndaxisScenario';
-import { projectOptimizerResult } from '@/simulation/adapters/projectOptimizerResult';
 import { i18n } from '@/i18n';
 import { snapMs } from '@/utils/precision';
 import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time';
@@ -116,6 +115,7 @@ import {
   normalizeTracks,
 } from '@/stores/timeline/normalizers';
 import { useTimelineLayouts } from '@/stores/timeline/layouts';
+import { useTimelineSimulation } from '@/stores/timeline/simulation';
 
 const tr = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
 const getI18nSkillType = (type: string) => {
@@ -5288,57 +5288,47 @@ export const useTimelineStore = defineStore('timeline', () => {
   // ===================================================================================
   // Monitor data
   // ===================================================================================
-  const compiledScenario = computed(() => {
-    const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
-    if (!currentScenario) return null;
-    return compileEndaxisScenario({
-      scenarioData: currentScenario.data,
-      tracks: tracks.value,
-      characterRoster: characterRoster.value,
-      systemConstants: effectiveSystemConstants.value,
-      prepDuration: prepDuration.value,
-      activeEnemyId: activeEnemyId.value,
-      runtimeInitialEffects: [
-        ...runtimeInitialEffects.value,
-        ...inheritedInitialEffects.value,
-      ] as unknown as InitialEffect[],
-      runtimeInitialEnemyState: inheritedInitialEnemyState.value,
-      simulationEndline: simulationEndline.value,
-      lmdiAttributionMode: lmdiAttributionMode.value,
-      controlledOperatorSegments: controlledOperatorSegments.value,
-    });
+  // Wire the simulation composable (compile → simulate → project pipeline).
+  // Placed here so its many reactive-state deps are already declared; the
+  // returned computeds are consumed lazily by getters and the return object.
+  const sim = useTimelineSimulation({
+    scenarioList,
+    activeScenarioId,
+    tracks,
+    characterRoster,
+    effectiveSystemConstants,
+    prepDuration,
+    activeEnemyId,
+    runtimeInitialEffects,
+    inheritedInitialEffects,
+    inheritedInitialEnemyState,
+    simulationEndline,
+    lmdiAttributionMode,
+    controlledOperatorSegments,
+    viewDuration,
   });
-
-  const compiledTimeline = computed(() => {
-    return compiledScenario.value?.timeline;
-  });
-
-  const simulation = computed(() => {
-    const scenario = compiledScenario.value;
-    if (!scenario) return null;
-    return simulate(
-      scenario.timeline,
-      scenario.teamConfig,
-      scenario.enemyConfig,
-      scenario.actors,
-      scenario.triggerRegistry,
-      scenario.consumedStacksWriteKeys,
-      {
-        initialEffects: scenario.initialEffects,
-        initialEnemyState: scenario.initialEnemyState,
-        baseStatsByTrack: scenario.baseStatsByTrack,
-        enemyDef: scenario.enemyDef,
-        enemyResistance: scenario.enemyResistance,
-        endlineTime: scenario.endlineTime,
-        lmdiAttributionMode: scenario.lmdiAttributionMode,
-        controlledOperatorSegments: scenario.controlledOperatorSegments,
-      },
-    );
-  });
+  const {
+    compiledTimeline,
+    simulation,
+    simLog,
+    operatorLog,
+    enemyLog,
+    simLogRevision,
+    spSeries,
+    staggerSeries,
+    trackBuffLayouts,
+    enemyEffectLayout,
+    enemyAfflictionViz,
+    operatorEffectLayouts,
+    comboWindowLayouts,
+    requisiteWarnings,
+    gaugeSeriesByTrackId,
+    timeContext,
+    globalExtensions,
+  } = sim;
 
   // Wire the layout composable (node rects, effect layouts, coordinate spaces).
-  // Placed here so its compiledTimeline / getResolvedActionVisualEndTime deps
-  // are already declared; consumers reference the results lazily.
+  // Depends on the simulation's compiledTimeline, so it is wired after it.
   const layouts = useTimelineLayouts({
     timelineRect,
     timelineShift,
@@ -5349,71 +5339,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     getResolvedActionVisualEndTime,
   });
   const { nodeRects, effectLayouts, getNodeRect, toTimelineSpace, toViewportSpace } = layouts;
-
-  const optimizerProjection = computed(() => {
-    return projectOptimizerResult({
-      simulation: simulation.value,
-      compiledScenario: compiledScenario.value,
-      tracks: tracks.value,
-      viewDuration: viewDuration.value,
-      prepDuration: prepDuration.value,
-      simulationEndline: simulationEndline.value,
-    });
-  });
-
-  const simLog = computed(() => {
-    return optimizerProjection.value.simLog;
-  });
-
-  const operatorLog = computed(() => {
-    return optimizerProjection.value.operatorLog;
-  });
-
-  const enemyLog = computed(() => {
-    return optimizerProjection.value.enemyLog;
-  });
-
-  const simLogRevision = computed(() => {
-    return simLog.value.length + enemyLog.value.length;
-  });
-
-  const spSeries = computed(() => {
-    return optimizerProjection.value.spSeries;
-  });
-
-  const staggerSeries = computed(() => {
-    return optimizerProjection.value.staggerSeries;
-  });
-
-  const trackBuffLayouts = computed(() => {
-    return optimizerProjection.value.trackBuffLayouts;
-  });
-
-  const enemyEffectLayout = computed(() => {
-    return optimizerProjection.value.enemyEffectLayout;
-  });
-
-  const enemyAfflictionViz = computed(() => {
-    return optimizerProjection.value.enemyAfflictionViz;
-  });
-
-  const operatorEffectLayouts = computed(() => {
-    return optimizerProjection.value.operatorEffectLayouts;
-  });
-
-  const comboWindowLayouts = computed(() => {
-    return optimizerProjection.value.comboWindowLayouts;
-  });
-
-  const requisiteWarnings = computed(() => {
-    return optimizerProjection.value.requisiteWarnings;
-  });
-
-  const timeContext = computed(() => compiledTimeline.value?.timeContext || null);
-
-  const globalExtensions = computed(() => {
-    return compiledTimeline.value?.timeExtensions || [];
-  });
 
   function refreshAllActionShifts(excludeIds: string | (string | undefined)[] = []) {
     const excludeSet = new Set(Array.isArray(excludeIds) ? excludeIds : [excludeIds]);
@@ -5633,10 +5558,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     if (!charInfo) return 0;
     return resolveGaugeMax(trackId, track, charInfo);
   }
-
-  const gaugeSeriesByTrackId = computed(() => {
-    return optimizerProjection.value.gaugeSeriesByTrackId;
-  });
 
   function calculateGaugeData(trackId: string) {
     const track = tracks.value.find(t => t.id === trackId);
