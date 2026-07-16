@@ -1,59 +1,61 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   operatorStatus: { type: Object, default: null },
   operatorName: { type: String, default: '' },
-})
+});
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible']);
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const atkOpen = ref(false)
-const hpOpen = ref(false)
+const atkOpen = ref(false);
+const hpOpen = ref(false);
 
-const ATTR_KEYS = ['strength', 'agility', 'intellect', 'will']
+const ATTR_KEYS = ['strength', 'agility', 'intellect', 'will'];
 
 function attrLabel(key) {
-  return t(`stats.${key}`)
+  return t(`stats.${key}`);
 }
 
 function pct(value) {
-  return `${((Number(value) || 0) * 100).toFixed(1)}%`
+  return `${((Number(value) || 0) * 100).toFixed(1)}%`;
 }
 
 function num(value) {
-  return `${Math.ceil(Number(value) || 0)}`
+  return `${Math.ceil(Number(value) || 0)}`;
 }
 
 function attrKey(value) {
-  return String(value || '').toLowerCase()
+  return String(value || '').toLowerCase();
 }
 
 const baseAtkTotal = computed(() => {
-  const status = props.operatorStatus
-  if (!status) return 0
-  return (Number(status.baseAtk?.operator) || 0) + (Number(status.baseAtk?.weapon) || 0)
-})
+  const status = props.operatorStatus;
+  if (!status) return 0;
+  return (Number(status.baseAtk?.operator) || 0) + (Number(status.baseAtk?.weapon) || 0);
+});
 
 const basicTotal = computed(() => {
-  const status = props.operatorStatus
-  if (!status) return 0
-  return baseAtkTotal.value * (1 + (Number(status.atkPercent) || 0)) + (Number(status.flatAtk) || 0)
-})
+  const status = props.operatorStatus;
+  if (!status) return 0;
+  return (
+    baseAtkTotal.value * (1 + (Number(status.atkPercent) || 0)) + (Number(status.flatAtk) || 0)
+  );
+});
 
 const attrContribs = computed(() => {
-  const status = props.operatorStatus
-  if (!status) return []
-  const mainKey = attrKey(status.mainAttributeName)
-  const subKey = attrKey(status.secondaryAttributeName)
+  const status = props.operatorStatus;
+  if (!status) return [];
+  const mainKey = attrKey(status.mainAttributeName);
+  const subKey = attrKey(status.secondaryAttributeName);
 
   return ATTR_KEYS.map(key => {
-    const coeff = Number(status.attrAtkCoeff?.[key]) || 0
-    const value = Number(status.attributes?.[key]) || 0
+    const coeff = Number(status.attrAtkCoeff?.[key]) || 0;
+    const value = Number(status.attributes?.[key]) || 0;
     return {
       key,
       name: attrLabel(key),
@@ -62,25 +64,25 @@ const attrContribs = computed(() => {
       contrib: coeff * value,
       isMain: key === mainKey,
       isSub: key === subKey,
-    }
+    };
   })
     .filter(row => row.coeff !== 0)
     .sort((a, b) => {
-      const rank = row => (row.isMain ? 0 : row.isSub ? 1 : 2)
-      return rank(a) - rank(b)
-    })
-})
+      const rank = row => (row.isMain ? 0 : row.isSub ? 1 : 2);
+      return rank(a) - rank(b);
+    });
+});
 
 const baseHpTotal = computed(() => {
-  const status = props.operatorStatus
-  if (!status) return 0
-  return (Number(status.baseHp) || 0) + (Number(status.attributes?.strength) || 0) * 5
-})
+  const status = props.operatorStatus;
+  if (!status) return 0;
+  return (Number(status.baseHp) || 0) + (Number(status.attributes?.strength) || 0) * 5;
+});
 
 function onClose() {
-  atkOpen.value = false
-  hpOpen.value = false
-  emit('update:visible', false)
+  atkOpen.value = false;
+  hpOpen.value = false;
+  emit('update:visible', false);
 }
 </script>
 
@@ -108,10 +110,16 @@ function onClose() {
           >
             <td class="label-cell">
               {{ attrLabel(key) }}
-              <span v-if="key === attrKey(operatorStatus.mainAttributeName)" class="attr-badge main-badge">
+              <span
+                v-if="key === attrKey(operatorStatus.mainAttributeName)"
+                class="attr-badge main-badge"
+              >
                 {{ t('statDetail.main') }}
               </span>
-              <span v-if="key === attrKey(operatorStatus.secondaryAttributeName)" class="attr-badge sub-badge">
+              <span
+                v-if="key === attrKey(operatorStatus.secondaryAttributeName)"
+                class="attr-badge sub-badge"
+              >
                 {{ t('statDetail.sub') }}
               </span>
             </td>
@@ -150,7 +158,12 @@ function onClose() {
             <tr class="sub-row">
               <td class="label-cell indent-2">{{ t('statDetail.atkBonus') }}</td>
               <td class="value-cell">
-                +{{ num(baseAtkTotal * (Number(operatorStatus.atkPercent) || 0) + (Number(operatorStatus.flatAtk) || 0)) }}
+                +{{
+                  num(
+                    baseAtkTotal * (Number(operatorStatus.atkPercent) || 0) +
+                      (Number(operatorStatus.flatAtk) || 0),
+                  )
+                }}
               </td>
             </tr>
             <tr class="sub-row dim">
@@ -198,14 +211,25 @@ function onClose() {
             </tr>
             <tr class="sub-row dim">
               <td class="label-cell indent-2">{{ t('statDetail.hpFromStrength') }}</td>
-              <td class="value-cell">{{ num((Number(operatorStatus.attributes?.strength) || 0) * 5) }}</td>
+              <td class="value-cell">
+                {{ num((Number(operatorStatus.attributes?.strength) || 0) * 5) }}
+              </td>
             </tr>
-            <tr v-if="operatorStatus.hpPercent !== 0 || operatorStatus.flatHp !== 0" class="sub-row dim">
+            <tr
+              v-if="operatorStatus.hpPercent !== 0 || operatorStatus.flatHp !== 0"
+              class="sub-row dim"
+            >
               <td class="label-cell indent-1">{{ t('statDetail.otherHp') }}</td>
               <td class="value-cell">
-                <template v-if="operatorStatus.hpPercent !== 0">{{ t('statDetail.hpPercent') }} {{ pct(operatorStatus.hpPercent) }}</template>
-                <template v-if="operatorStatus.hpPercent !== 0 && operatorStatus.flatHp !== 0"> + </template>
-                <template v-if="operatorStatus.flatHp !== 0">{{ t('statDetail.flatHp') }} {{ num(operatorStatus.flatHp) }}</template>
+                <template v-if="operatorStatus.hpPercent !== 0"
+                  >{{ t('statDetail.hpPercent') }} {{ pct(operatorStatus.hpPercent) }}</template
+                >
+                <template v-if="operatorStatus.hpPercent !== 0 && operatorStatus.flatHp !== 0">
+                  +
+                </template>
+                <template v-if="operatorStatus.flatHp !== 0"
+                  >{{ t('statDetail.flatHp') }} {{ num(operatorStatus.flatHp) }}</template
+                >
               </td>
             </tr>
           </template>
@@ -228,7 +252,9 @@ function onClose() {
           </tr>
           <tr>
             <td class="label-cell">{{ t('stats.ult_charge_eff') }}</td>
-            <td class="value-cell">{{ pct(1 + (Number(operatorStatus.ultimateGainEfficiency) || 0) / 100) }}</td>
+            <td class="value-cell">
+              {{ pct(1 + (Number(operatorStatus.ultimateGainEfficiency) || 0) / 100) }}
+            </td>
           </tr>
         </tbody>
       </table>

@@ -1,26 +1,23 @@
 <script setup>
-import { useTimelineStore } from '../stores/timelineStore.js'
-import { formatFrameCount } from '@/utils/time.js'
-import { useI18n } from 'vue-i18n'
+import { useTimelineStore } from '../stores/timelineStore.js';
+import { formatFrameCount } from '@/utils/time';
+import { useI18n } from 'vue-i18n';
 
 defineProps({
   trackId: { type: String, required: true },
-})
+});
 
-const store = useTimelineStore()
-const { t } = useI18n({ useScope: 'global' })
+const store = useTimelineStore();
+const { t } = useI18n({ useScope: 'global' });
 
 function formatDuration(time) {
-  if (time >= 1) return store.formatTimeLabel(time)
-  return formatFrameCount(time)
+  if (time >= 1) return store.formatTimeLabel(time);
+  return formatFrameCount(time);
 }
 </script>
 
 <template>
-  <div
-    v-if="store.comboWindowLayouts?.get(trackId)?.length"
-    class="combo-window-bar-layer"
-  >
+  <div v-if="store.comboWindowLayouts?.get(trackId)?.length" class="combo-window-bar-layer">
     <div
       v-for="(cw, cwIdx) in store.comboWindowLayouts.get(trackId)"
       :key="`cw-${trackId}-${cwIdx}`"
@@ -82,20 +79,23 @@ function formatDuration(time) {
   height: 2px;
   border-bottom: none;
   background: repeating-linear-gradient(
-      90deg,
-      var(--cw-color) 0,
-      var(--cw-color) 4px,
-      transparent 4px,
-      transparent 8px
+    90deg,
+    var(--cw-color) 0,
+    var(--cw-color) 4px,
+    transparent 4px,
+    transparent 8px
   );
   background-size: 8px 100%;
-  animation:
-      dash-flow 0.5s linear infinite;
+  animation: dash-flow 0.5s linear infinite;
 }
 
 @keyframes dash-flow {
-  from { background-position-x: 0; }
-  to   { background-position-x: 8px; }
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: 8px;
+  }
 }
 
 .perfect-timing-bar .cw-line::after {
@@ -107,13 +107,16 @@ function formatDuration(time) {
   height: 4px;
   border-radius: 50%;
   background: var(--cw-color);
-  animation:
-    move-along-path 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: move-along-path 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes move-along-path {
-  0%   { left: 0; }
-  100% { left: calc(100% - 4px); }
+  0% {
+    left: 0;
+  }
+  100% {
+    left: calc(100% - 4px);
+  }
 }
 
 .cw-end-mark {

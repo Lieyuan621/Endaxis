@@ -43,25 +43,31 @@ describe('EnemyEffectHandler stack strategies', () => {
     const handler = new EnemyEffectHandler();
     const { ctx } = createContext();
 
-    handler.handle({
-      type: 'ENEMY_EFFECT_APPLY',
-      kind: 'infliction',
-      time: 1,
-      element: 'electric',
-      stacks: 3,
-      effectiveDuration: 10,
-      sourceId: 'alpha',
-    } as any, ctx);
-    handler.handle({
-      type: 'ENEMY_EFFECT_APPLY',
-      kind: 'infliction',
-      time: 2,
-      element: 'electric',
-      stacks: 1,
-      effectiveDuration: 10,
-      sourceId: 'beta',
-      stackStrategy: 'REPLACE',
-    } as any, ctx);
+    handler.handle(
+      {
+        type: 'ENEMY_EFFECT_APPLY',
+        kind: 'infliction',
+        time: 1,
+        element: 'electric',
+        stacks: 3,
+        effectiveDuration: 10,
+        sourceId: 'alpha',
+      } as any,
+      ctx,
+    );
+    handler.handle(
+      {
+        type: 'ENEMY_EFFECT_APPLY',
+        kind: 'infliction',
+        time: 2,
+        element: 'electric',
+        stacks: 1,
+        effectiveDuration: 10,
+        sourceId: 'beta',
+        stackStrategy: 'REPLACE',
+      } as any,
+      ctx,
+    );
 
     expect(ctx.state.enemy.infliction?.stacks).toBe(1);
     expect(ctx.state.enemy.infliction?.sourceQueue).toEqual([{ sourceId: 'beta', count: 1 }]);
@@ -71,23 +77,29 @@ describe('EnemyEffectHandler stack strategies', () => {
     const handler = new EnemyEffectHandler();
     const { ctx } = createContext();
 
-    handler.handle({
-      type: 'ENEMY_EFFECT_APPLY',
-      kind: 'physicalStatus',
-      time: 1,
-      physicalType: 'vulnerability',
-      effectiveDuration: 10,
-      sourceId: 'alpha',
-    } as any, ctx);
-    handler.handle({
-      type: 'ENEMY_EFFECT_APPLY',
-      kind: 'physicalStatus',
-      time: 2,
-      physicalType: 'vulnerability',
-      effectiveDuration: 10,
-      sourceId: 'beta',
-      stackStrategy: 'REPLACE',
-    } as any, ctx);
+    handler.handle(
+      {
+        type: 'ENEMY_EFFECT_APPLY',
+        kind: 'physicalStatus',
+        time: 1,
+        physicalType: 'vulnerability',
+        effectiveDuration: 10,
+        sourceId: 'alpha',
+      } as any,
+      ctx,
+    );
+    handler.handle(
+      {
+        type: 'ENEMY_EFFECT_APPLY',
+        kind: 'physicalStatus',
+        time: 2,
+        physicalType: 'vulnerability',
+        effectiveDuration: 10,
+        sourceId: 'beta',
+        stackStrategy: 'REPLACE',
+      } as any,
+      ctx,
+    );
 
     expect(ctx.state.enemy.vulnerability?.stacks).toBe(1);
     expect(ctx.state.enemy.vulnerability?.sourceQueue).toEqual([{ sourceId: 'beta', count: 1 }]);

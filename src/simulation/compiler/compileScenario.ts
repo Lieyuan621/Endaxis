@@ -1,4 +1,4 @@
-import { compileTimeline } from "./compileTimeline";
+import { compileTimeline } from './compileTimeline';
 import type {
   ActionNode,
   ActorStats,
@@ -8,11 +8,11 @@ import type {
   ScenarioTrack,
   SystemConstants,
   Action,
-} from "./types";
-import { createDefaultStats } from "@/simulation/defaultActorStats";
-import type { ActorSnapshot } from "@/simulation/state/types.ts";
-import { isComboSkillLikeAction, isUltimateLikeAction } from "./types";
-import { createDefaultEnemyResistance, normalizeEnemyResistance } from "@/data/enemyResistance";
+} from './types';
+import { createDefaultStats } from '@/simulation/defaultActorStats';
+import type { ActorSnapshot } from '@/simulation/state/types.ts';
+import { isComboSkillLikeAction, isUltimateLikeAction } from './types';
+import { createDefaultEnemyResistance, normalizeEnemyResistance } from '@/data/enemyResistance';
 
 function clampPercent(value: unknown): number {
   const num = Number(value) || 0;
@@ -22,9 +22,9 @@ function clampPercent(value: unknown): number {
 }
 
 function resolveEffectiveCooldown(
-    action: Action,
-    track: ScenarioTrack,
-    systemConstants?: Partial<SystemConstants>,
+  action: Action,
+  track: ScenarioTrack,
+  systemConstants?: Partial<SystemConstants>,
 ) {
   const baseCooldown = Math.max(0, Number(action.cooldown) || 0);
 
@@ -44,10 +44,10 @@ function resolveEffectiveCooldown(
 
   if (isComboSkillLikeAction(action)) {
     reductionPercent = Math.max(
-        clampPercent((stats as any).combo_cd_reduction),
-        clampPercent(stats.link_cd_reduction),
-        clampPercent(track.linkCdReduction),
-        clampPercent(systemConstants?.linkCdReduction),
+      clampPercent((stats as any).combo_cd_reduction),
+      clampPercent(stats.link_cd_reduction),
+      clampPercent(track.linkCdReduction),
+      clampPercent(systemConstants?.linkCdReduction),
     );
     reductionFlat = Math.max(0, Number((stats as any).combo_cd_reduction_flat) || 0);
     externalMult = Math.max(0, Number((stats as any).combo_cd_external_mult ?? 1) || 1);
@@ -58,8 +58,8 @@ function resolveEffectiveCooldown(
   }
 
   const cooldown = Math.max(
-      0,
-      (baseCooldown - reductionFlat) * (1 - reductionPercent / 100) * externalMult,
+    0,
+    (baseCooldown - reductionFlat) * (1 - reductionPercent / 100) * externalMult,
   );
 
   return {
@@ -71,31 +71,31 @@ function resolveEffectiveCooldown(
 }
 
 function normalizeTracks(
-    tracks: ScenarioTrack[],
-    systemConstants?: Partial<SystemConstants>,
+  tracks: ScenarioTrack[],
+  systemConstants?: Partial<SystemConstants>,
 ): ScenarioTrack[] {
-  return tracks.map((track) => {
+  return tracks.map(track => {
     const baseStats = createDefaultStats() as ActorStats;
     track.stats = { ...baseStats, ...track.stats };
     track.acceptTeamGauge = track.acceptTeamGauge !== false;
-    track.actions = (track.actions || []).map((action) =>
-        normalizeAction(action, track, systemConstants),
+    track.actions = (track.actions || []).map(action =>
+      normalizeAction(action, track, systemConstants),
     );
     return track;
   });
 }
 
 function normalizeAction(
-    action: Action,
-    track: ScenarioTrack,
-    systemConstants?: Partial<SystemConstants>,
+  action: Action,
+  track: ScenarioTrack,
+  systemConstants?: Partial<SystemConstants>,
 ): Action {
   const cooldown = resolveEffectiveCooldown(action, track, systemConstants);
 
   return {
     ...action,
     ...cooldown,
-    hits: (action.hits || []).map((hit) => ({
+    hits: (action.hits || []).map(hit => ({
       ...hit,
       spRecovery: Number(hit.spRecovery) || 0,
       spReturn: Number(hit.spReturn) || 0,
@@ -109,15 +109,13 @@ function resolveTrackMaxGauge(track: ScenarioTrack) {
     return Number(track.maxGaugeOverride);
   }
 
-  const intrinsicMaxGauge = Number(
-    track.maxUltimateGauge ?? track.ultimate_gaugeMax,
-  );
+  const intrinsicMaxGauge = Number(track.maxUltimateGauge ?? track.ultimate_gaugeMax);
   if (intrinsicMaxGauge > 0) {
     return intrinsicMaxGauge;
   }
 
   const ultimateAction = (track.actions || []).find(
-    (action) => isUltimateLikeAction(action) && Number(action.gaugeCost) > 0,
+    action => isUltimateLikeAction(action) && Number(action.gaugeCost) > 0,
   );
 
   return Math.max(1, Number(ultimateAction?.gaugeCost) || 100);
@@ -125,42 +123,42 @@ function resolveTrackMaxGauge(track: ScenarioTrack) {
 
 function processActors(tracks: ScenarioTrack[]): ActorSnapshot[] {
   return tracks
-      .filter((t) => !!t.id)
-      .map((track) => {
-        const maxGauge = resolveTrackMaxGauge(track);
-        return {
-          id: track.id,
-          element: (track as any).element,
-          stats: track.stats,
-          baseStats: track.baseStats ?? null,
-          triggerEffects: track.triggerEffects || [],
-          acceptTeamGauge: track.acceptTeamGauge !== false,
-          acceptTeamUltEnergy: track.acceptTeamUltEnergy ?? track.acceptTeamGauge !== false,
-          acceptSelfSpCostUltEnergy: track.acceptSelfSpCostUltEnergy !== false,
-          ultimateEnergyCostOverride: maxGauge,
-          resources: {
-            hp: track.stats.hp,
-            gauge: track.initialGauge,
-            maxGauge,
-            ultimateEnergy: track.initialGauge,
-          },
-          cooldowns: new Map(),
-          activeBuffs: new Map(),
-        };
-      });
+    .filter(t => !!t.id)
+    .map(track => {
+      const maxGauge = resolveTrackMaxGauge(track);
+      return {
+        id: track.id,
+        element: (track as any).element,
+        stats: track.stats,
+        baseStats: track.baseStats ?? null,
+        triggerEffects: track.triggerEffects || [],
+        acceptTeamGauge: track.acceptTeamGauge !== false,
+        acceptTeamUltEnergy: track.acceptTeamUltEnergy ?? track.acceptTeamGauge !== false,
+        acceptSelfSpCostUltEnergy: track.acceptSelfSpCostUltEnergy !== false,
+        ultimateEnergyCostOverride: maxGauge,
+        resources: {
+          hp: track.stats.hp,
+          gauge: track.initialGauge,
+          maxGauge,
+          ultimateEnergy: track.initialGauge,
+        },
+        cooldowns: new Map(),
+        activeBuffs: new Map(),
+      };
+    });
 }
 
 export function normalizeScenario(
-    scenario: ScenarioData,
-    systemConstants?: Partial<SystemConstants>,
+  scenario: ScenarioData,
+  systemConstants?: Partial<SystemConstants>,
 ) {
   const tracks = normalizeTracks(scenario.tracks, systemConstants);
 
   const actions: ActionNode[] = [];
   tracks.forEach((track, index) => {
-    track.actions.forEach((action) => {
+    track.actions.forEach(action => {
       actions.push({
-        type: "action",
+        type: 'action',
         id: action.instanceId,
         trackIndex: index,
         trackId: track.id || `track_${index}`,
@@ -190,7 +188,7 @@ const DEFAULT_SYSTEM_CONSTANTS: SystemConstants = {
   executionRecovery: 25,
   defense: 100,
   superArmor: 0,
-  tier: "normal",
+  tier: 'normal',
   resistance: createDefaultEnemyResistance(),
 };
 
@@ -231,16 +229,16 @@ export function compileScenario(
       executionRecovery: mergedSystemConstants.executionRecovery,
       finisherRecovery: mergedSystemConstants.executionRecovery,
       finisherMultiplier:
-          (mergedSystemConstants as any).finisherMultiplier ??
-          (mergedSystemConstants.tier === "leader"
-              ? 1.75
-              : mergedSystemConstants.tier === "boss"
-                  ? 1.5
-                  : mergedSystemConstants.tier === "elite"
-                      ? 1.25
-                      : mergedSystemConstants.tier === "advanced"
-                          ? 1.1
-                          : 1),
+        (mergedSystemConstants as any).finisherMultiplier ??
+        (mergedSystemConstants.tier === 'leader'
+          ? 1.75
+          : mergedSystemConstants.tier === 'boss'
+            ? 1.5
+            : mergedSystemConstants.tier === 'elite'
+              ? 1.25
+              : mergedSystemConstants.tier === 'advanced'
+                ? 1.1
+                : 1),
       defense: mergedSystemConstants.defense,
       enemyHp: (mergedSystemConstants as any).enemyHp,
       superArmor: (mergedSystemConstants as any).superArmor,

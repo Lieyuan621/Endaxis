@@ -1,6 +1,6 @@
-import type { ActorSnapshot } from "@/simulation/state/types.ts";
-import type { BaseGameState } from "./BaseGameState";
-import { EffectManager } from "./EffectManager";
+import type { ActorSnapshot } from '@/simulation/state/types.ts';
+import type { BaseGameState } from './BaseGameState';
+import { EffectManager } from './EffectManager';
 
 export class ActorState implements BaseGameState<ActorSnapshot> {
   public effects: EffectManager;
@@ -12,10 +12,7 @@ export class ActorState implements BaseGameState<ActorSnapshot> {
   constructor(public readonly snapshotData: ActorSnapshot) {
     this.effects = new EffectManager();
     this.gauge = Number(snapshotData.resources?.gauge) || 0;
-    this.maxGauge = Math.max(
-      0,
-      Number(snapshotData.resources?.maxGauge) || 0,
-    );
+    this.maxGauge = Math.max(0, Number(snapshotData.resources?.maxGauge) || 0);
   }
 
   get id() {

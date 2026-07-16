@@ -17,7 +17,7 @@ const sheet: OperatorSheet = {
     Intellect: [14.18, 38.73, 64.58, 90.44, 116.29, 129.21],
     Will: [11.34, 28.57, 46.71, 64.84, 82.98, 92.05],
     'Base ATK': [30, 91, 155, 219, 283, 315],
-    'Base HP': [500, 1566.33, 2688.78, 3811.22, 4933.67, 5494.90],
+    'Base HP': [500, 1566.33, 2688.78, 3811.22, 4933.67, 5494.9],
   },
   talents: [
     {
@@ -412,7 +412,12 @@ const sheet: OperatorSheet = {
       comboWindow: {
         triggers: [
           {
-            trigger: { kind: 'onStatusConsumed', status: 'heatInfliction', target: 'enemy', triggerScope: 'global' },
+            trigger: {
+              kind: 'onStatusConsumed',
+              status: 'heatInfliction',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
           },
         ],
         duration: 5,

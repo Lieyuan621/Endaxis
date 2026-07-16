@@ -1,32 +1,28 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { getGearPiece } from '@/data'
-import {
-  getGameSlotTypeName,
-  getGearPieceGameName,
-  getGearSetGameName,
-} from '@/data/gameText'
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { getGearPiece } from '@/data';
+import { getGameSlotTypeName, getGearPieceGameName, getGearSetGameName } from '@/data/gameText';
 import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
-} from '@/utils/equipmentEffectDisplay'
-import { resolveLeveled } from '@/data/types'
-import { useGearStore } from '@/stores/gearStore'
-import { useTimelineStore } from '@/stores/timelineStore'
-import EditGearInstanceDialog from './EditGearInstanceDialog.vue'
+} from '@/utils/equipmentEffectDisplay';
+import { resolveLeveled } from '@/data/types';
+import { useGearStore } from '@/stores/gearStore';
+import { useTimelineStore } from '@/stores/timelineStore';
+import EditGearInstanceDialog from './EditGearInstanceDialog.vue';
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   track: { type: Object, default: null },
-})
+});
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible']);
 
-const store = useTimelineStore()
-const gearStore = useGearStore()
-const { t, locale } = useI18n()
-const editingGearInstance = ref(null)
+const store = useTimelineStore();
+const gearStore = useGearStore();
+const { t, locale } = useI18n();
+const editingGearInstance = ref(null);
 
 const SLOT_CONFIGS = [
   {
@@ -61,7 +57,7 @@ const SLOT_CONFIGS = [
     labelKey: 'timelineGrid.equipmentSlot.accessory2',
     fallback: 'Accessory 2',
   },
-]
+];
 
 const EQUIPMENT_LEVEL_COLORS = {
   70: '#ffd700',
@@ -70,86 +66,88 @@ const EQUIPMENT_LEVEL_COLORS = {
   28: '#73c94f',
   20: '#95de64',
   10: '#888888',
-}
+};
 function getEquipmentLevelColor(level) {
-  const key = Number(level)
-  return EQUIPMENT_LEVEL_COLORS[key] || '#888'
+  const key = Number(level);
+  return EQUIPMENT_LEVEL_COLORS[key] || '#888';
 }
 
 function tr(key, fallback) {
-  const out = t(key)
-  return out === key ? fallback : out
+  const out = t(key);
+  return out === key ? fallback : out;
 }
 
 function getInstance(instanceId) {
-  return instanceId ? gearStore.gears.find(item => item.id === instanceId) || null : null
+  return instanceId ? gearStore.gears.find(item => item.id === instanceId) || null : null;
 }
 
 function getRefineLevel(instance) {
-  const levels = Array.isArray(instance?.artificingLevels) ? instance.artificingLevels : []
+  const levels = Array.isArray(instance?.artificingLevels) ? instance.artificingLevels : [];
   const normalized = [0, 1, 2].map(index => {
-    const level = Number(levels[index]) || 0
-    return Math.max(0, Math.min(3, level))
-  })
+    const level = Number(levels[index]) || 0;
+    return Math.max(0, Math.min(3, level));
+  });
 
-  const first = normalized[0]
-  const allSame = normalized.every(level => level === first)
+  const first = normalized[0];
+  const allSame = normalized.every(level => level === first);
 
-  return allSame ? first : null
+  return allSame ? first : null;
 }
 function getSkillSlots(piece) {
-  if (!piece) return []
+  if (!piece) return [];
   return [piece.skill1, piece.skill2, piece.skill3]
     .filter(Boolean)
     .map(skill => (skill.effects || []).filter(effect => effect.kind === 'status'))
-    .filter(slot => slot.length > 0)
+    .filter(slot => slot.length > 0);
 }
 
 function formatStatLabel(effect) {
-  return formatEquipmentEffectLabel(effect, t, locale.value)
+  return formatEquipmentEffectLabel(effect, t, locale.value);
 }
 
 function formatStatValue(effect, value) {
-  return formatEquipmentEffectStatValue(effect, value)
+  return formatEquipmentEffectStatValue(effect, value);
 }
 
 function getArtificingLevel(instance, slotIdx) {
-  const levels = Array.isArray(instance?.artificingLevels) ? instance.artificingLevels : []
-  const level = Number(levels[slotIdx]) || 0
-  return Math.max(0, Math.min(3, level))
+  const levels = Array.isArray(instance?.artificingLevels) ? instance.artificingLevels : [];
+  const level = Number(levels[slotIdx]) || 0;
+  return Math.max(0, Math.min(3, level));
 }
 
 function getSlotStatRows(piece, instance) {
   return getSkillSlots(piece).map((slot, index) => {
-    const effect = slot[0]
-    const refine = getArtificingLevel(instance, index)
+    const effect = slot[0];
+    const refine = getArtificingLevel(instance, index);
 
     return {
       key: `${effect?.id || effect?.stat?.modifier || 'stat'}-${index}`,
       label: formatStatLabel(effect),
       value: effect ? formatStatValue(effect, resolveLeveled(effect.value, refine)) : '',
       refine,
-    }
-  })
+    };
+  });
 }
 
 function isUniformRefineActive(slot, level) {
-  const levels = (slot?.stats || []).map(row => Number(row.refine))
-  if (levels.length === 0) return false
-  return levels.every(refine => refine === level)
+  const levels = (slot?.stats || []).map(row => Number(row.refine));
+  if (levels.length === 0) return false;
+  return levels.every(refine => refine === level);
 }
 
 const slots = computed(() => {
-  const track = props.track
+  const track = props.track;
   return SLOT_CONFIGS.map(config => {
-    const equipmentId = track?.[config.idKey] || null
-    const instance = getInstance(track?.[config.instanceKey])
-    const equipment = store.getEquipmentById?.(equipmentId) || null
-    const piece = getGearPiece(instance?.gearPieceId || equipmentId)
-    const level = Number(equipment?.level ?? piece?.levelRequirement) || 0
-    const color = getEquipmentLevelColor(level)
-    const trackRefine = Number(track?.[config.tierKey])
-    const refine = Number.isFinite(trackRefine) ? Math.max(0, Math.min(3, trackRefine)) : getRefineLevel(instance)
+    const equipmentId = track?.[config.idKey] || null;
+    const instance = getInstance(track?.[config.instanceKey]);
+    const equipment = store.getEquipmentById?.(equipmentId) || null;
+    const piece = getGearPiece(instance?.gearPieceId || equipmentId);
+    const level = Number(equipment?.level ?? piece?.levelRequirement) || 0;
+    const color = getEquipmentLevelColor(level);
+    const trackRefine = Number(track?.[config.tierKey]);
+    const refine = Number.isFinite(trackRefine)
+      ? Math.max(0, Math.min(3, trackRefine))
+      : getRefineLevel(instance);
 
     return {
       ...config,
@@ -165,28 +163,32 @@ const slots = computed(() => {
         ? getGearPieceGameName(instance.gearPieceId, locale.value) || instance.gearPieceId
         : equipment?.name || '',
       icon: piece?.icon || equipment?.icon || '/icons/default_icon.webp',
-      setName: getGearSetGameName(piece?.setSlug || equipment?.category || '', locale.value) || equipment?.categoryName || '',
+      setName:
+        getGearSetGameName(piece?.setSlug || equipment?.category || '', locale.value) ||
+        equipment?.categoryName ||
+        '',
       slotType: piece?.slotType || equipment?.slot || '',
       stats: getSlotStatRows(piece, instance),
-    }
-  })
-})
+    };
+  });
+});
 
 function setRefine(slot, level) {
-  if (!props.track?.id || !slot?.instance || !slot.isGold) return
-  store.updateTrackEquipmentTier(props.track.id, slot.slotKey, level)
+  if (!props.track?.id || !slot?.instance || !slot.isGold) return;
+  store.updateTrackEquipmentTier(props.track.id, slot.slotKey, level);
 }
 
 function maxOut() {
-  if (!props.track?.id) return
+  if (!props.track?.id) return;
   slots.value.forEach(slot => {
-    if (slot.instance && slot.isGold) store.updateTrackEquipmentTier(props.track.id, slot.slotKey, 3)
-  })
+    if (slot.instance && slot.isGold)
+      store.updateTrackEquipmentTier(props.track.id, slot.slotKey, 3);
+  });
 }
 
 function openItemEditor(slot) {
-  if (!slot?.instance) return
-  editingGearInstance.value = slot.instance
+  if (!slot?.instance) return;
+  editingGearInstance.value = slot.instance;
 }
 </script>
 
@@ -222,7 +224,9 @@ function openItemEditor(slot) {
             </div>
             <div class="gear-info">
               <div class="gear-name">{{ slot.name }}</div>
-              <div class="gear-subline">Lv{{ slot.level }}<span v-if="slot.setName"> / {{ slot.setName }}</span></div>
+              <div class="gear-subline">
+                Lv{{ slot.level }}<span v-if="slot.setName"> / {{ slot.setName }}</span>
+              </div>
               <div v-if="slot.stats.length > 0" class="stat-list">
                 <div v-for="row in slot.stats" :key="row.key" class="stat-row">
                   <span>{{ row.label }}</span>
@@ -233,11 +237,10 @@ function openItemEditor(slot) {
           </div>
 
           <div class="refine-row">
-            <span class="refine-label">{{ tr('timelineGrid.equipmentDialog.refine', 'Refine') }}</span>
-            <span
-                v-if="slot.isGold && slot.stats.length > 0"
-                class="refine-mixed"
-            >
+            <span class="refine-label">{{
+              tr('timelineGrid.equipmentDialog.refine', 'Refine')
+            }}</span>
+            <span v-if="slot.isGold && slot.stats.length > 0" class="refine-mixed">
               {{ slot.stats.map(row => row.refine).join('/') }}
             </span>
             <template v-if="slot.isGold">
@@ -257,7 +260,10 @@ function openItemEditor(slot) {
             <span v-else class="refine-locked">{{ t('actionLibrary.hints.noRefineNon70') }}</span>
           </div>
 
-          <button class="ea-btn ea-btn--sm ea-btn--glass-rect edit-item-btn" @click="openItemEditor(slot)">
+          <button
+            class="ea-btn ea-btn--sm ea-btn--glass-rect edit-item-btn"
+            @click="openItemEditor(slot)"
+          >
             {{ t('actionLibrary.buttons.editItem') }}
           </button>
         </template>
@@ -271,13 +277,24 @@ function openItemEditor(slot) {
     <EditGearInstanceDialog
       :visible="!!editingGearInstance"
       :instance="editingGearInstance"
-      @update:visible="value => { if (!value) editingGearInstance = null }"
+      @update:visible="
+        value => {
+          if (!value) editingGearInstance = null;
+        }
+      "
     />
 
     <template #footer>
       <div class="footer">
-        <button class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill" @click="maxOut">{{ t('common.max') }}</button>
-        <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">{{ t('common.close') }}</button>
+        <button
+          class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill"
+          @click="maxOut"
+        >
+          {{ t('common.max') }}
+        </button>
+        <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">
+          {{ t('common.close') }}
+        </button>
       </div>
     </template>
   </el-dialog>

@@ -1,7 +1,7 @@
-import { Effect } from "../effects/types";
-import type { EffectTag } from "../effects/types";
-import { passesSkillFilter } from "@/data/filter";
-import type { ConsumedStatEffect } from "@/simulation/compiler/types";
+import { Effect } from '../effects/types';
+import type { EffectTag } from '../effects/types';
+import { passesSkillFilter } from '@/data/filter';
+import type { ConsumedStatEffect } from '@/simulation/compiler/types';
 
 export type EffectInstanceContext = {
   targetId: string;
@@ -30,16 +30,13 @@ export class EffectManager {
 
   constructor() {}
 
-  add(
-    effect: Effect,
-    context: Partial<EffectInstanceContext> = {},
-  ): EffectInstance {
-    if (effect.stackStrategy === "REPLACE") {
+  add(effect: Effect, context: Partial<EffectInstanceContext> = {}): EffectInstance {
+    if (effect.stackStrategy === 'REPLACE') {
       this.removeByEffectId(effect.id);
       return this.createInstance(effect, context);
     }
 
-    if (effect.stackStrategy === "INDEPENDENT") {
+    if (effect.stackStrategy === 'INDEPENDENT') {
       const created = this.createInstance(effect, context);
       this.trimIndependentStacks(effect.id, effect.maxStacks);
       return this.effectInstances.get(created.id) || created;
@@ -83,7 +80,7 @@ export class EffectManager {
 
   getAllTags(): EffectTag[] {
     const tags = Array.from(this.tagCounts.keys());
-    return tags.filter((tag) => this.tagCounts.get(tag)! > 0);
+    return tags.filter(tag => this.tagCounts.get(tag)! > 0);
   }
 
   applyOneTime(effect: any): number {
@@ -139,7 +136,7 @@ export class EffectManager {
       );
     }
 
-    if (effect.stackStrategy === "REFRESH_DURATION") {
+    if (effect.stackStrategy === 'REFRESH_DURATION') {
       effect.startTime = incoming.startTime;
       existing.targetId = context.targetId || existing.targetId;
       existing.actorId = context.actorId;
@@ -149,15 +146,12 @@ export class EffectManager {
     return effect;
   }
 
-  private createInstance(
-    effect: Effect,
-    context: Partial<EffectInstanceContext>,
-  ): EffectInstance {
+  private createInstance(effect: Effect, context: Partial<EffectInstanceContext>): EffectInstance {
     const instanceId = `${effect.id}_${this.counter++}`;
     const instance: EffectInstance = {
       id: instanceId,
       effect,
-      targetId: context.targetId || "",
+      targetId: context.targetId || '',
       actorId: context.actorId,
       actionId: context.actionId,
     };
@@ -169,19 +163,15 @@ export class EffectManager {
   }
 
   private getByEffectId(id: string): EffectInstance | undefined {
-    return this.effectInstances
-      .values()
-      .find((instance) => instance.effect.id === id);
+    return this.effectInstances.values().find(instance => instance.effect.id === id);
   }
 
   private getByMatchingEffectId(id: string): EffectInstance[] {
-    return Array.from(this.effectInstances.values()).filter(
-      (instance) => instance.effect.id === id,
-    );
+    return Array.from(this.effectInstances.values()).filter(instance => instance.effect.id === id);
   }
 
   private removeByEffectId(id: string) {
-    this.getByMatchingEffectId(id).forEach((instance) => {
+    this.getByMatchingEffectId(id).forEach(instance => {
       this.remove(instance.id);
     });
   }
@@ -220,7 +210,7 @@ export class EffectManager {
   }
 
   private updateTags(effect: Effect, delta: number) {
-    effect.tags.forEach((tag) => {
+    effect.tags.forEach(tag => {
       const current = this.tagCounts.get(tag) || 0;
       this.tagCounts.set(tag, Math.max(0, current + delta));
     });

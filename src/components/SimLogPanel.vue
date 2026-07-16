@@ -1,194 +1,200 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { useTimelineStore } from '@/stores/timelineStore.js'
-import { formatSimLogEntry } from '@/simulation/formatSimLogEntry.ts'
-import { useI18n } from 'vue-i18n'
-import { formatTimeWithFrames } from '@/utils/time.js'
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useTimelineStore } from '@/stores/timelineStore.js';
+import { formatSimLogEntry } from '@/simulation/formatSimLogEntry.ts';
+import { useI18n } from 'vue-i18n';
+import { formatTimeWithFrames } from '@/utils/time';
 
-const store = useTimelineStore()
-const { t } = useI18n({ useScope: 'global' })
+const store = useTimelineStore();
+const { t } = useI18n({ useScope: 'global' });
 
-const displayLog = ref([])
-const lastRefreshedRevision = ref(0)
-const isDirty = ref(false)
-const hasInitializedTypes = ref(false)
-const groupRefs = ref({})
-const openActionId = ref(null)
+const displayLog = ref([]);
+const lastRefreshedRevision = ref(0);
+const isDirty = ref(false);
+const hasInitializedTypes = ref(false);
+const groupRefs = ref({});
+const openActionId = ref(null);
 
-const keyword = ref('')
-const limit = ref('all')
-const selectedTypes = ref(new Set())
+const keyword = ref('');
+const limit = ref('all');
+const selectedTypes = ref(new Set());
 
 function formatSignedNumber(value) {
-  const num = Number(value) || 0
-  if (num > 0) return `+${num}`
-  return `${num}`
+  const num = Number(value) || 0;
+  if (num > 0) return `+${num}`;
+  return `${num}`;
 }
 
 function formatDamageNumber(value) {
-  const num = Number(value)
-  if (!Number.isFinite(num)) return '0'
-  return Number.isInteger(num) ? String(num) : num.toFixed(2)
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '0';
+  return Number.isInteger(num) ? String(num) : num.toFixed(2);
 }
 
 function getDamageValue(entry) {
-  return Number(entry?.payload?.hitData?._expectedDamage ?? entry?.payload?.damage ?? 0) || 0
+  return Number(entry?.payload?.hitData?._expectedDamage ?? entry?.payload?.damage ?? 0) || 0;
 }
 
 function getDamageBreakdown(entry) {
-  return entry?.payload?.hitData?._damageBreakdown || null
+  return entry?.payload?.hitData?._damageBreakdown || null;
 }
 
 function getDamageElement(entry) {
-  const hitData = entry?.payload?.hitData
-  const breakdown = getDamageBreakdown(entry)
-  return breakdown?.element || hitData?.element || ''
+  const hitData = entry?.payload?.hitData;
+  const breakdown = getDamageBreakdown(entry);
+  return breakdown?.element || hitData?.element || '';
 }
 
 function getReactionLabel(entry) {
-  const hitData = entry?.payload?.hitData
-  const breakdown = getDamageBreakdown(entry)
-  return breakdown?.reactionType || hitData?._reactionMeta?.reactionType || ''
+  const hitData = entry?.payload?.hitData;
+  const breakdown = getDamageBreakdown(entry);
+  return breakdown?.reactionType || hitData?._reactionMeta?.reactionType || '';
 }
 
 function getConsumedStacksLabel(entry) {
-  const hitData = entry?.payload?.hitData
-  const consumed = hitData?.consumedStacks || hitData?._reactionMeta?.consumedStackSources
-  if (!consumed || typeof consumed !== 'object') return ''
+  const hitData = entry?.payload?.hitData;
+  const consumed = hitData?.consumedStacks || hitData?._reactionMeta?.consumedStackSources;
+  if (!consumed || typeof consumed !== 'object') return '';
   return Object.entries(consumed)
     .filter(([, value]) => Number(value) !== 0)
     .map(([key, value]) => `${key}:${formatDamageNumber(value)}`)
-    .join(', ')
+    .join(', ');
 }
 
 function getLmdiLabel(entry) {
-  const hitData = entry?.payload?.hitData
-  if (!hitData || hitData._lmdiSelf == null) return ''
-  const external = hitData._lmdiExternal && typeof hitData._lmdiExternal === 'object'
-    ? Object.entries(hitData._lmdiExternal)
-        .filter(([, value]) => Number(value) !== 0)
-        .map(([key, value]) => `${key}:${formatDamageNumber(value)}`)
-        .join(', ')
-    : ''
-  const self = `self:${formatDamageNumber(hitData._lmdiSelf)}`
-  return external ? `${self} ext:${external}` : self
+  const hitData = entry?.payload?.hitData;
+  if (!hitData || hitData._lmdiSelf == null) return '';
+  const external =
+    hitData._lmdiExternal && typeof hitData._lmdiExternal === 'object'
+      ? Object.entries(hitData._lmdiExternal)
+          .filter(([, value]) => Number(value) !== 0)
+          .map(([key, value]) => `${key}:${formatDamageNumber(value)}`)
+          .join(', ')
+      : '';
+  const self = `self:${formatDamageNumber(hitData._lmdiSelf)}`;
+  return external ? `${self} ext:${external}` : self;
 }
 
 function getGroupDamageTotal(group) {
-  return group.damage.reduce((sum, entry) => sum + getDamageValue(entry), 0)
+  return group.damage.reduce((sum, entry) => sum + getDamageValue(entry), 0);
 }
 
 function getActionColor(actionId) {
-  const info = store.getActionById?.(actionId)
-  const node = info?.node
-  if (node?.customColor) return node.customColor
-  if (node?.type === 'comboSkill') return store.getColor('link')
-  if (node?.type === 'finisher') return store.getColor('execution')
-  if (node?.type === 'basicAttack') return store.getColor('attack')
-  if (node?.type === 'dive') return store.getColor('dodge')
-  if (node?.element) return store.getColor(node.element)
-  if (info?.trackId) return store.getCharacterElementColor?.(info.trackId) || store.getColor('default')
-  return store.getColor('default')
+  const info = store.getActionById?.(actionId);
+  const node = info?.node;
+  if (node?.customColor) return node.customColor;
+  if (node?.type === 'comboSkill') return store.getColor('link');
+  if (node?.type === 'finisher') return store.getColor('execution');
+  if (node?.type === 'basicAttack') return store.getColor('attack');
+  if (node?.type === 'dive') return store.getColor('dodge');
+  if (node?.element) return store.getColor(node.element);
+  if (info?.trackId)
+    return store.getCharacterElementColor?.(info.trackId) || store.getColor('default');
+  return store.getColor('default');
 }
 
 function getEntryActionId(entry) {
-  if (!entry || !entry.type) return null
+  if (!entry || !entry.type) return null;
   switch (entry.type) {
     case 'ACTION_START':
     case 'ACTION_END':
-      return entry.payload?.actionId || null
+      return entry.payload?.actionId || null;
     case 'DAMAGE_HIT':
-      return entry.payload?.actionId || null
+      return entry.payload?.actionId || null;
     case 'CD_REDUCTION':
-      return entry.payload?.actionId || null
+      return entry.payload?.actionId || null;
     case 'STAGGER':
-      return entry.payload?.actionId || null
+      return entry.payload?.actionId || null;
     case 'SP_CHANGE':
-      return entry.payload?.sourceId || null
+      return entry.payload?.sourceId || null;
     case 'ULT_ENERGY_CHANGE':
     case 'ULTIMATE_CHARGE_CHANGE':
-      return entry.payload?.sourceId || null
+      return entry.payload?.sourceId || null;
     case 'EFFECT_START':
     case 'REACTION_OCCURRED':
-      return entry.payload?.actionId || null
+      return entry.payload?.actionId || null;
     default:
-      return null
+      return null;
   }
 }
 
 function getTrackDisplayName(trackId) {
-  if (!trackId) return ''
-  const found = store.characterRoster?.find((c) => c?.id === trackId)
-  return found?.name || trackId
+  if (!trackId) return '';
+  const found = store.characterRoster?.find(c => c?.id === trackId);
+  return found?.name || trackId;
 }
 
 function getActionDisplayName(actionId) {
-  const info = store.getActionById?.(actionId)
-  const node = info?.node
-  if (node?.name) return node.name
-  if (node?.id) return node.id
-  return formatEffectId(actionId)
+  const info = store.getActionById?.(actionId);
+  const node = info?.node;
+  if (node?.name) return node.name;
+  if (node?.id) return node.id;
+  return formatEffectId(actionId);
 }
 
 function getActionType(actionId) {
-  const info = store.getActionById?.(actionId)
-  return info?.node?.type || ''
+  const info = store.getActionById?.(actionId);
+  return info?.node?.type || '';
 }
 
 function getActorIdForAction(actionId) {
-  const info = store.getActionById?.(actionId)
-  return info?.trackId || ''
+  const info = store.getActionById?.(actionId);
+  return info?.trackId || '';
 }
 
 function formatFrameTime(timeSeconds) {
-  const prep = Number(store.prepDuration) || 0
-  const battleTime = (Number(timeSeconds) || 0) - prep
-  return formatTimeWithFrames(battleTime)
+  const prep = Number(store.prepDuration) || 0;
+  const battleTime = (Number(timeSeconds) || 0) - prep;
+  return formatTimeWithFrames(battleTime);
 }
 
 function formatEntryLine(entry) {
-  return formatSimLogEntry(entry, { formatTime: formatFrameTime })
+  return formatSimLogEntry(entry, { formatTime: formatFrameTime });
 }
 
 function formatOtherEntryText(entry) {
   if (entry?.type === 'CD_REDUCTION') {
     return t('battleLog.ui.cdReductionText', {
       amount: formatDamageNumber(entry.payload?.reduction),
-    })
+    });
   }
-  return formatEntryLine(entry)
+  return formatEntryLine(entry);
 }
 
 function formatEffectId(effectId) {
-  if (!effectId) return ''
-  const key = `battleLog.effectNames.${effectId}`
-  const out = t(key)
-  if (out !== key) return out
-  const effectNameKey = `effects.name.${effectId}`
-  const effectName = t(effectNameKey)
-  return effectName === effectNameKey ? effectId : effectName
+  if (!effectId) return '';
+  const key = `battleLog.effectNames.${effectId}`;
+  const out = t(key);
+  if (out !== key) return out;
+  const effectNameKey = `effects.name.${effectId}`;
+  const effectName = t(effectNameKey);
+  return effectName === effectNameKey ? effectId : effectName;
 }
 
 function formatEffectSourceId(sourceId) {
-  if (!sourceId) return ''
-  const action = store.getActionById?.(sourceId)
-  if (action?.node?.name) return action.node.name
-  if (action?.node?.id) return action.node.id
-  return formatEffectId(sourceId)
+  if (!sourceId) return '';
+  const action = store.getActionById?.(sourceId);
+  if (action?.node?.name) return action.node.name;
+  if (action?.node?.id) return action.node.id;
+  return formatEffectId(sourceId);
 }
 
 function getTypeLabel(type) {
-  const key = `battleLog.types.${type}`
-  const out = t(key)
-  return out === key ? type : out
+  const key = `battleLog.types.${type}`;
+  const out = t(key);
+  return out === key ? type : out;
 }
 
 function getSummaryStats(group) {
   return [
-    { key: 'damage', label: t('battleLog.summary.damage'), value: formatDamageNumber(getGroupDamageTotal(group)) },
+    {
+      key: 'damage',
+      label: t('battleLog.summary.damage'),
+      value: formatDamageNumber(getGroupDamageTotal(group)),
+    },
     { key: 'gauge', label: t('battleLog.summary.gauge'), value: group.gauge.length },
     { key: 'stagger', label: t('battleLog.summary.stagger'), value: group.stagger.length },
-  ]
+  ];
 }
 
 function hasRenderableSections(group) {
@@ -199,118 +205,118 @@ function hasRenderableSections(group) {
     group.sp.length > 0 ||
     group.gauge.length > 0 ||
     group.stagger.length > 0 ||
-    group.other.some((entry) => entry.type !== 'ACTION_START' && entry.type !== 'ACTION_END')
-  )
+    group.other.some(entry => entry.type !== 'ACTION_START' && entry.type !== 'ACTION_END')
+  );
 }
 
 const availableTypes = computed(() => {
-  const set = new Set()
+  const set = new Set();
   for (const entry of displayLog.value) {
-    if (entry?.type) set.add(entry.type)
+    if (entry?.type) set.add(entry.type);
   }
-  return Array.from(set).sort()
-})
+  return Array.from(set).sort();
+});
 
 const typeFilterItems = computed(() =>
-  availableTypes.value.map((type) => ({
+  availableTypes.value.map(type => ({
     type,
     label: getTypeLabel(type),
   })),
-)
+);
 
-watch(availableTypes, (types) => {
-  if (!types || types.length === 0) return
+watch(availableTypes, types => {
+  if (!types || types.length === 0) return;
   if (!hasInitializedTypes.value) {
-    selectedTypes.value = new Set(types)
-    hasInitializedTypes.value = true
-    return
+    selectedTypes.value = new Set(types);
+    hasInitializedTypes.value = true;
+    return;
   }
-  let changed = false
-  const typeSet = new Set(types)
-  const next = new Set()
-  selectedTypes.value.forEach((type) => {
-    if (typeSet.has(type)) next.add(type)
-  })
-  types.forEach((type) => {
+  let changed = false;
+  const typeSet = new Set(types);
+  const next = new Set();
+  selectedTypes.value.forEach(type => {
+    if (typeSet.has(type)) next.add(type);
+  });
+  types.forEach(type => {
     if (selectedTypes.value.size > 0 && !next.has(type)) {
-      next.add(type)
-      changed = true
+      next.add(type);
+      changed = true;
     }
-  })
-  if (!changed && next.size === selectedTypes.value.size) return
-  selectedTypes.value = next
-})
+  });
+  if (!changed && next.size === selectedTypes.value.size) return;
+  selectedTypes.value = next;
+});
 
-const currentRevision = computed(() => store.simLogRevision)
+const currentRevision = computed(() => store.simLogRevision);
 
 watch(
   currentRevision,
-  (rev) => {
+  rev => {
     if (rev !== lastRefreshedRevision.value) {
-      isDirty.value = true
+      isDirty.value = true;
     }
   },
   { immediate: true },
-)
+);
 
 function refresh() {
-  displayLog.value = Array.isArray(store.simLog) ? store.simLog.slice() : []
-  lastRefreshedRevision.value = store.simLogRevision
-  isDirty.value = false
+  displayLog.value = Array.isArray(store.simLog) ? store.simLog.slice() : [];
+  lastRefreshedRevision.value = store.simLogRevision;
+  isDirty.value = false;
 }
 
 function toggleType(type) {
-  const next = new Set(selectedTypes.value)
-  if (next.has(type)) next.delete(type)
-  else next.add(type)
-  selectedTypes.value = next
+  const next = new Set(selectedTypes.value);
+  if (next.has(type)) next.delete(type);
+  else next.add(type);
+  selectedTypes.value = next;
 }
 
 function selectAllTypes() {
-  selectedTypes.value = new Set(availableTypes.value)
+  selectedTypes.value = new Set(availableTypes.value);
 }
 
 function clearTypes() {
-  selectedTypes.value = new Set()
+  selectedTypes.value = new Set();
 }
 
 const filteredEntries = computed(() => {
-  const kw = (keyword.value || '').trim().toLowerCase()
-  const allow = selectedTypes.value
-  const raw = displayLog.value
-  const max = limit.value === 'all' ? Infinity : Math.max(0, Number(limit.value) || 0)
+  const kw = (keyword.value || '').trim().toLowerCase();
+  const allow = selectedTypes.value;
+  const raw = displayLog.value;
+  const max = limit.value === 'all' ? Infinity : Math.max(0, Number(limit.value) || 0);
 
   if (availableTypes.value.length > 0 && allow.size === 0) {
-    return []
+    return [];
   }
 
-  const out = []
+  const out = [];
   for (let i = 0; i < raw.length && out.length < max; i++) {
-    const entry = raw[i]
-    if (!entry || !entry.type) continue
-    if (!allow.has(entry.type)) continue
+    const entry = raw[i];
+    if (!entry || !entry.type) continue;
+    if (!allow.has(entry.type)) continue;
 
-    const line = formatEntryLine(entry)
-    if (kw && !String(line).toLowerCase().includes(kw)) continue
-    out.push(entry)
+    const line = formatEntryLine(entry);
+    if (kw && !String(line).toLowerCase().includes(kw)) continue;
+    out.push(entry);
   }
-  return out
-})
+  return out;
+});
 
 const actionGroups = computed(() => {
-  const map = new Map()
-  const orphans = []
+  const map = new Map();
+  const orphans = [];
 
   for (const entry of filteredEntries.value) {
-    const actionId = getEntryActionId(entry)
+    const actionId = getEntryActionId(entry);
     if (!actionId) {
-      orphans.push(entry)
-      continue
+      orphans.push(entry);
+      continue;
     }
 
-    let group = map.get(actionId)
+    let group = map.get(actionId);
     if (!group) {
-      const actorId = getActorIdForAction(actionId)
+      const actorId = getActorIdForAction(actionId);
       group = {
         actionId,
         actorId,
@@ -326,84 +332,86 @@ const actionGroups = computed(() => {
         gauge: [],
         stagger: [],
         other: [],
-      }
-      map.set(actionId, group)
+      };
+      map.set(actionId, group);
     }
 
     switch (entry.type) {
       case 'ACTION_START':
-        group.startTime = group.startTime ?? entry.time
-        group.other.push(entry)
-        break
+        group.startTime = group.startTime ?? entry.time;
+        group.other.push(entry);
+        break;
       case 'ACTION_END':
-        group.endTime = group.endTime ?? entry.time
-        group.other.push(entry)
-        break
+        group.endTime = group.endTime ?? entry.time;
+        group.other.push(entry);
+        break;
       case 'DAMAGE_HIT':
-        group.damage.push(entry)
-        break
+        group.damage.push(entry);
+        break;
       case 'EFFECT_START':
       case 'EFFECT_END':
-        group.effects.push(entry)
-        break
+        group.effects.push(entry);
+        break;
       case 'REACTION_OCCURRED':
-        group.reactions.push(entry)
-        break
+        group.reactions.push(entry);
+        break;
       case 'SP_CHANGE':
-        group.sp.push(entry)
-        break
+        group.sp.push(entry);
+        break;
       case 'ULT_ENERGY_CHANGE':
       case 'ULTIMATE_CHARGE_CHANGE':
-        group.gauge.push(entry)
-        break
+        group.gauge.push(entry);
+        break;
       case 'STAGGER':
-        group.stagger.push(entry)
-        break
+        group.stagger.push(entry);
+        break;
       default:
-        group.other.push(entry)
-        break
+        group.other.push(entry);
+        break;
     }
   }
 
-  const groups = Array.from(map.values())
+  const groups = Array.from(map.values());
 
-  const getGroupTime = (group) => {
-    const times = []
-    if (group.startTime != null) times.push(group.startTime)
-    if (group.damage[0]) times.push(group.damage[0].time)
-    if (group.effects[0]) times.push(group.effects[0].time)
-    if (group.reactions[0]) times.push(group.reactions[0].time)
-    if (group.sp[0]) times.push(group.sp[0].time)
-    if (group.gauge[0]) times.push(group.gauge[0].time)
-    if (group.stagger[0]) times.push(group.stagger[0].time)
-    if (group.other[0]) times.push(group.other[0].time)
-    if (times.length === 0) return Number.POSITIVE_INFINITY
-    return Math.min(...times)
-  }
+  const getGroupTime = group => {
+    const times = [];
+    if (group.startTime != null) times.push(group.startTime);
+    if (group.damage[0]) times.push(group.damage[0].time);
+    if (group.effects[0]) times.push(group.effects[0].time);
+    if (group.reactions[0]) times.push(group.reactions[0].time);
+    if (group.sp[0]) times.push(group.sp[0].time);
+    if (group.gauge[0]) times.push(group.gauge[0].time);
+    if (group.stagger[0]) times.push(group.stagger[0].time);
+    if (group.other[0]) times.push(group.other[0].time);
+    if (times.length === 0) return Number.POSITIVE_INFINITY;
+    return Math.min(...times);
+  };
 
-  groups.sort((a, b) => getGroupTime(a) - getGroupTime(b))
+  groups.sort((a, b) => getGroupTime(a) - getGroupTime(b));
 
-  groups.forEach((group) => {
-    group.damage.sort((a, b) => a.time - b.time)
-    group.effects.sort((a, b) => a.time - b.time)
-    group.reactions.sort((a, b) => a.time - b.time)
-    group.sp.sort((a, b) => a.time - b.time)
-    group.gauge.sort((a, b) => a.time - b.time)
-    group.stagger.sort((a, b) => a.time - b.time)
-    group.other.sort((a, b) => a.time - b.time)
-  })
+  groups.forEach(group => {
+    group.damage.sort((a, b) => a.time - b.time);
+    group.effects.sort((a, b) => a.time - b.time);
+    group.reactions.sort((a, b) => a.time - b.time);
+    group.sp.sort((a, b) => a.time - b.time);
+    group.gauge.sort((a, b) => a.time - b.time);
+    group.stagger.sort((a, b) => a.time - b.time);
+    group.other.sort((a, b) => a.time - b.time);
+  });
 
-  return { groups, orphans }
-})
+  return { groups, orphans };
+});
 
-const filteredGroupCount = computed(() => actionGroups.value.groups.length)
-const filteredEntryCount = computed(() => filteredEntries.value.length)
-const hasAnyVisibleData = computed(() => filteredGroupCount.value > 0 || actionGroups.value.orphans.length > 0)
+const filteredGroupCount = computed(() => actionGroups.value.groups.length);
+const filteredEntryCount = computed(() => filteredEntries.value.length);
+const hasAnyVisibleData = computed(
+  () => filteredGroupCount.value > 0 || actionGroups.value.orphans.length > 0,
+);
 
 function setGroupRef(actionId, el) {
-  if (!actionId) return
-  if (el) groupRefs.value[actionId] = el
-  else delete groupRefs.value[actionId]
+  if (!actionId) return;
+  if (el) groupRefs.value[actionId] = el;
+  else delete groupRefs.value[actionId];
 }
 
 function scrollActionGroupIntoView(actionId) {
@@ -411,48 +419,56 @@ function scrollActionGroupIntoView(actionId) {
     groupRefs.value[actionId]?.scrollIntoView?.({
       block: 'nearest',
       behavior: 'smooth',
-    })
-  })
+    });
+  });
 }
 
 function syncSelectedActionGroup(actionId = store.selectedActionId) {
   if (!actionId) {
-    openActionId.value = null
-    return
+    openActionId.value = null;
+    return;
   }
 
-  const hasGroup = actionGroups.value.groups.some((group) => group.actionId === actionId)
+  const hasGroup = actionGroups.value.groups.some(group => group.actionId === actionId);
   if (!hasGroup) {
-    openActionId.value = null
-    return
+    openActionId.value = null;
+    return;
   }
 
-  openActionId.value = actionId
-  scrollActionGroupIntoView(actionId)
+  openActionId.value = actionId;
+  scrollActionGroupIntoView(actionId);
 }
 
 function onGroupToggle(actionId, event) {
-  const isOpen = !!event?.target?.open
+  const isOpen = !!event?.target?.open;
   if (isOpen) {
-    openActionId.value = actionId
-    return
+    openActionId.value = actionId;
+    return;
   }
   if (openActionId.value === actionId) {
-    openActionId.value = null
+    openActionId.value = null;
   }
 }
 
-watch(() => store.selectedActionId, (actionId) => {
-  syncSelectedActionGroup(actionId)
-}, { flush: 'post' })
+watch(
+  () => store.selectedActionId,
+  actionId => {
+    syncSelectedActionGroup(actionId);
+  },
+  { flush: 'post' },
+);
 
-watch(actionGroups, () => {
-  syncSelectedActionGroup(store.selectedActionId)
-}, { flush: 'post' })
+watch(
+  actionGroups,
+  () => {
+    syncSelectedActionGroup(store.selectedActionId);
+  },
+  { flush: 'post' },
+);
 
 onMounted(() => {
-  refresh()
-})
+  refresh();
+});
 </script>
 
 <template>
@@ -468,11 +484,7 @@ onMounted(() => {
         </div>
 
         <div class="header-actions">
-          <button
-            type="button"
-            class="ea-btn ea-btn--sm ea-btn--glass-rect"
-            @click="refresh"
-          >
+          <button type="button" class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="refresh">
             {{ t('battleLog.refresh') }}
           </button>
         </div>
@@ -483,7 +495,8 @@ onMounted(() => {
     <div class="simlog-filters simlog-block">
       <div class="simlog-filter-top">
         <div class="simlog-filter-label">
-          {{ t('battleLog.ui.filtered') }} {{ filteredEntryCount }} / {{ t('battleLog.ui.actionGroups') }} {{ filteredGroupCount }}
+          {{ t('battleLog.ui.filtered') }} {{ filteredEntryCount }} /
+          {{ t('battleLog.ui.actionGroups') }} {{ filteredGroupCount }}
         </div>
         <div class="simlog-filter-actions">
           <button
@@ -570,11 +583,7 @@ onMounted(() => {
                 </span>
               </div>
               <div class="group__stats">
-                <span
-                  v-for="stat in getSummaryStats(group)"
-                  :key="stat.key"
-                  class="group__stat"
-                >
+                <span v-for="stat in getSummaryStats(group)" :key="stat.key" class="group__stat">
                   <span class="group__stat-label">{{ stat.label }}</span>
                   <span class="group__stat-sep">:</span>
                   <span class="group__stat-value">{{ stat.value }}</span>
@@ -593,16 +602,34 @@ onMounted(() => {
                 <div v-for="(entry, idx) in group.damage" :key="idx" class="event-row">
                   <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
-                  <span class="event-value">dmg={{ formatDamageNumber(getDamageValue(entry)) }}</span>
-                  <span v-if="getDamageElement(entry)" class="event-value">elem={{ getDamageElement(entry) }}</span>
-                  <span v-if="getReactionLabel(entry)" class="event-value">rx={{ getReactionLabel(entry) }}</span>
-                  <span v-if="getConsumedStacksLabel(entry)" class="event-value">consume={{ getConsumedStacksLabel(entry) }}</span>
-                  <span v-if="getLmdiLabel(entry)" class="event-value">lmdi={{ getLmdiLabel(entry) }}</span>
+                  <span class="event-value"
+                    >dmg={{ formatDamageNumber(getDamageValue(entry)) }}</span
+                  >
+                  <span v-if="getDamageElement(entry)" class="event-value"
+                    >elem={{ getDamageElement(entry) }}</span
+                  >
+                  <span v-if="getReactionLabel(entry)" class="event-value"
+                    >rx={{ getReactionLabel(entry) }}</span
+                  >
+                  <span v-if="getConsumedStacksLabel(entry)" class="event-value"
+                    >consume={{ getConsumedStacksLabel(entry) }}</span
+                  >
+                  <span v-if="getLmdiLabel(entry)" class="event-value"
+                    >lmdi={{ getLmdiLabel(entry) }}</span
+                  >
                   <span class="event-value">stg={{ entry.payload.stagger }}</span>
-                  <span v-if="(entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery) > 0" class="event-value">sp+={{ entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery }}</span>
+                  <span
+                    v-if="
+                      (entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery) > 0
+                    "
+                    class="event-value"
+                    >sp+={{
+                      entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery
+                    }}</span
+                  >
                 </div>
                 <div
-                  v-if="group.damage.every((entry) => getDamageValue(entry) === 0)"
+                  v-if="group.damage.every(entry => getDamageValue(entry) === 0)"
                   class="event-hint"
                 >
                   {{ t('battleLog.ui.damageHint') }}
@@ -610,13 +637,22 @@ onMounted(() => {
               </div>
             </section>
 
-            <section v-if="group.effects.length > 0 || group.reactions.length > 0" class="group-section group-section--effects">
+            <section
+              v-if="group.effects.length > 0 || group.reactions.length > 0"
+              class="group-section group-section--effects"
+            >
               <div class="group-section__heading">
                 <span class="group-section__title">{{ t('battleLog.ui.sections.effects') }}</span>
-                <span class="group-section__count">{{ group.effects.length + group.reactions.length }}</span>
+                <span class="group-section__count">{{
+                  group.effects.length + group.reactions.length
+                }}</span>
               </div>
               <div class="group-section__list">
-                <div v-for="(entry, idx) in group.reactions" :key="`reaction_${idx}`" class="event-row">
+                <div
+                  v-for="(entry, idx) in group.reactions"
+                  :key="`reaction_${idx}`"
+                  class="event-row"
+                >
                   <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
                   <span class="event-text">{{ entry.payload.reactionName }}</span>
@@ -625,7 +661,9 @@ onMounted(() => {
                   <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
                   <template v-if="entry.type === 'EFFECT_START'">
                     <span class="event-pill">{{ t('battleLog.ui.effectApply') }}</span>
-                    <span class="event-text">{{ formatEffectId(entry.payload.effectSnapshot?.id) }}</span>
+                    <span class="event-text">{{
+                      formatEffectId(entry.payload.effectSnapshot?.id)
+                    }}</span>
                     <span class="event-muted">-> {{ entry.payload.targetId }}</span>
                   </template>
                   <template v-else>
@@ -646,7 +684,9 @@ onMounted(() => {
                 <div v-for="(entry, idx) in group.sp" :key="idx" class="event-row">
                   <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
-                  <span class="event-value">chg={{ formatSignedNumber(entry.payload.change) }}</span>
+                  <span class="event-value"
+                    >chg={{ formatSignedNumber(entry.payload.change) }}</span
+                  >
                   <span class="event-value">sp={{ entry.payload.sp }}</span>
                   <span class="event-muted">({{ entry.payload.reason }})</span>
                 </div>
@@ -662,10 +702,18 @@ onMounted(() => {
                 <div v-for="(entry, idx) in group.gauge" :key="idx" class="event-row">
                   <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
-                  <span class="event-value">chg={{ formatSignedNumber(entry.payload.change) }}</span>
-                  <span class="event-value">gauge={{ Number(entry.payload.gauge).toFixed(1) }}</span>
-                  <span v-if="entry.payload.actorId" class="event-muted">-> {{ getTrackDisplayName(entry.payload.actorId) }}</span>
-                  <span v-if="entry.payload.sourceId" class="event-muted">({{ formatEffectSourceId(entry.payload.sourceId) }})</span>
+                  <span class="event-value"
+                    >chg={{ formatSignedNumber(entry.payload.change) }}</span
+                  >
+                  <span class="event-value"
+                    >gauge={{ Number(entry.payload.gauge).toFixed(1) }}</span
+                  >
+                  <span v-if="entry.payload.actorId" class="event-muted"
+                    >-> {{ getTrackDisplayName(entry.payload.actorId) }}</span
+                  >
+                  <span v-if="entry.payload.sourceId" class="event-muted"
+                    >({{ formatEffectSourceId(entry.payload.sourceId) }})</span
+                  >
                 </div>
               </div>
             </section>
@@ -680,23 +728,37 @@ onMounted(() => {
                   <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
                   <span class="event-value">{{ formatSignedNumber(entry.payload.amount) }}</span>
-                  <span class="event-value">stg={{ Number(entry.payload.stagger).toFixed(1) }}</span>
-                  <span v-if="entry.payload.isBroken" class="event-tag">{{ t('battleLog.ui.broken') }}</span>
+                  <span class="event-value"
+                    >stg={{ Number(entry.payload.stagger).toFixed(1) }}</span
+                  >
+                  <span v-if="entry.payload.isBroken" class="event-tag">{{
+                    t('battleLog.ui.broken')
+                  }}</span>
                 </div>
               </div>
             </section>
 
             <section
-              v-if="group.other.some((entry) => entry.type !== 'ACTION_START' && entry.type !== 'ACTION_END')"
+              v-if="
+                group.other.some(
+                  entry => entry.type !== 'ACTION_START' && entry.type !== 'ACTION_END',
+                )
+              "
               class="group-section group-section--other"
             >
               <div class="group-section__heading">
                 <span class="group-section__title">{{ t('battleLog.ui.sections.other') }}</span>
-                <span class="group-section__count">{{ group.other.filter((entry) => entry.type !== 'ACTION_START' && entry.type !== 'ACTION_END').length }}</span>
+                <span class="group-section__count">{{
+                  group.other.filter(
+                    entry => entry.type !== 'ACTION_START' && entry.type !== 'ACTION_END',
+                  ).length
+                }}</span>
               </div>
               <div class="group-section__list">
                 <div
-                  v-for="(entry, idx) in group.other.filter((entry) => entry.type !== 'ACTION_START' && entry.type !== 'ACTION_END')"
+                  v-for="(entry, idx) in group.other.filter(
+                    entry => entry.type !== 'ACTION_START' && entry.type !== 'ACTION_END',
+                  )"
                   :key="idx"
                   class="event-row"
                 >
@@ -730,7 +792,9 @@ onMounted(() => {
             </div>
           </summary>
           <div class="group__body">
-            <pre class="simlog-pre"><code v-for="(entry, idx) in actionGroups.orphans" :key="idx" class="simlog-line">{{ formatEntryLine(entry) }}</code></pre>
+            <pre
+              class="simlog-pre"
+            ><code v-for="(entry, idx) in actionGroups.orphans" :key="idx" class="simlog-line">{{ formatEntryLine(entry) }}</code></pre>
           </div>
         </details>
       </div>
@@ -906,7 +970,9 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.88);
   font-size: 12px;
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .simlog-search {
@@ -1128,12 +1194,24 @@ onMounted(() => {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.group-section--damage { --section-accent: var(--ea-danger-soft); }
-.group-section--effects { --section-accent: var(--ea-info); }
-.group-section--sp { --section-accent: var(--ea-gold); }
-.group-section--gauge { --section-accent: #f59e0b; }
-.group-section--stagger { --section-accent: #fb7185; }
-.group-section--other { --section-accent: #94a3b8; }
+.group-section--damage {
+  --section-accent: var(--ea-danger-soft);
+}
+.group-section--effects {
+  --section-accent: var(--ea-info);
+}
+.group-section--sp {
+  --section-accent: var(--ea-gold);
+}
+.group-section--gauge {
+  --section-accent: #f59e0b;
+}
+.group-section--stagger {
+  --section-accent: #fb7185;
+}
+.group-section--other {
+  --section-accent: #94a3b8;
+}
 
 .group-section:first-child {
   padding-top: 0;

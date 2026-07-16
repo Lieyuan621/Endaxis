@@ -1,10 +1,6 @@
-import type {
-  ActorStats,
-  ResolvedAction,
-  ResolvedEffect,
-} from "@/simulation/compiler/types.ts";
-import type { BaseStatValues } from "@/data/stats/types";
-import type { EnemyResistance } from "@/data/enemyResistance";
+import type { ActorStats, ResolvedAction, ResolvedEffect } from '@/simulation/compiler/types.ts';
+import type { BaseStatValues } from '@/data/stats/types';
+import type { EnemyResistance } from '@/data/enemyResistance';
 
 export interface ActorSnapshot {
   id: string;

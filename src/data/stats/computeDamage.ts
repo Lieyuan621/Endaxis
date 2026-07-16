@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Expected damage calculation for timeline hit diamonds.
  *
@@ -27,8 +26,8 @@ const ULT_LINK_BONUS = [0, 0.2, 0.3, 0.4, 0.5];
 export function linkMultiplier(stacks: number, skillType?: string): number {
   if (stacks <= 0) return 1;
   const idx = Math.min(stacks, 4);
-  if (skillType === 'battleSkill') return 1 + SKILL_LINK_BONUS[idx];
-  if (skillType === 'ultimate') return 1 + ULT_LINK_BONUS[idx];
+  if (skillType === 'battleSkill') return 1 + (SKILL_LINK_BONUS[idx] ?? 0);
+  if (skillType === 'ultimate') return 1 + (ULT_LINK_BONUS[idx] ?? 0);
   return 1;
 }
 

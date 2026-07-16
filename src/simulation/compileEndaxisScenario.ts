@@ -1,8 +1,8 @@
-import { compileScenario } from "@/simulation/compiler/compileScenario";
-import { TriggerRegistry } from "@/simulation/engine/TriggerRegistry";
-import type { InitialEffect } from "@/simulation/simulator";
-import { getEnemy } from "@/data";
-import { normalizeEnemyResistance } from "@/data/enemyResistance";
+import { compileScenario } from '@/simulation/compiler/compileScenario';
+import { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
+import type { InitialEffect } from '@/simulation/simulator';
+import { getEnemy } from '@/data';
+import { normalizeEnemyResistance } from '@/data/enemyResistance';
 
 interface CompileEndaxisScenarioInput {
   scenarioData: any;
@@ -14,7 +14,7 @@ interface CompileEndaxisScenarioInput {
   runtimeInitialEffects?: InitialEffect[];
   runtimeInitialEnemyState?: any;
   simulationEndline?: number | null;
-  lmdiAttributionMode?: "stacks" | "applier";
+  lmdiAttributionMode?: 'stacks' | 'applier';
   controlledOperatorSegments?: { startTime: number; operatorId: string | null }[];
 }
 
@@ -28,15 +28,15 @@ function buildTriggerRegistryEntries(tracks: any[]) {
 
       const trigger = entry.triggerEffect.trigger || {};
       const effectIds = (entry.triggerEffect.effects || [])
-        .map((effect: any) => effect?.id || effect?.kind || "")
-        .join(",");
+        .map((effect: any) => effect?.id || effect?.kind || '')
+        .join(',');
       const key = [
         entry.sourceTrackId,
-        entry.sourceSkillType || "",
-        trigger.kind || "",
+        entry.sourceSkillType || '',
+        trigger.kind || '',
         JSON.stringify(trigger),
         effectIds,
-      ].join("::");
+      ].join('::');
 
       if (seen.has(key)) continue;
       seen.add(key);
@@ -80,32 +80,33 @@ function collectConsumedStacksWriteKeys(timeline: any, triggerEntries: any[]) {
 }
 
 function resolveDynamicMaxGauge(track: any, charInfo: any) {
-  const manualOverride = Number(track?.maxGaugeOverride)
+  const manualOverride = Number(track?.maxGaugeOverride);
   if (Number.isFinite(manualOverride) && manualOverride > 0) {
-    return manualOverride
+    return manualOverride;
   }
 
-  const base = Number(charInfo?.maxUltimateGauge ?? charInfo?.ultimate_gaugeMax) || 100
-  const reduction = Number(track?.operatorStatus?.ultimateEnergyCostReduction) || 0
-  return Math.max(1, Math.ceil(base * (1 - Math.max(0, Math.min(reduction, 0.99)))))
+  const base = Number(charInfo?.maxUltimateGauge ?? charInfo?.ultimate_gaugeMax) || 100;
+  const reduction = Number(track?.operatorStatus?.ultimateEnergyCostReduction) || 0;
+  return Math.max(1, Math.ceil(base * (1 - Math.max(0, Math.min(reduction, 0.99)))));
 }
 
 function buildCompiledTracks(tracks: any[], characterRoster: any[]) {
-  return (tracks || []).map((track) => {
-    const charInfo = (characterRoster || []).find((character) => character.id === track.id)
-    const dynamicMaxGauge = resolveDynamicMaxGauge(track, charInfo)
-    const trackGaugeOverride = Number(track.maxGaugeOverride) > 0 ? Number(track.maxGaugeOverride) : null
+  return (tracks || []).map(track => {
+    const charInfo = (characterRoster || []).find(character => character.id === track.id);
+    const dynamicMaxGauge = resolveDynamicMaxGauge(track, charInfo);
+    const trackGaugeOverride =
+      Number(track.maxGaugeOverride) > 0 ? Number(track.maxGaugeOverride) : null;
     const acceptTeamUltEnergy =
       track?.acceptTeamUltEnergy ??
       charInfo?.acceptTeamUltEnergy ??
       charInfo?.accept_team_ult_energy ??
       charInfo?.accept_team_gauge ??
       track?.acceptTeamGauge ??
-      true
+      true;
 
     return {
       ...track,
-      element: charInfo?.element || track.element || "physical",
+      element: charInfo?.element || track.element || 'physical',
       acceptTeamGauge: acceptTeamUltEnergy !== false,
       acceptTeamUltEnergy: acceptTeamUltEnergy !== false,
       acceptSelfSpCostUltEnergy:
@@ -116,8 +117,8 @@ function buildCompiledTracks(tracks: any[], characterRoster: any[]) {
       maxGaugeOverride: trackGaugeOverride,
       maxUltimateGauge: dynamicMaxGauge,
       ultimate_gaugeMax: dynamicMaxGauge,
-    }
-  })
+    };
+  });
 }
 
 export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
@@ -131,14 +132,13 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
     runtimeInitialEffects = [],
     runtimeInitialEnemyState = null,
     simulationEndline = null,
-    lmdiAttributionMode = "stacks",
+    lmdiAttributionMode = 'stacks',
     controlledOperatorSegments = [],
   } = input;
 
   if (!scenarioData) return null;
 
-  const enemySheet =
-    activeEnemyId && activeEnemyId !== "custom" ? getEnemy(activeEnemyId) : null;
+  const enemySheet = activeEnemyId && activeEnemyId !== 'custom' ? getEnemy(activeEnemyId) : null;
   const enemyResistance = normalizeEnemyResistance(
     systemConstants?.resistance ?? enemySheet?.resistance,
   );
@@ -154,7 +154,7 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
         prepDuration: Number(prepDuration) || 0,
         defense: enemySheet?.def ?? 100,
         superArmor: Number(enemySheet?.superArmor ?? systemConstants?.superArmor) || 0,
-        tier: enemySheet?.tier ?? "normal",
+        tier: enemySheet?.tier ?? 'normal',
         resistance: enemyResistance,
         ...(enemySheet?.maxStagger !== undefined ? { maxStagger: enemySheet.maxStagger } : {}),
         ...(enemySheet?.staggerNodeCount !== undefined

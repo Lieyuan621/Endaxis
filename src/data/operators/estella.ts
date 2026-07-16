@@ -227,7 +227,12 @@ const sheet: OperatorSheet = {
       comboWindow: {
         triggers: [
           {
-            trigger: { kind: 'onStatusApplied', status: 'solidification', target: 'enemy', triggerScope: 'global' },
+            trigger: {
+              kind: 'onStatusApplied',
+              status: 'solidification',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
           },
         ],
         duration: 5,

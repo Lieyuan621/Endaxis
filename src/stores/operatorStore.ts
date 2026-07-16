@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { OperatorInstance, OperatorLevel } from '../types';
@@ -28,9 +27,9 @@ function migrateSkillLevels(instances: OperatorInstance[]): OperatorInstance[] {
     if (staleKeys.length === 0) continue;
     for (const oldKey of staleKeys) {
       const newKey = SKILL_KEY_MIGRATION[oldKey];
-      const value = inst.skillLevels[oldKey];
+      const value = inst.skillLevels[oldKey]!;
       delete inst.skillLevels[oldKey];
-      if (newKey !== null) inst.skillLevels[newKey] = value;
+      if (newKey != null) inst.skillLevels[newKey] = value;
     }
   }
   return instances;
@@ -73,7 +72,9 @@ function loadFromStorage(): OperatorInstance[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.state && Array.isArray(parsed.state.operators)) {
-        return migrateOperatorSlugs(migrateTrustLevel(migrateTalentStates(migrateSkillLevels(parsed.state.operators))));
+        return migrateOperatorSlugs(
+          migrateTrustLevel(migrateTalentStates(migrateSkillLevels(parsed.state.operators))),
+        );
       }
     }
   } catch {
@@ -168,17 +169,19 @@ export const useOperatorStore = defineStore('operators', () => {
     // Clamp skill levels
     const max = getOperatorSkillMax(o.level as OperatorLevel, o.promoted);
     for (const key of Object.keys(o.skillLevels)) {
-      o.skillLevels[key] = clampOperatorSkillLevel(o.skillLevels[key], max);
+      o.skillLevels[key] = clampOperatorSkillLevel(o.skillLevels[key]!, max);
     }
 
     // Clamp talent states to valid range and migrate legacy string values
-    const talentGroups = getOperatorTalentGroups(resolveOperatorSlug(o.operatorSlug) || o.operatorSlug);
+    const talentGroups = getOperatorTalentGroups(
+      resolveOperatorSlug(o.operatorSlug) || o.operatorSlug,
+    );
     const legacyMap: Record<string, number> = { inactive: 0, active: 1, upgraded: 2 };
     for (let i = 0; i < talentGroups.length; i++) {
       const key = String(i);
       let state = o.talentStates[key];
       if (typeof state === 'string') state = legacyMap[state as string] ?? 0;
-      o.talentStates[key] = Math.min(Math.max(0, state ?? 0), talentGroups[i].levels);
+      o.talentStates[key] = Math.min(Math.max(0, state ?? 0), talentGroups[i]!.levels);
     }
 
     persist();

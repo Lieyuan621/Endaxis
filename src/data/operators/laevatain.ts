@@ -16,25 +16,25 @@ const GAIN_MELTING_FLAME_EFFECT: StatusEffect = {
 };
 
 const createAbsorbHeatInflictionEffects = (): Effect[] =>
-    [0, 1, 2, 3].map(x => ({
-      kind: 'consume',
-      enemyStatus: 'heatInfliction',
-      consumeStacks: 4 - x,
-      condition:
-          x === 0
-              ? {
-                kind: 'not',
-                condition: {
-                  kind: 'operatorStatus',
-                  status: 'laevatain-melting-flame',
-                },
-              }
-              : {
-                kind: 'operatorStatus',
-                status: 'laevatain-melting-flame',
-                stacks: { compare: 'exact', count: x },
-              },
-    }));
+  [0, 1, 2, 3].map(x => ({
+    kind: 'consume',
+    enemyStatus: 'heatInfliction',
+    consumeStacks: 4 - x,
+    condition:
+      x === 0
+        ? {
+            kind: 'not',
+            condition: {
+              kind: 'operatorStatus',
+              status: 'laevatain-melting-flame',
+            },
+          }
+        : {
+            kind: 'operatorStatus',
+            status: 'laevatain-melting-flame',
+            stacks: { compare: 'exact', count: x },
+          },
+  }));
 
 const sheet: OperatorSheet = {
   gameId: 'LAEVATAIN',
@@ -434,7 +434,7 @@ const sheet: OperatorSheet = {
                           duration: 5,
                         },
                       ],
-                    }
+                    },
                   ],
                   condition: {
                     kind: 'operatorStatus',

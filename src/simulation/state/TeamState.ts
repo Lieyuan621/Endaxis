@@ -1,7 +1,7 @@
-import type { SpGainKind } from "@/simulation/compiler/types.ts";
-import type { BaseGameState } from "@/simulation/state/BaseGameState.ts";
-import type { TeamSnapshot, TeamConfig } from "@/simulation/state/types.ts";
-import type { SimulationEngine } from "../engine/SimulationEngine";
+import type { SpGainKind } from '@/simulation/compiler/types.ts';
+import type { BaseGameState } from '@/simulation/state/BaseGameState.ts';
+import type { TeamSnapshot, TeamConfig } from '@/simulation/state/types.ts';
+import type { SimulationEngine } from '../engine/SimulationEngine';
 
 export class TeamState implements BaseGameState<TeamSnapshot> {
   private recoverSp: number;
@@ -74,7 +74,7 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
     return this.debtSp;
   }
 
-  addSp(amount: number, kind: SpGainKind = "recover"): number {
+  addSp(amount: number, kind: SpGainKind = 'recover'): number {
     if (!Number.isFinite(amount) || amount <= 0) {
       return this.getSp();
     }
@@ -91,23 +91,23 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
       return this.getSp();
     }
 
-    if (kind === "refund") {
+    if (kind === 'refund') {
       this.refundSp += remaining;
-      this.trimOverflow("refund");
+      this.trimOverflow('refund');
       return this.getSp();
     }
 
     this.recoverSp += remaining;
-    this.trimOverflow("recover");
+    this.trimOverflow('recover');
     return this.getSp();
   }
 
   modifySpRecovery(amount: number): number {
-    return this.addSp(amount, "recover");
+    return this.addSp(amount, 'recover');
   }
 
   modifySpReturn(amount: number): number {
-    return this.addSp(amount, "refund");
+    return this.addSp(amount, 'refund');
   }
 
   consumeSp(amount: number) {
@@ -170,7 +170,7 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
 
     if (this.getSp() < this.config.maxSp) {
       const gain = effectiveDuration * this.config.spRegenRate;
-      this.addSp(gain, "recover");
+      this.addSp(gain, 'recover');
     }
   }
 
@@ -184,7 +184,7 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
       return;
     }
 
-    if (preferredKind === "recover" && this.refundSp > 0) {
+    if (preferredKind === 'recover' && this.refundSp > 0) {
       const displacedRefund = Math.min(this.refundSp, overflow);
       this.refundSp -= displacedRefund;
       overflow -= displacedRefund;
@@ -194,7 +194,7 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
       return;
     }
 
-    if (preferredKind === "refund") {
+    if (preferredKind === 'refund') {
       this.refundSp = Math.max(0, this.refundSp - overflow);
       return;
     }

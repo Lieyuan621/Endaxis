@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { OperatorSheet, TriggerEffect, Effect, ArtsElement, PhysicalStatus } from '../types';
 
 const INFLICTIONS = ['cryo', 'electric', 'nature', 'heat'];
@@ -46,7 +45,7 @@ const COMBO_SKILL_EFFECTS: Effect[] = [...INFLICTIONS, ...PHYSICAL_REACTIONS].ma
       }),
   condition: {
     kind: 'operatorStatus',
-    status: TRACKER_IDS[x],
+    status: TRACKER_IDS[x]!,
     consume: true,
   },
 }));
@@ -255,8 +254,17 @@ const sheet: OperatorSheet = {
           {
             trigger: {
               kind: 'onStatusApplied',
-              status: ['vulnerability', 'lift', 'knockdown', 'crush', 'breach',
-                'heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              status: [
+                'vulnerability',
+                'lift',
+                'knockdown',
+                'crush',
+                'breach',
+                'heatInfliction',
+                'cryoInfliction',
+                'electricInfliction',
+                'natureInfliction',
+              ],
               target: 'enemy',
               triggerScope: 'global',
             },

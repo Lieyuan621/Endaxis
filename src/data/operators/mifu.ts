@@ -327,8 +327,17 @@ const sheet: OperatorSheet = {
       comboWindow: {
         triggers: [
           {
-            trigger: { kind: 'onStatusApplied', status: 'vulnerability', target: 'enemy', triggerScope: 'global' },
-            condition: { kind: 'enemyStatus', status: 'vulnerability', stacks: { compare: 'atLeast', count: 3 } },
+            trigger: {
+              kind: 'onStatusApplied',
+              status: 'vulnerability',
+              target: 'enemy',
+              triggerScope: 'global',
+            },
+            condition: {
+              kind: 'enemyStatus',
+              status: 'vulnerability',
+              stacks: { compare: 'atLeast', count: 3 },
+            },
           },
         ],
         duration: 5,

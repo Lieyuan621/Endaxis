@@ -1,5 +1,10 @@
 import { describe, expect, it, beforeAll, afterAll } from 'vitest';
-import { getEffectColor, getEffectIcon, getEffectName, resolveEffectLifecycle } from './effectPresets';
+import {
+  getEffectColor,
+  getEffectIcon,
+  getEffectName,
+  resolveEffectLifecycle,
+} from './effectPresets';
 import { i18n } from '@/i18n';
 import type { Effect } from './types';
 
@@ -68,15 +73,19 @@ describe('effect display presets', () => {
   });
 
   it('defaults reaction effects to replace stacking', () => {
-    expect(resolveEffectLifecycle({
-      kind: 'reaction',
-    }).stackStrategy).toBe('REPLACE');
+    expect(
+      resolveEffectLifecycle({
+        kind: 'reaction',
+      }).stackStrategy,
+    ).toBe('REPLACE');
   });
 
   it('keeps status effects on refresh-duration stacking by default', () => {
-    expect(resolveEffectLifecycle({
-      kind: 'status',
-      id: 'example-status',
-    }).stackStrategy).toBe('REFRESH_DURATION');
+    expect(
+      resolveEffectLifecycle({
+        kind: 'status',
+        id: 'example-status',
+      }).stackStrategy,
+    ).toBe('REFRESH_DURATION');
   });
 });

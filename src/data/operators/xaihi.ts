@@ -258,7 +258,10 @@ const sheet: OperatorSheet = {
               target: 'self',
               triggerScope: 'global',
             },
-            condition: { kind: 'not', condition: { kind: 'operatorStatus', status: 'xaihi-auxiliary-crystal' } },
+            condition: {
+              kind: 'not',
+              condition: { kind: 'operatorStatus', status: 'xaihi-auxiliary-crystal' },
+            },
           },
         ],
         duration: 5,

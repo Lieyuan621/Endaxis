@@ -1,5 +1,5 @@
-import type { SimLogEntry } from "@/simulation/events/event.types.ts";
-import type { GameSnapshot } from "@/simulation/state/types.ts";
+import type { SimLogEntry } from '@/simulation/events/event.types.ts';
+import type { GameSnapshot } from '@/simulation/state/types.ts';
 
 export interface GaugePoint {
   time: number;
@@ -13,7 +13,7 @@ export function projectUltimateSeries(
   actorId: string,
   timelineDuration = 120,
 ): GaugePoint[] {
-  const actor = initialSnapshot.actors.find((item) => item.id === actorId);
+  const actor = initialSnapshot.actors.find(item => item.id === actorId);
   if (!actor) {
     return [];
   }
@@ -24,15 +24,10 @@ export function projectUltimateSeries(
     Math.min(Number(actor.resources?.gauge ?? actor.resources?.ultimateEnergy) || 0, maxGauge),
   );
 
-  const points : GaugePoint[] = [
-    { time: 0, val: currentGauge, ratio: currentGauge / maxGauge },
-  ];
+  const points: GaugePoint[] = [{ time: 0, val: currentGauge, ratio: currentGauge / maxGauge }];
 
-  simLog.forEach((entry) => {
-    if (
-      entry.type !== "ULT_ENERGY_CHANGE" ||
-      entry.payload.actorId !== actorId
-    ) {
+  simLog.forEach(entry => {
+    if (entry.type !== 'ULT_ENERGY_CHANGE' || entry.payload.actorId !== actorId) {
       return;
     }
 
@@ -42,7 +37,10 @@ export function projectUltimateSeries(
       ratio: currentGauge / maxGauge,
     });
 
-    currentGauge = Math.max(0, Math.min(currentGauge + (Number(entry.payload.change) || 0), maxGauge));
+    currentGauge = Math.max(
+      0,
+      Math.min(currentGauge + (Number(entry.payload.change) || 0), maxGauge),
+    );
 
     points.push({
       time: entry.time,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { WeaponSheet } from '../../../types';
 
 const sheet: WeaponSheet = {
@@ -49,7 +48,7 @@ const sheet: WeaponSheet = {
             target: 'teamExcludeSelf',
             value: [5, 6, 7, 8, 9, 10, 11, 12, 14].map((x, i) => {
               const bonus = [2, 2.4, 2.8, 3.2, 3.6, 4, 4.4, 4.8, 5.6];
-              return x + bonus[i];
+              return x + (bonus[i] ?? 0);
             }),
             duration: 15,
           },

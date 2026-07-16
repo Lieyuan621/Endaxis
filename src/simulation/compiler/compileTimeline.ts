@@ -1,5 +1,5 @@
-import { TimeContext } from "./timeContext";
-import { resolveEffectLifecycle } from "@/data/effectPresets";
+import { TimeContext } from './timeContext';
+import { resolveEffectLifecycle } from '@/data/effectPresets';
 import type {
   Connection,
   ActionNode,
@@ -8,11 +8,8 @@ import type {
   ResolvedEffect,
   ResolvedHit,
   TimeExtension,
-} from "./types";
-import {
-  isComboSkillLikeAction,
-  isUltimateLikeAction,
-} from "./types";
+} from './types';
+import { isComboSkillLikeAction, isUltimateLikeAction } from './types';
 
 interface ShiftContext {
   shift: number;
@@ -25,21 +22,17 @@ function round(num: number, factor: number = 1000): number {
   return Math.round(num * factor) / factor;
 }
 
-function getNominalFreezeDuration(action: ActionNode["node"]): number {
+function getNominalFreezeDuration(action: ActionNode['node']): number {
   if (isComboSkillLikeAction(action)) return 0.5;
   if (isUltimateLikeAction(action)) return Number(action.animationTime) || 1.5;
   return 0;
 }
 
 function calculateTimeShifts(startSortedActions: ActionNode[]) {
-  const stopSources = startSortedActions.filter((item) => {
+  const stopSources = startSortedActions.filter(item => {
     const a = item.node;
     const hasWindow = (a.triggerWindow || 0) >= 0;
-    return (
-      (isComboSkillLikeAction(a) || isUltimateLikeAction(a)) &&
-      hasWindow &&
-      !a.isDisabled
-    );
+    return (isComboSkillLikeAction(a) || isUltimateLikeAction(a)) && hasWindow && !a.isDisabled;
   });
 
   const sourceShiftMap = new Map<string, ShiftContext>();
@@ -101,9 +94,7 @@ function resolveAction(
   const startTime = action.startTime;
 
   let realStartTime = startTime;
-  const activeSourceItem = [...stopSources]
-    .reverse()
-    .find((s) => s.node.startTime <= startTime);
+  const activeSourceItem = [...stopSources].reverse().find(s => s.node.startTime <= startTime);
 
   const realFreezeDuration = sourceShiftMap.get(item.id)?.amount;
   const nominalFreezeDuration = getNominalFreezeDuration(action);
@@ -121,16 +112,10 @@ function resolveAction(
   const effectiveDuration = round(
     Math.max(
       0,
-      action.duration -
-        nominalFreezeDuration +
-        (realFreezeDuration ?? nominalFreezeDuration),
+      action.duration - nominalFreezeDuration + (realFreezeDuration ?? nominalFreezeDuration),
     ),
   );
-  const realEndTime = timeCtx.getShiftedEndTime(
-    realStartTime,
-    effectiveDuration,
-    item.id,
-  );
+  const realEndTime = timeCtx.getShiftedEndTime(realStartTime, effectiveDuration, item.id);
   const realDuration = round(realEndTime - realStartTime);
   const actionExtension = round(realDuration - action.duration);
 
@@ -157,7 +142,7 @@ function resolveAction(
       resolvedEffects.push({
         ...(effect as any),
         ...(inheritedCondition ? { condition: inheritedCondition } : {}),
-        type: "effect",
+        type: 'effect',
         id: uniqueId,
         actionId: item.id,
         uniqueId: `${uniqueId}_${flatIndex}`,
@@ -165,9 +150,7 @@ function resolveAction(
         realDuration: round(effectRealEndTime - effectRealStartTime),
         displayDuration: round(effectRealEndTime - effectRealStartTime),
         isConsumed: false,
-        extensionAmount: round(
-          round(effectRealEndTime - effectRealStartTime) - baseDuration,
-        ),
+        extensionAmount: round(round(effectRealEndTime - effectRealStartTime) - baseDuration),
         hitIndex,
         effectIndex,
         flatIndex,
@@ -177,11 +160,7 @@ function resolveAction(
   });
 
   const resolvedHits: ResolvedHit[] = (action.hits || []).map((hit, hitIndex) => {
-    const realTime = timeCtx.getShiftedEndTime(
-      realStartTime,
-      Number(hit.offset) || 0,
-      item.id,
-    );
+    const realTime = timeCtx.getShiftedEndTime(realStartTime, Number(hit.offset) || 0, item.id);
     const treatAsReaction = (hit as any).treatAsReaction as string | undefined;
     const treatAsSkillType = (hit as any).treatAsSkillType as string | undefined;
 
@@ -228,21 +207,16 @@ function resolveAction(
   };
 }
 
-function resolveConsumption(
-  resolvedActions: ResolvedAction[],
-  connections: Connection[],
-) {
+function resolveConsumption(resolvedActions: ResolvedAction[], connections: Connection[]) {
   if (!connections?.length) return;
 
-  resolvedActions.forEach((producer) => {
+  resolvedActions.forEach(producer => {
     if (producer.node.isDisabled) return;
-    producer.effects.forEach((effect) => {
-      const conn = connections.find(
-        (c) => c.isConsumption && c.fromEffectId === effect.id,
-      );
+    producer.effects.forEach(effect => {
+      const conn = connections.find(c => c.isConsumption && c.fromEffectId === effect.id);
       if (!conn?.to) return;
 
-      const consumer = resolvedActions.find((a) => a.id === conn.to);
+      const consumer = resolvedActions.find(a => a.id === conn.to);
       if (!consumer || consumer.node.isDisabled) return;
 
       const consumptionOffset = Number(conn.consumptionOffset) || 0;
@@ -269,15 +243,10 @@ function resolveActions(
   const effectMap = new Map<string, ResolvedEffect>();
 
   for (const item of actions) {
-    const resolvedAction = resolveAction(
-      item,
-      stopSources,
-      sourceShiftMap,
-      timeCtx,
-    );
+    const resolvedAction = resolveAction(item, stopSources, sourceShiftMap, timeCtx);
     resolvedActions.push(resolvedAction);
     actionMap.set(resolvedAction.id, resolvedAction);
-    resolvedAction.effects.forEach((effect) => {
+    resolvedAction.effects.forEach(effect => {
       effectMap.set(effect.id, effect);
     });
   }
@@ -289,14 +258,14 @@ function applyActionInterruptions(resolvedActions: ResolvedAction[]) {
   const trackBuckets = new Map<string, ResolvedAction[]>();
   const epsilon = 0.0001;
 
-  resolvedActions.forEach((action) => {
+  resolvedActions.forEach(action => {
     if (!action.trackId || action.node.isDisabled) return;
     const bucket = trackBuckets.get(action.trackId) ?? [];
     bucket.push(action);
     trackBuckets.set(action.trackId, bucket);
   });
 
-  trackBuckets.forEach((bucket) => {
+  trackBuckets.forEach(bucket => {
     bucket.sort((a, b) => {
       if (a.realStartTime !== b.realStartTime) {
         return a.realStartTime - b.realStartTime;
@@ -315,11 +284,9 @@ function applyActionInterruptions(resolvedActions: ResolvedAction[]) {
       action.isInterrupted = true;
       action.interruptTime = interruptAt;
       action.realDuration = round(Math.max(0, interruptAt - action.realStartTime));
-      action.resolvedHits = action.resolvedHits.filter(
-        (hit) => hit.realTime < interruptAt - epsilon,
-      );
+      action.resolvedHits = action.resolvedHits.filter(hit => hit.realTime < interruptAt - epsilon);
       action.effects = action.effects.filter(
-        (effect) => effect.realStartTime < interruptAt - epsilon,
+        effect => effect.realStartTime < interruptAt - epsilon,
       );
       action.extensionAmount = round(action.realDuration - action.duration);
     });
@@ -328,8 +295,8 @@ function applyActionInterruptions(resolvedActions: ResolvedAction[]) {
 
 function rebuildEffectMap(resolvedActions: ResolvedAction[]) {
   const effectMap = new Map<string, ResolvedEffect>();
-  resolvedActions.forEach((action) => {
-    action.effects.forEach((effect) => {
+  resolvedActions.forEach(action => {
+    action.effects.forEach(effect => {
       effectMap.set(effect.id, effect);
     });
   });
@@ -340,12 +307,9 @@ export function compileTimeline(
   actions: ActionNode[],
   connections: Connection[] = [],
 ): ResolvedTimeline {
-  const sortedActions = actions.toSorted(
-    (a, b) => a.node.startTime - b.node.startTime,
-  );
+  const sortedActions = actions.toSorted((a, b) => a.node.startTime - b.node.startTime);
 
-  const { stopSources, sourceShiftMap, timeExtensions } =
-    calculateTimeShifts(sortedActions);
+  const { stopSources, sourceShiftMap, timeExtensions } = calculateTimeShifts(sortedActions);
 
   const timeCtx = new TimeContext(timeExtensions);
 

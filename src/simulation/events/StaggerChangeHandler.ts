@@ -86,18 +86,21 @@ export class StaggerChangeHandler implements EventHandler<StaggerChangeEvent> {
     // that watch for nodes (e.g. Akekuri's combo window) can activate via the
     // standard onStatusApplied/Expire trigger pipeline.
     if (nodeReachedIndex !== undefined && nodeEndTime !== undefined && !broken) {
-      ctx.queue.enqueue({
-        type: 'ENEMY_EFFECT_APPLY',
-        time: e.time,
-        kind: 'status',
-        id: 'staggerNode',
-        value: 0,
-        stacks: 1,
-        maxStacks: 1,
-        expiresAt: nodeEndTime,
-        sourceId: actor.id,
-        effect: { kind: 'status', hide: true },
-      }, 0);
+      ctx.queue.enqueue(
+        {
+          type: 'ENEMY_EFFECT_APPLY',
+          time: e.time,
+          kind: 'status',
+          id: 'staggerNode',
+          value: 0,
+          stacks: 1,
+          maxStacks: 1,
+          expiresAt: nodeEndTime,
+          sourceId: actor.id,
+          effect: { kind: 'status', hide: true },
+        },
+        0,
+      );
     }
 
     // Surface the break window as an internal enemy status so passive effects

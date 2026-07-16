@@ -258,11 +258,11 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
 
   private cloneSourceQueue(queue: any[] | undefined) {
     return Array.isArray(queue)
-        ? queue.map(slot => ({
+      ? queue.map(slot => ({
           sourceId: slot.sourceId,
           count: Number(slot.count) || 0,
         }))
-        : [];
+      : [];
   }
 
   private cloneStatusEntry(entry: EnemyStatusEntry): EnemyStatusEntry {
@@ -287,71 +287,71 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
 
   exportCarryoverSnapshot(time = this.currentTime) {
     const activeStatuses = [...this.enemyStatusEffects.values()]
-        .filter(entry => time < entry.expiresAt)
-        .map(entry => ({
-          ...this.cloneStatusEntry(entry),
-          remainingDuration: this.getRemaining(entry.expiresAt, time),
-        }));
+      .filter(entry => time < entry.expiresAt)
+      .map(entry => ({
+        ...this.cloneStatusEntry(entry),
+        remainingDuration: this.getRemaining(entry.expiresAt, time),
+      }));
 
     const infliction =
-        this.infliction && time < this.infliction.expiresAt
-            ? {
-              ...this.infliction,
-              sourceQueue: this.cloneSourceQueue(this.infliction.sourceQueue),
-              remainingDuration: this.getRemaining(this.infliction.expiresAt, time),
-            }
-            : null;
+      this.infliction && time < this.infliction.expiresAt
+        ? {
+            ...this.infliction,
+            sourceQueue: this.cloneSourceQueue(this.infliction.sourceQueue),
+            remainingDuration: this.getRemaining(this.infliction.expiresAt, time),
+          }
+        : null;
 
     const vulnerability =
-        this.vulnerability && time < this.vulnerability.expiresAt
-            ? {
-              ...this.vulnerability,
-              sourceQueue: this.cloneSourceQueue(this.vulnerability.sourceQueue),
-              remainingDuration: this.getRemaining(this.vulnerability.expiresAt, time),
-            }
-            : null;
+      this.vulnerability && time < this.vulnerability.expiresAt
+        ? {
+            ...this.vulnerability,
+            sourceQueue: this.cloneSourceQueue(this.vulnerability.sourceQueue),
+            remainingDuration: this.getRemaining(this.vulnerability.expiresAt, time),
+          }
+        : null;
 
     const solidification =
-        this.solidification && time < this.solidification.expiresAt
-            ? {
-              ...this.solidification,
-              remainingDuration: this.getRemaining(this.solidification.expiresAt, time),
-            }
-            : null;
+      this.solidification && time < this.solidification.expiresAt
+        ? {
+            ...this.solidification,
+            remainingDuration: this.getRemaining(this.solidification.expiresAt, time),
+          }
+        : null;
 
     const combustion =
-        this.combustion && time < this.combustion.expiresAt
-            ? {
-              ...this.combustion,
-              remainingDuration: this.getRemaining(this.combustion.expiresAt, time),
-              nextTickDelay: this.getNextOneSecondTickDelay(this.combustion.startedAt, time),
-            }
-            : null;
+      this.combustion && time < this.combustion.expiresAt
+        ? {
+            ...this.combustion,
+            remainingDuration: this.getRemaining(this.combustion.expiresAt, time),
+            nextTickDelay: this.getNextOneSecondTickDelay(this.combustion.startedAt, time),
+          }
+        : null;
 
     const electrification =
-        this.electrification && time < this.electrification.expiresAt
-            ? {
-              ...this.electrification,
-              remainingDuration: this.getRemaining(this.electrification.expiresAt, time),
-            }
-            : null;
+      this.electrification && time < this.electrification.expiresAt
+        ? {
+            ...this.electrification,
+            remainingDuration: this.getRemaining(this.electrification.expiresAt, time),
+          }
+        : null;
 
     const corrosion =
-        this.corrosion && time < this.corrosion.expiresAt
-            ? {
-              ...this.corrosion,
-              remainingDuration: this.getRemaining(this.corrosion.expiresAt, time),
-              nextTickDelay: this.getNextOneSecondTickDelay(this.corrosion.startedAt, time),
-            }
-            : null;
+      this.corrosion && time < this.corrosion.expiresAt
+        ? {
+            ...this.corrosion,
+            remainingDuration: this.getRemaining(this.corrosion.expiresAt, time),
+            nextTickDelay: this.getNextOneSecondTickDelay(this.corrosion.startedAt, time),
+          }
+        : null;
 
     const breach =
-        this.breach && time < this.breach.expiresAt
-            ? {
-              ...this.breach,
-              remainingDuration: this.getRemaining(this.breach.expiresAt, time),
-            }
-            : null;
+      this.breach && time < this.breach.expiresAt
+        ? {
+            ...this.breach,
+            remainingDuration: this.getRemaining(this.breach.expiresAt, time),
+          }
+        : null;
 
     return {
       time,
@@ -398,10 +398,7 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
     };
 
     const stagger = snapshot.stagger || {};
-    this.stagger = Math.max(
-        0,
-        Math.min(Number(stagger.value) || 0, this.config.maxStagger),
-    );
+    this.stagger = Math.max(0, Math.min(Number(stagger.value) || 0, this.config.maxStagger));
 
     this.breakEndTime = applyTime + Math.max(0, Number(stagger.breakRemaining) || 0);
     this.lockEndTime = applyTime + Math.max(0, Number(stagger.lockRemaining) || 0);
@@ -410,67 +407,71 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
 
     const infliction = disabledEffects.has('infliction') ? null : snapshot.infliction;
     this.infliction = infliction
-        ? {
+      ? {
           element: infliction.element,
           stacks: Math.max(1, Math.min(4, Number(infliction.stacks) || 1)),
           appliedAt: applyTime,
           expiresAt: toExpiresAt(infliction),
           sourceQueue: this.cloneSourceQueue(infliction.sourceQueue),
         }
-        : null;
+      : null;
 
     const vulnerability = disabledEffects.has('vulnerability') ? null : snapshot.vulnerability;
     this.vulnerability = vulnerability
-        ? {
+      ? {
           stacks: Math.max(1, Math.min(4, Number(vulnerability.stacks) || 1)),
           appliedAt: applyTime,
           expiresAt: toExpiresAt(vulnerability),
           sourceQueue: this.cloneSourceQueue(vulnerability.sourceQueue),
         }
-        : null;
+      : null;
 
     const debuffs = snapshot.debuffs || {};
 
-    const solidification = disabledEffects.has('debuff:solidification') ? null : debuffs.solidification;
+    const solidification = disabledEffects.has('debuff:solidification')
+      ? null
+      : debuffs.solidification;
     this.solidification = solidification
-        ? {
+      ? {
           level: Math.max(1, Math.min(4, Number(solidification.level) || 1)),
           expiresAt: toExpiresAt(solidification),
           consumedStackSources: solidification.consumedStackSources
-              ? { ...solidification.consumedStackSources }
-              : undefined,
+            ? { ...solidification.consumedStackSources }
+            : undefined,
           sourceId: solidification.sourceId,
         }
-        : null;
+      : null;
 
     const combustion = disabledEffects.has('debuff:combustion') ? null : debuffs.combustion;
     this.combustion = combustion
-        ? {
+      ? {
           level: Math.max(1, Math.min(4, Number(combustion.level) || 1)),
           startedAt: applyTime,
           expiresAt: toExpiresAt(combustion),
           sourceId: combustion.sourceId,
           effectiveness: combustion.effectiveness,
           consumedStackSources: combustion.consumedStackSources
-              ? { ...combustion.consumedStackSources }
-              : undefined,
+            ? { ...combustion.consumedStackSources }
+            : undefined,
           actionId: combustion.actionId,
         }
-        : null;
+      : null;
 
-    const electrification = disabledEffects.has('debuff:electrification') ? null : debuffs.electrification;
+    const electrification = disabledEffects.has('debuff:electrification')
+      ? null
+      : debuffs.electrification;
     this.electrification = electrification
-        ? {
+      ? {
           level: Math.max(1, Math.min(4, Number(electrification.level) || 1)),
           expiresAt: toExpiresAt(electrification),
           operatorSlot: Number(electrification.operatorSlot) || 0,
           sourceId: electrification.sourceId,
         }
-        : null;
+      : null;
 
     const corrosion = disabledEffects.has('debuff:corrosion') ? null : debuffs.corrosion;
     this.corrosion = corrosion
-        ? {
+      ? {
           level: Math.max(1, Math.min(4, Number(corrosion.level) || 1)),
           startedAt: applyTime,
           expiresAt: toExpiresAt(corrosion),
@@ -480,17 +481,17 @@ export class EnemyState implements BaseGameState<EnemySnapshot> {
           maxShred: Number(corrosion.maxShred) || 0,
           sourceId: corrosion.sourceId || '',
         }
-        : null;
+      : null;
 
     const breach = disabledEffects.has('debuff:breach') ? null : debuffs.breach;
     this.breach = breach
-        ? {
+      ? {
           level: Math.max(1, Math.min(4, Number(breach.level) || 1)),
           expiresAt: toExpiresAt(breach),
           operatorSlot: Number(breach.operatorSlot) || 0,
           sourceId: breach.sourceId,
         }
-        : null;
+      : null;
 
     this.enemyStatusEffects.clear();
 

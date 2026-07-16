@@ -177,26 +177,26 @@ export class SimulationEngine {
       const start = Number(action.realStartTime) || 0;
 
       const animationTime = Math.max(
-          0,
-          Number(action.node.animationTime) || Number(action.freezeDuration) || 0,
+        0,
+        Number(action.node.animationTime) || Number(action.freezeDuration) || 0,
       );
 
       const enhancementStart = this.timeline.timeContext.getShiftedEndTime(
-          start,
-          animationTime,
-          action.id,
+        start,
+        animationTime,
+        action.id,
       );
 
       const extraDuration = this.getUltimateEnhancementExtraDuration(
-          action,
-          enhancementStart,
-          enhancementTime,
+        action,
+        enhancementStart,
+        enhancementTime,
       );
 
       const end = this.timeline.timeContext.getShiftedEndTime(
-          enhancementStart,
-          enhancementTime + extraDuration,
-          action.id,
+        enhancementStart,
+        enhancementTime + extraDuration,
+        action.id,
       );
 
       addWindow({
@@ -216,9 +216,9 @@ export class SimulationEngine {
   }
 
   private getUltimateEnhancementExtraDuration(
-      ultimateAction: ResolvedTimeline['actions'][number],
-      enhancementStart: number,
-      baseDuration: number,
+    ultimateAction: ResolvedTimeline['actions'][number],
+    enhancementStart: number,
+    baseDuration: number,
   ) {
     if (ultimateAction.trackId !== 'laevatain') return 0;
 
@@ -229,9 +229,9 @@ export class SimulationEngine {
 
     while (guard++ < 200) {
       const currentEnd = this.timeline.timeContext.getShiftedEndTime(
-          enhancementStart,
-          baseDuration + extraDuration,
-          ultimateAction.id,
+        enhancementStart,
+        baseDuration + extraDuration,
+        ultimateAction.id,
       );
 
       let foundAny = false;
@@ -268,10 +268,7 @@ export class SimulationEngine {
     const epsilon = 0.0001;
     const windows = this.getUltimateEnergyBlockWindowsByActor().get(actorId) ?? [];
 
-    return windows.some((window) =>
-        t > window.start + epsilon &&
-        t < window.end - epsilon
-    );
+    return windows.some(window => t > window.start + epsilon && t < window.end - epsilon);
   }
 
   run() {
@@ -342,10 +339,7 @@ export class SimulationEngine {
         throw new Error(`No handler for event type: ${event.type}`);
       }
     }
-    if (
-        this.endlineTime !== undefined &&
-        this.endlineTime > this.state.getCurrentTime()
-    ) {
+    if (this.endlineTime !== undefined && this.endlineTime > this.state.getCurrentTime()) {
       this.state.advanceTime(this.endlineTime - this.state.getCurrentTime());
     }
 

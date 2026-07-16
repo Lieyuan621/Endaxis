@@ -1,6 +1,6 @@
-import type { ActorSnapshot } from "@/simulation/state/types.ts";
-import type { EnemyState } from "../state/EnemyState";
-import type { GameState } from "../state/GameState";
+import type { ActorSnapshot } from '@/simulation/state/types.ts';
+import type { EnemyState } from '../state/EnemyState';
+import type { GameState } from '../state/GameState';
 
 export interface StaggerContext {
   source: ActorSnapshot;
@@ -19,7 +19,7 @@ export interface CalculationResult {
 export interface BreakdownEntry {
   // name
   source: string;
-  type: "BASE" | "FLAT" | "MULTIPLIER";
+  type: 'BASE' | 'FLAT' | 'MULTIPLIER';
   value: number;
   contribution: number;
 }

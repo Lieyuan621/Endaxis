@@ -1,13 +1,10 @@
-import { getEffectColor, getEffectName } from "@/data/effectPresets";
-import type { Effect } from "@/data/types";
-import { isEnemyStat } from "@/data/types";
-import type {
-  OperatorEffectApplyEvent,
-  OperatorStateEvent,
-} from "@/simulation/engine/types";
+import { getEffectColor, getEffectName } from '@/data/effectPresets';
+import type { Effect } from '@/data/types';
+import { isEnemyStat } from '@/data/types';
+import type { OperatorEffectApplyEvent, OperatorStateEvent } from '@/simulation/engine/types';
 
-export type ActionBuffPlacement = "upper" | "lower";
-export type ActionBuffSourceGroup = "operator" | "weapon" | "gearSet";
+export type ActionBuffPlacement = 'upper' | 'lower';
+export type ActionBuffSourceGroup = 'operator' | 'weapon' | 'gearSet';
 
 export interface ActionBuffSegment {
   key: string;
@@ -32,7 +29,7 @@ export interface ActionBuffLayout {
   lowerLaneCount: number;
 }
 
-type PendingActionBuffSegment = Omit<ActionBuffSegment, "lane">;
+type PendingActionBuffSegment = Omit<ActionBuffSegment, 'lane'>;
 
 interface PendingActionBuffLayout {
   upper: PendingActionBuffSegment[];
@@ -58,7 +55,7 @@ interface ActionBuffApplyEvent {
 interface ActionBuffEndEvent {
   key: string;
   time: number;
-  type: "consumption" | "expiration";
+  type: 'consumption' | 'expiration';
 }
 
 interface ActionBuffWindow {
@@ -78,25 +75,26 @@ interface ActionBuffWindow {
 }
 
 function looksInternalKey(value: unknown): boolean {
-  const key = String(value || "").toLowerCase();
+  const key = String(value || '').toLowerCase();
   if (!key) return false;
   return /(^|[-_])(tracker|internal|consume)([-_]|$)/.test(key);
 }
 
 function resolvePlacement(sourceGroup: unknown): ActionBuffPlacement {
-  return sourceGroup === "weapon" || sourceGroup === "gearSet" ? "lower" : "upper";
+  return sourceGroup === 'weapon' || sourceGroup === 'gearSet' ? 'lower' : 'upper';
 }
 
 function isVisibleFriendlyBuff(
   event: OperatorEffectApplyEvent,
   effect: Effect | undefined,
 ): boolean {
-  if (!effect || effect.kind !== "status") return false;
-  if (effect.hide === true || event.silent === true || (effect as any).silent === true) return false;
+  if (!effect || effect.kind !== 'status') return false;
+  if (effect.hide === true || event.silent === true || (effect as any).silent === true)
+    return false;
 
   const target = effect.target;
-  const scope = typeof target === "string" ? target : target?.scope;
-  if (scope === "enemy") return false;
+  const scope = typeof target === 'string' ? target : target?.scope;
+  if (scope === 'enemy') return false;
   if (event.stat && isEnemyStat(event.stat)) return false;
 
   const statusKey = event.id || effect.id;
@@ -110,8 +108,8 @@ function pushMergedApply(
   event: OperatorEffectApplyEvent,
   effect: Effect,
 ) {
-  const sourceGroup = ((effect as any)?.sourceGroup ?? "operator") as ActionBuffSourceGroup;
-  const effectKey = String(event.id || effect?.id || "status");
+  const sourceGroup = ((effect as any)?.sourceGroup ?? 'operator') as ActionBuffSourceGroup;
+  const effectKey = String(event.id || effect?.id || 'status');
   const time = event.time;
   const targetTrackId = event.targetTrackId;
   const dedupeKey = `${targetTrackId}::${effectKey}::${time}`;
@@ -124,7 +122,7 @@ function pushMergedApply(
     sourceGroup,
     placement: resolvePlacement(sourceGroup),
     icon: ((effect as any)?.icon as string | null | undefined) ?? null,
-    color: effect ? getEffectColor(effect) : "#5dade2",
+    color: effect ? getEffectColor(effect) : '#5dade2',
     title: effect ? getEffectName(effect) : effectKey,
     effect,
     stacks: Math.max(1, Number(event.cumulativeStacks ?? event.stacks) || 1),
@@ -150,7 +148,7 @@ function pushMergedEnd(
   targetTrackId: string,
   effectId: string,
   time: number,
-  type: "consumption" | "expiration",
+  type: 'consumption' | 'expiration',
 ) {
   const dedupeKey = `${targetTrackId}::${effectId}::${time}`;
   const existing = endMap.get(dedupeKey);
@@ -163,8 +161,8 @@ function pushMergedEnd(
     return;
   }
 
-  if (type === "consumption") {
-    existing.type = "consumption";
+  if (type === 'consumption') {
+    existing.type = 'consumption';
   }
 }
 
@@ -175,8 +173,8 @@ function assignLanes(segments: PendingActionBuffSegment[]): ActionBuffSegment[] 
       if (left.start !== right.start) return left.start - right.start;
       return right.end - left.end;
     })
-    .map((segment) => {
-      let lane = laneEnds.findIndex((end) => end <= segment.start);
+    .map(segment => {
+      let lane = laneEnds.findIndex(end => end <= segment.start);
       if (lane < 0) {
         lane = laneEnds.length;
         laneEnds.push(segment.end);
@@ -196,7 +194,7 @@ function applySort(left: ActionBuffApplyEvent, right: ActionBuffApplyEvent): num
 function endSort(left: ActionBuffEndEvent, right: ActionBuffEndEvent): number {
   if (left.time !== right.time) return left.time - right.time;
   if (left.type === right.type) return 0;
-  return left.type === "consumption" ? -1 : 1;
+  return left.type === 'consumption' ? -1 : 1;
 }
 
 function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): ActionBuffWindow[] {
@@ -204,10 +202,10 @@ function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): A
   const endMap = new Map<string, ActionBuffEndEvent>();
   const effectByKey = new Map<string, Effect>();
 
-  operatorLog.forEach((entry) => {
-    if (entry.type === "OPERATOR_EFFECT_APPLY") {
+  operatorLog.forEach(entry => {
+    if (entry.type === 'OPERATOR_EFFECT_APPLY') {
       if (!entry.targetTrackId) return;
-      const effectKey = String(entry.id || entry.effect?.id || "status");
+      const effectKey = String(entry.id || entry.effect?.id || 'status');
       const cacheKey = `${entry.targetTrackId}::${effectKey}`;
       if (entry.effect) effectByKey.set(cacheKey, entry.effect);
       const effect = entry.effect ?? effectByKey.get(cacheKey);
@@ -217,27 +215,27 @@ function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): A
       return;
     }
 
-    if (entry.type === "OPERATOR_EFFECT_EXPIRE") {
+    if (entry.type === 'OPERATOR_EFFECT_EXPIRE') {
       if (!entry.targetTrackId || !entry.id) return;
       pushMergedEnd(
         endMap,
         entry.targetTrackId,
         entry.id,
         entry.time,
-        entry.consumed ? "consumption" : "expiration",
+        entry.consumed ? 'consumption' : 'expiration',
       );
     }
   });
 
   const appliesByKey = new Map<string, ActionBuffApplyEvent[]>();
-  applyMap.forEach((apply) => {
+  applyMap.forEach(apply => {
     const list = appliesByKey.get(apply.key) ?? [];
     list.push(apply);
     appliesByKey.set(apply.key, list);
   });
 
   const endsByKey = new Map<string, ActionBuffEndEvent[]>();
-  endMap.forEach((end) => {
+  endMap.forEach(end => {
     const list = endsByKey.get(end.key) ?? [];
     list.push(end);
     endsByKey.set(end.key, list);
@@ -253,8 +251,8 @@ function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): A
       const nextApplyTime = sortedApplies[index + 1]?.time ?? Number.POSITIVE_INFINITY;
       const endEvent =
         apply.isContinuation && apply.stacks > 0
-          ? (ends.find((candidate) => candidate.time > apply.time) ?? null)
-          : (ends.find((candidate) => candidate.time >= apply.time) ?? null);
+          ? (ends.find(candidate => candidate.time > apply.time) ?? null)
+          : (ends.find(candidate => candidate.time >= apply.time) ?? null);
       const unclampedEnd = Math.min(nextApplyTime, endEvent?.time ?? apply.expiresAt);
       const endTime = Math.min(unclampedEnd, maxTime);
       if (endTime <= apply.time) return;
@@ -272,7 +270,7 @@ function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): A
         effect: apply.effect,
         stacks: apply.stacks,
         maxStacks: apply.maxStacks,
-        isConsumed: endEvent?.type === "consumption",
+        isConsumed: endEvent?.type === 'consumption',
       });
     });
   });
@@ -291,7 +289,7 @@ export function projectActionBuffs(
 
   const pendingLayouts = new Map<string, PendingActionBuffLayout>();
 
-  windows.forEach((window) => {
+  windows.forEach(window => {
     const start = Math.max(0, window.start);
     const end = Math.min(window.end, maxTime);
     if (end <= start) return;
@@ -318,7 +316,7 @@ export function projectActionBuffs(
       isConsumed: window.isConsumed,
     };
 
-    if (window.placement === "upper") {
+    if (window.placement === 'upper') {
       layout.upper.push(segment);
     } else {
       layout.lower.push(segment);

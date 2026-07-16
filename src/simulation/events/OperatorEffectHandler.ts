@@ -73,15 +73,15 @@ export class OperatorEffectHandler implements EventHandler<OperatorEffectEvents>
         }
         if (!event.silent && !event.skipStatusAppliedTrigger) {
           this.registry?.onStatusApplied(
-              event.id,
-              event.stat,
-              'self',
-              event.sourceId,
-              event.time,
-              ctx,
-              event.sourceSkillType,
-              event.sourceSkillId,
-              resolvedStacks,
+            event.id,
+            event.stat,
+            'self',
+            event.sourceId,
+            event.time,
+            ctx,
+            event.sourceSkillType,
+            event.sourceSkillId,
+            resolvedStacks,
           );
         }
         break;

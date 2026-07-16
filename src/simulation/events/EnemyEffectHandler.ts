@@ -280,13 +280,13 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       );
       ctx.enemyLog({
         type: 'INFLICTION_APPLY',
-          time,
-          element,
-          stacks: state.infliction.stacks,
-          sourceId,
-          effectiveDuration: duration,
-          expiresAt: shiftedExpiry,
-        });
+        time,
+        element,
+        stacks: state.infliction.stacks,
+        sourceId,
+        effectiveDuration: duration,
+        expiresAt: shiftedExpiry,
+      });
       this.registry?.onStatusApplied(
         `${element}Infliction`,
         undefined,

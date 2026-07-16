@@ -1,18 +1,9 @@
-import type {
-  ActorSnapshot,
-  EnemyConfig,
-  TeamConfig,
-} from "@/simulation/state/types.ts";
-import type { OperatorStatus, ComputedEnemyStatus } from "@/types";
-import type { TimeContext } from "@/simulation/compiler/timeContext.ts";
-import type {
-  Effect,
-  EffectCondition,
-  OperatorStat,
-  ResolvedScalingDef,
-} from "@/data/types";
-import type { DamageBreakdown } from "@/data/stats/computeDamage";
-import type { BaseStatValues } from "@/data/stats/types";
+import type { ActorSnapshot, EnemyConfig, TeamConfig } from '@/simulation/state/types.ts';
+import type { OperatorStatus, ComputedEnemyStatus } from '@/types';
+import type { TimeContext } from '@/simulation/compiler/timeContext.ts';
+import type { Effect, EffectCondition, OperatorStat, ResolvedScalingDef } from '@/data/types';
+import type { DamageBreakdown } from '@/data/stats/computeDamage';
+import type { BaseStatValues } from '@/data/stats/types';
 
 export type { Effect };
 
@@ -133,7 +124,7 @@ export interface CompiledScenario {
   systemConstants: SystemConstants;
 }
 
-export type SpGainKind = "recover" | "refund";
+export type SpGainKind = 'recover' | 'refund';
 
 export interface ConsumedStatEffect {
   stat: OperatorStat;
@@ -207,41 +198,26 @@ export interface ResolvedHit extends Hit {
 }
 
 export type ActionType =
-  | "finisher"
-  | "dive"
-  | "battleSkill"
-  | "comboSkill"
-  | "ultimate"
-  | "basicAttack";
+  'finisher' | 'dive' | 'battleSkill' | 'comboSkill' | 'ultimate' | 'basicAttack';
 
-export function resolveOptimizerSkillType(action: {
-  type?: ActionType | null;
-}) {
+export function resolveOptimizerSkillType(action: { type?: ActionType | null }) {
   return action?.type || null;
 }
 
-export function isBattleSkillLikeAction(action: {
-  type?: ActionType | null;
-}) {
-  return resolveOptimizerSkillType(action) === "battleSkill";
+export function isBattleSkillLikeAction(action: { type?: ActionType | null }) {
+  return resolveOptimizerSkillType(action) === 'battleSkill';
 }
 
-export function isComboSkillLikeAction(action: {
-  type?: ActionType | null;
-}) {
-  return resolveOptimizerSkillType(action) === "comboSkill";
+export function isComboSkillLikeAction(action: { type?: ActionType | null }) {
+  return resolveOptimizerSkillType(action) === 'comboSkill';
 }
 
-export function isUltimateLikeAction(action: {
-  type?: ActionType | null;
-}) {
-  return resolveOptimizerSkillType(action) === "ultimate";
+export function isUltimateLikeAction(action: { type?: ActionType | null }) {
+  return resolveOptimizerSkillType(action) === 'ultimate';
 }
 
-export function isFinalStrikeLikeAction(action: {
-  type?: ActionType | null;
-}) {
-  return resolveOptimizerSkillType(action) === "finisher";
+export function isFinalStrikeLikeAction(action: { type?: ActionType | null }) {
+  return resolveOptimizerSkillType(action) === 'finisher';
 }
 
 export interface Action {
@@ -287,7 +263,7 @@ export interface Action {
 }
 
 export interface ActionNode {
-  type: "action";
+  type: 'action';
   id: string;
   trackIndex: number;
   trackId: string;
@@ -295,7 +271,7 @@ export interface ActionNode {
 }
 
 export interface EffectNode {
-  type: "effect";
+  type: 'effect';
   id: string;
   actionId: string;
   hitIndex: number;

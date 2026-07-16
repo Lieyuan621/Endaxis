@@ -44,7 +44,10 @@ export interface SimulationContext {
   /** Enemy per-element damage multiplier. 100 = neutral. */
   enemyResistance: EnemyResistance;
   /** Apply enemy-side per-window incoming damage caps, returning the final damage. */
-  applyEnemyDamageCap: (time: number, damage: number) => {
+  applyEnemyDamageCap: (
+    time: number,
+    damage: number,
+  ) => {
     damage: number;
     capped: boolean;
     cap: number;

@@ -61,7 +61,8 @@ function gaugeAtTime(series: GaugePoint[], time: number): number {
     else hi = mid - 1;
   }
   // If the point at this time is post-consumption, back up to the pre-consumption point
-  while (lo > 0 && snapTimeToFrame(series[lo - 1]!.time) === snapTimeToFrame(series[lo]!.time)) lo--;
+  while (lo > 0 && snapTimeToFrame(series[lo - 1]!.time) === snapTimeToFrame(series[lo]!.time))
+    lo--;
   return Number(series[lo]!.val) || 0;
 }
 
@@ -92,7 +93,9 @@ export function projectRequisiteWarnings(
     if (!tid || !track.actions) continue;
 
     // Determine once per track — does this operator define a comboWindow?
-    const hasComboWindow = !!(track.id && getOperator(track.id)?.combatSkills?.comboSkill?.comboWindow);
+    const hasComboWindow = !!(
+      track.id && getOperator(track.id)?.combatSkills?.comboSkill?.comboWindow
+    );
     const gaugeSeries = gaugeSeriesByTrackId.get(tid) ?? [];
     const comboWindowLayout = comboWindowLayouts.get(tid) ?? [];
 
@@ -105,9 +108,11 @@ export function projectRequisiteWarnings(
       // ── Combo skill: must overlap a combo window ────────────────────
       if (a.type === 'comboSkill') {
         if (!hasComboWindow) continue;
-        if (!comboWindowLayout.some(seg =>
-            start >= snapTimeToFrame(seg.start) &&
-            start <= snapTimeToFrame(seg.end))) {
+        if (
+          !comboWindowLayout.some(
+            seg => start >= snapTimeToFrame(seg.start) && start <= snapTimeToFrame(seg.end),
+          )
+        ) {
           warnings.set(a.instanceId, { kind: 'combo' });
         }
         continue;

@@ -285,8 +285,7 @@ export type EffectTargetScope =
   | 'controlled';
 
 export type EffectTarget =
-  | { scope: EffectTargetScope; classes?: operatorClass[] }
-  | EffectTargetScope;
+  { scope: EffectTargetScope; classes?: operatorClass[] } | EffectTargetScope;
 
 // ─── Effect Base ─────────────────────────────────────────────────────────────
 

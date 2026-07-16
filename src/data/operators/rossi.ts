@@ -370,13 +370,23 @@ const sheet: OperatorSheet = {
             },
             condition: {
               kind: 'enemyStatus',
-              status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              status: [
+                'heatInfliction',
+                'cryoInfliction',
+                'electricInfliction',
+                'natureInfliction',
+              ],
             },
           },
           {
             trigger: {
               kind: 'onStatusApplied',
-              status: ['heatInfliction', 'cryoInfliction', 'electricInfliction', 'natureInfliction'],
+              status: [
+                'heatInfliction',
+                'cryoInfliction',
+                'electricInfliction',
+                'natureInfliction',
+              ],
               target: 'enemy',
               triggerScope: 'global',
             },
@@ -427,7 +437,7 @@ const sheet: OperatorSheet = {
                       duration: 5,
                       sourceGroup: 'operator',
                       hide: true,
-                    }
+                    },
                   ],
                 },
                 {
@@ -588,7 +598,7 @@ const sheet: OperatorSheet = {
               kind: 'status',
               target: 'self',
               duration: 2,
-              hide: true
+              hide: true,
             },
           ],
         },

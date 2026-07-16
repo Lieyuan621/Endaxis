@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { TeamState } from "./TeamState";
+import { describe, expect, it } from 'vitest';
+import { TeamState } from './TeamState';
 
-describe("TeamState", () => {
-  it("consumes refund SP before recover SP", () => {
+describe('TeamState', () => {
+  it('consumes refund SP before recover SP', () => {
     const team = new TeamState(
       {
         maxSp: 200,
@@ -15,8 +15,8 @@ describe("TeamState", () => {
       {} as never,
     );
 
-    team.addSp(40, "recover");
-    team.addSp(60, "refund");
+    team.addSp(40, 'recover');
+    team.addSp(60, 'refund');
 
     const result = team.consumeSp(100);
 
