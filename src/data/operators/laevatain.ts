@@ -8,10 +8,10 @@ const GAIN_MELTING_FLAME_EFFECT: StatusEffect = {
   duration: 999,
   maxStacks: 4,
   icon: [
-    'operators/laevatain/magma_1.webp',
-    'operators/laevatain/magma_2.webp',
-    'operators/laevatain/magma_3.webp',
-    'operators/laevatain/magma_4.webp',
+    '/operators/laevatain/magma_1.webp',
+    '/operators/laevatain/magma_2.webp',
+    '/operators/laevatain/magma_3.webp',
+    '/operators/laevatain/magma_4.webp',
   ],
 };
 

@@ -113,7 +113,7 @@ const sheet: OperatorSheet = {
                 status: 'pogranichnik-sp-tracker',
                 stacks: { compare: 'exact' as const, count: 80 },
               },
-              icon: 'operators/pogranichnik/icon_battle_pograni_talent_1.webp',
+              icon: '/operators/pogranichnik/icon_battle_pograni_talent_1.webp',
             })),
             {
               id: 'pogranichnik-t1-consume',
