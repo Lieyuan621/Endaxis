@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import { getGearPieceList, getGearSet, getOperator, getOperatorList, getWeaponList } from '@/data';
 import { collectEffects, collectTriggerEffects, patchCombatSkills } from '@/data/collect';
@@ -9,6 +8,7 @@ import { simulate } from './simulator';
 import { TriggerRegistry } from './engine/TriggerRegistry';
 import type { Action, ScenarioData, ScenarioTrack } from './compiler/types';
 import type { BaseStatValues } from '@/data/stats/types';
+import type { TeamInstance, OperatorInstance, WeaponInstance } from '@/types';
 import { i18n } from '@/i18n';
 
 const BASE_STATS: BaseStatValues = {
@@ -119,7 +119,7 @@ function maxTalentStates(operatorSlug: string) {
   );
 }
 
-function createOperatorInstance(operatorSlug: string, id = `op_${operatorSlug}`) {
+function createOperatorInstance(operatorSlug: string, id = `op_${operatorSlug}`): OperatorInstance {
   return {
     id,
     operatorSlug,
@@ -134,10 +134,19 @@ function createOperatorInstance(operatorSlug: string, id = `op_${operatorSlug}`)
     },
     talentStates: maxTalentStates(operatorSlug),
     trustLevel: 0,
-  };
+  } as unknown as OperatorInstance;
 }
 
-function createTeam(operatorId: string, weaponId: string | null = null, gear = EMPTY_GEAR) {
+function createTeam(
+  operatorId: string,
+  weaponId: string | null = null,
+  gear: {
+    armor: string | null;
+    gloves: string | null;
+    kit1: string | null;
+    kit2: string | null;
+  } = EMPTY_GEAR,
+): TeamInstance {
   return {
     id: 'team',
     name: 'team',
@@ -147,7 +156,7 @@ function createTeam(operatorId: string, weaponId: string | null = null, gear = E
       { operatorId: null, weaponId: null, gear: { ...EMPTY_GEAR } },
       { operatorId: null, weaponId: null, gear: { ...EMPTY_GEAR } },
     ],
-  };
+  } as unknown as TeamInstance;
 }
 
 function mapTriggerEntriesToTracks(entries: Array<any>, tracks: ScenarioTrack[]) {
@@ -179,7 +188,7 @@ function collectConsumedStackKeys(tracks: ScenarioTrack[], triggerEntries: Array
 }
 
 function triggerExerciseActions() {
-  const setupEffects = [
+  const setupEffects: any[] = [
     {
       id: 'sweep-self-status',
       kind: 'status',
@@ -296,14 +305,14 @@ describe('optimizer runtime full data sweep', () => {
         for (const [skillKey, skill] of Object.entries(flatSkills)) {
           const level = 8;
           for (let segmentIndex = 0; segmentIndex < (skill.segments || []).length; segmentIndex++) {
-            const segment = skill.segments[segmentIndex];
+            const segment = skill.segments[segmentIndex]!;
             const rawEntries = extractRawEntries({ segments: [segment] }, level);
             const hits = resolveHitsFromSheet([], rawEntries, level, {
               preserveCondition: true,
               preserveDurationExtension: true,
             });
             actions.push(
-              createAction(`${slug}_${skillKey}_${segmentIndex}`, skill.type, {
+              createAction(`${slug}_${skillKey}_${segmentIndex}`, skill.type as Action['type'], {
                 skillId: skill.skillKey || skillKey,
                 element: skill.element || sheet.element,
                 duration: Math.max(0.1, Number(segment.duration) || 1),
@@ -334,19 +343,19 @@ describe('optimizer runtime full data sweep', () => {
       ...new Set(
         getGearPieceList()
           .map(piece => piece.setSlug)
-          .filter(Boolean),
+          .filter((slug): slug is string => Boolean(slug)),
       ),
     ];
 
     const runTriggerCase = (
-      label: string,
+      _label: string,
       operatorSlug: string,
       weaponSlug: string | null,
       gearPieceSlugs: string[] = [],
     ) => {
       const operatorInstances = [createOperatorInstance(operatorSlug, 'op_alpha')];
-      const weaponInstances = weaponSlug
-        ? [
+      const weaponInstances: WeaponInstance[] = weaponSlug
+        ? ([
             {
               id: 'weapon_alpha',
               weaponSlug,
@@ -357,7 +366,7 @@ describe('optimizer runtime full data sweep', () => {
               skill2Level: 9,
               skill3Level: 9,
             },
-          ]
+          ] as unknown as WeaponInstance[])
         : [];
       const gearInstances = gearPieceSlugs.map((slug, index) =>
         createGearInstance(`gear_${index}`, slug),
@@ -422,14 +431,14 @@ describe('optimizer runtime full data sweep', () => {
     const failures: string[] = [];
 
     const runPassiveCase = (
-      label: string,
+      _label: string,
       operatorSlug: string,
       weaponSlug: string | null,
       gearPieceSlugs: string[] = [],
     ) => {
       const operatorInstances = [createOperatorInstance(operatorSlug, 'op_alpha')];
-      const weaponInstances = weaponSlug
-        ? [
+      const weaponInstances: WeaponInstance[] = weaponSlug
+        ? ([
             {
               id: 'weapon_alpha',
               weaponSlug,
@@ -440,7 +449,7 @@ describe('optimizer runtime full data sweep', () => {
               skill2Level: 9,
               skill3Level: 9,
             },
-          ]
+          ] as unknown as WeaponInstance[])
         : [];
       const gearInstances = gearPieceSlugs.map((slug, index) =>
         createGearInstance(`gear_${index}`, slug),
@@ -493,7 +502,7 @@ describe('optimizer runtime full data sweep', () => {
       ...new Set(
         getGearPieceList()
           .map(piece => piece.setSlug)
-          .filter(Boolean),
+          .filter((slug): slug is string => Boolean(slug)),
       ),
     ]) {
       try {
