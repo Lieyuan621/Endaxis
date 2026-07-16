@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type {
   Attribute,
   Effect,
@@ -24,6 +23,7 @@ import type {
   OperatorSheet,
   DamageElement,
   EffectCondition,
+  EffectStat,
 } from './types';
 import { resolveLeveled, isTickGroup, createFinisherEntry, createDiveEntry } from './types';
 import type { TeamInstance, OperatorInstance, WeaponInstance, GearInstance } from '../types';
@@ -93,12 +93,12 @@ function flatSkills(
   // Inject synthetic finisher/dive entries (share basicAttack's level)
   result.push({
     skillKey: 'finisher',
-    skill: createFinisherEntry(finisherElement),
+    skill: createFinisherEntry(finisherElement as DamageElement),
     levelKey: 'basicAttack',
   });
   result.push({
     skillKey: 'dive',
-    skill: createDiveEntry(diveElement),
+    skill: createDiveEntry(diveElement as DamageElement),
     levelKey: 'basicAttack',
   });
   return result;
@@ -120,7 +120,7 @@ export function collectEffects(
 
   for (let slotIndex = 0; slotIndex < team.slots.length; slotIndex++) {
     const slot = team.slots[slotIndex];
-    if (!slot.operatorId) continue;
+    if (!slot?.operatorId) continue;
 
     const opInst = operatorInstances.find(o => o.id === slot.operatorId);
     if (!opInst) continue;
@@ -137,7 +137,7 @@ export function collectEffects(
         const state = opInst.talentStates[String(groupIdx)];
         if (!state || state <= 0) continue;
         const idx = state - 1;
-        for (const patch of op.talents[groupIdx].patches ?? []) {
+        for (const patch of op.talents[groupIdx]!.patches ?? []) {
           if (patch.kind === 'appendEffect') {
             const list = appendPassiveByTarget.get(patch.targetEffect) ?? [];
             list.push({ effect: patch.effect, idx });
@@ -147,7 +147,7 @@ export function collectEffects(
       }
       for (let i = 0; i < op.potentials.length; i++) {
         if (i + 1 > opInst.potential) continue;
-        for (const patch of op.potentials[i].patches ?? []) {
+        for (const patch of op.potentials[i]!.patches ?? []) {
           if (patch.kind === 'appendEffect') {
             const list = appendPassiveByTarget.get(patch.targetEffect) ?? [];
             list.push({ effect: patch.effect, idx: 0 });
@@ -176,7 +176,7 @@ export function collectEffects(
       // Talents: iterate groups, check state, walk nested effects
       let talentFlatIndex = 0;
       for (let groupIdx = 0; groupIdx < op.talents.length; groupIdx++) {
-        const group = op.talents[groupIdx];
+        const group = op.talents[groupIdx]!;
         const state = opInst.talentStates[String(groupIdx)];
         if (!state || state <= 0) {
           talentFlatIndex += group.levels ?? 0;
@@ -193,7 +193,7 @@ export function collectEffects(
           );
         }
         for (let effIdx = 0; effIdx < (group.effects?.length ?? 0); effIdx++) {
-          const nested = group.effects![effIdx];
+          const nested = group.effects![effIdx]!;
           const stamped = resolveEffect(
             ensureEffectId(
               hydrateEffect(nested, 'operator', talentName),
@@ -215,7 +215,7 @@ export function collectEffects(
       for (let i = 0; i < op.potentials.length; i++) {
         if (i + 1 > opInst.potential) continue;
         const potentialName = getOperatorPotentialName(operatorSlug, i);
-        for (const [patchIdx, patch] of (op.potentials[i].patches ?? []).entries()) {
+        for (const [patchIdx, patch] of (op.potentials[i]!.patches ?? []).entries()) {
           collectedPatches.push(
             ensurePatchEffectIds(
               patch,
@@ -223,8 +223,8 @@ export function collectEffects(
             ),
           );
         }
-        for (let effIdx = 0; effIdx < (op.potentials[i].effects?.length ?? 0); effIdx++) {
-          const nested = op.potentials[i].effects![effIdx];
+        for (let effIdx = 0; effIdx < (op.potentials[i]!.effects?.length ?? 0); effIdx++) {
+          const nested = op.potentials[i]!.effects![effIdx]!;
           const effect = ensureEffectId(
             hydrateEffect(nested, 'operator', potentialName),
             makeEffectId(operatorSlug, `potential${i}`, `effect${effIdx}`),
@@ -242,7 +242,7 @@ export function collectEffects(
       )) {
         const lvlIdx = Math.min((opInst.skillLevels[levelKey] ?? 1) - 1, 11);
         for (let effIdx = 0; effIdx < (skill.effects?.length ?? 0); effIdx++) {
-          const nested = skill.effects![effIdx];
+          const nested = skill.effects![effIdx]!;
           const stamped = resolveEffect(
             ensureEffectId(
               hydrateEffect(nested, 'operator', ''),
@@ -277,7 +277,7 @@ export function collectEffects(
       if (gsSheet) {
         const setDisplayName = getGearSetGameName(setSlug);
         for (let effIdx = 0; effIdx < gsSheet.effects.length; effIdx++) {
-          const nested = gsSheet.effects[effIdx];
+          const nested = gsSheet.effects[effIdx]!;
           const effect = ensureEffectId(
             hydrateEffect(nested, 'gearSet', setDisplayName),
             makeEffectId(setSlug, `effect${effIdx}`),
@@ -365,13 +365,18 @@ export function collectEffects(
  * for team-scoped effects it is deferred to each target-binding point (partition / sim
  * initial-effects / triggered dispatch), which call this with the target operator's attributes.
  */
-export function resolveStatAttributes(stat, mainAttribute, subAttribute) {
+export function resolveStatAttributes<S extends EffectStat | undefined>(
+  stat: S,
+  mainAttribute?: Attribute,
+  subAttribute?: Attribute,
+): S {
   if (!stat || !('attribute' in stat)) return stat;
-  const map = a => (a === 'main' ? (mainAttribute ?? a) : a === 'sub' ? (subAttribute ?? a) : a);
-  const attr = stat.attribute;
+  const map = (a: Attribute): Attribute =>
+    a === 'main' ? (mainAttribute ?? a) : a === 'sub' ? (subAttribute ?? a) : a;
+  const attr = (stat as { attribute: Attribute | Attribute[] }).attribute;
   const resolved = Array.isArray(attr) ? attr.map(map) : map(attr);
   if (resolved === attr) return stat;
-  return { ...stat, attribute: resolved };
+  return { ...stat, attribute: resolved } as S;
 }
 
 /** Replace 'main'/'sub' attribute placeholders on an effect with the operator's actual attributes. */
@@ -404,11 +409,11 @@ function addWeaponSheetEffects(
 
   const skillKeys = ['skill1', 'skill2', 'skill3'];
   for (let skillNum = 0; skillNum < skills.length; skillNum++) {
-    const { effects, level } = skills[skillNum];
+    const { effects, level } = skills[skillNum]!;
     if (!effects) continue;
-    const skillKey = skillKeys[skillNum];
+    const skillKey = skillKeys[skillNum]!;
     for (let effIdx = 0; effIdx < effects.length; effIdx++) {
-      const raw = effects[effIdx];
+      const raw = effects[effIdx]!;
       const lvlIdx = Math.min(level - 1, 11);
       const resolved = resolveContextualAttributes(
         resolveEffect(
@@ -718,7 +723,7 @@ function resolvePatches(collected: CollectedEffect[], patches: Patch[]): Collect
 
   // Expand DerivedEffects — must run after patchEffect so source values are final.
   // For derived source lookup, the first match with a given id is sufficient.
-  const effectById = new Map([...effectsById.entries()].map(([id, list]) => [id, list[0]]));
+  const effectById = new Map([...effectsById.entries()].map(([id, list]) => [id, list[0]!]));
   const expanded: CollectedEffect[] = [];
   for (const ce of collected) {
     const effectAny = ce.effect as unknown as Effect;
@@ -751,7 +756,7 @@ export function collectTriggerEffects(
 
   for (let slotIndex = 0; slotIndex < team.slots.length; slotIndex++) {
     const slot = team.slots[slotIndex];
-    if (!slot.operatorId) continue;
+    if (!slot?.operatorId) continue;
 
     const opInst = operatorInstances.find(o => o.id === slot.operatorId);
     if (!opInst) continue;
@@ -766,7 +771,7 @@ export function collectTriggerEffects(
       for (let groupIdx = 0; groupIdx < op.talents.length; groupIdx++) {
         const state = opInst.talentStates[String(groupIdx)];
         if (!state || state <= 0) continue;
-        for (const patch of op.talents[groupIdx].patches ?? []) {
+        for (const patch of op.talents[groupIdx]!.patches ?? []) {
           if (patch.kind === 'appendEffect') {
             const list = appendEffectByTarget.get(patch.targetEffect) ?? [];
             list.push(patch.effect);
@@ -776,7 +781,7 @@ export function collectTriggerEffects(
       }
       for (let i = 0; i < op.potentials.length; i++) {
         if (i + 1 > opInst.potential) continue;
-        for (const patch of op.potentials[i].patches ?? []) {
+        for (const patch of op.potentials[i]!.patches ?? []) {
           if (patch.kind === 'appendEffect') {
             const list = appendEffectByTarget.get(patch.targetEffect) ?? [];
             list.push(patch.effect);
@@ -787,13 +792,13 @@ export function collectTriggerEffects(
 
       // Talents
       for (let groupIdx = 0; groupIdx < op.talents.length; groupIdx++) {
-        const group = op.talents[groupIdx];
+        const group = op.talents[groupIdx]!;
         const state = opInst.talentStates[String(groupIdx)];
         if (!state || state <= 0) continue;
         const idx = state - 1;
         for (const patch of group.patches ?? []) collectedPatches.push(patch);
         for (let teIdx = 0; teIdx < (group.triggers?.length ?? 0); teIdx++) {
-          const te = group.triggers![teIdx];
+          const te = group.triggers![teIdx]!;
           const teLvlIdx = te.skillLevelKey
             ? Math.min((opInst.skillLevels[te.skillLevelKey] ?? 1) - 1, 11)
             : idx;
@@ -818,9 +823,9 @@ export function collectTriggerEffects(
       // Potentials
       for (let i = 0; i < op.potentials.length; i++) {
         if (i + 1 > opInst.potential) continue;
-        for (const patch of op.potentials[i].patches ?? []) collectedPatches.push(patch);
-        for (let teIdx = 0; teIdx < (op.potentials[i].triggers?.length ?? 0); teIdx++) {
-          const te = op.potentials[i].triggers![teIdx];
+        for (const patch of op.potentials[i]!.patches ?? []) collectedPatches.push(patch);
+        for (let teIdx = 0; teIdx < (op.potentials[i]!.triggers?.length ?? 0); teIdx++) {
+          const te = op.potentials[i]!.triggers![teIdx]!;
           const basePath = makeEffectId(operatorSlug, `potential${i}`, `trigger${teIdx}`);
           const stampedTe = {
             ...te,
@@ -847,7 +852,7 @@ export function collectTriggerEffects(
         if (!skill.triggers) continue;
         const lvlIdx = Math.min((opInst.skillLevels[levelKey] ?? 1) - 1, 11);
         for (let teIdx = 0; teIdx < skill.triggers.length; teIdx++) {
-          const te = applyPatchHitsToTrigger(skill.triggers[teIdx], collectedPatches);
+          const te = applyPatchHitsToTrigger(skill.triggers[teIdx]!, collectedPatches);
           const teLvlIdx = te.skillLevelKey
             ? Math.min((opInst.skillLevels[te.skillLevelKey] ?? 1) - 1, 11)
             : lvlIdx;
@@ -906,7 +911,7 @@ export function collectTriggerEffects(
           };
 
           collected.push({
-            triggerEffect: { trigger, effects: [windowEffect] },
+            triggerEffect: { trigger, effects: [windowEffect as ResolvedEffect] },
             sourceSlotIndex: slotIndex,
             sourceOperatorSlug: operatorSlug,
             sourceSkillType: skillKey,
@@ -946,7 +951,7 @@ export function collectTriggerEffects(
             if (!triggers) continue;
             const lvlIdx = Math.min(level - 1, 11);
             for (let teIdx = 0; teIdx < triggers.length; teIdx++) {
-              const te = triggers[teIdx];
+              const te = triggers[teIdx]!;
               const basePath = makeEffectId(wInst.weaponSlug, skillKey, `trigger${teIdx}`);
               const stampedTe = {
                 ...te,
@@ -977,7 +982,7 @@ export function collectTriggerEffects(
       const gsSheet = getGearSet(setSlug);
       if (gsSheet) {
         for (let teIdx = 0; teIdx < (gsSheet.triggers?.length ?? 0); teIdx++) {
-          const te = gsSheet.triggers![teIdx];
+          const te = gsSheet.triggers![teIdx]!;
           const stampedEffects = te.effects.map((eff, effIdx) =>
             stampTriggerEffect(
               hydrateTriggerEffect(eff, 'gearSet'),
@@ -1015,7 +1020,7 @@ export function collectTriggerEffects(
   // in triggers can reference them (e.g. Antal P5 derives from a battle skill hit effect).
   for (let slotIndex = 0; slotIndex < team.slots.length; slotIndex++) {
     const slot = team.slots[slotIndex];
-    if (!slot.operatorId) continue;
+    if (!slot?.operatorId) continue;
     const opInst = operatorInstances.find(o => o.id === slot.operatorId);
     if (!opInst) continue;
     const op = getOperator(opInst.operatorSlug);
@@ -1043,7 +1048,7 @@ export function collectTriggerEffects(
   }
   if (combinedById.size > 0) {
     for (let ci = 0; ci < collected.length; ci++) {
-      const te = collected[ci].triggerEffect;
+      const te = collected[ci]!.triggerEffect;
       let modified = false;
       const expanded = te.effects.flatMap(eff => {
         if ((eff as any).kind !== 'derived') return [eff];
@@ -1053,7 +1058,7 @@ export function collectTriggerEffects(
       });
       if (modified) {
         collected[ci] = {
-          ...collected[ci],
+          ...collected[ci]!,
           triggerEffect: { ...te, effects: expanded },
         };
       }
@@ -1091,9 +1096,9 @@ function applyPatchesToTriggerEffects(collected: CollectedTriggerEffect[], patch
 
   const byId = new Map<string, { cteIdx: number; effIdx: number }[]>();
   for (let ci = 0; ci < collected.length; ci++) {
-    const effects = collected[ci].triggerEffect.effects;
+    const effects = collected[ci]!.triggerEffect.effects;
     for (let ei = 0; ei < effects.length; ei++) {
-      const id = effects[ei].id;
+      const id = effects[ei]!.id;
       if (!id) continue;
       const list = byId.get(id) ?? [];
       list.push({ cteIdx: ci, effIdx: ei });
@@ -1105,10 +1110,10 @@ function applyPatchesToTriggerEffects(collected: CollectedTriggerEffect[], patch
     const locs = byId.get(patch.targetEffect);
     if (!locs) continue;
     for (const loc of locs) {
-      const te = collected[loc.cteIdx].triggerEffect;
-      const patched = applyEffectPatch(te.effects[loc.effIdx], patch.effect);
+      const te = collected[loc.cteIdx]!.triggerEffect;
+      const patched = applyEffectPatch(te.effects[loc.effIdx]!, patch.effect);
       collected[loc.cteIdx] = {
-        ...collected[loc.cteIdx],
+        ...collected[loc.cteIdx]!,
         triggerEffect: {
           ...te,
           effects: te.effects.map((e, i) => (i === loc.effIdx ? patched : e)),
@@ -1317,13 +1322,13 @@ function expandCombatSkills(
   }
   // Inject synthetic finisher/dive entries — share basicAttack's level.
   result.finisher = {
-    ...createFinisherEntry(finisherElement),
+    ...createFinisherEntry(finisherElement as DamageElement),
     skillKey: 'finisher',
     levelKey: 'basicAttack',
     type: 'finisher',
   };
   result.dive = {
-    ...createDiveEntry(diveElement),
+    ...createDiveEntry(diveElement as DamageElement),
     skillKey: 'dive',
     levelKey: 'basicAttack',
     type: 'dive',
@@ -1356,7 +1361,7 @@ export function patchCombatSkills(
     const state = opInst.talentStates[String(groupIdx)];
     if (!state || state <= 0) continue;
     const idx = state - 1;
-    for (const [patchIdx, patch] of (op.talents[groupIdx].patches ?? []).entries())
+    for (const [patchIdx, patch] of (op.talents[groupIdx]!.patches ?? []).entries())
       patches.push({
         patch: ensurePatchEffectIds(
           patch,
@@ -1367,7 +1372,7 @@ export function patchCombatSkills(
   }
   for (let i = 0; i < op.potentials.length; i++) {
     if (i + 1 > opInst.potential) continue;
-    for (const [patchIdx, patch] of (op.potentials[i].patches ?? []).entries())
+    for (const [patchIdx, patch] of (op.potentials[i]!.patches ?? []).entries())
       patches.push({
         patch: ensurePatchEffectIds(patch, makeEffectId(slug, `potential${i}`, `patch${patchIdx}`)),
         idx: 0,
@@ -1426,18 +1431,18 @@ export function patchCombatSkills(
     for (const segment of segments) {
       for (const group of segment.damageGroups as HitGroup[]) {
         for (let i = 0; i < group.hits.length; i++) {
-          let hit = group.hits[i];
+          let hit = group.hits[i]!;
           if (hit.id) {
             const hitPatches = patchHitsByTarget.get(hit.id);
             if (hitPatches) {
               for (const { patch: hitPatch, idx } of hitPatches) {
                 const { effects: injectedEffects, ...otherHitFields } = hitPatch.hit;
-                hit = { ...hit, ...otherHitFields };
+                hit = { ...hit, ...otherHitFields } as Hit;
                 if (injectedEffects?.length) {
                   const resolved = injectedEffects.map(e =>
                     resolveEffect(e, idx),
                   ) as unknown as Effect[];
-                  hit = { ...hit, effects: [...(hit.effects ?? []), ...resolved] };
+                  hit = { ...hit, effects: [...(hit.effects ?? []), ...resolved] } as Hit;
                 }
               }
             }
@@ -1453,7 +1458,7 @@ export function patchCombatSkills(
     for (const { triggers } of allSegmentHolders()) {
       for (const trigger of triggers ?? []) {
         for (let i = 0; i < trigger.effects.length; i++) {
-          const effect = trigger.effects[i];
+          const effect = trigger.effects[i]!;
           if (effect.kind !== 'damageHit' || !effect.hit?.id) continue;
           const hitPatches = patchHitsByTarget.get(effect.hit.id);
           if (!hitPatches) continue;
@@ -1493,7 +1498,7 @@ export function patchCombatSkills(
       }
       for (const trigger of triggers ?? []) {
         for (let i = 0; i < trigger.effects.length; i++) {
-          const eff = trigger.effects[i];
+          const eff = trigger.effects[i]!;
           if (eff.kind !== 'damageHit' || !eff.hit?.effects) continue;
           const toAppend: Effect[] = [];
           for (const hitEff of eff.hit.effects) {

@@ -2437,8 +2437,8 @@ export const useTimelineStore = defineStore('timeline', () => {
           const targetMeta = armoryContext.trackMetaById.get(targetId);
           const resolvedStat = resolveStatAttributes(
             effect.stat as Parameters<typeof resolveStatAttributes>[0],
-            targetMeta?.mainAttribute,
-            targetMeta?.subAttribute,
+            targetMeta?.mainAttribute as Parameters<typeof resolveStatAttributes>[1],
+            targetMeta?.subAttribute as Parameters<typeof resolveStatAttributes>[2],
           );
           return {
             targetTrackId: targetId,
