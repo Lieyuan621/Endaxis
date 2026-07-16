@@ -69,7 +69,9 @@ export function buildEffectBindingOptions(
   const typeSerials = new Map<string, number>();
   return flattened.map(({ effect, type, id, rowIndex, colIndex }) => {
     const baseName =
-      (typeof getEffectName === 'function' ? getEffectName(type, effect) : null) || type || 'Unknown';
+      (typeof getEffectName === 'function' ? getEffectName(type, effect) : null) ||
+      type ||
+      'Unknown';
     const duplicates = (typeCounts.get(type) || 0) > 1;
     const serial = (typeSerials.get(type) || 0) + 1;
     typeSerials.set(type, serial);

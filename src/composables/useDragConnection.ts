@@ -1,25 +1,80 @@
-import { computed, readonly } from 'vue';
-import { useTimelineStore } from '../stores/timelineStore.js';
+import { computed, readonly, type Ref } from 'vue';
+import { useTimelineStore } from '../stores/timelineStore';
 import { storeToRefs } from 'pinia';
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface DragPayload {
+  mode?: string;
+  sourceId: string;
+  existingConnectionId?: string | null;
+  sourcePort?: string | null;
+  startX?: number;
+  startY?: number;
+}
+
+interface NodeLike {
+  id: string;
+  type?: string;
+  actionId?: string | null;
+  flatIndex?: number | null;
+  [key: string]: unknown;
+}
+
+interface SnapState {
+  isActive: boolean;
+  targetId: string | null;
+  targetPort: string | null;
+  snapPos: Point | null;
+}
+
+interface DragState {
+  isDragging: boolean;
+  mode?: string;
+  sourceId: string | null;
+  existingConnectionId?: string | null;
+  startPoint?: Point;
+  sourcePort?: string | null;
+}
+
+// The timeline store's connection API. Declared here from the consumer side while
+// the store is still JavaScript; Phase 2 moves these types onto the store itself.
+interface ConnectionStoreMethods {
+  getConnectionById(id: string): { isConsumption?: boolean; sourcePort?: string | null } | null;
+  removeConnection(id: string): void;
+  createConnection(
+    sourcePort: string | null | undefined,
+    targetPort: string | null,
+    isConsumption: boolean,
+    data: unknown,
+  ): void;
+  resolveNode(id: string | null): NodeLike | null;
+  getNodesOfConnection(id: string): { fromNode?: NodeLike | null; toNode?: NodeLike | null };
+}
 
 export function useDragConnection() {
   const store = useTimelineStore();
+  const api = store as unknown as ConnectionStoreMethods;
 
   const {
-    connectionDragState,
-    connectionSnapState,
+    connectionDragState: dragStateRef,
+    connectionSnapState: snapStateRef,
     enableConnectionTool,
     validConnectionTargetIds,
     actionMap,
     effectsMap,
     connections,
-    toggleConnectionTool,
   } = storeToRefs(store);
+  const connectionDragState = dragStateRef as unknown as Ref<DragState>;
+  const connectionSnapState = snapStateRef as unknown as Ref<SnapState>;
   const isDragging = computed(() => {
     return connectionDragState.value.isDragging;
   });
 
-  function snapTo(targetId, port, pos) {
+  function snapTo(targetId: string | null, port: string | null, pos: Point | null) {
     connectionSnapState.value = {
       isActive: true,
       targetId,
@@ -37,8 +92,8 @@ export function useDragConnection() {
     };
   }
 
-  function calculateValidTargets(sourceId) {
-    const validSet = new Set();
+  function calculateValidTargets(sourceId: string) {
+    const validSet = new Set<string>();
 
     for (const action of actionMap.value.values()) {
       if (validateConnection(sourceId, action.id)) {
@@ -55,14 +110,14 @@ export function useDragConnection() {
     validConnectionTargetIds.value = validSet;
   }
 
-  function isNodeValid(targetId) {
+  function isNodeValid(targetId: string) {
     if (!isDragging.value) {
       return true;
     }
     return validConnectionTargetIds.value.has(targetId);
   }
 
-  function startDrag(payload) {
+  function startDrag(payload: DragPayload) {
     connectionDragState.value = {
       isDragging: true,
       mode: payload.mode || 'create',
@@ -77,34 +132,39 @@ export function useDragConnection() {
     clearSnap();
   }
 
-  function handleLinkDrop(fromNode, toNode, targetPort, connectionData) {
+  function handleLinkDrop(
+    _fromNode: NodeLike,
+    _toNode: NodeLike,
+    targetPort: string | null,
+    connectionData: unknown,
+  ) {
     const state = connectionDragState.value;
 
     let isConsumption = false;
     if (state.existingConnectionId) {
-      const connection = store.getConnectionById(state.existingConnectionId);
+      const connection = api.getConnectionById(state.existingConnectionId);
       if (connection) {
-        isConsumption = connection.isConsumption;
-        store.removeConnection(state.existingConnectionId);
+        isConsumption = connection.isConsumption ?? false;
+        api.removeConnection(state.existingConnectionId);
       }
     }
 
-    store.createConnection(state.sourcePort, targetPort, isConsumption, connectionData);
+    api.createConnection(state.sourcePort, targetPort, isConsumption, connectionData);
   }
 
-  function validateConnection(fromId, toId) {
+  function validateConnection(fromId: string | null | undefined, toId: string | null | undefined) {
     if (!fromId || !toId || fromId === toId) {
       return false;
     }
 
-    const fromNode = store.resolveNode(fromId);
-    const toNode = store.resolveNode(toId);
+    const fromNode = api.resolveNode(fromId) as NodeLike | null;
+    const toNode = api.resolveNode(toId) as NodeLike | null;
 
     if (!fromNode || !toNode) {
       return false;
     }
 
-    const getEndpointId = (conn, side) => {
+    const getEndpointId = (conn: Record<string, unknown> | null, side: 'from' | 'to') => {
       if (!conn) return null;
       if (side === 'from') return conn.fromNodeId || conn.fromEffectId || conn.from || null;
       return conn.toNodeId || conn.toEffectId || conn.to || null;
@@ -114,7 +174,8 @@ export function useDragConnection() {
     const toNodeId = toNode.id;
 
     const exists = connections.value.some(
-      c => getEndpointId(c, 'from') === fromNodeId && getEndpointId(c, 'to') === toNodeId,
+      (c: Record<string, unknown>) =>
+        getEndpointId(c, 'from') === fromNodeId && getEndpointId(c, 'to') === toNodeId,
     );
 
     if (exists) {
@@ -140,7 +201,7 @@ export function useDragConnection() {
     };
   }
 
-  function endDrag(targetId = null, targetPort = null) {
+  function endDrag(targetId: string | null = null, targetPort: string | null = null) {
     if (!isDragging.value) {
       return;
     }
@@ -155,8 +216,8 @@ export function useDragConnection() {
       finalPort = connectionSnapState.value.targetPort;
     }
 
-    const fromNode = store.resolveNode(state.sourceId);
-    const toNode = store.resolveNode(finalTargetId);
+    const fromNode = api.resolveNode(state.sourceId) as NodeLike | null;
+    const toNode = api.resolveNode(finalTargetId) as NodeLike | null;
 
     if (fromNode && toNode) {
       const connectionData = validateConnection(state.sourceId, finalTargetId);
@@ -169,7 +230,7 @@ export function useDragConnection() {
     clearSnap();
   }
 
-  function newConnectionFrom(startPos, sourceId, sourcePort) {
+  function newConnectionFrom(startPos: Point, sourceId: string, sourcePort: string | null) {
     startDrag({
       mode: 'create',
       sourceId,
@@ -179,16 +240,16 @@ export function useDragConnection() {
     });
   }
 
-  function moveConnectionEnd(connectionId, startPos) {
-    const connection = store.getConnectionById(connectionId);
+  function moveConnectionEnd(connectionId: string, startPos: Point) {
+    const connection = api.getConnectionById(connectionId);
     if (!connection) {
       return;
     }
-    const nodes = store.getNodesOfConnection(connectionId);
+    const nodes = api.getNodesOfConnection(connectionId);
     if (!nodes.fromNode || !nodes.toNode) {
       return;
     }
-    const linkDragConfig = {
+    const linkDragConfig: DragPayload = {
       mode: 'create',
       sourceId: nodes.fromNode.id,
       existingConnectionId: connectionId,
@@ -202,7 +263,7 @@ export function useDragConnection() {
 
   function cancelDrag() {
     if (connectionDragState.value.existingConnectionId) {
-      store.removeConnection(connectionDragState.value.existingConnectionId);
+      api.removeConnection(connectionDragState.value.existingConnectionId);
     }
 
     connectionDragState.value.isDragging = false;

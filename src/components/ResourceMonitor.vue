@@ -5,7 +5,7 @@ import CustomNumberInput from './CustomNumberInput.vue';
 import ConnectionPath from './ConnectionPath.vue';
 import HitDamageDetailDialog from './HitDamageDetailDialog.vue';
 import { useI18n } from 'vue-i18n';
-import { getDisplayKeyCandidates } from '@/utils/effectDisplay.js';
+import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
 import { getEnemyGameName } from '@/data/gameText';
 import { computeContingencyEnemyHealing } from '@/data/contingencyContracts/criteriaEffects';
 

@@ -1,7 +1,7 @@
 ﻿<script setup>
 import { onMounted, onUnmounted, ref, nextTick, computed, watch } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
-import { useShareProject } from '@/composables/useShareProject.js';
+import { useShareProject } from '@/composables/useShareProject';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import { snapdom } from '@zumer/snapdom';
 import { useI18n } from 'vue-i18n';
@@ -17,7 +17,7 @@ import ResourceMonitor from '../components/ResourceMonitor.vue';
 import SimLogPanel from '../components/SimLogPanel.vue';
 import DamageAnalysisDialog from '../components/DamageAnalysisDialog.vue';
 
-import { addMetadataToPng, readMetadataFromPng } from '../utils/pngUtils.js';
+import { addMetadataToPng, readMetadataFromPng } from '../utils/pngUtils';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });

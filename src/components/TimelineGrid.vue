@@ -14,11 +14,11 @@ import HitDamageDetailDialog from './HitDamageDetailDialog.vue';
 import CustomNumberInput from './CustomNumberInput.vue';
 import { ElMessage } from 'element-plus';
 import { Search } from '@element-plus/icons-vue';
-import { useDragConnection } from '@/composables/useDragConnection.js';
+import { useDragConnection } from '@/composables/useDragConnection';
 import { useI18n } from 'vue-i18n';
-import { snapMs } from '@/utils/precision.js';
-import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time.js';
-import { toLegacyDisplayType } from '@/utils/hitModel.js';
+import { snapMs } from '@/utils/precision';
+import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time';
+import { toLegacyDisplayType } from '@/utils/hitModel';
 import { getGearPiece, getEnemy, getOperator } from '@/data';
 import {
   getGameClassName,

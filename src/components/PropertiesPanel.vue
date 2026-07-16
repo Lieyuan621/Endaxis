@@ -5,11 +5,11 @@ import draggable from 'vuedraggable';
 import CustomNumberInput from './CustomNumberInput.vue';
 import HitEditorDialog from './HitEditorDialog.vue';
 import { ArrowRight } from '@element-plus/icons-vue';
-import { useDragConnection } from '@/composables/useDragConnection.js';
-import { getRectPos } from '@/utils/layoutUtils.js';
+import { useDragConnection } from '@/composables/useDragConnection';
+import { getRectPos } from '@/utils/layoutUtils';
 import { useI18n } from 'vue-i18n';
-import { frameToTime, timeToFrame } from '@/utils/time.js';
-import { getDisplayKeyCandidates, resolveEffectDisplayKey } from '@/utils/effectDisplay.js';
+import { frameToTime, timeToFrame } from '@/utils/time';
+import { getDisplayKeyCandidates, resolveEffectDisplayKey } from '@/utils/effectDisplay';
 import {
   canEditEditorEffectValue,
   createEditorEffect,
@@ -22,7 +22,7 @@ import {
   normalizeHits,
   retypeEditorEffect,
   toLegacyDisplayType,
-} from '@/utils/hitModel.js';
+} from '@/utils/hitModel';
 
 const store = useTimelineStore();
 const connectionHandler = useDragConnection();

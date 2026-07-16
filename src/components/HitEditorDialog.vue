@@ -10,13 +10,13 @@ import {
   parseEditorJsonField,
   retypeEditorEffect,
   retypeEditorEffectKind,
-} from '@/utils/hitModel.js';
-import { resolveEffectDisplayKey } from '@/utils/effectDisplay.js';
+} from '@/utils/hitModel';
+import { resolveEffectDisplayKey } from '@/utils/effectDisplay';
 import {
   filterEffectOptionGroups,
   shouldRetypeEffectForDisplayKind,
-} from '@/utils/effectDisplayOptions.js';
-import { frameToTime, timeToFrame } from '@/utils/time.js';
+} from '@/utils/effectDisplayOptions';
+import { frameToTime, timeToFrame } from '@/utils/time';
 import { getDefaultStackStrategy } from '@/data/effectPresets';
 
 const DAMAGE_ELEMENTS = ['physical', 'heat', 'cryo', 'electric', 'nature'];

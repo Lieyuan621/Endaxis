@@ -14,7 +14,7 @@ import {
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { useI18n } from 'vue-i18n';
 import { setLocale } from '@/i18n';
-import { toLegacyDisplayType } from '@/utils/hitModel.js';
+import { toLegacyDisplayType } from '@/utils/hitModel';
 import { findWeaponInstance, findGearInstance } from '@/stores/timeline/instanceLookup';
 
 const store = useTimelineStore();

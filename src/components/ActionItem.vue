@@ -1,10 +1,10 @@
 <script setup>
 import { computed } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
-import { useDragConnection } from '../composables/useDragConnection.js';
+import { useDragConnection } from '../composables/useDragConnection';
 import ActionLinkPorts from './ActionLinkPorts.vue';
 import { useI18n } from 'vue-i18n';
-import { snapTimeToFrame } from '@/utils/time.js';
+import { snapTimeToFrame } from '@/utils/time';
 const props = defineProps({
   action: { type: Object, required: true },
   showDecorations: { type: Boolean, default: true },

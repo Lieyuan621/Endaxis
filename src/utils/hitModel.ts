@@ -1,4 +1,9 @@
-const LEGACY_TO_OPTIMIZER_TYPE = Object.freeze({
+// ─── Editor hit/effect model ──────────────────────────────────────────────
+// Bridges the editor's loose hit/effect objects and the optimizer engine
+// shapes. The objects here originate from the (dynamically-shaped) timeline
+// store, so the structural types below are intentionally permissive.
+
+const LEGACY_TO_OPTIMIZER_TYPE: Record<string, string> = Object.freeze({
   attack: 'basicAttack',
   skill: 'battleSkill',
   link: 'comboSkill',
@@ -6,7 +11,7 @@ const LEGACY_TO_OPTIMIZER_TYPE = Object.freeze({
   execution: 'finisher',
 });
 
-const OPTIMIZER_TO_LEGACY_TYPE = Object.freeze({
+const OPTIMIZER_TO_LEGACY_TYPE: Record<string, string> = Object.freeze({
   basicAttack: 'attack',
   battleSkill: 'skill',
   comboSkill: 'link',
@@ -127,7 +132,7 @@ const COMMON_EFFECT_FIELDS = Object.freeze([
   'condition',
 ]);
 
-const EFFECT_KIND_FIELDS = Object.freeze({
+const EFFECT_KIND_FIELDS: Record<string, string[]> = Object.freeze({
   status: ['target', 'stat', 'value', 'scaling', 'silent', 'external'],
   infliction: ['element'],
   burst: ['element'],
@@ -165,11 +170,63 @@ const EFFECT_KIND_FIELDS = Object.freeze({
   cooldownReductionPercent: ['value', 'target', 'skillTypes', 'skillId'],
 });
 
-function cloneJson(value) {
+export interface EditorStat {
+  modifier?: string;
+  elements?: string | string[];
+  skillTypes?: string | string[];
+}
+
+export interface EditorEffect {
+  _id?: string;
+  kind?: string;
+  type?: string;
+  id?: string;
+  name?: string;
+  displayType?: string;
+  element?: string;
+  physicalType?: string;
+  reactionType?: string;
+  stat?: EditorStat | null;
+  value?: number;
+  duration?: number;
+  durationExtension?: number;
+  stacks?: number | string;
+  maxStacks?: number;
+  offset?: number;
+  interval?: number;
+  consumeStacks?: number;
+  [key: string]: unknown;
+}
+
+export interface EditorHit {
+  id?: string | number;
+  offset?: number;
+  stagger?: number;
+  spRecovery?: number;
+  spReturn?: number;
+  durationExtension?: number;
+  element?: string | null;
+  effects?: EditorEffect[];
+  hideInEditor?: boolean;
+  hiddenInEditor?: boolean;
+  spKind?: string;
+  sp?: number;
+  [key: string]: unknown;
+}
+
+export interface ActionLikeEntity {
+  type?: string;
+  hits?: EditorHit[];
+  element?: string | null;
+  allowedEffectTypes?: string[];
+  [key: string]: unknown;
+}
+
+function cloneJson<T>(value: T): T {
   return value == null ? value : JSON.parse(JSON.stringify(value));
 }
 
-function stripEditorHitMetadata(hit) {
+function stripEditorHitMetadata(hit: EditorHit): EditorHit {
   if (!hit || typeof hit !== 'object') return hit;
   const next = { ...hit };
   delete next._editorId;
@@ -177,30 +234,30 @@ function stripEditorHitMetadata(hit) {
   return next;
 }
 
-export function createHitModelId() {
+export function createHitModelId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-export function toOptimizerActionType(type) {
+export function toOptimizerActionType(type: string | null | undefined): string {
   if (!type) return 'battleSkill';
   return LEGACY_TO_OPTIMIZER_TYPE[type] || type;
 }
 
-export function toLegacyDisplayType(type) {
+export function toLegacyDisplayType(type: string | null | undefined): string {
   if (!type) return 'unknown';
   return OPTIMIZER_TO_LEGACY_TYPE[type] || type;
 }
 
-function decorateHitCompat(hit) {
+function decorateHitCompat(hit: EditorHit): EditorHit {
   if (!hit || typeof hit !== 'object') return hit;
   if (!Object.prototype.hasOwnProperty.call(hit, 'sp')) {
     Object.defineProperty(hit, 'sp', {
       enumerable: false,
       configurable: true,
-      get() {
+      get(this: EditorHit) {
         return this.spKind === 'refund' ? Number(this.spReturn) || 0 : Number(this.spRecovery) || 0;
       },
-      set(value) {
+      set(this: EditorHit, value: unknown) {
         const num = Number(value) || 0;
         if (this.spKind === 'refund') {
           this.spReturn = num;
@@ -216,10 +273,10 @@ function decorateHitCompat(hit) {
     Object.defineProperty(hit, 'spKind', {
       enumerable: false,
       configurable: true,
-      get() {
+      get(this: EditorHit) {
         return (Number(this.spReturn) || 0) > 0 ? 'refund' : 'recover';
       },
-      set(value) {
+      set(this: EditorHit, value: unknown) {
         const current = Number(this.sp) || 0;
         if (value === 'refund') {
           this.spReturn = current;
@@ -234,13 +291,13 @@ function decorateHitCompat(hit) {
   return hit;
 }
 
-export function ensureEffectId(effect) {
+export function ensureEffectId(effect: EditorEffect): EditorEffect {
   if (!effect || typeof effect !== 'object') return effect;
   if (!effect._id) effect._id = createHitModelId();
   return effect;
 }
 
-export function ensureEffectIds(rows) {
+export function ensureEffectIds(rows: EditorEffect[][]): EditorEffect[][] {
   if (!Array.isArray(rows)) return rows;
   rows.forEach(row => {
     if (!Array.isArray(row)) return;
@@ -249,8 +306,8 @@ export function ensureEffectIds(rows) {
   return rows;
 }
 
-function inferAllowedEffectTypesFromHits(hits = []) {
-  const collected = new Set();
+function inferAllowedEffectTypesFromHits(hits: EditorHit[] = []): string[] {
+  const collected = new Set<string>();
   hits.forEach(hit => {
     const effects = Array.isArray(hit?.effects) ? hit.effects : [];
     effects.forEach(effect => {
@@ -261,7 +318,7 @@ function inferAllowedEffectTypesFromHits(hits = []) {
   return [...collected];
 }
 
-export function getHitEffectRows(hits = []) {
+export function getHitEffectRows(hits: EditorHit[] = []): EditorEffect[][] {
   return (Array.isArray(hits) ? hits : []).map(hit => {
     if (!Array.isArray(hit?.effects)) hit.effects = [];
     hit.effects.forEach(effect => ensureEffectId(effect));
@@ -269,28 +326,31 @@ export function getHitEffectRows(hits = []) {
   });
 }
 
-export function setHitEffectRows(existingHits = [], rows = []) {
+export function setHitEffectRows(
+  existingHits: EditorHit[] = [],
+  rows: EditorEffect[][] = [],
+): EditorHit[] {
   const nextHits = Array.isArray(existingHits) ? existingHits : [];
   while (nextHits.length < rows.length) {
     nextHits.push(createEditorHit());
   }
   nextHits.length = rows.length;
   nextHits.forEach((hit, index) => {
-    const nextRow = Array.isArray(rows[index]) ? rows[index] : [];
+    const nextRow = Array.isArray(rows[index]) ? rows[index]! : [];
     hit.effects = nextRow.map(effect => ensureEffectId(effect));
   });
   return nextHits;
 }
 
-function convertLegacyRowToEffects(row = []) {
+function convertLegacyRowToEffects(row: EditorEffect[] = []): EditorEffect[] {
   return row
     .filter(effect => effect && typeof effect === 'object')
     .map(effect => {
-      const next = cloneJson(effect) || {};
+      const next = cloneJson(effect) || ({} as EditorEffect);
       ensureEffectId(next);
       if (next.displayType === undefined)
         next.displayType = next.type || next.id || next.kind || 'default';
-      if (PHYSICAL_STATUS_TYPES.has(next.type)) {
+      if (next.type && PHYSICAL_STATUS_TYPES.has(next.type)) {
         next.kind = next.kind || 'physicalStatus';
         next.physicalType = next.physicalType || next.type;
       } else if (typeof next.type === 'string' && next.type.endsWith('_attach')) {
@@ -310,7 +370,7 @@ function convertLegacyRowToEffects(row = []) {
     });
 }
 
-export function createEditorEffect(defaultType = 'default') {
+export function createEditorEffect(defaultType = 'default'): EditorEffect {
   return retypeEditorEffect(
     {
       _id: createHitModelId(),
@@ -321,21 +381,21 @@ export function createEditorEffect(defaultType = 'default') {
   );
 }
 
-function getElementFromDisplayType(type, suffix) {
+function getElementFromDisplayType(type: string, suffix: string): string {
   return String(type || '').slice(0, -suffix.length);
 }
 
-function parseStatPresetKey(displayType) {
+function parseStatPresetKey(displayType: string): EditorEffect | null {
   const [modifier, scope] = String(displayType || '').split(':');
   if (!modifier) return null;
   if (!ENEMY_STAT_MODIFIERS.has(modifier) && !OPERATOR_STAT_MODIFIERS.has(modifier)) return null;
 
-  const stat = { modifier };
+  const stat: EditorStat = { modifier };
   if (scope === 'arts' && ELEMENT_SCOPED_STAT_MODIFIERS.has(modifier)) {
     stat.elements = [...ARTS_ELEMENTS];
-  } else if (DAMAGE_ELEMENTS.has(scope) && ELEMENT_SCOPED_STAT_MODIFIERS.has(modifier)) {
+  } else if (scope && DAMAGE_ELEMENTS.has(scope) && ELEMENT_SCOPED_STAT_MODIFIERS.has(modifier)) {
     stat.elements = scope;
-  } else if (SKILL_TYPE_SCOPES.has(scope) && SKILL_SCOPED_STAT_MODIFIERS.has(modifier)) {
+  } else if (scope && SKILL_TYPE_SCOPES.has(scope) && SKILL_SCOPED_STAT_MODIFIERS.has(modifier)) {
     stat.skillTypes = scope === 'finisher' ? 'finalStrike' : scope;
   }
 
@@ -346,7 +406,7 @@ function parseStatPresetKey(displayType) {
   };
 }
 
-function buildEffectRoute(type) {
+function buildEffectRoute(type: string): EditorEffect {
   const displayType = type || 'default';
   if (String(displayType).endsWith('_infliction')) {
     return {
@@ -387,9 +447,9 @@ function buildEffectRoute(type) {
   };
 }
 
-export function retypeEditorEffect(effect, nextType = 'default') {
+export function retypeEditorEffect(effect: EditorEffect, nextType = 'default'): EditorEffect {
   const displayType = nextType || 'default';
-  const next = cloneJson(effect) || {};
+  const next = cloneJson(effect) || ({} as EditorEffect);
   ensureEffectId(next);
   const value = Number(next.value);
 
@@ -410,14 +470,17 @@ export function retypeEditorEffect(effect, nextType = 'default') {
   };
 }
 
-export function canEditEditorEffectValue(effect) {
+export function canEditEditorEffectValue(effect: EditorEffect): boolean {
   if (!effect || typeof effect !== 'object') return false;
   if (effect.kind === 'status' && effect.stat) return true;
-  return ['damageHit', 'spRecovery', 'spReturn', 'ultEnergyGain'].includes(effect.kind);
+  return ['damageHit', 'spRecovery', 'spReturn', 'ultEnergyGain'].includes(effect.kind ?? '');
 }
 
-export function cloneEditorHit(hit = {}, defaultElement = null) {
-  const cloned = cloneJson(hit) || {};
+export function cloneEditorHit(
+  hit: EditorHit = {},
+  defaultElement: string | null = null,
+): EditorHit {
+  const cloned = cloneJson(hit) || ({} as EditorHit);
   if (!Array.isArray(cloned.effects)) cloned.effects = [];
   cloned.effects = cloned.effects.map(effect => ensureEffectId(effect));
   return decorateHitCompat(
@@ -425,15 +488,19 @@ export function cloneEditorHit(hit = {}, defaultElement = null) {
   );
 }
 
-export function isEditorVisibleHit(hit) {
+export function isEditorVisibleHit(hit: EditorHit): boolean {
   return hit?.hideInEditor !== true && hit?.hiddenInEditor !== true;
 }
 
-export function filterEditorVisibleHits(hits = []) {
+export function filterEditorVisibleHits(hits: EditorHit[] = []): EditorHit[] {
   return (Array.isArray(hits) ? hits : []).filter(isEditorVisibleHit);
 }
 
-export function mergeEditorVisibleHits(existingHits = [], visibleHits = [], defaultElement = null) {
+export function mergeEditorVisibleHits(
+  existingHits: EditorHit[] = [],
+  visibleHits: EditorHit[] = [],
+  defaultElement: string | null = null,
+): EditorHit[] {
   const hiddenHits = (Array.isArray(existingHits) ? existingHits : [])
     .filter(hit => !isEditorVisibleHit(hit))
     .map(stripEditorHitMetadata);
@@ -443,14 +510,21 @@ export function mergeEditorVisibleHits(existingHits = [], visibleHits = [], defa
   return normalizeHits([...nextVisibleHits, ...hiddenHits], defaultElement);
 }
 
-export function patchEditorHitAt(hits = [], index, patch = {}, defaultElement = null) {
+export function patchEditorHitAt(
+  hits: EditorHit[] = [],
+  index: number,
+  patch: EditorHit = {},
+  defaultElement: string | null = null,
+): EditorHit[] {
   const next = Array.isArray(hits) ? hits.map(hit => cloneEditorHit(hit, defaultElement)) : [];
   if (!next[index]) return next;
   next[index] = cloneEditorHit({ ...next[index], ...cloneJson(patch) }, defaultElement);
   return normalizeHits(next, defaultElement);
 }
 
-export function parseEditorJsonField(raw) {
+export function parseEditorJsonField(
+  raw: unknown,
+): { ok: true; value: unknown } | { ok: false; error: string } {
   const text = String(raw ?? '').trim();
   if (!text) return { ok: true, value: undefined };
   try {
@@ -460,12 +534,12 @@ export function parseEditorJsonField(raw) {
   }
 }
 
-export function getEditorEffectEditableFields(effect) {
-  return [...COMMON_EFFECT_FIELDS, ...(EFFECT_KIND_FIELDS[effect?.kind] || [])];
+export function getEditorEffectEditableFields(effect: EditorEffect): string[] {
+  return [...COMMON_EFFECT_FIELDS, ...(EFFECT_KIND_FIELDS[effect?.kind ?? ''] || [])];
 }
 
-export function retypeEditorEffectKind(effect, nextKind) {
-  const next = cloneJson(effect) || {};
+export function retypeEditorEffectKind(effect: EditorEffect, nextKind: string): EditorEffect {
+  const next = cloneJson(effect) || ({} as EditorEffect);
   ensureEffectId(next);
   const keep = {
     _id: next._id,
@@ -481,7 +555,7 @@ export function retypeEditorEffectKind(effect, nextKind) {
     applyTiming: next.applyTiming,
     condition: next.condition,
   };
-  const defaults = {
+  const defaults: Record<string, EditorEffect> = {
     status: { kind: 'status', id: next.id || 'default', name: next.name || next.id || 'default' },
     infliction: { kind: 'infliction', element: next.element || 'heat' },
     burst: { kind: 'burst', element: next.element || 'heat' },
@@ -516,6 +590,15 @@ export function retypeEditorEffectKind(effect, nextKind) {
   return { ...keep, ...(defaults[nextKind] || defaults.status) };
 }
 
+export interface CreateEditorHitOptions {
+  offset?: number;
+  stagger?: number;
+  spRecovery?: number;
+  spReturn?: number;
+  element?: string | null;
+  effects?: EditorEffect[];
+}
+
 export function createEditorHit({
   offset = 0,
   stagger = 0,
@@ -523,8 +606,8 @@ export function createEditorHit({
   spReturn = 0,
   element = null,
   effects = [],
-} = {}) {
-  const hit = {
+}: CreateEditorHitOptions = {}): EditorHit {
+  const hit: EditorHit = {
     offset: Number(offset) || 0,
     stagger: Number(stagger) || 0,
     spRecovery: Number(spRecovery) || 0,
@@ -535,12 +618,15 @@ export function createEditorHit({
   return decorateHitCompat(hit);
 }
 
-export function normalizeHits(rawHits = [], defaultElement = null) {
+export function normalizeHits(
+  rawHits: EditorHit[] = [],
+  defaultElement: string | null = null,
+): EditorHit[] {
   if (!Array.isArray(rawHits)) return [];
   return rawHits
     .filter(hit => hit && typeof hit === 'object')
     .map(hit => {
-      const next = {
+      const next: EditorHit = {
         ...hit,
         offset: Number(hit.offset) || 0,
         stagger: Number(hit.stagger) || 0,
@@ -557,6 +643,15 @@ export function normalizeHits(rawHits = [], defaultElement = null) {
     .sort((a, b) => (Number(a.offset) || 0) - (Number(b.offset) || 0));
 }
 
+export interface LegacyActionInput {
+  hits?: EditorHit[];
+  damageTicks?: unknown;
+  physicalAnomaly?: unknown;
+  allowedTypes?: unknown;
+  effectRows?: unknown;
+  element?: string | null;
+}
+
 export function legacyActionToHits({
   hits,
   damageTicks,
@@ -564,12 +659,12 @@ export function legacyActionToHits({
   allowedTypes,
   effectRows,
   element,
-} = {}) {
+}: LegacyActionInput = {}): EditorHit[] {
   if (Array.isArray(hits) && hits.length > 0) {
     return normalizeHits(hits, element);
   }
 
-  const normalizedHits = Array.isArray(damageTicks)
+  const normalizedHits: EditorHit[] = Array.isArray(damageTicks)
     ? damageTicks.map(tick =>
         createEditorHit({
           offset: tick?.offset,
@@ -582,10 +677,10 @@ export function legacyActionToHits({
     : [];
 
   const rowsSource = effectRows ?? physicalAnomaly;
-  const rows = Array.isArray(rowsSource)
+  const rows: EditorEffect[][] = Array.isArray(rowsSource)
     ? Array.isArray(rowsSource[0])
-      ? rowsSource
-      : [rowsSource]
+      ? (rowsSource as EditorEffect[][])
+      : [rowsSource as EditorEffect[]]
     : [];
 
   rows.forEach((row, rowIndex) => {
@@ -605,7 +700,7 @@ export function legacyActionToHits({
         element,
       });
     }
-    normalizedHits[targetIndex].effects.push(...effects);
+    normalizedHits[targetIndex]!.effects!.push(...effects);
   });
 
   if (normalizedHits.length === 0 && Array.isArray(allowedTypes) && allowedTypes.length > 0) {
@@ -615,7 +710,11 @@ export function legacyActionToHits({
   return normalizeHits(normalizedHits, element);
 }
 
-function defineAlias(entity, aliasKey, descriptor) {
+function defineAlias(
+  entity: ActionLikeEntity,
+  aliasKey: string,
+  descriptor: PropertyDescriptor,
+): void {
   if (!entity || typeof entity !== 'object') return;
   const current = Object.getOwnPropertyDescriptor(entity, aliasKey);
   if (current?.get || current?.set) return;
@@ -626,10 +725,20 @@ function defineAlias(entity, aliasKey, descriptor) {
   });
 }
 
+export interface EnsureActionLikeModelOptions {
+  deleteLegacy?: boolean;
+  aliasStyle?: 'camel' | 'snake' | 'both' | null;
+  defaultElement?: string | null;
+}
+
 export function ensureActionLikeModel(
-  entity,
-  { deleteLegacy = true, aliasStyle = null, defaultElement = null } = {},
-) {
+  entity: ActionLikeEntity,
+  {
+    deleteLegacy = true,
+    aliasStyle = null,
+    defaultElement = null,
+  }: EnsureActionLikeModelOptions = {},
+): ActionLikeEntity {
   if (!entity || typeof entity !== 'object') return entity;
 
   entity.type = toOptimizerActionType(entity.type);
@@ -657,26 +766,26 @@ export function ensureActionLikeModel(
 
   if (aliasStyle === 'camel' || aliasStyle === 'both') {
     defineAlias(entity, 'damageTicks', {
-      get() {
+      get(this: ActionLikeEntity) {
         return this.hits;
       },
-      set(value) {
-        this.hits = normalizeHits(value, this.element || defaultElement);
+      set(this: ActionLikeEntity, value: unknown) {
+        this.hits = normalizeHits(value as EditorHit[], this.element || defaultElement);
       },
     });
     defineAlias(entity, 'physicalAnomaly', {
-      get() {
+      get(this: ActionLikeEntity) {
         return getHitEffectRows(this.hits);
       },
-      set(value) {
-        this.hits = setHitEffectRows(this.hits, value);
+      set(this: ActionLikeEntity, value: unknown) {
+        this.hits = setHitEffectRows(this.hits, value as EditorEffect[][]);
       },
     });
     defineAlias(entity, 'allowedTypes', {
-      get() {
+      get(this: ActionLikeEntity) {
         return this.allowedEffectTypes;
       },
-      set(value) {
+      set(this: ActionLikeEntity, value: unknown) {
         this.allowedEffectTypes = Array.isArray(value) ? value : [];
       },
     });
@@ -684,26 +793,26 @@ export function ensureActionLikeModel(
 
   if (aliasStyle === 'snake' || aliasStyle === 'both') {
     defineAlias(entity, 'damage_ticks', {
-      get() {
+      get(this: ActionLikeEntity) {
         return this.hits;
       },
-      set(value) {
-        this.hits = normalizeHits(value, this.element || defaultElement);
+      set(this: ActionLikeEntity, value: unknown) {
+        this.hits = normalizeHits(value as EditorHit[], this.element || defaultElement);
       },
     });
     defineAlias(entity, 'anomalies', {
-      get() {
+      get(this: ActionLikeEntity) {
         return getHitEffectRows(this.hits);
       },
-      set(value) {
-        this.hits = setHitEffectRows(this.hits, value);
+      set(this: ActionLikeEntity, value: unknown) {
+        this.hits = setHitEffectRows(this.hits, value as EditorEffect[][]);
       },
     });
     defineAlias(entity, 'allowed_types', {
-      get() {
+      get(this: ActionLikeEntity) {
         return this.allowedEffectTypes;
       },
-      set(value) {
+      set(this: ActionLikeEntity, value: unknown) {
         this.allowedEffectTypes = Array.isArray(value) ? value : [];
       },
     });

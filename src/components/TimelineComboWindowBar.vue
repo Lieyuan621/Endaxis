@@ -1,6 +1,6 @@
 <script setup>
 import { useTimelineStore } from '../stores/timelineStore.js';
-import { formatFrameCount } from '@/utils/time.js';
+import { formatFrameCount } from '@/utils/time';
 import { useI18n } from 'vue-i18n';
 
 defineProps({

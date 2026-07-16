@@ -2,7 +2,7 @@
 import { computed, onMounted } from 'vue';
 import { useTimelineStore } from './stores/timelineStore.js';
 import { useI18n } from 'vue-i18n';
-import { getElementPlusLocale } from '@/i18n/elementPlusLocale.js';
+import { getElementPlusLocale } from '@/i18n/elementPlusLocale';
 
 const store = useTimelineStore();
 const { locale } = useI18n({ useScope: 'global' });

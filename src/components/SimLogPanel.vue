@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { formatSimLogEntry } from '@/simulation/formatSimLogEntry.ts';
 import { useI18n } from 'vue-i18n';
-import { formatTimeWithFrames } from '@/utils/time.js';
+import { formatTimeWithFrames } from '@/utils/time';
 
 const store = useTimelineStore();
 const { t } = useI18n({ useScope: 'global' });

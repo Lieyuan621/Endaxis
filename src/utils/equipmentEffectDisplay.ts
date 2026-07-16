@@ -15,9 +15,7 @@ interface EquipmentEffectLike {
   [key: string]: unknown;
 }
 
-export function normalizeEquipmentStatArray(
-  value: string | string[] | null | undefined,
-): string[] {
+export function normalizeEquipmentStatArray(value: string | string[] | null | undefined): string[] {
   if (Array.isArray(value)) return value.filter(Boolean);
   return value ? [value] : [];
 }
@@ -96,7 +94,9 @@ function getEquipmentDmgBonusModifierIds(stat: EquipmentStatLike): string[] {
   return ['all_skill_dmg_bonus'];
 }
 
-export function getEquipmentEffectModifierIds(stat: EquipmentStatLike | null | undefined): string[] {
+export function getEquipmentEffectModifierIds(
+  stat: EquipmentStatLike | null | undefined,
+): string[] {
   if (!stat?.modifier) return [];
 
   if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
@@ -177,7 +177,8 @@ export function formatEquipmentEffectLabel(
     return trOrFallback(t, 'game.stat.susceptibility', '脆弱');
   }
 
-  if (stat.modifier === 'artsIntensity') return getEquipmentModifierLabel('originium_arts_power', t);
+  if (stat.modifier === 'artsIntensity')
+    return getEquipmentModifierLabel('originium_arts_power', t);
   if (stat.modifier === 'ultimateGainEfficiency')
     return getEquipmentModifierLabel('ult_charge_eff', t);
   if (stat.modifier === 'heal') return getEquipmentModifierLabel('healing_effect', t);

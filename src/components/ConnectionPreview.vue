@@ -2,9 +2,9 @@
 import { computed } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import ConnectionPath from './ConnectionPath.vue';
-import { useDragConnection } from '@/composables/useDragConnection.js';
-import { PORT_DIRECTIONS } from '@/utils/layoutUtils.js';
-import { toLegacyDisplayType } from '@/utils/hitModel.js';
+import { useDragConnection } from '@/composables/useDragConnection';
+import { PORT_DIRECTIONS } from '@/utils/layoutUtils';
+import { toLegacyDisplayType } from '@/utils/hitModel';
 
 const props = defineProps({});
 const store = useTimelineStore();
