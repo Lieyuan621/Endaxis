@@ -195,6 +195,16 @@ export interface ResolvedTimelineNode {
   [key: string]: unknown;
 }
 
+/** The measured bounding box of the timeline viewport, in screen pixels. */
+export interface TimelineRect {
+  width: number;
+  height: number;
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+}
+
 export interface SwitchEvent {
   id: string;
   [key: string]: unknown;
