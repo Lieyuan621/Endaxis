@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getOperator, getOperatorTalentGroups } from '@/data';
+import GameRichTextRenderer from '@/components/GameRichTextRenderer.vue';
 import {
   getGameAttributeName,
   getGameClassName,
@@ -296,7 +297,7 @@ function promotedLabel() {
                         v-if="getPotentialInfo(p).description"
                         class="operator-edit-tooltip-desc"
                       >
-                        {{ getPotentialInfo(p).description }}
+                        <GameRichTextRenderer :text="getPotentialInfo(p).description" :locale="locale" />
                       </div>
                     </div>
                   </template>
@@ -343,7 +344,7 @@ function promotedLabel() {
                   <div class="operator-edit-tooltip">
                     <div class="operator-edit-tooltip-title">{{ getSkillName(key) }}</div>
                     <div v-if="getSkillDescription(key)" class="operator-edit-tooltip-desc">
-                      {{ getSkillDescription(key) }}
+                      <GameRichTextRenderer :text="getSkillDescription(key)" :locale="locale" />
                     </div>
                   </div>
                 </template>
@@ -448,7 +449,10 @@ function promotedLabel() {
                         {{ getTalentTooltipInfo(groupIdx, lvl).name }}
                       </div>
                       <div class="operator-edit-tooltip-desc">
-                        {{ getTalentTooltipInfo(groupIdx, lvl).description }}
+                        <GameRichTextRenderer
+                          :text="getTalentTooltipInfo(groupIdx, lvl).description"
+                          :locale="locale"
+                        />
                       </div>
                     </div>
                   </template>
@@ -762,15 +766,15 @@ function promotedLabel() {
 
 :global(.operator-edit-tooltip-popper.el-popper.is-dark) {
   padding: 0 !important;
-  background: #d8d8d8;
-  color: #111;
-  border: 1px solid rgba(0, 0, 0, 0.22);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+  background: #202126;
+  color: #f1f1f1;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
 }
 
 :global(.operator-edit-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: #d8d8d8;
-  border-color: rgba(0, 0, 0, 0.22);
+  background: #202126;
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 :global(.operator-edit-tooltip) {
@@ -780,18 +784,18 @@ function promotedLabel() {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 6px 10px 8px;
-  color: #111;
+  padding: 8px 10px 10px;
+  color: #f1f1f1;
 }
 :global(.operator-edit-tooltip-title) {
-  color: #050505;
+  color: #fff;
   font-size: 13px;
   font-weight: 800;
   line-height: 1.25;
 }
 
 :global(.operator-edit-tooltip-desc) {
-  color: rgba(0, 0, 0, 0.78);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.45;
