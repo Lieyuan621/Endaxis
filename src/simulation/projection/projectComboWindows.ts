@@ -19,11 +19,18 @@ import type {
 import { timeToFrame } from '@/utils/time';
 
 export interface ComboWindowSegment {
+  /** Visible segment start time. This may be later than the original window start after splitting. */
   start: number;
+  /** Visible segment end time, clipped by the projection max time. */
   end: number;
+  /** Visible segment duration, equal to `end - start`. */
   duration: number;
+  /** Render color for the combo window bar. */
   color: string;
-  perfectTiming?: boolean; // this segment is a perfect-timing overlay
+  /** Original combo window apply time. Used for queue-order checks after perfect-timing splits. */
+  windowStart: number;
+  /** True when this visible slice overlaps a perfect-timing window. */
+  perfectTiming?: boolean;
 }
 
 export type ComboWindowLayout = ComboWindowSegment[];
@@ -63,7 +70,7 @@ export function projectComboWindows(
 
   if (markers.length === 0) return [];
 
-  // Stable sort: apply then expire at the same timestamp (consume+reapply in same tick)
+  // Same-timestamp consume+reapply should close the old window before opening a new one.
   markers.sort((a, b) => {
     if (a.time !== b.time) return a.time - b.time;
     return a.kind === 'expire' ? -1 : 1; // expire before apply at same tick
@@ -86,6 +93,7 @@ export function projectComboWindows(
             end,
             duration: end - windowStart,
             color: COMBO_WINDOW_COLOR,
+            windowStart,
           });
         }
         windowStart = null;
@@ -100,6 +108,7 @@ export function projectComboWindows(
       end: maxTime,
       duration: maxTime - windowStart,
       color: COMBO_WINDOW_COLOR,
+      windowStart,
     });
   }
 
@@ -154,21 +163,22 @@ function mergeWithPerfectTiming(
     // Skip if both ends land on the same frame — no real duration
     if (timeToFrame(start) === timeToFrame(end)) continue;
 
-    const inCombo = combo.some(
+    const comboSegment = combo.find(
       s => timeToFrame(start) >= timeToFrame(s.start) && timeToFrame(end) <= timeToFrame(s.end),
     );
+    const inCombo = !!comboSegment;
+    if (!inCombo) continue;
+
     const inPerfect = perfect.some(
       s => timeToFrame(start) >= timeToFrame(s.start) && timeToFrame(end) <= timeToFrame(s.end),
     );
-    if (!inCombo && !inPerfect) continue;
-    // Only perfect-timing within combo windows (not standalone)
-    if (inPerfect && !inCombo) continue;
 
     segments.push({
       start,
       end,
       duration: end - start,
       color: COMBO_WINDOW_COLOR,
+      windowStart: comboSegment.windowStart,
       perfectTiming: inPerfect ? true : undefined,
     });
   }

@@ -4,16 +4,12 @@ import type { GaugePoint } from './projectUltimateSeries';
 import { snapTimeToFrame } from '@/utils/time';
 import type { ComboWindowLayout } from './projectComboWindows';
 
-/**
- * A skill that cannot execute because its prerequisite is unmet.
- * - `kind`: which resource or window is lacking
- * - `need` / `current`: the required and current values (sp / gauge)
- */
-export interface RequisiteWarning {
-  kind: 'combo' | 'sp' | 'gauge';
-  need?: number;
-  current?: number;
-}
+/** A skill that cannot execute because its prerequisite is unmet. */
+export type RequisiteWarning =
+  | { kind: 'comboWindow' }
+  | { kind: 'comboOrder'; blockingTrackId: string }
+  | { kind: 'sp'; need: number; current: number }
+  | { kind: 'gauge'; need: number; current: number };
 
 interface TrackData {
   id?: string;
@@ -28,6 +24,12 @@ interface TrackData {
   operatorStatus?: {
     ultimateEnergyCostReduction?: number;
   };
+}
+
+interface ActiveComboWindow {
+  trackId: string;
+  trackIndex: number;
+  windowStart: number;
 }
 
 /** Binary-search SP value just before `time`.
@@ -66,12 +68,58 @@ function gaugeAtTime(series: GaugePoint[], time: number): number {
   return Number(series[lo]!.val) || 0;
 }
 
+function isInComboWindow(seg: ComboWindowLayout[number], time: number): boolean {
+  return time >= snapTimeToFrame(seg.start) && time <= snapTimeToFrame(seg.end);
+}
+
+function getActiveComboWindow(
+  layout: ComboWindowLayout,
+  time: number,
+): ActiveComboWindow['windowStart'] | null {
+  const activeSegments = layout.filter(seg => isInComboWindow(seg, time));
+  if (!activeSegments.length) return null;
+
+  activeSegments.sort((left, right) => {
+    const leftStart = snapTimeToFrame(left.windowStart);
+    const rightStart = snapTimeToFrame(right.windowStart);
+    if (leftStart !== rightStart) return leftStart - rightStart;
+    return snapTimeToFrame(left.start) - snapTimeToFrame(right.start);
+  });
+
+  const first = activeSegments[0]!;
+  return snapTimeToFrame(first.windowStart);
+}
+
+function getActiveComboQueue(
+  tracks: TrackData[],
+  comboWindowLayouts: Map<string, ComboWindowLayout>,
+  time: number,
+): ActiveComboWindow[] {
+  const active: ActiveComboWindow[] = [];
+
+  tracks.forEach((track, trackIndex) => {
+    const trackId = track.id;
+    if (!trackId) return;
+    const windowStart = getActiveComboWindow(comboWindowLayouts.get(trackId) ?? [], time);
+    if (windowStart == null) return;
+    active.push({ trackId, trackIndex, windowStart });
+  });
+
+  active.sort((left, right) => {
+    if (left.windowStart !== right.windowStart) return left.windowStart - right.windowStart;
+    return left.trackIndex - right.trackIndex;
+  });
+
+  return active;
+}
+
 /**
  * Build a map of actionId → RequisiteWarning for all skill blocks
  * that cannot execute because their prerequisites are unmet.
  *
- * Three checks, one per skill type:
+ * Four checks:
  * - comboSkill  → must overlap a combo window (if the operator has one)
+ * - comboSkill  → active combo windows must be consumed in queue order
  * - battleSkill → must have enough SP at start time
  * - ultimate     → must have enough gauge at start time
  *
@@ -108,12 +156,18 @@ export function projectRequisiteWarnings(
       // ── Combo skill: must overlap a combo window ────────────────────
       if (a.type === 'comboSkill') {
         if (!hasComboWindow) continue;
-        if (
-          !comboWindowLayout.some(
-            seg => start >= snapTimeToFrame(seg.start) && start <= snapTimeToFrame(seg.end),
-          )
-        ) {
-          warnings.set(a.instanceId, { kind: 'combo' });
+        if (!comboWindowLayout.some(seg => isInComboWindow(seg, start))) {
+          warnings.set(a.instanceId, { kind: 'comboWindow' });
+          continue;
+        }
+
+        const activeComboQueue = getActiveComboQueue(tracks, comboWindowLayouts, start);
+        const firstWindow = activeComboQueue[0];
+        if (firstWindow && firstWindow.trackId !== tid) {
+          warnings.set(a.instanceId, {
+            kind: 'comboOrder',
+            blockingTrackId: firstWindow.trackId,
+          });
         }
         continue;
       }

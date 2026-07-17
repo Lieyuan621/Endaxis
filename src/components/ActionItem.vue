@@ -5,6 +5,7 @@ import { useDragConnection } from '../composables/useDragConnection';
 import ActionLinkPorts from './ActionLinkPorts.vue';
 import { useI18n } from 'vue-i18n';
 import { snapTimeToFrame } from '@/utils/time';
+import { getOperatorGameName } from '@/data/gameText';
 const props = defineProps({
   action: { type: Object, required: true },
   showDecorations: { type: Boolean, default: true },
@@ -166,7 +167,13 @@ const requisiteTitle = computed(() => {
   if (!w) return '';
   // Format the number with a maximum of 3 decimal places, omitting redundant trailing zeros.
   const fmt = n => Number(n.toFixed(3)).toString();
-  if (w.kind === 'combo') return t('actionItem.requisiteTitle.comboWindow');
+  if (w.kind === 'comboWindow') {
+    return t('actionItem.requisiteTitle.comboWindow');
+  }
+  if (w.kind === 'comboOrder') {
+    const operator = getOperatorGameName(w.blockingTrackId);
+    return t('actionItem.requisiteTitle.comboOrder', { operator });
+  }
   if (w.kind === 'sp')
     return t('actionItem.requisiteTitle.spInsufficient', {
       need: fmt(w.need ?? 0),
