@@ -32,22 +32,17 @@ interface ActiveComboWindow {
   windowStart: number;
 }
 
-/** Binary-search SP value just before `time`.
- *  Same-frame hours have two points (pre-deduction, post-deduction).
- *  `actionId` identifies which deduction belongs to this action. */
-function spAtTime(series: SpPoint[], time: number, actionId?: string): number {
-  if (!series.length) return 0;
-  if (time <= 0) return Number(series[0]!.sp) || 0;
-  let lo = 0;
-  let hi = series.length - 1;
-  while (lo < hi) {
-    const mid = Math.ceil((lo + hi) / 2);
-    if (snapTimeToFrame(series[mid]!.time) <= time) lo = mid;
-    else hi = mid - 1;
+/** Build instanceId → SpPoint[] map for SP deduction lookups. */
+function buildSpIndex(spSeries: SpPoint[]): Map<string, SpPoint[]> {
+  const index = new Map<string, SpPoint[]>();
+  for (const p of spSeries) {
+    const id = (p as any).actionId as string | undefined;
+    if (!id) continue;
+    let arr = index.get(id);
+    if (!arr) { arr = []; index.set(id, arr); }
+    arr.push(p);
   }
-  // If this is the deduction point for our action, back up to the pre-deduction point
-  if (actionId && lo > 0 && (series[lo] as any).actionId === actionId) lo--;
-  return Number(series[lo]!.sp) || 0;
+  return index;
 }
 
 /** Binary-search gauge value just before `time`.
@@ -120,7 +115,7 @@ function getActiveComboQueue(
  * Four checks:
  * - comboSkill  → must overlap a combo window (if the operator has one)
  * - comboSkill  → active combo windows must be consumed in queue order
- * - battleSkill → must have enough SP at start time
+ * - battleSkill → SP_CHANGE log shows sp < 0 after cost deduction
  * - ultimate     → must have enough gauge at start time
  *
  * Disabled actions (isDisabled) are skipped entirely.
@@ -135,6 +130,7 @@ export function projectRequisiteWarnings(
   gaugeSeriesByTrackId: Map<string, GaugePoint[]>,
 ): Map<string, RequisiteWarning> {
   const warnings = new Map<string, RequisiteWarning>();
+  const spIndex = buildSpIndex(spSeries);
 
   for (const track of tracks) {
     const tid = track.id;
@@ -172,14 +168,22 @@ export function projectRequisiteWarnings(
         continue;
       }
 
-      // ── Battle skill: SP at action start ≥ spCost ───────────────────
+      // ── Battle skill: find SP deduction in SpPoint log ─────────────
       if (a.type === 'battleSkill') {
-        const sc = Number(a.spCost) || 0;
-        if (sc > 0) {
-          const now = spAtTime(spSeries, start, a.instanceId);
-          if (now < sc) {
-            warnings.set(a.instanceId, { kind: 'sp', need: sc, current: now });
+        const points = spIndex.get(a.instanceId);
+        if (!points) continue;
+        for (const p of points) {
+          const change = Number((p as any).change) || 0;
+          // skip recovery, only check costs
+          if (change >= 0) continue;
+          const spAfter = Number(p.sp) || 0;
+          if (spAfter < 0) {
+            // change is negative, so spBefore = spAfter + |change|
+            const spBefore = spAfter - change;
+            warnings.set(a.instanceId, { kind: 'sp', need: -change, current: spBefore });
           }
+          // first deduction is the cost
+          break;
         }
         continue;
       }
