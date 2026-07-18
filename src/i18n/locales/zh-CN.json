@@ -205,19 +205,18 @@
         "weapon": "武器",
         "equipment": "装备",
         "none": "未装备",
-        "slot": {
-          "armor": "护甲",
-          "gloves": "手套",
-          "accessory1": "饰品 1",
-          "accessory2": "饰品 2"
-        }
+        "exclusiveBuff": "专属特质"
       },
       "actionInfo": {
         "title": "技能信息",
         "notFound": "未找到该技能（可能已切换方案或数据已更新）",
         "start": "开始时间",
         "end": "结束时间",
-        "duration": "持续时间"
+        "duration": "持续时间",
+        "spCost": "技力消耗",
+        "cooldown": "冷却时间",
+        "gaugeCost": "充能消耗",
+        "hits": "判定点数"
       }
     },
     "loading": "正在加载资源...",
@@ -367,7 +366,7 @@
     "track": {
       "changeOperatorTooltip": "点击更换干员",
       "initialGauge": "初始终结技充能",
-      "initialGaugeShort": "初始",
+      "initialGaugeShort": "初始充能",
       "operatorAlreadyInUse": "该干员已在另一条轨道上！",
       "selectOperator": "请选择干员",
       "selectWeaponTooltip": "选择武器",
@@ -431,6 +430,7 @@
   },
   "skillType": {
     "attack": "普攻",
+    "heavyAttack": "重击",
     "dodge": "闪避",
     "dive": "下落攻击",
     "execution": "处决",

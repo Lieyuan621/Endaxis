@@ -104,7 +104,7 @@ const OPERATOR_BUFF_ROW_HEIGHT = 24;
 const EQUIPMENT_BUFF_LANE_PITCH = 22;
 const BUFF_LAYER_MARGIN = 4;
 const TRACKS_VERTICAL_PADDING = 20;
-const TRACK_LAYOUT_KEY = 'endaxis:timeline-track-row-heights:v1';
+const LEGACY_TRACK_LAYOUT_KEY = 'endaxis:timeline-track-row-heights:v1';
 let resizeObserver = [];
 let trackResizeState = null;
 
@@ -176,44 +176,37 @@ function normalizeTrackWeights(weights, count = store.tracks.length) {
   });
 }
 
-const trackHeightWeights = ref([]);
 const tracksViewportHeight = ref(0);
 const draggingTrackResizeIndex = ref(null);
 const trackRowHeightPreview = ref(null);
 
-function restoreTrackLayoutWeights() {
+/** One-time migrate from the old global localStorage layout into the active scenario. */
+function migrateLegacyTrackLayoutWeights() {
   if (typeof window === 'undefined') return;
   try {
-    const raw = window.localStorage.getItem(TRACK_LAYOUT_KEY);
+    const raw = window.localStorage.getItem(LEGACY_TRACK_LAYOUT_KEY);
     if (!raw) return;
-    trackHeightWeights.value = normalizeTrackWeights(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const current = normalizeTrackWeights(store.trackRowHeightWeights);
+    const isDefault = current.every(weight => weight === 1);
+    if (isDefault && Array.isArray(parsed)) {
+      store.setTrackRowHeightWeights(parsed);
+    }
+    window.localStorage.removeItem(LEGACY_TRACK_LAYOUT_KEY);
   } catch {
-    trackHeightWeights.value = normalizeTrackWeights([]);
+    try {
+      window.localStorage.removeItem(LEGACY_TRACK_LAYOUT_KEY);
+    } catch {
+      // ignore
+    }
   }
 }
-
-function persistTrackLayoutWeights() {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(TRACK_LAYOUT_KEY, JSON.stringify(trackHeightWeights.value));
-  } catch {
-    // ignore
-  }
-}
-
-watch(
-  () => store.tracks.length,
-  count => {
-    trackHeightWeights.value = normalizeTrackWeights(trackHeightWeights.value, count);
-  },
-  { immediate: true },
-);
 
 const trackRowHeights = computed(() => {
   const count = store.tracks.length;
   if (!count) return [];
 
-  const weights = normalizeTrackWeights(trackHeightWeights.value, count);
+  const weights = normalizeTrackWeights(store.trackRowHeightWeights, count);
   const totalHeight = Math.max(
     (tracksViewportHeight.value || 0) - TRACKS_VERTICAL_PADDING * 2,
     count * TRACK_ROW_MIN_HEIGHT,
@@ -338,7 +331,7 @@ function onTrackResizeMove(event) {
 function endTrackResize() {
   const preview = Array.isArray(trackRowHeightPreview.value) ? trackRowHeightPreview.value : null;
   if (preview && preview.length === store.tracks.length) {
-    trackHeightWeights.value = normalizeTrackWeights(preview, preview.length);
+    store.setTrackRowHeightWeights(normalizeTrackWeights(preview, preview.length));
   }
   trackResizeState = null;
   trackRowHeightPreview.value = null;
@@ -347,13 +340,11 @@ function endTrackResize() {
   document.body.style.cursor = '';
   window.removeEventListener('pointermove', onTrackResizeMove);
   window.removeEventListener('pointerup', endTrackResize);
-  persistTrackLayoutWeights();
 }
 
 function resetTrackLayoutWeights() {
   trackRowHeightPreview.value = null;
-  trackHeightWeights.value = normalizeTrackWeights([]);
-  persistTrackLayoutWeights();
+  store.setTrackRowHeightWeights([]);
 }
 
 // ===================================================================================
@@ -1174,6 +1165,22 @@ function getInitialGaugeValue(track) {
   return max > 0 ? Math.min(value, max) : value;
 }
 
+function getActiveSetBonusLabel(trackId) {
+  const cats =
+    typeof store.getActiveSetBonusCategories === 'function'
+      ? store.getActiveSetBonusCategories(trackId)
+      : [];
+  if (!Array.isArray(cats) || cats.length === 0) return '';
+  return cats
+    .map(cat =>
+      typeof store.getSetBonusDisplayName === 'function'
+        ? store.getSetBonusDisplayName(cat)
+        : cat,
+    )
+    .filter(Boolean)
+    .join(' / ');
+}
+
 function updateInitialGauge(track, value) {
   if (!track?.id) return;
   store.updateTrackInitialGauge(track.id, value);
@@ -1828,6 +1835,12 @@ const currentStaggerValue = computed(() => {
     }
   }
   return Math.floor(points[points.length - 1].val);
+});
+const currentStaggerMax = computed(() => Math.max(0, Number(store.systemConstants.maxStagger) || 0));
+const currentStaggerText = computed(() => {
+  const max = currentStaggerMax.value;
+  if (!max) return String(currentStaggerValue.value);
+  return `${currentStaggerValue.value}/${max}`;
 });
 const currentEnemyMaxHp = computed(() => {
   return Number(store.systemConstants.enemyHp ?? 0) || 0;
@@ -2782,7 +2795,7 @@ watch(
 );
 
 onMounted(() => {
-  restoreTrackLayoutWeights();
+  migrateLegacyTrackLayoutWeights();
   if (tracksContentRef.value) {
     tracksContentRef.value.addEventListener('scroll', syncVerticalScroll);
     tracksViewportHeight.value = tracksContentRef.value.clientHeight || 0;
@@ -3388,9 +3401,9 @@ defineExpose({
             <div class="gear-hint-row">
               <div
                 class="set-bonus-hint"
-                :class="{ 'is-hidden': !store.getActiveSetBonusCategories(track.id)?.length }"
+                :class="{ 'is-hidden': !getActiveSetBonusLabel(track.id) }"
               >
-                {{ t('timelineGrid.track.setBonusActive') }}
+                {{ getActiveSetBonusLabel(track.id) }}
               </div>
             </div>
           </div>
@@ -3453,7 +3466,7 @@ defineExpose({
             {{ t('timelineGrid.cursor.sp') }}: {{ currentSpValue }}{{ currentSpReturnText }}
           </div>
           <div class="guide-stagger-label">
-            {{ t('timelineGrid.cursor.stagger') }}: {{ currentStaggerValue }}
+            {{ t('timelineGrid.cursor.stagger') }}: {{ currentStaggerText }}
           </div>
 
           <div v-if="cursorGaugeRows.length" class="guide-gauge-panel">
@@ -5369,72 +5382,51 @@ body.capture-mode .davinci-range {
   box-shadow: 0 0 6px #ffd700;
 }
 
-.guide-time-label {
+.guide-time-label,
+.guide-sp-label,
+.guide-stagger-label,
+.guide-enemy-hp-label,
+.guide-gauge-panel {
   width: fit-content;
-  color: #ffffff;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  background: rgba(16, 16, 16, 0.84);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  line-height: 1.2;
   font-size: 10px;
   font-weight: bold;
   font-family: monospace;
-  padding: 2px 4px;
-  border-radius: 0 4px 4px 0;
-  white-space: nowrap;
-  line-height: 1;
+}
+
+.guide-time-label {
+  color: #ffffff;
 }
 
 .guide-sp-label {
-  width: fit-content;
   color: #ffd700;
-  font-size: 10px;
-  font-weight: bold;
-  font-family: monospace;
-  padding: 2px 4px;
-  white-space: nowrap;
-  line-height: 1;
-  text-shadow: 0 0 2px rgba(255, 215, 0, 0.5);
+  margin-top: 2px;
 }
 
 .guide-stagger-label {
-  width: fit-content;
   color: #ff7875;
-  font-size: 10px;
-  font-weight: bold;
-  font-family: monospace;
-  padding: 2px 4px;
-  border-radius: 0 4px 4px 0;
-  white-space: nowrap;
-  line-height: 1;
-  text-shadow: 0 0 2px rgba(255, 120, 117, 0.5);
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .guide-enemy-hp-label {
-  width: fit-content;
   color: #ff4d4f;
-  font-size: 10px;
-  font-weight: bold;
-  font-family: monospace;
-  padding: 2px 4px;
-  white-space: nowrap;
-  line-height: 1;
-  text-shadow: 0 0 2px rgba(255, 77, 79, 0.5);
   margin-top: 2px;
 }
 
 .guide-gauge-panel {
-  width: fit-content;
-  font-size: 10px;
-  font-weight: bold;
-  font-family: monospace;
-  padding: 2px 4px;
-  border-radius: 0 4px 4px 0;
-  white-space: nowrap;
-  line-height: 1;
   margin-top: 2px;
 }
 
 .guide-gauge-title {
   color: #00e5ff;
-  text-shadow: 0 0 2px rgba(0, 229, 255, 0.45);
   margin-bottom: 2px;
 }
 

@@ -168,6 +168,8 @@ export interface ScenarioSnapshot {
   gears?: unknown;
   prepDuration?: number;
   prepExpanded?: boolean;
+  /** Per-track relative row height weights (UI layout for this scenario). */
+  trackRowHeightWeights?: number[];
   [key: string]: unknown;
 }
 

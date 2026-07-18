@@ -203,19 +203,18 @@
         "weapon": "Weapon",
         "equipment": "Equipment",
         "none": "Not equipped",
-        "slot": {
-          "armor": "Armor",
-          "gloves": "Gloves",
-          "accessory1": "Accessory 1",
-          "accessory2": "Accessory 2"
-        }
+        "exclusiveBuff": "Exclusive Trait"
       },
       "actionInfo": {
         "title": "Skill Info",
         "notFound": "Skill not found (the scenario may have changed or data was updated)",
         "start": "Start Time",
         "end": "End Time",
-        "duration": "Duration"
+        "duration": "Duration",
+        "spCost": "SP Cost",
+        "cooldown": "Cooldown",
+        "gaugeCost": "Ult Gauge Cost",
+        "hits": "Hit Points"
       }
     },
     "loading": "Loading resources...",
@@ -365,7 +364,7 @@
     "track": {
       "changeOperatorTooltip": "Click to change operator",
       "initialGauge": "Initial Ultimate Energy",
-      "initialGaugeShort": "Init",
+      "initialGaugeShort": "Init Gauge",
       "operatorAlreadyInUse": "This operator is already on another track!",
       "selectOperator": "Select OP",
       "selectWeaponTooltip": "Select weapon",
@@ -429,6 +428,7 @@
   },
   "skillType": {
     "attack": "Basic Attack",
+    "heavyAttack": "Heavy Attack",
     "dodge": "Dodge",
     "dive": "Dive Attack",
     "execution": "Finisher",

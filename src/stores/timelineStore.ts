@@ -589,6 +589,35 @@ export const useTimelineStore = defineStore('timeline', () => {
   const characterOverrides = ref<Record<string, unknown>>({});
   const weaponOverrides = ref<Record<string, unknown>>({});
   const equipmentCategoryOverrides = ref<Record<string, unknown>>({});
+
+  function normalizeTrackRowHeightWeights(
+    weights: unknown,
+    count = tracks.value.length,
+  ): number[] {
+    const safeCount = Math.max(0, Number(count) || 0);
+    return Array.from({ length: safeCount }, (_, index) => {
+      const raw = Array.isArray(weights) ? weights[index] : null;
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+    });
+  }
+
+  const trackRowHeightWeights = ref<number[]>(normalizeTrackRowHeightWeights([]));
+
+  function setTrackRowHeightWeights(weights: unknown) {
+    trackRowHeightWeights.value = normalizeTrackRowHeightWeights(weights);
+  }
+
+  watch(
+    () => tracks.value.length,
+    count => {
+      trackRowHeightWeights.value = normalizeTrackRowHeightWeights(
+        trackRowHeightWeights.value,
+        count,
+      );
+    },
+  );
+
   const runtimeInitialEffects = ref<Record<string, unknown>[]>([]);
   // Selected Contingency Contract criteria tags (numeric tag ids, e.g. 102803). The criterion
   // group + level is derived from the id: group = Math.floor(id/100), level = id % 100.
@@ -1165,6 +1194,10 @@ export const useTimelineStore = defineStore('timeline', () => {
       prepExpanded.value = snapshot.prepExpanded !== false;
     }
 
+    if (snapshot.trackRowHeightWeights !== undefined) {
+      trackRowHeightWeights.value = normalizeTrackRowHeightWeights(snapshot.trackRowHeightWeights);
+    }
+
     cycleBoundaries.value = snapshot.cycleBoundaries || [];
     switchEvents.value = snapshot.switchEvents || [];
     inheritedInitialEffects.value = Array.isArray(snapshot.inheritedInitialEffects)
@@ -1195,6 +1228,7 @@ export const useTimelineStore = defineStore('timeline', () => {
           equipmentCategoryOverrides: equipmentCategoryOverrides.value,
           prepDuration: prepDuration.value,
           prepExpanded: prepExpanded.value,
+          trackRowHeightWeights: trackRowHeightWeights.value,
           systemConstants: systemConstants.value,
           activeEnemyId: activeEnemyId.value,
           activeEnemyLevel: activeEnemyLevel.value,
@@ -1234,6 +1268,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     );
     prepDuration.value = Math.max(MIN_PREP_DURATION, Number(incoming.prepDuration) || 0);
     prepExpanded.value = incoming.prepExpanded !== false;
+    trackRowHeightWeights.value = normalizeTrackRowHeightWeights(incoming.trackRowHeightWeights);
 
     if (incoming.systemConstants) {
       systemConstants.value = normalizeEnemyConfig(systemConstants.value, incoming.systemConstants);
@@ -1360,6 +1395,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       equipmentCategoryOverrides: {},
       prepDuration: 5,
       prepExpanded: true,
+      trackRowHeightWeights: [],
       systemConstants: createDefaultSystemConstantsState(),
       inheritedInitialEffects: [],
       inheritedInitialEnemyState: null,
@@ -5251,6 +5287,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     initializeOptimizerGameData,
     dropLegacyTimedStatusData,
     normalizePrepConfig,
+    trackRowHeightWeights,
   });
   const {
     initAutoSave,
@@ -5453,6 +5490,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     misc,
     prepDuration,
     prepExpanded,
+    trackRowHeightWeights,
+    setTrackRowHeightWeights,
     viewDuration,
     prepZoneWidthPx,
     totalTimelineWidthPx,

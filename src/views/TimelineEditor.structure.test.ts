@@ -21,23 +21,22 @@ describe('TimelineEditor right rail icons', () => {
     expect(inspectorIcon).toContain('fill="currentColor"');
   });
 
-  test('labels all activity bar buttons for hover tooltips and accessibility', () => {
-    const activityButtons =
-      source.match(/<button[\s\S]*?class="activity-bar__button[\s\S]*?>/g) || [];
+  test('keeps activity bar buttons accessible without hover tooltips', () => {
+    const openings = source
+      .split('class="activity-bar__button')
+      .slice(1)
+      .map(chunk => chunk.slice(0, chunk.indexOf('>')));
 
-    expect(activityButtons).toHaveLength(5);
-    for (const button of activityButtons) {
-      expect(button).toContain(':title=');
-      expect(button).toContain(':aria-label=');
-      expect(button).toContain(':data-tooltip=');
+    expect(openings).toHaveLength(5);
+    for (const opening of openings) {
+      expect(opening).toContain(':aria-label=');
+      expect(opening).not.toContain(':title=');
+      expect(opening).not.toContain(':data-tooltip=');
     }
   });
 
   test('adds visible hover motion to activity bar icons', () => {
-    expect(source).toContain('.activity-bar__button::before');
-    expect(source).toContain('content: attr(data-tooltip)');
-    expect(source).toContain('.activity-bar__button:hover::before');
-    expect(source).toContain('z-index: 50');
+    expect(source).not.toContain('content: attr(data-tooltip)');
     expect(source).toContain('transform: translateY(-1px)');
     expect(source).toContain('.activity-bar__button:hover .activity-bar__icon');
     expect(source).toContain('.activity-bar__button.is-active:hover .activity-bar__icon');

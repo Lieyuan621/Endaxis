@@ -31,7 +31,12 @@ import { getOperator, getWeapon, getGearPiece, getGearSet, resolveOperatorSlug }
 import { resolveEffectDefaults } from './effectPresets';
 import { uid } from '@/utils/uid';
 import { i18n } from '@/i18n';
-import { getGearSetGameName, getOperatorPotentialName, getOperatorTalentName } from './gameText';
+import {
+  getGameSlotTypeName,
+  getGearSetGameName,
+  getOperatorPotentialName,
+  getOperatorTalentName,
+} from './gameText';
 
 export interface CollectedEffect {
   effect: ResolvedEffect;
@@ -299,8 +304,13 @@ export function collectEffects(
       if (!piece) continue;
 
       if (piece.defense > 0) {
-        const translatedSlot = i18n.global.t(`game.slotType.${gearSlotKey}`, gearSlotKey);
-        const translatedDef = i18n.global.t('game.stat.defense', 'Defense');
+        const slotTypeKey =
+          gearSlotKey === 'kit1' || gearSlotKey === 'kit2' ? 'kit' : gearSlotKey;
+        const translatedSlot = getGameSlotTypeName(slotTypeKey, i18n.global.locale.value);
+        const defenseKey = 'armory.common.defense';
+        const translatedDef = i18n.global.te(defenseKey)
+          ? i18n.global.t(defenseKey)
+          : 'Defense';
         const defEffect = resolveEffect(
           {
             kind: 'status',

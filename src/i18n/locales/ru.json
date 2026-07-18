@@ -203,19 +203,18 @@
         "weapon": "Оружие",
         "equipment": "Снаряжение",
         "none": "Не экипировано",
-        "slot": {
-          "armor": "Броня",
-          "gloves": "Перчатки",
-          "accessory1": "Амуниция 1",
-          "accessory2": "Амуниция 2"
-        }
+        "exclusiveBuff": "Уникальная черта"
       },
       "actionInfo": {
         "title": "Информация о навыке",
         "notFound": "Навык не найден (возможно, проект изменён или данные обновлены)",
         "start": "Время начала",
         "end": "Время окончания",
-        "duration": "Длительность"
+        "duration": "Длительность",
+        "spCost": "Затраты SP",
+        "cooldown": "Перезарядка",
+        "gaugeCost": "Затраты ульты",
+        "hits": "Число ударов"
       }
     },
     "loading": "Загрузка ресурсов...",
@@ -364,8 +363,8 @@
     },
     "track": {
       "changeOperatorTooltip": "Сменить оперативника",
-      "initialGauge": "Initial Ultimate Energy",
-      "initialGaugeShort": "Init",
+      "initialGauge": "Начальная энергия ульты",
+      "initialGaugeShort": "Нач. энергия",
       "operatorAlreadyInUse": "Этот оперативник уже на другой дорожке!",
       "selectOperator": "Выбрать ОП",
       "selectWeaponTooltip": "Выбрать оружие",
@@ -429,6 +428,7 @@
   },
   "skillType": {
     "attack": "Последний удар",
+    "heavyAttack": "Тяжёлый удар",
     "dodge": "Уклонение",
     "dive": "Атака в падении",
     "execution": "Добивание",

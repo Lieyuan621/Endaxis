@@ -75,48 +75,9 @@ function formatDuration(time) {
 }
 
 .perfect-timing-bar .cw-line {
-  position: relative;
   height: 2px;
   border-bottom: none;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--cw-color) 0,
-    var(--cw-color) 4px,
-    transparent 4px,
-    transparent 8px
-  );
-  background-size: 8px 100%;
-  animation: dash-flow 0.5s linear infinite;
-}
-
-@keyframes dash-flow {
-  from {
-    background-position-x: 0;
-  }
-  to {
-    background-position-x: 8px;
-  }
-}
-
-.perfect-timing-bar .cw-line::after {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: 0;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
   background: var(--cw-color);
-  animation: move-along-path 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-@keyframes move-along-path {
-  0% {
-    left: 0;
-  }
-  100% {
-    left: calc(100% - 4px);
-  }
 }
 
 .cw-end-mark {

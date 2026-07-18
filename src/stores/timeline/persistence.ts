@@ -51,6 +51,7 @@ interface PersistenceDeps {
   contingencyContractTags: Ref<number[]>;
   prepDuration: Ref<number>;
   prepExpanded: Ref<boolean>;
+  trackRowHeightWeights: Ref<number[]>;
   isLoading: Ref<boolean>;
   historyStack: Ref<string[]>;
   historyIndex: Ref<number>;
@@ -96,6 +97,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     contingencyContractTags,
     prepDuration,
     prepExpanded,
+    trackRowHeightWeights,
     isLoading,
     historyStack,
     historyIndex,
@@ -136,6 +138,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         inheritedInitialEffects,
         inheritedInitialEnemyState,
         contingencyContractTags,
+        trackRowHeightWeights,
         () => operatorStore.operators,
         () => weaponStore.weapons,
         () => gearStore.gears,
@@ -157,6 +160,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         newInheritedInitialEffects,
         newInheritedInitialEnemyState,
         newContingencyContractTags,
+        newTrackRowHeightWeights,
         newOperators,
         newWeapons,
         newGears,
@@ -181,6 +185,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
             equipmentCategoryOverrides: newEquipmentCatOverrides,
             prepDuration: prepDuration.value,
             prepExpanded: prepExpanded.value,
+            trackRowHeightWeights: newTrackRowHeightWeights,
             systemConstants: newSys,
             activeEnemyId: newEnemyId,
             activeEnemyLevel: newEnemyLevel,
@@ -250,6 +255,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
           equipmentCategoryOverrides.value = {};
           prepDuration.value = 5;
           prepExpanded.value = true;
+          trackRowHeightWeights.value = [];
           inheritedInitialEffects.value = [];
           inheritedInitialEnemyState.value = null;
           recomputeAllTrackOperatorStatuses();
@@ -282,6 +288,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     inheritedInitialEnemyState.value = null;
     prepDuration.value = 5;
     prepExpanded.value = true;
+    trackRowHeightWeights.value = [];
 
     systemConstants.value = createDefaultSystemConstantsState();
 
@@ -342,6 +349,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         equipmentCategoryOverrides: equipmentCategoryOverrides.value,
         prepDuration: prepDuration.value,
         prepExpanded: prepExpanded.value,
+        trackRowHeightWeights: trackRowHeightWeights.value,
         systemConstants: systemConstants.value,
         activeEnemyId: activeEnemyId.value,
         activeEnemyLevel: activeEnemyLevel.value,

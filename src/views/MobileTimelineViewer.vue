@@ -14,8 +14,26 @@ import {
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { useI18n } from 'vue-i18n';
 import { setLocale } from '@/i18n';
+import { getGearPiece } from '@/data';
+import {
+  getGameSlotTypeName,
+  getGearPieceGameName,
+  getGearSetGameName,
+  getOperatorGameName,
+  getWeaponGameName,
+  getWeaponSkillName,
+} from '@/data/gameText';
+import { resolveLeveled } from '@/data/types';
 import { toLegacyDisplayType } from '@/utils/hitModel';
-import { findWeaponInstance, findGearInstance } from '@/stores/timeline/instanceLookup';
+import {
+  formatEquipmentEffectLabel,
+  formatEquipmentEffectStatValue,
+} from '@/utils/equipmentEffectDisplay';
+import {
+  findOperatorInstance,
+  findWeaponInstance,
+  findGearInstance,
+} from '@/stores/timeline/instanceLookup';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -149,6 +167,46 @@ function getTrackAvatar(track) {
   return found?.avatar || DEFAULT_ICON;
 }
 
+const EQUIPMENT_LEVEL_COLORS = {
+  70: '#ffd700',
+  50: '#b37feb',
+  36: '#4a90e2',
+  28: '#73c94f',
+  20: '#95de64',
+  10: '#888888',
+};
+
+function getEquipmentLevelColor(level) {
+  return EQUIPMENT_LEVEL_COLORS[Number(level)] || '#888';
+}
+
+function getArtificingLevel(instance, slotIdx) {
+  const levels = Array.isArray(instance?.artificingLevels) ? instance.artificingLevels : [];
+  const level = Number(levels[slotIdx]) || 0;
+  return Math.max(0, Math.min(3, level));
+}
+
+function getEquipmentSkillSlots(piece) {
+  if (!piece) return [];
+  return [piece.skill1, piece.skill2, piece.skill3]
+    .filter(Boolean)
+    .map(skill => (skill.effects || []).filter(effect => effect.kind === 'status'))
+    .filter(slot => slot.length > 0);
+}
+
+function getEquipmentStatRows(piece, instance) {
+  return getEquipmentSkillSlots(piece).map((slot, index) => {
+    const effect = slot[0];
+    const refine = getArtificingLevel(instance, index);
+    return {
+      key: `${effect?.id || effect?.stat?.modifier || 'stat'}-${index}`,
+      label: formatEquipmentEffectLabel(effect, t, locale.value),
+      value: effect ? formatEquipmentEffectStatValue(effect, resolveLeveled(effect.value, refine)) : '',
+      refine,
+    };
+  });
+}
+
 function withBaseUrl(input) {
   const s = String(input || '').trim();
   if (!s) return '';
@@ -171,10 +229,17 @@ function onAssetError(evt) {
 }
 
 function getTrackName(track) {
+  void locale.value;
   const id = track?.id;
-  const roster = Array.isArray(store.characterRoster) ? store.characterRoster : [];
-  const found = roster.find(c => c && c.id === id);
-  return found?.name || id || t('common.unknown');
+  if (!id) return t('common.unknown');
+  return getOperatorGameName(id, locale.value) || id || t('common.unknown');
+}
+
+function getSelectedWeaponName() {
+  void locale.value;
+  const slug = selectedWeaponInstance.value?.weaponSlug || selectedTrack.value?.weaponId;
+  if (!slug) return '';
+  return getWeaponGameName(slug, locale.value) || selectedWeapon.value?.name || slug;
 }
 
 function openLoadout(index) {
@@ -215,94 +280,157 @@ const selectedWeaponSkill3Level = computed(
   () => selectedWeaponInstance.value?.skill3Level ?? selectedTrack.value?.weaponBuffTier ?? 1,
 );
 
-function formatSlotLabel(slot) {
-  void locale.value;
-  const modifierId = slot?.modifierId || slot?.key;
-  if (!modifierId) return t('common.noneParen');
-  const sizeLabel =
-    slot.size === 'large'
-      ? t('common.size.large')
-      : slot.size === 'medium'
-        ? t('common.size.medium')
-        : t('common.size.small');
-  return `${store.getModifierLabel(modifierId)} · ${sizeLabel}`;
-}
-
 function formatTierLabel(val) {
   const n = Number(val);
   if (!Number.isFinite(n)) return '-';
   return `${n}${t('common.levelSuffix')}`;
 }
 
-const selectedWeaponSlot1Label = computed(() =>
-  formatSlotLabel(selectedWeapon.value?.commonSlots?.[0]),
-);
-const selectedWeaponSlot2Label = computed(() =>
-  formatSlotLabel(selectedWeapon.value?.commonSlots?.[1]),
-);
-const selectedWeaponBuffKeysLabel = computed(() => {
+const selectedWeaponSkillLines = computed(() => {
   void locale.value;
-  const list = Array.isArray(selectedWeapon.value?.buffBonuses)
-    ? selectedWeapon.value.buffBonuses
-    : [];
-  const ids = list.map(b => b?.modifierId || b?.key).filter(Boolean);
-  if (ids.length === 0) return t('common.noneParen');
-  return ids.map(k => store.getModifierLabel(k)).join('、');
+  const slug = selectedWeaponInstance.value?.weaponSlug || selectedTrack.value?.weaponId;
+  if (!slug || !selectedWeapon.value) return [];
+
+  const levels = [
+    selectedWeaponSkill1Level.value,
+    selectedWeaponSkill2Level.value,
+    selectedWeaponSkill3Level.value,
+  ];
+
+  return (['skill1', 'skill2', 'skill3']).map((skillKey, index) => ({
+    key: skillKey,
+    name: getWeaponSkillName(slug, skillKey, locale.value) || skillKey,
+    tier: formatTierLabel(levels[index]),
+  }));
 });
+
+const EQUIPMENT_SLOT_CONFIGS = [
+  {
+    slotKey: 'armor',
+    idKey: 'equipArmorId',
+    instanceKey: 'equipArmorInstanceId',
+    tierKey: 'equipArmorRefineTier',
+  },
+  {
+    slotKey: 'gloves',
+    idKey: 'equipGlovesId',
+    instanceKey: 'equipGlovesInstanceId',
+    tierKey: 'equipGlovesRefineTier',
+  },
+  {
+    slotKey: 'accessory1',
+    idKey: 'equipAccessory1Id',
+    instanceKey: 'equipAccessory1InstanceId',
+    tierKey: 'equipAccessory1RefineTier',
+  },
+  {
+    slotKey: 'accessory2',
+    idKey: 'equipAccessory2Id',
+    instanceKey: 'equipAccessory2InstanceId',
+    tierKey: 'equipAccessory2RefineTier',
+  },
+];
 
 const equipmentSlots = computed(() => {
   void locale.value;
   const track = selectedTrack.value;
   if (!track) return [];
 
-  const resolve = (slotKey, id, refineTier, instanceId) => {
-    const instance = instanceId ? findGearInstance(instanceId) : null;
-    const equipmentId = instance?.gearPieceId || id;
-    const item =
-      typeof store.getEquipmentById === 'function' ? store.getEquipmentById(equipmentId) : null;
-    const artificingLevels = Array.isArray(instance?.artificingLevels)
-      ? instance.artificingLevels
-      : [];
-    const instanceRefine = artificingLevels.length
-      ? Math.max(...artificingLevels.map(level => Number(level) || 0))
+  return EQUIPMENT_SLOT_CONFIGS.map(config => {
+    const equipmentId = track[config.idKey] || null;
+    const instance = track[config.instanceKey]
+      ? findGearInstance(track[config.instanceKey])
       : null;
-    const level = item?.level !== undefined ? Number(item.level) : null;
-    const is70 = level === 70;
+    const pieceId = instance?.gearPieceId || equipmentId;
+    const item =
+      typeof store.getEquipmentById === 'function' ? store.getEquipmentById(pieceId) : null;
+    const piece = pieceId ? getGearPiece(pieceId) : null;
+    const level = Number(item?.level ?? piece?.levelRequirement) || 0;
+    const isGold = level >= 70;
+    const trackRefine = Number(track[config.tierKey]);
+    const stats = getEquipmentStatRows(piece, instance);
+    const refineLevels = stats.map(row => Number(row.refine) || 0);
+    const refineLabel =
+      isGold && refineLevels.length > 0
+        ? refineLevels.join('/')
+        : isGold && Number.isFinite(trackRefine)
+          ? String(Math.max(0, Math.min(3, trackRefine)))
+          : null;
+
     return {
-      slotKey,
-      slotLabel: t(`timeline.mobile.loadout.slot.${slotKey}`),
-      id: equipmentId || null,
+      slotKey: config.slotKey,
+      slotLabel: t(`timelineGrid.equipmentSlot.${config.slotKey}`),
+      id: pieceId || null,
       instance,
       item,
-      level: Number.isFinite(level) ? level : null,
-      refineTier: is70 ? Number(instanceRefine ?? refineTier) || 0 : null,
+      piece,
+      level: level || null,
+      levelColor: getEquipmentLevelColor(level),
+      isGold,
+      name: pieceId
+        ? getGearPieceGameName(pieceId, locale.value) || item?.name || pieceId
+        : '',
+      icon: piece?.icon || item?.icon || DEFAULT_ICON,
+      setName:
+        getGearSetGameName(piece?.setSlug || item?.category || '', locale.value) ||
+        item?.categoryName ||
+        '',
+      slotTypeName: getGameSlotTypeName(piece?.slotType || item?.slot || '', locale.value),
+      stats,
+      refineLabel,
     };
-  };
+  });
+});
 
-  return [
-    resolve('armor', track.equipArmorId, track.equipArmorRefineTier, track.equipArmorInstanceId),
-    resolve(
-      'gloves',
-      track.equipGlovesId,
-      track.equipGlovesRefineTier,
-      track.equipGlovesInstanceId,
-    ),
-    resolve(
-      'accessory1',
-      track.equipAccessory1Id,
-      track.equipAccessory1RefineTier,
-      track.equipAccessory1InstanceId,
-    ),
-    resolve(
-      'accessory2',
-      track.equipAccessory2Id,
-      track.equipAccessory2RefineTier,
-      track.equipAccessory2InstanceId,
-    ),
-  ];
+const selectedOperatorInstance = computed(() => {
+  const id = selectedTrack.value?.operatorInstanceId;
+  return id ? findOperatorInstance(id) : null;
+});
+
+const selectedOperatorSummary = computed(() => {
+  void locale.value;
+  const inst = selectedOperatorInstance.value;
+  if (!inst) return '';
+  const parts = [];
+  if (Number.isFinite(Number(inst.level))) {
+    parts.push(`Lv${Number(inst.level)}`);
+  }
+  if (Number.isFinite(Number(inst.potential))) {
+    parts.push(`${t('armory.common.potential')} ${Number(inst.potential)}`);
+  }
+  const gauge = Number(selectedTrack.value?.initialGauge);
+  if (Number.isFinite(gauge) && gauge > 0) {
+    parts.push(`${t('timelineGrid.track.initialGaugeShort')} ${gauge}`);
+  }
+  return parts.join(' · ');
+});
+
+const selectedSetBonusLabel = computed(() => {
+  void locale.value;
+  const trackId = selectedTrack.value?.id;
+  if (!trackId || typeof store.getActiveSetBonusCategories !== 'function') return '';
+  const cats = store.getActiveSetBonusCategories(trackId);
+  if (!Array.isArray(cats) || cats.length === 0) return '';
+  return cats
+    .map(cat => getGearSetGameName(cat, locale.value) || cat)
+    .filter(Boolean)
+    .join(' / ');
 });
 
 function getTypeLabel(action) {
+  if (action?.kind === 'attack_segment') {
+    const total = Number(action.attackSequenceTotal) || 0;
+    const idx = Number(action.attackSequenceIndex) || 0;
+    if (total > 0 && idx === total) {
+      const named = String(action.name || '').trim();
+      if (named) return named;
+      return t('skillType.heavyAttack');
+    }
+  }
+
+  const named = String(action?.name || '').trim();
+  if (named && action?.kind !== 'attack_segment') return named;
+
   const type = toLegacyDisplayType(action?.type || 'unknown');
   const key = `skillType.${type}`;
   const out = t(key);
@@ -444,15 +572,54 @@ const resolvedActionDuration = computed(() => {
 });
 
 const resolvedOperator = computed(() => {
+  void locale.value;
   const id = resolvedAction.value?.trackId;
   if (!id) return null;
   const roster = Array.isArray(store.characterRoster) ? store.characterRoster : [];
   const found = roster.find(c => c && c.id === id);
   return {
     id,
-    name: found?.name || id,
+    name: getOperatorGameName(id, locale.value) || found?.name || id,
     avatar: found?.avatar || DEFAULT_ICON,
   };
+});
+
+const resolvedActionNode = computed(() => resolvedAction.value?.node || null);
+
+const resolvedActionStats = computed(() => {
+  const node = resolvedActionNode.value;
+  if (!node) return [];
+
+  const rows = [];
+  const spCost = Number(node.spCost);
+  if (Number.isFinite(spCost)) {
+    rows.push({ key: 'sp', label: t('timeline.mobile.actionInfo.spCost'), value: String(spCost) });
+  }
+  const cooldown = Number(node.cooldown);
+  if (Number.isFinite(cooldown) && cooldown > 0) {
+    rows.push({
+      key: 'cd',
+      label: t('timeline.mobile.actionInfo.cooldown'),
+      value: `${formatSec(cooldown)}s`,
+    });
+  }
+  const gaugeCost = Number(node.gaugeCost);
+  if (Number.isFinite(gaugeCost) && gaugeCost > 0) {
+    rows.push({
+      key: 'gauge',
+      label: t('timeline.mobile.actionInfo.gaugeCost'),
+      value: String(gaugeCost),
+    });
+  }
+  const hits = Array.isArray(node.hits) ? node.hits.length : 0;
+  if (hits > 0) {
+    rows.push({
+      key: 'hits',
+      label: t('timeline.mobile.actionInfo.hits'),
+      value: String(hits),
+    });
+  }
+  return rows;
 });
 
 watch(
@@ -968,6 +1135,12 @@ async function doImport() {
                 <div class="time-chip__val mono">{{ formatSec(resolvedActionDuration) }}s</div>
               </div>
             </div>
+            <div v-if="resolvedActionStats.length" class="actioninfo-stats">
+              <div v-for="row in resolvedActionStats" :key="row.key" class="actioninfo-stat">
+                <div class="actioninfo-stat__label">{{ row.label }}</div>
+                <div class="actioninfo-stat__val mono">{{ row.value }}</div>
+              </div>
+            </div>
           </div>
 
           <div v-else class="tech-style">
@@ -1020,7 +1193,12 @@ async function doImport() {
               </div>
               <div class="loadout-operator__meta">
                 <div class="loadout-operator__name">{{ getTrackName(selectedTrack) }}</div>
-                <div class="loadout-operator__sub">{{ selectedTrack.id }}</div>
+                <div v-if="selectedOperatorSummary" class="loadout-operator__sub">
+                  {{ selectedOperatorSummary }}
+                </div>
+                <div v-if="selectedSetBonusLabel" class="loadout-operator__bonus">
+                  {{ selectedSetBonusLabel }}
+                </div>
               </div>
             </div>
           </div>
@@ -1031,39 +1209,25 @@ async function doImport() {
               <div class="loadout-item__icon">
                 <img
                   :src="withBaseUrl(selectedWeapon?.icon || DEFAULT_ICON)"
-                  :alt="selectedWeapon?.name || ''"
+                  :alt="getSelectedWeaponName()"
                   @error="onAssetError"
                 />
               </div>
               <div class="loadout-item__main">
                 <div class="loadout-item__title">
-                  {{ selectedWeapon?.name || t('timeline.mobile.loadout.none') }}
+                  {{ getSelectedWeaponName() || t('actionLibrary.fallback.noWeapon') }}
                 </div>
                 <div
                   class="loadout-item__sub loadout-weapon-sub"
                   v-if="selectedTrack && selectedWeapon"
                 >
-                  <div class="loadout-weapon-line">
-                    <span class="loadout-weapon-name">{{ selectedWeaponSlot1Label }}</span>
-                    <span class="loadout-weapon-tier mono">{{
-                      formatTierLabel(selectedWeaponSkill1Level)
-                    }}</span>
-                  </div>
-                  <div class="loadout-weapon-line">
-                    <span class="loadout-weapon-name">{{ selectedWeaponSlot2Label }}</span>
-                    <span class="loadout-weapon-tier mono">{{
-                      formatTierLabel(selectedWeaponSkill2Level)
-                    }}</span>
-                  </div>
-                  <div class="loadout-weapon-line">
-                    <span class="loadout-weapon-name">
-                      {{ selectedWeapon?.buffName || t('actionLibrary.labels.exclusiveBuff') }}：{{
-                        selectedWeaponBuffKeysLabel
-                      }}
-                    </span>
-                    <span class="loadout-weapon-tier mono">{{
-                      formatTierLabel(selectedWeaponSkill3Level)
-                    }}</span>
+                  <div
+                    v-for="line in selectedWeaponSkillLines"
+                    :key="line.key"
+                    class="loadout-weapon-line"
+                  >
+                    <span class="loadout-weapon-name">{{ line.name }}</span>
+                    <span class="loadout-weapon-tier mono">{{ line.tier }}</span>
                   </div>
                 </div>
               </div>
@@ -1077,11 +1241,15 @@ async function doImport() {
                 v-for="slot in equipmentSlots"
                 :key="slot.slotKey"
                 class="loadout-item tech-style"
+                :class="{ 'is-empty': !slot.id }"
               >
-                <div class="loadout-item__icon">
+                <div
+                  class="loadout-item__icon"
+                  :style="slot.id ? { borderColor: slot.levelColor } : undefined"
+                >
                   <img
-                    :src="withBaseUrl(slot.item?.icon || DEFAULT_ICON)"
-                    :alt="slot.item?.name || ''"
+                    :src="withBaseUrl(slot.icon || DEFAULT_ICON)"
+                    :alt="slot.name || ''"
                     @error="onAssetError"
                   />
                 </div>
@@ -1089,15 +1257,34 @@ async function doImport() {
                   <div class="loadout-item__title">
                     <span class="slot-label">{{ slot.slotLabel }}</span>
                     <span class="title-main">{{
-                      slot.item?.name || t('timeline.mobile.loadout.none')
+                      slot.name || t('actionLibrary.fallback.noEquip')
                     }}</span>
                   </div>
-                  <div class="loadout-item__sub" v-if="slot.item">
-                    <span class="mono">Lv{{ slot.level ?? '-' }}</span>
-                    <template v-if="slot.refineTier !== null">
+                  <div class="loadout-item__sub" v-if="slot.id">
+                    <span class="mono" :style="{ color: slot.levelColor }"
+                      >Lv{{ slot.level ?? '-' }}</span
+                    >
+                    <template v-if="slot.slotTypeName">
                       <span class="dot">·</span>
-                      <span class="mono">+{{ slot.refineTier }}</span>
+                      <span>{{ slot.slotTypeName }}</span>
                     </template>
+                    <template v-if="slot.setName">
+                      <span class="dot">·</span>
+                      <span>{{ slot.setName }}</span>
+                    </template>
+                    <template v-if="slot.refineLabel !== null">
+                      <span class="dot">·</span>
+                      <span class="mono"
+                        >{{ t('timelineGrid.equipmentDialog.refine') }}
+                        {{ slot.refineLabel }}</span
+                      >
+                    </template>
+                  </div>
+                  <div v-if="slot.stats.length" class="loadout-stat-list">
+                    <div v-for="row in slot.stats" :key="row.key" class="loadout-stat-row">
+                      <span>{{ row.label }}</span>
+                      <strong class="mono">+{{ row.value }}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1950,6 +2137,14 @@ async function doImport() {
     'Courier New', monospace;
 }
 
+.loadout-operator__bonus {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 215, 0, 0.85);
+  line-height: 1.3;
+}
+
 .loadout-eq-list {
   display: flex;
   flex-direction: column;
@@ -1958,9 +2153,13 @@ async function doImport() {
 
 .loadout-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 12px;
+}
+
+.loadout-item.is-empty {
+  opacity: 0.72;
 }
 
 .loadout-item__icon {
@@ -1984,6 +2183,7 @@ async function doImport() {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1 1 auto;
 }
 
 .loadout-item__title {
@@ -2004,6 +2204,26 @@ async function doImport() {
   gap: 6px;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.55);
+}
+
+.loadout-stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+}
+
+.loadout-stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.loadout-stat-row strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 800;
 }
 
 .loadout-weapon-sub {
@@ -2029,6 +2249,32 @@ async function doImport() {
   flex: 0 0 auto;
   opacity: 0.85;
   white-space: nowrap;
+}
+
+.actioninfo-stats {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.actioninfo-stat {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.actioninfo-stat__label {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 4px;
+}
+
+.actioninfo-stat__val {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .mono {

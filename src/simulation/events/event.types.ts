@@ -241,5 +241,7 @@ export type SimLogEntry =
         actionId: string;
         /** Seconds removed from the cooldown (always a flat positive value). */
         reduction: number;
+        /** True when this reduction cleared all remaining CD (hide the bar entirely). */
+        clearedRemaining?: boolean;
       }
     >;

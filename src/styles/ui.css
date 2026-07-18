@@ -198,77 +198,15 @@
 
 .ea-btn--outline-muted {
   --ea-btn-radius: 0px;
-  --ea-btn-bg:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.07) 0%,
-      rgba(255, 255, 255, 0.035) 55%,
-      rgba(255, 255, 255, 0.02) 100%
-    ),
-    radial-gradient(
-      140% 200% at 15% 0%,
-      rgba(255, 255, 255, 0.06) 0%,
-      rgba(255, 255, 255, 0.03) 45%,
-      rgba(255, 255, 255, 0.015) 85%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.06) 0%,
-      rgba(0, 0, 0, 0.03) 65%,
-      rgba(0, 0, 0, 0.02) 100%
-    );
-  --ea-btn-bg-hover:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0.05) 55%,
-      rgba(255, 255, 255, 0.03) 100%
-    ),
-    radial-gradient(
-      140% 200% at 15% 0%,
-      rgba(255, 255, 255, 0.08) 0%,
-      rgba(255, 255, 255, 0.04) 45%,
-      rgba(255, 255, 255, 0.02) 85%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.05) 0%,
-      rgba(0, 0, 0, 0.02) 65%,
-      rgba(0, 0, 0, 0.015) 100%
-    );
-  --ea-btn-border: rgba(255, 255, 255, 0.16);
-  --ea-btn-border-hover: rgba(255, 255, 255, 0.26);
-  --ea-btn-color: rgba(255, 255, 255, 0.75);
+  --ea-btn-bg: rgba(255, 255, 255, 0.03);
+  --ea-btn-bg-hover: rgba(255, 255, 255, 0.06);
+  --ea-btn-border: rgba(255, 255, 255, 0.1);
+  --ea-btn-border-hover: rgba(255, 255, 255, 0.22);
+  --ea-btn-color: #aaa;
   --ea-btn-color-hover: #fff;
 
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(6px) saturate(1.06);
-  -webkit-backdrop-filter: blur(6px) saturate(1.06);
-  box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
-}
-
-.ea-btn--outline-muted::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: linear-gradient(
-    110deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.14) 20%,
-    rgba(255, 255, 255, 0.05) 34%,
-    transparent 55%
-  );
-  transform: translateX(-120%);
-  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-  pointer-events: none;
-}
-
-.ea-btn--outline-muted:hover::before {
-  transform: translateX(120%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .ea-btn--dashed {
@@ -372,100 +310,33 @@
 
 .ea-btn--fill-gold {
   --ea-btn-accent: var(--ea-gold);
-  --ea-btn-color: #111;
-  --ea-btn-color-hover: #111;
+  --ea-btn-color: var(--ea-gold);
+  --ea-btn-color-hover: var(--ea-gold);
 }
 
 .ea-btn--fill-success {
   --ea-btn-accent: var(--ea-success);
-  --ea-btn-color: #111;
-  --ea-btn-color-hover: #111;
+  --ea-btn-color: var(--ea-success);
+  --ea-btn-color-hover: var(--ea-success);
 }
 
 .ea-btn--fill-danger {
   --ea-btn-accent: var(--ea-danger-dark);
-  --ea-btn-color: #111;
-  --ea-btn-color-hover: #111;
+  --ea-btn-color: var(--ea-danger-dark);
+  --ea-btn-color-hover: var(--ea-danger-dark);
 }
 
 .ea-btn--fill-gold,
 .ea-btn--fill-success,
 .ea-btn--fill-danger {
   --ea-btn-radius: 0px;
-  --ea-btn-border: color-mix(in srgb, var(--ea-btn-accent) 74%, rgba(255, 255, 255, 0.22));
-  --ea-btn-border-hover: color-mix(in srgb, var(--ea-btn-accent) 86%, rgba(255, 255, 255, 0.28));
-  --ea-btn-bg:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.2) 0%,
-      rgba(255, 255, 255, 0.09) 45%,
-      rgba(255, 255, 255, 0.05) 100%
-    ),
-    radial-gradient(
-      140% 200% at 15% 0%,
-      color-mix(in srgb, var(--ea-btn-accent) 78%, transparent) 0%,
-      color-mix(in srgb, var(--ea-btn-accent) 50%, transparent) 45%,
-      rgba(255, 255, 255, 0.02) 85%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ea-btn-accent) 62%, rgba(255, 255, 255, 0.08)) 0%,
-      color-mix(in srgb, var(--ea-btn-accent) 46%, rgba(255, 255, 255, 0.05)) 60%,
-      color-mix(in srgb, var(--ea-btn-accent) 38%, rgba(255, 255, 255, 0.04)) 100%
-    );
-  --ea-btn-bg-hover:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.25) 0%,
-      rgba(255, 255, 255, 0.12) 45%,
-      rgba(255, 255, 255, 0.07) 100%
-    ),
-    radial-gradient(
-      140% 200% at 15% 0%,
-      color-mix(in srgb, var(--ea-btn-accent) 92%, transparent) 0%,
-      color-mix(in srgb, var(--ea-btn-accent) 60%, transparent) 45%,
-      rgba(255, 255, 255, 0.03) 85%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ea-btn-accent) 68%, rgba(255, 255, 255, 0.1)) 0%,
-      color-mix(in srgb, var(--ea-btn-accent) 52%, rgba(255, 255, 255, 0.08)) 60%,
-      color-mix(in srgb, var(--ea-btn-accent) 42%, rgba(255, 255, 255, 0.06)) 100%
-    );
+  --ea-btn-bg: color-mix(in srgb, var(--ea-btn-accent) 10%, transparent);
+  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-btn-accent) 16%, transparent);
+  --ea-btn-border: color-mix(in srgb, var(--ea-btn-accent) 40%, transparent);
+  --ea-btn-border-hover: var(--ea-btn-accent);
 
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(7px) saturate(1.15);
-  -webkit-backdrop-filter: blur(7px) saturate(1.15);
-  box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
-    0 0 10px color-mix(in srgb, var(--ea-btn-accent) 18%, transparent);
-}
-
-.ea-btn--fill-gold::before,
-.ea-btn--fill-success::before,
-.ea-btn--fill-danger::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: linear-gradient(
-    110deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.16) 20%,
-    rgba(255, 255, 255, 0.06) 34%,
-    transparent 55%
-  );
-  transform: translateX(-120%);
-  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-  pointer-events: none;
-}
-
-.ea-btn--fill-gold:hover::before,
-.ea-btn--fill-success:hover::before,
-.ea-btn--fill-danger:hover::before {
-  transform: translateX(120%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .ea-btn--cut-left {

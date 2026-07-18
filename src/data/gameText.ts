@@ -53,6 +53,8 @@ const gameEnumTerms = {
       armor: 'Armor',
       gloves: 'Gloves',
       kit: 'Kit',
+      kit1: 'Kit',
+      kit2: 'Kit',
       accessory: 'Accessory',
     },
     quality: {
@@ -108,6 +110,8 @@ const gameEnumTerms = {
       armor: '护甲',
       gloves: '护手',
       kit: '配件',
+      kit1: '配件',
+      kit2: '配件',
       accessory: '配件',
     },
     quality: {

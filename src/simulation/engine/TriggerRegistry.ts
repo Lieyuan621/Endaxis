@@ -580,6 +580,8 @@ export class TriggerRegistry {
       const clamped = Math.min(reduction, remaining);
       if (clamped <= 0) continue;
 
+      const clearedRemaining = clamped >= remaining - 1e-6;
+
       ctx.state.getActor(targetTrackId).recordCdReduction(target.node.instanceId, clamped);
 
       ctx.simLog({
@@ -589,6 +591,7 @@ export class TriggerRegistry {
           actorId: targetTrackId,
           actionId: target.node.instanceId,
           reduction: clamped,
+          clearedRemaining,
         },
       });
     }

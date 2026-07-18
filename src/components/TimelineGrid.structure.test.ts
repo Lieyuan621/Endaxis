@@ -10,4 +10,11 @@ describe('TimelineGrid cursor guide', () => {
     expect(source).toContain("t('timelineGrid.cursor.spReturn')");
     expect(source).toContain('{{ currentSpValue }}{{ currentSpReturnText }}');
   });
+
+  test('shows stagger current and max like gauge rows', () => {
+    expect(source).toContain('const currentStaggerMax = computed');
+    expect(source).toContain('const currentStaggerText = computed');
+    expect(source).toContain('store.systemConstants.maxStagger');
+    expect(source).toContain('{{ currentStaggerText }}');
+  });
 });

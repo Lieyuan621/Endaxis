@@ -1009,9 +1009,7 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--lib"
           :class="{ 'is-active': !isLeftPanelCollapsed }"
-          :title="t('timeline.activityBar.library')"
           :aria-label="t('timeline.activityBar.library')"
-          :data-tooltip="t('timeline.activityBar.library')"
           @click="toggleActivityPanel('library')"
         >
           <svg
@@ -1033,9 +1031,7 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--contract"
           :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'contract' }"
-          :title="t('timeline.activityBar.contract')"
           :aria-label="t('timeline.activityBar.contract')"
-          :data-tooltip="t('timeline.activityBar.contract')"
           @click="toggleBottomTool('contract')"
         >
           <img
@@ -1050,9 +1046,7 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--panel"
           :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'enemy' }"
-          :title="t('timeline.activityBar.resourceMonitor')"
           :aria-label="t('timeline.activityBar.resourceMonitor')"
-          :data-tooltip="t('timeline.activityBar.resourceMonitor')"
           @click="toggleBottomTool('enemy')"
         >
           <svg
@@ -1504,9 +1498,7 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--inspector"
           :class="{ 'is-active': !isRightPanelCollapsed && rightPanelTool === 'inspector' }"
-          :title="t('timeline.activityBar.inspector')"
           :aria-label="t('timeline.activityBar.inspector')"
-          :data-tooltip="t('timeline.activityBar.inspector')"
           @click="toggleRightTool('inspector')"
         >
           <svg
@@ -1531,9 +1523,7 @@ onUnmounted(() => {
           type="button"
           class="activity-bar__button activity-bar__button--battle-log"
           :class="{ 'is-active': !isRightPanelCollapsed && rightPanelTool === 'battleLog' }"
-          :title="t('timeline.activityBar.battleLog')"
           :aria-label="t('timeline.activityBar.battleLog')"
-          :data-tooltip="t('timeline.activityBar.battleLog')"
           @click="toggleRightTool('battleLog')"
         >
           <svg
@@ -1752,34 +1742,6 @@ onUnmounted(() => {
     background-color 0.14s ease,
     transform 0.14s ease;
 }
-.activity-bar__button::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  z-index: 30;
-  max-width: 180px;
-  padding: 5px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(24, 24, 24, 0.96);
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translate(6px, -50%);
-  transition:
-    opacity 0.12s ease,
-    transform 0.12s ease;
-  pointer-events: none;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-}
-.activity-bar--right .activity-bar__button::before {
-  left: auto;
-  right: calc(100% + 8px);
-  transform: translate(-6px, -50%);
-}
 .activity-bar__button::after {
   content: '';
   position: absolute;
@@ -1803,13 +1765,6 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.84);
   background: rgba(255, 255, 255, 0.035);
   transform: translateY(-1px);
-}
-.activity-bar__button:hover::before {
-  opacity: 1;
-  transform: translate(0, -50%);
-}
-.activity-bar--right .activity-bar__button:hover::before {
-  transform: translate(0, -50%);
 }
 .activity-bar__button:hover::after {
   opacity: 0.76;
@@ -2467,7 +2422,7 @@ onUnmounted(() => {
 :deep(.el-dialog) {
   background-color: #2b2b2b;
   border: 1px solid #444;
-  border-radius: 8px;
+  border-radius: 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 :deep(.el-dialog__header) {
