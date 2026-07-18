@@ -2,8 +2,9 @@ import type { EventHandler } from '@/simulation/events/EventHandler.ts';
 import type { ActionStartEvent } from '@/simulation/events/event.types.ts';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext.ts';
 import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
-import type { OperatorEffectExpireEvent } from '@/simulation/engine/types';
+import type { OperatorEffectExpireEvent, SourceSlot } from '@/simulation/engine/types';
 import { resolveEffectiveActionSkillType } from '@/simulation/events/actionSkillType';
+import { pushSourceQueue, consumeSourceQueue } from '@/simulation/state/sourceQueue';
 
 export class ActionStartHandler implements EventHandler<ActionStartEvent> {
   private registry?: TriggerRegistry;
@@ -115,12 +116,16 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
       if (!action.consumedStacks) action.consumedStacks = {};
       action.consumedStacks.link = consumed;
 
-      // Stamp per-source link attribution for LMDI
-      const linkSourceMap: Record<string, number> = {};
+      // Stamp per-source link attribution for LMDI. Attribute only the actually-consumed stacks
+      // (FIFO, newest kept) via a source queue capped at `consumed`, rather than crediting every
+      // source its full stacks — so the breakdown sums to `consumed` even when total link stacks
+      // exceed the cap. (Ordering uses collection order as a proxy for application order, since
+      // Endaxis keeps per-source link entries rather than one pooled entry with a live sourceQueue.)
+      const sourceQueue: SourceSlot[] = [];
       for (const { sourceId, stacks } of deduped.values()) {
-        linkSourceMap[sourceId] = (linkSourceMap[sourceId] ?? 0) + stacks;
+        pushSourceQueue(sourceQueue, sourceId, stacks, consumed);
       }
-      action.consumedLinkSources = linkSourceMap;
+      action.consumedLinkSources = consumeSourceQueue(sourceQueue);
     }
 
     // Schedule consumption of each link entry at priority 3
