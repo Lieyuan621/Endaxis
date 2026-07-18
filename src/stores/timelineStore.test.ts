@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useTimelineStore } from './timelineStore';
+import { setLocale } from '@/i18n';
 
 describe('timeline skill library editing', () => {
   beforeEach(() => {
@@ -75,6 +76,10 @@ describe('timeline skill library editing', () => {
   });
 
   it('names generic basic attacks as 普攻 and only the final segment as 重击', async () => {
+    // The basic-attack group name is localized (skillType.attack) and the final segment is the
+    // hardcoded 重击, so this test asserts the app's default zh-CN naming; pin the locale since the
+    // test env otherwise detects the host language.
+    setLocale('zh-CN');
     const store = useTimelineStore();
     await store.fetchGameData();
 
