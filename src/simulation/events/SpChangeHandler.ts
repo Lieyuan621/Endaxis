@@ -13,6 +13,10 @@ export class SpChangeHandler implements EventHandler<SpChangeEvent> {
   handle(e: SpChangeEvent, ctx: SimulationContext) {
     let sp = e.payload.spChange;
     const isReturn = e.payload.spType === 'return';
+    const prevSp = ctx.state.team.getSp();
+    const prevRecoverSp = ctx.state.team.getRecoverSp();
+    const prevRefundSp = ctx.state.team.getRefundSp();
+    const prevDebtSp = ctx.state.team.getDebtSp();
 
     // Apply recovery modifiers only to positive recovery-type SP gains
     if (sp > 0 && !isReturn) {
@@ -63,18 +67,24 @@ export class SpChangeHandler implements EventHandler<SpChangeEvent> {
       }
     }
 
+    const currentSp = ctx.state.team.getSp();
     const spType = isReturn ? 'return' : 'recovery';
 
     ctx.simLog({
       type: 'SP_CHANGE',
       time: e.time,
       payload: {
-        sp: ctx.state.team.getSp(),
+        sp: currentSp,
         change: sp,
+        actualChange: currentSp - prevSp,
+        prevSp,
         actorId: e.payload.actorId,
         sourceId: e.payload.sourceId,
         reason: e.payload.reason,
         spType,
+        prevRecoverSp,
+        prevRefundSp,
+        prevDebtSp,
         recoverSp: ctx.state.team.getRecoverSp(),
         refundSp: ctx.state.team.getRefundSp(),
         debtSp: ctx.state.team.getDebtSp(),

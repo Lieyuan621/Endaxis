@@ -19,6 +19,7 @@ import { useI18n } from 'vue-i18n';
 import { snapMs } from '@/utils/precision';
 import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time';
 import { toLegacyDisplayType } from '@/utils/hitModel';
+import { sampleSpSeriesAtTime } from '@/simulation/projection/projectSpSeries';
 import { getGearPiece, getEnemy, getOperator } from '@/data';
 import {
   getGameClassName,
@@ -1781,35 +1782,32 @@ function onActionContextMenu(evt, action) {
 // ===================================================================================
 
 const cachedSpData = computed(() => store.spSeries || []);
-const currentSpValue = computed(() => {
-  const time = store.cursorCurrentTime;
+const currentSpSample = computed(() => {
   const points = cachedSpData.value;
   if (!points || points.length === 0) {
     const val = Number(store.systemConstants.initialSp);
-    return isNaN(val) ? 200 : val;
+    return { sp: isNaN(val) ? 200 : val, refundSp: 0 };
   }
-  for (let i = 0; i < points.length - 1; i++) {
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    if (time >= p1.time && time < p2.time) {
-      const progress = (time - p1.time) / (p2.time - p1.time);
-      const val = p1.sp + (p2.sp - p1.sp) * progress;
-      return Math.floor(val);
-    }
-  }
-  return Math.floor(points[points.length - 1].sp);
+  return sampleSpSeriesAtTime(points, store.cursorCurrentTime);
+});
+
+const currentSpValue = computed(() => {
+  return Math.floor(Number(currentSpSample.value.sp) || 0);
 });
 
 const currentReturnedSpValue = computed(() => {
+  const points = cachedSpData.value;
+  if (points?.length) return Math.floor(Number(currentSpSample.value.refundSp) || 0);
+
+  let fallback = 0;
   const time = store.cursorCurrentTime;
-  let value = 0;
   for (const entry of store.simLog || []) {
     if (entry?.type !== 'SP_CHANGE') continue;
     if (Number(entry.time) <= time && entry.payload?.refundSp != null) {
-      value = Number(entry.payload.refundSp) || 0;
+      fallback = Number(entry.payload.refundSp) || 0;
     }
   }
-  return Math.floor(value);
+  return Math.floor(fallback);
 });
 
 const currentSpReturnText = computed(() => {

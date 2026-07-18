@@ -166,6 +166,11 @@ export type SimLogEntry =
         sourceId: string;
         reason: string;
         spType?: 'recovery' | 'return';
+        prevSp?: number;
+        actualChange?: number;
+        prevRecoverSp?: number;
+        prevRefundSp?: number;
+        prevDebtSp?: number;
         recoverSp?: number;
         refundSp?: number;
         debtSp?: number;

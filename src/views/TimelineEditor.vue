@@ -16,6 +16,7 @@ import PropertiesPanel from '../components/PropertiesPanel.vue';
 import ResourceMonitor from '../components/ResourceMonitor.vue';
 import SimLogPanel from '../components/SimLogPanel.vue';
 import DamageAnalysisDialog from '../components/DamageAnalysisDialog.vue';
+import LoadingTerminal from '../components/LoadingTerminal.vue';
 
 import { addMetadataToPng, readMetadataFromPng } from '../utils/pngUtils';
 
@@ -863,12 +864,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="store.isLoading" class="loading-screen">
-    <div class="loading-content">
-      <div class="spinner"></div>
-      <p>{{ t('timeline.loading') }}</p>
-    </div>
-  </div>
+  <LoadingTerminal v-if="store.isLoading" full-screen :message="t('timeline.loading')" scanner />
 
   <div
     v-if="!store.isLoading"
@@ -2268,41 +2264,6 @@ onUnmounted(() => {
 .resource-monitor-panel__body {
   background: #252526;
   position: relative;
-}
-
-/* Loading */
-.loading-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #18181c;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #888;
-  font-size: 14px;
-}
-.loading-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid #333;
-  border-top-color: #ffd700;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Export Dialog Styles */
