@@ -4,6 +4,7 @@ import source from './ResourceMonitor.vue?raw';
 describe('ResourceMonitor structure', () => {
   test('enemy status effect icons and duration bars hover independently without scaling', () => {
     expect(source).toContain('getTypeTitle');
+    expect(source).toContain('pickRepresentativePhysicalMarker');
     expect(source).toContain(':title="getTypeTitle(it.typeKey)"');
     expect(source).toContain('.anomaly-icon-box:hover');
     expect(source).toContain('.anomaly-icon-box:hover .anomaly-icon');

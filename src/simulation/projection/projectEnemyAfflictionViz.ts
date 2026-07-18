@@ -51,6 +51,96 @@ const PHYSICAL_MARKER_PRIORITY: Record<string, number> = {
   vulnerability: 100,
 };
 
+export type PhysicalMarkerLike = {
+  typeKey: string;
+  stacks?: number;
+  icon?: string | null;
+  sourceId?: string;
+  time?: number;
+  row?: number;
+};
+
+/**
+ * Pick the icon/stacks shown for a physical combo instant.
+ * Mirrors enemy-state rules: without prior vulnerability, normal physical hits
+ * only seed 1 vulnerability stack, but forced lift/knockdown keep their control icon.
+ */
+export function pickRepresentativePhysicalMarker(
+  markers: PhysicalMarkerLike[],
+  previousStacks: number,
+  activeStacks: number,
+): PhysicalMarkerLike | null {
+  const physicalMarkers = markers.filter(marker => PHYSICAL_REACTION_KEYS.has(marker.typeKey));
+  if (physicalMarkers.length === 0) return null;
+
+  const byPriority = (a: PhysicalMarkerLike, b: PhysicalMarkerLike) =>
+    (PHYSICAL_MARKER_PRIORITY[b.typeKey] || 0) - (PHYSICAL_MARKER_PRIORITY[a.typeKey] || 0);
+
+  if (previousStacks <= 0) {
+    const controlMarker = [...physicalMarkers]
+      .filter(marker => PHYSICAL_STACKING_KEYS.has(marker.typeKey))
+      .sort(byPriority)[0];
+    if (controlMarker) {
+      return {
+        typeKey: controlMarker.typeKey,
+        time: controlMarker.time,
+        stacks: Math.min(4, Math.max(1, Number(controlMarker.stacks) || 1)),
+        icon: controlMarker.icon ?? null,
+        row: 0,
+        sourceId: controlMarker.sourceId,
+      };
+    }
+
+    return {
+      typeKey: 'vulnerability',
+      time: physicalMarkers[0]!.time,
+      stacks: 1,
+      icon: null,
+      row: 0,
+      sourceId: physicalMarkers[0]!.sourceId,
+    };
+  }
+
+  const representative = [...physicalMarkers].sort(byPriority)[0]!;
+
+  if (PHYSICAL_CONSUMING_KEYS.has(representative.typeKey)) {
+    return {
+      typeKey: representative.typeKey,
+      time: representative.time,
+      stacks: Math.min(
+        4,
+        Math.max(previousStacks, ...physicalMarkers.map(marker => Number(marker.stacks) || 1)),
+      ),
+      icon: representative.icon ?? null,
+      row: 0,
+      sourceId: representative.sourceId,
+    };
+  }
+
+  if (PHYSICAL_STACKING_KEYS.has(representative.typeKey)) {
+    return {
+      typeKey: representative.typeKey,
+      time: representative.time,
+      stacks: Math.min(4, Math.max(activeStacks, previousStacks + 1)),
+      icon: representative.icon ?? null,
+      row: 0,
+      sourceId: representative.sourceId,
+    };
+  }
+
+  return {
+    typeKey: representative.typeKey,
+    time: representative.time,
+    stacks: Math.min(
+      4,
+      Math.max(activeStacks, previousStacks, Number(representative.stacks) || 1),
+    ),
+    icon: representative.icon ?? null,
+    row: 0,
+    sourceId: representative.sourceId,
+  };
+}
+
 function emptyEnemyAfflictionViz() {
   return {
     physical: { segments: [], markers: [] } as EnemyAfflictionGroup,
@@ -224,64 +314,6 @@ function getPhysicalMarkerPriority(typeKey: string) {
   return PHYSICAL_MARKER_PRIORITY[typeKey] || 0;
 }
 
-function getRepresentativePhysicalMarker(
-  markers: EnemyAfflictionMarker[],
-  previousStacks: number,
-  activeStacks: number,
-): EnemyAfflictionMarker | null {
-  const physicalMarkers = markers.filter(marker => PHYSICAL_REACTION_KEYS.has(marker.typeKey));
-  if (physicalMarkers.length === 0) return null;
-
-  if (previousStacks <= 0) {
-    return {
-      typeKey: 'vulnerability',
-      time: physicalMarkers[0]!.time,
-      stacks: 1,
-      icon: null,
-      row: 0,
-      sourceId: physicalMarkers[0]!.sourceId,
-    };
-  }
-
-  const representative = [...physicalMarkers].sort(
-    (a, b) => getPhysicalMarkerPriority(b.typeKey) - getPhysicalMarkerPriority(a.typeKey),
-  )[0]!;
-
-  if (PHYSICAL_CONSUMING_KEYS.has(representative.typeKey)) {
-    return {
-      typeKey: representative.typeKey,
-      time: representative.time,
-      stacks: Math.min(
-        4,
-        Math.max(previousStacks, ...physicalMarkers.map(marker => Number(marker.stacks) || 1)),
-      ),
-      icon: representative.icon,
-      row: 0,
-      sourceId: representative.sourceId,
-    };
-  }
-
-  if (PHYSICAL_STACKING_KEYS.has(representative.typeKey)) {
-    return {
-      typeKey: representative.typeKey,
-      time: representative.time,
-      stacks: Math.min(4, Math.max(activeStacks, previousStacks + 1)),
-      icon: representative.icon,
-      row: 0,
-      sourceId: representative.sourceId,
-    };
-  }
-
-  return {
-    typeKey: representative.typeKey,
-    time: representative.time,
-    stacks: Math.min(4, Math.max(activeStacks, previousStacks, Number(representative.stacks) || 1)),
-    icon: representative.icon,
-    row: 0,
-    sourceId: representative.sourceId,
-  };
-}
-
 function normalizePhysicalMarkers(group: EnemyAfflictionGroup) {
   const epsilon = 0.001;
   const groups = new Map<number, EnemyAfflictionMarker[]>();
@@ -306,8 +338,17 @@ function normalizePhysicalMarkers(group: EnemyAfflictionGroup) {
 
       const previousStacks = getPreviousPhysicalComboStacks(group.segments, time, epsilon);
       const activeStacks = getActivePhysicalComboStacks(group.segments, time, epsilon);
-      const representative = getRepresentativePhysicalMarker(markers, previousStacks, activeStacks);
-      if (representative) return withDamageHits(representative);
+      const picked = pickRepresentativePhysicalMarker(markers, previousStacks, activeStacks);
+      if (picked) {
+        return withDamageHits({
+          typeKey: picked.typeKey,
+          time: Number(picked.time) || 0,
+          stacks: Number(picked.stacks) || 1,
+          icon: picked.icon ?? null,
+          row: Number(picked.row) || 0,
+          sourceId: picked.sourceId,
+        });
+      }
 
       return withDamageHits(
         [...markers].sort(

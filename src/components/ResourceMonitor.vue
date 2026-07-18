@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n';
 import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
 import { getEnemyGameName } from '@/data/gameText';
 import { computeContingencyEnemyHealing } from '@/data/contingencyContracts/criteriaEffects';
+import { pickRepresentativePhysicalMarker } from '@/simulation/projection/projectEnemyAfflictionViz';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -462,8 +463,6 @@ function getPreviousComboStacksAtTime(segments, time, epsilon = 0.001) {
 }
 
 const PHYSICAL_REACTION_MARKERS = new Set(['lift', 'knockdown', 'breach', 'crush']);
-const PHYSICAL_STACKING_MARKERS = new Set(['lift', 'knockdown']);
-const PHYSICAL_CONSUMING_MARKERS = new Set(['breach', 'crush']);
 const PHYSICAL_CANONICAL_ICON_KEYS = new Set([
   'vulnerability',
   'lift',
@@ -652,27 +651,16 @@ const afflictionItems = computed(() => {
           x => !x.isDamageHit && PHYSICAL_REACTION_MARKERS.has(x.typeKey),
         );
         if (comboItems.length > 0) {
-          let representative =
-            [...comboItems].sort(
-              (a, b) => getMarkerPriority(b.typeKey) - getMarkerPriority(a.typeKey),
-            )[0] || comboItems[0];
-          let mergedStacks = 1;
-
-          if (previousComboStacks <= 0) {
-            representative = { typeKey: 'vulnerability', stacks: 1, icon: null };
-          } else if (PHYSICAL_CONSUMING_MARKERS.has(representative.typeKey)) {
-            mergedStacks = Math.min(
-              4,
-              Math.max(previousComboStacks, ...comboItems.map(x => Number(x.stacks) || 1)),
-            );
-          } else if (PHYSICAL_STACKING_MARKERS.has(representative.typeKey)) {
-            mergedStacks = Math.min(4, Math.max(activeComboStacks, previousComboStacks + 1));
-          } else {
-            mergedStacks = Math.min(
-              4,
-              Math.max(activeComboStacks, previousComboStacks, Number(representative?.stacks) || 1),
-            );
-          }
+          const picked = pickRepresentativePhysicalMarker(
+            comboItems,
+            previousComboStacks,
+            activeComboStacks,
+          );
+          const representative = picked || {
+            typeKey: 'vulnerability',
+            stacks: 1,
+            icon: null,
+          };
 
           g.list = g.list.filter(
             x =>
@@ -681,8 +669,9 @@ const afflictionItems = computed(() => {
           );
           g.list.push({
             typeKey: representative?.typeKey || 'vulnerability',
-            stacks: Math.max(1, mergedStacks || Number(representative?.stacks) || 1),
+            stacks: Math.max(1, Number(representative?.stacks) || 1),
             icon: representative?.icon || null,
+            sourceId: representative?.sourceId || null,
           });
         }
       }

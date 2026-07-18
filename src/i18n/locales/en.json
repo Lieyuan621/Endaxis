@@ -157,13 +157,27 @@
       "dialogTitle": "Export Settings",
       "durationHintMax": "Maximum support {max}s",
       "durationLabel": "Export Duration (seconds)",
-      "exportImage": "Export Image",
+      "smallDurationHint": "Battle time only — prep (negative) is not included",
+      "exportImage": "Export Long Image",
+      "exportSmallImage": "Export Small Image",
       "exportJson": "Export JSON",
       "failed": "Export failed: {msg}",
       "filenameLabel": "File Name",
       "filenamePlaceholder": "Please enter file name",
       "imageExported": "Timeline image exported: {filename}",
-      "rendering": "Rendering timeline image for the first {seconds} seconds..."
+      "rendering": "Rendering timeline image for the first {seconds} seconds...",
+      "smallPreviewTitle": "Small Image Preview",
+      "saveSmallImage": "Save Image",
+      "cardWidthLabel": "Card Width",
+      "blockHeightLabel": "Skill Block Height",
+      "timeScaleLabel": "Time Scale",
+      "showCombatIcons": "Show combat icons",
+      "showDurationBars": "Show duration bars",
+      "showKeycaps": "Show keycaps",
+      "showPrep": "Show prep phase",
+      "showTimeTicks": "Show time ticks",
+      "smallRendering": "Rendering small image...",
+      "smallImageExported": "Small image exported: {filename}"
     },
     "header": {
       "hideEffectsLabel": "Hide Effects",
@@ -201,9 +215,7 @@
         "title": "Loadout",
         "openAria": "View {name}'s loadout",
         "weapon": "Weapon",
-        "equipment": "Equipment",
-        "none": "Not equipped",
-        "exclusiveBuff": "Exclusive Trait"
+        "equipment": "Equipment"
       },
       "actionInfo": {
         "title": "Skill Info",

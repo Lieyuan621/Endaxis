@@ -17,6 +17,7 @@ import ResourceMonitor from '../components/ResourceMonitor.vue';
 import SimLogPanel from '../components/SimLogPanel.vue';
 import DamageAnalysisDialog from '../components/DamageAnalysisDialog.vue';
 import LoadingTerminal from '../components/LoadingTerminal.vue';
+import SmallImageExportDialog from '../components/SmallImageExportDialog.vue';
 
 import { addMetadataToPng, readMetadataFromPng } from '../utils/pngUtils';
 import {
@@ -551,12 +552,23 @@ async function handleWindowDrop(e) {
 // === 导出长图相关 ===
 const exportDialogVisible = ref(false);
 const exportForm = ref({ filename: '', duration: 60 });
+const smallImageExportVisible = ref(false);
 
 function openExportDialog() {
   const dateStr = new Date().toISOString().slice(0, 10);
   exportForm.value.filename = `Endaxis_Timeline_${dateStr}`;
   exportForm.value.duration = 60;
   exportDialogVisible.value = true;
+}
+
+function openSmallImageExport() {
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const current = String(exportForm.value.filename || '').trim();
+  if (!current || /^Endaxis_Timeline_/i.test(current)) {
+    exportForm.value.filename = `Endaxis_Card_${dateStr}`;
+  }
+  exportDialogVisible.value = false;
+  smallImageExportVisible.value = true;
 }
 
 function handleExportJson() {
@@ -1553,9 +1565,9 @@ onUnmounted(() => {
     <el-dialog
       v-model="exportDialogVisible"
       :title="t('timeline.export.dialogTitle')"
-      width="460px"
+      width="640px"
       align-center
-      class="custom-dialog"
+      class="custom-dialog export-settings-dialog"
     >
       <div class="export-form">
         <div class="form-item">
@@ -1607,6 +1619,13 @@ onUnmounted(() => {
           <button
             type="button"
             class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold"
+            @click="openSmallImageExport"
+          >
+            {{ t('timeline.export.exportSmallImage') }}
+          </button>
+          <button
+            type="button"
+            class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold"
             @click="processExport"
           >
             {{ t('timeline.export.exportImage') }}
@@ -1614,6 +1633,12 @@ onUnmounted(() => {
         </span>
       </template>
     </el-dialog>
+
+    <SmallImageExportDialog
+      v-model="smallImageExportVisible"
+      :initial-filename="exportForm.filename"
+      :initial-duration="exportForm.duration"
+    />
 
     <el-dialog
       v-model="importShareDialogVisible"
@@ -2361,9 +2386,19 @@ onUnmounted(() => {
 }
 .dialog-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   width: 100%;
+}
+.dialog-footer .ea-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-width: max-content;
+}
+.export-settings-dialog .dialog-footer {
+  gap: 8px 10px;
 }
 .form-item label {
   display: block;

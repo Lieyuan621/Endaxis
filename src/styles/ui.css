@@ -538,6 +538,74 @@
   white-space: nowrap;
 }
 
+/* Native range — same gold thumb language as timeline zoom (davinci-range). */
+.ea-range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ea-range {
+  --ea-range-track: #555;
+  --ea-range-thumb: var(--ea-gold);
+
+  flex: 1;
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: var(--ea-range-track);
+  outline: none;
+  border-radius: 1px;
+  cursor: pointer;
+}
+
+.ea-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  background: var(--ea-range-thumb);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid #333;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  transition: transform 0.1s ease;
+}
+
+.ea-range::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  background: #fff;
+}
+
+.ea-range::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: var(--ea-range-thumb);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.ea-range::-moz-range-track {
+  height: 2px;
+  background: var(--ea-range-track);
+  border: none;
+  border-radius: 1px;
+}
+
+.ea-range-value {
+  flex: 0 0 auto;
+  min-width: 2.5em;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 @keyframes ea-pulse {
   0% {
     opacity: 1;

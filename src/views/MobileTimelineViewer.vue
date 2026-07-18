@@ -25,6 +25,8 @@ import {
 } from '@/data/gameText';
 import { resolveLeveled } from '@/data/types';
 import { toLegacyDisplayType } from '@/utils/hitModel';
+import { collectActionCombatBadges } from '@/utils/actionCombatIcons';
+import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
 import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
@@ -450,17 +452,35 @@ function formatAxisLabel(viewTime) {
   return `${formatSec(viewTime)}s`;
 }
 
-function getActionColor(action) {
-  const displayType = toLegacyDisplayType(action?.type);
-  if (displayType === 'attack') return store.getColor('attack');
-  if (displayType === 'skill') return store.getColor('skill');
-  if (displayType === 'link') return store.getColor('link');
-  if (displayType === 'execution') return store.getColor('execution');
-  if (displayType === 'dive') return store.getColor('dodge');
-  if (displayType === 'ultimate') return store.getColor('ultimate');
-  if (typeof store.getColor === 'function')
-    return store.getColor(action?.element || displayType || 'default');
-  return '#8c8c8c';
+function getActionColor(action, trackId = null) {
+  const node = getCompiledAction(action)?.node || action;
+  if (node?.customColor) return node.customColor;
+
+  // Match ActionItem themeColor: type overrides first, then element, then operator element.
+  if (node?.type === 'comboSkill') return store.getColor('link');
+  if (node?.type === 'finisher') return store.getColor('execution');
+  if (node?.type === 'basicAttack') return store.getColor('attack');
+  if (node?.type === 'dive') return store.getColor('dodge');
+  if (node?.element) return store.getColor(node.element);
+
+  const resolvedTrackId =
+    trackId ||
+    action?.trackId ||
+    (() => {
+      const id = action?.instanceId;
+      if (!id) return null;
+      for (const track of store.tracks || []) {
+        if (Array.isArray(track?.actions) && track.actions.some(a => a?.instanceId === id)) {
+          return track.id;
+        }
+      }
+      return null;
+    })();
+
+  if (resolvedTrackId && typeof store.getCharacterElementColor === 'function') {
+    return store.getCharacterElementColor(resolvedTrackId);
+  }
+  return store.getColor('default');
 }
 
 function normalizeDuration(action) {
@@ -497,16 +517,17 @@ function getVisualActionDuration(action) {
   return Math.max(0.1, end - start);
 }
 
-function getActionStyle(action) {
+function getActionStyle(action, track = null) {
   const start = getVisualActionStartTime(action);
   const duration = getVisualActionDuration(action);
   const top = timeToY(start);
   const bottom = timeToY(start + duration);
   const height = Math.max(16, bottom - top);
 
-  const color = getActionColor(action);
+  const node = getCompiledAction(action)?.node || action;
+  const color = getActionColor(action, track?.id);
   const isDisabled = !!action?.isDisabled;
-  const isAttack = toLegacyDisplayType(action?.type) === 'attack';
+  const isAttack = node?.type === 'basicAttack' || toLegacyDisplayType(node?.type) === 'attack';
 
   return {
     top: `${top}px`,
@@ -531,6 +552,65 @@ function getVisibleActions(track) {
 
     return true;
   });
+}
+
+function getActionCombatBadges(track, action) {
+  const node = getCompiledAction(action)?.node || action;
+  return collectActionCombatBadges({
+    action: node,
+    trackId: track?.id || null,
+    startTime: getVisualActionStartTime(action),
+    endTime: getVisualActionEndTime(action),
+    viz: store.enemyAfflictionViz,
+    iconDatabase: store.iconDatabase,
+  });
+}
+
+function getVisibleActionEntries(track) {
+  return getVisibleActions(track).map(action => {
+    const badges = getActionCombatBadges(track, action);
+    return {
+      action,
+      badges,
+      durationBars: badges
+        .filter(badge => !badge.isMarker && badge.duration > 0)
+        .map((badge, index) => ({
+          ...badge,
+          lane: index,
+          color: typeof store.getColor === 'function' ? store.getColor(badge.key) : '#aaaaaa',
+        })),
+    };
+  });
+}
+
+function getCombatIconTitle(typeKey) {
+  void locale.value;
+  for (const candidate of getDisplayKeyCandidates(typeKey)) {
+    const localeKey = `effects.name.${candidate}`;
+    const out = t(localeKey);
+    if (out !== localeKey) return out;
+  }
+  return String(typeKey || '');
+}
+
+function getDurationBarStyle(bar) {
+  const top = Math.round(timeToY(bar.startTime));
+  const bottom = Math.round(timeToY(bar.endTime ?? bar.startTime + bar.duration));
+  const height = Math.max(10, bottom - top);
+  const lane = Number(bar.lane) || 0;
+  return {
+    top: `${top}px`,
+    height: `${height}px`,
+    right: `${2 + lane * 10}px`,
+    color: bar.color || '#aaaaaa',
+  };
+}
+
+function formatBadgeDuration(duration) {
+  if (typeof store.formatTimeLabel === 'function') {
+    return store.formatTimeLabel(duration);
+  }
+  return `${formatSec(duration)}s`;
 }
 
 function openActionInfo(instanceId) {
@@ -620,6 +700,19 @@ const resolvedActionStats = computed(() => {
     });
   }
   return rows;
+});
+
+const resolvedActionCombatIcons = computed(() => {
+  const action = resolvedAction.value;
+  if (!action) return [];
+  return collectActionCombatBadges({
+    action: action.node || action,
+    trackId: action.trackId || null,
+    startTime: Number(action.realStartTime) || 0,
+    endTime: Number(resolvedActionEndTime.value) || Number(action.realStartTime) || 0,
+    viz: store.enemyAfflictionViz,
+    iconDatabase: store.iconDatabase,
+  });
 });
 
 watch(
@@ -1044,18 +1137,51 @@ async function doImport() {
 
           <div v-for="(track, idx) in tracks" :key="idx" class="mobile-track-col">
             <div class="mobile-actions-layer">
-              <div
-                v-for="action in getVisibleActions(track)"
-                :key="action.instanceId"
-                class="mobile-action-block"
-                :style="getActionStyle(action)"
-                :class="{
-                  'is-info-target': actionInfoOpen && selectedActionId === action.instanceId,
-                }"
-                @click.stop="openActionInfo(action.instanceId)"
+              <template
+                v-for="entry in getVisibleActionEntries(track)"
+                :key="entry.action.instanceId"
               >
-                <span class="mobile-action-text">{{ getTypeLabel(action) }}</span>
-              </div>
+                <div
+                  v-for="bar in entry.durationBars"
+                  :key="`dur_${entry.action.instanceId}_${bar.id}`"
+                  class="mobile-cd-ibar"
+                  :style="getDurationBarStyle(bar)"
+                  :title="`${getCombatIconTitle(bar.key)} · ${formatBadgeDuration(bar.duration)}`"
+                >
+                  <div class="mobile-cd-ibar__start"></div>
+                  <div class="mobile-cd-ibar__line"></div>
+                  <div class="mobile-cd-ibar__end"></div>
+                  <span class="mobile-cd-ibar__text">{{ formatBadgeDuration(bar.duration) }}</span>
+                </div>
+
+                <div
+                  class="mobile-action-block"
+                  :style="getActionStyle(entry.action, track)"
+                  :class="{
+                    'is-info-target':
+                      actionInfoOpen && selectedActionId === entry.action.instanceId,
+                  }"
+                  @click.stop="openActionInfo(entry.action.instanceId)"
+                >
+                  <span class="mobile-action-text">{{ getTypeLabel(entry.action) }}</span>
+                  <div v-if="entry.badges.length" class="mobile-action-icons">
+                    <div
+                      v-for="badge in entry.badges"
+                      :key="`${entry.action.instanceId}_${badge.id}`"
+                      class="mobile-action-icon-box"
+                      :title="getCombatIconTitle(badge.key)"
+                    >
+                      <img
+                        class="mobile-action-icon"
+                        :src="withBaseUrl(badge.icon)"
+                        :alt="getCombatIconTitle(badge.key)"
+                        @error="onAssetError"
+                      />
+                      <span class="mobile-action-stacks">{{ badge.stacks }}</span>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -1116,6 +1242,33 @@ async function doImport() {
                   <span class="mono">{{ resolvedOperator?.name || resolvedAction.trackId }}</span>
                   <span class="dot">·</span>
                   <span class="mono">{{ getTypeLabel(resolvedAction.node) }}</span>
+                </div>
+                <div
+                  v-if="resolvedActionCombatIcons.length"
+                  class="actioninfo-combat-icons"
+                >
+                  <div
+                    v-for="icon in resolvedActionCombatIcons"
+                    :key="`info_${icon.id}`"
+                    class="actioninfo-combat-item"
+                    :title="getCombatIconTitle(icon.key)"
+                  >
+                    <div class="actioninfo-combat-icon-box">
+                      <img
+                        class="actioninfo-combat-icon"
+                        :src="withBaseUrl(icon.icon)"
+                        :alt="getCombatIconTitle(icon.key)"
+                        @error="onAssetError"
+                      />
+                      <span class="actioninfo-combat-stacks">{{ icon.stacks }}</span>
+                    </div>
+                    <div class="actioninfo-combat-meta">
+                      <div class="actioninfo-combat-name">{{ getCombatIconTitle(icon.key) }}</div>
+                      <div v-if="!icon.isMarker && icon.duration > 0" class="actioninfo-combat-dur">
+                        {{ formatBadgeDuration(icon.duration) }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1794,15 +1947,57 @@ async function doImport() {
 
 .mobile-action-block {
   position: absolute;
-  left: 6px;
-  right: 6px;
+  left: 4px;
+  right: 4px;
   border: 1px solid transparent;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 0;
+  z-index: 4;
+}
+
+.mobile-action-icons {
+  position: absolute;
+  right: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.mobile-action-icon-box {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.mobile-action-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.mobile-action-stacks {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  min-width: 10px;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffd700;
+  font-size: 8px;
+  line-height: 1.1;
+  font-weight: 800;
+  text-align: center;
 }
 
 .mobile-action-text {
@@ -1813,8 +2008,47 @@ async function doImport() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 4px;
+  padding: 0 18px;
   letter-spacing: 1px;
+  text-align: center;
+  max-width: 100%;
+}
+
+.mobile-cd-ibar {
+  position: absolute;
+  width: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mobile-cd-ibar__line {
+  flex: 1 1 auto;
+  width: 2px;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.mobile-cd-ibar__start,
+.mobile-cd-ibar__end {
+  width: 8px;
+  height: 1px;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+
+.mobile-cd-ibar__text {
+  position: absolute;
+  left: 6px;
+  top: 0;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  color: currentColor;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
 }
 
 :deep(.el-dialog) {
@@ -2060,6 +2294,68 @@ async function doImport() {
   gap: 6px;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.55);
+}
+
+.actioninfo-combat-icons {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.actioninfo-combat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.actioninfo-combat-icon-box {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.actioninfo-combat-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  object-fit: contain;
+}
+
+.actioninfo-combat-stacks {
+  position: absolute;
+  right: -4px;
+  bottom: -3px;
+  min-width: 11px;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffd700;
+  font-size: 9px;
+  line-height: 1.1;
+  font-weight: 800;
+  text-align: center;
+}
+
+.actioninfo-combat-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.actioninfo-combat-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.actioninfo-combat-dur {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family:
+    'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
 }
 
 .actioninfo-hero__time {

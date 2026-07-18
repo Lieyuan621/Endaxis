@@ -159,13 +159,27 @@
       "dialogTitle": "导出设置",
       "durationHintMax": "最大支持 {max}s",
       "durationLabel": "导出时长 (秒)",
-      "exportImage": "导出图片",
+      "smallDurationHint": "按战斗时间计算，不含备战（负数）段",
+      "exportImage": "导出长图",
+      "exportSmallImage": "导出小图",
       "exportJson": "导出 JSON",
       "failed": "导出失败：{msg}",
       "filenameLabel": "文件名称",
       "filenamePlaceholder": "请输入文件名",
       "imageExported": "长图已导出：{filename}",
-      "rendering": "正在渲染前 {seconds} 秒的长图..."
+      "rendering": "正在渲染前 {seconds} 秒的长图...",
+      "smallPreviewTitle": "小图预览与微调",
+      "saveSmallImage": "保存图片",
+      "cardWidthLabel": "整图宽度",
+      "blockHeightLabel": "技能块高度",
+      "timeScaleLabel": "时间格高度",
+      "showCombatIcons": "显示异常/附着图标",
+      "showDurationBars": "显示持续时间",
+      "showKeycaps": "显示操作键位",
+      "showPrep": "显示战前准备",
+      "showTimeTicks": "显示时间刻度",
+      "smallRendering": "正在渲染小图...",
+      "smallImageExported": "小图已导出：{filename}"
     },
     "header": {
       "hideEffectsLabel": "隐藏效果",
@@ -203,9 +217,7 @@
         "title": "干员配装",
         "openAria": "查看 {name} 配装",
         "weapon": "武器",
-        "equipment": "装备",
-        "none": "未装备",
-        "exclusiveBuff": "专属特质"
+        "equipment": "装备"
       },
       "actionInfo": {
         "title": "技能信息",

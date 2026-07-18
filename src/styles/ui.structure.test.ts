@@ -23,4 +23,10 @@ describe('global icon button styling', () => {
     expect(source).toContain(".ea-check-rect input[type='checkbox']:checked");
     expect(source).toContain('--ea-check-accent');
   });
+
+  test('defines reusable gold range slider styling', () => {
+    expect(source).toContain('.ea-range');
+    expect(source).toContain('.ea-range-row');
+    expect(source).toContain('--ea-range-thumb');
+  });
 });

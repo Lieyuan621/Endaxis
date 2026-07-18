@@ -157,13 +157,27 @@
       "dialogTitle": "Настройки экспорта",
       "durationHintMax": "Максимум {max}с",
       "durationLabel": "Длительность экспорта (сек.)",
-      "exportImage": "Экспорт изображения",
+      "smallDurationHint": "Только боевое время — подготовка (отрицательная) не входит",
+      "exportImage": "Экспорт длинного изображения",
+      "exportSmallImage": "Экспорт миниатюры",
       "exportJson": "Экспорт JSON",
       "failed": "Ошибка экспорта: {msg}",
       "filenameLabel": "Имя файла",
       "filenamePlaceholder": "Введите имя файла",
       "imageExported": "Изображение таймлайна экспортировано: {filename}",
-      "rendering": "Рендеринг изображения таймлайна для первых {seconds} сек..."
+      "rendering": "Рендеринг изображения таймлайна для первых {seconds} сек...",
+      "smallPreviewTitle": "Превью миниатюры",
+      "saveSmallImage": "Сохранить изображение",
+      "cardWidthLabel": "Ширина карточки",
+      "blockHeightLabel": "Высота блока навыка",
+      "timeScaleLabel": "Масштаб времени",
+      "showCombatIcons": "Показывать иконки статусов",
+      "showDurationBars": "Показывать длительность",
+      "showKeycaps": "Показывать клавиши",
+      "showPrep": "Показывать подготовку",
+      "showTimeTicks": "Показывать шкалу времени",
+      "smallRendering": "Рендеринг миниатюры...",
+      "smallImageExported": "Миниатюра экспортирована: {filename}"
     },
     "header": {
       "hideEffectsLabel": "Скрыть эффекты",
@@ -201,9 +215,7 @@
         "title": "Экипировка",
         "openAria": "Посмотреть экипировку: {name}",
         "weapon": "Оружие",
-        "equipment": "Снаряжение",
-        "none": "Не экипировано",
-        "exclusiveBuff": "Уникальная черта"
+        "equipment": "Снаряжение"
       },
       "actionInfo": {
         "title": "Информация о навыке",
