@@ -1017,6 +1017,7 @@
     "disabledTitle": "已禁用：不参与计算",
     "requisiteTitle": {
       "comboWindow": "不在连携窗口内",
+      "comboOrder": "连携技释放顺序错误，需先释放{operator}的连携技",
       "spInsufficient": "技力不足，需要{need}，当前{current}",
       "gaugeInsufficient": "终结技能量不足，需要{need}，当前{current}"
     }

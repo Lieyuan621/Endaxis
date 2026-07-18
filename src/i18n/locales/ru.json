@@ -898,6 +898,12 @@
   "actionItem": {
     "damageHitTooltip": "Урон: {damage}",
     "lockedTitle": "Заблокировано",
-    "disabledTitle": "Отключено"
+    "disabledTitle": "Отключено",
+    "requisiteTitle": {
+      "comboWindow": "Вне окна комбо",
+      "comboOrder": "Неверный порядок комбо: сначала используйте комбо {operator}",
+      "spInsufficient": "Недостаточно SP, нужно {need}, сейчас {current}",
+      "gaugeInsufficient": "Недостаточно шкалы, нужно {need}, сейчас {current}"
+    }
   }
 }

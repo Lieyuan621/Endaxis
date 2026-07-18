@@ -1015,6 +1015,7 @@
     "disabledTitle": "Disabled",
     "requisiteTitle": {
       "comboWindow": "Not in combo window",
+      "comboOrder": "Wrong combo skill order. Release {operator}'s combo skill first",
       "spInsufficient": "Insufficient SP, need {need}, current {current}",
       "gaugeInsufficient": "Insufficient gauge, need {need}, current {current}"
     }
