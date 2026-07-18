@@ -31,9 +31,7 @@ describe('scheduleDotTicks', () => {
     const ticks = enqueued.filter(e => e.type === 'DOT_TICK');
     expect(ticks.length).toBeGreaterThan(0);
     for (const e of ticks) {
-      // A DoT tick must not inherit the source skill's skillType (regression guard)...
       expect(e.payload.skillType).toBeUndefined();
-      // ...but skillId scoping is still honored.
       expect(e.payload.skillId).toBe('skill1');
     }
   });

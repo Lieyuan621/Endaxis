@@ -185,9 +185,8 @@ export class HitHandler implements EventHandler<HitEvent> {
 
       const element = reactionMeta.element;
       const enemyResistance = getEnemyResistanceValue(ctx, element);
-      // Synthetic (treatAsReaction) hits still scale by the operator-level coefficient — a crush
-      // dealt via treatAsReaction levels exactly like a real crush. `synthetic` only suppresses the
-      // reaction marker / vulnerability consumption / reaction triggers, not the level coefficient.
+      // Synthetic (treatAsReaction) hits scale by the level coefficient too — synthetic only
+      // suppresses the reaction marker/vulnerability/triggers, not the coefficient.
       const levelCoeff = computeLevelCoefficient(
         operatorLevel,
         reactionMeta.reactionType as ReactionDamageType,

@@ -270,8 +270,7 @@ export function computeStats(
         atkPercent += pct;
         break;
       case 'attributeAtkPercent':
-        // Sheet effects are converted to per-attribute coefficients in Phase 2 (attrAtkCoeff) and
-        // skipped there; dynamic (runtime) mods arrive here pre-resolved and contribute directly.
+        // Dynamic (runtime) mods arrive pre-resolved here; sheet effects were converted in Phase 2.
         attrAtkBonusDelta += pct;
         break;
       case 'atkFlat':

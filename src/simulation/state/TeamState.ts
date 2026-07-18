@@ -151,9 +151,8 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
   }
 
   private regenSp(dt: number) {
-    // Keep regen running while below cap (room to grow / repay debt) OR there is refund SP left to
-    // displace. Natural regen goes to the recover pool and trimOverflow('recover') then reduces
-    // refund SP first, converting refund → recover so a later spend draws recover SP (grants UE).
+    // Keep regen running while refund SP remains to displace: regen adds to recover and
+    // trimOverflow('recover') converts refund → recover (so a later spend draws recover SP → UE).
     if (this.recoverSp >= this.config.maxSp && this.refundSp <= 0) {
       return;
     }

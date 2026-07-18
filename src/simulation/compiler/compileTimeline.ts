@@ -159,9 +159,8 @@ function resolveAction(
     });
   });
 
-  // The last hit of a completed basic-attack sequence is tagged 'finalStrike' so finalStrike-scoped
-  // modifiers (e.g. last-rite, sundered-prince) match. Mirrors TriggerRegistry.onFinalStrike gating:
-  // sequenceIndex/sequenceTotal, with the attackSequence* fallback; sequenceTotal 0 = single hit.
+  // Tag the last hit of a completed basic-attack sequence 'finalStrike' (mirrors
+  // TriggerRegistry.onFinalStrike gating; sequenceTotal 0 = single hit).
   const seqNode = action as any;
   const sequenceIndex = Number(seqNode.sequenceIndex ?? seqNode.attackSequenceIndex) || 0;
   const sequenceTotal = Number(seqNode.sequenceTotal ?? seqNode.attackSequenceTotal) || 0;

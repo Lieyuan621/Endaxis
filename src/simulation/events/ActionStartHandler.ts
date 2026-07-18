@@ -116,11 +116,8 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
       if (!action.consumedStacks) action.consumedStacks = {};
       action.consumedStacks.link = consumed;
 
-      // Stamp per-source link attribution for LMDI. Attribute only the actually-consumed stacks
-      // (FIFO, newest kept) via a source queue capped at `consumed`, rather than crediting every
-      // source its full stacks — so the breakdown sums to `consumed` even when total link stacks
-      // exceed the cap. (Ordering uses collection order as a proxy for application order, since
-      // Endaxis keeps per-source link entries rather than one pooled entry with a live sourceQueue.)
+      // Attribute only the actually-consumed link stacks per source (FIFO, newest kept) so the
+      // breakdown sums to `consumed` rather than over-crediting when total link exceeds the cap.
       const sourceQueue: SourceSlot[] = [];
       for (const { sourceId, stacks } of deduped.values()) {
         pushSourceQueue(sourceQueue, sourceId, stacks, consumed);

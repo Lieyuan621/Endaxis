@@ -963,9 +963,8 @@ export function scheduleDotTicks(
           effectId,
           element: r.element,
           multiplier: tickMultiplier,
-          // A DoT tick is its own damage instance, not a skill hit — it must NOT inherit the source
-          // skill's type, so skill-type-scoped modifiers (dmgBonus/directMultiplier/attack% and the
-          // link multiplier) don't apply. Mirrors reaction damage; skillId/element scoping is kept.
+          // A DoT tick must not inherit the source skill's skillType (skill-type-scoped mods + link
+          // would wrongly apply); skillId/element scoping is kept, mirroring reaction damage.
           skillType: undefined,
           skillId: sourceSkillId,
           canCrit: r.canCrit,

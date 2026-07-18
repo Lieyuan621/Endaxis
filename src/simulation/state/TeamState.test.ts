@@ -40,9 +40,9 @@ describe('TeamState', () => {
     );
 
     team.addSp(40, 'recover');
-    team.addSp(60, 'refund'); // at cap: 40 recover + 60 refund = 100
+    team.addSp(60, 'refund');
 
-    team.advanceTime(10, 5); // 100 SP of regen into recover; overflow displaces refund first
+    team.advanceTime(10, 5);
 
     expect(team.getSp()).toBe(100);
     expect(team.getRefundSp()).toBe(0);

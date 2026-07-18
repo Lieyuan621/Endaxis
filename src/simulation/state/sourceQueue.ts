@@ -1,8 +1,7 @@
 import type { SourceSlot } from '@/simulation/engine/types';
 
 // ─── FIFO source queue helpers ──────────────────────────────────────────────
-// Retain a per-source breakdown while stacks accumulate from multiple appliers
-// (capped, oldest trimmed first) so the consumed stacks can be attributed for LMDI.
+// Retain a per-source breakdown as stacks accumulate (oldest trimmed first) for LMDI attribution.
 
 /** Push stacks to a FIFO source queue, capping total at maxStacks by trimming oldest first. */
 export function pushSourceQueue(

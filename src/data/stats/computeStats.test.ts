@@ -21,8 +21,6 @@ describe('computeStats — dynamic attributeAtkPercent', () => {
       [{ stat: { modifier: 'attributeAtkPercent' }, value: 10 } as unknown as ResolvedStatModifier],
     );
 
-    // With zeroed base attributes the attribute bonus is exactly 1; a +10 attributeAtkPercent
-    // dynamic mod adds +0.10 to that multiplicative bonus (regression guard: this used to be dropped).
     expect(without.attack).toBe(1000);
     expect(withBuff.attack).toBe(1100);
     expect(withBuff.attack).toBeGreaterThan(without.attack);

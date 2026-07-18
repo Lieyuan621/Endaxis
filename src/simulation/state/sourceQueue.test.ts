@@ -13,7 +13,7 @@ describe('sourceQueue', () => {
   it('trims oldest first when total exceeds the cap (keeps newest stacks)', () => {
     const q: SourceSlot[] = [];
     pushSourceQueue(q, 'A', 2, 4);
-    pushSourceQueue(q, 'B', 3, 4); // total 5 > 4 -> drop oldest A by 1
+    pushSourceQueue(q, 'B', 3, 4);
     expect(consumeSourceQueue(q)).toEqual({ A: 1, B: 3 });
   });
 
