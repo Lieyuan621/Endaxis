@@ -963,6 +963,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   const snapStep = ref(FRAME_DURATION);
 
   const draggingSkillData = ref<Record<string, unknown> | null>(null);
+  const isLibraryPlaceMode = ref(false);
 
   const selectedConnectionId = ref<string | null>(null);
   const selectedActionId = ref<string | null>(null);
@@ -3606,8 +3607,35 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function setDraggingSkill(skill: Record<string, unknown>) {
-    draggingSkillData.value = skill;
+  function setDraggingSkill(skill: Record<string, unknown> | null) {
+    if (skill) {
+      beginLibraryPlace(skill);
+      return;
+    }
+    cancelLibraryPlace();
+  }
+
+  function beginLibraryPlace(skill: Record<string, unknown>) {
+    const dragOffsetX = Number(skill.dragOffsetX);
+    const dragOffsetY = Number(skill.dragOffsetY);
+    draggingSkillData.value = {
+      ...skill,
+      librarySource: skill.librarySource || 'character',
+      weaponId: skill.weaponId ?? null,
+      dragOffsetX: Number.isFinite(dragOffsetX) ? dragOffsetX : 10,
+      dragOffsetY: Number.isFinite(dragOffsetY) ? dragOffsetY : 25,
+    };
+    isLibraryPlaceMode.value = true;
+    if (skill.id) selectLibrarySkill(String(skill.id));
+    document.body.classList.add('is-lib-dragging');
+  }
+
+  function cancelLibraryPlace() {
+    const wasActive = isLibraryPlaceMode.value || draggingSkillData.value !== null;
+    isLibraryPlaceMode.value = false;
+    draggingSkillData.value = null;
+    document.body.classList.remove('is-lib-dragging');
+    return wasActive;
   }
 
   function selectTrack(trackRef: number | string | null) {
@@ -5258,6 +5286,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     trackLaneRects,
     nodeRects,
     draggingSkillData,
+    isLibraryPlaceMode,
     lmdiAttributionMode,
     selectedActionId,
     selectedLibrarySkillId,
@@ -5304,6 +5333,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     updateAction,
     addSkillToTrack,
     setDraggingSkill,
+    beginLibraryPlace,
+    cancelLibraryPlace,
     setTimelineShift,
     setScrollTop,
     resetTimelineViewport,

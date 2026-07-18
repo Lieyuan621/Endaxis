@@ -19,10 +19,23 @@ import DamageAnalysisDialog from '../components/DamageAnalysisDialog.vue';
 import LoadingTerminal from '../components/LoadingTerminal.vue';
 
 import { addMetadataToPng, readMetadataFromPng } from '../utils/pngUtils';
+import {
+  createLibraryDragGhost,
+  getDefaultLibraryDragOffsets,
+  positionLibraryDragGhost,
+  removeLibraryDragGhost,
+} from '@/utils/libraryDragGhost';
+import {
+  findLibrarySkillByType,
+  getLibrarySkillTypeFromHotkeyCode,
+  getTrackIndexFromHotkeyEvent,
+} from '@/utils/librarySkillHotkeys';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
 const { copyShareCode, importFromCode } = useShareProject();
+
+const timelineGridRef = ref(null);
 
 const TIMELINE_LAYOUT_KEY = 'endaxis:timeline-workbench-layout:v1';
 const ACTIVITY_BAR_WIDTH = 48;
@@ -425,14 +438,14 @@ watch(
 
 onMounted(() => {
   restoreWorkbenchLayout();
-  window.addEventListener('keydown', handleGlobalKeydown);
+  window.addEventListener('keydown', handleGlobalKeydown, true);
   window.addEventListener('resize', updateScrollMask); // 窗口缩放时重算
   nextTick(() => updateScrollMask());
 });
 
 onUnmounted(() => {
   endWorkbenchResize();
-  window.removeEventListener('keydown', handleGlobalKeydown);
+  window.removeEventListener('keydown', handleGlobalKeydown, true);
   window.removeEventListener('resize', updateScrollMask);
 });
 
@@ -743,6 +756,14 @@ async function handleImportShare() {
   }
 }
 
+function claimShortcutEvent(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (typeof e.stopImmediatePropagation === 'function') {
+    e.stopImmediatePropagation();
+  }
+}
+
 function handleGlobalKeydown(e) {
   const target = e.target;
   if (
@@ -753,8 +774,34 @@ function handleGlobalKeydown(e) {
       target.isContentEditable)
   )
     return;
+
+  if (e.key === 'Escape' && store.isLibraryPlaceMode) {
+    claimShortcutEvent(e);
+    store.cancelLibraryPlace();
+    ElMessage.info({ message: t('timeline.shortcut.placeCancelled'), duration: 800 });
+    return;
+  }
+
+  if (!isLeftPanelCollapsed.value && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    const trackIndex = getTrackIndexFromHotkeyEvent(e);
+    if (trackIndex !== null) {
+      claimShortcutEvent(e);
+      handleLibraryTrackHotkey(trackIndex);
+      return;
+    }
+  }
+
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !isLeftPanelCollapsed.value) {
+    const skillType = getLibrarySkillTypeFromHotkeyCode(e.code);
+    if (skillType) {
+      claimShortcutEvent(e);
+      handleLibrarySkillHotkey(skillType);
+      return;
+    }
+  }
+
   if (e.ctrlKey && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
-    e.preventDefault();
+    claimShortcutEvent(e);
     store.undo();
     ElMessage.info({ message: t('timeline.shortcut.undo'), duration: 800 });
     return;
@@ -763,25 +810,25 @@ function handleGlobalKeydown(e) {
     (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) ||
     (e.ctrlKey && e.shiftKey && (e.key === 'z' || e.key === 'Z'))
   ) {
-    e.preventDefault();
+    claimShortcutEvent(e);
     store.redo();
     ElMessage.info({ message: t('timeline.shortcut.redo'), duration: 800 });
     return;
   }
   if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
-    e.preventDefault();
+    claimShortcutEvent(e);
     store.copySelection();
     ElMessage.success({ message: t('timeline.shortcut.copied'), duration: 800 });
     return;
   }
   if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
-    e.preventDefault();
+    claimShortcutEvent(e);
     store.pasteSelection();
     ElMessage.success({ message: t('timeline.shortcut.pasted'), duration: 800 });
     return;
   }
   if (e.ctrlKey && (e.key === 'g' || e.key === 'G')) {
-    e.preventDefault();
+    claimShortcutEvent(e);
     store.toggleCursorGuide();
     ElMessage.info({
       message: store.showCursorGuide
@@ -792,7 +839,7 @@ function handleGlobalKeydown(e) {
     return;
   }
   if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) {
-    e.preventDefault();
+    claimShortcutEvent(e);
     store.toggleBoxSelectMode();
     ElMessage.info({
       message: store.isBoxSelectMode
@@ -803,7 +850,7 @@ function handleGlobalKeydown(e) {
     return;
   }
   if (e.altKey && (e.key === 's' || e.key === 'S')) {
-    e.preventDefault();
+    claimShortcutEvent(e);
     store.toggleSnapStep();
     const mode =
       store.snapStep < 0.05
@@ -813,7 +860,7 @@ function handleGlobalKeydown(e) {
     return;
   }
   if (e.altKey && (e.key === 'l' || e.key === 'L')) {
-    e.preventDefault();
+    claimShortcutEvent(e);
     store.toggleConnectionTool();
     ElMessage.info({
       message: t('timeline.shortcut.connectionTool', {
@@ -825,8 +872,87 @@ function handleGlobalKeydown(e) {
   }
 }
 
+function getPlaceSkillThemeColor(skill) {
+  if (skill.customColor) return skill.customColor;
+  if (skill.type === 'comboSkill') return store.getColor('link');
+  if (skill.type === 'finisher') return store.getColor('execution');
+  if (skill.type === 'basicAttack') return store.getColor('attack');
+  if (skill.type === 'dive') return store.getColor('dodge');
+  if (skill.type === 'battleSkill')
+    return skill.element ? store.getColor(skill.element) : store.getColor('skill');
+  if (skill.type === 'ultimate')
+    return skill.element ? store.getColor(skill.element) : store.getColor('ultimate');
+  if (skill.element) return store.getColor(skill.element);
+  return store.getColor('default');
+}
+
+function handleLibraryTrackHotkey(trackIndex) {
+  if (trackIndex < 0 || trackIndex >= store.tracks.length) return;
+  const track = store.tracks[trackIndex];
+  store.selectTrack(trackIndex);
+  if (!track?.id) {
+    timelineGridRef.value?.openCharacterSelector(trackIndex);
+  }
+}
+
+function handleLibrarySkillHotkey(skillType) {
+  const activeIndex = store.activeTrackIndex;
+  if (activeIndex === null || activeIndex === undefined) {
+    ElMessage.warning({ message: t('timeline.shortcut.placeNeedsTrack'), duration: 1200 });
+    return;
+  }
+  const track = store.tracks[activeIndex];
+  if (!track?.id) {
+    ElMessage.warning({ message: t('timeline.shortcut.placeNeedsOperator'), duration: 1200 });
+    timelineGridRef.value?.openCharacterSelector(activeIndex);
+    return;
+  }
+
+  const skill = findLibrarySkillByType(store.activeSkillLibrary, skillType);
+  if (!skill) {
+    ElMessage.warning({ message: t('timeline.shortcut.placeSkillMissing'), duration: 1200 });
+    return;
+  }
+
+  const offsets = getDefaultLibraryDragOffsets();
+  store.beginLibraryPlace({ ...skill, ...offsets });
+  ElMessage.info({ message: t('timeline.shortcut.placeReady'), duration: 1000 });
+}
+
+function onLibraryPlacePointerMove(e) {
+  if (!store.isLibraryPlaceMode || !store.draggingSkillData) return;
+  const skill = store.draggingSkillData;
+  positionLibraryDragGhost(
+    e.clientX,
+    e.clientY,
+    Number(skill.dragOffsetX) || 10,
+    Number(skill.dragOffsetY) || 25,
+  );
+}
+
+watch(
+  () => ({
+    enabled: store.isLibraryPlaceMode,
+    skillId: store.draggingSkillData?.id ?? null,
+  }),
+  ({ enabled }) => {
+    window.removeEventListener('pointermove', onLibraryPlacePointerMove);
+    removeLibraryDragGhost();
+    if (!enabled) return;
+    const skill = store.draggingSkillData;
+    if (!skill) return;
+    createLibraryDragGhost(skill, store.timeBlockWidth, getPlaceSkillThemeColor);
+    window.addEventListener('pointermove', onLibraryPlacePointerMove);
+  },
+);
+
+watch(isLeftPanelCollapsed, collapsed => {
+  if (collapsed && store.isLibraryPlaceMode) {
+    store.cancelLibraryPlace();
+  }
+});
+
 onMounted(() => {
-  window.addEventListener('keydown', handleGlobalKeydown);
   nextTick(() => {
     updateTimelineWorkspaceMetrics();
     if (typeof ResizeObserver !== 'undefined' && timelineWorkspaceRef.value) {
@@ -847,7 +973,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown);
+  window.removeEventListener('pointermove', onLibraryPlacePointerMove);
+  if (store.isLibraryPlaceMode) {
+    store.cancelLibraryPlace();
+  } else {
+    removeLibraryDragGhost();
+  }
   if (timelineWorkspaceResizeObserver) {
     timelineWorkspaceResizeObserver.disconnect();
     timelineWorkspaceResizeObserver = null;
@@ -1313,7 +1444,7 @@ onUnmounted(() => {
       </header>
 
       <div ref="timelineWorkspaceRef" class="timeline-workspace" :style="timelineWorkspaceStyle">
-        <div class="timeline-grid-container"><TimelineGrid /></div>
+        <div class="timeline-grid-container"><TimelineGrid ref="timelineGridRef" /></div>
 
         <div
           v-if="!isBottomPanelCollapsed"

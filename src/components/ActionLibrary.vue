@@ -8,6 +8,7 @@ import EditWeaponInstanceDialog from './armory/EditWeaponInstanceDialog.vue';
 import EditTrackGearLoadoutDialog from './armory/EditTrackGearLoadoutDialog.vue';
 import { useI18n } from 'vue-i18n';
 import { getOperatorGameName, getWeaponGameName } from '@/data/gameText';
+import { getDefaultLibraryDragOffsets } from '@/utils/libraryDragGhost';
 
 const store = useTimelineStore();
 const operatorStore = useOperatorStore();
@@ -174,14 +175,6 @@ watch(hasActiveCharacter, val => {
 });
 
 // === 拖拽 Ghost 逻辑 ===
-function hexToRgba(hex, alpha) {
-  if (!hex) return `rgba(255,255,255,${alpha})`;
-  let c = hex.substring(1).split('');
-  if (c.length === 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-  c = '0x' + c.join('');
-  return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + alpha + ')';
-}
-
 function getSkillThemeColor(skill) {
   if (skill.customColor) return skill.customColor;
   if (skill.type === 'comboSkill') return store.getColor('link');
@@ -236,7 +229,7 @@ function onAttackSegmentDragStart(evt, seg) {
     evt.preventDefault();
     return;
   }
-  onNativeDragStart(evt, seg);
+  beginPlaceFromLibrary(evt, seg);
 }
 
 function onAttackSegmentClick(seg) {
@@ -244,66 +237,20 @@ function onAttackSegmentClick(seg) {
   onSkillClick(seg.id);
 }
 
-function onNativeDragStart(evt, skill) {
-  const ghost = document.createElement('div');
-  ghost.id = 'custom-drag-ghost';
-
-  const duration = Number(skill.duration) || 0;
-  const themeColor = getSkillThemeColor(skill);
-  let dragOffsetX = 0;
-  let dragOffsetY = 0;
-
-  const realWidth = (duration || 1) * store.timeBlockWidth;
-  ghost.textContent = skill.name || '';
-  Object.assign(ghost.style, {
-    position: 'absolute',
-    top: '-9999px',
-    left: '-9999px',
-    width: `${realWidth}px`,
-    height: '50px',
-    border: `2px dashed ${themeColor}`,
-    backgroundColor: hexToRgba(themeColor, 0.2),
-    color: '#ffffff',
-    boxShadow: `0 0 10px ${themeColor}`,
-    textShadow: `0 1px 2px rgba(0,0,0,0.8)`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxSizing: 'border-box',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    zIndex: '999999',
-    pointerEvents: 'none',
-    fontFamily: 'sans-serif',
-    whiteSpace: 'nowrap',
-    backdropFilter: 'blur(4px)',
-  });
-  document.body.appendChild(ghost);
-  dragOffsetX = 10;
-  dragOffsetY = 25;
-  evt.dataTransfer.setDragImage(ghost, dragOffsetX, dragOffsetY);
-  evt.dataTransfer.effectAllowed = 'copy';
-
-  const payload = {
+function beginPlaceFromLibrary(evt, skill) {
+  // Cancel native HTML5 DnD; reuse the same place-mode ghost as hotkeys.
+  evt.preventDefault();
+  const offsets = getDefaultLibraryDragOffsets();
+  store.beginLibraryPlace({
     ...skill,
     librarySource: 'character',
     weaponId: null,
-    dragOffsetX,
-    dragOffsetY,
-  };
-
-  store.setDraggingSkill(payload);
-  document.body.classList.add('is-lib-dragging');
-
-  setTimeout(() => {
-    const el = document.getElementById('custom-drag-ghost');
-    if (el) document.body.removeChild(el);
-  }, 0);
+    ...offsets,
+  });
 }
 
-function onNativeDragEnd() {
-  store.setDraggingSkill(null);
-  document.body.classList.remove('is-lib-dragging');
+function onNativeDragStart(evt, skill) {
+  beginPlaceFromLibrary(evt, skill);
 }
 </script>
 
@@ -404,7 +351,6 @@ function onNativeDragEnd() {
             :title="getSkillCardTooltip(skill)"
             draggable="true"
             @dragstart="onNativeDragStart($event, skill)"
-            @dragend="onNativeDragEnd"
             @click="onSkillClick(skill.id)"
           >
             <div class="card-edge"></div>
@@ -440,7 +386,6 @@ function onNativeDragEnd() {
               }"
               :draggable="!isAttackSegmentDisabled(seg)"
               @dragstart="onAttackSegmentDragStart($event, seg)"
-              @dragend="onNativeDragEnd"
               @click.stop="onAttackSegmentClick(seg)"
             >
               {{ getSegmentChipLabel(seg) }}

@@ -246,6 +246,12 @@
       "cursorGuideOff": "Guide Lines: Hidden",
       "cursorGuideOn": "Guide Lines: Enabled",
       "pasted": "Pasted",
+      "placeActiveTrackOnly": "Place on the active track only",
+      "placeCancelled": "Placement cancelled",
+      "placeNeedsOperator": "Select an operator for this track first",
+      "placeNeedsTrack": "Select a track first (F1–F4)",
+      "placeReady": "Click the timeline to place (Esc to cancel)",
+      "placeSkillMissing": "This operator has no such skill",
       "redo": "Redo",
       "snapMode01": "0.1s",
       "snapModeFrame": "1 Frame (1/60s)",
@@ -394,7 +400,7 @@
     "hints": {
       "noRefineNon70": "No Artificing below Lv70",
       "adjustOperatorStatus": "Tune attributes, weapons, and gear sets; changes affect timeline simulation",
-      "clickOrDrag": "Click to select a skill / Drag to arrange timeline"
+      "clickOrDrag": "Click to select / Drag out then place on the timeline"
     },
     "tabs": {
       "operator": "Attributes",

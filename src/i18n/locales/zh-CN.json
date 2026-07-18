@@ -248,6 +248,12 @@
       "cursorGuideOff": "辅助线：隐藏",
       "cursorGuideOn": "辅助线：开启",
       "pasted": "已粘贴",
+      "placeActiveTrackOnly": "请放到当前选中轨道",
+      "placeCancelled": "已取消放置",
+      "placeNeedsOperator": "请先为轨道选择干员",
+      "placeNeedsTrack": "请先选中一条轨道（F1–F4）",
+      "placeReady": "点击时间轴放置技能（Esc 取消）",
+      "placeSkillMissing": "当前干员没有该技能",
       "redo": "已重做",
       "snapMode01": "0.1s",
       "snapModeFrame": "1帧 (1/60s)",
@@ -396,7 +402,7 @@
     "hints": {
       "noRefineNon70": "非 Lv70 无精锻",
       "adjustOperatorStatus": "调整属性、武器与装备套装；影响时间轴模拟结果",
-      "clickOrDrag": "点击选中技能 / 拖拽排轴"
+      "clickOrDrag": "点击选中技能 / 拖出后放到时间轴"
     },
     "tabs": {
       "operator": "属性",

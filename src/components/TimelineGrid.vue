@@ -2609,16 +2609,26 @@ function calculateTimeFromDropEvent(evt, skill, fixedStep = null) {
   return startTime;
 }
 
-function onTrackDrop(track, index, evt) {
+function onTrackPlacePointer(track, index, evt) {
+  if (!store.isLibraryPlaceMode) return;
   const skill = store.draggingSkillData;
-  if (!skill || store.activeTrackIndex !== index) return;
+  if (!skill) return;
+
+  if (store.activeTrackIndex !== index) {
+    ElMessage.warning({ message: t('timeline.shortcut.placeActiveTrackOnly'), duration: 1200 });
+    return;
+  }
+  if (!track?.id) {
+    ElMessage.warning({ message: t('timeline.shortcut.placeNeedsOperator'), duration: 1200 });
+    return;
+  }
+
+  evt.preventDefault();
+  evt.stopPropagation();
   const startTime = calculateTimeFromDropEvent(evt, skill);
   store.addSkillToTrack(track.id, skill, startTime);
+  store.cancelLibraryPlace();
   nextTick(() => forceSvgUpdate());
-}
-function onTrackDragOver(evt) {
-  evt.preventDefault();
-  evt.dataTransfer.dropEffect = 'copy';
 }
 
 function onBackgroundClick(event) {
@@ -2820,6 +2830,10 @@ onUnmounted(() => {
   window.removeEventListener('pointerup', endTrackResize);
   document.body.style.userSelect = '';
   document.body.style.cursor = '';
+});
+
+defineExpose({
+  openCharacterSelector,
 });
 </script>
 
@@ -3681,8 +3695,8 @@ onUnmounted(() => {
               'is-active-drop': index === store.activeTrackIndex,
               'is-last-track': index === store.tracks.length - 1,
             }"
-            @dragover="onTrackDragOver"
-            @drop="onTrackDrop(track, index, $event)"
+            @pointerup="onTrackPlacePointer(track, index, $event)"
+            @click="onTrackPlacePointer(track, index, $event)"
           >
             <TimelineBuffLayer
               v-if="track.id && store.isOperatorEffectsVisible(index)"
