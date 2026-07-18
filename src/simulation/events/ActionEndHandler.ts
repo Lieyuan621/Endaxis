@@ -37,11 +37,15 @@ export class ActionEndHandler implements EventHandler<ActionEndEvent> {
 
     const action = ctx.getAction(e.payload.actionId);
     if (action) {
-      // Scale down UE proportionally to returned SP consumed.
-      // Insufficient SP is ignored — only returned SP reduces UE gain.
-      const actualCost: number = (action as any)._actualSpCost ?? action.node.spCost ?? 0;
+      // Scale UE by the real SP actually paid, relative to the base cost the UE gain is calibrated
+      // against (node.UE = spCost/100 * 6.5). Both SP-cost reductions and returned SP shrink the
+      // real amount paid, so a reduced/free cast grants proportionally less UE. Insufficient SP is
+      // ignored. (_actualSpCost is the post-reduction cost the SP_CHANGE actually consumed.)
+      const baseCost: number = action.node.spCost ?? 0;
+      const finalSpCost: number = (action as any)._actualSpCost ?? baseCost;
       const returnedConsumed: number = (action as any)._returnedConsumed ?? 0;
-      const ueFraction = actualCost > 0 ? 1 - returnedConsumed / actualCost : 1;
+      const realPaid = finalSpCost - returnedConsumed;
+      const ueFraction = baseCost > 0 ? Math.min(1, Math.max(0, realPaid / baseCost)) : 1;
 
       const ueTime = e.time - 0.01;
       const battleSkillRecoveredConsumed = Number((action as any)._recoveredConsumed) || 0;
