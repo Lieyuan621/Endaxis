@@ -167,7 +167,7 @@ export class HitHandler implements EventHandler<HitEvent> {
           external: entry.external,
         });
       }
-      const operatorStatus = computeStats(baseStats, [], dynamicMods);
+      const operatorStatus = computeStats(baseStats, [], dynamicMods, undefined, hit.skillId);
 
       const enemyEntries = [...ctx.state.enemy.enemyStatusEffects.values()].filter(
         entry => e.time < entry.expiresAt,
@@ -185,18 +185,21 @@ export class HitHandler implements EventHandler<HitEvent> {
 
       const element = reactionMeta.element;
       const enemyResistance = getEnemyResistanceValue(ctx, element);
-      const levelCoeff = reactionMeta.synthetic
-        ? 1
-        : computeLevelCoefficient(operatorLevel, reactionMeta.reactionType as ReactionDamageType);
+      // Synthetic (treatAsReaction) hits scale by the level coefficient too — synthetic only
+      // suppresses the reaction marker/vulnerability/triggers, not the coefficient.
+      const levelCoeff = computeLevelCoefficient(
+        operatorLevel,
+        reactionMeta.reactionType as ReactionDamageType,
+      );
       const artsIntensityMult = computeArtsIntensityDamageMult(operatorStatus.artsIntensity);
       const effectivenessMult = reactionMeta.effectiveness ?? 1;
 
-      // No skill-type scoping for reaction damage
+      // No skill-type scoping for reaction damage, but skillId- and element-scoped mods still apply.
       const mods = filterDamageModifiers(
         operatorStatus.damageModifiers ?? [],
         element,
         undefined,
-        undefined,
+        hit.skillId,
       );
 
       const elementalSusc =

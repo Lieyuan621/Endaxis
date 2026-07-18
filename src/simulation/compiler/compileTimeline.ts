@@ -159,17 +159,27 @@ function resolveAction(
     });
   });
 
+  // Tag the last hit of a completed basic-attack sequence 'finalStrike' (mirrors
+  // TriggerRegistry.onFinalStrike gating; sequenceTotal 0 = single hit).
+  const seqNode = action as any;
+  const sequenceIndex = Number(seqNode.sequenceIndex ?? seqNode.attackSequenceIndex) || 0;
+  const sequenceTotal = Number(seqNode.sequenceTotal ?? seqNode.attackSequenceTotal) || 0;
+  const isFinalStrikeAction =
+    action.type === 'basicAttack' && (sequenceTotal === 0 || sequenceIndex === sequenceTotal);
+  const lastHitIndex = (action.hits?.length ?? 0) - 1;
+
   const resolvedHits: ResolvedHit[] = (action.hits || []).map((hit, hitIndex) => {
     const realTime = timeCtx.getShiftedEndTime(realStartTime, Number(hit.offset) || 0, item.id);
     const treatAsReaction = (hit as any).treatAsReaction as string | undefined;
     const treatAsSkillType = (hit as any).treatAsSkillType as string | undefined;
+    const isFinalHit = isFinalStrikeAction && hitIndex === lastHitIndex;
 
     return {
       ...hit,
       realTime,
       realOffset: realTime - realStartTime,
       time: timeCtx.toGameTime(realTime),
-      skillType: treatAsSkillType ?? action.type,
+      skillType: treatAsSkillType ?? (isFinalHit ? 'finalStrike' : action.type),
       skillId: (hit as any).skillId ?? action.skillId,
       element: hit.element || action.element,
       _actionInstanceId: item.id,

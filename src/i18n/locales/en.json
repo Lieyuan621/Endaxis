@@ -422,7 +422,7 @@
     }
   },
   "skillType": {
-    "attack": "Final Strike",
+    "attack": "Basic Attack",
     "dodge": "Dodge",
     "dive": "Dive Attack",
     "execution": "Finisher",

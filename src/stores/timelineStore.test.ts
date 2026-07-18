@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useTimelineStore } from './timelineStore';
+import { setLocale } from '@/i18n';
 
 describe('timeline skill library editing', () => {
   beforeEach(() => {
@@ -75,6 +76,7 @@ describe('timeline skill library editing', () => {
   });
 
   it('names generic basic attacks as 普攻 and only the final segment as 重击', async () => {
+    setLocale('zh-CN');
     const store = useTimelineStore();
     await store.fetchGameData();
 

@@ -151,7 +151,9 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
   }
 
   private regenSp(dt: number) {
-    if (this.getSp() >= this.config.maxSp) {
+    // Keep regen running while refund SP remains to displace: regen adds to recover and
+    // trimOverflow('recover') converts refund → recover (so a later spend draws recover SP → UE).
+    if (this.recoverSp >= this.config.maxSp && this.refundSp <= 0) {
       return;
     }
 
@@ -168,10 +170,8 @@ export class TeamState implements BaseGameState<TeamSnapshot> {
       this.spRegenPauseDuration = 0;
     }
 
-    if (this.getSp() < this.config.maxSp) {
-      const gain = effectiveDuration * this.config.spRegenRate;
-      this.addSp(gain, 'recover');
-    }
+    const gain = effectiveDuration * this.config.spRegenRate;
+    this.addSp(gain, 'recover');
   }
 
   private getPositiveSp() {
