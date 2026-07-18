@@ -169,6 +169,7 @@ export function computeStats(
 
   let atkPercent = 0;
   let flatAtk = 0;
+  let attrAtkBonusDelta = 0;
   let hpPercent = 0;
   let flatHp = 0;
   let defPercent = 0;
@@ -269,7 +270,10 @@ export function computeStats(
         atkPercent += pct;
         break;
       case 'attributeAtkPercent':
-        break; // handled via attrAtkCoeff in Phase 2
+        // Sheet effects are converted to per-attribute coefficients in Phase 2 (attrAtkCoeff) and
+        // skipped there; dynamic (runtime) mods arrive here pre-resolved and contribute directly.
+        attrAtkBonusDelta += pct;
+        break;
       case 'atkFlat':
         flatAtk += val;
         break;
@@ -414,7 +418,8 @@ export function computeStats(
     attrAtkCoeff.strength * attrs.strength +
     attrAtkCoeff.agility * attrs.agility +
     attrAtkCoeff.intellect * attrs.intellect +
-    attrAtkCoeff.will * attrs.will;
+    attrAtkCoeff.will * attrs.will +
+    attrAtkBonusDelta;
   const baseAtkTotal = baseAtk + weaponAtk;
   const attack = Math.floor((baseAtkTotal * (1 + atkPercent) + flatAtk) * attributeBonus);
 
