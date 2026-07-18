@@ -1,0 +1,374 @@
+{
+  "ba.absorb": {
+    "name": "吸收",
+    "description": "状态以特殊的方式提前结束。<@ba.key>吸收</>不算作<#ba.consume>消耗</>。",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.airborne": {
+    "name": "物理异常 - 击飞",
+    "description": "对敌人造成<#ba.noguard>破防</>，如果敌人已经<#ba.noguard>破防</>，则叠加一层<#ba.noguard>破防</>，造成<@ba.phy>物理伤害</>并累积<@ba.poise>失衡值</>。",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_airborne.webp"
+  },
+  "ba.burning": {
+    "name": "法术异常 - 燃烧",
+    "description": "<@ba.burning>燃烧</>状态下，敌人持续受到<@ba.fire>灼热伤害</>。\n<@ba.burning>燃烧</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.fireinflict>灼热附着</>",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_burning.webp"
+  },
+  "ba.burningonchar": {
+    "name": "干员受到燃烧",
+    "description": "一些敌人的技能会给干员施加<@ba.fireinflict>灼热附着</>。\n达到4层时，干员会进入<@ba.burning>燃烧</>状态：一段时间内，持续受到无视防御力的<@ba.fire>灼热伤害</>。",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_burning.webp"
+  },
+  "ba.combo": {
+    "name": "连击",
+    "description": "全队的下个战技或终结技的伤害提高，对战技的提高幅度更大，触发后效果清空。同类效果可以叠加，但效果有衰减。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_combo.webp"
+  },
+  "ba.conduct": {
+    "name": "法术异常 - 导电",
+    "description": "<@ba.conduct>导电</>状态下，敌人受到的<#ba.spelldmg>法术伤害</>提高。\n<@ba.conduct>导电</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.pulseinflict>电磁附着</>",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_conduct.webp"
+  },
+  "ba.conductonchar": {
+    "name": "干员受到导电",
+    "description": "一些敌人的技能会给干员施加<@ba.pulseinflict>电磁附着</>。\n达到4层时，干员会进入<@ba.conduct>导电</>状态：短暂眩晕，且一段时间内，受到的<#ba.spelldmg>法术伤害</>提高。",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_conduct.webp"
+  },
+  "ba.consume": {
+    "name": "状态消耗",
+    "description": "状态以特殊的方式提前结束（如<#ba.crush>猛击</>消耗<#ba.noguard>破防</>状态，<#ba.burning>燃烧</>消耗<#ba.spellinflict>法术附着</>状态）。",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.corrupt": {
+    "name": "法术异常 - 腐蚀",
+    "description": "<@ba.corrupt>腐蚀</>状态下，敌人的所有抗性逐渐下降。\n<@ba.corrupt>腐蚀</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">）+ <@ba.naturalinflict>自然附着</>",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_corrupt.webp"
+  },
+  "ba.corruptonchar": {
+    "name": "干员受到腐蚀",
+    "description": "一些敌人的技能会给干员施加<@ba.naturalinflict>自然附着</>。\n达到4层时，干员会进入<@ba.corrupt>腐蚀</>状态：一段时间内无法冲刺，且移动速度降低。",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_corrupt.webp"
+  },
+  "ba.crush": {
+    "name": "物理异常 - 猛击",
+    "description": "对敌人造成<#ba.noguard>破防</>，如果敌人已经<#ba.noguard>破防</>，则会<#ba.consume>消耗</>所有<#ba.noguard>破防</>层数并造成大量<@ba.phy>物理伤害</>。",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_crush.webp"
+  },
+  "ba.crystbreak": {
+    "name": "碎冰",
+    "description": "对处于<#ba.frozen>冻结</>状态的敌人施加<#ba.noguard>破防</>或<#ba.physicalstatus>物理异常</>时触发，<#ba.consume>消耗</>目标的<#ba.frozen>冻结</>状态，并对其造成大量<@ba.pd>物理伤害</>。",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystbreak.webp"
+  },
+  "ba.crystburst": {
+    "name": "法术爆发 - 寒冷",
+    "description": "<#ba.crystinflict>寒冷附着</> + <#ba.crystinflict>寒冷附着</>会触发<@ba.cryst>寒冷爆发</>，对敌人造成一定<@ba.cryst>寒冷伤害</>。",
+    "styleId": "ba.cryst",
+    "iconPath": ""
+  },
+  "ba.crystenhance": {
+    "name": "寒冷增幅",
+    "description": "一定时间内目标造成的<@ba.cryst>寒冷伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystenhance.webp"
+  },
+  "ba.crystinflict": {
+    "name": "法术附着 - 寒冷",
+    "description": "<@ba.crystinflict>寒冷附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.crystinflict>寒冷附着</>最多叠加4层，叠加时会触发<#ba.crystburst>寒冷爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.crystinflict>寒冷附着</> = <#ba.frozen>冻结</>",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystinflict.webp"
+  },
+  "ba.crystonchar": {
+    "name": "干员受到寒冷附着",
+    "description": "一些敌人的技能会给干员施加<@ba.crystinflict>寒冷附着</>。\n达到4层时，干员会进入<@ba.frozen>冻结</>状态：一段时间内无法行动。",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystinflict.webp"
+  },
+  "ba.crystvul": {
+    "name": "寒冷脆弱",
+    "description": "一定时间内目标受到的<@ba.cryst>寒冷伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystvul.webp"
+  },
+  "ba.dispel": {
+    "name": "净化",
+    "description": "清除干员的特定异常状态。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.dot": {
+    "name": "持续伤害",
+    "description": "持续伤害无法触发暴击。",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.enhance": {
+    "name": "增幅",
+    "description": "一定时间内目标造成的特定属性伤害提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_enhance.webp"
+  },
+  "ba.fireburst": {
+    "name": "法术爆发 - 灼热",
+    "description": "<#ba.fireinflict>灼热附着</> + <#ba.fireinflict>灼热附着</>会触发<@ba.fire>灼热爆发</>，对敌人造成一定<@ba.fire>灼热伤害</>。",
+    "styleId": "ba.fire",
+    "iconPath": ""
+  },
+  "ba.fireenhance": {
+    "name": "灼热增幅",
+    "description": "一定时间内目标造成的<@ba.fire>灼热伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_fireenhance.webp"
+  },
+  "ba.fireinflict": {
+    "name": "法术附着 - 灼热",
+    "description": "<@ba.fireinflict>灼热附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.fireinflict>灼热附着</>最多叠加4层，叠加时会触发<#ba.fireburst>灼热爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.fireinflict>灼热附着</> = <#ba.burning>燃烧</>",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_fireinflict.webp"
+  },
+  "ba.fireonchar": {
+    "name": "干员受到灼热附着",
+    "description": "一些敌人的技能会给干员施加<@ba.fireinflict>灼热附着</>。\n达到4层时，干员会进入<@ba.burning>燃烧</>状态：一段时间内，持续受到无视防御力的<@ba.fire>灼热伤害</>。",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_fireinflict.webp"
+  },
+  "ba.firevul": {
+    "name": "灼热脆弱",
+    "description": "一定时间内目标受到的<@ba.fire>灼热伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_firevul.webp"
+  },
+  "ba.fracture": {
+    "name": "物理异常 - 碎甲",
+    "description": "对敌人造成<#ba.noguard>破防</>，如果敌人已经<#ba.noguard>破防</>，则会<#ba.consume>消耗</>所有<#ba.noguard>破防</>层数，造成<@ba.phy>物理伤害</>，并使其在一段时间内受到的<@ba.pd>物理伤害</>提高。",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_fracture.webp"
+  },
+  "ba.frozen": {
+    "name": "法术异常 - 冻结",
+    "description": "<@ba.frozen>冻结</>状态下，敌人无法行动，此时若受到<#ba.noguard>破防</>或<#ba.physicalstatus>物理异常</>，会触发<#ba.crystbreak>碎冰</>。\n<@ba.frozen>冻结</> = 其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.crystinflict>寒冷附着</>",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_frozen.webp"
+  },
+  "ba.frozenonchar": {
+    "name": "干员受到冻结",
+    "description": "一些敌人的技能会给干员施加<@ba.crystinflict>寒冷附着</>。\n达到4层时，干员会进入<@ba.frozen>冻结</>状态：一段时间内无法行动。",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_frozen.webp"
+  },
+  "ba.guard": {
+    "name": "庇护",
+    "description": "一定时间内目标受到的伤害降低（数值代表降低的幅度）。同类效果会取效果最高值。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_guard.webp"
+  },
+  "ba.knockdown": {
+    "name": "物理异常 - 倒地",
+    "description": "对敌人造成<#ba.noguard>破防</>，如果敌人已经<#ba.noguard>破防</>，则叠加一层<#ba.noguard>破防</>，造成<@ba.phy>物理伤害</>并累积<@ba.poise>失衡值</>。",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_knockdown.webp"
+  },
+  "ba.lastcombo": {
+    "name": "重击",
+    "description": "重击是干员普通攻击的最后一段。主控干员的重击命中敌人时，会额外累积<@ba.poise>失衡值</>，并恢复一定技力。",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.naturalburst": {
+    "name": "法术爆发 - 自然",
+    "description": "<#ba.naturalinflict>自然附着</> + <#ba.naturalinflict>自然附着</>会触发<@ba.natur>自然爆发</>，对敌人造成一定<@ba.natur>自然伤害</>。",
+    "styleId": "ba.natur",
+    "iconPath": ""
+  },
+  "ba.naturalenhance": {
+    "name": "自然增幅",
+    "description": "一定时间内目标造成的<@ba.natur>自然伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_naturalenhance.webp"
+  },
+  "ba.naturalinflict": {
+    "name": "法术附着 - 自然",
+    "description": "<@ba.naturalinflict>自然附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.naturalinflict>自然附着</>最多叠加4层，叠加时会触发<#ba.naturalburst>自然爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">）+ <@ba.naturalinflict>自然附着</> = <#ba.corrupt>腐蚀</>",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_naturalinflict.webp"
+  },
+  "ba.naturalonchar": {
+    "name": "干员受到自然附着",
+    "description": "一些敌人的技能会给干员施加<@ba.naturalinflict>自然附着</>。\n达到4层时，干员会进入<@ba.corrupt>腐蚀</>状态：一段时间内无法冲刺，且移动速度降低。",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_naturalinflict.webp"
+  },
+  "ba.naturalvul": {
+    "name": "自然脆弱",
+    "description": "一定时间内目标受到的<@ba.natur>自然伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_naturalvul.webp"
+  },
+  "ba.noguard": {
+    "name": "破防",
+    "description": "当敌人首次受到<#ba.physicalstatus>物理异常</>时，不会直接触发异常效果，而是进入<@ba.noguard>破防</>状态。\n<@ba.phy>破防</>状态可以被<#ba.airborne>击飞</>和<#ba.knockdown>倒地</>叠加（最多4层），且会被<#ba.crush>猛击</>和<#ba.fracture>碎甲</><#ba.consume>消耗</>。",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_noguard.webp"
+  },
+  "ba.originium": {
+    "name": "源石结晶",
+    "description": "管理员的连携技会对敌人附着源石结晶，使敌人无法行动。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.physicalenhance": {
+    "name": "物理增幅",
+    "description": "一定时间内目标造成的<@ba.pd>物理伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_physicalenhance.webp"
+  },
+  "ba.physicalstatus": {
+    "name": "物理异常",
+    "description": "物理异常是通过物理方式对敌人施加的异常效果，包含<#ba.airborne>击飞</>、<#ba.knockdown>倒地</>、<#ba.crush>猛击</>、<#ba.fracture>碎甲</>。",
+    "styleId": "ba.phy",
+    "iconPath": ""
+  },
+  "ba.physicalvul": {
+    "name": "物理脆弱",
+    "description": "一定时间内目标受到的<@ba.pd>物理伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_physicalvul.webp"
+  },
+  "ba.poiseknot": {
+    "name": "失衡节点",
+    "description": "部分强大的敌人存在<@ba.poise>失衡节点</>。<@ba.poise>失衡值</>累积到<@ba.poise>失衡节点</>时，会打断敌人行动并让敌人踉跄。",
+    "styleId": "ba.poise",
+    "iconPath": ""
+  },
+  "ba.pulseburst": {
+    "name": "法术爆发 - 电磁",
+    "description": "<#ba.pulseinflict>电磁附着</> + <#ba.pulseinflict>电磁附着</>会触发<@ba.pulse>电磁爆发</>，对敌人造成一定<@ba.pulse>电磁伤害</>。",
+    "styleId": "ba.pulse",
+    "iconPath": ""
+  },
+  "ba.pulseenhance": {
+    "name": "电磁增幅",
+    "description": "一定时间内目标造成的<@ba.pulse>电磁伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_pulseenhance.webp"
+  },
+  "ba.pulseinflict": {
+    "name": "法术附着 - 电磁",
+    "description": "<@ba.pulseinflict>电磁附着</>是一种<#ba.spellinflict>法术附着</>。\n<@ba.pulseinflict>电磁附着</>最多叠加4层，叠加时会触发<#ba.pulseburst>电磁爆发</>。\n其他<#ba.spellinflict>法术附着</>（<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">）+ <@ba.pulseinflict>电磁附着</> = <#ba.conduct>导电</>",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_pulseinflict.webp"
+  },
+  "ba.pulseonchar": {
+    "name": "干员受到电磁附着",
+    "description": "一些敌人的技能会给干员施加<@ba.pulseinflict>电磁附着</>。\n达到4层时，干员会进入<@ba.conduct>导电</>状态：短暂眩晕，且一段时间内，受到的<#ba.spelldmg>法术伤害</>提高。",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_pulseinflict.webp"
+  },
+  "ba.pulsevul": {
+    "name": "电磁脆弱",
+    "description": "一定时间内目标受到的<@ba.pulse>电磁伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_pulsevul.webp"
+  },
+  "ba.return": {
+    "name": "返还技力",
+    "description": "消耗技力后，满足一定条件时，重新获得的一部分技力。\n返还技力并不算作“恢复技力”，不会触发恢复技力时触发的效果，且这部分技力消耗时不会获得终结技能量。",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.rossi": {
+    "name": "爪印斫痕",
+    "description": "洛茜的战技对敌人造成的特殊效果。受影响的目标会持续受到<@ba.pd>物理伤害</>，并且受到的物理和灼热伤害会增加。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.shield": {
+    "name": "护盾",
+    "description": "护盾可以在持续时间内吸收伤害。部分护盾只会吸收特定类型的伤害。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.slow": {
+    "name": "缓速",
+    "description": "一定时间内目标的移动速度降低（数值代表降低的幅度）。同类效果会取效果最高值。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_slow.webp"
+  },
+  "ba.speedup": {
+    "name": "加速",
+    "description": "一定时间内目标的移动速度提高（数值代表提高的幅度）。同类效果可以叠加，直到达到上限。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_speedup.webp"
+  },
+  "ba.spellburst": {
+    "name": "法术爆发",
+    "description": "<@ba.key>法术爆发</>是同类型的<#ba.spellinflict>法术附着</>叠加时产生的伤害效果，包含<#ba.fireburst>灼热爆发</>、<#ba.pulseburst>电磁爆发</>、<#ba.crystburst>寒冷爆发</>、<#ba.naturalburst>自然爆发</>。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spelldmg": {
+    "name": "伤害类型",
+    "description": "伤害分为<@ba.pd>物理伤害</>、<@ba.key>法术伤害</>、<@ba.ether>超域伤害</>。\n其中，<@ba.key>法术伤害</>又分为<@ba.fire>灼热伤害</>、<@ba.pulse>电磁伤害</>、<@ba.cryst>寒冷伤害</>、<@ba.natur>自然伤害</>。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spellenhance": {
+    "name": "法术增幅",
+    "description": "一定时间内目标造成的<#ba.spelldmg>法术伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_spellenhance.webp"
+  },
+  "ba.spellinflict": {
+    "name": "法术附着",
+    "description": "<@ba.key>法术附着</>是一种附着在敌人身上的法术标记，包括<#ba.fireinflict>灼热附着</>、<#ba.pulseinflict>电磁附着</>、<#ba.crystinflict>寒冷附着</>、<#ba.naturalinflict>自然附着</>。\n同类型的<@ba.key>法术附着</>可以叠加，最多4层。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spellinflictonchar": {
+    "name": "干员受到法术附着/异常",
+    "description": "一些敌人的技能会给干员施加<#ba.burningonchar>灼热附着</>、<#ba.conductonchar>电磁附着</>、<#ba.frozenonchar>寒冷附着</>或<#ba.corruptonchar>自然附着</>。\n达到4层时，会分别让干员受到<#ba.burningonchar>燃烧</>、<#ba.conductonchar>导电</>、<#ba.frozenonchar>冻结</>或<#ba.corruptonchar>腐蚀</>。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spellstatus": {
+    "name": "法术异常",
+    "description": "<@ba.key>法术异常</>是通过法术方式对敌人施加的异常效果，包含<#ba.burning>燃烧</>、<#ba.conduct>导电</>、<#ba.frozen>冻结</>、<#ba.corrupt>腐蚀</>。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spellvul": {
+    "name": "法术脆弱",
+    "description": "一定时间内目标受到的<#ba.spelldmg>法术伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_spellvul.webp"
+  },
+  "ba.statuslevel": {
+    "name": "异常等级",
+    "description": "异常等级等于触发<#ba.physicalstatus>物理异常</>或<#ba.spellstatus>法术异常</>时<#ba.consume>消耗</>的<#ba.noguard>破防</>或<#ba.spellinflict>法术附着</>层数（最高4级）。<#ba.statuslevel>异常等级</>越高，<#ba.physicalstatus>物理异常</>和<#ba.spellstatus>法术异常</>的效果就越强。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.vulnerable": {
+    "name": "脆弱",
+    "description": "一定时间内目标受到的特定属性伤害提高（数值代表提高的幅度）。同类效果可以叠加。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_vulnerable.webp"
+  },
+  "ba.weak": {
+    "name": "虚弱",
+    "description": "一定时间内目标造成的伤害降低（数值代表降低的幅度）。同类效果会以非线性方式叠加。",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_weak.webp"
+  }
+}

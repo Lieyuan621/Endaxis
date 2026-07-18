@@ -1,0 +1,374 @@
+{
+  "ba.absorb": {
+    "name": "Absorb",
+    "description": "A way to end a Physical or Arts debuff early. <@ba.key>Absorb</> is not the same as <#ba.consume>consume</>.",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.airborne": {
+    "name": "Physical Status: Lift",
+    "description": "Applies <#ba.noguard>Vulnerability</> on an enemy. If the enemy is already <#ba.noguard>Vulnerable</>, then add 1 stack of <#ba.noguard>Vulnerability</>, and deal <@ba.phy>Physical DMG</> and <@ba.poise>Stagger</>.",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_airborne.webp"
+  },
+  "ba.burning": {
+    "name": "Arts Reaction: Combustion",
+    "description": "An enemy with <@ba.burning>Combustion</> takes <@ba.fire>Heat DMG</> over time.\n<@ba.burning>Combustion</> = A <#ba.spellinflict>non-Heat Infliction</> (<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.fireinflict>Heat Infliction</>",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_burning.webp"
+  },
+  "ba.burningonchar": {
+    "name": "Operator Debuff: Combustion",
+    "description": "Certain enemy skills can apply stacks of <@ba.fireinflict>Heat Infliction</> to operators. \nAt 4 stacks, the operator becomes <@ba.burning>Combusted</>: Temporarily take continuous <@ba.fire>Heat DMG</> that ignores their DEF.",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_burning.webp"
+  },
+  "ba.combo": {
+    "name": "Link",
+    "description": "Next battle skill or ultimate cast by the team consumes the Link buff and deals more DMG, with battle skills getting a higher increase. Effects of the same type can stack, but with diminishing returns.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_combo.webp"
+  },
+  "ba.conduct": {
+    "name": "Arts Reaction: Electrification",
+    "description": "An enemy with <@ba.conduct>Electrification</> takes more <#ba.spelldmg>Arts DMG</>.\n<@ba.conduct>Electrification</> = A <#ba.spellinflict>non-Electric Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.pulseinflict>Electric Infliction</>",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_conduct.webp"
+  },
+  "ba.conductonchar": {
+    "name": "Operator Debuff: Electrification",
+    "description": "Certain enemy skills can apply stacks of <@ba.pulseinflict>Electric Infliction</> to operators. \nAt 4 stacks, the operator becomes <@ba.conduct>Electrified</>: Temporary stun and take more <#ba.spelldmg>Arts DMG</> for a certain duration.",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_conduct.webp"
+  },
+  "ba.consume": {
+    "name": "Debuff Consumption",
+    "description": "Various Physical and Arts debuffs can be ended early. For example, <#ba.crush>Crush</> consumes <#ba.noguard>Vulnerability</> debuffs, while <#ba.burning>Combustion</> consumes <#ba.spellinflict>Arts Infliction</> debuffs.",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.corrupt": {
+    "name": "Arts Reaction: Corrosion",
+    "description": "An enemy with <@ba.corrupt>Corrosion</> gradually loses resistance against all elements. \n<@ba.corrupt>Corrosion</> = A <#ba.spellinflict>non-Nature Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">) + <@ba.naturalinflict>Nature Infliction</>",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_corrupt.webp"
+  },
+  "ba.corruptonchar": {
+    "name": "Operator Debuff: Corrosion",
+    "description": "Certain enemy skills can apply stacks of <@ba.naturalinflict>Nature Infliction</> to operators. \nAt 4 stacks, the operator becomes <@ba.corrupt>Corroded</>: Cannot dash and suffer movement speed reduction for a certain duration.",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_corrupt.webp"
+  },
+  "ba.crush": {
+    "name": "Physical Status: Crush",
+    "description": "Applies <#ba.noguard>Vulnerability</> on an enemy. If the enemy is already <#ba.noguard>Vulnerable</>, then <#ba.consume>consume</> all <#ba.noguard>Vulnerability</> stacks and deal massive <@ba.phy>Physical DMG</>.",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_crush.webp"
+  },
+  "ba.crystbreak": {
+    "name": "Shatter",
+    "description": "To an enemy with active <#ba.frozen>Solidification</>, applying <#ba.noguard>Vulnerability</> or <#ba.physicalstatus>Physical Status</> effects will <#ba.consume>consume</> the <#ba.frozen>Solidification</> to trigger Shatter that deals massive <@ba.pd>Physical DMG</>.",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystbreak.webp"
+  },
+  "ba.crystburst": {
+    "name": "Arts Burst: Cryo",
+    "description": "<#ba.crystinflict>Cryo Infliction</> + <#ba.crystinflict>Cryo Infliction</> will trigger <@ba.cryst>Cryo Burst</> that deals <@ba.cryst>Cryo DMG</> to enemies.",
+    "styleId": "ba.cryst",
+    "iconPath": ""
+  },
+  "ba.crystenhance": {
+    "name": "Cryo Amp",
+    "description": "Cryo Amped targets temporarily deal more <@ba.cryst>Cryo DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystenhance.webp"
+  },
+  "ba.crystinflict": {
+    "name": "Arts Infliction: Cryo",
+    "description": "<@ba.crystinflict>Cryo Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.crystinflict>Cryo Infliction</> can be applied and stacking triggers <#ba.crystburst>Cryo Burst</>. \nA <#ba.spellinflict>non-Cryo Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.crystinflict>Cryo Infliction</> = <#ba.frozen>Solidification</>",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystinflict.webp"
+  },
+  "ba.crystonchar": {
+    "name": "Operator Debuff: Cryo Infliction",
+    "description": "Certain enemy skills can apply stacks of <@ba.crystinflict>Cryo Infliction</> to operators. \nAt 4 stacks, the operator becomes <@ba.frozen>Solidified</>: Cannot move for a certain duration.",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystinflict.webp"
+  },
+  "ba.crystvul": {
+    "name": "Cryo Susceptibility",
+    "description": "Cryo Susceptible targets temporarily take more <@ba.cryst>Cryo DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_crystvul.webp"
+  },
+  "ba.dispel": {
+    "name": "Dispel",
+    "description": "This removes specific debuffs from the operator.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.dot": {
+    "name": "DMG Over Time",
+    "description": "DMG over time cannot trigger critical hits.",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.enhance": {
+    "name": "Amp",
+    "description": "Amped targets deal more DMG of the element it is Amped for. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_enhance.webp"
+  },
+  "ba.fireburst": {
+    "name": "Arts Burst: Heat",
+    "description": "<#ba.fireinflict>Heat Infliction</> + <#ba.fireinflict>Heat Infliction</> will trigger <@ba.fire>Heat Burst</> that deals <@ba.fire>Heat DMG</> to enemies.",
+    "styleId": "ba.fire",
+    "iconPath": ""
+  },
+  "ba.fireenhance": {
+    "name": "Heat Amp",
+    "description": "Heat Amped targets temporarily deal more <@ba.fire>Heat DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_fireenhance.webp"
+  },
+  "ba.fireinflict": {
+    "name": "Arts Infliction: Heat",
+    "description": "<@ba.fireinflict>Heat Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.fireinflict>Heat Infliction</> can be applied and stacking triggers <#ba.fireburst>Heat Burst</>. \nA <#ba.spellinflict>non-Heat Infliction</> (<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.fireinflict>Heat Infliction</> = <#ba.burning>Combustion</>",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_fireinflict.webp"
+  },
+  "ba.fireonchar": {
+    "name": "Operator Debuff: Heat Infliction",
+    "description": "Certain enemy skills can apply stacks of <@ba.fireinflict>Heat Infliction</> to operators. \nAt 4 stacks, the operator becomes <@ba.burning>Combusted</>: Temporarily take continuous <@ba.fire>Heat DMG</> that ignores their DEF.",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_fireinflict.webp"
+  },
+  "ba.firevul": {
+    "name": "Heat Susceptibility",
+    "description": "Heat Susceptible targets temporarily take more <@ba.fire>Heat DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.fire",
+    "iconPath": "/icons/icon_term_ba_firevul.webp"
+  },
+  "ba.fracture": {
+    "name": "Physical Status: Breach",
+    "description": "Applies <#ba.noguard>Vulnerability</> on an enemy. If the enemy is already <#ba.noguard>Vulnerable</>, then <#ba.consume>consume</> all <#ba.noguard>Vulnerability</> stacks, deal <@ba.phy>Physical DMG</>, and temporarily increase the <@ba.pd>Physical DMG</> taken by the enemy.",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_fracture.webp"
+  },
+  "ba.frozen": {
+    "name": "Arts Reaction: Solidification",
+    "description": "An enemy with <@ba.frozen>Solidification</> cannot move, and applying <#ba.noguard>Vulnerability</> or a <#ba.physicalstatus>Physical Status</> to the enemy triggers the <#ba.crystbreak>Shatter</> effect. \n<@ba.frozen>Solidification</> = A <#ba.spellinflict>non-Cryo Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.crystinflict>Cryo Infliction</>",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_frozen.webp"
+  },
+  "ba.frozenonchar": {
+    "name": "Operator Debuff: Solidification",
+    "description": "Certain enemy skills can apply stacks of <@ba.crystinflict>Cryo Infliction</> to operators. \nAt 4 stacks, the operator becomes <@ba.frozen>Solidified</>: Cannot move for a certain duration.",
+    "styleId": "ba.cryst",
+    "iconPath": "/icons/icon_term_ba_frozen.webp"
+  },
+  "ba.guard": {
+    "name": "Protect",
+    "description": "Protected targets temporarily take reduced DMG. The number represents the degree of reduction. When there are multiple effects of the same type, only the most powerful applies.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_guard.webp"
+  },
+  "ba.knockdown": {
+    "name": "Physical Status: Knock Down",
+    "description": "Applies <#ba.noguard>Vulnerability</> on an enemy. If the enemy is already <#ba.noguard>Vulnerable</>, then add 1 stack of <#ba.noguard>Vulnerability</>, and deal <@ba.phy>Physical DMG</> and <@ba.poise>Stagger</>.",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_knockdown.webp"
+  },
+  "ba.lastcombo": {
+    "name": "Final Strike",
+    "description": "Final Strike is the last sequence of basic attack. When the controlled operator's Final Strike hits the enemy, it also deals <@ba.poise>Stagger</> and restores some Skill Points (SP).",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.naturalburst": {
+    "name": "Arts Burst: Nature",
+    "description": "<#ba.naturalinflict>Nature Infliction</> + <#ba.naturalinflict>Nature Infliction</> will trigger <@ba.natur>Nature Burst</> that deals <@ba.natur>Nature DMG</> to enemies.",
+    "styleId": "ba.natur",
+    "iconPath": ""
+  },
+  "ba.naturalenhance": {
+    "name": "Nature Amp",
+    "description": "Nature Amped targets temporarily deal more <@ba.natur>Nature DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_naturalenhance.webp"
+  },
+  "ba.naturalinflict": {
+    "name": "Arts Infliction: Nature",
+    "description": "<@ba.naturalinflict>Nature Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.naturalinflict>Nature Infliction</> can be applied and stacking triggers <#ba.naturalburst>Nature Burst</>. \nA <#ba.spellinflict>non-Nature Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_pulseinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">) + <@ba.naturalinflict>Nature Infliction</> = <#ba.corrupt>Corrosion</>",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_naturalinflict.webp"
+  },
+  "ba.naturalonchar": {
+    "name": "Operator Debuff: Nature Infliction",
+    "description": "Certain enemy skills can apply stacks of <@ba.naturalinflict>Nature Infliction</> to operators. \nAt 4 stacks, the operator becomes <@ba.corrupt>Corroded</>: Cannot dash and suffer movement speed reduction for a certain duration.",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_naturalinflict.webp"
+  },
+  "ba.naturalvul": {
+    "name": "Nature Susceptibility",
+    "description": "Nature Susceptible targets temporarily take more <@ba.natur>Nature DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.natur",
+    "iconPath": "/icons/icon_term_ba_naturalvul.webp"
+  },
+  "ba.noguard": {
+    "name": "Vulnerable",
+    "description": "Hitting an enemy for the first time with a skill with <#ba.physicalstatus>Physical Status</> applies <@ba.noguard>Vulnerability</> instead of the actual Physical Status.\nA <@ba.phy>Vulnerable</> enemy can be <#ba.airborne>Lifted</> and <#ba.knockdown>Knocked Down</> to add more Vulnerability stacks (up to 4). Hitting a Vulnerable enemy with <#ba.crush>Crush</> or <#ba.fracture>Breach</> will <#ba.consume>consume</> the Vulnerability stacks.",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_noguard.webp"
+  },
+  "ba.originium": {
+    "name": "Originium Crystal",
+    "description": "The Endministrator's combo skill attaches Originium Crystals to enemies and immobilizes them.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.physicalenhance": {
+    "name": "Physical Amp",
+    "description": "Physical Amped targets temporarily deal more <@ba.pd>Physical DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_physicalenhance.webp"
+  },
+  "ba.physicalstatus": {
+    "name": "Physical Status",
+    "description": "Physical Statuses refer to physical debuffs applied to the enemy. They include: <#ba.airborne>Lifted</>, <#ba.knockdown>Knocked Down</>, <#ba.crush>Crushed</>, and <#ba.fracture>Breached</>.",
+    "styleId": "ba.phy",
+    "iconPath": ""
+  },
+  "ba.physicalvul": {
+    "name": "Physical Susceptibility",
+    "description": "Physical Susceptible targets temporarily take more <@ba.pd>Physical DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.phy",
+    "iconPath": "/icons/icon_term_ba_physicalvul.webp"
+  },
+  "ba.poiseknot": {
+    "name": "Stagger Node",
+    "description": "Some powerful enemies have <@ba.poise>Stagger Nodes</>. Deal enough <@ba.poise>Stagger</> to reach the <@ba.poise>Stagger Node</> to interrupt such enemies and make them stumble.",
+    "styleId": "ba.poise",
+    "iconPath": ""
+  },
+  "ba.pulseburst": {
+    "name": "Arts Burst: Electric",
+    "description": "<#ba.pulseinflict>Electric Infliction</> + <#ba.pulseinflict>Electric Infliction</> will trigger <@ba.pulse>Electric Burst</> that deals <@ba.pulse>Electric DMG</> to enemies.",
+    "styleId": "ba.pulse",
+    "iconPath": ""
+  },
+  "ba.pulseenhance": {
+    "name": "Electric Amp",
+    "description": "Electric Amped targets temporarily deal more <@ba.pulse>Electric DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_pulseenhance.webp"
+  },
+  "ba.pulseinflict": {
+    "name": "Arts Infliction: Electric",
+    "description": "<@ba.pulseinflict>Electric Infliction</> is a type of <#ba.spellinflict>Arts Infliction</>. \nUp to 4 stacks of <@ba.pulseinflict>Electric Infliction</> can be applied and stacking triggers <#ba.pulseburst>Electric Burst</>. \nA <#ba.spellinflict>non-Electric Infliction</> (<image=\"/icons/icon_term_ba_fireinflict.webp\">/<image=\"/icons/icon_term_ba_crystinflict.webp\">/<image=\"/icons/icon_term_ba_naturalinflict.webp\">) + <@ba.pulseinflict>Electric Infliction</> = <#ba.conduct>Electrification</>",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_pulseinflict.webp"
+  },
+  "ba.pulseonchar": {
+    "name": "Operator Debuff: Electric Infliction",
+    "description": "Certain enemy skills can apply stacks of <@ba.pulseinflict>Electric Infliction</> to operators. \nAt 4 stacks, the operator becomes <@ba.conduct>Electrified</>: Temporary stun and take more <#ba.spelldmg>Arts DMG</> for a certain duration.",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_pulseinflict.webp"
+  },
+  "ba.pulsevul": {
+    "name": "Electric Susceptibility",
+    "description": "Electric Susceptible targets temporarily take more <@ba.pulse>Electric DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.pulse",
+    "iconPath": "/icons/icon_term_ba_pulsevul.webp"
+  },
+  "ba.return": {
+    "name": "SP Return",
+    "description": "After spending SP and meeting certain criteria, some of the SP spent will be returned. \nSP Return is not \"SP Recovery\" and does not activate SP Recovery-triggered effects. Spending returned SP also does not give Ultimate Energy.",
+    "styleId": "",
+    "iconPath": ""
+  },
+  "ba.rossi": {
+    "name": "Razor Clawmark",
+    "description": "Rossi's battle skill applies a special status on the enemy. The affected target will take <@ba.pd>Physical DMG</> over time, and suffers higher Physical DMG Taken and Heat DMG Taken.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.shield": {
+    "name": "Shield",
+    "description": "The shield can absorb damage while it is active. Some shields may only absorb specific type(s) of DMG.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.slow": {
+    "name": "Slow",
+    "description": "Slowed targets temporarily suffer movement speed reduction. The number represents the degree of reduction. When there are multiple effects of the same type, only the most powerful applies.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_slow.webp"
+  },
+  "ba.speedup": {
+    "name": "Haste",
+    "description": "Temporarily raises the movement speed of a target. The number represents the degree of the speed increase. Effects of the same type can stack until hitting the speed cap.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_speedup.webp"
+  },
+  "ba.spellburst": {
+    "name": "Arts Burst",
+    "description": "<@ba.key>Arts Bursts</> are triggered by stacking <#ba.spellinflict>Arts Inflictions</> of the same elements. They include <#ba.fireburst>Heat Burst</>, <#ba.pulseburst>Electric Burst</>, <#ba.crystburst>Cryo Burst</>, and <#ba.naturalburst>Nature Burst</>.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spelldmg": {
+    "name": "DMG Type",
+    "description": "Damage can be divided into <@ba.pd>Physical DMG</>, <@ba.key>Arts DMG</>, and <@ba.ether>Æther DMG</>.\n<@ba.key>Arts DMG</> can be further divided into <@ba.fire>Heat DMG</>, <@ba.pulse>Electric DMG</>, <@ba.cryst>Cryo DMG</>, and <@ba.natur>Nature DMG</>.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spellenhance": {
+    "name": "Arts Amp",
+    "description": "Arts Amped targets temporarily deal more <#ba.spelldmg>Arts DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_spellenhance.webp"
+  },
+  "ba.spellinflict": {
+    "name": "Arts Infliction",
+    "description": "<@ba.key>Arts Inflictions</> are special Arts debuff inflicted upon the enemy. There are 4 elements of Arts Inflictions: <#ba.fireinflict>Heat Infliction</>, <#ba.pulseinflict>Electric Infliction</>, <#ba.crystinflict>Cryo Infliction</>, and <#ba.naturalinflict>Nature Infliction</>. \nUp to 4 stacks of <@ba.key>Arts Infliction</> of the same element can be applied.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spellinflictonchar": {
+    "name": "Arts Inflictions / Arts Reactions on Operators",
+    "description": "Some enemy skills can apply stacks of <#ba.burningonchar>Heat Infliction</>, <#ba.conductonchar>Electric Infliction</>, <#ba.frozenonchar>Cryo Infliction</>, or <#ba.corruptonchar>Nature Infliction</>.\nAt 4 stacks of the Arts Inflictions, the operator becomes <#ba.burningonchar>Combusted</>, <#ba.conductonchar>Electrified</>, <#ba.frozenonchar>Solidified</>, or <#ba.corruptonchar>Corroded</> respectively.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spellstatus": {
+    "name": "Arts Reaction",
+    "description": "<@ba.key>Arts Reactions</> are Arts debuffs that can be applied to the enemy. They include: <#ba.burning>Combustion</>, <#ba.conduct>Electrification</>, <#ba.frozen>Solidification</>, and <#ba.corrupt>Corrosion</>.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.spellvul": {
+    "name": "Arts Susceptibility",
+    "description": "Arts Susceptible targets temporarily take more <#ba.spelldmg>Arts DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_spellvul.webp"
+  },
+  "ba.statuslevel": {
+    "name": "Status Level",
+    "description": "Status Level is the number of <#ba.noguard>Vulnerability</> or <#ba.spellinflict>Arts Infliction</> stacks (max 4) <#ba.consume>consumed</> when triggering a <#ba.physicalstatus>Physical Status</> or <#ba.spellstatus>Arts Reaction</>. The higher the <#ba.statuslevel>Status Level</>, the stronger the resulting <#ba.physicalstatus>Physical Status</> or <#ba.spellstatus>Arts Reaction</>.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.vulnerable": {
+    "name": "Susceptible",
+    "description": "Susceptible targets temporarily take more DMG of the element it is Susceptible to. The number represents the degree of increase. Effects of the same type can stack.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_vulnerable.webp"
+  },
+  "ba.weak": {
+    "name": "Weaken",
+    "description": "Weakened targets temporarily deal reduced DMG. The number represents the degree of reduction. Effects of the same type can stack non-linearly.",
+    "styleId": "ba.key",
+    "iconPath": "/icons/icon_term_ba_weak.webp"
+  }
+}
