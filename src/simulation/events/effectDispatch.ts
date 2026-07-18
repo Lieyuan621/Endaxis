@@ -899,7 +899,6 @@ export function scheduleDotTicks(
   time: number,
   sourceTrackId: string,
   ctx: SimulationContext,
-  sourceSkillType?: string,
   sourceActionId?: string,
   sourceSkillId?: string,
 ): void {
@@ -964,7 +963,10 @@ export function scheduleDotTicks(
           effectId,
           element: r.element,
           multiplier: tickMultiplier,
-          skillType: sourceSkillType,
+          // A DoT tick is its own damage instance, not a skill hit — it must NOT inherit the source
+          // skill's type, so skill-type-scoped modifiers (dmgBonus/directMultiplier/attack% and the
+          // link multiplier) don't apply. Mirrors reaction damage; skillId/element scoping is kept.
+          skillType: undefined,
           skillId: sourceSkillId,
           canCrit: r.canCrit,
           consumedStacks,
@@ -1250,7 +1252,6 @@ export function dispatchSingleActorEffect(
       time,
       sourceTrackId,
       ctx,
-      skillType,
       actionId,
       skillId,
     );
