@@ -84,11 +84,48 @@ export interface EditorHit {
   [key: string]: unknown;
 }
 
+function hitSpGain(hit: EditorHit | null | undefined): number {
+  return (Number(hit?.spRecovery) || 0) + (Number(hit?.spReturn) || 0);
+}
+
+/**
+ * Panel summary totals for a flattened hit list.
+ * Hits that share an `id` (typical mutually-exclusive branch variants) contribute
+ * only their max stagger / SP; hits without an id still sum individually.
+ */
+export function summarizeEditorHitTotals(hits: readonly EditorHit[] = []): {
+  stagger: number;
+  spGain: number;
+} {
+  let stagger = 0;
+  let spGain = 0;
+  const maxStaggerById = new Map<string, number>();
+  const maxSpById = new Map<string, number>();
+
+  for (const hit of hits) {
+    if (!hit || typeof hit !== 'object') continue;
+    const id = hit.id != null && String(hit.id).trim() !== '' ? String(hit.id) : '';
+    const hitStagger = Number(hit.stagger) || 0;
+    const hitSp = hitSpGain(hit);
+    if (id) {
+      maxStaggerById.set(id, Math.max(maxStaggerById.get(id) || 0, hitStagger));
+      maxSpById.set(id, Math.max(maxSpById.get(id) || 0, hitSp));
+    } else {
+      stagger += hitStagger;
+      spGain += hitSp;
+    }
+  }
+
+  for (const value of maxStaggerById.values()) stagger += value;
+  for (const value of maxSpById.values()) spGain += value;
+
+  return { stagger, spGain };
+}
+
 export interface ActionLikeEntity {
   type?: string;
   hits?: EditorHit[];
   element?: string | null;
-  allowedEffectTypes?: string[];
   [key: string]: unknown;
 }
 
@@ -167,19 +204,7 @@ export function ensureEffectId(effect: EditorEffect): EditorEffect {
   return effect;
 }
 
-function inferAllowedEffectTypesFromHits(hits: EditorHit[] = []): string[] {
-  const collected = new Set<string>();
-  hits.forEach(hit => {
-    const effects = Array.isArray(hit?.effects) ? hit.effects : [];
-    effects.forEach(effect => {
-      const type = effect?.displayType || effect?.type || effect?.id || effect?.kind;
-      if (type) collected.add(type);
-    });
-  });
-  return [...collected];
-}
-
-export function getHitEffectRows(hits: EditorHit[] = []): EditorEffect[][] {
+function getHitEffectRows(hits: EditorHit[] = []): EditorEffect[][] {
   return (Array.isArray(hits) ? hits : []).map(hit => {
     if (!Array.isArray(hit?.effects)) hit.effects = [];
     hit.effects.forEach(effect => ensureEffectId(effect));
@@ -187,7 +212,7 @@ export function getHitEffectRows(hits: EditorHit[] = []): EditorEffect[][] {
   });
 }
 
-export function setHitEffectRows(
+function setHitEffectRows(
   existingHits: EditorHit[] = [],
   rows: EditorEffect[][] = [],
 ): EditorHit[] {
@@ -492,6 +517,7 @@ export function legacyActionToHits({
   });
 
   if (normalizedHits.length === 0 && Array.isArray(allowedTypes) && allowedTypes.length > 0) {
+    // Legacy actions sometimes only stored allowedTypes; keep a placeholder hit.
     normalizedHits.push(createEditorHit({ element }));
   }
 
@@ -515,7 +541,8 @@ function defineAlias(
 
 export interface EnsureActionLikeModelOptions {
   deleteLegacy?: boolean;
-  aliasStyle?: 'camel' | 'snake' | 'both' | null;
+  /** Compat aliases for old panel code that still reads damageTicks / physicalAnomaly. */
+  aliasStyle?: 'camel' | null;
   defaultElement?: string | null;
 }
 
@@ -538,11 +565,6 @@ export function ensureActionLikeModel(
     element: entity.element || defaultElement,
   });
 
-  const allowedList = Array.isArray(entity.allowedEffectTypes)
-    ? entity.allowedEffectTypes
-    : entity.allowedTypes || entity.allowed_types || inferAllowedEffectTypesFromHits(entity.hits);
-  entity.allowedEffectTypes = Array.isArray(allowedList) ? [...allowedList] : [];
-
   if (deleteLegacy) {
     delete entity.damageTicks;
     delete entity.damage_ticks;
@@ -550,9 +572,10 @@ export function ensureActionLikeModel(
     delete entity.anomalies;
     delete entity.allowedTypes;
     delete entity.allowed_types;
+    delete entity.allowedEffectTypes;
   }
 
-  if (aliasStyle === 'camel' || aliasStyle === 'both') {
+  if (aliasStyle === 'camel') {
     defineAlias(entity, 'damageTicks', {
       get(this: ActionLikeEntity) {
         return this.hits;
@@ -567,41 +590,6 @@ export function ensureActionLikeModel(
       },
       set(this: ActionLikeEntity, value: unknown) {
         this.hits = setHitEffectRows(this.hits, value as EditorEffect[][]);
-      },
-    });
-    defineAlias(entity, 'allowedTypes', {
-      get(this: ActionLikeEntity) {
-        return this.allowedEffectTypes;
-      },
-      set(this: ActionLikeEntity, value: unknown) {
-        this.allowedEffectTypes = Array.isArray(value) ? value : [];
-      },
-    });
-  }
-
-  if (aliasStyle === 'snake' || aliasStyle === 'both') {
-    defineAlias(entity, 'damage_ticks', {
-      get(this: ActionLikeEntity) {
-        return this.hits;
-      },
-      set(this: ActionLikeEntity, value: unknown) {
-        this.hits = normalizeHits(value as EditorHit[], this.element || defaultElement);
-      },
-    });
-    defineAlias(entity, 'anomalies', {
-      get(this: ActionLikeEntity) {
-        return getHitEffectRows(this.hits);
-      },
-      set(this: ActionLikeEntity, value: unknown) {
-        this.hits = setHitEffectRows(this.hits, value as EditorEffect[][]);
-      },
-    });
-    defineAlias(entity, 'allowed_types', {
-      get(this: ActionLikeEntity) {
-        return this.allowedEffectTypes;
-      },
-      set(this: ActionLikeEntity, value: unknown) {
-        this.allowedEffectTypes = Array.isArray(value) ? value : [];
       },
     });
   }

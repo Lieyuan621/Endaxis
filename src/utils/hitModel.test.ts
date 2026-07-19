@@ -4,6 +4,7 @@ import {
   createEditorEffect,
   retypeEditorEffect,
   retypeEditorEffectKind,
+  summarizeEditorHitTotals,
   toPersistedEditorHits,
 } from './hitModel';
 import { resolveEffectDisplayKey } from './effectDisplay';
@@ -159,5 +160,31 @@ describe('hit editor effect model', () => {
     expect(persisted[0]).toMatchObject({ id: 'visible', offset: 0.5, element: 'heat' });
     expect(persisted[0]).not.toHaveProperty('_editorId');
     expect(persisted[0]).not.toHaveProperty('_editorSourceIndex');
+  });
+
+  it('summarizes hit totals with max-per-id for shared ids and sum for anonymous hits', () => {
+    expect(
+      summarizeEditorHitTotals([
+        { id: 'thunder', stagger: 0, spRecovery: 0 },
+        { id: 'thunder', stagger: 15, spRecovery: 6 },
+        { id: 'thunder', stagger: 15, spRecovery: 6 },
+        { id: 'first', stagger: 0, spRecovery: 0 },
+      ]),
+    ).toEqual({ stagger: 15, spGain: 6 });
+
+    expect(
+      summarizeEditorHitTotals([
+        { stagger: 10, spRecovery: 5 },
+        { stagger: 8, spReturn: 3 },
+      ]),
+    ).toEqual({ stagger: 18, spGain: 8 });
+
+    expect(
+      summarizeEditorHitTotals([
+        { id: 'a', stagger: 15, spRecovery: 2 },
+        { id: 'a', stagger: 15, spRecovery: 2 },
+        { stagger: 10, spRecovery: 4 },
+      ]),
+    ).toEqual({ stagger: 25, spGain: 6 });
   });
 });

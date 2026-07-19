@@ -77,7 +77,7 @@ function resolveStatDisplayKey(stat: StatLike | null | undefined): string | null
   return stat.modifier;
 }
 
-export function toCanonicalUiKey(value: unknown): string | null {
+function toCanonicalUiKey(value: unknown): string | null {
   const key = String(value || '').trim();
   return key || null;
 }

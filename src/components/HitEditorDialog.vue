@@ -19,7 +19,9 @@ import {
 } from '@/utils/hitModel';
 import { resolveEffectDisplayKey } from '@/utils/effectDisplay';
 import {
+  effectKindHasDisplayTypePicker,
   filterEffectOptionGroups,
+  isAmpDisplayKey,
   shouldRetypeEffectForDisplayKind,
 } from '@/utils/effectDisplayOptions';
 import { frameToTime, timeToFrame } from '@/utils/time';
@@ -131,12 +133,23 @@ const damageElementValue = computed(() => {
   return element && element !== defaultElementKey.value ? element : DEFAULT_DAMAGE_ELEMENT_VALUE;
 });
 
+const selectedEditorKind = computed(() => {
+  const effect = selectedEffect.value;
+  if (!effect) return 'status';
+  if (effect.kind === 'status' && isAmpDisplayKey(resolveEffectDisplayKey(effect))) return 'amp';
+  return effect.kind || 'status';
+});
+
 const filteredEffectOptions = computed(() =>
   filterEffectOptionGroups(
     props.effectOptions || [],
-    selectedEffect.value?.kind || 'status',
+    selectedEditorKind.value,
     resolveEffectDisplayKey(selectedEffect.value),
   ),
+);
+
+const showDisplayTypeField = computed(() =>
+  effectKindHasDisplayTypePicker(selectedEditorKind.value),
 );
 
 const physicalStatusOptions = computed(() => {
@@ -170,10 +183,8 @@ const canEditConsumedStatEffects = computed(() =>
 
 const canEditNestedHit = computed(() => effectKindHasField(selectedEffect.value?.kind, 'hit'));
 
-const canEditSkillScope = computed(
-  () =>
-    effectKindHasField(selectedEffect.value?.kind, 'skillTypes') ||
-    effectKindHasField(selectedEffect.value?.kind, 'skillId'),
+const canEditSkillScope = computed(() =>
+  effectKindHasField(selectedEffect.value?.kind, 'skillTypes'),
 );
 
 const skillTypeValues = computed({
@@ -621,9 +632,7 @@ function save() {
         </div>
       </section>
 
-      <section class="editor-section">
-        <div class="section-title">{{ t('hitEditor.effects') }}</div>
-        <div class="effect-layout">
+      <div class="effect-layout">
           <div class="effect-list">
             <div class="effect-pane-title">{{ t('hitEditor.effects') }}</div>
             <draggable
@@ -671,13 +680,14 @@ function save() {
           </div>
 
           <div v-if="selectedEffect" class="effect-detail">
-            <div class="effect-pane-title">{{ effectDisplayName(selectedEffect) }}</div>
+            <div class="effect-detail__name">{{ effectDisplayName(selectedEffect) }}</div>
             <div class="effect-field-groups">
+              <div class="effect-field-groups__title">{{ t('hitEditor.generalSettings') }}</div>
               <div class="field-grid field-grid--effect-select-row">
                 <label class="field">
                   <span>{{ t('hitEditor.effectKind') }}</span>
                   <el-select
-                    :model-value="selectedEffect.kind"
+                    :model-value="selectedEditorKind"
                     @update:model-value="updateSelectedEffectKind"
                     size="small"
                     class="effect-select-dark"
@@ -691,7 +701,7 @@ function save() {
                     />
                   </el-select>
                 </label>
-                <label class="field full">
+                <label v-if="showDisplayTypeField" class="field full">
                   <span>{{ t('hitEditor.displayType') }}</span>
                   <el-select
                     :model-value="resolveEffectDisplayKey(selectedEffect)"
@@ -889,6 +899,7 @@ function save() {
             </div>
 
             <div class="kind-field-groups">
+              <div class="kind-field-groups__title">{{ t('hitEditor.specialSettings') }}</div>
               <template v-if="canEditStat || canEditTarget">
                 <EffectStatEditor
                   v-if="canEditStat"
@@ -1002,7 +1013,7 @@ function save() {
                   <label class="field">
                     <span>{{ fieldLabel('effectiveness') }}</span>
                     <CustomNumberInput
-                      :model-value="selectedEffect.effectiveness || 0"
+                      :model-value="selectedEffect.effectiveness ?? 1"
                       @update:model-value="
                         value => patchSelectedEffectNumber('effectiveness', value)
                       "
@@ -1047,7 +1058,7 @@ function save() {
                   <label class="field">
                     <span>{{ fieldLabel('effectiveness') }}</span>
                     <CustomNumberInput
-                      :model-value="selectedEffect.effectiveness || 0"
+                      :model-value="selectedEffect.effectiveness ?? 1"
                       @update:model-value="
                         value => patchSelectedEffectNumber('effectiveness', value)
                       "
@@ -1250,18 +1261,6 @@ function save() {
                       />
                     </el-select>
                   </label>
-                  <label class="field">
-                    <span>{{ fieldLabel('skillId') }}</span>
-                    <input
-                      class="simple-input"
-                      :value="
-                        typeof selectedEffect.skillId === 'string' ? selectedEffect.skillId : ''
-                      "
-                      @input="
-                        event => patchSelectedEffect('skillId', optionalString(event.target.value))
-                      "
-                    />
-                  </label>
                 </div>
               </template>
 
@@ -1388,7 +1387,6 @@ function save() {
             <div class="empty-hint">{{ t('hitEditor.noEffect') }}</div>
           </div>
         </div>
-      </section>
 
       <section class="editor-section">
         <div class="section-title">{{ t('hitEditor.advanced') }}</div>
@@ -1483,9 +1481,19 @@ function save() {
   gap: 10px;
 }
 
+.effect-field-groups__title,
+.kind-field-groups__title {
+  color: #ffd700;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
 .kind-field-groups {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.22);
+  border-left: 3px solid rgba(255, 215, 0, 0.72);
+  padding: 10px 10px 10px 12px;
 }
 
 .field,
@@ -1668,6 +1676,21 @@ function save() {
   padding-bottom: 6px;
   text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.effect-detail__name {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e8ecf4;
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  min-height: 22px;
+  overflow: hidden;
+  padding-bottom: 6px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

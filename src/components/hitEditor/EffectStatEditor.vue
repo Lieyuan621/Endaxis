@@ -90,17 +90,6 @@ const skillTypeValues = computed({
   },
 });
 
-const skillIdValue = computed({
-  get() {
-    const id = isPlainObject(props.modelValue) ? props.modelValue.skillId : '';
-    return typeof id === 'string' ? id : '';
-  },
-  set(next) {
-    const text = String(next || '').trim();
-    patchScope('skillId', text || undefined);
-  },
-});
-
 const attributeValue = computed({
   get() {
     const attr = isPlainObject(props.modelValue) ? props.modelValue.attribute : '';
@@ -131,14 +120,9 @@ const showAttribute = computed(() =>
 function patchScope(key, raw) {
   if (!modifierValue.value) return;
   const seed = { ...(isPlainObject(props.modelValue) ? props.modelValue : {}) };
-  if (key === 'skillId') {
-    if (raw) seed.skillId = raw;
-    else delete seed.skillId;
-  } else {
-    const list = asList(raw);
-    if (list.length) seed[key] = list;
-    else delete seed[key];
-  }
+  const list = asList(raw);
+  if (list.length) seed[key] = list;
+  else delete seed[key];
   emit('update:modelValue', buildStat(modifierValue.value, seed));
 }
 
@@ -249,17 +233,6 @@ function skillTypeLabel(value) {
         </el-select>
       </label>
     </div>
-
-    <div v-if="showSkillScope" class="field-grid field-grid--effect-text-row">
-      <label class="field">
-        <span>{{ t('hitEditor.fields.skillId') }}</span>
-        <input
-          class="simple-input"
-          :value="skillIdValue"
-          @input="event => (skillIdValue = event.target.value)"
-        />
-      </label>
-    </div>
   </div>
 </template>
 
@@ -275,8 +248,7 @@ function skillTypeLabel(value) {
   gap: 10px;
 }
 
-.field-grid--effect-select-row,
-.field-grid--effect-text-row {
+.field-grid--effect-select-row {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -289,23 +261,7 @@ function skillTypeLabel(value) {
   min-width: 0;
 }
 
-.effect-select-dark,
-.simple-input {
+.effect-select-dark {
   width: 100%;
-}
-
-.simple-input {
-  background: #111;
-  border: 1px solid #444;
-  color: #f0f0f0;
-  font-family: inherit;
-  font-size: 12px;
-  min-height: 31px;
-  padding: 6px 8px;
-}
-
-.simple-input:focus {
-  border-color: rgba(255, 215, 0, 0.72);
-  outline: none;
 }
 </style>

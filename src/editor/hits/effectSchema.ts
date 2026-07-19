@@ -3,9 +3,13 @@
  * Domain shapes live in `data/types.ts`.
  */
 
+import { ARTS_ELEMENTS } from '@/data/enums';
+
+
 /** Effect kinds users can pick in the hit editor. */
 export const EDITOR_EFFECT_KINDS = Object.freeze([
   'status',
+  'amp',
   'infliction',
   'burst',
   'reaction',
@@ -22,10 +26,13 @@ export const EDITOR_EFFECT_KINDS = Object.freeze([
 ] as const);
 
 /**
- * All sheet effect kinds including `derived`.
- * `derived` is authoring-only: collect expands it before skills reach the editor.
+ * Sheet / domain effect kinds including `derived`.
+ * `amp` is editor-only (persists as `status` + ampBonus display); `derived` is authoring-only.
  */
-export const EFFECT_KINDS = Object.freeze([...EDITOR_EFFECT_KINDS, 'derived'] as const);
+export const EFFECT_KINDS = Object.freeze([
+  ...EDITOR_EFFECT_KINDS.filter(kind => kind !== 'amp'),
+  'derived',
+] as const);
 
 export type EffectKindKey = (typeof EFFECT_KINDS)[number];
 
@@ -50,6 +57,7 @@ export const COMMON_EFFECT_FIELDS = Object.freeze([
 /** Kind-specific editable field keys (legacy `EFFECT_KIND_FIELDS` shape). */
 export const EFFECT_KIND_FIELDS: Readonly<Record<string, readonly string[]>> = Object.freeze({
   status: ['target', 'stat', 'value', 'scaling', 'silent', 'external'],
+  amp: ['target', 'stat', 'value', 'scaling', 'silent', 'external'],
   infliction: ['element'],
   burst: ['element'],
   reaction: ['reactionType', 'requiresInfliction', 'effectiveness', 'defaultLevel'],
@@ -81,9 +89,9 @@ export const EFFECT_KIND_FIELDS: Readonly<Record<string, readonly string[]>> = O
   spReturn: ['value', 'scaling'],
   ultEnergyGain: ['target', 'value', 'scaling'],
   consume: ['operatorStatus', 'enemyStatus', 'consumeStacks', 'consumeScope'],
-  oneTime: ['stat', 'value', 'target', 'skillTypes', 'skillId'],
-  cooldownReductionFlat: ['value', 'target', 'skillTypes', 'skillId'],
-  cooldownReductionPercent: ['value', 'target', 'skillTypes', 'skillId'],
+  oneTime: ['stat', 'value', 'target', 'skillTypes'],
+  cooldownReductionFlat: ['value', 'target', 'skillTypes'],
+  cooldownReductionPercent: ['value', 'target', 'skillTypes'],
   derived: ['sourceEffect', 'effect'],
 });
 
@@ -106,6 +114,19 @@ export function createEffectKindDefaults(
         kind: 'status',
         id: next.id || 'default',
         name: next.name || next.id || 'default',
+      };
+    case 'amp':
+      // `ampBonus:arts` is a display preset; runtime elements are the four arts
+      // elements (not the literal string "arts", which is not a DamageElement).
+      return {
+        kind: 'status',
+        type: 'ampBonus:arts',
+        displayType: 'ampBonus:arts',
+        id: next.id || 'ampBonus:arts',
+        name: next.name || 'ampBonus:arts',
+        stat: { modifier: 'ampBonus', elements: [...ARTS_ELEMENTS] },
+        target: next.target || 'self',
+        value: Number(next.value) || 0,
       };
     case 'infliction':
       return { kind: 'infliction', element: next.element || 'heat' };

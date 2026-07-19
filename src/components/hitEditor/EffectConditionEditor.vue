@@ -328,6 +328,8 @@ function statusLabel(value) {
             />
           </el-select>
         </label>
+      </div>
+      <div v-if="stacksEnabled" class="field-grid field-grid--effect-input-row">
         <label class="field">
           <span>{{ t('common.value') }}</span>
           <CustomNumberInput
@@ -340,38 +342,39 @@ function statusLabel(value) {
       </div>
     </template>
 
-    <div
-      v-else-if="HP_KINDS.has(kindValue)"
-      class="field-grid field-grid--effect-select-row"
-    >
-      <label class="field">
-        <span>{{ t('hitEditor.fields.hpCompare') }}</span>
-        <el-select
-          :model-value="hpCompare"
-          @update:model-value="value => (hpCompare = value)"
-          size="small"
-          class="effect-select-dark"
-          popper-class="hit-editor-select-popper"
-        >
-          <el-option
-            v-for="compare in HP_COMPARES"
-            :key="compare"
-            :value="compare"
-            :label="compareLabel('hpCompares', compare)"
+    <template v-else-if="HP_KINDS.has(kindValue)">
+      <div class="field-grid field-grid--effect-select-row">
+        <label class="field">
+          <span>{{ t('hitEditor.fields.hpCompare') }}</span>
+          <el-select
+            :model-value="hpCompare"
+            @update:model-value="value => (hpCompare = value)"
+            size="small"
+            class="effect-select-dark"
+            popper-class="hit-editor-select-popper"
+          >
+            <el-option
+              v-for="compare in HP_COMPARES"
+              :key="compare"
+              :value="compare"
+              :label="compareLabel('hpCompares', compare)"
+            />
+          </el-select>
+        </label>
+      </div>
+      <div class="field-grid field-grid--effect-input-row">
+        <label class="field">
+          <span>{{ t('hitEditor.fields.hpPercent') }}</span>
+          <CustomNumberInput
+            :model-value="hpPercent"
+            @update:model-value="value => (hpPercent = value)"
+            :min="0"
+            :max="100"
+            :activeColor="'#ffd700'"
           />
-        </el-select>
-      </label>
-      <label class="field">
-        <span>{{ t('hitEditor.fields.hpPercent') }}</span>
-        <CustomNumberInput
-          :model-value="hpPercent"
-          @update:model-value="value => (hpPercent = value)"
-          :min="0"
-          :max="100"
-          :activeColor="'#ffd700'"
-        />
-      </label>
-    </div>
+        </label>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -388,6 +391,7 @@ function statusLabel(value) {
 }
 
 .field-grid--effect-select-row,
+.field-grid--effect-input-row,
 .field-grid--effect-check-row {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }

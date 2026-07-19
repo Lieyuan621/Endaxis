@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
   collectOperatorStatusCatalog,
-  collectOperatorStatusNameMap,
   collectStatusOptions,
   KNOWN_ENEMY_STATUS_KEYS,
   resolveStatusLocaleKey,
@@ -55,9 +54,6 @@ describe('statusOptions', () => {
     expect(catalog.ids).not.toContain('waterspouts');
     expect(catalog.ids).not.toContain('tangtang-t2-waterspouts');
     expect(Object.values(catalog.nameById).filter(name => name === 'waterspouts')).toEqual([]);
-    expect(collectOperatorStatusNameMap(getOperator('tangtang'))['tangtang-whirlpools']).toBe(
-      'whirlpools',
-    );
   });
 
   test('scans every operator: status-only catalogs and known named keys resolve', () => {

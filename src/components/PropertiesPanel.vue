@@ -15,6 +15,7 @@ import {
   createHitModelId,
   ensureActionLikeModel,
   normalizeHits,
+  summarizeEditorHitTotals,
   toLegacyDisplayType,
   toPersistedEditorHits,
 } from '@/utils/hitModel';
@@ -261,16 +262,9 @@ const editingHit = computed(() => {
   return editableHits.value[editingHitIndex.value] || null;
 });
 
-const totalStagger = computed(() => {
-  return editableHits.value.reduce((acc, hit) => acc + (Number(hit?.stagger) || 0), 0);
-});
-
-const totalSpGain = computed(() => {
-  return editableHits.value.reduce(
-    (acc, hit) => acc + (Number(hit?.spRecovery) || 0) + (Number(hit?.spReturn) || 0),
-    0,
-  );
-});
+const hitListTotals = computed(() => summarizeEditorHitTotals(editableHits.value));
+const totalStagger = computed(() => hitListTotals.value.stagger);
+const totalSpGain = computed(() => hitListTotals.value.spGain);
 
 // ===================================================================================
 // 3. 技能与更新逻辑
@@ -754,6 +748,7 @@ function handleStartConnection(id, type = null) {
             v-for="(tick, index) in editableHits"
             :key="tick._editorId || index"
             class="tick-item red-theme"
+            :class="{ 'tick-item--has-stagger': (tick.stagger || 0) > 0 }"
           >
             <div class="tick-header">
               <span class="tick-idx">HIT {{ index + 1 }}</span>
@@ -796,16 +791,29 @@ function handleStartConnection(id, type = null) {
                 >{{ t('propertiesPanel.damage.tickMultiplier') }}: {{ tick.multiplier || 0 }}%</span
               >
               <span>{{ t('common.element') }}: {{ getHitElementLabel(tick) }}</span>
-              <span>{{ t('propertiesPanel.damage.tickStagger') }}: {{ tick.stagger || 0 }}</span>
               <span
-                >{{ t('propertiesPanel.damage.tickSpGain') }}: {{ tick.sp || 0 }}
+                >{{ t('propertiesPanel.damage.tickStagger') }}:
+                <span :class="{ 'hit-summary-positive': (tick.stagger || 0) > 0 }">{{
+                  tick.stagger || 0
+                }}</span></span
+              >
+              <span
+                >{{ t('propertiesPanel.damage.tickSpGain') }}:
+                <span :class="{ 'hit-summary-positive': (tick.sp || 0) > 0 }">{{
+                  tick.sp || 0
+                }}</span>
                 {{
                   tick.spKind === 'refund'
                     ? t('propertiesPanel.damage.spKindRefundShort')
                     : t('propertiesPanel.damage.spKindRecoverShort')
                 }}</span
               >
-              <span>{{ t('hitEditor.effects') }}: {{ tick.effects?.length || 0 }}</span>
+              <span
+                >{{ t('hitEditor.effects') }}:
+                <span :class="{ 'hit-summary-positive': (tick.effects?.length || 0) > 0 }">{{
+                  tick.effects?.length || 0
+                }}</span></span
+              >
             </div>
           </div>
         </div>
@@ -1310,6 +1318,10 @@ function handleStartConnection(id, type = null) {
   border-left-color: #ff7875 !important;
   background: linear-gradient(90deg, rgba(255, 120, 117, 0.08) 0%, transparent 100%) !important;
 }
+.tick-item.red-theme.tick-item--has-stagger {
+  border-left-color: #ffd666 !important;
+  background: linear-gradient(90deg, rgba(255, 214, 102, 0.12) 0%, transparent 100%) !important;
+}
 .tick-item.blue-theme {
   border-left-color: #00e5ff !important;
   background: linear-gradient(90deg, rgba(0, 229, 255, 0.08) 0%, transparent 100%) !important;
@@ -1353,6 +1365,10 @@ function handleStartConnection(id, type = null) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.hit-summary-positive {
+  color: #ffd666;
+  font-weight: 700;
 }
 .binding-row {
   align-items: flex-start;

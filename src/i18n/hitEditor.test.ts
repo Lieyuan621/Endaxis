@@ -7,6 +7,7 @@ const REQUIRED_GROUPS = {
   skillTypes: ['basicAttack', 'battleSkill', 'comboSkill', 'ultimate', 'finalStrike', 'dive'],
   effectKinds: [
     'status',
+    'amp',
     'infliction',
     'burst',
     'reaction',
@@ -57,7 +58,6 @@ const REQUIRED_GROUPS = {
     'enemyStatus',
     'skillTypes',
     'treatAsSkillType',
-    'skillId',
     'stacksFromConsume',
     '_condition',
   ],
@@ -120,6 +120,9 @@ describe('hit editor localization', () => {
     expect(message.effects.name.cryo_burst).toBe('寒冷爆发');
     expect(message.effects.name.ultEnergyGain).toBe('终结技充能');
     expect(message.effects.group.status).toBe('法术异常');
+    expect(message.hitEditor.generalSettings).toBe('通用设置');
+    expect(message.hitEditor.specialSettings).toBe('特殊设置');
+    expect(message.hitEditor.effectKinds.amp).toBe('增幅');
     expect(message.hitEditor.effectKinds.infliction).toBe('法术附着');
     expect(message.hitEditor.effectKinds.reaction).toBe('法术异常');
     expect(message.hitEditor.effectKinds.physicalStatus).toBe('物理异常');

@@ -293,10 +293,3 @@ export function collectOperatorStatusCatalog(
   for (const skill of Object.values(sheet.combatSkills || {})) visitSkill(skill, nameById, ids);
   return { ids: [...ids], nameById: Object.fromEntries(nameById) };
 }
-
-/** @deprecated Prefer collectOperatorStatusCatalog — kept for callers that only need labels. */
-export function collectOperatorStatusNameMap(
-  sheet: OperatorSheet | null | undefined,
-): Record<string, string> {
-  return collectOperatorStatusCatalog(sheet).nameById;
-}

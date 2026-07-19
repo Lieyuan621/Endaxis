@@ -66,6 +66,8 @@ describe('HitEditorDialog structure', () => {
   test('uses category and concrete effect labels with an ungrouped none option', () => {
     expect(source).toContain("t('hitEditor.effectKind')");
     expect(source).toContain("t('hitEditor.displayType')");
+    expect(source).toContain('showDisplayTypeField');
+    expect(source).toContain('effectKindHasDisplayTypePicker');
     expect(source).toContain('<el-option value="default" :label="t(\'common.none\')" />');
   });
 
@@ -79,6 +81,9 @@ describe('HitEditorDialog structure', () => {
   test('groups effect detail fields by control type', () => {
     expect(source).toContain('effect-field-groups');
     expect(source).toContain('kind-field-groups');
+    expect(source).toContain('hitEditor.generalSettings');
+    expect(source).toContain('hitEditor.specialSettings');
+    expect(source).toContain('selectedEditorKind');
     expect(source).toContain('field-grid field-grid--effect-select-row');
     expect(source).toContain('field-grid field-grid--effect-input-row');
     expect(source).toContain('field-grid field-grid--effect-text-row');

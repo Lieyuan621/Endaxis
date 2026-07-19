@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { filterEffectOptionGroups } from './effectDisplayOptions';
+import {
+  effectKindHasDisplayTypePicker,
+  filterEffectOptionGroups,
+} from './effectDisplayOptions';
 
 const groups = [
   {
@@ -18,6 +21,14 @@ const groups = [
       { label: 'cryo burst', value: 'cryo_burst' },
       { label: 'electric burst', value: 'electric_burst' },
       { label: 'nature burst', value: 'nature_burst' },
+    ],
+  },
+  {
+    label: 'amp',
+    options: [
+      { label: 'amp arts', value: 'ampBonus:arts' },
+      { label: 'amp cryo', value: 'ampBonus:cryo' },
+      { label: 'amp heat', value: 'ampBonus:heat' },
     ],
   },
   {
@@ -56,11 +67,17 @@ describe('effect display option filtering', () => {
     ]);
   });
 
-  it('keeps stat display types out of routed and runtime effect kind filters', () => {
+  it('keeps amp presets under the amp editor kind, not status/other', () => {
     expect(optionValues(filterEffectOptionGroups(groups, 'status'))).toEqual([
       'dmgBonus:physical',
       'dmgBonus:arts',
       'waterspouts',
+    ]);
+
+    expect(optionValues(filterEffectOptionGroups(groups, 'amp'))).toEqual([
+      'ampBonus:arts',
+      'ampBonus:heat',
+      'ampBonus:cryo',
     ]);
 
     expect(optionValues(filterEffectOptionGroups(groups, 'ultEnergyGain'))).toEqual([
@@ -81,5 +98,13 @@ describe('effect display option filtering', () => {
     expect(
       optionValues(filterEffectOptionGroups(groups, 'physicalStatus', 'vulnerability')),
     ).toEqual(['breach', 'crush', 'lift', 'knockdown', 'vulnerability']);
+  });
+
+  it('hides the display-type picker for direct runtime kinds with no variants', () => {
+    expect(effectKindHasDisplayTypePicker('consume')).toBe(false);
+    expect(effectKindHasDisplayTypePicker('ultEnergyGain')).toBe(false);
+    expect(effectKindHasDisplayTypePicker('status')).toBe(true);
+    expect(effectKindHasDisplayTypePicker('amp')).toBe(true);
+    expect(effectKindHasDisplayTypePicker('reaction')).toBe(true);
   });
 });

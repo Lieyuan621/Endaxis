@@ -19,7 +19,9 @@ import { createEditorEffect, retypeEditorEffectKind } from '@/utils/hitModel';
 
 describe('hit/effect editor SSOT', () => {
   test('covers every editor effect kind with field defs', () => {
+    expect(EDITOR_EFFECT_KINDS).toContain('amp');
     expect(EDITOR_EFFECT_KINDS).not.toContain('derived');
+    expect(EFFECT_KINDS).not.toContain('amp');
     expect(EFFECT_KINDS).toContain('derived');
     for (const kind of EFFECT_KINDS) {
       expect(EFFECT_KIND_FIELDS[kind]?.length, kind).toBeGreaterThan(0);
@@ -27,6 +29,15 @@ describe('hit/effect editor SSOT', () => {
         expect.arrayContaining(['id', 'duration', ...EFFECT_KIND_FIELDS[kind]]),
       );
     }
+    expect(EFFECT_KIND_FIELDS.amp).toEqual(EFFECT_KIND_FIELDS.status);
+    expect(createEffectKindDefaults('amp')).toMatchObject({
+      kind: 'status',
+      displayType: 'ampBonus:arts',
+      stat: {
+        modifier: 'ampBonus',
+        elements: ['heat', 'cryo', 'electric', 'nature'],
+      },
+    });
   });
 
   test('domain physical / reaction enums are exposed for selects', () => {

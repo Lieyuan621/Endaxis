@@ -36,8 +36,10 @@ describe('PropertiesPanel effect display type options', () => {
   test('keeps useful panel summary metrics visible', () => {
     expect(source).toContain('propertiesPanel.damage.stagger');
     expect(source).toContain('propertiesPanel.damage.sp');
+    expect(source).toContain('summarizeEditorHitTotals');
     expect(source).toContain('totalStagger');
     expect(source).toContain('totalSpGain');
+    expect(source).toContain('hit-summary-positive');
     expect(source).toContain('propertiesPanel.connections.currentCount');
     expect(source).toContain('relevantConnections.length');
   });

@@ -149,6 +149,89 @@ interface ResolveHitsOptions {
   preserveDurationExtension?: boolean;
 }
 
+const SHEET_BASELINE_KEY = '_sheetBaseline';
+
+const AUTHORING_HIT_KEYS = Object.freeze([
+  'offset',
+  'stagger',
+  'spRecovery',
+  'spReturn',
+  'element',
+  'durationExtension',
+  'multiplier',
+  'treatAsReaction',
+  'treatAsSkillType',
+  '_condition',
+  'effects',
+] as const);
+
+function stableSerialize(value: unknown): string {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function normalizeEffectsForCompare(effects: unknown): unknown {
+  if (!Array.isArray(effects)) return effects ?? null;
+  return effects.map(effect => {
+    if (!effect || typeof effect !== 'object') return effect;
+    const record = { ...(effect as Dict) };
+    delete record._id;
+    delete record.displayType;
+    delete record.displayDuration;
+    delete record.displayStacks;
+    return record;
+  });
+}
+
+function authoringValuesEqual(key: string, left: unknown, right: unknown): boolean {
+  if (key === 'effects') {
+    return stableSerialize(normalizeEffectsForCompare(left)) ===
+      stableSerialize(normalizeEffectsForCompare(right));
+  }
+  if (typeof left === 'number' || typeof right === 'number') {
+    return Number(left) === Number(right);
+  }
+  return stableSerialize(left ?? null) === stableSerialize(right ?? null);
+}
+
+function pickAuthoringField(
+  key: string,
+  stored: Dict,
+  baseline: Dict | null | undefined,
+  sheetValue: unknown,
+): unknown {
+  const hasStored = Object.prototype.hasOwnProperty.call(stored, key);
+  if (!hasStored) return sheetValue;
+
+  const storedValue = stored[key];
+  if (!baseline || !Object.prototype.hasOwnProperty.call(baseline, key)) {
+    // Legacy hits without a baseline: keep divergence from the current sheet.
+    return authoringValuesEqual(key, storedValue, sheetValue) ? sheetValue : storedValue;
+  }
+
+  const baselineValue = baseline[key];
+  // Still matches the last sheet snapshot → safe to take the newly leveled sheet value.
+  if (authoringValuesEqual(key, storedValue, baselineValue)) return sheetValue;
+  return storedValue;
+}
+
+function buildSheetBaseline(sheetHit: Dict): Dict {
+  const baseline: Dict = {};
+  for (const key of AUTHORING_HIT_KEYS) {
+    if (sheetHit[key] !== undefined) baseline[key] = sheetHit[key];
+  }
+  if (sheetHit.effects === undefined) baseline.effects = null;
+  return baseline;
+}
+
+function applySheetBaseline(hit: Dict, sheetHit: Dict): Dict {
+  hit[SHEET_BASELINE_KEY] = buildSheetBaseline(sheetHit);
+  return hit;
+}
+
 export function resolveHitsFromSheet(
   storedHits: ResolvedHit[] = [],
   rawEntries: RawEntry[] = [],
@@ -169,44 +252,136 @@ export function resolveHitsFromSheet(
       continue;
     }
 
-    const nextHit: Dict = {
-      ...stored,
-      id: rawHit.id ?? stored.id,
+    const sheetMultiplier = resolveMultiplierFromEntry(rawEntry, level);
+    const sheetHit: Dict = {
+      id: rawHit.id,
       offset: Number(rawHit.offset) || 0,
       spRecovery: Number(rlv(rawHit.spRecovery, level)) || 0,
       spReturn: Number(rlv(rawHit.spReturn, level)) || 0,
       stagger: Number(rlv(rawHit.stagger, level)) || 0,
-      element: rawHit.element ?? rawEntry?.element ?? stored.element,
-      ...resolveMultiplierFromEntry(rawEntry, level),
+      element: rawHit.element ?? rawEntry?.element,
+      ...sheetMultiplier,
     };
 
     if (preserveDurationExtension) {
       if (rawHit.durationExtension != null) {
-        nextHit.durationExtension = Number(rlv(rawHit.durationExtension, level)) || 0;
+        sheetHit.durationExtension = Number(rlv(rawHit.durationExtension, level)) || 0;
       }
     } else {
-      nextHit.durationExtension =
+      sheetHit.durationExtension =
         rawHit.durationExtension != null
           ? Number(rlv(rawHit.durationExtension, level)) || 0
           : undefined;
     }
 
     if (preserveCondition && rawEntry?.condition !== undefined) {
-      nextHit._condition = rawEntry.condition;
-    } else if (!preserveCondition) {
-      delete nextHit._condition;
+      sheetHit._condition = rawEntry.condition;
     }
 
     if (rawHit.treatAsReaction) {
-      nextHit.treatAsReaction = rawHit.treatAsReaction;
-    } else {
-      delete nextHit.treatAsReaction;
+      sheetHit.treatAsReaction = rawHit.treatAsReaction;
     }
 
     if (rawEntry?.treatAsSkillType) {
-      nextHit.treatAsSkillType = rawEntry.treatAsSkillType;
+      sheetHit.treatAsSkillType = rawEntry.treatAsSkillType;
+    }
+
+    if (Array.isArray(rawHit.effects) && rawHit.effects.length > 0) {
+      sheetHit.effects = rawHit.effects
+        .map((rawEffect: Dict) => resolveEffectAtLevel(rawEffect, undefined, level))
+        .filter(Boolean);
     } else {
-      delete nextHit.treatAsSkillType;
+      sheetHit.effects = undefined;
+    }
+
+    const baseline = (stored[SHEET_BASELINE_KEY] as Dict | undefined) || null;
+    const nextHit: Dict = { ...stored };
+
+    nextHit.id = stored.id ?? sheetHit.id;
+    nextHit.offset = Number(pickAuthoringField('offset', stored, baseline, sheetHit.offset)) || 0;
+    nextHit.spRecovery =
+      Number(pickAuthoringField('spRecovery', stored, baseline, sheetHit.spRecovery)) || 0;
+    nextHit.spReturn =
+      Number(pickAuthoringField('spReturn', stored, baseline, sheetHit.spReturn)) || 0;
+    nextHit.stagger =
+      Number(pickAuthoringField('stagger', stored, baseline, sheetHit.stagger)) || 0;
+    nextHit.element = pickAuthoringField('element', stored, baseline, sheetHit.element);
+
+    const pickedMultiplier = pickAuthoringField(
+      'multiplier',
+      stored,
+      baseline,
+      sheetHit.multiplier,
+    );
+    if (pickedMultiplier === sheetHit.multiplier) {
+      Object.assign(nextHit, sheetMultiplier);
+    } else {
+      nextHit.multiplier = Number(pickedMultiplier) || 0;
+      if (stored._multiplierScaling !== undefined) {
+        nextHit._multiplierScaling = stored._multiplierScaling;
+      }
+      if (!(nextHit.multiplier > 0)) nextHit._noDamage = true;
+      else {
+        delete nextHit._noDamage;
+        delete nextHit._multiplierScaling;
+      }
+    }
+
+    const pickedDurationExtension = pickAuthoringField(
+      'durationExtension',
+      stored,
+      baseline,
+      sheetHit.durationExtension,
+    );
+    if (pickedDurationExtension === undefined) delete nextHit.durationExtension;
+    else nextHit.durationExtension = Number(rlv(pickedDurationExtension, level)) || 0;
+
+    if (preserveCondition) {
+      const pickedCondition = pickAuthoringField(
+        '_condition',
+        stored,
+        baseline,
+        sheetHit._condition,
+      );
+      if (pickedCondition === undefined) delete nextHit._condition;
+      else nextHit._condition = pickedCondition;
+    } else {
+      delete nextHit._condition;
+    }
+
+    const pickedTreatAsReaction = pickAuthoringField(
+      'treatAsReaction',
+      stored,
+      baseline,
+      sheetHit.treatAsReaction,
+    );
+    if (pickedTreatAsReaction) nextHit.treatAsReaction = pickedTreatAsReaction;
+    else delete nextHit.treatAsReaction;
+
+    const pickedTreatAsSkillType = pickAuthoringField(
+      'treatAsSkillType',
+      stored,
+      baseline,
+      sheetHit.treatAsSkillType,
+    );
+    if (pickedTreatAsSkillType) nextHit.treatAsSkillType = pickedTreatAsSkillType;
+    else delete nextHit.treatAsSkillType;
+
+    const pickedEffects = pickAuthoringField('effects', stored, baseline, sheetHit.effects);
+    if (Array.isArray(pickedEffects) && pickedEffects.length > 0) {
+      nextHit.effects = pickedEffects
+        .map((effect: Dict) =>
+          resolveEffectAtLevel(
+            effect,
+            Array.isArray(stored.effects)
+              ? (stored.effects as Dict[]).find(item => item?._id && item._id === effect._id)
+              : undefined,
+            level,
+          ),
+        )
+        .filter(Boolean);
+    } else {
+      nextHit.effects = undefined;
     }
 
     if (nextHit._noDamage) {
@@ -216,17 +391,7 @@ export function resolveHitsFromSheet(
       delete nextHit._noDamage;
     }
 
-    if (!Array.isArray(rawHit.effects) || rawHit.effects.length === 0) {
-      nextHit.effects = undefined;
-    } else {
-      const existingEffects: Dict[] = Array.isArray(stored.effects) ? stored.effects : [];
-      nextHit.effects = rawHit.effects
-        .map((rawEffect: Dict, effectIndex: number) =>
-          resolveEffectAtLevel(rawEffect, existingEffects[effectIndex], level),
-        )
-        .filter(Boolean);
-    }
-
+    applySheetBaseline(nextHit, sheetHit);
     resolved.push(nextHit);
   }
 
@@ -272,6 +437,7 @@ export function resolveHitsFromSheet(
       delete nextHit._multiplierScaling;
     }
 
+    applySheetBaseline(nextHit, nextHit);
     resolved.push(nextHit);
   }
 
