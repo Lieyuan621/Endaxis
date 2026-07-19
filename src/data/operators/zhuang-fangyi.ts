@@ -649,7 +649,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 1.4,
@@ -697,6 +697,10 @@ const sheet: OperatorSheet = {
                           },
                         ],
                       },
+                    },
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
                     },
                   ],
                 },

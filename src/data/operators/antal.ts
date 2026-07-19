@@ -272,7 +272,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.8,
@@ -285,7 +285,13 @@ const sheet: OperatorSheet = {
                 {
                   offset: 0.7,
                   stagger: 10,
-                  effects: COMBO_SKILL_EFFECTS,
+                  effects: [
+                    ...COMBO_SKILL_EFFECTS,
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
+                  ],
                 },
               ],
             },

@@ -342,7 +342,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 1.767,
@@ -359,6 +359,10 @@ const sheet: OperatorSheet = {
                   offset: 1.433,
                   stagger: 10,
                   effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
                     {
                       id: 'mifu-combo-physical-susceptibility',
                       kind: 'status',

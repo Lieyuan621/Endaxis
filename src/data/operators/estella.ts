@@ -237,7 +237,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.67,
@@ -267,6 +267,10 @@ const sheet: OperatorSheet = {
                   offset: 0.63,
                   stagger: 10,
                   effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
                     { kind: 'physicalStatus', physicalType: 'lift', forced: true },
                     {
                       id: 'estella-combo-physical-susceptibility',

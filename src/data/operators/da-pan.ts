@@ -240,7 +240,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.8,
@@ -254,6 +254,10 @@ const sheet: OperatorSheet = {
                   offset: 0.76,
                   stagger: 15,
                   effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
                     {
                       kind: 'physicalStatus',
                       physicalType: 'crush',

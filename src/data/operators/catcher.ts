@@ -229,7 +229,7 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.8,
@@ -254,6 +254,10 @@ const sheet: OperatorSheet = {
                   offset: 0.67,
                   stagger: 10,
                   effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
                     {
                       id: 'catcher-combo-shield',
                       kind: 'status',

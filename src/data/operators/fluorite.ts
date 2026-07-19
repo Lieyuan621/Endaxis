@@ -284,7 +284,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.57,
@@ -298,6 +298,10 @@ const sheet: OperatorSheet = {
                   offset: 0.5,
                   stagger: 10,
                   effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
                     {
                       kind: 'infliction',
                       element: 'cryo',

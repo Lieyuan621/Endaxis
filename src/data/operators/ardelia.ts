@@ -241,7 +241,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.77,
@@ -265,6 +265,10 @@ const sheet: OperatorSheet = {
                   offset: 2.4,
                   stagger: 10,
                   effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
                     {
                       id: 'ardelia-combo-corrosion',
                       kind: 'reaction',

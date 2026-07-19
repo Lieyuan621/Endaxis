@@ -233,7 +233,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.77,
@@ -245,7 +245,11 @@ const sheet: OperatorSheet = {
               hits: [
                 {
                   offset: 0.57,
-                  effects: [{ kind: 'physicalStatus', physicalType: 'lift' }],
+                  effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },{ kind: 'physicalStatus', physicalType: 'lift' }],
                 },
               ],
             },

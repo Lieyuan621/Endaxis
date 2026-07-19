@@ -462,7 +462,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 1.37,
@@ -475,7 +475,11 @@ const sheet: OperatorSheet = {
                 {
                   offset: 0.67,
                   stagger: 10,
-                  effects: [GAIN_MELTING_FLAME_EFFECT, { kind: 'ultEnergyGain', value: 25 }],
+                  effects: [
+                    GAIN_MELTING_FLAME_EFFECT,
+                    { kind: 'ultEnergyGain', value: 25 },
+                    { kind: 'ultEnergyGain', value: 10 },
+                  ],
                 },
               ],
             },

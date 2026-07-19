@@ -361,7 +361,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.63,
@@ -395,7 +395,13 @@ const sheet: OperatorSheet = {
                 {
                   offset: 3.63,
                   stagger: 10,
-                  effects: [{ kind: 'reaction', reactionType: 'solidification' }],
+                  effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
+                    { kind: 'reaction', reactionType: 'solidification' },
+                  ],
                 },
               ],
             },

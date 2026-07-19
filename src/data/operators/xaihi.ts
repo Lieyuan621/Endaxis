@@ -266,7 +266,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.83,
@@ -280,7 +280,11 @@ const sheet: OperatorSheet = {
                   id: 'xaihi-combo-hit',
                   offset: 0.8,
                   stagger: 10,
-                  effects: [{ kind: 'infliction', element: 'cryo' }],
+                  effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },{ kind: 'infliction', element: 'cryo' }],
                 },
               ],
             },

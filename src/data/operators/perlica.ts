@@ -204,7 +204,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.83,
@@ -218,6 +218,10 @@ const sheet: OperatorSheet = {
                   offset: 0.8,
                   stagger: 10,
                   effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
                     {
                       id: 'perlica-combo-electrification',
                       kind: 'reaction',

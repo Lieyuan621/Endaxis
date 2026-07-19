@@ -38,18 +38,34 @@ describe('timeline data roster', () => {
     ).toBe(true);
   });
 
-  it('gives non-Avywenna combo skills their authored 10 ultimate energy', () => {
+  it('stores combo-skill ultimate energy on the last hit (action-level cleared)', () => {
     const perlica = getCharacterRoster().find(entry => entry.id === 'perlica');
     const alesh = getCharacterRoster().find(entry => entry.id === 'alesh');
+    const arclight = getCharacterRoster().find(entry => entry.id === 'arclight');
+    const camille = getCharacterRoster().find(entry => entry.id === 'camille');
 
-    expect(perlica?.comboSkill_ultimateEnergyGain).toBe(10);
-    expect(alesh?.comboSkill_ultimateEnergyGain).toBe(10);
+    expect(perlica?.comboSkill_ultimateEnergyGain).toBe(0);
+    expect(alesh?.comboSkill_ultimateEnergyGain).toBe(0);
+    expect(arclight?.comboSkill_ultimateEnergyGain).toBe(0);
+
+    const lastHitHasUe = (hits: any[], value: number) => {
+      const last = hits?.[hits.length - 1];
+      return last?.effects?.some(
+        (effect: any) => effect.kind === 'ultEnergyGain' && effect.value === value,
+      );
+    };
+
+    expect(lastHitHasUe(perlica?.comboSkill_damage_hits, 10)).toBe(true);
+    expect(lastHitHasUe(alesh?.comboSkill_damage_hits, 10)).toBe(true);
+    expect(lastHitHasUe(arclight?.comboSkill_damage_hits, 5)).toBe(true);
+    expect(lastHitHasUe(camille?.comboSkill_damage_hits, 10)).toBe(true);
   });
 
-  it('preserves explicitly authored combo-skill ultimate energy', () => {
-    const arclight = getCharacterRoster().find(entry => entry.id === 'arclight');
+  it('keeps combo action-level ultimate energy when the combo has no hits', () => {
+    const snowshine = getCharacterRoster().find(entry => entry.id === 'snowshine');
 
-    expect(arclight?.comboSkill_ultimateEnergyGain).toBe(5);
+    expect(snowshine?.comboSkill_ultimateEnergyGain).toBe(10);
+    expect(snowshine?.comboSkill_damage_hits ?? []).toEqual([]);
   });
 
   it('keeps Zhuang Fangyi runtime battle-skill branches out of the default hit editor list', () => {

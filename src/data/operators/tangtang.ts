@@ -430,7 +430,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 10,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 1.03,
@@ -443,6 +443,10 @@ const sheet: OperatorSheet = {
                   offset: 0.87,
                   stagger: 10,
                   effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
                     {
                       id: 'tangtang-whirlpools',
                       name: 'whirlpools',

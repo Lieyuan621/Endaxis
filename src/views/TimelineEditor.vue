@@ -1022,20 +1022,15 @@ onUnmounted(() => {
           class="activity-bar__button activity-bar__button--lib"
           :class="{ 'is-active': !isLeftPanelCollapsed }"
           :aria-label="t('timeline.activityBar.library')"
+          :data-tooltip="t('timeline.activityBar.library')"
           @click="toggleActivityPanel('library')"
         >
-          <svg
-            class="activity-bar__icon activity-bar__icon--lib"
-            viewBox="0 0 184 182"
+          <img
+            class="activity-bar__image-icon activity-bar__image-icon--lib"
+            src="/icons/btn_character.webp"
+            alt=""
             aria-hidden="true"
-            shape-rendering="crispEdges"
-          >
-            <path
-              fill="currentColor"
-              fill-rule="evenodd"
-              d="M88.6 1.7 L53.5 38.1 L92 76.3 L127.1 38.1 Z M56.9 65.9 L26.8 97.1 L31.8 104 L61.9 72.8 Z M123.7 65.9 L118.7 72.8 L150.5 104 L155.5 98.8 Z M53.5 90.1 L92 128.3 L128.8 90.1 L128.8 175.1 L53.5 175.1 Z M3.3 138.7 L21.7 156 L51.8 126.5 L31.8 109.2 Z M148.9 109.2 L132.3 128.3 L162.3 156 L179 138.7 Z"
-            />
-          </svg>
+          />
         </button>
       </div>
       <div class="activity-bar__group activity-bar__group--bottom">
@@ -1044,6 +1039,7 @@ onUnmounted(() => {
           class="activity-bar__button activity-bar__button--contract"
           :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'contract' }"
           :aria-label="t('timeline.activityBar.contract')"
+          :data-tooltip="t('timeline.activityBar.contract')"
           @click="toggleBottomTool('contract')"
         >
           <img
@@ -1059,6 +1055,7 @@ onUnmounted(() => {
           class="activity-bar__button activity-bar__button--panel"
           :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'enemy' }"
           :aria-label="t('timeline.activityBar.resourceMonitor')"
+          :data-tooltip="t('timeline.activityBar.resourceMonitor')"
           @click="toggleBottomTool('enemy')"
         >
           <svg
@@ -1511,6 +1508,7 @@ onUnmounted(() => {
           class="activity-bar__button activity-bar__button--inspector"
           :class="{ 'is-active': !isRightPanelCollapsed && rightPanelTool === 'inspector' }"
           :aria-label="t('timeline.activityBar.inspector')"
+          :data-tooltip="t('timeline.activityBar.inspector')"
           @click="toggleRightTool('inspector')"
         >
           <svg
@@ -1536,6 +1534,7 @@ onUnmounted(() => {
           class="activity-bar__button activity-bar__button--battle-log"
           :class="{ 'is-active': !isRightPanelCollapsed && rightPanelTool === 'battleLog' }"
           :aria-label="t('timeline.activityBar.battleLog')"
+          :data-tooltip="t('timeline.activityBar.battleLog')"
           @click="toggleRightTool('battleLog')"
         >
           <svg
@@ -1767,6 +1766,34 @@ onUnmounted(() => {
     background-color 0.14s ease,
     transform 0.14s ease;
 }
+.activity-bar__button::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  z-index: 30;
+  max-width: 180px;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(24, 24, 24, 0.96);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(6px, -50%);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.activity-bar--right .activity-bar__button::before {
+  left: auto;
+  right: calc(100% + 8px);
+  transform: translate(-6px, -50%);
+}
 .activity-bar__button::after {
   content: '';
   position: absolute;
@@ -1790,6 +1817,13 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.84);
   background: rgba(255, 255, 255, 0.035);
   transform: translateY(-1px);
+}
+.activity-bar__button:hover::before {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.activity-bar--right .activity-bar__button:hover::before {
+  transform: translate(0, -50%);
 }
 .activity-bar__button:hover::after {
   opacity: 0.76;
@@ -1827,7 +1861,7 @@ onUnmounted(() => {
   transform: translateY(-3px) scale(1.1);
   filter: drop-shadow(0 3px 10px rgba(255, 255, 255, 0.28));
 }
-.activity-bar__button--lib .activity-bar__icon {
+.activity-bar__button--lib .activity-bar__image-icon--lib {
   width: 24px;
   height: 24px;
 }

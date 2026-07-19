@@ -280,7 +280,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 5,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 0.9,
@@ -300,6 +300,12 @@ const sheet: OperatorSheet = {
                   offset: 0.83,
                   spRecovery: [8, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10],
                   stagger: 5,
+                  effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 5,
+                    },
+                  ],
                 },
               ],
             },
