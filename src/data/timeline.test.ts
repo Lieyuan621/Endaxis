@@ -68,15 +68,12 @@ describe('timeline data roster', () => {
     expect(snowshine?.comboSkill_damage_hits ?? []).toEqual([]);
   });
 
-  it('keeps Zhuang Fangyi runtime battle-skill branches out of the default hit editor list', () => {
+  it('exposes Zhuang Fangyi battle-skill thunder-strike hits in the hit editor list', () => {
     const zhuangFangyi = getCharacterRoster().find(entry => entry.id === 'zhuang-fangyi');
     const hits = zhuangFangyi?.battleSkill_damage_hits || [];
-    const visibleHits = hits.filter(
-      (hit: any) => hit.hideInEditor !== true && hit.hiddenInEditor !== true,
-    );
 
     expect(hits.length).toBeGreaterThan(20);
-    expect(visibleHits).toHaveLength(1);
+    expect(hits.some((hit: any) => (Number(hit.multiplier) || 0) > 0)).toBe(true);
   });
 
   it('keeps Rossi Razor Clawmark DoT on a stable display id', () => {

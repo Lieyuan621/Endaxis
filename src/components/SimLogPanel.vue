@@ -4,9 +4,10 @@ import { useTimelineStore } from '@/stores/timelineStore.js';
 import { formatSimLogEntry } from '@/simulation/formatSimLogEntry.ts';
 import { useI18n } from 'vue-i18n';
 import { formatTimeWithFrames } from '@/utils/time';
+import { translateEffectName } from '@/editor/hits/statusOptions';
 
 const store = useTimelineStore();
-const { t } = useI18n({ useScope: 'global' });
+const { t, te } = useI18n({ useScope: 'global' });
 
 const displayLog = ref([]);
 const lastRefreshedRevision = ref(0);
@@ -162,13 +163,7 @@ function formatOtherEntryText(entry) {
 }
 
 function formatEffectId(effectId) {
-  if (!effectId) return '';
-  const key = `battleLog.effectNames.${effectId}`;
-  const out = t(key);
-  if (out !== key) return out;
-  const effectNameKey = `effects.name.${effectId}`;
-  const effectName = t(effectNameKey);
-  return effectName === effectNameKey ? effectId : effectName;
+  return translateEffectName(t, te, effectId);
 }
 
 function formatEffectSourceId(sourceId) {

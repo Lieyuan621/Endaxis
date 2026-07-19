@@ -98,9 +98,14 @@ function resolveEffectAtLevel(
     }));
   }
 
-  resolved.displayType =
-    resolved.displayType ||
-    resolveEffectDisplayKey(rawEffect as unknown as Parameters<typeof resolveEffectDisplayKey>[0]);
+  // Drop id-as-displayType stamps, then derive the locale display key (name beats
+  // mechanical stat keys for branded statuses such as Antal focus).
+  if (resolved.displayType && resolved.displayType === resolved.id) {
+    delete resolved.displayType;
+  }
+  resolved.displayType = resolveEffectDisplayKey(
+    resolved as unknown as Parameters<typeof resolveEffectDisplayKey>[0],
+  );
   resolved.displayDuration = Math.max(0, Number(resolved.duration) || 0);
   resolved.displayStacks =
     resolved.stacks === 'fromConsume' ? 1 : Math.max(1, Number(resolved.stacks) || 1);
@@ -172,8 +177,6 @@ export function resolveHitsFromSheet(
       spReturn: Number(rlv(rawHit.spReturn, level)) || 0,
       stagger: Number(rlv(rawHit.stagger, level)) || 0,
       element: rawHit.element ?? rawEntry?.element ?? stored.element,
-      ...(rawHit.hideInEditor ? { hideInEditor: true } : {}),
-      ...(rawHit.hiddenInEditor ? { hiddenInEditor: true } : {}),
       ...resolveMultiplierFromEntry(rawEntry, level),
     };
 
@@ -239,8 +242,6 @@ export function resolveHitsFromSheet(
       spReturn: Number(rlv(rawHit.spReturn, level)) || 0,
       stagger: Number(rlv(rawHit.stagger, level)) || 0,
       element: rawHit.element ?? rawEntry?.element,
-      ...(rawHit.hideInEditor ? { hideInEditor: true } : {}),
-      ...(rawHit.hiddenInEditor ? { hiddenInEditor: true } : {}),
       ...resolveMultiplierFromEntry(rawEntry, level),
     };
 

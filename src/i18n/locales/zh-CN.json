@@ -92,25 +92,6 @@
       "damage": "伤害",
       "gauge": "充能",
       "stagger": "失衡"
-    },
-    "effectNames": {
-      "ELEMENT_HEAT": "灼热附着",
-      "ELEMENT_CRYO": "寒冷附着",
-      "ELEMENT_ELECTRIC": "电磁附着",
-      "ELEMENT_NATURE": "自然附着",
-      "ELEMENT_COMBUSTION": "燃烧",
-      "ELEMENT_ELECTRIFICATION": "导电",
-      "ELEMENT_SOLIDIFICATION": "冻结",
-      "ELEMENT_CORROSION": "腐蚀",
-      "ELEMENT_HEAT_BURST": "灼热爆发",
-      "ELEMENT_CRYO_BURST": "寒冷爆发",
-      "ELEMENT_ELECTRIC_BURST": "电磁爆发",
-      "ELEMENT_NATURE_BURST": "自然爆发",
-      "PHYSICAL_VULNERABLE": "破防",
-      "PHYSICAL_KNOCK_DOWN": "倒地",
-      "PHYSICAL_LIFT": "击飞",
-      "PHYSICAL_CRUSH": "猛击",
-      "PHYSICAL_BREACH": "碎甲"
     }
   },
   "locale": {
@@ -517,24 +498,9 @@
       "other": "其他"
     },
     "name": {
-      "break": "破防",
-      "armor_break": "碎甲",
-      "stagger": "猛击",
       "knockdown": "倒地",
-      "knockup": "击飞",
-      "blaze_attach": "灼热附着",
-      "emag_attach": "电磁附着",
-      "cold_attach": "寒冷附着",
-      "nature_attach": "自然附着",
-      "blaze_burst": "灼热爆发",
-      "emag_burst": "电磁爆发",
-      "cold_burst": "寒冷爆发",
       "comboWindow": "连携窗口",
       "nature_burst": "自然爆发",
-      "burning": "燃烧",
-      "conductive": "导电",
-      "frozen": "冻结",
-      "ice_shatter": "碎冰",
       "corrosion": "腐蚀",
       "default": "默认图标",
       "vulnerability": "破防",
@@ -552,6 +518,8 @@
       "combustion": "燃烧",
       "solidification": "冻结",
       "shatter": "碎冰",
+      "combustion_dot": "燃烧持续伤害",
+      "artsBurst": "元素爆发",
       "atkPercent": "攻击力%",
       "flatAtk": "固定攻击力",
       "dmgBonus": "伤害加成",
@@ -640,6 +608,16 @@
       "slowed": "缓速",
       "link": "连击",
       "protection": "庇护",
+      "weaken": "虚弱",
+      "inflictionBarrier": "附着屏障",
+      "attributeAtkPercent": "属性攻击力%",
+      "heal": "治疗",
+      "battleSkillSPCostReduction": "战技技力消耗降低",
+      "staggerFlat": "失衡固定值",
+      "staggerPercent": "失衡%",
+      "susceptibilityAmplify": "脆弱增幅",
+      "attributeFlat": "属性固定值",
+      "attributePercent": "属性%",
       "scorchingFangs": "灼热獠牙",
       "prepIngredients": "备料",
       "meltingFlame": "熔火",
@@ -668,8 +646,6 @@
     }
   },
   "hitEditor": {
-    "moveUp": "上移",
-    "moveDown": "下移",
     "elements": {
       "physical": "物理",
       "heat": "灼热",
@@ -683,7 +659,40 @@
       "comboSkill": "连携技",
       "ultimate": "终结技",
       "finalStrike": "处决",
-      "dive": "下落攻击"
+      "dive": "下落攻击",
+      "finisher": "处决",
+      "nonSkill": "非技能"
+    },
+    "targetScopes": {
+      "self": "自身",
+      "team": "全队",
+      "teamExcludeSelf": "全队（不含自身）",
+      "teamExcludeSameElement": "全队（不含同元素）",
+      "enemy": "敌人",
+      "owner": "持有者",
+      "controlled": "当前操控"
+    },
+    "statGroups": {
+      "enemy": "敌人属性",
+      "operator": "干员属性"
+    },
+    "conditionKinds": {
+      "enemyStatus": "敌人状态",
+      "enemyHp": "敌人生命",
+      "enemyStaggered": "敌人失衡",
+      "operatorStatus": "干员状态",
+      "operatorHp": "干员生命",
+      "comboNotOnCooldown": "连携技未冷却",
+      "actionLinkConsumed": "消耗连击"
+    },
+    "stacksCompares": {
+      "exact": "等于",
+      "atLeast": "至少",
+      "atMost": "至多"
+    },
+    "hpCompares": {
+      "above": "高于",
+      "below": "低于"
     },
     "effectKinds": {
       "status": "其他",
@@ -700,22 +709,6 @@
       "oneTime": "一次性数值",
       "cooldownReductionFlat": "固定冷却缩减",
       "cooldownReductionPercent": "百分比冷却缩减"
-    },
-    "reactions": {
-      "combustion": "燃烧",
-      "electrification": "导电",
-      "solidification": "冻结",
-      "corrosion": "腐蚀",
-      "shatter": "破碎",
-      "breach": "破防",
-      "crush": "压制"
-    },
-    "physicalStatuses": {
-      "vulnerability": "破防",
-      "breach": "碎甲",
-      "crush": "猛击",
-      "lift": "击飞",
-      "knockdown": "倒地"
     },
     "stackStrategies": {
       "REFRESH_DURATION": "刷新持续时间",
@@ -759,6 +752,10 @@
       "multiplierScaling": "倍率缩放",
       "staggerScaling": "失衡缩放",
       "hit": "命中覆盖",
+      "hitEffects": "命中附带效果",
+      "spRecovery": "技力回复",
+      "spReturn": "技力返还",
+      "stagger": "失衡",
       "readConsumedStacks": "读取消耗层数",
       "consumedStatEffects": "消耗的属性效果",
       "operatorStatus": "干员状态",
@@ -766,11 +763,26 @@
       "skillTypes": "技能类型",
       "treatAsSkillType": "视为技能类型",
       "skillId": "技能 ID",
-      "_condition": "判定点条件"
+      "stacksFromConsume": "层数取自消耗",
+      "_condition": "判定点条件",
+      "targetClasses": "职业限制",
+      "attribute": "属性类型",
+      "conditionStatus": "状态",
+      "conditionStacks": "层数约束",
+      "conditionConsume": "消耗该状态",
+      "conditionTarget": "检查目标",
+      "hpCompare": "生命比较",
+      "hpPercent": "生命百分比",
+      "scalingCap": "上限"
+    },
+    "scalingTerms": {
+      "flat": "固定值",
+      "stack": "层数",
+      "attribute": "属性",
+      "multiplier": "乘区"
     },
     "title": "命中 {index}",
     "basic": "基础",
-    "damageResource": "伤害与资源",
     "effects": "效果",
     "advanced": "高级",
     "open": "编辑",
@@ -779,17 +791,18 @@
     "newEffect": "新效果",
     "effectKind": "效果分类",
     "displayType": "具体效果",
-    "jsonInvalid": "JSON 无效",
     "noEffect": "未选择效果",
     "durationExtension": "持续延长",
-    "treatAsReaction": "按异常类型处理",
-    "treatAsSkillType": "按技能类型处理",
     "maxStacks": "最大层数",
     "stackStrategy": "叠层策略",
     "icdGroup": "ICD 组",
     "applyTiming": "生效时机",
     "hide": "隐藏显示",
-    "ignoreTimeShift": "忽略时间偏移"
+    "ignoreTimeShift": "忽略时间偏移",
+    "addScalingTerm": "添加加成项",
+    "addScalingMultiplier": "添加乘区",
+    "addConsumedStatEffect": "添加消耗属性效果",
+    "hitEffectsPlaceholder": "JSON 数组，可选"
   },
   "propertiesPanel": {
     "noSelection": "未选中技能",
@@ -1014,20 +1027,7 @@
     "levelCoeffDetail": "等级 {level}",
     "artsIntensity": "源石技艺强度",
     "artsIntensityDetail": "{value} 点",
-    "effectiveness": "异常效能",
-    "reaction": {
-      "electrification": "导电",
-      "corrosion": "腐蚀",
-      "combustion": "燃烧",
-      "combustion_dot": "燃烧持续伤害",
-      "solidification": "冻结",
-      "shatter": "碎冰",
-      "artsBurst": "元素爆发",
-      "knockdown": "倒地",
-      "lift": "击飞",
-      "breach": "碎甲",
-      "crush": "猛击"
-    }
+    "effectiveness": "异常效能"
   },
   "actionItem": {
     "damageHitTooltip": "伤害: {damage}",

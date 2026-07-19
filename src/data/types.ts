@@ -1,22 +1,68 @@
 // ─── Primitive enumerations ───────────────────────────────────────────────────
+// Runtime arrays live in `./enums`; types are derived from those consts.
 
-export type CombatSkillType = 'basicAttack' | 'battleSkill' | 'comboSkill' | 'ultimate';
+import type {
+  ApplyTiming,
+  ArtsElement,
+  ArtsReaction,
+  Attribute,
+  CombatSkillType,
+  DamageElement,
+  EffectTargetScope,
+  OperatorClass,
+  PhysicalStatus,
+  SkillType,
+  StackStrategy,
+  TreatAsReaction,
+} from './enums';
 
-export type SkillType = CombatSkillType | 'finalStrike' | 'dive';
+export type {
+  ApplyTiming,
+  ArtsElement,
+  ArtsReaction,
+  Attribute,
+  CombatSkillType,
+  DamageElement,
+  EffectTargetScope,
+  MultiplierMode,
+  OperatorClass,
+  PhysicalStatus,
+  SkillType,
+  SkillTypeScope,
+  StackStrategy,
+  TreatAsReaction,
+} from './enums';
 
-export type ArtsElement = 'cryo' | 'electric' | 'nature' | 'heat';
+export type operatorClass = OperatorClass;
 
-export type DamageElement = 'physical' | ArtsElement;
-
-export type Attribute = 'strength' | 'agility' | 'intellect' | 'will' | 'main' | 'sub';
-
-export type operatorClass = 'guard' | 'caster' | 'defender' | 'vanguard' | 'supporter' | 'striker';
-
-// ─── Combat capabilities ────────────────────────────────────────────────────
-
-export type PhysicalStatus = 'vulnerability' | 'lift' | 'knockdown' | 'crush' | 'breach';
-
-export type ArtsReaction = 'solidification' | 'electrification' | 'corrosion' | 'combustion';
+export {
+  APPLY_TIMINGS,
+  ARTS_ELEMENTS,
+  ATTRIBUTES,
+  ATTRIBUTE_STAT_MODIFIERS,
+  COMBAT_SKILL_TYPES,
+  CONSUME_SCOPES,
+  DAMAGE_ELEMENTS,
+  EFFECT_CONDITION_KINDS,
+  EFFECT_TARGET_SCOPES,
+  ELEMENT_SCOPED_STAT_MODIFIERS,
+  ENEMY_STAT_MODIFIERS,
+  HP_COMPARES,
+  MULTIPLIER_MODES,
+  OPERATOR_CLASSES,
+  OPERATOR_STAT_MODIFIERS,
+  PHYSICAL_STATUS_TYPES,
+  REACTION_TYPES,
+  SKILL_SCOPED_STAT_MODIFIERS,
+  SKILL_TYPES,
+  SKILL_TYPE_SCOPES,
+  STACKS_COMPARES,
+  STACK_STRATEGIES,
+  TREAT_AS_REACTION_TYPES,
+  isPhysicalStatusType,
+  isReactionType,
+  isTreatAsReactionType,
+} from './enums';
 
 // ─── Damage-relevant stat types ──────────────────────────────────────────────
 
@@ -274,16 +320,6 @@ export interface TriggerEffect {
 
 // ─── Effect Target ────────────────────────────────────────────────────────────
 
-export type EffectTargetScope =
-  | 'self'
-  | 'team'
-  | 'teamExcludeSelf'
-  | 'teamExcludeSameElement'
-  | 'enemy'
-  | 'owner'
-  /** The operator the player is controlling at the effect's time. Resolved via the control timeline. */
-  | 'controlled';
-
 export type EffectTarget =
   { scope: EffectTargetScope; classes?: operatorClass[] } | EffectTargetScope;
 
@@ -308,7 +344,7 @@ export interface EffectBase {
   /** Maximum stack count. Defaults to 1 when omitted. */
   maxStacks?: Leveled<number>;
   /** Stacking behavior. Defaults to 'REFRESH_DURATION' when omitted. */
-  stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
+  stackStrategy?: StackStrategy;
   condition?: EffectCondition | EffectCondition[];
   /** Internal cooldown in seconds — minimum interval between trigger activations. */
   icd?: number;
@@ -330,7 +366,7 @@ export interface EffectBase {
    * `beforeDamage` lets a specific hit effect apply first when its own hit must
    * benefit from triggers caused by that effect.
    */
-  applyTiming?: 'beforeDamage' | 'afterDamage';
+  applyTiming?: ApplyTiming;
 }
 
 // ─── Effect Subtypes ────────────────────────────────────────────────────────
@@ -989,9 +1025,7 @@ export interface Hit {
   stagger?: Leveled<number>;
   durationExtension?: number;
   effects?: Effect[];
-  hideInEditor?: boolean;
-  hiddenInEditor?: boolean;
-  treatAsReaction?: ArtsReaction | 'shatter' | 'breach' | 'crush';
+  treatAsReaction?: TreatAsReaction;
 }
 
 export interface HitGroup {

@@ -90,25 +90,6 @@
       "damage": "Урон",
       "gauge": "Заряд",
       "stagger": "Шат"
-    },
-    "effectNames": {
-      "ELEMENT_HEAT": "Наложение жара",
-      "ELEMENT_CRYO": "Наложение холода",
-      "ELEMENT_ELECTRIC": "Наложение электричества",
-      "ELEMENT_NATURE": "Наложение природы",
-      "ELEMENT_COMBUSTION": "Горение",
-      "ELEMENT_ELECTRIFICATION": "Электрификация",
-      "ELEMENT_SOLIDIFICATION": "Заморозка",
-      "ELEMENT_CORROSION": "Коррозия",
-      "ELEMENT_HEAT_BURST": "Тепловой взрыв",
-      "ELEMENT_CRYO_BURST": "Ледяной взрыв",
-      "ELEMENT_ELECTRIC_BURST": "Электрический взрыв",
-      "ELEMENT_NATURE_BURST": "Природный взрыв",
-      "PHYSICAL_VULNERABLE": "Уязвимость",
-      "PHYSICAL_KNOCK_DOWN": "Поваливание",
-      "PHYSICAL_LIFT": "Подбрасывание",
-      "PHYSICAL_CRUSH": "Сокрушение",
-      "PHYSICAL_BREACH": "Пробой брони"
     }
   },
   "locale": {
@@ -515,24 +496,26 @@
       "other": "Другое"
     },
     "name": {
-      "break": "Уязвимость",
-      "armor_break": "Прорыв",
-      "stagger": "Разгром",
       "knockdown": "Опрокидывание",
-      "knockup": "Подбрасывание",
-      "blaze_attach": "Поражение теплом",
-      "emag_attach": "Поражение электричеством",
-      "cold_attach": "Криогенное поражение",
-      "nature_attach": "Поражение природой",
-      "blaze_burst": "Тепловзрыв",
-      "emag_burst": "Электризация",
-      "cold_burst": "Криовзрыв",
       "nature_burst": "Природный взрыв",
-      "burning": "Возгорание",
-      "conductive": "Электризация",
-      "frozen": "Застывание",
-      "ice_shatter": "Раскол",
       "corrosion": "Коррозия",
+      "vulnerability": "Уязвимость",
+      "breach": "Пробитие",
+      "crush": "Сокрушение",
+      "lift": "Подброс",
+      "shatter": "Разбитие",
+      "combustion": "Горение",
+      "solidification": "Затвердевание",
+      "electrification": "Электрификация",
+      "combustion_dot": "Периодический урон горения",
+      "artsBurst": "Элементальный взрыв",
+      "heat_infliction": "Поражение теплом",
+      "cryo_infliction": "Криогенное поражение",
+      "electric_infliction": "Поражение электричеством",
+      "nature_infliction": "Поражение природой",
+      "heat_burst": "Тепловзрыв",
+      "cryo_burst": "Криовзрыв",
+      "electric_burst": "Электризация",
       "wolvenBlood": "Волчья кровь",
       "default": "По умолчанию",
       "ultEnergyGain": "Получение энергии ульты",
@@ -552,8 +535,6 @@
     }
   },
   "hitEditor": {
-    "moveUp": "Вверх",
-    "moveDown": "Вниз",
     "elements": {
       "physical": "Физический",
       "heat": "Тепло",
@@ -567,7 +548,40 @@
       "comboSkill": "Комбо-навык",
       "ultimate": "Ультимейт",
       "finalStrike": "Финальный удар",
-      "dive": "Атака в падении"
+      "dive": "Атака в падении",
+      "finisher": "Финишер",
+      "nonSkill": "Не навык"
+    },
+    "targetScopes": {
+      "self": "Себя",
+      "team": "Команда",
+      "teamExcludeSelf": "Команда (без себя)",
+      "teamExcludeSameElement": "Команда (без того же элемента)",
+      "enemy": "Враг",
+      "owner": "Владелец",
+      "controlled": "Управляемый"
+    },
+    "statGroups": {
+      "enemy": "Характеристики врага",
+      "operator": "Характеристики оператора"
+    },
+    "conditionKinds": {
+      "enemyStatus": "Статус врага",
+      "enemyHp": "HP врага",
+      "enemyStaggered": "Враг ошеломлён",
+      "operatorStatus": "Статус оператора",
+      "operatorHp": "HP оператора",
+      "comboNotOnCooldown": "Комбо не на КД",
+      "actionLinkConsumed": "Комбо израсходовано"
+    },
+    "stacksCompares": {
+      "exact": "Ровно",
+      "atLeast": "Не меньше",
+      "atMost": "Не больше"
+    },
+    "hpCompares": {
+      "above": "Выше",
+      "below": "Ниже"
     },
     "effectKinds": {
       "status": "Статус",
@@ -584,22 +598,6 @@
       "oneTime": "Разовое значение",
       "cooldownReductionFlat": "Плоское сокращение КД",
       "cooldownReductionPercent": "Процентное сокращение КД"
-    },
-    "reactions": {
-      "combustion": "Горение",
-      "electrification": "Электрификация",
-      "solidification": "Затвердевание",
-      "corrosion": "Коррозия",
-      "shatter": "Раскол",
-      "breach": "Пробитие",
-      "crush": "Сокрушение"
-    },
-    "physicalStatuses": {
-      "vulnerability": "Уязвимость",
-      "breach": "Пробитие",
-      "crush": "Сокрушение",
-      "lift": "Подброс",
-      "knockdown": "Нокдаун"
     },
     "stackStrategies": {
       "REFRESH_DURATION": "Обновлять длительность",
@@ -643,6 +641,10 @@
       "multiplierScaling": "Масштаб множителя",
       "staggerScaling": "Масштаб ошеломления",
       "hit": "Переопределение удара",
+      "hitEffects": "Эффекты удара",
+      "spRecovery": "Восстановление SP",
+      "spReturn": "Возврат SP",
+      "stagger": "Пошатывание",
       "readConsumedStacks": "Читать расход стаков",
       "consumedStatEffects": "Расходуемые стат-эффекты",
       "operatorStatus": "Статус оператора",
@@ -650,11 +652,26 @@
       "skillTypes": "Типы навыков",
       "treatAsSkillType": "Считать типом навыка",
       "skillId": "ID навыка",
-      "_condition": "Условие точки удара"
+      "stacksFromConsume": "Стаки из расхода",
+      "_condition": "Условие точки удара",
+      "targetClasses": "Фильтр классов",
+      "attribute": "Атрибут",
+      "conditionStatus": "Статус",
+      "conditionStacks": "Ограничение стаков",
+      "conditionConsume": "Расходовать статус",
+      "conditionTarget": "Цель проверки",
+      "hpCompare": "Сравнение HP",
+      "hpPercent": "Процент HP",
+      "scalingCap": "Предел"
+    },
+    "scalingTerms": {
+      "flat": "Плоское",
+      "stack": "Стаки",
+      "attribute": "Атрибут",
+      "multiplier": "Множитель"
     },
     "title": "Удар {index}",
     "basic": "Основное",
-    "damageResource": "Урон и ресурс",
     "effects": "Эффекты",
     "advanced": "Дополнительно",
     "open": "Изменить",
@@ -663,17 +680,18 @@
     "newEffect": "Новый эффект",
     "effectKind": "Категория эффекта",
     "displayType": "Конкретный эффект",
-    "jsonInvalid": "Неверный JSON",
     "noEffect": "Эффект не выбран",
     "durationExtension": "Продление",
-    "treatAsReaction": "Считать реакцией",
-    "treatAsSkillType": "Считать типом навыка",
     "maxStacks": "Макс. стаки",
     "stackStrategy": "Правило стаков",
     "icdGroup": "Группа ICD",
     "applyTiming": "Момент применения",
     "hide": "Скрыть",
-    "ignoreTimeShift": "Игнорировать сдвиг времени"
+    "ignoreTimeShift": "Игнорировать сдвиг времени",
+    "addScalingTerm": "Добавить слагаемое",
+    "addScalingMultiplier": "Добавить множитель",
+    "addConsumedStatEffect": "Добавить расход стата",
+    "hitEffectsPlaceholder": "Опциональный JSON-массив"
   },
   "propertiesPanel": {
     "noSelection": "Навык не выбран",
@@ -898,20 +916,7 @@
     "levelCoeffDetail": "Уровень {level}",
     "artsIntensity": "Сила искусств",
     "artsIntensityDetail": "{value} ед.",
-    "effectiveness": "Эффективность",
-    "reaction": {
-      "electrification": "Электрификация",
-      "corrosion": "Коррозия",
-      "combustion": "Горение",
-      "combustion_dot": "Периодический урон горения",
-      "solidification": "Заморозка",
-      "shatter": "Разбитие",
-      "artsBurst": "Элементальный взрыв",
-      "knockdown": "Опрокидывание",
-      "lift": "Подброс",
-      "breach": "Пробитие",
-      "crush": "Сокрушение"
-    }
+    "effectiveness": "Эффективность"
   },
   "actionItem": {
     "damageHitTooltip": "Урон: {damage}",

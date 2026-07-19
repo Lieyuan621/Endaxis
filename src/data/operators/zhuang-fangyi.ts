@@ -142,7 +142,6 @@ const BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i => {
       hits: [
         ...[...Array(i).keys()].map(j => ({
           id: 'zhuang-fangyi-thunder-strike',
-          hideInEditor: true,
           offset: 1 + 0.233 * j,
           durationExtension: j === 0 ? 1 + 0.233 * i + 0.367 : undefined,
           effects: [
@@ -184,7 +183,6 @@ const BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i => {
       hits: [
         {
           id: 'zhuang-fangyi-thunder-strike',
-          hideInEditor: true,
           offset: 1 + 0.233 * i + 0.367,
           durationExtension: i === 0 ? 1 + 0.233 * i + 0.367 : undefined,
           stagger: 15,
@@ -232,7 +230,6 @@ const ENHANCED_BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i =>
       hits: [
         ...[...Array(i).keys()].map(j => ({
           id: 'zhuang-fangyi-thunder-strike',
-          hideInEditor: true,
           offset: 1 + 0.233 * j,
           effects: [
             {
@@ -273,7 +270,6 @@ const ENHANCED_BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i =>
       hits: [
         {
           id: 'zhuang-fangyi-thunder-strike',
-          hideInEditor: true,
           offset: 1 + 0.233 * i + 0.367,
           stagger: 15,
           effects: [

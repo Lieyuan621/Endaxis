@@ -5,18 +5,15 @@ const groups = [
   {
     label: 'attach',
     options: [
-      { label: 'legacy heat', value: 'blaze_attach' },
       { label: 'heat', value: 'heat_infliction' },
       { label: 'cryo', value: 'cryo_infliction' },
       { label: 'electric', value: 'electric_infliction' },
-      { label: 'nature legacy', value: 'nature_attach' },
       { label: 'nature', value: 'nature_infliction' },
     ],
   },
   {
     label: 'burst',
     options: [
-      { label: 'legacy heat burst', value: 'blaze_burst' },
       { label: 'heat burst', value: 'heat_burst' },
       { label: 'cryo burst', value: 'cryo_burst' },
       { label: 'electric burst', value: 'electric_burst' },

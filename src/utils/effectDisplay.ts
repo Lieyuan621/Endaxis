@@ -87,7 +87,18 @@ export function resolveEffectDisplayKey(effectOrKey: EffectOrKey): string {
   if (typeof effectOrKey === 'string') return toCanonicalUiKey(effectOrKey) || 'default';
 
   const effect = effectOrKey;
-  if (effect.displayType) return toCanonicalUiKey(effect.displayType) || 'default';
+  const runtimeId = toCanonicalUiKey(effect.id);
+  const displayType = toCanonicalUiKey(effect.displayType);
+  const statKey = effect.kind === 'status' ? resolveStatDisplayKey(effect.stat) : null;
+  const nameKey = toCanonicalUiKey(effect.name);
+
+  // Prefer an explicit displayType, but ignore stale auto-stamps:
+  // - copies of the runtime id
+  // - copies of the derived stat key when a branded `name` exists (e.g. focus vs susceptibility:arts)
+  if (displayType && displayType !== runtimeId) {
+    const isAutoStatStamp = !!(nameKey && statKey && displayType === statKey);
+    if (!isAutoStatStamp) return displayType;
+  }
 
   switch (effect.kind) {
     case 'physicalStatus':
@@ -99,17 +110,11 @@ export function resolveEffectDisplayKey(effectOrKey: EffectOrKey): string {
     case 'reaction':
       return toCanonicalUiKey(effect.reactionType) || 'default';
     case 'status':
-      return (
-        toCanonicalUiKey(
-          resolveStatDisplayKey(effect.stat) ||
-            effect.id ||
-            effect.name ||
-            effect.type ||
-            effect.kind,
-        ) || 'default'
-      );
+      // Branded statuses (focus, whirlpools, …) prefer `name` over mechanical stat keys.
+      return toCanonicalUiKey(nameKey || statKey || effect.type || effect.kind) || 'default';
     default:
-      return toCanonicalUiKey(effect.type || effect.id || effect.name || effect.kind) || 'default';
+      // Prefer locale-friendly name/kind over runtime ids (e.g. tangtang-waterspouts-sp-return).
+      return toCanonicalUiKey(effect.name || effect.type || effect.kind || effect.id) || 'default';
   }
 }
 

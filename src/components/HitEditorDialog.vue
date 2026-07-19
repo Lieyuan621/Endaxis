@@ -3,11 +3,17 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import draggable from 'vuedraggable';
 import CustomNumberInput from './CustomNumberInput.vue';
+import EffectConditionEditor from './hitEditor/EffectConditionEditor.vue';
+import EffectConsumeStatusesEditor from './hitEditor/EffectConsumeStatusesEditor.vue';
+import ConsumedStatEffectsEditor from './hitEditor/ConsumedStatEffectsEditor.vue';
+import EffectNestedHitEditor from './hitEditor/EffectNestedHitEditor.vue';
+import EffectScalingEditor from './hitEditor/EffectScalingEditor.vue';
+import EffectStatEditor from './hitEditor/EffectStatEditor.vue';
+import EffectTargetEditor from './hitEditor/EffectTargetEditor.vue';
 import {
   cloneEditorHit,
   createEditorEffect,
   normalizeHits,
-  parseEditorJsonField,
   retypeEditorEffect,
   retypeEditorEffectKind,
 } from '@/utils/hitModel';
@@ -18,49 +24,29 @@ import {
 } from '@/utils/effectDisplayOptions';
 import { frameToTime, timeToFrame } from '@/utils/time';
 import { getDefaultStackStrategy } from '@/data/effectPresets';
+import {
+  APPLY_TIMINGS,
+  ARTS_ELEMENTS,
+  DAMAGE_ELEMENTS,
+  PHYSICAL_STATUS_TYPES,
+  REACTION_TYPES,
+  SKILL_TYPES,
+  STACK_STRATEGIES,
+  TREAT_AS_REACTION_TYPES,
+} from '@/data/enums';
+import { EDITOR_EFFECT_KINDS, effectKindHasField } from '@/editor/hits/effectSchema';
+import {
+  collectOperatorStatusCatalog,
+  collectStatusOptions,
+  KNOWN_ENEMY_STATUS_KEYS,
+  mergeStatusNameRecords,
+  mergeStatusNameSources,
+  translateEffectName,
+} from '@/editor/hits/statusOptions';
+import { getOperator } from '@/data';
 
-const DAMAGE_ELEMENTS = ['physical', 'heat', 'cryo', 'electric', 'nature'];
-const ARTS_ELEMENTS = ['heat', 'cryo', 'electric', 'nature'];
-const REACTION_TYPES = ['combustion', 'electrification', 'solidification', 'corrosion'];
-const PHYSICAL_STATUS_TYPES = ['breach', 'crush', 'lift', 'knockdown'];
-const TREAT_AS_ANOMALY_TYPES = [...REACTION_TYPES, ...PHYSICAL_STATUS_TYPES];
+const TREAT_AS_ANOMALY_TYPES = TREAT_AS_REACTION_TYPES;
 const DEFAULT_DAMAGE_ELEMENT_VALUE = '__default_damage_element__';
-const SKILL_TYPES = ['basicAttack', 'battleSkill', 'comboSkill', 'ultimate', 'finalStrike', 'dive'];
-const EFFECT_KINDS = [
-  'status',
-  'infliction',
-  'burst',
-  'reaction',
-  'physicalStatus',
-  'damageHit',
-  'damageOverTime',
-  'spRecovery',
-  'spReturn',
-  'ultEnergyGain',
-  'consume',
-  'oneTime',
-  'cooldownReductionFlat',
-  'cooldownReductionPercent',
-];
-const STACK_STRATEGIES = ['REFRESH_DURATION', 'INDEPENDENT', 'REPLACE'];
-const APPLY_TIMINGS = ['afterDamage', 'beforeDamage'];
-const JSON_HIT_FIELDS = ['_condition'];
-const JSON_EFFECT_FIELDS = [
-  'condition',
-  'stat',
-  'target',
-  'scaling',
-  'requiresInfliction',
-  'multiplierScaling',
-  'staggerScaling',
-  'hit',
-  'readConsumedStacks',
-  'consumedStatEffects',
-  'operatorStatus',
-  'enemyStatus',
-  'skillTypes',
-  'skillId',
-];
 const ELEMENT_KEY_ALIASES = Object.freeze({
   blaze: 'heat',
   fire: 'heat',
@@ -81,15 +67,15 @@ const props = defineProps({
   hitIndex: { type: Number, default: -1 },
   defaultElement: { type: String, default: null },
   effectOptions: { type: Array, default: () => [] },
+  /** Operator slug used to resolve runtime status ids → display names (e.g. tangtang-whirlpools → 涡流). */
+  operatorSlug: { type: String, default: '' },
 });
 
 const emit = defineEmits(['update:visible', 'save', 'delete']);
-const { t } = useI18n({ useScope: 'global' });
+const { t, te } = useI18n({ useScope: 'global' });
 
 const draft = ref(null);
 const selectedEffectId = ref(null);
-const jsonErrors = ref({});
-const jsonDrafts = ref({});
 
 const open = computed({
   get: () => props.visible,
@@ -109,13 +95,11 @@ watch(
     if (!props.visible) return;
     draft.value = cloneEditorHit(props.hit || {}, defaultElementKey.value);
     selectedEffectId.value = null;
-    jsonErrors.value = {};
-    jsonDrafts.value = {};
   },
   { immediate: true, deep: true },
 );
 
-const dialogTitle = computed(() => `Hit ${props.hitIndex + 1}`);
+const dialogTitle = computed(() => t('hitEditor.title', { index: props.hitIndex + 1 }));
 
 const selectedEffect = computed(() => {
   const effects = draft.value?.effects || [];
@@ -137,8 +121,6 @@ const spAmount = computed(() =>
     ? Number(draft.value?.spReturn) || 0
     : Number(draft.value?.spRecovery) || 0,
 );
-
-const hasJsonErrors = computed(() => Object.values(jsonErrors.value).some(Boolean));
 
 const selectableDamageElements = computed(() =>
   DAMAGE_ELEMENTS.filter(element => element !== defaultElementKey.value),
@@ -168,6 +150,126 @@ const canEditStackStrategy = computed(() =>
   ['status', 'infliction', 'physicalStatus', 'reaction'].includes(selectedEffect.value?.kind),
 );
 
+const canEditStat = computed(() => effectKindHasField(selectedEffect.value?.kind, 'stat'));
+
+const canEditTarget = computed(() => effectKindHasField(selectedEffect.value?.kind, 'target'));
+
+const canEditScaling = computed(() => effectKindHasField(selectedEffect.value?.kind, 'scaling'));
+
+const canEditMultiplierScaling = computed(() =>
+  effectKindHasField(selectedEffect.value?.kind, 'multiplierScaling'),
+);
+
+const canEditStaggerScaling = computed(() =>
+  effectKindHasField(selectedEffect.value?.kind, 'staggerScaling'),
+);
+
+const canEditConsumedStatEffects = computed(() =>
+  effectKindHasField(selectedEffect.value?.kind, 'consumedStatEffects'),
+);
+
+const canEditNestedHit = computed(() => effectKindHasField(selectedEffect.value?.kind, 'hit'));
+
+const canEditSkillScope = computed(
+  () =>
+    effectKindHasField(selectedEffect.value?.kind, 'skillTypes') ||
+    effectKindHasField(selectedEffect.value?.kind, 'skillId'),
+);
+
+const skillTypeValues = computed({
+  get() {
+    const value = selectedEffect.value?.skillTypes;
+    if (value == null || value === '') return [];
+    return Array.isArray(value) ? value : [value];
+  },
+  set(next) {
+    const list = Array.isArray(next) ? next.filter(Boolean) : [];
+    if (!list.length) {
+      patchSelectedEffect('skillTypes', undefined);
+      return;
+    }
+    patchSelectedEffect('skillTypes', list.length === 1 ? list[0] : list);
+  },
+});
+
+const requiresInflictionValues = computed({
+  get() {
+    const value = selectedEffect.value?.requiresInfliction;
+    if (!Array.isArray(value)) return [];
+    return value;
+  },
+  set(next) {
+    const list = Array.isArray(next) ? next.filter(Boolean) : [];
+    patchSelectedEffect('requiresInfliction', list.length ? list : undefined);
+  },
+});
+
+const readConsumedStacksKey = computed({
+  get() {
+    return selectedEffect.value?.readConsumedStacks?.statusKey || '';
+  },
+  set(next) {
+    const text = String(next || '').trim();
+    const target = selectedEffect.value?.readConsumedStacks?.target || 'enemy';
+    if (!text) {
+      patchSelectedEffect('readConsumedStacks', undefined);
+      return;
+    }
+    patchSelectedEffect('readConsumedStacks', { statusKey: text, target });
+  },
+});
+
+const readConsumedStacksTarget = computed({
+  get() {
+    return selectedEffect.value?.readConsumedStacks?.target || 'enemy';
+  },
+  set(next) {
+    const target = next === 'self' ? 'self' : 'enemy';
+    const key =
+      selectedEffect.value?.readConsumedStacks?.statusKey ||
+      (target === 'enemy' ? KNOWN_ENEMY_STATUS_KEYS[0] : operatorStatusOptions.value[0]);
+    if (!key) {
+      patchSelectedEffect('readConsumedStacks', undefined);
+      return;
+    }
+    patchSelectedEffect('readConsumedStacks', { statusKey: key, target });
+  },
+});
+
+const operatorStatusCatalog = computed(() =>
+  collectOperatorStatusCatalog(getOperator(props.operatorSlug) || undefined),
+);
+
+const operatorStatusNameById = computed(() =>
+  mergeStatusNameRecords(
+    operatorStatusCatalog.value.nameById,
+    mergeStatusNameSources(
+      (draft.value?.effects || [])
+        .filter(effect => effect?.kind === 'status')
+        .map(effect => ({ id: effect?.id, name: effect?.name })),
+    ),
+  ),
+);
+
+const operatorStatusOptions = computed(() => {
+  const draftStatusIds = (draft.value?.effects || [])
+    .filter(effect => effect?.kind === 'status')
+    .map(effect => effect?.id)
+    .filter(id => typeof id === 'string' && id && id !== 'default');
+  return collectStatusOptions(operatorStatusCatalog.value.ids, draftStatusIds);
+});
+
+const readConsumedStacksOptions = computed(() => {
+  if (readConsumedStacksTarget.value === 'self') {
+    return collectStatusOptions([], operatorStatusOptions.value, readConsumedStacksKey.value);
+  }
+  return collectStatusOptions(KNOWN_ENEMY_STATUS_KEYS, [], readConsumedStacksKey.value);
+});
+
+function statusOptionLabel(value) {
+  return translateEffectName(t, te, value, operatorStatusNameById.value);
+}
+
 const selectedStackStrategyValue = computed(() =>
   selectedEffect.value
     ? selectedEffect.value.stackStrategy || getDefaultStackStrategy(selectedEffect.value)
@@ -193,6 +295,14 @@ function optionalDamageElement(value) {
 
 function displayTextValue(value) {
   return value === 'default' ? '' : value || '';
+}
+
+function patchSelectedEffectStacksFromConsume(enabled) {
+  if (enabled) {
+    patchSelectedEffect('stacks', 'fromConsume');
+    return;
+  }
+  patchSelectedEffect('stacks', 1);
 }
 
 function patchHit(key, value) {
@@ -236,30 +346,6 @@ function patchSpAmount(value) {
   );
 }
 
-function jsonKey(scope, key) {
-  return `${scope}:${key}`;
-}
-
-function stringifyJson(value) {
-  if (value === undefined || value === null) return '';
-  return JSON.stringify(value, null, 2);
-}
-
-function jsonText(scope, source, key) {
-  const id = jsonKey(scope, key);
-  if (Object.prototype.hasOwnProperty.call(jsonDrafts.value, id)) return jsonDrafts.value[id];
-  return stringifyJson(source?.[key]);
-}
-
-function patchHitJson(key, raw) {
-  const id = jsonKey('hit', key);
-  jsonDrafts.value = { ...jsonDrafts.value, [id]: raw };
-  const parsed = parseEditorJsonField(raw);
-  jsonErrors.value = { ...jsonErrors.value, [id]: parsed.ok ? '' : parsed.error };
-  if (!parsed.ok) return;
-  patchHit(key, parsed.value);
-}
-
 function patchSelectedEffect(key, value) {
   if (!draft.value || !selectedEffect.value) return;
   const effects = draft.value.effects.map(effect => {
@@ -281,16 +367,6 @@ function patchSelectedEffectNumber(key, value) {
 
 function patchSelectedEffectBool(key, value) {
   patchSelectedEffect(key, !!value);
-}
-
-function patchSelectedEffectJson(key, raw) {
-  if (!selectedEffect.value) return;
-  const id = jsonKey(selectedEffect.value._id, key);
-  jsonDrafts.value = { ...jsonDrafts.value, [id]: raw };
-  const parsed = parseEditorJsonField(raw);
-  jsonErrors.value = { ...jsonErrors.value, [id]: parsed.ok ? '' : parsed.error };
-  if (!parsed.ok) return;
-  patchSelectedEffect(key, parsed.value);
 }
 
 function addEffect() {
@@ -369,15 +445,15 @@ function effectKindLabel(value) {
 }
 
 function reactionLabel(value) {
-  return editorLabel('reactions', value);
+  return translateEffectName(t, te, value);
 }
 
 function physicalStatusLabel(value) {
-  return editorLabel('physicalStatuses', value);
+  return translateEffectName(t, te, value);
 }
 
 function anomalyTypeLabel(value) {
-  return REACTION_TYPES.includes(value) ? reactionLabel(value) : physicalStatusLabel(value);
+  return translateEffectName(t, te, value);
 }
 
 function stackStrategyLabel(value) {
@@ -401,7 +477,7 @@ function fieldLabel(value) {
 }
 
 function save() {
-  if (!draft.value || hasJsonErrors.value) return;
+  if (!draft.value) return;
   emit('save', normalizeHits([draft.value], defaultElementKey.value)[0]);
   emit('update:visible', false);
 }
@@ -608,7 +684,7 @@ function save() {
                     popper-class="hit-editor-select-popper"
                   >
                     <el-option
-                      v-for="kind in EFFECT_KINDS"
+                      v-for="kind in EDITOR_EFFECT_KINDS"
                       :key="kind"
                       :value="kind"
                       :label="effectKindLabel(kind)"
@@ -696,9 +772,26 @@ function save() {
                   />
                 </label>
                 <label class="field">
+                  <span>{{ t('hitEditor.durationExtension') }}</span>
+                  <CustomNumberInput
+                    :model-value="frameValue(selectedEffect.durationExtension || 0)"
+                    @update:model-value="
+                      value => patchSelectedEffect('durationExtension', timeValueFromFrame(value))
+                    "
+                    :min="0"
+                    :step="1"
+                    :activeColor="'#00e5ff'"
+                  />
+                </label>
+                <label class="field">
                   <span>{{ t('common.stacks') }}</span>
                   <CustomNumberInput
-                    :model-value="selectedEffect.stacks || 1"
+                    :model-value="
+                      selectedEffect.stacks === 'fromConsume'
+                        ? 0
+                        : Number(selectedEffect.stacks) || 1
+                    "
+                    :disabled="selectedEffect.stacks === 'fromConsume'"
                     @update:model-value="value => patchSelectedEffectNumber('stacks', value)"
                     :min="0"
                     :activeColor="'#ffd700'"
@@ -713,6 +806,9 @@ function save() {
                     :activeColor="'#ffd700'"
                   />
                 </label>
+              </div>
+
+              <div class="field-grid field-grid--effect-input-row">
                 <label class="field">
                   <span>ICD</span>
                   <CustomNumberInput
@@ -759,6 +855,14 @@ function save() {
                 <label class="check-field ea-check-rect">
                   <input
                     type="checkbox"
+                    :checked="selectedEffect.stacks === 'fromConsume'"
+                    @change="event => patchSelectedEffectStacksFromConsume(event.target.checked)"
+                  />
+                  <span>{{ fieldLabel('stacksFromConsume') }}</span>
+                </label>
+                <label class="check-field ea-check-rect">
+                  <input
+                    type="checkbox"
                     :checked="!!selectedEffect.hide"
                     @change="event => patchSelectedEffectBool('hide', event.target.checked)"
                   />
@@ -775,9 +879,29 @@ function save() {
                   <span>{{ t('hitEditor.ignoreTimeShift') }}</span>
                 </label>
               </div>
+
+              <EffectConditionEditor
+                :model-value="selectedEffect.condition"
+                :operator-status-options="operatorStatusOptions"
+                :operator-status-name-by-id="operatorStatusNameById"
+                @update:model-value="value => patchSelectedEffect('condition', value)"
+              />
             </div>
 
             <div class="kind-field-groups">
+              <template v-if="canEditStat || canEditTarget">
+                <EffectStatEditor
+                  v-if="canEditStat"
+                  :model-value="selectedEffect.stat"
+                  @update:model-value="value => patchSelectedEffect('stat', value)"
+                />
+                <EffectTargetEditor
+                  v-if="canEditTarget"
+                  :model-value="selectedEffect.target"
+                  @update:model-value="value => patchSelectedEffect('target', value)"
+                />
+              </template>
+
               <template v-if="selectedEffect.kind === 'status'">
                 <div class="field-grid field-grid--effect-input-row">
                   <label class="field">
@@ -849,6 +973,27 @@ function save() {
                         :key="reaction"
                         :value="reaction"
                         :label="reactionLabel(reaction)"
+                      />
+                    </el-select>
+                  </label>
+                  <label class="field">
+                    <span>{{ fieldLabel('requiresInfliction') }}</span>
+                    <el-select
+                      :model-value="requiresInflictionValues"
+                      @update:model-value="value => (requiresInflictionValues = value)"
+                      size="small"
+                      multiple
+                      collapse-tags
+                      collapse-tags-tooltip
+                      clearable
+                      class="effect-select-dark"
+                      popper-class="hit-editor-select-popper"
+                    >
+                      <el-option
+                        v-for="element in ARTS_ELEMENTS"
+                        :key="element"
+                        :value="element"
+                        :label="elementLabel(element)"
                       />
                     </el-select>
                   </label>
@@ -994,7 +1139,10 @@ function save() {
                   </label>
                 </div>
                 <div class="field-grid field-grid--effect-check-row">
-                  <label class="check-field ea-check-rect">
+                  <label
+                    v-if="selectedEffect.kind === 'damageHit'"
+                    class="check-field ea-check-rect"
+                  >
                     <input
                       type="checkbox"
                       :checked="!!selectedEffect.scaleByCrit"
@@ -1079,7 +1227,116 @@ function save() {
                 </div>
               </template>
 
+              <template v-if="canEditSkillScope">
+                <div class="field-grid field-grid--effect-select-row">
+                  <label class="field">
+                    <span>{{ fieldLabel('skillTypes') }}</span>
+                    <el-select
+                      :model-value="skillTypeValues"
+                      @update:model-value="value => (skillTypeValues = value)"
+                      size="small"
+                      multiple
+                      collapse-tags
+                      collapse-tags-tooltip
+                      clearable
+                      class="effect-select-dark"
+                      popper-class="hit-editor-select-popper"
+                    >
+                      <el-option
+                        v-for="skill in SKILL_TYPES"
+                        :key="skill"
+                        :value="skill"
+                        :label="skillTypeLabel(skill)"
+                      />
+                    </el-select>
+                  </label>
+                  <label class="field">
+                    <span>{{ fieldLabel('skillId') }}</span>
+                    <input
+                      class="simple-input"
+                      :value="
+                        typeof selectedEffect.skillId === 'string' ? selectedEffect.skillId : ''
+                      "
+                      @input="
+                        event => patchSelectedEffect('skillId', optionalString(event.target.value))
+                      "
+                    />
+                  </label>
+                </div>
+              </template>
+
+              <template v-if="selectedEffect.kind === 'damageHit'">
+                <div class="field-grid field-grid--effect-select-row">
+                  <label class="field">
+                    <span>{{ fieldLabel('conditionTarget') }}</span>
+                    <el-select
+                      :model-value="readConsumedStacksTarget"
+                      @update:model-value="value => (readConsumedStacksTarget = value)"
+                      size="small"
+                      class="effect-select-dark"
+                      popper-class="hit-editor-select-popper"
+                    >
+                      <el-option value="self" :label="t('hitEditor.targetScopes.self')" />
+                      <el-option value="enemy" :label="t('hitEditor.targetScopes.enemy')" />
+                    </el-select>
+                  </label>
+                  <label class="field">
+                    <span>{{ fieldLabel('readConsumedStacks') }}</span>
+                    <el-select
+                      :model-value="readConsumedStacksKey"
+                      @update:model-value="value => (readConsumedStacksKey = value)"
+                      size="small"
+                      clearable
+                      filterable
+                      class="effect-select-dark"
+                      popper-class="hit-editor-select-popper"
+                    >
+                      <el-option value="" :label="t('common.none')" />
+                      <el-option
+                        v-for="status in readConsumedStacksOptions"
+                        :key="status"
+                        :value="status"
+                        :label="statusOptionLabel(status)"
+                      />
+                    </el-select>
+                  </label>
+                </div>
+              </template>
+
+              <EffectScalingEditor
+                v-if="canEditScaling"
+                :model-value="selectedEffect.scaling"
+                :label="fieldLabel('scaling')"
+                :operator-status-options="operatorStatusOptions"
+                :operator-status-name-by-id="operatorStatusNameById"
+                @update:model-value="value => patchSelectedEffect('scaling', value)"
+              />
+              <EffectScalingEditor
+                v-if="canEditMultiplierScaling"
+                :model-value="selectedEffect.multiplierScaling"
+                :label="fieldLabel('multiplierScaling')"
+                :operator-status-options="operatorStatusOptions"
+                :operator-status-name-by-id="operatorStatusNameById"
+                @update:model-value="value => patchSelectedEffect('multiplierScaling', value)"
+              />
+              <EffectScalingEditor
+                v-if="canEditStaggerScaling"
+                :model-value="selectedEffect.staggerScaling"
+                :label="fieldLabel('staggerScaling')"
+                :operator-status-options="operatorStatusOptions"
+                :operator-status-name-by-id="operatorStatusNameById"
+                @update:model-value="value => patchSelectedEffect('staggerScaling', value)"
+              />
+
               <template v-if="selectedEffect.kind === 'consume'">
+                <EffectConsumeStatusesEditor
+                  :operator-status="selectedEffect.operatorStatus"
+                  :enemy-status="selectedEffect.enemyStatus"
+                  :operator-status-options="operatorStatusOptions"
+                  :operator-status-name-by-id="operatorStatusNameById"
+                  @update:operator-status="value => patchSelectedEffect('operatorStatus', value)"
+                  @update:enemy-status="value => patchSelectedEffect('enemyStatus', value)"
+                />
                 <div class="field-grid field-grid--effect-select-row">
                   <label class="field">
                     <span>{{ fieldLabel('consumeScope') }}</span>
@@ -1111,21 +1368,19 @@ function save() {
                   </label>
                 </div>
               </template>
-            </div>
 
-            <div class="json-grid">
-              <label v-for="key in JSON_EFFECT_FIELDS" :key="key" class="json-field">
-                <span>{{ fieldLabel(key) }}</span>
-                <textarea
-                  class="json-input"
-                  :class="{ 'has-error': jsonErrors[jsonKey(selectedEffect._id, key)] }"
-                  :value="jsonText(selectedEffect._id, selectedEffect, key)"
-                  @input="event => patchSelectedEffectJson(key, event.target.value)"
-                />
-                <small v-if="jsonErrors[jsonKey(selectedEffect._id, key)]">{{
-                  jsonErrors[jsonKey(selectedEffect._id, key)]
-                }}</small>
-              </label>
+              <ConsumedStatEffectsEditor
+                v-if="canEditConsumedStatEffects"
+                :model-value="selectedEffect.consumedStatEffects"
+                @update:model-value="value => patchSelectedEffect('consumedStatEffects', value)"
+              />
+
+              <EffectNestedHitEditor
+                v-if="canEditNestedHit"
+                :model-value="selectedEffect.hit"
+                :label="fieldLabel('hit')"
+                @update:model-value="value => patchSelectedEffect('hit', value)"
+              />
             </div>
           </div>
 
@@ -1137,20 +1392,14 @@ function save() {
 
       <section class="editor-section">
         <div class="section-title">{{ t('hitEditor.advanced') }}</div>
-        <div class="json-grid">
-          <label v-for="key in JSON_HIT_FIELDS" :key="key" class="json-field">
-            <span>{{ fieldLabel(key) }}</span>
-            <textarea
-              class="json-input"
-              :class="{ 'has-error': jsonErrors[jsonKey('hit', key)] }"
-              :value="jsonText('hit', draft, key)"
-              @input="event => patchHitJson(key, event.target.value)"
-            />
-            <small v-if="jsonErrors[jsonKey('hit', key)]">{{
-              jsonErrors[jsonKey('hit', key)]
-            }}</small>
-          </label>
-        </div>
+        <EffectConditionEditor
+          v-if="draft"
+          :model-value="draft._condition"
+          :label="fieldLabel('_condition')"
+          :operator-status-options="operatorStatusOptions"
+          :operator-status-name-by-id="operatorStatusNameById"
+          @update:model-value="value => patchHit('_condition', value)"
+        />
       </section>
     </div>
 
@@ -1170,7 +1419,6 @@ function save() {
         <button
           type="button"
           class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold"
-          :disabled="hasJsonErrors"
           @click="save"
         >
           {{ t('hitEditor.save') }}
@@ -1261,11 +1509,11 @@ function save() {
   min-height: 30px;
 }
 
-.simple-input,
-.json-input {
+.simple-input {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  appearance: none;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: #111;
   color: #f0f0f0;
@@ -1288,49 +1536,10 @@ function save() {
   box-sizing: border-box;
 }
 
-.simple-input {
-  appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.58) 50%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.58) 50%, transparent 50%);
-  background-position:
-    calc(100% - 13px) 50%,
-    calc(100% - 8px) 50%;
-  background-repeat: no-repeat;
-  background-size:
-    5px 5px,
-    5px 5px;
-}
-
-input.simple-input,
-textarea.json-input {
-  background-image: none;
-}
-
-.simple-input:focus,
-.json-input:focus {
+.simple-input:focus {
   border-color: rgba(255, 215, 0, 0.62);
   outline: none;
   box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.18);
-}
-
-.simple-input option {
-  background: #23262d;
-  color: #f0f0f0;
-}
-
-.json-input {
-  min-height: 74px;
-  resize: vertical;
-  font-family: Consolas, 'Courier New', monospace;
-}
-
-.json-input.has-error {
-  border-color: #ff7875;
-}
-
-.json-field small {
-  color: #ff7875;
 }
 
 .effect-layout {
@@ -1477,13 +1686,6 @@ textarea.json-input {
   opacity: 0.45;
 }
 
-.json-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-
 .spacer {
   flex: 1;
 }
@@ -1626,7 +1828,6 @@ textarea.json-input {
 
 @media (max-width: 900px) {
   .field-grid,
-  .json-grid,
   .effect-layout {
     grid-template-columns: 1fr;
   }

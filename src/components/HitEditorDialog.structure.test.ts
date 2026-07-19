@@ -94,6 +94,65 @@ describe('HitEditorDialog structure', () => {
     );
   });
 
+  test('fixes DoT/lifecycle editor gaps for durationExtension, fromConsume, and scaleByCrit', () => {
+    expect(source).toContain("patchSelectedEffect('durationExtension'");
+    expect(source).toContain("fieldLabel('stacksFromConsume')");
+    expect(source).toContain('patchSelectedEffectStacksFromConsume');
+    expect(source).toContain("fieldLabel('scaleByCrit')");
+    expect(source).toContain("patchSelectedEffectBool('scaleByCrit'");
+    expect(source).toMatch(
+      /v-if="selectedEffect\.kind === 'damageHit'"[\s\S]{0,800}?fieldLabel\('scaleByCrit'\)/,
+    );
+    expect(source).not.toContain('patchSelectedEffectIcon');
+    expect(source).not.toContain("fieldLabel('icon')");
+  });
+
+  test('uses structured editors for stat, target, and condition instead of primary JSON', () => {
+    expect(source).toContain('EffectStatEditor');
+    expect(source).toContain('EffectTargetEditor');
+    expect(source).toContain('EffectConditionEditor');
+    expect(source).toContain('canEditStat');
+    expect(source).toContain('canEditTarget');
+    expect(source).toContain("patchSelectedEffect('stat'");
+    expect(source).toContain("patchSelectedEffect('target'");
+    expect(source).toContain("patchSelectedEffect('condition'");
+    expect(source).toContain("patchHit('_condition'");
+    expect(source).toContain('effectKindHasField');
+  });
+
+  test('structures scaling, requiresInfliction, skill scope, and readConsumedStacks', () => {
+    expect(source).toContain('EffectScalingEditor');
+    expect(source).toContain('canEditScaling');
+    expect(source).toContain('canEditMultiplierScaling');
+    expect(source).toContain('canEditStaggerScaling');
+    expect(source).toContain('requiresInflictionValues');
+    expect(source).toContain('canEditSkillScope');
+    expect(source).toContain('readConsumedStacksKey');
+    expect(source).toContain("fieldLabel('requiresInfliction')");
+  });
+
+  test('structures consume statuses and DoT consumedStatEffects', () => {
+    expect(source).toContain('EffectConsumeStatusesEditor');
+    expect(source).toContain('ConsumedStatEffectsEditor');
+    expect(source).toContain('canEditConsumedStatEffects');
+    expect(source).toContain("patchSelectedEffect('operatorStatus'");
+    expect(source).toContain("patchSelectedEffect('enemyStatus'");
+    expect(source).toContain("patchSelectedEffect('consumedStatEffects'");
+  });
+
+  test('structures nested hit; hides derived authoring; drops primary JSON escape hatch', () => {
+    expect(source).toContain('EffectNestedHitEditor');
+    expect(source).toContain('canEditNestedHit');
+    expect(source).toContain('EDITOR_EFFECT_KINDS');
+    expect(source).not.toContain('EffectDerivedPatchEditor');
+    expect(source).not.toContain('canEditDerivedPatch');
+    expect(source).not.toContain("fieldLabel('sourceEffect')");
+    expect(source).not.toContain('visibleJsonFields');
+    expect(source).not.toContain('patchSelectedEffectJson');
+    expect(source).not.toContain('hasJsonErrors');
+    expect(source).not.toContain('EFFECT_JSON_EDITOR_FIELDS');
+  });
+
   test('matches dialog number input background to select controls', () => {
     expect(source).toContain(':global(.hit-editor-dialog .custom-number-input)');
     expect(source).toContain('background-color: #111');

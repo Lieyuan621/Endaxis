@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { i18n } from '@/i18n';
+import { PHYSICAL_STATUS_TYPES, TREAT_AS_REACTION_TYPES } from '@/data/enums';
 
 const REQUIRED_GROUPS = {
   elements: ['physical', 'heat', 'cryo', 'electric', 'nature'],
@@ -20,8 +21,6 @@ const REQUIRED_GROUPS = {
     'cooldownReductionFlat',
     'cooldownReductionPercent',
   ],
-  reactions: ['combustion', 'electrification', 'solidification', 'corrosion'],
-  physicalStatuses: ['breach', 'crush', 'lift', 'knockdown'],
   stackStrategies: ['REFRESH_DURATION', 'INDEPENDENT', 'REPLACE'],
   applyTimings: ['afterDamage', 'beforeDamage'],
   multiplierModes: ['each', 'split'],
@@ -59,9 +58,16 @@ const REQUIRED_GROUPS = {
     'skillTypes',
     'treatAsSkillType',
     'skillId',
+    'stacksFromConsume',
     '_condition',
   ],
 };
+
+/** Anomaly / physical keys share `effects.name` with the rest of the app — no hitEditor copy. */
+const EFFECT_NAME_KEYS = Object.freeze([
+  ...TREAT_AS_REACTION_TYPES,
+  ...PHYSICAL_STATUS_TYPES,
+]);
 
 describe('hit editor localization', () => {
   test.each(['zh-CN', 'en', 'ru'])('%s has a shared none label for hit editor selects', locale => {
@@ -77,6 +83,16 @@ describe('hit editor localization', () => {
 
     expect(hitEditor.newEffect, `${locale}.hitEditor.newEffect`).toEqual(expect.any(String));
     expect(hitEditor.newEffect).not.toBe('');
+    expect(hitEditor.reactions, `${locale}.hitEditor.reactions`).toBeUndefined();
+    expect(hitEditor.physicalStatuses, `${locale}.hitEditor.physicalStatuses`).toBeUndefined();
+    expect(
+      (message.battleLog as { effectNames?: unknown })?.effectNames,
+      `${locale}.battleLog.effectNames`,
+    ).toBeUndefined();
+    expect(
+      (message.hitDetail as { reaction?: unknown })?.reaction,
+      `${locale}.hitDetail.reaction`,
+    ).toBeUndefined();
 
     for (const [group, keys] of Object.entries(REQUIRED_GROUPS)) {
       const labels = hitEditor[group] as Record<string, string> | undefined;
@@ -84,6 +100,12 @@ describe('hit editor localization', () => {
         expect(labels?.[key], `${locale}.hitEditor.${group}.${key}`).toEqual(expect.any(String));
         expect(labels?.[key]).not.toBe('');
       }
+    }
+
+    const effectNames = (message.effects as { name?: Record<string, string> })?.name || {};
+    for (const key of EFFECT_NAME_KEYS) {
+      expect(effectNames[key], `${locale}.effects.name.${key}`).toEqual(expect.any(String));
+      expect(effectNames[key]).not.toBe('');
     }
   });
 
@@ -105,9 +127,9 @@ describe('hit editor localization', () => {
     expect(message.hitEditor.fields.reactionType).toBe('异常类型');
     expect(message.hitEditor.fields.treatAsReaction).toBe('视为异常类型');
     expect(message.hitEditor.fields.physicalType).toBe('物理异常类型');
-    expect(message.hitEditor.treatAsReaction).toBe('按异常类型处理');
     expect(message.hitEditor.fields.skillTypes).toBe('技能类型');
     expect(message.hitEditor.fields.treatAsSkillType).toBe('视为技能类型');
+    expect(message.hitEditor.title).toBe('命中 {index}');
     expect(message.hitEditor.hide).toBe('隐藏显示');
     expect(message.hitEditor.fields.silent).toBe('不触发连锁');
     expect(message.hitEditor.fields.external).toBe('独立乘区');
@@ -116,13 +138,13 @@ describe('hit editor localization', () => {
     expect(message.hitEditor.fields.target).toBe('效果目标');
     expect(message.effects.group.physical).toBe(message.hitEditor.effectKinds.physicalStatus);
     expect(message.effects.group.status).toBe(message.hitEditor.effectKinds.reaction);
-    expect(message.hitEditor.reactions).toMatchObject({
+    expect(message.effects.name).toMatchObject({
       combustion: '燃烧',
       electrification: '导电',
       solidification: '冻结',
       corrosion: '腐蚀',
-    });
-    expect(message.hitEditor.physicalStatuses).toMatchObject({
+      shatter: '碎冰',
+      vulnerability: '破防',
       breach: '碎甲',
       crush: '猛击',
       lift: '击飞',

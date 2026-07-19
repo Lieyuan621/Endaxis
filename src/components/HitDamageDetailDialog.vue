@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getGameElementName } from '@/data/gameText';
+import { translateEffectName } from '@/editor/hits/statusOptions';
 import { useTimelineStore } from '@/stores/timelineStore';
 
 const props = defineProps({
@@ -12,7 +13,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible']);
 
-const { t, locale } = useI18n();
+const { t, te, locale } = useI18n();
 const store = useTimelineStore();
 
 const pct = value => `${((Number(value) || 0) * 100).toFixed(1)}%`;
@@ -47,7 +48,7 @@ function skillTypeLabel(value) {
 }
 
 function reactionLabel(value) {
-  return value ? tr(`hitDetail.reaction.${value}`, humanize(value)) : '';
+  return translateEffectName(t, te, value);
 }
 
 const canForceCrit = computed(

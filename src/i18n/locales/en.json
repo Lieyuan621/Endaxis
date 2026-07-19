@@ -90,25 +90,6 @@
       "damage": "Damage",
       "gauge": "Charge",
       "stagger": "Stagger"
-    },
-    "effectNames": {
-      "ELEMENT_HEAT": "Heat Attach",
-      "ELEMENT_CRYO": "Cryo Attach",
-      "ELEMENT_ELECTRIC": "Electric Attach",
-      "ELEMENT_NATURE": "Nature Attach",
-      "ELEMENT_COMBUSTION": "Combustion",
-      "ELEMENT_ELECTRIFICATION": "Electrification",
-      "ELEMENT_SOLIDIFICATION": "Solidification",
-      "ELEMENT_CORROSION": "Corrosion",
-      "ELEMENT_HEAT_BURST": "Heat Burst",
-      "ELEMENT_CRYO_BURST": "Cryo Burst",
-      "ELEMENT_ELECTRIC_BURST": "Electric Burst",
-      "ELEMENT_NATURE_BURST": "Nature Burst",
-      "PHYSICAL_VULNERABLE": "Vulnerable",
-      "PHYSICAL_KNOCK_DOWN": "Knock Down",
-      "PHYSICAL_LIFT": "Launch",
-      "PHYSICAL_CRUSH": "Crush",
-      "PHYSICAL_BREACH": "Breach"
     }
   },
   "locale": {
@@ -515,24 +496,9 @@
       "other": "Other"
     },
     "name": {
-      "break": "Vulnerability",
-      "armor_break": "Breach",
-      "stagger": "Crush",
       "knockdown": "Knock Down",
-      "knockup": "Lift",
-      "blaze_attach": "Heat Infliction",
-      "emag_attach": "Electric Infliction",
-      "cold_attach": "Cryo Infliction",
-      "nature_attach": "Nature Infliction",
-      "blaze_burst": "Heat Burst",
-      "emag_burst": "Electric Burst",
-      "cold_burst": "Cryo Burst",
       "comboWindow": "Combo Window",
       "nature_burst": "Nature Burst",
-      "burning": "Combustion",
-      "conductive": "Electrification",
-      "frozen": "Solidification",
-      "ice_shatter": "Shatter",
       "corrosion": "Corrosion",
       "default": "Default Icon",
       "vulnerability": "Vulnerability",
@@ -550,6 +516,8 @@
       "combustion": "Combustion",
       "solidification": "Solidification",
       "shatter": "Shatter",
+      "combustion_dot": "Combustion DoT",
+      "artsBurst": "Element Burst",
       "atkPercent": "ATK%",
       "flatAtk": "Flat ATK",
       "dmgBonus": "DMG Bonus",
@@ -638,6 +606,16 @@
       "slowed": "Slowed",
       "link": "Link",
       "shield": "Shield",
+      "weaken": "Weaken",
+      "inflictionBarrier": "Infliction Barrier",
+      "attributeAtkPercent": "Attribute ATK%",
+      "heal": "Heal",
+      "battleSkillSPCostReduction": "Battle Skill SP Cost Reduction",
+      "staggerFlat": "Flat Stagger",
+      "staggerPercent": "Stagger%",
+      "susceptibilityAmplify": "Susceptibility Amplify",
+      "attributeFlat": "Flat Attribute",
+      "attributePercent": "Attribute%",
       "scorchingFangs": "Scorching Fangs",
       "prepIngredients": "Prep Ingredients",
       "meltingFlame": "Melting Flame",
@@ -668,7 +646,6 @@
   "hitEditor": {
     "title": "Hit {index}",
     "basic": "Basic",
-    "damageResource": "Damage & Resource",
     "effects": "Effects",
     "advanced": "Advanced",
     "open": "Edit",
@@ -677,19 +654,18 @@
     "newEffect": "New effect",
     "effectKind": "Effect category",
     "displayType": "Specific effect",
-    "jsonInvalid": "Invalid JSON",
     "noEffect": "No effect selected",
     "durationExtension": "Duration extension",
-    "treatAsReaction": "Treat as reaction",
-    "treatAsSkillType": "Treat as skill type",
     "maxStacks": "Max stacks",
     "stackStrategy": "Stack strategy",
     "icdGroup": "ICD group",
     "applyTiming": "Apply timing",
     "hide": "Hidden",
     "ignoreTimeShift": "Ignore time shift",
-    "moveUp": "Move up",
-    "moveDown": "Move down",
+    "addScalingTerm": "Add additive term",
+    "addScalingMultiplier": "Add multiplier",
+    "addConsumedStatEffect": "Add consumed stat effect",
+    "hitEffectsPlaceholder": "Optional JSON array",
     "elements": {
       "physical": "Physical",
       "heat": "Heat",
@@ -703,7 +679,40 @@
       "comboSkill": "Combo skill",
       "ultimate": "Ultimate",
       "finalStrike": "Final strike",
-      "dive": "Dive"
+      "dive": "Dive",
+      "finisher": "Finisher",
+      "nonSkill": "Non-skill"
+    },
+    "targetScopes": {
+      "self": "Self",
+      "team": "Team",
+      "teamExcludeSelf": "Team (exclude self)",
+      "teamExcludeSameElement": "Team (exclude same element)",
+      "enemy": "Enemy",
+      "owner": "Owner",
+      "controlled": "Controlled"
+    },
+    "statGroups": {
+      "enemy": "Enemy stats",
+      "operator": "Operator stats"
+    },
+    "conditionKinds": {
+      "enemyStatus": "Enemy status",
+      "enemyHp": "Enemy HP",
+      "enemyStaggered": "Enemy staggered",
+      "operatorStatus": "Operator status",
+      "operatorHp": "Operator HP",
+      "comboNotOnCooldown": "Combo not on cooldown",
+      "actionLinkConsumed": "Combo consumed"
+    },
+    "stacksCompares": {
+      "exact": "Exact",
+      "atLeast": "At least",
+      "atMost": "At most"
+    },
+    "hpCompares": {
+      "above": "Above",
+      "below": "Below"
     },
     "effectKinds": {
       "status": "Status",
@@ -720,22 +729,6 @@
       "oneTime": "One-time value",
       "cooldownReductionFlat": "Flat cooldown reduction",
       "cooldownReductionPercent": "Percent cooldown reduction"
-    },
-    "reactions": {
-      "combustion": "Combustion",
-      "electrification": "Electrification",
-      "solidification": "Solidification",
-      "corrosion": "Corrosion",
-      "shatter": "Shatter",
-      "breach": "Breach",
-      "crush": "Crush"
-    },
-    "physicalStatuses": {
-      "vulnerability": "Vulnerability",
-      "breach": "Breach",
-      "crush": "Crush",
-      "lift": "Lift",
-      "knockdown": "Knockdown"
     },
     "stackStrategies": {
       "REFRESH_DURATION": "Refresh duration",
@@ -779,6 +772,10 @@
       "multiplierScaling": "Multiplier scaling",
       "staggerScaling": "Stagger scaling",
       "hit": "Hit override",
+      "hitEffects": "Hit effects",
+      "spRecovery": "SP recovery",
+      "spReturn": "SP return",
+      "stagger": "Stagger",
       "readConsumedStacks": "Read consumed stacks",
       "consumedStatEffects": "Consumed stat effects",
       "operatorStatus": "Operator status",
@@ -786,7 +783,23 @@
       "skillTypes": "Skill types",
       "treatAsSkillType": "Treat as skill type",
       "skillId": "Skill ID",
-      "_condition": "Hit condition"
+      "stacksFromConsume": "Stacks from consume",
+      "_condition": "Hit condition",
+      "targetClasses": "Class filter",
+      "attribute": "Attribute",
+      "conditionStatus": "Status",
+      "conditionStacks": "Stack constraint",
+      "conditionConsume": "Consume status",
+      "conditionTarget": "Check target",
+      "hpCompare": "HP compare",
+      "hpPercent": "HP percent",
+      "scalingCap": "Cap"
+    },
+    "scalingTerms": {
+      "flat": "Flat",
+      "stack": "Stacks",
+      "attribute": "Attribute",
+      "multiplier": "Multiplier"
     }
   },
   "propertiesPanel": {
@@ -1012,20 +1025,7 @@
     "levelCoeffDetail": "Level {level}",
     "artsIntensity": "Arts Intensity",
     "artsIntensityDetail": "{value} pts",
-    "effectiveness": "Effectiveness",
-    "reaction": {
-      "electrification": "Electrification",
-      "corrosion": "Corrosion",
-      "combustion": "Combustion",
-      "combustion_dot": "Combustion DoT",
-      "solidification": "Solidification",
-      "shatter": "Shatter",
-      "artsBurst": "Element Burst",
-      "knockdown": "Knock Down",
-      "lift": "Lift",
-      "breach": "Breach",
-      "crush": "Crush"
-    }
+    "effectiveness": "Effectiveness"
   },
   "actionItem": {
     "damageHitTooltip": "Damage: {damage}",

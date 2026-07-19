@@ -3,6 +3,19 @@
 // shapes. The objects here originate from the (dynamically-shaped) timeline
 // store, so the structural types below are intentionally permissive.
 
+import {
+  PHYSICAL_STATUS_TYPES as PHYSICAL_STATUS_TYPE_LIST,
+  ARTS_ELEMENTS,
+  DAMAGE_ELEMENTS as DAMAGE_ELEMENT_LIST,
+  ELEMENT_SCOPED_STAT_MODIFIERS as ELEMENT_SCOPED_STAT_MODIFIER_LIST,
+  ENEMY_STAT_MODIFIERS as ENEMY_STAT_MODIFIER_LIST,
+  OPERATOR_STAT_MODIFIERS as OPERATOR_STAT_MODIFIER_LIST,
+  REACTION_TYPES as REACTION_TYPE_LIST,
+  SKILL_SCOPED_STAT_MODIFIERS as SKILL_SCOPED_STAT_MODIFIER_LIST,
+  SKILL_TYPE_SCOPES as SKILL_TYPE_SCOPE_LIST,
+} from '@/data/enums';
+import { createEffectKindDefaults } from '@/editor/hits/effectSchema';
+
 const LEGACY_TO_OPTIMIZER_TYPE: Record<string, string> = Object.freeze({
   attack: 'basicAttack',
   skill: 'battleSkill',
@@ -20,155 +33,14 @@ const OPTIMIZER_TO_LEGACY_TYPE: Record<string, string> = Object.freeze({
   dive: 'dive',
 });
 
-const PHYSICAL_STATUS_TYPES = new Set([
-  'vulnerability',
-  'breach',
-  'crush',
-  'lift',
-  'break',
-  'armor_break',
-  'stagger',
-  'knockdown',
-  'knockup',
-  'ice_shatter',
-]);
-
-const REACTION_TYPES = new Set(['combustion', 'electrification', 'solidification', 'corrosion']);
-
-const ARTS_ELEMENTS = Object.freeze(['heat', 'cryo', 'electric', 'nature']);
-
-const DAMAGE_ELEMENTS = new Set(['physical', ...ARTS_ELEMENTS]);
-
-const SKILL_TYPE_SCOPES = new Set([
-  'basicAttack',
-  'battleSkill',
-  'comboSkill',
-  'ultimate',
-  'finalStrike',
-  'finisher',
-  'dive',
-  'nonSkill',
-]);
-
-const ENEMY_STAT_MODIFIERS = new Set([
-  'susceptibility',
-  'increasedDmgTaken',
-  'resistanceShred',
-  'slowed',
-  'weaken',
-  'inflictionBarrier',
-]);
-
-const OPERATOR_STAT_MODIFIERS = new Set([
-  'atkPercent',
-  'attributeAtkPercent',
-  'atkFlat',
-  'hpPercent',
-  'flatHp',
-  'defPercent',
-  'flatDef',
-  'artsIntensity',
-  'ultimateGainEfficiency',
-  'ultimateEnergyCostReduction',
-  'shield',
-  'protection',
-  'link',
-  'heal',
-  'critRate',
-  'critDmg',
-  'directMultiplier',
-  'spRecoveryFlat',
-  'spRecoveryPercent',
-  'battleSkillSPCostReduction',
-  'staggerFlat',
-  'staggerPercent',
-  'cooldownReductionFlat',
-  'cooldownReductionPercent',
-  'ampBonus',
-  'resistanceIgnore',
-  'dmgBonus',
-  'susceptibilityAmplify',
-]);
-
-const ELEMENT_SCOPED_STAT_MODIFIERS = new Set([
-  'ampBonus',
-  'resistanceIgnore',
-  'dmgBonus',
-  'susceptibilityAmplify',
-  'susceptibility',
-  'increasedDmgTaken',
-  'resistanceShred',
-  'inflictionBarrier',
-]);
-
-const SKILL_SCOPED_STAT_MODIFIERS = new Set([
-  'critRate',
-  'critDmg',
-  'directMultiplier',
-  'spRecoveryFlat',
-  'spRecoveryPercent',
-  'staggerFlat',
-  'staggerPercent',
-  'cooldownReductionFlat',
-  'cooldownReductionPercent',
-  'dmgBonus',
-  'susceptibilityAmplify',
-]);
-
-const COMMON_EFFECT_FIELDS = Object.freeze([
-  'id',
-  'name',
-  'displayType',
-  'duration',
-  'durationExtension',
-  'stacks',
-  'maxStacks',
-  'stackStrategy',
-  'icd',
-  'icdGroup',
-  'hide',
-  'ignoreTimeShift',
-  'applyTiming',
-  'condition',
-]);
-
-const EFFECT_KIND_FIELDS: Record<string, string[]> = Object.freeze({
-  status: ['target', 'stat', 'value', 'scaling', 'silent', 'external'],
-  infliction: ['element'],
-  burst: ['element'],
-  reaction: ['reactionType', 'requiresInfliction', 'effectiveness', 'defaultLevel'],
-  physicalStatus: ['physicalType', 'forced', 'effectiveness'],
-  damageHit: [
-    'element',
-    'multiplier',
-    'multiplierScaling',
-    'staggerScaling',
-    'offset',
-    'hit',
-    'readConsumedStacks',
-    'scaleByCrit',
-  ],
-  damageOverTime: [
-    'element',
-    'multiplier',
-    'multiplierMode',
-    'multiplierScaling',
-    'offset',
-    'interval',
-    'snapshot',
-    'canCrit',
-    'skipFirstTick',
-    'cancelOnRefresh',
-    'consumedStatEffects',
-  ],
-  spRecovery: ['value', 'scaling'],
-  spReturn: ['value', 'scaling'],
-  ultEnergyGain: ['target', 'value', 'scaling'],
-  consume: ['operatorStatus', 'enemyStatus', 'consumeStacks', 'consumeScope'],
-  oneTime: ['stat', 'value', 'target', 'skillTypes', 'skillId'],
-  cooldownReductionFlat: ['value', 'target', 'skillTypes', 'skillId'],
-  cooldownReductionPercent: ['value', 'target', 'skillTypes', 'skillId'],
-});
+const PHYSICAL_STATUS_TYPES = new Set<string>(PHYSICAL_STATUS_TYPE_LIST);
+const REACTION_TYPES = new Set<string>(REACTION_TYPE_LIST);
+const DAMAGE_ELEMENTS = new Set<string>(DAMAGE_ELEMENT_LIST);
+const SKILL_TYPE_SCOPES = new Set<string>(SKILL_TYPE_SCOPE_LIST);
+const ENEMY_STAT_MODIFIERS = new Set<string>(ENEMY_STAT_MODIFIER_LIST);
+const OPERATOR_STAT_MODIFIERS = new Set<string>(OPERATOR_STAT_MODIFIER_LIST);
+const ELEMENT_SCOPED_STAT_MODIFIERS = new Set<string>(ELEMENT_SCOPED_STAT_MODIFIER_LIST);
+const SKILL_SCOPED_STAT_MODIFIERS = new Set<string>(SKILL_SCOPED_STAT_MODIFIER_LIST);
 
 export interface EditorStat {
   modifier?: string;
@@ -207,8 +79,6 @@ export interface EditorHit {
   durationExtension?: number;
   element?: string | null;
   effects?: EditorEffect[];
-  hideInEditor?: boolean;
-  hiddenInEditor?: boolean;
   spKind?: string;
   sp?: number;
   [key: string]: unknown;
@@ -297,15 +167,6 @@ export function ensureEffectId(effect: EditorEffect): EditorEffect {
   return effect;
 }
 
-export function ensureEffectIds(rows: EditorEffect[][]): EditorEffect[][] {
-  if (!Array.isArray(rows)) return rows;
-  rows.forEach(row => {
-    if (!Array.isArray(row)) return;
-    row.forEach(effect => ensureEffectId(effect));
-  });
-  return rows;
-}
-
 function inferAllowedEffectTypesFromHits(hits: EditorHit[] = []): string[] {
   const collected = new Set<string>();
   hits.forEach(hit => {
@@ -348,8 +209,10 @@ function convertLegacyRowToEffects(row: EditorEffect[] = []): EditorEffect[] {
     .map(effect => {
       const next = cloneJson(effect) || ({} as EditorEffect);
       ensureEffectId(next);
+      // Prefer locale keys (type/name/kind). Never seed displayType from runtime `id`
+      // (e.g. lastrite-hypothermic-perfusion) — that shadows `name` in resolveEffectDisplayKey.
       if (next.displayType === undefined)
-        next.displayType = next.type || next.id || next.kind || 'default';
+        next.displayType = next.type || next.name || next.kind || 'default';
       if (next.type && PHYSICAL_STATUS_TYPES.has(next.type)) {
         next.kind = next.kind || 'physicalStatus';
         next.physicalType = next.physicalType || next.type;
@@ -470,12 +333,6 @@ export function retypeEditorEffect(effect: EditorEffect, nextType = 'default'): 
   };
 }
 
-export function canEditEditorEffectValue(effect: EditorEffect): boolean {
-  if (!effect || typeof effect !== 'object') return false;
-  if (effect.kind === 'status' && effect.stat) return true;
-  return ['damageHit', 'spRecovery', 'spReturn', 'ultEnergyGain'].includes(effect.kind ?? '');
-}
-
 export function cloneEditorHit(
   hit: EditorHit = {},
   defaultElement: string | null = null,
@@ -488,54 +345,14 @@ export function cloneEditorHit(
   );
 }
 
-export function isEditorVisibleHit(hit: EditorHit): boolean {
-  return hit?.hideInEditor !== true && hit?.hiddenInEditor !== true;
-}
-
-export function filterEditorVisibleHits(hits: EditorHit[] = []): EditorHit[] {
-  return (Array.isArray(hits) ? hits : []).filter(isEditorVisibleHit);
-}
-
-export function mergeEditorVisibleHits(
-  existingHits: EditorHit[] = [],
-  visibleHits: EditorHit[] = [],
-  defaultElement: string | null = null,
-): EditorHit[] {
-  const hiddenHits = (Array.isArray(existingHits) ? existingHits : [])
-    .filter(hit => !isEditorVisibleHit(hit))
-    .map(stripEditorHitMetadata);
-  const nextVisibleHits = (Array.isArray(visibleHits) ? visibleHits : []).map(
-    stripEditorHitMetadata,
-  );
-  return normalizeHits([...nextVisibleHits, ...hiddenHits], defaultElement);
-}
-
-export function patchEditorHitAt(
+export function toPersistedEditorHits(
   hits: EditorHit[] = [],
-  index: number,
-  patch: EditorHit = {},
   defaultElement: string | null = null,
 ): EditorHit[] {
-  const next = Array.isArray(hits) ? hits.map(hit => cloneEditorHit(hit, defaultElement)) : [];
-  if (!next[index]) return next;
-  next[index] = cloneEditorHit({ ...next[index], ...cloneJson(patch) }, defaultElement);
-  return normalizeHits(next, defaultElement);
-}
-
-export function parseEditorJsonField(
-  raw: unknown,
-): { ok: true; value: unknown } | { ok: false; error: string } {
-  const text = String(raw ?? '').trim();
-  if (!text) return { ok: true, value: undefined };
-  try {
-    return { ok: true, value: JSON.parse(text) };
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : String(error) };
-  }
-}
-
-export function getEditorEffectEditableFields(effect: EditorEffect): string[] {
-  return [...COMMON_EFFECT_FIELDS, ...(EFFECT_KIND_FIELDS[effect?.kind ?? ''] || [])];
+  return normalizeHits(
+    (Array.isArray(hits) ? hits : []).map(stripEditorHitMetadata),
+    defaultElement,
+  );
 }
 
 export function retypeEditorEffectKind(effect: EditorEffect, nextKind: string): EditorEffect {
@@ -555,39 +372,10 @@ export function retypeEditorEffectKind(effect: EditorEffect, nextKind: string): 
     applyTiming: next.applyTiming,
     condition: next.condition,
   };
-  const defaults: Record<string, EditorEffect> = {
-    status: { kind: 'status', id: next.id || 'default', name: next.name || next.id || 'default' },
-    infliction: { kind: 'infliction', element: next.element || 'heat' },
-    burst: { kind: 'burst', element: next.element || 'heat' },
-    reaction: { kind: 'reaction', reactionType: next.reactionType || 'combustion' },
-    physicalStatus: { kind: 'physicalStatus', physicalType: next.physicalType || 'breach' },
-    damageHit: {
-      kind: 'damageHit',
-      element: next.element || 'physical',
-      multiplier: Number(next.multiplier) || 0,
-    },
-    damageOverTime: {
-      kind: 'damageOverTime',
-      element: next.element || 'physical',
-      multiplier: Number(next.multiplier) || 0,
-      interval: Number(next.interval) || 1,
-    },
-    spRecovery: { kind: 'spRecovery', value: Number(next.value) || 0 },
-    spReturn: { kind: 'spReturn', value: Number(next.value) || 0 },
-    ultEnergyGain: { kind: 'ultEnergyGain', value: Number(next.value) || 0 },
-    consume: {
-      kind: 'consume',
-      ...(Number(next.consumeStacks) ? { consumeStacks: Number(next.consumeStacks) } : {}),
-    },
-    oneTime: {
-      kind: 'oneTime',
-      stat: next.stat || { modifier: 'dmgBonus' },
-      value: Number(next.value) || 0,
-    },
-    cooldownReductionFlat: { kind: 'cooldownReductionFlat', value: Number(next.value) || 0 },
-    cooldownReductionPercent: { kind: 'cooldownReductionPercent', value: Number(next.value) || 0 },
-  };
-  return { ...keep, ...(defaults[nextKind] || defaults.status) };
+  return {
+    ...keep,
+    ...createEffectKindDefaults(nextKind, next as Record<string, unknown>),
+  } as EditorEffect;
 }
 
 export interface CreateEditorHitOptions {

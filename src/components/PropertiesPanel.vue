@@ -9,19 +9,14 @@ import { useDragConnection } from '@/composables/useDragConnection';
 import { getRectPos } from '@/utils/layoutUtils';
 import { useI18n } from 'vue-i18n';
 import { frameToTime, timeToFrame } from '@/utils/time';
-import { getDisplayKeyCandidates, resolveEffectDisplayKey } from '@/utils/effectDisplay';
+import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
 import {
-  canEditEditorEffectValue,
-  createEditorEffect,
   createEditorHit,
   createHitModelId,
   ensureActionLikeModel,
-  ensureEffectId,
-  filterEditorVisibleHits,
-  mergeEditorVisibleHits,
   normalizeHits,
-  retypeEditorEffect,
   toLegacyDisplayType,
+  toPersistedEditorHits,
 } from '@/utils/hitModel';
 
 const store = useTimelineStore();
@@ -63,7 +58,10 @@ function getEffectDisplayName(type) {
 }
 
 const GROUP_DEFINITIONS = computed(() => [
-  { label: t('effects.group.physical'), keys: ['breach', 'crush', 'lift', 'knockdown'] },
+  {
+    label: t('effects.group.physical'),
+    keys: ['vulnerability', 'breach', 'crush', 'lift', 'knockdown'],
+  },
   {
     label: t('effects.group.attach'),
     matcher: key => key.endsWith('_infliction') || key.endsWith('_attach'),
@@ -113,14 +111,6 @@ const isTicksExpanded = ref(false);
 const isBarsExpanded = ref(false);
 const editingHitIndex = ref(null);
 const hitEditorVisible = ref(false);
-const localSelectedAnomalyId = ref(null); // 用于库模式下的本地选中状态
-
-watch(
-  () => store.selectedLibrarySkillId,
-  () => {
-    localSelectedAnomalyId.value = null;
-  },
-);
 
 const targetData = computed(() => {
   if (store.selectedActionId) {
@@ -258,38 +248,17 @@ const editableHits = computed({
   get: () => {
     const hits = normalizeHits(targetData.value?.hits || [], targetData.value?.element);
     hits.forEach(ensureHitUiKey);
-    return filterEditorVisibleHits(hits);
+    return hits;
   },
   set: val =>
     commitUpdate({
-      hits: mergeEditorVisibleHits(targetData.value?.hits || [], val, targetData.value?.element),
+      hits: toPersistedEditorHits(val, targetData.value?.element),
     }),
 });
 
 const editingHit = computed(() => {
   if (editingHitIndex.value === null) return null;
   return editableHits.value[editingHitIndex.value] || null;
-});
-
-const activeAnomalyId = computed(() => {
-  return isLibraryMode.value ? localSelectedAnomalyId.value : store.selectedAnomalyId;
-});
-
-const currentSelectedCoords = computed(() => {
-  if (!activeAnomalyId.value || !targetData.value) return null;
-
-  for (let r = 0; r < editableHits.value.length; r++) {
-    const row = Array.isArray(editableHits.value[r]?.effects) ? editableHits.value[r].effects : [];
-    const c = row.findIndex(e => e?._id === activeAnomalyId.value);
-    if (c !== -1) return { rowIndex: r, colIndex: c };
-  }
-  return null;
-});
-
-const editingEffectData = computed(() => {
-  const coords = currentSelectedCoords.value;
-  if (!coords) return null;
-  return editableHits.value[coords.rowIndex]?.effects?.[coords.colIndex] || null;
 });
 
 const totalStagger = computed(() => {
@@ -303,101 +272,9 @@ const totalSpGain = computed(() => {
   );
 });
 
-function isEditing(r, c) {
-  const coords = currentSelectedCoords.value;
-  return coords && coords.rowIndex === r && coords.colIndex === c;
-}
-
 // ===================================================================================
 // 3. 技能与更新逻辑
 // ===================================================================================
-
-function toggleEditEffect(r, c) {
-  const effect = editableHits.value[r]?.effects?.[c];
-  if (!effect) return;
-  ensureEffectId(effect);
-
-  const targetId = effect._id;
-
-  if (isLibraryMode.value) {
-    // 库模式：使用本地状态
-    localSelectedAnomalyId.value = localSelectedAnomalyId.value === targetId ? null : targetId;
-  } else {
-    // 实例模式：使用 Store 状态
-    if (store.selectedAnomalyId === targetId) {
-      store.setSelectedAnomalyId(null);
-    } else {
-      store.selectAnomaly(store.selectedActionId, r, c);
-    }
-  }
-}
-
-function updateEffectProp(key, value) {
-  const coords = currentSelectedCoords.value;
-  if (!coords) return;
-  const { rowIndex, colIndex } = coords;
-  const hits = JSON.parse(JSON.stringify(editableHits.value));
-  const effect = hits[rowIndex]?.effects?.[colIndex];
-  if (effect) {
-    effect[key] = value;
-    editableHits.value = hits;
-  }
-}
-
-function updateEffectFrameProp(key, value) {
-  updateEffectProp(key, timeValueFromFrame(value));
-}
-
-function commitEditableHits() {
-  editableHits.value = editableHits.value;
-}
-
-function updateEffectType(value) {
-  const coords = currentSelectedCoords.value;
-  if (!coords) return;
-  const { rowIndex, colIndex } = coords;
-  const hits = JSON.parse(JSON.stringify(editableHits.value));
-  const effect = hits[rowIndex]?.effects?.[colIndex];
-  if (!effect) return;
-  hits[rowIndex].effects[colIndex] = retypeEditorEffect(effect, value);
-  editableHits.value = hits;
-}
-
-function addRow() {
-  const newEffect = createEditorEffect('default');
-  const nextHits = [
-    ...editableHits.value,
-    createEditorHit({ element: targetData.value?.element, effects: [newEffect] }),
-  ];
-  editableHits.value = nextHits;
-  if (newEffect) {
-    if (isLibraryMode.value) localSelectedAnomalyId.value = newEffect._id;
-    else store.setSelectedAnomalyId(newEffect._id);
-  }
-}
-
-function addEffectToRow(rowIndex) {
-  const hits = JSON.parse(JSON.stringify(editableHits.value));
-  if (!hits[rowIndex]) return;
-
-  const newEffect = createEditorEffect('default');
-  if (!Array.isArray(hits[rowIndex].effects)) hits[rowIndex].effects = [];
-  hits[rowIndex].effects.push(newEffect);
-  editableHits.value = hits;
-
-  if (isLibraryMode.value) localSelectedAnomalyId.value = newEffect._id;
-  else store.setSelectedAnomalyId(newEffect._id);
-}
-
-function removeEffect(r, c) {
-  const hits = JSON.parse(JSON.stringify(editableHits.value));
-  if (!hits[r]?.effects?.[c]) return;
-  hits[r].effects.splice(c, 1);
-  editableHits.value = hits;
-  if (!isLibraryMode.value) store.removeAnomaly(store.selectedActionId, r, c);
-  store.setSelectedAnomalyId(null);
-  localSelectedAnomalyId.value = null;
-}
 
 function updateActionProp(key, value) {
   commitUpdate({ [key]: value });
@@ -1014,193 +891,6 @@ function handleStartConnection(id, type = null) {
         </div>
       </div>
 
-      <div v-if="false" class="section-container tech-style">
-        <div class="panel-tag-mini">{{ t('propertiesPanel.effects.title') }}</div>
-        <div
-          class="anomalies-editor-container"
-          style="background: transparent; border-color: rgba(255, 255, 255, 0.1); margin-top: 10px"
-        >
-          <draggable
-            v-model="editableHits"
-            item-key="_editorId"
-            class="rows-container"
-            handle=".row-handle"
-            :animation="200"
-          >
-            <template #item="{ element: row, index: rowIndex }">
-              <div class="anomaly-editor-row">
-                <div class="row-handle">::</div>
-                <draggable
-                  :list="row.effects"
-                  item-key="_id"
-                  class="row-items-list"
-                  :group="{ name: 'effects' }"
-                  :animation="150"
-                  @change="commitEditableHits"
-                >
-                  <template #item="{ element: effect, index: colIndex }">
-                    <div
-                      class="icon-wrapper"
-                      :class="{ 'is-editing': isEditing(rowIndex, colIndex) }"
-                      @click="toggleEditEffect(rowIndex, colIndex)"
-                    >
-                      <img :src="getIconPath(effect)" class="mini-icon" />
-                      <div v-if="effect.stacks > 1" class="mini-stacks">{{ effect.stacks }}</div>
-                    </div>
-                  </template>
-                </draggable>
-                <button
-                  class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--icon-plus"
-                  @click="addEffectToRow(rowIndex)"
-                  :title="t('propertiesPanel.effects.addEffect')"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="3"
-                  >
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
-              </div>
-            </template>
-          </draggable>
-          <button class="add-effect-bar" @click="addRow">
-            <svg
-              viewBox="0 0 24 24"
-              width="12"
-              height="12"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>{{ t('propertiesPanel.effects.addRow') }}</span>
-          </button>
-        </div>
-
-        <div
-          v-if="editingEffectData && currentSelectedCoords"
-          class="effect-detail-editor-embedded"
-        >
-          <div class="editor-arrow"></div>
-          <div class="editor-header-mini">
-            <div class="header-tag"></div>
-            <span>{{
-              t('propertiesPanel.effects.editing', {
-                row: currentSelectedCoords.rowIndex + 1,
-                col: currentSelectedCoords.colIndex + 1,
-              })
-            }}</span>
-            <div class="spacer"></div>
-            <button
-              class="close-btn"
-              @click="
-                isLibraryMode ? (localSelectedAnomalyId = null) : store.setSelectedAnomalyId(null)
-              "
-            >
-              {{ t('common.close') }}
-            </button>
-          </div>
-
-          <div class="editor-grid">
-            <div class="full-width-col">
-              <label>{{ t('common.type') }}</label>
-              <el-select
-                :model-value="resolveEffectDisplayKey(editingEffectData)"
-                @update:model-value="updateEffectType"
-                :placeholder="t('propertiesPanel.effects.selectPlaceholder')"
-                filterable
-                size="small"
-                class="effect-select-dark"
-              >
-                <el-option-group
-                  v-for="group in iconOptions"
-                  :key="group.label"
-                  :label="group.label"
-                >
-                  <el-option
-                    v-for="item in group.options"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  >
-                    <div class="opt-row">
-                      <img :src="item.path" /><span>{{ item.label }}</span>
-                    </div>
-                  </el-option>
-                </el-option-group>
-              </el-select>
-            </div>
-
-            <div>
-              <label>{{ t('common.triggerTime') }}</label>
-              <CustomNumberInput
-                :model-value="frameValue(editingEffectData.offset || 0)"
-                @update:model-value="val => updateEffectFrameProp('offset', val)"
-                :step="1"
-                :min="0"
-                :activeColor="HIGHLIGHT_COLORS.default"
-              />
-            </div>
-            <div>
-              <label>{{ t('common.stacks') }}</label>
-              <CustomNumberInput
-                :model-value="editingEffectData.stacks"
-                @update:model-value="val => updateEffectProp('stacks', val)"
-                :min="1"
-                :activeColor="HIGHLIGHT_COLORS.default"
-              />
-            </div>
-            <div>
-              <label>{{ t('common.duration') }}</label>
-              <CustomNumberInput
-                :model-value="frameValue(editingEffectData.duration)"
-                @update:model-value="val => updateEffectFrameProp('duration', val)"
-                :min="0"
-                :step="1"
-                :activeColor="HIGHLIGHT_COLORS.default"
-              />
-            </div>
-            <div v-if="canEditEditorEffectValue(editingEffectData)">
-              <label>{{ t('common.value') }}</label>
-              <CustomNumberInput
-                :model-value="editingEffectData.value || 0"
-                @update:model-value="val => updateEffectProp('value', Number(val) || 0)"
-                :activeColor="HIGHLIGHT_COLORS.default"
-              />
-            </div>
-          </div>
-
-          <div class="editor-actions">
-            <button
-              v-if="!isLibraryMode"
-              class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent"
-              @click.stop="handleStartConnection(activeAnomalyId, 'effect')"
-              :class="{
-                'is-linking':
-                  connectionHandler.isDragging.value &&
-                  connectionHandler.state.value.sourceId === activeAnomalyId,
-              }"
-            >
-              {{ t('connection.connect') }}
-            </button>
-            <button
-              class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger"
-              @click="removeEffect(currentSelectedCoords.rowIndex, currentSelectedCoords.colIndex)"
-            >
-              {{ t('common.delete') }}
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div v-if="!isLibraryMode" class="section-container tech-style">
         <div class="panel-tag-mini">{{ t('propertiesPanel.connections.title') }}</div>
 
@@ -1368,6 +1058,7 @@ function handleStartConnection(id, type = null) {
       :hit-index="editingHitIndex ?? -1"
       :default-element="targetData?.element"
       :effect-options="iconOptions"
+      :operator-slug="currentCharacter?.id || ''"
       @save="saveHitFromDialog"
       @delete="deleteHitFromDialog"
     />
@@ -1767,210 +1458,7 @@ function handleStartConnection(id, type = null) {
   white-space: nowrap;
   opacity: 0.95;
 }
-.anomalies-editor-container {
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-.anomaly-editor-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.02);
-  padding: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 3px solid rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
-  position: relative;
-  transition: all 0.2s;
-  clip-path: polygon(0 0, 100% 0, 100% 85%, 98% 100%, 0 100%);
-}
-.anomaly-editor-row:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-.row-handle {
-  color: #555;
-  cursor: grab;
-  padding: 0 2px;
-}
-.row-items-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  flex-grow: 1;
-}
-.add-effect-bar {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #888 !important;
-  font-size: 11px !important;
-  padding: 8px !important;
-  margin-top: 10px;
-  border-radius: 0 !important;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.add-effect-bar:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #ccc !important;
-  border-color: #ffd700 !important;
-}
-.add-effect-bar::before,
-.add-effect-bar::after {
-  content: '';
-  position: absolute;
-  width: 4px;
-  height: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.2s;
-}
-.add-effect-bar::before {
-  left: 0;
-  border-right: none;
-}
-.add-effect-bar::after {
-  right: 0;
-  border-left: none;
-}
-.add-effect-bar:hover::before,
-.add-effect-bar:hover::after {
-  border-color: #ffd700;
-  width: 6px;
-}
-.icon-wrapper {
-  width: 24px;
-  height: 24px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.icon-wrapper:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.05);
-}
-.icon-wrapper.is-editing {
-  border-color: #ffd700;
-  background: rgba(255, 215, 0, 0.1);
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
-}
-.mini-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-.mini-stacks {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  font-size: 8px;
-  padding: 0 2px;
-  line-height: 1;
-}
 
-/* Embedded Editor */
-.effect-detail-editor-embedded {
-  margin-top: 12px;
-  background: rgba(30, 30, 30, 0.9) !important;
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  padding: 12px;
-  position: relative;
-  animation: fadeIn 0.2s ease;
-  backdrop-filter: blur(8px);
-  clip-path: polygon(0 0, 100% 0, 100% 90%, 95% 100%, 0 100%);
-}
-.editor-arrow {
-  position: absolute;
-  top: -6px;
-  left: 24px;
-  width: 10px;
-  height: 10px;
-  background: rgba(30, 30, 30, 0.9);
-  border-left: 1px solid rgba(255, 215, 0, 0.3);
-  border-top: 1px solid rgba(255, 215, 0, 0.3);
-  transform: rotate(45deg);
-}
-.editor-header-mini {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
-  font-size: 10px;
-  color: #ffd700;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-.header-tag {
-  width: 3px;
-  height: 10px;
-  background: #ffd700;
-}
-.close-btn {
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 11px;
-  cursor: pointer;
-  text-decoration: underline;
-}
-.editor-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px 16px;
-  margin-bottom: 10px;
-}
-.full-width-col {
-  grid-column: 1 / -1;
-}
-.editor-grid label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  display: block;
-  margin-bottom: 6px;
-}
-.effect-select-dark {
-  width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-:deep(.effect-select-dark .el-input__wrapper) {
-  background-color: #111;
-  box-shadow: none;
-  border: 1px solid #444;
-}
-.opt-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.opt-row img {
-  width: 16px;
-  height: 16px;
-}
-.editor-actions {
-  display: flex;
-  gap: 8px;
-}
-.editor-actions .ea-btn {
-  flex: 1;
-}
 
 /* Connection Cards - Optimized */
 .connection-header-group {
@@ -2150,10 +1638,6 @@ function handleStartConnection(id, type = null) {
 .skill-type-minimal,
 .section-container,
 .binding-option__icon,
-.anomalies-editor-container,
-.anomaly-editor-row,
-.icon-wrapper,
-.effect-select-dark,
 .direction-tag,
 .icon-s,
 .port-config {
@@ -2161,9 +1645,7 @@ function handleStartConnection(id, type = null) {
 }
 
 :deep(.tick-select .el-select__wrapper),
-:deep(.tick-select .el-input__wrapper),
-:deep(.effect-select-dark .el-select__wrapper),
-:deep(.effect-select-dark .el-input__wrapper) {
+:deep(.tick-select .el-input__wrapper) {
   border-radius: var(--right-panel-container-radius);
 }
 

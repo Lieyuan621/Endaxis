@@ -121,7 +121,7 @@ describe('timeline skill library editing', () => {
         (effect: any) =>
           effect.name === 'scorchingFangs' &&
           effect.kind === 'status' &&
-          effect.displayType === 'dmgBonus:heat',
+          effect.displayType === 'scorchingFangs',
       ),
     ).toBe(true);
   });

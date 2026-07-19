@@ -68,6 +68,8 @@ const gameEnumTerms = {
       agility: 'Agility',
       intellect: 'Intellect',
       will: 'Will',
+      main: 'Main',
+      sub: 'Sub',
     },
     operatorUi: {
       promote: 'Promote',
@@ -125,6 +127,8 @@ const gameEnumTerms = {
       agility: '敏捷',
       intellect: '智识',
       will: '意志',
+      main: '主属性',
+      sub: '副属性',
     },
     operatorUi: {
       promote: '精英化',

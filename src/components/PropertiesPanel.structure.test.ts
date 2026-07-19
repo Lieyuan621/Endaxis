@@ -13,9 +13,10 @@ describe('PropertiesPanel effect display type options', () => {
     expect(source).not.toContain('鈹');
   });
 
-  test('uses editor-visible hits without dropping hidden runtime branches', () => {
-    expect(source).toContain('filterEditorVisibleHits');
-    expect(source).toContain('mergeEditorVisibleHits');
+  test('persists all skill hits without an editor-visibility filter', () => {
+    expect(source).toContain('toPersistedEditorHits');
+    expect(source).not.toContain('filterEditorVisibleHits');
+    expect(source).not.toContain('mergeEditorVisibleHits');
   });
 
   test('uses square right-panel container styling', () => {
