@@ -784,28 +784,33 @@ function handleActionDragStart(startPos, port) {
       </svg>
     </div>
 
-    <div
+    <el-tooltip
       v-if="showDecorations && requisiteWarning"
-      class="status-icon warn-icon"
-      :title="requisiteTitle"
+      :content="requisiteTitle"
+      placement="top"
+      effect="dark"
+      :show-after="80"
+      popper-class="action-requisite-tooltip-popper"
     >
-      <svg
-        viewBox="0 0 24 24"
-        width="12"
-        height="12"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path
-          d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-        ></path>
-        <line x1="12" y1="9" x2="12" y2="13"></line>
-        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-      </svg>
-    </div>
+      <div class="status-icon warn-icon">
+        <svg
+          viewBox="0 0 24 24"
+          width="12"
+          height="12"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+          ></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+    </el-tooltip>
 
     <template v-if="showDecorations && action.type === 'ultimate' && !action.isDisabled">
       <div class="ultimate-side-bar left-bar" :style="{ backgroundColor: themeColor }"></div>
@@ -910,6 +915,28 @@ function handleActionDragStart(startPos, port) {
   color: #ff4d4f;
   pointer-events: auto;
   cursor: default;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(.action-requisite-tooltip-popper) {
+  max-width: min(320px, calc(100vw - 48px));
+}
+
+:global(.action-requisite-tooltip-popper.el-popper.is-dark) {
+  padding: 8px 10px;
+  background: #202126;
+  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 77, 79, 0.45);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+:global(.action-requisite-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
+  background: #202126;
+  border-color: rgba(255, 77, 79, 0.45);
 }
 
 .action-item-content {
