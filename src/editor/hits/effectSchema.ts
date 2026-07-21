@@ -5,7 +5,6 @@
 
 import { ARTS_ELEMENTS } from '@/data/enums';
 
-
 /** Effect kinds users can pick in the hit editor. */
 export const EDITOR_EFFECT_KINDS = Object.freeze([
   'status',
@@ -87,8 +86,8 @@ export const EFFECT_KIND_FIELDS: Readonly<Record<string, readonly string[]>> = O
   ],
   spRecovery: ['value', 'scaling'],
   spReturn: ['value', 'scaling'],
-  ultEnergyGain: ['target', 'value', 'scaling'],
-  consume: ['operatorStatus', 'enemyStatus', 'consumeStacks', 'consumeScope'],
+  ultEnergyGain: ['target', 'value', 'scaling', 'ignoreEfficiency'],
+  consume: ['operatorStatus', 'enemyStatus', 'consumeStacks', 'consumeScope', 'consumeTarget'],
   oneTime: ['stat', 'value', 'target', 'skillTypes'],
   cooldownReductionFlat: ['value', 'target', 'skillTypes'],
   cooldownReductionPercent: ['value', 'target', 'skillTypes'],
