@@ -1,12 +1,11 @@
 import type { EnemySheet } from '../types';
 
 const sheet: EnemySheet = {
-  name: 'Wgabyss',
+  name: 'Tidalklast',
   gameId: 'eny_0090_wgabyss',
   avatar: '/Icon_Enemy/eny_0090_wgabyss.webp',
   category: '天使',
   tier: 'boss',
-
   levelHp: {
     1: 1385,
     20: 9936,
@@ -15,9 +14,7 @@ const sheet: EnemySheet = {
     80: 595357,
     90: 917164,
   },
-
   def: 100,
-
   resistance: {
     physical: 0,
     heat: 0,
@@ -26,7 +23,6 @@ const sheet: EnemySheet = {
     nature: 0,
   },
   superArmor: 30,
-
   maxStagger: 640,
   staggerNodeCount: 1,
   staggerNodeDuration: 2,

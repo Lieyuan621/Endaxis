@@ -1,12 +1,11 @@
 import type { EnemySheet } from '../types';
 
 const sheet: EnemySheet = {
-  name: 'Aghornb',
+  name: 'Heavy Ram',
   gameId: 'eny_0023_aghornb',
   avatar: '/Icon_Enemy/eny_0023_aghornb.webp',
   category: '天使',
   tier: 'advanced',
-
   levelHp: {
     1: 831,
     20: 5961,
@@ -15,9 +14,7 @@ const sheet: EnemySheet = {
     80: 357214,
     90: 550298,
   },
-
   def: 100,
-
   resistance: {
     physical: 20,
     heat: 20,
@@ -26,7 +23,6 @@ const sheet: EnemySheet = {
     nature: 20,
   },
   superArmor: 20,
-
   maxStagger: 160,
   staggerNodeCount: 0,
   staggerNodeDuration: 2,

@@ -1,41 +1,251 @@
 {
+  "eny_0007_mimicw": {
+    "name": "Tunneling Nidwyrm"
+  },
+  "eny_0018_lbtough": {
+    "name": "Bonekrusher Executioner"
+  },
   "eny_0021_agmelee": {
-    "name": "Agmelee"
+    "name": "Ram"
   },
   "eny_0023_aghornb": {
-    "name": "Aghornb"
+    "name": "Heavy Ram"
+  },
+  "eny_0025_agrange": {
+    "name": "Sting"
   },
   "eny_0027_agscorp": {
-    "name": "Agscorp"
+    "name": "Heavy Sting"
+  },
+  "eny_0029_lbmob": {
+    "name": "Bonekrusher Raider"
+  },
+  "eny_0033_lbhunt": {
+    "name": "Bonekrusher Ambusher"
+  },
+  "eny_0039_agcanno": {
+    "name": "Sentinel"
+  },
+  "eny_0045_agtrinit": {
+    "name": "Triaggelos"
+  },
+  "eny_0046_lbshamman": {
+    "name": "Bonekrusher Pyromancer"
+  },
+  "eny_0047_firebat": {
+    "name": "Bonekrusher Arsonist"
+  },
+  "eny_0048_hvybow": {
+    "name": "Bonekrusher Ballista"
+  },
+  "eny_0049_rogue": {
+    "name": "Bonekrusher Infiltrator"
+  },
+  "eny_0050_hound": {
+    "name": "Bonekrusher Ripptusk"
   },
   "eny_0051_rodin": {
     "name": "Rhodagn the Bonekrushing Fist"
   },
+  "eny_0052_palesent": {
+    "name": "Marble Aggelomoirai"
+  },
+  "eny_0053_hsmob": {
+    "name": "Road Plunderer"
+  },
+  "eny_0054_hsmino": {
+    "name": "Hill Smasher"
+  },
+  "eny_0055_hscrane": {
+    "name": "Cloud Stalker"
+  },
   "eny_0058_agdisk": {
-    "name": "Agdisk"
+    "name": "Effigy"
+  },
+  "eny_0059_erhound": {
+    "name": "Hazefyre Tuskbeast"
+  },
+  "eny_0060_lbmad": {
+    "name": "Hazefyre Claw"
+  },
+  "eny_0061_palecore": {
+    "name": "Marble Aggelomoirai"
+  },
+  "eny_0062_paletent": {
+    "name": "Marble Appendage"
+  },
+  "eny_0063_agmelee2": {
+    "name": "Ram α"
+  },
+  "eny_0064_agrange2": {
+    "name": "Sting α"
+  },
+  "eny_0065_lbmob2": {
+    "name": "Elite Raider"
+  },
+  "eny_0066_lbhunt2": {
+    "name": "Elite Ambusher"
+  },
+  "eny_0067_hound2": {
+    "name": "Elite Ripptusk"
+  },
+  "eny_0068_lbtough2": {
+    "name": "Elite Executioner"
   },
   "eny_0069_aghornb2": {
-    "name": "Aghornb2"
+    "name": "Heavy Ram α"
   },
   "eny_0070_agscorp2": {
-    "name": "Agscorp2"
+    "name": "Heavy Sting α"
+  },
+  "eny_0071_sandb": {
+    "name": "Axe Armorbeast"
+  },
+  "eny_0072_slimeml": {
+    "name": "Indigenous Pincerbeast"
+  },
+  "eny_0073_slimerg": {
+    "name": "Acid Originium Slug"
+  },
+  "eny_0074_lbshield": {
+    "name": "Bonekrusher Vanguard"
+  },
+  "eny_0075_lbroshan": {
+    "name": "Bonekrusher Siegeknuckles"
   },
   "eny_0076_agfly": {
-    "name": "Agfly"
+    "name": "Falsewings"
+  },
+  "eny_0077_agshield": {
+    "name": "Walking Chrysopolis"
+  },
+  "eny_0078_nefarp1": {
+    "name": "Nefarith, \"Bonekrusher\""
+  },
+  "eny_0079_nefarp2": {
+    "name": "Nefarith, \"Conqueror\""
+  },
+  "eny_0080_reaper": {
+    "name": "Ereignis"
+  },
+  "eny_0081_ruanyi": {
+    "name": "Ruan Yi"
+  },
+  "eny_0082_hsbear": {
+    "name": "Skydrummer"
+  },
+  "eny_0083_hstiger": {
+    "name": "Spotted Rakerbeast"
+  },
+  "eny_0084_hshunt": {
+    "name": "Grove Archer"
+  },
+  "eny_0085_hsrogue": {
+    "name": "Nimbus Razor"
   },
   "eny_0087_wgslime": {
-    "name": "Wgslime"
+    "name": "Mudflow"
   },
   "eny_0088_wgthorns": {
-    "name": "Wgthorns"
+    "name": "Hedron"
   },
   "eny_0089_wgreflec": {
-    "name": "Wgreflec"
+    "name": "Prism"
   },
   "eny_0090_wgabyss": {
-    "name": "Wgabyss"
+    "name": "Tidalklast"
   },
   "eny_0091_wgshoal": {
-    "name": "Wgshoal"
+    "name": "Tidewalker"
+  },
+  "eny_0092_slbomb": {
+    "name": "Firemist Originium Slug"
+  },
+  "eny_0093_hshog": {
+    "name": "Quillbeast"
+  },
+  "eny_0094_hsfly": {
+    "name": "Waterlamp"
+  },
+  "eny_0095_ethillu": {
+    "name": "Æthillu"
+  },
+  "eny_0096_hsmob2": {
+    "name": "Highway Reaver"
+  },
+  "eny_0097_hsmino2": {
+    "name": "Cloud Obliterator"
+  },
+  "eny_0098_sandb2": {
+    "name": "Hazefyre Axe Armorbeast"
+  },
+  "eny_0099_slimeml2": {
+    "name": "Brutal Pincerbeast"
+  },
+  "eny_0100_slimerg2": {
+    "name": "Acid Originium Slug α"
+  },
+  "eny_0101_agfly2": {
+    "name": "Falsewings α"
+  },
+  "eny_0102_hstiger2": {
+    "name": "Glaring Rakerbeast"
+  },
+  "eny_0103_hshunt2": {
+    "name": "Sweeping Wind"
+  },
+  "eny_0104_hsrogue2": {
+    "name": "Breaking Gust"
+  },
+  "eny_0105_wgslime2": {
+    "name": "Mudflow δ"
+  },
+  "eny_0106_wgthorns2": {
+    "name": "Hedron δ"
+  },
+  "eny_0107_wgshoal2": {
+    "name": "Tidewalker δ"
+  },
+  "eny_0108_slbomb2": {
+    "name": "Blazemist Originium Slug"
+  },
+  "eny_0109_hshog2": {
+    "name": "Imbued Quillbeast"
+  },
+  "eny_0112_jzmonk": {
+    "name": "Rockhowler"
+  },
+  "eny_0113_jzogre": {
+    "name": "Armored Manglerbeast"
+  },
+  "eny_0114_jzmking": {
+    "name": "Craghowler"
+  },
+  "eny_0117_klhound": {
+    "name": "Tuskbeast Blightshade"
+  },
+  "eny_0118_klhog": {
+    "name": "Quillbeast Blightshade"
+  },
+  "eny_0119_kltiger": {
+    "name": "Rakerbeast Blightshade"
+  },
+  "eny_0120_klbear": {
+    "name": "Blitzcrash Blightshade"
+  },
+  "eny_0121_klbud": {
+    "name": "YSTF Vanguard Blightshade"
+  },
+  "eny_0122_kltdbud": {
+    "name": "YSTF Elite Blightshade"
+  },
+  "eny_0123_klcap": {
+    "name": "YSTF Glaiver Blightshade"
+  },
+  "eny_0124_kltdcap": {
+    "name": "YSTF Captain Blightshade"
+  },
+  "eny_0125_fdcentur": {
+    "name": "Alleikhreos, Chiliarch"
   }
 }

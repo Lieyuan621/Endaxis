@@ -509,13 +509,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     return ELEMENT_COLORS[key] || ELEMENT_COLORS.default;
   };
 
-  const ENEMY_TIERS = [
-    { labelKey: 'enemyTier.normal', label: 'Normal', value: 'normal', color: '#a0a0a0' },
-    { labelKey: 'enemyTier.advanced', label: 'Advanced', value: 'advanced', color: '#52c41a' },
-    { labelKey: 'enemyTier.elite', label: 'Elite', value: 'elite', color: '#d8b4fe' },
-    { labelKey: 'enemyTier.boss', label: 'Boss', value: 'boss', color: '#ffd700' },
-    { labelKey: 'enemyTier.leader', label: 'Leader', value: 'leader', color: '#ff4d4f' },
-  ];
   // ===================================================================================
   // Core reactive state
   // ===================================================================================
@@ -5525,7 +5518,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     activeEnemyLevel,
     applyEnemyPreset,
     setActiveEnemyLevel,
-    ENEMY_TIERS,
     enemyCategories,
     scenarioList,
     activeScenarioId,

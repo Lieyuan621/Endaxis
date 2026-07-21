@@ -1,7 +1,7 @@
 import type { EnemySheet } from '../types';
 
 const sheet: EnemySheet = {
-  name: 'Agmelee',
+  name: 'Ram',
   gameId: 'eny_0021_agmelee',
   avatar: '/Icon_Enemy/eny_0021_agmelee.webp',
   category: '天使',

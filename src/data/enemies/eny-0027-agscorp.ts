@@ -1,12 +1,11 @@
 import type { EnemySheet } from '../types';
 
 const sheet: EnemySheet = {
-  name: 'Agscorp',
+  name: 'Heavy Sting',
   gameId: 'eny_0027_agscorp',
   avatar: '/Icon_Enemy/eny_0027_agscorp.webp',
   category: '天使',
   tier: 'advanced',
-
   levelHp: {
     1: 734,
     20: 5266,
@@ -15,9 +14,7 @@ const sheet: EnemySheet = {
     80: 315539,
     90: 486097,
   },
-
   def: 100,
-
   resistance: {
     physical: 20,
     heat: 20,
@@ -26,7 +23,6 @@ const sheet: EnemySheet = {
     nature: 20,
   },
   superArmor: 20,
-
   maxStagger: 140,
   staggerNodeCount: 0,
   staggerNodeDuration: 2,

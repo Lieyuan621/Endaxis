@@ -843,12 +843,14 @@ const afflictionLayout = computed(() => {
 
 const activeEnemyInfo = computed(() => {
   if (store.activeEnemyId === 'custom') {
-    return { name: t('resourceMonitor.enemy.custom'), avatar: '', isCustom: true };
+    return { name: t('resourceMonitor.enemy.custom') };
   }
   const enemy = store.enemyDatabase.find(e => e.id === store.activeEnemyId);
-  return enemy
-    ? { ...enemy, name: getEnemyGameName(enemy.id, locale.value) }
-    : { name: t('resourceMonitor.enemy.unknown'), avatar: '' };
+  return {
+    name: enemy
+      ? getEnemyGameName(enemy.id, locale.value)
+      : t('resourceMonitor.enemy.unknown'),
+  };
 });
 
 const staggerResult = computed(() => {
@@ -1803,39 +1805,6 @@ const staggerRatio = computed(() => {
   white-space: nowrap;
 }
 
-.enemy-select-module {
-  padding: 8px 10px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  position: relative;
-}
-
-.enemy-select-module:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.module-deco-line {
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 2px;
-  background: #ffd700;
-  box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
-}
-
-.enemy-info-col {
-  flex-grow: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
 .enemy-name {
   font-weight: bold;
   color: #eee;
@@ -1844,79 +1813,6 @@ const staggerRatio = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
-}
-
-.click-hint {
-  font-size: 10px;
-  color: #ffd700;
-  opacity: 0.5;
-  margin-top: 1px;
-}
-
-.settings-scroll-area {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 16px 8px 10px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  scrollbar-width: none;
-}
-
-.settings-scroll-area::-webkit-scrollbar {
-  display: none;
-}
-
-.section-container.tech-style {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 3px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 8px 8px 8px;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.section-container.border-red {
-  border-left-color: #ff7875;
-}
-.section-container.border-gold {
-  border-left-color: #ffd700;
-}
-
-.attribute-grid-mini {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.control-row-mini {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.control-row-mini label {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-  white-space: nowrap;
-  letter-spacing: 0.3px;
-}
-
-.mini-subsection-label {
-  margin-top: 4px;
-  padding-top: 7px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.resistance-row label {
-  max-width: 86px;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 :deep(.standard-input) {

@@ -75,15 +75,22 @@ export const qualityColors: Record<string, string> = {
   gold: '#ffa726',
 };
 
-// ─── Enemy tiers ────────────────────────────────────────────────────────────
+// ─── Enemy tiers (high → low; used for filters + list sort weight) ───────────
 
 export const ENEMY_TIERS = [
-  { labelKey: 'enemyTier.normal', label: '普通', value: 'normal', color: '#a0a0a0' },
-  { labelKey: 'enemyTier.advanced', label: '进阶', value: 'advanced', color: '#52c41a' },
-  { labelKey: 'enemyTier.elite', label: '精英', value: 'elite', color: '#d8b4fe' },
-  { labelKey: 'enemyTier.boss', label: '头目', value: 'boss', color: '#ffd700' },
-  { labelKey: 'enemyTier.leader', label: '领袖', value: 'leader', color: '#ff4d4f' },
+  { labelKey: 'enemyTier.leader', value: 'leader', color: '#ff4d4f' },
+  { labelKey: 'enemyTier.boss', value: 'boss', color: '#ffd700' },
+  { labelKey: 'enemyTier.elite', value: 'elite', color: '#d8b4fe' },
+  { labelKey: 'enemyTier.advanced', value: 'advanced', color: '#52c41a' },
+  { labelKey: 'enemyTier.normal', value: 'normal', color: '#a0a0a0' },
 ] as const;
+
+type EnemyTierValue = (typeof ENEMY_TIERS)[number]['value'];
+
+/** Higher number = higher tier. Derived from ENEMY_TIERS order. */
+export const ENEMY_TIER_WEIGHT: Record<EnemyTierValue, number> = Object.fromEntries(
+  ENEMY_TIERS.map((tier, index) => [tier.value, ENEMY_TIERS.length - index]),
+) as Record<EnemyTierValue, number>;
 
 // ─── Effect / status bar colors ─────────────────────────────────────────────
 // Used by simulation projection for effect status bars on the timeline.

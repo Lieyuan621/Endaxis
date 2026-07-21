@@ -331,10 +331,6 @@ export function getEnemyList(): {
   });
 }
 
-export function getEnemyCategories(): string[] {
-  return [...new Set(Object.values(enemySheets).map(e => e.category))].sort();
-}
-
 const gearPieceSheets: Record<string, GearPieceSheet> = Object.fromEntries(
   Object.entries(gearPieceModules).map(([path, sheet]) => {
     const slug = (path.split('/').pop() || '').replace(/\.ts$/, '');

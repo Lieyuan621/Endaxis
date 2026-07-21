@@ -6,19 +6,12 @@ import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import CustomNumberInput from './CustomNumberInput.vue';
 import { getEnemyGameName } from '@/data/gameText';
+import { ENEMY_TIERS, ENEMY_TIER_WEIGHT } from '@/utils/theme';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
 const { enemyDatabase, enemyCategories } = storeToRefs(store);
 
-const ENEMY_TIERS = store.ENEMY_TIERS;
-const TIER_WEIGHTS = {
-  leader: 5,
-  boss: 4,
-  elite: 3,
-  advanced: 2,
-  normal: 1,
-};
 const ENEMY_RESISTANCE_ELEMENTS = ['physical', 'heat', 'cryo', 'electric', 'nature'];
 const ENEMY_LEVELS = [1, 20, 40, 60, 80, 90];
 const CATEGORY_ALL = '__ALL__';
@@ -27,6 +20,19 @@ const CATEGORY_UNCATEGORIZED = '__UNCAT__';
 const isEnemySelectorVisible = ref(false);
 const enemySearchQuery = ref('');
 const activeCategoryTab = ref(CATEGORY_ALL);
+const activeTierFilter = ref('ALL');
+
+const TIER_FILTERS = computed(() => {
+  locale.value;
+  return [
+    { label: t('common.all'), value: 'ALL', color: 'var(--ea-gold)' },
+    ...ENEMY_TIERS.map(tier => ({
+      label: t(tier.labelKey),
+      value: tier.value,
+      color: tier.color,
+    })),
+  ];
+});
 
 const activeEnemyInfo = computed(() => {
   if (store.activeEnemyId === 'custom') {
@@ -38,6 +44,17 @@ const activeEnemyInfo = computed(() => {
     : { name: t('resourceMonitor.enemy.unknown'), avatar: '' };
 });
 
+const showCustomEnemyCard = computed(
+  () =>
+    activeCategoryTab.value === CATEGORY_ALL &&
+    activeTierFilter.value === 'ALL' &&
+    !enemySearchQuery.value,
+);
+
+function tierWeight(tier) {
+  return ENEMY_TIER_WEIGHT[tier] || 0;
+}
+
 const groupedEnemyList = computed(() => {
   locale.value;
   let list = (enemyDatabase.value || []).map(enemy => ({
@@ -48,6 +65,10 @@ const groupedEnemyList = computed(() => {
   if (enemySearchQuery.value) {
     const q = enemySearchQuery.value.toLowerCase();
     list = list.filter(e => e.name.toLowerCase().includes(q));
+  }
+
+  if (activeTierFilter.value !== 'ALL') {
+    list = list.filter(e => (e.tier || 'normal') === activeTierFilter.value);
   }
 
   const groups = {};
@@ -69,7 +90,7 @@ const groupedEnemyList = computed(() => {
   return targetCategories.flatMap(cat => {
     const enemyList = groups[cat];
     if (!enemyList || enemyList.length === 0) return [];
-    enemyList.sort((a, b) => (TIER_WEIGHTS[b.tier] || 0) - (TIER_WEIGHTS[a.tier] || 0));
+    enemyList.sort((a, b) => tierWeight(b.tier) - tierWeight(a.tier));
     return [
       {
         id: cat,
@@ -80,16 +101,17 @@ const groupedEnemyList = computed(() => {
   });
 });
 
+function getTierMeta(tierValue) {
+  return ENEMY_TIERS.find(t => t.value === tierValue);
+}
+
 function getTierColor(tierValue) {
-  const tier = ENEMY_TIERS.find(t => t.value === tierValue);
-  return tier ? tier.color : '#a0a0a0';
+  return getTierMeta(tierValue)?.color || '#a0a0a0';
 }
 
 function getTierLabel(tierValue) {
-  const tier = ENEMY_TIERS.find(t => t.value === tierValue);
-  if (!tier) return '';
-  if (tier.labelKey) return t(tier.labelKey);
-  return tier.label || '';
+  const tier = getTierMeta(tierValue);
+  return tier ? t(tier.labelKey) : '';
 }
 
 function getTypeColor(typeKey) {
@@ -245,30 +267,44 @@ function setEnemyLevel(level) {
         </div>
       </div>
 
-      <div class="category-tabs">
-        <button
-          class="ea-btn ea-btn--glass-cut"
-          :class="{ 'is-active': activeCategoryTab === CATEGORY_ALL }"
-          :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
-          @click="activeCategoryTab = CATEGORY_ALL"
-        >
-          {{ t('common.all') }}
-        </button>
-        <button
-          v-for="cat in enemyCategories"
-          :key="cat"
-          class="ea-btn ea-btn--glass-cut"
-          :class="{ 'is-active': activeCategoryTab === cat }"
-          :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
-          @click="activeCategoryTab = cat"
-        >
-          {{ cat }}
-        </button>
+      <div class="enemy-filter-rows">
+        <div class="category-tabs">
+          <button
+            class="ea-btn ea-btn--glass-cut"
+            :class="{ 'is-active': activeCategoryTab === CATEGORY_ALL }"
+            :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
+            @click="activeCategoryTab = CATEGORY_ALL"
+          >
+            {{ t('common.all') }}
+          </button>
+          <button
+            v-for="cat in enemyCategories"
+            :key="cat"
+            class="ea-btn ea-btn--glass-cut"
+            :class="{ 'is-active': activeCategoryTab === cat }"
+            :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
+            @click="activeCategoryTab = cat"
+          >
+            {{ cat }}
+          </button>
+        </div>
+        <div class="tier-filters">
+          <button
+            v-for="tier in TIER_FILTERS"
+            :key="tier.value"
+            class="ea-btn ea-btn--glass-cut"
+            :class="{ 'is-active': activeTierFilter === tier.value }"
+            :style="{ '--ea-btn-accent': tier.color }"
+            @click="activeTierFilter = tier.value"
+          >
+            {{ tier.label }}
+          </button>
+        </div>
       </div>
 
       <div class="enemy-list-grid">
         <div
-          v-if="activeCategoryTab === CATEGORY_ALL && !enemySearchQuery"
+          v-if="showCustomEnemyCard"
           class="enemy-group-section"
         >
           <div class="group-header">
@@ -347,10 +383,7 @@ function setEnemyLevel(level) {
         </div>
 
         <div
-          v-if="
-            groupedEnemyList.length === 0 &&
-            !(activeCategoryTab === CATEGORY_ALL && !enemySearchQuery)
-          "
+          v-if="groupedEnemyList.length === 0 && !showCustomEnemyCard"
           class="empty-state"
         >
           {{ t('resourceMonitor.enemy.empty') }}
@@ -585,19 +618,28 @@ function setEnemyLevel(level) {
   line-height: 1;
 }
 
-.category-tabs {
+.enemy-filter-rows {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px 8px;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 20px;
   padding: 8px;
   background: #1e1e1e;
   border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.category-tabs,
+.tier-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
   overflow: visible;
   white-space: normal;
 }
 
-.category-tabs .ea-btn {
+.category-tabs .ea-btn,
+.tier-filters .ea-btn {
   flex: none;
   margin-bottom: 2px;
   --ea-btn-py: 6px;

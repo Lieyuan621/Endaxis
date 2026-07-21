@@ -1,18 +1,96 @@
 {
+  "eny_0007_mimicw": {
+    "name": "潜地虬兽"
+  },
+  "eny_0018_lbtough": {
+    "name": "碾骨行刑人"
+  },
   "eny_0021_agmelee": {
     "name": "大角天使"
   },
   "eny_0023_aghornb": {
     "name": "刚角天使"
   },
+  "eny_0025_agrange": {
+    "name": "钉刺天使"
+  },
   "eny_0027_agscorp": {
     "name": "重刺天使"
+  },
+  "eny_0029_lbmob": {
+    "name": "碾骨劫掠者"
+  },
+  "eny_0033_lbhunt": {
+    "name": "碾骨伏击射手"
+  },
+  "eny_0039_agcanno": {
+    "name": "岗哨天使"
+  },
+  "eny_0045_agtrinit": {
+    "name": "三位一体"
+  },
+  "eny_0046_lbshamman": {
+    "name": "碾骨焰术师"
+  },
+  "eny_0047_firebat": {
+    "name": "碾骨清道夫"
+  },
+  "eny_0048_hvybow": {
+    "name": "碾骨射手"
+  },
+  "eny_0049_rogue": {
+    "name": "碾骨渗透者"
+  },
+  "eny_0050_hound": {
+    "name": "碾骨撕裂牙兽"
   },
   "eny_0051_rodin": {
     "name": "“碾骨之拳”罗丹"
   },
+  "eny_0052_palesent": {
+    "name": "白垩界卫"
+  },
+  "eny_0053_hsmob": {
+    "name": "莫留财"
+  },
+  "eny_0054_hsmino": {
+    "name": "摧山将"
+  },
+  "eny_0055_hscrane": {
+    "name": "劫云客"
+  },
   "eny_0058_agdisk": {
     "name": "肖像天使"
+  },
+  "eny_0059_erhound": {
+    "name": "雾火牙兽"
+  },
+  "eny_0060_lbmad": {
+    "name": "雾火爪牙"
+  },
+  "eny_0061_palecore": {
+    "name": "白垩界卫"
+  },
+  "eny_0062_paletent": {
+    "name": "白垩附肢"
+  },
+  "eny_0063_agmelee2": {
+    "name": "大角天使α"
+  },
+  "eny_0064_agrange2": {
+    "name": "钉刺天使α"
+  },
+  "eny_0065_lbmob2": {
+    "name": "精锐劫掠者"
+  },
+  "eny_0066_lbhunt2": {
+    "name": "精锐伏击射手"
+  },
+  "eny_0067_hound2": {
+    "name": "精锐撕裂牙兽"
+  },
+  "eny_0068_lbtough2": {
+    "name": "精锐行刑人"
   },
   "eny_0069_aghornb2": {
     "name": "刚角天使α"
@@ -20,8 +98,50 @@
   "eny_0070_agscorp2": {
     "name": "重刺天使α"
   },
+  "eny_0071_sandb": {
+    "name": "斧甲兽"
+  },
+  "eny_0072_slimeml": {
+    "name": "原生钳兽"
+  },
+  "eny_0073_slimerg": {
+    "name": "酸液源石虫"
+  },
+  "eny_0074_lbshield": {
+    "name": "碾骨先锋"
+  },
+  "eny_0075_lbroshan": {
+    "name": "碾骨破城者"
+  },
   "eny_0076_agfly": {
     "name": "仿生翅天使"
+  },
+  "eny_0077_agshield": {
+    "name": "跂步晶城"
+  },
+  "eny_0078_nefarp1": {
+    "name": "聂菲斯，“碾骨”"
+  },
+  "eny_0079_nefarp2": {
+    "name": "聂菲斯，“征服者”"
+  },
+  "eny_0080_reaper": {
+    "name": "埃尔埃格尼斯"
+  },
+  "eny_0081_ruanyi": {
+    "name": "阮一"
+  },
+  "eny_0082_hsbear": {
+    "name": "天鼓"
+  },
+  "eny_0083_hstiger": {
+    "name": "百眼彪兽"
+  },
+  "eny_0084_hshunt": {
+    "name": "穿林箭"
+  },
+  "eny_0085_hsrogue": {
+    "name": "割云翁"
   },
   "eny_0087_wgslime": {
     "name": "浊流天使"
@@ -37,5 +157,95 @@
   },
   "eny_0091_wgshoal": {
     "name": "潮行天使"
+  },
+  "eny_0092_slbomb": {
+    "name": "火雾源石虫"
+  },
+  "eny_0093_hshog": {
+    "name": "球刺兽"
+  },
+  "eny_0094_hsfly": {
+    "name": "水灯虫"
+  },
+  "eny_0095_ethillu": {
+    "name": "表象"
+  },
+  "eny_0096_hsmob2": {
+    "name": "莫惜命"
+  },
+  "eny_0097_hsmino2": {
+    "name": "开天将"
+  },
+  "eny_0098_sandb2": {
+    "name": "雾火斧甲兽"
+  },
+  "eny_0099_slimeml2": {
+    "name": "残暴原生钳兽"
+  },
+  "eny_0100_slimerg2": {
+    "name": "酸液源石虫·α"
+  },
+  "eny_0101_agfly2": {
+    "name": "仿生翅天使α"
+  },
+  "eny_0102_hstiger2": {
+    "name": "怒目彪兽"
+  },
+  "eny_0103_hshunt2": {
+    "name": "过堂风"
+  },
+  "eny_0104_hsrogue2": {
+    "name": "断云叟"
+  },
+  "eny_0105_wgslime2": {
+    "name": "浊流天使δ"
+  },
+  "eny_0106_wgthorns2": {
+    "name": "晶锥天使δ"
+  },
+  "eny_0107_wgshoal2": {
+    "name": "潮行天使δ"
+  },
+  "eny_0108_slbomb2": {
+    "name": "焚雾源石虫"
+  },
+  "eny_0109_hshog2": {
+    "name": "充能球刺兽"
+  },
+  "eny_0112_jzmonk": {
+    "name": "山犼兽"
+  },
+  "eny_0113_jzogre": {
+    "name": "披甲裂兽"
+  },
+  "eny_0114_jzmking": {
+    "name": "巨山犼兽"
+  },
+  "eny_0117_klhound": {
+    "name": "蚀影牙兽"
+  },
+  "eny_0118_klhog": {
+    "name": "蚀影球刺兽"
+  },
+  "eny_0119_kltiger": {
+    "name": "蚀影彪兽"
+  },
+  "eny_0120_klbear": {
+    "name": "蚀影噪雷"
+  },
+  "eny_0121_klbud": {
+    "name": "蚀影应龙前锋"
+  },
+  "eny_0122_kltdbud": {
+    "name": "蚀影应龙尖兵"
+  },
+  "eny_0123_klcap": {
+    "name": "蚀影应龙破阵手"
+  },
+  "eny_0124_kltdcap": {
+    "name": "蚀影应龙队长"
+  },
+  "eny_0125_fdcentur": {
+    "name": "阿莱克琉斯，千夫长"
   }
 }

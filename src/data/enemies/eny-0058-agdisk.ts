@@ -1,12 +1,11 @@
 import type { EnemySheet } from '../types';
 
 const sheet: EnemySheet = {
-  name: 'Agdisk',
+  name: 'Effigy',
   gameId: 'eny_0058_agdisk',
   avatar: '/Icon_Enemy/eny_0058_agdisk.webp',
   category: '天使',
   tier: 'elite',
-
   levelHp: {
     1: 1246,
     20: 8942,
@@ -15,9 +14,7 @@ const sheet: EnemySheet = {
     80: 535821,
     90: 825447,
   },
-
   def: 100,
-
   resistance: {
     physical: 20,
     heat: 20,
@@ -26,7 +23,6 @@ const sheet: EnemySheet = {
     nature: 20,
   },
   superArmor: 30,
-
   maxStagger: 340,
   staggerNodeCount: 1,
   staggerNodeDuration: 2,
