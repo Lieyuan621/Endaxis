@@ -359,13 +359,21 @@ const enhancementMetrics = computed(() => {
   const start = getActionRealStartTime();
   const freezeDuration = Number(props.action.animationTime || props.action.duration) || 0;
   const end = store.getShiftedEndTime(start, freezeDuration, props.action.instanceId);
-  const time = Number(props.action.enhancementTime) || 0;
-  if (time <= 0) return { widthPx: 0, extensionAmount: 0, enhStart: end };
+
+  // A string enhancementTime binds the window to a status; its metrics come entirely from the store
+  // (which mirrors the status's existence). A number is a fixed-seconds window.
+  const enh = props.action.enhancementTime;
+  const isStatusBound = typeof enh === 'string' && enh.length > 0;
+  const time = isStatusBound ? 0 : Number(enh) || 0;
 
   const ultimateMetrics =
     props.action.type === 'ultimate'
       ? store.getUltimateEnhancementMetrics?.(props.action.instanceId)
       : null;
+
+  if (isStatusBound ? !ultimateMetrics?.finalEnd : time <= 0) {
+    return { widthPx: 0, extensionAmount: 0, enhStart: end, baseDuration: 0 };
+  }
 
   const finalEnd =
     ultimateMetrics?.finalEnd || store.getShiftedEndTime(end, time, props.action.instanceId);
@@ -375,7 +383,7 @@ const enhancementMetrics = computed(() => {
   const extensionAmount = snapTimeToFrame(shiftedEnhDuration - baseDuration);
   const widthPx = store.timeToPx(finalEnd) - store.timeToPx(end);
 
-  return { widthPx, extensionAmount, enhStart: end };
+  return { widthPx, extensionAmount, enhStart: end, baseDuration };
 });
 
 const enhancementStyle = computed(() => {
@@ -669,14 +677,14 @@ function handleActionDragStart(startPos, port) {
         showDecorations &&
         !isGhostMode &&
         action.type === 'ultimate' &&
-        (action.enhancementTime || 0) > 0
+        enhancementMetrics.widthPx > 0
       "
       class="cd-bar-container bottom-bar"
       :style="enhancementStyle"
     >
       <div class="cd-line" style="background-color: #b37feb"></div>
       <span class="cd-text" style="color: #b37feb">
-        {{ store.formatTimeLabel(action.enhancementTime) }}
+        {{ store.formatTimeLabel(enhancementMetrics.baseDuration) }}
         <span v-if="enhancementMetrics.extensionAmount > 0" class="extension-label">
           (+{{ store.formatTimeLabel(enhancementMetrics.extensionAmount) }})
         </span>

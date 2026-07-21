@@ -9,6 +9,7 @@ import { computed } from 'vue';
 import type { Ref, ComputedRef } from 'vue';
 import { snapTimeToFrame } from '@/utils/time';
 import { snapMs } from '@/utils/precision';
+import { buildWindowsFromLog } from '@/simulation/projection/projectOperatorEffects';
 import type { Track, TimelineAction, UltEnhancer } from './types';
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
@@ -17,6 +18,7 @@ interface ShiftsDeps {
   tracks: Ref<Track[]>;
   timeContext: ComputedRef<any>;
   compiledTimeline: ComputedRef<any>;
+  simulation: ComputedRef<any>;
   isComboLikeAction: (action: { type?: string } | null | undefined) => boolean;
   isUltimateLikeAction: (action: { type?: string } | null | undefined) => boolean;
   getUltimateEnhancementExtender: (trackId: string | null | undefined) => UltEnhancer | null;
@@ -29,6 +31,7 @@ export function useShifts(deps: ShiftsDeps) {
     tracks,
     timeContext,
     compiledTimeline,
+    simulation,
     isComboLikeAction,
     isUltimateLikeAction,
     getUltimateEnhancementExtender,
@@ -121,13 +124,52 @@ export function useShifts(deps: ShiftsDeps) {
       action: TimelineAction | null | undefined,
     ) => {
       if (!action || !isUltimateLikeAction(action)) return null;
-      const baseDuration = Number(action.enhancementTime) || 0;
-      if (baseDuration <= 0) return null;
 
       const resolvedAction = compiledTimeline.value?.actionMap?.get(action.instanceId ?? '');
       const start = Number(resolvedAction?.realStartTime ?? action.startTime) || 0;
       const freezeDuration = Number(action.animationTime || action.duration) || 0;
       const enhStart = getShiftedEndTime(start, freezeDuration, action.instanceId);
+
+      // Status-bound enhancement (`enhancementTime: '<statusId>'`): the window mirrors the bound
+      // status's live existence. Merge contiguous windows (a refresh logs w1.end == w2.start) into
+      // continuous spans, then attribute the span this cast opened. A cast sitting inside an earlier
+      // span (e.g. Arcane's 2nd/arcana cast) opens no span of its own → no bar.
+      const enh = action.enhancementTime;
+      if (typeof enh === 'string' && enh.length > 0) {
+        const epsilon = 0.0001;
+        const opLog = simulation.value?.operatorLog ?? [];
+        const trackActions = tracks.value.find(t => t.id === trackId)?.actions ?? [];
+        const ultRealStart = (a: TimelineAction) =>
+          Number(
+            compiledTimeline.value?.actionMap?.get(a.instanceId ?? '')?.realStartTime ??
+              a.startTime,
+          ) || 0;
+        const nextUltStart = trackActions
+          .filter(a => isUltimateLikeAction(a) && ultRealStart(a) > start + epsilon)
+          .reduce((min, a) => Math.min(min, ultRealStart(a)), Infinity);
+        const wins = (buildWindowsFromLog(opLog, trackId ?? '').get(enh) ?? [])
+          .slice()
+          .sort((a, b) => a.start - b.start);
+        const spans: { start: number; end: number }[] = [];
+        for (const w of wins) {
+          const last = spans[spans.length - 1];
+          if (last && w.start <= last.end + epsilon) last.end = Math.max(last.end, w.end);
+          else spans.push({ start: w.start, end: w.end });
+        }
+        const span = spans.find(
+          s => s.start >= start - epsilon && s.start < nextUltStart - epsilon,
+        );
+        if (!span || span.end <= enhStart) return null;
+        return {
+          enhStart,
+          baseDuration: span.end - enhStart,
+          finalEnd: span.end,
+          extensionAmount: 0,
+        };
+      }
+
+      const baseDuration = Number(action.enhancementTime) || 0;
+      if (baseDuration <= 0) return null;
 
       let extraDuration = 0;
 

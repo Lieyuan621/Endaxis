@@ -244,7 +244,7 @@ export interface Action {
   ultimateEnergyCost?: number;
   ultimateEnergyGain?: number;
   teamUltimateEnergyGain?: number;
-  enhancementTime?: number;
+  enhancementTime?: number | string;
   duration: number;
   triggerWindow?: number;
   animationTime?: number;

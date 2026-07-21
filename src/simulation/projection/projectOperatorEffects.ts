@@ -57,7 +57,7 @@ function syntheticStatusEffect(id: string): Effect {
  * Keyed by effect id. Works for both stat-bearing and pure state effects —
  * both produce identical OPERATOR_EFFECT_APPLY/EXPIRE events.
  */
-function buildWindowsFromLog(
+export function buildWindowsFromLog(
   operatorLog: OperatorStateEvent[],
   trackId: string,
 ): Map<string, ActivationWindow[]> {
