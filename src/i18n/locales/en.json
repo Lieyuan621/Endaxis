@@ -163,10 +163,50 @@
     "header": {
       "hideEffectsLabel": "Hide Effects",
       "hideEffectsTooltip": "Hide icons, links, and effect overlays by operator",
+      "shortcutsLabel": "Shortcuts",
+      "shortcutsTooltip": "View all keyboard shortcuts",
       "languageTooltip": "Language",
       "loadTooltip": "Import .json project file or .png image",
       "receiveTooltip": "Paste data code to import project",
       "resetTooltip": "Clear all content"
+    },
+    "shortcuts": {
+      "dialogTitle": "Keyboard Shortcuts",
+      "sections": {
+        "tracksSkills": "Tracks & Skills",
+        "edit": "Edit",
+        "tools": "Tools"
+      },
+      "keys": {
+        "cancelPlace": "Esc / Right-click",
+        "undo": "Ctrl + Z",
+        "redo": "Ctrl + Y / Ctrl + Shift + Z",
+        "copy": "Ctrl + C",
+        "paste": "Ctrl + V",
+        "delete": "Delete / Backspace",
+        "nudgeLeft": "A / ←",
+        "nudgeRight": "D / →",
+        "cursorGuide": "Ctrl + G",
+        "boxSelect": "Ctrl + B",
+        "snapPrecision": "Alt + S",
+        "connectionTool": "Alt + L"
+      },
+      "items": {
+        "selectTrack": "Select the matching track (opens picker if empty)",
+        "placeSkill": "Place {skill} (select a track first)",
+        "cancelPlace": "Cancel skill placement",
+        "undo": "Undo",
+        "redo": "Redo",
+        "copy": "Copy selection",
+        "paste": "Paste",
+        "delete": "Delete current selection",
+        "nudgeLeft": "Nudge selection left",
+        "nudgeRight": "Nudge selection right",
+        "cursorGuide": "Toggle guide lines",
+        "boxSelect": "Toggle box select",
+        "snapPrecision": "Toggle snap precision",
+        "connectionTool": "Toggle connection tool"
+      }
     },
     "import": {
       "dialogAlert": "Warning: Importing will overwrite all current project data. It is recommended to save first.",
@@ -240,9 +280,10 @@
       "pasted": "Pasted",
       "placeActiveTrackOnly": "Place on the active track only",
       "placeCancelled": "Placement cancelled",
+      "placeCancelHint": "Press Esc or right-click to cancel",
       "placeNeedsOperator": "Select an operator for this track first",
       "placeNeedsTrack": "Select a track first (F1–F4)",
-      "placeReady": "Click the timeline to place (Esc to cancel)",
+      "placeReady": "Click the timeline to place (Esc / right-click to cancel)",
       "placeSkillMissing": "This operator has no such skill",
       "redo": "Redo",
       "snapMode01": "0.1s",

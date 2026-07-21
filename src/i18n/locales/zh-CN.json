@@ -165,10 +165,50 @@
     "header": {
       "hideEffectsLabel": "隐藏效果",
       "hideEffectsTooltip": "按干员隐藏图标、连线和效果层",
+      "shortcutsLabel": "快捷键",
+      "shortcutsTooltip": "查看全部快捷键",
       "languageTooltip": "切换语言",
       "loadTooltip": "导入 .json 项目文件或 .png 图片",
       "receiveTooltip": "粘贴数据码导入项目",
       "resetTooltip": "清空所有内容"
+    },
+    "shortcuts": {
+      "dialogTitle": "快捷键一览",
+      "sections": {
+        "tracksSkills": "轨道与技能",
+        "edit": "编辑",
+        "tools": "工具"
+      },
+      "keys": {
+        "cancelPlace": "Esc / 右键",
+        "undo": "Ctrl + Z",
+        "redo": "Ctrl + Y / Ctrl + Shift + Z",
+        "copy": "Ctrl + C",
+        "paste": "Ctrl + V",
+        "delete": "Delete / Backspace",
+        "nudgeLeft": "A / ←",
+        "nudgeRight": "D / →",
+        "cursorGuide": "Ctrl + G",
+        "boxSelect": "Ctrl + B",
+        "snapPrecision": "Alt + S",
+        "connectionTool": "Alt + L"
+      },
+      "items": {
+        "selectTrack": "选中对应轨道（无干员时打开干员选择）",
+        "placeSkill": "放置{skill}（需先选中轨道）",
+        "cancelPlace": "取消技能放置",
+        "undo": "撤销",
+        "redo": "重做",
+        "copy": "复制选中内容",
+        "paste": "粘贴",
+        "delete": "删除当前选中",
+        "nudgeLeft": "微调选中内容向左",
+        "nudgeRight": "微调选中内容向右",
+        "cursorGuide": "开关辅助线",
+        "boxSelect": "开关框选模式",
+        "snapPrecision": "切换吸附精度",
+        "connectionTool": "开关连线工具"
+      }
     },
     "import": {
       "dialogAlert": "警告：导入将覆盖当前所有工程数据，建议先保存。",
@@ -242,9 +282,10 @@
       "pasted": "已粘贴",
       "placeActiveTrackOnly": "请放到当前选中轨道",
       "placeCancelled": "已取消放置",
+      "placeCancelHint": "按 Esc 或右键取消",
       "placeNeedsOperator": "请先为轨道选择干员",
       "placeNeedsTrack": "请先选中一条轨道（F1–F4）",
-      "placeReady": "点击时间轴放置技能（Esc 取消）",
+      "placeReady": "点击时间轴放置技能（Esc / 右键取消）",
       "placeSkillMissing": "当前干员没有该技能",
       "redo": "已重做",
       "snapMode01": "0.1s",

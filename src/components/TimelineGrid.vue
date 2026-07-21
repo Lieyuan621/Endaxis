@@ -2753,6 +2753,9 @@ function calculateTimeFromDropEvent(evt, skill, fixedStep = null) {
 
 function onTrackPlacePointer(track, index, evt) {
   if (!store.isLibraryPlaceMode) return;
+  // Right/middle button must not place — cancel is handled by place-mode listeners.
+  if (typeof evt.button === 'number' && evt.button !== 0) return;
+
   const skill = store.draggingSkillData;
   if (!skill) return;
 

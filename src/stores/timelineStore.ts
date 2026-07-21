@@ -1094,8 +1094,29 @@ export const useTimelineStore = defineStore('timeline', () => {
   const historyStack = ref<string[]>([]);
   const historyIndex = ref(-1);
   const MAX_HISTORY = 50;
+  /** Suppress auto-commits while undoing/redoing (watchers would otherwise truncate the redo stack). */
+  let isRestoringHistory = false;
+  let restoreHistoryReleaseTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function beginHistoryRestore() {
+    isRestoringHistory = true;
+    if (restoreHistoryReleaseTimer != null) {
+      clearTimeout(restoreHistoryReleaseTimer);
+      restoreHistoryReleaseTimer = null;
+    }
+  }
+
+  function endHistoryRestore() {
+    // Stay suppressed long enough for sync watchers + throttled armory commits (120ms).
+    restoreHistoryReleaseTimer = setTimeout(() => {
+      restoreHistoryReleaseTimer = null;
+      isRestoringHistory = false;
+    }, 200);
+  }
 
   function commitState() {
+    if (isRestoringHistory) return;
+
     const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
     if (currentScenario) {
       currentScenario.data = _createSnapshot() ?? null;
@@ -1143,14 +1164,24 @@ export const useTimelineStore = defineStore('timeline', () => {
     if (historyIndex.value <= 0) return;
     historyIndex.value--;
     const prevSnapshot = JSON.parse(historyStack.value[historyIndex.value]!);
-    restoreState(prevSnapshot);
+    beginHistoryRestore();
+    try {
+      restoreState(prevSnapshot);
+    } finally {
+      endHistoryRestore();
+    }
   }
 
   function redo() {
     if (historyIndex.value >= historyStack.value.length - 1) return;
     historyIndex.value++;
     const nextSnapshot = JSON.parse(historyStack.value[historyIndex.value]!);
-    restoreState(nextSnapshot);
+    beginHistoryRestore();
+    try {
+      restoreState(nextSnapshot);
+    } finally {
+      endHistoryRestore();
+    }
   }
 
   function restoreState(snapshot: ScenarioSnapshot | null | undefined) {
@@ -4854,6 +4885,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     time = 0,
     targetType: string | null = null,
   ) {
+    // Placement mode owns right-click (cancel); never open the context menu over it.
+    if (isLibraryPlaceMode.value) return;
+
     contextMenu.value = {
       visible: true,
       x: evt.clientX,

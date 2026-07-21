@@ -163,10 +163,50 @@
     "header": {
       "hideEffectsLabel": "Скрыть эффекты",
       "hideEffectsTooltip": "Скрывать значки, связи и слои эффектов по оператору",
+      "shortcutsLabel": "Горячие клавиши",
+      "shortcutsTooltip": "Показать все горячие клавиши",
       "languageTooltip": "Язык",
       "loadTooltip": "Импорт .json файла проекта или .png изображения",
       "receiveTooltip": "Вставьте дата-код для импорта проекта",
       "resetTooltip": "Полный сброс"
+    },
+    "shortcuts": {
+      "dialogTitle": "Горячие клавиши",
+      "sections": {
+        "tracksSkills": "Дорожки и навыки",
+        "edit": "Редактирование",
+        "tools": "Инструменты"
+      },
+      "keys": {
+        "cancelPlace": "Esc / ПКМ",
+        "undo": "Ctrl + Z",
+        "redo": "Ctrl + Y / Ctrl + Shift + Z",
+        "copy": "Ctrl + C",
+        "paste": "Ctrl + V",
+        "delete": "Delete / Backspace",
+        "nudgeLeft": "A / ←",
+        "nudgeRight": "D / →",
+        "cursorGuide": "Ctrl + G",
+        "boxSelect": "Ctrl + B",
+        "snapPrecision": "Alt + S",
+        "connectionTool": "Alt + L"
+      },
+      "items": {
+        "selectTrack": "Выбрать дорожку (откроет выбор, если пусто)",
+        "placeSkill": "Разместить {skill} (сначала выберите дорожку)",
+        "cancelPlace": "Отменить размещение навыка",
+        "undo": "Отменить",
+        "redo": "Повторить",
+        "copy": "Копировать выделение",
+        "paste": "Вставить",
+        "delete": "Удалить текущее выделение",
+        "nudgeLeft": "Сдвинуть выделение влево",
+        "nudgeRight": "Сдвинуть выделение вправо",
+        "cursorGuide": "Направляющие",
+        "boxSelect": "Рамка выделения",
+        "snapPrecision": "Точность привязки",
+        "connectionTool": "Инструмент связей"
+      }
     },
     "import": {
       "dialogAlert": "Внимание: импорт перезапишет все данные проекта. Рекомендуется сохранить текущий проект!",
@@ -240,9 +280,10 @@
       "pasted": "Вставлено",
       "placeActiveTrackOnly": "Размещайте только на активной дорожке",
       "placeCancelled": "Размещение отменено",
+      "placeCancelHint": "Esc или ПКМ — отмена",
       "placeNeedsOperator": "Сначала выберите оператора для дорожки",
       "placeNeedsTrack": "Сначала выберите дорожку (F1–F4)",
-      "placeReady": "Кликните по таймлайну, чтобы разместить (Esc — отмена)",
+      "placeReady": "Кликните по таймлайну, чтобы разместить (Esc / ПКМ — отмена)",
       "placeSkillMissing": "У этого оператора нет такого навыка",
       "redo": "Повтор",
       "snapMode01": "0.1с",

@@ -1,19 +1,14 @@
+import { hexToRgba } from '@/utils/theme';
+
 const GHOST_ID = 'custom-drag-ghost';
+const GHOST_HINT_CLASS = 'library-drag-ghost-hint';
 const DEFAULT_DRAG_OFFSET_X = 10;
 const DEFAULT_DRAG_OFFSET_Y = 25;
 
-export function hexToRgba(hex: string | null | undefined, alpha: number): string {
-  if (!hex) return `rgba(255,255,255,${alpha})`;
-  let chars = hex.substring(1).split('');
-  if (chars.length === 3) {
-    const [a, b, c] = chars;
-    chars = [a!, a!, b!, b!, c!, c!];
-  }
-  const n = Number('0x' + chars.join(''));
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
-}
+/** Delay before showing the cancel-hint bubble while a skill sticks to the cursor. */
+export const LIBRARY_PLACE_CANCEL_HINT_DELAY_MS = 5000;
 
-export type SkillThemeColorResolver = (skill: Record<string, unknown>) => string;
+type SkillThemeColorResolver = (skill: Record<string, unknown>) => string;
 
 export function createLibraryDragGhost(
   skill: Record<string, unknown>,
@@ -52,9 +47,54 @@ export function createLibraryDragGhost(
     fontFamily: 'sans-serif',
     whiteSpace: 'nowrap',
     backdropFilter: 'blur(4px)',
+    overflow: 'visible',
   });
   document.body.appendChild(ghost);
   return ghost;
+}
+
+/** Attach a cancel-hint bubble under the ghost (follows mouse with the ghost). */
+export function attachLibraryDragGhostHint(text: string): void {
+  const ghost = document.getElementById(GHOST_ID);
+  if (!ghost || ghost.querySelector(`.${GHOST_HINT_CLASS}`)) return;
+
+  const hint = document.createElement('div');
+  hint.className = GHOST_HINT_CLASS;
+  hint.textContent = text;
+  Object.assign(hint.style, {
+    position: 'absolute',
+    top: 'calc(100% + 10px)',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    padding: '6px 10px',
+    borderRadius: '6px',
+    background: 'rgba(20, 20, 20, 0.92)',
+    border: '1px solid rgba(255, 215, 0, 0.45)',
+    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.45)',
+    color: '#f5f5f5',
+    fontSize: '11px',
+    fontWeight: '600',
+    letterSpacing: '0.2px',
+    textShadow: 'none',
+    whiteSpace: 'nowrap',
+    pointerEvents: 'none',
+    zIndex: '1',
+  });
+
+  const caret = document.createElement('div');
+  Object.assign(caret.style, {
+    position: 'absolute',
+    top: '-5px',
+    left: '50%',
+    width: '8px',
+    height: '8px',
+    transform: 'translateX(-50%) rotate(45deg)',
+    background: 'rgba(20, 20, 20, 0.92)',
+    borderLeft: '1px solid rgba(255, 215, 0, 0.45)',
+    borderTop: '1px solid rgba(255, 215, 0, 0.45)',
+  });
+  hint.appendChild(caret);
+  ghost.appendChild(hint);
 }
 
 export function positionLibraryDragGhost(

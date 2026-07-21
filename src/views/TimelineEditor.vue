@@ -21,8 +21,10 @@ import SmallImageExportDialog from '../components/SmallImageExportDialog.vue';
 
 import { addMetadataToPng, readMetadataFromPng } from '../utils/pngUtils';
 import {
+  attachLibraryDragGhostHint,
   createLibraryDragGhost,
   getDefaultLibraryDragOffsets,
+  LIBRARY_PLACE_CANCEL_HINT_DELAY_MS,
   positionLibraryDragGhost,
   removeLibraryDragGhost,
 } from '@/utils/libraryDragGhost';
@@ -497,6 +499,92 @@ const isDragging = ref(false);
 const isInternalDrag = ref(false);
 let dragCounter = 0;
 const hideEffectsHovered = ref(false);
+const shortcutsDialogVisible = ref(false);
+
+const shortcutHelpSections = computed(() => {
+  locale.value;
+  return [
+    {
+      title: t('timeline.shortcuts.sections.tracksSkills'),
+      items: [
+        { keys: 'F1 – F4', desc: t('timeline.shortcuts.items.selectTrack') },
+        {
+          keys: '1',
+          desc: t('timeline.shortcuts.items.placeSkill', {
+            skill: t('hitEditor.skillTypes.basicAttack'),
+          }),
+        },
+        {
+          keys: '2',
+          desc: t('timeline.shortcuts.items.placeSkill', {
+            skill: t('hitEditor.skillTypes.battleSkill'),
+          }),
+        },
+        {
+          keys: '3',
+          desc: t('timeline.shortcuts.items.placeSkill', {
+            skill: t('hitEditor.skillTypes.comboSkill'),
+          }),
+        },
+        {
+          keys: '4',
+          desc: t('timeline.shortcuts.items.placeSkill', {
+            skill: t('hitEditor.skillTypes.ultimate'),
+          }),
+        },
+        {
+          keys: '5',
+          desc: t('timeline.shortcuts.items.placeSkill', {
+            skill: t('hitEditor.skillTypes.dive'),
+          }),
+        },
+        {
+          keys: '6',
+          desc: t('timeline.shortcuts.items.placeSkill', {
+            skill: t('hitEditor.skillTypes.finisher'),
+          }),
+        },
+        { keys: t('timeline.shortcuts.keys.cancelPlace'), desc: t('timeline.shortcuts.items.cancelPlace') },
+      ],
+    },
+    {
+      title: t('timeline.shortcuts.sections.edit'),
+      items: [
+        { keys: t('timeline.shortcuts.keys.undo'), desc: t('timeline.shortcuts.items.undo') },
+        { keys: t('timeline.shortcuts.keys.redo'), desc: t('timeline.shortcuts.items.redo') },
+        { keys: t('timeline.shortcuts.keys.copy'), desc: t('timeline.shortcuts.items.copy') },
+        { keys: t('timeline.shortcuts.keys.paste'), desc: t('timeline.shortcuts.items.paste') },
+        { keys: t('timeline.shortcuts.keys.delete'), desc: t('timeline.shortcuts.items.delete') },
+        { keys: t('timeline.shortcuts.keys.nudgeLeft'), desc: t('timeline.shortcuts.items.nudgeLeft') },
+        {
+          keys: t('timeline.shortcuts.keys.nudgeRight'),
+          desc: t('timeline.shortcuts.items.nudgeRight'),
+        },
+      ],
+    },
+    {
+      title: t('timeline.shortcuts.sections.tools'),
+      items: [
+        {
+          keys: t('timeline.shortcuts.keys.cursorGuide'),
+          desc: t('timeline.shortcuts.items.cursorGuide'),
+        },
+        {
+          keys: t('timeline.shortcuts.keys.boxSelect'),
+          desc: t('timeline.shortcuts.items.boxSelect'),
+        },
+        {
+          keys: t('timeline.shortcuts.keys.snapPrecision'),
+          desc: t('timeline.shortcuts.items.snapPrecision'),
+        },
+        {
+          keys: t('timeline.shortcuts.keys.connectionTool'),
+          desc: t('timeline.shortcuts.items.connectionTool'),
+        },
+      ],
+    },
+  ];
+});
 
 function hasFiles(e) {
   if (isInternalDrag.value) return false;
@@ -944,19 +1032,53 @@ function onLibraryPlacePointerMove(e) {
   );
 }
 
+/**
+ * Cancel on `contextmenu` (not pointerdown): ending place mode earlier would remove this
+ * listener and let the app/browser context menu open on the same right-click.
+ * Non-left place is already ignored in TimelineGrid `onTrackPlacePointer`.
+ */
+function onLibraryPlaceContextMenu(e) {
+  if (!store.isLibraryPlaceMode) return;
+  claimShortcutEvent(e);
+  store.cancelLibraryPlace();
+  ElMessage.info({ message: t('timeline.shortcut.placeCancelled'), duration: 800 });
+}
+
+let libraryPlaceCancelHintTimer = null;
+
+function clearLibraryPlaceCancelHintTimer() {
+  if (libraryPlaceCancelHintTimer != null) {
+    clearTimeout(libraryPlaceCancelHintTimer);
+    libraryPlaceCancelHintTimer = null;
+  }
+}
+
+function scheduleLibraryPlaceCancelHint() {
+  clearLibraryPlaceCancelHintTimer();
+  libraryPlaceCancelHintTimer = setTimeout(() => {
+    libraryPlaceCancelHintTimer = null;
+    if (!store.isLibraryPlaceMode) return;
+    attachLibraryDragGhostHint(t('timeline.shortcut.placeCancelHint'));
+  }, LIBRARY_PLACE_CANCEL_HINT_DELAY_MS);
+}
+
 watch(
   () => ({
     enabled: store.isLibraryPlaceMode,
     skillId: store.draggingSkillData?.id ?? null,
   }),
   ({ enabled }) => {
+    clearLibraryPlaceCancelHintTimer();
     window.removeEventListener('pointermove', onLibraryPlacePointerMove);
+    window.removeEventListener('contextmenu', onLibraryPlaceContextMenu, true);
     removeLibraryDragGhost();
     if (!enabled) return;
     const skill = store.draggingSkillData;
     if (!skill) return;
     createLibraryDragGhost(skill, store.timeBlockWidth, getPlaceSkillThemeColor);
+    scheduleLibraryPlaceCancelHint();
     window.addEventListener('pointermove', onLibraryPlacePointerMove);
+    window.addEventListener('contextmenu', onLibraryPlaceContextMenu, true);
   },
 );
 
@@ -987,7 +1109,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  clearLibraryPlaceCancelHintTimer();
   window.removeEventListener('pointermove', onLibraryPlacePointerMove);
+  window.removeEventListener('contextmenu', onLibraryPlaceContextMenu, true);
   if (store.isLibraryPlaceMode) {
     store.cancelLibraryPlace();
   } else {
@@ -1236,6 +1360,29 @@ onUnmounted(() => {
             accept=".json,.png"
             @change="onFileSelected"
           />
+
+          <button
+            class="ea-btn ea-btn--sm ea-btn--lift shortcuts-help-btn"
+            type="button"
+            :title="t('timeline.header.shortcutsTooltip')"
+            @click="shortcutsDialogVisible = true"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="6" width="20" height="12" rx="2" />
+              <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
+            </svg>
+            {{ t('timeline.header.shortcutsLabel') }}
+          </button>
 
           <div
             class="hide-effects-group"
@@ -1562,6 +1709,35 @@ onUnmounted(() => {
       :visible="analysisDialogVisible"
       @update:visible="analysisDialogVisible = $event"
     />
+
+    <el-dialog
+      v-model="shortcutsDialogVisible"
+      :title="t('timeline.shortcuts.dialogTitle')"
+      width="560px"
+      align-center
+      class="custom-dialog"
+      :append-to-body="true"
+    >
+      <div class="shortcuts-help">
+        <section
+          v-for="section in shortcutHelpSections"
+          :key="section.title"
+          class="shortcuts-help__section"
+        >
+          <h3 class="shortcuts-help__title">{{ section.title }}</h3>
+          <div class="shortcuts-help__list">
+            <div
+              v-for="item in section.items"
+              :key="`${section.title}-${item.keys}`"
+              class="shortcuts-help__row"
+            >
+              <span class="shortcuts-help__keys">{{ item.keys }}</span>
+              <span class="shortcuts-help__desc">{{ item.desc }}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </el-dialog>
 
     <el-dialog
       v-model="exportDialogVisible"
@@ -2186,6 +2362,62 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+.shortcuts-help-btn {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.shortcuts-help {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.shortcuts-help__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shortcuts-help__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 215, 0, 0.9);
+  letter-spacing: 0.4px;
+}
+.shortcuts-help__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.shortcuts-help__row {
+  display: grid;
+  grid-template-columns: minmax(168px, 220px) 1fr;
+  gap: 20px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.shortcuts-help__keys {
+  font-family:
+    'Cascadia Mono', 'Cascadia Code', 'Segoe UI Mono', Consolas, 'SF Mono', Menlo,
+    'Liberation Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-ligatures: none;
+  letter-spacing: 0.4px;
+  color: #f0f0f0;
+  white-space: nowrap;
+}
+.shortcuts-help__desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.4;
 }
 .divider-vertical {
   width: 1px;

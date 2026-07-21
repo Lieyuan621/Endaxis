@@ -8,7 +8,7 @@ export const LIBRARY_SKILL_HOTKEY_TYPES = [
   'finisher',
 ] as const;
 
-export type LibrarySkillHotkeyType = (typeof LIBRARY_SKILL_HOTKEY_TYPES)[number];
+type LibrarySkillHotkeyType = (typeof LIBRARY_SKILL_HOTKEY_TYPES)[number];
 
 const DIGIT_CODE_TO_INDEX: Record<string, number> = {
   Digit1: 0,
