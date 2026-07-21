@@ -1714,5 +1714,66 @@
         "description": "Enters a channeling state and fires 3 Rallying Flares. Each firing recovers some SP."
       }
     }
+  },
+  "arcane": {
+    "name": "Arcane",
+    "forms": {
+      "int": "INT",
+      "will": "WILL"
+    },
+    "talents": [
+      {
+        "name": "Tactical Planning",
+        "description": "When Arcane's Intellect ≥ Will, switch skill type to Array Arcana: INT. If not, then switch to Array Arcana: WILL.Attribute requirements for the 2 types of Array Arcana only include effects from operator levels, talents, potentials, and attribute bonuses provided by equipped gear and weapons."
+      },
+      {
+        "name": "Tactical Planning",
+        "description": "When Arcane's Intellect ≥ Will, switch skill type to Array Arcana: INT. If not, then switch to Array Arcana: WILL.Ultimate Gloompurge improved:Array Arcana: INT:- During the ultimate, Arcane gains 24% Arts Amp.Array Arcana: WILL:- When Gloompurger Array (ultimate sequence 1) and Gloompurge Arcana (ultimate sequence 2) deal DMG to the enemy, they also apply [Will × 0.02%] Nature Susceptibility and Cryo Susceptibility (max: 12.8%) for 10s. This effect cannot stack.Attribute requirements for the 2 types of Array Arcana only include effects from operator levels, talents, potentials, and attribute bonuses provided by equipped gear and weapons."
+      },
+      {
+        "name": "Weapon Honing",
+        "description": "Corrosion applied by Arcane lasts 5s longer, and Max Resistance Reduction is increased to 1.05 times the original."
+      },
+      {
+        "name": "Weapon Honing",
+        "description": "Corrosion applied by Arcane lasts 10s longer, and Max Resistance Reduction is increased to 1.1 times the original."
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Watcher of the Sea",
+        "description": "Combo skill Yinglung Stance IV improved:DMG Multiplier is increased to 1.3 times the original.Array Arcana: INT: Hitting an enemy under Imprisonment with Arcane's battle skill returns 10 additional SP.Array Arcana: WILL: Effects of Nature Susceptibility and Cryo Susceptibility applied +6%."
+      },
+      {
+        "name": "Heart of Ice Cold Ferrium",
+        "description": "Intellect and Will +15, Arts Intensity +16."
+      },
+      {
+        "name": "Wielder of Stone",
+        "description": "Talent Weapon Honing improved:Corrosion applied by Arcane lasts 5s longer, and Max Resistance Reduction is increased by 20% of the original."
+      },
+      {
+        "name": "Mind of Refined Steel",
+        "description": "Ultimate Gloompurge improved: Ultimate Energy cost -15%."
+      },
+      {
+        "name": "Homeward Glance",
+        "description": "Ultimate Gloompurge improved:Array Arcana: INT: During the ultimate, Arcane gains 16% Arts Amp. DMG Multiplier of Gloompurge Arcana (ultimate sequence 2) is increased to 1.3 times the original.Array Arcana: WILL: Further increases the effects of Nature Susceptibility and Cryo Susceptibility applied by Gloompurger Array (ultimate sequence 1) and Gloompurge Arcana (ultimate sequence 2) by +7%. After casting Gloompurge Arcana (ultimate sequence 2), if combo skill Yinglung Stance IV is still in its cooldown, immediately shorten the length of the cooldown by 30%."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Artillery Interdiction"
+      },
+      "battleSkill": {
+        "name": "Jadecrushing Grid"
+      },
+      "comboSkill": {
+        "name": "Yinglung Stance IV"
+      },
+      "ultimate": {
+        "name": "Gloompurge"
+      }
+    }
   }
 }

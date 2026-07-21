@@ -1875,5 +1875,148 @@
         [28, 22.4]
       ]
     }
+  },
+  "blessing-of-lustrous-carmine": {
+    "name": "Blessing of Lustrous Carmine",
+    "type": "Polearm",
+    "skill1": {
+      "name": "Agility",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "Heat DMG Dealt",
+      "values": [5.6, 10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 43.3],
+      "isPercent": true
+    },
+    "skill3": {
+      "name": "流转·",
+      "prefix": "流转",
+      "description": "Ultimate Gain Efficiency +{0}%.When the wielder's skill recovers SP, the entire team gains ATK +{1}% for 20s. When the wielder's skill applies Heat Infliction, the entire team gains Heat DMG Dealt +{2}% for 20s.The two effects apply separately and do not stack with themselves.",
+      "values": [
+        [18, 6, 6],
+        [21.6, 7.2, 7.2],
+        [25.2, 8.4, 8.4],
+        [28.8, 9.6, 9.6],
+        [32.4, 10.8, 10.8],
+        [36, 12, 12],
+        [39.6, 13.2, 13.2],
+        [43.2, 14.4, 14.4],
+        [50.4, 16.8, 16.8]
+      ]
+    }
+  },
+  "farsight": {
+    "name": "Farsight",
+    "type": "Sword",
+    "skill1": {
+      "name": "Main attribute",
+      "values": [17, 30, 44, 57, 71, 85, 98, 112, 132]
+    },
+    "skill2": {
+      "name": "Arts Intensity",
+      "values": [10, 18, 26, 34, 42, 50, 58, 66, 78]
+    },
+    "skill3": {
+      "name": "Assault: Vision for Tomorrow",
+      "prefix": "Assault",
+      "description": "When entering battle, the entire team gains the Dream Striving buff that grants DMG Dealt +{0}%, Arts Intensity +{1}, and DEF +{2}% for 20s. When Dream Striving ends, the wielder restores the entire team for 122 HP.Effects of the same name cannot stack.",
+      "values": [
+        [5, 10, 3],
+        [6, 12, 3.6],
+        [7, 14, 4.2],
+        [8, 16, 4.8],
+        [9, 18, 5.4],
+        [10, 20, 6],
+        [11, 22, 6.6],
+        [12, 24, 7.2],
+        [14, 28, 8.4]
+      ]
+    }
+  },
+  "golden-age": {
+    "name": "Golden Age",
+    "type": "Polearm",
+    "skill1": {
+      "name": "Will",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "Treatment Efficiency +6.0%.",
+      "values": [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "skill3": {
+      "name": "Pursuit: Great Hero",
+      "prefix": "Pursuit",
+      "description": "Electric DMG Dealt +{0}%.When the wielder's combo skill deals DMG, the wielder gains Treatment Efficiency +{1}% for 15s. When the wielder's combo skill grants HP Treatment to other operators in the team, the entire team gains Arts DMG Dealt +{2}% for 20s.Effects of the same name cannot stack.",
+      "values": [
+        [6, 4, 5],
+        [7.2, 4.8, 6],
+        [8.4, 5.6, 7],
+        [9.6, 6.4, 8],
+        [10.8, 7.2, 9],
+        [12, 8, 10],
+        [13.2, 8.8, 11],
+        [14.4, 9.6, 12],
+        [16.8, 11.2, 14]
+      ]
+    }
+  },
+  "junction-point": {
+    "name": "Junction Point",
+    "type": "Arts Unit",
+    "skill1": {
+      "name": "Intellect",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "Ultimate Gain Efficiency",
+      "values": [6, 10.7, 15.5, 20.2, 25, 29.8, 34.5, 39.3, 46.4],
+      "isPercent": true
+    },
+    "skill3": {
+      "name": "Efficacy: Feedback Loop",
+      "prefix": "Efficacy",
+      "description": "Nature DMG Dealt +{0}%.When the wielder applies Arts Susceptibility or Arts Infliction with a combo skill, the wielder gains ATK +{1}% while other operators in the team gain ATK +{2}%. Duration: 20s.Max stacks for effects of the same name: 2. Duration of each stack is counted separately.",
+      "values": [
+        [7, 6, 1.5],
+        [8.4, 7.2, 1.8],
+        [9.8, 8.4, 2.1],
+        [11.2, 9.6, 2.4],
+        [12.6, 10.8, 2.7],
+        [14, 12, 3],
+        [15.4, 13.2, 3.3],
+        [16.8, 14.4, 3.6],
+        [19.6, 16.8, 4.2]
+      ]
+    }
+  },
+  "type-42-solemn-phalanx": {
+    "name": "Type 42: Solemn Phalanx",
+    "type": "Arts Unit",
+    "skill1": {
+      "name": "Intellect",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "Ultimate Gain Efficiency",
+      "values": [6, 10.7, 15.5, 20.2, 25, 29.8, 34.5, 39.3, 46.4],
+      "isPercent": true
+    },
+    "skill3": {
+      "name": "Detonate: Debilitating Assault",
+      "prefix": "Detonate",
+      "description": "ATK +{0}%.Wielder's Intellect ≥ Will: When the wielder applies Arts Infliction with their own skill, the wielder gains Arts DMG Dealt +{1}% for 20s; when the wielder applies Arts Susceptibility with their own skill, the wielder gains ATK +{2}% for 20s;Wielder's Will ＞ Intellect: When the wielder applies Arts Burst with their own skill, the target enemy suffers Arts DMG Taken +{3}% for 25s; when the wielder applies Arts Susceptibility with their own skill, the target enemy suffers Arts DMG Taken +{4}% for 25s.Effects of the same name cannot stack. The aforementioned attributes only include effects from the wielder's level, talents, potentials, and attribute bonuses provided by equipped gear and weapons.",
+      "values": [
+        [16, 20, 20, 6, 6],
+        [19.2, 24, 24, 7.2, 7.2],
+        [22.4, 28, 28, 8.4, 8.4],
+        [25.6, 32, 32, 9.6, 9.6],
+        [28.8, 36, 36, 10.8, 10.8],
+        [32, 40, 40, 12, 12],
+        [35.2, 44, 44, 13.2, 13.2],
+        [38.4, 48, 48, 14.4, 14.4],
+        [44.8, 56, 56, 16.8, 16.8]
+      ]
+    }
   }
 }

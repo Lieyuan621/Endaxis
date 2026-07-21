@@ -641,7 +641,13 @@
       "electrification": "Electrification",
       "ultEnergyGain": "Ultimate Energy Gain",
       "spRecovery": "SP Recovery",
-      "spReturn": "SP Return"
+      "spReturn": "SP Return",
+      "pursuit": "Pursuit",
+      "imprisonment": "Imprisonment",
+      "gloompurgerArray": "Gloompurger Array",
+      "clusterStrike": "Cluster Strike",
+      "gloompurgeArcana": "Gloompurge Arcana",
+      "dreamStriving": "Dream Striving"
     }
   },
   "hitEditor": {

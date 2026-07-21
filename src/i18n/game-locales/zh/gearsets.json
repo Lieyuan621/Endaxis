@@ -113,5 +113,10 @@
     "setName": "无套装加成",
     "passive": "",
     "conditional": ""
+  },
+  "aic-fieldwork": {
+    "setName": "集成实训",
+    "passive": "",
+    "conditional": ""
   }
 }

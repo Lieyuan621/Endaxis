@@ -4408,5 +4408,564 @@
       }
     },
     "defense": 6
+  },
+  "qingbo-positioning-kit-t1": {
+    "name": "清波定位仪·壹型",
+    "slotType": "配件",
+    "setName": "清波",
+    "statNames": ["敏捷", "力量", "物理伤害加成"],
+    "stats": {
+      "Agility": {
+        "values": [32, 35, 38, 41],
+        "isPercent": false
+      },
+      "Strength": {
+        "values": [21, 23, 25, 27],
+        "isPercent": false
+      },
+      "Physical DMG Bonus": {
+        "values": [23, 25.3, 27.6, 29.9],
+        "isPercent": true
+      }
+    },
+    "defense": 21
+  },
+  "hot-work-hands-ppe": {
+    "name": "动火用护手",
+    "slotType": "护手",
+    "setName": "动火用",
+    "statNames": ["智识", "意志", "灼热和自然伤害加成"],
+    "stats": [
+      {
+        "name": "Intellect",
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      {
+        "name": "Will",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Heat and Nature DMG Dealt Bonus",
+        "values": [19.2, 21.1, 23, 24.9],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "hot-work-insulation-slab": {
+    "name": "动火用隔温板",
+    "slotType": "配件",
+    "setName": "动火用",
+    "statNames": ["智识", "意志", "所有技能伤害加成"],
+    "stats": [
+      {
+        "name": "Intellect",
+        "values": [32, 35, 38, 41],
+        "isPercent": false
+      },
+      {
+        "name": "Will",
+        "values": [21, 23, 25, 27],
+        "isPercent": false
+      },
+      {
+        "name": "All Skill DMG Dealt Bonus",
+        "values": [27.6, 30.4, 33.1, 35.9],
+        "isPercent": true
+      }
+    ],
+    "defense": 21
+  },
+  "aic-fieldwork-armor": {
+    "name": "集成实训护甲",
+    "slotType": "护甲",
+    "setName": "集成实训",
+    "statNames": ["主能力", "副能力", "法术伤害加成"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [74, 81, 88, 96],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [49, 53, 58, 63],
+        "isPercent": false
+      },
+      {
+        "name": "Arts DMG Dealt Bonus",
+        "values": [9.3, 10.2, 11.2, 12.1],
+        "isPercent": true
+      }
+    ],
+    "defense": 48
+  },
+  "aic-fieldwork-vest": {
+    "name": "集成实训胸甲",
+    "slotType": "护甲",
+    "setName": "集成实训",
+    "statNames": ["副能力", "主能力", "副能力"],
+    "stats": [
+      {
+        "name": "Secondary Attribute",
+        "values": [74, 81, 88, 96],
+        "isPercent": false
+      },
+      {
+        "name": "Main Attribute",
+        "values": [49, 53, 58, 63],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [8.9, 9.7, 10.6, 11.5],
+        "isPercent": true
+      }
+    ],
+    "defense": 48
+  },
+  "aic-fieldwork-plate": {
+    "name": "集成实训钢甲",
+    "slotType": "护甲",
+    "setName": "集成实训",
+    "statNames": ["主能力", "副能力", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [74, 81, 88, 96],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [49, 53, 58, 63],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [10.5, 11.6, 12.6, 13.7],
+        "isPercent": true
+      }
+    ],
+    "defense": 48
+  },
+  "aic-fieldwork-wraps": {
+    "name": "集成实训缠带",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "statNames": ["副能力", "主能力", "副能力"],
+    "stats": [
+      {
+        "name": "Secondary Attribute",
+        "values": [55, 60, 66, 71],
+        "isPercent": false
+      },
+      {
+        "name": "Main Attribute",
+        "values": [37, 40, 44, 48],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [14.8, 16.2, 17.7, 19.2],
+        "isPercent": true
+      }
+    ],
+    "defense": 36
+  },
+  "aic-fieldwork-gloves": {
+    "name": "集成实训手套",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "statNames": ["主能力", "副能力", "法术伤害加成"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [55, 60, 66, 71],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [37, 40, 44, 48],
+        "isPercent": false
+      },
+      {
+        "name": "Arts DMG Dealt Bonus",
+        "values": [15.5, 17.1, 18.6, 20.2],
+        "isPercent": true
+      }
+    ],
+    "defense": 36
+  },
+  "aic-fieldwork-hands": {
+    "name": "集成实训护手",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "statNames": ["主能力", "副能力", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [55, 60, 66, 71],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [37, 40, 44, 48],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [17.6, 19.3, 21.1, 22.8],
+        "isPercent": true
+      }
+    ],
+    "defense": 36
+  },
+  "aic-fieldwork-flashlight": {
+    "name": "集成实训照明器",
+    "slotType": "配件",
+    "setName": "集成实训",
+    "statNames": ["副能力", "主能力", "副能力"],
+    "stats": [
+      {
+        "name": "Secondary Attribute",
+        "values": [27, 29, 32, 35],
+        "isPercent": false
+      },
+      {
+        "name": "Main Attribute",
+        "values": [18, 19, 21, 23],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [17.7, 19.5, 21.2, 23],
+        "isPercent": true
+      }
+    ],
+    "defense": 18
+  },
+  "aic-fieldwork-ember": {
+    "name": "集成实训火种石",
+    "slotType": "配件",
+    "setName": "集成实训",
+    "statNames": ["主能力", "副能力", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [27, 29, 32, 35],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [18, 19, 21, 23],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [21.1, 23.2, 25.3, 27.4],
+        "isPercent": true
+      }
+    ],
+    "defense": 18
+  },
+  "aic-fieldwork-machete": {
+    "name": "集成实训排障刀",
+    "slotType": "配件",
+    "setName": "集成实训",
+    "statNames": ["主能力", "副能力", "法术伤害加成"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [27, 29, 32, 35],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [18, 19, 21, 23],
+        "isPercent": false
+      },
+      {
+        "name": "Arts DMG Dealt Bonus",
+        "values": [18.6, 20.5, 22.4, 24.2],
+        "isPercent": true
+      }
+    ],
+    "defense": 18
+  },
+  "lynx-cuirass-t1": {
+    "name": "生物辅助胸甲·壹型",
+    "slotType": "护甲",
+    "setName": "生物辅助",
+    "statNames": ["意志", "敏捷", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [87, 95, 104, 113],
+        "isPercent": false
+      },
+      {
+        "name": "Agility",
+        "values": [58, 63, 69, 75],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [12.3, 13.6, 14.8, 16],
+        "isPercent": true
+      }
+    ],
+    "defense": 56
+  },
+  "lynx-gauntlets-t1": {
+    "name": "生物辅助手甲·壹型",
+    "slotType": "护手",
+    "setName": "生物辅助",
+    "statNames": ["意志", "敏捷", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      {
+        "name": "Agility",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [20.5, 22.6, 24.6, 26.7],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "swordmancer-fiber-armor": {
+    "name": "点剑纤维护甲",
+    "slotType": "护甲",
+    "setName": "点剑",
+    "statNames": ["力量", "意志", "物理伤害加成"],
+    "stats": {
+      "Strength": {
+        "values": [87, 95, 104, 113],
+        "isPercent": false
+      },
+      "Will": {
+        "values": [58, 63, 69, 75],
+        "isPercent": false
+      },
+      "Physical DMG Bonus": {
+        "values": [11.5, 12.7, 13.8, 14.9],
+        "isPercent": true
+      }
+    },
+    "defense": 56
+  },
+  "eternal-xiranite-light-armor": {
+    "name": "长息轻护甲",
+    "slotType": "护甲",
+    "setName": "长息",
+    "statNames": ["意志", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [110, 121, 132, 143],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [12.3, 13.6, 14.8, 16],
+        "isPercent": true
+      }
+    ],
+    "defense": 56
+  },
+  "eternal-xiranite-light-armor-t1": {
+    "name": "长息轻护甲·壹型",
+    "slotType": "护甲",
+    "setName": "长息",
+    "statNames": ["智识", "意志", "副能力"],
+    "stats": [
+      {
+        "name": "Intellect",
+        "values": [87, 95, 104, 113],
+        "isPercent": false
+      },
+      {
+        "name": "Will",
+        "values": [58, 63, 69, 75],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [10.4, 11.4, 12.4, 13.5],
+        "isPercent": true
+      }
+    ],
+    "defense": 56
+  },
+  "eternal-xiranite-wraps": {
+    "name": "长息裹手",
+    "slotType": "护手",
+    "setName": "长息",
+    "statNames": ["意志", "智识", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      {
+        "name": "Intellect",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [20.5, 22.6, 24.6, 26.7],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "eternal-xiranite-hands": {
+    "name": "长息手套",
+    "slotType": "护手",
+    "setName": "长息",
+    "statNames": ["意志", "敏捷", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      {
+        "name": "Agility",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [20.5, 22.6, 24.6, 26.7],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "eternal-xiranite-bracing-slab": {
+    "name": "长息加固板",
+    "slotType": "配件",
+    "setName": "长息",
+    "statNames": ["意志", "副能力"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [41, 45, 49, 53],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [20.7, 22.8, 24.8, 26.9],
+        "isPercent": true
+      }
+    ],
+    "defense": 21
+  },
+  "rift-trekker-heavy-armor": {
+    "name": "涉渊重甲",
+    "slotType": "护甲",
+    "setName": "无套装加成",
+    "statNames": ["力量", "源石技艺强度"],
+    "stats": [
+      {
+        "name": "Strength",
+        "values": [115, 126, 138, 149],
+        "isPercent": false
+      },
+      {
+        "name": "Arts Intensity",
+        "values": [21, 23, 25, 28],
+        "isPercent": false
+      }
+    ],
+    "defense": 56
+  },
+  "rift-trekker-light-armor": {
+    "name": "涉渊轻甲",
+    "slotType": "护甲",
+    "setName": "无套装加成",
+    "statNames": ["意志", "治疗效率加成"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [115, 126, 138, 149],
+        "isPercent": false
+      },
+      {
+        "name": "Treatment Bonus",
+        "values": [10.8, 11.9, 13, 14],
+        "isPercent": true
+      }
+    ],
+    "defense": 56
+  },
+  "rift-trekker-gloves": {
+    "name": "涉渊护手",
+    "slotType": "护手",
+    "setName": "无套装加成",
+    "statNames": ["智识", "终结技充能效率"],
+    "stats": [
+      {
+        "name": "Intellect",
+        "values": [86, 94, 103, 111],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [21.4, 23.6, 25.7, 27.9],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "rift-trekker-hands": {
+    "name": "涉渊手套",
+    "slotType": "护手",
+    "setName": "无套装加成",
+    "statNames": ["意志", "战技伤害加成"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [86, 94, 103, 111],
+        "isPercent": false
+      },
+      {
+        "name": "Battle Skill DMG Bonus",
+        "values": [36, 39.6, 43.2, 46.8],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "rift-trekker-armor-slab": {
+    "name": "涉渊护甲板",
+    "slotType": "配件",
+    "setName": "无套装加成",
+    "statNames": ["敏捷", "副能力"],
+    "stats": [
+      {
+        "name": "Agility",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [21.6, 23.8, 25.9, 28.1],
+        "isPercent": true
+      }
+    ],
+    "defense": 21
   }
 }

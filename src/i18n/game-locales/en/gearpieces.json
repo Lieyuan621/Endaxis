@@ -4408,5 +4408,564 @@
       }
     },
     "defense": 6
+  },
+  "qingbo-positioning-kit-t1": {
+    "name": "Qingbo Positioning Kit T1",
+    "slotType": "Kit",
+    "setName": "Qingbo",
+    "statNames": ["Agility", "Strength", "Physical DMG Bonus"],
+    "stats": {
+      "Agility": {
+        "values": [32, 35, 38, 41],
+        "isPercent": false
+      },
+      "Strength": {
+        "values": [21, 23, 25, 27],
+        "isPercent": false
+      },
+      "Physical DMG Bonus": {
+        "values": [23, 25.3, 27.6, 29.9],
+        "isPercent": true
+      }
+    },
+    "defense": 21
+  },
+  "hot-work-hands-ppe": {
+    "name": "Hot Work Hands PPE",
+    "slotType": "Gloves",
+    "setName": "Hot Work",
+    "statNames": ["Intellect", "Will", "Heat and Nature DMG Dealt Bonus"],
+    "stats": [
+      {
+        "name": "Intellect",
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      {
+        "name": "Will",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Heat and Nature DMG Dealt Bonus",
+        "values": [19.2, 21.1, 23, 24.9],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "hot-work-insulation-slab": {
+    "name": "Hot Work Insulation Slab",
+    "slotType": "Kit",
+    "setName": "Hot Work",
+    "statNames": ["Intellect", "Will", "All Skill DMG Dealt Bonus"],
+    "stats": [
+      {
+        "name": "Intellect",
+        "values": [32, 35, 38, 41],
+        "isPercent": false
+      },
+      {
+        "name": "Will",
+        "values": [21, 23, 25, 27],
+        "isPercent": false
+      },
+      {
+        "name": "All Skill DMG Dealt Bonus",
+        "values": [27.6, 30.4, 33.1, 35.9],
+        "isPercent": true
+      }
+    ],
+    "defense": 21
+  },
+  "aic-fieldwork-armor": {
+    "name": "AIC Fieldwork Armor",
+    "slotType": "Armor",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Main Attribute", "Secondary Attribute", "Arts DMG Dealt Bonus"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [74, 81, 88, 96],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [49, 53, 58, 63],
+        "isPercent": false
+      },
+      {
+        "name": "Arts DMG Dealt Bonus",
+        "values": [9.3, 10.2, 11.2, 12.1],
+        "isPercent": true
+      }
+    ],
+    "defense": 48
+  },
+  "aic-fieldwork-vest": {
+    "name": "AIC Fieldwork Vest",
+    "slotType": "Armor",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Secondary Attribute", "Main Attribute", "Secondary Attribute"],
+    "stats": [
+      {
+        "name": "Secondary Attribute",
+        "values": [74, 81, 88, 96],
+        "isPercent": false
+      },
+      {
+        "name": "Main Attribute",
+        "values": [49, 53, 58, 63],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [8.9, 9.7, 10.6, 11.5],
+        "isPercent": true
+      }
+    ],
+    "defense": 48
+  },
+  "aic-fieldwork-plate": {
+    "name": "AIC Fieldwork Plate",
+    "slotType": "Armor",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Main Attribute", "Secondary Attribute", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [74, 81, 88, 96],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [49, 53, 58, 63],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [10.5, 11.6, 12.6, 13.7],
+        "isPercent": true
+      }
+    ],
+    "defense": 48
+  },
+  "aic-fieldwork-wraps": {
+    "name": "AIC Fieldwork Wraps",
+    "slotType": "Gloves",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Secondary Attribute", "Main Attribute", "Secondary Attribute"],
+    "stats": [
+      {
+        "name": "Secondary Attribute",
+        "values": [55, 60, 66, 71],
+        "isPercent": false
+      },
+      {
+        "name": "Main Attribute",
+        "values": [37, 40, 44, 48],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [14.8, 16.2, 17.7, 19.2],
+        "isPercent": true
+      }
+    ],
+    "defense": 36
+  },
+  "aic-fieldwork-gloves": {
+    "name": "AIC Fieldwork Gloves",
+    "slotType": "Gloves",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Main Attribute", "Secondary Attribute", "Arts DMG Dealt Bonus"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [55, 60, 66, 71],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [37, 40, 44, 48],
+        "isPercent": false
+      },
+      {
+        "name": "Arts DMG Dealt Bonus",
+        "values": [15.5, 17.1, 18.6, 20.2],
+        "isPercent": true
+      }
+    ],
+    "defense": 36
+  },
+  "aic-fieldwork-hands": {
+    "name": "AIC Fieldwork Hands",
+    "slotType": "Gloves",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Main Attribute", "Secondary Attribute", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [55, 60, 66, 71],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [37, 40, 44, 48],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [17.6, 19.3, 21.1, 22.8],
+        "isPercent": true
+      }
+    ],
+    "defense": 36
+  },
+  "aic-fieldwork-flashlight": {
+    "name": "AIC Fieldwork Flashlight",
+    "slotType": "Kit",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Secondary Attribute", "Main Attribute", "Secondary Attribute"],
+    "stats": [
+      {
+        "name": "Secondary Attribute",
+        "values": [27, 29, 32, 35],
+        "isPercent": false
+      },
+      {
+        "name": "Main Attribute",
+        "values": [18, 19, 21, 23],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [17.7, 19.5, 21.2, 23],
+        "isPercent": true
+      }
+    ],
+    "defense": 18
+  },
+  "aic-fieldwork-ember": {
+    "name": "AIC Fieldwork Ember",
+    "slotType": "Kit",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Main Attribute", "Secondary Attribute", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [27, 29, 32, 35],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [18, 19, 21, 23],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [21.1, 23.2, 25.3, 27.4],
+        "isPercent": true
+      }
+    ],
+    "defense": 18
+  },
+  "aic-fieldwork-machete": {
+    "name": "AIC Fieldwork Machete",
+    "slotType": "Kit",
+    "setName": "AIC Fieldwork",
+    "statNames": ["Main Attribute", "Secondary Attribute", "Arts DMG Dealt Bonus"],
+    "stats": [
+      {
+        "name": "Main Attribute",
+        "values": [27, 29, 32, 35],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [18, 19, 21, 23],
+        "isPercent": false
+      },
+      {
+        "name": "Arts DMG Dealt Bonus",
+        "values": [18.6, 20.5, 22.4, 24.2],
+        "isPercent": true
+      }
+    ],
+    "defense": 18
+  },
+  "lynx-cuirass-t1": {
+    "name": "LYNX Cuirass T1",
+    "slotType": "Armor",
+    "setName": "LYNX",
+    "statNames": ["Will", "Agility", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [87, 95, 104, 113],
+        "isPercent": false
+      },
+      {
+        "name": "Agility",
+        "values": [58, 63, 69, 75],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [12.3, 13.6, 14.8, 16],
+        "isPercent": true
+      }
+    ],
+    "defense": 56
+  },
+  "lynx-gauntlets-t1": {
+    "name": "LYNX Gauntlets T1",
+    "slotType": "Gloves",
+    "setName": "LYNX",
+    "statNames": ["Will", "Agility", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      {
+        "name": "Agility",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [20.5, 22.6, 24.6, 26.7],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "swordmancer-fiber-armor": {
+    "name": "Swordmancer Fiber Armor",
+    "slotType": "Armor",
+    "setName": "Swordmancer",
+    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
+    "stats": {
+      "Strength": {
+        "values": [87, 95, 104, 113],
+        "isPercent": false
+      },
+      "Will": {
+        "values": [58, 63, 69, 75],
+        "isPercent": false
+      },
+      "Physical DMG Bonus": {
+        "values": [11.5, 12.7, 13.8, 14.9],
+        "isPercent": true
+      }
+    },
+    "defense": 56
+  },
+  "eternal-xiranite-light-armor": {
+    "name": "Eternal Xiranite Light Armor",
+    "slotType": "Armor",
+    "setName": "Eternal Xiranite",
+    "statNames": ["Will", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [110, 121, 132, 143],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [12.3, 13.6, 14.8, 16],
+        "isPercent": true
+      }
+    ],
+    "defense": 56
+  },
+  "eternal-xiranite-light-armor-t1": {
+    "name": "Eternal Xiranite Light Armor T1",
+    "slotType": "Armor",
+    "setName": "Eternal Xiranite",
+    "statNames": ["Intellect", "Will", "Secondary Attribute"],
+    "stats": [
+      {
+        "name": "Intellect",
+        "values": [87, 95, 104, 113],
+        "isPercent": false
+      },
+      {
+        "name": "Will",
+        "values": [58, 63, 69, 75],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [10.4, 11.4, 12.4, 13.5],
+        "isPercent": true
+      }
+    ],
+    "defense": 56
+  },
+  "eternal-xiranite-wraps": {
+    "name": "Eternal Xiranite Wraps",
+    "slotType": "Gloves",
+    "setName": "Eternal Xiranite",
+    "statNames": ["Will", "Intellect", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      {
+        "name": "Intellect",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [20.5, 22.6, 24.6, 26.7],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "eternal-xiranite-hands": {
+    "name": "Eternal Xiranite Hands",
+    "slotType": "Gloves",
+    "setName": "Eternal Xiranite",
+    "statNames": ["Will", "Agility", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [65, 71, 78, 84],
+        "isPercent": false
+      },
+      {
+        "name": "Agility",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [20.5, 22.6, 24.6, 26.7],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "eternal-xiranite-bracing-slab": {
+    "name": "Eternal Xiranite Bracing Slab",
+    "slotType": "Kit",
+    "setName": "Eternal Xiranite",
+    "statNames": ["Will", "Secondary Attribute"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [41, 45, 49, 53],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [20.7, 22.8, 24.8, 26.9],
+        "isPercent": true
+      }
+    ],
+    "defense": 21
+  },
+  "rift-trekker-heavy-armor": {
+    "name": "Rift Trekker Heavy Armor",
+    "slotType": "Armor",
+    "setName": "No Set Bonuses",
+    "statNames": ["Strength", "Arts Intensity"],
+    "stats": [
+      {
+        "name": "Strength",
+        "values": [115, 126, 138, 149],
+        "isPercent": false
+      },
+      {
+        "name": "Arts Intensity",
+        "values": [21, 23, 25, 28],
+        "isPercent": false
+      }
+    ],
+    "defense": 56
+  },
+  "rift-trekker-light-armor": {
+    "name": "Rift Trekker Light Armor",
+    "slotType": "Armor",
+    "setName": "No Set Bonuses",
+    "statNames": ["Will", "Treatment Bonus"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [115, 126, 138, 149],
+        "isPercent": false
+      },
+      {
+        "name": "Treatment Bonus",
+        "values": [10.8, 11.9, 13, 14],
+        "isPercent": true
+      }
+    ],
+    "defense": 56
+  },
+  "rift-trekker-gloves": {
+    "name": "Rift Trekker Gloves",
+    "slotType": "Gloves",
+    "setName": "No Set Bonuses",
+    "statNames": ["Intellect", "Ultimate Gain Efficiency"],
+    "stats": [
+      {
+        "name": "Intellect",
+        "values": [86, 94, 103, 111],
+        "isPercent": false
+      },
+      {
+        "name": "Ultimate Gain Efficiency",
+        "values": [21.4, 23.6, 25.7, 27.9],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "rift-trekker-hands": {
+    "name": "Rift Trekker Hands",
+    "slotType": "Gloves",
+    "setName": "No Set Bonuses",
+    "statNames": ["Will", "Battle Skill DMG Bonus"],
+    "stats": [
+      {
+        "name": "Will",
+        "values": [86, 94, 103, 111],
+        "isPercent": false
+      },
+      {
+        "name": "Battle Skill DMG Bonus",
+        "values": [36, 39.6, 43.2, 46.8],
+        "isPercent": true
+      }
+    ],
+    "defense": 42
+  },
+  "rift-trekker-armor-slab": {
+    "name": "Rift Trekker Armor Slab",
+    "slotType": "Kit",
+    "setName": "No Set Bonuses",
+    "statNames": ["Agility", "Secondary Attribute"],
+    "stats": [
+      {
+        "name": "Agility",
+        "values": [43, 47, 51, 55],
+        "isPercent": false
+      },
+      {
+        "name": "Secondary Attribute",
+        "values": [21.6, 23.8, 25.9, 28.1],
+        "isPercent": true
+      }
+    ],
+    "defense": 21
   }
 }
