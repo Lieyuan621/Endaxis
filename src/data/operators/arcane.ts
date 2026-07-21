@@ -563,6 +563,38 @@ const sheet: OperatorSheet = {
               },
               {
                 trigger: {
+                  kind: 'onFinisher',
+                  triggerScope: 'global',
+                },
+                effects: [
+                  // 4 laser
+                  ...map(range(4), (i: number) => ({
+                    kind: 'damageHit' as const,
+                    element: 'nature' as const,
+                    readConsumedStacks: {
+                      statusKey: 'arcane-ultimate-cluster-strike-counter',
+                      target: 'self' as const,
+                    },
+                    offset: 0.4 + 0.133 * i,
+                    multiplier: map(
+                      [160, 176, 192, 208, 224, 240, 256, 272, 288, 308, 332, 360],
+                      j => j / 8,
+                    ),
+                    condition: {
+                      kind: 'operatorStatus' as const,
+                      status: 'arcane-ultimate-cluster-strike-counter',
+                    },
+                  })),
+                  {
+                    kind: 'consume',
+                    operatorStatus: 'arcane-ultimate-cluster-strike-counter',
+                    consumeStacks: 1,
+                    consumeTarget: 'owner',
+                  },
+                ],
+              },
+              {
+                trigger: {
                   kind: 'onStatusConsumed',
                   status: 'arcane-ultimate-cluster-strike-counter',
                   target: 'self',
@@ -908,6 +940,38 @@ const sheet: OperatorSheet = {
               {
                 trigger: {
                   kind: 'onFinalStrike',
+                  triggerScope: 'global',
+                },
+                effects: [
+                  // 4 laser
+                  ...map(range(4), (i: number) => ({
+                    kind: 'damageHit' as const,
+                    element: 'nature' as const,
+                    readConsumedStacks: {
+                      statusKey: 'arcane-ultimate-cluster-strike-counter',
+                      target: 'self' as const,
+                    },
+                    offset: 0.4 + 0.133 * i,
+                    multiplier: map(
+                      [160, 176, 192, 208, 224, 240, 256, 272, 288, 308, 332, 360],
+                      j => j / 8,
+                    ),
+                    condition: {
+                      kind: 'operatorStatus' as const,
+                      status: 'arcane-ultimate-cluster-strike-counter',
+                    },
+                  })),
+                  {
+                    kind: 'consume',
+                    operatorStatus: 'arcane-ultimate-cluster-strike-counter',
+                    consumeStacks: 1,
+                    consumeTarget: 'owner',
+                  },
+                ],
+              },
+              {
+                trigger: {
+                  kind: 'onFinisher',
                   triggerScope: 'global',
                 },
                 effects: [
