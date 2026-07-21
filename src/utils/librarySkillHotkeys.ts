@@ -65,3 +65,24 @@ export function findLibrarySkillByType(
   }
   return null;
 }
+
+/**
+ * Rematch a sticky place-mode skill onto another operator's library.
+ * Prefer the same `skillKey` (variants), then fall back to the same `type`.
+ */
+export function findLibrarySkillForPlaceRematch(
+  library: ReadonlyArray<Record<string, unknown>>,
+  previous: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
+  if (!previous) return null;
+  const skillKey = typeof previous.skillKey === 'string' ? previous.skillKey.trim() : '';
+  if (skillKey) {
+    for (const skill of library) {
+      if (!skill || skill.hiddenInLibraryGrid) continue;
+      if (skill.skillKey === skillKey) return skill;
+    }
+  }
+  const type = typeof previous.type === 'string' ? previous.type.trim() : '';
+  if (!type) return null;
+  return findLibrarySkillByType(library, type);
+}

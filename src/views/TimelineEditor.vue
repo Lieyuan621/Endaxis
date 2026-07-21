@@ -30,6 +30,7 @@ import {
 } from '@/utils/libraryDragGhost';
 import {
   findLibrarySkillByType,
+  findLibrarySkillForPlaceRematch,
   getLibrarySkillTypeFromHotkeyCode,
   getTrackIndexFromHotkeyEvent,
 } from '@/utils/librarySkillHotkeys';
@@ -581,6 +582,14 @@ const shortcutHelpSections = computed(() => {
           keys: t('timeline.shortcuts.keys.connectionTool'),
           desc: t('timeline.shortcuts.items.connectionTool'),
         },
+        {
+          keys: t('timeline.shortcuts.keys.snapToAction'),
+          desc: t('timeline.shortcuts.items.snapToAction'),
+        },
+        {
+          keys: t('timeline.shortcuts.keys.alignToAction'),
+          desc: t('timeline.shortcuts.items.alignToAction'),
+        },
       ],
     },
   ];
@@ -1021,9 +1030,54 @@ function handleLibrarySkillHotkey(skillType) {
   ElMessage.info({ message: t('timeline.shortcut.placeReady'), duration: 1000 });
 }
 
+let lastLibraryPlaceClientX = 0;
+let lastLibraryPlaceClientY = 0;
+
+/** When the active track/operator changes mid-place, stick the matching skill from that library. */
+function rematchLibraryPlaceSkillForActiveTrack() {
+  if (!store.isLibraryPlaceMode || !store.draggingSkillData) return;
+
+  const activeIndex = store.activeTrackIndex;
+  if (activeIndex === null || activeIndex === undefined) return;
+  const track = store.tracks[activeIndex];
+  if (!track?.id) return;
+
+  const previous = store.draggingSkillData;
+  const next = findLibrarySkillForPlaceRematch(store.activeSkillLibrary, previous);
+  if (!next) {
+    store.cancelLibraryPlace();
+    ElMessage.warning({ message: t('timeline.shortcut.placeSkillMissing'), duration: 1200 });
+    return;
+  }
+  if (next.id && previous.id && next.id === previous.id) return;
+
+  store.beginLibraryPlace({
+    ...next,
+    librarySource: previous.librarySource || 'character',
+    weaponId: previous.weaponId ?? null,
+    dragOffsetX: previous.dragOffsetX,
+    dragOffsetY: previous.dragOffsetY,
+  });
+
+  if (lastLibraryPlaceClientX || lastLibraryPlaceClientY) {
+    nextTick(() => {
+      const skill = store.draggingSkillData;
+      if (!skill) return;
+      positionLibraryDragGhost(
+        lastLibraryPlaceClientX,
+        lastLibraryPlaceClientY,
+        Number(skill.dragOffsetX) || 10,
+        Number(skill.dragOffsetY) || 25,
+      );
+    });
+  }
+}
+
 function onLibraryPlacePointerMove(e) {
   if (!store.isLibraryPlaceMode || !store.draggingSkillData) return;
   const skill = store.draggingSkillData;
+  lastLibraryPlaceClientX = e.clientX;
+  lastLibraryPlaceClientY = e.clientY;
   positionLibraryDragGhost(
     e.clientX,
     e.clientY,
@@ -1076,9 +1130,31 @@ watch(
     const skill = store.draggingSkillData;
     if (!skill) return;
     createLibraryDragGhost(skill, store.timeBlockWidth, getPlaceSkillThemeColor);
+    if (lastLibraryPlaceClientX || lastLibraryPlaceClientY) {
+      positionLibraryDragGhost(
+        lastLibraryPlaceClientX,
+        lastLibraryPlaceClientY,
+        Number(skill.dragOffsetX) || 10,
+        Number(skill.dragOffsetY) || 25,
+      );
+    }
     scheduleLibraryPlaceCancelHint();
     window.addEventListener('pointermove', onLibraryPlacePointerMove);
     window.addEventListener('contextmenu', onLibraryPlaceContextMenu, true);
+  },
+);
+
+watch(
+  () => ({
+    enabled: store.isLibraryPlaceMode,
+    trackId: store.activeTrackId,
+    libraryKey: store.activeSkillLibrary
+      .map(skill => `${skill?.id ?? ''}:${skill?.skillKey ?? ''}:${skill?.type ?? ''}`)
+      .join('|'),
+  }),
+  ({ enabled }) => {
+    if (!enabled) return;
+    rematchLibraryPlaceSkillForActiveTrack();
   },
 );
 

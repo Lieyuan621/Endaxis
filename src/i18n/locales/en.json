@@ -240,7 +240,9 @@
         "cursorGuide": "Ctrl + G",
         "boxSelect": "Ctrl + B",
         "snapPrecision": "Alt + S",
-        "connectionTool": "Alt + L"
+        "connectionTool": "Alt + L",
+        "snapToAction": "Alt + Click",
+        "alignToAction": "Alt + Shift + Click"
       },
       "items": {
         "selectTrack": "Select the matching track (opens picker if empty)",
@@ -256,7 +258,9 @@
         "cursorGuide": "Toggle guide lines",
         "boxSelect": "Toggle box select",
         "snapPrecision": "Toggle snap precision",
-        "connectionTool": "Toggle connection tool"
+        "connectionTool": "Toggle connection tool",
+        "snapToAction": "Snap selection before/after the target (left half = front, right half = back)",
+        "alignToAction": "Align selection to the target edge (left half = left, right half = right)"
       }
     },
     "import": {

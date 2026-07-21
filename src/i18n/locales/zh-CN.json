@@ -240,7 +240,9 @@
         "cursorGuide": "Ctrl + G",
         "boxSelect": "Ctrl + B",
         "snapPrecision": "Alt + S",
-        "connectionTool": "Alt + L"
+        "connectionTool": "Alt + L",
+        "snapToAction": "Alt + 点击",
+        "alignToAction": "Alt + Shift + 点击"
       },
       "items": {
         "selectTrack": "选中对应轨道（无干员时打开干员选择）",
@@ -256,7 +258,9 @@
         "cursorGuide": "开关辅助线",
         "boxSelect": "开关框选模式",
         "snapPrecision": "切换吸附精度",
-        "connectionTool": "开关连线工具"
+        "connectionTool": "开关连线工具",
+        "snapToAction": "将选中技能接到目标前/后方（点左半边接前方，右半边接后方）",
+        "alignToAction": "将选中技能与目标左/右对齐（点左半边左对齐，右半边右对齐）"
       }
     },
     "import": {

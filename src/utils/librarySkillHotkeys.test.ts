@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   findLibrarySkillByType,
+  findLibrarySkillForPlaceRematch,
   getLibrarySkillTypeFromHotkeyCode,
   getTrackIndexFromHotkeyCode,
   getTrackIndexFromHotkeyEvent,
@@ -44,5 +45,30 @@ describe('librarySkillHotkeys', () => {
     expect(findLibrarySkillByType(library, 'basicAttack')?.id).toBe('group');
     expect(findLibrarySkillByType(library, 'ultimate')?.id).toBe('ult');
     expect(findLibrarySkillByType(library, 'dive')).toBeNull();
+  });
+
+  it('rematches place-mode skills by skillKey then type', () => {
+    const library = [
+      { id: 'a-ba', type: 'basicAttack', skillKey: 'basicAttack' },
+      { id: 'a-bs', type: 'battleSkill', skillKey: 'battleSkill' },
+      { id: 'a-var', type: 'battleSkill', skillKey: 'enhancedBattle' },
+    ];
+    expect(
+      findLibrarySkillForPlaceRematch(library, {
+        id: 'other-var',
+        type: 'battleSkill',
+        skillKey: 'enhancedBattle',
+      })?.id,
+    ).toBe('a-var');
+    expect(
+      findLibrarySkillForPlaceRematch(library, {
+        id: 'other-bs',
+        type: 'battleSkill',
+        skillKey: 'missingKey',
+      })?.id,
+    ).toBe('a-bs');
+    expect(
+      findLibrarySkillForPlaceRematch(library, { id: 'x', type: 'dive', skillKey: 'dive' }),
+    ).toBeNull();
   });
 });

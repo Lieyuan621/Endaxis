@@ -240,7 +240,9 @@
         "cursorGuide": "Ctrl + G",
         "boxSelect": "Ctrl + B",
         "snapPrecision": "Alt + S",
-        "connectionTool": "Alt + L"
+        "connectionTool": "Alt + L",
+        "snapToAction": "Alt + клик",
+        "alignToAction": "Alt + Shift + клик"
       },
       "items": {
         "selectTrack": "Выбрать дорожку (откроет выбор, если пусто)",
@@ -256,7 +258,9 @@
         "cursorGuide": "Направляющие",
         "boxSelect": "Рамка выделения",
         "snapPrecision": "Точность привязки",
-        "connectionTool": "Инструмент связей"
+        "connectionTool": "Инструмент связей",
+        "snapToAction": "Пристыковать выделение перед/после цели (левая половина — спереди, правая — сзади)",
+        "alignToAction": "Выровнять выделение по краю цели (левая половина — влево, правая — вправо)"
       }
     },
     "import": {
