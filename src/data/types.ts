@@ -601,6 +601,8 @@ export interface PatchEffect {
   kind: 'patchEffect';
   targetEffect: string;
   id?: string;
+  /** Resolve this patch's leveled scaling at this skill's level (else spliced raw, as before). */
+  skillLevelKey?: CombatSkillType;
   /** Override fields merged into the target effect at collection time. */
   effect: Partial<PatchableEffectFields>;
 }

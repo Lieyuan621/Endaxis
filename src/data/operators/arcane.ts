@@ -648,6 +648,19 @@ const sheet: OperatorSheet = {
                 value: 1.3,
               },
             ],
+            patches: [
+              {
+                kind: 'patchEffect',
+                targetEffect: 'arcane-combo-susceptibility',
+                skillLevelKey: 'comboSkill',
+                effect: {
+                  scaling: {
+                    additive: [6],
+                    cap: [13, 13, 13, 13, 13, 13, 13, 13, 13.5, 13.5, 13.5, 14],
+                  },
+                },
+              },
+            ],
           },
           undefined,
           undefined,
@@ -752,6 +765,7 @@ const sheet: OperatorSheet = {
             cooldown: [20, 20, 20, 20, 20, 20, 20, 20, 19, 19, 19, 18],
             effects: [
               {
+                id: 'arcane-combo-susceptibility',
                 kind: 'status',
                 target: 'enemy',
                 stat: { modifier: 'susceptibility', elements: ['nature', 'cryo'] },

@@ -316,7 +316,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 0,
+      ultimateEnergyGain: 40,
       segments: [
         {
           duration: 2.17,
@@ -351,7 +351,7 @@ const sheet: OperatorSheet = {
                   effects: [
                     {
                       kind: 'ultEnergyGain',
-                      value: 40,
+                      value: 0,
                       scaling: {
                         additive: [
                           {

@@ -306,6 +306,17 @@ const sheet: OperatorSheet = {
             {
               element: 'physical',
               multiplier: [356, 391, 427, 462, 498, 533, 569, 604, 640, 684, 738, 800],
+              multiplierScaling: {
+                conditionalScaling: {
+                  scaling: {
+                    additive: [[267, 294, 320, 347, 374, 400, 427, 454, 480, 514, 554, 600]],
+                  },
+                  condition: {
+                    kind: 'enemyStatus',
+                    status: 'endministrator-originium-crystals',
+                  },
+                },
+              },
               multiplierMode: 'split',
               hits: [
                 {
@@ -313,20 +324,6 @@ const sheet: OperatorSheet = {
                   stagger: 25,
                 },
               ],
-            },
-            {
-              element: 'physical',
-              multiplier: [267, 294, 320, 347, 374, 400, 427, 454, 480, 514, 554, 600],
-              multiplierMode: 'split',
-              hits: [
-                {
-                  offset: 1.67,
-                },
-              ],
-              condition: {
-                kind: 'enemyStatus',
-                status: 'endministrator-originium-crystals',
-              },
             },
           ],
         },

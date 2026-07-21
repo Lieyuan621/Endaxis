@@ -320,9 +320,12 @@ export function collectEffects(
         const talentName = getOperatorTalentName(operatorSlug, talentFlatIndex, idx);
         for (const [patchIdx, patch] of (group.patches ?? []).entries()) {
           collectedPatches.push(
-            ensurePatchEffectIds(
-              patch,
-              makeEffectId(operatorSlug, `talent${groupIdx}`, `patch${patchIdx}`),
+            resolvePatchSkillLevel(
+              ensurePatchEffectIds(
+                patch,
+                makeEffectId(operatorSlug, `talent${groupIdx}`, `patch${patchIdx}`),
+              ),
+              opInst,
             ),
           );
         }
@@ -351,9 +354,12 @@ export function collectEffects(
         const potentialName = getOperatorPotentialName(operatorSlug, i);
         for (const [patchIdx, patch] of (op.potentials[i]!.patches ?? []).entries()) {
           collectedPatches.push(
-            ensurePatchEffectIds(
-              patch,
-              makeEffectId(operatorSlug, `potential${i}`, `patch${patchIdx}`),
+            resolvePatchSkillLevel(
+              ensurePatchEffectIds(
+                patch,
+                makeEffectId(operatorSlug, `potential${i}`, `patch${patchIdx}`),
+              ),
+              opInst,
             ),
           );
         }
@@ -613,6 +619,34 @@ export function resolveScalingDef(scaling: ScalingDef, idx: number): ResolvedSca
           },
         }
       : {}),
+  };
+}
+
+/**
+ * Pre-resolve a `patchEffect`'s leveled scaling to scalars when it declares a `skillLevelKey`
+ * (indexed by that skill's level), so a leveled `cap`/`additive` array in a patch resolves
+ * correctly instead of being spliced raw by `mergeScaling`. Other patches pass through unchanged.
+ */
+function resolvePatchSkillLevel(patch: Patch, opInst: OperatorInstance): Patch {
+  if (patch.kind !== 'patchEffect' || !patch.skillLevelKey || !patch.effect) return patch;
+  const idx = Math.min((opInst.skillLevels[patch.skillLevelKey] ?? 1) - 1, 11);
+  const e = patch.effect as Record<string, unknown>;
+  return {
+    ...patch,
+    effect: {
+      ...patch.effect,
+      ...(e.scaling
+        ? { scaling: resolveScalingDef(e.scaling as ScalingDef, idx) as ScalingDef }
+        : {}),
+      ...(e.multiplierScaling
+        ? {
+            multiplierScaling: resolveScalingDef(
+              e.multiplierScaling as ScalingDef,
+              idx,
+            ) as ScalingDef,
+          }
+        : {}),
+    },
   };
 }
 
@@ -941,7 +975,8 @@ export function collectTriggerEffects(
         const state = opInst.talentStates[String(groupIdx)];
         if (!state || state <= 0) continue;
         const idx = state - 1;
-        for (const patch of group.patches ?? []) collectedPatches.push(patch);
+        for (const patch of group.patches ?? [])
+          collectedPatches.push(resolvePatchSkillLevel(patch, opInst));
         for (let teIdx = 0; teIdx < (group.triggers?.length ?? 0); teIdx++) {
           const te = group.triggers![teIdx]!;
           const teLvlIdx = te.skillLevelKey
@@ -968,7 +1003,8 @@ export function collectTriggerEffects(
       // Potentials
       for (let i = 0; i < op.potentials.length; i++) {
         if (i + 1 > opInst.potential) continue;
-        for (const patch of op.potentials[i]!.patches ?? []) collectedPatches.push(patch);
+        for (const patch of op.potentials[i]!.patches ?? [])
+          collectedPatches.push(resolvePatchSkillLevel(patch, opInst));
         for (let teIdx = 0; teIdx < (op.potentials[i]!.triggers?.length ?? 0); teIdx++) {
           const te = op.potentials[i]!.triggers![teIdx]!;
           const basePath = makeEffectId(operatorSlug, `potential${i}`, `trigger${teIdx}`);
