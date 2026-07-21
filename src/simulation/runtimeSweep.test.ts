@@ -305,7 +305,7 @@ describe('optimizer runtime full data sweep', () => {
         for (const [skillKey, skill] of Object.entries(flatSkills)) {
           const level = 8;
           for (let segmentIndex = 0; segmentIndex < (skill.segments || []).length; segmentIndex++) {
-            const segment = skill.segments[segmentIndex]!;
+            const segment = skill.segments![segmentIndex]!;
             const rawEntries = extractRawEntries({ segments: [segment] }, level);
             const hits = resolveHitsFromSheet([], rawEntries, level, {
               preserveCondition: true,

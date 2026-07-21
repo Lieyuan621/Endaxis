@@ -26,9 +26,19 @@ import type {
   EffectStat,
 } from './types';
 import { resolveLeveled, isTickGroup, createFinisherEntry, createDiveEntry } from './types';
-import type { TeamInstance, OperatorInstance, WeaponInstance, GearInstance } from '../types';
+import type {
+  TeamInstance,
+  TeamSlot,
+  OperatorInstance,
+  WeaponInstance,
+  GearInstance,
+} from '../types';
 import { getOperator, getWeapon, getGearPiece, getGearSet, resolveOperatorSlug } from './index';
 import { resolveEffectDefaults } from './effectPresets';
+import { computeStats } from './stats/computeStats';
+import { getBaseStatValues } from './stats/baseValues';
+import type { SheetStatEffect } from './stats/types';
+import { applyForm, applyWeaponForm } from './forms';
 import { uid } from '@/utils/uid';
 import { i18n } from '@/i18n';
 import {
@@ -109,6 +119,121 @@ function flatSkills(
   return result;
 }
 
+const EMPTY_SLOT: TeamSlot = {
+  operatorId: null,
+  weaponId: null,
+  gear: { armor: null, gloves: null, kit1: null, kit2: null },
+};
+
+/**
+ * Compute the wielder's GENERAL-form self attributes (base + equipment + general talents/potentials),
+ * the static total both the operator and weapon form selectors compare against. Collects the operator's
+ * own self attribute effects from the BASE sheets (resolveForms: false → no recursion) and runs
+ * computeStats.
+ */
+function computeWielderAttributes(
+  opInst: OperatorInstance,
+  wInst: WeaponInstance | undefined,
+  gearInstances: GearInstance[],
+  slot: TeamSlot,
+): Record<string, number> {
+  const singleTeam: TeamInstance = {
+    id: '_form',
+    name: '',
+    slots: [slot, EMPTY_SLOT, EMPTY_SLOT, EMPTY_SLOT],
+  };
+  const effects = collectEffects(singleTeam, [opInst], wInst ? [wInst] : [], gearInstances, {
+    resolveForms: false,
+  });
+
+  const attrEffects: SheetStatEffect[] = [];
+  for (const ce of effects) {
+    const e = ce.effect;
+    if (e.kind !== 'status' || !e.stat) continue;
+    if (e.stat.modifier !== 'attributeFlat' && e.stat.modifier !== 'attributePercent') continue;
+    const scope = typeof e.target === 'string' ? e.target : (e.target?.scope ?? 'self');
+    if (scope !== 'self') continue;
+    const r = e as unknown as { value?: number; scaling?: ResolvedScalingDef };
+    attrEffects.push({
+      stat: e.stat,
+      value: r.value,
+      scaling: r.scaling,
+      id: e.id,
+      external: e.external,
+    });
+  }
+
+  return computeStats(getBaseStatValues(opInst, wInst), attrEffects, []).attributes;
+}
+
+/**
+ * Resolve the active form key from the operator's GENERAL-form attributes. Never applies a form, so
+ * the switch can't depend on the chosen form (non-circular). Returns null when the operator has no forms.
+ */
+export function resolveActiveForm(
+  opInst: OperatorInstance,
+  weaponInstances: WeaponInstance[],
+  gearInstances: GearInstance[],
+  slot: TeamSlot,
+  sheet?: OperatorSheet,
+): string | null {
+  const op = sheet ?? getOperator(opInst.operatorSlug);
+  if (!op?.forms) return null;
+
+  const wInst = slot.weaponId ? weaponInstances.find(w => w.id === slot.weaponId) : undefined;
+  const attrs = computeWielderAttributes(opInst, wInst, gearInstances, slot);
+  const { selector, forms } = op.forms;
+  const first = forms[0]?.key ?? null;
+  return (attrs[selector.left] ?? 0) >= (attrs[selector.right] ?? 0)
+    ? first
+    : (forms[1]?.key ?? first);
+}
+
+/**
+ * Resolve the active weapon form key from the wielder's GENERAL-form attributes. Shares the selector
+ * semantics of operator forms; returns null when the weapon has no forms.
+ */
+export function resolveActiveWeaponForm(
+  wInst: WeaponInstance,
+  opInst: OperatorInstance,
+  gearInstances: GearInstance[],
+  slot: TeamSlot,
+): string | null {
+  const wSheet = getWeapon(wInst.weaponSlug);
+  if (!wSheet?.forms) return null;
+
+  const attrs = computeWielderAttributes(opInst, wInst, gearInstances, slot);
+  const { selector, forms } = wSheet.forms;
+  const first = forms[0]?.key ?? null;
+  return (attrs[selector.left] ?? 0) >= (attrs[selector.right] ?? 0)
+    ? first
+    : (forms[1]?.key ?? first);
+}
+
+/** getWeapon + active-form overrides. Returns the base sheet (zero overhead) for form-less weapons. */
+export function getEffectiveWeapon(
+  wInst: WeaponInstance,
+  opInst: OperatorInstance,
+  gearInstances: GearInstance[],
+  slot: TeamSlot,
+): WeaponSheet | undefined {
+  const sheet = getWeapon(wInst.weaponSlug);
+  if (!sheet?.forms) return sheet;
+  return applyWeaponForm(sheet, resolveActiveWeaponForm(wInst, opInst, gearInstances, slot));
+}
+
+/** getOperator + active-form overrides. Returns the base sheet (zero overhead) for form-less operators. */
+export function getEffectiveOperator(
+  opInst: OperatorInstance,
+  weaponInstances: WeaponInstance[],
+  gearInstances: GearInstance[],
+  slot: TeamSlot,
+): OperatorSheet | undefined {
+  const sheet = getOperator(opInst.operatorSlug);
+  if (!sheet?.forms) return sheet;
+  return applyForm(sheet, resolveActiveForm(opInst, weaponInstances, gearInstances, slot, sheet));
+}
+
 /**
  * Collect all damage-relevant effects from a team composition.
  * Looks up effect sheets for each slot's operator, weapon, and gear set,
@@ -119,6 +244,7 @@ export function collectEffects(
   operatorInstances: OperatorInstance[],
   weaponInstances: WeaponInstance[],
   gearInstances: GearInstance[],
+  opts?: { resolveForms?: boolean },
 ): CollectedEffect[] {
   const collected: CollectedEffect[] = [];
   const collectedPatches: Patch[] = [];
@@ -133,7 +259,10 @@ export function collectEffects(
     const operatorSlug = opInst.operatorSlug;
 
     // --- Operator effects (talents + potentials + skillEffects) ---
-    const op = getOperator(operatorSlug);
+    const op =
+      opts?.resolveForms === false
+        ? getOperator(operatorSlug)
+        : getEffectiveOperator(opInst, weaponInstances, gearInstances, slot);
     if (op) {
       // Pre-scan AppendEffect patches targeting passive effect arrays (talents, potentials, skill effects).
       // Key: target effect id → list of { effect: raw Effect, idx: level index to resolve at }
@@ -268,7 +397,12 @@ export function collectEffects(
     // --- Weapon effects ---
     const wInst = slot.weaponId ? weaponInstances.find(w => w.id === slot.weaponId) : null;
     if (wInst) {
-      const wSheet = getWeapon(wInst.weaponSlug);
+      // resolveForms:false MUST use the base sheet: computeWielderAttributes (form resolution) runs
+      // through here with that flag, so calling getEffectiveWeapon would recurse.
+      const wSheet =
+        opts?.resolveForms === false
+          ? getWeapon(wInst.weaponSlug)
+          : getEffectiveWeapon(wInst, opInst, gearInstances, slot);
       if (wSheet) {
         addWeaponSheetEffects(collected, wSheet, wInst, slotIndex, operatorSlug);
       }
@@ -304,13 +438,10 @@ export function collectEffects(
       if (!piece) continue;
 
       if (piece.defense > 0) {
-        const slotTypeKey =
-          gearSlotKey === 'kit1' || gearSlotKey === 'kit2' ? 'kit' : gearSlotKey;
+        const slotTypeKey = gearSlotKey === 'kit1' || gearSlotKey === 'kit2' ? 'kit' : gearSlotKey;
         const translatedSlot = getGameSlotTypeName(slotTypeKey, i18n.global.locale.value);
         const defenseKey = 'armory.common.defense';
-        const translatedDef = i18n.global.te(defenseKey)
-          ? i18n.global.t(defenseKey)
-          : 'Defense';
+        const translatedDef = i18n.global.te(defenseKey) ? i18n.global.t(defenseKey) : 'Defense';
         const defEffect = resolveEffect(
           {
             kind: 'status',
@@ -760,6 +891,7 @@ export function collectTriggerEffects(
   weaponInstances: WeaponInstance[],
   gearInstances: GearInstance[],
   effectById?: Map<string, CollectedEffect>,
+  opts?: { resolveForms?: boolean },
 ): CollectedTriggerEffect[] {
   const collected: CollectedTriggerEffect[] = [];
   const collectedPatches: Patch[] = [];
@@ -772,7 +904,10 @@ export function collectTriggerEffects(
     if (!opInst) continue;
 
     const operatorSlug = opInst.operatorSlug;
-    const op = getOperator(operatorSlug);
+    const op =
+      opts?.resolveForms === false
+        ? getOperator(operatorSlug)
+        : getEffectiveOperator(opInst, weaponInstances, gearInstances, slot);
 
     if (op) {
       // Pre-scan: collect AppendEffect patches from active talents + unlocked potentials.
@@ -950,7 +1085,10 @@ export function collectTriggerEffects(
     if (slot.weaponId) {
       const wInst = weaponInstances.find(w => w.id === slot.weaponId);
       if (wInst) {
-        const wSheet = getWeapon(wInst.weaponSlug);
+        const wSheet =
+          opts?.resolveForms === false
+            ? getWeapon(wInst.weaponSlug)
+            : getEffectiveWeapon(wInst, opInst, gearInstances, slot);
         if (wSheet) {
           const skills = [
             { triggers: wSheet.skill1.triggers, level: wInst.skill1Level, skillKey: 'skill1' },
@@ -1033,10 +1171,13 @@ export function collectTriggerEffects(
     if (!slot?.operatorId) continue;
     const opInst = operatorInstances.find(o => o.id === slot.operatorId);
     if (!opInst) continue;
-    const op = getOperator(opInst.operatorSlug);
+    const op =
+      opts?.resolveForms === false
+        ? getOperator(opInst.operatorSlug)
+        : getEffectiveOperator(opInst, weaponInstances, gearInstances, slot);
     if (!op?.combatSkills) continue;
     for (const skill of Object.values(op.combatSkills)) {
-      for (const seg of skill.segments) {
+      for (const seg of skill.segments ?? []) {
         for (const group of seg.damageGroups) {
           if (isTickGroup(group)) continue;
           for (const hit of group.hits) {
@@ -1309,7 +1450,7 @@ function expandCombatSkills(
     const { subSkills, ...rest } = skill;
     result[key] = {
       ...rest,
-      segments: expandSegments(skill.segments, patchTicksByTarget),
+      segments: expandSegments(skill.segments ?? [], patchTicksByTarget),
       skillKey: key,
       levelKey: key,
       type: key,

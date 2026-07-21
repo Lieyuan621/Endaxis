@@ -88,6 +88,81 @@ function flattenHitGroup(hg: any): any[] {
   }));
 }
 
+/** Flatten a basicAttack skill into `basicAttack_segments`. Empty array when it has no segments. */
+export function flattenBasicAttackSegments(basicAttack: any): any[] {
+  return (basicAttack?.segments || []).map((seg: any) => ({
+    duration: seg.duration,
+    ...(seg.gap != null ? { gap: seg.gap } : {}),
+    element: seg.damageGroups?.[0]?.element,
+    ultimateEnergyGain: 0,
+    damage_hits: (seg?.damageGroups ?? []).flatMap(flattenHitGroup),
+  }));
+}
+
+/**
+ * Flatten one combat skill (battleSkill/comboSkill/ultimate) into the flat `${key}_*` fields the
+ * timeline store expects. Returns an empty object when the skill has no segments (e.g. an empty
+ * `{}` general-form placeholder). Shared by the roster builder and the per-track skill library so
+ * form-resolved skills flatten identically to base-sheet skills.
+ */
+export function flattenCombatSkillFields(
+  skillKey: 'battleSkill' | 'comboSkill' | 'ultimate',
+  skill: any,
+  slug: string,
+): Record<string, any> {
+  const expandedSegs = expandSegments(skill?.segments || []);
+  const seg = expandedSegs[0];
+  if (!seg) return {};
+
+  const fields: Record<string, any> = {};
+  fields[`${skillKey}_segments`] = expandedSegs.map((s: any) => {
+    const base: any = {
+      duration: s.duration,
+      ...(s.gap != null ? { gap: s.gap } : {}),
+      ...(s.skillId ? { skillId: s.skillId } : {}),
+      element: s.damageGroups?.[0]?.element,
+      ultimateEnergyGain: 0,
+      damage_hits: (s?.damageGroups ?? []).flatMap(flattenHitGroup),
+    };
+    if (skillKey === 'battleSkill') {
+      const segSpCost = s.spCost ?? BATTLE_SKILL_SP_COST;
+      base.spCost = segSpCost;
+      base.ultimateEnergyGain = s.ultimateEnergyGain ?? 0;
+      base.teamUltimateEnergyGain = s.teamUltimateEnergyGain ?? 0;
+    }
+    return base;
+  });
+
+  fields[`${skillKey}_duration`] = seg.duration ?? 0;
+  fields[`${skillKey}_damage_hits`] = (seg?.damageGroups ?? []).flatMap(flattenHitGroup);
+  fields[`${skillKey}_element`] = seg.damageGroups?.[0]?.element;
+  fields[`${skillKey}_icon`] = `/operators/${slug}/${SKILL_ICON_FILE[skillKey]}`;
+
+  if (skillKey === 'battleSkill') {
+    const segs = fields.battleSkill_segments as any[];
+    const totalSpCost = segs.reduce((acc, s) => acc + (s.spCost ?? 0), 0);
+    const totalUe = segs.reduce((acc, s) => acc + (s.ultimateEnergyGain ?? 0), 0);
+    fields.battleSkill_spCost = totalSpCost;
+    fields.battleSkill_ultimateEnergyGain = totalUe;
+    fields.battleSkill_teamUltimateEnergyGain = totalUe;
+  }
+  if (skillKey === 'comboSkill') {
+    fields.comboSkill_ultimateEnergyGain = skill.ultimateEnergyGain ?? COMBO_SKILL_UE;
+  }
+
+  if (skill.cooldown != null) fields[`${skillKey}_cooldown`] = rlv(skill.cooldown, 0);
+
+  if (skillKey === 'ultimate') {
+    if (skill.ultimateEnergyCost != null)
+      fields.ultimate_ultimateEnergyCost = skill.ultimateEnergyCost;
+    fields.ultimate_ultimateEnergyReply = 0;
+    if (skill.enhancementTime != null) fields.ultimate_enhancementTime = skill.enhancementTime;
+    if (skill.animationTime != null) fields.ultimate_animationTime = skill.animationTime;
+  }
+
+  return fields;
+}
+
 let _characterRoster: any[] | null = null;
 
 export function getCharacterRoster(): any[] {
@@ -106,9 +181,9 @@ export function getCharacterRoster(): any[] {
 
     // Finisher and Dive from shared templates
     const finisherEntry = createFinisherEntry(op.finisherElement);
-    const finSeg = finisherEntry.segments[0];
+    const finSeg = finisherEntry.segments?.[0];
     const diveEntry = createDiveEntry(op.diveElement);
-    const diveSeg = diveEntry.segments[0];
+    const diveSeg = diveEntry.segments?.[0];
 
     const entry: any = {
       id,
@@ -131,71 +206,14 @@ export function getCharacterRoster(): any[] {
 
     // Basic Attack → basicAttack_segments (reconstructed from segments)
     if (basicAttack) {
-      entry.basicAttack_segments = (basicAttack.segments || []).map((seg: any) => ({
-        duration: seg.duration,
-        ...(seg.gap != null ? { gap: seg.gap } : {}),
-        element: seg.damageGroups?.[0]?.element,
-        ultimateEnergyGain: 0,
-        damage_hits: (seg?.damageGroups ?? []).flatMap(flattenHitGroup),
-      }));
+      entry.basicAttack_segments = flattenBasicAttackSegments(basicAttack);
     }
 
     // Battle Skill / Combo Skill / Ultimate → flat dict-key fields + per-segment arrays
     for (const skillKey of ['battleSkill', 'comboSkill', 'ultimate'] as const) {
       const skill = op.combatSkills?.[skillKey];
       if (!skill) continue;
-
-      // expandSegments converts TickGroups → HitGroups so their hits are visible below.
-      const expandedSegs = expandSegments(skill.segments || []);
-      const seg = expandedSegs[0];
-      if (!seg) continue;
-
-      // Per-segment array (mirrors basicAttack_segments shape)
-      entry[`${skillKey}_segments`] = expandedSegs.map((s: any) => {
-        const base: any = {
-          duration: s.duration,
-          ...(s.gap != null ? { gap: s.gap } : {}),
-          ...(s.skillId ? { skillId: s.skillId } : {}),
-          element: s.damageGroups?.[0]?.element,
-          ultimateEnergyGain: 0,
-          damage_hits: (s?.damageGroups ?? []).flatMap(flattenHitGroup),
-        };
-        if (skillKey === 'battleSkill') {
-          const segSpCost = s.spCost ?? BATTLE_SKILL_SP_COST;
-          base.spCost = segSpCost;
-          base.ultimateEnergyGain = s.ultimateEnergyGain ?? 0;
-          base.teamUltimateEnergyGain = s.teamUltimateEnergyGain ?? 0;
-        }
-        return base;
-      });
-
-      // Flat fields from first segment
-      entry[`${skillKey}_duration`] = seg.duration ?? 0;
-      entry[`${skillKey}_damage_hits`] = (seg?.damageGroups ?? []).flatMap(flattenHitGroup);
-      entry[`${skillKey}_element`] = seg.damageGroups?.[0]?.element;
-      entry[`${skillKey}_icon`] = `/operators/${slug}/${SKILL_ICON_FILE[skillKey]}`;
-
-      if (skillKey === 'battleSkill') {
-        const segs = entry.battleSkill_segments as any[];
-        const totalSpCost = segs.reduce((acc, s) => acc + (s.spCost ?? 0), 0);
-        const totalUe = segs.reduce((acc, s) => acc + (s.ultimateEnergyGain ?? 0), 0);
-        entry.battleSkill_spCost = totalSpCost;
-        entry.battleSkill_ultimateEnergyGain = totalUe;
-        entry.battleSkill_teamUltimateEnergyGain = totalUe;
-      }
-      if (skillKey === 'comboSkill') {
-        entry.comboSkill_ultimateEnergyGain = skill.ultimateEnergyGain ?? COMBO_SKILL_UE;
-      }
-
-      if (skill.cooldown != null) entry[`${skillKey}_cooldown`] = rlv(skill.cooldown, 0);
-
-      if (skillKey === 'ultimate') {
-        if (skill.ultimateEnergyCost != null)
-          entry.ultimate_ultimateEnergyCost = skill.ultimateEnergyCost;
-        entry.ultimate_ultimateEnergyReply = 0;
-        if (skill.enhancementTime != null) entry.ultimate_enhancementTime = skill.enhancementTime;
-        if (skill.animationTime != null) entry.ultimate_animationTime = skill.animationTime;
-      }
+      Object.assign(entry, flattenCombatSkillFields(skillKey, skill, slug));
     }
 
     roster.push(entry);
