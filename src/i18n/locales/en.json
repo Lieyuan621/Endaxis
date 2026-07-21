@@ -98,6 +98,7 @@
       "noControl": "no control",
       "skillDamage": "Skill damage",
       "effectDamage": "Effect damage",
+      "cdReductionText": "CD reduction {amount}s",
       "orphans": "Unassigned Events",
       "jumpToTimeline": "Click to jump to timeline",
       "lines": "Lines",

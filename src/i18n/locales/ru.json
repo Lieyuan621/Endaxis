@@ -98,6 +98,7 @@
       "noControl": "без контроля",
       "skillDamage": "Урон навыка",
       "effectDamage": "Урон эффекта",
+      "cdReductionText": "Снижение КД {amount}с",
       "orphans": "Несвязанные события",
       "jumpToTimeline": "Нажмите, чтобы перейти к таймлайну",
       "lines": "Строк",

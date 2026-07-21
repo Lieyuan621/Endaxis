@@ -26,16 +26,23 @@ describe('timeline data roster', () => {
     expect(avywenna?.comboSkill_ultimateEnergyGain).toBe(0);
   });
 
-  it('keeps Last Rite combo action energy at zero because its hit grants the base 40', () => {
+  it('splits Last Rite combo UE: base 40 on first hit, stack-scaled on second with consume', () => {
     const lastRite = getCharacterRoster().find(entry => entry.id === 'last-rite');
+    const hits = lastRite?.comboSkill_damage_hits || [];
+    const firstUe = hits[0]?.effects?.find((effect: any) => effect.kind === 'ultEnergyGain');
+    const lastEffects = hits[hits.length - 1]?.effects || [];
+    const stackUe = lastEffects.find((effect: any) => effect.kind === 'ultEnergyGain');
 
     expect(lastRite?.comboSkill_ultimateEnergyGain).toBe(0);
     expect(lastRite?.accept_self_sp_cost_ult_energy).toBe(false);
-    expect(
-      lastRite?.comboSkill_damage_hits?.some((hit: any) =>
-        hit.effects?.some((effect: any) => effect.kind === 'ultEnergyGain' && effect.value === 40),
-      ),
-    ).toBe(true);
+    expect(firstUe).toMatchObject({ kind: 'ultEnergyGain', value: 40 });
+    expect(firstUe?.scaling).toBeUndefined();
+    expect(stackUe).toMatchObject({ kind: 'ultEnergyGain', value: 0 });
+    expect(stackUe?.scaling?.additive?.[0]).toMatchObject({
+      key: 'cryoInfliction',
+      coefficient: 15,
+    });
+    expect(lastEffects.some((effect: any) => effect.kind === 'consume')).toBe(true);
   });
 
   it('stores combo-skill ultimate energy on the last hit (action-level cleared)', () => {

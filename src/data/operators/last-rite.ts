@@ -316,7 +316,7 @@ const sheet: OperatorSheet = {
         ],
         duration: 5,
       },
-      ultimateEnergyGain: 40,
+      ultimateEnergyGain: 0,
       segments: [
         {
           duration: 2.17,
@@ -328,6 +328,12 @@ const sheet: OperatorSheet = {
               hits: [
                 {
                   offset: 0.43,
+                  effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 40,
+                    },
+                  ],
                 },
               ],
             },
