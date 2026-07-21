@@ -423,7 +423,7 @@ const sheet: OperatorSheet = {
                           {
                             id: 'arcane-gloompurger-array',
                             name: 'gloompurgerArray',
-                            icon: '/operators/arcane/ultimate.png',
+                            icon: '/operators/arcane/ultimate.webp',
                             kind: 'status',
                             target: 'self',
                             duration: 20,
@@ -517,7 +517,7 @@ const sheet: OperatorSheet = {
                   {
                     id: 'arcane-gloompurge-arcana-ready',
                     name: 'gloompurgeArcana',
-                    icon: '/operators/arcane/ultimate.png',
+                    icon: '/operators/arcane/ultimate.webp',
                     kind: 'status',
                     target: 'self',
                     stat: { modifier: 'ultimateEnergyCostReduction' },
@@ -764,7 +764,7 @@ const sheet: OperatorSheet = {
                           {
                             id: 'arcane-gloompurger-array',
                             name: 'gloompurgerArray',
-                            icon: '/operators/arcane/ultimate.png',
+                            icon: '/operators/arcane/ultimate.webp',
                             kind: 'status',
                             target: 'self',
                             duration: 20,
@@ -854,7 +854,7 @@ const sheet: OperatorSheet = {
                   {
                     id: 'arcane-gloompurge-arcana-ready',
                     name: 'gloompurgeArcana',
-                    icon: '/operators/arcane/ultimate.png',
+                    icon: '/operators/arcane/ultimate.webp',
                     kind: 'status',
                     target: 'self',
                     stat: { modifier: 'ultimateEnergyCostReduction' },
