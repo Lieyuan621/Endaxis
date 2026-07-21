@@ -55,16 +55,21 @@ export class TriggerRegistry {
   onSpRecovery(event: SpChangeEvent, ctx: SimulationContext): void {
     if (event.payload.spChange <= 0) return;
     const actorId = event.payload.actorId;
+    const sourceAction = ctx.getAction(event.payload.sourceId);
+    const sourceActionId =
+      sourceAction?.id ??
+      (event.payload.sourceId && !String(event.payload.sourceId).startsWith('triggered:')
+        ? event.payload.sourceId
+        : undefined);
     for (const entry of this.entries) {
       if (entry.sourceTrackId !== actorId) continue;
       const { trigger } = entry.triggerEffect;
       if (trigger.kind !== 'onSpRecovery') continue;
       const t = trigger as Extract<TriggerEvent, { kind: 'onSpRecovery' }>;
       if (t.skillTypes || t.skillId) {
-        const action = ctx.getAction(event.payload.sourceId);
         // For triggered hits (synthetic actionId), fall back to the skillType stamped on the event.
-        const type = action?.node.type ?? event.payload.skillType;
-        const skillId = action?.node.skillId ?? event.payload.skillId;
+        const type = sourceAction?.node.type ?? event.payload.skillType;
+        const skillId = sourceAction?.node.skillId ?? event.payload.skillId;
         if (!type && !skillId) continue;
         // `skillTypes` filter matches the action's type (e.g. 'comboSkill' matches
         // both the canonical combo AND every sub-combo variant).
@@ -81,7 +86,7 @@ export class TriggerRegistry {
         undefined,
         entry.sourceSkillType,
         undefined,
-        undefined,
+        sourceActionId,
         undefined,
         undefined,
         event.payload.skillId,
@@ -127,7 +132,7 @@ export class TriggerRegistry {
         undefined,
         entry.sourceSkillType,
         actorId,
-        undefined,
+        event.payload.actionId,
         undefined,
         undefined,
         (event.payload.hitData as any)?.skillId,
@@ -165,6 +170,7 @@ export class TriggerRegistry {
         undefined,
         entry.sourceSkillType,
         actorId,
+        event.payload.actionId,
       );
     }
   }
@@ -194,6 +200,7 @@ export class TriggerRegistry {
         undefined,
         entry.sourceSkillType,
         actorId,
+        event.payload.actionId,
       );
     }
   }
@@ -223,6 +230,7 @@ export class TriggerRegistry {
         undefined,
         entry.sourceSkillType,
         actorId,
+        event.payload.actionId,
       );
     }
   }
@@ -254,6 +262,8 @@ export class TriggerRegistry {
         1,
         undefined,
         entry.sourceSkillType,
+        undefined,
+        event.payload.actionId,
       );
     }
   }
@@ -452,7 +462,8 @@ export class TriggerRegistry {
      *  Used for scope:'self' / 'teamExcludeSelf' target resolution and spGain.
      *  Defaults to sourceTrackId when absent (self-scope triggers). */
     triggeringTrackId?: string,
-    /** Set only for duringAction triggers; forwarded to effect apply/expire events for runtime extension. */
+    /** Originating action id when known (hit/action triggers, duringAction, etc.).
+     *  Forwarded to effect apply/expire and triggered damage so battle log can attribute them. */
     actionId?: string,
     /** Pre-mutation enemy snapshot for consume/expire triggers (enemy state already mutated before dispatch).
      *  When absent, a live snapshot is taken. */
@@ -506,7 +517,7 @@ export class TriggerRegistry {
           sourceTrackId,
           ctx,
           sourceSkillType,
-          undefined,
+          actionId,
           consumedStacks,
           enemySnap,
           sourceSkillId,

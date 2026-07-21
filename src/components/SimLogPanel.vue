@@ -2,6 +2,42 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { formatSimLogEntry } from '@/simulation/formatSimLogEntry.ts';
+import {
+  formatBattleLogField,
+  translateBattleLogElement,
+  translateBattleLogSpReason,
+  translateBattleLogStatus,
+} from '@/simulation/formatBattleLogLabels.ts';
+import {
+  formatEnemyBattleLogLine,
+  formatEnemyBattleLogSummary,
+  isEnemyChannelEntry,
+  isEnemyEffectType,
+  isEnemyReactionType,
+  mergeCorrosionTicksInBattleLog,
+  normalizeEnemyLogEntry,
+  shouldIncludeEnemyLogEvent,
+} from '@/simulation/normalizeEnemyLogForBattleLog.ts';
+import { enrichBattleLogAttribution } from '@/simulation/enrichBattleLogAttribution.ts';
+import {
+  BATTLE_LOG_TYPE_PRESETS,
+  matchBattleLogTypePreset,
+  resolveBattleLogTypePreset,
+} from '@/simulation/battleLogTypePresets.ts';
+import {
+  BATTLE_LOG_UNKNOWN_SKILL_KIND,
+  battleLogSkillKindLabel,
+  sortBattleLogSkillKinds,
+} from '@/simulation/battleLogSkillKinds.ts';
+import {
+  formatOperatorBattleLogLine,
+  formatOperatorBattleLogSummary,
+  isEffectOriginDamage,
+  isOperatorChannelEntry,
+  isOperatorEffectType,
+  normalizeOperatorLogEntry,
+  shouldIncludeOperatorLogEvent,
+} from '@/simulation/normalizeOperatorLogForBattleLog.ts';
 import { useI18n } from 'vue-i18n';
 import { formatTimeWithFrames } from '@/utils/time';
 import { translateEffectName } from '@/editor/hits/statusOptions';
@@ -19,6 +55,8 @@ const openActionId = ref(null);
 const keyword = ref('');
 const limit = ref('all');
 const selectedTypes = ref(new Set());
+const selectedSkillKinds = ref(new Set());
+const hasInitializedSkillKinds = ref(false);
 
 function formatSignedNumber(value) {
   const num = Number(value) || 0;
@@ -30,6 +68,10 @@ function formatDamageNumber(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return '0';
   return Number.isInteger(num) ? String(num) : num.toFixed(2);
+}
+
+function formatField(fieldKey, value) {
+  return formatBattleLogField(t, te, fieldKey, value);
 }
 
 function getDamageValue(entry) {
@@ -46,10 +88,18 @@ function getDamageElement(entry) {
   return breakdown?.element || hitData?.element || '';
 }
 
-function getReactionLabel(entry) {
+function getDamageElementLabel(entry) {
+  return translateBattleLogElement(t, te, getDamageElement(entry));
+}
+
+function getReactionRaw(entry) {
   const hitData = entry?.payload?.hitData;
   const breakdown = getDamageBreakdown(entry);
   return breakdown?.reactionType || hitData?._reactionMeta?.reactionType || '';
+}
+
+function getReactionLabel(entry) {
+  return translateBattleLogStatus(t, te, getReactionRaw(entry));
 }
 
 function getConsumedStacksLabel(entry) {
@@ -58,22 +108,37 @@ function getConsumedStacksLabel(entry) {
   if (!consumed || typeof consumed !== 'object') return '';
   return Object.entries(consumed)
     .filter(([, value]) => Number(value) !== 0)
-    .map(([key, value]) => `${key}:${formatDamageNumber(value)}`)
+    .map(([key, value]) => `${translateBattleLogStatus(t, te, key)}:${formatDamageNumber(value)}`)
     .join(', ');
 }
 
-function getLmdiLabel(entry) {
+function getLmdiEntries(entry) {
   const hitData = entry?.payload?.hitData;
-  if (!hitData || hitData._lmdiSelf == null) return '';
-  const external =
-    hitData._lmdiExternal && typeof hitData._lmdiExternal === 'object'
-      ? Object.entries(hitData._lmdiExternal)
-          .filter(([, value]) => Number(value) !== 0)
-          .map(([key, value]) => `${key}:${formatDamageNumber(value)}`)
-          .join(', ')
-      : '';
-  const self = `self:${formatDamageNumber(hitData._lmdiSelf)}`;
-  return external ? `${self} ext:${external}` : self;
+  if (!hitData || hitData._lmdiSelf == null) return [];
+
+  const entries = [
+    {
+      key: 'self',
+      label: t('battleLog.fields.lmdiSelf'),
+      value: formatDamageNumber(hitData._lmdiSelf),
+    },
+  ];
+
+  if (hitData._lmdiExternal && typeof hitData._lmdiExternal === 'object') {
+    for (const [key, value] of Object.entries(hitData._lmdiExternal)) {
+      if (Number(value) === 0) continue;
+      const trackName = getTrackDisplayName(key);
+      const statusName = translateBattleLogStatus(t, te, key);
+      entries.push({
+        key: `ext:${key}`,
+        // External LMDI keys are usually operator track ids; status keys are rarer fallbacks.
+        label: trackName && trackName !== key ? trackName : statusName || key,
+        value: formatDamageNumber(value),
+      });
+    }
+  }
+
+  return entries;
 }
 
 function getGroupDamageTotal(group) {
@@ -96,6 +161,8 @@ function getActionColor(actionId) {
 
 function getEntryActionId(entry) {
   if (!entry || !entry.type) return null;
+  if (isEnemyChannelEntry(entry)) return null;
+  if (isOperatorChannelEntry(entry)) return entry.payload?.actionId || null;
   switch (entry.type) {
     case 'ACTION_START':
     case 'ACTION_END':
@@ -109,14 +176,89 @@ function getEntryActionId(entry) {
     case 'SP_CHANGE':
       return entry.payload?.sourceId || null;
     case 'ULT_ENERGY_CHANGE':
-    case 'ULTIMATE_CHARGE_CHANGE':
       return entry.payload?.sourceId || null;
-    case 'EFFECT_START':
-    case 'REACTION_OCCURRED':
-      return entry.payload?.actionId || null;
+    case 'SP_REGEN_PAUSE':
+      return entry.payload?.sourceId || null;
     default:
       return null;
   }
+}
+
+function isRealActionId(actionId) {
+  return !!(actionId && store.getActionById?.(actionId));
+}
+
+function isSyntheticActionId(actionId) {
+  if (!actionId) return true;
+  return (
+    String(actionId).startsWith('triggered:') ||
+    String(actionId).startsWith('reaction:') ||
+    String(actionId).startsWith('dot:')
+  );
+}
+
+function getEntryTrackId(entry) {
+  if (!entry?.payload) return '';
+  if (isEnemyChannelEntry(entry)) {
+    return entry.payload.sourceId || '';
+  }
+  if (isOperatorChannelEntry(entry)) {
+    return entry.payload.sourceId || entry.payload.targetTrackId || '';
+  }
+  switch (entry.type) {
+    case 'DAMAGE_HIT':
+      return entry.payload.sourceId || '';
+    case 'ACTION_START':
+    case 'ACTION_END':
+    case 'SP_CHANGE':
+    case 'CD_REDUCTION':
+    case 'STAGGER':
+    case 'ULT_ENERGY_CHANGE':
+      return entry.payload.actorId || '';
+    case 'SP_REGEN_PAUSE': {
+      const sourceId = entry.payload.sourceId;
+      if (isRealActionId(sourceId)) return getActorIdForAction(sourceId);
+      return sourceId || '';
+    }
+    default:
+      return entry.payload.actorId || entry.payload.sourceId || '';
+  }
+}
+
+/** Latest action on a track that started at or before `time` (same heuristic as ActionItem ticks). */
+function buildTrackActionStarts() {
+  const byTrack = new Map();
+  const entries = store.compiledTimeline?.actionMap?.entries?.() ?? [];
+  for (const [id, action] of entries) {
+    const trackId = action.trackId;
+    if (!trackId) continue;
+    let list = byTrack.get(trackId);
+    if (!list) {
+      list = [];
+      byTrack.set(trackId, list);
+    }
+    list.push({ id, start: Number(action.realStartTime) || 0 });
+  }
+  for (const list of byTrack.values()) {
+    list.sort((left, right) => right.start - left.start);
+  }
+  return byTrack;
+}
+
+function resolveOwnerActionId(entry, trackActionStarts) {
+  const raw = getEntryActionId(entry);
+  if (isRealActionId(raw)) return raw;
+
+  const trackId = getEntryTrackId(entry);
+  const starts = trackId ? trackActionStarts.get(trackId) : null;
+  if (starts?.length) {
+    const owner = starts.find(item => item.start <= (Number(entry.time) || 0));
+    if (owner?.id) return owner.id;
+  }
+
+  // Keep a stable synthetic bucket when we cannot resolve a real action.
+  if (raw && !isSyntheticActionId(raw)) return raw;
+  return raw || null;
 }
 
 function getTrackDisplayName(trackId) {
@@ -133,11 +275,6 @@ function getActionDisplayName(actionId) {
   return formatEffectId(actionId);
 }
 
-function getActionType(actionId) {
-  const info = store.getActionById?.(actionId);
-  return info?.node?.type || '';
-}
-
 function getActorIdForAction(actionId) {
   const info = store.getActionById?.(actionId);
   return info?.trackId || '';
@@ -150,7 +287,112 @@ function formatFrameTime(timeSeconds) {
 }
 
 function formatEntryLine(entry) {
-  return formatSimLogEntry(entry, { formatTime: formatFrameTime });
+  if (isEnemyChannelEntry(entry)) {
+    return formatEnemyBattleLogLine(entry, {
+      t,
+      te,
+      formatTime: formatFrameTime,
+      typeLabel: getTypeLabel,
+    });
+  }
+  if (isOperatorChannelEntry(entry)) {
+    return formatOperatorBattleLogLine(entry, {
+      t,
+      te,
+      formatTime: formatFrameTime,
+      typeLabel: getTypeLabel,
+      trackName: getTrackDisplayName,
+    });
+  }
+  return formatSimLogEntry(entry, {
+    formatTime: formatFrameTime,
+    t,
+    te,
+    typeLabel: getTypeLabel,
+    trackName: getTrackDisplayName,
+    actionName: id => {
+      const info = store.getActionById?.(id);
+      if (info?.node?.name) return info.node.name;
+      return formatEffectId(id);
+    },
+  });
+}
+
+function formatEnemyEffectVerb(entry) {
+  if (
+    entry?.type === 'ENEMY_EFFECT_EXPIRE' ||
+    entry?.type === 'INFLICTION_CONSUMED' ||
+    entry?.type === 'VULNERABILITY_CONSUMED'
+  ) {
+    return t('battleLog.ui.effectRemove');
+  }
+  if (entry?.type === 'CORROSION_SPAN') {
+    return t('battleLog.ui.tick');
+  }
+  if (entry?.type === 'ARTS_BURST') return t('battleLog.ui.burst');
+  if (isEnemyReactionType(entry?.type)) return t('battleLog.ui.reaction');
+  return t('battleLog.ui.effectApply');
+}
+
+function formatEnemyEffectSummary(entry) {
+  return formatEnemyBattleLogSummary(entry, t, te);
+}
+
+function formatOperatorEffectVerb(entry) {
+  return entry?.type === 'OPERATOR_EFFECT_EXPIRE'
+    ? t('battleLog.ui.effectRemove')
+    : t('battleLog.ui.effectApply');
+}
+
+function formatOperatorEffectSummary(entry) {
+  return formatOperatorBattleLogSummary(entry, t, te);
+}
+
+function getDamageKindPill(entry) {
+  return isEffectOriginDamage(entry)
+    ? t('battleLog.ui.effectDamage')
+    : t('battleLog.ui.skillDamage');
+}
+
+function getEffectDamageSourceLabel(entry, group) {
+  const hit = entry?.payload?.hitData;
+  if (!hit) return '';
+
+  const rawBy = String(
+    hit.triggeredBy || hit._reactionMeta?.reactionType || hit.id || '',
+  ).trim();
+  const cleaned = rawBy.replace(/^(dot:|reaction:|triggered:)/, '');
+  const effectPart = cleaned ? translateBattleLogStatus(t, te, cleaned) || cleaned : '';
+
+  let skillPart = '';
+  if (group?.actionName && !isSyntheticActionId(group.actionId)) {
+    skillPart = group.actionName;
+  } else if (isRealActionId(entry?.payload?.actionId)) {
+    skillPart = getActionDisplayName(entry.payload.actionId);
+  } else if (hit.skillId) {
+    skillPart = formatEffectId(hit.skillId);
+  }
+
+  if (effectPart && skillPart && effectPart !== skillPart) {
+    return `${effectPart} · ${skillPart}`;
+  }
+  return effectPart || skillPart;
+}
+
+function getSkillDamageEntries(group) {
+  return (group.damage || []).filter(entry => !isEffectOriginDamage(entry));
+}
+
+function getEffectDamageEntries(group) {
+  return (group.damage || []).filter(entry => isEffectOriginDamage(entry));
+}
+
+function getGroupSkillDamageTotal(group) {
+  return getSkillDamageEntries(group).reduce((sum, entry) => sum + getDamageValue(entry), 0);
+}
+
+function getGroupEffectDamageTotal(group) {
+  return getEffectDamageEntries(group).reduce((sum, entry) => sum + getDamageValue(entry), 0);
 }
 
 function formatOtherEntryText(entry) {
@@ -174,6 +416,22 @@ function formatEffectSourceId(sourceId) {
   return formatEffectId(sourceId);
 }
 
+function getActionSkillKind(actionId) {
+  if (!actionId) return BATTLE_LOG_UNKNOWN_SKILL_KIND;
+  const info = store.getActionById?.(actionId);
+  const kind = String(info?.node?.type || '').trim();
+  return kind || BATTLE_LOG_UNKNOWN_SKILL_KIND;
+}
+
+function getEntrySkillKind(entry, trackActionStarts) {
+  if (entry?.type === 'ACTION_START' || entry?.type === 'ACTION_END') {
+    const fromPayload = String(entry.payload?.type || '').trim();
+    if (fromPayload) return fromPayload;
+  }
+  const actionId = resolveOwnerActionId(entry, trackActionStarts);
+  return getActionSkillKind(actionId);
+}
+
 function getTypeLabel(type) {
   const key = `battleLog.types.${type}`;
   const out = t(key);
@@ -181,15 +439,34 @@ function getTypeLabel(type) {
 }
 
 function getSummaryStats(group) {
-  return [
+  const skillTotal = getGroupSkillDamageTotal(group);
+  const effectTotal = getGroupEffectDamageTotal(group);
+  const stats = [
     {
       key: 'damage',
       label: t('battleLog.summary.damage'),
       value: formatDamageNumber(getGroupDamageTotal(group)),
     },
+  ];
+  if (skillTotal > 0 && effectTotal > 0) {
+    stats.push(
+      {
+        key: 'skillDamage',
+        label: t('battleLog.summary.skillDamage'),
+        value: formatDamageNumber(skillTotal),
+      },
+      {
+        key: 'effectDamage',
+        label: t('battleLog.summary.effectDamage'),
+        value: formatDamageNumber(effectTotal),
+      },
+    );
+  }
+  stats.push(
     { key: 'gauge', label: t('battleLog.summary.gauge'), value: group.gauge.length },
     { key: 'stagger', label: t('battleLog.summary.stagger'), value: group.stagger.length },
-  ];
+  );
+  return stats;
 }
 
 function hasRenderableSections(group) {
@@ -204,10 +481,21 @@ function hasRenderableSections(group) {
   );
 }
 
+/** Corrosion ticks are merged into spans; spans follow the DEBUFF_APPLY type chip. */
+function isCorrosionLogType(type) {
+  return type === 'CORROSION_SPAN';
+}
+
+function isTypeAllowed(type, allow) {
+  if (isCorrosionLogType(type)) return allow.has('DEBUFF_APPLY');
+  return allow.has(type);
+}
+
 const availableTypes = computed(() => {
   const set = new Set();
   for (const entry of displayLog.value) {
-    if (entry?.type) set.add(entry.type);
+    if (!entry?.type || isCorrosionLogType(entry.type)) continue;
+    set.add(entry.type);
   }
   return Array.from(set).sort();
 });
@@ -242,6 +530,48 @@ watch(availableTypes, types => {
   selectedTypes.value = next;
 });
 
+const trackActionStartsForFilter = computed(() => buildTrackActionStarts());
+
+const availableSkillKinds = computed(() => {
+  const set = new Set();
+  const trackStarts = trackActionStartsForFilter.value;
+  for (const entry of displayLog.value) {
+    if (!entry?.type) continue;
+    set.add(getEntrySkillKind(entry, trackStarts));
+  }
+  return sortBattleLogSkillKinds(Array.from(set));
+});
+
+const skillKindFilterItems = computed(() =>
+  availableSkillKinds.value.map(kind => ({
+    kind,
+    label: battleLogSkillKindLabel(t, te, kind),
+  })),
+);
+
+watch(availableSkillKinds, kinds => {
+  if (!kinds || kinds.length === 0) return;
+  if (!hasInitializedSkillKinds.value) {
+    selectedSkillKinds.value = new Set(kinds);
+    hasInitializedSkillKinds.value = true;
+    return;
+  }
+  let changed = false;
+  const kindSet = new Set(kinds);
+  const next = new Set();
+  selectedSkillKinds.value.forEach(kind => {
+    if (kindSet.has(kind)) next.add(kind);
+  });
+  kinds.forEach(kind => {
+    if (selectedSkillKinds.value.size > 0 && !next.has(kind)) {
+      next.add(kind);
+      changed = true;
+    }
+  });
+  if (!changed && next.size === selectedSkillKinds.value.size) return;
+  selectedSkillKinds.value = next;
+});
+
 const currentRevision = computed(() => store.simLogRevision);
 
 watch(
@@ -255,7 +585,33 @@ watch(
 );
 
 function refresh() {
-  displayLog.value = Array.isArray(store.simLog) ? store.simLog.slice() : [];
+  const sim = Array.isArray(store.simLog) ? store.simLog : [];
+  const enemy = Array.isArray(store.enemyLog) ? store.enemyLog : [];
+  const operator = Array.isArray(store.operatorLog) ? store.operatorLog : [];
+  const normalizedEnemy = [];
+  for (let i = 0; i < enemy.length; i++) {
+    const event = enemy[i];
+    if (!shouldIncludeEnemyLogEvent(event)) continue;
+    normalizedEnemy.push(normalizeEnemyLogEntry(event));
+  }
+  const mergedEnemy = mergeCorrosionTicksInBattleLog(normalizedEnemy);
+  const normalizedOperator = [];
+  for (let i = 0; i < operator.length; i++) {
+    const event = operator[i];
+    if (!shouldIncludeOperatorLogEvent(event)) continue;
+    normalizedOperator.push(normalizeOperatorLogEntry(event));
+  }
+  const merged = [...sim, ...mergedEnemy, ...normalizedOperator].sort((a, b) => {
+    const dt = (Number(a.time) || 0) - (Number(b.time) || 0);
+    if (dt !== 0) return dt;
+    const channelRank = entry => {
+      if (isOperatorChannelEntry(entry)) return 2;
+      if (isEnemyChannelEntry(entry)) return 1;
+      return 0;
+    };
+    return channelRank(a) - channelRank(b);
+  });
+  displayLog.value = enrichBattleLogAttribution(merged);
   lastRefreshedRevision.value = store.simLogRevision;
   isDirty.value = false;
 }
@@ -267,21 +623,38 @@ function toggleType(type) {
   selectedTypes.value = next;
 }
 
-function selectAllTypes() {
-  selectedTypes.value = new Set(availableTypes.value);
+function toggleSkillKind(kind) {
+  const next = new Set(selectedSkillKinds.value);
+  if (next.has(kind)) next.delete(kind);
+  else next.add(kind);
+  selectedSkillKinds.value = next;
 }
 
 function clearTypes() {
   selectedTypes.value = new Set();
+  selectedSkillKinds.value = new Set();
+}
+
+const activeTypePreset = computed(() =>
+  matchBattleLogTypePreset(selectedTypes.value, availableTypes.value),
+);
+
+function applyTypePreset(presetId) {
+  selectedTypes.value = new Set(resolveBattleLogTypePreset(presetId, availableTypes.value));
 }
 
 const filteredEntries = computed(() => {
   const kw = (keyword.value || '').trim().toLowerCase();
   const allow = selectedTypes.value;
+  const allowSkills = selectedSkillKinds.value;
   const raw = displayLog.value;
   const max = limit.value === 'all' ? Infinity : Math.max(0, Number(limit.value) || 0);
+  const trackStarts = trackActionStartsForFilter.value;
 
   if (availableTypes.value.length > 0 && allow.size === 0) {
+    return [];
+  }
+  if (availableSkillKinds.value.length > 0 && allowSkills.size === 0) {
     return [];
   }
 
@@ -289,7 +662,8 @@ const filteredEntries = computed(() => {
   for (let i = 0; i < raw.length && out.length < max; i++) {
     const entry = raw[i];
     if (!entry || !entry.type) continue;
-    if (!allow.has(entry.type)) continue;
+    if (!isTypeAllowed(entry.type, allow)) continue;
+    if (!allowSkills.has(getEntrySkillKind(entry, trackStarts))) continue;
 
     const line = formatEntryLine(entry);
     if (kw && !String(line).toLowerCase().includes(kw)) continue;
@@ -301,9 +675,10 @@ const filteredEntries = computed(() => {
 const actionGroups = computed(() => {
   const map = new Map();
   const orphans = [];
+  const trackActionStarts = buildTrackActionStarts();
 
   for (const entry of filteredEntries.value) {
-    const actionId = getEntryActionId(entry);
+    const actionId = resolveOwnerActionId(entry, trackActionStarts);
     if (!actionId) {
       orphans.push(entry);
       continue;
@@ -311,13 +686,13 @@ const actionGroups = computed(() => {
 
     let group = map.get(actionId);
     if (!group) {
-      const actorId = getActorIdForAction(actionId);
+      const actorId = getActorIdForAction(actionId) || getEntryTrackId(entry);
       group = {
         actionId,
         actorId,
         actorName: getTrackDisplayName(actorId),
         actionName: getActionDisplayName(actionId),
-        actionType: getActionType(actionId),
+        jumpable: isRealActionId(actionId),
         startTime: null,
         endTime: null,
         damage: [],
@@ -343,25 +718,31 @@ const actionGroups = computed(() => {
       case 'DAMAGE_HIT':
         group.damage.push(entry);
         break;
-      case 'EFFECT_START':
-      case 'EFFECT_END':
-        group.effects.push(entry);
-        break;
-      case 'REACTION_OCCURRED':
+      case 'REACTION_TRIGGER':
         group.reactions.push(entry);
         break;
       case 'SP_CHANGE':
         group.sp.push(entry);
         break;
       case 'ULT_ENERGY_CHANGE':
-      case 'ULTIMATE_CHARGE_CHANGE':
         group.gauge.push(entry);
         break;
       case 'STAGGER':
         group.stagger.push(entry);
         break;
       default:
-        group.other.push(entry);
+        if (isEnemyReactionType(entry.type)) {
+          group.reactions.push(entry);
+        } else if (
+          isEnemyEffectType(entry.type) ||
+          isEnemyChannelEntry(entry) ||
+          isOperatorEffectType(entry.type) ||
+          isOperatorChannelEntry(entry)
+        ) {
+          group.effects.push(entry);
+        } else {
+          group.other.push(entry);
+        }
         break;
     }
   }
@@ -385,6 +766,7 @@ const actionGroups = computed(() => {
   groups.sort((a, b) => getGroupTime(a) - getGroupTime(b));
 
   groups.forEach(group => {
+    group.focusTime = getGroupTime(group);
     group.damage.sort((a, b) => a.time - b.time);
     group.effects.sort((a, b) => a.time - b.time);
     group.reactions.sort((a, b) => a.time - b.time);
@@ -445,6 +827,45 @@ function onGroupToggle(actionId, event) {
   }
 }
 
+function focusActionOnTimeline(actionId, focusTime) {
+  if (!isRealActionId(actionId)) return;
+
+  // Keep the log group expanded; avoid selectAction toggle-off when already selected.
+  openActionId.value = actionId;
+  if (store.selectedActionId !== actionId) {
+    store.selectAction(actionId);
+  }
+
+  const resolved = store.compiledTimeline?.actionMap?.get(actionId);
+  const info = store.getActionById?.(actionId);
+  const time =
+    Number.isFinite(focusTime) && focusTime !== Number.POSITIVE_INFINITY
+      ? Number(focusTime)
+      : Number(resolved?.realStartTime ?? info?.node?.startTime) || 0;
+
+  const viewportW = Number(store.timelineRect?.width) || 0;
+  const targetPx = store.timeToPx(time);
+  store.setTimelineShift(Math.max(0, targetPx - viewportW / 2));
+  scrollActionGroupIntoView(actionId);
+}
+
+function onGroupSummaryClick(group, event) {
+  // Controlled `:open` fights the browser's default details toggle — take over fully.
+  event?.preventDefault?.();
+
+  if (group?.jumpable) {
+    focusActionOnTimeline(group.actionId, group.startTime ?? group.focusTime);
+    return;
+  }
+
+  openActionId.value = openActionId.value === group.actionId ? null : group.actionId;
+}
+
+function onEventRowClick(group, entry) {
+  if (!group?.jumpable) return;
+  focusActionOnTimeline(group.actionId, entry?.time ?? group.startTime ?? group.focusTime);
+}
+
 watch(
   () => store.selectedActionId,
   actionId => {
@@ -474,11 +895,11 @@ onMounted(() => {
           <div class="header-icon-bar"></div>
           <div class="simlog-title-stack">
             <div class="char-name">{{ t('battleLog.title') }}</div>
-            <span v-if="isDirty" class="simlog-dirty">{{ t('battleLog.dirtyHint') }}</span>
           </div>
         </div>
 
         <div class="header-actions">
+          <span v-if="isDirty" class="simlog-dirty">{{ t('battleLog.dirtyHint') }}</span>
           <button type="button" class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="refresh">
             {{ t('battleLog.refresh') }}
           </button>
@@ -493,36 +914,63 @@ onMounted(() => {
           {{ t('battleLog.ui.filtered') }} {{ filteredEntryCount }} /
           {{ t('battleLog.ui.actionGroups') }} {{ filteredGroupCount }}
         </div>
-        <div class="simlog-filter-actions">
+        <button
+          type="button"
+          class="ea-btn ea-btn--glass-rect simlog-chip simlog-chip--tool"
+          @click="clearTypes"
+        >
+          {{ t('battleLog.ui.clear') }}
+        </button>
+      </div>
+
+      <div class="simlog-presets">
+        <div class="simlog-filter-label">{{ t('battleLog.presets.label') }}</div>
+        <div class="simlog-presets__list">
           <button
+            v-for="preset in BATTLE_LOG_TYPE_PRESETS"
+            :key="preset.id"
             type="button"
-            class="ea-btn ea-btn--glass-rect simlog-chip simlog-chip--tool"
-            @click="selectAllTypes"
+            class="ea-btn ea-btn--glass-rect simlog-preset"
+            :class="{ 'is-active': activeTypePreset === preset.id }"
+            @click="applyTypePreset(preset.id)"
           >
-            {{ t('battleLog.ui.selectAll') }}
-          </button>
-          <button
-            type="button"
-            class="ea-btn ea-btn--glass-rect simlog-chip simlog-chip--tool"
-            @click="clearTypes"
-          >
-            {{ t('battleLog.ui.clear') }}
+            {{ t(preset.i18nKey) }}
           </button>
         </div>
       </div>
 
-      <div class="simlog-types">
-        <button
-          v-for="item in typeFilterItems"
-          :key="item.type"
-          type="button"
-          class="ea-btn ea-btn--glass-rect simlog-chip"
-          :class="{ 'is-active': selectedTypes.has(item.type) }"
-          :title="item.type"
-          @click="toggleType(item.type)"
-        >
-          {{ item.label }}
-        </button>
+      <div class="simlog-types-row">
+        <div class="simlog-filter-label">{{ t('battleLog.ui.types') }}</div>
+        <div class="simlog-types">
+          <button
+            v-for="item in typeFilterItems"
+            :key="item.type"
+            type="button"
+            class="ea-btn ea-btn--glass-rect simlog-chip"
+            :class="{ 'is-active': selectedTypes.has(item.type) }"
+            :title="item.type"
+            @click="toggleType(item.type)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="skillKindFilterItems.length > 0" class="simlog-types-row">
+        <div class="simlog-filter-label">{{ t('battleLog.ui.skillKinds') }}</div>
+        <div class="simlog-types">
+          <button
+            v-for="item in skillKindFilterItems"
+            :key="item.kind"
+            type="button"
+            class="ea-btn ea-btn--glass-rect simlog-chip"
+            :class="{ 'is-active': selectedSkillKinds.has(item.kind) }"
+            :title="item.kind"
+            @click="toggleSkillKind(item.kind)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
       </div>
 
       <div class="simlog-filter-bottom">
@@ -560,7 +1008,12 @@ onMounted(() => {
           :style="{ '--group-accent': getActionColor(group.actionId) }"
           @toggle="event => onGroupToggle(group.actionId, event)"
         >
-          <summary class="group__summary">
+          <summary
+            class="group__summary"
+            :class="{ 'is-jumpable': group.jumpable }"
+            :title="group.jumpable ? t('battleLog.ui.jumpToTimeline') : undefined"
+            @click="onGroupSummaryClick(group, $event)"
+          >
             <div class="group__summary-main">
               <div class="group__title-row">
                 <span class="group__actor">{{ group.actorName }}</span>
@@ -593,42 +1046,158 @@ onMounted(() => {
                 <span class="group-section__title">{{ t('battleLog.ui.sections.damage') }}</span>
                 <span class="group-section__count">{{ group.damage.length }}</span>
               </div>
-              <div class="group-section__list">
-                <div v-for="(entry, idx) in group.damage" :key="idx" class="event-row">
-                  <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
-                  <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
-                  <span class="event-value"
-                    >dmg={{ formatDamageNumber(getDamageValue(entry)) }}</span
-                  >
-                  <span v-if="getDamageElement(entry)" class="event-value"
-                    >elem={{ getDamageElement(entry) }}</span
-                  >
-                  <span v-if="getReactionLabel(entry)" class="event-value"
-                    >rx={{ getReactionLabel(entry) }}</span
-                  >
-                  <span v-if="getConsumedStacksLabel(entry)" class="event-value"
-                    >consume={{ getConsumedStacksLabel(entry) }}</span
-                  >
-                  <span v-if="getLmdiLabel(entry)" class="event-value"
-                    >lmdi={{ getLmdiLabel(entry) }}</span
-                  >
-                  <span class="event-value">stg={{ entry.payload.stagger }}</span>
-                  <span
-                    v-if="
-                      (entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery) > 0
-                    "
-                    class="event-value"
-                    >sp+={{
-                      entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery
-                    }}</span
-                  >
+
+              <div
+                v-if="getSkillDamageEntries(group).length > 0"
+                class="damage-subgroup"
+              >
+                <div class="damage-subgroup__heading">
+                  <span class="damage-subgroup__title">{{ t('battleLog.ui.skillDamage') }}</span>
+                  <span class="damage-subgroup__count">{{
+                    getSkillDamageEntries(group).length
+                  }}</span>
                 </div>
-                <div
-                  v-if="group.damage.every(entry => getDamageValue(entry) === 0)"
-                  class="event-hint"
-                >
-                  {{ t('battleLog.ui.damageHint') }}
+                <div class="group-section__list">
+                  <div
+                    v-for="(entry, idx) in getSkillDamageEntries(group)"
+                    :key="`skill_${idx}`"
+                    class="event-row event-row--stack"
+                    :class="{ 'is-jumpable': group.jumpable }"
+                    @click="onEventRowClick(group, entry)"
+                  >
+                    <div class="event-row__main">
+                      <span class="event-row__time">{{
+                        formatField('time', formatFrameTime(entry.time))
+                      }}</span>
+                      <span class="event-pill event-pill--skill">{{
+                        getDamageKindPill(entry)
+                      }}</span>
+                      <span class="event-value">{{
+                        formatField('damage', formatDamageNumber(getDamageValue(entry)))
+                      }}</span>
+                      <span v-if="getDamageElementLabel(entry)" class="event-value">{{
+                        formatField('element', getDamageElementLabel(entry))
+                      }}</span>
+                      <span v-if="getConsumedStacksLabel(entry)" class="event-value">{{
+                        formatField('consume', getConsumedStacksLabel(entry))
+                      }}</span>
+                      <span class="event-value">{{
+                        formatField('stagger', entry.payload.stagger)
+                      }}</span>
+                      <span
+                        v-if="
+                          (entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery) > 0
+                        "
+                        class="event-value"
+                        >{{
+                          formatField(
+                            'spGain',
+                            entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery,
+                          )
+                        }}</span
+                      >
+                    </div>
+                    <div
+                      v-if="getLmdiEntries(entry).length > 0"
+                      class="event-lmdi"
+                      :title="t('battleLog.fields.lmdiHint')"
+                    >
+                      <div class="event-lmdi__title">{{ t('battleLog.fields.lmdi') }}</div>
+                      <div
+                        v-for="item in getLmdiEntries(entry)"
+                        :key="item.key"
+                        class="event-lmdi__item"
+                      >
+                        <span class="event-lmdi__label">{{ item.label }}</span>
+                        <span class="event-lmdi__sep">:</span>
+                        <span class="event-lmdi__value">{{ item.value }}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              <div
+                v-if="getEffectDamageEntries(group).length > 0"
+                class="damage-subgroup"
+              >
+                <div class="damage-subgroup__heading">
+                  <span class="damage-subgroup__title">{{ t('battleLog.ui.effectDamage') }}</span>
+                  <span class="damage-subgroup__count">{{
+                    getEffectDamageEntries(group).length
+                  }}</span>
+                </div>
+                <div class="group-section__list">
+                  <div
+                    v-for="(entry, idx) in getEffectDamageEntries(group)"
+                    :key="`effect_dmg_${idx}`"
+                    class="event-row event-row--stack"
+                    :class="{ 'is-jumpable': group.jumpable }"
+                    @click="onEventRowClick(group, entry)"
+                  >
+                    <div class="event-row__main">
+                      <span class="event-row__time">{{
+                        formatField('time', formatFrameTime(entry.time))
+                      }}</span>
+                      <span class="event-pill event-pill--effect">{{
+                        getDamageKindPill(entry)
+                      }}</span>
+                      <span v-if="getEffectDamageSourceLabel(entry, group)" class="event-text">{{
+                        getEffectDamageSourceLabel(entry, group)
+                      }}</span>
+                      <span class="event-value">{{
+                        formatField('damage', formatDamageNumber(getDamageValue(entry)))
+                      }}</span>
+                      <span v-if="getDamageElementLabel(entry)" class="event-value">{{
+                        formatField('element', getDamageElementLabel(entry))
+                      }}</span>
+                      <span v-if="getReactionLabel(entry)" class="event-value">{{
+                        formatField('reaction', getReactionLabel(entry))
+                      }}</span>
+                      <span v-if="getConsumedStacksLabel(entry)" class="event-value">{{
+                        formatField('consume', getConsumedStacksLabel(entry))
+                      }}</span>
+                      <span class="event-value">{{
+                        formatField('stagger', entry.payload.stagger)
+                      }}</span>
+                      <span
+                        v-if="
+                          (entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery) > 0
+                        "
+                        class="event-value"
+                        >{{
+                          formatField(
+                            'spGain',
+                            entry.payload.hitData?.spReturn || entry.payload.hitData?.spRecovery,
+                          )
+                        }}</span
+                      >
+                    </div>
+                    <div
+                      v-if="getLmdiEntries(entry).length > 0"
+                      class="event-lmdi"
+                      :title="t('battleLog.fields.lmdiHint')"
+                    >
+                      <div class="event-lmdi__title">{{ t('battleLog.fields.lmdi') }}</div>
+                      <div
+                        v-for="item in getLmdiEntries(entry)"
+                        :key="item.key"
+                        class="event-lmdi__item"
+                      >
+                        <span class="event-lmdi__label">{{ item.label }}</span>
+                        <span class="event-lmdi__sep">:</span>
+                        <span class="event-lmdi__value">{{ item.value }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="group.damage.every(entry => getDamageValue(entry) === 0)"
+                class="event-hint"
+              >
+                {{ t('battleLog.ui.damageHint') }}
               </div>
             </section>
 
@@ -647,24 +1216,51 @@ onMounted(() => {
                   v-for="(entry, idx) in group.reactions"
                   :key="`reaction_${idx}`"
                   class="event-row"
+                  :class="{ 'is-jumpable': group.jumpable }"
+                  @click="onEventRowClick(group, entry)"
                 >
-                  <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
-                  <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
-                  <span class="event-text">{{ entry.payload.reactionName }}</span>
+                  <span class="event-row__time">{{
+                    formatField('time', formatFrameTime(entry.time))
+                  }}</span>
+                  <span class="event-pill">{{ formatEnemyEffectVerb(entry) }}</span>
+                  <span class="event-text">{{
+                    formatEnemyEffectSummary(entry) ||
+                    translateBattleLogStatus(
+                      t,
+                      te,
+                      entry.payload?.reactionType || entry.payload?.reactionName,
+                    )
+                  }}</span>
+                  <span class="event-muted">{{ getTypeLabel(entry.type) }}</span>
                 </div>
-                <div v-for="(entry, idx) in group.effects" :key="`effect_${idx}`" class="event-row">
-                  <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
-                  <template v-if="entry.type === 'EFFECT_START'">
-                    <span class="event-pill">{{ t('battleLog.ui.effectApply') }}</span>
-                    <span class="event-text">{{
-                      formatEffectId(entry.payload.effectSnapshot?.id)
-                    }}</span>
-                    <span class="event-muted">-> {{ entry.payload.targetId }}</span>
+                <div
+                  v-for="(entry, idx) in group.effects"
+                  :key="`effect_${idx}`"
+                  class="event-row"
+                  :class="{ 'is-jumpable': group.jumpable }"
+                  @click="onEventRowClick(group, entry)"
+                >
+                  <span class="event-row__time">{{
+                    formatField('time', formatFrameTime(entry.time))
+                  }}</span>
+                  <template v-if="isEnemyChannelEntry(entry)">
+                    <span class="event-pill">{{ formatEnemyEffectVerb(entry) }}</span>
+                    <span class="event-text">{{ formatEnemyEffectSummary(entry) }}</span>
+                    <span class="event-muted">{{ getTypeLabel(entry.type) }}</span>
+                  </template>
+                  <template v-else-if="isOperatorChannelEntry(entry)">
+                    <span class="event-pill">{{ formatOperatorEffectVerb(entry) }}</span>
+                    <span class="event-text">{{ formatOperatorEffectSummary(entry) }}</span>
+                    <span
+                      v-if="entry.payload?.targetTrackId"
+                      class="event-muted"
+                      >-> {{ getTrackDisplayName(entry.payload.targetTrackId) }}</span
+                    >
+                    <span class="event-muted">{{ getTypeLabel(entry.type) }}</span>
                   </template>
                   <template v-else>
-                    <span class="event-pill">{{ t('battleLog.ui.effectRemove') }}</span>
-                    <span class="event-text">{{ formatEffectId(entry.payload.effectId) }}</span>
-                    <span class="event-muted">({{ entry.payload.type }})</span>
+                    <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
+                    <span class="event-text">{{ formatOtherEntryText(entry) }}</span>
                   </template>
                 </div>
               </div>
@@ -676,14 +1272,24 @@ onMounted(() => {
                 <span class="group-section__count">{{ group.sp.length }}</span>
               </div>
               <div class="group-section__list">
-                <div v-for="(entry, idx) in group.sp" :key="idx" class="event-row">
-                  <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
+                <div
+                  v-for="(entry, idx) in group.sp"
+                  :key="idx"
+                  class="event-row"
+                  :class="{ 'is-jumpable': group.jumpable }"
+                  @click="onEventRowClick(group, entry)"
+                >
+                  <span class="event-row__time">{{
+                    formatField('time', formatFrameTime(entry.time))
+                  }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
-                  <span class="event-value"
-                    >chg={{ formatSignedNumber(entry.payload.change) }}</span
+                  <span class="event-value">{{
+                    formatField('change', formatSignedNumber(entry.payload.change))
+                  }}</span>
+                  <span class="event-value">{{ formatField('sp', entry.payload.sp) }}</span>
+                  <span class="event-muted"
+                    >({{ translateBattleLogSpReason(t, te, entry.payload.reason) }})</span
                   >
-                  <span class="event-value">sp={{ entry.payload.sp }}</span>
-                  <span class="event-muted">({{ entry.payload.reason }})</span>
                 </div>
               </div>
             </section>
@@ -694,15 +1300,23 @@ onMounted(() => {
                 <span class="group-section__count">{{ group.gauge.length }}</span>
               </div>
               <div class="group-section__list">
-                <div v-for="(entry, idx) in group.gauge" :key="idx" class="event-row">
-                  <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
+                <div
+                  v-for="(entry, idx) in group.gauge"
+                  :key="idx"
+                  class="event-row"
+                  :class="{ 'is-jumpable': group.jumpable }"
+                  @click="onEventRowClick(group, entry)"
+                >
+                  <span class="event-row__time">{{
+                    formatField('time', formatFrameTime(entry.time))
+                  }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
-                  <span class="event-value"
-                    >chg={{ formatSignedNumber(entry.payload.change) }}</span
-                  >
-                  <span class="event-value"
-                    >gauge={{ Number(entry.payload.gauge).toFixed(1) }}</span
-                  >
+                  <span class="event-value">{{
+                    formatField('change', formatSignedNumber(entry.payload.change))
+                  }}</span>
+                  <span class="event-value">{{
+                    formatField('gauge', Number(entry.payload.gauge).toFixed(1))
+                  }}</span>
                   <span v-if="entry.payload.actorId" class="event-muted"
                     >-> {{ getTrackDisplayName(entry.payload.actorId) }}</span
                   >
@@ -719,13 +1333,21 @@ onMounted(() => {
                 <span class="group-section__count">{{ group.stagger.length }}</span>
               </div>
               <div class="group-section__list">
-                <div v-for="(entry, idx) in group.stagger" :key="idx" class="event-row">
-                  <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
+                <div
+                  v-for="(entry, idx) in group.stagger"
+                  :key="idx"
+                  class="event-row"
+                  :class="{ 'is-jumpable': group.jumpable }"
+                  @click="onEventRowClick(group, entry)"
+                >
+                  <span class="event-row__time">{{
+                    formatField('time', formatFrameTime(entry.time))
+                  }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
                   <span class="event-value">{{ formatSignedNumber(entry.payload.amount) }}</span>
-                  <span class="event-value"
-                    >stg={{ Number(entry.payload.stagger).toFixed(1) }}</span
-                  >
+                  <span class="event-value">{{
+                    formatField('stagger', Number(entry.payload.stagger).toFixed(1))
+                  }}</span>
                   <span v-if="entry.payload.isBroken" class="event-tag">{{
                     t('battleLog.ui.broken')
                   }}</span>
@@ -756,8 +1378,12 @@ onMounted(() => {
                   )"
                   :key="idx"
                   class="event-row"
+                  :class="{ 'is-jumpable': group.jumpable }"
+                  @click="onEventRowClick(group, entry)"
                 >
-                  <span class="event-row__time">t={{ formatFrameTime(entry.time) }}</span>
+                  <span class="event-row__time">{{
+                    formatField('time', formatFrameTime(entry.time))
+                  }}</span>
                   <span class="event-pill">{{ getTypeLabel(entry.type) }}</span>
                   <span class="event-text">{{ formatOtherEntryText(entry) }}</span>
                 </div>
@@ -871,7 +1497,7 @@ onMounted(() => {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -898,6 +1524,16 @@ onMounted(() => {
   margin: 8px 14px 0;
   padding: 10px 12px;
   border-left-color: rgba(255, 255, 255, 0.18);
+  border-radius: 0;
+}
+
+.simlog-filters,
+.simlog-filters .simlog-preset,
+.simlog-filters .simlog-chip,
+.simlog-filters .simlog-search,
+.simlog-filters :deep(.el-select__wrapper),
+.simlog-filters :deep(.el-input__wrapper) {
+  border-radius: 0;
 }
 
 .simlog-filter-top,
@@ -918,22 +1554,64 @@ onMounted(() => {
 }
 
 .simlog-filter-label {
-  min-width: 80px;
+  flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
 
-.simlog-filter-actions {
+.simlog-presets,
+.simlog-types-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
 }
 
+.simlog-presets {
+  padding: 8px 10px;
+  border-radius: 0;
+  background: rgba(56, 189, 248, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.simlog-presets .simlog-filter-label {
+  margin-top: 5px;
+  color: #7dd3fc;
+}
+
+.simlog-presets__list,
 .simlog-types {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
   flex: 1;
+}
+
+.simlog-types-row .simlog-filter-label {
+  margin-top: 5px;
+}
+
+.simlog-preset {
+  --ea-btn-py: 4px;
+  --ea-btn-px: 10px;
+  --ea-btn-font-size: 11px;
+  --ea-btn-bg: rgba(14, 165, 233, 0.06);
+  --ea-btn-border: rgba(56, 189, 248, 0.22);
+  --ea-btn-color: #bae6fd;
+  --ea-btn-bg-hover: rgba(14, 165, 233, 0.12);
+  --ea-btn-border-hover: rgba(56, 189, 248, 0.36);
+  --ea-btn-color-hover: #e0f2fe;
+  border-radius: 0;
+  min-height: 24px;
+}
+
+.simlog-preset.is-active {
+  --ea-btn-bg: rgba(14, 165, 233, 0.16);
+  --ea-btn-border: rgba(56, 189, 248, 0.48);
+  --ea-btn-color: #7dd3fc;
+  --ea-btn-bg-hover: rgba(14, 165, 233, 0.2);
+  --ea-btn-border-hover: rgba(56, 189, 248, 0.58);
+  --ea-btn-color-hover: #7dd3fc;
 }
 
 .simlog-chip {
@@ -975,7 +1653,7 @@ onMounted(() => {
   min-width: 0;
   height: 30px;
   padding: 0 12px;
-  border-radius: 4px;
+  border-radius: 0;
   font-family: 'Roboto Mono', 'Consolas', monospace;
 }
 
@@ -1075,6 +1753,12 @@ onMounted(() => {
 
 .group__summary:hover {
   background: rgba(255, 255, 255, 0.025);
+}
+
+.group__summary.is-jumpable:hover .group__action {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .group__summary::-webkit-details-marker {
@@ -1192,6 +1876,40 @@ onMounted(() => {
 .group-section--damage {
   --section-accent: var(--ea-danger-soft);
 }
+
+.damage-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0 2px;
+}
+
+.damage-subgroup + .damage-subgroup {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.damage-subgroup__heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.damage-subgroup__title {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.damage-subgroup__count {
+  color: #666;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
 .group-section--effects {
   --section-accent: var(--ea-info);
 }
@@ -1253,8 +1971,77 @@ onMounted(() => {
   border: none;
 }
 
+.event-row--stack {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.event-row__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.event-row.is-jumpable {
+  cursor: pointer;
+  border-radius: 3px;
+  margin: 0 -4px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.event-row.is-jumpable:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .event-row + .event-row {
   border-top: 1px dashed rgba(255, 255, 255, 0.04);
+}
+
+.event-lmdi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 2px;
+  padding: 4px 8px;
+  border-left: 2px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0 3px 3px 0;
+}
+
+.event-lmdi__title {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.event-lmdi__item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.event-lmdi__label {
+  color: #9aa3b2;
+}
+
+.event-lmdi__sep {
+  color: #555;
+}
+
+.event-lmdi__value {
+  color: #d7dde8;
+  font-variant-numeric: tabular-nums;
 }
 
 .event-row__time,
@@ -1281,6 +2068,18 @@ onMounted(() => {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.event-pill--skill {
+  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(248, 113, 113, 0.08);
+  color: #fca5a5;
+}
+
+.event-pill--effect {
+  border-color: rgba(125, 211, 252, 0.28);
+  background: rgba(125, 211, 252, 0.08);
+  color: #7dd3fc;
 }
 
 .event-value,
@@ -1341,17 +2140,11 @@ onMounted(() => {
 }
 
 @media (max-width: 720px) {
-  .simlog-header,
   .simlog-filter-top,
   .simlog-filter-bottom,
   .group__summary {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .simlog-tools,
-  .simlog-filter-actions {
-    justify-content: flex-start;
   }
 
   .simlog-filters {

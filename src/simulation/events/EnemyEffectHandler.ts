@@ -362,7 +362,13 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         (e as Extract<EnemyEffectExpireEvent, { kind: 'infliction' }>).element === consumedElement,
     );
 
-    ctx.enemyLog({ type: 'INFLICTION_CONSUMED', time, element: consumedElement, consumedStacks });
+    ctx.enemyLog({
+      type: 'INFLICTION_CONSUMED',
+      time,
+      element: consumedElement,
+      consumedStacks,
+      sourceId,
+    });
     this.registry?.onStatusConsumed(
       `${consumedElement}Infliction`,
       undefined,
@@ -791,7 +797,13 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           (e as EnemyEffectExpireEvent).kind === 'infliction' &&
           (e as Extract<EnemyEffectExpireEvent, { kind: 'infliction' }>).element === infElement,
       );
-      ctx.enemyLog({ type: 'INFLICTION_CONSUMED', time, element: infElement, consumedStacks });
+      ctx.enemyLog({
+        type: 'INFLICTION_CONSUMED',
+        time,
+        element: infElement,
+        consumedStacks,
+        sourceId,
+      });
       this.registry?.onStatusConsumed(
         `${infElement}Infliction`,
         undefined,
@@ -1203,7 +1215,8 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
   }
 
   private handleDotTick(event: DotTickSimEvent, ctx: SimulationContext): void {
-    const { sourceId, effectId, element, multiplier, skillType, skillId, canCrit } = event.payload;
+    const { sourceId, effectId, element, multiplier, skillType, skillId, canCrit, actionId } =
+      event.payload;
 
     // Log for projection (diamond markers)
     ctx.enemyLog({ type: 'DOT_TICK', time: event.time, effectId, sourceId });
@@ -1235,7 +1248,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
             consumedStatEffects: event.payload.consumedStatEffects,
             _canCrit: canCrit !== false ? undefined : false,
           } as ResolvedHit,
-          actionId: `triggered:${effectId}`,
+          actionId: actionId ?? `triggered:${effectId}`,
         },
       },
       1,

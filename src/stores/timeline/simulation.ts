@@ -123,7 +123,7 @@ export function useTimelineSimulation(deps: SimulationDeps) {
   });
 
   const simLogRevision = computed(() => {
-    return simLog.value.length + enemyLog.value.length;
+    return simLog.value.length + enemyLog.value.length + operatorLog.value.length;
   });
 
   const spSeries = computed(() => {

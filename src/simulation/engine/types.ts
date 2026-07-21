@@ -315,6 +315,8 @@ export interface InflictionConsumedEvent {
   time: number;
   element: ArtsElement;
   consumedStacks: number;
+  /** Operator track that caused the consume when known. */
+  sourceId?: string;
 }
 
 export interface VulnerabilityApplyEvent {

@@ -123,6 +123,8 @@ export type DotTickSimEvent = SimBaseEvent<
     skillType?: string;
     /** Specific skillId (e.g. 'alesh-enhanced-combo'). Matches `stat.skillId` on DOT-tick damage. */
     skillId?: string;
+    /** Originating action instance id when the DoT was applied from a skill/trigger. */
+    actionId?: string;
     canCrit?: boolean;
     consumedStacks?: Record<string, number>;
     consumedStatEffects?: ConsumedStatEffect[];

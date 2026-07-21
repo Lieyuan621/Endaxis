@@ -33,6 +33,7 @@ describe('scheduleDotTicks', () => {
     for (const e of ticks) {
       expect(e.payload.skillType).toBeUndefined();
       expect(e.payload.skillId).toBe('skill1');
+      expect(e.payload.actionId).toBe('action1');
     }
   });
 });

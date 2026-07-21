@@ -996,6 +996,7 @@ export function scheduleDotTicks(
           // would wrongly apply); skillId/element scoping is kept, mirroring reaction damage.
           skillType: undefined,
           skillId: sourceSkillId,
+          actionId: sourceActionId,
           canCrit: r.canCrit,
           consumedStacks,
           consumedStatEffects,
