@@ -805,9 +805,7 @@ function handleGlobalKeydown(e) {
       handleLibraryTrackHotkey(trackIndex);
       return;
     }
-  }
 
-  if (e.altKey && !e.ctrlKey && !e.metaKey && !isLeftPanelCollapsed.value) {
     const skillType = getLibrarySkillTypeFromHotkeyCode(e.code);
     if (skillType) {
       claimShortcutEvent(e);

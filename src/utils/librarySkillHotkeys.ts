@@ -1,4 +1,4 @@
-/** Hotkey digit → library skill `type` (Alt+1…6). */
+/** Hotkey digit → library skill `type` (1…6). */
 export const LIBRARY_SKILL_HOTKEY_TYPES = [
   'basicAttack',
   'battleSkill',
@@ -19,7 +19,7 @@ const DIGIT_CODE_TO_INDEX: Record<string, number> = {
   Digit6: 5,
 };
 
-/** Resolve Alt+1…6 from `KeyboardEvent.code` (avoids Alt dead-key `key` quirks). */
+/** Resolve 1…6 from `KeyboardEvent.code`. */
 export function getLibrarySkillTypeFromHotkeyCode(
   code: string,
 ): LibrarySkillHotkeyType | null {
