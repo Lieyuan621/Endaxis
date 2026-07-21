@@ -1,5 +1,5 @@
 /**
- * Declarative effect schema — field lists, defaults, and JSON escape-hatch keys.
+ * Declarative effect schema — kind field lists and editor defaults.
  * Domain shapes live in `data/types.ts`.
  */
 
@@ -35,25 +35,7 @@ export const EFFECT_KINDS = Object.freeze([
 
 export type EffectKindKey = (typeof EFFECT_KINDS)[number];
 
-export const COMMON_EFFECT_FIELDS = Object.freeze([
-  'id',
-  'name',
-  'displayType',
-  'icon',
-  'duration',
-  'durationExtension',
-  'stacks',
-  'maxStacks',
-  'stackStrategy',
-  'icd',
-  'icdGroup',
-  'hide',
-  'ignoreTimeShift',
-  'applyTiming',
-  'condition',
-] as const);
-
-/** Kind-specific editable field keys (legacy `EFFECT_KIND_FIELDS` shape). */
+/** Kind-specific editable field keys. */
 export const EFFECT_KIND_FIELDS: Readonly<Record<string, readonly string[]>> = Object.freeze({
   status: ['target', 'stat', 'value', 'scaling', 'silent', 'external'],
   amp: ['target', 'stat', 'value', 'scaling', 'silent', 'external'],
@@ -93,10 +75,6 @@ export const EFFECT_KIND_FIELDS: Readonly<Record<string, readonly string[]>> = O
   cooldownReductionPercent: ['value', 'target', 'skillTypes'],
   derived: ['sourceEffect', 'effect'],
 });
-
-export function getEffectEditableFieldKeys(kind: string | null | undefined): string[] {
-  return [...COMMON_EFFECT_FIELDS, ...(EFFECT_KIND_FIELDS[kind ?? ''] || [])];
-}
 
 export function effectKindHasField(kind: string | null | undefined, field: string): boolean {
   return !!(kind && EFFECT_KIND_FIELDS[kind]?.includes(field));

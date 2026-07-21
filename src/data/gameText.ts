@@ -216,6 +216,23 @@ export function getOperatorGameName(slug: string, locale?: string | null) {
   return readTrimmedText(entry?.name) || humanizeIdentifier(slug);
 }
 
+/** Localized operator form label (e.g. arcane `int` → 阵诀·智). */
+export function getOperatorFormName(
+  slug: string,
+  formKey: string | null | undefined,
+  locale?: string | null,
+) {
+  const key = String(formKey || '').trim();
+  if (!key) return null;
+  const entry = getOperatorEntry(slug, locale);
+  const forms = entry?.forms;
+  if (forms && typeof forms === 'object' && !Array.isArray(forms)) {
+    const named = readTrimmedText((forms as Record<string, unknown>)[key]);
+    if (named) return named;
+  }
+  return humanizeIdentifier(key);
+}
+
 export function getOperatorTalentName(
   slug: string,
   flatStartIndex: number,

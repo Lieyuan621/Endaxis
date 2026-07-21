@@ -31,6 +31,7 @@ import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
 } from '@/utils/equipmentEffectDisplay';
+import { getEquipmentLevelColor, isEquipmentArtificable } from '@/utils/equipmentLevels';
 import {
   findOperatorInstance,
   findWeaponInstance,
@@ -167,19 +168,6 @@ function getTrackAvatar(track) {
   const roster = Array.isArray(store.characterRoster) ? store.characterRoster : [];
   const found = roster.find(c => c && c.id === id);
   return found?.avatar || DEFAULT_ICON;
-}
-
-const EQUIPMENT_LEVEL_COLORS = {
-  70: '#ffd700',
-  50: '#b37feb',
-  36: '#4a90e2',
-  28: '#73c94f',
-  20: '#95de64',
-  10: '#888888',
-};
-
-function getEquipmentLevelColor(level) {
-  return EQUIPMENT_LEVEL_COLORS[Number(level)] || '#888';
 }
 
 function getArtificingLevel(instance, slotIdx) {
@@ -348,7 +336,7 @@ const equipmentSlots = computed(() => {
       typeof store.getEquipmentById === 'function' ? store.getEquipmentById(pieceId) : null;
     const piece = pieceId ? getGearPiece(pieceId) : null;
     const level = Number(item?.level ?? piece?.levelRequirement) || 0;
-    const isGold = level >= 70;
+    const isGold = isEquipmentArtificable(level);
     const trackRefine = Number(track[config.tierKey]);
     const stats = getEquipmentStatRows(piece, instance);
     const refineLevels = stats.map(row => Number(row.refine) || 0);

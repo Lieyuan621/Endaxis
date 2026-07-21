@@ -15,7 +15,11 @@ interface TrackLike {
   weaponInstanceId?: string | null;
   equipArmorInstanceId?: string | null;
   equipGlovesInstanceId?: string | null;
+  equipAccessory1InstanceId?: string | null;
+  equipAccessory2InstanceId?: string | null;
+  /** @deprecated legacy alias for accessory1 */
   equipKit1InstanceId?: string | null;
+  /** @deprecated legacy alias for accessory2 */
   equipKit2InstanceId?: string | null;
 }
 
@@ -59,8 +63,8 @@ export function getTrackInstances(track: TrackLike): TrackInstances | null {
   const gearSlots: Record<string, string | null | undefined> = {
     armor: track.equipArmorInstanceId,
     gloves: track.equipGlovesInstanceId,
-    kit1: track.equipKit1InstanceId,
-    kit2: track.equipKit2InstanceId,
+    kit1: track.equipAccessory1InstanceId ?? track.equipKit1InstanceId,
+    kit2: track.equipAccessory2InstanceId ?? track.equipKit2InstanceId,
   };
 
   const gearInsts: any[] = [];

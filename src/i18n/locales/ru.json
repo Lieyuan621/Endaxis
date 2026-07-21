@@ -380,17 +380,12 @@
       "noOperator": "Нет ОП",
       "noWeapon": "Оружие не экипировано"
     },
-    "panels": {
-      "operatorStats": "Показатели ОП",
-      "weaponStats": "Показатели оружия",
-      "equipmentRefine": "Доработка"
-    },
     "section": {
       "operatorStatusAdjust": "Настройка статуса оператора",
       "operatorSkillLibrary": "Навыки оператора"
     },
     "hints": {
-      "noRefineNon70": "Без доработки до 70 ур.",
+      "noRefineNonGold": "Без доработки на не-золотом снаряжении",
       "adjustOperatorStatus": "Настраивайте атрибуты, оружие и комплекты; изменения влияют на симуляцию",
       "clickOrDrag": "Нажмите, чтобы выбрать / Перетащите и разместите на таймлайне"
     },

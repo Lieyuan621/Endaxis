@@ -382,17 +382,12 @@
       "noOperator": "未选择干员",
       "noWeapon": "未装备武器"
     },
-    "panels": {
-      "operatorStats": "干员数值",
-      "weaponStats": "武器数值",
-      "equipmentRefine": "装备精锻"
-    },
     "section": {
       "operatorStatusAdjust": "干员状态调整",
       "operatorSkillLibrary": "干员技能库"
     },
     "hints": {
-      "noRefineNon70": "非 Lv70 无精锻",
+      "noRefineNonGold": "非金色装备无精锻",
       "adjustOperatorStatus": "调整属性、武器与装备套装；影响时间轴模拟结果",
       "clickOrDrag": "点击选中技能 / 拖出后放到时间轴"
     },

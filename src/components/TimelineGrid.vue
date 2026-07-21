@@ -19,6 +19,8 @@ import { useI18n } from 'vue-i18n';
 import { snapMs } from '@/utils/precision';
 import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time';
 import { toLegacyDisplayType } from '@/utils/hitModel';
+import { EQUIPMENT_LEVELS, getEquipmentLevelColor } from '@/utils/equipmentLevels';
+import { getTrackOperatorFormName } from '@/utils/operatorFormDisplay';
 import { sampleSpSeriesAtTime } from '@/simulation/projection/projectSpSeries';
 import { getGearPiece, getEnemy, getOperator } from '@/data';
 import {
@@ -392,15 +394,21 @@ function openStatDetail(index) {
   statDetailTrackIndex.value = index;
 }
 
-const EQUIPMENT_LEVELS = [70, 50, 36, 28, 20, 10];
-const EQUIPMENT_LEVEL_COLORS = {
-  70: '#ffd700',
-  50: '#b37feb',
-  36: '#4a90e2',
-  28: '#73c94f',
-  20: '#95de64',
-  10: '#888888',
-};
+const trackOperatorFormNames = computed(() => {
+  void locale.value;
+  return (store.tracks || []).map(track => {
+    // Touch status / loadout fields so form flips when intellect/will gear changes.
+    void track?.operatorStatus;
+    void track?.operatorInstanceId;
+    void track?.weaponInstanceId;
+    void track?.equipArmorInstanceId;
+    void track?.equipGlovesInstanceId;
+    void track?.equipAccessory1InstanceId;
+    void track?.equipAccessory2InstanceId;
+    return getTrackOperatorFormName(track, locale.value);
+  });
+});
+
 const EQUIPMENT_AFFIX_FILTER_GROUPS = [
   {
     key: 'elementDamage',
@@ -1304,10 +1312,6 @@ function setCurrentEquipmentTierForDialog(tier) {
   if (!currentEquipmentForDialog.value) return;
 
   store.updateTrackEquipmentTier(track.id, equipmentSlotKey.value, nextTier);
-}
-function getEquipmentLevelColor(level) {
-  const key = Number(level);
-  return EQUIPMENT_LEVEL_COLORS[key] || '#888';
 }
 
 function isEquipmentEquipped(equipmentId) {
@@ -3318,9 +3322,16 @@ defineExpose({
                 >
                   {{ t('statDetail.button') }}
                 </button>
-                <span class="trigger-name">{{
-                  track.name || t('timelineGrid.track.selectOperator')
-                }}</span>
+                <span class="trigger-name">
+                  <span class="trigger-name__main">{{
+                    track.name || t('timelineGrid.track.selectOperator')
+                  }}</span>
+                  <span
+                    v-if="trackOperatorFormNames[index]"
+                    class="operator-form-badge"
+                    :title="trackOperatorFormNames[index]"
+                  >{{ trackOperatorFormNames[index] }}</span>
+                </span>
               </div>
             </div>
           </div>
@@ -4959,12 +4970,33 @@ body.capture-mode .davinci-range {
 }
 
 .trigger-name {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
   color: #f0f0f0;
   font-weight: bold;
   font-size: 14px;
   line-height: 18px;
   user-select: none;
+}
+
+.trigger-name__main {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operator-form-badge {
+  flex: 0 0 auto;
+  color: #00e5ff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+  white-space: nowrap;
 }
 
 .initial-gauge-control {

@@ -3,7 +3,7 @@ import type { WeaponSheet } from '../../../types';
 const sheet: WeaponSheet = {
   rarity: 6,
   type: 'arts-unit',
-  icon: '/weapons/arts-unit/wpn_artsunit_0016.webp',
+  icon: '/weapons/arts-unit/wpn_artsunit_0015.webp',
   baseAtk: [52, 149, 252, 355, 458, 510],
   skill1: {
     effects: [

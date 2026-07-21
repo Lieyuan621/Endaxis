@@ -9,6 +9,7 @@ import { resolveEffectValueStatic } from '@/simulation/events/effectDispatch';
 import { compileEndaxisScenario } from '@/simulation/compileEndaxisScenario';
 import { i18n } from '@/i18n';
 import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time';
+import { isEquipmentArtificable } from '@/utils/equipmentLevels';
 import type {
   TimelineAction,
   Track,
@@ -960,7 +961,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     if (!gearInst) return;
 
     const piece = getGearPiece(gearInst.gearPieceId);
-    const next = piece && Number(piece.levelRequirement) >= 70 ? clampEquipmentRefineTier(tier) : 0;
+    const next =
+      piece && isEquipmentArtificable(piece.levelRequirement) ? clampEquipmentRefineTier(tier) : 0;
     const levels = next > 0 ? createGearArtificingLevels(next) : [];
     gearStore.updateGear(gearInst.id, { artificingLevels: levels });
     gearInst = findGearInstance(gearInst.id) || gearInst;
@@ -1948,7 +1950,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return {
       gearPieceId: resolvedGearPieceId,
       artificingLevels:
-        piece && Number(piece.levelRequirement) >= 70
+        piece && isEquipmentArtificable(piece.levelRequirement)
           ? createGearArtificingLevels(Number(track?.[slotConfig.tierKey]))
           : [],
     };
@@ -2000,7 +2002,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       levels.length > 0
         ? Math.max(...levels.map((level: unknown) => clampEquipmentRefineTier(level)))
         : 0;
-    track[slotConfig.tierKey] = piece && Number(piece.levelRequirement) >= 70 ? projectedTier : 0;
+    track[slotConfig.tierKey] =
+      piece && isEquipmentArtificable(piece.levelRequirement) ? projectedTier : 0;
   }
 
   function projectTrackLoadoutFromInstances(track: Track | null | undefined) {
@@ -2986,8 +2989,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       string,
       unknown
     >;
-    const is70 = Number(level) === 70;
-    const size = is70 ? 4 : 1;
+    const canArtifice = isEquipmentArtificable(level);
+    const size = canArtifice ? 4 : 1;
 
     const normalizePrimary = (input: unknown) => {
       const raw = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
@@ -2997,7 +3000,7 @@ export const useTimelineStore = defineStore('timeline', () => {
           : typeof raw.key === 'string' && raw.key.trim()
             ? raw.key.trim()
             : null;
-      const vals = is70
+      const vals = canArtifice
         ? normalizeArray4(raw.values)
         : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0];
       return {
@@ -3008,7 +3011,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     const normalizeAdapter = (input: unknown) => {
       const raw = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
-      const baseVals = is70
+      const baseVals = canArtifice
         ? normalizeArray4(raw.values)
         : [Number(Array.isArray(raw.values) ? raw.values[0] : raw.value) || 0];
       const baseValues = baseVals.slice(0, size);
@@ -3025,7 +3028,7 @@ export const useTimelineStore = defineStore('timeline', () => {
               : typeof ent.key === 'string' && ent.key.trim()
                 ? ent.key.trim()
                 : null;
-          const vals = is70
+          const vals = canArtifice
             ? normalizeArray4(ent.values)
             : [Number(Array.isArray(ent.values) ? ent.values[0] : ent.value) || 0];
           return { modifierId: modifierId || null, values: vals.slice(0, size) };
@@ -3052,7 +3055,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         const modifierId = typeof ent?.modifierId === 'string' ? ent.modifierId.trim() : '';
         if (!modifierId) continue;
         if (seen.has(modifierId)) continue;
-        const vals = is70
+        const vals = canArtifice
           ? normalizeArray4(ent.values)
           : [Number(Array.isArray(ent.values) ? ent.values[0] : ent.value) || 0];
         cleanedEntries.push({ modifierId, values: vals.slice(0, size) });
@@ -3079,14 +3082,14 @@ export const useTimelineStore = defineStore('timeline', () => {
       const base = { ...(eq || {}) } as Record<string, unknown>;
       base.canonicalGearPieceId =
         resolveGearPieceSlug(base.id as string | null | undefined) || null;
-      const is70 = Number(base.level) === 70;
+      const canArtifice = isEquipmentArtificable(base.level);
       const legacy = base.affixes70 && typeof base.affixes70 === 'object' ? base.affixes70 : null;
       const affixesInput =
         base.affixes && typeof base.affixes === 'object' ? base.affixes : legacy || null;
       if (affixesInput) {
         const affixes = normalizeEquipmentAffixes(base.level, affixesInput);
         base.affixes = affixes;
-        if (!is70) {
+        if (!canArtifice) {
           affixes.primary1.values = affixes.primary1.values.slice(0, 1);
           affixes.primary2.values = affixes.primary2.values.slice(0, 1);
           affixes.adapter.values = affixes.adapter.values.slice(0, 1);

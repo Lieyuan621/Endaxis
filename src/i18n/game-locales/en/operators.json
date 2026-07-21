@@ -1718,8 +1718,8 @@
   "arcane": {
     "name": "Arcane",
     "forms": {
-      "int": "INT",
-      "will": "WILL"
+      "int": "Array Arcana · INT",
+      "will": "Array Arcana · WILL"
     },
     "talents": [
       {

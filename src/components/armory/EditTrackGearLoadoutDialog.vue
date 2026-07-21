@@ -7,6 +7,7 @@ import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
 } from '@/utils/equipmentEffectDisplay';
+import { getEquipmentLevelColor, isEquipmentArtificable } from '@/utils/equipmentLevels';
 import { resolveLeveled } from '@/data/types';
 import { useGearStore } from '@/stores/gearStore';
 import { useTimelineStore } from '@/stores/timelineStore';
@@ -58,19 +59,6 @@ const SLOT_CONFIGS = [
     fallback: 'Accessory 2',
   },
 ];
-
-const EQUIPMENT_LEVEL_COLORS = {
-  70: '#ffd700',
-  50: '#b37feb',
-  36: '#4a90e2',
-  28: '#73c94f',
-  20: '#95de64',
-  10: '#888888',
-};
-function getEquipmentLevelColor(level) {
-  const key = Number(level);
-  return EQUIPMENT_LEVEL_COLORS[key] || '#888';
-}
 
 function tr(key, fallback) {
   const out = t(key);
@@ -158,7 +146,7 @@ const slots = computed(() => {
       level,
       color,
       refine,
-      isGold: level >= 70,
+      isGold: isEquipmentArtificable(level),
       name: instance
         ? getGearPieceGameName(instance.gearPieceId, locale.value) || instance.gearPieceId
         : equipment?.name || '',
@@ -257,7 +245,7 @@ function openItemEditor(slot) {
                 </button>
               </div>
             </template>
-            <span v-else class="refine-locked">{{ t('actionLibrary.hints.noRefineNon70') }}</span>
+            <span v-else class="refine-locked">{{ t('actionLibrary.hints.noRefineNonGold') }}</span>
           </div>
 
           <button

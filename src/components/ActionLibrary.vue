@@ -9,6 +9,7 @@ import EditTrackGearLoadoutDialog from './armory/EditTrackGearLoadoutDialog.vue'
 import { useI18n } from 'vue-i18n';
 import { getOperatorGameName, getWeaponGameName } from '@/data/gameText';
 import { getDefaultLibraryDragOffsets } from '@/utils/libraryDragGhost';
+import { getTrackOperatorFormName } from '@/utils/operatorFormDisplay';
 
 const store = useTimelineStore();
 const operatorStore = useOperatorStore();
@@ -74,6 +75,19 @@ const hasAnyEquipmentEquipped = computed(() => {
 const activeCharacterName = computed(() => {
   if (!activeCharacter.value) return t('actionLibrary.fallback.noOperator');
   return getOperatorGameName(activeCharacter.value.id || activeCharacter.value.slug, locale.value);
+});
+const activeOperatorFormName = computed(() => {
+  void locale.value;
+  const track = activeTrack.value;
+  if (!track) return null;
+  void track.operatorStatus;
+  void track.operatorInstanceId;
+  void track.weaponInstanceId;
+  void track.equipArmorInstanceId;
+  void track.equipGlovesInstanceId;
+  void track.equipAccessory1InstanceId;
+  void track.equipAccessory2InstanceId;
+  return getTrackOperatorFormName(track, locale.value);
 });
 const activeWeaponName = computed(() => {
   if (!activeWeapon.value) return t('actionLibrary.fallback.noWeapon');
@@ -260,7 +274,14 @@ function onNativeDragStart(evt, skill) {
       <div class="header-main">
         <div class="header-main-title">
           <div class="header-icon-bar"></div>
-          <h3 class="char-name">{{ activeLibraryTitle }}</h3>
+          <h3 class="char-name">
+            <span class="char-name__main">{{ activeLibraryTitle }}</span>
+            <span
+              v-if="activeOperatorFormName"
+              class="operator-form-badge"
+              :title="activeOperatorFormName"
+            >{{ activeOperatorFormName }}</span>
+          </h3>
         </div>
         <div class="header-actions">
           <button type="button" class="header-tool-btn" @click="handleResetPanel">
@@ -439,9 +460,29 @@ function onNativeDragStart(evt, skill) {
 }
 .char-name {
   margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
   color: #fff;
   font-size: 18px;
   letter-spacing: 1px;
+}
+.char-name__main {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operator-form-badge {
+  flex: 0 0 auto;
+  color: #00e5ff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+  white-space: nowrap;
 }
 .header-actions {
   display: flex;

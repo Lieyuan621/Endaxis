@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { GearInstance } from '../types';
 import { getGearPiece } from '../data';
+import { isEquipmentArtificable } from '@/utils/equipmentLevels';
 
 const STORAGE_KEY = 'endfield-gear-armory';
 
@@ -64,7 +65,7 @@ export const useGearStore = defineStore('gears', () => {
     if (!g) return;
 
     const piece = getGearPiece(g.gearPieceId);
-    const isGold = piece && piece.levelRequirement >= 70;
+    const isGold = piece && isEquipmentArtificable(piece.levelRequirement);
     if (!isGold) {
       g.artificingLevels = [];
       persist();

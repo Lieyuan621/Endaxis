@@ -380,17 +380,12 @@
       "noOperator": "No OP ",
       "noWeapon": "No Weapon Equipped"
     },
-    "panels": {
-      "operatorStats": "Operator Stats",
-      "weaponStats": "Weapon Stats",
-      "equipmentRefine": "Equipment Artificing"
-    },
     "section": {
       "operatorStatusAdjust": "Operator Status Adjustment",
       "operatorSkillLibrary": "Operator Skill Library"
     },
     "hints": {
-      "noRefineNon70": "No Artificing below Lv70",
+      "noRefineNonGold": "No Artificing on non-gold gear",
       "adjustOperatorStatus": "Tune attributes, weapons, and gear sets; changes affect timeline simulation",
       "clickOrDrag": "Click to select / Drag out then place on the timeline"
     },

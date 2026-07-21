@@ -4,7 +4,6 @@ import {
   EDITOR_EFFECT_KINDS,
   EFFECT_KIND_FIELDS,
   effectKindHasField,
-  getEffectEditableFieldKeys,
   createEffectKindDefaults,
 } from './effectSchema';
 import {
@@ -25,9 +24,6 @@ describe('hit/effect editor SSOT', () => {
     expect(EFFECT_KINDS).toContain('derived');
     for (const kind of EFFECT_KINDS) {
       expect(EFFECT_KIND_FIELDS[kind]?.length, kind).toBeGreaterThan(0);
-      expect(getEffectEditableFieldKeys(kind)).toEqual(
-        expect.arrayContaining(['id', 'duration', ...EFFECT_KIND_FIELDS[kind]]),
-      );
     }
     expect(EFFECT_KIND_FIELDS.amp).toEqual(EFFECT_KIND_FIELDS.status);
     expect(createEffectKindDefaults('amp')).toMatchObject({
