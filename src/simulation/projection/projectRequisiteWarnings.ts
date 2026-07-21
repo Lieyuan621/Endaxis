@@ -5,6 +5,9 @@ import { snapTimeToFrame } from '@/utils/time';
 import type { ComboWindowLayout } from './projectComboWindows';
 import type { OperatorStateEvent } from '@/simulation/engine/types';
 
+const COMBO_SKILL_TYPE = 'comboSkill';
+const COMBO_WINDOW_EFFECT_ID_SUFFIX = 'combo-window';
+
 /**
  * Sum the active `ultimateEnergyCostReduction` status buffs on a track at `time`, as a percentage
  * (value*stacks; 100 = 100%). This is the DYNAMIC, per-cast reduction (e.g. a temporary "free ult"
@@ -53,8 +56,23 @@ export type RequisiteWarning =
   | { kind: 'sp'; need: number; current: number }
   | { kind: 'gauge'; need: number; current: number };
 
+interface RegisteredTriggerEffect {
+  sourceTrackId?: string;
+  sourceSkillType?: string;
+  triggerEffect?: {
+    effects?: RegisteredEffect[];
+  };
+}
+
+interface RegisteredEffect {
+  kind?: string;
+  id?: string;
+  name?: string;
+}
+
 interface TrackData {
   id?: string;
+  triggerEffects?: RegisteredTriggerEffect[];
   actions?: {
     isDisabled?: boolean;
     startTime?: number;
@@ -153,6 +171,44 @@ function getActiveComboQueue(
   return active;
 }
 
+function operatorSheetDefinesComboWindow(trackId: string): boolean {
+  const operator = getOperator(trackId);
+  if (!operator) return false;
+  if (operator.combatSkills?.comboSkill?.comboWindow) return true;
+  return (operator.forms?.forms ?? []).some(form => !!form.combatSkills?.comboSkill?.comboWindow);
+}
+
+function isComboWindowEffect(effect: RegisteredEffect): boolean {
+  if (effect.kind !== 'status') return false;
+  return String(effect.id || '').endsWith(COMBO_WINDOW_EFFECT_ID_SUFFIX);
+}
+
+function isCurrentTrackComboTrigger(trackId: string, entry: RegisteredTriggerEffect): boolean {
+  if (entry.sourceTrackId && entry.sourceTrackId !== trackId) return false;
+  return entry.sourceSkillType === COMBO_SKILL_TYPE;
+}
+
+function hasRegisteredComboWindowTrigger(track: TrackData): boolean {
+  const trackId = track.id;
+  if (!trackId || !Array.isArray(track.triggerEffects)) return false;
+  return track.triggerEffects.some(entry => {
+    if (!isCurrentTrackComboTrigger(trackId, entry)) return false;
+    return (entry.triggerEffect?.effects ?? []).some(isComboWindowEffect);
+  });
+}
+
+function requiresComboWindowCheck(track: TrackData): boolean {
+  if (!track.id) return false;
+
+  // `triggerEffects` 是当前轨道实例/形态最终注册进模拟器的触发器。
+  // 存在该字段时以它为准；没有该字段时再退回静态表，兼容轻量测试和旧数据。
+  if (Array.isArray(track.triggerEffects)) {
+    return hasRegisteredComboWindowTrigger(track);
+  }
+
+  return operatorSheetDefinesComboWindow(track.id);
+}
+
 /**
  * Build a map of actionId → RequisiteWarning for all skill blocks
  * that cannot execute because their prerequisites are unmet.
@@ -182,10 +238,7 @@ export function projectRequisiteWarnings(
     const tid = track.id;
     if (!tid || !track.actions) continue;
 
-    // Determine once per track — does this operator define a comboWindow?
-    const hasComboWindow = !!(
-      track.id && getOperator(track.id)?.combatSkills?.comboSkill?.comboWindow
-    );
+    const requiresComboWindow = requiresComboWindowCheck(track);
     const gaugeSeries = gaugeSeriesByTrackId.get(tid) ?? [];
     const comboWindowLayout = comboWindowLayouts.get(tid) ?? [];
 
@@ -196,8 +249,8 @@ export function projectRequisiteWarnings(
       const start = snapTimeToFrame(a.startTime ?? 0);
 
       // ── Combo skill: must overlap a combo window ────────────────────
-      if (a.type === 'comboSkill') {
-        if (!hasComboWindow) continue;
+      if (a.type === COMBO_SKILL_TYPE) {
+        if (!requiresComboWindow) continue;
         if (!comboWindowLayout.some(seg => isInComboWindow(seg, start))) {
           warnings.set(a.instanceId, { kind: 'comboWindow' });
           continue;

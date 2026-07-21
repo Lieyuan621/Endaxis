@@ -414,7 +414,15 @@
       "susceptibility": "Susceptibility"
     },
     "operator": {
-      "talent": "Talent {index}"
+      "talent": "Talent {index}",
+      "skillTooltip": {
+        "active": "Active",
+        "rank": "RANK {level}",
+        "cooldown": "Cooldown",
+        "spCost": "SP Cost",
+        "ultimateEnergyCost": "Ultimate Energy Cost",
+        "seconds": "s"
+      }
     }
   },
   "skillType": {

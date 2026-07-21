@@ -414,7 +414,15 @@
       "susceptibility": "Уязвимость"
     },
     "operator": {
-      "talent": "Талант {index}"
+      "talent": "Талант {index}",
+      "skillTooltip": {
+        "active": "Активно",
+        "rank": "RANK {level}",
+        "cooldown": "Перезарядка",
+        "spCost": "Расход SP",
+        "ultimateEnergyCost": "Расход энергии",
+        "seconds": "с"
+      }
     }
   },
   "skillType": {

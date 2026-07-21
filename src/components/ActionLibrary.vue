@@ -7,9 +7,9 @@ import EditOperatorInstanceDialog from './armory/EditOperatorInstanceDialog.vue'
 import EditWeaponInstanceDialog from './armory/EditWeaponInstanceDialog.vue';
 import EditTrackGearLoadoutDialog from './armory/EditTrackGearLoadoutDialog.vue';
 import { useI18n } from 'vue-i18n';
-import { getOperatorGameName, getWeaponGameName } from '@/data/gameText';
+import { getOperatorFormName, getOperatorGameName, getWeaponGameName } from '@/data/gameText';
 import { getDefaultLibraryDragOffsets } from '@/utils/libraryDragGhost';
-import { getTrackOperatorFormName } from '@/utils/operatorFormDisplay';
+import { getTrackOperatorFormKey } from '@/utils/operatorFormDisplay';
 
 const store = useTimelineStore();
 const operatorStore = useOperatorStore();
@@ -76,8 +76,7 @@ const activeCharacterName = computed(() => {
   if (!activeCharacter.value) return t('actionLibrary.fallback.noOperator');
   return getOperatorGameName(activeCharacter.value.id || activeCharacter.value.slug, locale.value);
 });
-const activeOperatorFormName = computed(() => {
-  void locale.value;
+const activeOperatorFormKey = computed(() => {
   const track = activeTrack.value;
   if (!track) return null;
   void track.operatorStatus;
@@ -87,7 +86,14 @@ const activeOperatorFormName = computed(() => {
   void track.equipGlovesInstanceId;
   void track.equipAccessory1InstanceId;
   void track.equipAccessory2InstanceId;
-  return getTrackOperatorFormName(track, locale.value);
+  return getTrackOperatorFormKey(track);
+});
+const activeOperatorFormName = computed(() => {
+  void locale.value;
+  const track = activeTrack.value;
+  const formKey = activeOperatorFormKey.value;
+  if (!track?.id || !formKey) return null;
+  return getOperatorFormName(track.id, formKey, locale.value);
 });
 const activeWeaponName = computed(() => {
   if (!activeWeapon.value) return t('actionLibrary.fallback.noWeapon');
@@ -280,7 +286,8 @@ function onNativeDragStart(evt, skill) {
               v-if="activeOperatorFormName"
               class="operator-form-badge"
               :title="activeOperatorFormName"
-            >{{ activeOperatorFormName }}</span>
+              >{{ activeOperatorFormName }}</span
+            >
           </h3>
         </div>
         <div class="header-actions">
@@ -340,6 +347,7 @@ function onNativeDragStart(evt, skill) {
       :visible="showOperatorEditDialog"
       :instance="activeOperatorInstance"
       :display-name="activeCharacterName"
+      :active-form-key="activeOperatorFormKey"
       @update:visible="showOperatorEditDialog = $event"
     />
     <EditWeaponInstanceDialog

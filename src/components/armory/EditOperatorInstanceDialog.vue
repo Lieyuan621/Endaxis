@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getOperator, getOperatorTalentGroups } from '@/data';
 import GameRichTextRenderer from '@/components/GameRichTextRenderer.vue';
+import OperatorSkillTooltip from '@/components/armory/OperatorSkillTooltip.vue';
 import {
   getGameAttributeName,
   getGameClassName,
@@ -10,8 +11,6 @@ import {
   getGameWeaponTypeName,
   getOperatorPotentialDescription,
   getOperatorPotentialName,
-  getOperatorCombatSkillDescription,
-  getOperatorCombatSkillName,
   getOperatorTalentDescription,
   getOperatorTalentName,
   getOperatorUiLabel,
@@ -42,6 +41,7 @@ const props = defineProps({
   instance: { type: Object, default: null },
   visible: { type: Boolean, default: false },
   displayName: { type: String, default: '' },
+  activeFormKey: { type: String, default: null },
 });
 
 const emit = defineEmits(['update:visible']);
@@ -123,18 +123,6 @@ function getSkillTypeName(key) {
       : key === 'comboSkill'
         ? t('skillType.link')
         : t('skillType.ultimate');
-}
-
-function getSkillName(key) {
-  const slug = props.instance?.operatorSlug;
-  if (!slug) return '';
-  return getOperatorCombatSkillName(slug, key, locale.value) || getSkillTypeName(key);
-}
-
-function getSkillDescription(key) {
-  const slug = props.instance?.operatorSlug;
-  if (!slug) return '';
-  return getOperatorCombatSkillDescription(slug, key, locale.value) || '';
 }
 
 function getTalentIcon(groupIdx) {
@@ -338,15 +326,18 @@ function promotedLabel() {
                 placement="top"
                 effect="dark"
                 :show-after="120"
+                :enterable="true"
                 popper-class="operator-edit-tooltip-popper"
               >
                 <template #content>
-                  <div class="operator-edit-tooltip">
-                    <div class="operator-edit-tooltip-title">{{ getSkillName(key) }}</div>
-                    <div v-if="getSkillDescription(key)" class="operator-edit-tooltip-desc">
-                      <GameRichTextRenderer :text="getSkillDescription(key)" :locale="locale" />
-                    </div>
-                  </div>
+                  <OperatorSkillTooltip
+                    :operator="op"
+                    :operator-slug="instance.operatorSlug"
+                    :skill-key="key"
+                    :skill-level="instance.skillLevels[key] ?? 1"
+                    :skill-type-name="getSkillTypeName(key)"
+                    :active-form-key="activeFormKey"
+                  />
                 </template>
                 <div class="skill-icon-frame" :style="{ borderColor: elColor }">
                   <img :src="getSkillIcon(key)" class="skill-icon" />
@@ -761,7 +752,7 @@ function promotedLabel() {
 }
 
 :global(.operator-edit-tooltip-popper) {
-  max-width: 340px;
+  max-width: min(440px, calc(100vw - 48px));
 }
 
 :global(.operator-edit-tooltip-popper.el-popper.is-dark) {

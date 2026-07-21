@@ -12,6 +12,26 @@ function comboSegment(start: number, end: number, windowStart = start): ComboWin
   };
 }
 
+function comboWindowTrigger(sourceTrackId: string) {
+  return {
+    sourceTrackId,
+    sourceSkillType: 'comboSkill',
+    triggerEffect: {
+      effects: [{ kind: 'status', id: `${sourceTrackId}-combo-window`, name: 'comboWindow' }],
+    },
+  };
+}
+
+type ComboWindowTrigger = ReturnType<typeof comboWindowTrigger>;
+
+function comboSkillTrack(id: string, triggerEffects?: ComboWindowTrigger[]) {
+  return {
+    id,
+    ...(triggerEffects ? { triggerEffects } : {}),
+    actions: [{ instanceId: `${id}-combo`, type: 'comboSkill', startTime: 6 }],
+  };
+}
+
 describe('projectRequisiteWarnings combo queue order', () => {
   it('warns when a combo skill is outside its combo window', () => {
     const warnings = projectRequisiteWarnings(
@@ -27,6 +47,39 @@ describe('projectRequisiteWarnings combo queue order', () => {
     );
 
     expect(warnings.get('perlica-combo')).toEqual({ kind: 'comboWindow' });
+  });
+
+  it('recognizes combo windows defined only by operator form overrides', () => {
+    const warnings = projectRequisiteWarnings(
+      [comboSkillTrack('arcane')],
+      new Map(),
+      [],
+      new Map(),
+    );
+
+    expect(warnings.get('arcane-combo')).toEqual({ kind: 'comboWindow' });
+  });
+
+  it('uses current track trigger effects before falling back to sheet definitions', () => {
+    const warnings = projectRequisiteWarnings(
+      [comboSkillTrack('arcane', [])],
+      new Map(),
+      [],
+      new Map(),
+    );
+
+    expect(warnings.has('arcane-combo')).toBe(false);
+  });
+
+  it('checks current-form combo windows when track trigger effects contain them', () => {
+    const warnings = projectRequisiteWarnings(
+      [comboSkillTrack('arcane', [comboWindowTrigger('arcane')])],
+      new Map(),
+      [],
+      new Map(),
+    );
+
+    expect(warnings.get('arcane-combo')).toEqual({ kind: 'comboWindow' });
   });
 
   it('requires earlier combo windows to be released first', () => {
