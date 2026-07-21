@@ -10,7 +10,9 @@ export class UltEnergyHandler implements EventHandler<UltEnergyChangeEvent> {
       return;
     }
     const stats = actor.snapshot().stats as any;
-    const efficiency = rawChange > 0 ? Math.max(0, Number(stats?.ult_charge_eff) || 100) / 100 : 1;
+    // A flat (ignoreEfficiency) gain bypasses the recipient's ult charge efficiency multiplier.
+    const applyEff = rawChange > 0 && !e.payload.ignoreEfficiency;
+    const efficiency = applyEff ? Math.max(0, Number(stats?.ult_charge_eff) || 100) / 100 : 1;
     const change = rawChange * efficiency;
     const gauge = actor.modifyGauge(change);
 
@@ -22,6 +24,7 @@ export class UltEnergyHandler implements EventHandler<UltEnergyChangeEvent> {
         change,
         gauge,
         sourceId: e.payload.sourceId,
+        ignoreEfficiency: e.payload.ignoreEfficiency,
       },
     });
   }

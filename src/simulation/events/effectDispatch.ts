@@ -1362,6 +1362,7 @@ export function dispatchSingleActorEffect(
             actorId: targetId,
             change: gain,
             sourceId: effectId,
+            ignoreEfficiency: ue.ignoreEfficiency,
           },
         });
       }

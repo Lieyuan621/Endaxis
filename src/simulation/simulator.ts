@@ -530,6 +530,9 @@ export function simulate(
   const actorIds = actors.map(actor => actor.id);
   const actorMetaById = new Map(actors.map(actor => [actor.id, actor]));
 
+  // Fire onBattleStart triggers at t=0 (after unconditional passives are seeded above).
+  engine.enqueue({ type: 'BATTLE_START', time: 0, payload: {} });
+
   timeline.actions.forEach(action => {
     // Keep disabled actions in the compiled timeline for editor rendering, but
     // never let them enter the simulator event queue.

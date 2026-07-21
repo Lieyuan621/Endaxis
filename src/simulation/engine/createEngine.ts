@@ -7,6 +7,7 @@ import { SpChangeHandler } from '../events/SpChangeHandler';
 import { SpRegenPauseHandler } from '../events/SpRegenPauseHandler';
 import { StaggerChangeHandler } from '../events/StaggerChangeHandler';
 import { UltEnergyHandler } from '../events/UltEnergyHandler';
+import { BattleStartHandler } from '../events/BattleStartHandler';
 import { OperatorEffectHandler } from '../events/OperatorEffectHandler';
 import { EnemyEffectHandler } from '../events/EnemyEffectHandler';
 import type { ResolvedTimeline } from '../compiler/types';
@@ -26,6 +27,7 @@ export function createEngine(
   engine.registerHandler('ACTION_END', new ActionEndHandler());
   engine.registerHandler('SP_CHANGE', new SpChangeHandler(triggerRegistry));
   engine.registerHandler('ULT_ENERGY_CHANGE', new UltEnergyHandler());
+  engine.registerHandler('BATTLE_START', new BattleStartHandler(triggerRegistry));
   engine.registerHandler('SP_REGEN_PAUSE', new SpRegenPauseHandler());
   engine.registerHandler('STAGGER_CHANGE', new StaggerChangeHandler());
   engine.registerHandler('OPERATOR_EFFECT_APPLY', new OperatorEffectHandler(triggerRegistry));
