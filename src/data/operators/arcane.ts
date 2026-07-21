@@ -1,17 +1,40 @@
 import { map, range } from 'lodash';
-import type { OperatorSheet, Effect, ArtsElement } from '../types';
+import type { OperatorSheet, ArtsElement, TriggerEffect, Effect } from '../types';
 
-const ReapplyInflictionEffects: Effect[] = map(
-  ['cryo', 'electric', 'nature', 'heat'],
-  (element: ArtsElement) => ({
-    kind: 'infliction' as const,
-    element,
-    condition: {
-      kind: 'enemyStatus' as const,
-      status: `${element}Infliction` as const,
+const INFLICTIONS = ['cryo', 'electric', 'nature', 'heat'];
+const TRACKER_IDS = Object.fromEntries(INFLICTIONS.map(x => [x, `arcane-combo-tracker-${x}`]));
+
+const INFLICTION_TRACKER: TriggerEffect[] = INFLICTIONS.map(x => ({
+  trigger: {
+    kind: 'onStatusApplied' as const,
+    status: `${x}Infliction`,
+    target: 'enemy' as const,
+    triggerScope: 'global' as const,
+  },
+  effects: [
+    {
+      id: TRACKER_IDS[x]!,
+      kind: 'status' as const,
+      target: 'owner' as const,
+      duration: 6,
+      hide: true,
     },
-  }),
-);
+    ...INFLICTIONS.filter(y => x !== y).map(y => ({
+      kind: 'consume' as const,
+      operatorStatus: TRACKER_IDS[y]!,
+    })),
+  ],
+}));
+
+const COMBO_SKILL_EFFECTS: Effect[] = INFLICTIONS.map(x => ({
+  kind: 'infliction' as const,
+  element: x as ArtsElement,
+  condition: {
+    kind: 'operatorStatus',
+    status: TRACKER_IDS[x]!,
+    consume: true,
+  },
+}));
 
 const sheet: OperatorSheet = {
   new: true,
@@ -673,7 +696,7 @@ const sheet: OperatorSheet = {
                             target: 'enemy',
                             duration: 6,
                           },
-                          ...ReapplyInflictionEffects,
+                          ...COMBO_SKILL_EFFECTS,
                         ],
                       },
                     ],
@@ -704,6 +727,7 @@ const sheet: OperatorSheet = {
               },
             ],
             triggers: [
+              ...INFLICTION_TRACKER,
               {
                 trigger: {
                   kind: 'onStatusExpire',
@@ -779,7 +803,17 @@ const sheet: OperatorSheet = {
                             duration: 20,
                             hide: true,
                           },
-                          ...ReapplyInflictionEffects,
+                          ...map(
+                            ['cryo', 'electric', 'nature', 'heat'],
+                            (element: ArtsElement) => ({
+                              kind: 'infliction' as const,
+                              element,
+                              condition: {
+                                kind: 'enemyStatus' as const,
+                                status: `${element}Infliction` as const,
+                              },
+                            }),
+                          ),
                         ],
                       },
                     ],
