@@ -1,7 +1,6 @@
 import type { OperatorSheet } from '../types';
 
 const sheet: OperatorSheet = {
-  new: true,
   gameId: 'CAMILLE',
   rarity: 6,
   weapon: 'polearm',

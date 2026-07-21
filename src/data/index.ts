@@ -22,6 +22,7 @@ export {
 import akekuri from './operators/akekuri';
 import alesh from './operators/alesh';
 import antal from './operators/antal';
+import arcane from './operators/arcane';
 import arclight from './operators/arclight';
 import ardelia from './operators/ardelia';
 import avywenna from './operators/avywenna';
@@ -63,6 +64,7 @@ const enemyModules = import.meta.glob('./enemies/*.ts', {
 // Gear set effect sheets
 import aburreys_legacy from './gearsets/aburreys-legacy';
 import aethertech from './gearsets/aethertech';
+import aic_fieldwork from './gearsets/aic-fieldwork';
 import aic_heavy from './gearsets/aic-heavy';
 import aic_light from './gearsets/aic-light';
 import armored_msgr from './gearsets/armored-msgr';
@@ -89,6 +91,7 @@ const operatorSheets: Record<string, OperatorSheet> = {
   akekuri: akekuri,
   alesh: alesh,
   antal: antal,
+  arcane: arcane,
   arclight: arclight,
   ardelia: ardelia,
   avywenna: avywenna,
@@ -217,6 +220,7 @@ const enemySheets: Record<string, EnemySheet> = Object.fromEntries(
 const gearSetSheets: Record<string, GearSetSheet> = {
   'aburreys-legacy': aburreys_legacy,
   aethertech: aethertech,
+  'aic-fieldwork': aic_fieldwork,
   'aic-heavy': aic_heavy,
   'aic-light': aic_light,
   'armored-msgr': armored_msgr,
