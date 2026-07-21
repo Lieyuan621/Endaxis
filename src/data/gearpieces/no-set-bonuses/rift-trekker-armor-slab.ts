@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'Rift Trekker Armor Slab',
-  icon: '/equipment/item_equip_t4_parts_wuling02_edc_01.webp',
+  icon: '/equipment/wuling02/item_equip_t4_parts_wuling02_edc_01.webp',
   slotType: 'kit',
   levelRequirement: 70,
   defense: 21,

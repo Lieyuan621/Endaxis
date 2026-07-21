@@ -281,6 +281,9 @@
       "collapseTitle": "Collapse Pre-battle Preparation Area",
       "setDurationTitle": "Set Pre-battle Preparation Duration"
     },
+    "battle": {
+      "setDurationTitle": "Set timeline length (seconds, max 600)"
+    },
     "ruler": {
       "gameTimeCollapseTitle": "Game Time (Click to Collapse)",
       "realTimeTitle": "Real Time",

@@ -543,7 +543,7 @@ function formatAxisLabel(viewTime) {
         </div>
         <div
           v-if="showPrepVisual"
-          class="share-card__battle-line share-card__battle-line--grid"
+          class="share-card__battle-line"
           :style="{ top: `${battleStartYPx}px` }"
         ></div>
 
@@ -624,7 +624,7 @@ function formatAxisLabel(viewTime) {
   grid-template-columns: var(--rail-w, 0px) repeat(4, minmax(0, 1fr)) var(--opw, 0px);
   gap: 0;
   padding: 6px 4px 8px;
-  background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), transparent 55%), #0c0c10;
+  background: #0c0c10;
   border-bottom: 1px solid rgba(255, 215, 0, 0.18);
   flex: 0 0 auto;
 }
@@ -704,7 +704,8 @@ function formatAxisLabel(viewTime) {
   left: 0;
   right: 0;
   top: 0;
-  background: rgba(255, 215, 0, 0.05);
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   pointer-events: none;
   z-index: 1;
 }
@@ -715,7 +716,7 @@ function formatAxisLabel(viewTime) {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: rgba(255, 215, 0, 0.55);
+  color: rgba(255, 255, 255, 0.38);
   z-index: 2;
 }
 
@@ -723,14 +724,12 @@ function formatAxisLabel(viewTime) {
   position: absolute;
   left: 0;
   right: 0;
-  height: 0;
-  border-top: 1px dashed rgba(255, 215, 0, 0.55);
+  height: 2px;
+  background: rgba(255, 255, 255, 0.38);
+  border-top: none;
+  transform: translateY(-1px);
   z-index: 5;
   pointer-events: none;
-}
-.share-card__battle-line--grid {
-  left: 0;
-  right: 0;
 }
 
 .share-card__op-layer {
@@ -818,7 +817,7 @@ function formatAxisLabel(viewTime) {
   --mark-color: rgba(255, 255, 255, 0.45);
 }
 .share-card__tick.is-battle-start {
-  --mark-color: rgba(255, 215, 0, 0.7);
+  --mark-color: rgba(255, 255, 255, 0.7);
 }
 .share-card__tick-mark {
   width: 4px;
@@ -835,7 +834,7 @@ function formatAxisLabel(viewTime) {
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
 }
 .share-card__tick.is-battle-start .share-card__tick-label {
-  color: rgba(255, 215, 0, 0.75);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .share-card__tracks {

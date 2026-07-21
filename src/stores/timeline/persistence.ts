@@ -51,6 +51,7 @@ interface PersistenceDeps {
   contingencyContractTags: Ref<number[]>;
   prepDuration: Ref<number>;
   prepExpanded: Ref<boolean>;
+  battleDuration: Ref<number>;
   trackRowHeightWeights: Ref<number[]>;
   isLoading: Ref<boolean>;
   historyStack: Ref<string[]>;
@@ -97,6 +98,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     contingencyContractTags,
     prepDuration,
     prepExpanded,
+    battleDuration,
     trackRowHeightWeights,
     isLoading,
     historyStack,
@@ -185,6 +187,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
             equipmentCategoryOverrides: newEquipmentCatOverrides,
             prepDuration: prepDuration.value,
             prepExpanded: prepExpanded.value,
+            battleDuration: battleDuration.value,
             trackRowHeightWeights: newTrackRowHeightWeights,
             systemConstants: newSys,
             activeEnemyId: newEnemyId,
@@ -255,6 +258,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
           equipmentCategoryOverrides.value = {};
           prepDuration.value = 5;
           prepExpanded.value = true;
+          battleDuration.value = 120;
           trackRowHeightWeights.value = [];
           inheritedInitialEffects.value = [];
           inheritedInitialEnemyState.value = null;
@@ -288,6 +292,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     inheritedInitialEnemyState.value = null;
     prepDuration.value = 5;
     prepExpanded.value = true;
+    battleDuration.value = 120;
     trackRowHeightWeights.value = [];
 
     systemConstants.value = createDefaultSystemConstantsState();
@@ -349,6 +354,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         equipmentCategoryOverrides: equipmentCategoryOverrides.value,
         prepDuration: prepDuration.value,
         prepExpanded: prepExpanded.value,
+        battleDuration: battleDuration.value,
         trackRowHeightWeights: trackRowHeightWeights.value,
         systemConstants: systemConstants.value,
         activeEnemyId: activeEnemyId.value,
@@ -469,6 +475,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
           equipmentCategoryOverrides.value = {};
           prepDuration.value = 5;
           prepExpanded.value = true;
+          battleDuration.value = 120;
         }
       }
 

@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'Rift Trekker Heavy Armor',
-  icon: '/equipment/item_equip_t4_parts_wuling02_body_01.webp',
+  icon: '/equipment/wuling02/item_equip_t4_parts_wuling02_body_01.webp',
   slotType: 'armor',
   levelRequirement: 70,
   defense: 56,

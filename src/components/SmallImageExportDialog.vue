@@ -44,7 +44,10 @@ watch(
     const dateStr = new Date().toISOString().slice(0, 10);
     form.value = {
       filename: props.initialFilename || `Endaxis_Card_${dateStr}`,
-      duration: Math.max(10, Number(props.initialDuration) || 60),
+      duration: Math.min(
+        Math.max(10, Math.round(Number(props.initialDuration) || 60)),
+        Math.max(10, Math.round(Number(store.TOTAL_DURATION) || 120)),
+      ),
       cardWidth: 420,
       blockHeight: 22,
       pxPerSecond: 24,
@@ -63,7 +66,9 @@ const watermarkText = computed(() =>
     .trim() || 'Endaxis',
 );
 
-const maxDuration = computed(() => Math.max(10, Number(store.TOTAL_DURATION) || 120));
+const maxDuration = computed(() =>
+  Math.max(10, Math.round(Number(store.TOTAL_DURATION) || 120)),
+);
 
 function close() {
   visible.value = false;
@@ -174,6 +179,7 @@ async function saveImage() {
             :min="10"
             :max="maxDuration"
             :step="10"
+            :precision="0"
             size="default"
             style="width: 100%"
           />

@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'Hot Work Hands PPE',
-  icon: '/equipment/item_equip_t4_suit_fire_natr01_hand_04.webp',
+  icon: '/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_hand_04.webp',
   slotType: 'gloves',
   levelRequirement: 70,
   defense: 42,

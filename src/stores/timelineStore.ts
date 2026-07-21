@@ -33,6 +33,7 @@ import {
   findOperatorInstance,
   findWeaponInstance,
   findGearInstance,
+  resolveEffectiveOperatorForTrack,
 } from '@/stores/timeline/instanceLookup';
 import {
   buildControlledOperatorSegments,
@@ -415,13 +416,20 @@ export const useTimelineStore = defineStore('timeline', () => {
     MIN: 15,
     MAX: 1200,
   };
-  const TOTAL_DURATION = 120;
+  const DEFAULT_BATTLE_DURATION = 120;
+  const MIN_BATTLE_DURATION = 30;
+  const MAX_BATTLE_DURATION = 600;
   const MAX_SCENARIOS = 14;
 
   const prepDuration = ref(5);
   const prepExpanded = ref(true);
+  const battleDuration = ref(DEFAULT_BATTLE_DURATION);
 
-  const viewDuration = computed(() => (Number(prepDuration.value) || 0) + TOTAL_DURATION);
+  const viewDuration = computed(
+    () => (Number(prepDuration.value) || 0) + (Number(battleDuration.value) || 0),
+  );
+  /** @deprecated Prefer `battleDuration`; kept for ResourceMonitor / export max. */
+  const TOTAL_DURATION = computed(() => Number(battleDuration.value) || DEFAULT_BATTLE_DURATION);
   const prepZoneWidthPx = computed(() => {
     const dur = Number(prepDuration.value) || 0;
     if (dur <= 0) return 0;
@@ -1108,6 +1116,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       equipmentCategoryOverrides: equipmentCategoryOverrides.value,
       prepDuration: prepDuration.value,
       prepExpanded: prepExpanded.value,
+      battleDuration: battleDuration.value,
       systemConstants: systemConstants.value,
       activeEnemyId: activeEnemyId.value,
       activeEnemyLevel: activeEnemyLevel.value,
@@ -1193,6 +1202,12 @@ export const useTimelineStore = defineStore('timeline', () => {
       prepExpanded.value = snapshot.prepExpanded !== false;
     }
 
+    if (snapshot.battleDuration !== undefined) {
+      battleDuration.value = clampBattleDuration(Number(snapshot.battleDuration));
+    } else {
+      battleDuration.value = DEFAULT_BATTLE_DURATION;
+    }
+
     if (snapshot.trackRowHeightWeights !== undefined) {
       trackRowHeightWeights.value = normalizeTrackRowHeightWeights(snapshot.trackRowHeightWeights);
     }
@@ -1227,6 +1242,7 @@ export const useTimelineStore = defineStore('timeline', () => {
           equipmentCategoryOverrides: equipmentCategoryOverrides.value,
           prepDuration: prepDuration.value,
           prepExpanded: prepExpanded.value,
+          battleDuration: battleDuration.value,
           trackRowHeightWeights: trackRowHeightWeights.value,
           systemConstants: systemConstants.value,
           activeEnemyId: activeEnemyId.value,
@@ -1267,6 +1283,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     );
     prepDuration.value = Math.max(MIN_PREP_DURATION, Number(incoming.prepDuration) || 0);
     prepExpanded.value = incoming.prepExpanded !== false;
+    battleDuration.value =
+      incoming.battleDuration !== undefined
+        ? clampBattleDuration(Number(incoming.battleDuration))
+        : DEFAULT_BATTLE_DURATION;
     trackRowHeightWeights.value = normalizeTrackRowHeightWeights(incoming.trackRowHeightWeights);
 
     if (incoming.systemConstants) {
@@ -1394,6 +1414,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       equipmentCategoryOverrides: {},
       prepDuration: 5,
       prepExpanded: true,
+      battleDuration: DEFAULT_BATTLE_DURATION,
       trackRowHeightWeights: [],
       systemConstants: createDefaultSystemConstantsState(),
       inheritedInitialEffects: [],
@@ -1672,6 +1693,9 @@ export const useTimelineStore = defineStore('timeline', () => {
       : null;
     next.prepDuration = nextPrepDuration;
     next.prepExpanded = sourceSnapshot.prepExpanded !== false;
+    next.battleDuration = clampBattleDuration(
+      Number(sourceSnapshot.battleDuration ?? battleDuration.value),
+    );
 
     const maxSp = Number(next.systemConstants?.maxSp ?? systemConstants.value.maxSp) || 300;
     const inheritedSp = Number(inheritedState?.team?.sp);
@@ -2730,9 +2754,10 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   function getTrackPatchedSkills(track: Track | null | undefined) {
     if (!track?.id || !track?.operatorInstanceId) return null;
-    const operator = getOperatorSheet(track.id);
+    const baseOperator = getOperatorSheet(track.id);
     const operatorInstance = findOperatorInstance(track.operatorInstanceId);
-    if (!operator || !operatorInstance) return null;
+    if (!baseOperator || !operatorInstance) return null;
+    const operator = resolveEffectiveOperatorForTrack(track, baseOperator);
     return {
       operatorInstance,
       flatSkills: patchCombatSkills(
@@ -5191,6 +5216,42 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
+  function clampBattleDuration(value: number, contentFloor = 0) {
+    const raw = Number(value);
+    const next = Number.isFinite(raw) ? raw : DEFAULT_BATTLE_DURATION;
+    const floor = Math.max(MIN_BATTLE_DURATION, Number(contentFloor) || 0);
+    return Math.min(MAX_BATTLE_DURATION, Math.max(floor, next));
+  }
+
+  /** Earliest battle-time end that still fits all placed content. */
+  function getBattleDurationContentFloor() {
+    const prep = Number(prepDuration.value) || 0;
+    let maxEndBt = 0;
+    tracks.value.forEach(t => {
+      t.actions?.forEach(a => {
+        const start = Number(a.startTime) || 0;
+        const dur = Number(a.duration) || 0;
+        maxEndBt = Math.max(maxEndBt, start + dur - prep);
+      });
+    });
+    cycleBoundaries.value.forEach(b => {
+      maxEndBt = Math.max(maxEndBt, (Number(b.time) || 0) - prep);
+    });
+    switchEvents.value.forEach(e => {
+      maxEndBt = Math.max(maxEndBt, (Number(e.time) || 0) - prep);
+    });
+    return Math.max(0, maxEndBt);
+  }
+
+  function setBattleDuration(newDuration: number, { commit = true }: { commit?: boolean } = {}) {
+    const next = clampBattleDuration(newDuration, getBattleDurationContentFloor());
+    const prev = Number(battleDuration.value) || DEFAULT_BATTLE_DURATION;
+    if (Math.abs(next - prev) < 0.0001) return;
+    battleDuration.value = next;
+    setTimelineShift(timelineShift.value);
+    if (commit) commitState();
+  }
+
   function setPrepDuration(newDuration: number, { commit = true }: { commit?: boolean } = {}) {
     const next = Math.max(MIN_PREP_DURATION, Number(newDuration) || 0);
     const prev = Math.max(MIN_PREP_DURATION, Number(prepDuration.value) || 0);
@@ -5271,6 +5332,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     contingencyContractTags,
     prepDuration,
     prepExpanded,
+    battleDuration,
     isLoading,
     historyStack,
     historyIndex,
@@ -5491,6 +5553,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     misc,
     prepDuration,
     prepExpanded,
+    battleDuration,
     trackRowHeightWeights,
     setTrackRowHeightWeights,
     viewDuration,
@@ -5501,6 +5564,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     formatAxisTimeLabel,
     togglePrepExpanded,
     setPrepDuration,
+    setBattleDuration,
+    MAX_BATTLE_DURATION,
+    MIN_BATTLE_DURATION,
+    DEFAULT_BATTLE_DURATION,
     getActionCoverStartTime,
     getActionVisualEndTime,
     getActionVisualDuration,

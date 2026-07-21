@@ -281,6 +281,9 @@
       "collapseTitle": "Свернуть область подготовки",
       "setDurationTitle": "Установить длительность подготовки"
     },
+    "battle": {
+      "setDurationTitle": "Длина таймлайна (сек., макс. 600)"
+    },
     "ruler": {
       "gameTimeCollapseTitle": "Игровое время (нажмите, чтобы свернуть)",
       "realTimeTitle": "Реальное время",

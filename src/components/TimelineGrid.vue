@@ -119,6 +119,7 @@ const draggingTrackOrderIndex = ref(null);
 const reorderDropTargetIndex = ref(null);
 const isResizingPrep = ref(false);
 const prepDurationPreview = ref(null);
+const isResizingBattle = ref(false);
 
 function onReorderDragStart(evt, index) {
   draggingTrackOrderIndex.value = index;
@@ -1507,6 +1508,14 @@ const activePrepDuration = computed(() =>
   prepDurationPreview.value !== null ? prepDurationPreview.value : store.prepDuration,
 );
 
+const activeBattleDuration = computed(() => Number(store.battleDuration) || store.DEFAULT_BATTLE_DURATION);
+
+const battleEndPxRounded = computed(() => {
+  const prep = Number(store.prepDuration) || 0;
+  // Keep the same rounding as tick marks (`Math.round(tick.x)`) so the end line stays flush.
+  return Math.round(store.timeToPx(prep + (Number(activeBattleDuration.value) || 0)));
+});
+
 const prepZoneWidthPxRounded = computed(() => {
   const dur = Number(activePrepDuration.value) || 0;
   if (dur <= 0) return 0;
@@ -1721,6 +1730,50 @@ function onPrepResizeMouseUp() {
   }
 }
 
+function onBattleResizeMouseDown(evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  isResizingBattle.value = true;
+  lastMouseX = evt.clientX;
+  lastMouseY = evt.clientY;
+  document.body.classList.add('is-dragging');
+  document.body.style.cursor = 'ew-resize';
+  window.addEventListener('mousemove', onBattleResizeMouseMove);
+  window.addEventListener('mouseup', onBattleResizeMouseUp);
+}
+
+function applyBattleDurationFromClient(clientX, { commit = false } = {}) {
+  const viewTime = calculateTimeFromClient(clientX, lastMouseY, 0, store.snapStep);
+  const prep = Number(store.prepDuration) || 0;
+  store.setBattleDuration(Math.max(0, viewTime - prep), { commit });
+}
+
+function onBattleResizeMouseMove(evt) {
+  if (!isResizingBattle.value) return;
+  lastMouseX = evt.clientX;
+  lastMouseY = evt.clientY;
+  updateDragAutoScroll(evt.clientX);
+  if (autoScrollSpeed.value === 0) {
+    applyBattleDurationFromClient(evt.clientX, { commit: false });
+  }
+}
+
+function onBattleResizeMouseUp() {
+  if (!isResizingBattle.value) return;
+  isResizingBattle.value = false;
+  autoScrollSpeed.value = 0;
+  if (autoScrollRaf) {
+    cancelAnimationFrame(autoScrollRaf);
+    autoScrollRaf = null;
+  }
+  document.body.classList.remove('is-dragging');
+  document.body.style.cursor = '';
+  window.removeEventListener('mousemove', onBattleResizeMouseMove);
+  window.removeEventListener('mouseup', onBattleResizeMouseUp);
+  // Live drag used commit:false; snapshot once at the end (no-op if unchanged).
+  store.commitState();
+}
+
 const isPrepDurationEditorOpen = ref(false);
 const prepDurationDraft = ref('');
 const prepDurationInputRef = ref(null);
@@ -1728,18 +1781,76 @@ const prepDurationInputRef = ref(null);
 function openPrepDurationEditor() {
   prepDurationDraft.value = String(timeToFrame(activePrepDuration.value));
   isPrepDurationEditorOpen.value = true;
-  nextTick(() => prepDurationInputRef.value?.focus?.());
+  closeBattleDurationEditor();
+  nextTick(() => {
+    prepDurationInputRef.value?.focus?.({ preventScroll: true });
+    pinRulerScroll();
+  });
 }
 
 function closePrepDurationEditor() {
   isPrepDurationEditorOpen.value = false;
+  pinRulerScroll();
 }
 
 function applyPrepDurationDraft() {
   const frames = Number(prepDurationDraft.value);
   if (!Number.isFinite(frames)) return;
+  // Unmount the input before resizing so focus scrollIntoView cannot nudge the ruler.
+  isPrepDurationEditorOpen.value = false;
   store.setPrepDuration(frameToTime(frames));
+  nextTick(pinRulerScroll);
+}
+
+const isBattleDurationEditorOpen = ref(false);
+const battleDurationDraft = ref('');
+const battleDurationInputRef = ref(null);
+
+function openBattleDurationEditor() {
+  battleDurationDraft.value = String(Math.round(Number(activeBattleDuration.value) || 0));
+  isBattleDurationEditorOpen.value = true;
   closePrepDurationEditor();
+  nextTick(() => {
+    battleDurationInputRef.value?.focus?.({ preventScroll: true });
+    pinRulerScroll();
+  });
+}
+
+function closeBattleDurationEditor() {
+  isBattleDurationEditorOpen.value = false;
+  pinRulerScroll();
+}
+
+function applyBattleDurationDraft() {
+  const seconds = Number(battleDurationDraft.value);
+  if (!Number.isFinite(seconds)) return;
+  // Unmount the input before resizing so focus scrollIntoView cannot nudge the ruler.
+  isBattleDurationEditorOpen.value = false;
+  store.setBattleDuration(Math.round(seconds));
+  nextTick(pinRulerScroll);
+}
+
+/** Focus/scrollIntoView on the duration input can set scrollLeft on the overflow ruler. */
+function pinRulerScroll() {
+  const el = timeRulerWrapperRef.value;
+  if (!el) return;
+  if (el.scrollLeft !== 0) el.scrollLeft = 0;
+  if (el.scrollTop !== 0) el.scrollTop = 0;
+}
+
+/** Native overflow scroll on the ruler → timelineShift, then reset scrollLeft. */
+function onRulerScroll(e) {
+  const el = e.currentTarget;
+  if (!el) return;
+  const dx = el.scrollLeft;
+  const dy = el.scrollTop;
+  if (dx !== 0) {
+    store.setTimelineShift(store.timelineShift + dx);
+  }
+  if (dx !== 0 || dy !== 0) {
+    el.scrollLeft = 0;
+    el.scrollTop = 0;
+  }
 }
 
 const fakeScrollbarRef = ref(null);
@@ -2111,6 +2222,8 @@ function handleTrackWheel(e) {
 
   if (Math.abs(e.deltaX) > 0 || e.shiftKey) {
     e.preventDefault();
+    // Stop the ruler overflow box from consuming the gesture as native scrollLeft.
+    pinRulerScroll();
     let delta = e.deltaX;
     if (e.shiftKey && delta === 0) delta = e.deltaY;
 
@@ -2412,10 +2525,22 @@ function performAutoScroll() {
     autoScrollRaf = null;
     return;
   }
+  // Battle-end resize: grow duration before scrolling right, otherwise maxShift
+  // stays pinned and the handle can only move within the current viewport.
+  if (isResizingBattle.value && autoScrollSpeed.value > 0) {
+    const prep = Number(store.prepDuration) || 0;
+    const needEndPx =
+      store.timelineShift + store.timelineRect.width + autoScrollSpeed.value;
+    const needDuration = Math.max(0, store.pxToTime(needEndPx) - prep);
+    if (needDuration > (Number(store.battleDuration) || 0)) {
+      store.setBattleDuration(needDuration, { commit: false });
+    }
+  }
   const newShift = store.timelineShift + autoScrollSpeed.value;
   store.setTimelineShift(newShift);
   if (draggingSwitchEventId.value) updateSwitchMarkerPosition(lastMouseX, lastMouseY);
   else if (draggingCycleBoundaryId.value) updateCycleBoundaryPosition(lastMouseX, lastMouseY);
+  else if (isResizingBattle.value) applyBattleDurationFromClient(lastMouseX, { commit: false });
   else updateDragPosition(lastMouseX);
   autoScrollRaf = requestAnimationFrame(performAutoScroll);
 }
@@ -2960,16 +3085,22 @@ defineExpose({
       </div>
     </div>
 
-    <div class="time-ruler-wrapper" ref="timeRulerWrapperRef" @click="store.selectTrack(null)">
+    <div
+      class="time-ruler-wrapper"
+      ref="timeRulerWrapperRef"
+      @click="store.selectTrack(null)"
+      @wheel="handleTrackWheel"
+      @scroll.passive="onRulerScroll"
+    >
       <div class="ruler-content-container" :style="transformStyle">
         <div
           v-if="activePrepDuration > 0"
-          class="prep-zone-bg prep-zone-bg--ruler"
+          class="prep-zone-bg"
           :style="{ width: `${prepZoneWidthPxRounded}px` }"
         ></div>
         <div
           v-if="activePrepDuration > 0"
-          class="battle-start-line battle-start-line--ruler"
+          class="battle-start-line"
           :style="{ left: `${prepZoneWidthPxRounded}px` }"
         >
           <div
@@ -3049,6 +3180,62 @@ defineExpose({
             @blur="applyPrepDurationDraft"
           />
           <span class="prep-duration-unit">f</span>
+        </div>
+
+        <div
+          class="battle-end-line"
+          :style="{ left: `${battleEndPxRounded}px` }"
+        >
+          <div
+            class="battle-end-handle"
+            @mousedown.stop.prevent="onBattleResizeMouseDown"
+          ></div>
+        </div>
+        <div
+          class="battle-end-controls"
+          :style="{ left: `${battleEndPxRounded}px` }"
+        >
+          <button
+            type="button"
+            class="prep-mini-btn"
+            :title="t('timelineGrid.battle.setDurationTitle')"
+            @click.stop="openBattleDurationEditor"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v6l4 2"></path>
+            </svg>
+          </button>
+          <span class="battle-end-label">{{ Math.round(activeBattleDuration) }}s</span>
+        </div>
+        <div
+          v-if="isBattleDurationEditorOpen"
+          class="prep-duration-popover"
+          :style="{ left: `${Math.max(8, battleEndPxRounded - 88)}px` }"
+          @mousedown.stop
+        >
+          <input
+            ref="battleDurationInputRef"
+            v-model="battleDurationDraft"
+            class="prep-duration-input"
+            type="number"
+            :min="store.MIN_BATTLE_DURATION"
+            :max="store.MAX_BATTLE_DURATION"
+            step="1"
+            @keydown.enter.prevent="applyBattleDurationDraft"
+            @keydown.esc.prevent="closeBattleDurationEditor"
+            @blur="applyBattleDurationDraft"
+          />
+          <span class="prep-duration-unit">s</span>
         </div>
 
         <div
@@ -3629,18 +3816,27 @@ defineExpose({
         <div class="tracks-content">
           <div
             v-if="activePrepDuration > 0"
-            class="prep-zone-bg prep-zone-bg--content"
+            class="prep-zone-bg"
             :style="{ width: `${prepZoneWidthPxRounded}px` }"
           ></div>
           <div
             v-if="activePrepDuration > 0"
-            class="battle-start-line battle-start-line--content"
+            class="battle-start-line"
             :style="{ left: `${prepZoneWidthPxRounded}px` }"
           >
             <div
               v-if="store.prepExpanded"
               class="battle-start-handle"
               @mousedown.stop.prevent="onPrepResizeMouseDown"
+            ></div>
+          </div>
+          <div
+            class="battle-end-line"
+            :style="{ left: `${battleEndPxRounded}px` }"
+          >
+            <div
+              class="battle-end-handle"
+              @mousedown.stop.prevent="onBattleResizeMouseDown"
             ></div>
           </div>
           <div
@@ -4487,6 +4683,7 @@ body.capture-mode .davinci-range {
   background: #2b2b2b;
   border-bottom: 1px solid #444;
   overflow: hidden;
+  overflow-anchor: none;
   z-index: 6;
   user-select: none;
 }
@@ -4529,6 +4726,56 @@ body.capture-mode .davinci-range {
   cursor: ew-resize;
   pointer-events: auto;
   background: transparent;
+}
+
+.battle-end-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0, 229, 255, 0.55);
+  transform: translateX(-1px);
+  z-index: 8;
+  pointer-events: none;
+}
+
+.battle-end-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -10px;
+  width: 20px;
+  cursor: ew-resize;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.battle-end-controls {
+  position: absolute;
+  top: 6px;
+  /* Sit to the left of the end line so they aren't clipped by the viewport / right panel. */
+  transform: translateX(calc(-100% - 4px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.battle-end-controls .prep-mini-btn {
+  pointer-events: auto;
+}
+
+.battle-end-label {
+  color: rgba(0, 229, 255, 0.92);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.25);
+  user-select: none;
+  white-space: nowrap;
 }
 
 .prep-rtgt-wrapper {

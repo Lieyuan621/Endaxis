@@ -168,6 +168,8 @@ export interface ScenarioSnapshot {
   gears?: unknown;
   prepDuration?: number;
   prepExpanded?: boolean;
+  /** Battle-phase timeline length in seconds (default 120, max 600). */
+  battleDuration?: number;
   /** Per-track relative row height weights (UI layout for this scenario). */
   trackRowHeightWeights?: number[];
   [key: string]: unknown;

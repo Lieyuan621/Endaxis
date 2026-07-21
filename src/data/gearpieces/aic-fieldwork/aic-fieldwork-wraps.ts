@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'AIC Fieldwork Wraps',
-  icon: '/equipment/item_equip_t4_parts_wuling00_hand_03.webp',
+  icon: '/equipment/wuling00/item_equip_t4_parts_wuling00_hand_03.webp',
   slotType: 'gloves',
   levelRequirement: 60,
   defense: 36,

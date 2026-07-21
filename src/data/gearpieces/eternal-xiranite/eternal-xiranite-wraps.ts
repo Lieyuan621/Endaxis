@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'Eternal Xiranite Wraps',
-  icon: '/equipment/item_equip_t4_suit_usp02_hand_03.webp',
+  icon: '/equipment/usp02/item_equip_t4_suit_usp02_hand_03.webp',
   slotType: 'gloves',
   levelRequirement: 70,
   defense: 42,

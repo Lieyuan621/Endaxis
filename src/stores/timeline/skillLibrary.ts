@@ -10,14 +10,12 @@ import { computed } from 'vue';
 import type { Ref } from 'vue';
 import { i18n } from '@/i18n';
 import { getOperator as getOperatorSheet } from '@/data';
-import { patchCombatSkills, getEffectiveOperator } from '@/data/collect';
-import { applyForm } from '@/data/forms';
+import { patchCombatSkills } from '@/data/collect';
 import { getOperatorSubSkillName } from '@/data/gameText';
 import { buildResolvedSegmentPayload } from '@/stores/timeline/resolveHits';
 import {
   findOperatorInstance,
-  getTrackInstances,
-  makeSingleOpTeam,
+  resolveEffectiveOperatorForTrack,
 } from '@/stores/timeline/instanceLookup';
 import type { Track, RosterEntry, EnemyConfigState } from './types';
 
@@ -86,27 +84,10 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
     // Form operators keep empty base skill slots (real skills live in the forms). Resolve the active
     // form's effective sheet so the library shows the right skills. With no track instances (library
     // preview / synthetic max), default to the first form.
-    let operator = baseOperator;
-    if (baseOperator.forms) {
-      const inst = activeTrack ? getTrackInstances(activeTrack) : null;
-      if (inst && activeTrack?.operatorInstanceId) {
-        const team = makeSingleOpTeam(
-          activeChar.id,
-          activeTrack.operatorInstanceId,
-          activeTrack.weaponInstanceId,
-          inst.gearMap,
-        );
-        operator =
-          getEffectiveOperator(
-            inst.opInst,
-            inst.wpInst ? [inst.wpInst] : [],
-            inst.gearInsts,
-            team.slots[0],
-          ) ?? baseOperator;
-      } else {
-        operator = applyForm(baseOperator, baseOperator.forms.forms[0]?.key ?? null);
-      }
-    }
+    const operator = resolveEffectiveOperatorForTrack(
+      activeTrack || { id: activeChar.id },
+      baseOperator,
+    );
 
     const activeOpInstance = activeTrack?.operatorInstanceId
       ? findOperatorInstance(activeTrack.operatorInstanceId)

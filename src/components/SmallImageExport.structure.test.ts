@@ -23,6 +23,7 @@ describe('small image export wiring', () => {
   test('preview dialog saves via snapdom', () => {
     expect(dialogSource).toContain('snapdom');
     expect(dialogSource).toContain('addMetadataToPng');
-    expect(dialogSource).toContain('saveSmallImage');
+    expect(dialogSource).toContain('saveImage');
+    expect(dialogSource).toContain('@click="saveImage"');
   });
 });

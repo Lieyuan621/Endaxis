@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'AIC Fieldwork Vest',
-  icon: '/equipment/item_equip_t4_parts_wuling00_body_03.webp',
+  icon: '/equipment/wuling00/item_equip_t4_parts_wuling00_body_03.webp',
   slotType: 'armor',
   levelRequirement: 60,
   defense: 48,

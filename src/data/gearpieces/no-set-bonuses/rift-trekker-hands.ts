@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'Rift Trekker Hands',
-  icon: '/equipment/item_equip_t4_parts_wuling02_hand_02.webp',
+  icon: '/equipment/wuling02/item_equip_t4_parts_wuling02_hand_02.webp',
   slotType: 'gloves',
   levelRequirement: 70,
   defense: 42,

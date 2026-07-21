@@ -9,8 +9,12 @@
 import { useOperatorStore } from '@/stores/operatorStore';
 import { useWeaponStore } from '@/stores/weaponStore';
 import { useGearStore } from '@/stores/gearStore';
+import { getEffectiveOperator } from '@/data/collect';
+import { applyForm } from '@/data/forms';
+import type { OperatorSheet } from '@/data/types';
 
 interface TrackLike {
+  id?: string | null;
   operatorInstanceId?: string | null;
   weaponInstanceId?: string | null;
   equipArmorInstanceId?: string | null;
@@ -119,4 +123,35 @@ export function makeSingleOpTeam(
       { ...EMPTY_SLOT },
     ] as [any, any, any, any],
   };
+}
+
+/**
+ * Form operators (e.g. Arcane) keep empty base skill slots; real skills live in
+ * `forms`. Resolve the active form sheet the same way the skill library does.
+ */
+export function resolveEffectiveOperatorForTrack(
+  track: TrackLike,
+  baseOperator: OperatorSheet,
+): OperatorSheet {
+  if (!baseOperator?.forms) return baseOperator;
+
+  const inst = getTrackInstances(track);
+  if (inst && track.id && track.operatorInstanceId) {
+    const team = makeSingleOpTeam(
+      track.id,
+      track.operatorInstanceId,
+      track.weaponInstanceId,
+      inst.gearMap,
+    );
+    return (
+      getEffectiveOperator(
+        inst.opInst,
+        inst.wpInst ? [inst.wpInst] : [],
+        inst.gearInsts,
+        team.slots[0],
+      ) ?? baseOperator
+    );
+  }
+
+  return applyForm(baseOperator, baseOperator.forms.forms[0]?.key ?? null);
 }

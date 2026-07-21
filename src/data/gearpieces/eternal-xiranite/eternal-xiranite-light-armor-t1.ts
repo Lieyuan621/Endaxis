@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'Eternal Xiranite Light Armor T1',
-  icon: '/equipment/item_equip_t4_suit_usp02_body_04.webp',
+  icon: '/equipment/usp02/item_equip_t4_suit_usp02_body_04.webp',
   slotType: 'armor',
   levelRequirement: 70,
   defense: 56,

@@ -561,6 +561,10 @@ function openExportDialog() {
   exportDialogVisible.value = true;
 }
 
+const exportDurationMax = computed(() =>
+  Math.max(10, Math.round(Number(store.TOTAL_DURATION) || 120)),
+);
+
 function openSmallImageExport() {
   const dateStr = new Date().toISOString().slice(0, 10);
   const current = String(exportForm.value.filename || '').trim();
@@ -1582,13 +1586,14 @@ onUnmounted(() => {
           ><el-input-number
             v-model="exportForm.duration"
             :min="10"
-            :max="store.TOTAL_DURATION"
+            :max="exportDurationMax"
             :step="10"
+            :precision="0"
             size="large"
             style="width: 100%"
           />
           <div class="hint">
-            {{ t('timeline.export.durationHintMax', { max: store.TOTAL_DURATION }) }}
+            {{ t('timeline.export.durationHintMax', { max: exportDurationMax }) }}
           </div>
         </div>
       </div>

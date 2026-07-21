@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'AIC Fieldwork Plate',
-  icon: '/equipment/item_equip_t4_parts_wuling00_body_02.webp',
+  icon: '/equipment/wuling00/item_equip_t4_parts_wuling00_body_02.webp',
   slotType: 'armor',
   levelRequirement: 60,
   defense: 48,

@@ -18,6 +18,7 @@ const DIRECT_TIME_KEYS = new Set([
   'followup_delay',
   'logicalStartTime',
   'prepDuration',
+  'battleDuration',
   'staggerBreakDuration',
   'staggerNodeDuration',
   'startTime',

@@ -283,6 +283,9 @@
       "collapseTitle": "收起战前准备区",
       "setDurationTitle": "设置战前准备时长"
     },
+    "battle": {
+      "setDurationTitle": "设置时间轴长度（秒，最大 600）"
+    },
     "ruler": {
       "gameTimeCollapseTitle": "游戏时间（点击折叠）",
       "realTimeTitle": "现实时间",

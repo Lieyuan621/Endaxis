@@ -2,7 +2,7 @@ import type { GearPieceSheet } from '../../types';
 
 const sheet: GearPieceSheet = {
   name: 'AIC Fieldwork Ember',
-  icon: '/equipment/item_equip_t4_parts_wuling00_edc_02.webp',
+  icon: '/equipment/wuling00/item_equip_t4_parts_wuling00_edc_02.webp',
   slotType: 'kit',
   levelRequirement: 60,
   defense: 18,
