@@ -258,6 +258,23 @@ export class TriggerRegistry {
     }
   }
 
+  /** Fires once at t=0 so `onBattleStart` triggers can apply effects at the start of the fight. */
+  onBattleStart(ctx: SimulationContext): void {
+    for (const entry of this.entries) {
+      const { trigger } = entry.triggerEffect;
+      if (trigger.kind !== 'onBattleStart') continue;
+      this.dispatch(
+        entry.triggerEffect.effects,
+        0,
+        entry.sourceTrackId,
+        ctx,
+        1,
+        undefined,
+        entry.sourceSkillType,
+      );
+    }
+  }
+
   onDuringAction(event: ActionStartEvent, ctx: SimulationContext): void {
     const actorId = event.payload.actorId;
     const action = ctx.getAction(event.payload.actionId);

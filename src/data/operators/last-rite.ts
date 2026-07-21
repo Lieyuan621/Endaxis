@@ -290,7 +290,7 @@ const sheet: OperatorSheet = {
                 kind: 'operatorStatus',
                 status: 'lastrite-hypothermic-perfusion',
                 consume: true,
-                consumeScope: 'team',
+                consumeTarget: 'team',
               },
             },
           ],

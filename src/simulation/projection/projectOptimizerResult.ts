@@ -138,6 +138,7 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
     comboWindowLayouts,
     spSeries,
     gaugeSeriesByTrackId,
+    operatorLog,
   );
 
   return {

@@ -229,7 +229,7 @@ const sheet: OperatorSheet = {
                 kind: 'operatorStatus',
                 status: 'xaihi-auxiliary-crystal',
                 consume: 1,
-                consumeScope: 'team',
+                consumeTarget: 'team',
               },
             },
             {
@@ -284,7 +284,9 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'ultEnergyGain',
                       value: 10,
-                    },{ kind: 'infliction', element: 'cryo' }],
+                    },
+                    { kind: 'infliction', element: 'cryo' },
+                  ],
                 },
               ],
             },

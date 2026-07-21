@@ -22,6 +22,7 @@ export {
 import akekuri from './operators/akekuri';
 import alesh from './operators/alesh';
 import antal from './operators/antal';
+import arcane from './operators/arcane';
 import arclight from './operators/arclight';
 import ardelia from './operators/ardelia';
 import avywenna from './operators/avywenna';
@@ -63,6 +64,7 @@ const enemyModules = import.meta.glob('./enemies/*.ts', {
 // Gear set effect sheets
 import aburreys_legacy from './gearsets/aburreys-legacy';
 import aethertech from './gearsets/aethertech';
+import aic_fieldwork from './gearsets/aic-fieldwork';
 import aic_heavy from './gearsets/aic-heavy';
 import aic_light from './gearsets/aic-light';
 import armored_msgr from './gearsets/armored-msgr';
@@ -89,6 +91,7 @@ const operatorSheets: Record<string, OperatorSheet> = {
   akekuri: akekuri,
   alesh: alesh,
   antal: antal,
+  arcane: arcane,
   arclight: arclight,
   ardelia: ardelia,
   avywenna: avywenna,
@@ -217,6 +220,7 @@ const enemySheets: Record<string, EnemySheet> = Object.fromEntries(
 const gearSetSheets: Record<string, GearSetSheet> = {
   'aburreys-legacy': aburreys_legacy,
   aethertech: aethertech,
+  'aic-fieldwork': aic_fieldwork,
   'aic-heavy': aic_heavy,
   'aic-light': aic_light,
   'armored-msgr': armored_msgr,
@@ -384,7 +388,25 @@ export function getGearSet(slug: string): GearSetSheet | undefined {
 
 export function getOperatorTalentGroups(slug: string): OperatorSheet['talents'] {
   const op = getOperator(slug);
-  return op?.talents ?? [];
+  if (!op) return [];
+  const base = op.talents ?? [];
+  if (!op.forms) return base;
+  // Form operators leave some base talent slots as empty `{}` placeholders; the real talent (and its
+  // `levels`) lives in the forms. Fill each level-less base slot with the form's `levels` so talent
+  // leveling (init/clamp/maxOut) and the dialog use the right node count regardless of active form.
+  const formTalents = op.forms.forms.map(f => f.talents ?? []);
+  const len = Math.max(base.length, ...formTalents.map(t => t.length));
+  const merged: OperatorSheet['talents'] = [];
+  for (let i = 0; i < len; i++) {
+    const b = base[i];
+    if (b && b.levels != null) {
+      merged.push(b);
+      continue;
+    }
+    const ft = formTalents.map(t => t[i]).find(t => t && t.levels != null);
+    merged.push(ft ? { ...(b ?? {}), levels: ft.levels } : (b ?? {}));
+  }
+  return merged;
 }
 
 export function getQualityTier(levelRequirement: number): 'green' | 'blue' | 'purple' | 'gold' {

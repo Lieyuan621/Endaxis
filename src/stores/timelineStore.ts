@@ -590,10 +590,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   const weaponOverrides = ref<Record<string, unknown>>({});
   const equipmentCategoryOverrides = ref<Record<string, unknown>>({});
 
-  function normalizeTrackRowHeightWeights(
-    weights: unknown,
-    count = tracks.value.length,
-  ): number[] {
+  function normalizeTrackRowHeightWeights(weights: unknown, count = tracks.value.length): number[] {
     const safeCount = Math.max(0, Number(count) || 0);
     return Array.from({ length: safeCount }, (_, index) => {
       const raw = Array.isArray(weights) ? weights[index] : null;
@@ -5029,6 +5026,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     tracks,
     timeContext,
     compiledTimeline,
+    simulation,
     isComboLikeAction,
     isUltimateLikeAction,
     getUltimateEnhancementExtender,

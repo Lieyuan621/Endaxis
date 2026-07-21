@@ -10,7 +10,7 @@ const STEEL_OATH_HARASS = {
     status: 'pogranichnik-steel-oath',
     stacks: { compare: 'atLeast' as const, count: 2 },
     consume: 1,
-    consumeScope: 'team' as const,
+    consumeTarget: 'team' as const,
   },
 };
 
@@ -24,7 +24,7 @@ const STEEL_OATH_DECISIVE_ASSAULT = {
     status: 'pogranichnik-steel-oath',
     stacks: { compare: 'exact' as const, count: 1 },
     consume: true,
-    consumeScope: 'team' as const,
+    consumeTarget: 'team' as const,
   },
 };
 
@@ -53,7 +53,7 @@ const STEEL_OATH_ACTIVE_CONDITION = {
   kind: 'operatorStatus' as const,
   status: 'pogranichnik-steel-oath',
   stacks: { compare: 'atLeast' as const, count: 1 },
-  consumeScope: 'team' as const,
+  consumeTarget: 'team' as const,
 };
 
 const FERVENT_MORALE_MODIFIERS = ['atkPercent', 'artsIntensity'] as const;

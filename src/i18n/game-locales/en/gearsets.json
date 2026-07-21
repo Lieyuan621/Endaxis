@@ -113,5 +113,10 @@
     "setName": "No Set Bonuses",
     "passive": "",
     "conditional": ""
+  },
+  "aic-fieldwork": {
+    "setName": "AIC Fieldwork",
+    "passive": "Wearer gains DMG Dealt +20% for all types of DMG, 10% DMG Reduction against all types of DMG, and Ultimate Gain Efficiency +10%.",
+    "conditional": ""
   }
 }

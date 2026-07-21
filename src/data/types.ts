@@ -87,6 +87,10 @@ export type OperatorStat =
   | { modifier: 'link' }
   | { modifier: 'heal' }
 
+  // ── Reaction-scoped (caster's own reactions, by reaction type) ────────────
+  | { modifier: 'reactionDurationBonus'; reactionType: ArtsReaction }
+  | { modifier: 'reactionEffectivenessBonus'; reactionType: ArtsReaction }
+
   // ── SkillType-scoped ─────────────────────────────────────────────────────
   | {
       modifier: 'critRate' | 'critDmg';
@@ -187,7 +191,8 @@ export type TriggerEvent =
   | ({ kind: 'onStatusExpire' } & TriggerSkillFilter & TriggerStatusFilter & TriggerScopeFilter)
   | ({ kind: 'onStatusConsumed' } & TriggerSkillFilter & TriggerStatusFilter & TriggerScopeFilter)
   | ({ kind: 'onActionStart' } & TriggerSkillFilter & TriggerScopeFilter & TriggerElementFilter)
-  | ({ kind: 'duringAction' } & TriggerSkillFilter);
+  | ({ kind: 'duringAction' } & TriggerSkillFilter)
+  | { kind: 'onBattleStart' };
 
 // ─── Effect conditions ──────────────────────────────────────────────────────
 
@@ -223,6 +228,9 @@ export interface OperatorCondition {
   consume?: boolean | number;
   /** 'team' = check any team member and consume from all. */
   consumeScope?: 'team';
+  /** Which tracks to check/consume the operatorStatus from. Omit = source track only.
+   *  Takes precedence over `consumeScope` when set. */
+  consumeTarget?: EffectTarget;
   /** Which operator the status is read from / consumed on. 'self' (default) = the source operator;
    *  'controlled' = the operator controlled at the effect's time (resolved via the control timeline). */
   target?: 'self' | 'controlled';
@@ -488,6 +496,8 @@ export interface UltimateEnergyGainEffect extends EffectBase {
   target?: EffectTarget;
   value: Leveled<number>;
   scaling?: ScalingDef;
+  /** When true, this gain is flat — not scaled by the recipient's ult charge efficiency. Default false. */
+  ignoreEfficiency?: boolean;
 }
 
 /** Instantly reduces the remaining cooldown of the most recent matching skill on the actor.
@@ -535,6 +545,9 @@ export interface ConsumeEffect extends EffectBase {
   consumeStacks?: number;
   /** 'team' = consume from all team members (operatorStatus only). */
   consumeScope?: 'team';
+  /** Which tracks to consume the operatorStatus from (operatorStatus only). Omit = source track only.
+   *  Takes precedence over `consumeScope` when set. */
+  consumeTarget?: EffectTarget;
 }
 
 export type PatchableEffectBaseFields = Pick<
@@ -788,6 +801,8 @@ export interface ResolvedUltimateEnergyGainEffect extends ResolvedEffectBase {
   target?: EffectTarget;
   value: number;
   scaling?: ResolvedScalingDef;
+  /** When true, this gain is flat — not scaled by the recipient's ult charge efficiency. Default false. */
+  ignoreEfficiency?: boolean;
 }
 
 export interface ResolvedConsumeEffect extends ResolvedEffectBase {
@@ -796,6 +811,7 @@ export interface ResolvedConsumeEffect extends ResolvedEffectBase {
   enemyStatus?: string | EnemyStat | (string | EnemyStat)[];
   consumeStacks?: number;
   consumeScope?: 'team';
+  consumeTarget?: EffectTarget;
 }
 
 export interface ResolvedOneTimeEffect extends ResolvedEffectBase {
@@ -829,7 +845,8 @@ export interface ResolvedTriggerEffect {
 // ─── Operator Sheet ─────────────────────────────────────────────────────────
 
 export interface TalentEntry {
-  levels: number;
+  /** Optional so a general-form talent can be an empty `{}` placeholder filled by a form override. */
+  levels?: number;
   effects?: Effect[];
   triggers?: TriggerEffect[];
   patches?: Patch[];
@@ -843,7 +860,8 @@ export interface PotentialEntry {
 }
 
 export interface CombatSkillEntry {
-  segments: Segment[];
+  /** Optional so a general-form skill can be an empty `{}` placeholder filled by a form override. */
+  segments?: Segment[];
   element?: DamageElement;
   subSkills?: SubSkillEntry[];
   triggers?: TriggerEffect[];
@@ -854,7 +872,9 @@ export interface CombatSkillEntry {
   ultimateEnergyCost?: number;
   ultimateEnergyGain?: number;
   animationTime?: number;
-  enhancementTime?: number;
+  /** Ultimate enhancement window. A number = fixed seconds; a string = an operator-status id whose
+   *  active interval defines the window (ends when that status is consumed or expires). */
+  enhancementTime?: number | string;
   /** Combo skill activation window. When the trigger fires, a window of `duration` seconds opens
    *  during which this combo skill can be used. */
   comboWindow?: {
@@ -937,6 +957,28 @@ export interface SubSkillEntry {
   cooldown?: Leveled<number>;
 }
 
+/** Picks the active form from resolved (equipment + general-form) attributes. */
+export interface FormSelector {
+  kind: 'attributeCompare';
+  left: 'strength' | 'agility' | 'intellect' | 'will';
+  right: 'strength' | 'agility' | 'intellect' | 'will';
+  // active = attrs[left] >= attrs[right] ? forms[0] : forms[1]
+}
+
+/** One operator form: overrides layered on the general (base) sheet sections. */
+export interface OperatorForm {
+  key: string; // stable id, e.g. 'int' | 'will'
+  nameKey?: string; // optional i18n key for display
+  combatSkills?: Partial<Record<CombatSkillType, CombatSkillEntry>>; // per-skill override; unlisted → general
+  talents?: (TalentEntry | undefined)[]; // per-index override; hole → general
+  potentials?: (PotentialEntry | undefined)[]; // per-index override; hole → general
+}
+
+export interface OperatorForms {
+  selector: FormSelector;
+  forms: OperatorForm[]; // ordered; selector picks by index (binary today, N-ready)
+}
+
 export interface OperatorSheet {
   rarity: number;
   weapon: string;
@@ -944,10 +986,13 @@ export interface OperatorSheet {
   class: operatorClass;
   mainAttribute: Attribute;
   subAttribute: Attribute;
+  trustAttributeBonus?: { value: number[]; attribute: Attribute[] };
   attributes: Record<string, number[]>;
   talents: TalentEntry[];
   potentials: PotentialEntry[];
   combatSkills: Record<CombatSkillType, CombatSkillEntry>;
+  /** Optional attribute-derived forms; base sections above are the always-active "general form". */
+  forms?: OperatorForms;
   gameId?: string;
   avatar?: string;
   talentIcons?: string[];
@@ -963,14 +1008,35 @@ export interface OperatorSheet {
 
 // ─── Weapon Sheet ───────────────────────────────────────────────────────────
 
+export interface WeaponSkillSlot {
+  effects?: Effect[];
+  triggers?: TriggerEffect[];
+}
+
+/** One weapon form: per-skill overrides layered on the base (general-form) sheet. */
+export interface WeaponForm {
+  key: string; // stable id, e.g. 'int' | 'will'
+  nameKey?: string; // optional i18n key for display
+  skill1?: WeaponSkillSlot;
+  skill2?: WeaponSkillSlot;
+  skill3?: WeaponSkillSlot;
+}
+
+export interface WeaponForms {
+  selector: FormSelector;
+  forms: WeaponForm[]; // ordered; selector picks by index (binary today, N-ready)
+}
+
 export interface WeaponSheet {
   rarity: number;
   type: string;
   icon: string;
   baseAtk: number[];
-  skill1: { effects?: Effect[]; triggers?: TriggerEffect[] };
-  skill2: { effects?: Effect[]; triggers?: TriggerEffect[] };
-  skill3: { effects?: Effect[]; triggers?: TriggerEffect[] };
+  skill1: WeaponSkillSlot;
+  skill2: WeaponSkillSlot;
+  skill3: WeaponSkillSlot;
+  /** Optional attribute-derived forms; base skills above are the always-active "general form". */
+  forms?: WeaponForms;
 }
 
 // ─── Enemy Sheet ───────────────────────────────────────────────────────────

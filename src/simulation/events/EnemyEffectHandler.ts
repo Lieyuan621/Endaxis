@@ -23,6 +23,8 @@ import {
   CORROSION_INITIAL_SHRED,
   CORROSION_PER_SECOND,
   CORROSION_MAX_SHRED,
+  nextCorrosionShred,
+  aggregateReactionMods,
 } from '@/data/stats/computeReactionDamage';
 import { computeStats } from '@/data/stats/computeStats';
 import type { ResolvedStatModifier } from '@/data/stats/types';
@@ -814,8 +816,20 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       effectiveDuration: event.effectiveDuration,
       effectiveness: event.effectiveness,
     });
-    const effectiveDuration = event.effectiveDuration;
-    const effectiveness = event.effectiveness;
+    // Fold the caster's own reaction modifiers (duration +s, effectiveness bonus) into this reaction.
+    // Reads getOperatorEffects(sourceId) → applies only to reactions this operator triggers. When the
+    // caster has no such modifiers (all existing content), duration/effectiveness are unchanged.
+    const mods = aggregateReactionMods(
+      ctx.getOperatorEffects(sourceId).getActiveEntries(time),
+      reactionType,
+    );
+    const effectiveDuration = mods.durationBonus
+      ? (event.effectiveDuration || getReactionDuration(reactionType, level) || 0) +
+        mods.durationBonus
+      : event.effectiveDuration;
+    const effectiveness = mods.effectivenessBonus
+      ? (event.effectiveness ?? 1) + mods.effectivenessBonus
+      : event.effectiveness;
     const css = consumedStackSources; // shorthand
     // Forced reactions (via ReactionEffect) don't deal reaction damage
     const isForced = !!event.forced;
@@ -1032,22 +1046,20 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
 
     this.scheduleDebuffExpire('corrosion', expiresAt, ctx);
 
-    // Determine effective level and initial shred
-    const effectiveLevel = existing ? Math.max(existing.level, level) : level;
+    // The new application always owns its own level → initial/rate/cap (never inherits the old one's).
     const initialShred =
-      (CORROSION_INITIAL_SHRED[effectiveLevel] ?? 3.6) * (1 + enhancement) * effectivenessMult;
-    const perSecond =
-      (CORROSION_PER_SECOND[effectiveLevel] ?? 0.84) * (1 + enhancement) * effectivenessMult;
-    const maxShred =
-      (CORROSION_MAX_SHRED[effectiveLevel] ?? 12) * (1 + enhancement) * effectivenessMult;
+      (CORROSION_INITIAL_SHRED[level] ?? 3.6) * (1 + enhancement) * effectivenessMult;
+    const perSecond = (CORROSION_PER_SECOND[level] ?? 0.84) * (1 + enhancement) * effectivenessMult;
+    const maxShred = (CORROSION_MAX_SHRED[level] ?? 12) * (1 + enhancement) * effectivenessMult;
 
-    // On re-apply: refresh duration without lowering level or current shred
+    // On re-apply only the current shred carries over as a floor (never lowered); if it already exceeds
+    // this application's cap, the tick handler holds it there (no ramp) for the refreshed duration.
     const startingShred = existing
       ? Math.max(existing.currentResShred, initialShred)
       : initialShred;
 
     enemy.corrosion = {
-      level: effectiveLevel,
+      level,
       startedAt: time,
       expiresAt,
       operatorSlot: 0,
@@ -1061,7 +1073,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       type: 'DEBUFF_APPLY',
       time,
       debuffType: 'corrosion',
-      level: effectiveLevel,
+      level,
       expiresAt,
       sourceId,
     });
@@ -1106,7 +1118,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       time,
       sourceId,
       resShred: startingShred,
-      level: effectiveLevel,
+      level,
       tickIndex: 0,
     });
 
@@ -1151,7 +1163,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     const { sourceId, perSecond, maxShred, tickIndex, expiresAt } = event.payload;
 
     // Compute new shred value
-    const newShred = Math.min(corrosion.currentResShred + perSecond, maxShred);
+    const newShred = nextCorrosionShred(corrosion.currentResShred, perSecond, maxShred);
     corrosion.currentResShred = newShred;
 
     // Update the hidden corrosion:resShred status effect value in-place

@@ -181,7 +181,7 @@ export const useOperatorStore = defineStore('operators', () => {
       const key = String(i);
       let state = o.talentStates[key];
       if (typeof state === 'string') state = legacyMap[state as string] ?? 0;
-      o.talentStates[key] = Math.min(Math.max(0, state ?? 0), talentGroups[i]!.levels);
+      o.talentStates[key] = Math.min(Math.max(0, state ?? 0), talentGroups[i]!.levels ?? 1);
     }
 
     persist();

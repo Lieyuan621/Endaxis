@@ -91,7 +91,24 @@ const sheet: OperatorSheet = {
         },
       ],
     },
-    {},
+    {
+      triggers: [
+        {
+          trigger: { kind: 'onHit', skillTypes: 'ultimate' },
+          effects: [
+            {
+              kind: 'ultEnergyGain',
+              value: 15,
+              ignoreEfficiency: true,
+              condition: {
+                kind: 'enemyStatus',
+                status: 'endministrator-originium-crystals',
+              },
+            },
+          ],
+        },
+      ],
+    },
     {},
     {},
   ],

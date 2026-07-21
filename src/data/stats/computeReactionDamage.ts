@@ -73,6 +73,31 @@ export const CORROSION_PER_SECOND: Record<number, number> = {
 };
 export const CORROSION_MAX_SHRED: Record<number, number> = { 1: 12, 2: 16, 3: 20, 4: 24 };
 
+/** Next corrosion shred after a 1s tick. Ramps by `perSecond` toward `maxShred`, but never below the
+ *  current value — so a re-applied corrosion whose inherited floor is above the new cap stays locked
+ *  (never regresses) instead of dropping to that cap. */
+export function nextCorrosionShred(current: number, perSecond: number, maxShred: number): number {
+  return Math.min(current + perSecond, Math.max(maxShred, current));
+}
+
+/** Sum a caster's reaction modifiers from their active status entries, scoped to the reaction being
+ *  applied. `durationBonus` is flat seconds (additive); `effectivenessBonus` adds to the effectiveness
+ *  multiplier (0.05 = +5%). Only entries whose `reactionType` matches count. */
+export function aggregateReactionMods(
+  entries: { stat?: { modifier?: string; reactionType?: string }; value: number; stacks: number }[],
+  reactionType: string,
+): { durationBonus: number; effectivenessBonus: number } {
+  let durationBonus = 0;
+  let effectivenessBonus = 0;
+  for (const e of entries) {
+    if (e.stat?.reactionType !== reactionType) continue;
+    if (e.stat.modifier === 'reactionDurationBonus') durationBonus += e.value * e.stacks;
+    else if (e.stat.modifier === 'reactionEffectivenessBonus')
+      effectivenessBonus += e.value * e.stacks;
+  }
+  return { durationBonus, effectivenessBonus };
+}
+
 // ─── Public API ────────────────────────────────────────────────────────────
 
 /**

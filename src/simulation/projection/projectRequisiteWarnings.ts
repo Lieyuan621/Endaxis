@@ -3,6 +3,48 @@ import type { SpPoint } from './projectSpSeries';
 import type { GaugePoint } from './projectUltimateSeries';
 import { snapTimeToFrame } from '@/utils/time';
 import type { ComboWindowLayout } from './projectComboWindows';
+import type { OperatorStateEvent } from '@/simulation/engine/types';
+
+/**
+ * Sum the active `ultimateEnergyCostReduction` status buffs on a track at `time`, as a percentage
+ * (value*stacks; 100 = 100%). This is the DYNAMIC, per-cast reduction (e.g. a temporary "free ult"
+ * buff) that the compile-time static max-gauge reduction cannot represent — so ult-cost requisite
+ * checks must fold it in at the specific cast time.
+ */
+function sumActiveUltReductionPct(
+  operatorLog: OperatorStateEvent[],
+  trackId: string,
+  time: number,
+): number {
+  const appliesById = new Map<string, { time: number; value: number; stacks: number }[]>();
+  const expiresById = new Map<string, number[]>();
+  for (const e of operatorLog) {
+    if (e.targetTrackId !== trackId) continue;
+    if (e.type === 'OPERATOR_EFFECT_APPLY') {
+      if (e.stat?.modifier !== 'ultimateEnergyCostReduction') continue;
+      const list = appliesById.get(e.id) ?? [];
+      list.push({ time: e.time, value: e.value, stacks: e.cumulativeStacks ?? e.stacks ?? 1 });
+      appliesById.set(e.id, list);
+    } else if (e.type === 'OPERATOR_EFFECT_EXPIRE') {
+      const list = expiresById.get(e.id) ?? [];
+      list.push(e.time);
+      expiresById.set(e.id, list);
+    }
+  }
+  const eps = 1e-6;
+  let pct = 0;
+  for (const [id, applies] of appliesById) {
+    const active = applies
+      .filter(a => a.time <= time + eps)
+      .sort((a, b) => a.time - b.time)
+      .pop();
+    if (!active) continue;
+    const expired = (expiresById.get(id) ?? []).some(t => t > active.time + eps && t <= time + eps);
+    if (expired) continue;
+    pct += active.value * active.stacks;
+  }
+  return pct;
+}
 
 /** A skill that cannot execute because its prerequisite is unmet. */
 export type RequisiteWarning =
@@ -39,7 +81,10 @@ function buildSpIndex(spSeries: SpPoint[]): Map<string, SpPoint[]> {
     const id = (p as any).actionId as string | undefined;
     if (!id) continue;
     let arr = index.get(id);
-    if (!arr) { arr = []; index.set(id, arr); }
+    if (!arr) {
+      arr = [];
+      index.set(id, arr);
+    }
     arr.push(p);
   }
   return index;
@@ -128,6 +173,7 @@ export function projectRequisiteWarnings(
   comboWindowLayouts: Map<string, ComboWindowLayout>,
   spSeries: SpPoint[],
   gaugeSeriesByTrackId: Map<string, GaugePoint[]>,
+  operatorLog: OperatorStateEvent[] = [],
 ): Map<string, RequisiteWarning> {
   const warnings = new Map<string, RequisiteWarning>();
   const spIndex = buildSpIndex(spSeries);
@@ -192,9 +238,13 @@ export function projectRequisiteWarnings(
       if (a.type === 'ultimate') {
         const rawCost = Number(a.gaugeCost) || 0;
         if (rawCost > 0) {
-          // TODO ultimateEnergyCostReduction is scattered — consolidate or just compute max once and always deduct to 0?
-          const reduction = Number(track?.operatorStatus?.ultimateEnergyCostReduction) || 0;
-          const effectiveCost = rawCost * (1 - Math.max(0, Math.min(reduction, 0.99)));
+          // Static reduction (fraction, from operatorStatus) is baked into the compile-time max gauge;
+          // the DYNAMIC per-cast reduction (temporary ultimateEnergyCostReduction buffs active at this
+          // cast, as a percentage) must be folded in here so a "free ult" buff clears the warning.
+          const staticReduction = Number(track?.operatorStatus?.ultimateEnergyCostReduction) || 0;
+          const dynamicReduction = sumActiveUltReductionPct(operatorLog, tid, start) / 100;
+          const totalReduction = Math.max(0, Math.min(staticReduction + dynamicReduction, 1));
+          const effectiveCost = rawCost * (1 - totalReduction);
           const now = gaugeAtTime(gaugeSeries, start);
           if (now < effectiveCost) {
             warnings.set(a.instanceId, { kind: 'gauge', need: effectiveCost, current: now });

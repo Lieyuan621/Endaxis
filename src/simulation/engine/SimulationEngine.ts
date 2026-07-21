@@ -28,6 +28,7 @@ export class SimulationEngine {
   private enemyLogEntries: EnemyStateEvent[] = [];
   private operatorLogEntries: OperatorStateEvent[] = [];
   private ultimateEnergyBlockWindowsByActor?: Map<string, UltimateEnergyBlockWindow[]>;
+  private enhancementBoundStatusesByActor?: Map<string, Set<string>>;
 
   /** Status keys that need consumedStacks written at apply time (auto-inferred from readConsumedStacks). */
   consumedStacksWriteKeys = new Set<string>();
@@ -263,12 +264,41 @@ export class SimulationEngine {
     return extraDuration;
   }
 
+  /**
+   * Status-bound enhancement (`enhancementTime: '<statusId>'`): the block window can't be precomputed
+   * from the timeline because it mirrors a status's runtime existence. Map each actor to the set of
+   * status ids its ultimates bind their enhancement to; the block is then "is any such status active".
+   */
+  private getEnhancementBoundStatusesByActor() {
+    if (this.enhancementBoundStatusesByActor) return this.enhancementBoundStatusesByActor;
+    const map = new Map<string, Set<string>>();
+    for (const action of this.timeline.actions) {
+      if (action.node.type !== 'ultimate' || action.node.isDisabled) continue;
+      const enh = action.node.enhancementTime;
+      if (typeof enh !== 'string' || !enh) continue;
+      const set = map.get(action.trackId) ?? new Set<string>();
+      set.add(enh);
+      map.set(action.trackId, set);
+    }
+    this.enhancementBoundStatusesByActor = map;
+    return map;
+  }
+
   isUltimateEnergyBlocked(actorId: string, time: number) {
     const t = Number(time) || 0;
     const epsilon = 0.0001;
     const windows = this.getUltimateEnergyBlockWindowsByActor().get(actorId) ?? [];
+    if (windows.some(window => t > window.start + epsilon && t < window.end - epsilon)) return true;
 
-    return windows.some(window => t > window.start + epsilon && t < window.end - epsilon);
+    // Status-bound enhancement: block while any bound status is active on the actor.
+    const boundStatuses = this.getEnhancementBoundStatusesByActor().get(actorId);
+    if (boundStatuses && boundStatuses.size > 0) {
+      const effects = this.state.getOperatorEffects(actorId);
+      for (const statusId of boundStatuses) {
+        if (effects.getStacks(statusId, t) > 0) return true;
+      }
+    }
+    return false;
   }
 
   run() {

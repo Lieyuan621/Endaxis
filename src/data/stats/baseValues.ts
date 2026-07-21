@@ -1,5 +1,6 @@
 import type { OperatorInstance, WeaponInstance } from '../../types';
 import type { Attributes, BaseStatValues } from './types';
+import type { Attribute } from '../types';
 import { getOperator, getWeapon } from '../index';
 
 // ─── Level index map ────────────────────────────────────────────────────────
@@ -8,8 +9,12 @@ const LEVEL_INDEX: Record<number, number> = { 1: 0, 20: 1, 40: 2, 60: 3, 80: 4, 
 
 // ─── Promotion helpers ──────────────────────────────────────────────────────
 
-/** Main attribute bonus per promotion: [promo1, promo2, promo3, promo4]. */
-const PROMOTION_ATTR_BONUS = [10, 15, 15, 20];
+/** Trust bonus used when a sheet doesn't override `trustAttributeBonus`: per-trust-node increments on the
+ *  main attribute (`'main'` is resolved to the operator's actual main attribute at read time). */
+export const DEFAULT_TRUST_ATTRIBUTE_BONUS: { value: number[]; attribute: Attribute[] } = {
+  value: [10, 15, 15, 20],
+  attribute: ['main'],
+};
 
 /** Count completed promotions based on level + promoted flag. */
 export function getPromotionCount(level: number, promoted: boolean): number {
@@ -21,11 +26,11 @@ export function getPromotionCount(level: number, promoted: boolean): number {
   return 0;
 }
 
-/** Cumulative main attribute bonus from trust level (0-4). */
-export function getTrustAttrBonus(trustLevel: number): number {
-  const clamped = Math.min(Math.max(0, trustLevel), PROMOTION_ATTR_BONUS.length);
+/** Cumulative attribute bonus from trust level, summing the per-node increments up to `trustLevel`. */
+export function getTrustAttrBonus(trustLevel: number, value: number[]): number {
+  const clamped = Math.min(Math.max(0, trustLevel), value.length);
   let total = 0;
-  for (let i = 0; i < clamped; i++) total += PROMOTION_ATTR_BONUS[i] ?? 0;
+  for (let i = 0; i < clamped; i++) total += value[i] ?? 0;
   return total;
 }
 
@@ -68,11 +73,15 @@ export function getBaseStatValues(
   const mainAttributeName = opData?.mainAttribute ?? 'Agility';
   const secondaryAttributeName = opData?.subAttribute ?? 'Intellect';
 
-  // Apply trust-level bonus to main attribute (replaces auto-computed promotion bonus)
-  const trustBonus = getTrustAttrBonus(opInst.trustLevel ?? 0);
-  const mainAttrKey = ATTR_MAP[mainAttributeName];
-  if (mainAttrKey) {
-    baseAttrs[mainAttrKey] += trustBonus;
+  // Apply the trust bonus to its target attribute(s). A sheet may override the amount and targets;
+  // otherwise it defaults to DEFAULT_TRUST_ATTRIBUTE_BONUS.
+  const tab = opData?.trustAttributeBonus ?? DEFAULT_TRUST_ATTRIBUTE_BONUS;
+  const trustBonus = getTrustAttrBonus(opInst.trustLevel ?? 0, tab.value);
+  for (const attr of tab.attribute) {
+    const resolved =
+      attr === 'main' ? mainAttributeName : attr === 'sub' ? secondaryAttributeName : attr;
+    const key = ATTR_MAP[resolved];
+    if (key) baseAttrs[key] += trustBonus;
   }
 
   // Weapon base ATK

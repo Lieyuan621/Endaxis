@@ -643,7 +643,13 @@
       "electrification": "导电",
       "ultEnergyGain": "终结技充能",
       "spRecovery": "技力回复",
-      "spReturn": "技力返还"
+      "spReturn": "技力返还",
+      "pursuit": "追猎",
+      "imprisonment": "囹圄",
+      "gloompurgerArray": "破晦阵",
+      "clusterStrike": "集束打击",
+      "gloompurgeArcana": "破晦诀明",
+      "dreamStriving": "憧憬"
     }
   },
   "hitEditor": {

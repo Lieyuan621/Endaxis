@@ -83,12 +83,17 @@ export type StaggerChangeEvent = SimBaseEvent<
   }
 >;
 
+/** Fires once at t=0 so `onBattleStart` triggers can apply effects at the start of the fight. */
+export type BattleStartEvent = SimBaseEvent<'BATTLE_START', {}>;
+
 export type UltEnergyChangeEvent = SimBaseEvent<
   'ULT_ENERGY_CHANGE',
   {
     actorId: string;
     change: number;
     sourceId: string;
+    /** When true, this gain bypasses the recipient's ult charge efficiency multiplier. */
+    ignoreEfficiency?: boolean;
   }
 >;
 
@@ -132,6 +137,7 @@ export type SimEvent =
   | SpRegenPauseEvent
   | StaggerChangeEvent
   | UltEnergyChangeEvent
+  | BattleStartEvent
   // Enemy state events
   | EnemyEffectApplyEvent
   | EnemyEffectExpireEvent
@@ -223,6 +229,8 @@ export type SimLogEntry =
         change: number;
         gauge?: number;
         sourceId: string;
+        /** When true, this gain bypassed the recipient's ult charge efficiency multiplier. */
+        ignoreEfficiency?: boolean;
       }
     >
   | SimLogEntryBase<

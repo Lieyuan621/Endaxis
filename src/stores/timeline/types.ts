@@ -41,7 +41,7 @@ export interface TimelineAction {
   kind?: string;
   triggerWindow?: number;
   animationTime?: number;
-  enhancementTime?: number;
+  enhancementTime?: number | string;
   realStartTime?: number;
   realDuration?: number;
   comboGroupId?: string;

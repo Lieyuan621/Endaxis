@@ -230,8 +230,14 @@ export function evaluateEffectCondition(
     const readTrackId =
       cond.target === 'controlled' ? ctx.getControlledOperatorAt(time) : sourceTrackId;
     return statuses.some(s => {
+      const getStacks = (id: string) => getOperatorStatusStacks(s, id, time, ctx);
+      // consumeTarget takes precedence over the legacy consumeScope/self path.
+      if (cond.consumeTarget) {
+        const ids = resolveConsumeTrackIds(cond.consumeTarget, sourceTrackId, ctx);
+        if (!cond.stacks) return ids.some(id => getStacks(id) > 0);
+        return ids.some(id => checkStacks(getStacks(id), cond.stacks));
+      }
       if (cond.consumeScope === 'team') {
-        const getStacks = (id: string) => getOperatorStatusStacks(s, id, time, ctx);
         if (!cond.stacks) return ctx.allTrackIds.some(id => getStacks(id) > 0);
         return ctx.allTrackIds.some(id => checkStacks(getStacks(id), cond.stacks));
       }
@@ -447,18 +453,21 @@ export function scheduleConsumption(
     // 'controlled' consumes from the operator controlled at this time; otherwise the source.
     const consumeFromId =
       condition.target === 'controlled' ? ctx.getControlledOperatorAt(time) : sourceId;
+    // consumeTarget takes precedence over the legacy consumeScope/consumeFromId path.
+    const targetTrackIds: readonly string[] = condition.consumeTarget
+      ? resolveConsumeTrackIds(condition.consumeTarget, sourceId, ctx)
+      : condition.consumeScope === 'team'
+        ? ctx.allTrackIds
+        : consumeFromId
+          ? [consumeFromId]
+          : [];
     for (const status of statuses) {
       // For consumption, resolve to id (string or by stat.modifier match)
       let id: string | undefined;
       if (typeof status === 'string') {
         id = status;
       } else if (status && 'modifier' in status) {
-        const trackIds =
-          condition.consumeScope === 'team'
-            ? ctx.allTrackIds
-            : consumeFromId
-              ? [consumeFromId]
-              : [];
+        const trackIds = targetTrackIds;
         for (const trackId of trackIds) {
           const entries = ctx.getOperatorEffects(trackId).getActiveEntries(time);
           const match = entries.find(
@@ -474,8 +483,7 @@ export function scheduleConsumption(
         }
       }
       if (!id) continue;
-      const trackIds =
-        condition.consumeScope === 'team' ? ctx.allTrackIds : consumeFromId ? [consumeFromId] : [];
+      const trackIds = targetTrackIds;
       const anyPresent = trackIds.some(
         trackId => ctx.getOperatorEffects(trackId).getStacks(id, time) > 0,
       );
@@ -604,6 +612,26 @@ export function resolveTargetTrackIds(
     default:
       return [selfTrackId];
   }
+}
+
+/**
+ * Resolve which track IDs a consume / operatorStatus condition targets from its `consumeTarget`.
+ * Omitted target → source track only. Mirrors resolveTargetTrackIds semantics ('owner' → source).
+ * Takes precedence over the legacy `consumeScope`/`consumeFromId` path when a `consumeTarget` is set.
+ */
+export function resolveConsumeTrackIds(
+  target: EffectTarget | undefined,
+  sourceTrackId: string,
+  ctx: SimulationContext,
+): string[] {
+  if (!target) return [sourceTrackId];
+  return resolveTargetTrackIds(
+    { target } as unknown as Effect,
+    sourceTrackId,
+    ctx.allTrackIds,
+    sourceTrackId,
+    ctx.elementByTrackId,
+  );
 }
 
 // ─── Shared dispatch helpers ────────────────────────────────────────────────
@@ -868,6 +896,7 @@ export function dispatchConsumeEffect(
         status: resolved.operatorStatus,
         consume: resolved.consumeStacks ?? true,
         consumeScope: resolved.consumeScope,
+        consumeTarget: resolved.consumeTarget,
       },
       time,
       sourceTrackId,
@@ -1333,6 +1362,7 @@ export function dispatchSingleActorEffect(
             actorId: targetId,
             change: gain,
             sourceId: effectId,
+            ignoreEfficiency: ue.ignoreEfficiency,
           },
         });
       }

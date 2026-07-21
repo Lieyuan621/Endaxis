@@ -10,10 +10,15 @@ import { computed } from 'vue';
 import type { Ref } from 'vue';
 import { i18n } from '@/i18n';
 import { getOperator as getOperatorSheet } from '@/data';
-import { patchCombatSkills } from '@/data/collect';
+import { patchCombatSkills, getEffectiveOperator } from '@/data/collect';
+import { applyForm } from '@/data/forms';
 import { getOperatorSubSkillName } from '@/data/gameText';
 import { buildResolvedSegmentPayload } from '@/stores/timeline/resolveHits';
-import { findOperatorInstance } from '@/stores/timeline/instanceLookup';
+import {
+  findOperatorInstance,
+  getTrackInstances,
+  makeSingleOpTeam,
+} from '@/stores/timeline/instanceLookup';
 import type { Track, RosterEntry, EnemyConfigState } from './types';
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
@@ -75,8 +80,33 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       ? characterRoster.value.find(c => c.id === activeTrack.id)
       : characterRoster.value.find(c => c.id === activeTrackId.value);
     if (!activeChar) return [];
-    const operator = getOperatorSheet(activeChar.id);
-    if (!operator?.combatSkills) return [];
+    const baseOperator = getOperatorSheet(activeChar.id);
+    if (!baseOperator?.combatSkills) return [];
+
+    // Form operators keep empty base skill slots (real skills live in the forms). Resolve the active
+    // form's effective sheet so the library shows the right skills. With no track instances (library
+    // preview / synthetic max), default to the first form.
+    let operator = baseOperator;
+    if (baseOperator.forms) {
+      const inst = activeTrack ? getTrackInstances(activeTrack) : null;
+      if (inst && activeTrack?.operatorInstanceId) {
+        const team = makeSingleOpTeam(
+          activeChar.id,
+          activeTrack.operatorInstanceId,
+          activeTrack.weaponInstanceId,
+          inst.gearMap,
+        );
+        operator =
+          getEffectiveOperator(
+            inst.opInst,
+            inst.wpInst ? [inst.wpInst] : [],
+            inst.gearInsts,
+            team.slots[0],
+          ) ?? baseOperator;
+      } else {
+        operator = applyForm(baseOperator, baseOperator.forms.forms[0]?.key ?? null);
+      }
+    }
 
     const activeOpInstance = activeTrack?.operatorInstanceId
       ? findOperatorInstance(activeTrack.operatorInstanceId)
