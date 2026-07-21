@@ -1,7 +1,11 @@
 import { map, range } from 'lodash';
 import type { OperatorSheet, ArtsElement, TriggerEffect, Effect } from '../types';
 
-const INFLICTIONS = ['cryo', 'electric', 'nature', 'heat'];
+const INFLICTIONS: ArtsElement[] = ['cryo', 'electric', 'nature', 'heat'];
+const INFLICTION_STATUSES = INFLICTIONS.map(x => `${x}Infliction`);
+const NON_NATURE_INFLICTION_STATUSES = INFLICTIONS.filter(x => x !== 'nature').map(
+  x => `${x}Infliction`,
+);
 const TRACKER_IDS = Object.fromEntries(INFLICTIONS.map(x => [x, `arcane-combo-tracker-${x}`]));
 
 const INFLICTION_TRACKER: TriggerEffect[] = INFLICTIONS.map(x => ({
@@ -275,6 +279,33 @@ const sheet: OperatorSheet = {
             ],
           },
           comboSkill: {
+            comboWindow: {
+              // 阵诀·智：自然附着立即开窗；其他法术附着需要当前层数至少为 2。
+              triggers: [
+                {
+                  trigger: {
+                    kind: 'onStatusApplied',
+                    status: 'natureInfliction',
+                    target: 'enemy',
+                    triggerScope: 'global',
+                  },
+                },
+                {
+                  trigger: {
+                    kind: 'onStatusApplied',
+                    status: NON_NATURE_INFLICTION_STATUSES,
+                    target: 'enemy',
+                    triggerScope: 'global',
+                  },
+                  condition: {
+                    kind: 'enemyStatus',
+                    status: NON_NATURE_INFLICTION_STATUSES,
+                    stacks: { compare: 'atLeast', count: 2 },
+                  },
+                },
+              ],
+              duration: 5,
+            },
             segments: [
               {
                 duration: 1,
@@ -675,6 +706,20 @@ const sheet: OperatorSheet = {
             ],
           },
           comboSkill: {
+            comboWindow: {
+              // 阵诀·意：任意法术附着都会开窗，包括触发反应后未留下附着条的应用。
+              triggers: [
+                {
+                  trigger: {
+                    kind: 'onStatusApplied',
+                    status: INFLICTION_STATUSES,
+                    target: 'enemy',
+                    triggerScope: 'global',
+                  },
+                },
+              ],
+              duration: 5,
+            },
             segments: [
               {
                 duration: 1,

@@ -104,8 +104,9 @@ function wrapWithStyle(content, style, key, termOptions) {
     ...(termOptions && termOptions.underline
       ? {
           cursor: 'help',
-          borderBottom: '1px solid currentColor',
-          paddingBottom: '1px',
+          textDecoration: 'underline',
+          textDecorationThickness: '1px',
+          textUnderlineOffset: '2px',
         }
       : {}),
   };
@@ -172,23 +173,21 @@ function renderTermTooltip(term, locale, depth) {
 :global(.game-rich-text-icon) {
   display: inline-block;
   width: auto;
-  max-width: 2em;
-  height: 1.25em;
+  max-width: 1.75em;
+  height: 1.16em;
   object-fit: contain;
-  vertical-align: -0.2em;
+  vertical-align: -0.18em;
 }
 
 :global(.game-rich-text-inline-image) {
-  width: auto;
-  max-width: 2em;
-  height: 1.25em;
-  vertical-align: -0.2em;
+  max-width: 1.75em;
 }
 
 :global(.game-rich-text-term) {
   cursor: help;
-  padding-bottom: 1px;
-  border-bottom: 1px dashed currentColor;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 :global(.game-rich-text-term-popper) {
@@ -232,8 +231,8 @@ function renderTermTooltip(term, locale, depth) {
 }
 
 :global(.game-rich-text-tooltip-icon) {
-  width: 2em;
-  height: 2em;
+  width: 1.5em;
+  height: 1.5em;
   object-fit: contain;
 }
 

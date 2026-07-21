@@ -191,6 +191,22 @@ function getOperatorEntry(slug: string, locale?: string | null) {
   return getEntry(operatorsZhTable, operatorsEnTable, slug, locale);
 }
 
+function getOperatorCombatSkillEntry(
+  slug: string,
+  skillKey: string,
+  locale?: string | null,
+  formKey?: string | null,
+) {
+  const entry = getOperatorEntry(slug, locale);
+  const skill = entry?.combatSkills?.[skillKey] || null;
+  const key = String(formKey || '').trim();
+  if (!key) return { skill, formSkill: null };
+  const forms = skill?.forms;
+  const formSkill =
+    forms && typeof forms === 'object' && !Array.isArray(forms) ? forms[key] || null : null;
+  return { skill, formSkill };
+}
+
 function getWeaponEntry(slug: string, locale?: string | null) {
   return getEntry(weaponsZhTable, weaponsEnTable, slug, locale);
 }
@@ -296,10 +312,12 @@ export function getOperatorCombatSkillName(
   skillKey: string,
   locale?: string | null,
   fallback?: string | null,
+  formKey?: string | null,
 ) {
-  const entry = getOperatorEntry(slug, locale);
+  const { skill, formSkill } = getOperatorCombatSkillEntry(slug, skillKey, locale, formKey);
   return (
-    readTrimmedText(entry?.combatSkills?.[skillKey]?.name) ||
+    readTrimmedText(formSkill?.name) ||
+    readTrimmedText(skill?.name) ||
     readTrimmedText(fallback) ||
     humanizeIdentifier(skillKey)
   );
@@ -309,9 +327,21 @@ export function getOperatorCombatSkillDescription(
   slug: string,
   skillKey: string,
   locale?: string | null,
+  formKey?: string | null,
 ) {
-  const entry = getOperatorEntry(slug, locale);
-  return readTrimmedText(entry?.combatSkills?.[skillKey]?.description) || '';
+  const { skill, formSkill } = getOperatorCombatSkillEntry(slug, skillKey, locale, formKey);
+  return readTrimmedText(formSkill?.description) || readTrimmedText(skill?.description) || '';
+}
+
+export function getOperatorCombatSkillFormKeys(
+  slug: string,
+  skillKey: string,
+  locale?: string | null,
+) {
+  const { skill } = getOperatorCombatSkillEntry(slug, skillKey, locale);
+  const forms = skill?.forms;
+  if (!forms || typeof forms !== 'object' || Array.isArray(forms)) return [];
+  return Object.keys(forms).filter(key => key.trim());
 }
 
 export function getOperatorSubSkillName(

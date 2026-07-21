@@ -416,7 +416,15 @@
       "susceptibility": "易伤"
     },
     "operator": {
-      "talent": "天赋 {index}"
+      "talent": "天赋 {index}",
+      "skillTooltip": {
+        "active": "生效中",
+        "rank": "RANK {level}",
+        "cooldown": "冷却时间",
+        "spCost": "技力消耗",
+        "ultimateEnergyCost": "所需终结技能量",
+        "seconds": "秒"
+      }
     }
   },
   "skillType": {
