@@ -2888,3 +2888,50 @@ describe('external dmgBonus via initial effect (Poor Basics regression)', () => 
     expect(withExternal / plus50).toBeCloseTo(0.3, 2);
   });
 });
+
+describe('onFinisher trigger', () => {
+  const finisherBuff = {
+    kind: 'status',
+    id: 'onfin-buff',
+    stat: { modifier: 'atkPercent' },
+    target: 'self',
+    value: 10,
+    duration: 999,
+  } as Effect;
+
+  const triggerEffects = [
+    {
+      sourceTrackId: 'alpha',
+      triggerEffect: {
+        trigger: { kind: 'onFinisher', triggerScope: 'global' },
+        effects: [finisherBuff],
+      },
+    },
+  ] satisfies TrackPatch['triggerEffects'];
+
+  const fired = (type: Action['type']) => {
+    const tracks = [
+      createTrack(
+        'alpha',
+        [
+          createAction('act1', type, {
+            startTime: 0,
+            hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ],
+        { triggerEffects },
+      ),
+    ];
+    return runScenario(tracks, registry(triggerEffects)).operatorLog.some(
+      e => e.type === 'OPERATOR_EFFECT_APPLY' && e.id === 'onfin-buff',
+    );
+  };
+
+  it('fires on the hit of a finisher action', () => {
+    expect(fired('finisher')).toBe(true);
+  });
+
+  it('does not fire on a non-finisher action', () => {
+    expect(fired('basicAttack')).toBe(false);
+  });
+});
