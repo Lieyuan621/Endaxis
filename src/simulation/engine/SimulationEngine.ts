@@ -311,7 +311,8 @@ export class SimulationEngine {
       actionEndTimes.set(action.id, action.realStartTime + action.realDuration + totalExtension);
     }
 
-    const ctx: SimulationContext = {
+    let ctx: SimulationContext;
+    ctx = {
       state: this.state,
       queue: {
         enqueue: (event: SimEvent, priority = 0) => this.enqueue(event, priority),
@@ -319,6 +320,17 @@ export class SimulationEngine {
         collect: predicate => this.queue.collect(predicate),
       },
       actionEndTimes,
+      flushQueuedEvents: predicate => {
+        const events = this.queue.collect(predicate);
+        for (const event of events) {
+          const handler = this.handlers.get(event.type);
+          if (handler) {
+            handler.handle(event, ctx);
+          } else {
+            throw new Error(`No handler for event type: ${event.type}`);
+          }
+        }
+      },
       simLog: (entry: SimLogEntry) => {
         this.simLog.enqueue(entry);
       },

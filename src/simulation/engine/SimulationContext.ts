@@ -17,6 +17,11 @@ export interface SimulationContext {
   };
   /** Current scheduled end time per action ID. Updated by HitHandler when a hit extends the action. */
   actionEndTimes: Map<string, number>;
+  /**
+   * Drain matching queued events and run their handlers immediately (same `ctx`).
+   * Used when a trigger phase must settle forced consumes before later same-frame conditions.
+   */
+  flushQueuedEvents: (predicate: (event: SimEvent) => boolean) => void;
   simLog: (entry: SimLogEntry) => void;
   getAction: (id: string) => ResolvedAction | undefined;
   enemyLog: (event: EnemyStateEvent) => void;

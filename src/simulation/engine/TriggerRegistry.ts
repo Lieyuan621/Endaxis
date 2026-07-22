@@ -10,7 +10,7 @@ import type { ResolvedAction } from '@/simulation/compiler/types';
 import { isUltimateLikeAction } from '@/simulation/compiler/types';
 import { isEnemyEffect } from '@/data/types';
 import type { SimulationContext } from './SimulationContext';
-import type { SpChangeEvent, HitEvent, ActionStartEvent } from '@/simulation/events/event.types';
+import type { SpChangeEvent, HitEvent, ActionStartEvent, SimEvent } from '@/simulation/events/event.types';
 import type { EnemyStatusSnapshot } from '@/simulation/engine/types';
 import { resolveEffectDefaults } from '@/data/effectPresets';
 import {
@@ -33,6 +33,18 @@ interface TriggerRegistryEntry {
   sourceSkillType?: string;
   /** Stack threshold for onStatusApplied — internal use only, not part of TriggerEvent schema. */
   stacksConstraint?: StacksConstraint;
+}
+
+function isConsumeKindEffect(effect: Effect): boolean {
+  return resolveEffectDefaults(effect).kind === 'consume';
+}
+
+function isForcedEnemyConsumeAt(time: number, event: SimEvent): boolean {
+  return (
+    event.type === 'ENEMY_EFFECT_EXPIRE' &&
+    event.time === time &&
+    (event as { consumed?: boolean }).consumed === true
+  );
 }
 
 export class TriggerRegistry {
@@ -157,22 +169,11 @@ export class TriggerRegistry {
     const sequenceTotal = Number(node.sequenceTotal ?? node.attackSequenceTotal) || 0;
     if (sequenceTotal > 0 && sequenceIndex !== sequenceTotal) return;
 
-    for (const entry of this.entries) {
-      if (!this.matchesScope(entry, actorId)) continue;
-      const { trigger } = entry.triggerEffect;
-      if (trigger.kind !== 'onFinalStrike') continue;
-      this.dispatch(
-        entry.triggerEffect.effects,
-        event.time,
-        entry.sourceTrackId,
-        ctx,
-        1,
-        undefined,
-        entry.sourceSkillType,
-        actorId,
-        event.payload.actionId,
-      );
-    }
+    // Absorb/consume first (e.g. Laevatain melting flame), then evaluate
+    // conditional windows (e.g. Ardelia: heavy on target with no arts infliction).
+    this.dispatchStrikePhase(event, ctx, 'onFinalStrike', 'consume');
+    ctx.flushQueuedEvents(ev => isForcedEnemyConsumeAt(event.time, ev));
+    this.dispatchStrikePhase(event, ctx, 'onFinalStrike', 'nonConsume');
   }
 
   onDive(event: HitEvent, ctx: SimulationContext): void {
@@ -216,13 +217,29 @@ export class TriggerRegistry {
 
     if (action.node.type !== 'finisher') return;
 
+    this.dispatchStrikePhase(event, ctx, 'onFinisher', 'consume');
+    ctx.flushQueuedEvents(ev => isForcedEnemyConsumeAt(event.time, ev));
+    this.dispatchStrikePhase(event, ctx, 'onFinisher', 'nonConsume');
+  }
+
+  private dispatchStrikePhase(
+    event: HitEvent,
+    ctx: SimulationContext,
+    kind: 'onFinalStrike' | 'onFinisher',
+    phase: 'consume' | 'nonConsume',
+  ): void {
+    const actorId = event.payload.sourceId;
     for (const entry of this.entries) {
       if (!this.matchesScope(entry, actorId)) continue;
-      const { trigger } = entry.triggerEffect;
-      if (trigger.kind !== 'onFinisher') continue;
-
+      const { trigger, effects } = entry.triggerEffect;
+      if (trigger.kind !== kind) continue;
+      const phaseEffects =
+        phase === 'consume'
+          ? effects.filter(isConsumeKindEffect)
+          : effects.filter(effect => !isConsumeKindEffect(effect));
+      if (!phaseEffects.length) continue;
       this.dispatch(
-        entry.triggerEffect.effects,
+        phaseEffects,
         event.time,
         entry.sourceTrackId,
         ctx,
