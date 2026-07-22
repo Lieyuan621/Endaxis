@@ -70,9 +70,12 @@ interface FilteredModifiers {
   dmgBonusExternalMult: number;
   dmgBonusSources: DamageModifierSource[];
   ampBonus: number;
+  ampBonusSources: DamageModifierSource[];
   directMultiplier: number;
   resistanceIgnore: number;
+  resistanceIgnoreSources: DamageModifierSource[];
   susceptibilityAmplify: number;
+  susceptibilityAmplifySources: DamageModifierSource[];
 }
 
 /** One contributing dmgBonus line for the hit-detail dialog. */
@@ -100,6 +103,9 @@ export function filterDamageModifiers(
   let resistanceIgnore = 0;
   let susceptibilityAmplify = 1;
   const dmgBonusSources: DamageModifierSource[] = [];
+  const ampBonusSources: DamageModifierSource[] = [];
+  const resistanceIgnoreSources: DamageModifierSource[] = [];
+  const susceptibilityAmplifySources: DamageModifierSource[] = [];
 
   for (const mod of modifiers) {
     if (!matchesElement(mod.elements, element)) continue;
@@ -121,15 +127,27 @@ export function filterDamageModifiers(
         break;
       case 'ampBonus':
         ampBonus += mod.value;
+        ampBonusSources.push({
+          label: mod.sourceLabel || mod.effectId || 'ampBonus',
+          value: mod.value,
+        });
         break;
       case 'directMultiplier':
         directMultiplier *= mod.value;
         break;
       case 'resistanceIgnore':
         resistanceIgnore += mod.value;
+        resistanceIgnoreSources.push({
+          label: mod.sourceLabel || mod.effectId || 'resistanceIgnore',
+          value: mod.value,
+        });
         break;
       case 'susceptibilityAmplify':
         susceptibilityAmplify *= 1 + mod.value;
+        susceptibilityAmplifySources.push({
+          label: mod.sourceLabel || mod.effectId || 'susceptibilityAmplify',
+          value: mod.value,
+        });
         break;
     }
   }
@@ -139,10 +157,99 @@ export function filterDamageModifiers(
     dmgBonusExternalMult,
     dmgBonusSources,
     ampBonus,
+    ampBonusSources,
     directMultiplier,
     resistanceIgnore,
+    resistanceIgnoreSources,
     susceptibilityAmplify,
+    susceptibilityAmplifySources,
   };
+}
+
+/** Collect susceptibility / resistance-shred lines from live enemy status entries. */
+export function collectEnemyHitModifierSources(
+  entries: ReadonlyArray<{
+    id: string;
+    stat?: { modifier?: string; elements?: string | string[] | null };
+    value: number;
+    stacks: number;
+    effect?: { name?: string | null } | null;
+  }>,
+  element: string | undefined,
+): {
+  susceptibilitySources: DamageModifierSource[];
+  resistanceShredSources: DamageModifierSource[];
+  increasedDmgTakenSources: DamageModifierSource[];
+} {
+  const susceptibilitySources: DamageModifierSource[] = [];
+  const resistanceShredSources: DamageModifierSource[] = [];
+  const increasedDmgTakenSources: DamageModifierSource[] = [];
+
+  for (const entry of entries) {
+    const modifier = entry.stat?.modifier;
+    if (!modifier) continue;
+    const named =
+      entry.effect && typeof entry.effect.name === 'string' && entry.effect.name.trim()
+        ? entry.effect.name.trim()
+        : '';
+    const decimal = (entry.value * entry.stacks) / 100;
+
+    if (modifier === 'susceptibility') {
+      const elements = entry.stat?.elements;
+      const arr = elements == null ? [] : Array.isArray(elements) ? elements : [elements];
+      const label =
+        named ||
+        (arr.length === 0
+          ? 'susceptibility'
+          : arr.length === 1
+            ? `susceptibility:${arr[0]}`
+            : arr.length === 4 &&
+                ['heat', 'cryo', 'electric', 'nature'].every(e => arr.includes(e))
+              ? 'susceptibility:arts'
+              : arr.includes('nature') && arr.includes('cryo') && arr.length === 2
+                ? 'natureCryoSusceptibility'
+                : 'susceptibility');
+      if (arr.length === 0) {
+        susceptibilitySources.push({ label, value: decimal });
+        continue;
+      }
+      if (element && arr.includes(element)) {
+        susceptibilitySources.push({ label, value: decimal });
+      }
+      continue;
+    }
+
+    if (modifier === 'increasedDmgTaken') {
+      const elements = entry.stat?.elements;
+      const arr = elements == null ? [] : Array.isArray(elements) ? elements : [elements];
+      const label =
+        named ||
+        (arr.length === 0
+          ? 'increasedDmgTaken'
+          : arr.length === 1
+            ? `increasedDmgTaken:${arr[0]}`
+            : 'increasedDmgTaken');
+      if (arr.length === 0) {
+        increasedDmgTakenSources.push({ label, value: decimal });
+        continue;
+      }
+      if (element && arr.includes(element)) {
+        increasedDmgTakenSources.push({ label, value: decimal });
+      }
+      continue;
+    }
+
+    if (modifier === 'resistanceShred') {
+      const label =
+        named ||
+        (entry.id === 'corrosion:resShred' || entry.id.startsWith('corrosion:')
+          ? 'corrosion'
+          : entry.id);
+      resistanceShredSources.push({ label, value: decimal });
+    }
+  }
+
+  return { susceptibilitySources, resistanceShredSources, increasedDmgTakenSources };
 }
 
 // ─── Consumed stat effect application ───────────────────────────────────────
@@ -155,9 +262,12 @@ interface MutableDamageStats {
   dmgBonusExternalMult: number;
   dmgBonusSources: DamageModifierSource[];
   ampBonus: number;
+  ampBonusSources: DamageModifierSource[];
   directMultiplier: number;
   resistanceIgnore: number;
+  resistanceIgnoreSources: DamageModifierSource[];
   susceptibilityAmplify: number;
+  susceptibilityAmplifySources: DamageModifierSource[];
 }
 
 /**
@@ -266,13 +376,19 @@ interface HitDamageParams {
   dmgBonusExternalMult: number; // standalone multiplicative factor (Π(1 + external dmgBonus))
   dmgBonusSources?: DamageModifierSource[];
   ampBonus: number; // decimal
+  ampBonusSources?: DamageModifierSource[];
   directMultiplier: number; // pre-computed product
   enemyDef: number;
   resistanceIgnore: number; // decimal
+  resistanceIgnoreSources?: DamageModifierSource[];
   resistanceShred: number; // decimal
+  resistanceShredSources?: DamageModifierSource[];
   enemyResistance?: number; // decimal resistance points, e.g. 0.2 = 20 resistance = 80% damage
   susceptibility: number; // decimal
+  susceptibilitySources?: DamageModifierSource[];
+  susceptibilityAmplifySources?: DamageModifierSource[];
   increasedDmgTaken: number; // decimal
+  increasedDmgTakenSources?: DamageModifierSource[];
   dmgTakenExternalMult: number; // standalone multiplicative damage-taken factor (Π(1 + external), e.g. Wrap)
   linkStacks: number;
   staggerMult: number; // 1.3 when enemy is staggered, 1 otherwise
@@ -296,11 +412,15 @@ export interface DamageBreakdown {
   critMult: number;
   ampBonus: number;
   ampMult: number;
+  ampBonusSources?: DamageModifierSource[];
   directMultiplier: number;
   susceptibility: number;
   susceptMult: number;
+  susceptibilitySources?: DamageModifierSource[];
+  susceptibilityAmplifySources?: DamageModifierSource[];
   increasedDmgTaken: number;
   dmgTakenMult: number;
+  increasedDmgTakenSources?: DamageModifierSource[];
   dmgTakenExternalMult: number;
   linkStacks: number;
   linkMult: number;
@@ -308,7 +428,9 @@ export interface DamageBreakdown {
   defMult: number;
   enemyResistance: number;
   resistanceIgnore: number;
+  resistanceIgnoreSources?: DamageModifierSource[];
   resistanceShred: number;
+  resistanceShredSources?: DamageModifierSource[];
   resMult: number;
   enemyResMult: number;
   staggerMult: number;
@@ -377,11 +499,19 @@ export function computeExpectedDamageWithBreakdown(
     critMult,
     ampBonus: p.ampBonus,
     ampMult,
+    ampBonusSources: p.ampBonusSources?.length ? p.ampBonusSources : undefined,
     directMultiplier: p.directMultiplier,
     susceptibility: p.susceptibility,
     susceptMult,
+    susceptibilitySources: p.susceptibilitySources?.length ? p.susceptibilitySources : undefined,
+    susceptibilityAmplifySources: p.susceptibilityAmplifySources?.length
+      ? p.susceptibilityAmplifySources
+      : undefined,
     increasedDmgTaken: p.increasedDmgTaken,
     dmgTakenMult,
+    increasedDmgTakenSources: p.increasedDmgTakenSources?.length
+      ? p.increasedDmgTakenSources
+      : undefined,
     dmgTakenExternalMult,
     linkStacks: p.linkStacks,
     linkMult: link,
@@ -389,7 +519,13 @@ export function computeExpectedDamageWithBreakdown(
     defMult,
     enemyResistance,
     resistanceIgnore: p.resistanceIgnore,
+    resistanceIgnoreSources: p.resistanceIgnoreSources?.length
+      ? p.resistanceIgnoreSources
+      : undefined,
     resistanceShred: p.resistanceShred,
+    resistanceShredSources: p.resistanceShredSources?.length
+      ? p.resistanceShredSources
+      : undefined,
     resMult,
     enemyResMult,
     staggerMult: p.staggerMult,
@@ -415,6 +551,7 @@ export function computeHitDamageWithBreakdown(
   staggerMult: number = 1,
   finisherMult: number = 1,
   enemyResistance: number = 0,
+  enemyEntries: Parameters<typeof collectEnemyHitModifierSources>[0] = [],
 ): DamageBreakdown | null {
   if (hit.multiplier == null || hit.multiplier === 0) return null;
 
@@ -431,6 +568,9 @@ export function computeHitDamageWithBreakdown(
     critDmg: operatorStatus.critDmg,
     ...mods,
     dmgBonusSources: [...mods.dmgBonusSources],
+    ampBonusSources: [...mods.ampBonusSources],
+    resistanceIgnoreSources: [...mods.resistanceIgnoreSources],
+    susceptibilityAmplifySources: [...mods.susceptibilityAmplifySources],
   };
 
   applyConsumedStatEffects(stats, hit.consumedStatEffects, operatorStatus);
@@ -449,6 +589,8 @@ export function computeHitDamageWithBreakdown(
     (enemyStatus?.increasedDmgTakenExternalMult ?? 1) *
     (element ? (enemyStatus?.elementalIncreasedDmgTakenExternalMult?.[element] ?? 1) : 1);
 
+  const enemySources = collectEnemyHitModifierSources(enemyEntries, element);
+
   return computeExpectedDamageWithBreakdown(
     {
       attack: stats.attack,
@@ -460,13 +602,19 @@ export function computeHitDamageWithBreakdown(
       dmgBonusExternalMult: stats.dmgBonusExternalMult,
       dmgBonusSources: stats.dmgBonusSources,
       ampBonus: stats.ampBonus,
+      ampBonusSources: stats.ampBonusSources,
       directMultiplier: stats.directMultiplier,
       enemyDef,
       resistanceIgnore: stats.resistanceIgnore,
+      resistanceIgnoreSources: stats.resistanceIgnoreSources,
       resistanceShred: enemyStatus?.resistanceShred ?? 0,
+      resistanceShredSources: enemySources.resistanceShredSources,
       enemyResistance,
       susceptibility: totalSusc,
+      susceptibilitySources: enemySources.susceptibilitySources,
+      susceptibilityAmplifySources: stats.susceptibilityAmplifySources,
       increasedDmgTaken: (enemyStatus?.increasedDmgTaken ?? 0) + elementalDmgTaken,
+      increasedDmgTakenSources: enemySources.increasedDmgTakenSources,
       dmgTakenExternalMult,
       linkStacks: hit.consumedStacks?.link ?? 0,
       staggerMult,

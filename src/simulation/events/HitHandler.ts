@@ -19,6 +19,7 @@ import {
   computeExpectedDamageWithBreakdown,
   filterDamageModifiers,
   applyConsumedStatEffects,
+  collectEnemyHitModifierSources,
   STAGGER_DAMAGE_MULTIPLIER,
 } from '@/data/stats/computeDamage';
 import type { ResolvedStatModifier } from '@/data/stats/types';
@@ -224,6 +225,7 @@ export class HitHandler implements EventHandler<HitEvent> {
       const isCombustionDot = reactionMeta.reactionType === 'combustion_dot';
       const noCrit = hit._canCrit === false || isCombustionDot;
 
+      const enemySources = collectEnemyHitModifierSources(enemyEntries, element);
       const reactionHitParams = {
         attack: operatorStatus.attack,
         multiplier: resolvedMultiplier,
@@ -233,14 +235,20 @@ export class HitHandler implements EventHandler<HitEvent> {
         dmgBonusExternalMult: mods.dmgBonusExternalMult,
         dmgBonusSources: [...mods.dmgBonusSources],
         ampBonus: mods.ampBonus,
+        ampBonusSources: [...mods.ampBonusSources],
         directMultiplier: mods.directMultiplier,
         enemyDef: ctx.enemyDef,
         resistanceIgnore: mods.resistanceIgnore,
+        resistanceIgnoreSources: [...mods.resistanceIgnoreSources],
         resistanceShred: enemyStatus?.resistanceShred ?? 0,
+        resistanceShredSources: enemySources.resistanceShredSources,
         enemyResistance,
         susceptibility:
           ((enemyStatus?.susceptibility ?? 0) + elementalSusc) * mods.susceptibilityAmplify,
+        susceptibilitySources: enemySources.susceptibilitySources,
+        susceptibilityAmplifySources: [...mods.susceptibilityAmplifySources],
         increasedDmgTaken: (enemyStatus?.increasedDmgTaken ?? 0) + elementalDmgTaken,
+        increasedDmgTakenSources: enemySources.increasedDmgTakenSources,
         dmgTakenExternalMult,
         linkStacks: 0,
         staggerMult,
@@ -413,6 +421,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         staggerMult,
         finisherMult,
         enemyResistance,
+        enemyEntries,
       );
       if (breakdown) {
         applyEnemyDamageCapToBreakdown(breakdown, e.time, ctx, hit);

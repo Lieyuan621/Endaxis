@@ -35,6 +35,13 @@ export function resolveDamageBonusSourceLabel(
   const translated = translateEffectName(t, te, label);
   if (translated && translated !== label) return translated;
 
+  // Synthetic reaction helper statuses (e.g. corrosion:resShred).
+  const syntheticMatch = label.match(/^([a-zA-Z]+)(?::|$)/);
+  if (syntheticMatch?.[1]) {
+    const reactionTranslated = translateEffectName(t, te, syntheticMatch[1]);
+    if (reactionTranslated && reactionTranslated !== syntheticMatch[1]) return reactionTranslated;
+  }
+
   const weaponSkillMatch = label.match(/^(.+?)-skill\d+/i);
   if (weaponSkillMatch?.[1]) {
     const weaponName = getWeaponGameName(weaponSkillMatch[1], locale);

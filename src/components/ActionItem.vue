@@ -544,6 +544,15 @@ const renderableHits = computed(() => {
     .filter(entry => !String(entry.payload.hitData?.triggeredBy || '').startsWith('dot:'))
     .filter(entry => entry.payload.sourceId === resolvedAction.trackId)
     .filter(entry => {
+      const actionId = entry.payload.actionId;
+      if (
+        actionId &&
+        !String(actionId).startsWith('triggered:') &&
+        !String(actionId).startsWith('reaction:') &&
+        !String(actionId).startsWith('dot:')
+      ) {
+        return actionId === props.action.instanceId;
+      }
       const owner = trackActionStarts.find(item => item.start <= entry.time);
       return owner?.id === props.action.instanceId;
     })

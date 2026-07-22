@@ -1118,7 +1118,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         sourceId,
         sourceSkillType,
         icon: undefined,
-        effect: { kind: 'status', hide: true } as any,
+        effect: { kind: 'status', id: 'corrosion:resShred', name: 'corrosion', hide: true } as any,
         sourceBreakdown: computeSourceBreakdown(sourceId, consumedStackSources, level),
       },
       1,
@@ -1441,6 +1441,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       sourceId,
       sourceSkillType,
       sourceSkillId,
+      actionId,
     } = event;
     if (expiresAt <= time) return;
     ctx.state.enemy.applyStatus({
@@ -1458,6 +1459,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       sourceBreakdown: event.sourceBreakdown,
       cancelHitKey: (event as any).cancelHitKey,
       external: event.external,
+      actionId,
     });
     ctx.enemyLog({
       type: 'ENEMY_STATUS_APPLY',
@@ -1489,6 +1491,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         consumed: false,
         sourceSkillType,
         sourceSkillId,
+        actionId,
       },
       2,
     );
@@ -1502,6 +1505,8 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         ctx,
         sourceSkillType,
         sourceSkillId,
+        undefined,
+        actionId,
       );
     }
   }
@@ -1516,6 +1521,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     let status: string | undefined;
     let statusStat: EnemyStat | undefined;
     let consumedStacks = 1;
+    let originActionId: string | undefined = event.actionId;
 
     switch (event.kind) {
       case 'infliction':
@@ -1628,6 +1634,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         const entry = enemy.enemyStatusEffects.get(event.id);
         statusStat = entry?.stat;
         status = event.id;
+        originActionId = entry?.actionId ?? event.actionId;
         if (event.stacksToConsume !== undefined) {
           const result = enemy.consumeStatusStacks(event.id, event.stacksToConsume, event.time);
           if (!result) break;
@@ -1678,6 +1685,8 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           event.sourceSkillType,
           event.sourceSkillId,
           preConsumeSnap,
+          undefined,
+          originActionId,
         );
       } else {
         this.registry?.onStatusExpire(
@@ -1691,6 +1700,8 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           event.sourceSkillType,
           event.sourceSkillId,
           preConsumeSnap,
+          undefined,
+          originActionId,
         );
       }
     }

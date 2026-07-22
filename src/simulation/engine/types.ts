@@ -28,6 +28,8 @@ export interface EnemyStatusEntry {
   cancelHitKey?: string;
   /** Standalone-multiplicative damage-taken modifier (e.g. Wrap): routed to the external factor. */
   external?: boolean;
+  /** Originating action that applied this status — used to attribute expire/consume damageHits. */
+  actionId?: string;
 }
 
 // ─── Source tracking for LMDI attribution ───────────────────────────────────
@@ -114,6 +116,8 @@ export interface OperatorStatusEntry {
   /** Snapshotted consumed stacks from the action that applied this effect. */
   consumedStacks?: Record<string, number>;
   external?: boolean;
+  /** Originating action that applied this status — used to attribute expire/consume damageHits. */
+  actionId?: string;
 }
 
 // ─── Engine events: enemy side ───────────────────────────────────────────────
@@ -189,6 +193,8 @@ export type EnemyEffectExpireEvent = {
   sourceSkillType?: string;
   /** Specific skillId that caused consumption. Used by onStatusConsumed/Expire triggers' `skillId` filter. */
   sourceSkillId?: string;
+  /** Originating apply action id — preferred for attributing expire/consume triggered damage. */
+  actionId?: string;
 } & (
   | { kind: 'infliction'; element: ArtsElement; stacksToConsume?: number }
   | { kind: 'vulnerability' }

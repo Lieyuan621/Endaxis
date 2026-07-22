@@ -161,27 +161,48 @@ const multiplierRows = computed(() => {
     });
   }
   if (b.ampMult !== 1) {
+    const ampLines = (b.ampBonusSources || []).map(src => {
+      const name = resolveDamageBonusSourceLabel(src.label, t, te, locale.value);
+      return `${name} +${pct(src.value)}`;
+    });
     rows.push({
       label: t('hitDetail.ampBonus'),
       detail: `+${pct(b.ampBonus)}`,
       value: mult(b.ampMult),
+      tooltip: ampLines.length ? ampLines.join('\n') : undefined,
     });
   }
   if (b.directMultiplier !== 1) {
     rows.push({ label: t('hitDetail.directMult'), detail: '', value: mult(b.directMultiplier) });
   }
   if (b.susceptMult !== 1) {
+    const susceptLines = [
+      ...(b.susceptibilitySources || []).map(src => {
+        const name = resolveDamageBonusSourceLabel(src.label, t, te, locale.value);
+        return `${name} +${pct(src.value)}`;
+      }),
+      ...(b.susceptibilityAmplifySources || []).map(src => {
+        const name = resolveDamageBonusSourceLabel(src.label, t, te, locale.value);
+        return `${name} ×${(1 + (Number(src.value) || 0)).toFixed(3)}`;
+      }),
+    ];
     rows.push({
       label: t('hitDetail.susceptibility'),
       detail: `+${pct(b.susceptibility)}`,
       value: mult(b.susceptMult),
+      tooltip: susceptLines.length ? susceptLines.join('\n') : undefined,
     });
   }
   if (b.dmgTakenMult !== 1) {
+    const dmgTakenLines = (b.increasedDmgTakenSources || []).map(src => {
+      const name = resolveDamageBonusSourceLabel(src.label, t, te, locale.value);
+      return `${name} +${pct(src.value)}`;
+    });
     rows.push({
       label: t('hitDetail.dmgTaken'),
       detail: `+${pct(b.increasedDmgTaken)}`,
       value: mult(b.dmgTakenMult),
+      tooltip: dmgTakenLines.length ? dmgTakenLines.join('\n') : undefined,
     });
   }
   if (b.linkMult !== 1) {
@@ -197,10 +218,21 @@ const multiplierRows = computed(() => {
     value: mult(b.defMult),
   });
   if (b.resMult !== 1) {
+    const resLines = [
+      ...(b.resistanceIgnoreSources || []).map(src => {
+        const name = resolveDamageBonusSourceLabel(src.label, t, te, locale.value);
+        return `${name} −${pct(src.value)}`;
+      }),
+      ...(b.resistanceShredSources || []).map(src => {
+        const name = resolveDamageBonusSourceLabel(src.label, t, te, locale.value);
+        return `${name} −${pct(src.value)}`;
+      }),
+    ];
     rows.push({
       label: t('hitDetail.resMult'),
       detail: `${pct(b.enemyResistance)} - ${pct(b.resistanceIgnore)} - ${pct(b.resistanceShred)}`,
       value: mult(b.resMult),
+      tooltip: resLines.length ? resLines.join('\n') : undefined,
     });
   }
   if (b.staggerMult != null && b.staggerMult !== 1) {

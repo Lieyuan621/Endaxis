@@ -339,6 +339,7 @@ export function scheduleConsumption(
           }
         }
         if (matchingKey) {
+          const matchingEntry = snap.enemyStatusEffects.get(matchingKey);
           ctx.queue.enqueue(
             {
               type: 'ENEMY_EFFECT_EXPIRE',
@@ -349,6 +350,7 @@ export function scheduleConsumption(
               sourceId,
               sourceSkillType: skillType,
               sourceSkillId: skillId,
+              actionId: matchingEntry?.actionId,
               ...(stacksToConsume !== undefined && { stacksToConsume }),
             } as EnemyEffectExpireEvent,
             3,
@@ -439,6 +441,7 @@ export function scheduleConsumption(
               sourceId,
               sourceSkillType: skillType,
               sourceSkillId: skillId,
+              actionId: match.entry.actionId,
               ...(stacksToConsume !== undefined && { stacksToConsume }),
             } as EnemyEffectExpireEvent,
             3,
@@ -861,6 +864,7 @@ export function dispatchEnemyEffects(
             sourceId,
             sourceSkillType: skillType,
             sourceSkillId: skillId,
+            actionId,
             icon: resolved.icon,
             effect: resolved,
             ...(ctx.consumedStacksWriteKeys.has(effectId) && actionId
@@ -1023,6 +1027,7 @@ export function scheduleDotTicks(
       maxStacks: 1,
       expiresAt,
       sourceId: sourceTrackId,
+      actionId: sourceActionId,
       icon: r.icon as string | undefined,
       effect: { kind: 'status', id: effectId, name: r.name, icon: r.icon, target: 'enemy' } as any,
       cancelHitKey: effectId,
@@ -1265,6 +1270,7 @@ export function dispatchSingleActorEffect(
             skillType,
             consumedStacks: dc.hitConsumedStacks ?? parentAction?.consumedStacks,
             consumedStatEffects: parentAction?.consumedStatEffects,
+            ...(skillId ? { skillId } : {}),
             ...(critRateScale !== undefined && { _critRateScale: critRateScale }),
           },
           actionId: actionId ?? `triggered:${effectId}`,

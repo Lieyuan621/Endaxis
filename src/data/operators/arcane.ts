@@ -270,7 +270,9 @@ const sheet: OperatorSheet = {
                       {
                         offset: 0.617,
                         stagger: 10,
-                        effects: [{ kind: 'infliction', element: 'nature' }],
+                        effects: [
+                          { kind: 'infliction', element: 'nature', applyTiming: 'beforeDamage' },
+                        ],
                       },
                     ],
                   },
@@ -336,6 +338,7 @@ const sheet: OperatorSheet = {
                           },
                           {
                             id: 'arcane-combo-susceptibility',
+                            name: 'natureCryoSusceptibility',
                             kind: 'status',
                             icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_vulnerable.webp',
                             target: 'enemy',
@@ -416,6 +419,7 @@ const sheet: OperatorSheet = {
                   {
                     kind: 'status',
                     id: 'arcane-combo-susceptibility',
+                    name: 'natureCryoSusceptibility',
                     icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_vulnerable.webp',
                     target: 'enemy',
                     stat: { modifier: 'susceptibility', elements: ['nature', 'cryo'] },
@@ -749,7 +753,9 @@ const sheet: OperatorSheet = {
                       {
                         offset: 0.617,
                         stagger: 10,
-                        effects: [{ kind: 'infliction', element: 'nature' }],
+                        effects: [
+                          { kind: 'infliction', element: 'nature', applyTiming: 'beforeDamage' },
+                        ],
                       },
                     ],
                   },
@@ -802,6 +808,7 @@ const sheet: OperatorSheet = {
                           },
                           {
                             id: 'arcane-combo-susceptibility',
+                            name: 'natureCryoSusceptibility',
                             kind: 'status',
                             icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_vulnerable.webp',
                             target: 'enemy',

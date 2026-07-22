@@ -344,6 +344,7 @@ export class TriggerRegistry {
     skillType?: string,
     skillId?: string,
     cumulativeStacks?: number,
+    actionId?: string,
   ): void {
     for (const entry of this.entries) {
       if (!this.matchesScope(entry, actorId)) continue;
@@ -369,7 +370,7 @@ export class TriggerRegistry {
         undefined,
         entry.sourceSkillType,
         actorId,
-        undefined,
+        actionId,
         undefined,
         undefined,
         skillId,
@@ -393,6 +394,7 @@ export class TriggerRegistry {
     skillId?: string,
     preComputedEnemySnap?: EnemyStatusSnapshot,
     preConsumeOpStacks?: Map<string, number>,
+    actionId?: string,
   ): void {
     for (const entry of this.entries) {
       if (!this.matchesScope(entry, actorId)) continue;
@@ -413,7 +415,7 @@ export class TriggerRegistry {
         undefined,
         entry.sourceSkillType,
         actorId,
-        undefined,
+        actionId,
         preComputedEnemySnap,
         preConsumeOpStacks,
         skillId,
@@ -437,6 +439,7 @@ export class TriggerRegistry {
     skillId?: string,
     preComputedEnemySnap?: EnemyStatusSnapshot,
     preConsumeOpStacks?: Map<string, number>,
+    actionId?: string,
   ): void {
     for (const entry of this.entries) {
       // Natural expiry has no triggering actor (actorId is ''), so fire for all matching entries.
@@ -459,7 +462,7 @@ export class TriggerRegistry {
         undefined,
         entry.sourceSkillType,
         actorId || undefined,
-        undefined,
+        actionId,
         preComputedEnemySnap,
         preConsumeOpStacks,
         skillId,
