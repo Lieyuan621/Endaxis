@@ -533,7 +533,12 @@ export class TriggerRegistry {
           const { statusKey, target } = r.readConsumedStacks;
           hitConsumedStacks =
             target === 'enemy'
-              ? enemySnap.enemyStatusEffects.get(statusKey)?.consumedStacks
+              ? // Suffix-aware: DoT statuses are keyed `<id>@<instanceKey>`, so an exact-key lookup
+                // misses them — fall back to matching the bare id (mirrors EnemyState.getStatusConsumedStacks).
+                (enemySnap.enemyStatusEffects.get(statusKey)?.consumedStacks ??
+                [...enemySnap.enemyStatusEffects.entries()].find(
+                  ([k]) => k && k.split('@')[0] === statusKey,
+                )?.[1]?.consumedStacks)
               : ctx.getOperatorEffects(sourceTrackId).getConsumedStacks(statusKey, time);
         }
       }

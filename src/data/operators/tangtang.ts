@@ -481,6 +481,7 @@ const sheet: OperatorSheet = {
                       name: 'oldenStare',
                       kind: 'damageOverTime',
                       element: 'cryo',
+                      skillType: 'ultimate',
                       multiplier: [142, 156, 171, 185, 199, 213, 228, 242, 256, 274, 295, 320],
                       multiplierMode: 'split',
                       duration: 3.99, // prevent last tick

@@ -456,6 +456,9 @@ export interface DamageHitEffect extends EffectBase {
 export interface DamageOverTimeEffect extends EffectBase {
   kind: 'damageOverTime';
   element: DamageElement;
+  /** Treat ticks as this skill's damage — they then inherit skill-type-scoped modifiers
+   *  (dmgBonus/directMultiplier/link/etc.). Omit to keep ticks skill-type-agnostic (the default). */
+  skillType?: SkillType;
   multiplier: Leveled<number>;
   multiplierMode?: 'each' | 'split';
   multiplierScaling?: ScalingDef;
@@ -774,6 +777,7 @@ export interface ResolvedDamageHitEffect extends ResolvedEffectBase {
 export interface ResolvedDamageOverTimeEffect extends ResolvedEffectBase {
   kind: 'damageOverTime';
   element: DamageElement;
+  skillType?: SkillType;
   multiplier: number;
   multiplierMode?: 'each' | 'split';
   multiplierScaling?: ResolvedScalingDef;

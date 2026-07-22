@@ -992,9 +992,10 @@ export function scheduleDotTicks(
           effectId,
           element: r.element,
           multiplier: tickMultiplier,
-          // A DoT tick must not inherit the source skill's skillType (skill-type-scoped mods + link
-          // would wrongly apply); skillId/element scoping is kept, mirroring reaction damage.
-          skillType: undefined,
+          // By default a DoT tick is skill-type-agnostic (skill-type-scoped mods + link don't apply),
+          // mirroring reaction damage. An effect may opt in via `skillType` to have its ticks treated
+          // as that skill's damage (e.g. tangtang's ultimate DoT → inherits ult-scoped buffs + link).
+          skillType: r.skillType,
           skillId: sourceSkillId,
           actionId: sourceActionId,
           canCrit: r.canCrit,
