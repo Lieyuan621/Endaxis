@@ -306,6 +306,7 @@ const sheet: OperatorSheet = {
               ],
               duration: 5,
             },
+            ultimateEnergyGain: 0,
             segments: [
               {
                 duration: 1,
@@ -319,6 +320,10 @@ const sheet: OperatorSheet = {
                         offset: 0.5,
                         stagger: 5,
                         effects: [
+                          {
+                            kind: 'ultEnergyGain',
+                            value: 10,
+                          },
                           {
                             id: 'arcane-imprisonment',
                             name: 'imprisonment',
@@ -765,6 +770,7 @@ const sheet: OperatorSheet = {
               ],
               duration: 5,
             },
+            ultimateEnergyGain: 0,
             segments: [
               {
                 duration: 1,
@@ -778,6 +784,10 @@ const sheet: OperatorSheet = {
                         offset: 0.5,
                         stagger: 5,
                         effects: [
+                          {
+                            kind: 'ultEnergyGain',
+                            value: 10,
+                          },
                           {
                             id: 'arcane-imprisonment',
                             name: 'imprisonment',

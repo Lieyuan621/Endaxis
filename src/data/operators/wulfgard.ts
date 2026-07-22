@@ -308,7 +308,7 @@ const sheet: OperatorSheet = {
       ultimateEnergyGain: 0,
       segments: [
         {
-          duration: 1,
+          duration: 0.75,
           damageGroups: [
             {
               element: 'heat',
