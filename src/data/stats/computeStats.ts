@@ -253,7 +253,7 @@ export function computeStats(
       continue;
     }
 
-    accumulateStat(modifier, mod.value, mod.stat, mod.effectId, mod.external);
+    accumulateStat(modifier, mod.value, mod.stat, mod.effectId, mod.external, mod.sourceLabel);
   }
 
   function accumulateStat(
@@ -262,6 +262,7 @@ export function computeStats(
     stat: Record<string, unknown>,
     effectId?: string,
     external?: boolean,
+    sourceLabel?: string,
   ): void {
     const pct = val / 100;
 
@@ -324,6 +325,8 @@ export function computeStats(
           skillTypes: stat.skillTypes as ScopedDamageModifier['skillTypes'],
           skillId: stat.skillId as ScopedDamageModifier['skillId'],
           external,
+          effectId,
+          sourceLabel,
         });
         break;
       case 'ampBonus':

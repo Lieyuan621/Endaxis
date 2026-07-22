@@ -6,6 +6,7 @@ import { getGameSlotTypeName, getGearPieceGameName, getGearSetGameName } from '@
 import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
+  mergeEquipmentElementPairEffects,
 } from '@/utils/equipmentEffectDisplay';
 import { getEquipmentLevelColor, isEquipmentArtificable } from '@/utils/equipmentLevels';
 import { resolveLeveled } from '@/data/types';
@@ -85,7 +86,11 @@ function getSkillSlots(piece) {
   if (!piece) return [];
   return [piece.skill1, piece.skill2, piece.skill3]
     .filter(Boolean)
-    .map(skill => (skill.effects || []).filter(effect => effect.kind === 'status'))
+    .map(skill =>
+      mergeEquipmentElementPairEffects(skill.effects || []).filter(
+        effect => effect.kind === 'status',
+      ),
+    )
     .filter(slot => slot.length > 0);
 }
 

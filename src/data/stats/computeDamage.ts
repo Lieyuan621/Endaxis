@@ -68,10 +68,20 @@ function matchesSkillId(
 interface FilteredModifiers {
   dmgBonus: number;
   dmgBonusExternalMult: number;
+  dmgBonusSources: DamageModifierSource[];
   ampBonus: number;
   directMultiplier: number;
   resistanceIgnore: number;
   susceptibilityAmplify: number;
+}
+
+/** One contributing dmgBonus line for the hit-detail dialog. */
+export interface DamageModifierSource {
+  /** Prefer effect.name; fall back to effect id. */
+  label: string;
+  /** Decimal contribution (e.g. 0.2 = +20%) or external factor delta. */
+  value: number;
+  external?: boolean;
 }
 
 /**
@@ -89,6 +99,7 @@ export function filterDamageModifiers(
   let directMultiplier = 1;
   let resistanceIgnore = 0;
   let susceptibilityAmplify = 1;
+  const dmgBonusSources: DamageModifierSource[] = [];
 
   for (const mod of modifiers) {
     if (!matchesElement(mod.elements, element)) continue;
@@ -102,6 +113,11 @@ export function filterDamageModifiers(
         } else {
           dmgBonus += mod.value;
         }
+        dmgBonusSources.push({
+          label: mod.sourceLabel || mod.effectId || 'dmgBonus',
+          value: mod.value,
+          external: mod.external,
+        });
         break;
       case 'ampBonus':
         ampBonus += mod.value;
@@ -121,6 +137,7 @@ export function filterDamageModifiers(
   return {
     dmgBonus,
     dmgBonusExternalMult,
+    dmgBonusSources,
     ampBonus,
     directMultiplier,
     resistanceIgnore,
@@ -136,6 +153,7 @@ interface MutableDamageStats {
   critDmg: number;
   dmgBonus: number;
   dmgBonusExternalMult: number;
+  dmgBonusSources: DamageModifierSource[];
   ampBonus: number;
   directMultiplier: number;
   resistanceIgnore: number;
@@ -201,6 +219,10 @@ export function applyConsumedStatEffects(
         break;
       case 'dmgBonus':
         stats.dmgBonus += ce.value / 100;
+        stats.dmgBonusSources.push({
+          label: typeof ce.stat === 'string' ? ce.stat : ((ce.stat as any)?.modifier ?? 'dmgBonus'),
+          value: ce.value / 100,
+        });
         break;
       case 'ampBonus':
         stats.ampBonus += ce.value / 100;
@@ -242,6 +264,7 @@ interface HitDamageParams {
   critDmg: number; // decimal
   dmgBonus: number; // decimal
   dmgBonusExternalMult: number; // standalone multiplicative factor (Π(1 + external dmgBonus))
+  dmgBonusSources?: DamageModifierSource[];
   ampBonus: number; // decimal
   directMultiplier: number; // pre-computed product
   enemyDef: number;
@@ -267,6 +290,7 @@ export interface DamageBreakdown {
   dmgBonus: number;
   dmgBonusMult: number;
   dmgBonusExternalMult: number;
+  dmgBonusSources?: DamageModifierSource[];
   critRate: number;
   critDmg: number;
   critMult: number;
@@ -347,6 +371,7 @@ export function computeExpectedDamageWithBreakdown(
     dmgBonus: p.dmgBonus,
     dmgBonusMult,
     dmgBonusExternalMult: p.dmgBonusExternalMult,
+    dmgBonusSources: p.dmgBonusSources?.length ? p.dmgBonusSources : undefined,
     critRate,
     critDmg: p.critDmg,
     critMult,
@@ -405,6 +430,7 @@ export function computeHitDamageWithBreakdown(
     critRate: operatorStatus.critRate,
     critDmg: operatorStatus.critDmg,
     ...mods,
+    dmgBonusSources: [...mods.dmgBonusSources],
   };
 
   applyConsumedStatEffects(stats, hit.consumedStatEffects, operatorStatus);
@@ -432,6 +458,7 @@ export function computeHitDamageWithBreakdown(
       critDmg: stats.critDmg,
       dmgBonus: stats.dmgBonus,
       dmgBonusExternalMult: stats.dmgBonusExternalMult,
+      dmgBonusSources: stats.dmgBonusSources,
       ampBonus: stats.ampBonus,
       directMultiplier: stats.directMultiplier,
       enemyDef,

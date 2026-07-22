@@ -328,9 +328,21 @@ const sheet: OperatorSheet = {
                             id: 'arcane-imprisonment',
                             name: 'imprisonment',
                             kind: 'status',
+                            icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_seal.webp',
                             stat: { modifier: 'slowed' },
                             target: 'enemy',
                             duration: 4,
+                            applyTiming: 'beforeDamage',
+                          },
+                          {
+                            id: 'arcane-combo-susceptibility',
+                            kind: 'status',
+                            icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_vulnerable.webp',
+                            target: 'enemy',
+                            stat: { modifier: 'susceptibility', elements: ['nature', 'cryo'] },
+                            value: 4,
+                            duration: 4,
+                            applyTiming: 'beforeDamage',
                           },
                         ],
                       },
@@ -340,18 +352,6 @@ const sheet: OperatorSheet = {
               },
             ],
             cooldown: [14, 14, 14, 14, 14, 14, 14, 14, 13, 13, 13, 12],
-            effects: [
-              {
-                kind: 'status',
-                target: 'enemy',
-                stat: { modifier: 'susceptibility', elements: ['nature', 'cryo'] },
-                value: 4,
-                condition: {
-                  kind: 'enemyStatus',
-                  status: 'arcane-imprisonment',
-                },
-              },
-            ],
             triggers: [
               {
                 trigger: {
@@ -415,6 +415,8 @@ const sheet: OperatorSheet = {
                   },
                   {
                     kind: 'status',
+                    id: 'arcane-combo-susceptibility',
+                    icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_vulnerable.webp',
                     target: 'enemy',
                     stat: { modifier: 'susceptibility', elements: ['nature', 'cryo'] },
                     value: 4,
@@ -792,9 +794,30 @@ const sheet: OperatorSheet = {
                             id: 'arcane-imprisonment',
                             name: 'imprisonment',
                             kind: 'status',
+                            icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_seal.webp',
                             stat: { modifier: 'slowed' },
                             target: 'enemy',
                             duration: 6,
+                            applyTiming: 'beforeDamage',
+                          },
+                          {
+                            id: 'arcane-combo-susceptibility',
+                            kind: 'status',
+                            icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_vulnerable.webp',
+                            target: 'enemy',
+                            stat: { modifier: 'susceptibility', elements: ['nature', 'cryo'] },
+                            value: 4,
+                            duration: 6,
+                            applyTiming: 'beforeDamage',
+                            scaling: {
+                              additive: [
+                                {
+                                  basis: 'will',
+                                  coefficient: 0.0125,
+                                },
+                              ],
+                              cap: [7, 7, 7, 7, 7, 7, 7, 7, 7.5, 7.5, 7.5, 8],
+                            },
                           },
                           ...COMBO_SKILL_EFFECTS,
                         ],
@@ -805,28 +828,6 @@ const sheet: OperatorSheet = {
               },
             ],
             cooldown: [20, 20, 20, 20, 20, 20, 20, 20, 19, 19, 19, 18],
-            effects: [
-              {
-                id: 'arcane-combo-susceptibility',
-                kind: 'status',
-                target: 'enemy',
-                stat: { modifier: 'susceptibility', elements: ['nature', 'cryo'] },
-                value: 4,
-                scaling: {
-                  additive: [
-                    {
-                      basis: 'will',
-                      coefficient: 0.0125,
-                    },
-                  ],
-                  cap: [7, 7, 7, 7, 7, 7, 7, 7, 7.5, 7.5, 7.5, 8],
-                },
-                condition: {
-                  kind: 'enemyStatus',
-                  status: 'arcane-imprisonment',
-                },
-              },
-            ],
             triggers: [
               ...INFLICTION_TRACKER,
               {

@@ -165,6 +165,10 @@ export class HitHandler implements EventHandler<HitEvent> {
           stat: entry.stat,
           value: entry.value * entry.stacks,
           external: entry.external,
+          effectId: entry.id,
+          sourceLabel:
+            (entry.effect && 'name' in entry.effect && entry.effect.name) ||
+            entry.id,
         });
       }
       const operatorStatus = computeStats(baseStats, [], dynamicMods, undefined, hit.skillId);
@@ -224,6 +228,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         critDmg: noCrit ? 0 : operatorStatus.critDmg,
         dmgBonus: mods.dmgBonus,
         dmgBonusExternalMult: mods.dmgBonusExternalMult,
+        dmgBonusSources: [...mods.dmgBonusSources],
         ampBonus: mods.ampBonus,
         directMultiplier: mods.directMultiplier,
         enemyDef: ctx.enemyDef,
@@ -359,6 +364,10 @@ export class HitHandler implements EventHandler<HitEvent> {
           stat: entry.stat,
           value: entry.value * entry.stacks,
           external: entry.external,
+          effectId: entry.id,
+          sourceLabel:
+            (entry.effect && 'name' in entry.effect && entry.effect.name) ||
+            entry.id,
         });
       }
       const operatorStatus = computeStats(baseStats, [], dynamicMods, hit.skillType, hit.skillId);

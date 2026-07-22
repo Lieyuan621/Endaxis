@@ -134,11 +134,22 @@ const multiplierRows = computed(() => {
       tooltip: t('hitDetail.critRateScaleTooltip'),
     });
   }
-  if (b.dmgBonusMult !== 1) {
+  if (b.dmgBonusMult !== 1 || b.dmgBonusExternalMult !== 1 || (b.dmgBonusSources?.length ?? 0) > 0) {
+    const sourceLines = (b.dmgBonusSources || []).map(src => {
+      const name = translateEffectName(t, te, src.label) || humanize(src.label);
+      const signed = src.external
+        ? `×${(1 + (Number(src.value) || 0)).toFixed(3)}`
+        : `+${pct(src.value)}`;
+      return `${name} ${signed}`;
+    });
     rows.push({
       label: t('hitDetail.dmgBonus'),
-      detail: `+${pct(b.dmgBonus)}`,
-      value: mult(b.dmgBonusMult),
+      detail:
+        b.dmgBonusExternalMult !== 1
+          ? `+${pct(b.dmgBonus)} · ×${(Number(b.dmgBonusExternalMult) || 1).toFixed(3)}`
+          : `+${pct(b.dmgBonus)}`,
+      value: mult(b.dmgBonusMult * (b.dmgBonusExternalMult ?? 1)),
+      tooltip: sourceLines.length ? sourceLines.join('\n') : undefined,
     });
   }
   if (b.critMult !== 1) {
@@ -300,7 +311,13 @@ function onClose() {
             <tr v-for="row in multiplierRows" :key="row.label">
               <td class="label-cell">
                 {{ row.label }}
-                <el-tooltip v-if="row.tooltip" :content="row.tooltip" placement="top">
+                <el-tooltip
+                  v-if="row.tooltip"
+                  :content="row.tooltip"
+                  placement="top"
+                  :show-after="80"
+                  popper-class="hit-detail-source-tooltip"
+                >
                   <span class="hint-icon">i</span>
                 </el-tooltip>
                 <span v-if="row.detail" class="mult-detail">{{ row.detail }}</span>
@@ -417,5 +434,13 @@ function onClose() {
 }
 .force-crit-checkbox {
   margin-right: auto;
+}
+</style>
+
+<style>
+.hit-detail-source-tooltip {
+  max-width: min(320px, calc(100vw - 48px));
+  white-space: pre-line;
+  line-height: 1.45;
 }
 </style>

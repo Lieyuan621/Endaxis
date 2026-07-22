@@ -442,6 +442,12 @@ const sheet: OperatorSheet = {
                 },
                 {
                   offset: 1.6,
+                  effects: [
+                    {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
+                  ],
                 },
               ],
             },

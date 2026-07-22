@@ -11,6 +11,7 @@ import {
 import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
+  mergeEquipmentElementPairEffects,
 } from '@/utils/equipmentEffectDisplay';
 import { resolveLeveled } from '@/data/types';
 import { useGearStore } from '@/stores/gearStore';
@@ -38,7 +39,11 @@ const skillSlots = computed(() => {
   if (!currentPiece) return [];
   return [currentPiece.skill1, currentPiece.skill2, currentPiece.skill3]
     .filter(Boolean)
-    .map(skill => (skill.effects || []).filter(effect => effect.kind === 'status'));
+    .map(skill =>
+      mergeEquipmentElementPairEffects(skill.effects || []).filter(
+        effect => effect.kind === 'status',
+      ),
+    );
 });
 
 function formatStatLabel(effect) {

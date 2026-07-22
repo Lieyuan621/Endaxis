@@ -49,6 +49,8 @@ export interface ResolvedStatModifier {
   /** Source operator track ID — used for LMDI contribution attribution. */
   sourceId?: string;
   external?: boolean;
+  /** Display name key (effect.name) for hit-detail source lines. */
+  sourceLabel?: string;
 }
 
 // ─── Sheet stat effect (input to computeStats) ────────────────────────────
@@ -79,4 +81,8 @@ export interface ScopedDamageModifier {
   skillTypes?: SkillType | SkillType[] | 'nonSkill';
   skillId?: string | string[];
   external?: boolean;
+  /** Runtime effect id / sheet effect id for source attribution in hit detail. */
+  effectId?: string;
+  /** Display name key (effect.name) when available. */
+  sourceLabel?: string;
 }

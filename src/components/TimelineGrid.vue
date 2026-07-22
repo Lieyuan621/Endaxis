@@ -20,6 +20,7 @@ import { snapMs } from '@/utils/precision';
 import { frameToTime, snapTimeToFrame, timeToFrame } from '@/utils/time';
 import { toLegacyDisplayType } from '@/utils/hitModel';
 import { EQUIPMENT_LEVELS, getEquipmentLevelColor } from '@/utils/equipmentLevels';
+import { mergeEquipmentElementPairEffects } from '@/utils/equipmentEffectDisplay';
 import { getTrackOperatorFormName } from '@/utils/operatorFormDisplay';
 import { sampleSpSeriesAtTime } from '@/simulation/projection/projectSpSeries';
 import { getGearPiece, getEnemy, getOperator } from '@/data';
@@ -624,10 +625,6 @@ function getEquipmentAbilityMatch(eq, operator) {
   };
 }
 
-function sameEquipmentValue(a, b) {
-  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-}
-
 function getEquipmentElementPairId(elements) {
   const set = new Set(elements);
   if (set.size !== 2) return '';
@@ -645,47 +642,6 @@ function isEquipmentArtsDmgElements(elements) {
 
 function isEquipmentPairModifierId(modifierId) {
   return modifierId === 'heat_nature_dmg_bonus' || modifierId === 'cryo_electric_dmg_bonus';
-}
-
-function mergeEquipmentElementPairEffects(effects) {
-  const out = [];
-  const used = new Set();
-  effects.forEach((effect, index) => {
-    if (used.has(index)) return;
-    const stat = effect?.stat;
-    const element = typeof stat?.elements === 'string' ? stat.elements : '';
-    if (stat?.modifier !== 'dmgBonus' || !element) {
-      out.push(effect);
-      return;
-    }
-
-    const pairIndex = effects.findIndex((candidate, candidateIndex) => {
-      if (candidateIndex <= index || used.has(candidateIndex)) return false;
-      const candidateStat = candidate?.stat;
-      if (candidateStat?.modifier !== 'dmgBonus') return false;
-      const candidateElement =
-        typeof candidateStat?.elements === 'string' ? candidateStat.elements : '';
-      if (!candidateElement) return false;
-      if (!sameEquipmentValue(effect.value, candidate.value)) return false;
-      return !!getEquipmentElementPairId([element, candidateElement]);
-    });
-
-    if (pairIndex < 0) {
-      out.push(effect);
-      return;
-    }
-
-    used.add(index);
-    used.add(pairIndex);
-    out.push({
-      ...effect,
-      stat: {
-        ...stat,
-        elements: [element, effects[pairIndex].stat.elements],
-      },
-    });
-  });
-  return out;
 }
 
 function getEquipmentDmgBonusModifierIds(stat) {
