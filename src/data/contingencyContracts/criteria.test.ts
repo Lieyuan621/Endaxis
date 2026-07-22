@@ -193,7 +193,8 @@ describe('external dmgBonus (standalone multiplicative damage factor)', () => {
       { modifier: 'dmgBonus', value: -0.45, external: true },
       { modifier: 'dmgBonus', value: -0.1, external: true },
     ];
-    const f = filterDamageModifiers(mods, undefined, undefined, undefined);
+    // Unscoped dmgBonus only matches operator skill hits (not reaction/untyped).
+    const f = filterDamageModifiers(mods, undefined, 'battleSkill', undefined);
     expect(f.dmgBonus).toBeCloseTo(1.5, 10);
     expect(f.dmgBonusExternalMult).toBeCloseTo(0.55 * 0.9, 10);
   });
@@ -202,7 +203,7 @@ describe('external dmgBonus (standalone multiplicative damage factor)', () => {
     const f = filterDamageModifiers(
       [{ modifier: 'dmgBonus', value: -1.5, external: true }],
       undefined,
-      undefined,
+      'battleSkill',
       undefined,
     );
     expect(f.dmgBonusExternalMult).toBe(0);
@@ -480,10 +481,26 @@ describe("dmgBonus skillTypes:'nonSkill' scope", () => {
     expect(battle.damageModifiers.some(m => m.skillTypes === 'nonSkill')).toBe(false);
   });
 
-  it('a normal global dmgBonus (no skillTypes) still matches both typed and untyped hits', () => {
+  it('unscoped dmgBonus (所有技能) matches skill hits but not reaction/untyped hits', () => {
     const global: ScopedDamageModifier = { modifier: 'dmgBonus', value: 0.5 };
-    expect(filterDamageModifiers([global], 'heat', undefined, undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([global], 'heat', undefined, undefined).dmgBonus).toBe(0);
     expect(filterDamageModifiers([global], 'heat', 'battleSkill', undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([global], 'heat', 'basicAttack', undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([global], 'heat', 'dive', undefined).dmgBonus).toBe(0.5);
+    // treatAsReaction hits (e.g. Mifu battle-skill seg3 / mifu-world-splitter crush) use the
+    // reaction path with skillType undefined — same as untyped above, so unscoped all-skill
+    // bonus does not apply. See damageGolden "Mifu battle-skill treatAsReaction crush…".
+  });
+
+  it('element-only dmgBonus still matches reaction/untyped hits of that element', () => {
+    const nature: ScopedDamageModifier = {
+      modifier: 'dmgBonus',
+      value: 0.5,
+      elements: 'nature',
+    };
+    expect(filterDamageModifiers([nature], 'nature', undefined, undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([nature], 'nature', 'battleSkill', undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([nature], 'heat', undefined, undefined).dmgBonus).toBe(0);
   });
 
   it('a battleSkill-scoped dmgBonus matches a battleSkill hit but not an untyped hit', () => {

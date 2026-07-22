@@ -828,9 +828,9 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       effectiveDuration: event.effectiveDuration,
       effectiveness: event.effectiveness,
     });
-    // Fold the caster's own reaction modifiers (duration +s, effectiveness bonus) into this reaction.
-    // Reads getOperatorEffects(sourceId) → applies only to reactions this operator triggers. When the
-    // caster has no such modifiers (all existing content), duration/effectiveness are unchanged.
+    // Fold the caster's own reaction modifiers into this reaction.
+    // `reactionDurationBonus` extends duration; `reactionEffectivenessBonus` only scales
+    // debuff potency (e.g. corrosion shred cap) — never the reaction *damage* hit.
     const mods = aggregateReactionMods(
       ctx.getOperatorEffects(sourceId).getActiveEntries(time),
       reactionType,
@@ -839,9 +839,12 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       ? (event.effectiveDuration || getReactionDuration(reactionType, level) || 0) +
         mods.durationBonus
       : event.effectiveDuration;
-    const effectiveness = mods.effectivenessBonus
-      ? (event.effectiveness ?? 1) + mods.effectivenessBonus
-      : event.effectiveness;
+    // Sheet/effect-authored effectiveness (Laevatain 1.5, etc.) — used for reaction damage.
+    const sheetEffectiveness = event.effectiveness;
+    // Debuff potency may also include talent reactionEffectivenessBonus (e.g. Arcane 厉兵).
+    const debuffEffectiveness = mods.effectivenessBonus
+      ? (sheetEffectiveness ?? 1) + mods.effectivenessBonus
+      : sheetEffectiveness;
     const css = consumedStackSources; // shorthand
     // Forced reactions (via ReactionEffect) don't deal reaction damage
     const isForced = !!event.forced;
@@ -856,15 +859,26 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           effectiveDuration,
           sourceSkillType,
           sourceSkillId,
-          effectiveness,
+          debuffEffectiveness,
           css,
         );
         if (!isForced)
           this.emitReactionDamageHit('electrification', level, time, sourceId, ctx, {
-            effectiveness,
+            effectiveness: sheetEffectiveness,
             consumedStackSources: css,
             actionId,
           });
+        // After reaction damage: "on apply" triggers (e.g. hot-work) must not buff this hit.
+        this.registry?.onStatusApplied(
+          'electrification',
+          undefined,
+          'enemy',
+          sourceId,
+          time,
+          ctx,
+          sourceSkillType,
+          sourceSkillId,
+        );
         break;
       case 'corrosion':
         this.applyCorrosion(
@@ -876,15 +890,25 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           effectiveDuration,
           sourceSkillType,
           sourceSkillId,
-          effectiveness,
+          debuffEffectiveness,
           css,
         );
         if (!isForced)
           this.emitReactionDamageHit('corrosion', level, time, sourceId, ctx, {
-            effectiveness,
+            effectiveness: sheetEffectiveness,
             consumedStackSources: css,
             actionId,
           });
+        this.registry?.onStatusApplied(
+          'corrosion',
+          undefined,
+          'enemy',
+          sourceId,
+          time,
+          ctx,
+          sourceSkillType,
+          sourceSkillId,
+        );
         break;
       case 'combustion':
         this.applyCombustion(
@@ -896,16 +920,26 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           effectiveDuration,
           sourceSkillType,
           sourceSkillId,
-          effectiveness,
+          debuffEffectiveness,
           css,
           actionId,
         );
         if (!isForced)
           this.emitReactionDamageHit('combustion', level, time, sourceId, ctx, {
-            effectiveness,
+            effectiveness: sheetEffectiveness,
             consumedStackSources: css,
             actionId,
           });
+        this.registry?.onStatusApplied(
+          'combustion',
+          undefined,
+          'enemy',
+          sourceId,
+          time,
+          ctx,
+          sourceSkillType,
+          sourceSkillId,
+        );
         break;
       case 'solidification':
         this.applySolidification(
@@ -921,15 +955,25 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         );
         if (!isForced)
           this.emitReactionDamageHit('solidification', level, time, sourceId, ctx, {
-            effectiveness,
+            effectiveness: sheetEffectiveness,
             consumedStackSources: css,
             actionId,
           });
+        this.registry?.onStatusApplied(
+          'solidification',
+          undefined,
+          'enemy',
+          sourceId,
+          time,
+          ctx,
+          sourceSkillType,
+          sourceSkillId,
+        );
         break;
       case 'shatter':
         if (!isForced)
           this.emitReactionDamageHit('shatter', level, time, sourceId, ctx, {
-            effectiveness,
+            effectiveness: sheetEffectiveness,
             consumedStackSources: css,
             actionId,
           });
@@ -1023,17 +1067,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       },
       1,
     );
-
-    this.registry?.onStatusApplied(
-      'electrification',
-      undefined,
-      'enemy',
-      sourceId,
-      time,
-      ctx,
-      sourceSkillType,
-      sourceSkillId,
-    );
   }
 
   private applyCorrosion(
@@ -1059,8 +1092,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     this.scheduleDebuffExpire('corrosion', expiresAt, ctx);
 
     // Arts-intensity enhancement scales the whole corrosion profile.
-    // Talent/potential `reactionEffectivenessBonus` only boosts the shred *cap*
-    // ("降低的最大抗性"), never the initial jump or per-second ramp.
+    // Talent `reactionEffectivenessBonus` (debuffEffectiveness) only boosts the shred *cap*.
     const aiScale = 1 + enhancement;
     const initialShred = (CORROSION_INITIAL_SHRED[level] ?? 3.6) * aiScale;
     const perSecond = (CORROSION_PER_SECOND[level] ?? 0.84) * aiScale;
@@ -1068,11 +1100,10 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
 
     // On re-apply only the current shred carries over as a floor (never lowered); if it already exceeds
     // this application's cap, the tick handler holds it there (no ramp) for the refreshed duration.
-    // Fresh apply: resistance immediately takes the first ramp (initial + perSecond), so the hit
-    // that triggers corrosion already sees that shred — not just the bare initial value.
+    // Fresh apply starts at `initialShred`; the first +perSecond ramp happens on the 1s tick.
     const startingShred = existing
       ? Math.max(existing.currentResShred, initialShred)
-      : nextCorrosionShred(initialShred, perSecond, maxShred);
+      : initialShred;
 
     enemy.corrosion = {
       level,
@@ -1107,46 +1138,30 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     );
     ctx.state.enemy.expireStatus('corrosion:resShred');
 
-    // Apply res shred synchronously so beforeDamage-triggered corrosion is visible to the
-    // same-frame skill hit (queued APPLY at priority 1 would land after DAMAGE_HIT).
-    ctx.state.enemy.applyStatus({
-      id: 'corrosion:resShred',
-      stat: { modifier: 'resistanceShred' },
-      value: startingShred,
-      stacks: 1,
-      maxStacks: 1,
-      expiresAt,
-      sourceId,
-      effect: { kind: 'status', id: 'corrosion:resShred', name: 'corrosion', hide: true } as any,
-      sourceBreakdown: computeSourceBreakdown(sourceId, consumedStackSources, level),
-    });
-    ctx.enemyLog({
-      type: 'ENEMY_STATUS_APPLY',
-      time,
-      id: 'corrosion:resShred',
-      stat: { modifier: 'resistanceShred' },
-      value: startingShred,
-      stacks: 1,
-      maxStacks: 1,
-      expiresAt,
-      sourceId,
-      effect: { kind: 'status', id: 'corrosion:resShred', name: 'corrosion', hide: true } as any,
-    });
+    // Initial res shred at priority 0, enqueued here *before* the reaction DAMAGE_HIT (also p0)
+    // so corrosion damage already sees the shred. Hot-work (onStatusApplied after emit) still
+    // lands after that DAMAGE_HIT and does not buff this hit.
     ctx.queue.enqueue(
       {
-        type: 'ENEMY_EFFECT_EXPIRE',
-        time: expiresAt,
+        type: 'ENEMY_EFFECT_APPLY',
+        time,
         kind: 'status',
         id: 'corrosion:resShred',
-        consumed: false,
+        stat: { modifier: 'resistanceShred' },
+        value: startingShred,
+        stacks: 1,
+        maxStacks: 1,
+        expiresAt,
+        sourceId,
         sourceSkillType,
-        sourceSkillId,
-        actionId: undefined,
+        icon: undefined,
+        effect: { kind: 'status', id: 'corrosion:resShred', name: 'corrosion', hide: true } as any,
+        sourceBreakdown: computeSourceBreakdown(sourceId, consumedStackSources, level),
       },
-      2,
+      0,
     );
 
-    // Log initial corrosion tick (already includes the first ramp on fresh apply)
+    // Log initial corrosion tick (bare initial shred; ramp starts at +1s)
     ctx.enemyLog({
       type: 'CORROSION_TICK',
       time,
@@ -1174,17 +1189,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         1,
       );
     }
-
-    this.registry?.onStatusApplied(
-      'corrosion',
-      undefined,
-      'enemy',
-      sourceId,
-      time,
-      ctx,
-      sourceSkillType,
-      sourceSkillId,
-    );
   }
 
   private handleCorrosionTick(event: CorrosionTickSimEvent, ctx: SimulationContext): void {
@@ -1329,17 +1333,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         actionId,
       });
     }
-
-    this.registry?.onStatusApplied(
-      'combustion',
-      undefined,
-      'enemy',
-      sourceId,
-      time,
-      ctx,
-      sourceSkillType,
-      sourceSkillId,
-    );
   }
 
   private applySolidification(
@@ -1370,16 +1363,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       expiresAt,
       sourceId,
     });
-    this.registry?.onStatusApplied(
-      'solidification',
-      undefined,
-      'enemy',
-      sourceId,
-      time,
-      ctx,
-      sourceSkillType,
-      sourceSkillId,
-    );
   }
 
   private applyBreachDebuff(

@@ -202,7 +202,7 @@ export class HitHandler implements EventHandler<HitEvent> {
       const artsIntensityMult = computeArtsIntensityDamageMult(operatorStatus.artsIntensity);
       const effectivenessMult = reactionMeta.effectiveness ?? 1;
 
-      // No skill-type scoping for reaction damage, but skillId- and element-scoped mods still apply.
+      // Element- and skillId-scoped mods still apply; unscoped "所有技能伤害加成" does not.
       const mods = filterDamageModifiers(
         operatorStatus.damageModifiers ?? [],
         element,
