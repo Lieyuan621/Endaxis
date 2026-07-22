@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getGameElementName } from '@/data/gameText';
 import { translateEffectName } from '@/editor/hits/statusOptions';
+import { resolveDamageBonusSourceLabel } from '@/utils/damageBonusSourceLabel';
 import { useTimelineStore } from '@/stores/timelineStore';
 
 const props = defineProps({
@@ -136,7 +137,7 @@ const multiplierRows = computed(() => {
   }
   if (b.dmgBonusMult !== 1 || b.dmgBonusExternalMult !== 1 || (b.dmgBonusSources?.length ?? 0) > 0) {
     const sourceLines = (b.dmgBonusSources || []).map(src => {
-      const name = translateEffectName(t, te, src.label) || humanize(src.label);
+      const name = resolveDamageBonusSourceLabel(src.label, t, te, locale.value);
       const signed = src.external
         ? `×${(1 + (Number(src.value) || 0)).toFixed(3)}`
         : `+${pct(src.value)}`;
@@ -318,7 +319,7 @@ function onClose() {
                   :show-after="80"
                   popper-class="hit-detail-source-tooltip"
                 >
-                  <span class="hint-icon">i</span>
+                  <span class="hint-icon" aria-hidden="true">ⓘ</span>
                 </el-tooltip>
                 <span v-if="row.detail" class="mult-detail">{{ row.detail }}</span>
               </td>
@@ -422,9 +423,12 @@ function onClose() {
 }
 .hint-icon {
   margin-left: 4px;
-  color: #888;
-  font-size: 11px;
+  color: inherit;
+  opacity: 0.55;
+  font-size: 12px;
+  line-height: 1;
   cursor: help;
+  vertical-align: baseline;
 }
 .dialog-footer {
   min-height: 22px;

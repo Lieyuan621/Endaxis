@@ -167,7 +167,10 @@ export class HitHandler implements EventHandler<HitEvent> {
           external: entry.external,
           effectId: entry.id,
           sourceLabel:
-            (entry.effect && 'name' in entry.effect && entry.effect.name) ||
+            (entry.effect &&
+              'name' in entry.effect &&
+              typeof entry.effect.name === 'string' &&
+              entry.effect.name.trim()) ||
             entry.id,
         });
       }
@@ -366,7 +369,10 @@ export class HitHandler implements EventHandler<HitEvent> {
           external: entry.external,
           effectId: entry.id,
           sourceLabel:
-            (entry.effect && 'name' in entry.effect && entry.effect.name) ||
+            (entry.effect &&
+              'name' in entry.effect &&
+              typeof entry.effect.name === 'string' &&
+              entry.effect.name.trim()) ||
             entry.id,
         });
       }

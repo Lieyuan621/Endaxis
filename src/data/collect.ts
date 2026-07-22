@@ -43,9 +43,11 @@ import { uid } from '@/utils/uid';
 import { i18n } from '@/i18n';
 import {
   getGameSlotTypeName,
+  getGearPieceGameName,
   getGearSetGameName,
   getOperatorPotentialName,
   getOperatorTalentName,
+  getWeaponGameName,
 } from './gameText';
 
 export interface CollectedEffect {
@@ -475,10 +477,17 @@ export function collectEffects(
         const artificingLevel = gInst.artificingLevels[slotIdx] ?? 0;
         for (const raw of slot.effects ?? []) {
           if (raw.kind !== 'status') continue;
+          const pieceName =
+            getGearPieceGameName(gInst.gearPieceId, i18n.global.locale.value) ||
+            gInst.gearPieceId;
           const resolved = resolveContextualAttributes(
             resolveEffect(
               ensureEffectId(
-                { ...raw, sourceGroup: 'gearSet' },
+                {
+                  ...raw,
+                  sourceGroup: 'gearSet',
+                  name: raw.name ?? pieceName,
+                },
                 makeEffectId(operatorSlug, 'gear-implicit', `effect${gearEffIdx++}`),
               ),
               artificingLevel,
@@ -555,6 +564,8 @@ function addWeaponSheetEffects(
   ];
 
   const skillKeys = ['skill1', 'skill2', 'skill3'];
+  const weaponName =
+    getWeaponGameName(wInst.weaponSlug, i18n.global.locale.value) || wInst.weaponSlug;
   for (let skillNum = 0; skillNum < skills.length; skillNum++) {
     const { effects, level } = skills[skillNum]!;
     if (!effects) continue;
@@ -565,7 +576,12 @@ function addWeaponSheetEffects(
       const resolved = resolveContextualAttributes(
         resolveEffect(
           ensureEffectId(
-            { ...raw, sourceGroup: 'weapon', icon: raw.icon ?? sheet.icon },
+            {
+              ...raw,
+              sourceGroup: 'weapon',
+              icon: raw.icon ?? sheet.icon,
+              name: raw.name ?? weaponName,
+            },
             makeEffectId(wInst.weaponSlug, skillKey, `effect${effIdx}`),
           ),
           lvlIdx,
@@ -1137,11 +1153,14 @@ export function collectTriggerEffects(
             for (let teIdx = 0; teIdx < triggers.length; teIdx++) {
               const te = triggers[teIdx]!;
               const basePath = makeEffectId(wInst.weaponSlug, skillKey, `trigger${teIdx}`);
+              const weaponName =
+                getWeaponGameName(wInst.weaponSlug, i18n.global.locale.value) ||
+                wInst.weaponSlug;
               const stampedTe = {
                 ...te,
                 effects: te.effects.map((eff, effIdx) =>
                   stampTriggerEffect(
-                    hydrateTriggerEffect(eff, 'weapon', '', wSheet.icon),
+                    hydrateTriggerEffect(eff, 'weapon', weaponName, wSheet.icon),
                     basePath,
                     effIdx,
                   ),
@@ -1167,9 +1186,10 @@ export function collectTriggerEffects(
       if (gsSheet) {
         for (let teIdx = 0; teIdx < (gsSheet.triggers?.length ?? 0); teIdx++) {
           const te = gsSheet.triggers![teIdx]!;
+          const setName = getGearSetGameName(setSlug, i18n.global.locale.value) || setSlug;
           const stampedEffects = te.effects.map((eff, effIdx) =>
             stampTriggerEffect(
-              hydrateTriggerEffect(eff, 'gearSet'),
+              hydrateTriggerEffect(eff, 'gearSet', setName),
               makeEffectId(setSlug, `trigger${teIdx}`),
               effIdx,
             ),
