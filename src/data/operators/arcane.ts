@@ -430,15 +430,15 @@ const sheet: OperatorSheet = {
                       status: 'arcane-imprisonment',
                     },
                   },
-                  // 4 small laser, 1 large laser
-                  ...map(range(5), (i: number) => ({
+                  // 4 small laser, 1 large laser (weights 0.6×4 + 2.6 = 5 → total = sheet mult)
+                  ...map(range(5), (hitIndex: number) => ({
                     kind: 'damageHit' as const,
                     element: 'nature' as const,
                     multiplier: map(
                       [222, 244, 266, 289, 311, 333, 355, 377, 400, 427, 461, 500],
-                      i => (i / 5) * (i === 4 ? 2.6 : 0.6), // large laser deals more damage
+                      levelMult => (levelMult / 5) * (hitIndex === 4 ? 2.6 : 0.6),
                     ),
-                    offset: 1.45 + 0.1 * i + (i === 4 ? 0.1 : 0), // large laser has a slightly longer delay
+                    offset: 1.45 + 0.1 * hitIndex + (hitIndex === 4 ? 0.1 : 0),
                     readConsumedStacks: {
                       statusKey: 'arcane-imprisonment',
                       target: 'enemy' as const,

@@ -55,7 +55,12 @@ const sheet: WeaponSheet = {
               effects: [
                 {
                   kind: 'status',
-                  stat: { modifier: 'dmgBonus' },
+                  // 文案「法术伤害」— must be arts-scoped so reactions (e.g. corrosion) can receive it.
+                  // Unscoped dmgBonus is「所有技能伤害加成」and no longer applies to reactions.
+                  stat: {
+                    modifier: 'dmgBonus',
+                    elements: ['heat', 'cryo', 'electric', 'nature'],
+                  },
                   target: 'self',
                   value: [20, 24, 28, 32, 36, 40, 44, 48, 56],
                   duration: 20,
@@ -101,7 +106,7 @@ const sheet: WeaponSheet = {
               },
               effects: [
                 {
-                  id: 'type-42-solemn-phalanx-increasedDmgTaken',
+                  id: 'type-42-solemn-phalanx-increasedDmgTaken-burst',
                   kind: 'status',
                   stat: {
                     modifier: 'increasedDmgTaken',
@@ -109,7 +114,7 @@ const sheet: WeaponSheet = {
                   },
                   target: 'enemy',
                   value: [6, 7.2, 8.4, 9.6, 10.8, 12, 13.2, 14.4, 16.8],
-                  duration: 20,
+                  duration: 25,
                 },
               ],
             },
@@ -121,7 +126,7 @@ const sheet: WeaponSheet = {
               },
               effects: [
                 {
-                  id: 'type-42-solemn-phalanx-increasedDmgTaken',
+                  id: 'type-42-solemn-phalanx-increasedDmgTaken-susceptibility',
                   kind: 'status',
                   stat: {
                     modifier: 'increasedDmgTaken',
@@ -129,7 +134,7 @@ const sheet: WeaponSheet = {
                   },
                   target: 'enemy',
                   value: [6, 7.2, 8.4, 9.6, 10.8, 12, 13.2, 14.4, 16.8],
-                  duration: 20,
+                  duration: 25,
                 },
               ],
             },

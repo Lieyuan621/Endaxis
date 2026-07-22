@@ -56,6 +56,39 @@ function matchesSkillType(
   return types.includes(skillType);
 }
 
+/** Skill types covered by unscoped "所有技能伤害加成" (not reactions / arts burst / etc.). */
+const ALL_SKILL_DMG_BONUS_TYPES = new Set([
+  'basicAttack',
+  'dive',
+  'finalStrike',
+  'battleSkill',
+  'comboSkill',
+  'ultimate',
+]);
+
+function hasElementScope(elements: string | string[] | undefined): boolean {
+  if (elements == null) return false;
+  return Array.isArray(elements) ? elements.length > 0 : true;
+}
+
+/**
+ * dmgBonus skill-type matching:
+ * - Explicit `skillTypes` (incl. `nonSkill`): same as matchesSkillType
+ * - Element-only (no skillTypes): any hit of that element, including reactions
+ * - Fully unscoped ("所有技能伤害加成"): only operator skills listed above — not reactions/burst
+ */
+function matchesDmgBonusSkillScope(
+  filter: string | string[] | undefined,
+  skillType: string | undefined,
+  elements: string | string[] | undefined,
+): boolean {
+  if (filter != null && !(Array.isArray(filter) && filter.length === 0)) {
+    return matchesSkillType(filter, skillType);
+  }
+  if (hasElementScope(elements)) return true;
+  return skillType != null && ALL_SKILL_DMG_BONUS_TYPES.has(skillType);
+}
+
 function matchesSkillId(
   filter: string | string[] | undefined,
   skillId: string | undefined,
@@ -109,11 +142,11 @@ export function filterDamageModifiers(
 
   for (const mod of modifiers) {
     if (!matchesElement(mod.elements, element)) continue;
-    if (!matchesSkillType(mod.skillTypes, skillType)) continue;
     if (!matchesSkillId(mod.skillId, skillId)) continue;
 
     switch (mod.modifier) {
       case 'dmgBonus':
+        if (!matchesDmgBonusSkillScope(mod.skillTypes, skillType, mod.elements)) continue;
         if (mod.external) {
           dmgBonusExternalMult *= Math.max(0, 1 + mod.value);
         } else {
@@ -126,6 +159,7 @@ export function filterDamageModifiers(
         });
         break;
       case 'ampBonus':
+        if (!matchesSkillType(mod.skillTypes, skillType)) continue;
         ampBonus += mod.value;
         ampBonusSources.push({
           label: mod.sourceLabel || mod.effectId || 'ampBonus',
@@ -133,9 +167,11 @@ export function filterDamageModifiers(
         });
         break;
       case 'directMultiplier':
+        if (!matchesSkillType(mod.skillTypes, skillType)) continue;
         directMultiplier *= mod.value;
         break;
       case 'resistanceIgnore':
+        if (!matchesSkillType(mod.skillTypes, skillType)) continue;
         resistanceIgnore += mod.value;
         resistanceIgnoreSources.push({
           label: mod.sourceLabel || mod.effectId || 'resistanceIgnore',
@@ -143,6 +179,7 @@ export function filterDamageModifiers(
         });
         break;
       case 'susceptibilityAmplify':
+        if (!matchesSkillType(mod.skillTypes, skillType)) continue;
         susceptibilityAmplify *= 1 + mod.value;
         susceptibilityAmplifySources.push({
           label: mod.sourceLabel || mod.effectId || 'susceptibilityAmplify',

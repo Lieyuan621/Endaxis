@@ -9,6 +9,7 @@ import { collectTriggerEffects, patchCombatSkills } from '@/data/collect';
 import estellaSheet from '@/data/operators/estella';
 import daPanSheet from '@/data/operators/da-pan';
 import snowshineSheet from '@/data/operators/snowshine';
+import mifuSheet from '@/data/operators/mifu';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
 import type { Effect, TriggerEffect } from '@/data/types';
@@ -104,6 +105,7 @@ function runScenario(
     enemyDef?: number;
     enemyResistance?: EnemyResistance;
     lmdiAttributionMode?: 'stacks' | 'applier';
+    initialEffects?: any[];
   } = {},
 ) {
   const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
@@ -115,6 +117,7 @@ function runScenario(
     enemyDef: options.enemyDef ?? 100,
     enemyResistance: options.enemyResistance,
     lmdiAttributionMode: options.lmdiAttributionMode,
+    initialEffects: options.initialEffects,
   });
 }
 
@@ -1266,5 +1269,62 @@ describe('optimizer damage golden baselines', () => {
         }),
       ]),
     );
+  });
+
+  it('Mifu battle-skill treatAsReaction crush ignores unscoped all-skill dmgBonus', () => {
+    // Seg 1–2 are normal battleSkill hits; seg 3 (`mifu-world-splitter`) is treatAsReaction:crush.
+    const normalHits = resolveOperatorSheetHits(mifuSheet, 'battleSkill', 11, 1);
+    const crushHits = resolveOperatorSheetHits(mifuSheet, 'battleSkill', 11, 2);
+    expect(crushHits.some(hit => hit.treatAsReaction === 'crush')).toBe(true);
+
+    const tracks = [
+      createTrack('alpha', [
+        createAction('mifu_bs_normal', 'battleSkill', {
+          startTime: 0,
+          skillId: 'battleSkill',
+          element: 'physical',
+          hits: normalHits,
+        }),
+        createAction('mifu_bs_crush', 'battleSkill', {
+          startTime: 3,
+          skillId: 'mifu-world-splitter',
+          element: 'physical',
+          hits: crushHits,
+        }),
+      ]),
+    ];
+    const allSkillBonus = [
+      {
+        targetTrackId: 'alpha',
+        id: 'all-skill-dmg',
+        stat: { modifier: 'dmgBonus' },
+        value: 50,
+        sourceId: 'alpha',
+      },
+    ];
+
+    const baseline = runScenario(tracks);
+    const buffed = runScenario(tracks, undefined, { initialEffects: allSkillBonus });
+
+    const baselineNormal = damageByAction(baseline, 'mifu_bs_normal_inst');
+    const buffedNormal = damageByAction(buffed, 'mifu_bs_normal_inst');
+    expect(buffedNormal._damageBreakdown?.dmgBonus).toBeCloseTo(
+      (baselineNormal._damageBreakdown?.dmgBonus ?? 0) + 0.5,
+      10,
+    );
+    expect(buffedNormal._expectedDamage).toBeGreaterThan(baselineNormal._expectedDamage!);
+
+    const baselineCrush = damageHits(baseline).find(
+      hit => hit._reactionMeta?.reactionType === 'crush' && hit._reactionMeta?.synthetic,
+    );
+    const buffedCrush = damageHits(buffed).find(
+      hit => hit._reactionMeta?.reactionType === 'crush' && hit._reactionMeta?.synthetic,
+    );
+    expect(baselineCrush).toBeTruthy();
+    expect(buffedCrush).toBeTruthy();
+    expect(buffedCrush!._damageBreakdown?.dmgBonus ?? 0).toBe(
+      baselineCrush!._damageBreakdown?.dmgBonus ?? 0,
+    );
+    expect(buffedCrush!._expectedDamage).toBe(baselineCrush!._expectedDamage);
   });
 });
