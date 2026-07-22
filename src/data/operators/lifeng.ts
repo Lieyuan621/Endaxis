@@ -291,7 +291,10 @@ const sheet: OperatorSheet = {
         triggers: [
           {
             trigger: { kind: 'onFinalStrike', triggerScope: 'global' },
-            condition: { kind: 'enemyStatus', status: ['vulnerability', 'breach'] },
+            condition: {
+              kind: 'enemyStatus',
+              status: [{ modifier: 'susceptibility', elements: 'physical' }, 'breach']
+            },
           },
         ],
         duration: 5,
