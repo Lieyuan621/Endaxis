@@ -102,6 +102,37 @@ describe('timeline skill library editing', () => {
     ).toBe(true);
   });
 
+  it('keeps Laevatain enhanced basic attack distinct from normal attack in the library', async () => {
+    setLocale('zh-CN');
+    const store = useTimelineStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'laevatain');
+    store.selectTrack(0);
+
+    const basicAttacks = store.activeSkillLibrary.filter(
+      (skill: any) => skill.type === 'basicAttack' && !skill.hiddenInLibraryGrid,
+    ) as any[];
+    const enhanced = basicAttacks.find(
+      (skill: any) => skill.skillKey === 'laevatain-basic-attack-during-ultimate',
+    );
+    const normal = basicAttacks.find((skill: any) => skill.skillKey === 'basicAttack');
+
+    expect(enhanced).toBeTruthy();
+    expect(normal).toBeTruthy();
+    expect(enhanced.id).not.toBe(normal.id);
+    expect(enhanced.name).toBe('强化普攻');
+    expect(normal.name).toBe('普攻');
+
+    const { findLibrarySkillForPlaceRematch } = await import('@/utils/librarySkillHotkeys');
+    expect(
+      findLibrarySkillForPlaceRematch(store.activeSkillLibrary, {
+        id: enhanced.id,
+        type: 'basicAttack',
+      })?.id,
+    ).toBe(enhanced.id);
+  });
+
   it('resolves Wulfgard derived hit effects before exposing skills to the editor', async () => {
     const store = useTimelineStore();
     await store.fetchGameData();

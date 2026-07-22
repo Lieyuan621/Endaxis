@@ -66,22 +66,42 @@ export function findLibrarySkillByType(
   return null;
 }
 
+function readSkillIdentityKey(skill: Record<string, unknown> | null | undefined): string {
+  if (!skill) return '';
+  for (const key of ['skillKey', 'sourceSkillKey', 'skillId'] as const) {
+    const value = skill[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
 /**
  * Rematch a sticky place-mode skill onto another operator's library.
- * Prefer the same `skillKey` (variants), then fall back to the same `type`.
+ * Prefer the same library `id` (same operator / variant), then the same skill
+ * identity key (variants), then fall back to the same `type`.
  */
 export function findLibrarySkillForPlaceRematch(
   library: ReadonlyArray<Record<string, unknown>>,
   previous: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> | null {
   if (!previous) return null;
-  const skillKey = typeof previous.skillKey === 'string' ? previous.skillKey.trim() : '';
+
+  const previousId = typeof previous.id === 'string' ? previous.id.trim() : '';
+  if (previousId) {
+    for (const skill of library) {
+      if (!skill || skill.hiddenInLibraryGrid) continue;
+      if (skill.id === previousId) return skill;
+    }
+  }
+
+  const skillKey = readSkillIdentityKey(previous);
   if (skillKey) {
     for (const skill of library) {
       if (!skill || skill.hiddenInLibraryGrid) continue;
-      if (skill.skillKey === skillKey) return skill;
+      if (readSkillIdentityKey(skill) === skillKey) return skill;
     }
   }
+
   const type = typeof previous.type === 'string' ? previous.type.trim() : '';
   if (!type) return null;
   return findLibrarySkillByType(library, type);

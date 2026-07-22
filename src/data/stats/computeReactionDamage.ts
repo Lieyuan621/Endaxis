@@ -82,7 +82,9 @@ export function nextCorrosionShred(current: number, perSecond: number, maxShred:
 
 /** Sum a caster's reaction modifiers from their active status entries, scoped to the reaction being
  *  applied. `durationBonus` is flat seconds (additive); `effectivenessBonus` adds to the effectiveness
- *  multiplier (0.05 = +5%). Only entries whose `reactionType` matches count. */
+ *  multiplier (0.05 = +5%). Only entries whose `reactionType` matches count.
+ *  For corrosion, effectivenessBonus only scales the shred cap (max), not initial/per-second.
+ *  Fresh corrosion also immediately applies one ramp step (initial+perSecond) at generation. */
 export function aggregateReactionMods(
   entries: { stat?: { modifier?: string; reactionType?: string }; value: number; stacks: number }[],
   reactionType: string,

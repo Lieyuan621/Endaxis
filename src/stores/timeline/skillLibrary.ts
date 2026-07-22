@@ -135,6 +135,8 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       type: string;
       name: string;
       skillId: string;
+      /** Flat-sheet skillKey (standard type key or unique subSkill id). Used by place-mode rematch. */
+      skillKey?: string;
       // element/payload/numeric fields flow from loosely-typed sheet data.
       element?: any;
       icon?: any;
@@ -157,6 +159,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       type,
       name,
       skillId,
+      skillKey,
       element,
       icon,
       duration,
@@ -177,6 +180,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         id,
         type,
         skillId,
+        skillKey: skillKey || skillId,
         name,
         librarySource: 'character',
         element: (element as string) || activeChar.element || 'physical',
@@ -221,6 +225,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       const icon = getOperatorSkillIcon(activeChar.id, skill.type, skill);
       const actionType = skill.type;
       const skillId = isStandard ? skill.skillKey || skill.type : skill.skillKey || skill.type;
+      const skillKey = skill.skillKey || skill.type;
       const cooldown = resolveLevelNumber(skill?.cooldown, levelIndex, 0);
       const segmentData = buildSegmentModels(skillIdBase, skill, levelIndex);
       const gaugeGainDefault =
@@ -268,6 +273,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
             id: segmentId,
             type: 'basicAttack',
             skillId,
+            skillKey,
             name: getBasicAttackSegmentName(attackGroupName, idx + 1, segmentTotal),
             element: segmentInfo.element,
             icon,
@@ -296,6 +302,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
           id: skillIdBase,
           type: 'basicAttack',
           skillId,
+          skillKey,
           name: attackGroupName,
           element: segmentData.element,
           icon,
@@ -339,6 +346,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
             id: segmentId,
             type: actionType,
             skillId: segmentSkillId,
+            skillKey,
             name: `${displayName} ${idx + 1}`,
             element: segmentInfo.element,
             icon,
@@ -371,6 +379,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
           id: skillIdBase,
           type: actionType,
           skillId,
+          skillKey,
           name: displayName,
           element: segmentData.element,
           icon,
@@ -397,6 +406,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         id: skillIdBase,
         type: actionType,
         skillId,
+        skillKey,
         name: displayName,
         element: segmentData.element,
         icon,

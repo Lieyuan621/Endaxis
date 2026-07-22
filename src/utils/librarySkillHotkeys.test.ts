@@ -47,12 +47,32 @@ describe('librarySkillHotkeys', () => {
     expect(findLibrarySkillByType(library, 'dive')).toBeNull();
   });
 
-  it('rematches place-mode skills by skillKey then type', () => {
+  it('rematches place-mode skills by id, then skill identity, then type', () => {
     const library = [
       { id: 'a-ba', type: 'basicAttack', skillKey: 'basicAttack' },
       { id: 'a-bs', type: 'battleSkill', skillKey: 'battleSkill' },
       { id: 'a-var', type: 'battleSkill', skillKey: 'enhancedBattle' },
+      {
+        id: 'a-enhanced-ba',
+        type: 'basicAttack',
+        skillKey: 'laevatain-basic-attack-during-ultimate',
+        skillId: 'laevatain-basic-attack-during-ultimate',
+      },
     ];
+    expect(
+      findLibrarySkillForPlaceRematch(library, {
+        id: 'a-enhanced-ba',
+        type: 'basicAttack',
+        // Missing skillKey must not fall back to the first basicAttack.
+      })?.id,
+    ).toBe('a-enhanced-ba');
+    expect(
+      findLibrarySkillForPlaceRematch(library, {
+        id: 'other-enhanced-ba',
+        type: 'basicAttack',
+        skillId: 'laevatain-basic-attack-during-ultimate',
+      })?.id,
+    ).toBe('a-enhanced-ba');
     expect(
       findLibrarySkillForPlaceRematch(library, {
         id: 'other-var',

@@ -1058,17 +1058,21 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
 
     this.scheduleDebuffExpire('corrosion', expiresAt, ctx);
 
-    // The new application always owns its own level → initial/rate/cap (never inherits the old one's).
-    const initialShred =
-      (CORROSION_INITIAL_SHRED[level] ?? 3.6) * (1 + enhancement) * effectivenessMult;
-    const perSecond = (CORROSION_PER_SECOND[level] ?? 0.84) * (1 + enhancement) * effectivenessMult;
-    const maxShred = (CORROSION_MAX_SHRED[level] ?? 12) * (1 + enhancement) * effectivenessMult;
+    // Arts-intensity enhancement scales the whole corrosion profile.
+    // Talent/potential `reactionEffectivenessBonus` only boosts the shred *cap*
+    // ("降低的最大抗性"), never the initial jump or per-second ramp.
+    const aiScale = 1 + enhancement;
+    const initialShred = (CORROSION_INITIAL_SHRED[level] ?? 3.6) * aiScale;
+    const perSecond = (CORROSION_PER_SECOND[level] ?? 0.84) * aiScale;
+    const maxShred = (CORROSION_MAX_SHRED[level] ?? 12) * aiScale * effectivenessMult;
 
     // On re-apply only the current shred carries over as a floor (never lowered); if it already exceeds
     // this application's cap, the tick handler holds it there (no ramp) for the refreshed duration.
+    // Fresh apply: resistance immediately takes the first ramp (initial + perSecond), so the hit
+    // that triggers corrosion already sees that shred — not just the bare initial value.
     const startingShred = existing
       ? Math.max(existing.currentResShred, initialShred)
-      : initialShred;
+      : nextCorrosionShred(initialShred, perSecond, maxShred);
 
     enemy.corrosion = {
       level,
@@ -1103,28 +1107,46 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     );
     ctx.state.enemy.expireStatus('corrosion:resShred');
 
-    // Apply initial res shred status (priority 1: after reaction damage at same time)
+    // Apply res shred synchronously so beforeDamage-triggered corrosion is visible to the
+    // same-frame skill hit (queued APPLY at priority 1 would land after DAMAGE_HIT).
+    ctx.state.enemy.applyStatus({
+      id: 'corrosion:resShred',
+      stat: { modifier: 'resistanceShred' },
+      value: startingShred,
+      stacks: 1,
+      maxStacks: 1,
+      expiresAt,
+      sourceId,
+      effect: { kind: 'status', id: 'corrosion:resShred', name: 'corrosion', hide: true } as any,
+      sourceBreakdown: computeSourceBreakdown(sourceId, consumedStackSources, level),
+    });
+    ctx.enemyLog({
+      type: 'ENEMY_STATUS_APPLY',
+      time,
+      id: 'corrosion:resShred',
+      stat: { modifier: 'resistanceShred' },
+      value: startingShred,
+      stacks: 1,
+      maxStacks: 1,
+      expiresAt,
+      sourceId,
+      effect: { kind: 'status', id: 'corrosion:resShred', name: 'corrosion', hide: true } as any,
+    });
     ctx.queue.enqueue(
       {
-        type: 'ENEMY_EFFECT_APPLY',
-        time,
+        type: 'ENEMY_EFFECT_EXPIRE',
+        time: expiresAt,
         kind: 'status',
         id: 'corrosion:resShred',
-        stat: { modifier: 'resistanceShred' },
-        value: startingShred,
-        stacks: 1,
-        maxStacks: 1,
-        expiresAt,
-        sourceId,
+        consumed: false,
         sourceSkillType,
-        icon: undefined,
-        effect: { kind: 'status', id: 'corrosion:resShred', name: 'corrosion', hide: true } as any,
-        sourceBreakdown: computeSourceBreakdown(sourceId, consumedStackSources, level),
+        sourceSkillId,
+        actionId: undefined,
       },
-      1,
+      2,
     );
 
-    // Log initial corrosion tick
+    // Log initial corrosion tick (already includes the first ramp on fresh apply)
     ctx.enemyLog({
       type: 'CORROSION_TICK',
       time,
