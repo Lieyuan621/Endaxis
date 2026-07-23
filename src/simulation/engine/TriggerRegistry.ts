@@ -39,6 +39,17 @@ function isConsumeKindEffect(effect: Effect): boolean {
   return resolveEffectDefaults(effect).kind === 'consume';
 }
 
+/** Auto-injected combo-window consume must match the action's canonical type.
+ *  Hits with `treatAsSkillType: 'comboSkill'` (e.g. Camille hunter pursuit) must not
+ *  close the combo window — they are still battleSkills for action-start purposes. */
+function isComboWindowConsumeTrigger(entry: TriggerRegistryEntry): boolean {
+  return (entry.triggerEffect.effects ?? []).some(effect => {
+    if (!isConsumeKindEffect(effect as Effect)) return false;
+    const status = String((effect as { operatorStatus?: string }).operatorStatus ?? '');
+    return status.endsWith('combo-window');
+  });
+}
+
 function isForcedEnemyConsumeAt(time: number, event: SimEvent): boolean {
   return (
     event.type === 'ENEMY_EFFECT_EXPIRE' &&
@@ -261,8 +272,13 @@ export class TriggerRegistry {
       if (trigger.kind !== 'onActionStart') continue;
       const t = trigger as Extract<TriggerEvent, { kind: 'onActionStart' }>;
       if (action) {
-        const effectiveType = resolveEffectiveActionSkillType(action, event.time, actorId, ctx);
-        if (t.skillTypes && !passesSkillFilter(t.skillTypes, effectiveType)) continue;
+        // Combo-window consume uses the authored action type so treatAsSkillType
+        // re-tags do not prematurely close the window. Other onActionStart filters
+        // still honor the effective (treatAs) skill type.
+        const typeForFilter = isComboWindowConsumeTrigger(entry)
+          ? action.node.type
+          : resolveEffectiveActionSkillType(action, event.time, actorId, ctx);
+        if (t.skillTypes && !passesSkillFilter(t.skillTypes, typeForFilter)) continue;
         if (t.skillId && !passesSkillFilter(t.skillId, action.node.skillId)) continue;
         if (t.element) {
           const allowed = Array.isArray(t.element) ? t.element : [t.element];

@@ -2134,6 +2134,158 @@ describe('optimizer-native runtime parity', () => {
     );
   });
 
+  it('collapses link grants from different effect ids into one pooled buff bar', () => {
+    const result = runScenario([
+      createTrack('alpha', [
+        createAction('grant-a', 'comboSkill', {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'source-a-link',
+                  kind: 'status',
+                  stat: { modifier: 'link' },
+                  target: 'self',
+                  duration: 20,
+                },
+              ],
+            },
+          ],
+        }),
+        createAction('grant-b', 'comboSkill', {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'source-b-link',
+                  kind: 'status',
+                  stat: { modifier: 'link' },
+                  target: 'self',
+                  duration: 20,
+                },
+              ],
+            },
+          ],
+        }),
+      ]),
+    ]);
+
+    const linkApplies = result.operatorLog.filter(
+      (entry: any) =>
+        entry.type === 'OPERATOR_EFFECT_APPLY' &&
+        entry.stat?.modifier === 'link' &&
+        !entry.silent,
+    );
+    expect(linkApplies.every((entry: any) => entry.id === 'link')).toBe(true);
+
+    const layout = projectActionBuffs(result.operatorLog, 30).get('alpha');
+    const linkBars = (layout?.upper ?? []).filter(
+      seg => seg.effect?.stat && (seg.effect.stat as any).modifier === 'link',
+    );
+    // Same lane (not two vertical layers); stack count reaches 2 after the second grant.
+    expect(linkBars.length).toBeGreaterThan(0);
+    expect(new Set(linkBars.map(seg => seg.lane)).size).toBe(1);
+    expect(Math.max(...linkBars.map(seg => seg.stacks))).toBe(2);
+    expect(layout?.upperLaneCount).toBe(1);
+  });
+
+  it('does not close combo window when a battleSkill is treated as comboSkill', () => {
+    const readyStatus: Effect = {
+      id: 'camille-hunter-pursuit-ready',
+      kind: 'status',
+      target: 'self',
+      duration: 10,
+    } as Effect;
+    const windowId = 'camille-combo-window';
+    const result = runScenario(
+      [
+        createTrack('camille', [
+          createAction('open-window', 'battleSkill', {
+            startTime: 0,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 0,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [readyStatus],
+              },
+            ],
+          }),
+          createAction('pursuit', 'battleSkill', {
+            startTime: 1,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 100,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                treatAsSkillType: 'comboSkill',
+                _condition: { kind: 'operatorStatus', status: 'camille-hunter-pursuit-ready' },
+              },
+            ],
+          }),
+          createAction('real-combo', 'comboSkill', {
+            startTime: 1.5,
+            hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ]),
+      ],
+      registry([
+        {
+          sourceTrackId: 'camille',
+          sourceSkillType: 'comboSkill',
+          triggerEffect: {
+            trigger: { kind: 'onBattleStart' },
+            effects: [
+              {
+                id: windowId,
+                name: 'comboWindow',
+                kind: 'status',
+                target: 'self',
+                duration: 5,
+                hide: true,
+              },
+            ],
+          },
+        },
+        {
+          sourceTrackId: 'camille',
+          sourceSkillType: 'comboSkill',
+          triggerEffect: {
+            trigger: {
+              kind: 'onActionStart',
+              skillTypes: 'comboSkill',
+              triggerScope: 'self',
+            },
+            effects: [{ kind: 'consume', operatorStatus: windowId }],
+          },
+        },
+      ]),
+    );
+
+    const windowExpires = result.operatorLog.filter(
+      (entry: any) => entry.type === 'OPERATOR_EFFECT_EXPIRE' && entry.id === windowId,
+    );
+    // Pursuit must leave the window open; the real comboSkill then consumes it.
+    expect(windowExpires).toHaveLength(1);
+    expect(windowExpires[0]?.time).toBeCloseTo(1.5, 5);
+  });
+
   it('blocks positive ultimate energy gains during own ultimate enhancement window', () => {
     const simulation = runScenario([
       createTrack(

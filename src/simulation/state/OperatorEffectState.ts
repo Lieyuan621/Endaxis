@@ -2,6 +2,7 @@ import type { OperatorStatusEntry } from '../engine/types';
 import type { OperatorStat, SkillType } from '@/data/types';
 import type { ConsumedStatEffect } from '@/simulation/compiler/types';
 import { passesSkillFilter } from '@/data/filter';
+import { pushSourceQueue } from './sourceQueue';
 
 interface OneTimeEntry {
   id: string;
@@ -77,6 +78,16 @@ export class OperatorEffectState {
       return;
     }
     const existing = this.effects.get(entry.id);
+    // Pooled resources (link) keep a per-source FIFO queue so consumption can attribute
+    // stacks back to each applier. The queue total is the authoritative stack count, and
+    // the new entry's expiresAt refreshes the shared duration on every grant.
+    if (entry.stat?.modifier === 'link') {
+      const queue = existing?.sourceQueue ? existing.sourceQueue.map(s => ({ ...s })) : [];
+      pushSourceQueue(queue, entry.sourceId, entry.stacks, entry.maxStacks);
+      const total = queue.reduce((s, slot) => s + slot.count, 0);
+      this.effects.set(entry.id, { ...entry, stacks: total, sourceQueue: queue });
+      return;
+    }
     const newStacks = Math.min((existing?.stacks ?? 0) + entry.stacks, entry.maxStacks);
     this.effects.set(entry.id, { ...entry, stacks: newStacks });
   }

@@ -55,7 +55,16 @@ function findEnemyStatusByBaseId(
 }
 
 function getRuntimeEffectId(effect: Effect | ResolvedEffect): string {
-  const raw = effect as { id?: string; _id?: string; name?: string; kind?: string };
+  const raw = effect as {
+    id?: string;
+    _id?: string;
+    name?: string;
+    kind?: string;
+    stat?: { modifier?: string };
+  };
+  // Team-wide `link` (连击) is a single pooled resource — collapse every grant onto one
+  // canonical id so buff bars stack instead of rendering as separate lanes.
+  if (raw.stat?.modifier === 'link') return 'link';
   return raw.id ?? raw._id ?? raw.name ?? raw.kind ?? 'effect';
 }
 

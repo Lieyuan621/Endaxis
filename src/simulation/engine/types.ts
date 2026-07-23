@@ -115,6 +115,8 @@ export interface OperatorStatusEntry {
   effect?: Effect;
   /** Snapshotted consumed stacks from the action that applied this effect. */
   consumedStacks?: Record<string, number>;
+  /** Per-source stack breakdown for pooled resources (link), retained for LMDI attribution. */
+  sourceQueue?: SourceSlot[];
   external?: boolean;
   /** Originating action that applied this status — used to attribute expire/consume damageHits. */
   actionId?: string;

@@ -2,9 +2,9 @@ import type { EventHandler } from '@/simulation/events/EventHandler.ts';
 import type { ActionStartEvent } from '@/simulation/events/event.types.ts';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext.ts';
 import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
-import type { OperatorEffectExpireEvent, SourceSlot } from '@/simulation/engine/types';
+import type { OperatorEffectExpireEvent } from '@/simulation/engine/types';
 import { resolveEffectiveActionSkillType } from '@/simulation/events/actionSkillType';
-import { pushSourceQueue, consumeSourceQueue } from '@/simulation/state/sourceQueue';
+import { consumeSourceQueue } from '@/simulation/state/sourceQueue';
 
 export class ActionStartHandler implements EventHandler<ActionStartEvent> {
   private registry?: TriggerRegistry;
@@ -85,22 +85,25 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
     if (effectiveType !== 'battleSkill' && effectiveType !== 'ultimate') return;
 
     const time = e.time;
-    const linkEntries: { trackId: string; id: string; stacks: number; sourceId: string }[] = [];
-    // Deduplicate by id for counting (team copies share the same id)
-    const deduped = new Map<string, { stacks: number; sourceId: string }>();
+    const linkEntries: { trackId: string; id: string }[] = [];
+    // Link pools onto one canonical entry id ('link') replicated per track. Dedup by id
+    // for counting; the entry's sourceQueue holds the authoritative per-applier breakdown.
+    const deduped = new Map<
+      string,
+      { stacks: number; sourceId: string; sourceQueue?: SourceSlot[] }
+    >();
 
     for (const trackId of ctx.allTrackIds) {
       const entries = ctx.getOperatorEffects(trackId).getActiveEntries(time);
       for (const entry of entries) {
         if (entry.stat?.modifier === 'link') {
-          linkEntries.push({
-            trackId,
-            id: entry.id,
-            stacks: entry.stacks,
-            sourceId: entry.sourceId,
-          });
+          linkEntries.push({ trackId, id: entry.id });
           if (!deduped.has(entry.id)) {
-            deduped.set(entry.id, { stacks: entry.stacks, sourceId: entry.sourceId });
+            deduped.set(entry.id, {
+              stacks: entry.stacks,
+              sourceId: entry.sourceId,
+              sourceQueue: entry.sourceQueue,
+            });
           }
         }
       }
@@ -116,13 +119,26 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
       if (!action.consumedStacks) action.consumedStacks = {};
       action.consumedStacks.link = consumed;
 
-      // Attribute only the actually-consumed link stacks per source (FIFO, newest kept) so the
-      // breakdown sums to `consumed` rather than over-crediting when total link exceeds the cap.
-      const sourceQueue: SourceSlot[] = [];
-      for (const { sourceId, stacks } of deduped.values()) {
-        pushSourceQueue(sourceQueue, sourceId, stacks, consumed);
+      // Stamp per-source link attribution for LMDI — from the entry's sourceQueue when
+      // present, falling back to the single applier for legacy/queue-less entries.
+      const linkSourceMap: Record<string, number> = {};
+      for (const { sourceId, stacks, sourceQueue } of deduped.values()) {
+        const bySource = sourceQueue?.length
+          ? consumeSourceQueue(sourceQueue)
+          : { [sourceId]: stacks };
+        for (const [sid, n] of Object.entries(bySource)) {
+          linkSourceMap[sid] = (linkSourceMap[sid] ?? 0) + n;
+        }
       }
-      action.consumedLinkSources = consumeSourceQueue(sourceQueue);
+      // Scale attribution down to the actually-consumed stack count when over cap.
+      const attributed = Object.values(linkSourceMap).reduce((s, n) => s + n, 0);
+      if (attributed > consumed && attributed > 0) {
+        const scale = consumed / attributed;
+        for (const sid of Object.keys(linkSourceMap)) {
+          linkSourceMap[sid] = Math.round((linkSourceMap[sid] ?? 0) * scale);
+        }
+      }
+      action.consumedLinkSources = linkSourceMap;
     }
 
     // Schedule consumption of each link entry at priority 3
