@@ -85,6 +85,7 @@ const sheet: OperatorSheet = {
                 stat: { modifier: 'susceptibility', elements: 'electric' },
                 value: [6, 10],
                 duration: 10,
+                applyTiming: 'beforeDamage',
               },
             ],
           },

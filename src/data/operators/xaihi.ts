@@ -36,6 +36,7 @@ const sheet: OperatorSheet = {
                   status: ['cryoInfliction', 'solidification'],
                 },
                 duration: 5,
+                applyTiming: 'beforeDamage',
               },
             ],
           },

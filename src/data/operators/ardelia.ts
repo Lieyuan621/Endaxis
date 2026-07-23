@@ -191,6 +191,7 @@ const sheet: OperatorSheet = {
                       stat: { modifier: 'susceptibility', elements: 'physical' },
                       value: [12, 12, 12, 13, 13, 13, 14, 14, 16, 17, 18, 20],
                       duration: 30,
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'enemyStatus',
                         status: 'corrosion',
@@ -206,6 +207,7 @@ const sheet: OperatorSheet = {
                       },
                       value: [12, 12, 12, 13, 13, 13, 14, 14, 16, 17, 18, 20],
                       duration: 30,
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'enemyStatus',
                         status: 'corrosion',

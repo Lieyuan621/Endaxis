@@ -278,6 +278,7 @@ const sheet: OperatorSheet = {
                       stat: { modifier: 'susceptibility', elements: 'physical' },
                       value: [10, 10, 10, 10, 10, 10, 10, 10, 10, 15, 15, 15],
                       duration: 6,
+                      applyTiming: 'beforeDamage',
                     },
                   ],
                 },

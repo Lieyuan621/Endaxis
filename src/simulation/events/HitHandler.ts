@@ -92,9 +92,19 @@ function beforeDamageActorEffects(
   effects: readonly (Effect | ResolvedEffect)[] | undefined,
 ): readonly (Effect | ResolvedEffect)[] | undefined {
   if (!effects?.length) return undefined;
-  // Enemy beforeDamage is scheduled in simulate(); only self/team here.
   const matched = effects.filter(
     effect => effect.applyTiming === 'beforeDamage' && !isEnemyEffect(effect),
+  );
+  return matched.length ? matched : undefined;
+}
+
+function beforeDamageEnemyEffects(
+  effects: readonly (Effect | ResolvedEffect)[] | undefined,
+): readonly (Effect | ResolvedEffect)[] | undefined {
+  if (!effects?.length) return undefined;
+  // Applied here (not pre-scheduled) so conditions/consume see live state.
+  const matched = effects.filter(
+    effect => effect.applyTiming === 'beforeDamage' && isEnemyEffect(effect),
   );
   return matched.length ? matched : undefined;
 }
@@ -150,14 +160,15 @@ export class HitHandler implements EventHandler<HitEvent> {
       }
     }
 
-    // Self/team beforeDamage effects must land before damage calc so this hit
-    // can benefit (enemy beforeDamage is scheduled earlier in simulate()).
+    // beforeDamage effects must land before damage calc so this hit can benefit.
+    // Enemy effects are applied here (not pre-scheduled) so conditions/consume
+    // evaluate against live state (e.g. Tangtang whirlpools, Ardelia corrosion).
+    const sourceIdForEarly = e.payload.sourceId ?? e.payload.actionId;
     const earlyActorEffects = beforeDamageActorEffects(hit.effects);
     if (earlyActorEffects?.length) {
-      const sourceId = e.payload.sourceId ?? e.payload.actionId;
       dispatchActorEffects(earlyActorEffects, {
         time: e.time,
-        sourceTrackId: sourceId,
+        sourceTrackId: sourceIdForEarly,
         ctx,
         enemySnap: ctx.state.enemy.statusSnapshot(),
         skillType: hit.skillType,
@@ -173,12 +184,35 @@ export class HitHandler implements EventHandler<HitEvent> {
               this.registry!.onStatusApplied(id, stat, 'self', src, t, ctx, st, hit.skillId)
           : undefined,
       });
-      // Status applies are queued; settle them (and onStatusApplied follow-ups like
-      // conditional talent buffs) before reading operator mods for damage.
-      const isSameTimeOperatorEffect = (ev: { type: string; time: number }) =>
+    }
+    const earlyEnemyEffects = beforeDamageEnemyEffects(hit.effects);
+    if (earlyEnemyEffects?.length) {
+      dispatchEnemyEffects(
+        earlyEnemyEffects,
+        e.time,
+        sourceIdForEarly,
+        ctx,
+        hit.skillType,
+        e.payload.actionId,
+        undefined,
+        ctx.state.enemy.statusSnapshot(),
+        hit.skillId,
+      );
+    }
+    if (earlyActorEffects?.length || earlyEnemyEffects?.length) {
+      // Settle applies (and onStatusApplied follow-ups) before reading mods for damage.
+      // Skip consumed expires so stack scaling still sees pre-consume state.
+      const isSameTimeEffectApply = (ev: {
+        type: string;
+        time: number;
+        consumed?: boolean;
+      }) =>
         Number(ev.time) === Number(e.time) &&
-        (ev.type === 'OPERATOR_EFFECT_APPLY' || ev.type === 'OPERATOR_EFFECT_EXPIRE');
-      for (let i = 0; i < 8 && ctx.flushQueuedEvents(isSameTimeOperatorEffect) > 0; i++) {
+        (ev.type === 'OPERATOR_EFFECT_APPLY' ||
+          ev.type === 'ENEMY_EFFECT_APPLY' ||
+          ((ev.type === 'OPERATOR_EFFECT_EXPIRE' || ev.type === 'ENEMY_EFFECT_EXPIRE') &&
+            !ev.consumed));
+      for (let i = 0; i < 8 && ctx.flushQueuedEvents(isSameTimeEffectApply) > 0; i++) {
         /* cascade */
       }
     }

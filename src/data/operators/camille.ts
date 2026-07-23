@@ -320,6 +320,7 @@ const sheet: OperatorSheet = {
                       stat: { modifier: 'susceptibility', elements: 'heat' },
                       value: [5, 5, 5, 6, 6, 6, 6, 6, 6, 6.5, 6.5, 7],
                       duration: 45,
+                      applyTiming: 'beforeDamage',
                     },
                     {
                       id: 'camille-firefang-vesperwings-weaken',
@@ -329,6 +330,7 @@ const sheet: OperatorSheet = {
                       value: [5, 5, 5, 6, 6, 6, 6, 6, 6, 6.5, 6.5, 7],
                       duration: 45,
                       hide: true,
+                      applyTiming: 'beforeDamage',
                     },
                   ],
                 },
