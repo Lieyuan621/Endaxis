@@ -557,6 +557,31 @@ describe('optimizer-native runtime parity', () => {
     expect(compiled?.consumedStacksWriteKeys.has('combo-state')).toBe(true);
     expect(compiled?.consumedStacksWriteKeys.has('vulnerability')).toBe(true);
     expect(compiled?.initialEffects).toBe(runtimeInitialEffects);
+
+    // Preset sheet defaults must not overwrite an explicit UI maxStagger edit.
+    const edited = compileEndaxisScenario({
+      scenarioData: createScenario(tracks),
+      tracks,
+      characterRoster: [
+        {
+          id: 'alpha',
+          element: 'heat',
+          accept_team_gauge: false,
+          accept_self_sp_cost_ult_energy: false,
+          maxUltimateGauge: 150,
+        },
+      ],
+      systemConstants: {
+        maxSp: 300,
+        initialSp: 123,
+        spRegenRate: 8,
+        skillSpCostDefault: 100,
+        maxStagger: 500,
+      },
+      prepDuration: 3,
+      activeEnemyId: 'eny_0051_rodin',
+    });
+    expect(edited?.enemyConfig.maxStagger).toBe(500);
     expect(compiled?.baseStatsByTrack.get('alpha')).toEqual(BASE_STATS);
     expect(compiled?.enemyDef).toBe(100);
     expect(compiled?.endlineTime).toBe(9);
@@ -3216,5 +3241,351 @@ describe('onFinisher trigger', () => {
 
   it('does not fire on a non-finisher action', () => {
     expect(fired('basicAttack')).toBe(false);
+  });
+});
+
+describe('beforeDamage self status', () => {
+  function hitDamage(applyTiming: 'beforeDamage' | 'afterDamage' | undefined) {
+    const tracks = [
+      createTrack('A', [
+        createAction('ult', 'ultimate', {
+          element: 'nature',
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'self-amp-buff',
+                  kind: 'status',
+                  target: 'self',
+                  stat: { modifier: 'ampBonus' },
+                  value: 50,
+                  duration: 10,
+                  ...(applyTiming ? { applyTiming } : {}),
+                },
+              ],
+            },
+          ],
+        }),
+      ]),
+    ];
+    return damageFor(runScenario(tracks), 'ult_inst');
+  }
+
+  it('lets the same hit benefit from a self buff applied beforeDamage', () => {
+    const after = hitDamage('afterDamage');
+    const before = hitDamage('beforeDamage');
+    expect(before / after).toBeCloseTo(1.5, 2);
+  });
+});
+
+describe('same-timestamp expire and triggered damage', () => {
+  it('lets onStatusExpire damage still see a sibling enemy debuff that expires at the same time', () => {
+    const triggerEffects = [
+      {
+        sourceTrackId: 'A',
+        triggerEffect: {
+          trigger: {
+            kind: 'onStatusExpire',
+            status: 'prison-marker',
+            target: 'enemy',
+          },
+          effects: [
+            {
+              kind: 'damageHit',
+              element: 'nature',
+              multiplier: 100,
+              hit: { stagger: 0 },
+            },
+          ],
+        },
+      },
+    ] satisfies TrackPatch['triggerEffects'];
+
+    const tracks = [
+      createTrack(
+        'A',
+        [
+          createAction('combo', 'comboSkill', {
+            element: 'nature',
+            startTime: 0,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 1,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [
+                  {
+                    id: 'prison-marker',
+                    kind: 'status',
+                    target: 'enemy',
+                    duration: 1,
+                    applyTiming: 'beforeDamage',
+                  },
+                  {
+                    id: 'shared-vuln',
+                    kind: 'status',
+                    target: 'enemy',
+                    stat: { modifier: 'susceptibility', elements: ['nature'] },
+                    value: 50,
+                    duration: 1,
+                    applyTiming: 'beforeDamage',
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+        { triggerEffects },
+      ),
+    ];
+
+    const result = runScenario(tracks, registry(triggerEffects));
+    const explode = result.simLog.find(
+      item =>
+        item.type === 'DAMAGE_HIT' &&
+        item.payload.hitData?.triggered === true &&
+        item.payload.hitData?.element === 'nature',
+    );
+    expect(explode?.type).toBe('DAMAGE_HIT');
+    if (explode?.type !== 'DAMAGE_HIT') return;
+
+    const baselineTracks = [
+      createTrack('A', [
+        createAction('plain', 'comboSkill', {
+          element: 'nature',
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+    const baseline = damageFor(runScenario(baselineTracks), 'plain_inst');
+    const exploded = Number(explode.payload.hitData._expectedDamage ?? 0);
+    expect(exploded / baseline).toBeCloseTo(1.5, 2);
+  });
+});
+
+describe('beforeDamage enemy status freeze extension', () => {
+  it('extends beforeDamage enemy status expiry across ultimate freeze (Arcane combo pattern)', () => {
+    const tracks = [
+      createTrack('A', [
+        createAction('combo', 'comboSkill', {
+          startTime: 0,
+          duration: 1,
+          element: 'nature',
+          hits: [
+            {
+              offset: 0.5,
+              multiplier: 10,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'prison-marker',
+                  kind: 'status',
+                  target: 'enemy',
+                  duration: 4,
+                  applyTiming: 'beforeDamage',
+                },
+                {
+                  id: 'combo-vuln',
+                  kind: 'status',
+                  target: 'enemy',
+                  stat: { modifier: 'susceptibility', elements: ['nature'] },
+                  value: 4,
+                  duration: 4,
+                  applyTiming: 'beforeDamage',
+                },
+              ],
+            },
+          ],
+        }),
+        createAction('ult', 'ultimate', {
+          startTime: 1,
+          duration: 2,
+          animationTime: 2,
+          enhancementTime: 0,
+          element: 'nature',
+          hits: [{ offset: 0.5, multiplier: 10, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+
+    const result = runScenario(tracks);
+    const applies = result.enemyLog.filter(
+      e =>
+        e.type === 'ENEMY_STATUS_APPLY' &&
+        (e.id === 'prison-marker' || e.id === 'combo-vuln'),
+    );
+    expect(applies).toHaveLength(2);
+
+    // Combo hit at realTime ~0.5; without freeze expiry would be ~4.5.
+    // Ultimate freeze [1, 3] overlaps the remaining duration → expiry should be pushed by 2s.
+    for (const apply of applies) {
+      expect(apply.expiresAt).toBeGreaterThan(6);
+      expect(apply.expiresAt).toBeCloseTo(6.5, 1);
+    }
+  });
+
+  it('keeps afterDamage enemy status freeze extension working (control)', () => {
+    const tracks = [
+      createTrack('A', [
+        createAction('combo', 'comboSkill', {
+          startTime: 0,
+          duration: 1,
+          element: 'nature',
+          hits: [
+            {
+              offset: 0.5,
+              multiplier: 10,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'after-vuln',
+                  kind: 'status',
+                  target: 'enemy',
+                  stat: { modifier: 'susceptibility', elements: ['nature'] },
+                  value: 4,
+                  duration: 4,
+                },
+              ],
+            },
+          ],
+        }),
+        createAction('ult', 'ultimate', {
+          startTime: 1,
+          duration: 2,
+          animationTime: 2,
+          enhancementTime: 0,
+          element: 'nature',
+          hits: [{ offset: 0.5, multiplier: 10, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+
+    const result = runScenario(tracks);
+    const apply = result.enemyLog.find(
+      e => e.type === 'ENEMY_STATUS_APPLY' && e.id === 'after-vuln',
+    );
+    expect(apply?.type).toBe('ENEMY_STATUS_APPLY');
+    if (apply?.type !== 'ENEMY_STATUS_APPLY') return;
+    expect(apply.expiresAt).toBeGreaterThan(6);
+    expect(apply.expiresAt).toBeCloseTo(6.5, 1);
+  });
+});
+
+describe('independent enemy status instance ids', () => {
+  it('keeps an earlier INDEPENDENT status timer when a later grant reuses the same base id', () => {
+    // Engine regression for resolveEnemyStatusInstanceId — not Arcane-specific.
+    const triggerEffects = [
+      {
+        sourceTrackId: 'A',
+        triggerEffect: {
+          trigger: { kind: 'onHit', skillTypes: 'battleSkill' },
+          effects: [
+            {
+              id: 'shared-vuln',
+              kind: 'status',
+              target: 'enemy',
+              stat: { modifier: 'susceptibility', elements: ['nature'] },
+              value: 10,
+              duration: 2,
+              stackStrategy: 'INDEPENDENT',
+            },
+          ],
+        },
+      },
+    ] satisfies TrackPatch['triggerEffects'];
+
+    const tracks = [
+      createTrack(
+        'A',
+        [
+          createAction('battle', 'battleSkill', {
+            startTime: 0,
+            duration: 0.5,
+            element: 'nature',
+            hits: [{ offset: 0, multiplier: 1, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+          createAction('combo', 'comboSkill', {
+            startTime: 0.5,
+            duration: 1,
+            element: 'nature',
+            hits: [
+              {
+                offset: 0,
+                multiplier: 1,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [
+                  {
+                    id: 'shared-vuln',
+                    kind: 'status',
+                    target: 'enemy',
+                    stat: { modifier: 'susceptibility', elements: ['nature'] },
+                    value: 10,
+                    duration: 4,
+                    applyTiming: 'beforeDamage',
+                    stackStrategy: 'INDEPENDENT',
+                  },
+                ],
+              },
+            ],
+          }),
+          createAction('probe', 'basicAttack', {
+            startTime: 1.5,
+            duration: 0.5,
+            element: 'nature',
+            hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ],
+        { triggerEffects },
+      ),
+    ];
+
+    const result = runScenario(tracks, registry(triggerEffects));
+    const applies = result.enemyLog.filter(
+      e => e.type === 'ENEMY_STATUS_APPLY' && String(e.id).startsWith('shared-vuln'),
+    );
+    expect(applies).toHaveLength(2);
+    expect(new Set(applies.map(e => e.id)).size).toBe(2);
+
+    const first = applies[0]!;
+    const second = applies[1]!;
+    // Battle-skill grant (~2s) then combo grant (~4s); exact expiry can shift with freeze.
+    expect(first.expiresAt).toBeLessThan(second.expiresAt);
+    expect(second.expiresAt - second.time).toBeGreaterThan(3);
+
+    // First expiry must still fire (was previously cancelled by the second grant).
+    const firstExpire = result.enemyLog.find(
+      e =>
+        e.type === 'ENEMY_EFFECT_EXPIRE' &&
+        e.kind === 'status' &&
+        e.id === first.id &&
+        !e.consumed,
+    );
+    expect(firstExpire?.time).toBeCloseTo(first.expiresAt, 1);
+
+    // While both are active, nature susceptibility should stack (10% + 10%).
+    const baselineTracks = [
+      createTrack('A', [
+        createAction('probe', 'basicAttack', {
+          element: 'nature',
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+    const baseline = damageFor(runScenario(baselineTracks), 'probe_inst');
+    const stacked = damageFor(result, 'probe_inst');
+    expect(stacked / baseline).toBeCloseTo(1.2, 2);
   });
 });

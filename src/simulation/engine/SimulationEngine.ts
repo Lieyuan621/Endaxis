@@ -41,7 +41,7 @@ export class SimulationEngine {
   /** If set, simulation stops processing events beyond this time. */
   endlineTime?: number;
   /** LMDI attribution mode for reaction debuff contributions. */
-  lmdiAttributionMode: 'stacks' | 'applier' = 'stacks';
+  lmdiAttributionMode: 'stacks' | 'applier' = 'applier';
   /** Controlled-operator timeline (time-ascending segments). Empty = nobody controlled. */
   controlledOperatorSegments: ControlSegment[] = [];
   private enemyDamageCapWindows = new Map<number, number>();
@@ -335,6 +335,7 @@ export class SimulationEngine {
             throw new Error(`No handler for event type: ${event.type}`);
           }
         }
+        return events.length;
       },
       simLog: (entry: SimLogEntry) => {
         this.simLog.enqueue(entry);

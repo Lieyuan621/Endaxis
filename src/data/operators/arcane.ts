@@ -420,6 +420,11 @@ const sheet: OperatorSheet = {
                     kind: 'consume',
                     enemyStatus: 'arcane-imprisonment',
                   },
+                  // Detonate also clears the combo-applied susceptibility.
+                  {
+                    kind: 'consume',
+                    enemyStatus: 'arcane-combo-susceptibility',
+                  },
                   {
                     kind: 'spReturn',
                     value: [28, 28, 28, 28, 28, 28, 28, 28, 28, 30, 30, 30],
@@ -429,8 +434,9 @@ const sheet: OperatorSheet = {
                     },
                   },
                   {
+                    // Distinct id so a later combo cannot refresh/cancel this 2s grant.
                     kind: 'status',
-                    id: 'arcane-combo-susceptibility',
+                    id: 'arcane-combo-susceptibility-detonate',
                     name: 'natureCryoSusceptibility',
                     icon: '/operators/arcane/icon_battle_buff_lizhiyan_combo_vulnerable.webp',
                     target: 'enemy',
@@ -505,6 +511,7 @@ const sheet: OperatorSheet = {
                             kind: 'status',
                             target: 'self',
                             duration: 20,
+                            applyTiming: 'beforeDamage',
                           },
                           {
                             id: 'arcane-ultimate-cluster-strike-counter',
@@ -520,6 +527,7 @@ const sheet: OperatorSheet = {
                             kind: 'reaction',
                             reactionType: 'corrosion',
                             duration: 15,
+                            applyTiming: 'beforeDamage',
                           },
                         ],
                       },
@@ -708,6 +716,17 @@ const sheet: OperatorSheet = {
               {
                 kind: 'patchEffect',
                 targetEffect: 'arcane-combo-susceptibility',
+                skillLevelKey: 'comboSkill',
+                effect: {
+                  scaling: {
+                    additive: [6],
+                    cap: [13, 13, 13, 13, 13, 13, 13, 13, 13.5, 13.5, 13.5, 14],
+                  },
+                },
+              },
+              {
+                kind: 'patchEffect',
+                targetEffect: 'arcane-combo-susceptibility-detonate',
                 skillLevelKey: 'comboSkill',
                 effect: {
                   scaling: {

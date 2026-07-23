@@ -934,6 +934,7 @@
       "spCost": "技力消耗",
       "gaugeCost": "充能消耗",
       "enhancementTimeS": "强化时间(f)",
+      "enhancementFollowsStatus": "跟随{status}",
       "followupDelayS": "下一段间隔(f)",
       "comboSegment": "连携段",
       "comboLink": "连携绑定"

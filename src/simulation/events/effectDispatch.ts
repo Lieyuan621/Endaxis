@@ -68,6 +68,20 @@ function getRuntimeEffectId(effect: Effect | ResolvedEffect): string {
   return raw.id ?? raw._id ?? raw.name ?? raw.kind ?? 'effect';
 }
 
+/**
+ * Enemy status map key. INDEPENDENT applications get a unique `@instance` suffix so a later
+ * grant does not cancel/overwrite an earlier one's duration (mirrors DoT cancelOnRefresh:false).
+ */
+export function resolveEnemyStatusInstanceId(
+  baseId: string,
+  stackStrategy: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE' | undefined,
+  actionId: string | undefined,
+  time: number,
+): string {
+  if (stackStrategy !== 'INDEPENDENT') return baseId;
+  return `${baseId}@${actionId ?? time}`;
+}
+
 /** True if the condition (or any element of an array condition) has consume: true/number. */
 export function conditionHasConsume(
   cond: EffectCondition | EffectCondition[] | undefined,
@@ -858,7 +872,13 @@ export function dispatchEnemyEffects(
           );
         const { duration, stacks, maxStacks } = lifecycle;
         if (duration <= 0) break;
-        const effectId = getRuntimeEffectId(resolved);
+        const baseEffectId = getRuntimeEffectId(resolved);
+        const effectId = resolveEnemyStatusInstanceId(
+          baseEffectId,
+          lifecycle.stackStrategy,
+          actionId,
+          time,
+        );
         ctx.queue.enqueue(
           {
             type: 'ENEMY_EFFECT_APPLY',
@@ -879,7 +899,7 @@ export function dispatchEnemyEffects(
             actionId,
             icon: resolved.icon,
             effect: resolved,
-            ...(ctx.consumedStacksWriteKeys.has(effectId) && actionId
+            ...(ctx.consumedStacksWriteKeys.has(baseEffectId) && actionId
               ? { consumedStacks: ctx.getAction(actionId)?.consumedStacks }
               : {}),
             ...(resolved.silent ? { silent: true } : {}),

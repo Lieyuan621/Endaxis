@@ -10,6 +10,7 @@ import type { TriggerRegistry } from './engine/TriggerRegistry';
 import type { Effect, OperatorStat, ResolvedEffect } from '@/data/types';
 import { isEnemyEffect } from '@/data/types';
 import { resolveEffectDefaults, resolveEffectLifecycle } from '@/data/effectPresets';
+import { resolveEnemyStatusInstanceId } from '@/simulation/events/effectDispatch';
 import type { EnemyEffectApplyEvent } from '@/simulation/engine/types';
 import type { BaseStatValues } from '@/data/stats/types';
 import type { EnemyResistance } from '@/data/enemyResistance';
@@ -57,6 +58,7 @@ function buildBeforeDamageEnemyEffectEvents(
   actionId: string,
   skillType?: string,
   skillId?: string,
+  getShiftedTime?: (startTime: number, duration: number) => number,
 ): EnemyEffectApplyEvent[] {
   if (!effects?.length) return [];
   const events: EnemyEffectApplyEvent[] = [];
@@ -109,22 +111,30 @@ function buildBeforeDamageEnemyEffectEvents(
           forced: true,
         });
         break;
-      case 'status':
+      case 'status': {
+        const duration = lifecycle.duration;
+        const expiresAt =
+          resolved.ignoreTimeShift || !getShiftedTime
+            ? time + duration
+            : getShiftedTime(time, duration);
+        const baseId = resolved.id || resolved.name || 'status';
         events.push({
           ...base,
           kind: 'status',
-          id: resolved.id || resolved.name || 'status',
+          id: resolveEnemyStatusInstanceId(baseId, lifecycle.stackStrategy, actionId, time),
           stat: resolved.stat as any,
           value: typeof resolved.value === 'number' ? resolved.value : 0,
           stacks: typeof lifecycle.stacks === 'number' ? lifecycle.stacks : 1,
           maxStacks: lifecycle.maxStacks,
-          expiresAt: time + lifecycle.duration,
+          expiresAt,
+          stackStrategy: lifecycle.stackStrategy,
           icon: Array.isArray(resolved.icon) ? resolved.icon[0] : resolved.icon,
           effect: resolved,
           silent: resolved.silent,
           external: resolved.external,
         });
         break;
+      }
     }
   }
 
@@ -636,6 +646,7 @@ export function simulate(
         action.id,
         hit.skillType,
         hit.skillId,
+        (start, duration) => engine.getShiftedTime(start, duration),
       )) {
         engine.enqueue(event, -1);
       }

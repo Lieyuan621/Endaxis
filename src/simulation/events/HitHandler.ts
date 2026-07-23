@@ -23,7 +23,6 @@ import {
   STAGGER_DAMAGE_MULTIPLIER,
 } from '@/data/stats/computeDamage';
 import type { ResolvedStatModifier } from '@/data/stats/types';
-import type { DamageElement } from '@/data/types';
 import {
   computeLmdiContributions,
   computeReactionLmdiContributions,
@@ -34,7 +33,12 @@ import {
   computeLevelCoefficient,
   computeArtsIntensityDamageMult,
 } from '@/data/stats/computeReactionDamage';
-import type { Effect, ResolvedEffect } from '@/data/types';
+import {
+  isEnemyEffect,
+  type DamageElement,
+  type Effect,
+  type ResolvedEffect,
+} from '@/data/types';
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
@@ -82,6 +86,17 @@ function afterDamageEffects(
 ): readonly (Effect | ResolvedEffect)[] | undefined {
   if (!effects?.length) return effects;
   return effects.filter(effect => effect.applyTiming !== 'beforeDamage');
+}
+
+function beforeDamageActorEffects(
+  effects: readonly (Effect | ResolvedEffect)[] | undefined,
+): readonly (Effect | ResolvedEffect)[] | undefined {
+  if (!effects?.length) return undefined;
+  // Enemy beforeDamage is scheduled in simulate(); only self/team here.
+  const matched = effects.filter(
+    effect => effect.applyTiming === 'beforeDamage' && !isEnemyEffect(effect),
+  );
+  return matched.length ? matched : undefined;
 }
 
 export class HitHandler implements EventHandler<HitEvent> {
@@ -135,6 +150,39 @@ export class HitHandler implements EventHandler<HitEvent> {
       }
     }
 
+    // Self/team beforeDamage effects must land before damage calc so this hit
+    // can benefit (enemy beforeDamage is scheduled earlier in simulate()).
+    const earlyActorEffects = beforeDamageActorEffects(hit.effects);
+    if (earlyActorEffects?.length) {
+      const sourceId = e.payload.sourceId ?? e.payload.actionId;
+      dispatchActorEffects(earlyActorEffects, {
+        time: e.time,
+        sourceTrackId: sourceId,
+        ctx,
+        enemySnap: ctx.state.enemy.statusSnapshot(),
+        skillType: hit.skillType,
+        skillId: hit.skillId,
+        actionId: e.payload.actionId,
+        statusActionId: e.payload.actionId,
+        spReason: 'hit',
+        applyCooldownReduction: this.registry
+          ? (eff, t, tid, c) => this.registry!.applyCooldownReduction(eff, t, tid, c)
+          : undefined,
+        onInstantHeal: this.registry
+          ? (id, stat, src, t, st) =>
+              this.registry!.onStatusApplied(id, stat, 'self', src, t, ctx, st, hit.skillId)
+          : undefined,
+      });
+      // Status applies are queued; settle them (and onStatusApplied follow-ups like
+      // conditional talent buffs) before reading operator mods for damage.
+      const isSameTimeOperatorEffect = (ev: { type: string; time: number }) =>
+        Number(ev.time) === Number(e.time) &&
+        (ev.type === 'OPERATOR_EFFECT_APPLY' || ev.type === 'OPERATOR_EFFECT_EXPIRE');
+      for (let i = 0; i < 8 && ctx.flushQueuedEvents(isSameTimeOperatorEffect) > 0; i++) {
+        /* cascade */
+      }
+    }
+
     // Compute expected damage using live operator + enemy state at time T
     const staggerMult = ctx.state.enemy.isBroken(e.time) ? STAGGER_DAMAGE_MULTIPLIER : 1;
     hit._staggerMult = staggerMult;
@@ -142,10 +190,13 @@ export class HitHandler implements EventHandler<HitEvent> {
       hit._staggerContributions = ctx.state.enemy.getStaggerContributionFractions();
     }
 
-    // Finisher multiplier: applies when a finisher action hits a staggered enemy
+    // Finisher multiplier: only the finisher action's own hits, not triggered follow-ups
+    // (e.g. Arcane cluster strike queued from onFinisher with the finisher's actionId).
     const action = ctx.getAction(e.payload.actionId);
     const finisherMult =
-      action?.node.type === 'finisher' && ctx.state.enemy.isBroken(e.time)
+      !hit.triggered &&
+      action?.node.type === 'finisher' &&
+      ctx.state.enemy.isBroken(e.time)
         ? (ctx.state.enemy.config.finisherMultiplier ?? 1)
         : 1;
     hit._finisherMult = finisherMult;
@@ -178,7 +229,9 @@ export class HitHandler implements EventHandler<HitEvent> {
       const operatorStatus = computeStats(baseStats, [], dynamicMods, undefined, hit.skillId);
 
       const enemyEntries = [...ctx.state.enemy.enemyStatusEffects.values()].filter(
-        entry => e.time < entry.expiresAt,
+        // Inclusive at expiresAt: same-timestamp derived hits (e.g. onStatusExpire
+        // damage) must still see sibling debuffs that share the expiry time.
+        entry => e.time <= entry.expiresAt,
       );
       const enemyMods: ResolvedStatModifier[] = [];
       for (const entry of enemyEntries) {
@@ -387,7 +440,9 @@ export class HitHandler implements EventHandler<HitEvent> {
       const operatorStatus = computeStats(baseStats, [], dynamicMods, hit.skillType, hit.skillId);
 
       const enemyEntries = [...ctx.state.enemy.enemyStatusEffects.values()].filter(
-        entry => e.time < entry.expiresAt,
+        // Inclusive at expiresAt: same-timestamp derived hits (e.g. onStatusExpire
+        // damage) must still see sibling debuffs that share the expiry time.
+        entry => e.time <= entry.expiresAt,
       );
       const enemyMods: ResolvedStatModifier[] = [];
       for (const entry of enemyEntries) {
