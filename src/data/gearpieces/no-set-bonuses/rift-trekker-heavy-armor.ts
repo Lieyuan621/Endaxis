@@ -22,7 +22,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'artsIntensity' },
         target: 'self',
-        value: [21, 23, 25, 28],
+        value: [21.6, 23.76, 25.92, 28.08],
       },
     ],
   },

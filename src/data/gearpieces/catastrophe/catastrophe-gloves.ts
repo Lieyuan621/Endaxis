@@ -27,7 +27,7 @@ const sheet: GearPieceSheet = {
     ],
   },
   skill3: {
-    effects: [{ kind: 'status', stat: { modifier: 'artsIntensity' }, target: 'self', value: 24 }],
+    effects: [{ kind: 'status', stat: { modifier: 'artsIntensity' }, target: 'self', value: 24.5 }],
   },
   setSlug: 'catastrophe',
 };

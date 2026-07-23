@@ -427,7 +427,7 @@ export function computeStats(
 
   const health = Math.floor((baseHp + attrs.strength * 5) * (1 + hpPercent) + flatHp);
   const defense = Math.floor(gearDefense * (1 + defPercent) + flatDef);
-  artsIntensity = Math.floor(artsIntensity);
+  artsIntensity = Math.round(artsIntensity * 100) / 100;
 
   // Round percentage stats
   critRate = Math.floor(critRate * 1000) / 1000;
