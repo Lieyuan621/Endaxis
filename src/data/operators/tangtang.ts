@@ -76,7 +76,10 @@ const sheet: OperatorSheet = {
             {
               id: 'tangtang-waterspouts-susceptibility',
               kind: 'status',
-              stat: { modifier: 'susceptibility' },
+              stat: {
+                modifier: 'susceptibility',
+                elements: ['heat', 'cryo', 'electric', 'nature'],
+              },
               target: 'enemy',
               scaling: {
                 additive: [
@@ -390,7 +393,10 @@ const sheet: OperatorSheet = {
                     {
                       id: 'tangtang-waterspouts-susceptibility',
                       kind: 'status',
-                      stat: { modifier: 'susceptibility' },
+                      stat: {
+                        modifier: 'susceptibility',
+                        elements: ['heat', 'cryo', 'electric', 'nature'],
+                      },
                       target: 'enemy',
                       scaling: {
                         additive: [

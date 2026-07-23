@@ -434,9 +434,10 @@ export function createEditorHit({
 export function normalizeHits(
   rawHits: EditorHit[] = [],
   defaultElement: string | null = null,
+  { sortByOffset = true }: { sortByOffset?: boolean } = {},
 ): EditorHit[] {
   if (!Array.isArray(rawHits)) return [];
-  return rawHits
+  const normalized = rawHits
     .filter(hit => hit && typeof hit === 'object')
     .map(hit => {
       const next: EditorHit = {
@@ -452,8 +453,12 @@ export function normalizeHits(
         ? hit.effects.map(effect => ensureEffectId(effect))
         : [];
       return decorateHitCompat(next);
-    })
-    .sort((a, b) => (Number(a.offset) || 0) - (Number(b.offset) || 0));
+    });
+  // UI lists sort by offset for readability. Do not sort when writing back into the
+  // stored action — sheet extract order follows damageGroups and refresh rematches
+  // by id/offset (Tangtang BS: waterspout hit is earlier in time but later in sheet).
+  if (!sortByOffset) return normalized;
+  return normalized.sort((a, b) => (Number(a.offset) || 0) - (Number(b.offset) || 0));
 }
 
 export interface LegacyActionInput {
@@ -474,7 +479,8 @@ export function legacyActionToHits({
   element,
 }: LegacyActionInput = {}): EditorHit[] {
   if (Array.isArray(hits) && hits.length > 0) {
-    return normalizeHits(hits, element);
+    // Preserve stored order — do not sort by offset when hydrating live actions.
+    return normalizeHits(hits, element, { sortByOffset: false });
   }
 
   const normalizedHits: EditorHit[] = Array.isArray(damageTicks)
@@ -581,7 +587,9 @@ export function ensureActionLikeModel(
         return this.hits;
       },
       set(this: ActionLikeEntity, value: unknown) {
-        this.hits = normalizeHits(value as EditorHit[], this.element || defaultElement);
+        this.hits = normalizeHits(value as EditorHit[], this.element || defaultElement, {
+          sortByOffset: false,
+        });
       },
     });
     defineAlias(entity, 'physicalAnomaly', {

@@ -182,6 +182,7 @@ const sheet: OperatorSheet = {
       ],
     },
     battleSkill: {
+      element: 'cryo',
       segments: [
         {
           duration: 1,
@@ -296,6 +297,7 @@ const sheet: OperatorSheet = {
       cooldown: [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7],
     },
     ultimate: {
+      element: 'cryo',
       segments: [
         {
           duration: 2.23,
