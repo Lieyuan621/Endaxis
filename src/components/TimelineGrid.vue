@@ -86,6 +86,10 @@ const isShiftDown = ref(false);
 const hoveredContext = ref(null);
 const draggingCycleBoundaryId = ref(null);
 const draggingSwitchEventId = ref(null);
+const draggingEndline = ref(false);
+const draggingStartline = ref(false);
+const wasEndlineSelectedOnPress = ref(false);
+const wasStartlineSelectedOnPress = ref(false);
 const switchEventDragOffsetX = ref(0);
 const cycleBoundaryDragOffsetX = ref(0);
 const dragStartMouseTime = ref(0);
@@ -2061,6 +2065,48 @@ function onCycleLineMouseDown(evt, boundaryId) {
   window.addEventListener('blur', onWindowMouseUp);
 }
 
+function onEndlineMouseDown(evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  if (evt.button !== 0) return;
+
+  wasEndlineSelectedOnPress.value = store.isEndlineSelected;
+  if (!wasEndlineSelectedOnPress.value) {
+    store.selectEndline();
+  }
+  draggingEndline.value = true;
+  initialMouseX.value = evt.clientX;
+  initialMouseY.value = evt.clientY;
+  isDragStarted.value = false;
+  isMouseDown.value = true;
+  document.body.classList.add('is-dragging');
+
+  window.addEventListener('mousemove', onWindowMouseMove);
+  window.addEventListener('mouseup', onWindowMouseUp);
+  window.addEventListener('blur', onWindowMouseUp);
+}
+
+function onStartlineMouseDown(evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  if (evt.button !== 0) return;
+
+  wasStartlineSelectedOnPress.value = store.isStartlineSelected;
+  if (!wasStartlineSelectedOnPress.value) {
+    store.selectStartline();
+  }
+  draggingStartline.value = true;
+  initialMouseX.value = evt.clientX;
+  initialMouseY.value = evt.clientY;
+  isDragStarted.value = false;
+  isMouseDown.value = true;
+  document.body.classList.add('is-dragging');
+
+  window.addEventListener('mousemove', onWindowMouseMove);
+  window.addEventListener('mouseup', onWindowMouseUp);
+  window.addEventListener('blur', onWindowMouseUp);
+}
+
 function onBoxMouseMove(evt) {
   if (!isBoxSelecting.value) return;
   const current = store.toTimelineSpace(evt.clientX, evt.clientY);
@@ -2458,6 +2504,26 @@ function updateCycleBoundaryPosition(clientX, clientY) {
   store.updateCycleBoundary(draggingCycleBoundaryId.value, newTime);
 }
 
+function updateEndlinePosition(clientX, clientY) {
+  let newTime = calculateTimeFromClient(clientX, clientY, 0, store.snapStep);
+  if (newTime > store.viewDuration) newTime = store.viewDuration;
+  newTime = Math.max(0, snapTimeToFrame(newTime));
+  if (store.simulationStartline !== null) {
+    newTime = Math.max(newTime, store.simulationStartline);
+  }
+  store.updateSimulationEndline(newTime);
+}
+
+function updateStartlinePosition(clientX, clientY) {
+  let newTime = calculateTimeFromClient(clientX, clientY, 0, store.snapStep);
+  if (newTime > store.viewDuration) newTime = store.viewDuration;
+  newTime = Math.max(0, snapTimeToFrame(newTime));
+  if (store.simulationEndline !== null) {
+    newTime = Math.min(newTime, store.simulationEndline);
+  }
+  store.updateSimulationStartline(newTime);
+}
+
 function updateDragAutoScroll(clientX) {
   if (!tracksContentRef.value) return;
   const rect = store.timelineRect;
@@ -2496,6 +2562,8 @@ function performAutoScroll() {
   store.setTimelineShift(newShift);
   if (draggingSwitchEventId.value) updateSwitchMarkerPosition(lastMouseX, lastMouseY);
   else if (draggingCycleBoundaryId.value) updateCycleBoundaryPosition(lastMouseX, lastMouseY);
+  else if (draggingEndline.value) updateEndlinePosition(lastMouseX, lastMouseY);
+  else if (draggingStartline.value) updateStartlinePosition(lastMouseX, lastMouseY);
   else if (isResizingBattle.value) applyBattleDurationFromClient(lastMouseX, { commit: false });
   else updateDragPosition(lastMouseX);
   autoScrollRaf = requestAnimationFrame(performAutoScroll);
@@ -2561,6 +2629,42 @@ function onWindowMouseMove(evt) {
     updateDragAutoScroll(evt.clientX);
     if (autoScrollSpeed.value === 0) {
       updateCycleBoundaryPosition(evt.clientX, evt.clientY);
+    }
+    return;
+  }
+  if (draggingEndline.value) {
+    if (!isDragStarted.value) {
+      const dist = Math.sqrt(
+        Math.pow(evt.clientX - initialMouseX.value, 2) +
+          Math.pow(evt.clientY - initialMouseY.value, 2),
+      );
+      if (dist > dragThreshold) {
+        isDragStarted.value = true;
+      } else {
+        return;
+      }
+    }
+    updateDragAutoScroll(evt.clientX);
+    if (autoScrollSpeed.value === 0) {
+      updateEndlinePosition(evt.clientX, evt.clientY);
+    }
+    return;
+  }
+  if (draggingStartline.value) {
+    if (!isDragStarted.value) {
+      const dist = Math.sqrt(
+        Math.pow(evt.clientX - initialMouseX.value, 2) +
+          Math.pow(evt.clientY - initialMouseY.value, 2),
+      );
+      if (dist > dragThreshold) {
+        isDragStarted.value = true;
+      } else {
+        return;
+      }
+    }
+    updateDragAutoScroll(evt.clientX);
+    if (autoScrollSpeed.value === 0) {
+      updateStartlinePosition(evt.clientX, evt.clientY);
     }
     return;
   }
@@ -2647,6 +2751,40 @@ function onWindowMouseUp(event) {
     isDragStarted.value = false;
     draggingCycleBoundaryId.value = null;
     cycleBoundaryDragOffsetX.value = 0;
+    document.body.classList.remove('is-dragging');
+    window.removeEventListener('mousemove', onWindowMouseMove);
+    window.removeEventListener('mouseup', onWindowMouseUp);
+    window.removeEventListener('blur', onWindowMouseUp);
+    isMouseDown.value = false;
+    return;
+  }
+
+  if (draggingEndline.value) {
+    if (!isDragStarted.value && wasEndlineSelectedOnPress.value) {
+      store.selectEndline();
+    }
+    if (isDragStarted.value) {
+      store.commitState();
+    }
+    isDragStarted.value = false;
+    draggingEndline.value = false;
+    document.body.classList.remove('is-dragging');
+    window.removeEventListener('mousemove', onWindowMouseMove);
+    window.removeEventListener('mouseup', onWindowMouseUp);
+    window.removeEventListener('blur', onWindowMouseUp);
+    isMouseDown.value = false;
+    return;
+  }
+
+  if (draggingStartline.value) {
+    if (!isDragStarted.value && wasStartlineSelectedOnPress.value) {
+      store.selectStartline();
+    }
+    if (isDragStarted.value) {
+      store.commitState();
+    }
+    isDragStarted.value = false;
+    draggingStartline.value = false;
     document.body.classList.remove('is-dragging');
     window.removeEventListener('mousemove', onWindowMouseMove);
     window.removeEventListener('mouseup', onWindowMouseUp);
@@ -3664,6 +3802,52 @@ defineExpose({
           <div class="cycle-label-text">{{ t('timelineGrid.cycleBoundary') }}</div>
           <div class="cycle-hit-area"></div>
         </div>
+
+        <div
+          v-if="store.simulationStartline !== null"
+          class="startline-guide"
+          :class="{ 'is-selected': store.isStartlineSelected }"
+          :style="{ left: `${store.timeToPx(store.simulationStartline)}px` }"
+          @mousedown.stop="onStartlineMouseDown($event)"
+        >
+          <div class="startline-label-time">
+            {{ store.formatAxisTimeLabel(store.simulationStartline) }}
+          </div>
+          <div class="startline-label-text">{{ t('timelineGrid.simulationStartline') }}</div>
+          <div class="startline-hit-area"></div>
+        </div>
+
+        <div
+          v-if="store.simulationStartline !== null"
+          class="startline-dim-region"
+          :style="{
+            left: '0px',
+            width: `${store.timeToPx(store.simulationStartline)}px`,
+          }"
+        ></div>
+
+        <div
+          v-if="store.simulationEndline !== null"
+          class="endline-guide"
+          :class="{ 'is-selected': store.isEndlineSelected }"
+          :style="{ left: `${store.timeToPx(store.simulationEndline)}px` }"
+          @mousedown.stop="onEndlineMouseDown($event)"
+        >
+          <div class="endline-label-time">
+            {{ store.formatAxisTimeLabel(store.simulationEndline) }}
+          </div>
+          <div class="endline-label-text">{{ t('timelineGrid.simulationEndline') }}</div>
+          <div class="endline-hit-area"></div>
+        </div>
+
+        <div
+          v-if="store.simulationEndline !== null"
+          class="endline-dim-region"
+          :style="{
+            left: `${store.timeToPx(store.simulationEndline)}px`,
+            width: `${store.totalTimelineWidthPx - store.timeToPx(store.simulationEndline)}px`,
+          }"
+        ></div>
 
         <div v-if="alignGuide.visible" class="align-guide-layer">
           <div
@@ -6461,6 +6645,197 @@ body.capture-mode .davinci-range {
   writing-mode: horizontal-tb;
   letter-spacing: normal;
   pointer-events: none;
+}
+
+/* ==========================================================================
+   11b. Simulation Start / End line Styles
+   ========================================================================== */
+.endline-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #cc2222;
+  box-shadow: 0 0 6px #cc2222;
+  pointer-events: auto;
+  cursor: col-resize;
+  z-index: 4;
+  transition:
+    background-color 0.1s,
+    box-shadow 0.1s;
+}
+
+.endline-guide:hover {
+  width: 2px;
+  background: #ee3333;
+  box-shadow: 0 0 8px #ee3333;
+}
+
+.endline-guide.is-selected {
+  background: #fff;
+  box-shadow:
+    0 0 8px #fff,
+    0 0 12px rgba(255, 255, 255, 0.5);
+  z-index: 30;
+  width: 2px;
+}
+
+.endline-guide.is-selected .endline-label-time {
+  background: #fff;
+  color: #000;
+}
+
+.endline-guide.is-selected .endline-label-text {
+  color: #fff;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.endline-label-time {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: fit-content;
+  background: #cc2222;
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: monospace;
+  padding: 2px 4px;
+  border-radius: 0 4px 4px 0;
+  white-space: nowrap;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.endline-label-text {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  width: fit-content;
+  color: #cc2222;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: monospace;
+  padding: 2px 4px;
+  white-space: nowrap;
+  line-height: 1;
+  text-shadow: 0 0 2px rgba(204, 34, 34, 0.5);
+  pointer-events: none;
+}
+
+.endline-hit-area {
+  position: absolute;
+  left: -5px;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 20;
+}
+
+.endline-dim-region {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.startline-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #22cc44;
+  box-shadow: 0 0 6px #22cc44;
+  pointer-events: auto;
+  cursor: col-resize;
+  z-index: 4;
+  transition:
+    background-color 0.1s,
+    box-shadow 0.1s;
+}
+
+.startline-guide:hover {
+  width: 2px;
+  background: #33ee55;
+  box-shadow: 0 0 8px #33ee55;
+}
+
+.startline-guide.is-selected {
+  background: #fff;
+  box-shadow:
+    0 0 8px #fff,
+    0 0 12px rgba(255, 255, 255, 0.5);
+  z-index: 30;
+  width: 2px;
+}
+
+.startline-guide.is-selected .startline-label-time {
+  background: #fff;
+  color: #000;
+}
+
+.startline-guide.is-selected .startline-label-text {
+  color: #fff;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.startline-label-time {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: fit-content;
+  background: #22cc44;
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: monospace;
+  padding: 2px 4px;
+  border-radius: 0 4px 4px 0;
+  white-space: nowrap;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.startline-label-text {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  width: fit-content;
+  color: #22cc44;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: monospace;
+  padding: 2px 4px;
+  white-space: nowrap;
+  line-height: 1;
+  text-shadow: 0 0 2px rgba(34, 204, 68, 0.5);
+  pointer-events: none;
+}
+
+.startline-hit-area {
+  position: absolute;
+  left: -5px;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 20;
+}
+
+.startline-dim-region {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .cycle-hit-area {

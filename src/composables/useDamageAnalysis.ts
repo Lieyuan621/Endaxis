@@ -33,7 +33,10 @@ export function useDamageAnalysis() {
 
     let totalDamage = 0;
     let maxTime = 0;
-    const startlineTime = Number(store.prepDuration) || 0;
+    const startlineTime =
+      store.simulationStartline != null
+        ? Number(store.simulationStartline) || 0
+        : Number(store.prepDuration) || 0;
 
     if (timeline) {
       const actionElementMap = new Map<string, string>();

@@ -245,6 +245,16 @@ function shiftSnapshotTimes(snapshot: ScenarioSnapshot | null | undefined, delta
     snapshot.switchEvents.forEach(shiftStartLike);
   }
 
+  if (snapshot.simulationEndline != null && Number.isFinite(Number(snapshot.simulationEndline))) {
+    snapshot.simulationEndline = shiftVal(snapshot.simulationEndline);
+  }
+  if (
+    snapshot.simulationStartline != null &&
+    Number.isFinite(Number(snapshot.simulationStartline))
+  ) {
+    snapshot.simulationStartline = shiftVal(snapshot.simulationStartline);
+  }
+
   return snapshot;
 }
 
@@ -654,6 +664,9 @@ export const useTimelineStore = defineStore('timeline', () => {
   const inheritedInitialEffects = ref<Record<string, unknown>[]>([]);
   const inheritedInitialEnemyState = ref<Record<string, unknown> | null>(null);
   const simulationEndline = ref<number | null>(null);
+  const simulationStartline = ref<number | null>(null);
+  const isEndlineSelected = ref(false);
+  const isStartlineSelected = ref(false);
   const lmdiAttributionMode = ref<'stacks' | 'applier'>('stacks');
 
   const connectionMap = computed(() => {
@@ -1137,6 +1150,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       customEnemyParams: customEnemyParams.value,
       cycleBoundaries: cycleBoundaries.value,
       switchEvents: switchEvents.value,
+      simulationEndline: simulationEndline.value,
+      simulationStartline: simulationStartline.value,
       inheritedInitialEffects: inheritedInitialEffects.value,
       inheritedInitialEnemyState: inheritedInitialEnemyState.value,
       contingencyContractTags: contingencyContractTags.value,
@@ -1238,6 +1253,14 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     cycleBoundaries.value = snapshot.cycleBoundaries || [];
     switchEvents.value = snapshot.switchEvents || [];
+    simulationEndline.value =
+      snapshot.simulationEndline != null && Number.isFinite(Number(snapshot.simulationEndline))
+        ? Number(snapshot.simulationEndline)
+        : null;
+    simulationStartline.value =
+      snapshot.simulationStartline != null && Number.isFinite(Number(snapshot.simulationStartline))
+        ? Number(snapshot.simulationStartline)
+        : null;
     inheritedInitialEffects.value = Array.isArray(snapshot.inheritedInitialEffects)
       ? JSON.parse(JSON.stringify(snapshot.inheritedInitialEffects))
       : [];
@@ -1274,6 +1297,8 @@ export const useTimelineStore = defineStore('timeline', () => {
           customEnemyParams: customEnemyParams.value,
           cycleBoundaries: cycleBoundaries.value,
           switchEvents: switchEvents.value,
+          simulationEndline: simulationEndline.value,
+          simulationStartline: simulationStartline.value,
           inheritedInitialEffects: inheritedInitialEffects.value,
           inheritedInitialEnemyState: inheritedInitialEnemyState.value,
           contingencyContractTags: contingencyContractTags.value,
@@ -1332,6 +1357,14 @@ export const useTimelineStore = defineStore('timeline', () => {
     switchEvents.value = incoming.switchEvents
       ? JSON.parse(JSON.stringify(incoming.switchEvents))
       : [];
+    simulationEndline.value =
+      incoming.simulationEndline != null && Number.isFinite(Number(incoming.simulationEndline))
+        ? Number(incoming.simulationEndline)
+        : null;
+    simulationStartline.value =
+      incoming.simulationStartline != null && Number.isFinite(Number(incoming.simulationStartline))
+        ? Number(incoming.simulationStartline)
+        : null;
     inheritedInitialEffects.value = Array.isArray(incoming.inheritedInitialEffects)
       ? JSON.parse(JSON.stringify(incoming.inheritedInitialEffects))
       : [];
@@ -1711,6 +1744,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       }));
 
     next.cycleBoundaries = [];
+    next.simulationEndline = null;
+    next.simulationStartline = null;
     next.inheritedInitialEffects = buildInheritedOperatorInitialEffects(inheritedState);
     next.inheritedInitialEnemyState = inheritedState?.enemyCarryover
       ? JSON.parse(JSON.stringify(inheritedState.enemyCarryover))
@@ -3842,6 +3877,56 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
+  function selectEndline() {
+    const wasSel = isEndlineSelected.value;
+    clearSelection();
+    if (!wasSel) isEndlineSelected.value = true;
+  }
+
+  function selectStartline() {
+    const wasSel = isStartlineSelected.value;
+    clearSelection();
+    if (!wasSel) isStartlineSelected.value = true;
+  }
+
+  function setSimulationEndline(time: number) {
+    const t = Math.max(0, Number(time) || 0);
+    simulationEndline.value = t;
+    if (simulationStartline.value != null && simulationStartline.value > t) {
+      simulationStartline.value = t;
+    }
+    commitState();
+  }
+
+  function removeSimulationEndline() {
+    simulationEndline.value = null;
+    isEndlineSelected.value = false;
+    commitState();
+  }
+
+  function updateSimulationEndline(time: number) {
+    simulationEndline.value = Math.max(0, Number(time) || 0);
+  }
+
+  function setSimulationStartline(time: number) {
+    const t = Math.max(0, Number(time) || 0);
+    simulationStartline.value = t;
+    if (simulationEndline.value != null && simulationEndline.value < t) {
+      simulationEndline.value = t;
+    }
+    commitState();
+  }
+
+  function removeSimulationStartline() {
+    simulationStartline.value = null;
+    isStartlineSelected.value = false;
+    commitState();
+  }
+
+  function updateSimulationStartline(time: number) {
+    simulationStartline.value = Math.max(0, Number(time) || 0);
+  }
+
   function setHoveredAction(id: string) {
     hoveredActionId.value = id;
   }
@@ -3860,6 +3945,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     selectedConnectionId.value = null;
     selectedAnomalyId.value = null;
     selectedCycleBoundaryId.value = null;
+    isEndlineSelected.value = false;
+    isStartlineSelected.value = false;
     selectedSwitchEventId.value = null;
     multiSelectedIds.value.clear();
     selectedLibrarySkillId.value = null;
@@ -4122,6 +4209,20 @@ export const useTimelineStore = defineStore('timeline', () => {
     if (selectedSwitchEventId.value) {
       switchEvents.value = switchEvents.value.filter(s => s.id !== selectedSwitchEventId.value);
       selectedSwitchEventId.value = null;
+      commitState();
+      return { total: 1 };
+    }
+
+    if (isEndlineSelected.value) {
+      simulationEndline.value = null;
+      isEndlineSelected.value = false;
+      commitState();
+      return { total: 1 };
+    }
+
+    if (isStartlineSelected.value) {
+      simulationStartline.value = null;
+      isStartlineSelected.value = false;
       commitState();
       return { total: 1 };
     }
@@ -5301,6 +5402,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     switchEvents.value.forEach(e => {
       minTime = Math.min(minTime, Number(e.time) || 0);
     });
+    if (simulationEndline.value != null) {
+      minTime = Math.min(minTime, Number(simulationEndline.value) || 0);
+    }
+    if (simulationStartline.value != null) {
+      minTime = Math.min(minTime, Number(simulationStartline.value) || 0);
+    }
     if (!Number.isFinite(minTime)) minTime = 0;
 
     const minAllowedDelta = -minTime;
@@ -5326,6 +5433,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     switchEvents.value.forEach(e => {
       e.time = shiftVal(e.time);
     });
+    if (simulationEndline.value != null) {
+      simulationEndline.value = shiftVal(simulationEndline.value);
+    }
+    if (simulationStartline.value != null) {
+      simulationStartline.value = shiftVal(simulationStartline.value);
+    }
 
     prepDuration.value = prev + appliedDelta;
     refreshAllActionShifts();
@@ -5360,6 +5473,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     prepDuration,
     prepExpanded,
     battleDuration,
+    trackRowHeightWeights,
+    simulationEndline,
+    simulationStartline,
     isLoading,
     historyStack,
     historyIndex,
@@ -5377,7 +5493,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     initializeOptimizerGameData,
     dropLegacyTimedStatusData,
     normalizePrepConfig,
-    trackRowHeightWeights,
   });
   const {
     initAutoSave,
@@ -5523,6 +5638,18 @@ export const useTimelineStore = defineStore('timeline', () => {
     addCycleBoundary,
     updateCycleBoundary,
     selectCycleBoundary,
+    simulationEndline,
+    simulationStartline,
+    isEndlineSelected,
+    isStartlineSelected,
+    setSimulationEndline,
+    removeSimulationEndline,
+    updateSimulationEndline,
+    selectEndline,
+    setSimulationStartline,
+    removeSimulationStartline,
+    updateSimulationStartline,
+    selectStartline,
     contextMenu,
     openContextMenu,
     closeContextMenu,

@@ -184,6 +184,24 @@ function handleAddCycleBoundary() {
   store.addCycleBoundary(store.contextMenu.time);
   close();
 }
+
+function handleToggleSimulationStartline() {
+  if (store.simulationStartline !== null) {
+    store.removeSimulationStartline();
+  } else {
+    store.setSimulationStartline(store.contextMenu.time);
+  }
+  close();
+}
+
+function handleToggleSimulationEndline() {
+  if (store.simulationEndline !== null) {
+    store.removeSimulationEndline();
+  } else {
+    store.setSimulationEndline(store.contextMenu.time);
+  }
+  close();
+}
 </script>
 
 <template>
@@ -662,6 +680,54 @@ function handleAddCycleBoundary() {
             </svg>
           </span>
           <span class="label">{{ t('contextMenu.addCycleBoundary') }}</span>
+        </div>
+
+        <div class="menu-item" @click="handleToggleSimulationStartline">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="2" x2="12" y2="22"></line>
+              <line x1="8" y1="6" x2="16" y2="6"></line>
+              <line x1="8" y1="18" x2="16" y2="18"></line>
+            </svg>
+          </span>
+          <span class="label">{{
+            store.simulationStartline !== null
+              ? t('contextMenu.removeSimulationStartline')
+              : t('contextMenu.addSimulationStartline')
+          }}</span>
+        </div>
+
+        <div class="menu-item" @click="handleToggleSimulationEndline">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="2" x2="12" y2="22"></line>
+              <line x1="8" y1="6" x2="16" y2="6"></line>
+              <line x1="8" y1="18" x2="16" y2="18"></line>
+            </svg>
+          </span>
+          <span class="label">{{
+            store.simulationEndline !== null
+              ? t('contextMenu.removeSimulationEndline')
+              : t('contextMenu.addSimulationEndline')
+          }}</span>
         </div>
 
         <div class="menu-item has-submenu">

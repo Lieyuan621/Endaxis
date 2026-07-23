@@ -46,6 +46,8 @@ interface PersistenceDeps {
   customEnemyParams: Ref<EnemyConfigState>;
   cycleBoundaries: Ref<CycleBoundary[]>;
   switchEvents: Ref<SwitchEvent[]>;
+  simulationEndline: Ref<number | null>;
+  simulationStartline: Ref<number | null>;
   inheritedInitialEffects: Ref<Record<string, unknown>[]>;
   inheritedInitialEnemyState: Ref<Record<string, unknown> | null>;
   contingencyContractTags: Ref<number[]>;
@@ -93,6 +95,8 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     customEnemyParams,
     cycleBoundaries,
     switchEvents,
+    simulationEndline,
+    simulationStartline,
     inheritedInitialEffects,
     inheritedInitialEnemyState,
     contingencyContractTags,
@@ -137,6 +141,8 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         customEnemyParams,
         cycleBoundaries,
         switchEvents,
+        simulationEndline,
+        simulationStartline,
         inheritedInitialEffects,
         inheritedInitialEnemyState,
         contingencyContractTags,
@@ -159,6 +165,8 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         newCustomParams,
         newBoundaries,
         newSwEvents,
+        newSimEndline,
+        newSimStartline,
         newInheritedInitialEffects,
         newInheritedInitialEnemyState,
         newContingencyContractTags,
@@ -195,6 +203,8 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
             customEnemyParams: newCustomParams,
             cycleBoundaries: newBoundaries,
             switchEvents: newSwEvents,
+            simulationEndline: newSimEndline,
+            simulationStartline: newSimStartline,
             inheritedInitialEffects: newInheritedInitialEffects,
             inheritedInitialEnemyState: newInheritedInitialEnemyState,
             contingencyContractTags: newContingencyContractTags,
@@ -260,6 +270,8 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
           prepExpanded.value = true;
           battleDuration.value = 120;
           trackRowHeightWeights.value = [];
+          simulationEndline.value = null;
+          simulationStartline.value = null;
           inheritedInitialEffects.value = [];
           inheritedInitialEnemyState.value = null;
           recomputeAllTrackOperatorStatuses();
@@ -288,6 +300,8 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     equipmentCategoryOverrides.value = {};
     cycleBoundaries.value = [];
     switchEvents.value = [];
+    simulationEndline.value = null;
+    simulationStartline.value = null;
     inheritedInitialEffects.value = [];
     inheritedInitialEnemyState.value = null;
     prepDuration.value = 5;
@@ -362,6 +376,8 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         customEnemyParams: customEnemyParams.value,
         cycleBoundaries: cycleBoundaries.value,
         switchEvents: switchEvents.value,
+        simulationEndline: simulationEndline.value,
+        simulationStartline: simulationStartline.value,
         inheritedInitialEffects: inheritedInitialEffects.value,
         inheritedInitialEnemyState: inheritedInitialEnemyState.value,
         contingencyContractTags: contingencyContractTags.value,
@@ -472,6 +488,8 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
           weaponOverrides.value = {};
           cycleBoundaries.value = [];
           switchEvents.value = [];
+          simulationEndline.value = null;
+          simulationStartline.value = null;
           equipmentCategoryOverrides.value = {};
           prepDuration.value = 5;
           prepExpanded.value = true;

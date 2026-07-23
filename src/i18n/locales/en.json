@@ -371,6 +371,8 @@
       "gauge": "Gauge"
     },
     "cycleBoundary": "Cycle Boundary",
+    "simulationStartline": "Simulation Startline",
+    "simulationEndline": "Simulation Endline",
     "prep": {
       "title": "Pre-battle Preparation",
       "expand": "Click to Expand",
@@ -552,6 +554,10 @@
     "setTargetPort": "Set Input Point",
     "globalOps": "Global Operations",
     "addCycleBoundary": "Add Cycle Boundary",
+    "addSimulationStartline": "Add Simulation Startline",
+    "removeSimulationStartline": "Remove Simulation Startline",
+    "addSimulationEndline": "Add Simulation Endline",
+    "removeSimulationEndline": "Remove Simulation Endline",
     "addSwitchEvent": "Switch Character Here...",
     "cycleBoundary": "Cycle Boundary",
     "createInheritedScenario": "Create Scenario with Inherited Resources",

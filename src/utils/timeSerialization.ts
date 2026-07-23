@@ -19,6 +19,8 @@ const DIRECT_TIME_KEYS = new Set([
   'logicalStartTime',
   'prepDuration',
   'battleDuration',
+  'simulationEndline',
+  'simulationStartline',
   'staggerBreakDuration',
   'staggerNodeDuration',
   'startTime',

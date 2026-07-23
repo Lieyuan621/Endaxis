@@ -371,6 +371,8 @@
       "gauge": "Заряд"
     },
     "cycleBoundary": "Граница цикла",
+    "simulationStartline": "Начальная линия симуляции",
+    "simulationEndline": "Конечная линия симуляции",
     "prep": {
       "title": "Подготовка к бою",
       "expand": "Нажмите, чтобы развернуть",
@@ -552,6 +554,10 @@
     "setTargetPort": "Установить точку входа",
     "globalOps": "Глобальные операции",
     "addCycleBoundary": "Добавить границу цикла",
+    "addSimulationStartline": "Добавить начальную линию симуляции",
+    "removeSimulationStartline": "Удалить начальную линию симуляции",
+    "addSimulationEndline": "Добавить конечную линию симуляции",
+    "removeSimulationEndline": "Удалить конечную линию симуляции",
     "addSwitchEvent": "Сменить персонажа на...",
     "cycleBoundary": "Граница цикла",
     "createInheritedScenario": "Создать схему с унаследованными ресурсами",

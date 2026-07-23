@@ -371,6 +371,8 @@
       "gauge": "充能"
     },
     "cycleBoundary": "循环分界线",
+    "simulationStartline": "模拟起始线",
+    "simulationEndline": "模拟终止线",
     "prep": {
       "title": "战前准备",
       "expand": "点击展开",
@@ -552,6 +554,10 @@
     "setTargetPort": "设置 入点",
     "globalOps": "全局操作",
     "addCycleBoundary": "添加循环分界线",
+    "addSimulationStartline": "添加模拟起始线",
+    "removeSimulationStartline": "移除模拟起始线",
+    "addSimulationEndline": "添加模拟终止线",
+    "removeSimulationEndline": "移除模拟终止线",
     "addSwitchEvent": "在此处切人...",
     "cycleBoundary": "循环分界线",
     "createInheritedScenario": "继承资源并生成新方案",
