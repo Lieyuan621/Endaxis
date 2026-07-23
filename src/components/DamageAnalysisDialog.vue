@@ -193,19 +193,6 @@ const elementChartOption = computed<ChartOption>(() => ({
               <h3 class="chart-title">{{ t('timeline.analysis.contributionByOperator') }}</h3>
               <div class="lmdi-mode-toggle">
                 <el-tooltip
-                  :content="t('timeline.analysis.lmdiModeStacksTip')"
-                  placement="top"
-                  :show-after="300"
-                >
-                  <button
-                    class="lmdi-mode-btn"
-                    :class="{ active: store.lmdiAttributionMode === 'stacks' }"
-                    @click="store.lmdiAttributionMode = 'stacks'"
-                  >
-                    {{ t('timeline.analysis.lmdiModeStacks') }}
-                  </button>
-                </el-tooltip>
-                <el-tooltip
                   :content="t('timeline.analysis.lmdiModeApplierTip')"
                   placement="top"
                   :show-after="300"
@@ -216,6 +203,19 @@ const elementChartOption = computed<ChartOption>(() => ({
                     @click="store.lmdiAttributionMode = 'applier'"
                   >
                     {{ t('timeline.analysis.lmdiModeApplier') }}
+                  </button>
+                </el-tooltip>
+                <el-tooltip
+                  :content="t('timeline.analysis.lmdiModeStacksTip')"
+                  placement="top"
+                  :show-after="300"
+                >
+                  <button
+                    class="lmdi-mode-btn"
+                    :class="{ active: store.lmdiAttributionMode === 'stacks' }"
+                    @click="store.lmdiAttributionMode = 'stacks'"
+                  >
+                    {{ t('timeline.analysis.lmdiModeStacks') }}
                   </button>
                 </el-tooltip>
               </div>

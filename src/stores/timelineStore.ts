@@ -667,7 +667,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   const simulationStartline = ref<number | null>(null);
   const isEndlineSelected = ref(false);
   const isStartlineSelected = ref(false);
-  const lmdiAttributionMode = ref<'stacks' | 'applier'>('stacks');
+  const lmdiAttributionMode = ref<'stacks' | 'applier'>('applier');
 
   const connectionMap = computed(() => {
     const map = new Map();

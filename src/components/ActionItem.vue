@@ -543,6 +543,9 @@ const renderableHits = computed(() => {
     .map(([id, action]) => ({ id, start: action.realStartTime }))
     .sort((left, right) => right.start - left.start);
 
+  const timeOwnerOnThisTrack = time =>
+    trackActionStarts.find(item => item.start <= time)?.id === props.action.instanceId;
+
   const triggeredHits = (store.simLog || [])
     .filter(entry => entry.type === 'DAMAGE_HIT')
     .filter(entry => entry.payload.hitData?.triggered)
@@ -552,15 +555,20 @@ const renderableHits = computed(() => {
     .filter(entry => {
       const actionId = entry.payload.actionId;
       if (
-        actionId &&
-        !String(actionId).startsWith('triggered:') &&
-        !String(actionId).startsWith('reaction:') &&
-        !String(actionId).startsWith('dot:')
+        !actionId ||
+        String(actionId).startsWith('triggered:') ||
+        String(actionId).startsWith('reaction:') ||
+        String(actionId).startsWith('dot:')
       ) {
-        return actionId === props.action.instanceId;
+        return timeOwnerOnThisTrack(entry.time);
       }
-      const owner = trackActionStarts.find(item => item.start <= entry.time);
-      return owner?.id === props.action.instanceId;
+      // Global procs (e.g. Arcane cluster strike) keep the triggering strike's actionId,
+      // which may be on another track — fall back to time ownership on the damage source track.
+      const attributed = store.compiledTimeline?.actionMap.get(String(actionId));
+      if (!attributed || attributed.trackId !== resolvedAction.trackId) {
+        return timeOwnerOnThisTrack(entry.time);
+      }
+      return actionId === props.action.instanceId;
     })
     .filter(entry => !isCoveredBeforeStart(entry.time))
     .map(entry => {

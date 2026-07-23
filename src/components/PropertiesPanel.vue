@@ -19,10 +19,11 @@ import {
   toLegacyDisplayType,
   toPersistedEditorHits,
 } from '@/utils/hitModel';
+import { translateEffectName } from '@/editor/hits/statusOptions';
 
 const store = useTimelineStore();
 const connectionHandler = useDragConnection();
-const { t, tm } = useI18n({ useScope: 'global' });
+const { t, te, tm } = useI18n({ useScope: 'global' });
 const props = defineProps({
   onResetPanel: {
     type: Function,
@@ -285,6 +286,33 @@ function timeValueFromFrame(value) {
 function updateActionFrameProp(key, value) {
   updateActionProp(key, timeValueFromFrame(value));
 }
+
+function kebabToCamel(value) {
+  return String(value || '').replace(/-([a-z])/g, (_, ch) => ch.toUpperCase());
+}
+
+/** Status-bound ultimate enhancement (`enhancementTime: '<statusId>'`). */
+const statusBoundEnhancementId = computed(() => {
+  const value = targetData.value?.enhancementTime;
+  return typeof value === 'string' && value.length > 0 ? value : '';
+});
+
+const statusBoundEnhancementLabel = computed(() => {
+  const statusId = statusBoundEnhancementId.value;
+  if (!statusId) return '';
+  const candidates = [statusId, kebabToCamel(statusId)];
+  const dash = statusId.indexOf('-');
+  if (dash > 0) candidates.push(kebabToCamel(statusId.slice(dash + 1)));
+  let statusName = statusId;
+  for (const candidate of candidates) {
+    const translated = translateEffectName(t, te, candidate);
+    if (translated && translated !== candidate) {
+      statusName = translated;
+      break;
+    }
+  }
+  return t('propertiesPanel.labels.enhancementFollowsStatus', { status: statusName });
+});
 
 function addDamageTick() {
   const currentTicks = [
@@ -690,7 +718,15 @@ function handleStartConnection(id, type = null) {
 
           <div class="form-group compact" v-if="currentSkillType === 'ultimate'">
             <label>{{ t('propertiesPanel.labels.enhancementTimeS') }}</label>
+            <div
+              v-if="statusBoundEnhancementLabel"
+              class="readonly-field"
+              :title="statusBoundEnhancementId"
+            >
+              {{ statusBoundEnhancementLabel }}
+            </div>
             <CustomNumberInput
+              v-else
               :model-value="frameValue(targetData.enhancementTime || 0)"
               @update:model-value="val => updateActionFrameProp('enhancementTime', val)"
               :step="1"
@@ -1273,6 +1309,20 @@ function handleStartConnection(id, type = null) {
   color: #999;
   margin-bottom: 2px;
   display: block;
+}
+.readonly-field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid #b37feb;
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  text-align: center;
+  background: rgba(179, 127, 235, 0.08);
+  box-sizing: border-box;
 }
 .header-left label {
   font-size: 12px;

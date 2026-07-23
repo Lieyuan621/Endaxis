@@ -387,7 +387,7 @@ export interface EffectBase {
   /**
    * Hit-attached effects normally apply after the hit damage is calculated.
    * `beforeDamage` lets a specific hit effect apply first when its own hit must
-   * benefit from triggers caused by that effect.
+   * benefit from that effect (e.g. self buffs / enemy reactions that feed the hit).
    */
   applyTiming?: ApplyTiming;
 }

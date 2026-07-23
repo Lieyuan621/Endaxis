@@ -132,7 +132,7 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
     runtimeInitialEffects = [],
     runtimeInitialEnemyState = null,
     simulationEndline = null,
-    lmdiAttributionMode = 'stacks',
+    lmdiAttributionMode = 'applier',
     controlledOperatorSegments = [],
   } = input;
 
@@ -156,17 +156,24 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
         superArmor: Number(enemySheet?.superArmor ?? systemConstants?.superArmor) || 0,
         tier: enemySheet?.tier ?? 'normal',
         resistance: enemyResistance,
-        ...(enemySheet?.maxStagger !== undefined ? { maxStagger: enemySheet.maxStagger } : {}),
-        ...(enemySheet?.staggerNodeCount !== undefined
+        // Prefer UI/systemConstants edits; only fill from the preset sheet when absent.
+        ...(systemConstants?.maxStagger === undefined && enemySheet?.maxStagger !== undefined
+          ? { maxStagger: enemySheet.maxStagger }
+          : {}),
+        ...(systemConstants?.staggerNodeCount === undefined &&
+        enemySheet?.staggerNodeCount !== undefined
           ? { staggerNodeCount: enemySheet.staggerNodeCount }
           : {}),
-        ...(enemySheet?.staggerNodeDuration !== undefined
+        ...(systemConstants?.staggerNodeDuration === undefined &&
+        enemySheet?.staggerNodeDuration !== undefined
           ? { staggerNodeDuration: enemySheet.staggerNodeDuration }
           : {}),
-        ...(enemySheet?.staggerBreakDuration !== undefined
+        ...(systemConstants?.staggerBreakDuration === undefined &&
+        enemySheet?.staggerBreakDuration !== undefined
           ? { staggerBreakDuration: enemySheet.staggerBreakDuration }
           : {}),
-        ...(enemySheet?.finisherRecovery !== undefined
+        ...(systemConstants?.executionRecovery === undefined &&
+        enemySheet?.finisherRecovery !== undefined
           ? { executionRecovery: enemySheet.finisherRecovery }
           : {}),
       },

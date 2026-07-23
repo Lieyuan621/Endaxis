@@ -817,6 +817,7 @@
       "spCost": "Расход ОН",
       "gaugeCost": "Стоимость заряда",
       "enhancementTimeS": "Время усиления (f)",
+      "enhancementFollowsStatus": "Следует за {status}",
       "followupDelayS": "Задержка до следующей (f)",
       "comboSegment": "Сегмент комбо",
       "comboLink": "Связь комбо"
