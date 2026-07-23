@@ -2323,6 +2323,58 @@ describe('optimizer-native runtime parity', () => {
     expect(ueEntries.some(entry => entry.payload.sourceId === 'gain-after_inst')).toBe(true);
   });
 
+  it('blocks positive ultimate energy gains during status-bound ultimate enhancement window', () => {
+    const simulation = runScenario([
+      createTrack(
+        'alpha',
+        [
+          createAction('ult', 'ultimate', {
+            startTime: 0,
+            duration: 2,
+            animationTime: 1,
+            enhancementTime: 'arcane-gloompurger-array',
+            gaugeCost: 50,
+            hits: [
+              {
+                offset: 1,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [
+                  {
+                    id: 'arcane-gloompurger-array',
+                    kind: 'status',
+                    target: 'self',
+                    duration: 5,
+                  },
+                ],
+              },
+            ],
+          }),
+          createAction('gain-inside', 'comboSkill', {
+            startTime: 2,
+            duration: 1,
+            gaugeGain: 10,
+          }),
+          createAction('gain-after', 'comboSkill', {
+            startTime: 7,
+            duration: 1,
+            gaugeGain: 10,
+          }),
+        ],
+        {
+          initialGauge: 50,
+          maxGaugeOverride: 100,
+        },
+      ),
+    ]);
+
+    const ueEntries = simulation.simLog.filter(entry => entry.type === 'ULT_ENERGY_CHANGE');
+
+    expect(ueEntries.some(entry => entry.payload.sourceId === 'gain-inside_inst')).toBe(false);
+    expect(ueEntries.some(entry => entry.payload.sourceId === 'gain-after_inst')).toBe(true);
+  });
+
   it('maps optimizer enemy effect layout into ResourceMonitor affliction groups', () => {
     const viz = projectEnemyAfflictionViz({
       positionedSegments: [

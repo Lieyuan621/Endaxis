@@ -2844,12 +2844,18 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   interface FlatSkillLike {
     segments?: (Segment | undefined)[];
+    requisites?: unknown[];
     levelKey?: string;
     cooldown?: number | number[];
     type?: string;
     animationTime?: number;
-    enhancementTime?: number;
+    enhancementTime?: number | string;
     [key: string]: unknown;
+  }
+
+  function resolveEnhancementTime(value: unknown) {
+    if (typeof value === 'string' && value.length > 0) return value;
+    return Number(value) || 0;
   }
 
   function resolveActionRefreshPayload(
@@ -2859,18 +2865,24 @@ export const useTimelineStore = defineStore('timeline', () => {
     levelIndex: number,
   ) {
     const segmentIndex = getActionSegmentIndex(action);
+    const skillRequisites = Array.isArray(flatSkill?.requisites) ? flatSkill.requisites : [];
     if (segmentIndex !== null) {
       const segment = flatSkill?.segments?.[segmentIndex];
       const segmentEntries = segment ? extractRawEntries({ segments: [segment] }, 0) : [];
+      const segmentRequisites = Array.isArray(segment?.requisites) ? segment.requisites : [];
       return {
         rawEntries: segmentEntries,
         duration: Number(segment?.duration) || 0,
         element: segment?.damageGroups?.find(group => group?.element)?.element || action.element,
+        requisites: [...skillRequisites, ...segmentRequisites],
       };
     }
 
     const aggregateRawEntries = extractAggregateRawEntries(flatSkill);
     const segmentPayload = buildResolvedSegmentPayload(skillIdBase, flatSkill, levelIndex);
+    const firstSegmentRequisites = Array.isArray(segmentPayload.segmentPayloads?.[0]?.requisites)
+      ? segmentPayload.segmentPayloads[0].requisites
+      : [];
     return {
       rawEntries: aggregateRawEntries,
       duration: Math.max(
@@ -2878,6 +2890,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         Number(segmentPayload.totalDuration) || Number(flatSkill?.segments?.[0]?.duration) || 0,
       ),
       element: segmentPayload.element || action.element,
+      requisites: [...skillRequisites, ...firstSegmentRequisites],
     };
   }
 
@@ -2922,13 +2935,16 @@ export const useTimelineStore = defineStore('timeline', () => {
       if (refreshPayload.element) {
         action.element = refreshPayload.element;
       }
+      action.requisites = Array.isArray(refreshPayload.requisites)
+        ? refreshPayload.requisites
+        : [];
 
       if (flatSkill.cooldown != null && !action.comboSegmentIndex && !action.attackSegmentIndex) {
         action.cooldown = resolveLevelNumber(flatSkill.cooldown, levelIndex, action.cooldown || 0);
       }
       if (flatSkill.type === 'ultimate') {
         action.animationTime = Number(flatSkill.animationTime) || 0;
-        action.enhancementTime = Number(flatSkill.enhancementTime) || 0;
+        action.enhancementTime = resolveEnhancementTime(flatSkill.enhancementTime);
       }
     });
   }
@@ -5244,13 +5260,12 @@ export const useTimelineStore = defineStore('timeline', () => {
         if (isUltimateLikeAction(action) && !action.isDisabled) {
           const start = snapTimeToFrame(action.startTime);
           const animT = Number(action.animationTime || 0);
-          const enhT = Number(action.enhancementTime || 0);
+          const rawEnhancementTime = action.enhancementTime;
+          const enhT = typeof rawEnhancementTime === 'string' ? 0 : Number(rawEnhancementTime || 0);
 
           let end: number | null = null;
-          if (typeof getUltimateEnhancementExtender(trackId) === 'function' && enhT > 0) {
-            const metrics = getUltimateEnhancementMetrics(action.instanceId ?? '');
-            if (metrics?.finalEnd) end = snapTimeToFrame(metrics.finalEnd);
-          }
+          const metrics = getUltimateEnhancementMetrics(action.instanceId ?? '');
+          if (metrics?.finalEnd) end = snapTimeToFrame(metrics.finalEnd);
 
           if (!end) {
             end = snapTimeToFrame(

@@ -528,6 +528,7 @@ export function buildResolvedSegmentPayload(
       duration: Number(segment?.duration) || 0,
       followupDelay,
       ...(segmentSkillId ? { skillId: segmentSkillId } : {}),
+      ...(segment?.requisites ? { requisites: segment.requisites } : {}),
       ...(segment?.spCost != null ? { spCost: Number(segment.spCost) || 0 } : {}),
       payload: {
         hits: segmentSkillId ? hits.map(hit => ({ ...hit, skillId: segmentSkillId })) : hits,

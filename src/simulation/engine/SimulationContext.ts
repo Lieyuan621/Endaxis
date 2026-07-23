@@ -41,6 +41,8 @@ export interface SimulationContext {
   consumedStacksWriteKeys: Set<string>;
   /** Compute the real-time end point of a duration starting at startTime, accounting for any time freezes within the window. */
   getShiftedTime(startTime: number, duration: number): number;
+  /** Whether the actor is currently inside its own ultimate enhancement window. */
+  isUltimateEnhancementActive: (actorId: string, time: number) => boolean;
   isUltimateEnergyBlocked(actorId: string, time: number): boolean;
   /** Base stat values per track for damage calculation (baseAtk, weaponAtk, attrs, etc.). */
   getBaseStats: (trackId: string) => BaseStatValues | undefined;

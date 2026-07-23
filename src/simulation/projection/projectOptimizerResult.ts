@@ -139,6 +139,7 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
     spSeries,
     gaugeSeriesByTrackId,
     operatorLog,
+    simLog,
   );
 
   return {

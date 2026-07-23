@@ -4,6 +4,7 @@ import type { GaugePoint } from './projectUltimateSeries';
 import { snapTimeToFrame } from '@/utils/time';
 import type { ComboWindowLayout } from './projectComboWindows';
 import type { OperatorStateEvent } from '@/simulation/engine/types';
+import type { SimLogEntry } from '@/simulation/events/event.types';
 
 const COMBO_SKILL_TYPE = 'comboSkill';
 const COMBO_WINDOW_EFFECT_ID_SUFFIX = 'combo-window';
@@ -54,7 +55,13 @@ export type RequisiteWarning =
   | { kind: 'comboWindow' }
   | { kind: 'comboOrder'; blockingTrackId: string }
   | { kind: 'sp'; need: number; current: number }
-  | { kind: 'gauge'; need: number; current: number };
+  | { kind: 'gauge'; need: number; current: number }
+  | {
+      kind: 'skillRequisite';
+      requisiteId: string;
+      messageKey?: string;
+      params?: Record<string, unknown>;
+    };
 
 interface RegisteredTriggerEffect {
   sourceTrackId?: string;
@@ -213,11 +220,12 @@ function requiresComboWindowCheck(track: TrackData): boolean {
  * Build a map of actionId → RequisiteWarning for all skill blocks
  * that cannot execute because their prerequisites are unmet.
  *
- * Four checks:
+ * Checks:
  * - comboSkill  → must overlap a combo window (if the operator has one)
  * - comboSkill  → active combo windows must be consumed in queue order
  * - battleSkill → SP_CHANGE log shows sp < 0 after cost deduction
  * - ultimate     → must have enough gauge at start time
+ * - skill-specific release requisites emitted by the simulator
  *
  * Disabled actions (isDisabled) are skipped entirely.
  * Combo checks use frame-snapped times to avoid floating-point drift
@@ -230,6 +238,7 @@ export function projectRequisiteWarnings(
   spSeries: SpPoint[],
   gaugeSeriesByTrackId: Map<string, GaugePoint[]>,
   operatorLog: OperatorStateEvent[] = [],
+  simLog: SimLogEntry[] = [],
 ): Map<string, RequisiteWarning> {
   const warnings = new Map<string, RequisiteWarning>();
   const spIndex = buildSpIndex(spSeries);
@@ -306,6 +315,20 @@ export function projectRequisiteWarnings(
         continue;
       }
     }
+  }
+
+  // Action-spec requisite
+  // Overrides previous checks
+  for (const entry of simLog) {
+    if (entry.type !== 'ACTION_REQUISITE_FAILED') continue;
+    const actionId = entry.payload?.actionId;
+    if (!actionId) continue;
+    warnings.set(actionId, {
+      kind: 'skillRequisite',
+      requisiteId: entry.payload.requisiteId,
+      messageKey: entry.payload.messageKey,
+      params: entry.payload.params,
+    });
   }
 
   return warnings;

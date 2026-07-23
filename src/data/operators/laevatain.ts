@@ -1,4 +1,4 @@
-import type { Effect, OperatorSheet, StatusEffect } from '../types';
+import type { Effect, OperatorSheet, SkillRequisite, StatusEffect } from '../types';
 
 const GAIN_MELTING_FLAME_EFFECT: StatusEffect = {
   id: 'laevatain-melting-flame',
@@ -13,6 +13,24 @@ const GAIN_MELTING_FLAME_EFFECT: StatusEffect = {
     '/operators/laevatain/magma_3.webp',
     '/operators/laevatain/magma_4.webp',
   ],
+};
+
+const DURING_ULTIMATE_REQUISITE: SkillRequisite = {
+  id: 'laevatain-ultimate-enhancement',
+  condition: { kind: 'ultimateEnhancement' },
+  messageKey: 'actionItem.requisiteTitle.ultimateEnhancementOnly',
+};
+
+const OUTSIDE_ULTIMATE_BASIC_REQUISITE: SkillRequisite = {
+  id: 'laevatain-basic-outside-ultimate-enhancement',
+  condition: { kind: 'not', condition: { kind: 'ultimateEnhancement' } },
+  messageKey: 'actionItem.requisiteTitle.enhancedBasicDuringUltimate',
+};
+
+const OUTSIDE_ULTIMATE_BATTLE_REQUISITE: SkillRequisite = {
+  id: 'laevatain-battle-outside-ultimate-enhancement',
+  condition: { kind: 'not', condition: { kind: 'ultimateEnhancement' } },
+  messageKey: 'actionItem.requisiteTitle.enhancedBattleDuringUltimate',
 };
 
 const createAbsorbHeatInflictionEffects = (): Effect[] =>
@@ -185,6 +203,7 @@ const sheet: OperatorSheet = {
   ],
   combatSkills: {
     basicAttack: {
+      requisites: [OUTSIDE_ULTIMATE_BASIC_REQUISITE],
       segments: [
         {
           duration: 0.367,
@@ -278,6 +297,7 @@ const sheet: OperatorSheet = {
       ],
     },
     battleSkill: {
+      requisites: [OUTSIDE_ULTIMATE_BATTLE_REQUISITE],
       segments: [
         {
           duration: 1.73,
@@ -364,6 +384,7 @@ const sheet: OperatorSheet = {
           group: 'battleSkill',
           name: 'enhancedBattleSkill',
           icon: '/operators/laevatain/ultimate_skill.webp',
+          requisites: [DURING_ULTIMATE_REQUISITE],
           segments: [
             {
               duration: 1.1,
@@ -505,6 +526,7 @@ const sheet: OperatorSheet = {
           id: 'laevatain-basic-attack-during-ultimate',
           group: 'basicAttack',
           name: 'enhancedBasicAttack',
+          requisites: [DURING_ULTIMATE_REQUISITE],
           segments: [
             {
               duration: 0.6,

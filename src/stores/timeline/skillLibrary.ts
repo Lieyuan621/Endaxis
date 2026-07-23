@@ -112,6 +112,11 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       return Math.max(0, Math.min((Number.isFinite(rawLevel) ? rawLevel : 1) - 1, 11));
     };
 
+    const resolveEnhancementTime = (value: unknown) => {
+      if (typeof value === 'string' && value.length > 0) return value;
+      return Number(value) || 0;
+    };
+
     const buildSegmentModels = (
       skillIdBase: string,
       skill: Record<string, unknown>,
@@ -149,6 +154,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       enhancementTime?: any;
       animationTime?: any;
       payload?: any;
+      requisites?: any;
       override?: Record<string, unknown>;
       extra?: Record<string, unknown>;
       sourceSkillKey?: string;
@@ -171,6 +177,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       enhancementTime = 0,
       animationTime = 0,
       payload,
+      requisites,
       override = {},
       extra = {},
       sourceSkillKey = skillId,
@@ -193,6 +200,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         teamGaugeGain,
         enhancementTime,
         animationTime,
+        ...(Array.isArray(requisites) && requisites.length ? { requisites } : {}),
         hits: cloneJsonData(safePayload.hits) || [],
         sourceSkillKey,
         ...(override && typeof override === 'object' ? override : {}),
@@ -228,6 +236,13 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       const skillKey = skill.skillKey || skill.type;
       const cooldown = resolveLevelNumber(skill?.cooldown, levelIndex, 0);
       const segmentData = buildSegmentModels(skillIdBase, skill, levelIndex);
+      const skillRequisites = Array.isArray(skill.requisites) ? skill.requisites : [];
+      const mergeRequisites = (segmentInfo?: Record<string, unknown> | null) => {
+        const segmentRequisites = Array.isArray(segmentInfo?.requisites)
+          ? segmentInfo.requisites
+          : [];
+        return [...skillRequisites, ...segmentRequisites];
+      };
       const gaugeGainDefault =
         skill.type === 'battleSkill'
           ? Number(skill?.ultimateEnergyGain ?? DEFAULT_BATTLE_SKILL_UE) || 0
@@ -239,7 +254,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         gaugeCost: skill.type === 'ultimate' ? Number(skill?.ultimateEnergyCost) || 100 : 0,
         gaugeGain: gaugeGainDefault,
         teamGaugeGain: skill.type === 'battleSkill' ? gaugeGainDefault : 0,
-        enhancementTime: Number(skill?.enhancementTime) || 0,
+        enhancementTime: resolveEnhancementTime(skill?.enhancementTime),
         animationTime:
           skill.type === 'ultimate'
             ? Number(skill?.animationTime) || 0.5
@@ -279,6 +294,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
             icon,
             duration: segmentInfo.duration,
             payload: segmentInfo.payload,
+            requisites: mergeRequisites(segmentInfo),
             override: mergedOverride,
             extra: {
               kind: 'attack_segment',
@@ -311,6 +327,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
             0,
           ),
           payload: segmentData.aggregatePayload,
+          requisites: skillRequisites,
           override: groupOverrideRaw,
           extra: {
             kind: 'attack_group',
@@ -364,6 +381,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
             enhancementTime: idx === 0 ? baseDefaults.enhancementTime : 0,
             animationTime: idx === 0 ? baseDefaults.animationTime : 0,
             payload: segmentInfo.payload,
+            requisites: mergeRequisites(segmentInfo),
             override: segOverride,
             sourceSkillKey: skillId,
             extra: {
@@ -392,6 +410,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
           enhancementTime: baseDefaults.enhancementTime,
           animationTime: baseDefaults.animationTime,
           payload: segmentData.aggregatePayload,
+          requisites: skillRequisites,
           override: globalOverride,
           extra: {
             kind: 'group',
@@ -422,6 +441,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         enhancementTime: baseDefaults.enhancementTime,
         animationTime: baseDefaults.animationTime,
         payload: segmentData.aggregatePayload,
+        requisites: mergeRequisites(segmentData.segmentPayloads[0]),
         override: globalOverride,
       });
     };

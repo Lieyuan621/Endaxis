@@ -4,6 +4,8 @@
 // transient fields — so the sprawling objects declare their common fields and
 // keep an index signature for the rest. Phase 2b decomposition builds on these.
 
+import type { SkillRequisite } from '@/data/types';
+
 /** A skill/action instance placed on a track's timeline. */
 export interface TimelineAction {
   id?: string;
@@ -32,6 +34,10 @@ export interface TimelineAction {
   attackGroupName?: string;
   attackSequenceIndex?: number;
   attackSequenceTotal?: number;
+  skillKey?: string;
+  // TODO: requisites 是由技能身份和当前技能表推导出的运行时字段。
+  //  后续整理存档 schema 时，应在 autosave/export 前剥离，并在加载/编译前统一刷新。
+  requisites?: SkillRequisite[];
   forcedCritHits?: number[];
   locked?: boolean;
   disabled?: boolean;

@@ -5,6 +5,7 @@ import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
 import type { OperatorEffectExpireEvent } from '@/simulation/engine/types';
 import { resolveEffectiveActionSkillType } from '@/simulation/events/actionSkillType';
 import { consumeSourceQueue } from '@/simulation/state/sourceQueue';
+import { evaluateSkillRequisites } from '@/simulation/requisites/evaluateSkillRequisites';
 
 export class ActionStartHandler implements EventHandler<ActionStartEvent> {
   private registry?: TriggerRegistry;
@@ -24,6 +25,7 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
         spCost: isPrepAction ? 0 : e.payload.spCost,
       },
     });
+    this.logRequisiteFailures(e, ctx);
     const spFreezeDuration = isPrepAction ? 0 : this.getSpFreezeDuration(e);
     if (spFreezeDuration > 0) {
       // 暂停SP再生
@@ -74,6 +76,25 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
   private isPrepAction(e: ActionStartEvent, ctx: SimulationContext) {
     const prepEnd = Number(ctx.state.team.config.prepDuration) || 0;
     return prepEnd > 0 && e.time < prepEnd - 1e-6;
+  }
+
+  private logRequisiteFailures(e: ActionStartEvent, ctx: SimulationContext): void {
+    const action = ctx.getAction(e.payload.actionId);
+    if (!action) return;
+
+    for (const failure of evaluateSkillRequisites(action, ctx)) {
+      ctx.simLog({
+        type: 'ACTION_REQUISITE_FAILED',
+        time: e.time,
+        payload: {
+          actionId: e.payload.actionId,
+          actorId: e.payload.actorId,
+          skillId: e.payload.skillId,
+          type: e.payload.type,
+          ...failure,
+        },
+      });
+    }
   }
 
   /** Consume all team-wide link stacks when a battle skill or ultimate starts. */
