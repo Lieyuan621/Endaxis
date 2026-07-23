@@ -253,7 +253,16 @@ export class OperatorEffectState {
       }
       if (entry.skillTypes && (!type || !passesSkillFilter(entry.skillTypes, type))) continue;
       if (entry.skillId && (!skillId || !passesSkillFilter(entry.skillId, skillId))) continue;
-      consumed.push({ id: key, stat: entry.stat, value: entry.value * entry.stacks });
+      const effectName =
+        entry.effect && typeof (entry.effect as { name?: unknown }).name === 'string'
+          ? String((entry.effect as { name: string }).name).trim()
+          : '';
+      consumed.push({
+        id: key,
+        sourceLabel: effectName || key,
+        stat: entry.stat,
+        value: entry.value * entry.stacks,
+      });
       this.oneTimeEffects.delete(key);
     }
     return consumed;

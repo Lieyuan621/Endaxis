@@ -37,7 +37,10 @@ const items = computed(() => {
         const endPx = store.timeToPx(segment.end);
         const showIcon = segment.showIcon !== false;
         const iconOffsetPx = showIcon ? ICON_SIZE + BAR_GAP : 0;
-        const widthPx = Math.max(0, endPx - startPx - iconOffsetPx - BAR_GAP);
+        const showDurationBar = segment.effect?.kind !== 'oneTime';
+        const widthPx = showDurationBar
+          ? Math.max(0, endPx - startPx - iconOffsetPx - BAR_GAP)
+          : 0;
         return {
           key: `${segment.effectId || segment.typeKey}-${segment.start}-${index}`,
           start: segment.start,
@@ -67,10 +70,13 @@ const items = computed(() => {
   return segments
     .map(segment => {
       const leftPx = store.timeToPx(segment.start);
-      const widthPx = Math.max(
-        0,
-        store.timeToPx(segment.end) - store.timeToPx(segment.start) - (ICON_SIZE + BAR_GAP),
-      );
+      const showDurationBar = segment.showDurationBar !== false;
+      const widthPx = showDurationBar
+        ? Math.max(
+            0,
+            store.timeToPx(segment.end) - store.timeToPx(segment.start) - (ICON_SIZE + BAR_GAP),
+          )
+        : 0;
       return {
         ...segment,
         leftPx,

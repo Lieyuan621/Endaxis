@@ -49,7 +49,7 @@ const sheet: GearSetSheet = {
           target: 'teamExcludeSelf',
           value: 16,
           duration: 15,
-          icon: '/equipment/item_equip_t4_suit_usp02_edc_01.webp',
+          icon: '/equipment/usp02/item_equip_t4_suit_usp02_edc_01.webp',
         },
       ],
     },

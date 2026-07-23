@@ -21,7 +21,6 @@ const sheet: GearSetSheet = {
           target: 'owner',
           value: 20,
           maxStacks: 3,
-          duration: 999,
           icon: '/equipment/atk02/item_equip_t4_suit_atk02_edc_04.webp',
         },
       ],

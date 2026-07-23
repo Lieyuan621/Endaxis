@@ -287,15 +287,17 @@ export class TriggerRegistry {
       } else if (t.element) {
         continue; // element-filtered trigger needs an action to match against
       }
+      // Mirror onHit: sourceTrackId = trigger owner (gear/talent wearer), triggeringTrackId =
+      // actor who started the action. Required for global + target:'owner' (e.g. Type-50 Yinglung).
       this.dispatch(
         entry.triggerEffect.effects,
         event.time,
-        actorId,
+        entry.sourceTrackId,
         ctx,
         1,
         undefined,
         entry.sourceSkillType,
-        undefined,
+        actorId,
         event.payload.actionId,
       );
     }

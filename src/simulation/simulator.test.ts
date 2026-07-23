@@ -2507,6 +2507,94 @@ describe('optimizer-native runtime parity', () => {
   });
 });
 
+describe('global onActionStart target owner (Type-50 Yinglung)', () => {
+  it("applies oneTime to the trigger owner when a teammate starts a battle skill", () => {
+    const yinglungTrigger: TriggerEffect = {
+      trigger: { kind: 'onActionStart', skillTypes: 'battleSkill', triggerScope: 'global' },
+      effects: [
+        {
+          id: 'yinglungsEdge',
+          name: 'yinglungsEdge',
+          kind: 'oneTime',
+          stat: { modifier: 'dmgBonus', skillTypes: 'comboSkill' },
+          skillTypes: 'comboSkill',
+          target: 'owner',
+          value: 20,
+          maxStacks: 3,
+          sourceGroup: 'gearSet',
+          icon: '/equipment/atk02/item_equip_t4_suit_atk02_edc_04.webp',
+        } as Effect,
+      ],
+    };
+
+    const result = runScenario(
+      [
+        createTrack('wearer', [
+          createAction('wearer_combo', 'comboSkill', {
+            startTime: 1,
+            hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ]),
+        createTrack('ally', [
+          createAction('ally_bs', 'battleSkill', {
+            startTime: 0,
+            hits: [{ offset: 0, multiplier: 1, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ]),
+      ],
+      registry([{ sourceTrackId: 'wearer', triggerEffect: yinglungTrigger }]),
+    );
+
+    expect(result.operatorLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'OPERATOR_EFFECT_APPLY',
+          id: 'yinglungsEdge',
+          targetTrackId: 'wearer',
+          time: 0,
+        }),
+        expect.objectContaining({
+          type: 'OPERATOR_EFFECT_EXPIRE',
+          id: 'yinglungsEdge',
+          targetTrackId: 'wearer',
+          consumed: true,
+          time: 1,
+        }),
+      ]),
+    );
+
+    const comboHit = result.simLog.find(
+      entry =>
+        entry.type === 'DAMAGE_HIT' &&
+        entry.payload.actionId === 'wearer_combo_inst',
+    );
+    expect(comboHit?.type).toBe('DAMAGE_HIT');
+    if (comboHit?.type === 'DAMAGE_HIT') {
+      expect(comboHit.payload.hitData.consumedStatEffects).toEqual([
+        expect.objectContaining({
+          id: 'yinglungsEdge',
+          sourceLabel: 'yinglungsEdge',
+          value: 20,
+        }),
+      ]);
+      expect(comboHit.payload.hitData._damageBreakdown?.dmgBonusSources).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ label: 'yinglungsEdge', value: 0.2 }),
+        ]),
+      );
+    }
+
+    const layout = projectActionBuffs(result.operatorLog, 5).get('wearer');
+    expect(layout?.lower[0]).toMatchObject({
+      sourceGroup: 'gearSet',
+      stacks: 1,
+      isConsumed: true,
+      showDurationBar: false,
+      effect: expect.objectContaining({ name: 'yinglungsEdge', kind: 'oneTime' }),
+    });
+  });
+});
+
 describe('controlled-operator target scope', () => {
   const cryoTrigger = (): TriggerEffect => ({
     trigger: { kind: 'onActionStart', skillTypes: 'battleSkill', triggerScope: 'global' },
@@ -3371,6 +3459,49 @@ describe('same-timestamp expire and triggered damage', () => {
 });
 
 describe('beforeDamage enemy status freeze extension', () => {
+  it('applies will scaling on beforeDamage enemy susceptibility (Arcane 阵诀·意)', () => {
+    const tracks = [
+      createTrack('A', [
+        createAction('combo', 'comboSkill', {
+          startTime: 0,
+          duration: 1,
+          element: 'nature',
+          hits: [
+            {
+              offset: 0.5,
+              multiplier: 10,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'will-vuln',
+                  kind: 'status',
+                  target: 'enemy',
+                  stat: { modifier: 'susceptibility', elements: ['nature', 'cryo'] },
+                  value: 4,
+                  duration: 6,
+                  applyTiming: 'beforeDamage',
+                  scaling: {
+                    additive: [{ basis: 'will', coefficient: 0.0125 }],
+                    cap: 8,
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const result = runScenario(tracks);
+    const apply = result.enemyLog.find(
+      e => e.type === 'ENEMY_STATUS_APPLY' && e.id === 'will-vuln',
+    );
+    expect(apply).toMatchObject({ type: 'ENEMY_STATUS_APPLY', id: 'will-vuln' });
+    // BASE_STATS.will = 100 → 4 + 100 * 0.0125 = 5.25
+    expect((apply as { value?: number } | undefined)?.value).toBeCloseTo(5.25, 5);
+  });
+
   it('extends beforeDamage enemy status expiry across ultimate freeze (Arcane combo pattern)', () => {
     const tracks = [
       createTrack('A', [

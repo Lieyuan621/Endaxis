@@ -9,8 +9,9 @@ import type { HitEvent, CorrosionTickSimEvent, DotTickSimEvent } from '../events
 import { getReactionDuration } from '@/data/effectPresets';
 import type { EnemyState } from '../state/EnemyState';
 import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
-import type { ArtsReaction, PhysicalStatus, EnemyStat } from '@/data/types';
+import type { ArtsReaction, PhysicalStatus, EnemyStat, ResolvedScalingDef } from '@/data/types';
 import type { ResolvedHit } from '@/simulation/compiler/types';
+import { applyResolvedScaling } from '@/simulation/events/effectDispatch';
 import {
   type ReactionDamageType,
   getReactionMultiplier,
@@ -1437,7 +1438,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     const {
       id,
       stat,
-      value,
       stacks,
       maxStacks,
       expiresAt,
@@ -1449,6 +1449,25 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       actionId,
     } = event;
     if (expiresAt <= time) return;
+
+    // Resolve attribute/stack scaling at apply time so beforeDamage-scheduled
+    // statuses (e.g. Arcane 阵诀·意 combo susceptibility) get live will/intellect.
+    let value = event.value;
+    const effect = event.effect as
+      | { value?: number; scaling?: ResolvedScalingDef; stat?: unknown }
+      | undefined;
+    if (effect?.scaling && effect.stat) {
+      const base = typeof effect.value === 'number' ? effect.value : 0;
+      value = applyResolvedScaling(
+        base,
+        effect.scaling,
+        sourceId,
+        time,
+        ctx,
+        ctx.state.enemy.statusSnapshot(),
+      );
+    }
+
     ctx.state.enemy.applyStatus({
       id,
       stat,

@@ -860,16 +860,9 @@ export function dispatchEnemyEffects(
         );
         break;
       case 'status': {
-        let value = typeof resolved.value === 'number' ? resolved.value : 0;
-        if (resolved.stat && resolved.scaling)
-          value = applyResolvedScaling(
-            value,
-            resolved.scaling as ResolvedScalingDef,
-            sourceId,
-            time,
-            ctx,
-            enemySnap,
-          );
+        // Value scaling is resolved at apply time in EnemyEffectHandler so
+        // beforeDamage-scheduled events also pick up live attribute terms.
+        const value = typeof resolved.value === 'number' ? resolved.value : 0;
         const { duration, stacks, maxStacks } = lifecycle;
         if (duration <= 0) break;
         const baseEffectId = getRuntimeEffectId(resolved);

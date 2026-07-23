@@ -19,7 +19,6 @@ const sheet: GearSetSheet = {
           stat: { modifier: 'dmgBonus', skillTypes: 'battleSkill' },
           skillTypes: 'battleSkill',
           value: 30,
-          duration: 999,
           maxStacks: 2,
           icon: '/equipment/attri01/item_equip_t4_suit_attri01_edc_04.webp',
         },

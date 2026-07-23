@@ -38,6 +38,7 @@ const sheet: OperatorSheet = {
                 duration: [15, 25],
                 snapshot: true,
                 cancelOnRefresh: true,
+                applyTiming: 'beforeDamage',
                 icon: '/operators/rossi/icon_battle_buff_wulfa_blood.webp',
               },
               {
@@ -47,6 +48,7 @@ const sheet: OperatorSheet = {
                 target: 'enemy',
                 value: [6, 12],
                 duration: [15, 25],
+                applyTiming: 'beforeDamage',
                 hide: true,
               },
             ],

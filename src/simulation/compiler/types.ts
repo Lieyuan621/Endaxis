@@ -133,6 +133,10 @@ export interface CompiledScenario {
 export type SpGainKind = 'recover' | 'refund';
 
 export interface ConsumedStatEffect {
+  /** Runtime effect id when consumed from a live oneTime entry. */
+  id?: string;
+  /** Display key preferred over the bare modifier (e.g. `yinglungsEdge`). */
+  sourceLabel?: string;
   stat: OperatorStat;
   value: number;
 }

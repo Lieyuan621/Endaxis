@@ -367,7 +367,10 @@ export function applyConsumedStatEffects(
       case 'dmgBonus':
         stats.dmgBonus += ce.value / 100;
         stats.dmgBonusSources.push({
-          label: typeof ce.stat === 'string' ? ce.stat : ((ce.stat as any)?.modifier ?? 'dmgBonus'),
+          label:
+            (typeof ce.sourceLabel === 'string' && ce.sourceLabel.trim()) ||
+            (typeof ce.id === 'string' && ce.id.trim()) ||
+            (typeof ce.stat === 'string' ? ce.stat : ((ce.stat as any)?.modifier ?? 'dmgBonus')),
           value: ce.value / 100,
         });
         break;

@@ -20,6 +20,8 @@ export interface ActionBuffSegment {
   stacks: number;
   maxStacks: number;
   isConsumed: boolean;
+  /** When false, timeline shows icon/stacks only (no duration bar). */
+  showDurationBar?: boolean;
 }
 
 export interface ActionBuffLayout {
@@ -72,6 +74,7 @@ interface ActionBuffWindow {
   stacks: number;
   maxStacks: number;
   isConsumed: boolean;
+  showDurationBar: boolean;
 }
 
 function looksInternalKey(value: unknown): boolean {
@@ -88,7 +91,7 @@ function isVisibleFriendlyBuff(
   event: OperatorEffectApplyEvent,
   effect: Effect | undefined,
 ): boolean {
-  if (!effect || effect.kind !== 'status') return false;
+  if (!effect || (effect.kind !== 'status' && effect.kind !== 'oneTime')) return false;
   if (effect.hide === true || event.silent === true || (effect as any).silent === true)
     return false;
 
@@ -271,6 +274,8 @@ function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): A
         stacks: apply.stacks,
         maxStacks: apply.maxStacks,
         isConsumed: endEvent?.type === 'consumption',
+        // oneTime lasts until the next matching action — icon+stacks only, no duration bar.
+        showDurationBar: apply.effect?.kind !== 'oneTime',
       });
     });
   });
@@ -314,6 +319,7 @@ export function projectActionBuffs(
       stacks: window.stacks,
       maxStacks: window.maxStacks,
       isConsumed: window.isConsumed,
+      showDurationBar: window.showDurationBar,
     };
 
     if (window.placement === 'upper') {

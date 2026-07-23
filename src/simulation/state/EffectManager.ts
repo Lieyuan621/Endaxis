@@ -89,10 +89,15 @@ export class EffectManager {
     const stacks = Math.max(1, Number(effect.currentStacks ?? effect.stacks) || 1);
     const maxStacks = Math.max(1, Number(effect.maxStacks) || 1);
     const value = Number(effect.value ?? effect.properties?.value) || 0;
+    const sourceLabel =
+      (typeof effect.name === 'string' && effect.name.trim()) ||
+      (typeof effect.sourceLabel === 'string' && effect.sourceLabel.trim()) ||
+      id;
     const existing = this.oneTimeEffects.get(id);
     const nextStacks = Math.min(maxStacks, (existing?.stacks || 0) + stacks);
     this.oneTimeEffects.set(id, {
       id,
+      sourceLabel: existing?.sourceLabel || sourceLabel,
       stat: effect.stat,
       value,
       stacks: nextStacks,
@@ -110,6 +115,7 @@ export class EffectManager {
       if (entry.skillId && (!skillId || !passesSkillFilter(entry.skillId, skillId))) continue;
       consumed.push({
         id: key,
+        sourceLabel: entry.sourceLabel || key,
         stat: entry.stat,
         value: entry.value * entry.stacks,
       });
