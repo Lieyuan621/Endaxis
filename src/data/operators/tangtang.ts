@@ -91,6 +91,7 @@ const sheet: OperatorSheet = {
                 ],
               },
               duration: 15,
+              applyTiming: 'beforeDamage',
               condition: {
                 kind: 'operatorStatus',
                 status: 'tangtang-whirlpools',
@@ -408,6 +409,7 @@ const sheet: OperatorSheet = {
                         ],
                       },
                       duration: 15,
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'operatorStatus',
                         status: 'tangtang-whirlpools',

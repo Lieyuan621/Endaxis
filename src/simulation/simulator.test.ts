@@ -3502,6 +3502,126 @@ describe('beforeDamage enemy status freeze extension', () => {
     expect((apply as { value?: number } | undefined)?.value).toBeCloseTo(5.25, 5);
   });
 
+  it('lets the same hit benefit from beforeDamage enemy susceptibility', () => {
+    function hitDamage(applyTiming: 'beforeDamage' | 'afterDamage') {
+      const tracks = [
+        createTrack('A', [
+          createAction('skill', 'battleSkill', {
+            startTime: 0,
+            duration: 1,
+            element: 'nature',
+            hits: [
+              {
+                offset: 0.5,
+                multiplier: 100,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [
+                  {
+                    id: 'hit-vuln',
+                    kind: 'status',
+                    target: 'enemy',
+                    stat: { modifier: 'susceptibility', elements: ['nature'] },
+                    value: 50,
+                    duration: 10,
+                    applyTiming,
+                  },
+                ],
+              },
+            ],
+          }),
+        ]),
+      ];
+      return damageFor(runScenario(tracks), 'skill_inst');
+    }
+    const after = hitDamage('afterDamage');
+    const before = hitDamage('beforeDamage');
+    expect(before / after).toBeCloseTo(1.5, 2);
+  });
+
+  it('evaluates conditions for beforeDamage enemy status (Tangtang / Ardelia pattern)', () => {
+    function run(withWhirlpools: boolean) {
+      const tracks = [
+        createTrack('A', [
+          createAction('skill', 'battleSkill', {
+            startTime: 0,
+            duration: 1,
+            element: 'nature',
+            hits: [
+              {
+                offset: 0.5,
+                multiplier: 100,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [
+                  {
+                    id: 'cond-vuln',
+                    kind: 'status',
+                    target: 'enemy',
+                    stat: { modifier: 'susceptibility', elements: ['nature'] },
+                    value: 0,
+                    duration: 10,
+                    applyTiming: 'beforeDamage',
+                    scaling: {
+                      additive: [
+                        { key: 'whirlpools', target: 'self', coefficient: 5 },
+                      ],
+                    },
+                    condition: {
+                      kind: 'operatorStatus',
+                      status: 'whirlpools',
+                      consume: true,
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+        ]),
+      ];
+      const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
+      const baseStatsByTrack = new Map<string, BaseStatValues>(
+        actors.map(actor => [actor.id, BASE_STATS]),
+      );
+      return simulate(timeline, teamConfig, enemyConfig, actors, undefined, undefined, {
+        baseStatsByTrack,
+        enemyDef: 100,
+        initialEffects: withWhirlpools
+          ? [
+              {
+                targetTrackId: 'A',
+                id: 'whirlpools',
+                value: 0,
+                stacks: 3,
+                maxStacks: 3,
+                remainingDuration: 30,
+                sourceId: 'A',
+              },
+            ]
+          : [],
+      });
+    }
+
+    const without = run(false);
+    expect(
+      without.enemyLog.some(e => e.type === 'ENEMY_STATUS_APPLY' && e.id === 'cond-vuln'),
+    ).toBe(false);
+
+    const withStacks = run(true);
+    const apply = withStacks.enemyLog.find(
+      e => e.type === 'ENEMY_STATUS_APPLY' && e.id === 'cond-vuln',
+    );
+    expect(apply).toBeTruthy();
+    // 0 + 3 stacks * 5 = 15
+    expect((apply as { value?: number } | undefined)?.value).toBeCloseTo(15, 5);
+    // Same hit should see the vuln (beforeDamage)
+    const dmg = damageFor(withStacks, 'skill_inst');
+    const baseline = damageFor(run(false), 'skill_inst');
+    expect(dmg / baseline).toBeCloseTo(1.15, 2);
+  });
+
   it('extends beforeDamage enemy status expiry across ultimate freeze (Arcane combo pattern)', () => {
     const tracks = [
       createTrack('A', [

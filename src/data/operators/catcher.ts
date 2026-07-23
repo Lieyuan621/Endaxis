@@ -288,7 +288,13 @@ const sheet: OperatorSheet = {
                   offset: 1.53,
                   stagger: 5,
                   effects: [
-                    { kind: 'status', stat: { modifier: 'weaken' }, target: 'enemy', duration: 8 },
+                    {
+                      kind: 'status',
+                      stat: { modifier: 'weaken' },
+                      target: 'enemy',
+                      duration: 8,
+                      applyTiming: 'beforeDamage',
+                    },
                   ],
                 },
               ],

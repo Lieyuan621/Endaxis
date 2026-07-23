@@ -296,6 +296,7 @@ const sheet: OperatorSheet = {
                         ],
                       },
                       duration: 5,
+                      applyTiming: 'beforeDamage',
                     },
                     {
                       kind: 'status',

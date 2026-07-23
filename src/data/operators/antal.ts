@@ -238,6 +238,7 @@ const sheet: OperatorSheet = {
                       stat: { modifier: 'susceptibility', elements: ['electric', 'heat'] },
                       value: [5, 5, 6, 6, 7, 7, 8, 8, 8, 9, 9, 10],
                       duration: 60,
+                      applyTiming: 'beforeDamage',
                       icon: '/operators/antal/icon_battle_antal_buff.webp',
                     },
                   ],
