@@ -112,6 +112,7 @@ export const EFFECT_CONDITION_KINDS = Object.freeze([
   'operatorStatus',
   'operatorHp',
   'comboNotOnCooldown',
+  'ultimateEnhancement',
   'actionLinkConsumed',
   'not',
   'or',

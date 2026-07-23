@@ -50,6 +50,7 @@
     "dirtyHint": "Обновлено",
     "types": {
       "ACTION_START": "Начало действия",
+      "ACTION_REQUISITE_FAILED": "Условие навыка",
       "ACTION_END": "Конец действия",
       "DAMAGE_HIT": "Урон",
       "CD_REDUCTION": "Снижение КД",
@@ -1030,7 +1031,13 @@
       "comboWindow": "Вне окна комбо",
       "comboOrder": "Неверный порядок комбо: сначала используйте комбо {operator}",
       "spInsufficient": "Недостаточно SP, нужно {need}, сейчас {current}",
-      "gaugeInsufficient": "Недостаточно шкалы, нужно {need}, сейчас {current}"
+      "gaugeInsufficient": "Недостаточно шкалы, нужно {need}, сейчас {current}",
+      "skillRequisiteFallback": "Условие активации навыка не выполнено",
+      "ultimateEnhancementOnly": "Можно использовать только во время действия ультимейта",
+      "enhancedBasicDuringUltimate": "Во время действия ультимейта используйте усиленные базовые атаки",
+      "enhancedBattleDuringUltimate": "Во время действия ультимейта используйте усиленные боевые навыки",
+      "enhancedComboDuringUltimate": "Во время действия ультимейта используйте усиленные комбо-навыки",
+      "arcaneUltimateArcanaRequired": "Нельзя использовать ультимейт: сначала выполните две тяжелые атаки или добивания"
     }
   }
 }

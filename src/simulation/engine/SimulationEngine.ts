@@ -284,6 +284,11 @@ export class SimulationEngine {
     return map;
   }
 
+  isUltimateEnhancementActive(actorId: string, time: number) {
+    // TODO 函数的语义需要整理一下
+    return this.isUltimateEnergyBlocked(actorId, time);
+  }
+
   isUltimateEnergyBlocked(actorId: string, time: number) {
     const t = Number(time) || 0;
     const epsilon = 0.0001;
@@ -354,6 +359,7 @@ export class SimulationEngine {
       elementByTrackId: new Map(this.actors.map(a => [a.id, a.element])),
       consumedStacksWriteKeys: this.consumedStacksWriteKeys,
       getShiftedTime: this.getShiftedTime.bind(this),
+      isUltimateEnhancementActive: this.isUltimateEnhancementActive.bind(this),
       isUltimateEnergyBlocked: this.isUltimateEnergyBlocked.bind(this),
       getAllActions: () => this.timeline.actions,
       getBaseStats: (trackId: string) => this.baseStatsByTrack.get(trackId),

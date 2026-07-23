@@ -148,6 +148,75 @@ describe('projectRequisiteWarnings combo queue order', () => {
     expect(warnings.has('chen-combo')).toBe(false);
   });
 
+  it('projects skill-requisite diagnostics emitted by the simulator', () => {
+    const warnings = projectRequisiteWarnings(
+      [{ id: 'laevatain', actions: [{ instanceId: 'enhanced', type: 'battleSkill', startTime: 1 }] }],
+      new Map(),
+      [],
+      new Map(),
+      [],
+      [
+        {
+          type: 'ACTION_REQUISITE_FAILED',
+          time: 1,
+          payload: {
+            actionId: 'enhanced',
+            actorId: 'laevatain',
+            skillId: 'enhancedBattleSkill',
+            type: 'battleSkill',
+            requisiteId: 'laevatain-ultimate-enhancement',
+            messageKey: 'actionItem.requisiteTitle.ultimateEnhancementOnly',
+          },
+        },
+      ],
+    );
+
+    expect(warnings.get('enhanced')).toEqual({
+      kind: 'skillRequisite',
+      requisiteId: 'laevatain-ultimate-enhancement',
+      messageKey: 'actionItem.requisiteTitle.ultimateEnhancementOnly',
+      params: undefined,
+    });
+  });
+
+  it('lets skill-requisite diagnostics override generic resource warnings', () => {
+    const warnings = projectRequisiteWarnings(
+      [
+        {
+          id: 'arcane',
+          actions: [
+            { instanceId: 'arcane-ultimate', type: 'ultimate', startTime: 1, gaugeCost: 100 },
+          ],
+        },
+      ],
+      new Map(),
+      [],
+      new Map([['arcane', [{ time: 0, val: 0, ratio: 0 }]]]),
+      [],
+      [
+        {
+          type: 'ACTION_REQUISITE_FAILED',
+          time: 1,
+          payload: {
+            actionId: 'arcane-ultimate',
+            actorId: 'arcane',
+            skillId: 'ultimate',
+            type: 'ultimate',
+            requisiteId: 'arcane-ultimate-arcana-ready',
+            messageKey: 'actionItem.requisiteTitle.arcaneUltimateArcanaRequired',
+          },
+        },
+      ],
+    );
+
+    expect(warnings.get('arcane-ultimate')).toEqual({
+      kind: 'skillRequisite',
+      requisiteId: 'arcane-ultimate-arcana-ready',
+      messageKey: 'actionItem.requisiteTitle.arcaneUltimateArcanaRequired',
+      params: undefined,
+    });
+  });
+
   it('orders split combo-window segments by their original window start', () => {
     const warnings = projectRequisiteWarnings(
       [

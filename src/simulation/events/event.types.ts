@@ -217,6 +217,18 @@ export type SimLogEntry =
       }
     >
   | SimLogEntryBase<
+      'ACTION_REQUISITE_FAILED',
+      {
+        actionId: string;
+        actorId: string;
+        skillId: string;
+        type: ActionType;
+        requisiteId: string;
+        messageKey?: string;
+        params?: Record<string, unknown>;
+      }
+    >
+  | SimLogEntryBase<
       'ACTION_END',
       {
         skillId: string;

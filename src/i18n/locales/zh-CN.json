@@ -50,6 +50,7 @@
     "dirtyHint": "有更新",
     "types": {
       "ACTION_START": "动作开始",
+      "ACTION_REQUISITE_FAILED": "释放条件",
       "ACTION_END": "动作结束",
       "DAMAGE_HIT": "伤害",
       "CD_REDUCTION": "冷却缩减",
@@ -1147,7 +1148,13 @@
       "comboWindow": "不在连携窗口内",
       "comboOrder": "连携技释放顺序错误，需先释放{operator}的连携技",
       "spInsufficient": "技力不足，需要{need}，当前{current}",
-      "gaugeInsufficient": "终结技能量不足，需要{need}，当前{current}"
+      "gaugeInsufficient": "终结技能量不足，需要{need}，当前{current}",
+      "skillRequisiteFallback": "技能释放条件不满足",
+      "ultimateEnhancementOnly": "只能在终结技持续期间释放",
+      "enhancedBasicDuringUltimate": "终结技持续期间应释放强化普攻",
+      "enhancedBattleDuringUltimate": "终结技持续期间应释放强化战技",
+      "enhancedComboDuringUltimate": "终结技持续期间应释放强化连携",
+      "arcaneUltimateArcanaRequired": "无法释放终结技，需进行两次重击或处决"
     }
   }
 }
