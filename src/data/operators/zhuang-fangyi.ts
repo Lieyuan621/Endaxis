@@ -1,4 +1,28 @@
-import type { OperatorSheet, HitGroup, Effect } from '../types';
+import type { OperatorSheet, HitGroup, Effect, SkillRequisite } from '../types';
+
+const DURING_ULTIMATE_REQUISITE: SkillRequisite = {
+  id: 'zhuang-fangyi-ultimate-enhancement',
+  condition: { kind: 'ultimateEnhancement' },
+  messageKey: 'actionItem.requisiteTitle.ultimateEnhancementOnly',
+};
+
+const OUTSIDE_ULTIMATE_BASIC_REQUISITE: SkillRequisite = {
+  id: 'zhuang-fangyi-basic-outside-ultimate-enhancement',
+  condition: { kind: 'not', condition: { kind: 'ultimateEnhancement' } },
+  messageKey: 'actionItem.requisiteTitle.enhancedBasicDuringUltimate',
+};
+
+const OUTSIDE_ULTIMATE_BATTLE_REQUISITE: SkillRequisite = {
+  id: 'zhuang-fangyi-battle-outside-ultimate-enhancement',
+  condition: { kind: 'not', condition: { kind: 'ultimateEnhancement' } },
+  messageKey: 'actionItem.requisiteTitle.enhancedBattleDuringUltimate',
+};
+
+const OUTSIDE_ULTIMATE_COMBO_REQUISITE: SkillRequisite = {
+  id: 'zhuang-fangyi-combo-outside-ultimate-enhancement',
+  condition: { kind: 'not', condition: { kind: 'ultimateEnhancement' } },
+  messageKey: 'actionItem.requisiteTitle.enhancedComboDuringUltimate',
+};
 
 const BATTLE_FIRST_HIT_EFFECTS: Effect[] = [
   {
@@ -503,6 +527,7 @@ const sheet: OperatorSheet = {
   ],
   combatSkills: {
     basicAttack: {
+      requisites: [OUTSIDE_ULTIMATE_BASIC_REQUISITE],
       segments: [
         {
           duration: 0.5,
@@ -590,6 +615,7 @@ const sheet: OperatorSheet = {
       ],
     },
     battleSkill: {
+      requisites: [OUTSIDE_ULTIMATE_BATTLE_REQUISITE],
       segments: [
         {
           duration: 0.7,
@@ -611,6 +637,7 @@ const sheet: OperatorSheet = {
         {
           group: 'battleSkill',
           name: 'enhancedBattleSkill',
+          requisites: [DURING_ULTIMATE_REQUISITE],
           segments: [
             {
               duration: 0.7,
@@ -632,6 +659,7 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      requisites: [OUTSIDE_ULTIMATE_COMBO_REQUISITE],
       comboWindow: {
         triggers: [
           {
@@ -710,6 +738,7 @@ const sheet: OperatorSheet = {
         {
           group: 'comboSkill',
           name: 'enhancedComboSkill',
+          requisites: [DURING_ULTIMATE_REQUISITE],
           segments: [
             {
               duration: 1.2,
@@ -790,6 +819,7 @@ const sheet: OperatorSheet = {
         {
           group: 'basicAttack',
           name: 'enhancedBasicAttack',
+          requisites: [DURING_ULTIMATE_REQUISITE],
           segments: [
             {
               duration: 0.73,

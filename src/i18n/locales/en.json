@@ -50,6 +50,7 @@
     "dirtyHint": "Updated",
     "types": {
       "ACTION_START": "Action start",
+      "ACTION_REQUISITE_FAILED": "Release prerequisite",
       "ACTION_END": "Action end",
       "DAMAGE_HIT": "Damage",
       "CD_REDUCTION": "CD reduction",
@@ -1147,7 +1148,13 @@
       "comboWindow": "Not in combo window",
       "comboOrder": "Wrong combo skill order. Release {operator}'s combo skill first",
       "spInsufficient": "Insufficient SP, need {need}, current {current}",
-      "gaugeInsufficient": "Insufficient gauge, need {need}, current {current}"
+      "gaugeInsufficient": "Insufficient gauge, need {need}, current {current}",
+      "skillRequisiteFallback": "Skill release prerequisite is not met",
+      "ultimateEnhancementOnly": "Can only be released during the ultimate duration",
+      "enhancedBasicDuringUltimate": "Use enhanced basic attacks during the ultimate duration",
+      "enhancedBattleDuringUltimate": "Use enhanced battle skills during the ultimate duration",
+      "enhancedComboDuringUltimate": "Use enhanced combo skills during the ultimate duration",
+      "arcaneUltimateArcanaRequired": "Cannot release ultimate. Perform two heavy attacks or finishers first"
     }
   }
 }

@@ -244,7 +244,7 @@ export interface OperatorHpCondition {
 
 export interface NegatedCondition {
   kind: 'not';
-  condition: EnemyCondition | OperatorCondition | EnemyStaggeredCondition | OrCondition;
+  condition: EffectCondition;
 }
 
 export interface OrCondition {
@@ -264,6 +264,11 @@ export interface OperatorComboCdCondition {
   kind: 'comboNotOnCooldown';
 }
 
+/** True while the source operator is inside its own ultimate enhancement window. */
+export interface UltimateEnhancementCondition {
+  kind: 'ultimateEnhancement';
+}
+
 export type EffectCondition =
   | EnemyCondition
   | EnemyHpCondition
@@ -271,9 +276,19 @@ export type EffectCondition =
   | OperatorCondition
   | OperatorHpCondition
   | OperatorComboCdCondition
+  | UltimateEnhancementCondition
   | ActionLinkConsumedCondition
   | NegatedCondition
   | OrCondition;
+
+/** A prerequisite that must be satisfied before a skill/action can be released. */
+export interface SkillRequisite {
+  /** Stable id used by tests, diagnostics, and UI/i18n lookup. */
+  id: string;
+  condition: EffectCondition | EffectCondition[];
+  messageKey?: string;
+  params?: Record<string, unknown>;
+}
 
 // ─── Leveled value type ──────────────────────────────────────────────────────
 
@@ -890,6 +905,8 @@ export interface CombatSkillEntry {
     }[];
     duration: number;
   };
+  /** Release-time prerequisites shared by this skill and its segments. */
+  requisites?: SkillRequisite[];
 }
 
 /**
@@ -961,6 +978,8 @@ export interface SubSkillEntry {
   effects?: Effect[];
   icon?: string;
   cooldown?: Leveled<number>;
+  /** Release-time prerequisites shared by this sub-skill and its segments. */
+  requisites?: SkillRequisite[];
 }
 
 /** Picks the active form from resolved (equipment + general-form) attributes. */
@@ -1147,6 +1166,8 @@ export interface Segment {
   /** Per-segment SP cost for multi-stage battle skills. */
   spCost?: number;
   damageGroups: (HitGroup | TickGroup)[];
+  /** Release-time prerequisites that only apply to this segment. */
+  requisites?: SkillRequisite[];
 }
 
 export interface SystemConstants {

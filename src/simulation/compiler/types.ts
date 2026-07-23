@@ -1,7 +1,13 @@
 import type { ActorSnapshot, EnemyConfig, TeamConfig } from '@/simulation/state/types.ts';
 import type { OperatorStatus, ComputedEnemyStatus } from '@/types';
 import type { TimeContext } from '@/simulation/compiler/timeContext.ts';
-import type { Effect, EffectCondition, OperatorStat, ResolvedScalingDef } from '@/data/types';
+import type {
+  Effect,
+  EffectCondition,
+  OperatorStat,
+  ResolvedScalingDef,
+  SkillRequisite,
+} from '@/data/types';
 import type { DamageBreakdown } from '@/data/stats/computeDamage';
 import type { BaseStatValues } from '@/data/stats/types';
 
@@ -223,6 +229,10 @@ export interface Action {
   instanceId: string;
   type: ActionType;
   skillId: string;
+  skillKey?: string;
+  sourceSkillKey?: string;
+  segmentIndex?: number;
+  attackSegmentIndex?: number;
   name: string;
   startTime: number;
   logicalStartTime: number;
@@ -254,6 +264,7 @@ export interface Action {
   sourceWeaponId?: string | null;
   hits: Hit[];
   effects?: CompiledEffect[];
+  requisites?: SkillRequisite[];
 
   isLocked?: boolean;
   customBars?: any[];

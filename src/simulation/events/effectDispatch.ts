@@ -276,6 +276,9 @@ export function evaluateEffectCondition(
     const cooldownEnd = startTime + cd - cdReduction;
     return time >= cooldownEnd;
   }
+  if (cond.kind === 'ultimateEnhancement') {
+    return ctx.isUltimateEnhancementActive(sourceTrackId, time);
+  }
   if (cond.kind === 'enemyStaggered') {
     return ctx.state.enemy.isBroken(time);
   }

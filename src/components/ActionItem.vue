@@ -14,7 +14,7 @@ const emit = defineEmits(['hit-click']);
 
 const store = useTimelineStore();
 const connectionHandler = useDragConnection();
-const { t } = useI18n({ useScope: 'global' });
+const { t, te } = useI18n({ useScope: 'global' });
 const TYPE_SHORTHAND = {
   basicAttack: 'A',
   dive: 'D',
@@ -197,6 +197,12 @@ const requisiteTitle = computed(() => {
       need: fmt(w.need ?? 0),
       current: fmt(w.current ?? 0),
     });
+  if (w.kind === 'skillRequisite') {
+    if (w.messageKey && te(w.messageKey)) {
+      return t(w.messageKey, w.params || {});
+    }
+    return t('actionItem.requisiteTitle.skillRequisiteFallback');
+  }
   return '';
 });
 

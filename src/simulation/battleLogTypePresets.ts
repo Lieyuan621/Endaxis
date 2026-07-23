@@ -10,6 +10,7 @@ const DAMAGE_TYPES = Object.freeze([
   'ULT_ENERGY_CHANGE',
   'CD_REDUCTION',
   'ACTION_START',
+  'ACTION_REQUISITE_FAILED',
   'ACTION_END',
 ]);
 

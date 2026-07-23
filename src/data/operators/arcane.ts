@@ -1,5 +1,5 @@
 import { map, range } from 'lodash';
-import type { OperatorSheet, ArtsElement, TriggerEffect, Effect } from '../types';
+import type { OperatorSheet, ArtsElement, TriggerEffect, Effect, SkillRequisite } from '../types';
 
 const INFLICTIONS: ArtsElement[] = ['cryo', 'electric', 'nature', 'heat'];
 const INFLICTION_STATUSES = INFLICTIONS.map(x => `${x}Infliction`);
@@ -39,6 +39,18 @@ const COMBO_SKILL_EFFECTS: Effect[] = INFLICTIONS.map(x => ({
     consume: true,
   },
 }));
+
+const ULTIMATE_ARCANA_REQUISITE: SkillRequisite = {
+  id: 'arcane-ultimate-arcana-ready',
+  condition: {
+    kind: 'or',
+    conditions: [
+      { kind: 'not', condition: { kind: 'ultimateEnhancement' } },
+      { kind: 'operatorStatus', status: 'arcane-gloompurge-arcana-ready' },
+    ],
+  },
+  messageKey: 'actionItem.requisiteTitle.arcaneUltimateArcanaRequired',
+};
 
 const sheet: OperatorSheet = {
   new: true,
@@ -453,6 +465,7 @@ const sheet: OperatorSheet = {
             ],
           },
           ultimate: {
+            requisites: [ULTIMATE_ARCANA_REQUISITE],
             segments: [
               {
                 duration: 2.417,
@@ -861,6 +874,7 @@ const sheet: OperatorSheet = {
             ],
           },
           ultimate: {
+            requisites: [ULTIMATE_ARCANA_REQUISITE],
             segments: [
               {
                 duration: 2.417,

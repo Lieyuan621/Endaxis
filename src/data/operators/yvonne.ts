@@ -1,4 +1,16 @@
-import type { OperatorSheet, Effect } from '../types';
+import type { OperatorSheet, Effect, SkillRequisite } from '../types';
+
+const DURING_ULTIMATE_REQUISITE: SkillRequisite = {
+  id: 'yvonne-ultimate-enhancement',
+  condition: { kind: 'ultimateEnhancement' },
+  messageKey: 'actionItem.requisiteTitle.ultimateEnhancementOnly',
+};
+
+const OUTSIDE_ULTIMATE_BASIC_REQUISITE: SkillRequisite = {
+  id: 'yvonne-basic-outside-ultimate-enhancement',
+  condition: { kind: 'not', condition: { kind: 'ultimateEnhancement' } },
+  messageKey: 'actionItem.requisiteTitle.enhancedBasicDuringUltimate',
+};
 
 const ENHANCED_BASIC_ATTACK_MULTIPLIER = [
   8.9, 9.8, 10.7, 11.6, 12.5, 13.4, 14.3, 15.1, 16, 17.2, 18.5, 20,
@@ -194,6 +206,7 @@ const sheet: OperatorSheet = {
   ],
   combatSkills: {
     basicAttack: {
+      requisites: [OUTSIDE_ULTIMATE_BASIC_REQUISITE],
       segments: [
         {
           duration: 0.567,
@@ -431,6 +444,7 @@ const sheet: OperatorSheet = {
         {
           group: 'basicAttack',
           name: 'enhancedBasicAttack',
+          requisites: [DURING_ULTIMATE_REQUISITE],
           segments: [
             {
               duration: 7.25,
