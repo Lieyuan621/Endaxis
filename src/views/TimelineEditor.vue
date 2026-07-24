@@ -31,9 +31,15 @@ import {
 import {
   findLibrarySkillByType,
   findLibrarySkillForPlaceRematch,
+  getCycledTrackIndex,
   getLibrarySkillTypeFromHotkeyCode,
   getTrackIndexFromHotkeyEvent,
 } from '@/utils/librarySkillHotkeys';
+import {
+  hasVisibleElementPlusDialog,
+  isEditableShortcutTarget,
+  isTimelineShortcutScopeBlocked as hasBlockedTimelineShortcutScope,
+} from '@/utils/shortcutScope';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -509,6 +515,7 @@ const shortcutHelpSections = computed(() => {
       title: t('timeline.shortcuts.sections.tracksSkills'),
       items: [
         { keys: 'F1 – F4', desc: t('timeline.shortcuts.items.selectTrack') },
+        { keys: 'Tab / Shift + Tab', desc: t('timeline.shortcuts.items.cycleOperatorTrack') },
         {
           keys: '1',
           desc: t('timeline.shortcuts.items.placeSkill', {
@@ -545,7 +552,10 @@ const shortcutHelpSections = computed(() => {
             skill: t('hitEditor.skillTypes.finisher'),
           }),
         },
-        { keys: t('timeline.shortcuts.keys.cancelPlace'), desc: t('timeline.shortcuts.items.cancelPlace') },
+        {
+          keys: t('timeline.shortcuts.keys.cancelPlace'),
+          desc: t('timeline.shortcuts.items.cancelPlace'),
+        },
       ],
     },
     {
@@ -556,7 +566,10 @@ const shortcutHelpSections = computed(() => {
         { keys: t('timeline.shortcuts.keys.copy'), desc: t('timeline.shortcuts.items.copy') },
         { keys: t('timeline.shortcuts.keys.paste'), desc: t('timeline.shortcuts.items.paste') },
         { keys: t('timeline.shortcuts.keys.delete'), desc: t('timeline.shortcuts.items.delete') },
-        { keys: t('timeline.shortcuts.keys.nudgeLeft'), desc: t('timeline.shortcuts.items.nudgeLeft') },
+        {
+          keys: t('timeline.shortcuts.keys.nudgeLeft'),
+          desc: t('timeline.shortcuts.items.nudgeLeft'),
+        },
         {
           keys: t('timeline.shortcuts.keys.nudgeRight'),
           desc: t('timeline.shortcuts.items.nudgeRight'),
@@ -573,6 +586,14 @@ const shortcutHelpSections = computed(() => {
         {
           keys: t('timeline.shortcuts.keys.boxSelect'),
           desc: t('timeline.shortcuts.items.boxSelect'),
+        },
+        {
+          keys: t('timeline.shortcuts.keys.multiSelect'),
+          desc: t('timeline.shortcuts.items.multiSelect'),
+        },
+        {
+          keys: t('timeline.shortcuts.keys.panTimeline'),
+          desc: t('timeline.shortcuts.items.panTimeline'),
         },
         {
           keys: t('timeline.shortcuts.keys.snapPrecision'),
@@ -878,20 +899,18 @@ function claimShortcutEvent(e) {
 }
 
 function handleGlobalKeydown(e) {
-  const target = e.target;
-  if (
-    target &&
-    (target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT' ||
-      target.isContentEditable)
-  )
-    return;
+  if (isEditableShortcutTarget(e.target) || isTimelineShortcutScopeBlocked()) return;
 
   if (e.key === 'Escape' && store.isLibraryPlaceMode) {
     claimShortcutEvent(e);
     store.cancelLibraryPlace();
     ElMessage.info({ message: t('timeline.shortcut.placeCancelled'), duration: 800 });
+    return;
+  }
+
+  if (e.key === 'Tab' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+    claimShortcutEvent(e);
+    handleLibraryTrackCycleHotkey(e.shiftKey ? -1 : 1);
     return;
   }
 
@@ -1004,6 +1023,35 @@ function handleLibraryTrackHotkey(trackIndex) {
   if (!track?.id) {
     timelineGridRef.value?.openCharacterSelector(trackIndex);
   }
+}
+
+function isTimelineShortcutScopeBlocked() {
+  // 临时方案：当前由页面聚合弹窗状态来保护全局快捷键。
+  // 后续应抽成注册式 shortcut scope，由弹窗、编辑器、拖拽态统一注册当前作用域。
+  return hasBlockedTimelineShortcutScope({
+    hasOpenElementPlusDialog: hasVisibleElementPlusDialog(),
+    hasOpenDialog:
+      analysisDialogVisible.value ||
+      shortcutsDialogVisible.value ||
+      exportDialogVisible.value ||
+      smallImageExportVisible.value ||
+      importShareDialogVisible.value,
+    hasTimelineGridDialog: Boolean(timelineGridRef.value?.hasOpenDialog?.()),
+  });
+}
+
+function handleLibraryTrackCycleHotkey(direction) {
+  const trackIndex = getCycledTrackIndex(
+    store.activeTrackIndex,
+    store.tracks.length,
+    direction,
+    index => Boolean(store.tracks[index]?.id),
+  );
+  if (trackIndex === null) {
+    ElMessage.warning({ message: t('timeline.shortcut.cycleNeedsOperator'), duration: 1200 });
+    return;
+  }
+  handleLibraryTrackHotkey(trackIndex);
 }
 
 function handleLibrarySkillHotkey(skillType) {

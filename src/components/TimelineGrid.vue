@@ -22,6 +22,15 @@ import { toLegacyDisplayType } from '@/utils/hitModel';
 import { EQUIPMENT_LEVELS, getEquipmentLevelColor } from '@/utils/equipmentLevels';
 import { mergeEquipmentElementPairEffects } from '@/utils/equipmentEffectDisplay';
 import { getTrackOperatorFormName } from '@/utils/operatorFormDisplay';
+import { hasAnyTimelineGridDialogState } from '@/utils/shortcutScope';
+import {
+  BOX_SELECT_SOURCE_MODIFIER,
+  BOX_SELECT_SOURCE_TOOLBAR,
+  isClickOnlyBox,
+  isTemporaryBoxSelectGesture,
+  shouldShowBoxSelectionToast,
+  shouldStartTimelinePan,
+} from '@/utils/timelineSelectionGestures';
 import { sampleSpSeriesAtTime } from '@/simulation/projection/projectSpSeries';
 import { getGearPiece, getEnemy, getOperator } from '@/data';
 import {
@@ -93,6 +102,8 @@ const wasStartlineSelectedOnPress = ref(false);
 const switchEventDragOffsetX = ref(0);
 const cycleBoundaryDragOffsetX = ref(0);
 const dragStartMouseTime = ref(0);
+const isTimelinePanning = ref(false);
+let timelinePanState = null;
 
 // === 边缘自动滚动相关状态 ===
 const autoScrollSpeed = ref(0);
@@ -118,6 +129,22 @@ let trackResizeState = null;
 const isBoxSelecting = ref(false);
 const boxStart = ref({ x: 0, y: 0 });
 const boxRect = ref({ left: 0, top: 0, width: 0, height: 0 });
+const boxSelectSource = ref(BOX_SELECT_SOURCE_TOOLBAR);
+
+// 临时方案：通过排除交互元素来判断“时间轴空白处”；后续可抽成基于时间轴层级的命中测试。
+const TIMELINE_BLANK_TARGET_BLOCKLIST_SELECTOR = [
+  '.action-item-wrapper',
+  '.switch-tag',
+  '.cycle-guide',
+  '.battle-start-handle',
+  '.battle-end-handle',
+  '.track-divider-handle',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  '[contenteditable="true"]',
+].join(',');
 
 const draggingTrackOrderIndex = ref(null);
 const reorderDropTargetIndex = ref(null);
@@ -460,6 +487,18 @@ function openStatDetail(index) {
   const track = store.tracks[index];
   if (!track?.id || !track.operatorStatus) return;
   statDetailTrackIndex.value = index;
+}
+
+function hasOpenDialog() {
+  // 临时方案：先把内部弹窗状态暴露给页面级快捷键守卫。
+  // 后续应由弹窗自身注册 shortcut scope，避免父组件依赖 TimelineGrid 的内部状态。
+  return hasAnyTimelineGridDialogState({
+    operator: isSelectorVisible.value,
+    weapon: isWeaponSelectorVisible.value,
+    equipment: isEquipmentSelectorVisible.value,
+    statDetail: isStatDetailVisible.value,
+    hitDetail: showHitDetail.value,
+  });
 }
 
 const trackOperatorFormNames = computed(() => {
@@ -1204,9 +1243,7 @@ function getActiveSetBonusLabel(trackId) {
   if (!Array.isArray(cats) || cats.length === 0) return '';
   return cats
     .map(cat =>
-      typeof store.getSetBonusDisplayName === 'function'
-        ? store.getSetBonusDisplayName(cat)
-        : cat,
+      typeof store.getSetBonusDisplayName === 'function' ? store.getSetBonusDisplayName(cat) : cat,
     )
     .filter(Boolean)
     .join(' / ');
@@ -1530,7 +1567,9 @@ const activePrepDuration = computed(() =>
   prepDurationPreview.value !== null ? prepDurationPreview.value : store.prepDuration,
 );
 
-const activeBattleDuration = computed(() => Number(store.battleDuration) || store.DEFAULT_BATTLE_DURATION);
+const activeBattleDuration = computed(
+  () => Number(store.battleDuration) || store.DEFAULT_BATTLE_DURATION,
+);
 
 const battleEndPxRounded = computed(() => {
   const prep = Number(store.prepDuration) || 0;
@@ -1973,7 +2012,9 @@ const currentStaggerValue = computed(() => {
   }
   return Math.floor(points[points.length - 1].val);
 });
-const currentStaggerMax = computed(() => Math.max(0, Number(store.systemConstants.maxStagger) || 0));
+const currentStaggerMax = computed(() =>
+  Math.max(0, Number(store.systemConstants.maxStagger) || 0),
+);
 const currentStaggerText = computed(() => {
   const max = currentStaggerMax.value;
   if (!max) return String(currentStaggerValue.value);
@@ -2088,17 +2129,92 @@ function onGridMouseLeave() {
 }
 
 function onContentMouseDown(evt) {
-  if (store.isBoxSelectMode) {
-    evt.stopPropagation();
-    evt.preventDefault();
-    isBoxSelecting.value = true;
-    boxStart.value = store.toTimelineSpace(evt.clientX, evt.clientY);
-    boxRect.value = { left: boxStart.value.x, top: boxStart.value.y, width: 0, height: 0 };
-    window.addEventListener('mousemove', onBoxMouseMove);
-    window.addEventListener('mouseup', onBoxMouseUp);
+  if (
+    shouldStartTimelinePan({
+      button: evt.button,
+      isBlankTarget: isTimelineBlankTarget(evt.target),
+    })
+  ) {
+    beginTimelinePan(evt);
+    return;
+  }
+
+  if (store.isBoxSelectMode || isTemporaryBoxSelectEvent(evt)) {
+    beginBoxSelection(
+      evt,
+      store.isBoxSelectMode ? BOX_SELECT_SOURCE_TOOLBAR : BOX_SELECT_SOURCE_MODIFIER,
+    );
     return;
   }
   onBackgroundClick(evt);
+}
+
+function isTimelineBlankTarget(target) {
+  if (!target?.closest?.('.tracks-content-viewport')) return false;
+  return !target.closest(TIMELINE_BLANK_TARGET_BLOCKLIST_SELECTOR);
+}
+
+function beginTimelinePan(evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+
+  timelinePanState = {
+    startX: evt.clientX,
+    startY: evt.clientY,
+    timelineShift: store.timelineShift,
+    scrollTop: tracksContentRef.value?.scrollTop || 0,
+  };
+  isTimelinePanning.value = true;
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = 'grabbing';
+
+  window.addEventListener('mousemove', onTimelinePanMouseMove);
+  window.addEventListener('mouseup', endTimelinePan);
+  window.addEventListener('blur', endTimelinePan);
+}
+
+function onTimelinePanMouseMove(evt) {
+  if (!isTimelinePanning.value || !timelinePanState) return;
+  if ((evt.buttons & 4) === 0) {
+    endTimelinePan();
+    return;
+  }
+
+  evt.preventDefault();
+  store.setTimelineShift(timelinePanState.timelineShift + timelinePanState.startX - evt.clientX);
+
+  const scroller = tracksContentRef.value;
+  if (scroller) {
+    scroller.scrollTop = timelinePanState.scrollTop + timelinePanState.startY - evt.clientY;
+    store.setScrollTop(scroller.scrollTop);
+  }
+}
+
+function endTimelinePan() {
+  if (!isTimelinePanning.value) return;
+  isTimelinePanning.value = false;
+  timelinePanState = null;
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
+  window.removeEventListener('mousemove', onTimelinePanMouseMove);
+  window.removeEventListener('mouseup', endTimelinePan);
+  window.removeEventListener('blur', endTimelinePan);
+}
+
+function isTemporaryBoxSelectEvent(evt) {
+  return isTemporaryBoxSelectGesture(evt, store.isLibraryPlaceMode);
+}
+
+function beginBoxSelection(evt, source = BOX_SELECT_SOURCE_TOOLBAR) {
+  if (evt.button !== 0) return;
+  evt.stopPropagation();
+  evt.preventDefault();
+  boxSelectSource.value = source;
+  isBoxSelecting.value = true;
+  boxStart.value = store.toTimelineSpace(evt.clientX, evt.clientY);
+  boxRect.value = { left: boxStart.value.x, top: boxStart.value.y, width: 0, height: 0 };
+  window.addEventListener('mousemove', onBoxMouseMove);
+  window.addEventListener('mouseup', onBoxMouseUp);
 }
 
 function onCycleLineMouseDown(evt, boundaryId) {
@@ -2187,6 +2303,15 @@ function onBoxMouseUp() {
   window.removeEventListener('mousemove', onBoxMouseMove);
   window.removeEventListener('mouseup', onBoxMouseUp);
   const box = boxRect.value;
+  const isModifierSelect = boxSelectSource.value === BOX_SELECT_SOURCE_MODIFIER;
+  const isClickOnly = isClickOnlyBox(box.width, box.height, dragThreshold);
+
+  if (isModifierSelect && isClickOnly) {
+    boxRect.value = { left: 0, top: 0, width: 0, height: 0 };
+    boxSelectSource.value = BOX_SELECT_SOURCE_TOOLBAR;
+    return;
+  }
+
   const selection = {
     left: box.width > 0 ? box.left : box.left + box.width,
     top: box.height > 0 ? box.top : box.top + box.height,
@@ -2219,12 +2344,19 @@ function onBoxMouseUp() {
     });
   });
   if (foundIds.length > 0) {
-    store.setMultiSelection(foundIds);
-    ElMessage.success(t('timelineGrid.selection.selectedCount', { count: foundIds.length }));
-  } else {
+    if (isModifierSelect) {
+      store.toggleActionsMultiSelection(foundIds);
+    } else {
+      const nextIds = store.setMultiSelection(foundIds);
+      if (shouldShowBoxSelectionToast(boxSelectSource.value)) {
+        ElMessage.success(t('timelineGrid.selection.selectedCount', { count: nextIds.length }));
+      }
+    }
+  } else if (!isModifierSelect) {
     store.clearSelection();
   }
   boxRect.value = { left: 0, top: 0, width: 0, height: 0 };
+  boxSelectSource.value = BOX_SELECT_SOURCE_TOOLBAR;
 }
 
 // ===================================================================================
@@ -2405,6 +2537,12 @@ function onBackgroundContextMenu(evt) {
 
 function onActionMouseDown(evt, track, action) {
   evt.stopPropagation();
+  if (evt.button === 0 && evt.ctrlKey) {
+    evt.preventDefault();
+    store.toggleActionMultiSelection(action.instanceId);
+    return;
+  }
+
   if (action.isLocked) {
     if (evt.button === 0) {
       store.selectAction(action.instanceId);
@@ -2613,8 +2751,7 @@ function performAutoScroll() {
   // stays pinned and the handle can only move within the current viewport.
   if (isResizingBattle.value && autoScrollSpeed.value > 0) {
     const prep = Number(store.prepDuration) || 0;
-    const needEndPx =
-      store.timelineShift + store.timelineRect.width + autoScrollSpeed.value;
+    const needEndPx = store.timelineShift + store.timelineRect.width + autoScrollSpeed.value;
     const needDuration = Math.max(0, store.pxToTime(needEndPx) - prep);
     if (needDuration > (Number(store.battleDuration) || 0)) {
       store.setBattleDuration(needDuration, { commit: false });
@@ -3134,7 +3271,10 @@ onUnmounted(() => {
   window.removeEventListener('mouseup', onWindowMouseUp);
   window.removeEventListener('mousemove', onBoxMouseMove);
   window.removeEventListener('mouseup', onBoxMouseUp);
+  window.removeEventListener('mousemove', onTimelinePanMouseMove);
+  window.removeEventListener('mouseup', endTimelinePan);
   window.removeEventListener('blur', resetModifierKeys);
+  window.removeEventListener('blur', endTimelinePan);
   window.removeEventListener('mouseup', onGlobalWindowMouseUp);
   window.removeEventListener('mousemove', onPrepResizeMouseMove);
   window.removeEventListener('mouseup', onPrepResizeMouseUp);
@@ -3146,6 +3286,7 @@ onUnmounted(() => {
 
 defineExpose({
   openCharacterSelector,
+  hasOpenDialog,
 });
 </script>
 
@@ -3394,19 +3535,10 @@ defineExpose({
           <span class="prep-duration-unit">f</span>
         </div>
 
-        <div
-          class="battle-end-line"
-          :style="{ left: `${battleEndPxRounded}px` }"
-        >
-          <div
-            class="battle-end-handle"
-            @mousedown.stop.prevent="onBattleResizeMouseDown"
-          ></div>
+        <div class="battle-end-line" :style="{ left: `${battleEndPxRounded}px` }">
+          <div class="battle-end-handle" @mousedown.stop.prevent="onBattleResizeMouseDown"></div>
         </div>
-        <div
-          class="battle-end-controls"
-          :style="{ left: `${battleEndPxRounded}px` }"
-        >
+        <div class="battle-end-controls" :style="{ left: `${battleEndPxRounded}px` }">
           <button
             type="button"
             class="prep-mini-btn"
@@ -3729,7 +3861,8 @@ defineExpose({
                     v-if="trackOperatorFormNames[index]"
                     class="operator-form-badge"
                     :title="trackOperatorFormNames[index]"
-                  >{{ trackOperatorFormNames[index] }}</span>
+                    >{{ trackOperatorFormNames[index] }}</span
+                  >
                 </span>
               </div>
             </div>
@@ -3842,6 +3975,7 @@ defineExpose({
       @mousemove="onGridMouseMove"
       @mouseleave="onGridMouseLeave"
       @contextmenu="onBackgroundContextMenu"
+      @auxclick.prevent
     >
       <div
         class="tracks-content-scroller"
@@ -4097,14 +4231,8 @@ defineExpose({
               @mousedown.stop.prevent="onPrepResizeMouseDown"
             ></div>
           </div>
-          <div
-            class="battle-end-line"
-            :style="{ left: `${battleEndPxRounded}px` }"
-          >
-            <div
-              class="battle-end-handle"
-              @mousedown.stop.prevent="onBattleResizeMouseDown"
-            ></div>
+          <div class="battle-end-line" :style="{ left: `${battleEndPxRounded}px` }">
+            <div class="battle-end-handle" @mousedown.stop.prevent="onBattleResizeMouseDown"></div>
           </div>
           <div
             v-if="activePrepDuration > 0 && !store.prepExpanded"

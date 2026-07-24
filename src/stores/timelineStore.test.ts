@@ -156,4 +156,19 @@ describe('timeline skill library editing', () => {
       ),
     ).toBe(true);
   });
+
+  it('toggles multiple actions through the shared action selection path', () => {
+    const store = useTimelineStore();
+
+    store.selectConnection('conn-1');
+    expect(store.selectedConnectionId).toBe('conn-1');
+
+    store.toggleActionsMultiSelection(['a-1', 'a-2']);
+    expect([...store.multiSelectedIds].sort()).toEqual(['a-1', 'a-2']);
+    expect(store.selectedActionId).toBeNull();
+    expect(store.selectedConnectionId).toBeNull();
+
+    store.toggleActionsMultiSelection(['a-2', 'a-3']);
+    expect([...store.multiSelectedIds].sort()).toEqual(['a-1', 'a-3']);
+  });
 });
