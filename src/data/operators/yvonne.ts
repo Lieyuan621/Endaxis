@@ -185,18 +185,20 @@ const sheet: OperatorSheet = {
           hit: {
             effects: [
               {
+                // Applied on the ult cast marker hit (before animationTime so interrupt
+                // from enhanced BA cannot drop it). Duration covers cast + enhancement.
                 kind: 'status',
                 stat: { modifier: 'atkPercent' },
                 target: 'self',
                 value: 10,
-                duration: 7,
+                duration: 9.1,
               },
               {
                 kind: 'status',
                 stat: { modifier: 'critDmg' },
                 target: 'self',
                 value: 30,
-                duration: 7,
+                duration: 9.1,
               },
             ],
           },
@@ -432,8 +434,11 @@ const sheet: OperatorSheet = {
               element: 'cryo',
               hits: [
                 {
+                  // Marker for P5 / potential ult-start buffs. Must fire before
+                  // animationTime (2.03) — enhanced BA starting at anim end interrupts
+                  // the ultimate and drops any hit at/after that time.
                   id: 'yvonne-ultimate',
-                  offset: 2.13,
+                  offset: 0,
                 },
               ],
             },

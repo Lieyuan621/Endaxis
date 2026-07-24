@@ -12,6 +12,7 @@ import { collectTriggerEffects, patchCombatSkills } from '@/data/collect';
 import estellaSheet from '@/data/operators/estella';
 import perlicaSheet from '@/data/operators/perlica';
 import mifuSheet from '@/data/operators/mifu';
+import yvonneSheet from '@/data/operators/yvonne';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
 import type { Effect, TriggerEffect } from '@/data/types';
@@ -4026,5 +4027,89 @@ describe('independent enemy status instance ids', () => {
     );
     expect(removed).toBe(false);
     expect(damageFor(throughSolidify, 'yvonne_ba_inst')).toBeGreaterThan(baseline);
+  });
+});
+
+describe('Yvonne potential 5 ultimate buffs', () => {
+  it('applies P5 ATK/critDmg even when enhanced BA interrupts the ultimate cast', () => {
+    const hits = resolveOperatorSheetHits(yvonneSheet, 'ultimate', 0, 11, 5);
+    const marker = hits.find(hit => hit.id === 'yvonne-ultimate');
+    expect(marker).toBeTruthy();
+    expect(Number(marker?.offset) || 0).toBeLessThan(2.03);
+    expect(marker?.effects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'status',
+          stat: { modifier: 'atkPercent' },
+          value: 10,
+        }),
+        expect.objectContaining({
+          kind: 'status',
+          stat: { modifier: 'critDmg' },
+          value: 30,
+        }),
+      ]),
+    );
+
+    const result = runScenario([
+      createTrack('yvonne', [
+        createAction('ult', 'ultimate', {
+          startTime: 0,
+          duration: 2.13,
+          animationTime: 2.03,
+          enhancementTime: 7,
+          element: 'cryo',
+          hits: [
+            {
+              id: 'yvonne-ultimate',
+              offset: Number(marker!.offset) || 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: marker!.effects as Effect[],
+            },
+          ],
+        }),
+        createAction('enhanced_ba', 'basicAttack', {
+          startTime: 2.03,
+          duration: 1,
+          element: 'cryo',
+          hits: [{ offset: 0.3, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ]);
+
+    expect(result.operatorLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'OPERATOR_EFFECT_APPLY',
+          targetTrackId: 'yvonne',
+          stat: { modifier: 'atkPercent' },
+          value: 10,
+        }),
+        expect.objectContaining({
+          type: 'OPERATOR_EFFECT_APPLY',
+          targetTrackId: 'yvonne',
+          stat: { modifier: 'critDmg' },
+          value: 30,
+        }),
+      ]),
+    );
+    expect(damageFor(result, 'enhanced_ba_inst')).toBeGreaterThan(
+      damageFor(
+        runScenario([
+          createTrack('yvonne', [
+            createAction('enhanced_ba', 'basicAttack', {
+              startTime: 2.03,
+              duration: 1,
+              element: 'cryo',
+              hits: [{ offset: 0.3, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+            }),
+          ]),
+        ]),
+        'enhanced_ba_inst',
+      ),
+    );
   });
 });

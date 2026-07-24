@@ -475,7 +475,7 @@ async function processFile(file) {
     if (fileExtension === 'png') {
       const metadata = await readMetadataFromPng(file, 'EndaxisData');
       if (metadata) {
-        const success = store.importShareString(metadata);
+        const success = await store.importShareString(metadata);
         if (success) {
           ElMessage.success(t('timeline.import.pngSuccess'));
           return true;
