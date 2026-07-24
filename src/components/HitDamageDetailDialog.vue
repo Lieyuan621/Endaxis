@@ -21,6 +21,14 @@ const pct = value => `${((Number(value) || 0) * 100).toFixed(1)}%`;
 const mult = value => `x${(Number(value) || 0).toFixed(3)}`;
 const num = value => Math.floor(Number(value) || 0).toLocaleString();
 
+/** enemyResistance - resistanceIgnore - resistanceShred; omit zero subtrahends. */
+function formatResistanceDetail(breakdown) {
+  const parts = [pct(breakdown.enemyResistance)];
+  if (Number(breakdown.resistanceIgnore) || 0) parts.push(pct(breakdown.resistanceIgnore));
+  if (Number(breakdown.resistanceShred) || 0) parts.push(pct(breakdown.resistanceShred));
+  return parts.join(' - ');
+}
+
 function tr(key, fallback) {
   const value = t(key);
   return value === key ? fallback : value;
@@ -230,7 +238,7 @@ const multiplierRows = computed(() => {
     ];
     rows.push({
       label: t('hitDetail.resMult'),
-      detail: `${pct(b.enemyResistance)} - ${pct(b.resistanceIgnore)} - ${pct(b.resistanceShred)}`,
+      detail: formatResistanceDetail(b),
       value: mult(b.resMult),
       tooltip: resLines.length ? resLines.join('\n') : undefined,
     });
