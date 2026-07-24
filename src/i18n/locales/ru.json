@@ -452,6 +452,9 @@
     },
     "toolbar": {
       "boxSelect": "Рамка (Ctrl+B)",
+      "buffLayoutCompact": "Компактный",
+      "buffLayoutLoose": "Свободный",
+      "buffLayoutMode": "Раскладка баффов: {mode}",
       "connectionTool": "Связи (Alt+L)",
       "cursorGuide": "Направляющие (Ctrl+G)",
       "snapPrecision": "Точность привязки (Alt+S)"

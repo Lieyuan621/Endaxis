@@ -107,7 +107,6 @@ const TRACK_ROW_BASE_PADDING = 30;
 const TRACK_ROW_MIN_PADDING = 8;
 const TRACK_ROW_BASE_HEIGHT = TRACK_HEIGHT + TRACK_ROW_BASE_PADDING * 2;
 const TRACK_ROW_MIN_HEIGHT = TRACK_HEIGHT + TRACK_ROW_MIN_PADDING * 2;
-const OPERATOR_BUFF_ROW_HEIGHT = 24;
 const EQUIPMENT_BUFF_LANE_PITCH = 22;
 const BUFF_LAYER_MARGIN = 4;
 const TRACKS_VERTICAL_PADDING = 20;
@@ -245,6 +244,16 @@ const trackRowHeights = computed(() => {
 const displayTrackRowHeights = computed(() => {
   const preview = trackRowHeightPreview.value;
   if (Array.isArray(preview) && preview.length === store.tracks.length) return preview;
+  if (store.buffLayoutMode === 'loose') {
+    return store.tracks.map((_, index) => {
+      const { rowHeight } = getTrackBuffAdjustedRowMetrics(
+        index,
+        TRACK_ROW_BASE_PADDING,
+        TRACK_ROW_BASE_HEIGHT,
+      );
+      return rowHeight;
+    });
+  }
   return trackRowHeights.value;
 });
 
@@ -259,6 +268,22 @@ const trackDividerOffsets = computed(() => {
 
   return offsets;
 });
+
+/** Full scrollable tracks column height (padding + all rows). */
+const tracksContentHeightPx = computed(() => {
+  const heights = displayTrackRowHeights.value;
+  const rowsHeight = heights.reduce((sum, height) => sum + (Number(height) || 0), 0);
+  const contentHeight = TRACKS_VERTICAL_PADDING * 2 + rowsHeight;
+  // Never shorter than the viewport so prep/bg still fills empty space in compact mode.
+  return Math.max(contentHeight, tracksViewportHeight.value || 0);
+});
+
+const tracksScrollerStyle = computed(() => ({
+  transform: `translateX(${-store.timelineShift}px)`,
+  willChange: 'transform',
+  height: `${tracksContentHeightPx.value}px`,
+  minHeight: '100%',
+}));
 
 function getTrackRowStyle(index) {
   const requestedRowHeight = displayTrackRowHeights.value[index] ?? TRACK_ROW_BASE_HEIGHT;
@@ -292,15 +317,52 @@ function getTrackInfoStyle(index) {
   };
 }
 
-function getTrackBuffAdjustedRowMetrics(index, basePadding, requestedRowHeight) {
+function getTrackBuffContentPaddingNeeds(index) {
+  const track = store.tracks[index];
+  if (!track?.id || !store.isOperatorEffectsVisible(index)) {
+    return { topNeed: 0, bottomNeed: 0 };
+  }
+
+  const operatorLayout = store.operatorEffectLayouts.get(track.id);
+  const upperNeed = Math.max(0, Number(operatorLayout?.groupHeights?.[0]) || 0);
+
+  const actionBuffLayout = store.trackBuffLayouts.get(track.id);
+  const lowerLaneCount = Math.max(0, Number(actionBuffLayout?.lowerLaneCount) || 0);
+  const lowerNeed =
+    lowerLaneCount > 0 ? lowerLaneCount * EQUIPMENT_BUFF_LANE_PITCH : 0;
+
   return {
-    topPadding: basePadding,
-    bottomPadding: basePadding,
-    rowHeight: requestedRowHeight,
+    topNeed: upperNeed > 0 ? upperNeed + BUFF_LAYER_MARGIN : 0,
+    bottomNeed: lowerNeed > 0 ? lowerNeed + BUFF_LAYER_MARGIN : 0,
+  };
+}
+
+function getTrackBuffAdjustedRowMetrics(index, basePadding, requestedRowHeight) {
+  if (store.buffLayoutMode !== 'loose') {
+    return {
+      topPadding: basePadding,
+      bottomPadding: basePadding,
+      rowHeight: requestedRowHeight,
+    };
+  }
+
+  // Symmetric padding keeps the 50px lane (and avatar/name) centered in the row.
+  const { topNeed, bottomNeed } = getTrackBuffContentPaddingNeeds(index);
+  const pad = Math.max(
+    TRACK_ROW_BASE_PADDING,
+    TRACK_ROW_MIN_PADDING,
+    topNeed,
+    bottomNeed,
+  );
+  return {
+    topPadding: pad,
+    bottomPadding: pad,
+    rowHeight: TRACK_HEIGHT + pad * 2,
   };
 }
 
 function beginTrackResize(index, event) {
+  if (store.buffLayoutMode === 'loose') return;
   if (event.button !== 0) return;
   event.preventDefault();
   const rowHeights = trackRowHeights.value;
@@ -3020,6 +3082,17 @@ watch(
   },
 );
 
+watch(
+  () => [store.buffLayoutMode, displayTrackRowHeights.value.slice()],
+  () => {
+    nextTick(() => {
+      updateTrackRects();
+      forceSvgUpdate();
+      updateScrollbarHeight();
+    });
+  },
+);
+
 onMounted(() => {
   migrateLegacyTrackLayoutWeights();
   if (tracksContentRef.value) {
@@ -3147,6 +3220,48 @@ defineExpose({
               <path d="M5 4h14c3 0 3 8 0 8h-14c-3 0-3 8 0 8h14" />
               <circle cx="5" cy="4" r="2" fill="currentColor" />
               <circle cx="19" cy="20" r="2" fill="currentColor" />
+            </svg>
+          </button>
+
+          <button
+            class="mini-tool-btn"
+            :class="{ 'is-active': store.buffLayoutMode === 'loose' }"
+            @click="store.toggleBuffLayoutMode"
+            :title="
+              t('timelineGrid.toolbar.buffLayoutMode', {
+                mode: t(
+                  store.buffLayoutMode === 'loose'
+                    ? 'timelineGrid.toolbar.buffLayoutLoose'
+                    : 'timelineGrid.toolbar.buffLayoutCompact',
+                ),
+              })
+            "
+          >
+            <svg
+              v-if="store.buffLayoutMode === 'loose'"
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            >
+              <line x1="4" y1="5" x2="20" y2="5" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="19" x2="20" y2="19" />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            >
+              <line x1="4" y1="8" x2="20" y2="8" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="16" x2="20" y2="16" />
             </svg>
           </button>
         </div>
@@ -3728,25 +3843,34 @@ defineExpose({
       @mouseleave="onGridMouseLeave"
       @contextmenu="onBackgroundContextMenu"
     >
-      <div v-if="trackDividerOffsets.length" class="track-divider-overlay" aria-hidden="true">
+      <div
+        class="tracks-content-scroller"
+        :style="tracksScrollerStyle"
+      >
         <div
-          v-for="(offset, index) in trackDividerOffsets"
-          :key="`track-divider-${index}`"
-          class="track-divider-handle"
-          :class="{ 'is-active': draggingTrackResizeIndex === index }"
-          :style="{
-            top: `${offset - store.timelineScrollTop}px`,
-            left: `${prepZoneWidthPxRounded}px`,
-            '--track-divider-prep-offset': `${prepZoneWidthPxRounded}px`,
-          }"
-          @pointerdown.stop="beginTrackResize(index, $event)"
-          @dblclick.stop="resetTrackLayoutWeights"
+          v-if="trackDividerOffsets.length"
+          class="track-divider-overlay"
+          :class="{ 'is-loose': store.buffLayoutMode === 'loose' }"
+          :style="{ width: `${Math.max(totalWidthComputed, 0)}px` }"
+          aria-hidden="true"
         >
-          <div class="track-divider-line"></div>
+          <div
+            v-for="(offset, index) in trackDividerOffsets"
+            :key="`track-divider-${index}`"
+            class="track-divider-handle"
+            :class="{ 'is-active': draggingTrackResizeIndex === index }"
+            :style="{
+              top: `${offset}px`,
+              left: `${prepZoneWidthPxRounded}px`,
+              '--track-divider-prep-offset': `${prepZoneWidthPxRounded}px`,
+            }"
+            @pointerdown.stop="beginTrackResize(index, $event)"
+            @dblclick.stop="resetTrackLayoutWeights"
+          >
+            <div class="track-divider-line"></div>
+          </div>
         </div>
-      </div>
 
-      <div class="tracks-content-scroller" :style="transformStyle">
         <div
           v-if="store.showCursorGuide && !store.isBoxSelectMode"
           class="cursor-guide"
@@ -4148,11 +4272,11 @@ defineExpose({
           </div>
         </div>
       </div>
+    </div>
 
       <div class="timeline-horizontal-scrollbar" ref="fakeScrollbarRef" @scroll="onFakeScroll">
         <div class="scrollbar-spacer" :style="{ width: `${totalWidthComputed}px` }"></div>
       </div>
-    </div>
 
     <el-dialog
       v-model="isSelectorVisible"
@@ -4612,6 +4736,7 @@ defineExpose({
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: relative;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -5722,12 +5847,17 @@ body.capture-mode .davinci-range {
 }
 
 .tracks-content-scroller {
-  height: 100%;
+  position: relative;
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .track-divider-overlay {
   position: absolute;
-  inset: 0 0 12px 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  min-width: 100%;
   pointer-events: none;
   z-index: 1;
 }
@@ -5739,6 +5869,11 @@ body.capture-mode .davinci-range {
   transform: translateY(-50%);
   cursor: ns-resize;
   pointer-events: auto;
+}
+
+.track-divider-overlay.is-loose .track-divider-handle {
+  pointer-events: none;
+  cursor: default;
 }
 
 .track-divider-line {
@@ -5774,6 +5909,7 @@ body.capture-mode .davinci-range {
   z-index: 100;
   opacity: 0.7;
   transition: opacity 0.2s;
+  pointer-events: auto;
 }
 .timeline-horizontal-scrollbar:hover {
   opacity: 1;
@@ -5786,10 +5922,11 @@ body.capture-mode .davinci-range {
   position: relative;
   width: fit-content;
   min-width: 100%;
+  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   padding: 20px 0;
-  height: 100%;
   box-sizing: border-box;
 }
 

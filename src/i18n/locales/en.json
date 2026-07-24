@@ -452,6 +452,9 @@
     },
     "toolbar": {
       "boxSelect": "Box select (Ctrl+B)",
+      "buffLayoutCompact": "Compact",
+      "buffLayoutLoose": "Loose",
+      "buffLayoutMode": "Buff layout: {mode}",
       "connectionTool": "Connection tool (Alt+L)",
       "cursorGuide": "Guide line (Ctrl+G)",
       "snapPrecision": "Snap precision (Alt+S)"

@@ -452,6 +452,9 @@
     },
     "toolbar": {
       "boxSelect": "框选 (Ctrl+B)",
+      "buffLayoutCompact": "紧凑",
+      "buffLayoutLoose": "松散",
+      "buffLayoutMode": "Buff 排布：{mode}",
       "connectionTool": "连线工具 (Alt+L)",
       "cursorGuide": "辅助线 (Ctrl+G)",
       "snapPrecision": "吸附精度 (Alt+S)"

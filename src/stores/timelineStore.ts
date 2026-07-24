@@ -998,11 +998,44 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   const trackLaneRects = ref<Record<string, unknown>>({});
 
-  const showCursorGuide = ref(false);
+  const TIMELINE_TOOLBAR_PREFS_KEY = 'endaxis:timeline-toolbar-prefs:v1';
+
+  type TimelineToolbarPrefs = {
+    showCursorGuide?: boolean;
+    isBoxSelectMode?: boolean;
+    snapStep?: number;
+    enableConnectionTool?: boolean;
+    buffLayoutMode?: 'compact' | 'loose';
+  };
+
+  function loadTimelineToolbarPrefs(): TimelineToolbarPrefs {
+    try {
+      const raw = localStorage.getItem(TIMELINE_TOOLBAR_PREFS_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? (parsed as TimelineToolbarPrefs) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function normalizeToolbarSnapStep(value: unknown): number {
+    const parsed = Number(value);
+    if (parsed === COARSE_SNAP_STEP || parsed === FRAME_DURATION) return parsed;
+    return FRAME_DURATION;
+  }
+
+  function normalizeBuffLayoutMode(value: unknown): 'compact' | 'loose' {
+    return value === 'loose' ? 'loose' : 'compact';
+  }
+
+  const toolbarPrefs = loadTimelineToolbarPrefs();
+
+  const showCursorGuide = ref(Boolean(toolbarPrefs.showCursorGuide));
   const OPERATOR_EFFECTS_VISIBLE_KEY = 'endaxis:operator-effects-visible:v1';
   const operatorEffectsVisible = ref(loadOperatorEffectsVisible());
   const cursorPosition = ref({ x: 0, y: 0 });
-  const snapStep = ref(FRAME_DURATION);
+  const snapStep = ref(normalizeToolbarSnapStep(toolbarPrefs.snapStep));
 
   const draggingSkillData = ref<Record<string, unknown> | null>(null);
   const isLibraryPlaceMode = ref(false);
@@ -1017,7 +1050,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   const selectedSwitchEventId = ref<string | null>(null);
 
   const multiSelectedIds = ref<Set<string>>(new Set());
-  const isBoxSelectMode = ref(false);
+  const isBoxSelectMode = ref(Boolean(toolbarPrefs.isBoxSelectMode));
   const clipboard = ref<unknown>(null);
 
   const isCapturing = ref(false);
@@ -1381,7 +1414,14 @@ export const useTimelineStore = defineStore('timeline', () => {
   // ===================================================================================
   // Connection drag state
   // ===================================================================================
-  const enableConnectionTool = ref(false);
+  const enableConnectionTool = ref(Boolean(toolbarPrefs.enableConnectionTool));
+
+  /** Compact clips overflowing buffs; loose grows track rows to fit (optimizer-like). */
+  const buffLayoutMode = ref<'compact' | 'loose'>(
+    normalizeBuffLayoutMode(toolbarPrefs.buffLayoutMode),
+  );
+  /** Snapshot of compact-mode row height weights while loose mode is active. */
+  const compactTrackRowHeightWeights = ref<number[] | null>(null);
 
   const validConnectionTargetIds = ref<Set<string>>(new Set());
 
@@ -1401,8 +1441,52 @@ export const useTimelineStore = defineStore('timeline', () => {
     snapPos: null, // {x, y}
   });
 
+  function persistTimelineToolbarPrefs() {
+    try {
+      const payload: TimelineToolbarPrefs = {
+        showCursorGuide: showCursorGuide.value,
+        isBoxSelectMode: isBoxSelectMode.value,
+        snapStep: snapStep.value,
+        enableConnectionTool: enableConnectionTool.value,
+        buffLayoutMode: buffLayoutMode.value,
+      };
+      localStorage.setItem(TIMELINE_TOOLBAR_PREFS_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore quota / private mode failures
+    }
+  }
+
+  watch(
+    [showCursorGuide, isBoxSelectMode, snapStep, enableConnectionTool, buffLayoutMode],
+    () => {
+      persistTimelineToolbarPrefs();
+    },
+  );
+
   function toggleConnectionTool() {
     enableConnectionTool.value = !enableConnectionTool.value;
+  }
+
+  function setBuffLayoutMode(mode: 'compact' | 'loose') {
+    if (mode !== 'compact' && mode !== 'loose') return;
+    if (mode === buffLayoutMode.value) return;
+
+    if (mode === 'loose') {
+      compactTrackRowHeightWeights.value = normalizeTrackRowHeightWeights(
+        trackRowHeightWeights.value,
+      );
+    } else if (compactTrackRowHeightWeights.value) {
+      trackRowHeightWeights.value = normalizeTrackRowHeightWeights(
+        compactTrackRowHeightWeights.value,
+      );
+      compactTrackRowHeightWeights.value = null;
+    }
+
+    buffLayoutMode.value = mode;
+  }
+
+  function toggleBuffLayoutMode() {
+    setBuffLayoutMode(buffLayoutMode.value === 'compact' ? 'loose' : 'compact');
   }
 
   function createConnection(
@@ -5643,11 +5727,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     resolveNode,
     getNodesOfConnection,
     enableConnectionTool,
+    buffLayoutMode,
     connectionDragState,
     connectionSnapState,
     validConnectionTargetIds,
     createConnection,
     toggleConnectionTool,
+    toggleBuffLayoutMode,
     cycleBoundaries,
     selectedCycleBoundaryId,
     addCycleBoundary,
