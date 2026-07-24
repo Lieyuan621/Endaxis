@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   findLibrarySkillByType,
   findLibrarySkillForPlaceRematch,
+  getCycledTrackIndex,
   getLibrarySkillTypeFromHotkeyCode,
   getTrackIndexFromHotkeyCode,
   getTrackIndexFromHotkeyEvent,
@@ -33,6 +34,28 @@ describe('librarySkillHotkeys', () => {
     expect(getTrackIndexFromHotkeyCode('F3')).toBe(2);
     expect(getTrackIndexFromHotkeyEvent({ code: 'F1', key: 'F1' })).toBe(0);
     expect(getTrackIndexFromHotkeyEvent({ code: '', key: 'F2' })).toBe(1);
+  });
+
+  it('cycles track indices for Tab and Shift+Tab selection', () => {
+    expect(getCycledTrackIndex(null, 4, 1)).toBe(0);
+    expect(getCycledTrackIndex(undefined, 4, -1)).toBe(3);
+    expect(getCycledTrackIndex(0, 4, -1)).toBe(3);
+    expect(getCycledTrackIndex(3, 4, 1)).toBe(0);
+    expect(getCycledTrackIndex(1, 4, 1)).toBe(2);
+    expect(getCycledTrackIndex(2, 4, -1)).toBe(1);
+    expect(getCycledTrackIndex(0, 0, 1)).toBeNull();
+  });
+
+  it('skips unselectable tracks when cycling', () => {
+    const hasOperator = (index: number) => index === 0 || index === 2;
+
+    expect(getCycledTrackIndex(null, 4, 1, hasOperator)).toBe(0);
+    expect(getCycledTrackIndex(0, 4, 1, hasOperator)).toBe(2);
+    expect(getCycledTrackIndex(2, 4, 1, hasOperator)).toBe(0);
+    expect(getCycledTrackIndex(0, 4, -1, hasOperator)).toBe(2);
+    expect(getCycledTrackIndex(1, 4, 1, hasOperator)).toBe(2);
+    expect(getCycledTrackIndex(1, 4, -1, hasOperator)).toBe(0);
+    expect(getCycledTrackIndex(0, 4, 1, () => false)).toBeNull();
   });
 
   it('finds the first visible library skill of a type', () => {
