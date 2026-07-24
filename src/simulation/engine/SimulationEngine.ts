@@ -4,7 +4,8 @@ import type { EventHandler } from '@/simulation/events/EventHandler.ts';
 import { GameState } from '@/simulation/state/GameState.ts';
 import type { SimEvent, SimEventType, SimLogEntry } from '@/simulation/events/event.types.ts';
 import type { EventHookContext, SimulationContext } from '@/simulation/engine/SimulationContext.ts';
-import type { ResolvedTimeline } from '../compiler/types.ts';
+import type { ResolvedAction, ResolvedTimeline } from '../compiler/types.ts';
+import { isUltimateLikeAction } from '../compiler/types.ts';
 import type { EnemyStateEvent, OperatorStateEvent } from '../engine/types.ts';
 import type { BaseStatValues } from '@/data/stats/types';
 import { createDefaultEnemyResistance } from '@/data/enemyResistance';
@@ -306,6 +307,34 @@ export class SimulationEngine {
     return false;
   }
 
+  /**
+   * When an action's skill cooldown bar starts.
+   * Enhanced ultimates (Yvonne / Zhuang / Laevatain, etc.) start CD after the enhancement
+   * window ends — including Laevatain's battle/combo extensions.
+   */
+  getActionCooldownStart(action: ResolvedAction): number {
+    if (!isUltimateLikeAction(action.node)) {
+      return Number(action.realStartTime) || 0;
+    }
+
+    const enh = action.node.enhancementTime;
+    if (typeof enh === 'number' && enh > 0) {
+      const windows = this.getUltimateEnergyBlockWindowsByActor().get(action.trackId) ?? [];
+      const win = windows.find(window => window.sourceId === action.id);
+      if (win) return win.end;
+    }
+
+    const animationTime = Math.max(
+      0,
+      Number(action.node.animationTime) || Number(action.freezeDuration) || 0,
+    );
+    return this.timeline.timeContext.getShiftedEndTime(
+      Number(action.realStartTime) || 0,
+      animationTime,
+      action.id,
+    );
+  }
+
   run() {
     const actionEndTimes = new Map<string, number>();
     for (const action of this.timeline.actions) {
@@ -362,6 +391,7 @@ export class SimulationEngine {
       getShiftedTime: this.getShiftedTime.bind(this),
       isUltimateEnhancementActive: this.isUltimateEnhancementActive.bind(this),
       isUltimateEnergyBlocked: this.isUltimateEnergyBlocked.bind(this),
+      getActionCooldownStart: this.getActionCooldownStart.bind(this),
       getAllActions: () => this.timeline.actions,
       getBaseStats: (trackId: string) => this.baseStatsByTrack.get(trackId),
       enemyDef: this.enemyDef,

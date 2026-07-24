@@ -3,6 +3,7 @@ import { compileScenario } from './compiler/compileScenario';
 import type { Action, ScenarioData, ScenarioTrack } from './compiler/types';
 import { simulate } from './simulator';
 import { TriggerRegistry } from './engine/TriggerRegistry';
+import { createEngine } from './engine/createEngine';
 import { compileEndaxisScenario } from './compileEndaxisScenario';
 import { projectOptimizerResult } from './projection/projectOptimizerResult';
 import { projectEnemyAfflictionViz } from './projection/projectEnemyAfflictionViz';
@@ -2347,6 +2348,52 @@ describe('optimizer-native runtime parity', () => {
     expect(ueEntries.some(entry => entry.payload.sourceId === 'gain-inside_inst')).toBe(false);
 
     expect(ueEntries.some(entry => entry.payload.sourceId === 'gain-after_inst')).toBe(true);
+  });
+
+  it('starts enhanced ultimate cooldown after the enhancement window ends', () => {
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(
+      createScenario([
+        createTrack('yvonne', [
+          createAction('ult', 'ultimate', {
+            startTime: 0,
+            duration: 2.03,
+            animationTime: 2.03,
+            enhancementTime: 7,
+            cooldown: 10,
+          }),
+        ]),
+      ]),
+    );
+    const engine = createEngine(teamConfig, enemyConfig, actors, timeline);
+    const ult = timeline.actions.find(a => a.node.type === 'ultimate');
+    expect(ult).toBeTruthy();
+    // CD must not start at animation end (2.03); it starts after 7s enhancement.
+    expect(engine.getActionCooldownStart(ult!)).toBeCloseTo(9.03, 5);
+  });
+
+  it('delays Laevatain ultimate cooldown until extended enhancement ends', () => {
+    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(
+      createScenario([
+        createTrack('laevatain', [
+          createAction('ult', 'ultimate', {
+            startTime: 0,
+            duration: 2.07,
+            animationTime: 2.07,
+            enhancementTime: 15,
+            cooldown: 10,
+          }),
+          createAction('bs', 'battleSkill', {
+            startTime: 5,
+            duration: 3,
+          }),
+        ]),
+      ]),
+    );
+    const engine = createEngine(teamConfig, enemyConfig, actors, timeline);
+    const ult = timeline.actions.find(a => a.node.type === 'ultimate');
+    expect(ult).toBeTruthy();
+    // enhStart 2.07 + base 15 + battle 3 = 20.07
+    expect(engine.getActionCooldownStart(ult!)).toBeCloseTo(20.07, 5);
   });
 
   it('blocks positive ultimate energy gains during status-bound ultimate enhancement window', () => {

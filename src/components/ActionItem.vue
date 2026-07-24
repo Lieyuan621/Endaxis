@@ -334,11 +334,21 @@ function getCooldownStyle(cooldown, rowIndex) {
   if (!layout) return { display: 'none' };
 
   const start = getActionRealStartTime();
-  const freezeDuration =
-    props.action.type === 'ultimate' ? Number(props.action.animationTime) || 0 : 0;
-  const cdStart = start + freezeDuration;
   const cdVal = Number(cooldown) || 0;
   if (cdVal <= 0) return { display: 'none' };
+
+  // Ultimate CD starts after the enhancement window (incl. Laevatain extensions),
+  // not at cast / animation end. Non-enhanced ultimates still start after animation.
+  let cdStart = start;
+  if (props.action.type === 'ultimate') {
+    const metrics = store.getUltimateEnhancementMetrics?.(props.action.instanceId);
+    if (metrics?.finalEnd != null) {
+      cdStart = metrics.finalEnd;
+    } else {
+      const freezeDuration = Number(props.action.animationTime) || 0;
+      cdStart = store.getShiftedEndTime(start, freezeDuration, props.action.instanceId);
+    }
+  }
 
   const left = store.timeToPx(cdStart) - store.timeToPx(start);
   const width = store.timeToPx(cdStart + cdVal) - store.timeToPx(cdStart);

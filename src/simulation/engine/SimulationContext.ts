@@ -45,6 +45,8 @@ export interface SimulationContext {
   /** Whether the actor is currently inside its own ultimate enhancement window. */
   isUltimateEnhancementActive: (actorId: string, time: number) => boolean;
   isUltimateEnergyBlocked(actorId: string, time: number): boolean;
+  /** When an action's skill cooldown window starts (enhancement end for enhanced ultimates). */
+  getActionCooldownStart(action: ResolvedAction): number;
   /** Base stat values per track for damage calculation (baseAtk, weaponAtk, attrs, etc.). */
   getBaseStats: (trackId: string) => BaseStatValues | undefined;
   /** Enemy defense value for damage calculation. */
