@@ -399,7 +399,7 @@ const sheet: OperatorSheet = {
                   offset: 3,
                   spRecovery: [20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25, 25],
                   stagger: 20,
-                  effects: [{ kind: 'infliction', element: 'cryo' }],
+                  effects: [{ kind: 'infliction', element: 'cryo', applyTiming: 'beforeDamage' }],
                 },
               ],
             },

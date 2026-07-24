@@ -206,6 +206,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'infliction',
                       element: 'heat',
+                      applyTiming: 'beforeDamage',
                     },
                   ],
                 },

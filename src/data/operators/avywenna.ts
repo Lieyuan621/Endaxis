@@ -357,6 +357,7 @@ const sheet: OperatorSheet = {
                       kind: 'infliction',
                       element: 'electric',
                       stacks: 'fromConsume',
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'operatorStatus',
                         status: 'avywenna-thunderlance-ex',

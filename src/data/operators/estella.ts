@@ -215,7 +215,7 @@ const sheet: OperatorSheet = {
                 {
                   offset: 0.7,
                   stagger: 10,
-                  effects: [{ kind: 'infliction', element: 'cryo' }],
+                  effects: [{ kind: 'infliction', element: 'cryo', applyTiming: 'beforeDamage' }],
                 },
               ],
             },

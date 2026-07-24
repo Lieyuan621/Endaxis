@@ -283,6 +283,7 @@ const sheet: OperatorSheet = {
                   {
                     kind: 'infliction',
                     element: 'cryo',
+                    applyTiming: 'beforeDamage',
                   },
                 ],
               },

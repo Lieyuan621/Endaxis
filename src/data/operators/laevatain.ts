@@ -571,7 +571,7 @@ const sheet: OperatorSheet = {
                   hits: [
                     {
                       offset: 0.3,
-                      effects: [{ kind: 'infliction', element: 'heat' }],
+                      effects: [{ kind: 'infliction', element: 'heat', applyTiming: 'beforeDamage' }],
                     },
                   ],
                 },

@@ -2685,11 +2685,28 @@ export const useTimelineStore = defineStore('timeline', () => {
         ? { kind: 'not', condition: { kind: 'enemyStatus', status: effect.id } }
         : { kind: 'not', condition: { kind: 'operatorStatus', status: effect.id } };
 
-      const scope = cond.kind === 'operatorStatus' ? 'self' : 'enemy';
+      // Trigger schema uses `target` (not `scope`). Enemy-status passives must be
+      // global so teammate-applied statuses still arm this operator's buff.
+      const target = cond.kind === 'operatorStatus' ? 'self' : 'enemy';
+      const isEnemyStatus = cond.kind === 'enemyStatus';
+      // Global enemy-status triggers set selfTrackId to the applier; remap sheet
+      // `self` → `owner` so the talent buff lands on the passive owner.
+      const armedEffect =
+        isEnemyStatus &&
+        (effect.target === 'self' ||
+          effect.target === undefined ||
+          (typeof effect.target === 'object' && effect.target?.scope === 'self'))
+          ? { ...effect, target: 'owner' as const, duration: 999, condition: idempotencyCondition }
+          : { ...effect, duration: 999, condition: idempotencyCondition };
       out.push({
         triggerEffect: {
-          trigger: { kind: 'onStatusApplied', status: cond.status, scope },
-          effects: [{ ...effect, duration: 999, condition: idempotencyCondition }],
+          trigger: {
+            kind: 'onStatusApplied',
+            status: cond.status,
+            target,
+            ...(isEnemyStatus ? { triggerScope: 'global' } : {}),
+          },
+          effects: [armedEffect],
         },
         sourceSlotIndex: ce.sourceSlotIndex,
         sourceOperatorSlug: ce.sourceOperatorSlug,
@@ -2697,9 +2714,13 @@ export const useTimelineStore = defineStore('timeline', () => {
         stacksConstraint: cond.stacks,
       });
 
-      const removeCondition = cond.stacks
-        ? { kind: 'not', condition: { kind: cond.kind, status: cond.status, stacks: cond.stacks } }
-        : undefined;
+      // Always re-check the full original condition before removing. Without this,
+      // OR conditions (e.g. cryoInfliction | solidification) drop the buff when
+      // only one member is consumed mid-reaction even if the other is still active.
+      const removeCondition = {
+        kind: 'not',
+        condition: { kind: cond.kind, status: cond.status, ...(cond.stacks ? { stacks: cond.stacks } : {}) },
+      };
       const isTeamScoped =
         effect.target === 'team' ||
         (typeof effect.target === 'object' && effect.target?.scope === 'team');
@@ -2707,13 +2728,13 @@ export const useTimelineStore = defineStore('timeline', () => {
         ? {
             kind: 'consume',
             enemyStatus: effect.id,
-            ...(removeCondition ? { condition: removeCondition } : {}),
+            condition: removeCondition,
           }
         : {
             kind: 'consume',
             operatorStatus: effect.id,
             ...(isTeamScoped ? { consumeScope: 'team' } : {}),
-            ...(removeCondition ? { condition: removeCondition } : {}),
+            condition: removeCondition,
           };
 
       ['onStatusExpire', 'onStatusConsumed'].forEach(kind => {
@@ -2722,8 +2743,8 @@ export const useTimelineStore = defineStore('timeline', () => {
             trigger: {
               kind,
               status: cond.status,
-              scope,
-              ...(isTeamScoped ? { triggerScope: 'global' } : {}),
+              target,
+              ...(isEnemyStatus || isTeamScoped ? { triggerScope: 'global' } : {}),
             },
             effects: [removeEffect],
           },

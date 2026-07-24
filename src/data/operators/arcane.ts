@@ -33,6 +33,7 @@ const INFLICTION_TRACKER: TriggerEffect[] = INFLICTIONS.map(x => ({
 const COMBO_SKILL_EFFECTS: Effect[] = INFLICTIONS.map(x => ({
   kind: 'infliction' as const,
   element: x as ArtsElement,
+  applyTiming: 'beforeDamage' as const,
   condition: {
     kind: 'operatorStatus',
     status: TRACKER_IDS[x]!,
@@ -950,6 +951,7 @@ const sheet: OperatorSheet = {
                             (element: ArtsElement) => ({
                               kind: 'infliction' as const,
                               element,
+                              applyTiming: 'beforeDamage' as const,
                               condition: {
                                 kind: 'enemyStatus' as const,
                                 status: `${element}Infliction` as const,

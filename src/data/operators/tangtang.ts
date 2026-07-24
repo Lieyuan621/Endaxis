@@ -58,6 +58,7 @@ const sheet: OperatorSheet = {
             {
               kind: 'infliction',
               element: 'cryo',
+              applyTiming: 'beforeDamage',
             },
             {
               id: 'tangtang-waterspouts-sp-return',
@@ -376,6 +377,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'infliction',
                       element: 'cryo',
+                      applyTiming: 'beforeDamage',
                     },
                     {
                       id: 'tangtang-waterspouts-sp-return',

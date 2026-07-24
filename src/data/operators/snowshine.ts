@@ -163,7 +163,7 @@ const sheet: OperatorSheet = {
                   offset: 1.2,
                   spReturn: 30,
                   stagger: 20,
-                  effects: [{ kind: 'infliction', element: 'cryo' }],
+                  effects: [{ kind: 'infliction', element: 'cryo', applyTiming: 'beforeDamage' }],
                 },
               ],
             },

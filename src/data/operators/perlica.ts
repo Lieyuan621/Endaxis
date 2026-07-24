@@ -187,7 +187,7 @@ const sheet: OperatorSheet = {
                 {
                   offset: 0.43,
                   stagger: 10,
-                  effects: [{ kind: 'infliction', element: 'electric' }],
+                  effects: [{ kind: 'infliction', element: 'electric', applyTiming: 'beforeDamage' }],
                 },
               ],
             },

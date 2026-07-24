@@ -38,6 +38,7 @@ const COMBO_SKILL_EFFECTS: Effect[] = [...INFLICTIONS, ...PHYSICAL_REACTIONS].ma
     ? {
         kind: 'infliction' as const,
         element: x as ArtsElement,
+        applyTiming: 'beforeDamage' as const,
       }
     : {
         kind: 'physicalStatus' as const,

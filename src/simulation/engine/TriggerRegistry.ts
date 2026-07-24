@@ -526,8 +526,12 @@ export class TriggerRegistry {
         this.lastFire.set(key, time);
       }
 
-      // Condition check
-      if (!evaluateEffectCondition(resolved.condition, time, sourceTrackId, ctx, enemySnap))
+      // Condition check. Consume effects that gate on "status still present?" must
+      // see post-mutation live enemy state — pre-consume snaps would keep OR-gated
+      // conditional passives stuck after the last matching status expires.
+      const conditionSnap =
+        resolved.kind === 'consume' ? ctx.state.enemy.statusSnapshot() : enemySnap;
+      if (!evaluateEffectCondition(resolved.condition, time, sourceTrackId, ctx, conditionSnap))
         continue;
 
       // Schedule consumption if the condition (or any element of a compound condition) has consume.

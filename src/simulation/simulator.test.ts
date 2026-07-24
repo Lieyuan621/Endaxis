@@ -3839,4 +3839,192 @@ describe('independent enemy status instance ids', () => {
     const stacked = damageFor(result, 'probe_inst');
     expect(stacked / baseline).toBeCloseTo(1.2, 2);
   });
+
+  it('arms enemyStatus conditional passives from ally apply and keeps OR buff through solidification', () => {
+    const freezingPointTriggers = [
+      {
+        sourceTrackId: 'yvonne',
+        triggerEffect: {
+          trigger: {
+            kind: 'onStatusApplied' as const,
+            status: ['cryoInfliction', 'solidification'],
+            target: 'enemy' as const,
+            triggerScope: 'global' as const,
+          },
+          effects: [
+            {
+              id: 'yvonne-p2-cryo',
+              kind: 'status' as const,
+              stat: { modifier: 'critDmg' as const },
+              target: 'owner' as const,
+              value: 50,
+              duration: 999,
+              condition: {
+                kind: 'not' as const,
+                condition: { kind: 'operatorStatus' as const, status: 'yvonne-p2-cryo' },
+              },
+            },
+          ],
+        },
+      },
+      {
+        sourceTrackId: 'yvonne',
+        triggerEffect: {
+          trigger: {
+            kind: 'onStatusConsumed' as const,
+            status: ['cryoInfliction', 'solidification'],
+            target: 'enemy' as const,
+            triggerScope: 'global' as const,
+          },
+          effects: [
+            {
+              kind: 'consume' as const,
+              operatorStatus: 'yvonne-p2-cryo',
+              condition: {
+                kind: 'not' as const,
+                condition: {
+                  kind: 'enemyStatus' as const,
+                  status: ['cryoInfliction', 'solidification'],
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        sourceTrackId: 'yvonne',
+        triggerEffect: {
+          trigger: {
+            kind: 'onStatusExpire' as const,
+            status: ['cryoInfliction', 'solidification'],
+            target: 'enemy' as const,
+            triggerScope: 'global' as const,
+          },
+          effects: [
+            {
+              kind: 'consume' as const,
+              operatorStatus: 'yvonne-p2-cryo',
+              condition: {
+                kind: 'not' as const,
+                condition: {
+                  kind: 'enemyStatus' as const,
+                  status: ['cryoInfliction', 'solidification'],
+                },
+              },
+            },
+          ],
+        },
+      },
+    ] satisfies TrackPatch['triggerEffects'];
+
+    const armed = runScenario(
+      [
+        createTrack('yvonne', [
+          createAction('yvonne_ba', 'basicAttack', {
+            startTime: 1,
+            element: 'cryo',
+            hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ]),
+        createTrack('ally', [
+          createAction('ally_cryo', 'battleSkill', {
+            startTime: 0,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 1,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [{ kind: 'infliction', element: 'cryo', duration: 20 }],
+              },
+            ],
+          }),
+        ]),
+      ],
+      registry(freezingPointTriggers),
+    );
+
+    expect(armed.operatorLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'OPERATOR_EFFECT_APPLY',
+          id: 'yvonne-p2-cryo',
+          targetTrackId: 'yvonne',
+          time: 0,
+        }),
+      ]),
+    );
+
+    const baseline = damageFor(
+      runScenario([
+        createTrack('yvonne', [
+          createAction('yvonne_ba', 'basicAttack', {
+            startTime: 1,
+            element: 'cryo',
+            hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ]),
+      ]),
+      'yvonne_ba_inst',
+    );
+    expect(damageFor(armed, 'yvonne_ba_inst')).toBeGreaterThan(baseline);
+
+    const throughSolidify = runScenario(
+      [
+        createTrack('yvonne', [
+          createAction('force_solidify', 'battleSkill', {
+            startTime: 0.5,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 1,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [
+                  {
+                    kind: 'reaction',
+                    reactionType: 'solidification',
+                    requiresInfliction: ['cryo'],
+                    forced: true,
+                  } as Effect,
+                ],
+              },
+            ],
+          }),
+          createAction('yvonne_ba', 'basicAttack', {
+            startTime: 1,
+            element: 'cryo',
+            hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+          }),
+        ]),
+        createTrack('ally', [
+          createAction('ally_cryo', 'battleSkill', {
+            startTime: 0,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 1,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [{ kind: 'infliction', element: 'cryo', duration: 20 }],
+              },
+            ],
+          }),
+        ]),
+      ],
+      registry(freezingPointTriggers),
+    );
+
+    const removed = throughSolidify.operatorLog.some(
+      entry =>
+        entry.type === 'OPERATOR_EFFECT_EXPIRE' &&
+        entry.id === 'yvonne-p2-cryo' &&
+        entry.time <= 1,
+    );
+    expect(removed).toBe(false);
+    expect(damageFor(throughSolidify, 'yvonne_ba_inst')).toBeGreaterThan(baseline);
+  });
 });

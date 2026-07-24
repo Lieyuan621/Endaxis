@@ -215,7 +215,7 @@ const sheet: OperatorSheet = {
                 {
                   offset: 3.6,
                   stagger: 10,
-                  effects: [{ kind: 'infliction', element: 'nature' }],
+                  effects: [{ kind: 'infliction', element: 'nature', applyTiming: 'beforeDamage' }],
                 },
               ],
             },
@@ -277,7 +277,7 @@ const sheet: OperatorSheet = {
                   offset: 2,
                   stagger: 20,
                   effects: [
-                    { kind: 'infliction', element: 'nature' },
+                    { kind: 'infliction', element: 'nature', applyTiming: 'beforeDamage' },
                     {
                       id: 'gilberta-ultimate-susceptibility',
                       kind: 'status',
