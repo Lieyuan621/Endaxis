@@ -20,9 +20,7 @@ const DIGIT_CODE_TO_INDEX: Record<string, number> = {
 };
 
 /** Resolve 1…6 from `KeyboardEvent.code`. */
-export function getLibrarySkillTypeFromHotkeyCode(
-  code: string,
-): LibrarySkillHotkeyType | null {
+export function getLibrarySkillTypeFromHotkeyCode(code: string): LibrarySkillHotkeyType | null {
   const index = DIGIT_CODE_TO_INDEX[code];
   if (index === undefined) return null;
   return LIBRARY_SKILL_HOTKEY_TYPES[index] ?? null;
@@ -48,9 +46,32 @@ export function getTrackIndexFromHotkeyEvent(event: {
   key?: string;
 }): number | null {
   return (
-    getTrackIndexFromHotkeyCode(event.code || '') ??
-    getTrackIndexFromHotkeyKey(event.key || '')
+    getTrackIndexFromHotkeyCode(event.code || '') ?? getTrackIndexFromHotkeyKey(event.key || '')
   );
+}
+
+/** Resolve the next/previous track index; `isTrackSelectable` lets callers skip empty tracks. */
+export function getCycledTrackIndex(
+  currentIndex: number | null | undefined,
+  trackCount: number,
+  direction: 1 | -1,
+  isTrackSelectable: (index: number) => boolean = () => true,
+): number | null {
+  if (!Number.isFinite(trackCount) || trackCount <= 0) return null;
+
+  let nextIndex =
+    typeof currentIndex === 'number' && currentIndex >= 0 && currentIndex < trackCount
+      ? currentIndex
+      : direction > 0
+        ? -1
+        : 0;
+
+  for (let i = 0; i < trackCount; i++) {
+    nextIndex = (nextIndex + direction + trackCount) % trackCount;
+    if (isTrackSelectable(nextIndex)) return nextIndex;
+  }
+
+  return null;
 }
 
 /** First visible library card for a skill type (skips hidden segment children). */

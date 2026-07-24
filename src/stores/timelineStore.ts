@@ -3019,9 +3019,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       if (refreshPayload.element) {
         action.element = refreshPayload.element;
       }
-      action.requisites = Array.isArray(refreshPayload.requisites)
-        ? refreshPayload.requisites
-        : [];
+      action.requisites = Array.isArray(refreshPayload.requisites) ? refreshPayload.requisites : [];
 
       if (flatSkill.cooldown != null && !action.comboSegmentIndex && !action.attackSegmentIndex) {
         action.cooldown = resolveLevelNumber(flatSkill.cooldown, levelIndex, action.cooldown || 0);
@@ -4031,25 +4029,52 @@ export const useTimelineStore = defineStore('timeline', () => {
     hoveredActionId.value = id;
   }
 
+  function clearNonActionSelection() {
+    selectedConnectionId.value = null;
+    selectedAnomalyId.value = null;
+    selectedCycleBoundaryId.value = null;
+    selectedSwitchEventId.value = null;
+    selectedLibrarySkillId.value = null;
+    isEndlineSelected.value = false;
+    isStartlineSelected.value = false;
+  }
+
   function setMultiSelection(idsArray: string[]) {
-    multiSelectedIds.value = new Set(idsArray);
-    if (idsArray.length === 1) {
-      selectedActionId.value = idsArray[0] ?? null;
+    const ids = [...new Set(idsArray.filter(Boolean))];
+    clearNonActionSelection();
+    multiSelectedIds.value = new Set(ids);
+    if (ids.length === 1) {
+      selectedActionId.value = ids[0] ?? null;
     } else {
       selectedActionId.value = null;
     }
+    return ids;
+  }
+
+  // 临时方案：当前先统一 action 多选入口；后续可把 action/连线/异常点等收敛成单一 selection model。
+  function toggleActionsMultiSelection(instanceIds: string[]) {
+    const nextIds = new Set(multiSelectedIds.value);
+    if (selectedActionId.value) nextIds.add(selectedActionId.value);
+
+    new Set(instanceIds.filter(Boolean)).forEach(instanceId => {
+      if (nextIds.has(instanceId)) {
+        nextIds.delete(instanceId);
+      } else {
+        nextIds.add(instanceId);
+      }
+    });
+
+    return setMultiSelection([...nextIds]);
+  }
+
+  function toggleActionMultiSelection(instanceId: string) {
+    return toggleActionsMultiSelection([instanceId]);
   }
 
   function clearSelection() {
     selectedActionId.value = null;
-    selectedConnectionId.value = null;
-    selectedAnomalyId.value = null;
-    selectedCycleBoundaryId.value = null;
-    isEndlineSelected.value = false;
-    isStartlineSelected.value = false;
-    selectedSwitchEventId.value = null;
+    clearNonActionSelection();
     multiSelectedIds.value.clear();
-    selectedLibrarySkillId.value = null;
   }
 
   function normalizeComboLinksInTracks() {
@@ -5704,6 +5729,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     toggleSnapStep,
     nudgeSelection,
     setMultiSelection,
+    toggleActionMultiSelection,
+    toggleActionsMultiSelection,
     clearSelection,
     copySelection,
     pasteSelection,
