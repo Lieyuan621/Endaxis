@@ -311,7 +311,7 @@ const sheet: OperatorSheet = {
                   offset: 0.467,
                   stagger: 10,
                   effects: [
-                    { kind: 'infliction', element: 'heat' },
+                    { kind: 'infliction', element: 'heat', applyTiming: 'beforeDamage' },
                     {
                       id: 'camille-firefang-vesperwings-susceptibility',
                       name: 'firefangVesperwings',
@@ -479,7 +479,7 @@ const sheet: OperatorSheet = {
                   stagger: 15,
                   spRecovery: [32, 32, 32, 32, 32, 32, 32, 32, 36, 36, 36, 40],
                   effects: [
-                    { kind: 'infliction', element: 'heat' },
+                    { kind: 'infliction', element: 'heat', applyTiming: 'beforeDamage' },
                     {
                       id: 'camille-hunter-pursuit-ready',
                       name: 'pursuit',

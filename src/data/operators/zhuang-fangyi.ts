@@ -300,6 +300,7 @@ const ENHANCED_BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i =>
             {
               kind: 'infliction' as const,
               element: 'electric' as const,
+              applyTiming: 'beforeDamage' as const,
             },
             {
               kind: 'ultEnergyGain' as const,

@@ -485,7 +485,7 @@ const sheet: OperatorSheet = {
                     effects: () => ENHANCED_BASIC_ATTACK_EFFECTS,
                   },
                 },
-                // Last hit
+                // Last hit (enhanced Final Strike); if solidified, extra cryo hit then consume freeze
                 {
                   element: 'cryo',
                   multiplier: [133, 147, 160, 173, 186, 200, 213, 226, 240, 256, 276, 300],
@@ -498,6 +498,19 @@ const sheet: OperatorSheet = {
                         {
                           kind: 'consume',
                           operatorStatus: 'yvonne-ultimate-crit-rate',
+                        },
+                        {
+                          id: 'yvonne-ultimate-enhanced-final-additional',
+                          kind: 'damageHit',
+                          element: 'cryo',
+                          multiplier: [
+                            267, 294, 320, 347, 374, 400, 427, 454, 480, 514, 554, 600,
+                          ],
+                          condition: {
+                            kind: 'enemyStatus',
+                            status: 'solidification',
+                            consume: true,
+                          },
                         },
                       ],
                     },

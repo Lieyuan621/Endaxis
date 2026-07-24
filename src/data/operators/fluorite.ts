@@ -235,7 +235,7 @@ const sheet: OperatorSheet = {
               hit: {
                 id: 'fluorite-battle-explosive-expire-damage-hit',
                 stagger: 10,
-                effects: [{ kind: 'infliction', element: 'nature' }],
+                effects: [{ kind: 'infliction', element: 'nature', applyTiming: 'beforeDamage' }],
               },
             },
           ],
@@ -258,7 +258,7 @@ const sheet: OperatorSheet = {
               hit: {
                 id: 'fluorite-battle-explosive-consumed-damage-hit',
                 stagger: 10,
-                effects: [{ kind: 'infliction', element: 'nature' }],
+                effects: [{ kind: 'infliction', element: 'nature', applyTiming: 'beforeDamage' }],
               },
             },
           ],
@@ -305,6 +305,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'infliction',
                       element: 'cryo',
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'operatorStatus',
                         status: 'fluorite-combo-tracker-cryo',
@@ -314,6 +315,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'infliction',
                       element: 'nature',
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'operatorStatus',
                         status: 'fluorite-combo-tracker-nature',
@@ -425,6 +427,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'infliction',
                       element: 'cryo',
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'enemyStatus',
                         status: 'cryoInfliction',
@@ -434,6 +437,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'infliction',
                       element: 'nature',
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'enemyStatus',
                         status: 'natureInfliction',

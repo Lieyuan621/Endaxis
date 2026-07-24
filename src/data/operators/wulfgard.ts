@@ -230,6 +230,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'infliction',
                       element: 'heat',
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'not',
                         condition: {
@@ -322,7 +323,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'ultEnergyGain',
                       value: 10,
-                    },{ kind: 'infliction', element: 'heat' }],
+                    }, { kind: 'infliction', element: 'heat', applyTiming: 'beforeDamage' }],
                 },
               ],
             },

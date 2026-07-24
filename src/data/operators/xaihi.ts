@@ -287,7 +287,7 @@ const sheet: OperatorSheet = {
                       kind: 'ultEnergyGain',
                       value: 10,
                     },
-                    { kind: 'infliction', element: 'cryo' },
+                    { kind: 'infliction', element: 'cryo', applyTiming: 'beforeDamage' },
                   ],
                 },
               ],
