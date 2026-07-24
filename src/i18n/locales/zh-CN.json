@@ -2,6 +2,7 @@
   "common": {
     "cancel": "取消",
     "close": "关闭",
+    "confirm": "确定",
     "copy": "复制",
     "delete": "删除",
     "default": "默认",
@@ -463,6 +464,16 @@
       "buffLayoutMode": "Buff 排布：{mode}",
       "connectionTool": "连线工具 (Alt+L)",
       "cursorGuide": "辅助线 (Ctrl+G)",
+      "initialGauge": "初始充能：左键切换 0 / 充满 / 自定义（按干员记忆）；右键统一改所有干员充能",
+      "initialGaugeAppliedCustom": "初始充能：自定义（按干员）",
+      "initialGaugeAppliedEmpty": "初始充能：0",
+      "initialGaugeAppliedFull": "初始充能：充满",
+      "initialGaugeAppliedUnified": "已统一设为 {value}（并写入本方案自定义记忆）",
+      "initialGaugeCustomInvalid": "请输入非负整数",
+      "initialGaugeCustomShort": "自",
+      "initialGaugeEmptyShort": "0",
+      "initialGaugeFullShort": "满",
+      "initialGaugeUnifiedTitle": "统一修改初始充能",
       "snapPrecision": "吸附精度 (Alt+S)"
     },
     "track": {

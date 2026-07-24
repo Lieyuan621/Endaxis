@@ -2,6 +2,7 @@
   "common": {
     "cancel": "Отмена",
     "close": "Закрыть",
+    "confirm": "ОК",
     "copy": "Копировать",
     "delete": "Удалить",
     "default": "По умолчанию",
@@ -463,6 +464,16 @@
       "buffLayoutMode": "Раскладка баффов: {mode}",
       "connectionTool": "Связи (Alt+L)",
       "cursorGuide": "Направляющие (Ctrl+G)",
+      "initialGauge": "Начальная энергия: ЛКМ — 0 / полная / своя (по оперативникам); ПКМ — задать всем одинаково",
+      "initialGaugeAppliedCustom": "Начальная энергия: своя (по оперативникам)",
+      "initialGaugeAppliedEmpty": "Начальная энергия: 0",
+      "initialGaugeAppliedFull": "Начальная энергия: полная",
+      "initialGaugeAppliedUnified": "Всем задано {value} (сохранено в профиль сценария)",
+      "initialGaugeCustomInvalid": "Введите неотрицательное целое",
+      "initialGaugeCustomShort": "С",
+      "initialGaugeEmptyShort": "0",
+      "initialGaugeFullShort": "MAX",
+      "initialGaugeUnifiedTitle": "Одинаковая начальная энергия",
       "snapPrecision": "Точность привязки (Alt+S)"
     },
     "track": {

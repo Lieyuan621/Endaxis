@@ -1029,6 +1029,44 @@ export const useTimelineStore = defineStore('timeline', () => {
     return value === 'loose' ? 'loose' : 'compact';
   }
 
+  type InitialGaugeMode = 'empty' | 'full' | 'custom';
+
+  function normalizeInitialGaugeMode(value: unknown): InitialGaugeMode {
+    if (value === 'full' || value === 'custom') return value;
+    return 'empty';
+  }
+
+  function normalizeCustomInitialGauges(value: unknown): Record<string, number> {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    const out: Record<string, number> = {};
+    for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+      if (!key) continue;
+      const num = Number(raw);
+      if (!Number.isFinite(num)) continue;
+      out[key] = Math.max(0, Math.floor(num));
+    }
+    return out;
+  }
+
+  /** Migrate legacy single `customInitialGauge` into a per-operator map. */
+  function resolveCustomInitialGaugesFromSnapshot(
+    snapshot: { customInitialGauges?: unknown; customInitialGauge?: unknown; tracks?: Track[] } | null | undefined,
+  ): Record<string, number> {
+    if (snapshot?.customInitialGauges != null) {
+      return normalizeCustomInitialGauges(snapshot.customInitialGauges);
+    }
+    if (snapshot?.customInitialGauge == null) return {};
+    const legacy = Math.max(0, Math.floor(Number(snapshot.customInitialGauge) || 0));
+    return Object.fromEntries(
+      (snapshot.tracks || []).filter(t => t?.id).map(t => [t.id!, legacy]),
+    );
+  }
+
+  /** Scenario-scoped bulk initial ultimate-energy preset (toolbar control). */
+  const initialGaugeMode = ref<InitialGaugeMode>('empty');
+  /** Per-operator custom initial gauges remembered with the scenario. */
+  const customInitialGauges = ref<Record<string, number>>({});
+
   const toolbarPrefs = loadTimelineToolbarPrefs();
 
   const showCursorGuide = ref(Boolean(toolbarPrefs.showCursorGuide));
@@ -1303,6 +1341,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     contingencyContractTags.value = Array.isArray(snapshot.contingencyContractTags)
       ? snapshot.contingencyContractTags.map(Number).filter(Number.isFinite)
       : [];
+    initialGaugeMode.value = normalizeInitialGaugeMode(snapshot.initialGaugeMode);
+    customInitialGauges.value = resolveCustomInitialGaugesFromSnapshot(snapshot);
     recomputeAllTrackOperatorStatuses();
     clearSelection();
   }
@@ -1324,6 +1364,8 @@ export const useTimelineStore = defineStore('timeline', () => {
           prepExpanded: prepExpanded.value,
           battleDuration: battleDuration.value,
           trackRowHeightWeights: trackRowHeightWeights.value,
+          initialGaugeMode: initialGaugeMode.value,
+          customInitialGauges: customInitialGauges.value,
           systemConstants: systemConstants.value,
           activeEnemyId: activeEnemyId.value,
           activeEnemyLevel: activeEnemyLevel.value,
@@ -1407,6 +1449,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     contingencyContractTags.value = Array.isArray(incoming.contingencyContractTags)
       ? incoming.contingencyContractTags.map(Number).filter(Number.isFinite)
       : [];
+    initialGaugeMode.value = normalizeInitialGaugeMode(incoming.initialGaugeMode);
+    customInitialGauges.value = resolveCustomInitialGaugesFromSnapshot(incoming);
     recomputeAllTrackOperatorStatuses();
     clearSelection();
   }
@@ -1557,6 +1601,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       prepExpanded: true,
       battleDuration: DEFAULT_BATTLE_DURATION,
       trackRowHeightWeights: [],
+      initialGaugeMode: 'empty',
+      customInitialGauges: {},
       systemConstants: createDefaultSystemConstantsState(),
       inheritedInitialEffects: [],
       inheritedInitialEnemyState: null,
@@ -4885,10 +4931,55 @@ export const useTimelineStore = defineStore('timeline', () => {
   }
   function updateTrackInitialGauge(trackId: string, value: unknown) {
     const track = tracks.value.find(t => t.id === trackId);
-    if (track) {
-      track.initialGauge = clampTrackInitialGauge(track, value);
-      commitState();
+    if (!track) return;
+    track.initialGauge = clampTrackInitialGauge(track, value);
+    // Manual per-track edit is the custom profile: snapshot every occupied
+    // track so siblings aren't wiped the next time custom mode is applied.
+    const nextMap: Record<string, number> = { ...customInitialGauges.value };
+    for (const t of tracks.value) {
+      if (!t?.id) continue;
+      nextMap[t.id] = clampTrackInitialGauge(t, t.initialGauge);
     }
+    customInitialGauges.value = nextMap;
+    initialGaugeMode.value = 'custom';
+    commitState();
+  }
+
+  function applyInitialGaugePreset(mode: InitialGaugeMode = initialGaugeMode.value) {
+    for (const track of tracks.value) {
+      if (!track?.id) continue;
+      const next =
+        mode === 'empty'
+          ? 0
+          : mode === 'full'
+            ? getTrackGaugeMax(track.id)
+            : clampTrackInitialGauge(track, customInitialGauges.value[track.id] ?? 0);
+      track.initialGauge = next;
+    }
+    initialGaugeMode.value = mode;
+    commitState();
+  }
+
+  function cycleInitialGaugeMode() {
+    const order: InitialGaugeMode[] = ['empty', 'full', 'custom'];
+    const idx = order.indexOf(initialGaugeMode.value);
+    const next = order[(idx + 1) % order.length]!;
+    applyInitialGaugePreset(next);
+  }
+
+  /** Right-click bulk set: write the same value onto every occupied track and into the custom profile. */
+  function setUnifiedInitialGauge(value: unknown) {
+    const raw = Number(value);
+    const fallback = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+    const nextMap = { ...customInitialGauges.value };
+    for (const track of tracks.value) {
+      if (!track?.id) continue;
+      track.initialGauge = clampTrackInitialGauge(track, fallback);
+      nextMap[track.id] = track.initialGauge;
+    }
+    customInitialGauges.value = nextMap;
+    initialGaugeMode.value = 'custom';
+    commitState();
   }
 
   function removeAnomaly(instanceId: string, rowIndex: number, colIndex: number) {
@@ -5732,6 +5823,10 @@ export const useTimelineStore = defineStore('timeline', () => {
     getTrackGaugeMax,
     updateTrackInitialGauge,
     updateTrackMaxGauge,
+    cycleInitialGaugeMode,
+    setUnifiedInitialGauge,
+    initialGaugeMode,
+    customInitialGauges,
     updateTrackOriginiumArtsPower,
     updateTrackLinkCdReduction,
     updateTrackWeapon,

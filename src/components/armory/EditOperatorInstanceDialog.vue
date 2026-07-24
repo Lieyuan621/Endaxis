@@ -16,7 +16,7 @@ import {
   getOperatorUiLabel,
 } from '@/data/gameText';
 import { getOperatorSkillMax, skillLevelLabel } from '@/utils/operatorBounds';
-import { getPromotionCount } from '@/data/stats/baseValues';
+import { getPromotionCount, DEFAULT_TRUST_ATTRIBUTE_BONUS } from '@/data/stats/baseValues';
 import { useOperatorStore } from '@/stores/operatorStore';
 import { elementColors } from '@/utils/theme';
 
@@ -148,6 +148,54 @@ function getTalentDescription(groupIdx, level) {
   );
 }
 
+function resolveTrustAttributeBonus() {
+  return op.value?.trustAttributeBonus ?? DEFAULT_TRUST_ATTRIBUTE_BONUS;
+}
+
+function resolveTrustAttributeLabels() {
+  const tab = resolveTrustAttributeBonus();
+  const main = op.value?.mainAttribute;
+  const sub = op.value?.subAttribute;
+  return (tab.attribute || [])
+    .map(attr => {
+      const resolved = attr === 'main' ? main : attr === 'sub' ? sub : attr;
+      return resolved ? getGameAttributeName(resolved, locale.value) : '';
+    })
+    .filter(Boolean);
+}
+
+function resolveTrustAttributeKeys() {
+  const tab = resolveTrustAttributeBonus();
+  const main = op.value?.mainAttribute;
+  const sub = op.value?.subAttribute;
+  const keys = [];
+  for (const attr of tab.attribute || []) {
+    const resolved = attr === 'main' ? main : attr === 'sub' ? sub : attr;
+    if (resolved && !keys.includes(resolved)) keys.push(resolved);
+  }
+  return keys;
+}
+
+const trustAttributeSubLabel = computed(() => {
+  locale.value;
+  const labels = resolveTrustAttributeLabels();
+  return labels.join(String(locale.value).startsWith('zh') ? '、' : ' / ');
+});
+
+const trustAttributeIconKeys = computed(() => {
+  void op.value;
+  return resolveTrustAttributeKeys();
+});
+
+function getTrustTooltipInfo(level) {
+  const bonus = trustLevelBonus(level);
+  const labels = resolveTrustAttributeLabels();
+  const attrText = labels.join(String(locale.value).startsWith('zh') ? '、' : ' / ');
+  return {
+    description: attrText ? `+${bonus} ${attrText}` : `+${bonus}`,
+  };
+}
+
 function getPotentialInfo(level) {
   const slug = props.instance?.operatorSlug;
   if (!slug) {
@@ -165,14 +213,6 @@ function getPotentialInfo(level) {
   return {
     name,
     description,
-  };
-}
-
-function getTrustTooltipInfo(level) {
-  const attrName = getGameAttributeName(op.value?.mainAttribute, locale.value);
-
-  return {
-    description: `+${trustLevelBonus(level)} ${attrName}`,
   };
 }
 
@@ -207,7 +247,8 @@ function setTalentState(groupIdx, level) {
 }
 
 function trustLevelBonus(level) {
-  return [10, 15, 15, 20][level - 1] ?? 0;
+  const values = resolveTrustAttributeBonus().value || [];
+  return values[level - 1] ?? 0;
 }
 
 function promotedLabel() {
@@ -372,7 +413,7 @@ function promotedLabel() {
           <div class="talent-row">
             <div class="talent-info">
               <span class="talent-name">{{ t('armory.common.trust') }}</span>
-              <span class="talent-sub">{{ getGameAttributeName(op.mainAttribute, locale) }}</span>
+              <span class="talent-sub">{{ trustAttributeSubLabel }}</span>
             </div>
             <div class="talent-nodes">
               <template v-for="lvl in 4" :key="lvl">
@@ -401,13 +442,16 @@ function promotedLabel() {
                       :class="{
                         active: (instance.trustLevel ?? 0) >= lvl,
                         disabled: lvl > maxTrust,
+                        'is-multi-attr': trustAttributeIconKeys.length > 1,
                       }"
                       :style="(instance.trustLevel ?? 0) >= lvl ? { borderColor: elColor } : {}"
                       :disabled="lvl > maxTrust"
                       @click="setTrustLevel(lvl)"
                     >
                       <img
-                        :src="ATTR_ICON[op.mainAttribute] ?? '/icons/default_icon.webp'"
+                        v-for="attrKey in trustAttributeIconKeys"
+                        :key="attrKey"
+                        :src="ATTR_ICON[attrKey] ?? '/icons/default_icon.webp'"
                         class="talent-icon"
                       />
                     </button>
@@ -739,6 +783,14 @@ function promotedLabel() {
   width: 28px;
   height: 28px;
   object-fit: contain;
+}
+.talent-node.is-multi-attr {
+  gap: 1px;
+  padding: 0 3px;
+}
+.talent-node.is-multi-attr .talent-icon {
+  width: 16px;
+  height: 16px;
 }
 .footer {
   display: flex;

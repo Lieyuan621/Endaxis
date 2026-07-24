@@ -931,7 +931,76 @@ function getEquipmentPrimaryAffixIconStack(eq) {
 
 const isGameTimeCollapsed = ref(true);
 const showGameTime = computed(() => !isGameTimeCollapsed.value || store.isCapturing);
-const gridRowHeight = computed(() => (showGameTime.value ? '60px' : '48px'));
+// Two tool-button rows + zoom need more header height than the old single row.
+const gridRowHeight = computed(() => (showGameTime.value ? '88px' : '76px'));
+
+const initialGaugeModeLabel = computed(() => {
+  locale.value;
+  if (store.initialGaugeMode === 'full') return t('timelineGrid.toolbar.initialGaugeFullShort');
+  if (store.initialGaugeMode === 'custom') return t('timelineGrid.toolbar.initialGaugeCustomShort');
+  return t('timelineGrid.toolbar.initialGaugeEmptyShort');
+});
+
+const isUnifiedGaugeEditorOpen = ref(false);
+const unifiedGaugeDraft = ref('');
+const unifiedGaugeInputRef = ref(null);
+
+function defaultUnifiedGaugeDraftValue() {
+  const gauges = store.customInitialGauges || {};
+  const firstOccupied = (store.tracks || []).find(track => track?.id);
+  if (firstOccupied?.id != null && gauges[firstOccupied.id] != null) {
+    return String(gauges[firstOccupied.id]);
+  }
+  const values = Object.values(gauges);
+  if (values.length) return String(values[0]);
+  return '100';
+}
+
+function closeUnifiedGaugeEditor() {
+  isUnifiedGaugeEditorOpen.value = false;
+}
+
+function openUnifiedGaugeEditor() {
+  unifiedGaugeDraft.value = defaultUnifiedGaugeDraftValue();
+  isUnifiedGaugeEditorOpen.value = true;
+  closePrepDurationEditor();
+  closeBattleDurationEditor();
+  nextTick(() => {
+    unifiedGaugeInputRef.value?.focus?.({ preventScroll: true });
+    unifiedGaugeInputRef.value?.select?.();
+  });
+}
+
+function applyUnifiedGaugeDraft() {
+  // Esc / already closed: blur may still fire after unmount — ignore.
+  if (!isUnifiedGaugeEditorOpen.value) return;
+  const raw = String(unifiedGaugeDraft.value ?? '').trim();
+  isUnifiedGaugeEditorOpen.value = false;
+  if (!/^\d+$/.test(raw)) {
+    ElMessage.warning(t('timelineGrid.toolbar.initialGaugeCustomInvalid'));
+    return;
+  }
+  store.setUnifiedInitialGauge(raw);
+  ElMessage.success(t('timelineGrid.toolbar.initialGaugeAppliedUnified', { value: raw }));
+}
+
+function onInitialGaugeToolClick() {
+  closeUnifiedGaugeEditor();
+  store.cycleInitialGaugeMode();
+  const mode = store.initialGaugeMode;
+  if (mode === 'empty') ElMessage.info(t('timelineGrid.toolbar.initialGaugeAppliedEmpty'));
+  else if (mode === 'full') ElMessage.info(t('timelineGrid.toolbar.initialGaugeAppliedFull'));
+  else ElMessage.info(t('timelineGrid.toolbar.initialGaugeAppliedCustom'));
+}
+
+function onInitialGaugeToolContextMenu(event) {
+  event.preventDefault();
+  if (isUnifiedGaugeEditorOpen.value) {
+    closeUnifiedGaugeEditor();
+    return;
+  }
+  openUnifiedGaugeEditor();
+}
 
 const ELEMENT_FILTERS = computed(() => {
   locale.value;
@@ -1843,6 +1912,7 @@ function openPrepDurationEditor() {
   prepDurationDraft.value = String(timeToFrame(activePrepDuration.value));
   isPrepDurationEditorOpen.value = true;
   closeBattleDurationEditor();
+  closeUnifiedGaugeEditor();
   nextTick(() => {
     prepDurationInputRef.value?.focus?.({ preventScroll: true });
     pinRulerScroll();
@@ -1871,6 +1941,7 @@ function openBattleDurationEditor() {
   battleDurationDraft.value = String(Math.round(Number(activeBattleDuration.value) || 0));
   isBattleDurationEditorOpen.value = true;
   closePrepDurationEditor();
+  closeUnifiedGaugeEditor();
   nextTick(() => {
     battleDurationInputRef.value?.focus?.({ preventScroll: true });
     pinRulerScroll();
@@ -3295,6 +3366,36 @@ defineExpose({
     <div class="corner-placeholder">
       <div class="corner-controls">
         <div class="corner-button-row">
+          <div class="initial-gauge-tool">
+            <button
+              class="mini-tool-btn"
+              :class="{ 'is-active': store.initialGaugeMode !== 'empty' }"
+              @click="onInitialGaugeToolClick"
+              @contextmenu="onInitialGaugeToolContextMenu"
+              :title="t('timelineGrid.toolbar.initialGauge')"
+            >
+              <span class="btn-text">{{ initialGaugeModeLabel }}</span>
+            </button>
+            <div
+              v-if="isUnifiedGaugeEditorOpen"
+              class="prep-duration-popover initial-gauge-popover"
+              :title="t('timelineGrid.toolbar.initialGaugeUnifiedTitle')"
+              @mousedown.stop
+            >
+              <input
+                ref="unifiedGaugeInputRef"
+                v-model="unifiedGaugeDraft"
+                class="prep-duration-input"
+                type="number"
+                min="0"
+                step="1"
+                @keydown.enter.prevent="applyUnifiedGaugeDraft"
+                @keydown.esc.prevent="closeUnifiedGaugeEditor"
+                @blur="applyUnifiedGaugeDraft"
+              />
+            </div>
+          </div>
+
           <button
             class="mini-tool-btn"
             :class="{ 'is-active': store.showCursorGuide }"
@@ -4893,14 +4994,29 @@ defineExpose({
 }
 
 .corner-button-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   width: 100%;
   gap: 4px;
 }
 
+.initial-gauge-tool {
+  position: relative;
+  min-width: 0;
+}
+
+.initial-gauge-tool .mini-tool-btn {
+  width: 100%;
+}
+
+.initial-gauge-popover {
+  left: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
 .mini-tool-btn {
-  flex: 1;
   height: 20px;
   display: flex;
   align-items: center;
@@ -4912,6 +5028,7 @@ defineExpose({
   cursor: pointer;
   padding: 0;
   transition: all 0.2s;
+  min-width: 0;
 }
 
 .mini-tool-btn:hover {

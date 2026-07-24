@@ -2,6 +2,7 @@
   "common": {
     "cancel": "Cancel",
     "close": "Close",
+    "confirm": "Confirm",
     "copy": "Copy",
     "delete": "Delete",
     "default": "Default",
@@ -463,6 +464,16 @@
       "buffLayoutMode": "Buff layout: {mode}",
       "connectionTool": "Connection tool (Alt+L)",
       "cursorGuide": "Guide line (Ctrl+G)",
+      "initialGauge": "Initial gauge: left-click cycles 0 / full / custom (per operator, remembered); right-click sets all operators",
+      "initialGaugeAppliedCustom": "Initial gauge: custom (per operator)",
+      "initialGaugeAppliedEmpty": "Initial gauge: 0",
+      "initialGaugeAppliedFull": "Initial gauge: full",
+      "initialGaugeAppliedUnified": "Set all to {value} (saved into this scenario's custom profile)",
+      "initialGaugeCustomInvalid": "Enter a non-negative integer",
+      "initialGaugeCustomShort": "C",
+      "initialGaugeEmptyShort": "0",
+      "initialGaugeFullShort": "MAX",
+      "initialGaugeUnifiedTitle": "Set all initial gauges",
       "snapPrecision": "Snap precision (Alt+S)"
     },
     "track": {

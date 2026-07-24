@@ -176,6 +176,10 @@ export interface ScenarioSnapshot {
   prepExpanded?: boolean;
   /** Battle-phase timeline length in seconds (default 120, max 600). */
   battleDuration?: number;
+  /** Bulk initial ultimate-energy preset for the toolbar charge control. */
+  initialGaugeMode?: 'empty' | 'full' | 'custom';
+  /** Per-operator remembered custom initial ultimate energy (keyed by track/operator id). */
+  customInitialGauges?: Record<string, number>;
   /** Optional simulation analysis window start (absolute timeline seconds). */
   simulationStartline?: number | null;
   /** Optional simulation hard stop (absolute timeline seconds). */
