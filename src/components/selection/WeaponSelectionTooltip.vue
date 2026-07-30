@@ -1,9 +1,9 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getWeapon } from '@/data';
-import { getWeaponSkillDescription, getWeaponSkillName } from '@/data/gameText';
-import { getSkillBounds } from '@/utils/weaponBounds';
+import { getWeapon } from '@/data/index.js';
+import { getWeaponSkillDescription, getWeaponSkillName } from '@/data/gameText.js';
+import { getSkillBounds } from '@/utils/weaponBounds.js';
 import GameRichTextRenderer from '@/components/GameRichTextRenderer.vue';
 
 const props = defineProps({

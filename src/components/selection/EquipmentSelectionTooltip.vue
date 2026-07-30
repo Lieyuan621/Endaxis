@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getGearPiece } from '@/data';
-import { getGearSetGameDescription, getGearSetGameName } from '@/data/gameText';
+import { getGearPiece } from '@/data/index.js';
+import { getGearSetGameDescription, getGearSetGameName } from '@/data/gameText.js';
 import GameRichTextRenderer from '@/components/GameRichTextRenderer.vue';
 
 const props = defineProps({
