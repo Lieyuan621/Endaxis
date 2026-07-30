@@ -516,6 +516,8 @@
     "weaponDialog": {
       "empty": "Оружие не найдено",
       "equipped": "Экипировано",
+      "fullPotentialActive": "Полный потенциал",
+      "fullPotentialHint": "Удерживайте Ctrl для полного потенциала",
       "searchPlaceholder": "Поиск по названию...",
       "title": "Выбрать оружие",
       "unequipTooltip": "Снять текущее оружие"

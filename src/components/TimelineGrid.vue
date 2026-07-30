@@ -12,6 +12,8 @@ import ContextMenu from './ContextMenu.vue';
 import StatDetailDialog from './StatDetailDialog.vue';
 import HitDamageDetailDialog from './HitDamageDetailDialog.vue';
 import CustomNumberInput from './CustomNumberInput.vue';
+import EquipmentSelectionTooltipContent from './armory/EquipmentSelectionTooltipContent.vue';
+import WeaponSelectionTooltipContent from './armory/WeaponSelectionTooltipContent.vue';
 import { ElMessage } from 'element-plus';
 import { Search } from '@element-plus/icons-vue';
 import { useDragConnection } from '@/composables/useDragConnection';
@@ -91,6 +93,7 @@ const wasSelectedOnPress = ref(false);
 const wasCycleSelectedOnPress = ref(false);
 const wasSwitchSelectedOnPress = ref(false);
 const dragStartTimes = new Map();
+const isCtrlDown = ref(false);
 const isAltDown = ref(false);
 const isShiftDown = ref(false);
 const hoveredContext = ref(null);
@@ -898,7 +901,7 @@ function formatEquipmentNumber(value) {
 
 function formatEquipmentEffectValue(effect) {
   const rawValues = Array.isArray(effect?.value) ? effect.value : [effect?.value];
-  const values = rawValues.filter(v => v !== undefined && v !== null);
+  const values = rawValues.filter(value => value !== undefined && value !== null);
   if (values.length === 0) return '';
   const suffix = equipmentValueNeedsPercent(effect?.stat) ? '%' : '';
   return values.map(value => `+${formatEquipmentNumber(value)}${suffix}`).join(' / ');
@@ -3198,6 +3201,9 @@ function handleKeyDown(event) {
 }
 
 function handleGlobalKeyUp(e) {
+  if (e.key === 'Control') {
+    isCtrlDown.value = false;
+  }
   if (e.key === 'Alt') {
     isAltDown.value = false;
     hideAlignGuide();
@@ -3209,12 +3215,16 @@ function handleGlobalKeyUp(e) {
 }
 
 function resetModifierKeys() {
+  isCtrlDown.value = false;
   isAltDown.value = false;
   isShiftDown.value = false;
   hideAlignGuide();
 }
 
 function handleGlobalKeyDownWrapper(e) {
+  if (e.key === 'Control') {
+    isCtrlDown.value = true;
+  }
   if (e.key === 'Alt') {
     e.preventDefault();
     isAltDown.value = true;
@@ -4726,17 +4736,32 @@ defineExpose({
               :class="[`rarity-${getWeaponRarity(weapon)}-style`]"
               @click="confirmWeaponSelection(weapon.id)"
             >
-              <div
-                class="card-avatar-wrapper"
-                :style="
-                  getWeaponRarity(weapon) === 6
-                    ? {}
-                    : { borderColor: getRarityBaseColor(getWeaponRarity(weapon)) }
-                "
+              <el-tooltip
+                placement="top-start"
+                effect="dark"
+                :show-after="160"
+                popper-class="weapon-selection-preview-popper"
               >
-                <img :src="weapon.icon || '/weapons/default.webp'" loading="lazy" />
-              </div>
-              <div class="card-name">{{ weapon.name }}</div>
+                <template #content>
+                  <WeaponSelectionTooltipContent
+                    :weapon="weapon"
+                    :full-potential="isCtrlDown"
+                  />
+                </template>
+                <div class="selection-card-tooltip-target">
+                  <div
+                    class="card-avatar-wrapper"
+                    :style="
+                      getWeaponRarity(weapon) === 6
+                        ? {}
+                        : { borderColor: getRarityBaseColor(getWeaponRarity(weapon)) }
+                    "
+                  >
+                    <img :src="weapon.icon || '/weapons/default.webp'" loading="lazy" />
+                  </div>
+                  <div class="card-name">{{ weapon.name }}</div>
+                </div>
+              </el-tooltip>
               <div v-if="isWeaponEquipped(weapon.id)" class="in-team-tag weapon-equipped">
                 {{ t('timelineGrid.weaponDialog.equipped') }}
               </div>
@@ -4904,93 +4929,70 @@ defineExpose({
                 placement="top-start"
                 effect="dark"
                 :show-after="160"
-                :disabled="getEquipmentAffixRows(eq).length === 0"
-                popper-class="equipment-affix-tooltip-popper"
+                popper-class="equipment-selection-preview-popper"
               >
                 <template #content>
-                  <div class="equipment-affix-tooltip">
-                    <div
-                      v-for="row in getEquipmentAffixRows(eq)"
-                      :key="`eq_tip_${row.key}`"
-                      class="equipment-affix-tooltip-row"
-                    >
-                      <svg
-                        v-if="row.marker === 'hollow-dot'"
-                        class="equipment-affix-tooltip-marker"
-                        viewBox="0 0 12 12"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          cx="6"
-                          cy="6"
-                          r="3.25"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="1.5"
-                        />
-                      </svg>
-                      <img
-                        v-else
-                        class="equipment-affix-tooltip-icon"
-                        :src="row.src"
-                        loading="lazy"
-                      />
-                      <span class="equipment-affix-tooltip-label">{{ row.label }}</span>
-                      <strong class="equipment-affix-tooltip-value">{{ row.valueText }}</strong>
-                    </div>
-                  </div>
+                  <EquipmentSelectionTooltipContent
+                    :equipment="eq"
+                    :affix-rows="getEquipmentAffixRows(eq)"
+                  />
                 </template>
-                <div
-                  class="card-avatar-wrapper"
-                  :class="{ 'is-ability-match-both': eq.abilityMatch?.type === 'both' }"
-                  :style="{ borderColor: getEquipmentLevelColor(eq.level) }"
-                >
-                  <div class="eq-affix-icon-stack">
-                    <div
-                      v-for="icon in getEquipmentPrimaryAffixIconStack(eq)"
-                      :key="`eq_affix_${eq.id}_${icon.key || icon.modifierId}`"
-                      class="eq-affix-icon-cell"
-                      :class="{
-                        'has-img': !!icon.src,
-                        'has-hollow-marker': icon.marker === 'hollow-dot',
-                      }"
-                      :title="icon.title"
-                    >
-                      <span class="eq-affix-icon-dot" aria-hidden="true"></span>
-                      <svg
-                        v-if="icon.marker === 'hollow-dot'"
-                        class="eq-affix-icon-hollow"
-                        viewBox="0 0 12 12"
-                        aria-hidden="true"
+                <div class="selection-card-tooltip-target">
+                  <div
+                    class="card-avatar-wrapper"
+                    :class="{ 'is-ability-match-both': eq.abilityMatch?.type === 'both' }"
+                    :style="{ borderColor: getEquipmentLevelColor(eq.level) }"
+                  >
+                    <div class="eq-affix-icon-stack">
+                      <div
+                        v-for="icon in getEquipmentPrimaryAffixIconStack(eq)"
+                        :key="`eq_affix_${eq.id}_${icon.key || icon.modifierId}`"
+                        class="eq-affix-icon-cell"
+                        :class="{
+                          'has-img': !!icon.src,
+                          'has-hollow-marker': icon.marker === 'hollow-dot',
+                        }"
+                        :title="icon.title"
                       >
-                        <circle
-                          cx="6"
-                          cy="6"
-                          r="3"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="1.4"
+                        <span class="eq-affix-icon-dot" aria-hidden="true"></span>
+                        <svg
+                          v-if="icon.marker === 'hollow-dot'"
+                          class="eq-affix-icon-hollow"
+                          viewBox="0 0 12 12"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            cx="6"
+                            cy="6"
+                            r="3"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.4"
+                          />
+                        </svg>
+                        <img
+                          v-else-if="icon.src"
+                          class="eq-affix-icon-img"
+                          :src="icon.src"
+                          loading="lazy"
+                          @load="
+                            e =>
+                              e.target
+                                .closest('.eq-affix-icon-cell')
+                                ?.classList.remove('img-failed')
+                          "
+                          @error="
+                            e =>
+                              e.target.closest('.eq-affix-icon-cell')?.classList.add('img-failed')
+                          "
                         />
-                      </svg>
-                      <img
-                        v-else-if="icon.src"
-                        class="eq-affix-icon-img"
-                        :src="icon.src"
-                        loading="lazy"
-                        @load="
-                          e =>
-                            e.target.closest('.eq-affix-icon-cell')?.classList.remove('img-failed')
-                        "
-                        @error="
-                          e => e.target.closest('.eq-affix-icon-cell')?.classList.add('img-failed')
-                        "
-                      />
+                      </div>
                     </div>
+                    <img :src="eq.icon || '/icons/default_icon.webp'" loading="lazy" />
                   </div>
-                  <img :src="eq.icon || '/icons/default_icon.webp'" loading="lazy" />
+                  <div class="card-name">{{ eq.name }}</div>
                 </div>
               </el-tooltip>
-              <div class="card-name">{{ eq.name }}</div>
               <div v-if="isEquipmentEquipped(eq.id)" class="in-team-tag weapon-equipped">
                 {{ t('timelineGrid.weaponDialog.equipped') }}
               </div>
@@ -6725,6 +6727,13 @@ body.capture-mode .davinci-range {
 }
 
 /* 头像框 */
+.selection-card-tooltip-target {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .card-avatar-wrapper {
   position: relative;
   width: 72px;
@@ -6807,65 +6816,6 @@ body.capture-mode .davinci-range {
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
-}
-
-:global(.equipment-affix-tooltip-popper) {
-  max-width: 320px;
-}
-
-:global(.equipment-affix-tooltip-popper.el-popper.is-dark) {
-  background: #050505;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.72);
-}
-
-:global(.equipment-affix-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: #050505;
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-:global(.equipment-affix-tooltip) {
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-:global(.equipment-affix-tooltip-row) {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 22px;
-}
-
-:global(.equipment-affix-tooltip-icon) {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
-}
-
-:global(.equipment-affix-tooltip-marker) {
-  width: 12px;
-  height: 12px;
-  justify-self: center;
-  color: rgba(255, 255, 255, 0.9);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
-}
-
-:global(.equipment-affix-tooltip-label) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-:global(.equipment-affix-tooltip-value) {
-  color: #facc15;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 .element-badge {

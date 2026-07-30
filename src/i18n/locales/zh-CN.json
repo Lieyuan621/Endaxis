@@ -516,6 +516,8 @@
     "weaponDialog": {
       "empty": "没有找到匹配的武器",
       "equipped": "已装备",
+      "fullPotentialActive": "满潜效果",
+      "fullPotentialHint": "按住 Ctrl 查看满潜效果",
       "searchPlaceholder": "搜索武器名称...",
       "title": "选择武器",
       "unequipTooltip": "卸下当前武器"
