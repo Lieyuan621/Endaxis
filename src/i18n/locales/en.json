@@ -516,6 +516,8 @@
     "weaponDialog": {
       "empty": "No matching weapon found",
       "equipped": "Equipped",
+      "fullPotentialActive": "Full potential",
+      "fullPotentialHint": "Hold Ctrl to preview full potential",
       "searchPlaceholder": "Search weapon name...",
       "title": "Select Weapon",
       "unequipTooltip": "Unequip current weapon"
