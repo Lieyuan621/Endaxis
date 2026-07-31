@@ -1709,7 +1709,6 @@ onUnmounted(() => {
                       :key="layerId"
                       type="button"
                       class="header-more-check-row header-more-check-row--compact"
-                      :title="t(`timeline.header.viewLayers.${layerId}Tooltip`)"
                       @click="store.toggleTimelineViewLayer(layerId)"
                     >
                       <svg
@@ -1733,11 +1732,8 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <div class="header-more-view-block">
-                  <h5
-                    class="header-more-subsection__title"
-                    :title="t('timeline.header.viewOperatorsHint')"
-                  >
+                <div class="header-more-view-block header-more-view-block--follow">
+                  <h5 class="header-more-subsection__title">
                     {{ t('timeline.header.sectionViewOperators') }}
                   </h5>
                   <div v-if="hasOperatorTracks" class="header-more-checklist header-more-checklist--grid">
@@ -1746,7 +1742,6 @@ onUnmounted(() => {
                         v-if="track.id"
                         type="button"
                         class="header-more-check-row header-more-check-row--compact"
-                        :title="t('timeline.header.viewOperatorsHint')"
                         @click="store.toggleOperatorEffectsVisible(index)"
                       >
                         <svg
@@ -1770,6 +1765,149 @@ onUnmounted(() => {
                     </template>
                   </div>
                   <p v-else class="header-more-empty">{{ t('timeline.header.hideEffectsEmpty') }}</p>
+                </div>
+
+                <div class="header-more-view-block">
+                  <h5 class="header-more-subsection__title">
+                    {{ t('timeline.header.sectionDurationBarColor') }}
+                  </h5>
+
+                  <div class="header-more-checklist">
+                    <button
+                      type="button"
+                      class="header-more-check-row"
+                      @click="store.toggleColoredDurationBars()"
+                    >
+                      <svg
+                        viewBox="0 0 16 16"
+                        width="12"
+                        height="12"
+                        fill="none"
+                        stroke="rgba(255, 215, 0, 0.85)"
+                        stroke-width="1.5"
+                        aria-hidden="true"
+                      >
+                        <rect x="1" y="1" width="14" height="14" rx="2" />
+                        <polyline
+                          v-if="store.durationBarColor.enabled"
+                          points="3,8 6.5,11.5 13,4.5"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>{{ t('timeline.header.coloredDurationBarsEnable') }}</span>
+                    </button>
+                  </div>
+
+                  <div
+                    v-if="store.durationBarColor.enabled"
+                    class="header-more-color-controls"
+                  >
+                    <label class="header-more-tune-row">
+                      <span class="header-more-tune-row__label">
+                        {{ t('timeline.header.durationBarSaturation') }}
+                        <em>{{ store.durationBarColor.saturation }}%</em>
+                      </span>
+                      <div class="ea-range-row">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          class="ea-range"
+                          :value="store.durationBarColor.saturation"
+                          @input="
+                            store.setDurationBarColorSaturation(
+                              Number(($event.target).value),
+                            )
+                          "
+                        />
+                      </div>
+                    </label>
+
+                    <label class="header-more-tune-row">
+                      <span class="header-more-tune-row__label">
+                        {{ t('timeline.header.durationBarLightness') }}
+                        <em>{{ store.durationBarColor.lightness }}%</em>
+                      </span>
+                      <div class="ea-range-row">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          class="ea-range"
+                          :value="store.durationBarColor.lightness"
+                          @input="
+                            store.setDurationBarColorLightness(
+                              Number(($event.target).value),
+                            )
+                          "
+                        />
+                      </div>
+                    </label>
+
+                    <h5 class="header-more-subsection__title">
+                      {{ t('timeline.header.durationBarColorSources') }}
+                    </h5>
+                    <div class="header-more-checklist header-more-checklist--grid">
+                      <button
+                        v-for="sourceId in store.DURATION_BAR_COLOR_SOURCE_IDS"
+                        :key="sourceId"
+                        type="button"
+                        class="header-more-check-row header-more-check-row--compact"
+                        @click="store.toggleDurationBarColorSource(sourceId)"
+                      >
+                        <svg
+                          viewBox="0 0 16 16"
+                          width="12"
+                          height="12"
+                          fill="none"
+                          stroke="rgba(255, 215, 0, 0.85)"
+                          stroke-width="1.5"
+                          aria-hidden="true"
+                        >
+                          <rect x="1" y="1" width="14" height="14" rx="2" />
+                          <polyline
+                            v-if="store.durationBarColor.sources[sourceId]"
+                            points="3,8 6.5,11.5 13,4.5"
+                            stroke-width="2"
+                          />
+                        </svg>
+                        <span>{{ t(`timeline.header.durationBarColorSource.${sourceId}`) }}</span>
+                      </button>
+                    </div>
+
+                    <h5 class="header-more-subsection__title">
+                      {{ t('timeline.header.durationBarColorSurfaces') }}
+                    </h5>
+                    <div class="header-more-checklist header-more-checklist--grid">
+                      <button
+                        v-for="surfaceId in store.DURATION_BAR_COLOR_SURFACE_IDS"
+                        :key="surfaceId"
+                        type="button"
+                        class="header-more-check-row header-more-check-row--compact"
+                        @click="store.toggleDurationBarColorSurface(surfaceId)"
+                      >
+                        <svg
+                          viewBox="0 0 16 16"
+                          width="12"
+                          height="12"
+                          fill="none"
+                          stroke="rgba(255, 215, 0, 0.85)"
+                          stroke-width="1.5"
+                          aria-hidden="true"
+                        >
+                          <rect x="1" y="1" width="14" height="14" rx="2" />
+                          <polyline
+                            v-if="store.durationBarColor.surfaces[surfaceId]"
+                            points="3,8 6.5,11.5 13,4.5"
+                            stroke-width="2"
+                          />
+                        </svg>
+                        <span>{{ t(`timeline.header.durationBarColorSurface.${surfaceId}`) }}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </section>
 
@@ -2743,7 +2881,17 @@ onUnmounted(() => {
 .header-more-view-block {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+}
+.header-more-view-block + .header-more-view-block {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.header-more-view-block + .header-more-view-block.header-more-view-block--follow {
+  margin-top: 8px;
+  padding-top: 0;
+  border-top: none;
 }
 .header-more-subsection__title {
   margin: 0;
@@ -2814,6 +2962,37 @@ onUnmounted(() => {
 }
 .header-more-check-row svg {
   flex-shrink: 0;
+}
+.header-more-color-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0 0;
+}
+.header-more-tune-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 2px 2px 4px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: default;
+}
+.header-more-tune-row__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.header-more-tune-row__label em {
+  font-style: normal;
+  color: rgba(255, 215, 0, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+.header-more-color-controls .header-more-subsection__title {
+  margin-top: 2px;
 }
 .header-more-actions {
   display: flex;

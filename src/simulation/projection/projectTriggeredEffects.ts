@@ -7,10 +7,10 @@ import type { Effect } from '@/data/types';
 import {
   resolveEffectDefaults,
   getEffectIcon,
-  getEffectColor,
   resolveEffectLifecycle,
 } from '@/data/effectPresets';
 import { OperatorEffectGroup, type OperatorEffectSegment } from './projectOperatorEffects';
+import { resolveDurationBarColor, type DurationBarColorOptions } from '@/simulation/projection/sourceGroupBarColors';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -35,7 +35,16 @@ function getGroupFromEffect(effect: Effect): OperatorEffectGroup {
   return OperatorEffectGroup.OPERATOR;
 }
 
-export function windowsToOperatorSegments(windows: ActivationWindow[]): OperatorEffectSegment[] {
+export function windowsToOperatorSegments(
+  windows: ActivationWindow[],
+  options?: DurationBarColorOptions,
+): OperatorEffectSegment[] {
+  const colorOpts: DurationBarColorOptions = {
+    enabled: options?.enabled === true,
+    saturation: options?.saturation,
+    lightness: options?.lightness,
+    sources: options?.sources,
+  };
   return windows.map(w => {
     const resolved = resolveEffectDefaults(w.effect);
     return {
@@ -47,7 +56,11 @@ export function windowsToOperatorSegments(windows: ActivationWindow[]): Operator
       maxStacks: w.maxStacks ?? resolveEffectLifecycle(w.effect).maxStacks,
       showIcon: !w.isContinuation,
       icon: getEffectIcon(resolved, w.stacks),
-      color: getEffectColor(resolved),
+      color: resolveDurationBarColor({
+        sourceGroup: w.effect.sourceGroup,
+        effect: resolved,
+        ...colorOpts,
+      }),
       effect: w.effect,
       effectId: w.effectId,
       sourceActionId: '',

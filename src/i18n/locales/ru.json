@@ -225,25 +225,32 @@
       "sectionPrefs": "Настройки",
       "sectionViewLayers": "Слои",
       "sectionViewOperators": "Операторы",
-      "viewOperatorsHint": "Выключение скрывает все слои выше для этого оператора",
+      "sectionDurationBarColor": "Окраска полос",
+      "coloredDurationBarsEnable": "Включить",
+      "durationBarSaturation": "Насыщенность",
+      "durationBarLightness": "Светлота",
+      "durationBarColorSources": "По источнику",
+      "durationBarColorSurfaces": "По области",
+      "durationBarColorSource": {
+        "anomaly": "Аномалии",
+        "weapon": "Оружие",
+        "gearSet": "Сет",
+        "operator": "Оператор"
+      },
+      "durationBarColorSurface": {
+        "track": "Дорожки",
+        "enemy": "Панель врага"
+      },
       "hideEffectsEmpty": "Нет дорожек операторов для настройки",
       "viewLayers": {
         "upperEffects": "Эффекты сверху дорожки",
-        "upperEffectsTooltip": "Иконки эффектов и полосы длительности над дорожкой",
         "lowerBuffs": "Эффекты снизу дорожки",
-        "lowerBuffsTooltip": "Иконки эффектов и полосы длительности под дорожкой",
         "gauge": "Кривая заряда ульты",
-        "gaugeTooltip": "Кривая заряда на фоне действий",
         "skillDecorations": "Оформление навыков",
-        "skillDecorationsTooltip": "КД, усиление и иконки статуса на блоках навыков",
         "hitMarkers": "Точки ударов",
-        "hitMarkersTooltip": "Метки моментов урона на блоках навыков",
         "comboWindows": "Окна комбо",
-        "comboWindowsTooltip": "Полосы окон комбо на дорожке",
         "switchMarkers": "Метки смены",
-        "switchMarkersTooltip": "Метки времени смены оператора",
-        "effectLinks": "Связи",
-        "effectLinksTooltip": "Связи между навыками"
+        "effectLinks": "Связи"
       },
       "shortcutsLabel": "Горячие клавиши",
       "shortcutsTooltip": "Показать все горячие клавиши",

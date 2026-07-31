@@ -31,6 +31,8 @@ export interface EnemyAfflictionSegment {
   row: number;
   tracksComboState: boolean;
   sourceId?: string;
+  /** Duration-bar color from projection (source-group aware). */
+  color?: string;
 }
 
 export interface EnemyAfflictionGroup {
@@ -200,6 +202,7 @@ export function projectEnemyAfflictionViz(layout: any) {
       sourceId: segment.sourceId,
       carryoverKey: segment.carryoverKey,
       disabled: segment.disabled === true,
+      color: typeof segment.color === 'string' ? segment.color : undefined,
     };
 
     if (segment.group === 0 || segment.group === 1) {

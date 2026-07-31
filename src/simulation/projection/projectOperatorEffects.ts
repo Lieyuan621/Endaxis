@@ -11,6 +11,7 @@ import type {
 } from '@/simulation/engine/types';
 
 import { ROW_HEIGHT, buildByTypeKey, layoutEffects, type EffectLayout } from './effectLayout';
+import type { DurationBarColorOptions } from './sourceGroupBarColors';
 export { ROW_HEIGHT };
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -102,6 +103,7 @@ export function buildWindowsFromLog(
 export function projectOperatorEffects(
   trackId: string,
   operatorLog: OperatorStateEvent[],
+  options?: DurationBarColorOptions,
 ): OperatorEffectProjection {
   // Build windows from OPERATOR_EFFECT_APPLY/EXPIRE pairs
   const logWindowsMap = buildWindowsFromLog(operatorLog, trackId);
@@ -119,7 +121,7 @@ export function projectOperatorEffects(
     }),
   );
 
-  const segments = windowsToOperatorSegments([...visibleLogWindowsMap.values()].flat());
+  const segments = windowsToOperatorSegments([...visibleLogWindowsMap.values()].flat(), options);
   segments.sort((a, b) => a.start - b.start);
 
   return { segments, byTypeKey: buildByTypeKey(segments) };

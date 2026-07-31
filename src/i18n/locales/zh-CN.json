@@ -225,25 +225,32 @@
       "sectionPrefs": "偏好",
       "sectionViewLayers": "显示内容",
       "sectionViewOperators": "干员",
-      "viewOperatorsHint": "关闭后该干员的上述内容全部不显示",
+      "sectionDurationBarColor": "持续时间染色",
+      "coloredDurationBarsEnable": "启用染色",
+      "durationBarSaturation": "饱和度",
+      "durationBarLightness": "明度",
+      "durationBarColorSources": "按来源",
+      "durationBarColorSurfaces": "按区域",
+      "durationBarColorSource": {
+        "anomaly": "异常",
+        "weapon": "武器",
+        "gearSet": "套装",
+        "operator": "干员"
+      },
+      "durationBarColorSurface": {
+        "track": "干员轨道",
+        "enemy": "敌人状态栏"
+      },
       "hideEffectsEmpty": "当前没有可配置的干员轨道",
       "viewLayers": {
         "upperEffects": "轨道上层效果",
-        "upperEffectsTooltip": "轨道上方的效果图标与时长条",
         "lowerBuffs": "轨道下层效果",
-        "lowerBuffsTooltip": "轨道下方的效果图标与时长条",
         "gauge": "终结技充能曲线",
-        "gaugeTooltip": "轨道背景上的充能曲线",
         "skillDecorations": "技能装饰",
-        "skillDecorationsTooltip": "技能块上的 CD、强化条与状态图标等",
         "hitMarkers": "伤害判定点",
-        "hitMarkersTooltip": "技能块上的伤害判定时刻标记",
         "comboWindows": "连携窗口",
-        "comboWindowsTooltip": "轨道上的连携窗口条",
         "switchMarkers": "换人标记",
-        "switchMarkersTooltip": "换人时间点标记",
-        "effectLinks": "连线",
-        "effectLinksTooltip": "技能间的连线"
+        "effectLinks": "连线"
       },
       "shortcutsLabel": "快捷键",
       "shortcutsTooltip": "查看全部快捷键",

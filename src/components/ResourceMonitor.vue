@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n';
 import { getDisplayKeyCandidates, resolveEffectDisplayKey } from '@/utils/effectDisplay';
 import { computeContingencyEnemyHealing } from '@/data/contingencyContracts/criteriaEffects';
 import { pickRepresentativePhysicalMarker } from '@/simulation/projection/projectEnemyAfflictionViz';
+import { FALLBACK_EFFECT_COLOR } from '@/utils/theme';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -517,6 +518,7 @@ const afflictionItems = computed(() => {
       carryoverKey: seg.carryoverKey || null,
       isDisabled: seg.disabled === true,
       hideIcon: physicalMarkerTimeKeys.has(Math.round(start / epsilon)),
+      color: seg.color || null,
     });
   }
 
@@ -535,6 +537,7 @@ const afflictionItems = computed(() => {
       carryoverKey: seg.carryoverKey || null,
       isDisabled: seg.disabled === true,
       hideIcon: false,
+      color: seg.color || null,
     });
   }
 
@@ -553,6 +556,7 @@ const afflictionItems = computed(() => {
       carryoverKey: seg.carryoverKey || null,
       isDisabled: seg.disabled === true,
       hideIcon: false,
+      color: seg.color || null,
     });
   }
 
@@ -571,6 +575,7 @@ const afflictionItems = computed(() => {
       carryoverKey: seg.carryoverKey || null,
       isDisabled: seg.disabled === true,
       hideIcon: false,
+      color: seg.color || null,
     });
   }
 
@@ -1317,7 +1322,7 @@ const staggerRatio = computed(() => {
                       class="anomaly-duration-bar"
                       :style="{
                         width: it.barWidthPx + 'px',
-                        backgroundColor: getTypeColor(it.typeKey),
+                        backgroundColor: it.color || FALLBACK_EFFECT_COLOR,
                       }"
                       :title="getTypeTitle(it.typeKey)"
                     >

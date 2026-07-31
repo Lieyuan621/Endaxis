@@ -11,6 +11,7 @@ import { simulate, type InitialEffect } from '@/simulation/simulator';
 import { compileEndaxisScenario } from '@/simulation/compileEndaxisScenario';
 import { projectOptimizerResult } from '@/simulation/projection/projectOptimizerResult';
 import type { Track, RosterEntry, ScenarioListEntry } from './types';
+import type { DurationBarColorPrefs } from '@/simulation/projection/sourceGroupBarColors';
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ interface SimulationDeps {
   lmdiAttributionMode: Ref<'stacks' | 'applier'>;
   controlledOperatorSegments: ComputedRef<any>;
   viewDuration: ComputedRef<number>;
+  durationBarColor: Ref<DurationBarColorPrefs>;
 }
 
 // ─── Composable ──────────────────────────────────────────────────────────────
@@ -49,6 +51,7 @@ export function useTimelineSimulation(deps: SimulationDeps) {
     lmdiAttributionMode,
     controlledOperatorSegments,
     viewDuration,
+    durationBarColor,
   } = deps;
 
   const compiledScenario = computed(() => {
@@ -107,6 +110,7 @@ export function useTimelineSimulation(deps: SimulationDeps) {
       viewDuration: viewDuration.value,
       prepDuration: prepDuration.value,
       simulationEndline: simulationEndline.value,
+      durationBarColor: durationBarColor.value,
     });
   });
 

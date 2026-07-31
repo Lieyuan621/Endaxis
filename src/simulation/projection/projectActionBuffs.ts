@@ -1,7 +1,8 @@
-import { getEffectColor, getEffectName } from '@/data/effectPresets';
+import { getEffectName } from '@/data/effectPresets';
 import type { Effect } from '@/data/types';
 import { isEnemyStat } from '@/data/types';
 import type { OperatorEffectApplyEvent, OperatorStateEvent } from '@/simulation/engine/types';
+import { resolveDurationBarColor, type DurationBarColorOptions } from '@/simulation/projection/sourceGroupBarColors';
 
 export type ActionBuffPlacement = 'upper' | 'lower';
 export type ActionBuffSourceGroup = 'operator' | 'weapon' | 'gearSet';
@@ -110,12 +111,14 @@ function pushMergedApply(
   applyMap: Map<string, ActionBuffApplyEvent>,
   event: OperatorEffectApplyEvent,
   effect: Effect,
+  colorOpts: DurationBarColorOptions,
 ) {
   const sourceGroup = ((effect as any)?.sourceGroup ?? 'operator') as ActionBuffSourceGroup;
   const effectKey = String(event.id || effect?.id || 'status');
   const time = event.time;
   const targetTrackId = event.targetTrackId;
   const dedupeKey = `${targetTrackId}::${effectKey}::${time}`;
+  const title = effect ? getEffectName(effect) : effectKey;
 
   const nextEvent: ActionBuffApplyEvent = {
     key: `${targetTrackId}::${effectKey}`,
@@ -125,8 +128,13 @@ function pushMergedApply(
     sourceGroup,
     placement: resolvePlacement(sourceGroup),
     icon: ((effect as any)?.icon as string | null | undefined) ?? null,
-    color: effect ? getEffectColor(effect) : '#5dade2',
-    title: effect ? getEffectName(effect) : effectKey,
+    color: resolveDurationBarColor({
+      sourceGroup,
+      effect,
+      title,
+      ...colorOpts,
+    }),
+    title,
     effect,
     stacks: Math.max(1, Number(event.cumulativeStacks ?? event.stacks) || 1),
     maxStacks: Math.max(1, Number(event.maxStacks) || 1),
@@ -200,7 +208,11 @@ function endSort(left: ActionBuffEndEvent, right: ActionBuffEndEvent): number {
   return left.type === 'consumption' ? -1 : 1;
 }
 
-function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): ActionBuffWindow[] {
+function buildBuffWindows(
+  operatorLog: OperatorStateEvent[],
+  maxTime: number,
+  colorOpts: DurationBarColorOptions,
+): ActionBuffWindow[] {
   const applyMap = new Map<string, ActionBuffApplyEvent>();
   const endMap = new Map<string, ActionBuffEndEvent>();
   const effectByKey = new Map<string, Effect>();
@@ -214,7 +226,7 @@ function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): A
       const effect = entry.effect ?? effectByKey.get(cacheKey);
       if (!isVisibleFriendlyBuff(entry, effect)) return;
       if (!effect) return;
-      pushMergedApply(applyMap, entry, effect);
+      pushMergedApply(applyMap, entry, effect, colorOpts);
       return;
     }
 
@@ -286,10 +298,17 @@ function buildBuffWindows(operatorLog: OperatorStateEvent[], maxTime: number): A
 export function projectActionBuffs(
   operatorLog: OperatorStateEvent[],
   maxTime: number,
+  options?: DurationBarColorOptions,
 ): Map<string, ActionBuffLayout> {
   if (!operatorLog.length || maxTime <= 0) return new Map();
 
-  const windows = buildBuffWindows(operatorLog, maxTime);
+  const colorOpts: DurationBarColorOptions = {
+    enabled: options?.enabled === true,
+    saturation: options?.saturation,
+    lightness: options?.lightness,
+    sources: options?.sources,
+  };
+  const windows = buildBuffWindows(operatorLog, maxTime, colorOpts);
   if (!windows.length) return new Map();
 
   const pendingLayouts = new Map<string, PendingActionBuffLayout>();

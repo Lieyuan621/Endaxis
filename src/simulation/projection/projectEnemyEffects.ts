@@ -14,15 +14,19 @@ import type { SimLogEntry } from '@/simulation/events/event.types';
 import type { ResolvedHit } from '@/simulation/compiler/types';
 import {
   getEffectIcon,
-  getEffectColor,
   getEffectPresetKey,
   resolveEffectDefaults,
 } from '@/data/effectPresets';
 import { type ActivationWindow, buildApplyExpireWindows } from './projectTriggeredEffects';
 import { buildByTypeKey, layoutEffects, type EffectLayout } from './effectLayout';
+import { resolveDurationBarColor, type DurationBarColorOptions } from './sourceGroupBarColors';
 export { ROW_HEIGHT } from './effectLayout';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+function barColor(effect: Effect, colorOpts: DurationBarColorOptions): string {
+  return resolveDurationBarColor({ effect, ...colorOpts });
+}
+
+// ??? Types ??????????????????????????????????????????????????????????????????
 
 /** A visual segment in the enemy status track */
 interface EnemyEffectSegment {
@@ -63,7 +67,7 @@ interface EnemyEffectProjection {
   byTypeKey: Map<string, EnemyEffectSegment[]>;
 }
 
-// ─── Simulation-aware projection ────────────────────────────────────────────
+// ??? Simulation-aware projection ????????????????????????????????????????????
 
 type InflictionTracker = {
   start: number;
@@ -111,7 +115,11 @@ function syntheticBurst(element: ArtsElement): BurstEffect {
   return { kind: 'burst', element };
 }
 
-function makeInflictionSeg(t: InflictionTracker, end: number): EnemyEffectSegment {
+function makeInflictionSeg(
+  t: InflictionTracker,
+  end: number,
+  colorOpts: DurationBarColorOptions,
+): EnemyEffectSegment {
   const eff = syntheticInfliction(t.element);
   return {
     typeKey: 'infliction',
@@ -122,7 +130,7 @@ function makeInflictionSeg(t: InflictionTracker, end: number): EnemyEffectSegmen
     maxStacks: 4,
     showIcon: true,
     icon: getEffectIcon(eff),
-    color: getEffectColor(eff),
+    color: barColor(eff, colorOpts),
     effect: eff,
     sourceId: t.sourceId,
     carryoverKey: t.carryoverKey,
@@ -130,7 +138,11 @@ function makeInflictionSeg(t: InflictionTracker, end: number): EnemyEffectSegmen
   };
 }
 
-function makeVulnSeg(t: VulnTracker, end: number): EnemyEffectSegment {
+function makeVulnSeg(
+  t: VulnTracker,
+  end: number,
+  colorOpts: DurationBarColorOptions,
+): EnemyEffectSegment {
   const eff = syntheticPhysical('vulnerability');
   return {
     typeKey: 'physical_combo',
@@ -141,7 +153,7 @@ function makeVulnSeg(t: VulnTracker, end: number): EnemyEffectSegment {
     maxStacks: 4,
     showIcon: false,
     icon: getEffectIcon(eff),
-    color: getEffectColor(eff),
+    color: barColor(eff, colorOpts),
     effect: eff,
     sourceId: t.sourceId,
     carryoverKey: t.carryoverKey,
@@ -153,6 +165,7 @@ function makeDebuffSeg(
   debuffType: string,
   info: DebuffTracker,
   group: EnemyEffectGroup,
+  colorOpts: DurationBarColorOptions,
   corrosionTicks?: Array<{ time: number; resShred: number }>,
 ): EnemyEffectSegment {
   const isArtsReaction = ['combustion', 'electrification', 'corrosion', 'solidification'].includes(
@@ -177,7 +190,7 @@ function makeDebuffSeg(
     maxStacks: 4,
     showIcon: true,
     icon: getEffectIcon(eff),
-    color: getEffectColor(eff),
+    color: barColor(eff, colorOpts),
     effect: eff,
     sourceId: info.sourceId,
     carryoverKey: info.carryoverKey,
@@ -229,7 +242,10 @@ function getEnemyStatusTypeKey(resolved: Effect, effectId: string): string {
 }
 
 /** Convert ActivationWindows to EnemyEffectSegments for StatusEffects. */
-function windowsToEnemyStatusSegments(windows: ActivationWindow[]): EnemyEffectSegment[] {
+function windowsToEnemyStatusSegments(
+  windows: ActivationWindow[],
+  colorOpts: DurationBarColorOptions,
+): EnemyEffectSegment[] {
   return windows.map(w => {
     const resolved = resolveEffectDefaults(w.effect);
     const hasStat = resolved.kind === 'status' && resolved.stat;
@@ -242,7 +258,7 @@ function windowsToEnemyStatusSegments(windows: ActivationWindow[]): EnemyEffectS
       maxStacks: w.maxStacks ?? 1,
       showIcon: !w.isContinuation,
       icon: getEffectIcon(resolved, w.stacks),
-      color: getEffectColor(resolved),
+      color: barColor(resolved, colorOpts),
       effect: resolved,
       sourceId: w.sourceId ?? w.effectId,
       carryoverKey: w.carryoverKey,
@@ -256,7 +272,7 @@ function windowsToEnemyStatusSegments(windows: ActivationWindow[]): EnemyEffectS
  * Convert the simulation engine's event log into an EnemyEffectProjection.
  *
  * Enemy effects are rendered exclusively from the sim log (ground truth).
- * Do NOT add a hitFires fallback — the simulation dispatches all enemy effects
+ * Do NOT add a hitFires fallback ??the simulation dispatches all enemy effects
  * through ENEMY_EFFECT_APPLY events, so the log is the single source of truth.
  * A previous hitFires-based fallback was removed because it attempted local
  * condition evaluation that diverged from the simulation's actual behavior.
@@ -264,7 +280,14 @@ function windowsToEnemyStatusSegments(windows: ActivationWindow[]): EnemyEffectS
 export function projectFromSimLog(
   events: EnemyStateEvent[],
   simLog?: SimLogEntry[],
+  options?: DurationBarColorOptions,
 ): EnemyEffectProjection {
+  const colorOpts: DurationBarColorOptions = {
+    enabled: options?.enabled === true,
+    saturation: options?.saturation,
+    lightness: options?.lightness,
+    sources: options?.sources,
+  };
   const segments: EnemyEffectSegment[] = [];
 
   // Collect corrosion tick data from logged events
@@ -284,7 +307,7 @@ export function projectFromSimLog(
     switch (event.type) {
       case 'INFLICTION_APPLY': {
         if (event.triggerOnly) {
-          // Consumption trigger — icon only, no duration bar
+          // Consumption trigger ??icon only, no duration bar
           const eff = syntheticInfliction(event.element);
           segments.push({
             typeKey: 'infliction',
@@ -295,7 +318,7 @@ export function projectFromSimLog(
             maxStacks: 4,
             showIcon: true,
             icon: getEffectIcon(eff),
-            color: getEffectColor(eff),
+            color: barColor(eff, colorOpts),
             effect: eff,
             sourceId: event.sourceId,
             carryoverKey: event.carryoverKey,
@@ -307,8 +330,8 @@ export function projectFromSimLog(
           !infliction.disabled &&
           !event.disabled
         ) {
-          // Same-element reapply → split segment at boundary (stack increase + timer refresh)
-          segments.push(makeInflictionSeg(infliction, event.time));
+          // Same-element reapply ??split segment at boundary (stack increase + timer refresh)
+          segments.push(makeInflictionSeg(infliction, event.time, colorOpts));
           infliction = {
             start: event.time,
             element: event.element,
@@ -320,7 +343,7 @@ export function projectFromSimLog(
           };
         } else {
           // Fresh infliction or different element (consumed event should precede)
-          if (infliction) segments.push(makeInflictionSeg(infliction, event.time));
+          if (infliction) segments.push(makeInflictionSeg(infliction, event.time, colorOpts));
           infliction = {
             start: event.time,
             element: event.element,
@@ -336,7 +359,7 @@ export function projectFromSimLog(
 
       case 'INFLICTION_CONSUMED': {
         if (infliction) {
-          segments.push(makeInflictionSeg(infliction, event.time));
+          segments.push(makeInflictionSeg(infliction, event.time, colorOpts));
           infliction = null;
         }
         break;
@@ -348,13 +371,13 @@ export function projectFromSimLog(
         switch (event.kind) {
           case 'infliction':
             if (infliction && infliction.element === event.element) {
-              segments.push(makeInflictionSeg(infliction, event.time));
+              segments.push(makeInflictionSeg(infliction, event.time, colorOpts));
               infliction = null;
             }
             break;
           case 'vulnerability':
             if (vuln) {
-              segments.push(makeVulnSeg(vuln, event.time));
+              segments.push(makeVulnSeg(vuln, event.time, colorOpts));
               vuln = null;
             }
             break;
@@ -364,7 +387,7 @@ export function projectFromSimLog(
             if (existing) {
               existing.expiresAt = event.time;
               const group = dt === 'breach' ? EnemyEffectGroup.BREACH : EnemyEffectGroup.REACTION;
-              segments.push(makeDebuffSeg(dt, existing, group, corrosionTicks));
+              segments.push(makeDebuffSeg(dt, existing, group, colorOpts, corrosionTicks));
               openDebuffs.delete(dt);
             }
             break;
@@ -377,7 +400,7 @@ export function projectFromSimLog(
       }
 
       case 'ARTS_BURST': {
-        // Inline marker on infliction bar (same typeKey → same sub-row)
+        // Inline marker on infliction bar (same typeKey ??same sub-row)
         const eff = syntheticBurst(event.element);
         segments.push({
           typeKey: 'infliction',
@@ -388,7 +411,7 @@ export function projectFromSimLog(
           maxStacks: 4,
           showIcon: true,
           icon: getEffectIcon(eff),
-          color: getEffectColor(eff),
+          color: barColor(eff, colorOpts),
           effect: eff,
           sourceId: '',
         });
@@ -416,7 +439,7 @@ export function projectFromSimLog(
           maxStacks: 1,
           showIcon: true,
           icon: getEffectIcon(eff),
-          color: getEffectColor(eff),
+          color: barColor(eff, colorOpts),
           effect: eff,
           sourceId: event.sourceId,
         });
@@ -430,7 +453,7 @@ export function projectFromSimLog(
             maxStacks: 1,
             showIcon: true,
             icon: getEffectIcon(eff),
-            color: getEffectColor(eff),
+            color: barColor(eff, colorOpts),
             effect: eff,
             sourceId: event.sourceId,
           });
@@ -439,7 +462,7 @@ export function projectFromSimLog(
       }
 
       case 'VULNERABILITY_CHANGE': {
-        if (vuln) segments.push(makeVulnSeg(vuln, event.time));
+        if (vuln) segments.push(makeVulnSeg(vuln, event.time, colorOpts));
         vuln = {
           start: event.time,
           stacks: event.stacks,
@@ -453,14 +476,14 @@ export function projectFromSimLog(
 
       case 'VULNERABILITY_CONSUMED': {
         if (vuln) {
-          segments.push(makeVulnSeg(vuln, event.time));
+          segments.push(makeVulnSeg(vuln, event.time, colorOpts));
           vuln = null;
         }
         break;
       }
 
       case 'REACTION_TRIGGER': {
-        // Only shatter needs an instant marker — other reactions produce DEBUFF_APPLY
+        // Only shatter needs an instant marker ??other reactions produce DEBUFF_APPLY
         if (event.reactionType === 'shatter') {
           const eff = syntheticReaction('shatter');
           segments.push({
@@ -472,7 +495,7 @@ export function projectFromSimLog(
             maxStacks: 4,
             showIcon: true,
             icon: getEffectIcon(eff),
-            color: getEffectColor(eff),
+            color: barColor(eff, colorOpts),
             effect: eff,
             sourceId: event.sourceId,
           });
@@ -487,7 +510,7 @@ export function projectFromSimLog(
           existing.expiresAt = time;
           const group =
             debuffType === 'breach' ? EnemyEffectGroup.BREACH : EnemyEffectGroup.REACTION;
-          segments.push(makeDebuffSeg(debuffType, existing, group, corrosionTicks));
+          segments.push(makeDebuffSeg(debuffType, existing, group, colorOpts, corrosionTicks));
         }
         openDebuffs.set(debuffType, {
           start: time,
@@ -503,14 +526,14 @@ export function projectFromSimLog(
   }
 
   // Flush still-open enemy-specific segments
-  if (infliction) segments.push(makeInflictionSeg(infliction, infliction.expiresAt));
-  if (vuln) segments.push(makeVulnSeg(vuln, vuln.expiresAt));
+  if (infliction) segments.push(makeInflictionSeg(infliction, infliction.expiresAt, colorOpts));
+  if (vuln) segments.push(makeVulnSeg(vuln, vuln.expiresAt, colorOpts));
   for (const [debuffType, info] of openDebuffs) {
     const group = debuffType === 'breach' ? EnemyEffectGroup.BREACH : EnemyEffectGroup.REACTION;
-    segments.push(makeDebuffSeg(debuffType, info, group, corrosionTicks));
+    segments.push(makeDebuffSeg(debuffType, info, group, colorOpts, corrosionTicks));
   }
 
-  // ── Post-loop: batch-process enemy StatusEffects (same pattern as operator projection) ──
+  // ?? Post-loop: batch-process enemy StatusEffects (same pattern as operator projection) ??
 
   // Build windows from ENEMY_STATUS_APPLY/EXPIRE pairs
   const statusApplies = (
@@ -555,9 +578,9 @@ export function projectFromSimLog(
       getEnemyStatusTypeKey(resolveEffectDefaults(w.effect), w.effectId),
     ]),
   );
-  segments.push(...windowsToEnemyStatusSegments(visibleStatusWindows));
+  segments.push(...windowsToEnemyStatusSegments(visibleStatusWindows, colorOpts));
 
-  // ── Reaction damage + DoT hit markers from simLog (single pass) ────────
+  // ?? Reaction damage + DoT hit markers from simLog (single pass) ????????
   if (simLog) {
     const REACTION_TYPE_KEY_MAP: Record<string, string> = {
       electrification: 'reaction:electrification',
@@ -591,7 +614,7 @@ export function projectFromSimLog(
       if (entry.type !== 'DAMAGE_HIT') continue;
       const hitData = entry.payload.hitData as ResolvedHit;
 
-      // Reaction damage hit marker — skip synthetic `treatAsReaction` hits,
+      // Reaction damage hit marker ??skip synthetic `treatAsReaction` hits,
       // which only borrow the reaction formula and aren't real reactions.
       if (hitData?._reactionMeta && !hitData._reactionMeta.synthetic) {
         const { reactionType } = hitData._reactionMeta;
@@ -605,7 +628,7 @@ export function projectFromSimLog(
     }
   }
 
-  // ── DoT tick diamond markers from simLog ────────────────────────────────
+  // ?? DoT tick diamond markers from simLog ????????????????????????????????
   // Bar comes from ENEMY_STATUS_APPLY (handled by the log-based status path above).
   // Diamonds come from DAMAGE_HIT events spawned by DOT_TICK (identified by triggeredBy prefix).
   // We read from simLog (not events) because the DAMAGE_HIT hitData carries _expectedDamage.
@@ -633,7 +656,7 @@ export function projectFromSimLog(
   return { segments, byTypeKey: buildByTypeKey(segments) };
 }
 
-// ─── Layout (delegates to shared engine) ────────────────────────────────────
+// ??? Layout (delegates to shared engine) ????????????????????????????????????
 
 type EnemyEffectLayout = EffectLayout<EnemyEffectSegment>;
 

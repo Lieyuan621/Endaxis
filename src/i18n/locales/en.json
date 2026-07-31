@@ -225,25 +225,32 @@
       "sectionPrefs": "Preferences",
       "sectionViewLayers": "Layers",
       "sectionViewOperators": "Operators",
-      "viewOperatorsHint": "When off, all layers above are hidden for that operator",
+      "sectionDurationBarColor": "Duration bar tint",
+      "coloredDurationBarsEnable": "Enable tinting",
+      "durationBarSaturation": "Saturation",
+      "durationBarLightness": "Lightness",
+      "durationBarColorSources": "By source",
+      "durationBarColorSurfaces": "By area",
+      "durationBarColorSource": {
+        "anomaly": "Anomaly",
+        "weapon": "Weapon",
+        "gearSet": "Gear set",
+        "operator": "Operator"
+      },
+      "durationBarColorSurface": {
+        "track": "Operator tracks",
+        "enemy": "Enemy panel"
+      },
       "hideEffectsEmpty": "No operator tracks to configure",
       "viewLayers": {
         "upperEffects": "Upper track effects",
-        "upperEffectsTooltip": "Effect icons and duration bars above the track",
         "lowerBuffs": "Lower track effects",
-        "lowerBuffsTooltip": "Effect icons and duration bars below the track",
         "gauge": "Ultimate charge curve",
-        "gaugeTooltip": "Charge curve behind actions on the track",
         "skillDecorations": "Skill decorations",
-        "skillDecorationsTooltip": "CD bars, enhancement bars, and status icons on skill blocks",
         "hitMarkers": "Hit markers",
-        "hitMarkersTooltip": "Damage timing markers on skill blocks",
         "comboWindows": "Combo windows",
-        "comboWindowsTooltip": "Combo window bars on the track",
         "switchMarkers": "Switch markers",
-        "switchMarkersTooltip": "Operator switch time markers",
-        "effectLinks": "Links",
-        "effectLinksTooltip": "Links between skills"
+        "effectLinks": "Links"
       },
       "shortcutsLabel": "Shortcuts",
       "shortcutsTooltip": "View all keyboard shortcuts",

@@ -117,6 +117,14 @@ import { useTimelineSimulation } from '@/stores/timeline/simulation';
 import { useShifts } from '@/stores/timeline/shifts';
 import { useTimelinePersistence } from '@/stores/timeline/persistence';
 import { useSkillLibrary } from '@/stores/timeline/skillLibrary';
+import {
+  clampDurationBarSaturation,
+  clampDurationBarLightness,
+  normalizeDurationBarColorPrefs,
+  type DurationBarColorPrefs,
+  type DurationBarColorSource,
+  type DurationBarColorSurface,
+} from '@/simulation/projection/sourceGroupBarColors';
 
 const tr = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
 const getI18nSkillType = (type: string) => {
@@ -1104,6 +1112,8 @@ export const useTimelineStore = defineStore('timeline', () => {
   const showCursorGuide = ref(Boolean(toolbarPrefs.showCursorGuide));
   const OPERATOR_EFFECTS_VISIBLE_KEY = 'endaxis:operator-effects-visible:v1';
   const TIMELINE_VIEW_LAYERS_KEY = 'endaxis:timeline-view-layers:v1';
+  const COLORED_DURATION_BARS_KEY = 'endaxis:colored-duration-bars:v1';
+  const DURATION_BAR_COLOR_KEY = 'endaxis:duration-bar-color:v2';
   const TIMELINE_VIEW_LAYER_IDS = [
     'upperEffects',
     'lowerBuffs',
@@ -1161,8 +1171,42 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
+  function loadColoredDurationBarsLegacy(): boolean | null {
+    try {
+      const raw = localStorage.getItem(COLORED_DURATION_BARS_KEY);
+      if (raw === null) return null;
+      return raw !== 'false';
+    } catch {
+      return null;
+    }
+  }
+
+  function loadDurationBarColor(): DurationBarColorPrefs {
+    try {
+      const raw = localStorage.getItem(DURATION_BAR_COLOR_KEY);
+      if (raw) return normalizeDurationBarColorPrefs(JSON.parse(raw));
+    } catch {
+      // fall through
+    }
+    const legacy = loadColoredDurationBarsLegacy();
+    if (legacy === null) return normalizeDurationBarColorPrefs(null);
+    return normalizeDurationBarColorPrefs({ enabled: legacy });
+  }
+
+  function persistDurationBarColor() {
+    try {
+      localStorage.setItem(
+        DURATION_BAR_COLOR_KEY,
+        JSON.stringify(normalizeDurationBarColorPrefs(durationBarColor.value)),
+      );
+    } catch {
+      // ignore
+    }
+  }
+
   const operatorEffectsVisible = ref(loadOperatorEffectsVisible());
   const timelineViewLayers = ref(loadTimelineViewLayers());
+  const durationBarColor = ref(loadDurationBarColor());
   const cursorPosition = ref({ x: 0, y: 0 });
   const snapStep = ref(normalizeToolbarSnapStep(toolbarPrefs.snapStep));
 
@@ -1266,6 +1310,54 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
     persistTimelineViewLayers();
   }
+
+  function patchDurationBarColor(
+    patch: Partial<DurationBarColorPrefs> & {
+      sources?: Partial<DurationBarColorPrefs['sources']>;
+      surfaces?: Partial<DurationBarColorPrefs['surfaces']>;
+    },
+  ) {
+    durationBarColor.value = {
+      ...durationBarColor.value,
+      ...patch,
+      sources: {
+        ...durationBarColor.value.sources,
+        ...(patch.sources || {}),
+      },
+      surfaces: {
+        ...durationBarColor.value.surfaces,
+        ...(patch.surfaces || {}),
+      },
+    };
+    persistDurationBarColor();
+  }
+
+  function toggleColoredDurationBars() {
+    patchDurationBarColor({ enabled: !durationBarColor.value.enabled });
+  }
+
+  function setDurationBarColorSaturation(value: number) {
+    patchDurationBarColor({ saturation: clampDurationBarSaturation(value) });
+  }
+
+  function setDurationBarColorLightness(value: number) {
+    patchDurationBarColor({ lightness: clampDurationBarLightness(value) });
+  }
+
+  function toggleDurationBarColorSource(source: DurationBarColorSource) {
+    patchDurationBarColor({
+      sources: { [source]: !durationBarColor.value.sources[source] },
+    });
+  }
+
+  function toggleDurationBarColorSurface(surface: DurationBarColorSurface) {
+    patchDurationBarColor({
+      surfaces: { [surface]: !durationBarColor.value.surfaces[surface] },
+    });
+  }
+
+  const DURATION_BAR_COLOR_SOURCE_IDS = ['anomaly', 'weapon', 'gearSet', 'operator'] as const;
+  const DURATION_BAR_COLOR_SURFACE_IDS = ['track', 'enemy'] as const;
 
   watch(
     () => tracks.value.length,
@@ -5505,6 +5597,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     lmdiAttributionMode,
     controlledOperatorSegments,
     viewDuration,
+    durationBarColor,
   });
   const {
     compiledTimeline,
@@ -5974,6 +6067,14 @@ export const useTimelineStore = defineStore('timeline', () => {
     toggleTimelineViewLayer,
     isTimelineViewLayerVisible,
     isTrackViewLayerVisible,
+    durationBarColor,
+    toggleColoredDurationBars,
+    setDurationBarColorSaturation,
+    setDurationBarColorLightness,
+    toggleDurationBarColorSource,
+    toggleDurationBarColorSurface,
+    DURATION_BAR_COLOR_SOURCE_IDS,
+    DURATION_BAR_COLOR_SURFACE_IDS,
     toggleBoxSelectMode,
     setCursorPosition,
     toggleSnapStep,

@@ -11,6 +11,11 @@ import { projectActionBuffs } from '@/simulation/projection/projectActionBuffs';
 import { projectAllComboWindows } from '@/simulation/projection/projectComboWindows';
 import { projectRequisiteWarnings } from '@/simulation/projection/projectRequisiteWarnings';
 import { projectEnemyAfflictionViz } from '@/simulation/projection/projectEnemyAfflictionViz';
+import {
+  DEFAULT_DURATION_BAR_COLOR_PREFS,
+  durationBarColorOptionsForSurface,
+  type DurationBarColorPrefs,
+} from '@/simulation/projection/sourceGroupBarColors';
 
 interface ProjectOptimizerResultInput {
   simulation: any;
@@ -19,6 +24,7 @@ interface ProjectOptimizerResultInput {
   viewDuration: number;
   prepDuration?: number;
   simulationEndline?: number | null;
+  durationBarColor?: DurationBarColorPrefs;
 }
 
 function emptyEnemyEffectLayout() {
@@ -57,7 +63,18 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
     viewDuration,
     prepDuration = 0,
     simulationEndline = null,
+    durationBarColor,
   } = input;
+
+  const colorPrefs: DurationBarColorPrefs = durationBarColor
+    ? durationBarColor
+    : {
+        ...DEFAULT_DURATION_BAR_COLOR_PREFS,
+        sources: { ...DEFAULT_DURATION_BAR_COLOR_PREFS.sources },
+        surfaces: { ...DEFAULT_DURATION_BAR_COLOR_PREFS.surfaces },
+      };
+  const trackColorOpts = durationBarColorOptionsForSurface(colorPrefs, 'track');
+  const enemyColorOpts = durationBarColorOptionsForSurface(colorPrefs, 'enemy');
 
   const simLog = simulation?.simLog || [];
   const operatorLog = simulation?.operatorLog || [];
@@ -100,11 +117,11 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
   }
 
   const trackBuffLayouts =
-    operatorLog.length > 0 ? projectActionBuffs(operatorLog, duration) : new Map();
+    operatorLog.length > 0 ? projectActionBuffs(operatorLog, duration, trackColorOpts) : new Map();
 
   const enemyEffectProjection =
     simulation && compiledScenario
-      ? clipProjection(projectFromSimLog(enemyLog, simLog), simulationEndline)
+      ? clipProjection(projectFromSimLog(enemyLog, simLog, enemyColorOpts), simulationEndline)
       : { segments: [], byTypeKey: new Map() };
   const enemyEffectLayout =
     simulation && compiledScenario
@@ -117,7 +134,7 @@ export function projectOptimizerResult(input: ProjectOptimizerResultInput) {
     for (const track of tracks || []) {
       if (!track?.id) continue;
       const projection = clipProjection(
-        projectOperatorEffects(track.id, operatorLog),
+        projectOperatorEffects(track.id, operatorLog, trackColorOpts),
         simulationEndline,
       );
       operatorEffectLayouts.set(track.id, layoutOperatorEffects(projection as any));
