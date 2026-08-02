@@ -1,0 +1,123 @@
+/* Shared chrome tokens. Business / duration-bar colors stay out of theme. */
+
+:root,
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ea-bg: #18181c;
+  --ea-fg: #f0f0f0;
+  --ea-fg-secondary: rgba(255, 255, 255, 0.72);
+  --ea-fg-muted: rgba(255, 255, 255, 0.55);
+  --ea-fg-faint: rgba(255, 255, 255, 0.38);
+  --ea-border: rgba(255, 255, 255, 0.12);
+  --ea-border-soft: rgba(255, 255, 255, 0.08);
+  --ea-border-strong: rgba(255, 255, 255, 0.22);
+  --ea-panel: #18181c;
+  --ea-panel-elevated: #1e1e1e;
+  --ea-chrome: rgba(10, 10, 14, 0.78);
+  --ea-chrome-sticky: rgba(12, 12, 16, 0.9);
+  --ea-fill-soft: rgba(255, 255, 255, 0.03);
+  --ea-fill-muted: rgba(0, 0, 0, 0.16);
+  --ea-fill-strong: rgba(0, 0, 0, 0.22);
+  --ea-fill-input: #1a1a1a;
+  --ea-shadow: rgba(0, 0, 0, 0.45);
+  --ea-shadow-strong: rgba(0, 0, 0, 0.55);
+  --ea-grid-line: rgba(255, 255, 255, 0.05);
+  --ea-grid-wash: rgba(255, 255, 255, 0.03);
+  --ea-mark: rgba(255, 255, 255, 0.22);
+  --ea-mark-major: rgba(255, 255, 255, 0.3);
+  --ea-mark-strong: rgba(255, 255, 255, 0.55);
+  --ea-prep-fill: rgba(255, 255, 255, 0.04);
+  --ea-keycap-bg: #444;
+  --ea-keycap-border: #666;
+  --ea-keycap-skill-bg: #3a3a3a;
+  --ea-keycap-skill-border: #888;
+  --ea-action-fg: rgba(255, 255, 255, 0.9);
+  --ea-action-fg-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  --ea-stack-bg: rgba(0, 0, 0, 0.85);
+  --ea-btn-secondary-bg: rgba(0, 0, 0, 0.18);
+  --ea-btn-secondary-border: rgba(255, 255, 255, 0.16);
+  --ea-btn-secondary-fg: rgba(255, 255, 255, 0.75);
+  --ea-btn-secondary-hover-bg: rgba(255, 255, 255, 0.08);
+  --ea-btn-secondary-hover-border: rgba(255, 255, 255, 0.26);
+  --ea-btn-secondary-hover-fg: #fff;
+  --ea-btn-primary-bg: rgba(0, 229, 255, 0.1);
+  --ea-btn-primary-border: rgba(0, 229, 255, 0.35);
+  --ea-btn-primary-fg: rgba(0, 229, 255, 0.95);
+  --ea-btn-primary-hover-bg: rgba(0, 229, 255, 0.16);
+  --ea-btn-primary-hover-border: rgba(0, 229, 255, 0.6);
+  --ea-btn-primary-hover-fg: rgba(255, 255, 255, 0.95);
+  --ea-menu-hover-bg: rgba(0, 229, 255, 0.1);
+  --ea-menu-hover-fg: rgba(0, 229, 255, 0.95);
+  --ea-select-hover-bg: rgba(255, 215, 0, 0.08);
+  --ea-dialog-bg: #2b2b2b;
+  --ea-dialog-border: #444;
+  --ea-dialog-divider: #3a3a3a;
+  --ea-dialog-title: #f0f0f0;
+  --ea-dialog-body: #ccc;
+  --ea-dialog-hint: #888;
+  --ea-bg-gradient: linear-gradient(180deg, #0b0c10 0%, #111218 60%, #0b0c10 100%);
+  /* Gear / set accent — match PC loadout (#2dd4bf) */
+  --ea-gear-accent: #2dd4bf;
+  --ea-gear-accent-fg: rgba(45, 212, 191, 0.9);
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+
+  --ea-bg: #f2f3f5;
+  --ea-fg: #1a1b1e;
+  --ea-fg-secondary: rgba(26, 27, 30, 0.78);
+  --ea-fg-muted: rgba(26, 27, 30, 0.55);
+  --ea-fg-faint: rgba(26, 27, 30, 0.4);
+  --ea-border: rgba(26, 27, 30, 0.12);
+  --ea-border-soft: rgba(26, 27, 30, 0.08);
+  --ea-border-strong: rgba(26, 27, 30, 0.2);
+  --ea-panel: #ffffff;
+  --ea-panel-elevated: #ffffff;
+  --ea-chrome: rgba(255, 255, 255, 0.88);
+  --ea-chrome-sticky: rgba(255, 255, 255, 0.94);
+  --ea-fill-soft: rgba(26, 27, 30, 0.04);
+  --ea-fill-muted: rgba(26, 27, 30, 0.05);
+  --ea-fill-strong: rgba(26, 27, 30, 0.07);
+  --ea-fill-input: #f7f8fa;
+  --ea-shadow: rgba(26, 27, 30, 0.12);
+  --ea-shadow-strong: rgba(26, 27, 30, 0.18);
+  --ea-grid-line: rgba(26, 27, 30, 0.08);
+  --ea-grid-wash: rgba(26, 27, 30, 0.03);
+  --ea-mark: rgba(26, 27, 30, 0.18);
+  --ea-mark-major: rgba(26, 27, 30, 0.28);
+  --ea-mark-strong: rgba(26, 27, 30, 0.45);
+  --ea-prep-fill: rgba(26, 27, 30, 0.04);
+  --ea-keycap-bg: #dfe3e8;
+  --ea-keycap-border: #b8bec6;
+  --ea-keycap-skill-bg: #d4d8de;
+  --ea-keycap-skill-border: #a8afb8;
+  --ea-action-fg: rgba(20, 22, 26, 0.92);
+  --ea-action-fg-shadow: 0 1px 1px rgba(255, 255, 255, 0.65);
+  --ea-stack-bg: rgba(26, 27, 30, 0.82);
+  --ea-btn-secondary-bg: #ffffff;
+  --ea-btn-secondary-border: rgba(26, 27, 30, 0.18);
+  --ea-btn-secondary-fg: rgba(26, 27, 30, 0.82);
+  --ea-btn-secondary-hover-bg: #f3f4f6;
+  --ea-btn-secondary-hover-border: rgba(26, 27, 30, 0.3);
+  --ea-btn-secondary-hover-fg: #1a1b1e;
+  --ea-btn-primary-bg: #e6f5f7;
+  --ea-btn-primary-border: rgba(0, 122, 140, 0.45);
+  --ea-btn-primary-fg: #007a8c;
+  --ea-btn-primary-hover-bg: #d5eef2;
+  --ea-btn-primary-hover-border: rgba(0, 122, 140, 0.65);
+  --ea-btn-primary-hover-fg: #005f6d;
+  --ea-menu-hover-bg: rgba(0, 140, 160, 0.1);
+  --ea-menu-hover-fg: #007a8c;
+  --ea-select-hover-bg: rgba(180, 140, 0, 0.1);
+  --ea-dialog-bg: #ffffff;
+  --ea-dialog-border: #d8dbe0;
+  --ea-dialog-divider: #e6e8ec;
+  --ea-dialog-title: #1a1b1e;
+  --ea-dialog-body: #3a3d44;
+  --ea-dialog-hint: #7a7f88;
+  --ea-bg-gradient: linear-gradient(180deg, #eef0f3 0%, #f5f6f8 60%, #e8eaed 100%);
+  --ea-gear-accent: #2dd4bf;
+  --ea-gear-accent-fg: #0f9f8f;
+}

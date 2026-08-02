@@ -38,9 +38,12 @@ import {
   findWeaponInstance,
   findGearInstance,
 } from '@/stores/timeline/instanceLookup';
+import { useAppearance } from '@/composables/useAppearance';
+import { adaptColorForLightSurface } from '@/utils/theme';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
+const { appearance, setAppearance } = useAppearance();
 const DEFAULT_ICON = '/icons/default_icon.webp';
 
 const loadoutOpen = ref(false);
@@ -151,16 +154,17 @@ function handleReset() {
 }
 
 function handleMoreCommand(command) {
-  if (command === 'import') {
-    importVisible.value = true;
-    return;
-  }
   if (command === 'reset') {
     handleReset();
     return;
   }
   if (typeof command === 'string' && command.startsWith('locale:')) {
     changeLocale(command.slice('locale:'.length));
+    return;
+  }
+  if (typeof command === 'string' && command.startsWith('appearance:')) {
+    const next = command.slice('appearance:'.length);
+    if (next === 'light' || next === 'dark') setAppearance(next);
   }
 }
 
@@ -518,16 +522,22 @@ function getActionStyle(action, track = null) {
   const height = Math.max(16, bottom - top);
 
   const node = getCompiledAction(action)?.node || action;
-  const color = getActionColor(action, track?.id);
+  const rawColor = getActionColor(action, track?.id);
   const isDisabled = !!action?.isDisabled;
   const isAttack = node?.type === 'basicAttack' || toLegacyDisplayType(node?.type) === 'attack';
+  // Light chrome: denser fills + darken washed-out hues (physical beige, white skill, …).
+  const isLight = appearance.value === 'light';
+  const color = isLight ? adaptColorForLightSurface(rawColor) : rawColor;
+  const fillAlpha = isAttack ? (isLight ? 0.28 : 0.06) : isLight ? 0.48 : 0.18;
+  const borderAlpha = isAttack ? (isLight ? 0.72 : 0.45) : isLight ? 0.95 : 0.9;
+  const glowAlpha = isLight ? 0.08 : 0.16;
 
   return {
     top: `${top}px`,
     height: `${height}px`,
-    borderColor: toRgba(color, isAttack ? 0.45 : 0.9),
-    backgroundColor: toRgba(color, isAttack ? 0.06 : 0.18),
-    boxShadow: isDisabled || isAttack ? 'none' : `0 0 8px ${toRgba(color, 0.16)}`,
+    borderColor: toRgba(color, borderAlpha),
+    backgroundColor: toRgba(color, fillAlpha),
+    boxShadow: isDisabled || isAttack ? 'none' : `0 0 8px ${toRgba(color, glowAlpha)}`,
     opacity: isDisabled ? 0.45 : 1,
   };
 }
@@ -1034,6 +1044,40 @@ async function doImport() {
                 {{ t('locale.ru') }}
               </el-dropdown-item>
 
+              <el-dropdown-item divided disabled>
+                <div class="mobile-menu-item">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path
+                      d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                    ></path>
+                  </svg>
+                  <span>{{ t('common.appearance') }}</span>
+                </div>
+              </el-dropdown-item>
+              <el-dropdown-item
+                command="appearance:dark"
+                :disabled="appearance === 'dark'"
+              >
+                {{ t('common.appearanceDark') }}
+              </el-dropdown-item>
+              <el-dropdown-item
+                command="appearance:light"
+                :disabled="appearance === 'light'"
+              >
+                {{ t('common.appearanceLight') }}
+              </el-dropdown-item>
+
               <el-dropdown-item divided command="reset">
                 <div class="mobile-menu-item">
                   <svg
@@ -1225,7 +1269,7 @@ async function doImport() {
         <div class="m-drawer__content">
           <div
             v-if="resolvedAction"
-            class="tech-style border-gold section-container actioninfo-hero"
+            class="tech-style actioninfo-hero"
           >
             <div class="actioninfo-hero__top">
               <div class="actioninfo-hero__avatar">
@@ -1338,7 +1382,7 @@ async function doImport() {
         </div>
 
         <div class="m-drawer__content">
-          <div v-if="selectedTrack" class="loadout-header tech-style border-gold">
+          <div v-if="selectedTrack" class="loadout-header tech-style">
             <div class="loadout-operator">
               <div class="loadout-operator__avatar">
                 <img
@@ -1396,13 +1440,10 @@ async function doImport() {
               <div
                 v-for="slot in equipmentSlots"
                 :key="slot.slotKey"
-                class="loadout-item tech-style"
+                class="loadout-item tech-style border-gear"
                 :class="{ 'is-empty': !slot.id }"
               >
-                <div
-                  class="loadout-item__icon"
-                  :style="slot.id ? { borderColor: slot.levelColor } : undefined"
-                >
+                <div class="loadout-item__icon">
                   <img
                     :src="withBaseUrl(slot.icon || DEFAULT_ICON)"
                     :alt="slot.name || ''"
@@ -1510,7 +1551,8 @@ async function doImport() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: linear-gradient(180deg, #0b0c10 0%, #111218 60%, #0b0c10 100%);
+  background: var(--ea-bg-gradient);
+  color: var(--ea-fg);
 }
 
 .mobile-topbar {
@@ -1521,8 +1563,8 @@ async function doImport() {
   justify-content: flex-end;
   padding: 0 10px;
   box-sizing: border-box;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 10, 14, 0.78);
+  border-bottom: 1px solid var(--ea-border-soft);
+  background: var(--ea-chrome);
   backdrop-filter: blur(8px);
 }
 
@@ -1538,26 +1580,14 @@ async function doImport() {
 }
 
 .mobile-primary-btn {
-  --el-button-bg-color: rgba(0, 229, 255, 0.1);
-  --el-button-border-color: rgba(0, 229, 255, 0.35);
-  --el-button-text-color: rgba(0, 229, 255, 0.95);
-  --el-button-hover-bg-color: rgba(0, 229, 255, 0.16);
-  --el-button-hover-border-color: rgba(0, 229, 255, 0.6);
-  --el-button-hover-text-color: rgba(255, 255, 255, 0.95);
+  --el-button-bg-color: var(--ea-btn-primary-bg);
+  --el-button-border-color: var(--ea-btn-primary-border);
+  --el-button-text-color: var(--ea-btn-primary-fg);
+  --el-button-hover-bg-color: var(--ea-btn-primary-hover-bg);
+  --el-button-hover-border-color: var(--ea-btn-primary-hover-border);
+  --el-button-hover-text-color: var(--ea-btn-primary-hover-fg);
   border-radius: 0 !important;
   font-weight: 900;
-  letter-spacing: 1px;
-}
-
-.mobile-secondary-btn {
-  --el-button-bg-color: rgba(0, 0, 0, 0.18);
-  --el-button-border-color: rgba(255, 255, 255, 0.16);
-  --el-button-text-color: rgba(255, 255, 255, 0.75);
-  --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
-  --el-button-hover-border-color: rgba(255, 255, 255, 0.26);
-  --el-button-hover-text-color: #fff;
-  border-radius: 0 !important;
-  font-weight: 800;
   letter-spacing: 1px;
 }
 
@@ -1584,12 +1614,12 @@ async function doImport() {
 }
 
 .mobile-icon-btn {
-  --el-button-bg-color: rgba(0, 0, 0, 0.18);
-  --el-button-border-color: rgba(255, 255, 255, 0.16);
-  --el-button-text-color: rgba(255, 255, 255, 0.75);
-  --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
-  --el-button-hover-border-color: rgba(255, 255, 255, 0.26);
-  --el-button-hover-text-color: #fff;
+  --el-button-bg-color: var(--ea-btn-secondary-bg);
+  --el-button-border-color: var(--ea-btn-secondary-border);
+  --el-button-text-color: var(--ea-btn-secondary-fg);
+  --el-button-hover-bg-color: var(--ea-btn-secondary-hover-bg);
+  --el-button-hover-border-color: var(--ea-btn-secondary-hover-border);
+  --el-button-hover-text-color: var(--ea-btn-secondary-hover-fg);
   border-radius: 0 !important;
   padding: 0 10px !important;
   min-width: 34px;
@@ -1599,57 +1629,91 @@ async function doImport() {
 
 .mobile-scenario-select {
   width: 108px;
+  --el-fill-color-blank: var(--ea-fill-strong);
+  --el-border-color: var(--ea-btn-secondary-border);
+  --el-border-color-hover: var(--ea-btn-secondary-hover-border);
+  --el-text-color-regular: var(--ea-fg-secondary);
 }
 
-:deep(.mobile-scenario-select .el-input__wrapper) {
-  background-color: rgba(0, 0, 0, 0.22);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16) inset;
-  border-radius: 0;
+:deep(.mobile-scenario-select .el-input__wrapper),
+:deep(.mobile-scenario-select .el-select__wrapper) {
+  background-color: var(--ea-fill-strong) !important;
+  box-shadow: 0 0 0 1px var(--ea-btn-secondary-border) inset !important;
+  border-radius: 0 !important;
 }
 
-:deep(.mobile-scenario-select .el-input__inner) {
-  color: rgba(255, 255, 255, 0.85);
+:deep(.mobile-scenario-select .el-input__inner),
+:deep(.mobile-scenario-select .el-select__selected-item),
+:deep(.mobile-scenario-select .el-select__placeholder) {
+  color: var(--ea-fg-secondary) !important;
   font-size: 12px;
   font-weight: 700;
 }
 
-:deep(.mobile-scenario-select .el-input__suffix-inner) {
-  color: rgba(255, 255, 255, 0.55);
+:deep(.mobile-scenario-select .el-input__suffix-inner),
+:deep(.mobile-scenario-select .el-select__caret),
+:deep(.mobile-scenario-select .el-icon) {
+  color: var(--ea-fg-muted) !important;
 }
 
 :global(.mobile-scenario-popper.el-popper) {
-  background-color: #1e1e1e !important;
-  border: 1px solid #444 !important;
+  background-color: var(--ea-panel-elevated) !important;
+  border: 1px solid var(--ea-dialog-border) !important;
   border-radius: 0 !important;
+  box-shadow: 0 10px 30px var(--ea-shadow-strong) !important;
+}
+
+:global(.mobile-scenario-popper .el-popper__arrow) {
+  overflow: hidden;
+}
+
+:global(.mobile-scenario-popper .el-popper__arrow::before) {
+  background: var(--ea-panel-elevated) !important;
+  border: 1px solid var(--ea-panel-elevated) !important;
 }
 
 :global(.mobile-scenario-popper .el-select-dropdown__item) {
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--ea-fg-secondary) !important;
 }
 
 :global(.mobile-scenario-popper .el-select-dropdown__item.hover),
 :global(.mobile-scenario-popper .el-select-dropdown__item:hover) {
-  background: rgba(255, 215, 0, 0.08);
-  color: #ffd700;
+  background: var(--ea-select-hover-bg) !important;
+  color: var(--ea-gold, #ffd700) !important;
+}
+
+:global(.mobile-scenario-popper .el-select-dropdown__item.selected) {
+  color: var(--ea-gold, #ffd700) !important;
+  background-color: var(--ea-select-hover-bg) !important;
 }
 
 :global(.mobile-more-popper.el-popper) {
-  background-color: #1e1e1e !important;
-  border: 1px solid #444 !important;
+  background-color: var(--ea-panel-elevated) !important;
+  border: 1px solid var(--ea-dialog-border) !important;
   border-radius: 0 !important;
+  box-shadow: 0 10px 30px var(--ea-shadow-strong) !important;
+}
+
+:global(.mobile-more-popper .el-popper__arrow) {
+  overflow: hidden;
+}
+
+:global(.mobile-more-popper .el-popper__arrow::before) {
+  background: var(--ea-panel-elevated) !important;
+  border: 1px solid var(--ea-panel-elevated) !important;
 }
 
 :global(.mobile-more-popper .el-dropdown-menu__item) {
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--ea-fg-secondary);
 }
 
 :global(.mobile-more-popper .el-dropdown-menu__item:hover) {
-  background: rgba(0, 229, 255, 0.1);
-  color: rgba(0, 229, 255, 0.95);
+  background: var(--ea-menu-hover-bg);
+  color: var(--ea-menu-hover-fg);
 }
 
 :global(.mobile-more-popper .el-dropdown-menu__item.is-disabled) {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--ea-fg-faint);
 }
 
 .mobile-scroll {
@@ -1668,9 +1732,8 @@ async function doImport() {
   grid-template-columns: 48px repeat(4, minmax(0, 1fr));
   gap: 0;
   padding: 6px 6px 8px 6px;
-  background:
-    linear-gradient(90deg, rgba(255, 215, 0, 0.08), transparent 55%), rgba(12, 12, 16, 0.9);
-  border-bottom: 1px solid rgba(255, 215, 0, 0.16);
+  background: var(--ea-chrome-sticky);
+  border-bottom: 1px solid var(--ea-border-soft);
 }
 
 .mobile-time-head {
@@ -1680,7 +1743,7 @@ async function doImport() {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted);
 }
 
 .mobile-track-head {
@@ -1691,12 +1754,12 @@ async function doImport() {
 .mobile-avatar {
   width: 44px;
   height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--ea-border);
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ea-fill-soft);
   overflow: hidden;
   border-radius: 0;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 6px 18px var(--ea-shadow);
 }
 .mobile-avatar img {
   width: 100%;
@@ -1715,8 +1778,8 @@ async function doImport() {
 
 .mobile-time-rail {
   position: relative;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.16);
+  border-right: 1px solid var(--ea-border);
+  background: var(--ea-fill-muted);
   box-sizing: border-box;
 }
 
@@ -1748,13 +1811,13 @@ async function doImport() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #444;
-  border: 1px solid #666;
+  background: var(--ea-keycap-bg);
+  border: 1px solid var(--ea-keycap-border);
   border-radius: 2px;
-  color: #fff;
+  color: var(--ea-fg);
   font-weight: bold;
   font-family: Consolas, Monaco, monospace;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 1px var(--ea-shadow);
   white-space: nowrap;
   opacity: 0.92;
   font-size: var(--capfs, 9px);
@@ -1763,8 +1826,8 @@ async function doImport() {
 }
 
 .mobile-key-cap.op-skill {
-  background: #3a3a3a;
-  border-color: #888;
+  background: var(--ea-keycap-skill-bg);
+  border-color: var(--ea-keycap-skill-border);
 }
 
 .mobile-key-cap.op-link {
@@ -1790,8 +1853,8 @@ async function doImport() {
 }
 
 .mobile-key-cap.is-hold {
-  background: #3a3a3a;
-  border-color: #888;
+  background: var(--ea-keycap-skill-bg);
+  border-color: var(--ea-keycap-skill-border);
 }
 
 .mobile-key-cap .key-text {
@@ -1820,7 +1883,7 @@ async function doImport() {
   gap: 2px;
   padding: 0 0 0 2px;
   --mark-len: 12px;
-  --mark-color: rgba(255, 255, 255, 0.22);
+  --mark-color: var(--ea-mark);
 }
 
 .mobile-time-mark {
@@ -1840,23 +1903,23 @@ async function doImport() {
   font-weight: 800;
   line-height: 1;
   text-align: right;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted);
   white-space: nowrap;
   padding-right: 2px;
 }
 
 .mobile-time-tick.is-major .mobile-time-mark {
   --mark-len: 18px;
-  --mark-color: rgba(255, 255, 255, 0.3);
+  --mark-color: var(--ea-mark-major);
 }
 
 .mobile-time-tick.is-battle-start .mobile-time-mark {
   --mark-len: 22px;
-  --mark-color: rgba(255, 255, 255, 0.55);
+  --mark-color: var(--ea-mark-strong);
 }
 
 .mobile-time-tick.is-battle-start .mobile-time-label {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--ea-fg-secondary);
 }
 
 .mobile-prep-zone {
@@ -1864,8 +1927,8 @@ async function doImport() {
   left: 0;
   right: 0;
   top: 0;
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--ea-prep-fill);
+  border-bottom: 1px solid var(--ea-border);
   pointer-events: none;
 }
 
@@ -1882,7 +1945,7 @@ async function doImport() {
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 2px;
-  color: rgba(255, 255, 255, 0.38);
+  color: var(--ea-fg-faint);
   pointer-events: none;
 }
 
@@ -1891,7 +1954,7 @@ async function doImport() {
   left: 0;
   right: 0;
   height: 2px;
-  background: rgba(255, 255, 255, 0.38);
+  background: var(--ea-mark-strong);
   transform: translateY(-1px);
   pointer-events: none;
 }
@@ -1907,11 +1970,11 @@ async function doImport() {
   width: 100%;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 25%),
+    linear-gradient(180deg, var(--ea-grid-wash), transparent 25%),
     repeating-linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.05) 0px,
-      rgba(255, 255, 255, 0.05) 1px,
+      var(--ea-grid-line) 0px,
+      var(--ea-grid-line) 1px,
       transparent 1px,
       transparent var(--sec-px)
     );
@@ -1919,7 +1982,7 @@ async function doImport() {
 
 .mobile-track-col {
   position: relative;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid var(--ea-border-soft);
 }
 .mobile-track-col:first-child {
   border-left: none;
@@ -1978,8 +2041,8 @@ async function doImport() {
   bottom: -3px;
   min-width: 10px;
   padding: 0 2px;
-  background: rgba(0, 0, 0, 0.85);
-  color: #ffd700;
+  background: var(--ea-stack-bg);
+  color: var(--ea-gold, #ffd700);
   font-size: 8px;
   line-height: 1.1;
   font-weight: 800;
@@ -1989,8 +2052,8 @@ async function doImport() {
 .mobile-action-text {
   font-size: 12px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  color: var(--ea-action-fg);
+  text-shadow: var(--ea-action-fg-shadow);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2034,32 +2097,32 @@ async function doImport() {
   line-height: 1;
   color: currentColor;
   white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  text-shadow: var(--ea-action-fg-shadow);
 }
 
 :deep(.el-dialog) {
-  background-color: #2b2b2b;
-  border: 1px solid #444;
+  background-color: var(--ea-dialog-bg);
+  border: 1px solid var(--ea-dialog-border);
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 30px var(--ea-shadow-strong);
 }
 :deep(.el-dialog__header) {
   margin-right: 0;
-  border-bottom: 1px solid #3a3a3a;
+  border-bottom: 1px solid var(--ea-dialog-divider);
   padding: 15px 20px;
 }
 :deep(.el-dialog__title) {
-  color: #f0f0f0;
+  color: var(--ea-dialog-title);
   font-size: 16px;
   font-weight: 600;
 }
 :deep(.el-dialog__body) {
-  color: #ccc;
+  color: var(--ea-dialog-body);
   padding: 25px 25px 10px 25px;
 }
 :deep(.el-dialog__footer) {
   padding: 15px 25px 20px;
-  border-top: 1px solid #3a3a3a;
+  border-top: 1px solid var(--ea-dialog-divider);
 }
 
 .share-import-container {
@@ -2068,7 +2131,7 @@ async function doImport() {
   gap: 12px;
 }
 .dialog-hint {
-  color: #888;
+  color: var(--ea-dialog-hint);
   font-size: 12px;
   margin: 0;
 }
@@ -2079,68 +2142,28 @@ async function doImport() {
   width: 100%;
 }
 
-.section-container {
-  position: relative;
-}
-
 .tech-style {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 3px solid #ffd700;
+  background: linear-gradient(135deg, var(--ea-fill-soft) 0%, transparent 100%);
+  border: 1px solid var(--ea-border);
+  border-left: 3px solid var(--ea-gold, #ffd700);
   padding: 14px;
   overflow: visible;
 }
 
-.tech-style.border-gold {
-  border-left-color: #ffd700;
-}
-.no-margin {
-  margin: 0;
-}
-
-.module-deco {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-  border-left: 2px solid currentColor;
-  padding-left: 8px;
-}
-
-.module-code {
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  color: #ffd700;
-}
-
-.module-label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.55);
-  margin-top: 4px;
-}
-
-.section-content-tech {
-  display: flex;
-  flex-direction: column;
-}
-
-.tech-p {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 12px;
-  line-height: 1.6;
-  margin: 0;
-  white-space: pre-line;
+.tech-style.border-gear {
+  border-left-color: var(--ea-gear-accent, #2dd4bf);
 }
 
 :deep(.el-textarea__inner) {
-  background-color: #1a1a1a;
-  box-shadow: inset 0 0 0 1px #333;
-  color: #e0e0e0;
-  border: none;
+  background-color: var(--ea-fill-input) !important;
+  box-shadow: inset 0 0 0 1px var(--ea-border) !important;
+  color: var(--ea-fg) !important;
+  border: none !important;
   font-family: monospace;
 }
 :deep(.el-textarea__inner:focus) {
-  box-shadow: inset 0 0 0 1px #ffd700;
+  background-color: var(--ea-panel-elevated) !important;
+  box-shadow: inset 0 0 0 1px var(--ea-gold, #ffd700) !important;
 }
 
 :global(body.endaxis-mobile-viewer) {
@@ -2153,13 +2176,13 @@ async function doImport() {
 
 :global(.mobile-loadout-drawer),
 :global(.mobile-actioninfo-drawer) {
-  background: #18181c !important;
+  background: var(--ea-panel) !important;
 }
 
 :global(.mobile-loadout-drawer .el-drawer__body),
 :global(.mobile-actioninfo-drawer .el-drawer__body) {
   padding: 0 !important;
-  background: #18181c !important;
+  background: var(--ea-panel) !important;
 }
 
 .m-drawer {
@@ -2167,7 +2190,8 @@ async function doImport() {
   box-sizing: border-box;
   height: 100%;
   overflow-y: auto;
-  background: #18181c;
+  background: var(--ea-panel);
+  color: var(--ea-fg);
 }
 
 .m-drawer__header {
@@ -2179,7 +2203,7 @@ async function doImport() {
   top: 0;
   z-index: 20;
   padding: 14px 12px 10px 12px;
-  background: #18181c;
+  background: var(--ea-panel);
   border-bottom: 0;
 }
 
@@ -2203,7 +2227,7 @@ async function doImport() {
 
 .m-label {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted);
   font-weight: 900;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
@@ -2269,7 +2293,7 @@ async function doImport() {
 .actioninfo-hero__name {
   font-size: 14px;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--ea-fg);
   line-height: 1.15;
 }
 
@@ -2279,7 +2303,7 @@ async function doImport() {
   flex-wrap: wrap;
   gap: 6px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted);
 }
 
 .actioninfo-combat-icons {
@@ -2315,8 +2339,8 @@ async function doImport() {
   bottom: -3px;
   min-width: 11px;
   padding: 0 2px;
-  background: rgba(0, 0, 0, 0.85);
-  color: #ffd700;
+  background: var(--ea-stack-bg);
+  color: var(--ea-gold, #ffd700);
   font-size: 9px;
   line-height: 1.1;
   font-weight: 800;
@@ -2333,12 +2357,12 @@ async function doImport() {
 .actioninfo-combat-name {
   font-size: 12px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--ea-fg-secondary);
 }
 
 .actioninfo-combat-dur {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--ea-fg-muted);
   font-family:
     'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
@@ -2356,19 +2380,19 @@ async function doImport() {
   flex-direction: column;
   gap: 3px;
   padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--ea-border-soft);
+  background: var(--ea-fill-soft);
 }
 
 .time-chip__label {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted);
   font-weight: 900;
 }
 
 .time-chip__val {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--ea-fg-secondary);
 }
 
 .loadout-header {
@@ -2407,13 +2431,13 @@ async function doImport() {
 .loadout-operator__name {
   font-size: 14px;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--ea-fg);
   line-height: 1.15;
 }
 
 .loadout-operator__sub {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ea-fg-faint);
   font-family:
     'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
@@ -2423,7 +2447,7 @@ async function doImport() {
   margin-top: 4px;
   font-size: 11px;
   font-weight: 700;
-  color: rgba(255, 215, 0, 0.85);
+  color: var(--ea-gear-accent-fg);
   line-height: 1.3;
 }
 
@@ -2448,9 +2472,13 @@ async function doImport() {
   width: 38px;
   height: 38px;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ea-border);
+  background: var(--ea-fill-soft);
   overflow: hidden;
+}
+
+.loadout-eq-list .loadout-item__icon {
+  border-color: var(--ea-gear-accent, #2dd4bf);
 }
 
 .loadout-item__icon img {
@@ -2474,7 +2502,7 @@ async function doImport() {
   align-items: baseline;
   flex-wrap: wrap;
   line-height: 1.2;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--ea-fg-secondary);
   font-weight: 900;
   font-size: 13px;
 }
@@ -2485,7 +2513,7 @@ async function doImport() {
   flex-wrap: wrap;
   gap: 6px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted);
 }
 
 .loadout-stat-list {
@@ -2500,11 +2528,11 @@ async function doImport() {
   justify-content: space-between;
   gap: 10px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--ea-fg-secondary);
 }
 
 .loadout-stat-row strong {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--ea-fg);
   font-weight: 800;
 }
 
@@ -2542,21 +2570,21 @@ async function doImport() {
 
 .actioninfo-stat {
   padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--ea-border-soft);
+  background: var(--ea-fill-soft);
 }
 
 .actioninfo-stat__label {
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ea-fg-faint);
   margin-bottom: 4px;
 }
 
 .actioninfo-stat__val {
   font-size: 13px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--ea-fg);
 }
 
 .mono {
@@ -2570,7 +2598,7 @@ async function doImport() {
 }
 
 .slot-label {
-  color: rgba(255, 215, 0, 0.88);
+  color: var(--ea-gear-accent-fg);
 }
 
 .title-main {

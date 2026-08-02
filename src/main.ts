@@ -3,12 +3,16 @@ import { createPinia } from 'pinia';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
+import './styles/theme.css';
 import './styles/ui.css';
 
 import App from './App.vue';
 
 import router from './router';
 import { i18n, setLocale } from './i18n';
+import { bootstrapAppearance } from './composables/useAppearance';
+
+bootstrapAppearance();
 
 const app = createApp(App);
 const pinia = createPinia();

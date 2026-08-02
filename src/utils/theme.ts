@@ -137,13 +137,67 @@ export function hexToRgba(hex: string | undefined | null, alpha: number): string
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
+function parseHexRgb(hex: string): { r: number; g: number; b: number } | null {
+  const s = String(hex || '').trim();
+  if (!s.startsWith('#')) return null;
+  let c = s.slice(1);
+  if (c.length === 3) {
+    c = c
+      .split('')
+      .map(ch => ch + ch)
+      .join('');
+  }
+  if (c.length !== 6) return null;
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  if (![r, g, b].every(v => Number.isFinite(v))) return null;
+  return { r, g, b };
+}
+
+function toHexRgb(r: number, g: number, b: number): string {
+  return `#${[r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('')}`;
+}
+
 /** Lighten a hex color by mixing with white. Amount 0–1. */
 export function lightenColor(hex: string, amount: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const lr = Math.round(r + (255 - r) * amount);
-  const lg = Math.round(g + (255 - g) * amount);
-  const lb = Math.round(b + (255 - b) * amount);
-  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+  const rgb = parseHexRgb(hex);
+  if (!rgb) return hex;
+  const a = Math.max(0, Math.min(1, Number(amount) || 0));
+  return toHexRgb(
+    rgb.r + (255 - rgb.r) * a,
+    rgb.g + (255 - rgb.g) * a,
+    rgb.b + (255 - rgb.b) * a,
+  );
+}
+
+/** Darken a hex color by mixing with black. Amount 0–1. */
+function darkenColor(hex: string, amount: number): string {
+  const rgb = parseHexRgb(hex);
+  if (!rgb) return hex;
+  const a = Math.max(0, Math.min(1, Number(amount) || 0));
+  return toHexRgb(rgb.r * (1 - a), rgb.g * (1 - a), rgb.b * (1 - a));
+}
+
+/** Relative luminance 0–1 (sRGB). */
+function relativeLuminance(hex: string): number {
+  const rgb = parseHexRgb(hex);
+  if (!rgb) return 0;
+  const channel = (v: number) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b);
+}
+
+/**
+ * On light chrome, pale business colors (physical beige, white skill, light gray)
+ * wash out. Darken only when luminance is high — no per-type special cases.
+ */
+export function adaptColorForLightSurface(hex: string): string {
+  const lum = relativeLuminance(hex);
+  if (lum < 0.52) return hex;
+  // physical #d4c5a0 ~0.55–0.65 → modest warm brown; white → mid gray
+  const amount = 0.18 + ((lum - 0.52) / 0.48) * 0.34;
+  return darkenColor(hex, Math.min(0.52, amount));
 }

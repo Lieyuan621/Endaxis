@@ -1808,25 +1808,26 @@ function save() {
 }
 
 :global(.hit-editor-select-popper.el-popper) {
-  background: #111;
+  /* Align with global select popper / arrow (#1e1e1e), not the older #111 panel. */
+  background: #1e1e1e;
   border: 1px solid #444;
   border-radius: 0;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.48);
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown) {
-  background: #111;
+  background: #1e1e1e;
   border-radius: 0;
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown__wrap),
 :global(.hit-editor-select-popper .el-select-dropdown__list) {
-  background: #111;
+  background: #1e1e1e;
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown__item) {
   color: #dce2ec;
-  background: #111;
+  background: #1e1e1e;
   font-size: 11px;
 }
 
@@ -1841,12 +1842,16 @@ function save() {
 
 :global(.hit-editor-select-popper .el-select-group__title) {
   color: #8aa4c8;
-  background: #111;
+  background: #1e1e1e;
+}
+
+:global(.hit-editor-select-popper .el-popper__arrow) {
+  overflow: hidden;
 }
 
 :global(.hit-editor-select-popper .el-popper__arrow::before) {
-  background: #111;
-  border-color: #444;
+  background: #1e1e1e !important;
+  border: 1px solid #1e1e1e !important;
 }
 
 @media (max-width: 900px) {

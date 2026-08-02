@@ -35,8 +35,8 @@ html,
   width: 100%;
   height: 100vh;
   font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #18181c;
-  color: #f0f0f0;
+  background-color: var(--ea-bg, #18181c);
+  color: var(--ea-fg, #f0f0f0);
   overflow: hidden;
 }
 
@@ -46,14 +46,14 @@ html.dark {
   --el-fill-color-blank: #333333 !important;
 }
 
-.el-overlay-dialog .el-dialog {
+html.dark .el-overlay-dialog .el-dialog {
   background-color: #1e1e1e !important;
   background-image: none !important;
 }
 
-.el-dialog__header,
-.el-dialog__body,
-.el-dialog__footer {
+html.dark .el-dialog__header,
+html.dark .el-dialog__body,
+html.dark .el-dialog__footer {
   background-color: #1e1e1e !important;
 }
 
@@ -136,9 +136,9 @@ body.is-lib-dragging .action-item-wrapper {
   color: #ffd700 !important;
 }
 
-/* 输入框与文本域样式 */
-.el-input__wrapper,
-.el-textarea__inner {
+/* 输入框与文本域样式（深色硬编码仅挂 html.dark） */
+html.dark .el-input__wrapper,
+html.dark .el-textarea__inner {
   background-color: #16161a !important;
   border-radius: 0 !important;
   box-shadow: 0 0 0 1px #333 inset !important;
@@ -146,10 +146,26 @@ body.is-lib-dragging .action-item-wrapper {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.el-input__wrapper.is-focus,
-.el-textarea__inner:focus {
+html.dark .el-input__wrapper.is-focus,
+html.dark .el-textarea__inner:focus {
   box-shadow: 0 0 0 1px #ffd700 inset !important;
   background-color: #1f1f24 !important;
+}
+
+html[data-theme='light'] .el-input__wrapper,
+html[data-theme='light'] .el-textarea__inner {
+  background-color: var(--ea-fill-input, #f7f8fa) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 0 0 1px var(--ea-border, #d8dbe0) inset !important;
+  border: none !important;
+  color: var(--ea-fg, #1a1b1e) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+html[data-theme='light'] .el-input__wrapper.is-focus,
+html[data-theme='light'] .el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--ea-gold, #ffd700) inset !important;
+  background-color: #ffffff !important;
 }
 
 .el-input__count,
@@ -172,17 +188,21 @@ body.is-lib-dragging .action-item-wrapper {
 .el-textarea__inner::-webkit-scrollbar-thumb {
   background: rgba(255, 215, 0, 0.2);
 }
-::placeholder {
+html.dark ::placeholder {
   color: #444 !important;
   font-size: 12px;
 }
+html[data-theme='light'] ::placeholder {
+  color: #9aa0a8 !important;
+  font-size: 12px;
+}
 
-/* 下拉列表样式 */
+/* 下拉列表样式（深色硬编码仅挂在 html.dark，浅色走主题 token / Element 默认） */
 :root {
   --el-border-radius-base: 0px !important;
 }
 
-.el-select {
+html.dark .el-select {
   --el-fill-color-blank: #16161a !important;
   --el-border-color: #333 !important;
   --el-border-color-hover: #444 !important;
@@ -190,13 +210,13 @@ body.is-lib-dragging .action-item-wrapper {
   --el-text-color-regular: #ccc !important;
 }
 
-.el-select .el-input__wrapper {
+html.dark .el-select .el-input__wrapper {
   background-color: #16161a !important;
   box-shadow: 0 0 0 1px var(--el-border-color) inset !important;
   border-radius: 0 !important;
 }
 
-.el-select .el-input.is-focus .el-input__wrapper {
+html.dark .el-select .el-input.is-focus .el-input__wrapper {
   box-shadow: 0 0 0 1px #ffd700 inset !important;
 }
 
@@ -205,15 +225,15 @@ body.is-lib-dragging .action-item-wrapper {
   font-size: 13px;
 }
 
-.el-popper.is-light,
-.el-select__popper.el-popper {
+html.dark .el-popper.is-light,
+html.dark .el-select__popper.el-popper {
   background-color: #1e1e1e !important;
   border: 1px solid #444 !important;
   border-radius: 0 !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
 }
 
-.el-select-dropdown__item {
+html.dark .el-select-dropdown__item {
   color: #aaa !important;
   font-size: 13px !important;
   height: 34px !important;
@@ -221,24 +241,25 @@ body.is-lib-dragging .action-item-wrapper {
   transition: all 0.2s !important;
 }
 
-.el-select-dropdown__item.hover,
-.el-select-dropdown__item:hover {
+html.dark .el-select-dropdown__item.hover,
+html.dark .el-select-dropdown__item:hover {
   background-color: rgba(255, 215, 0, 0.1) !important;
   color: #ffd700 !important;
 }
 
-.el-select-dropdown__item.selected {
+html.dark .el-select-dropdown__item.selected {
   color: #ffd700 !important;
   font-weight: bold !important;
   background-color: rgba(255, 215, 0, 0.05) !important;
 }
 
-.el-popper.is-light .el-popper__arrow::before {
+/* Match fill so the rotated square does not read as a bordered diamond. */
+html.dark .el-popper.is-light .el-popper__arrow::before {
   background: #1e1e1e !important;
-  border: 1px solid #444 !important;
+  border: 1px solid #1e1e1e !important;
 }
 
-.el-select .el-input__suffix .el-icon {
+html.dark .el-select .el-input__suffix .el-icon {
   color: #666 !important;
 }
 </style>

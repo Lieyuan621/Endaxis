@@ -1,10 +1,22 @@
 <!doctype html>
-<html lang="" class="dark">
+<html lang="" class="dark" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/webp" href="/logo.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Endaxis - 《明日方舟：终末地》排轴工具</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('endaxis:appearance:v1') === 'light' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.classList.toggle('dark', theme === 'dark');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <style>
       html,
       body,
@@ -13,6 +25,12 @@
         min-height: 100%;
         margin: 0;
         background: #111113;
+      }
+
+      html[data-theme='light'],
+      html[data-theme='light'] body,
+      html[data-theme='light'] #app {
+        background: #f2f3f5;
       }
 
       .boot-loader {
