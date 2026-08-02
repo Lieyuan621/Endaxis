@@ -2,37 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   collectActionCombatBadges,
   collectCombatBadgesFromAfflictionViz,
-  collectCombatBadgesFromHits,
 } from './actionCombatIcons';
 import { projectEnemyAfflictionViz } from '@/simulation/projection/projectEnemyAfflictionViz';
 
 describe('actionCombatIcons', () => {
-  it('collects infliction badges from hits without duration bars', () => {
-    const badges = collectCombatBadgesFromHits(
-      {
-        hits: [
-          {
-            offset: 0.2,
-            effects: [
-              { kind: 'infliction', element: 'heat', stacks: 2 },
-              { kind: 'physicalStatus', physicalType: 'lift', forced: true },
-              { kind: 'status', stat: { modifier: 'atkPercent' }, value: 10 },
-            ],
-          },
-        ],
-      },
-      10,
-    );
-
-    expect(badges.map(item => item.key)).toEqual(['heat_infliction']);
-    expect(badges[0]).toMatchObject({
-      stacks: 2,
-      duration: 0,
-      isMarker: true,
-      kind: 'attachment',
-    });
-  });
-
   it('uses normalized physical viz markers for forced lift and vuln seeding', () => {
     const badges = collectCombatBadgesFromAfflictionViz({
       trackId: 'op_a',
@@ -84,6 +57,60 @@ describe('actionCombatIcons', () => {
       viz: { physical: { markers: [], segments: [] } },
     });
     expect(badges).toEqual([]);
+  });
+
+  it('does not invent extra conditional inflictions from hit data (Arcane combo)', () => {
+    const badges = collectActionCombatBadges({
+      action: {
+        hits: [
+          {
+            offset: 0.1,
+            effects: [
+              {
+                kind: 'infliction',
+                element: 'heat',
+                condition: { kind: 'operatorStatus', status: 'tracker_heat', consume: true },
+              },
+              {
+                kind: 'infliction',
+                element: 'cryo',
+                condition: { kind: 'operatorStatus', status: 'tracker_cryo', consume: true },
+              },
+              {
+                kind: 'infliction',
+                element: 'electric',
+                condition: { kind: 'operatorStatus', status: 'tracker_electric', consume: true },
+              },
+              {
+                kind: 'infliction',
+                element: 'nature',
+                condition: { kind: 'operatorStatus', status: 'tracker_nature', consume: true },
+              },
+            ],
+          },
+        ],
+      },
+      trackId: 'op_a',
+      startTime: 10,
+      endTime: 11,
+      viz: {
+        attachment: {
+          segments: [
+            {
+              typeKey: 'heat_infliction',
+              start: 10.1,
+              end: 30.1,
+              stacks: 1,
+              sourceId: 'op_a',
+              icon: '/icons/icon_energy_fusion_fire.webp',
+            },
+          ],
+          markers: [],
+        },
+      },
+    });
+
+    expect(badges.map(item => item.key)).toEqual(['heat_infliction']);
   });
 
   it('hides attachments when an anomaly is triggered in the same window', () => {

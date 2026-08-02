@@ -1,15 +1,12 @@
 /**
- * Mobile timeline helper: map an action's time window to combat-status badges
+ * Mobile / share-card helper: map an action's time window to combat-status badges
  * (affliction / physical / reaction icons + optional duration).
  *
- * Primary source is `enemyAfflictionViz` (same projection ResourceMonitor uses).
- * Hit effects are only a non-physical fallback when viz has no match.
- * Physical outcomes always come from viz so forced-lift / 1-stack vuln rules apply.
+ * Source of truth is `enemyAfflictionViz` (same sim-log projection ResourceMonitor uses).
+ * Do not fall back to raw hit.effects — hits may list conditional inflictions that never apply.
  */
 
-import { getEffectIcon, resolveEffectDefaults } from '@/data/effectPresets';
-import { getDisplayKeyCandidates, resolveEffectDisplayKey } from '@/utils/effectDisplay';
-import type { Effect } from '@/data/types';
+import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
 
 export interface ActionCombatBadge {
   id: string;
@@ -220,64 +217,7 @@ export function collectCombatBadgesFromAfflictionViz(options: {
   return [...map.values()];
 }
 
-/** Non-physical hit fallback (infliction / reaction). */
-export function collectCombatBadgesFromHits(
-  action: { hits?: any[] | null } | null | undefined,
-  actionStartTime: number,
-  iconDatabase?: Record<string, string> | null,
-): ActionCombatBadge[] {
-  const hits = Array.isArray(action?.hits) ? action.hits : [];
-  const map = new Map<string, ActionCombatBadge>();
-  const baseStart = Number(actionStartTime) || 0;
-
-  for (const hit of hits) {
-    const hitOffset = Number(hit?.offset) || 0;
-    for (const effect of Array.isArray(hit?.effects) ? hit.effects : []) {
-      const kindName = String(effect?.kind || '');
-      if (kindName === 'physicalStatus') continue;
-      if (kindName !== 'infliction' && kindName !== 'burst' && kindName !== 'reaction') {
-        const display = String(effect?.displayType || effect?.type || '');
-        if (
-          !display.endsWith('_infliction') &&
-          !display.endsWith('_burst') &&
-          !REACTION_KEYS.has(display)
-        ) {
-          continue;
-        }
-      }
-
-      const resolved = resolveEffectDefaults(effect as Effect);
-      const key =
-        resolveEffectDisplayKey(resolved as any) || String((resolved as any)?.kind || '');
-      if (PHYSICAL_KEYS.has(key)) continue;
-
-      const icon = resolveIconFromTypeKey(key, getEffectIcon(resolved as Effect), iconDatabase);
-      if (!icon || icon === FALLBACK_ICON) continue;
-
-      const kind = classifyKey(key);
-      const duration =
-        kind === 'attachment' ? 0 : Math.max(0, Number((resolved as any)?.duration) || 0);
-      const startTime = baseStart + hitOffset;
-      upsertBadge(
-        map,
-        makeBadge({
-          key,
-          icon,
-          stacks: Number((resolved as any)?.stacks) || 1,
-          startTime,
-          endTime: duration > 0 ? startTime + duration : null,
-          duration,
-          isMarker: kind === 'attachment' || duration <= TIME_EPS,
-          kind,
-        }),
-      );
-    }
-  }
-
-  return [...map.values()];
-}
-
-/** Viz-first badges for one action window; fill non-physical gaps from hits. */
+/** Viz-only badges for one action window (aligned with PC ResourceMonitor). */
 export function collectActionCombatBadges(options: {
   action?: { hits?: any[] | null; instanceId?: string } | null;
   trackId?: string | null;
@@ -286,16 +226,7 @@ export function collectActionCombatBadges(options: {
   viz?: EnemyAfflictionVizLike | null;
   iconDatabase?: Record<string, string> | null;
 }): ActionCombatBadge[] {
-  const fromViz = collectCombatBadgesFromAfflictionViz(options);
-  const map = new Map(fromViz.map(item => [item.key, item]));
-  for (const item of collectCombatBadgesFromHits(
-    options.action,
-    options.startTime,
-    options.iconDatabase,
-  )) {
-    if (!map.has(item.key)) map.set(item.key, item);
-  }
-  let badges = [...map.values()];
+  let badges = collectCombatBadgesFromAfflictionViz(options);
   // Mobile clarity: when a reaction fires, hide the attachment that triggered it.
   if (badges.some(item => item.kind === 'anomaly')) {
     badges = badges.filter(item => item.kind !== 'attachment');

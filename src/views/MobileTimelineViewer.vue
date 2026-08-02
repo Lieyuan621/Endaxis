@@ -547,9 +547,9 @@ function getVisibleActions(track) {
   });
 }
 
-function getActionCombatBadges(track, action) {
+function buildActionCombatEntry(track, action) {
   const node = getCompiledAction(action)?.node || action;
-  return collectActionCombatBadges({
+  const badges = collectActionCombatBadges({
     action: node,
     trackId: track?.id || null,
     startTime: getVisualActionStartTime(action),
@@ -557,24 +557,37 @@ function getActionCombatBadges(track, action) {
     viz: store.enemyAfflictionViz,
     iconDatabase: store.iconDatabase,
   });
+  return {
+    action,
+    badges,
+    durationBars: badges
+      .filter(badge => !badge.isMarker && badge.duration > 0)
+      .map((badge, index) => ({
+        ...badge,
+        lane: index,
+        color: typeof store.getColor === 'function' ? store.getColor(badge.key) : '#aaaaaa',
+      })),
+  };
 }
 
-function getVisibleActionEntries(track) {
-  return getVisibleActions(track).map(action => {
-    const badges = getActionCombatBadges(track, action);
-    return {
-      action,
-      badges,
-      durationBars: badges
-        .filter(badge => !badge.isMarker && badge.duration > 0)
-        .map((badge, index) => ({
-          ...badge,
-          lane: index,
-          color: typeof store.getColor === 'function' ? store.getColor(badge.key) : '#aaaaaa',
-        })),
-    };
-  });
-}
+/** Memoized per-track action entries so scroll/render does not rebuild combat badges. */
+const visibleActionEntriesByTrackId = computed(() => {
+  void store.enemyAfflictionViz;
+  void store.iconDatabase;
+  void store.compiledTimeline;
+  void store.simLogRevision;
+  void store.viewDuration;
+  void store.prepDuration;
+  void store.timeBlockWidth;
+
+  const out = Object.create(null);
+  for (const track of tracks.value) {
+    const trackId = track?.id;
+    if (!trackId) continue;
+    out[trackId] = getVisibleActions(track).map(action => buildActionCombatEntry(track, action));
+  }
+  return out;
+});
 
 function getCombatIconTitle(typeKey) {
   void locale.value;
@@ -921,9 +934,6 @@ async function doImport() {
 <template>
   <div class="mobile-viewer-root">
     <div class="mobile-topbar">
-      <div class="mobile-topbar-title">
-        <div class="mobile-topbar-kicker">ENDAXIS</div>
-      </div>
       <div class="mobile-topbar-actions">
         <el-select
           v-if="scenarioList.length > 1"
@@ -1131,7 +1141,7 @@ async function doImport() {
           <div v-for="(track, idx) in tracks" :key="idx" class="mobile-track-col">
             <div class="mobile-actions-layer">
               <template
-                v-for="entry in getVisibleActionEntries(track)"
+                v-for="entry in visibleActionEntriesByTrackId[track.id] || []"
                 :key="entry.action.instanceId"
               >
                 <div
@@ -1500,9 +1510,7 @@ async function doImport() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background:
-    radial-gradient(900px 520px at 30% -10%, rgba(0, 229, 255, 0.1), transparent 60%),
-    linear-gradient(180deg, #0b0c10 0%, #111218 60%, #0b0c10 100%);
+  background: linear-gradient(180deg, #0b0c10 0%, #111218 60%, #0b0c10 100%);
 }
 
 .mobile-topbar {
@@ -1510,12 +1518,11 @@ async function doImport() {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 10px;
   box-sizing: border-box;
-  border-bottom: 1px solid rgba(0, 229, 255, 0.12);
-  background:
-    linear-gradient(90deg, rgba(0, 229, 255, 0.1), transparent 40%), rgba(10, 10, 14, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 14, 0.78);
   backdrop-filter: blur(8px);
 }
 
@@ -1528,20 +1535,6 @@ async function doImport() {
 
 .mobile-topbar-actions :deep(.el-button + .el-button) {
   margin-left: 0 !important;
-}
-
-.mobile-topbar-title {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.mobile-topbar-kicker {
-  font-size: 13px;
-  letter-spacing: 2px;
-  color: rgba(0, 229, 255, 0.85);
-  font-weight: 900;
-  line-height: 1;
 }
 
 .mobile-primary-btn {
