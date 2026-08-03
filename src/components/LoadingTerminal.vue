@@ -50,7 +50,7 @@ defineProps({
   min-width: 280px;
   max-width: 520px;
   padding: 22px 26px;
-  border: 1px solid rgba(255, 215, 0, 0.22);
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 22%, transparent);
   background: rgba(0, 0, 0, 0.25);
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.55);
   display: flex;
@@ -74,7 +74,7 @@ defineProps({
   width: 18px;
   height: 18px;
   border: 2px solid rgba(0, 229, 255, 0.25);
-  border-top-color: #ffd700;
+  border-top-color: var(--ea-gold);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
   flex: 0 0 auto;

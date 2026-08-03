@@ -19,6 +19,7 @@ import { useGearStore } from '@/stores/gearStore';
 import { useTimelineStore } from '@/stores/timelineStore';
 import GameRichTextRenderer from '@/components/GameRichTextRenderer.vue';
 import EditGearInstanceDialog from './EditGearInstanceDialog.vue';
+import './armoryDialogTheme.css';
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -360,8 +361,8 @@ function openItemEditor(slot) {
   flex-direction: column;
   gap: 12px;
   padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.08));
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
 }
 
 .gear-slot-card.is-empty {
@@ -375,12 +376,12 @@ function openItemEditor(slot) {
   flex-direction: column;
   gap: 10px;
   padding: 13px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.08));
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
 }
 
 .gear-set-bonus-title {
-  color: #d6d6d6;
+  color: var(--ea-fg-secondary, #d6d6d6);
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -390,7 +391,7 @@ function openItemEditor(slot) {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  color: #d6d6d6;
+  color: var(--ea-fg-secondary, #d6d6d6);
   font-size: 12px;
   line-height: 1.55;
 }
@@ -404,14 +405,14 @@ function openItemEditor(slot) {
 
 .gear-set-bonus-name {
   min-width: 0;
-  color: #2dd4bf;
+  color: var(--ea-gear-accent-fg, #2dd4bf);
   font-size: 14px;
   font-weight: 800;
 }
 
 .gear-set-bonus-count {
   margin-left: auto;
-  color: #2dd4bf;
+  color: var(--ea-gear-accent-fg, #2dd4bf);
   font-family: 'Roboto Mono', monospace;
   font-size: 12px;
   white-space: nowrap;
@@ -419,7 +420,7 @@ function openItemEditor(slot) {
 }
 
 .gear-set-bonus-desc {
-  color: #d0d0d0;
+  color: var(--ea-fg-secondary, #d0d0d0);
 }
 
 .slot-head {
@@ -430,7 +431,7 @@ function openItemEditor(slot) {
 }
 
 .slot-title {
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -448,9 +449,9 @@ function openItemEditor(slot) {
   align-items: center;
   padding: 2px 8px;
   font-size: 10px;
-  color: #bbb;
-  border: 1px solid #555;
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--ea-fg-muted, #bbb);
+  border: 1px solid var(--ea-border-strong, #555);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
 }
 
 .gear-main {
@@ -466,8 +467,8 @@ function openItemEditor(slot) {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #555;
-  background: #1a1a1e;
+  border: 2px solid var(--ea-keycap-border, #555);
+  background: var(--ea-keycap-bg, #1a1a1e);
 }
 
 .gear-icon {
@@ -482,7 +483,7 @@ function openItemEditor(slot) {
 }
 
 .gear-name {
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
   font-size: 16px;
   font-weight: 700;
   line-height: 1.3;
@@ -490,7 +491,7 @@ function openItemEditor(slot) {
 
 .gear-subline {
   margin-top: 4px;
-  color: #999;
+  color: var(--ea-dialog-hint, #999);
   font-size: 12px;
 }
 
@@ -506,12 +507,12 @@ function openItemEditor(slot) {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  color: #bdbdbd;
+  color: var(--ea-dialog-body, #bdbdbd);
   font-size: 12px;
 }
 
 .stat-row strong {
-  color: #eab308;
+  color: var(--ea-gold);
   font-family: 'Roboto Mono', monospace;
 }
 
@@ -524,7 +525,7 @@ function openItemEditor(slot) {
 }
 
 .refine-label {
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -543,7 +544,7 @@ function openItemEditor(slot) {
 
 .refine-locked,
 .empty-slot {
-  color: #777;
+  color: var(--ea-dialog-hint, #777);
   font-size: 12px;
 }
 
@@ -566,7 +567,7 @@ function openItemEditor(slot) {
 }
 
 .refine-mixed {
-  color: #eab308;
+  color: var(--ea-gold);
   font-family: 'Roboto Mono', monospace;
   font-size: 12px;
   opacity: 0.95;

@@ -177,8 +177,8 @@ function getItemStyle(buff) {
 .timeline-buff-icon-box {
   width: 18px;
   height: 18px;
-  background-color: #333;
-  border: 1px solid #999;
+  background-color: var(--ea-keycap-skill-bg, #333);
+  border: 1px solid var(--ea-keycap-skill-border, #999);
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -227,8 +227,8 @@ function getItemStyle(buff) {
   position: absolute;
   bottom: -2px;
   right: -2px;
-  background: rgba(0, 0, 0, 0.8);
-  color: #ffd700;
+  background: var(--ea-stack-bg, rgba(0, 0, 0, 0.8));
+  color: var(--ea-gold);
   font-size: 8px;
   padding: 0 2px;
   line-height: 1;

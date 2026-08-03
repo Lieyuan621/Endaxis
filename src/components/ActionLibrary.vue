@@ -431,7 +431,8 @@ function onNativeDragStart(evt, skill) {
   padding: 15px;
   display: flex;
   flex-direction: column;
-  background-color: #252525;
+  background-color: var(--ea-workbench-panel, #252525);
+  color: var(--ea-fg, #f0f0f0);
   height: 100%;
   gap: 15px;
   overflow-y: auto;
@@ -464,7 +465,7 @@ function onNativeDragStart(evt, skill) {
 .header-icon-bar {
   width: 4px;
   height: 18px;
-  background-color: #ffd700;
+  background-color: var(--ea-gold);
 }
 .char-name {
   margin: 0;
@@ -472,7 +473,7 @@ function onNativeDragStart(evt, skill) {
   align-items: baseline;
   gap: 8px;
   min-width: 0;
-  color: #fff;
+  color: var(--ea-fg, #fff);
   font-size: 18px;
   letter-spacing: 1px;
 }
@@ -508,7 +509,7 @@ function onNativeDragStart(evt, skill) {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.34);
+  color: var(--ea-icon-muted, rgba(255, 255, 255, 0.34));
   cursor: pointer;
   padding: 0;
   transition:
@@ -516,8 +517,8 @@ function onNativeDragStart(evt, skill) {
     background-color 0.14s ease;
 }
 .header-tool-btn:hover {
-  color: rgba(255, 255, 255, 0.86);
-  background: rgba(255, 255, 255, 0.055);
+  color: var(--ea-icon-strong, rgba(255, 255, 255, 0.86));
+  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.055));
 }
 .loadout-actions {
   display: grid;
@@ -526,9 +527,9 @@ function onNativeDragStart(evt, skill) {
   margin-top: 6px;
 }
 .loadout-action-btn {
-  background: #1f1f1f;
-  border: 1px solid #333;
-  color: #bbb;
+  background: var(--ea-fill-input, #1f1f1f);
+  border: 1px solid var(--ea-border-strong, #333);
+  color: var(--ea-fg-secondary, #bbb);
   padding: 6px 12px;
   border-radius: 0;
   cursor: pointer;
@@ -536,9 +537,9 @@ function onNativeDragStart(evt, skill) {
   transition: all 0.2s ease;
 }
 .loadout-action-btn:hover:not(:disabled) {
-  color: #fff;
-  border-color: #ffd700;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.16);
+  color: var(--ea-fg, #fff);
+  border-color: var(--ea-gold);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 16%, transparent);
 }
 .loadout-action-btn:disabled {
   opacity: 0.35;
@@ -546,7 +547,7 @@ function onNativeDragStart(evt, skill) {
 }
 .header-divider {
   height: 2px;
-  background: linear-gradient(90deg, #ffd700 0%, transparent 100%);
+  background: linear-gradient(90deg, var(--ea-gold) 0%, transparent 100%);
   opacity: 0.3;
   margin-top: 3px;
 }
@@ -566,11 +567,11 @@ function onNativeDragStart(evt, skill) {
 .section-title {
   font-size: 14px;
   font-weight: bold;
-  color: #ccc;
+  color: var(--ea-fg, #ccc);
 }
 .section-hint {
   font-size: 10px;
-  color: #555;
+  color: var(--ea-fg-secondary, #555);
 }
 
 .skill-grid {
@@ -603,9 +604,9 @@ function onNativeDragStart(evt, skill) {
   transform: translateY(-2px);
 }
 .skill-card.is-selected {
-  border-color: #ffd700;
-  box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.1);
-  background: rgba(255, 215, 0, 0.05);
+  border-color: var(--ea-gold);
+  box-shadow: inset 0 0 10px color-mix(in srgb, var(--ea-gold) 10%, transparent);
+  background: color-mix(in srgb, var(--ea-gold) 5%, transparent);
 }
 
 .attack-segment-row {
@@ -626,9 +627,9 @@ function onNativeDragStart(evt, skill) {
   align-items: center;
   justify-content: center;
   padding-left: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.12));
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.05));
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.75));
   font-family: 'Roboto Mono', 'Consolas', monospace;
   font-size: 11px;
   line-height: 1;
@@ -672,9 +673,9 @@ function onNativeDragStart(evt, skill) {
 }
 
 .attack-segment-chip.is-selected {
-  border-color: #ffd700;
-  color: #ffd700;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.12);
+  border-color: var(--ea-gold);
+  color: var(--ea-gold);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 12%, transparent);
 }
 
 .skill-type-empty {
@@ -730,7 +731,7 @@ function onNativeDragStart(evt, skill) {
   font-family: 'Roboto Mono', 'Consolas', monospace;
   font-size: 10px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ea-fg-muted, rgba(255, 255, 255, 0.45));
   z-index: 3;
 }
 .skill-time::before {
@@ -742,7 +743,7 @@ function onNativeDragStart(evt, skill) {
 }
 .skill-name {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--ea-fg, rgba(255, 255, 255, 0.9));
   font-weight: bold;
   margin-top: 2px;
   padding-right: 65px;
@@ -798,6 +799,90 @@ function onNativeDragStart(evt, skill) {
   background: var(--accent-color);
   opacity: 0.2;
   clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
+/* Light: opaque cards + readable type; white weapon glyphs → ink. */
+:global(html[data-theme='light'] .library-container .header-tool-btn){
+  color: var(--ea-icon-muted);
+}
+:global(html[data-theme='light'] .library-container .header-tool-btn:hover){
+  color: var(--ea-icon-strong);
+  background: var(--ea-hover-fill);
+}
+:global(html[data-theme='light'] .library-container .loadout-action-btn){
+  background: var(--ea-fill-input);
+  border-color: var(--ea-border);
+  color: var(--ea-fg-secondary);
+}
+:global(html[data-theme='light'] .library-container .loadout-action-btn:hover:not(:disabled)){
+  color: var(--ea-fg);
+  border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ea-gold) 16%, transparent);
+}
+:global(html[data-theme='light'] .library-container .section-title){
+  color: var(--ea-fg);
+}
+:global(html[data-theme='light'] .library-container .section-hint){
+  color: var(--ea-fg-secondary);
+}
+:global(html[data-theme='light'] .library-container .section-title-box){
+  border-left-color: var(--ea-border-strong);
+}
+/* Scope to library grid — do not paint armory dialog .skill-card. */
+:global(html[data-theme='light'] .library-container .skill-card){
+  background: #ffffff;
+  border-color: var(--ea-border-strong);
+  box-shadow: 0 1px 2px var(--ea-shadow);
+}
+:global(html[data-theme='light'] .library-container .skill-card:hover){
+  background: var(--ea-surface-soft);
+  border-color: var(--accent-color);
+}
+:global(html[data-theme='light'] .library-container .skill-card.is-selected){
+  background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+  box-shadow: none;
+}
+:global(html[data-theme='light'] .library-container .skill-name){
+  color: var(--ea-fg);
+}
+:global(html[data-theme='light'] .library-container .skill-type){
+  filter: none;
+  opacity: 0.95;
+  color: var(--ea-fg-secondary);
+}
+:global(html[data-theme='light'] .library-container .skill-time){
+  color: var(--ea-fg-muted);
+}
+:global(html[data-theme='light'] .library-container .card-body){
+  box-shadow: none;
+}
+:global(html[data-theme='light'] .library-container .weapon-icon-inner){
+  filter: brightness(0) opacity(0.72);
+  opacity: 1;
+}
+:global(html[data-theme='light'] .library-container .skill-card:hover .weapon-icon-inner){
+  filter: brightness(0) opacity(0.92);
+  transform: scale(1.1);
+  opacity: 1;
+}
+:global(html[data-theme='light'] .library-container .attack-segment-chip){
+  background: var(--ea-chip-fill);
+  border-color: var(--ea-border-strong);
+  color: var(--ea-fg-secondary);
+}
+:global(html[data-theme='light'] .library-container .attack-segment-chip:hover){
+  background: var(--ea-chip-fill-hover);
+  color: var(--ea-fg);
+}
+:global(html[data-theme='light'] .library-container .attack-segment-chip.is-selected){
+  background: color-mix(in srgb, var(--ea-gold) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+  color: var(--ea-gold);
+  box-shadow: none;
+}
+:global(html[data-theme='light'] .library-container .attack-segment-chip:not(.is-last)::after){
+  color: var(--ea-fg-faint);
 }
 
 /* Slider 自定义 */

@@ -273,7 +273,7 @@ function setEnemyLevel(level) {
             <div
               class="enemy-card"
               :class="{ selected: store.activeEnemyId === 'custom' }"
-              style="--tier-color: #ffd700"
+              style="--tier-color: var(--ea-gold)"
               @click="selectEnemy('custom')"
             >
               <div class="enemy-avatar-wrapper is-custom">
@@ -343,15 +343,16 @@ function setEnemyLevel(level) {
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  background: #252526;
+  background: var(--ea-workbench-panel, #252526);
+  color: var(--ea-fg, #f0f0f0);
 }
 
 .enemy-select-module {
   width: 100%;
   padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.08));
   display: flex;
   align-items: center;
   gap: 8px;
@@ -361,7 +362,7 @@ function setEnemyLevel(level) {
 }
 
 .enemy-select-module:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.06));
 }
 
 .module-deco-line {
@@ -370,7 +371,7 @@ function setEnemyLevel(level) {
   top: 8px;
   bottom: 8px;
   width: 2px;
-  background: #ffd700;
+  background: var(--ea-gold);
 }
 
 .custom-avatar-placeholder,
@@ -380,8 +381,8 @@ function setEnemyLevel(level) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 215, 0, 0.05);
-  color: #ffd700;
+  background: color-mix(in srgb, var(--ea-gold) 5%, transparent);
+  color: var(--ea-gold);
   font-size: 18px;
   font-weight: 900;
   font-family: 'Roboto Mono', monospace;
@@ -390,8 +391,8 @@ function setEnemyLevel(level) {
 .enemy-avatar-box {
   width: 32px;
   height: 32px;
-  border: 1px solid #444;
-  background: #111;
+  border: 1px solid var(--ea-border-strong, #444);
+  background: var(--ea-keycap-bg, #111);
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
@@ -409,7 +410,7 @@ function setEnemyLevel(level) {
   left: 0;
   width: 100%;
   height: 1px;
-  background: rgba(255, 215, 0, 0.3);
+  background: color-mix(in srgb, var(--ea-gold) 30%, transparent);
   animation: scan 3s infinite linear;
 }
 
@@ -439,7 +440,7 @@ function setEnemyLevel(level) {
 
 .enemy-name {
   font-weight: bold;
-  color: #eee;
+  color: var(--ea-fg, #eee);
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
@@ -449,7 +450,7 @@ function setEnemyLevel(level) {
 
 .enemy-level-badge {
   flex-shrink: 0;
-  color: #ffd700;
+  color: var(--ea-gold);
   font-family: 'Roboto Mono', monospace;
   font-size: 10px;
   font-weight: 800;
@@ -459,7 +460,7 @@ function setEnemyLevel(level) {
 
 .click-hint {
   font-size: 10px;
-  color: #ffd700;
+  color: var(--ea-gold);
   opacity: 0.5;
   margin-top: 1px;
 }
@@ -479,12 +480,12 @@ function setEnemyLevel(level) {
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
 }
 
 .summary-label {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.48);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.48));
   white-space: nowrap;
 }
 
@@ -492,7 +493,7 @@ function setEnemyLevel(level) {
   font-family: 'Roboto Mono', monospace;
   font-size: 12px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--ea-fg, rgba(255, 255, 255, 0.86));
   text-align: right;
 }
 
@@ -504,7 +505,7 @@ function setEnemyLevel(level) {
   letter-spacing: 0.02em;
 }
 .res-sep {
-  color: rgba(255, 255, 255, 0.28);
+  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.28));
   margin: 0 2px;
 }
 .res-value {
@@ -533,7 +534,7 @@ function setEnemyLevel(level) {
 
 .enemy-level-picker .tier-label {
   font-size: 12px;
-  color: #888;
+  color: var(--ea-fg-muted, #888);
   font-weight: 700;
   user-select: none;
 }
@@ -557,8 +558,8 @@ function setEnemyLevel(level) {
   gap: 8px;
   margin-bottom: 20px;
   padding: 8px;
-  background: #1e1e1e;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  background: var(--ea-fill-input, #1e1e1e);
+  border-bottom: 1px solid color-mix(in srgb, var(--ea-gold) 20%, transparent);
 }
 
 .category-tabs,
@@ -597,10 +598,10 @@ function setEnemyLevel(level) {
 .group-header {
   font-size: 13px;
   font-weight: 800;
-  color: #ececec;
+  color: var(--ea-fg, #ececec);
   margin-bottom: 12px;
   padding-left: 10px;
-  border-left: 3px solid #ffd700;
+  border-left: 3px solid var(--ea-gold);
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -609,7 +610,7 @@ function setEnemyLevel(level) {
 
 .group-header .count {
   font-size: 11px;
-  color: #666;
+  color: var(--ea-fg-faint, #666);
   font-weight: normal;
 }
 
@@ -626,9 +627,9 @@ function setEnemyLevel(level) {
   align-items: center;
   gap: 10px;
   padding: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 3px solid #444;
+  background: var(--ea-fill-muted, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.05));
+  border-left: 3px solid var(--ea-border-strong, #444);
   cursor: pointer;
   transition:
     border-color 0.16s ease,
@@ -643,7 +644,7 @@ function setEnemyLevel(level) {
 }
 
 .enemy-card:hover {
-  background: rgba(255, 215, 0, 0.07);
+  background: color-mix(in srgb, var(--ea-gold) 7%, transparent);
 }
 
 .enemy-card.has-tier:hover {
@@ -651,10 +652,10 @@ function setEnemyLevel(level) {
 }
 
 .enemy-card.selected {
-  background: rgba(255, 215, 0, 0.12);
-  border-top-color: rgba(255, 215, 0, 0.18);
-  border-right-color: rgba(255, 215, 0, 0.18);
-  border-bottom-color: rgba(255, 215, 0, 0.18);
+  background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
+  border-top-color: color-mix(in srgb, var(--ea-gold) 18%, transparent);
+  border-right-color: color-mix(in srgb, var(--ea-gold) 18%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--ea-gold) 18%, transparent);
 }
 
 .enemy-card.has-tier.selected {
@@ -665,7 +666,7 @@ function setEnemyLevel(level) {
 }
 
 .enemy-card.selected:hover {
-  background: rgba(255, 215, 0, 0.15);
+  background: color-mix(in srgb, var(--ea-gold) 15%, transparent);
 }
 
 .enemy-card.has-tier.selected:hover {
@@ -673,7 +674,7 @@ function setEnemyLevel(level) {
 }
 
 .enemy-card.selected .name {
-  color: #fff;
+  color: var(--ea-fg, #fff);
 }
 
 .enemy-card.has-tier.selected .name {
@@ -686,15 +687,15 @@ function setEnemyLevel(level) {
   height: 42px;
   flex-shrink: 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #111;
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
+  background: var(--ea-keycap-bg, #111);
 }
 
 .enemy-avatar {
   width: 100%;
   height: 100%;
   border: none;
-  background: #111;
+  background: var(--ea-keycap-bg, #111);
   object-fit: cover;
   display: block;
 }
@@ -710,7 +711,11 @@ function setEnemyLevel(level) {
   justify-content: center;
   height: 14px;
   padding: 0 2px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.62) 100%);
+  background: linear-gradient(
+    to top,
+    var(--ea-stack-bg, rgba(0, 0, 0, 0.92)) 0%,
+    color-mix(in srgb, var(--ea-stack-bg, rgba(0, 0, 0, 0.92)) 70%, transparent) 100%
+  );
   color: var(--tier-color);
   border-top: 1px solid color-mix(in srgb, var(--tier-color) 55%, transparent);
   font-size: 8px;
@@ -720,7 +725,7 @@ function setEnemyLevel(level) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 2px var(--ea-shadow, rgba(0, 0, 0, 0.85));
 }
 
 .enemy-info {
@@ -735,7 +740,7 @@ function setEnemyLevel(level) {
 .enemy-info .name {
   font-size: 12px;
   font-weight: bold;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -748,7 +753,7 @@ function setEnemyLevel(level) {
 
 .enemy-info .desc {
   font-size: 10px;
-  color: #888;
+  color: var(--ea-fg-muted, #888);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -760,17 +765,53 @@ function setEnemyLevel(level) {
 }
 
 .enemy-avatar-wrapper.is-custom {
-  border-color: rgba(255, 215, 0, 0.4);
+  border-color: color-mix(in srgb, var(--ea-gold) 40%, transparent);
 }
 
 .enemy-card.selected .enemy-avatar-wrapper.is-custom {
-  background: rgba(255, 215, 0, 0.12);
+  background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
 }
 
 .empty-state {
-  color: #666;
+  color: var(--ea-fg-faint, #666);
   text-align: center;
   padding: 40px 0;
   font-size: 13px;
+}
+
+:global(html[data-theme='light'] .enemy-settings-panel .enemy-card) {
+  background: var(--ea-surface-row);
+  border-color: var(--ea-border);
+}
+:global(html[data-theme='light'] .enemy-settings-panel .enemy-card:hover) {
+  background: rgba(180, 140, 0, 0.1);
+}
+:global(html[data-theme='light'] .enemy-settings-panel .enemy-card.selected) {
+  background: rgba(180, 140, 0, 0.14);
+  border-top-color: rgba(180, 140, 0, 0.35);
+  border-right-color: rgba(180, 140, 0, 0.35);
+  border-bottom-color: rgba(180, 140, 0, 0.35);
+}
+:global(html[data-theme='light'] .enemy-settings-panel .summary-row) {
+  background: var(--ea-surface-row);
+}
+:global(html[data-theme='light'] .enemy-settings-panel .enemy-filter-rows) {
+  background: var(--ea-surface-sunken);
+}
+:global(html[data-theme='light'] .enemy-settings-panel .enemy-avatar-box),
+:global(html[data-theme='light'] .enemy-settings-panel .enemy-avatar-wrapper),
+:global(html[data-theme='light'] .enemy-settings-panel .enemy-avatar) {
+  background: var(--ea-chip-fill);
+  border-color: rgba(26, 27, 30, 0.14);
+}
+:global(html[data-theme='light'] .char-selector-dialog .el-dialog__body) {
+  color: var(--ea-dialog-body, #3a3d44);
+}
+:global(html[data-theme='light'] .char-selector-dialog .el-input__wrapper) {
+  background-color: var(--ea-fill-input, var(--ea-surface-soft)) !important;
+  box-shadow: 0 0 0 1px var(--ea-border, #d8dbe0) inset !important;
+}
+:global(html[data-theme='light'] .char-selector-dialog .el-input__inner) {
+  color: var(--ea-fg, #1a1b1e) !important;
 }
 </style>

@@ -913,7 +913,7 @@ function handleToggleSimulationEndline() {
 }
 
 .grid-item.is-active {
-  background: #ffd700;
+  background: var(--ea-gold);
   color: #000;
 }
 

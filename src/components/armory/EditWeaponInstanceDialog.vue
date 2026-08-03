@@ -12,6 +12,7 @@ import {
 import { useWeaponStore } from '@/stores/weaponStore';
 import { getSkillBounds } from '@/utils/weaponBounds';
 import GameRichTextRenderer from '@/components/GameRichTextRenderer.vue';
+import './armoryDialogTheme.css';
 
 const LEVELS = [1, 20, 40, 60, 80, 90];
 const ALL_SKILL_KEYS = ['skill1', 'skill2', 'skill3'];
@@ -62,7 +63,7 @@ const canTune = computed(() => {
 });
 
 function getRarityBaseColor(rarity) {
-  if (rarity === 6) return '#FFD700';
+  if (rarity === 6) return 'var(--ea-gold)';
   if (rarity === 5) return '#ffc400';
   if (rarity === 4) return '#d8b4fe';
   return '#888';
@@ -234,7 +235,11 @@ function getSkillDescription(skillKey) {
             class="ea-btn ea-btn--sm ea-btn--glass-rect level-btn"
             :style="
               instance.level === lv
-                ? { borderColor: color, color: '#fff', background: `${color}33` }
+                ? {
+                    borderColor: color,
+                    color,
+                    background: `color-mix(in srgb, ${color} 18%, var(--ea-dialog-bg, #fff))`,
+                  }
                 : {}
             "
             @click="handleLevelChange(lv)"
@@ -310,12 +315,13 @@ function getSkillDescription(skillKey) {
   align-items: flex-start;
 }
 .portrait-frame {
+  --armory-pad: var(--ea-keycap-bg, #1a1a1e);
   width: 120px;
   min-width: 120px;
   height: 120px;
-  border: 2px solid #555;
+  border: 2px solid var(--ea-border-strong, #555);
   overflow: hidden;
-  background: #1a1a1e;
+  background: var(--armory-pad);
 }
 .portrait {
   width: 100%;
@@ -325,8 +331,8 @@ function getSkillDescription(skillKey) {
 .rarity-6-style.portrait-frame {
   border: 2px solid transparent;
   background:
-    linear-gradient(#1a1a1e, #1a1a1e) padding-box,
-    linear-gradient(135deg, #ffd700, #ff8c00, #ff4500) border-box;
+    linear-gradient(var(--armory-pad), var(--armory-pad)) padding-box,
+    linear-gradient(135deg, var(--ea-gold), #ff8c00, #ff4500) border-box;
   box-shadow: 0 4px 12px rgba(255, 140, 0, 0.2);
 }
 .header-info {
@@ -343,14 +349,14 @@ function getSkillDescription(skillKey) {
 .name {
   font-size: 22px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
 }
 .stars {
   font-size: 14px;
   letter-spacing: 1px;
 }
 .header-rarity-6.stars {
-  background: linear-gradient(45deg, #ffd700, #ff8c00, #ff4500);
+  background: linear-gradient(45deg, var(--ea-gold), #ff8c00, #ff4500);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent !important;
@@ -365,9 +371,9 @@ function getSkillDescription(skillKey) {
   align-items: center;
   padding: 2px 10px;
   font-size: 11px;
-  border: 1px solid #555;
-  color: #bbb;
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ea-border-strong, #555);
+  color: var(--ea-fg-secondary, #bbb);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
 }
 .level-display {
   display: flex;
@@ -378,12 +384,12 @@ function getSkillDescription(skillKey) {
 .level-num {
   font-size: 28px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
   line-height: 1;
 }
 .level-text {
   font-size: 11px;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   letter-spacing: 2px;
   text-transform: uppercase;
 }
@@ -395,11 +401,11 @@ function getSkillDescription(skillKey) {
 .value {
   font-size: 16px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
 }
 .section-label {
   font-size: 11px;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -411,7 +417,7 @@ function getSkillDescription(skillKey) {
   width: 16px;
   height: 16px;
   transform: rotate(45deg);
-  border: 1.5px solid #555;
+  border: 1.5px solid var(--ea-border-strong, #555);
   background: transparent;
   cursor: pointer;
   padding: 0;
@@ -428,14 +434,14 @@ function getSkillDescription(skillKey) {
   justify-content: center;
 }
 .section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.06));
   padding: 16px;
 }
 .section-title {
   font-size: 11px;
   font-weight: 700;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-bottom: 14px;
@@ -445,7 +451,7 @@ function getSkillDescription(skillKey) {
   flex-direction: column;
   gap: 8px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.04));
 }
 .skill-row:last-child {
   border-bottom: none;
@@ -463,11 +469,11 @@ function getSkillDescription(skillKey) {
 .skill-name {
   font-size: 13px;
   font-weight: 600;
-  color: #e0e0e0;
+  color: var(--ea-fg, #e0e0e0);
 }
 .skill-value {
   font-size: 12px;
-  color: #aaa;
+  color: var(--ea-fg-muted, #aaa);
   margin-left: 8px;
 }
 .skill-bar-area {
@@ -493,35 +499,35 @@ function getSkillDescription(skillKey) {
   font-family: 'Roboto Mono', monospace;
 }
 .skill-slot.slot-base {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--ea-fill-muted, rgba(255, 255, 255, 0.12));
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.7));
 }
 .skill-slot.slot-active {
-  background: rgba(234, 179, 8, 0.25);
-  color: #eab308;
+  background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  color: var(--ea-gold);
   cursor: pointer;
 }
 .skill-slot.slot-empty {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
   color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
   cursor: pointer;
 }
 .skill-slot.slot-locked {
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.2);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
+  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.2));
 }
 .skill-counter {
   font-size: 13px;
   font-weight: 700;
-  color: #ccc;
+  color: var(--ea-fg-secondary, #ccc);
   min-width: 28px;
   text-align: right;
   font-family: 'Roboto Mono', monospace;
 }
 .skill-description {
   display: block;
-  color: #c8c8c8;
+  color: var(--ea-dialog-body, #c8c8c8);
   font-size: 12px;
   line-height: 1.55;
 }

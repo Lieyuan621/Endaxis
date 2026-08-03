@@ -1,0 +1,332 @@
+/*
+ * Shared light/dark chrome for armory dialogs (operator / weapon / gear).
+ * Selectors hang off dialog class names (teleported) so scoped child rules
+ * can stay in each SFC; this file only patches theme-sensitive surfaces.
+ */
+
+.armory-dialog .portrait-frame,
+.gear-loadout-dialog .gear-icon-frame {
+  --armory-pad: var(--ea-keycap-bg, #1a1a1e);
+  border-color: var(--ea-border-strong, #555);
+  background: var(--armory-pad);
+}
+
+.armory-dialog .rarity-6-style.portrait-frame {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--armory-pad), var(--armory-pad)) padding-box,
+    linear-gradient(135deg, var(--ea-gold), #ff8c00, #ff4500) border-box;
+}
+
+.armory-dialog .tag,
+.gear-loadout-dialog .slot-tag {
+  border-color: var(--ea-border-strong, #555);
+  color: var(--ea-fg-secondary, #bbb);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
+}
+
+.armory-dialog .level-text,
+.armory-dialog .section-label,
+.armory-dialog .section-title,
+.armory-dialog .talent-sub,
+.gear-loadout-dialog .refine-label,
+.gear-loadout-dialog .gear-subline,
+.gear-loadout-dialog .refine-locked,
+.gear-loadout-dialog .empty-slot {
+  color: var(--ea-dialog-hint, #888);
+}
+
+.armory-dialog .diamond {
+  border-color: var(--ea-border-strong, #555);
+}
+
+.armory-dialog .section {
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.06));
+}
+
+.armory-dialog .skill-icon-frame {
+  border-color: var(--ea-border-strong, #555);
+  background: var(--ea-fill-muted, #222228);
+}
+
+.armory-dialog .talent-row,
+.armory-dialog .skill-row,
+.armory-dialog .stat-row {
+  border-bottom-color: var(--ea-border-soft, rgba(255, 255, 255, 0.04));
+}
+
+.armory-dialog .talent-chain {
+  background: var(--ea-border, #444);
+}
+
+.armory-dialog .talent-chain.active {
+  background: var(--ea-border-strong, #777);
+}
+
+.armory-dialog .talent-node {
+  border-color: var(--ea-border-strong, #555);
+  background: var(--ea-panel-elevated, #2a2a2e);
+}
+
+.armory-dialog .skill-slot.slot-base {
+  background: var(--ea-fill-muted, rgba(255, 255, 255, 0.12));
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.armory-dialog .skill-slot.slot-active {
+  background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  color: var(--ea-gold);
+}
+
+.armory-dialog .skill-slot.slot-empty {
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
+  color: transparent;
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
+}
+
+.armory-dialog .skill-slot.slot-locked {
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
+  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.2));
+}
+
+.armory-dialog .skill-value,
+.armory-dialog .stat-value-inline,
+.armory-dialog .stat-locked {
+  color: var(--ea-fg-muted, #aaa);
+}
+
+.armory-dialog .skill-description {
+  color: var(--ea-dialog-body, #c8c8c8);
+}
+
+.gear-loadout-dialog .gear-set-bonus-name,
+.gear-loadout-dialog .gear-set-bonus-count {
+  color: var(--ea-gear-accent-fg, #2dd4bf);
+}
+
+.gear-loadout-dialog .stat-row {
+  color: var(--ea-dialog-body, #bdbdbd);
+}
+
+.gear-loadout-dialog .stat-row strong,
+.gear-loadout-dialog .refine-mixed {
+  color: var(--ea-gold);
+}
+
+/*
+ * Light sections:
+ * - .section / gear-slot-card → cool-grey wash
+ * - Header rows & base-stats panel → no wash
+ */
+html[data-theme='light'] .armory-dialog .section {
+  background: var(--ea-surface-sunken);
+  border-color: var(--ea-border, #d8dbe0);
+}
+
+html[data-theme='light'] .armory-dialog.base-stats-dialog .section {
+  background: transparent;
+  border-color: var(--ea-border, #d8dbe0);
+}
+
+/* Base-stat rows (基础攻击 / 属性等): flush with dialog, not grey chips. */
+html[data-theme='light'] .armory-dialog.base-stats-dialog .row {
+  background: transparent;
+  border-color: var(--ea-border-soft, rgba(26, 27, 30, 0.1));
+}
+
+html[data-theme='light'] .armory-dialog.base-stats-dialog .row.overridden {
+  background: color-mix(in srgb, #ffc400 10%, #ffffff);
+  border-color: color-mix(in srgb, #ffc400 40%, transparent);
+}
+
+html[data-theme='light'] .armory-dialog .header,
+html[data-theme='light'] .armory-dialog .header-info,
+html[data-theme='light'] .armory-dialog .level-selector,
+html[data-theme='light'] .armory-dialog .header-info .row {
+  background: transparent;
+}
+
+html[data-theme='light'] .armory-dialog .portrait-frame,
+html[data-theme='light'] .gear-loadout-dialog .gear-icon-frame {
+  --armory-pad: var(--ea-workbench-panel);
+  background: var(--armory-pad);
+  border-color: var(--ea-border-strong, rgba(26, 27, 30, 0.26));
+}
+
+html[data-theme='light'] .armory-dialog .rarity-6-style.portrait-frame {
+  background:
+    linear-gradient(var(--armory-pad), var(--armory-pad)) padding-box,
+    linear-gradient(135deg, var(--ea-gold), #ff8c00, #ff4500) border-box;
+}
+
+/* Armory skill tiles must not inherit ActionLibrary white .skill-card chrome. */
+html[data-theme='light'] .armory-dialog .skill-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/*
+ * Match dark-mode “one surface” feel: controls tint into the section wash
+ * instead of solid white chips sitting on grey.
+ */
+html[data-theme='light'] .armory-dialog .section .ea-btn--glass-rect,
+html[data-theme='light'] .armory-dialog .section .ea-btn--glass-rect:disabled,
+html[data-theme='light'] .armory-dialog .section .ea-btn--glass-rect[disabled] {
+  --ea-btn-bg: var(--ea-chip-fill);
+  --ea-btn-border: rgba(26, 27, 30, 0.14);
+  --ea-btn-color: #3a3d44;
+  --ea-btn-bg-hover: var(--ea-chip-fill-hover);
+  background: var(--ea-chip-fill);
+  border-color: rgba(26, 27, 30, 0.14);
+  color: #3a3d44;
+  box-shadow: none;
+}
+
+html[data-theme='light'] .armory-dialog .section .ea-btn--glass-rect:hover:not(:disabled) {
+  --ea-btn-bg: var(--ea-chip-fill-hover);
+  --ea-btn-border: rgba(26, 27, 30, 0.28);
+  background: var(--ea-chip-fill-hover);
+  border-color: rgba(26, 27, 30, 0.28);
+  color: #1a1b1e;
+}
+
+html[data-theme='light'] .armory-dialog .skill-controls {
+  gap: 0;
+  border: 1px solid rgba(26, 27, 30, 0.14);
+  background: var(--ea-chip-fill);
+  overflow: hidden;
+}
+
+html[data-theme='light'] .armory-dialog .skill-controls .ea-btn--glass-rect {
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  --ea-btn-bg: transparent;
+  --ea-btn-border: transparent;
+}
+
+html[data-theme='light'] .armory-dialog .skill-rank {
+  min-width: 36px;
+  padding: 0 6px;
+  background: transparent;
+  border-left: 1px solid rgba(26, 27, 30, 0.12);
+  border-right: 1px solid rgba(26, 27, 30, 0.12);
+  color: var(--ea-fg, #1a1b1e);
+  line-height: 28px;
+}
+
+html[data-theme='light'] .armory-dialog .skill-icon-frame,
+html[data-theme='light'] .armory-dialog .talent-node {
+  background: color-mix(in srgb, var(--ea-surface-sunken) 55%, var(--ea-panel-elevated));
+  border-color: rgba(26, 27, 30, 0.22);
+}
+
+/*
+ * Pale game glyphs → ink silhouettes on light pads (no dark disc).
+ * Clear node-level grayscale so it does not wash the icon twice.
+ */
+html[data-theme='light'] .armory-dialog .skill-icon,
+html[data-theme='light'] .armory-dialog .talent-icon {
+  filter: brightness(0) opacity(0.72);
+}
+
+html[data-theme='light'] .armory-dialog .talent-node:not(.active) {
+  opacity: 0.62;
+  filter: none;
+}
+
+html[data-theme='light'] .armory-dialog .talent-node:not(.active) .talent-icon {
+  filter: brightness(0) opacity(0.42);
+}
+
+html[data-theme='light'] .armory-dialog .talent-node.active {
+  opacity: 1;
+  filter: none;
+}
+
+html[data-theme='light'] .armory-dialog .talent-node.active .talent-icon {
+  filter: brightness(0) opacity(0.88);
+}
+
+html[data-theme='light'] .armory-dialog .talent-node.disabled {
+  opacity: 0.32;
+}
+
+html[data-theme='light'] .gear-loadout-dialog .gear-slot-card,
+html[data-theme='light'] .gear-loadout-dialog .gear-set-bonus-panel {
+  background: var(--ea-surface-row);
+  border-color: var(--ea-border, #d8dbe0);
+}
+
+html[data-theme='light'] .armory-dialog .operator-edit-tooltip-popper.el-popper.is-dark,
+html[data-theme='light'] .operator-edit-tooltip-popper.el-popper.is-dark {
+  background: var(--ea-tooltip-bg, #ffffff) !important;
+  color: var(--ea-fg, #1a1b1e) !important;
+  border-color: var(--ea-dialog-border, #d8dbe0) !important;
+  box-shadow: 0 14px 34px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18)) !important;
+}
+
+/*
+ * Rotated-square arrows read as diamonds on light chrome.
+ * Hide them — content readability matters more than the pointer.
+ */
+html[data-theme='light'] .operator-edit-tooltip-popper.el-popper .el-popper__arrow {
+  display: none !important;
+}
+
+html[data-theme='light'] .operator-edit-tooltip {
+  color: var(--ea-fg, #1a1b1e) !important;
+}
+
+html[data-theme='light'] .operator-edit-tooltip-title {
+  color: var(--ea-dialog-title, #1a1b1e) !important;
+}
+
+html[data-theme='light'] .operator-edit-tooltip-desc {
+  color: var(--ea-dialog-body, #3a3d44) !important;
+}
+
+/* Skill tooltip body (teleported) — force dark ink for unstyled copy. */
+html[data-theme='light'] .operator-skill-tooltip {
+  color: var(--ea-fg, #1a1b1e) !important;
+}
+
+html[data-theme='light'] .operator-skill-tooltip-header,
+html[data-theme='light'] .operator-skill-tooltip-resources {
+  border-color: var(--ea-border, rgba(26, 27, 30, 0.16)) !important;
+}
+
+html[data-theme='light'] .operator-skill-tooltip-title {
+  color: var(--ea-dialog-title, #1a1b1e) !important;
+}
+
+html[data-theme='light'] .operator-skill-tooltip-rank,
+html[data-theme='light'] .operator-skill-tooltip-type {
+  color: var(--ea-fg-muted, rgba(26, 27, 30, 0.68)) !important;
+}
+
+html[data-theme='light'] .operator-skill-tooltip-form {
+  border-color: var(--ea-border, rgba(26, 27, 30, 0.16)) !important;
+  border-bottom-color: var(--ea-border-strong, rgba(26, 27, 30, 0.26)) !important;
+  background: linear-gradient(180deg, var(--ea-surface-soft), var(--ea-surface-row)) !important;
+  color: var(--ea-fg-secondary, rgba(26, 27, 30, 0.84)) !important;
+}
+
+html[data-theme='light'] .operator-skill-tooltip-form.selected {
+  color: var(--ea-fg, #1a1b1e) !important;
+  border-bottom-color: var(--ea-fg, #1a1b1e) !important;
+  background: linear-gradient(180deg, #ffffff, var(--ea-surface-soft)) !important;
+  box-shadow: inset 0 -2px 0 var(--ea-fg, #1a1b1e) !important;
+}
+
+html[data-theme='light'] .operator-skill-tooltip-form.active {
+  color: var(--ea-fg, #1a1b1e) !important;
+}
+
+html[data-theme='light'] .operator-skill-tooltip-desc,
+html[data-theme='light'] .operator-skill-tooltip-desc .game-rich-text,
+html[data-theme='light'] .operator-skill-tooltip-resource {
+  color: var(--ea-dialog-body, #3a3d44) !important;
+}

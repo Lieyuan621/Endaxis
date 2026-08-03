@@ -10,6 +10,7 @@ import { getOperatorGameName } from '@/data/gameText';
 import { toLegacyDisplayType } from '@/utils/hitModel';
 import { collectActionCombatBadges } from '@/utils/actionCombatIcons';
 import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
+import { adaptColorForLightSurface, solidFillForLightTrack } from '@/utils/theme';
 
 const DEFAULT_ICON = '/icons/default_icon.webp';
 
@@ -25,6 +26,8 @@ const props = defineProps({
   showPrep: { type: Boolean, default: true },
   showTimeTicks: { type: Boolean, default: true },
   watermarkText: { type: String, default: 'Endaxis' },
+  /** Card chrome for export preview — independent of editor theme. */
+  appearance: { type: String, default: 'dark', validator: v => v === 'light' || v === 'dark' },
 });
 
 const store = useTimelineStore();
@@ -209,16 +212,26 @@ function getActionStyle(action, track, index) {
   const top = timeToY(start);
   const height = Math.max(12, Number(props.blockHeight) || 22);
   const node = getCompiledAction(action)?.node || action;
-  const color = getActionColor(action, track?.id);
+  const rawColor = getActionColor(action, track?.id);
+  const isLight = props.appearance === 'light';
+  const color = isLight ? adaptColorForLightSurface(rawColor) : rawColor;
   const isDisabled = !!action?.isDisabled;
   const isAttack = node?.type === 'basicAttack' || toLegacyDisplayType(node?.type) === 'attack';
 
   return {
     top: `${top}px`,
     height: `${height}px`,
-    borderColor: toRgba(color, isAttack ? 0.45 : 0.9),
-    backgroundColor: toRgba(color, isAttack ? 0.08 : 0.22),
-    boxShadow: isDisabled || isAttack ? 'none' : `0 0 6px ${toRgba(color, 0.14)}`,
+    borderColor: toRgba(color, isAttack ? (isLight ? 1 : 0.45) : isLight ? 1 : 0.9),
+    backgroundColor: isLight
+      ? solidFillForLightTrack(color, isAttack ? 0.7 : 0.48)
+      : toRgba(color, isAttack ? 0.08 : 0.22),
+    boxShadow: isDisabled || isAttack
+      ? isLight
+        ? '0 0 0 1px rgba(26, 27, 30, 0.18)'
+        : 'none'
+      : isLight
+        ? `0 0 0 1px rgba(26, 27, 30, 0.18), 0 0 6px ${toRgba(color, 0.12)}`
+        : `0 0 6px ${toRgba(color, 0.14)}`,
     opacity: isDisabled ? 0.45 : 1,
     zIndex: 10 + index,
   };
@@ -488,7 +501,12 @@ function formatAxisLabel(viewTime) {
 </script>
 
 <template>
-  <div ref="rootEl" class="share-card" :style="rootStyle">
+  <div
+    ref="rootEl"
+    class="share-card"
+    :class="{ 'share-card--light': appearance === 'light' }"
+    :style="rootStyle"
+  >
     <div class="share-card__header">
       <div v-if="showTimeTicks" class="share-card__time-head">{{ t('timeline.mobile.time') }}</div>
       <div v-else class="share-card__time-head is-spacer"></div>
@@ -614,7 +632,7 @@ function formatAxisLabel(viewTime) {
   flex-direction: column;
   background: #121218;
   color: #fff;
-  border: 1px solid rgba(255, 215, 0, 0.22);
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 22%, transparent);
   overflow: hidden;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
@@ -625,7 +643,7 @@ function formatAxisLabel(viewTime) {
   gap: 0;
   padding: 6px 4px 8px;
   background: #0c0c10;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.18);
+  border-bottom: 1px solid color-mix(in srgb, var(--ea-gold) 18%, transparent);
   flex: 0 0 auto;
 }
 
@@ -771,9 +789,9 @@ function formatAxisLabel(viewTime) {
   color: #fff;
 }
 .share-card__key.op-link {
-  background: rgba(255, 215, 0, 0.2);
-  border-color: #ffd700;
-  color: #ffd700;
+  background: color-mix(in srgb, var(--ea-gold) 20%, transparent);
+  border-color: var(--ea-gold);
+  color: var(--ea-gold);
 }
 .share-card__key.op-link.is-perfect-link {
   background: rgba(255, 236, 122, 0.36);
@@ -781,7 +799,7 @@ function formatAxisLabel(viewTime) {
   color: #fff7cf;
   box-shadow:
     0 0 0 1px rgba(255, 242, 168, 0.85),
-    0 0 8px rgba(255, 215, 0, 0.75);
+    0 0 8px color-mix(in srgb, var(--ea-gold) 75%, transparent);
 }
 .share-card__key.op-ultimate,
 .share-card__key.is-hold {
@@ -962,7 +980,7 @@ function formatAxisLabel(viewTime) {
   min-width: 9px;
   padding: 0 2px;
   background: rgba(0, 0, 0, 0.85);
-  color: #ffd700;
+  color: var(--ea-gold);
   font-size: 8px;
   line-height: 1;
   font-weight: 800;
@@ -976,8 +994,145 @@ function formatAxisLabel(viewTime) {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
-  color: rgba(255, 215, 0, 0.35);
+  color: color-mix(in srgb, var(--ea-gold) 35%, transparent);
   pointer-events: none;
   z-index: 20;
+}
+
+/* Light export card — self-contained (does not rely on html[data-theme]). */
+.share-card--light {
+  background: #e8ebf0;
+  color: #1a1b1e;
+  border-color: color-mix(in srgb, #c4a400 28%, var(--ea-workbench-main));
+  --ea-gold: #c4a400;
+  --ea-keycap-bg: #d4dae3;
+  --ea-keycap-border: #9aa3b0;
+  --ea-keycap-skill-bg: #c8d0db;
+  --ea-keycap-skill-border: #8b95a3;
+}
+
+.share-card--light .share-card__header {
+  background: #dce2eb;
+  border-bottom-color: color-mix(in srgb, #c4a400 22%, var(--ea-workbench-main));
+}
+
+.share-card--light .share-card__time-head {
+  color: rgba(26, 27, 30, 0.55);
+}
+
+.share-card--light .share-card__avatar {
+  border-color: rgba(26, 27, 30, 0.18);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.share-card--light .share-card__rail {
+  border-right-color: rgba(26, 27, 30, 0.14);
+  background: rgba(26, 27, 30, 0.04);
+}
+
+.share-card--light .share-card__op-rail {
+  border-left-color: rgba(26, 27, 30, 0.14);
+  background: rgba(26, 27, 30, 0.035);
+}
+
+.share-card--light .share-card__prep {
+  background: rgba(26, 27, 30, 0.05);
+  border-bottom-color: rgba(26, 27, 30, 0.14);
+}
+
+.share-card--light .share-card__prep--grid {
+  color: rgba(26, 27, 30, 0.42);
+}
+
+.share-card--light .share-card__battle-line {
+  background: rgba(26, 27, 30, 0.4);
+}
+
+.share-card--light .share-card__key {
+  background: var(--ea-keycap-bg);
+  border-color: var(--ea-keycap-border);
+  color: #1a1b1e;
+}
+
+.share-card--light .share-card__key.op-skill,
+.share-card--light .share-card__key.op-ultimate,
+.share-card--light .share-card__key.is-hold {
+  background: var(--ea-keycap-skill-bg);
+  border-color: var(--ea-keycap-skill-border);
+  color: #1a1b1e;
+}
+
+.share-card--light .share-card__key.op-link {
+  background: color-mix(in srgb, #c4a400 18%, #ffffff);
+  border-color: #c4a400;
+  color: #8a7200;
+}
+
+.share-card--light .share-card__key.op-link.is-perfect-link {
+  background: color-mix(in srgb, #c4a400 28%, #ffffff);
+  border-color: #b89600;
+  color: #7a6500;
+  box-shadow: 0 0 0 1px rgba(140, 110, 0, 0.45);
+}
+
+.share-card--light .share-card__key.op-switch {
+  background: rgba(120, 80, 180, 0.12);
+  border-color: #7c5cbf;
+  color: #5a3d9e;
+}
+
+.share-card--light .share-card__tick {
+  --mark-color: rgba(26, 27, 30, 0.22);
+}
+.share-card--light .share-card__tick.is-major {
+  --mark-color: rgba(26, 27, 30, 0.4);
+}
+.share-card--light .share-card__tick.is-battle-start {
+  --mark-color: rgba(26, 27, 30, 0.62);
+}
+
+.share-card--light .share-card__tick-label {
+  color: rgba(26, 27, 30, 0.55);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+.share-card--light .share-card__tick.is-battle-start .share-card__tick-label {
+  color: rgba(26, 27, 30, 0.82);
+}
+
+.share-card--light .share-card__tracks {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(26, 27, 30, 0.07) 0px,
+    rgba(26, 27, 30, 0.07) 1px,
+    transparent 1px,
+    transparent var(--sec-px)
+  );
+}
+
+.share-card--light .share-card__col {
+  border-left-color: rgba(26, 27, 30, 0.1);
+}
+
+.share-card--light .share-card__cd-ibar-text {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+}
+
+.share-card--light .share-card__action-text {
+  color: rgba(20, 22, 26, 0.92);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.65);
+}
+
+.share-card--light .share-card__icon {
+  filter: drop-shadow(0 0 1px rgba(26, 27, 30, 0.35));
+}
+
+.share-card--light .share-card__stacks {
+  background: rgba(26, 27, 30, 0.82);
+  color: #e0bc00;
+}
+
+.share-card--light .share-card__watermark {
+  color: color-mix(in srgb, #c4a400 45%, transparent);
 }
 </style>

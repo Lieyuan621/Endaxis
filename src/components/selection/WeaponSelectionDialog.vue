@@ -18,7 +18,7 @@ function rarity(weapon) {
 }
 
 function rarityColor(value) {
-  if (value === 6) return '#FFD700';
+  if (value === 6) return 'var(--ea-gold)';
   if (value === 5) return '#ffc400';
   if (value === 4) return '#d8b4fe';
   return '#a0a0a0';

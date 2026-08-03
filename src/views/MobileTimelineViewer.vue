@@ -39,7 +39,7 @@ import {
   findGearInstance,
 } from '@/stores/timeline/instanceLookup';
 import { useAppearance } from '@/composables/useAppearance';
-import { adaptColorForLightSurface } from '@/utils/theme';
+import { adaptColorForLightSurface, solidFillForLightTrack } from '@/utils/theme';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -525,19 +525,28 @@ function getActionStyle(action, track = null) {
   const rawColor = getActionColor(action, track?.id);
   const isDisabled = !!action?.isDisabled;
   const isAttack = node?.type === 'basicAttack' || toLegacyDisplayType(node?.type) === 'attack';
-  // Light chrome: denser fills + darken washed-out hues (physical beige, white skill, …).
+  // Light chrome: opaque pastel fills so track/grid do not show through.
   const isLight = appearance.value === 'light';
   const color = isLight ? adaptColorForLightSurface(rawColor) : rawColor;
-  const fillAlpha = isAttack ? (isLight ? 0.28 : 0.06) : isLight ? 0.48 : 0.18;
-  const borderAlpha = isAttack ? (isLight ? 0.72 : 0.45) : isLight ? 0.95 : 0.9;
-  const glowAlpha = isLight ? 0.08 : 0.16;
+  const fillAlpha = isAttack ? 0.06 : 0.18;
+  const borderAlpha = isAttack ? (isLight ? 1 : 0.45) : isLight ? 1 : 0.9;
+  const glowAlpha = isLight ? 0.12 : 0.16;
 
   return {
     top: `${top}px`,
     height: `${height}px`,
     borderColor: toRgba(color, borderAlpha),
-    backgroundColor: toRgba(color, fillAlpha),
-    boxShadow: isDisabled || isAttack ? 'none' : `0 0 8px ${toRgba(color, glowAlpha)}`,
+    backgroundColor: isLight
+      ? solidFillForLightTrack(color, isAttack ? 0.7 : 0.48)
+      : toRgba(color, fillAlpha),
+    boxShadow:
+      isDisabled || isAttack
+        ? isLight
+          ? '0 0 0 1px rgba(26, 27, 30, 0.22)'
+          : 'none'
+        : isLight
+          ? `0 0 0 1px rgba(26, 27, 30, 0.22), 0 0 8px ${toRgba(color, glowAlpha)}`
+          : `0 0 8px ${toRgba(color, glowAlpha)}`,
     opacity: isDisabled ? 0.45 : 1,
   };
 }
@@ -1045,37 +1054,58 @@ async function doImport() {
               </el-dropdown-item>
 
               <el-dropdown-item divided disabled>
-                <div class="mobile-menu-item">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="14"
-                    height="14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <circle cx="12" cy="12" r="4"></circle>
-                    <path
-                      d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-                    ></path>
-                  </svg>
-                  <span>{{ t('common.appearance') }}</span>
+                <div class="mobile-appearance-row">
+                  <span class="mobile-appearance-row__label">{{ t('common.appearance') }}</span>
+                  <div class="mobile-appearance-row__btns" role="group" :aria-label="t('common.appearance')">
+                    <button
+                      type="button"
+                      class="mobile-appearance-btn"
+                      :class="{ 'is-active': appearance === 'light' }"
+                      :title="t('common.appearanceLight')"
+                      :aria-label="t('common.appearanceLight')"
+                      @click.stop="setAppearance('light')"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="12" r="4" />
+                        <path
+                          d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="mobile-appearance-btn"
+                      :class="{ 'is-active': appearance === 'dark' }"
+                      :title="t('common.appearanceDark')"
+                      :aria-label="t('common.appearanceDark')"
+                      @click.stop="setAppearance('dark')"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </el-dropdown-item>
-              <el-dropdown-item
-                command="appearance:dark"
-                :disabled="appearance === 'dark'"
-              >
-                {{ t('common.appearanceDark') }}
-              </el-dropdown-item>
-              <el-dropdown-item
-                command="appearance:light"
-                :disabled="appearance === 'light'"
-              >
-                {{ t('common.appearanceLight') }}
               </el-dropdown-item>
 
               <el-dropdown-item divided command="reset">
@@ -1613,6 +1643,52 @@ async function doImport() {
   opacity: 0.9;
 }
 
+.mobile-appearance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-width: 160px;
+}
+
+.mobile-appearance-row__label {
+  font-size: 13px;
+  color: var(--ea-fg-muted);
+}
+
+.mobile-appearance-row__btns {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 28px);
+  gap: 4px;
+}
+
+.mobile-appearance-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--ea-border);
+  border-radius: 4px;
+  background: var(--ea-fill-soft);
+  color: var(--ea-fg-secondary);
+  cursor: pointer;
+}
+
+.mobile-appearance-btn.is-active {
+  border-color: rgba(180, 140, 0, 0.55);
+  background: rgba(180, 140, 0, 0.12);
+  color: var(--ea-gold);
+}
+
+:global(html[data-theme='dark'] .mobile-appearance-btn.is-active){
+  border-color: color-mix(in srgb, var(--ea-gold) 50%, transparent);
+  background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
+  color: #ffe38a;
+}
+
 .mobile-icon-btn {
   --el-button-bg-color: var(--ea-btn-secondary-bg);
   --el-button-border-color: var(--ea-btn-secondary-border);
@@ -1679,11 +1755,11 @@ async function doImport() {
 :global(.mobile-scenario-popper .el-select-dropdown__item.hover),
 :global(.mobile-scenario-popper .el-select-dropdown__item:hover) {
   background: var(--ea-select-hover-bg) !important;
-  color: var(--ea-gold, #ffd700) !important;
+  color: var(--ea-gold) !important;
 }
 
 :global(.mobile-scenario-popper .el-select-dropdown__item.selected) {
-  color: var(--ea-gold, #ffd700) !important;
+  color: var(--ea-gold) !important;
   background-color: var(--ea-select-hover-bg) !important;
 }
 
@@ -1831,9 +1907,9 @@ async function doImport() {
 }
 
 .mobile-key-cap.op-link {
-  background: rgba(255, 215, 0, 0.2);
-  border-color: #ffd700;
-  color: #ffd700;
+  background: color-mix(in srgb, var(--ea-gold) 20%, transparent);
+  border-color: var(--ea-gold);
+  color: var(--ea-gold);
 }
 
 .mobile-key-cap.op-link.is-perfect-link {
@@ -1842,7 +1918,7 @@ async function doImport() {
   color: #fff7cf;
   box-shadow:
     0 0 0 1px rgba(255, 242, 168, 0.85),
-    0 0 10px rgba(255, 215, 0, 0.8);
+    0 0 10px color-mix(in srgb, var(--ea-gold) 80%, transparent);
   animation: mobile-perfect-link-pulse 1.15s ease-in-out infinite;
 }
 
@@ -2042,7 +2118,7 @@ async function doImport() {
   min-width: 10px;
   padding: 0 2px;
   background: var(--ea-stack-bg);
-  color: var(--ea-gold, #ffd700);
+  color: var(--ea-gold);
   font-size: 8px;
   line-height: 1.1;
   font-weight: 800;
@@ -2145,7 +2221,7 @@ async function doImport() {
 .tech-style {
   background: linear-gradient(135deg, var(--ea-fill-soft) 0%, transparent 100%);
   border: 1px solid var(--ea-border);
-  border-left: 3px solid var(--ea-gold, #ffd700);
+  border-left: 3px solid var(--ea-gold);
   padding: 14px;
   overflow: visible;
 }
@@ -2163,7 +2239,7 @@ async function doImport() {
 }
 :deep(.el-textarea__inner:focus) {
   background-color: var(--ea-panel-elevated) !important;
-  box-shadow: inset 0 0 0 1px var(--ea-gold, #ffd700) !important;
+  box-shadow: inset 0 0 0 1px var(--ea-gold) !important;
 }
 
 :global(body.endaxis-mobile-viewer) {
@@ -2253,8 +2329,8 @@ async function doImport() {
 }
 
 .mobile-action-block.is-info-target {
-  outline: 1px solid rgba(255, 215, 0, 0.85);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.14);
+  outline: 1px solid color-mix(in srgb, var(--ea-gold) 85%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 14%, transparent);
 }
 
 .actioninfo-hero {
@@ -2271,8 +2347,8 @@ async function doImport() {
   width: 44px;
   height: 44px;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 215, 0, 0.22);
-  background: rgba(255, 215, 0, 0.06);
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  background: color-mix(in srgb, var(--ea-gold) 6%, transparent);
   overflow: hidden;
 }
 
@@ -2340,7 +2416,7 @@ async function doImport() {
   min-width: 11px;
   padding: 0 2px;
   background: var(--ea-stack-bg);
-  color: var(--ea-gold, #ffd700);
+  color: var(--ea-gold);
   font-size: 9px;
   line-height: 1.1;
   font-weight: 800;
@@ -2409,8 +2485,8 @@ async function doImport() {
   width: 44px;
   height: 44px;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 215, 0, 0.22);
-  background: rgba(255, 215, 0, 0.06);
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  background: color-mix(in srgb, var(--ea-gold) 6%, transparent);
   overflow: hidden;
 }
 

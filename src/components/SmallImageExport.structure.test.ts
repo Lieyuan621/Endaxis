@@ -18,6 +18,8 @@ describe('small image export wiring', () => {
     expect(cardSource).toContain('showTimeTicks');
     expect(cardSource).toContain('collectActionCombatBadges');
     expect(cardSource).toContain('share-card__op-rail');
+    expect(cardSource).toContain('share-card--light');
+    expect(cardSource).toContain('appearance');
   });
 
   test('preview dialog saves via snapdom', () => {
@@ -25,5 +27,7 @@ describe('small image export wiring', () => {
     expect(dialogSource).toContain('addMetadataToPng');
     expect(dialogSource).toContain('saveImage');
     expect(dialogSource).toContain('@click="saveImage"');
+    expect(dialogSource).toContain('cardAppearance');
+    expect(dialogSource).toContain('setCardAppearance');
   });
 });

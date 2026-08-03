@@ -160,6 +160,6 @@ describe('HitEditorDialog structure', () => {
 
   test('matches dialog number input background to select controls', () => {
     expect(source).toContain(':global(.hit-editor-dialog .custom-number-input)');
-    expect(source).toContain('background-color: #111');
+    expect(source).toContain('background-color: var(--ea-fill-input, #111)');
   });
 });

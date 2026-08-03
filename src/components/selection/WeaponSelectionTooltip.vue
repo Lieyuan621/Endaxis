@@ -83,6 +83,31 @@ const preview = computed(() => {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+:global(html[data-theme='light'] .weapon-selection-preview-popper.el-popper.is-dark) {
+  background: #ffffff;
+  border: 1px solid rgba(26, 27, 30, 0.14);
+  box-shadow: 0 14px 34px rgba(26, 27, 30, 0.16);
+  color: #1a1b1e;
+}
+
+:global(html[data-theme='light'] .weapon-selection-preview-popper.el-popper .el-popper__arrow) {
+  display: none !important;
+}
+
+:global(html[data-theme='light'] .weapon-selection-preview__name) {
+  border-bottom-color: rgba(26, 27, 30, 0.12);
+  color: #1a1b1e;
+}
+
+:global(html[data-theme='light'] .weapon-selection-preview__meta),
+:global(html[data-theme='light'] .weapon-selection-preview__skill-heading span) {
+  color: rgba(26, 27, 30, 0.55);
+}
+
+:global(html[data-theme='light'] .weapon-selection-preview__skill) {
+  color: rgba(26, 27, 30, 0.84);
+}
+
 :global(.weapon-selection-preview) {
   width: min(400px, calc(100vw - 64px));
   display: flex;

@@ -345,4 +345,5 @@ function getFirstSegmentNumber(skill, field, levelIndex) {
   font-weight: 700;
   line-height: 1.2;
 }
+
 </style>

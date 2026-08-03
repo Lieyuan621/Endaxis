@@ -336,7 +336,7 @@ function statusLabel(value) {
             :model-value="stacksCount"
             @update:model-value="value => (stacksCount = value)"
             :min="1"
-            :activeColor="'#ffd700'"
+            :activeColor="'var(--ea-gold)'"
           />
         </label>
       </div>
@@ -370,7 +370,7 @@ function statusLabel(value) {
             @update:model-value="value => (hpPercent = value)"
             :min="0"
             :max="100"
-            :activeColor="'#ffd700'"
+            :activeColor="'var(--ea-gold)'"
           />
         </label>
       </div>
@@ -398,7 +398,7 @@ function statusLabel(value) {
 
 .field,
 .check-field {
-  color: #cfd3dc;
+  color: var(--ea-fg-secondary, #cfd3dc);
   display: flex;
   flex-direction: column;
   font-size: 11px;

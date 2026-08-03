@@ -209,6 +209,7 @@
       "rendering": "正在渲染前 {seconds} 秒的长图...",
       "smallPreviewTitle": "小图预览与微调",
       "saveSmallImage": "保存图片",
+      "cardAppearanceLabel": "卡片明暗",
       "cardWidthLabel": "整图宽度",
       "blockHeightLabel": "技能块高度",
       "timeScaleLabel": "时间格高度",

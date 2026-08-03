@@ -476,12 +476,13 @@ function onClose() {
 <style scoped>
 .stat-detail-content {
   font-size: 13px;
+  color: var(--ea-fg, #f0f0f0);
 }
 
 .section-label {
   font-size: 12px;
   font-weight: 600;
-  color: #aaa;
+  color: var(--ea-fg-muted, #aaa);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 12px 0 6px;
@@ -497,7 +498,7 @@ function onClose() {
 }
 
 .stat-table tr {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.06));
 }
 
 .stat-table tr:last-child {
@@ -509,13 +510,13 @@ function onClose() {
 }
 
 .label-cell {
-  color: #ddd;
+  color: var(--ea-fg-secondary, #ddd);
 }
 
 .value-cell {
   text-align: right;
   font-family: monospace;
-  color: #eee;
+  color: var(--ea-fg, #eee);
   white-space: nowrap;
 }
 
@@ -524,7 +525,7 @@ function onClose() {
 }
 
 .dim {
-  opacity: 0.65;
+  opacity: 0.72;
   font-size: 12px;
 }
 
@@ -549,7 +550,7 @@ function onClose() {
 }
 
 .expandable-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.05));
 }
 
 .expandable-row.is-disabled {
@@ -563,18 +564,18 @@ function onClose() {
 .expand-icon {
   margin-right: 4px;
   vertical-align: -2px;
-  color: #888;
+  color: var(--ea-fg-muted, #888);
   font-size: 12px;
   transition: transform 0.18s ease, color 0.18s ease;
 }
 
 .expand-icon.is-open {
   transform: rotate(90deg);
-  color: #bbb;
+  color: var(--ea-fg-secondary, #bbb);
 }
 
 .expandable-row:hover .expand-icon {
-  color: #bbb;
+  color: var(--ea-fg-secondary, #bbb);
 }
 
 .attr-badge {
@@ -588,24 +589,24 @@ function onClose() {
 }
 
 .main-badge {
-  border: 1px solid rgba(255, 193, 7, 0.5);
-  color: #ffc107;
+  border: 1px solid color-mix(in srgb, var(--ea-gold, #ffc107) 50%, transparent);
+  color: var(--ea-gold, #ffc107);
 }
 
 .sub-badge {
-  border: 1px solid rgba(158, 158, 158, 0.5);
-  color: #9e9e9e;
+  border: 1px solid var(--ea-border-strong, rgba(158, 158, 158, 0.5));
+  color: var(--ea-fg-muted, #9e9e9e);
 }
 
 tr.is-main {
-  background: rgba(255, 193, 7, 0.08);
+  background: color-mix(in srgb, var(--ea-gold, #ffc107) 10%, transparent);
 }
 
 tr.is-sub {
-  background: rgba(158, 158, 158, 0.08);
+  background: var(--ea-fill-soft, rgba(158, 158, 158, 0.08));
 }
 
 .sub-row {
-  border-bottom-color: rgba(255, 255, 255, 0.03) !important;
+  border-bottom-color: var(--ea-border-soft, rgba(255, 255, 255, 0.03)) !important;
 }
 </style>

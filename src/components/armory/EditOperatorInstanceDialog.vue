@@ -20,6 +20,7 @@ import { getOperatorSkillMax, skillLevelLabel } from '@/utils/operatorBounds';
 import { getPromotionCount, DEFAULT_TRUST_ATTRIBUTE_BONUS } from '@/data/stats/baseValues';
 import { useOperatorStore } from '@/stores/operatorStore';
 import { elementColors } from '@/utils/theme';
+import './armoryDialogTheme.css';
 
 const LEVELS = [1, 20, 40, 60, 80, 90];
 const SKILL_ORDER = ['basicAttack', 'battleSkill', 'comboSkill', 'ultimate'];
@@ -78,7 +79,7 @@ const maxTrust = computed(() =>
 );
 
 function getRarityBaseColor(rarity) {
-  if (rarity === 6) return '#FFD700';
+  if (rarity === 6) return 'var(--ea-gold)';
   if (rarity === 5) return '#ffc400';
   if (rarity === 4) return '#d8b4fe';
   return '#888';
@@ -363,7 +364,11 @@ function promotedLabel() {
             class="ea-btn ea-btn--sm ea-btn--glass-rect level-btn"
             :style="
               instance.level === lv
-                ? { borderColor: color, color: '#fff', background: `${color}33` }
+                ? {
+                    borderColor: color,
+                    color,
+                    background: `color-mix(in srgb, ${color} 18%, var(--ea-dialog-bg, #fff))`,
+                  }
                 : {}
             "
             @click="update({ level: lv })"
@@ -561,13 +566,14 @@ function promotedLabel() {
   align-items: flex-start;
 }
 .portrait-frame {
+  --armory-pad: var(--ea-keycap-bg, #1a1a1e);
   width: 160px;
   min-width: 160px;
   height: 160px;
   border-radius: 8px;
-  border: 2px solid #555;
+  border: 2px solid var(--ea-border-strong, #555);
   overflow: hidden;
-  background: #1a1a1e;
+  background: var(--armory-pad);
 }
 .portrait {
   width: 100%;
@@ -578,8 +584,8 @@ function promotedLabel() {
 .rarity-6-style.portrait-frame {
   border: 2px solid transparent;
   background:
-    linear-gradient(#1a1a1e, #1a1a1e) padding-box,
-    linear-gradient(135deg, #ffd700, #ff8c00, #ff4500) border-box;
+    linear-gradient(var(--armory-pad), var(--armory-pad)) padding-box,
+    linear-gradient(135deg, var(--ea-gold), #ff8c00, #ff4500) border-box;
   box-shadow: 0 4px 12px rgba(255, 140, 0, 0.2);
 }
 .header-info {
@@ -596,14 +602,14 @@ function promotedLabel() {
 .name {
   font-size: 22px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
 }
 .stars {
   font-size: 14px;
   letter-spacing: 1px;
 }
 .header-rarity-6.stars {
-  background: linear-gradient(45deg, #ffd700, #ff8c00, #ff4500);
+  background: linear-gradient(45deg, var(--ea-gold), #ff8c00, #ff4500);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent !important;
@@ -618,9 +624,9 @@ function promotedLabel() {
   align-items: center;
   padding: 2px 10px;
   font-size: 11px;
-  border: 1px solid #555;
-  color: #bbb;
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ea-border-strong, #555);
+  color: var(--ea-fg-secondary, #bbb);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
 }
 .level-display {
   display: flex;
@@ -631,12 +637,12 @@ function promotedLabel() {
 .level-num {
   font-size: 28px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
   line-height: 1;
 }
 .level-text {
   font-size: 11px;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   letter-spacing: 2px;
   text-transform: uppercase;
 }
@@ -659,7 +665,7 @@ function promotedLabel() {
 }
 .section-label {
   font-size: 11px;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -671,7 +677,7 @@ function promotedLabel() {
   width: 16px;
   height: 16px;
   transform: rotate(45deg);
-  border: 1.5px solid #555;
+  border: 1.5px solid var(--ea-border-strong, #555);
   background: transparent;
   cursor: pointer;
   padding: 0;
@@ -688,15 +694,15 @@ function promotedLabel() {
   justify-content: center;
 }
 .section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.06));
   border-radius: 6px;
   padding: 16px;
 }
 .section-title {
   font-size: 11px;
   font-weight: 700;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-bottom: 14px;
@@ -718,8 +724,8 @@ function promotedLabel() {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  border: 2px solid #555;
-  background: #222228;
+  border: 2px solid var(--ea-border-strong, #555);
+  background: var(--ea-fill-muted, #222228);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -733,7 +739,7 @@ function promotedLabel() {
 }
 .skill-name {
   font-size: 12px;
-  color: #ccc;
+  color: var(--ea-fg-secondary, #ccc);
   text-align: center;
   min-height: 2.6em;
   display: flex;
@@ -747,7 +753,7 @@ function promotedLabel() {
 .skill-rank {
   font-size: 13px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
   min-width: 28px;
   text-align: center;
   font-family: 'Roboto Mono', monospace;
@@ -756,7 +762,7 @@ function promotedLabel() {
   display: flex;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.04));
 }
 .talent-row:last-child {
   border-bottom: none;
@@ -769,11 +775,11 @@ function promotedLabel() {
 .talent-name {
   font-size: 13px;
   font-weight: 600;
-  color: #e0e0e0;
+  color: var(--ea-fg, #e0e0e0);
 }
 .talent-sub {
   font-size: 11px;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
 }
 .talent-nodes {
   display: flex;
@@ -784,17 +790,17 @@ function promotedLabel() {
 .talent-chain {
   width: 24px;
   height: 2px;
-  background: #444;
+  background: var(--ea-border, #444);
 }
 .talent-chain.active {
-  background: #777;
+  background: var(--ea-border-strong, #777);
 }
 .talent-node {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid #555;
-  background: #2a2a2e;
+  border: 2px solid var(--ea-border-strong, #555);
+  background: var(--ea-panel-elevated, #2a2a2e);
   cursor: pointer;
   padding: 0;
   display: flex;

@@ -253,7 +253,7 @@ function skillTypeLabel(value) {
 }
 
 .field {
-  color: #cfd3dc;
+  color: var(--ea-fg-secondary, #cfd3dc);
   display: flex;
   flex-direction: column;
   font-size: 11px;

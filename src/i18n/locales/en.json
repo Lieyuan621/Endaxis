@@ -209,6 +209,7 @@
       "rendering": "Rendering timeline image for the first {seconds} seconds...",
       "smallPreviewTitle": "Small Image Preview",
       "saveSmallImage": "Save Image",
+      "cardAppearanceLabel": "Card appearance",
       "cardWidthLabel": "Card Width",
       "blockHeightLabel": "Skill Block Height",
       "timeScaleLabel": "Time Scale",

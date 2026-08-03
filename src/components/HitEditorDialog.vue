@@ -544,7 +544,7 @@ function save() {
               @update:model-value="patchSpAmount"
               :step="1"
               :min="0"
-              border-color="#ffd700"
+              border-color="var(--ea-gold)"
             />
           </label>
           <label class="field">
@@ -778,7 +778,7 @@ function save() {
                     "
                     :min="0"
                     :step="1"
-                    :activeColor="'#ffd700'"
+                    :activeColor="'var(--ea-gold)'"
                   />
                 </label>
                 <label class="field">
@@ -804,7 +804,7 @@ function save() {
                     :disabled="selectedEffect.stacks === 'fromConsume'"
                     @update:model-value="value => patchSelectedEffectNumber('stacks', value)"
                     :min="0"
-                    :activeColor="'#ffd700'"
+                    :activeColor="'var(--ea-gold)'"
                   />
                 </label>
                 <label class="field">
@@ -813,7 +813,7 @@ function save() {
                     :model-value="selectedEffect.maxStacks || 0"
                     @update:model-value="value => patchSelectedEffectNumber('maxStacks', value)"
                     :min="0"
-                    :activeColor="'#ffd700'"
+                    :activeColor="'var(--ea-gold)'"
                   />
                 </label>
               </div>
@@ -825,7 +825,7 @@ function save() {
                     :model-value="selectedEffect.icd || 0"
                     @update:model-value="value => patchSelectedEffectNumber('icd', value)"
                     :min="0"
-                    :activeColor="'#ffd700'"
+                    :activeColor="'var(--ea-gold)'"
                   />
                 </label>
               </div>
@@ -920,7 +920,7 @@ function save() {
                     <CustomNumberInput
                       :model-value="selectedEffect.value || 0"
                       @update:model-value="value => patchSelectedEffectNumber('value', value)"
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                 </div>
@@ -1017,7 +1017,7 @@ function save() {
                       @update:model-value="
                         value => patchSelectedEffectNumber('effectiveness', value)
                       "
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                   <label class="field">
@@ -1028,7 +1028,7 @@ function save() {
                         value => patchSelectedEffectNumber('defaultLevel', value)
                       "
                       :min="1"
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                 </div>
@@ -1062,7 +1062,7 @@ function save() {
                       @update:model-value="
                         value => patchSelectedEffectNumber('effectiveness', value)
                       "
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                 </div>
@@ -1124,7 +1124,7 @@ function save() {
                     <CustomNumberInput
                       :model-value="selectedEffect.multiplier || 0"
                       @update:model-value="value => patchSelectedEffectNumber('multiplier', value)"
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                   <label class="field">
@@ -1136,7 +1136,7 @@ function save() {
                       "
                       :min="0"
                       :step="1"
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                   <label v-if="selectedEffect.kind === 'damageOverTime'" class="field">
@@ -1145,7 +1145,7 @@ function save() {
                       :model-value="selectedEffect.interval || 1"
                       @update:model-value="value => patchSelectedEffectNumber('interval', value)"
                       :min="0"
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                 </div>
@@ -1232,7 +1232,7 @@ function save() {
                     <CustomNumberInput
                       :model-value="selectedEffect.value || 0"
                       @update:model-value="value => patchSelectedEffectNumber('value', value)"
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                 </div>
@@ -1362,7 +1362,7 @@ function save() {
                         value => patchSelectedEffectNumber('consumeStacks', value)
                       "
                       :min="0"
-                      :activeColor="'#ffd700'"
+                      :activeColor="'var(--ea-gold)'"
                     />
                   </label>
                 </div>
@@ -1437,14 +1437,14 @@ function save() {
 }
 
 .editor-section {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(20, 22, 26, 0.82);
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.12));
+  background: var(--ea-fill-muted, rgba(20, 22, 26, 0.82));
   padding: 12px;
   border-radius: 0;
 }
 
 .section-title {
-  color: #ffd700;
+  color: var(--ea-gold);
   font-size: 12px;
   font-weight: 700;
   margin-bottom: 10px;
@@ -1483,7 +1483,7 @@ function save() {
 
 .effect-field-groups__title,
 .kind-field-groups__title {
-  color: #ffd700;
+  color: var(--ea-gold);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.4px;
@@ -1491,8 +1491,8 @@ function save() {
 }
 
 .kind-field-groups {
-  border: 1px solid rgba(255, 215, 0, 0.22);
-  border-left: 3px solid rgba(255, 215, 0, 0.72);
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--ea-gold) 72%, transparent);
   padding: 10px 10px 10px 12px;
 }
 
@@ -1503,7 +1503,7 @@ function save() {
   flex-direction: column;
   gap: 5px;
   min-width: 0;
-  color: #cfd3dc;
+  color: var(--ea-fg-secondary, #cfd3dc);
   font-size: 11px;
 }
 
@@ -1522,9 +1522,9 @@ function save() {
   min-width: 0;
   box-sizing: border-box;
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: #111;
-  color: #f0f0f0;
+  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.16));
+  background: var(--ea-fill-input, #111);
+  color: var(--ea-fg, #f0f0f0);
   border-radius: 0;
   padding: 6px 8px;
   font-size: 12px;
@@ -1545,9 +1545,9 @@ function save() {
 }
 
 .simple-input:focus {
-  border-color: rgba(255, 215, 0, 0.62);
+  border-color: color-mix(in srgb, var(--ea-gold) 62%, transparent);
   outline: none;
-  box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.18);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ea-gold) 18%, transparent);
 }
 
 .effect-layout {
@@ -1555,15 +1555,15 @@ function save() {
   grid-template-columns: minmax(260px, 280px) minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
-  background: rgba(7, 8, 10, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ea-fill-soft, rgba(7, 8, 10, 0.28));
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.08));
   padding: 10px;
 }
 
 .effect-list {
-  background: rgba(16, 18, 22, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-left: 3px solid rgba(255, 215, 0, 0.5);
+  background: var(--ea-panel-elevated, rgba(16, 18, 22, 0.92));
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.14));
+  border-left: 3px solid color-mix(in srgb, var(--ea-gold) 50%, transparent);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1580,10 +1580,10 @@ function save() {
 
 .effect-row {
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-left: 3px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.035);
-  color: #f0f0f0;
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.14));
+  border-left: 3px solid var(--ea-border-strong, rgba(255, 255, 255, 0.15));
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.035));
+  color: var(--ea-fg, #f0f0f0);
   cursor: pointer;
   display: flex;
   gap: 8px;
@@ -1602,7 +1602,7 @@ function save() {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0;
-  color: #ffd700;
+  color: var(--ea-gold);
   cursor: pointer;
   display: flex;
   font-size: 11px;
@@ -1616,13 +1616,13 @@ function save() {
 
 .add-effect-bar:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 215, 0, 0.8);
+  border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
 }
 
 .effect-row.is-active {
-  border-color: rgba(255, 215, 0, 0.7);
-  border-left-color: #ffd700;
-  background: rgba(255, 215, 0, 0.12);
+  border-color: color-mix(in srgb, var(--ea-gold) 70%, transparent);
+  border-left-color: var(--ea-gold);
+  background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
 }
 
 .effect-row__text {
@@ -1646,9 +1646,9 @@ function save() {
 }
 
 .effect-detail {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
   border-left: 3px solid rgba(138, 164, 200, 0.55);
-  background: rgba(17, 19, 24, 0.94);
+  background: var(--ea-panel-elevated, rgba(17, 19, 24, 0.94));
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1666,7 +1666,7 @@ function save() {
 .effect-pane-title {
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 215, 0, 0.92);
+  color: color-mix(in srgb, var(--ea-gold) 92%, transparent);
   display: flex;
   font-size: 11px;
   font-weight: 800;
@@ -1681,8 +1681,8 @@ function save() {
 
 .effect-detail__name {
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #e8ecf4;
+  border-bottom: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.08));
+  color: var(--ea-fg, #e8ecf4);
   display: flex;
   font-size: 13px;
   font-weight: 700;
@@ -1714,16 +1714,16 @@ function save() {
 }
 
 .empty-hint {
-  color: #888;
+  color: var(--ea-fg-faint, #888);
   padding: 12px;
 }
 
 :global(.hit-editor-dialog.el-dialog),
 :global(.hit-editor-dialog .el-dialog) {
-  background: #23262d;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--ea-dialog-bg, #23262d);
+  border: 1px solid var(--ea-dialog-border, rgba(255, 255, 255, 0.12));
   border-radius: 0;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 18px 60px var(--ea-shadow-strong, rgba(0, 0, 0, 0.55));
   max-width: calc(100vw - 32px);
   overflow: hidden;
 }
@@ -1731,7 +1731,7 @@ function save() {
 :global(.hit-editor-dialog.el-dialog .el-dialog__header),
 :global(.hit-editor-dialog .el-dialog__header) {
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
   display: flex;
   margin: 0;
   padding: 14px 18px;
@@ -1739,7 +1739,7 @@ function save() {
 
 :global(.hit-editor-dialog.el-dialog .el-dialog__title),
 :global(.hit-editor-dialog .el-dialog__title) {
-  color: #f2f5f8;
+  color: var(--ea-dialog-title, #f2f5f8);
   font-size: 14px;
   font-weight: 700;
 }
@@ -1753,37 +1753,37 @@ function save() {
 
 :global(.hit-editor-dialog.el-dialog .el-dialog__close),
 :global(.hit-editor-dialog .el-dialog__close) {
-  color: #cfd3dc;
+  color: var(--ea-fg-secondary, #cfd3dc);
 }
 
 :global(.hit-editor-dialog.el-dialog .el-dialog__close:hover),
 :global(.hit-editor-dialog .el-dialog__close:hover) {
-  color: #ffd700;
+  color: var(--ea-gold);
 }
 
 :global(.hit-editor-dialog.el-dialog .el-dialog__body),
 :global(.hit-editor-dialog .el-dialog__body) {
-  color: #e8edf5;
+  color: var(--ea-dialog-body, #e8edf5);
   padding: 14px 18px;
 }
 
 :global(.hit-editor-dialog.el-dialog .el-dialog__footer),
 :global(.hit-editor-dialog .el-dialog__footer) {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
   padding: 12px 18px 14px;
 }
 
 :global(.hit-editor-dialog .el-select__wrapper) {
-  background-color: #111;
+  background-color: var(--ea-fill-input, #111);
   border-radius: 0;
-  border: 1px solid #444;
+  border: 1px solid var(--ea-border-strong, #444);
   box-shadow: none;
   min-height: 31px;
 }
 
 :global(.hit-editor-dialog .custom-number-input),
 :global(.hit-editor-dialog .custom-number-input:focus-within) {
-  background-color: #111;
+  background-color: var(--ea-fill-input, #111);
 }
 
 :global(.hit-editor-dialog input),
@@ -1797,52 +1797,51 @@ function save() {
 }
 
 :global(.hit-editor-dialog .el-select__wrapper.is-focused) {
-  border-color: rgba(255, 215, 0, 0.72);
+  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
   box-shadow: none;
 }
 
 :global(.hit-editor-dialog .el-select__selected-item),
 :global(.hit-editor-dialog .el-select__placeholder),
 :global(.hit-editor-dialog .el-select__caret) {
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
 }
 
 :global(.hit-editor-select-popper.el-popper) {
-  /* Align with global select popper / arrow (#1e1e1e), not the older #111 panel. */
-  background: #1e1e1e;
-  border: 1px solid #444;
+  background: var(--ea-popover-bg, #1e1e1e);
+  border: 1px solid var(--ea-border-strong, #444);
   border-radius: 0;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.48);
+  box-shadow: 0 8px 24px var(--ea-shadow-strong, rgba(0, 0, 0, 0.48));
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown) {
-  background: #1e1e1e;
+  background: var(--ea-popover-bg, #1e1e1e);
   border-radius: 0;
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown__wrap),
 :global(.hit-editor-select-popper .el-select-dropdown__list) {
-  background: #1e1e1e;
+  background: var(--ea-popover-bg, #1e1e1e);
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown__item) {
-  color: #dce2ec;
-  background: #1e1e1e;
+  color: var(--ea-fg-secondary, #dce2ec);
+  background: var(--ea-popover-bg, #1e1e1e);
   font-size: 11px;
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown__item.is-hovering),
 :global(.hit-editor-select-popper .el-select-dropdown__item:hover) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.08));
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown__item.is-selected) {
-  color: #ffd700;
+  color: var(--ea-gold);
 }
 
 :global(.hit-editor-select-popper .el-select-group__title) {
   color: #8aa4c8;
-  background: #1e1e1e;
+  background: var(--ea-popover-bg, #1e1e1e);
 }
 
 :global(.hit-editor-select-popper .el-popper__arrow) {
@@ -1850,8 +1849,57 @@ function save() {
 }
 
 :global(.hit-editor-select-popper .el-popper__arrow::before) {
-  background: #1e1e1e !important;
-  border: 1px solid #1e1e1e !important;
+  background: var(--ea-popover-bg, #1e1e1e) !important;
+  border: 1px solid var(--ea-popover-bg, #1e1e1e) !important;
+}
+
+:global(html[data-theme='light'] .hit-editor-dialog.el-dialog),
+:global(html[data-theme='light'] .hit-editor-dialog .el-dialog) {
+  background: #ffffff;
+  border-color: var(--ea-dialog-border, #d8dbe0);
+  box-shadow: 0 18px 48px rgba(26, 27, 30, 0.18);
+}
+
+:global(html[data-theme='light'] .hit-editor-dialog .editor-section) {
+  background: var(--ea-surface-sunken);
+  border-color: var(--ea-border);
+}
+
+:global(html[data-theme='light'] .hit-editor-dialog .effect-layout) {
+  background: var(--ea-surface-soft);
+  border-color: var(--ea-border);
+}
+
+:global(html[data-theme='light'] .hit-editor-dialog .effect-list),
+:global(html[data-theme='light'] .hit-editor-dialog .effect-detail) {
+  background: #ffffff;
+  border-color: var(--ea-border);
+}
+
+:global(html[data-theme='light'] .hit-editor-dialog .effect-row) {
+  background: var(--ea-surface-row);
+  border-color: var(--ea-border);
+  color: var(--ea-fg);
+}
+
+:global(html[data-theme='light'] .hit-editor-dialog .add-effect-bar) {
+  background: var(--ea-surface-row);
+  border-color: var(--ea-border);
+}
+
+:global(html[data-theme='light'] .hit-editor-dialog .el-select__wrapper),
+:global(html[data-theme='light'] .hit-editor-dialog .custom-number-input),
+:global(html[data-theme='light'] .hit-editor-dialog .custom-number-input:focus-within),
+:global(html[data-theme='light'] .hit-editor-dialog .simple-input) {
+  background-color: var(--ea-surface-soft) !important;
+  border-color: var(--ea-border-strong, #c9ced6);
+  color: var(--ea-fg, #1a1b1e);
+}
+
+:global(html[data-theme='light'] .hit-editor-dialog .el-select__selected-item),
+:global(html[data-theme='light'] .hit-editor-dialog .el-select__placeholder),
+:global(html[data-theme='light'] .hit-editor-dialog .el-select__caret) {
+  color: var(--ea-fg, #1a1b1e) !important;
 }
 
 @media (max-width: 900px) {
@@ -1859,5 +1907,43 @@ function save() {
   .effect-layout {
     grid-template-columns: 1fr;
   }
+}
+</style>
+
+<!-- Teleported select menus need unscoped rules (scoped :global often loses to EP). -->
+<style>
+html[data-theme='light'] .hit-editor-select-popper.el-popper,
+html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown,
+html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__wrap,
+html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__list {
+  background: var(--ea-popover-bg, #ffffff) !important;
+  border-color: var(--ea-border-strong, #d8dbe0) !important;
+  color: var(--ea-fg, #1a1b1e) !important;
+}
+
+html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item {
+  background: var(--ea-popover-bg, #ffffff) !important;
+  color: var(--ea-fg-secondary, #3a3d44) !important;
+}
+
+html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item.is-hovering,
+html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item:hover {
+  background: var(--ea-hover-fill, rgba(26, 27, 30, 0.07)) !important;
+  color: var(--ea-fg, #1a1b1e) !important;
+}
+
+html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item.is-selected {
+  color: var(--ea-gold) !important;
+  background: color-mix(in srgb, var(--ea-gold) 10%, #ffffff) !important;
+  font-weight: 600;
+}
+
+html[data-theme='light'] .hit-editor-select-popper .el-select-group__title {
+  background: var(--ea-surface-soft, #fafafa) !important;
+  color: var(--ea-fg-muted, rgba(26, 27, 30, 0.68)) !important;
+}
+
+html[data-theme='light'] .hit-editor-select-popper .el-popper__arrow {
+  display: none !important;
 }
 </style>

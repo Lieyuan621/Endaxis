@@ -78,6 +78,35 @@ const setPreview = computed(() => {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+:global(html[data-theme='light'] .equipment-selection-preview-popper.el-popper.is-dark) {
+  background: #ffffff;
+  border: 1px solid rgba(26, 27, 30, 0.14);
+  box-shadow: 0 14px 34px rgba(26, 27, 30, 0.16);
+  color: #1a1b1e;
+}
+
+:global(html[data-theme='light'] .equipment-selection-preview-popper.el-popper .el-popper__arrow) {
+  display: none !important;
+}
+
+:global(html[data-theme='light'] .equipment-selection-preview__name) {
+  border-bottom-color: rgba(26, 27, 30, 0.12);
+  color: #1a1b1e;
+}
+
+:global(html[data-theme='light'] .equipment-selection-preview__label),
+:global(html[data-theme='light'] .equipment-selection-preview__set-bonus) {
+  color: rgba(26, 27, 30, 0.86);
+}
+
+:global(html[data-theme='light'] .equipment-selection-preview__marker) {
+  color: rgba(26, 27, 30, 0.72);
+}
+
+:global(html[data-theme='light'] .equipment-selection-preview__set-heading span) {
+  color: rgba(26, 27, 30, 0.55);
+}
+
 :global(.equipment-selection-preview) {
   width: min(400px, calc(100vw - 64px));
   display: flex;

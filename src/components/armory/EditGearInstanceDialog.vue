@@ -16,6 +16,7 @@ import {
 import { resolveLeveled } from '@/data/types';
 import { useGearStore } from '@/stores/gearStore';
 import { qualityColors } from '@/utils/theme';
+import './armoryDialogTheme.css';
 
 const props = defineProps({
   instance: { type: Object, default: null },
@@ -179,12 +180,13 @@ function formatStatValue(effect, value) {
   align-items: flex-start;
 }
 .portrait-frame {
+  --armory-pad: var(--ea-keycap-bg, #1a1a1e);
   width: 100px;
   min-width: 100px;
   height: 100px;
-  border: 2px solid #555;
+  border: 2px solid var(--ea-border-strong, #555);
   overflow: hidden;
-  background: #1a1a1e;
+  background: var(--armory-pad);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -203,7 +205,7 @@ function formatStatValue(effect, value) {
 .name {
   font-size: 20px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
 }
 .tags {
   display: flex;
@@ -215,9 +217,9 @@ function formatStatValue(effect, value) {
   align-items: center;
   padding: 2px 10px;
   font-size: 11px;
-  border: 1px solid #555;
-  color: #bbb;
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ea-border-strong, #555);
+  color: var(--ea-fg-secondary, #bbb);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.04));
 }
 .row {
   display: flex;
@@ -226,24 +228,24 @@ function formatStatValue(effect, value) {
 }
 .section-label {
   font-size: 11px;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 .value {
   font-size: 16px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
 }
 .section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.06));
   padding: 16px;
 }
 .section-title {
   font-size: 11px;
   font-weight: 700;
-  color: #888;
+  color: var(--ea-dialog-hint, #888);
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-bottom: 14px;
@@ -252,7 +254,7 @@ function formatStatValue(effect, value) {
   display: flex;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.04));
 }
 .stat-row:last-child {
   border-bottom: none;
@@ -264,11 +266,11 @@ function formatStatValue(effect, value) {
 .stat-name {
   font-size: 13px;
   font-weight: 600;
-  color: #e0e0e0;
+  color: var(--ea-fg, #e0e0e0);
 }
 .stat-value-inline {
   font-weight: 400;
-  color: #aaa;
+  color: var(--ea-fg-muted, #aaa);
   margin-left: 6px;
 }
 .stat-bar-area {
@@ -290,13 +292,13 @@ function formatStatValue(effect, value) {
 .stat-level {
   font-size: 13px;
   font-weight: 700;
-  color: #ccc;
+  color: var(--ea-fg-secondary, #ccc);
   min-width: 24px;
   text-align: right;
   font-family: 'Roboto Mono', monospace;
 }
 .stat-locked {
-  color: #777;
+  color: var(--ea-dialog-hint, #777);
   font-size: 12px;
 }
 .footer {

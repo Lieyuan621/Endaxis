@@ -57,15 +57,6 @@ export const ELEMENT_COLORS: Record<string, string> = {
   lift: '#d9d9d9',
 };
 
-// ─── Rarity colors ──────────────────────────────────────────────────────────
-
-export const rarityColors: Record<number, string> = {
-  3: '#5c98c9',
-  4: '#b388e8',
-  5: '#e5a63e',
-  6: '#ff6e40',
-};
-
 // ─── Gear quality colors ────────────────────────────────────────────────────
 
 export const qualityColors: Record<string, string> = {
@@ -171,6 +162,15 @@ export function lightenColor(hex: string, amount: number): string {
   );
 }
 
+/**
+ * Opaque pastel fill for light timeline tracks.
+ * Translucent rgba bleeds into cool-gray chrome and grid lines — use solid tints instead.
+ * @param wash 0–1 how much white to mix (higher = paler)
+ */
+export function solidFillForLightTrack(hex: string, wash = 0.5): string {
+  return lightenColor(hex, wash);
+}
+
 /** Darken a hex color by mixing with black. Amount 0–1. */
 function darkenColor(hex: string, amount: number): string {
   const rgb = parseHexRgb(hex);
@@ -190,14 +190,26 @@ function relativeLuminance(hex: string): number {
   return 0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b);
 }
 
+const adaptColorForLightSurfaceCache = new Map<string, string>();
+
 /**
- * On light chrome, pale business colors (physical beige, white skill, light gray)
- * wash out. Darken only when luminance is high — no per-type special cases.
+ * On light chrome, very pale business colors (physical beige, white skill, link yellow)
+ * wash out. Darken only when luminance is high — keep the curve mild so saturated
+ * brights (e.g. combo/link #fdd900) stay vivid after opaque pastel wash.
  */
 export function adaptColorForLightSurface(hex: string): string {
-  const lum = relativeLuminance(hex);
-  if (lum < 0.52) return hex;
-  // physical #d4c5a0 ~0.55–0.65 → modest warm brown; white → mid gray
-  const amount = 0.18 + ((lum - 0.52) / 0.48) * 0.34;
-  return darkenColor(hex, Math.min(0.52, amount));
+  const key = String(hex || '');
+  const cached = adaptColorForLightSurfaceCache.get(key);
+  if (cached !== undefined) return cached;
+
+  const lum = relativeLuminance(key);
+  let next = key;
+  if (lum >= 0.52) {
+    // Milder than before: link ~0.18 darken (was ~0.31); white capped at 0.28 (was 0.52).
+    const amount = 0.1 + ((lum - 0.52) / 0.48) * 0.18;
+    next = darkenColor(key, Math.min(0.28, amount));
+  }
+  adaptColorForLightSurfaceCache.set(key, next);
+  return next;
 }
+

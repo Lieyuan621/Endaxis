@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBaseStatValues } from '@/data/stats/baseValues';
 import { useOperatorStore } from '@/stores/operatorStore';
+import './armoryDialogTheme.css';
 
 const ATTR_KEYS = ['strength', 'agility', 'intellect', 'will'];
 const COMMIT_DELAY_MS = 320;
@@ -498,7 +499,7 @@ function setCritPct(key, pctRaw) {
 .section-title {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.72));
   margin-bottom: 10px;
   letter-spacing: 0.02em;
 }
@@ -514,8 +515,9 @@ function setCritPct(key, pctRaw) {
   gap: 12px;
   padding: 8px 10px;
   border-radius: 0;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
   border: 1px solid transparent;
+  color: var(--ea-fg, #f0f0f0);
 }
 .row.overridden {
   border-color: rgba(255, 196, 0, 0.35);
@@ -549,7 +551,7 @@ function setCritPct(key, pctRaw) {
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted, rgba(255, 255, 255, 0.55));
   width: 14px;
   text-align: center;
 }

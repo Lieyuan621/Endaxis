@@ -505,9 +505,9 @@ function hideBrokenImage(event: Event) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: #252526;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.86);
+  background: var(--ea-workbench-panel, #252526);
+  border-top: 1px solid var(--ea-border, rgba(255, 255, 255, 0.12));
+  color: var(--ea-fg, rgba(255, 255, 255, 0.86));
   overflow: hidden;
 }
 
@@ -533,7 +533,7 @@ function hideBrokenImage(event: Event) {
   padding: 10px 12px 18px;
   scrollbar-width: thin;
   scrollbar-color: rgba(188, 40, 36, 0.7) rgba(255, 255, 255, 0.08);
-  background: #232326;
+  background: var(--ea-workbench-panel, #232326);
 }
 
 .cc-groups::-webkit-scrollbar {
@@ -592,7 +592,7 @@ function hideBrokenImage(event: Event) {
   justify-content: center;
   padding: 0;
   border: 1px solid rgba(196, 66, 60, 0.28);
-  background: #2a2a2c;
+  background: var(--ea-keycap-bg, #2a2a2c);
   cursor: pointer;
   z-index: 1;
   box-sizing: border-box;
@@ -600,7 +600,7 @@ function hideBrokenImage(event: Event) {
 
 .cc-tag:hover {
   border-color: rgba(255, 111, 101, 0.86);
-  background: #303033;
+  background: var(--ea-fill-strong, #303033);
   box-shadow: 0 0 10px rgba(188, 40, 36, 0.14);
 }
 
@@ -631,7 +631,7 @@ function hideBrokenImage(event: Event) {
 }
 
 .cc-tag-icon-fallback {
-  color: rgba(255, 255, 255, 0.74);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.74));
   font-weight: 900;
 }
 
@@ -653,7 +653,7 @@ function hideBrokenImage(event: Event) {
   position: absolute;
   left: 3px;
   bottom: 2px;
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.76));
   font-size: 9px;
   font-weight: 800;
 }
@@ -673,8 +673,8 @@ function hideBrokenImage(event: Event) {
   min-width: 0;
   overflow: auto;
   padding: 12px;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  background: #252526;
+  border-left: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
+  background: var(--ea-workbench-panel, #252526);
   scrollbar-width: none;
 }
 
@@ -690,7 +690,7 @@ function hideBrokenImage(event: Event) {
   gap: 8px;
   padding-bottom: 10px;
   margin-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
 }
 
 .cc-total-score {
@@ -727,10 +727,10 @@ function hideBrokenImage(event: Event) {
   gap: 8px;
   min-height: 54px;
   padding: 6px;
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--ea-fill-muted, rgba(0, 0, 0, 0.28));
   border-left: 3px solid #b71915;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  border-top: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--ea-border, rgba(0, 0, 0, 0.4));
 }
 
 .cc-selected-row > img {
@@ -757,7 +757,7 @@ function hideBrokenImage(event: Event) {
 }
 
 .cc-selected-title span {
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--ea-fg, rgba(255, 255, 255, 0.88));
   font-size: 12px;
   font-weight: 800;
   overflow: hidden;
@@ -773,7 +773,7 @@ function hideBrokenImage(event: Event) {
 }
 
 .cc-selected-desc {
-  color: rgba(255, 255, 255, 0.56);
+  color: var(--ea-fg-muted, rgba(255, 255, 255, 0.56));
   font-size: 11px;
   line-height: 1.3;
   display: -webkit-box;
@@ -797,7 +797,7 @@ function hideBrokenImage(event: Event) {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.34);
+  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.34));
   font-size: 11px;
 }
 
@@ -838,5 +838,83 @@ function hideBrokenImage(event: Event) {
 :global(.cc-tag-tooltip-desc .is-highlight) {
   color: #ffdb64;
   font-weight: 900;
+}
+
+:global(html[data-theme='light'] .cc-tag-tooltip-popper.el-popper.is-dark) {
+  background: var(--ea-tooltip-bg, #ffffff);
+  color: var(--ea-fg, #1a1b1e);
+  border-color: color-mix(in srgb, #c62828 35%, var(--ea-dialog-border, #d8dbe0));
+  box-shadow: 0 12px 28px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
+}
+
+:global(html[data-theme='light'] .cc-tag-tooltip-popper.el-popper .el-popper__arrow) {
+  display: none !important;
+}
+
+:global(html[data-theme='light'] .cc-tag-tooltip) {
+  color: var(--ea-dialog-body, #3a3d44);
+}
+
+:global(html[data-theme='light'] .cc-tag-tooltip-title) {
+  color: var(--ea-dialog-title, #1a1b1e);
+}
+
+:global(html[data-theme='light'] .cc-tag-tooltip-desc) {
+  color: var(--ea-dialog-body, #3a3d44);
+}
+
+:global(html[data-theme='light'] .cc-tag-tooltip-desc .is-highlight) {
+  color: var(--ea-gold);
+}
+
+:global(html[data-theme='light'] .cc-panel .cc-tag) {
+  background: var(--ea-chip-fill);
+  border-color: rgba(180, 50, 45, 0.32);
+}
+:global(html[data-theme='light'] .cc-panel .cc-tag img) {
+  filter: brightness(0) opacity(0.72);
+}
+:global(html[data-theme='light'] .cc-panel .cc-tag:hover) {
+  background: var(--ea-chip-fill-hover);
+  border-color: rgba(180, 50, 45, 0.55);
+  box-shadow: 0 0 8px rgba(180, 50, 45, 0.12);
+}
+:global(html[data-theme='light'] .cc-panel .cc-tag:hover img) {
+  filter: brightness(0) opacity(0.88);
+}
+:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected img) {
+  filter: brightness(0) invert(1) opacity(0.95);
+}
+:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected) {
+  background: #c62828;
+  border-color: #8a1c1c;
+}
+:global(html[data-theme='light'] .cc-panel .cc-tag:not(.is-selected) .cc-tag-roman) {
+  color: var(--ea-fg-secondary);
+}
+:global(html[data-theme='light'] .cc-panel .cc-tag:not(.is-selected) .cc-tag-score) {
+  color: #b42318;
+}
+:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected .cc-tag-roman),
+:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected .cc-tag-score),
+:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected .cc-tag-check) {
+  color: #fff;
+}
+:global(html[data-theme='light'] .cc-panel .cc-conflict-link-svg) {
+  stroke: rgba(26, 27, 30, 0.35);
+}
+:global(html[data-theme='light'] .cc-panel .cc-selected-row) {
+  background: var(--ea-surface-sunken);
+  border-top-color: var(--ea-border);
+  border-bottom-color: var(--ea-border);
+}
+:global(html[data-theme='light'] .cc-panel .cc-selected-desc .is-highlight) {
+  color: var(--ea-gold);
+}
+:global(html[data-theme='light'] .cc-panel .cc-groups::-webkit-scrollbar-thumb) {
+  border-color: var(--ea-dialog-divider);
+}
+:global(html[data-theme='light'] .cc-panel .cc-groups) {
+  scrollbar-color: rgba(180, 50, 45, 0.55) rgba(26, 27, 30, 0.06);
 }
 </style>

@@ -61,8 +61,8 @@ function selectPreset(id) {
   overflow: auto;
   padding: 14px 16px 20px;
   box-sizing: border-box;
-  color: rgba(255, 255, 255, 0.86);
-  background: #232326;
+  color: var(--ea-fg, rgba(255, 255, 255, 0.86));
+  background: var(--ea-workbench-panel, #232326);
 }
 
 .panel-header {
@@ -72,11 +72,11 @@ function selectPreset(id) {
 .panel-title {
   font-size: 15px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.78));
 }
 
 .panel-title.is-active {
-  color: #ffe08a;
+  color: var(--ea-gold, #ffe08a);
 }
 
 .preset-grid {
@@ -96,41 +96,54 @@ function selectPreset(id) {
   gap: 6px;
   padding: 10px 8px;
   box-sizing: border-box;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #2a2a2c;
+  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.14));
+  background: var(--ea-keycap-bg, #2a2a2c);
   color: inherit;
   cursor: pointer;
   text-align: center;
 }
 
 .preset-tile:hover {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: #303034;
+  border-color: var(--ea-border-strong, rgba(255, 255, 255, 0.28));
+  background: var(--ea-fill-strong, #303034);
 }
 
 .preset-tile.is-selected {
-  border-color: rgba(255, 255, 255, 0.42);
-  background: #333338;
+  border-color: color-mix(in srgb, var(--ea-gold, #ffe08a) 55%, transparent);
+  background: color-mix(in srgb, var(--ea-gold, #ffe08a) 12%, var(--ea-keycap-bg, #333338));
 }
 
 .preset-tile-name {
   font-size: 13px;
   font-weight: 700;
   line-height: 1.25;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--ea-fg, rgba(255, 255, 255, 0.9));
 }
 
 .preset-tile.is-selected .preset-tile-name {
-  color: #ffe08a;
+  color: var(--ea-gold, #ffe08a);
 }
 
 .preset-tile-desc {
   font-size: 11px;
   line-height: 1.3;
-  color: rgba(255, 255, 255, 0.48);
+  color: var(--ea-fg-muted, rgba(255, 255, 255, 0.48));
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+:global(html[data-theme='light'] .global-config-presets .preset-tile) {
+  background: #ffffff;
+  border-color: var(--ea-border-strong);
+  box-shadow: 0 1px 2px var(--ea-shadow);
+}
+:global(html[data-theme='light'] .global-config-presets .preset-tile:hover) {
+  background: var(--ea-surface-soft);
+}
+:global(html[data-theme='light'] .global-config-presets .preset-tile.is-selected) {
+  background: color-mix(in srgb, var(--ea-gold) 14%, #ffffff);
+  border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
 }
 </style>

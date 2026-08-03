@@ -177,14 +177,14 @@ function increment() {
 
 <style scoped>
 .custom-number-input {
-  --default-border-color: #333;
-  --hover-border-color: #444;
-  --active-color: #ffd700;
-  --text-color: white;
+  --default-border-color: var(--ea-border-strong, #333);
+  --hover-border-color: var(--ea-border-strong, #444);
+  --active-color: var(--ea-gold);
+  --text-color: var(--ea-fg, white);
 
   display: flex;
   align-items: center;
-  background-color: #16161a;
+  background-color: var(--ea-fill-input, #16161a);
   border: none;
   box-shadow: 0 0 0 1px var(--default-border-color) inset;
   border-radius: 0;
@@ -208,7 +208,7 @@ function increment() {
 .custom-number-input.has-hover:focus-within,
 .custom-number-input:focus-within {
   box-shadow: 0 0 0 1px var(--active-color) inset;
-  background-color: #1f1f24;
+  background-color: var(--ea-panel-elevated, #1f1f24);
 }
 
 .prepend-slot {
@@ -222,7 +222,7 @@ function increment() {
   display: flex;
   flex-direction: column;
   height: 100%;
-  box-shadow: -1px 0 0 rgba(255, 255, 255, 0.06);
+  box-shadow: -1px 0 0 var(--ea-border-soft, rgba(255, 255, 255, 0.06));
   flex-shrink: 0;
   transition:
     box-shadow 0.2s,
@@ -232,7 +232,7 @@ function increment() {
 .control-btn {
   background-color: transparent;
   border: none;
-  color: #666;
+  color: var(--ea-fg-faint, #666);
   cursor: pointer;
   width: 18px;
   height: 50%;
@@ -246,12 +246,12 @@ function increment() {
 }
 
 .control-btn:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.04);
-  color: #ffd700;
+  background-color: var(--ea-hover-fill, rgba(255, 255, 255, 0.04));
+  color: var(--ea-gold);
 }
 
 .control-btn:active:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--ea-active-fill, rgba(255, 255, 255, 0.08));
 }
 
 .control-btn:disabled {

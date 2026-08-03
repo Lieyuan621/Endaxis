@@ -230,7 +230,7 @@ const pathData = computed(() => {
 
 .drag-handle-dot:hover {
   r: 7;
-  fill: #ffd700;
+  fill: var(--ea-gold);
 }
 
 .moving-circle {

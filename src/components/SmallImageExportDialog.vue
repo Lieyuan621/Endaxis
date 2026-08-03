@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { addMetadataToPng } from '@/utils/pngUtils';
 import TimelineShareCard from '@/components/TimelineShareCard.vue';
+import { useAppearance } from '@/composables/useAppearance';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -17,6 +18,7 @@ const emit = defineEmits(['update:modelValue']);
 
 const store = useTimelineStore();
 const { t } = useI18n({ useScope: 'global' });
+const { appearance: editorAppearance } = useAppearance();
 
 const visible = computed({
   get: () => props.modelValue,
@@ -35,6 +37,7 @@ const form = ref({
   showKeycaps: true,
   showPrep: true,
   showTimeTicks: true,
+  cardAppearance: 'dark',
 });
 
 watch(
@@ -56,6 +59,8 @@ watch(
       showKeycaps: true,
       showPrep: true,
       showTimeTicks: true,
+      // Default card theme follows editor appearance when opening.
+      cardAppearance: editorAppearance.value === 'light' ? 'light' : 'dark',
     };
   },
 );
@@ -72,6 +77,11 @@ const maxDuration = computed(() =>
 
 function close() {
   visible.value = false;
+}
+
+function setCardAppearance(next) {
+  if (next !== 'light' && next !== 'dark') return;
+  form.value.cardAppearance = next;
 }
 
 async function saveImage() {
@@ -142,7 +152,10 @@ async function saveImage() {
     destroy-on-close
   >
     <div class="small-export">
-      <div class="small-export__preview">
+      <div
+        class="small-export__preview"
+        :class="{ 'is-light-card': form.cardAppearance === 'light' }"
+      >
         <div class="small-export__preview-scroll">
           <div class="small-export__preview-inner">
             <TimelineShareCard
@@ -157,12 +170,70 @@ async function saveImage() {
               :show-prep="form.showPrep"
               :show-time-ticks="form.showTimeTicks"
               :watermark-text="watermarkText"
+              :appearance="form.cardAppearance"
             />
           </div>
         </div>
       </div>
 
       <div class="small-export__controls">
+        <div class="form-item form-item--row">
+          <span>{{ t('timeline.export.cardAppearanceLabel') }}</span>
+          <div
+            class="card-appearance"
+            role="group"
+            :aria-label="t('timeline.export.cardAppearanceLabel')"
+          >
+            <button
+              type="button"
+              class="ea-btn ea-btn--sm ea-btn--lift card-appearance__btn"
+              :class="{ 'is-active': form.cardAppearance === 'light' }"
+              :title="t('common.appearanceLight')"
+              :aria-label="t('common.appearanceLight')"
+              @click="setCardAppearance('light')"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="4" />
+                <path
+                  d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="ea-btn ea-btn--sm ea-btn--lift card-appearance__btn"
+              :class="{ 'is-active': form.cardAppearance === 'dark' }"
+              :title="t('common.appearanceDark')"
+              :aria-label="t('common.appearanceDark')"
+              @click="setCardAppearance('dark')"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <div class="form-item">
           <label>{{ t('timeline.export.filenameLabel') }}</label>
           <el-input
@@ -295,10 +366,15 @@ async function saveImage() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ea-fill-muted);
+  border: 1px solid var(--ea-border);
   padding: 12px;
   overflow: hidden;
+}
+
+.small-export__preview.is-light-card {
+  background: var(--ea-workbench-main);
+  border-color: rgba(26, 27, 30, 0.16);
 }
 
 .small-export__preview-scroll {
@@ -338,7 +414,7 @@ async function saveImage() {
 .form-item label,
 .form-item--row span {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ea-fg-secondary);
 }
 
 .form-item--row {
@@ -349,7 +425,23 @@ async function saveImage() {
 
 .hint {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ea-dialog-hint);
+}
+
+.card-appearance {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.card-appearance__btn.ea-btn {
+  min-width: 30px;
+  padding: 4px 8px;
+}
+
+.card-appearance__btn.ea-btn.is-active {
+  color: var(--ea-gold);
+  border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+  background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
 }
 
 @media (max-width: 800px) {
@@ -369,6 +461,8 @@ async function saveImage() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background-color: var(--ea-dialog-bg);
+  border: 1px solid var(--ea-dialog-border);
 }
 
 .small-image-export-dialog .el-dialog__header,
@@ -379,18 +473,18 @@ async function saveImage() {
 .small-image-export-dialog .el-dialog__header {
   margin-right: 0;
   padding: 15px 20px;
-  border-bottom: 1px solid #3a3a3a;
+  border-bottom: 1px solid var(--ea-dialog-divider);
 }
 
 .small-image-export-dialog .el-dialog__title {
-  color: #f0f0f0;
+  color: var(--ea-dialog-title);
   font-size: 16px;
   font-weight: 600;
 }
 
 .small-image-export-dialog .el-dialog__footer {
   padding: 15px 25px 20px;
-  border-top: 1px solid #3a3a3a;
+  border-top: 1px solid var(--ea-dialog-divider);
 }
 
 .small-image-export-dialog .dialog-footer {
@@ -414,5 +508,6 @@ async function saveImage() {
   display: flex;
   flex-direction: column;
   padding: 16px 20px 10px;
+  color: var(--ea-dialog-body);
 }
 </style>

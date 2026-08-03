@@ -245,4 +245,28 @@ function renderTermTooltip(term, locale, depth) {
   line-height: 1.45;
   white-space: pre-wrap;
 }
+
+:global(html[data-theme='light'] .game-rich-text-term-popper.el-popper.is-dark) {
+  background: var(--ea-tooltip-bg, #ffffff);
+  color: var(--ea-fg, #1a1b1e);
+  border-color: var(--ea-dialog-border, #d8dbe0);
+  box-shadow: 0 14px 34px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
+}
+
+:global(html[data-theme='light'] .game-rich-text-term-popper.el-popper .el-popper__arrow) {
+  display: none !important;
+}
+
+:global(html[data-theme='light'] .game-rich-text-tooltip) {
+  color: var(--ea-fg, #1a1b1e);
+}
+
+:global(html[data-theme='light'] .game-rich-text-tooltip-title) {
+  border-bottom-color: var(--ea-border, rgba(26, 27, 30, 0.16));
+  color: var(--ea-dialog-title, #1a1b1e);
+}
+
+:global(html[data-theme='light'] .game-rich-text-tooltip-desc) {
+  color: var(--ea-dialog-body, #3a3d44);
+}
 </style>

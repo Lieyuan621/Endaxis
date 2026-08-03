@@ -6,6 +6,8 @@ import ActionLinkPorts from './ActionLinkPorts.vue';
 import { useI18n } from 'vue-i18n';
 import { snapTimeToFrame } from '@/utils/time';
 import { getOperatorGameName } from '@/data/gameText';
+import { adaptColorForLightSurface, hexToRgba, solidFillForLightTrack } from '@/utils/theme';
+import { useAppearance } from '@/composables/useAppearance';
 const props = defineProps({
   action: { type: Object, required: true },
   showDecorations: { type: Boolean, default: true },
@@ -16,6 +18,8 @@ const emit = defineEmits(['hit-click']);
 const store = useTimelineStore();
 const connectionHandler = useDragConnection();
 const { t, te } = useI18n({ useScope: 'global' });
+const { appearance } = useAppearance();
+const isLightAppearance = computed(() => appearance.value === 'light');
 const TYPE_SHORTHAND = {
   basicAttack: 'A',
   dive: 'D',
@@ -69,24 +73,72 @@ const isSelected = computed(() => store.isActionSelected(props.action.instanceId
 // 幽灵模式：触发窗口 < 0 时仅显示逻辑点，不显示实体框
 const isGhostMode = computed(() => (props.action.triggerWindow || 0) < 0);
 
-// 计算主题色
+// 计算主题色（与选中态解耦，避免每次点选都重算 rgba）
 const themeColor = computed(() => {
-  if (props.action.customColor) return props.action.customColor;
-  if (props.action.type === 'comboSkill') return store.getColor('link');
-  if (props.action.type === 'finisher') return store.getColor('execution');
-  if (props.action.type === 'basicAttack') return store.getColor('attack');
-  if (props.action.type === 'dive') return store.getColor('dodge');
-  if (props.action.element) return store.getColor(props.action.element);
-
-  let charId = null;
-  for (const track of store.tracks) {
-    if (track.actions.some(a => a.instanceId === props.action.instanceId)) {
-      charId = track.id;
-      break;
+  let raw = store.getColor('default');
+  if (props.action.customColor) {
+    raw = props.action.customColor;
+  } else if (props.action.type === 'comboSkill') {
+    raw = store.getColor('link');
+  } else if (props.action.type === 'finisher') {
+    raw = store.getColor('execution');
+  } else if (props.action.type === 'basicAttack') {
+    raw = store.getColor('attack');
+  } else if (props.action.type === 'dive') {
+    raw = store.getColor('dodge');
+  } else if (props.action.element) {
+    raw = store.getColor(props.action.element);
+  } else {
+    let charId = null;
+    for (const track of store.tracks) {
+      if (track.actions.some(a => a.instanceId === props.action.instanceId)) {
+        charId = track.id;
+        break;
+      }
     }
+    if (charId) raw = store.getCharacterElementColor(charId);
   }
-  if (charId) return store.getCharacterElementColor(charId);
-  return store.getColor('default');
+  // Align with mobile: pale hues wash out on light chrome.
+  return isLightAppearance.value ? adaptColorForLightSurface(raw) : raw;
+});
+
+const themePaint = computed(() => {
+  const color = themeColor.value;
+  const isLight = isLightAppearance.value;
+  const isAttack = props.action.type === 'basicAttack';
+  // Light: opaque pastel (no alpha) so track grey / grid do not show through.
+  const fill = isLight
+    ? solidFillForLightTrack(color, isAttack ? 0.7 : 0.48)
+    : hexToRgba(color, 0.15);
+  const attackBorder = isLight
+    ? `1.5px solid ${color}`
+    : `1.5px solid ${hexToRgba(color, 0.4)}`;
+  const glowAlpha = isLight ? 0.18 : 0.5;
+  // Soft outer ring separates dashed skill edges from 1px grid lines.
+  const edgeRing = isLight ? '0 0 0 1px rgba(26, 27, 30, 0.22)' : 'none';
+  return {
+    color,
+    isLight,
+    isAttack,
+    fill,
+    attackBorder,
+    glow: hexToRgba(color, glowAlpha),
+    edgeRing,
+    selectFg: isLight ? '#1a1b1e' : '#ffffff',
+    selectBorder: isLight ? '#1a1b1e' : '#ffffff',
+    // Match mobile: theme token, never pale business hues as label color.
+    labelFg: 'var(--ea-action-fg)',
+    glassBlur: !isLight && !store.isCapturing ? 'blur(4px)' : 'none',
+    ultimateBg: isLight
+      ? `radial-gradient(circle at center,
+      ${solidFillForLightTrack(color, 0.32)} 0%,
+      ${solidFillForLightTrack(color, 0.5)} 70%,
+      ${solidFillForLightTrack(color, 0.64)} 100%)`
+      : `radial-gradient(circle at center,
+      ${hexToRgba(color, 0.5)} 0%,
+      ${hexToRgba(color, 0.2)} 70%,
+      ${hexToRgba(color, 0.1)} 100%)`,
+  };
 });
 
 const actionLayout = computed(() => store.nodeRects[props.action.instanceId]);
@@ -226,9 +278,23 @@ const style = computed(() => {
     return {};
   }
   const { left, width, height } = layout.rect;
-  const color = themeColor.value;
+  const paint = themePaint.value;
+  const {
+    color,
+    isLight,
+    isAttack,
+    fill,
+    attackBorder,
+    glow,
+    selectFg,
+    selectBorder,
+    labelFg,
+    glassBlur,
+  } = paint;
+  const selected = isSelected.value;
+  const textColor = labelFg || (selected ? selectFg : 'var(--ea-action-fg)');
 
-  const priorityBase = isSelected.value ? 10000 : 100;
+  const priorityBase = selected ? 10000 : 100;
   const timeWeight = Math.floor((props.action.startTime || 0) * 10);
   const finalZIndex = priorityBase + timeWeight;
 
@@ -249,15 +315,15 @@ const style = computed(() => {
       backgroundColor: 'transparent',
       boxShadow: 'none',
       color: 'transparent',
-      pointerEvents: isSelected.value ? 'auto' : 'none',
+      pointerEvents: selected ? 'auto' : 'none',
     };
   }
 
   let borderStyle = '';
-  if (isSelected.value) {
-    borderStyle = `2px dashed #ffffff`;
-  } else if (props.action.type === 'basicAttack') {
-    borderStyle = `1.5px solid ${hexToRgba(color, 0.4)}`;
+  if (selected) {
+    borderStyle = `2px dashed ${selectBorder}`;
+  } else if (isAttack) {
+    borderStyle = attackBorder;
   } else {
     borderStyle = `2px dashed ${color}`;
   }
@@ -266,13 +332,11 @@ const style = computed(() => {
     return {
       ...layoutStyle,
       border: `1.5px solid ${color}`,
-      background: `radial-gradient(circle at center,
-      ${hexToRgba(color, 0.5)} 0%,
-      ${hexToRgba(color, 0.2)} 70%,
-      ${hexToRgba(color, 0.1)} 100%)`,
-      boxShadow: `0 0 15px ${hexToRgba(color, 0.5)}`,
+      background: paint.ultimateBg,
+      boxShadow: isLight ? `${paint.edgeRing}, 0 0 10px ${glow}` : `0 0 15px ${glow}`,
       borderRadius: '2px',
       padding: '0 6px',
+      color: textColor,
     };
   }
 
@@ -282,37 +346,48 @@ const style = computed(() => {
       ...layoutStyle,
       border: perfect ? '1.5px solid #fff2a8' : `1.5px solid ${color}`,
       borderRadius: '2px',
-      backgroundColor: perfect ? 'rgba(255, 236, 122, 0.18)' : hexToRgba(color, 0.15),
+      backgroundColor: perfect
+        ? isLight
+          ? solidFillForLightTrack('#c8a000', 0.55)
+          : 'rgba(255, 236, 122, 0.18)'
+        : fill,
       boxShadow: perfect
-        ? '0 0 0 1px rgba(255, 242, 168, 0.75), 0 0 14px rgba(255, 215, 0, 0.55)'
-        : isSelected.value
-          ? `0 0 8px ${color}`
-          : 'none',
-      backdropFilter: store.isCapturing ? 'none' : 'blur(4px)',
-      color: perfect ? '#fff7cf' : isSelected.value ? '#ffffff' : color,
+        ? isLight
+          ? '0 0 0 1px rgba(140, 110, 0, 0.55), 0 0 10px rgba(180, 140, 0, 0.22)'
+          : '0 0 0 1px rgba(255, 242, 168, 0.75), 0 0 14px color-mix(in srgb, var(--ea-gold) 55%, transparent)'
+        : selected
+          ? `0 0 8px ${glow}`
+          : paint.edgeRing,
+      backdropFilter: glassBlur,
+      color: perfect ? (isLight ? 'var(--ea-gold)' : '#fff7cf') : textColor,
     };
   }
 
   if (props.action.isDisabled) {
     return {
       ...layoutStyle,
-      border: `2px dashed #555`,
-      backgroundColor: `rgba(40,40,40, 0.3)`,
-      color: '#777',
+      border: `2px dashed ${isLight ? '#9aa0a8' : '#555'}`,
+      backgroundColor: isLight ? 'rgba(26, 27, 30, 0.08)' : `rgba(40,40,40, 0.3)`,
+      color: isLight ? '#7a7f88' : '#777',
       opacity: 0.6,
       backdropFilter: 'none',
-      backgroundImage:
-        'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.5) 5px, rgba(0,0,0,0.5) 10px)',
+      backgroundImage: isLight
+        ? 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(26,27,30,0.12) 5px, rgba(26,27,30,0.12) 10px)'
+        : 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.5) 5px, rgba(0,0,0,0.5) 10px)',
     };
   }
 
   return {
     ...layoutStyle,
     border: borderStyle,
-    backgroundColor: hexToRgba(color, 0.15),
-    backdropFilter: store.isCapturing ? 'none' : 'blur(4px)',
-    color: isSelected.value ? '#ffffff' : color,
-    boxShadow: isSelected.value ? `0 0 10px ${color}` : 'none',
+    backgroundColor: fill,
+    backdropFilter: glassBlur,
+    color: textColor,
+    boxShadow: selected
+      ? `0 0 10px ${glow}`
+      : isLight
+        ? paint.edgeRing
+        : 'none',
   };
 });
 
@@ -502,14 +577,6 @@ const animationTimeWidth = computed(() => {
 
   return 0;
 });
-
-function hexToRgba(hex, alpha) {
-  if (!hex) return `rgba(255,255,255,${alpha})`;
-  let c = hex.substring(1).split('');
-  if (c.length === 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-  c = '0x' + c.join('');
-  return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + alpha + ')';
-}
 
 const connectionSourceActionId = computed(() => {
   const node = store.resolveNode(connectionHandler.state.value.sourceId);
@@ -900,10 +967,14 @@ function handleActionDragStart(startPos, port) {
     box-shadow 0.2s,
     filter 0.2s;
   font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  color: var(--ea-action-fg);
+  text-shadow: var(--ea-action-fg-shadow, 0 1px 2px rgba(0, 0, 0, 0.8));
 }
 .action-item-wrapper:hover {
   filter: brightness(1.2);
+}
+:global(html[data-theme='light'] .action-item-wrapper:hover){
+  filter: brightness(1.04);
 }
 
 .action-item-wrapper.is-perfect-link-action::after {
@@ -912,7 +983,7 @@ function handleActionDragStart(startPos, port) {
   inset: -2px;
   border: 1px solid rgba(255, 242, 168, 0.9);
   border-radius: 3px;
-  box-shadow: 0 0 14px rgba(255, 215, 0, 0.7);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--ea-gold) 70%, transparent);
   pointer-events: none;
   z-index: 4;
   animation: perfect-link-action-pulse 1.15s ease-in-out infinite;
@@ -973,7 +1044,19 @@ function handleActionDragStart(startPos, port) {
   border-color: rgba(255, 77, 79, 0.45);
 }
 
+:global(html[data-theme='light'] .action-requisite-tooltip-popper.el-popper.is-dark) {
+  background: var(--ea-tooltip-bg, #ffffff);
+  color: var(--ea-fg, #1a1b1e);
+  border-color: color-mix(in srgb, #e11d48 45%, var(--ea-dialog-border, #d8dbe0));
+  box-shadow: 0 12px 28px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
+}
+
+:global(html[data-theme='light'] .action-requisite-tooltip-popper.el-popper .el-popper__arrow) {
+  display: none !important;
+}
+
 .action-item-content {
+  color: inherit;
   &.is-link-target-invalid {
     opacity: 0.5;
   }
@@ -1036,10 +1119,10 @@ function handleActionDragStart(startPos, port) {
 }
 
 .tick-marker:hover {
-  background-color: #ffd700;
+  background-color: var(--ea-gold);
   border-color: #fff;
   transform: translateY(50%) rotate(45deg) scale(1.65);
-  box-shadow: 0 0 8px rgba(255, 215, 0, 1);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ea-gold) 100%, transparent);
   z-index: 30;
 }
 

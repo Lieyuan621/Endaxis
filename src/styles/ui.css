@@ -1,6 +1,5 @@
 :root {
-  --ea-gold: #ffd700;
-  --ea-gold-hover: #ffec3d;
+  /* --ea-gold / --ea-gold-hover live in theme.css (dark + light-adapted). */
   --ea-blue: #4a90e2;
   --ea-orange: #e6a23c;
   --ea-success: #4caf50;
@@ -32,7 +31,7 @@
 
 .panel-tag-mini.gold {
   color: var(--ea-gold);
-  border-color: rgba(255, 215, 0, 0.25);
+  border-color: color-mix(in srgb, var(--ea-gold) 28%, transparent);
 }
 .panel-tag-mini.blue {
   color: var(--ea-info);
@@ -54,6 +53,7 @@
 }
 
 .ea-btn {
+  --ea-btn-accent: var(--ea-gold);
   --ea-btn-bg: #3a3a3a;
   --ea-btn-border: #555;
   --ea-btn-color: #ccc;
@@ -104,7 +104,7 @@
 
 .ea-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.35);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ea-gold) 35%, transparent);
 }
 
 .ea-btn:disabled,
@@ -214,7 +214,7 @@
   --ea-btn-border: #555;
   --ea-btn-color: #666;
   border-style: dashed;
-  --ea-btn-bg-hover: rgba(255, 215, 0, 0.05);
+  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-gold) 5%, transparent);
   --ea-btn-border-hover: var(--ea-gold);
   --ea-btn-color-hover: var(--ea-gold);
 }
@@ -255,7 +255,7 @@
   --ea-btn-bg: #333;
   --ea-btn-border: #555;
   --ea-btn-color: var(--ea-gold);
-  --ea-btn-bg-hover: rgba(255, 215, 0, 0.1);
+  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-gold) 10%, transparent);
   --ea-btn-border-hover: var(--ea-gold);
   --ea-btn-color-hover: var(--ea-gold);
 }
@@ -569,6 +569,37 @@
   height: 3px;
 }
 
+html[data-theme='light'] .ea-check-rect {
+  --ea-check-bg: #ffffff;
+  --ea-check-bg-hover: #f3f4f6;
+  --ea-check-border: rgba(26, 27, 30, 0.18);
+  --ea-check-color: #2f333a;
+}
+
+html[data-theme='light'] .ea-check-rect:hover {
+  color: #1a1b1e;
+  border-color: color-mix(in srgb, var(--ea-check-accent) 42%, rgba(26, 27, 30, 0.2));
+}
+
+html[data-theme='light'] .ea-check-rect:has(input[type='checkbox']:checked) {
+  background: color-mix(in srgb, var(--ea-check-accent) 14%, #ffffff);
+  border-color: color-mix(in srgb, var(--ea-check-accent) 48%, transparent);
+  color: var(--ea-check-accent);
+}
+
+html[data-theme='light'] .ea-check-rect input[type='checkbox'] {
+  background: #ffffff;
+  border-color: rgba(26, 27, 30, 0.28);
+  color: #1a1b1e;
+}
+
+html[data-theme='light'] .ea-check-rect input[type='checkbox']:checked {
+  background: var(--ea-check-accent);
+  border-color: var(--ea-check-accent);
+  color: #1a1b1e;
+  box-shadow: none;
+}
+
 /* Native range — same gold thumb language as timeline zoom (davinci-range). */
 .ea-range-row {
   display: flex;
@@ -688,8 +719,8 @@
 
 .ea-btn--glass-cut-gold {
   --ea-btn-accent: var(--ea-gold);
-  --ea-btn-bg: rgba(255, 215, 0, 0.04);
-  --ea-btn-border: rgba(255, 215, 0, 0.2);
+  --ea-btn-bg: color-mix(in srgb, var(--ea-gold) 4%, transparent);
+  --ea-btn-border: color-mix(in srgb, var(--ea-gold) 20%, transparent);
   --ea-btn-color: var(--ea-gold);
 }
 
@@ -723,16 +754,16 @@
 }
 
 .ea-btn--icon-plus-gold {
-  --ea-btn-bg: rgba(255, 215, 0, 0.1);
-  --ea-btn-border: rgba(255, 215, 0, 0.4);
+  --ea-btn-bg: color-mix(in srgb, var(--ea-gold) 10%, transparent);
+  --ea-btn-border: color-mix(in srgb, var(--ea-gold) 40%, transparent);
   --ea-btn-color: var(--ea-gold);
-  --ea-btn-bg-hover: rgba(255, 215, 0, 0.3);
+  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-gold) 30%, transparent);
   --ea-btn-border-hover: var(--ea-gold);
   --ea-btn-color-hover: var(--ea-gold);
 }
 
 .ea-btn--icon-plus-gold:hover {
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ea-gold) 35%, transparent);
 }
 
 .ea-btn--icon-plus-red {
@@ -764,42 +795,106 @@
 /* Light theme: solidify glass / translucent button variants (one place, not per call site). */
 html[data-theme='light'] .ea-btn {
   --ea-btn-bg: #ffffff;
-  --ea-btn-border: #c9ced6;
-  --ea-btn-color: #3a3d44;
+  --ea-btn-border: #b8bfc9;
+  --ea-btn-color: #2f333a;
   --ea-btn-bg-hover: #f3f4f6;
-  --ea-btn-border-hover: #aeb4be;
+  --ea-btn-border-hover: #9aa3b0;
   --ea-btn-color-hover: #1a1b1e;
 }
 
 html[data-theme='light'] .ea-btn--outline-muted,
 html[data-theme='light'] .ea-btn--glass-rect {
   --ea-btn-bg: #ffffff;
-  --ea-btn-border: rgba(26, 27, 30, 0.18);
-  --ea-btn-color: #4a4e57;
-  --ea-btn-bg-hover: #f3f4f6;
-  --ea-btn-border-hover: rgba(26, 27, 30, 0.32);
+  --ea-btn-border: rgba(26, 27, 30, 0.22);
+  --ea-btn-color: #2f333a;
+  --ea-btn-bg-hover: #f0f2f5;
+  --ea-btn-border-hover: rgba(26, 27, 30, 0.36);
   --ea-btn-color-hover: #1a1b1e;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  box-shadow: none;
 }
 
+/*
+ * Filter chips (operator / equipment / enemy) use glass-cut.
+ * Must beat html[data-theme='light'] .ea-btn or idle/active accents never show.
+ */
+html[data-theme='light'] .ea-btn--glass-cut {
+  --ea-btn-bg: #ffffff;
+  --ea-btn-border: rgba(26, 27, 30, 0.18);
+  --ea-btn-color: #5a616c;
+  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-btn-accent, var(--ea-gold)) 12%, #ffffff);
+  --ea-btn-border-hover: var(--ea-btn-accent, var(--ea-gold));
+  --ea-btn-color-hover: var(--ea-btn-accent, var(--ea-gold));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* Active / tinted chips: never white-on-pale. Accent text on soft white mix. */
 html[data-theme='light'] .ea-btn--fill-gold,
 html[data-theme='light'] .ea-btn--fill-success,
 html[data-theme='light'] .ea-btn--fill-danger,
-html[data-theme='light'] .ea-btn--glass-rect-accent {
-  --ea-btn-bg: color-mix(in srgb, var(--ea-btn-accent) 16%, #ffffff);
-  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-btn-accent) 26%, #ffffff);
-  --ea-btn-border: color-mix(in srgb, var(--ea-btn-accent) 48%, #ffffff);
-  --ea-btn-border-hover: var(--ea-btn-accent);
+html[data-theme='light'] .ea-btn--glass-rect-accent,
+html[data-theme='light'] .ea-btn--glass-rect.active,
+html[data-theme='light'] .ea-btn--glass-rect.is-active,
+html[data-theme='light'] .ea-btn--glass-cut.is-active {
+  --ea-btn-bg: color-mix(in srgb, var(--ea-btn-accent, var(--ea-gold)) 14%, #ffffff);
+  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-btn-accent, var(--ea-gold)) 22%, #ffffff);
+  --ea-btn-border: color-mix(in srgb, var(--ea-btn-accent, var(--ea-gold)) 48%, transparent);
+  --ea-btn-border-hover: var(--ea-btn-accent, var(--ea-gold));
+  --ea-btn-color: var(--ea-btn-accent, var(--ea-gold));
+  --ea-btn-color-hover: var(--ea-btn-accent, var(--ea-gold));
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+html[data-theme='light'] .ea-btn--glass-cut.is-active {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ea-btn-accent, var(--ea-gold)) 22%, transparent);
+}
+
+html[data-theme='light'] .ea-btn--glass-cut-danger {
+  --ea-btn-accent: var(--ea-danger-soft);
+  --ea-btn-bg: color-mix(in srgb, var(--ea-danger-soft) 8%, #ffffff);
+  --ea-btn-border: color-mix(in srgb, var(--ea-danger-soft) 40%, transparent);
+  --ea-btn-color: var(--ea-danger-soft);
+  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-danger-soft) 16%, #ffffff);
+  --ea-btn-border-hover: var(--ea-danger-soft);
+  --ea-btn-color-hover: var(--ea-danger-soft);
+}
+
+html[data-theme='light'] .ea-btn--text-bright {
+  --ea-btn-color: var(--ea-fg, #1a1b1e);
+  --ea-btn-color-hover: var(--ea-fg, #1a1b1e);
 }
 
 html[data-theme='light'] .ea-btn--ghost {
   --ea-btn-bg: transparent;
   --ea-btn-border: transparent;
-  --ea-btn-color: #6a707a;
+  --ea-btn-color: #4a515c;
   --ea-btn-bg-hover: rgba(26, 27, 30, 0.06);
   --ea-btn-border-hover: rgba(26, 27, 30, 0.16);
   --ea-btn-color-hover: #1a1b1e;
+}
+
+html[data-theme='light'] .ea-btn--hover-gold-fill:hover,
+html[data-theme='light'] .ea-btn--glass-rect.ea-btn--hover-gold-fill:hover {
+  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-gold) 18%, #ffffff);
+  --ea-btn-border-hover: var(--ea-gold);
+  --ea-btn-color-hover: var(--ea-gold);
+}
+
+/*
+ * White-on-transparent UI glyphs (activity / weapon chrome icons).
+ * Prefer this over invert() so black-backed assets don't flash white.
+ * Do NOT apply to colored combat / portrait art.
+ */
+html[data-theme='light'] .ea-glyph-icon {
+  filter: brightness(0) opacity(0.72);
+}
+html[data-theme='light'] .ea-glyph-icon.is-active,
+html[data-theme='light'] button:hover .ea-glyph-icon,
+html[data-theme='light'] .is-active .ea-glyph-icon {
+  filter: brightness(0) opacity(0.92);
 }

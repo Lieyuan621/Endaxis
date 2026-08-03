@@ -209,6 +209,7 @@
       "rendering": "Рендеринг изображения таймлайна для первых {seconds} сек...",
       "smallPreviewTitle": "Превью миниатюры",
       "saveSmallImage": "Сохранить изображение",
+      "cardAppearanceLabel": "Тема карточки",
       "cardWidthLabel": "Ширина карточки",
       "blockHeightLabel": "Высота блока навыка",
       "timeScaleLabel": "Масштаб времени",

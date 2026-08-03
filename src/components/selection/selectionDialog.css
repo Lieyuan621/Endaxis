@@ -4,7 +4,7 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+  border-bottom: 1px solid color-mix(in srgb, var(--ea-gold) 15%, transparent);
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -121,8 +121,9 @@
   margin-top: 18px;
   margin-bottom: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(30, 30, 30, 0.92);
+  border-bottom: 1px solid var(--ea-border-soft);
+  /* Match dialog chrome so sticky rarity bars don't flash a second surface. */
+  background: color-mix(in srgb, var(--ea-dialog-bg) 94%, transparent);
   backdrop-filter: blur(12px);
 }
 
@@ -148,14 +149,14 @@
 
 .header-rarity-6 .rarity-label {
   color: transparent !important;
-  background: linear-gradient(45deg, #ffd700, #ff8c00, #ff4500);
+  background: linear-gradient(45deg, var(--ea-gold), #ff8c00, #ff4500);
   background-clip: text;
   -webkit-background-clip: text;
 }
 
 .header-rarity-6 .rarity-line {
   height: 2px;
-  background: linear-gradient(90deg, #ff4500 0%, #ff8c00 30%, #ffd700 60%, transparent 100%);
+  background: linear-gradient(90deg, #ff4500 0%, #ff8c00 30%, var(--ea-gold) 60%, transparent 100%);
   clip-path: polygon(0 0, 100% 50%, 0 100%);
   opacity: 0.7;
 }
@@ -194,8 +195,8 @@
   height: 72px;
   padding: 2px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #111;
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
+  background: var(--ea-keycap-bg, #111);
 }
 
 .card-avatar-wrapper > img {
@@ -205,11 +206,11 @@
 }
 
 .equipment-roster-card .card-avatar-wrapper.is-ability-match-both {
-  border-color: #ffd700 !important;
+  border-color: var(--ea-gold) !important;
   box-shadow:
-    0 0 0 2px rgba(255, 215, 0, 0.95),
-    0 0 18px rgba(255, 215, 0, 0.55),
-    inset 0 0 10px rgba(255, 215, 0, 0.2);
+    0 0 0 2px color-mix(in srgb, var(--ea-gold) 95%, transparent),
+    0 0 18px color-mix(in srgb, var(--ea-gold) 55%, transparent),
+    inset 0 0 10px color-mix(in srgb, var(--ea-gold) 20%, transparent);
 }
 
 .eq-affix-icon-stack {
@@ -316,9 +317,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 215, 0, 0.5);
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 50%, transparent);
   background: rgba(0, 0, 0, 0.75);
-  color: #ffd700;
+  color: var(--ea-gold);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 1px;
@@ -345,13 +346,13 @@
 .rarity-6-style .card-avatar-wrapper {
   border: 1px solid transparent;
   background:
-    linear-gradient(#111, #111) padding-box,
-    linear-gradient(135deg, #ffd700, #ff8c00, #ff4500) border-box;
+    linear-gradient(var(--ea-keycap-bg, #111), var(--ea-keycap-bg, #111)) padding-box,
+    linear-gradient(135deg, var(--ea-gold), #ff8c00, #ff4500) border-box;
   box-shadow: 0 4px 12px rgba(255, 140, 0, 0.2);
 }
 
 .rarity-6-style:hover .card-avatar-wrapper {
-  border-color: rgba(255, 215, 0, 0.8);
+  border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
   box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
 }
 
@@ -366,4 +367,71 @@
 
 .char-selector-dialog .el-input__inner {
   color: #fff;
+}
+
+/* Light theme: selection dialogs (operator / weapon / equipment) */
+html[data-theme='light'] .rarity-header {
+  background: color-mix(in srgb, var(--ea-dialog-bg, #ffffff) 97%, transparent);
+  border-bottom-color: var(--ea-dialog-divider, #e6e8ec);
+  backdrop-filter: blur(10px);
+}
+
+html[data-theme='light'] .card-avatar-wrapper {
+  background: var(--ea-chip-fill) !important;
+  border-color: rgba(26, 27, 30, 0.14);
+}
+
+html[data-theme='light'] .rarity-6-style .card-avatar-wrapper {
+  background:
+    linear-gradient(var(--ea-chip-fill), var(--ea-chip-fill)) padding-box,
+    linear-gradient(135deg, var(--ea-gold), #ff8c00, #ff4500) border-box !important;
+}
+
+html[data-theme='light'] .element-badge {
+  background: color-mix(in srgb, var(--ea-chip-fill) 95%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ea-border);
+}
+
+html[data-theme='light'] .element-badge img {
+  filter: brightness(0) opacity(0.78);
+}
+
+html[data-theme='light'] .card-name {
+  color: rgba(26, 27, 30, 0.62);
+}
+
+html[data-theme='light'] .roster-card:hover .card-name {
+  color: #1a1b1e;
+}
+
+html[data-theme='light'] .in-team-tag {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(180, 140, 0, 0.55);
+  color: var(--ea-gold);
+}
+
+html[data-theme='light'] .equipment-tier-picker .tier-label,
+html[data-theme='light'] .empty-roster {
+  color: rgba(26, 27, 30, 0.45);
+}
+
+html[data-theme='light'] .equipment-affix-filter-divider::before {
+  background: linear-gradient(180deg, transparent, rgba(26, 27, 30, 0.28), transparent);
+}
+
+html[data-theme='light'] .eq-affix-icon-img {
+  filter: drop-shadow(0 1px 1px rgba(26, 27, 30, 0.25));
+}
+
+html[data-theme='light'] .char-selector-dialog .el-dialog__body {
+  color: var(--ea-dialog-body, #3a3d44);
+}
+
+html[data-theme='light'] .char-selector-dialog .el-input__wrapper {
+  background-color: var(--ea-fill-input, var(--ea-surface-soft));
+  box-shadow: 0 0 0 1px var(--ea-border, #d8dbe0) inset;
+}
+
+html[data-theme='light'] .char-selector-dialog .el-input__inner {
+  color: var(--ea-fg, #1a1b1e);
 }

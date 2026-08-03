@@ -222,8 +222,8 @@ const ports = [
 
   &:hover {
     transform: scale(1.2);
-    background-color: #ffd700;
-    border-color: #ffd700;
+    background-color: var(--ea-gold);
+    border-color: var(--ea-gold);
   }
 }
 

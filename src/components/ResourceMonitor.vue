@@ -53,6 +53,8 @@ function getReactionHitTitle(hitData) {
   return damage > 0 ? t('actionItem.damageHitTooltip', { damage: damage.toLocaleString() }) : '';
 }
 
+const activeSectionResizeLowerKey = ref(null);
+
 function beginSectionResize(which, event) {
   event.preventDefault();
   sectionResizeState = {
@@ -61,6 +63,7 @@ function beginSectionResize(which, event) {
     startY: event.clientY,
     heights: { ...SECTION_BODY_HEIGHTS.value },
   };
+  activeSectionResizeLowerKey.value = which.lowerKey;
   document.body.style.userSelect = 'none';
   document.body.style.cursor = 'ns-resize';
   window.addEventListener('pointermove', onSectionResizeMove);
@@ -105,6 +108,7 @@ function onSectionResizeMove(event) {
 
 function endSectionResize() {
   sectionResizeState = null;
+  activeSectionResizeLowerKey.value = null;
   document.body.style.userSelect = '';
   document.body.style.cursor = '';
   window.removeEventListener('pointermove', onSectionResizeMove);
@@ -397,7 +401,7 @@ const gridLineTimes = computed(() => {
 });
 
 const COLOR_STAGGER = '#ff7875';
-const COLOR_SP_MAIN = '#ffd700';
+const COLOR_SP_MAIN = 'var(--ea-gold)';
 const COLOR_SP_WARN = '#ff4d4f';
 
 function getMarkerPriority(typeKey) {
@@ -1147,7 +1151,7 @@ const staggerRatio = computed(() => {
               v-model="store.systemConstants.initialSp"
               :min="0"
               :max="300"
-              active-color="#ffd700"
+              active-color="var(--ea-gold)"
               class="standard-input"
             />
           </div>
@@ -1157,7 +1161,7 @@ const staggerRatio = computed(() => {
               v-model="store.systemConstants.spRegenRate"
               :step="0.5"
               :min="0"
-              active-color="#ffd700"
+              active-color="var(--ea-gold)"
               class="standard-input"
             />
           </div>
@@ -1231,7 +1235,6 @@ const staggerRatio = computed(() => {
             <div
               v-if="activeSectionCollapsed.affliction"
               class="section-collapsed-strip"
-              :style="{ height: `${sectionRects.affliction.stripHeight}px` }"
             >
               <button
                 type="button"
@@ -1337,6 +1340,7 @@ const staggerRatio = computed(() => {
           <div
             v-if="resizeHandleItems.some(item => item.lowerKey === 'stagger')"
             class="section-resize-handle"
+            :class="{ 'is-active': activeSectionResizeLowerKey === 'stagger' }"
             @pointerdown="
               beginSectionResize(
                 resizeHandleItems.find(item => item.lowerKey === 'stagger'),
@@ -1365,7 +1369,6 @@ const staggerRatio = computed(() => {
             <div
               v-if="activeSectionCollapsed.stagger"
               class="section-collapsed-strip"
-              :style="{ height: `${sectionRects.stagger.stripHeight}px` }"
             >
               <button
                 type="button"
@@ -1487,6 +1490,7 @@ const staggerRatio = computed(() => {
           <div
             v-if="resizeHandleItems.some(item => item.lowerKey === 'sp')"
             class="section-resize-handle"
+            :class="{ 'is-active': activeSectionResizeLowerKey === 'sp' }"
             @pointerdown="
               beginSectionResize(
                 resizeHandleItems.find(item => item.lowerKey === 'sp'),
@@ -1515,7 +1519,6 @@ const staggerRatio = computed(() => {
             <div
               v-if="activeSectionCollapsed.sp"
               class="section-collapsed-strip"
-              :style="{ height: `${sectionRects.sp.stripHeight}px` }"
             >
               <button
                 type="button"
@@ -1665,8 +1668,8 @@ const staggerRatio = computed(() => {
   grid-template-columns: 180px minmax(0, 1fr);
   width: 100%;
   height: 100%;
-  background: #1a1a1a;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ea-workbench-main, #1a1a1a);
+  border-top: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
   box-sizing: border-box;
   font-family:
     'Inter',
@@ -1677,8 +1680,8 @@ const staggerRatio = computed(() => {
 }
 
 .monitor-sidebar {
-  background-color: #252526;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--ea-workbench-panel, #252526);
+  border-right: 1px solid var(--ea-divider, rgba(255, 255, 255, 0.16));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1686,14 +1689,14 @@ const staggerRatio = computed(() => {
 }
 
 .monitor-module-sidebar {
-  background: #252526;
+  background: var(--ea-workbench-panel, #252526);
 }
 
 .module-meta-shell {
   min-height: 0;
   position: relative;
   box-sizing: border-box;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--ea-divider, rgba(255, 255, 255, 0.16));
 }
 
 .module-meta-resize-gap {
@@ -1709,8 +1712,8 @@ const staggerRatio = computed(() => {
   flex-direction: column;
   gap: 6px;
   overflow: hidden;
-  background: #252526;
-  border-left: 3px solid rgba(255, 255, 255, 0.18);
+  background: var(--ea-workbench-panel, #252526);
+  border-left: 3px solid var(--ea-border-strong, rgba(255, 255, 255, 0.18));
 }
 
 .enemy-status-meta,
@@ -1728,7 +1731,7 @@ const staggerRatio = computed(() => {
 }
 
 .sp-meta {
-  border-left-color: #ffd700;
+  border-left-color: var(--ea-gold);
 }
 
 .module-meta-collapsed {
@@ -1737,11 +1740,11 @@ const staggerRatio = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted, rgba(255, 255, 255, 0.55));
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.4px;
-  background: #252526;
+  background: var(--ea-workbench-panel, #252526);
   box-sizing: border-box;
   white-space: nowrap;
 }
@@ -1756,7 +1759,7 @@ const staggerRatio = computed(() => {
 .readout-title {
   font-size: 11px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted, rgba(255, 255, 255, 0.55));
   line-height: 1;
   white-space: nowrap;
 }
@@ -1770,11 +1773,11 @@ const staggerRatio = computed(() => {
 }
 
 .readout-title--sp {
-  color: #ffd700;
+  color: var(--ea-gold);
 }
 
 .readout-value {
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--ea-icon-strong, rgba(255, 255, 255, 0.86));
   font-family: 'Roboto Mono', monospace;
   font-size: 12px;
   font-weight: 700;
@@ -1784,7 +1787,7 @@ const staggerRatio = computed(() => {
 
 .readout-bar {
   height: 5px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.08));
   overflow: hidden;
 }
 
@@ -1817,7 +1820,7 @@ const staggerRatio = computed(() => {
 }
 
 .last-hit-buff-more {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ea-fg-muted, rgba(255, 255, 255, 0.55));
   font-size: 10px;
   font-weight: 700;
   font-family: 'Roboto Mono', monospace;
@@ -1832,7 +1835,7 @@ const staggerRatio = computed(() => {
 }
 
 .readout-value-max {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.45));
   font-weight: 600;
 }
 
@@ -1844,7 +1847,7 @@ const staggerRatio = computed(() => {
 }
 
 .module-control-row label {
-  color: rgba(255, 255, 255, 0.48);
+  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.48));
   font-size: 11px;
   white-space: nowrap;
 }
@@ -1860,7 +1863,7 @@ const staggerRatio = computed(() => {
   height: 100%;
   overflow: hidden;
   position: relative;
-  background: #18181c;
+  background: var(--ea-workbench-main, #18181c);
   min-width: 0;
   min-height: 0;
 }
@@ -1900,6 +1903,9 @@ const staggerRatio = computed(() => {
 .monitor-section-shell {
   position: relative;
   min-height: 0;
+  box-sizing: border-box;
+  /* Match .module-meta-shell so collapsed strips share the same content height. */
+  border-bottom: 1px solid var(--ea-divider, rgba(255, 255, 255, 0.16));
 }
 
 .section-topbar {
@@ -1914,7 +1920,12 @@ const staggerRatio = computed(() => {
   right: 0;
   top: 0;
   height: 1px;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--ea-divider, rgba(255, 255, 255, 0.16));
+}
+
+/* Avoid double hairlines: upper shell border-bottom already marks band boundaries. */
+.monitor-sections > .monitor-section-shell:not(:first-child) .section-topbar-line {
+  display: none;
 }
 
 .section-body {
@@ -1948,8 +1959,9 @@ const staggerRatio = computed(() => {
 
 .section-collapsed-strip {
   position: relative;
-  background: rgba(34, 34, 40, 0.94);
-  border-radius: 2px;
+  height: 100%;
+  box-sizing: border-box;
+  background: var(--ea-workbench-panel, #252526);
 }
 
 .section-resize-handle {
@@ -1959,6 +1971,7 @@ const staggerRatio = computed(() => {
   z-index: 3;
 }
 
+/* Hit area — no fill wash (match TimelineGrid track-divider). */
 .section-resize-handle::before {
   content: '';
   position: absolute;
@@ -1967,6 +1980,29 @@ const staggerRatio = computed(() => {
   top: -6px;
   height: 12px;
   cursor: ns-resize;
+}
+
+.section-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: transparent;
+  transition:
+    background-color 0.12s ease,
+    box-shadow 0.12s ease,
+    height 0.12s ease;
+}
+
+.section-resize-handle:hover::after,
+.section-resize-handle.is-active::after {
+  height: 2px;
+  background: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 22%, transparent);
 }
 
 .section-toggle-btn {
@@ -1979,7 +2015,7 @@ const staggerRatio = computed(() => {
   padding: 0;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.72));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1994,7 +2030,7 @@ const staggerRatio = computed(() => {
 }
 
 .section-toggle-btn:hover {
-  color: #fff;
+  color: var(--ea-fg, #fff);
 }
 
 .section-toggle-chevron {
@@ -2077,17 +2113,17 @@ const staggerRatio = computed(() => {
 }
 
 .affliction-item.is-damage-hit:hover .enemy-damage-diamond {
-  background-color: #ffd700;
+  background-color: var(--ea-gold);
   border-color: #fff;
-  box-shadow: 0 0 4px rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--ea-gold) 80%, transparent);
   transform: rotate(45deg) scale(1.3);
 }
 
 .anomaly-icon-box {
   width: var(--aff-icon-size, 20px);
   height: var(--aff-icon-size, 20px);
-  background-color: #333;
-  border: 1px solid #999;
+  background-color: var(--ea-keycap-skill-bg, #333);
+  border: 1px solid var(--ea-keycap-skill-border, #999);
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -2126,7 +2162,7 @@ const staggerRatio = computed(() => {
   bottom: -2px;
   right: -2px;
   background: rgba(0, 0, 0, 0.8);
-  color: #ffd700;
+  color: var(--ea-gold);
   font-size: 8px;
   padding: 0 2px;
   line-height: 1;

@@ -124,7 +124,7 @@ function addRow() {
 }
 
 .block-title {
-  color: #ffd700;
+  color: var(--ea-gold);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.4px;
@@ -155,7 +155,7 @@ function addRow() {
 }
 
 .field {
-  color: #cfd3dc;
+  color: var(--ea-fg-secondary, #cfd3dc);
   display: flex;
   flex-direction: column;
   font-size: 11px;
@@ -165,11 +165,11 @@ function addRow() {
 
 .simple-input {
   appearance: none;
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--ea-fill-input, #111);
+  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.16));
   border-radius: 0;
   box-sizing: border-box;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
   font-family: inherit;
   font-size: 12px;
   height: 31px;
@@ -180,7 +180,7 @@ function addRow() {
 }
 
 .simple-input:focus {
-  border-color: rgba(255, 215, 0, 0.72);
+  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
   outline: none;
 }
 
@@ -193,7 +193,7 @@ function addRow() {
   align-items: center;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ffd700;
+  color: var(--ea-gold);
   cursor: pointer;
   display: flex;
   font-size: 11px;
@@ -205,6 +205,6 @@ function addRow() {
 
 .add-effect-bar:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 215, 0, 0.8);
+  border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
 }
 </style>

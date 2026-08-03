@@ -54,14 +54,14 @@ const summaryRows = computed(() =>
   overflow: auto;
   padding: 12px 12px 16px;
   box-sizing: border-box;
-  background: #252526;
-  color: rgba(255, 255, 255, 0.86);
+  background: var(--ea-workbench-panel, #252526);
+  color: var(--ea-fg, rgba(255, 255, 255, 0.86));
 }
 
 .panel-title {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.78));
   margin-bottom: 12px;
 }
 
@@ -77,28 +77,36 @@ const summaryRows = computed(() =>
   justify-content: space-between;
   gap: 10px;
   padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.06));
 }
 
 .summary-label {
   min-width: 0;
   flex: 1;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.7));
 }
 
 .summary-value {
   flex-shrink: 0;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--ea-fg, rgba(255, 255, 255, 0.88));
 }
 
 .empty-hint {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.4));
   padding: 4px 0 2px;
+}
+
+:global(html[data-theme='light'] .global-config-settings .summary-row){
+  background: var(--ea-surface-sunken);
+  border-color: var(--ea-border);
+}
+:global(html[data-theme='light'] .global-config-settings .empty-hint){
+  color: var(--ea-fg-muted);
 }
 
 .stats-edit-btn {

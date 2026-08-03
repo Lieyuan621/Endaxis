@@ -260,7 +260,7 @@ onBeforeUnmount(() => {
 .section-title {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.72));
   margin-bottom: 10px;
   letter-spacing: 0.02em;
 }
@@ -276,14 +276,18 @@ onBeforeUnmount(() => {
   gap: 12px;
   padding: 8px 10px;
   border-radius: 0;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid transparent;
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--ea-border-soft, transparent);
 }
 .label {
   min-width: 0;
   flex: 1;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.78));
+}
+:global(html[data-theme='light'] .enemy-base-stats-dialog .row) {
+  background: var(--ea-surface-row);
+  border-color: var(--ea-border);
 }
 :deep(.stat-input) {
   width: 88px !important;

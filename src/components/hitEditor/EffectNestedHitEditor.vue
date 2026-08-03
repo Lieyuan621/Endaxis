@@ -135,7 +135,7 @@ const effectsJson = computed({
           :model-value="durationExtensionValue"
           @update:model-value="value => (durationExtensionValue = value)"
           :min="0"
-          :activeColor="'#ffd700'"
+          :activeColor="'var(--ea-gold)'"
         />
       </label>
     </div>
@@ -159,7 +159,7 @@ const effectsJson = computed({
 }
 
 .block-title {
-  color: #ffd700;
+  color: var(--ea-gold);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.4px;
@@ -177,7 +177,7 @@ const effectsJson = computed({
 }
 
 .field {
-  color: #cfd3dc;
+  color: var(--ea-fg-secondary, #cfd3dc);
   display: flex;
   flex-direction: column;
   font-size: 11px;
@@ -187,11 +187,11 @@ const effectsJson = computed({
 
 .simple-input {
   appearance: none;
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--ea-fill-input, #111);
+  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.16));
   border-radius: 0;
   box-sizing: border-box;
-  color: #f0f0f0;
+  color: var(--ea-fg, #f0f0f0);
   font-family: inherit;
   font-size: 12px;
   height: 31px;
@@ -202,12 +202,12 @@ const effectsJson = computed({
 }
 
 .simple-input:focus {
-  border-color: rgba(255, 215, 0, 0.72);
+  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
   outline: none;
 }
 
 .json-field {
-  color: #cfd3dc;
+  color: var(--ea-fg-secondary, #cfd3dc);
   display: flex;
   flex-direction: column;
   font-size: 11px;
@@ -215,9 +215,9 @@ const effectsJson = computed({
 }
 
 .json-input {
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #f0f0f0;
+  background: var(--ea-fill-input, #111);
+  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.16));
+  color: var(--ea-fg, #f0f0f0);
   font-family: Consolas, 'Courier New', monospace;
   font-size: 11px;
   min-height: 72px;
@@ -226,7 +226,7 @@ const effectsJson = computed({
 }
 
 .json-input:focus {
-  border-color: rgba(255, 215, 0, 0.72);
+  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
   outline: none;
 }
 </style>

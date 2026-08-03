@@ -9,6 +9,7 @@ import '@/utils/echartsSetup';
 import { useDamageAnalysis } from '@/composables/useDamageAnalysis';
 import { lightenColor } from '@/utils/theme';
 import { useTimelineStore } from '@/stores/timelineStore';
+import { useAppearance } from '@/composables/useAppearance';
 
 type ChartOption = ComposeOption<PieSeriesOption | TooltipComponentOption | LegendComponentOption>;
 
@@ -18,6 +19,7 @@ const emit = defineEmits<{ 'update:visible': [value: boolean] }>();
 const { t } = useI18n();
 const { analysis } = useDamageAnalysis();
 const store = useTimelineStore();
+const { appearance } = useAppearance();
 
 function onClose(val: boolean) {
   emit('update:visible', val);
@@ -32,43 +34,58 @@ function formatTime(seconds: number): string {
   return `${s}s`;
 }
 
-const tooltipStyle = {
-  backgroundColor: '#2a2a2a',
-  borderColor: '#444',
-  textStyle: { color: '#f0f0f0', fontSize: 13 },
-};
-
-const operatorChartOption = computed<ChartOption>(() => ({
-  backgroundColor: 'transparent',
-  tooltip: {
-    trigger: 'item',
-    formatter: '{b}: {c} ({d}%)',
-    ...tooltipStyle,
-  },
-  legend: {
-    orient: 'vertical',
-    right: 10,
-    top: 'center',
-    inactiveColor: '#565d66',
-    textStyle: { color: '#ccc', fontSize: 12 },
-  },
-  series: [
-    {
-      type: 'pie',
-      radius: ['35%', '65%'],
-      center: ['40%', '50%'],
-      itemStyle: { borderColor: '#252528', borderWidth: 2 },
-      label: { color: '#ccc', formatter: '{b}\n{d}%', fontSize: 12 },
-      emphasis: {
-        itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' },
-      },
-      data: analysis.value.operatorChartData,
+const chartPaint = computed(() => {
+  const isLight = appearance.value === 'light';
+  return {
+    isLight,
+    tooltip: {
+      backgroundColor: isLight ? '#ffffff' : '#2a2a2a',
+      borderColor: isLight ? '#d8dbe0' : '#444',
+      textStyle: { color: isLight ? '#1a1b1e' : '#f0f0f0', fontSize: 13 },
     },
-  ],
-}));
+    legendText: isLight ? '#3a3d44' : '#ccc',
+    legendInactive: isLight ? '#9aa3b0' : '#565d66',
+    label: isLight ? '#3a3d44' : '#ccc',
+    labelInner: isLight ? '#1a1b1e' : '#fff',
+    sliceBorder: isLight ? '#ffffff' : '#252528',
+  };
+});
+
+const operatorChartOption = computed<ChartOption>(() => {
+  const paint = chartPaint.value;
+  return {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)',
+      ...paint.tooltip,
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      inactiveColor: paint.legendInactive,
+      textStyle: { color: paint.legendText, fontSize: 12 },
+    },
+    series: [
+      {
+        type: 'pie',
+        radius: ['35%', '65%'],
+        center: ['40%', '50%'],
+        itemStyle: { borderColor: paint.sliceBorder, borderWidth: 2 },
+        label: { color: paint.label, formatter: '{b}\n{d}%', fontSize: 12 },
+        emphasis: {
+          itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' },
+        },
+        data: analysis.value.operatorChartData,
+      },
+    ],
+  };
+});
 
 const contributionChartOption = computed<ChartOption>(() => {
   const data = analysis.value.contributionData;
+  const paint = chartPaint.value;
 
   // Inner ring: operator totals
   const innerData = data.map(d => ({
@@ -101,15 +118,15 @@ const contributionChartOption = computed<ChartOption>(() => {
     tooltip: {
       trigger: 'item',
       formatter: '{b}: {d}%',
-      ...tooltipStyle,
+      ...paint.tooltip,
     },
     series: [
       {
         type: 'pie',
         radius: ['0%', '38%'],
         center: ['50%', '50%'],
-        itemStyle: { borderColor: '#252528', borderWidth: 2 },
-        label: { color: '#fff', formatter: '{d}%', fontSize: 11, position: 'inner' },
+        itemStyle: { borderColor: paint.sliceBorder, borderWidth: 2 },
+        label: { color: paint.labelInner, formatter: '{d}%', fontSize: 11, position: 'inner' },
         emphasis: {
           itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' },
         },
@@ -119,8 +136,8 @@ const contributionChartOption = computed<ChartOption>(() => {
         type: 'pie',
         radius: ['48%', '68%'],
         center: ['50%', '50%'],
-        itemStyle: { borderColor: '#252528', borderWidth: 1 },
-        label: { color: '#ccc', formatter: '{b}\n{d}%', fontSize: 11 },
+        itemStyle: { borderColor: paint.sliceBorder, borderWidth: 1 },
+        label: { color: paint.label, formatter: '{b}\n{d}%', fontSize: 11 },
         emphasis: {
           itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' },
         },
@@ -130,33 +147,36 @@ const contributionChartOption = computed<ChartOption>(() => {
   };
 });
 
-const elementChartOption = computed<ChartOption>(() => ({
-  backgroundColor: 'transparent',
-  tooltip: {
-    trigger: 'item',
-    formatter: '{b}: {c} ({d}%)',
-    ...tooltipStyle,
-  },
-  legend: {
-    orient: 'vertical',
-    right: 10,
-    top: 'center',
-    inactiveColor: '#565d66',
-    textStyle: { color: '#ccc', fontSize: 12 },
-  },
-  series: [
-    {
-      type: 'pie',
-      radius: ['35%', '65%'],
-      center: ['40%', '50%'],
-      label: { color: '#ccc', formatter: '{b}\n{d}%', fontSize: 12 },
-      emphasis: {
-        itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' },
-      },
-      data: analysis.value.elementChartData,
+const elementChartOption = computed<ChartOption>(() => {
+  const paint = chartPaint.value;
+  return {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)',
+      ...paint.tooltip,
     },
-  ],
-}));
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      inactiveColor: paint.legendInactive,
+      textStyle: { color: paint.legendText, fontSize: 12 },
+    },
+    series: [
+      {
+        type: 'pie',
+        radius: ['35%', '65%'],
+        center: ['40%', '50%'],
+        label: { color: paint.label, formatter: '{b}\n{d}%', fontSize: 12 },
+        emphasis: {
+          itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' },
+        },
+        data: analysis.value.elementChartData,
+      },
+    ],
+  };
+});
 </script>
 
 <template>
@@ -166,7 +186,7 @@ const elementChartOption = computed<ChartOption>(() => ({
     width="90vw"
     top="3vh"
     :append-to-body="true"
-    class="damage-analysis-dialog"
+    class="damage-analysis-dialog custom-dialog"
     :destroy-on-close="true"
   >
     <template #header>
@@ -271,7 +291,7 @@ const elementChartOption = computed<ChartOption>(() => ({
 .analysis-title {
   font-size: 16px;
   font-weight: 600;
-  color: #f0f0f0;
+  color: var(--ea-dialog-title);
   letter-spacing: 0.5px;
 }
 
@@ -284,7 +304,7 @@ const elementChartOption = computed<ChartOption>(() => ({
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  color: #888;
+  color: var(--ea-dialog-hint);
   font-size: 14px;
 }
 
@@ -296,8 +316,8 @@ const elementChartOption = computed<ChartOption>(() => ({
 }
 
 .chart-card {
-  background: #252528;
-  border: 1px solid #333;
+  background: color-mix(in srgb, var(--ea-fg) 5%, var(--ea-dialog-bg));
+  border: 1px solid var(--ea-border);
   border-radius: 6px;
   padding: 16px;
 }
@@ -313,13 +333,13 @@ const elementChartOption = computed<ChartOption>(() => ({
   margin: 0;
   font-size: 14px;
   font-weight: 500;
-  color: #ccc;
+  color: var(--ea-dialog-body);
 }
 
 .lmdi-mode-toggle {
   display: flex;
   gap: 0;
-  border: 1px solid #444;
+  border: 1px solid var(--ea-border-strong);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -329,7 +349,7 @@ const elementChartOption = computed<ChartOption>(() => ({
   font-size: 11px;
   font-weight: 500;
   background: transparent;
-  color: #888;
+  color: var(--ea-fg-muted);
   border: none;
   cursor: pointer;
   transition:
@@ -339,13 +359,13 @@ const elementChartOption = computed<ChartOption>(() => ({
 }
 
 .lmdi-mode-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ccc;
+  background: var(--ea-hover-fill);
+  color: var(--ea-fg-secondary);
 }
 
 .lmdi-mode-btn.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e0e0e0;
+  background: var(--ea-active-fill);
+  color: var(--ea-fg);
 }
 
 .chart {
@@ -361,8 +381,8 @@ const elementChartOption = computed<ChartOption>(() => ({
 
 .summary-item {
   flex: 1;
-  background: #252528;
-  border: 1px solid #333;
+  background: color-mix(in srgb, var(--ea-fg) 5%, var(--ea-dialog-bg));
+  border: 1px solid var(--ea-border);
   border-radius: 6px;
   padding: 14px;
   display: flex;
@@ -373,7 +393,7 @@ const elementChartOption = computed<ChartOption>(() => ({
 
 .summary-label {
   font-size: 13px;
-  color: #888;
+  color: var(--ea-dialog-hint);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -381,22 +401,26 @@ const elementChartOption = computed<ChartOption>(() => ({
 .summary-value {
   font-size: 24px;
   font-weight: 700;
-  color: #ffd700;
+  color: var(--ea-gold);
   font-variant-numeric: tabular-nums;
 }
 
 .warning-banner {
-  background: rgba(255, 171, 64, 0.08);
-  border: 1px solid rgba(255, 171, 64, 0.3);
+  background: color-mix(in srgb, #ffab40 10%, transparent);
+  border: 1px solid color-mix(in srgb, #ffab40 35%, transparent);
   border-radius: 6px;
   padding: 10px 16px;
   margin-bottom: 24px;
 }
 
 .warning-text {
-  color: #ffab40;
+  color: #c47a10;
   font-size: 13px;
   line-height: 1.5;
+}
+
+:global(html[data-theme='dark']) .warning-text {
+  color: #ffab40;
 }
 
 .faq-section {
@@ -415,15 +439,15 @@ const elementChartOption = computed<ChartOption>(() => ({
   margin: 0;
   font-size: 14px;
   font-weight: 500;
-  color: #ccc;
+  color: var(--ea-dialog-body);
 }
 
 .faq-collapse {
-  --el-collapse-border-color: #333;
-  --el-collapse-header-bg-color: #252528;
-  --el-collapse-content-bg-color: #1e1e20;
-  --el-collapse-header-text-color: #ccc;
-  --el-collapse-content-text-color: #aaa;
+  --el-collapse-border-color: var(--ea-border);
+  --el-collapse-header-bg-color: color-mix(in srgb, var(--ea-fg) 5%, var(--ea-dialog-bg));
+  --el-collapse-content-bg-color: color-mix(in srgb, var(--ea-fg) 3%, var(--ea-dialog-bg));
+  --el-collapse-header-text-color: var(--ea-dialog-body);
+  --el-collapse-content-text-color: var(--ea-fg-muted);
   --el-collapse-header-font-size: 13px;
   --el-collapse-content-font-size: 13px;
   border-radius: 6px;
@@ -443,8 +467,9 @@ const elementChartOption = computed<ChartOption>(() => ({
   margin: 0;
   line-height: 1.6;
   white-space: pre-line;
-  background: rgba(0, 0, 0, 0.3);
-  border-top: 1px solid #333;
+  background: var(--ea-fill-muted);
+  border-top: 1px solid var(--ea-border);
   padding: 12px 16px;
+  color: var(--ea-fg-muted);
 }
 </style>

@@ -1,9 +1,26 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, h } from 'vue';
 import { defineAsyncComponent } from 'vue';
+import LoadingTerminal from '@/components/LoadingTerminal.vue';
 
-const TimelineEditor = defineAsyncComponent(() => import('./TimelineEditor.vue'));
-const MobileTimelineViewer = defineAsyncComponent(() => import('./MobileTimelineViewer.vue'));
+function chunkLoadingFallback() {
+  return h(LoadingTerminal, {
+    fullScreen: true,
+    scanner: true,
+    message: '正在加载...',
+  });
+}
+
+const TimelineEditor = defineAsyncComponent({
+  loader: () => import('./TimelineEditor.vue'),
+  loadingComponent: { render: chunkLoadingFallback },
+  delay: 0,
+});
+const MobileTimelineViewer = defineAsyncComponent({
+  loader: () => import('./MobileTimelineViewer.vue'),
+  loadingComponent: { render: chunkLoadingFallback },
+  delay: 0,
+});
 
 function detectMobileViewer() {
   if (typeof window === 'undefined') return false;

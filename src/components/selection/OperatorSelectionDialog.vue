@@ -28,7 +28,7 @@ const elementIcons = {
 };
 
 function rarityColor(rarity) {
-  if (rarity === 6) return '#FFD700';
+  if (rarity === 6) return 'var(--ea-gold)';
   if (rarity === 5) return '#ffc400';
   if (rarity === 4) return '#d8b4fe';
   return '#a0a0a0';
@@ -47,7 +47,7 @@ const elementFilters = computed(() => {
     { label: getGameElementName('physical', locale.value), value: 'physical', color: '#e0e0e0' },
     { label: getGameElementName('heat', locale.value), value: 'heat', color: '#ff4d4f' },
     { label: getGameElementName('cryo', locale.value), value: 'cryo', color: '#00e5ff' },
-    { label: getGameElementName('electric', locale.value), value: 'electric', color: '#ffd700' },
+    { label: getGameElementName('electric', locale.value), value: 'electric', color: '#f0b23c' },
     { label: getGameElementName('nature', locale.value), value: 'nature', color: '#52c41a' },
   ];
 });
