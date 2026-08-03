@@ -1,6 +1,5 @@
 declare global {
   interface Window {
-    EndaxisAndroid?: unknown;
     EndaxisHandleBack?: () => boolean;
   }
 }
@@ -15,7 +14,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function isNativeApp(): boolean {
-  return typeof window !== 'undefined' && Boolean(window.EndaxisAndroid);
+  return typeof navigator !== 'undefined' && /\bEndaxisApp\//i.test(navigator.userAgent);
 }
 
 export function registerBackHandler(handler: () => boolean): () => void {

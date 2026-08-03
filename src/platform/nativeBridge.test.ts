@@ -6,8 +6,8 @@ describe('nativeBridge', () => {
     vi.resetModules();
   });
 
-  it('detects the injected Android bridge', async () => {
-    vi.stubGlobal('window', { EndaxisAndroid: {} });
+  it('detects the Endaxis Android user agent marker', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 EndaxisApp/1.0' });
     const { isNativeApp } = await import('./nativeBridge');
 
     expect(isNativeApp()).toBe(true);
