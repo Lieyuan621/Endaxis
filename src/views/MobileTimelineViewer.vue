@@ -40,6 +40,7 @@ import {
 } from '@/stores/timeline/instanceLookup';
 import { useAppearance } from '@/composables/useAppearance';
 import { adaptColorForLightSurface, solidFillForLightTrack } from '@/utils/theme';
+import { registerBackHandler } from '@/platform/nativeBridge';
 
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
@@ -55,6 +56,7 @@ const selectedActionId = ref(null);
 const importVisible = ref(false);
 const shareCode = ref('');
 const importing = ref(false);
+let unregisterBackHandler = null;
 
 const scenarioList = computed(() => (Array.isArray(store.scenarioList) ? store.scenarioList : []));
 const activeScenarioId = computed({
@@ -125,9 +127,26 @@ onMounted(() => {
   } catch {
     // ignore
   }
+  unregisterBackHandler = registerBackHandler(() => {
+    if (actionInfoOpen.value) {
+      actionInfoOpen.value = false;
+      return true;
+    }
+    if (loadoutOpen.value) {
+      loadoutOpen.value = false;
+      return true;
+    }
+    if (importVisible.value) {
+      importVisible.value = false;
+      return true;
+    }
+    return false;
+  });
 });
 
 onUnmounted(() => {
+  unregisterBackHandler?.();
+  unregisterBackHandler = null;
   try {
     document?.body?.classList?.remove('endaxis-mobile-viewer');
   } catch {
@@ -1576,8 +1595,7 @@ async function doImport() {
 
 <style scoped>
 .mobile-viewer-root {
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;

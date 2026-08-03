@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, h } from 'vue';
 import { defineAsyncComponent } from 'vue';
 import LoadingTerminal from '@/components/LoadingTerminal.vue';
+import { isNativeApp } from '@/platform/nativeBridge';
 
 function chunkLoadingFallback() {
   return h(LoadingTerminal, {
@@ -16,14 +17,15 @@ const TimelineEditor = defineAsyncComponent({
   loadingComponent: { render: chunkLoadingFallback },
   delay: 0,
 });
-const MobileTimelineViewer = defineAsyncComponent({
-  loader: () => import('./MobileTimelineViewer.vue'),
+const MobileAppShell = defineAsyncComponent({
+  loader: () => import('./MobileAppShell.vue'),
   loadingComponent: { render: chunkLoadingFallback },
   delay: 0,
 });
 
 function detectMobileViewer() {
   if (typeof window === 'undefined') return false;
+  if (isNativeApp()) return true;
 
   const width = Number(window.innerWidth) || 0;
   const isSmall = width > 0 && width <= 768;
@@ -35,9 +37,7 @@ function detectMobileViewer() {
 }
 
 const isMobileViewer = ref(false);
-const activeComponent = computed(() =>
-  isMobileViewer.value ? MobileTimelineViewer : TimelineEditor,
-);
+const activeComponent = computed(() => (isMobileViewer.value ? MobileAppShell : TimelineEditor));
 
 function refreshMode() {
   isMobileViewer.value = detectMobileViewer();

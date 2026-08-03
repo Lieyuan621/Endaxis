@@ -350,6 +350,11 @@
         "cooldown": "冷却时间",
         "gaugeCost": "充能消耗",
         "hits": "判定点数"
+      },
+      "app": {
+        "timeline": "时间轴",
+        "analysis": "分析",
+        "navigation": "应用导航"
       }
     },
     "loading": "正在加载资源...",

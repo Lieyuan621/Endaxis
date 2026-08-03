@@ -350,6 +350,11 @@
         "cooldown": "Cooldown",
         "gaugeCost": "Ult Gauge Cost",
         "hits": "Hit Points"
+      },
+      "app": {
+        "timeline": "Timeline",
+        "analysis": "Analysis",
+        "navigation": "App navigation"
       }
     },
     "loading": "Loading resources...",

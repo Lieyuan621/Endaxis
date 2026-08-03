@@ -1,4 +1,9 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import {
+  createRouter,
+  createWebHashHistory,
+  createWebHistory,
+  type RouteRecordRaw,
+} from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/timeline' },
@@ -6,7 +11,10 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: createWebHistory('/'),
+  history:
+    typeof window !== 'undefined' && window.location.hostname === 'appassets.androidplatform.net'
+      ? createWebHashHistory('/')
+      : createWebHistory('/'),
   routes,
 });
 
