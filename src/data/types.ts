@@ -1081,6 +1081,8 @@ export interface EnemySheet {
   staggerNodeDuration: number;
   staggerBreakDuration: number;
   finisherRecovery: number;
+  /** Incoming damage multiplier applied to finisher hits against this enemy. */
+  finisherMultiplier: number;
 }
 
 // ─── Gear Piece Sheet ───────────────────────────────────────────────────────

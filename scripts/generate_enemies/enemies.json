@@ -1,0 +1,337 @@
+{
+  "format": "EndaxisEnemyGenerationConfig",
+  "version": 1,
+  "defaults": {
+    "staggerNodeDuration": 2
+  },
+  "enemies": [
+    {
+      "gameId": "eny_0007_mimicw",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0018_lbtough",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0021_agmelee",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0023_aghornb",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0025_agrange",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0027_agscorp",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0029_lbmob",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0033_lbhunt",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0039_agcanno",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0045_agtrinit",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0046_lbshamman",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0047_firebat",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0048_hvybow",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0049_rogue",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0050_hound",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0051_rodin",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0052_palesent",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0053_hsmob",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0054_hsmino",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0055_hscrane",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0058_agdisk",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0059_erhound",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0060_lbmad",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0061_palecore",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0062_paletent",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0063_agmelee2",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0064_agrange2",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0065_lbmob2",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0066_lbhunt2",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0067_hound2",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0068_lbtough2",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0069_aghornb2",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0070_agscorp2",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0071_sandb",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0072_slimeml",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0073_slimerg",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0074_lbshield",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0075_lbroshan",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0076_agfly",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0077_agshield",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0078_nefarp1",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0079_nefarp2",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0081_ruanyi",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0082_hsbear",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0083_hstiger",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0084_hshunt",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0085_hsrogue",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0087_wgslime",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0088_wgthorns",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0089_wgreflec",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0090_wgabyss",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0091_wgshoal",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0092_slbomb",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0093_hshog",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0094_hsfly",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0095_ethillu",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0096_hsmob2",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0097_hsmino2",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0098_sandb2",
+      "category": "裂地者"
+    },
+    {
+      "gameId": "eny_0099_slimeml2",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0100_slimerg2",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0101_agfly2",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0102_hstiger2",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0103_hshunt2",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0104_hsrogue2",
+      "category": "沧贼"
+    },
+    {
+      "gameId": "eny_0105_wgslime2",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0106_wgthorns2",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0107_wgshoal2",
+      "category": "天使"
+    },
+    {
+      "gameId": "eny_0108_slbomb2",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0109_hshog2",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0112_jzmonk",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0113_jzogre",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0114_jzmking",
+      "category": "野外生物"
+    },
+    {
+      "gameId": "eny_0117_klhound",
+      "category": "蚀影"
+    },
+    {
+      "gameId": "eny_0118_klhog",
+      "category": "蚀影"
+    },
+    {
+      "gameId": "eny_0119_kltiger",
+      "category": "蚀影"
+    },
+    {
+      "gameId": "eny_0120_klbear",
+      "category": "蚀影"
+    },
+    {
+      "gameId": "eny_0121_klbud",
+      "category": "蚀影"
+    },
+    {
+      "gameId": "eny_0122_kltdbud",
+      "category": "蚀影"
+    },
+    {
+      "gameId": "eny_0123_klcap",
+      "category": "蚀影"
+    },
+    {
+      "gameId": "eny_0124_kltdcap",
+      "category": "蚀影"
+    },
+    {
+      "gameId": "eny_0125_fdcentur",
+      "category": "造裔"
+    }
+  ]
+}
