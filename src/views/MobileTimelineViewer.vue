@@ -1660,9 +1660,17 @@ async function doImport() {
 .mobile-more-trigger.ea-btn {
   width: 34px;
   min-width: 34px;
-  height: 28px;
+  height: 24px;
   padding: 0;
   justify-content: center;
+  --ea-btn-bg: var(--ea-btn-secondary-bg);
+  --ea-btn-border: var(--ea-btn-secondary-border);
+  --ea-btn-color: var(--ea-btn-secondary-fg);
+  --ea-btn-bg-hover: var(--ea-btn-secondary-hover-bg);
+  --ea-btn-border-hover: var(--ea-btn-secondary-hover-border);
+  --ea-btn-color-hover: var(--ea-btn-secondary-hover-fg);
+  --ea-btn-radius: 0;
+  border-radius: 0;
 }
 
 .mobile-more-panel {

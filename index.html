@@ -7,6 +7,10 @@
     <title>Endaxis - 《明日方舟：终末地》排轴工具</title>
     <script>
       (function () {
+        document.documentElement.classList.toggle(
+          'native-app',
+          /\bEndaxisApp\//i.test(navigator.userAgent || ''),
+        );
         try {
           var theme = localStorage.getItem('endaxis:appearance:v1') === 'light' ? 'light' : 'dark';
           document.documentElement.setAttribute('data-theme', theme);
@@ -104,6 +108,14 @@
         html[data-theme='light'] .boot-loader {
           background: #f0f0f0;
         }
+      }
+
+      html.native-app .boot-loader {
+        background: #0b0c10;
+      }
+
+      html.native-app .boot-loader .panel {
+        display: none;
       }
 
       @keyframes spin {

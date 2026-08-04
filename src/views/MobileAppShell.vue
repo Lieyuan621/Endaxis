@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { registerBackHandler } from '@/platform/nativeBridge';
 import MobileTimelineViewer from './MobileTimelineViewer.vue';
@@ -9,7 +9,15 @@ type AppView = 'timeline' | 'analysis';
 
 const { t } = useI18n({ useScope: 'global' });
 const view = ref<AppView>('timeline');
+const activeView = computed(() =>
+  view.value === 'timeline' ? MobileTimelineViewer : MobileAnalysisView,
+);
 let unregisterBackHandler: (() => void) | null = null;
+
+function selectView(nextView: AppView) {
+  if (view.value === nextView) return;
+  view.value = nextView;
+}
 
 onMounted(() => {
   unregisterBackHandler = registerBackHandler(() => {
@@ -27,12 +35,18 @@ onUnmounted(() => {
 <template>
   <div class="mobile-app-shell">
     <main class="app-content">
-      <MobileTimelineViewer v-if="view === 'timeline'" />
-      <MobileAnalysisView v-else />
+      <KeepAlive>
+        <component :is="activeView" />
+      </KeepAlive>
     </main>
 
     <nav class="bottom-nav" :aria-label="t('timeline.mobile.app.navigation')">
-      <button type="button" :class="{ active: view === 'timeline' }" @click="view = 'timeline'">
+      <button
+        type="button"
+        :class="{ active: view === 'timeline' }"
+        :aria-current="view === 'timeline' ? 'page' : undefined"
+        @click="selectView('timeline')"
+      >
         <svg
           class="nav-icon"
           viewBox="0 0 24 24"
@@ -48,7 +62,12 @@ onUnmounted(() => {
         </svg>
         {{ t('timeline.mobile.app.timeline') }}
       </button>
-      <button type="button" :class="{ active: view === 'analysis' }" @click="view = 'analysis'">
+      <button
+        type="button"
+        :class="{ active: view === 'analysis' }"
+        :aria-current="view === 'analysis' ? 'page' : undefined"
+        @click="selectView('analysis')"
+      >
         <svg
           class="nav-icon"
           viewBox="0 0 24 24"
@@ -80,10 +99,12 @@ onUnmounted(() => {
   color: var(--ea-fg);
 }
 .app-content {
+  position: relative;
   width: 100%;
   min-height: 0;
   flex: 1;
   overflow: hidden;
+  background: var(--ea-bg);
 }
 .bottom-nav {
   min-height: 58px;
@@ -95,6 +116,7 @@ onUnmounted(() => {
   background: var(--ea-chrome);
 }
 .bottom-nav button {
+  position: relative;
   min-width: 0;
   border: 0;
   background: transparent;
@@ -105,6 +127,8 @@ onUnmounted(() => {
   justify-content: center;
   gap: 3px;
   font-size: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 .nav-icon {
   width: 21px;
@@ -113,5 +137,16 @@ onUnmounted(() => {
 }
 .bottom-nav button.active {
   color: var(--ea-gold);
+}
+
+.bottom-nav button.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 28px;
+  height: 2px;
+  background: var(--ea-gold);
+  transform: translateX(-50%);
 }
 </style>
