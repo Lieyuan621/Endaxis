@@ -28,6 +28,7 @@ const sheet: EnemySheet = {
   staggerNodeDuration: 2,
   staggerBreakDuration: 9,
   finisherRecovery: 50,
+  finisherMultiplier: 1.5,
 };
 
 export default sheet;

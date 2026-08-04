@@ -417,16 +417,6 @@ export function applyConsumedStatEffects(
 
 export const STAGGER_DAMAGE_MULTIPLIER = 1.3;
 
-// ─── Finisher multiplier by enemy tier ─────────────────────────────────────
-
-export const FINISHER_MULTIPLIER_BY_TIER: Record<string, number> = {
-  normal: 1.0,
-  advanced: 1.25,
-  elite: 1.25,
-  boss: 1.5,
-  leader: 1.75,
-};
-
 // ─── Main damage calculation ────────────────────────────────────────────────
 
 interface HitDamageParams {
@@ -455,7 +445,7 @@ interface HitDamageParams {
   dmgTakenExternalMult: number; // standalone multiplicative damage-taken factor (Π(1 + external), e.g. Wrap)
   linkStacks: number;
   staggerMult: number; // 1.3 when enemy is staggered, 1 otherwise
-  finisherMult: number; // tier-based multiplier for finisher actions against staggered enemies
+  finisherMult: number; // enemy-specific multiplier for finisher actions against staggered enemies
   atkDetail?: AtkDetailSnapshot;
 }
 

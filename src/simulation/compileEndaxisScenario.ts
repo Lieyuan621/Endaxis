@@ -176,6 +176,8 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
         enemySheet?.finisherRecovery !== undefined
           ? { executionRecovery: enemySheet.finisherRecovery }
           : {}),
+        // Finisher vulnerability belongs to the selected enemy sheet, not persisted UI state.
+        finisherMultiplier: enemySheet?.finisherMultiplier ?? 1,
       },
     },
   );

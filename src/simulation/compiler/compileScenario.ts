@@ -190,6 +190,7 @@ const DEFAULT_SYSTEM_CONSTANTS: SystemConstants = {
   staggerNodeDuration: 2,
   staggerBreakDuration: 10,
   executionRecovery: 25,
+  finisherMultiplier: 1,
   defense: 100,
   superArmor: 0,
   tier: 'normal',
@@ -232,17 +233,7 @@ export function compileScenario(
       staggerBreakDuration: mergedSystemConstants.staggerBreakDuration,
       executionRecovery: mergedSystemConstants.executionRecovery,
       finisherRecovery: mergedSystemConstants.executionRecovery,
-      finisherMultiplier:
-        (mergedSystemConstants as any).finisherMultiplier ??
-        (mergedSystemConstants.tier === 'leader'
-          ? 1.75
-          : mergedSystemConstants.tier === 'boss'
-            ? 1.5
-            : mergedSystemConstants.tier === 'elite'
-              ? 1.25
-              : mergedSystemConstants.tier === 'advanced'
-                ? 1.1
-                : 1),
+      finisherMultiplier: mergedSystemConstants.finisherMultiplier,
       defense: mergedSystemConstants.defense,
       enemyHp: (mergedSystemConstants as any).enemyHp,
       superArmor: (mergedSystemConstants as any).superArmor,

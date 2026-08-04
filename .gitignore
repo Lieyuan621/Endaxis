@@ -26,6 +26,7 @@ deploy.ps1
 *.sw?
 
 *.tsbuildinfo
+__pycache__/
 
 .eslintcache
 
