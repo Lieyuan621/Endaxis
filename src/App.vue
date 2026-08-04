@@ -307,10 +307,89 @@ html.dark .el-select-dropdown__item.selected {
   background-color: color-mix(in srgb, var(--ea-gold) 5%, transparent) !important;
 }
 
-/* Match fill so the rotated square does not read as a bordered diamond. */
-html.dark .el-popper.is-light .el-popper__arrow::before {
-  background: #1e1e1e !important;
-  border: 1px solid #1e1e1e !important;
+/* Use real directional triangles instead of Element Plus' exposed rotated squares. */
+html body .el-popper.el-popper.el-popper[data-popper-placement] > .el-popper__arrow {
+  background: transparent !important;
+  overflow: visible;
+}
+
+html body
+  .el-popper.el-popper.el-popper[data-popper-placement]
+  > .el-popper__arrow::before {
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+.el-popper__arrow::before {
+  background: var(--ea-popper-arrow-bg, var(--el-bg-color-overlay, #ffffff));
+}
+
+html.dark .el-popper.is-dark {
+  --ea-popper-arrow-bg: var(--el-text-color-primary, #303133);
+}
+
+html.dark .el-popper.is-light {
+  --ea-popper-arrow-bg: #1e1e1e;
+}
+
+html[data-theme='light'] .el-popper {
+  --ea-popper-arrow-bg: var(--ea-popover-bg, #ffffff);
+}
+
+html body .el-popper.el-popper.el-popper[data-popper-placement^='top'] > .el-popper__arrow,
+html body .el-popper.el-popper.el-popper[data-popper-placement^='bottom'] > .el-popper__arrow {
+  width: 12px !important;
+  height: 7px !important;
+}
+
+html body .el-popper.el-popper.el-popper[data-popper-placement^='top'] > .el-popper__arrow {
+  bottom: -7px !important;
+}
+
+html body
+  .el-popper.el-popper.el-popper[data-popper-placement^='top']
+  > .el-popper__arrow::before {
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+html body .el-popper.el-popper.el-popper[data-popper-placement^='bottom'] > .el-popper__arrow {
+  top: -7px !important;
+}
+
+html body
+  .el-popper.el-popper.el-popper[data-popper-placement^='bottom']
+  > .el-popper__arrow::before {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+html body .el-popper.el-popper.el-popper[data-popper-placement^='left'] > .el-popper__arrow,
+html body .el-popper.el-popper.el-popper[data-popper-placement^='right'] > .el-popper__arrow {
+  width: 7px !important;
+  height: 12px !important;
+}
+
+html body .el-popper.el-popper.el-popper[data-popper-placement^='left'] > .el-popper__arrow {
+  right: -7px !important;
+}
+
+html body
+  .el-popper.el-popper.el-popper[data-popper-placement^='left']
+  > .el-popper__arrow::before {
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+html body .el-popper.el-popper.el-popper[data-popper-placement^='right'] > .el-popper__arrow {
+  left: -7px !important;
+}
+
+html body
+  .el-popper.el-popper.el-popper[data-popper-placement^='right']
+  > .el-popper__arrow::before {
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
 }
 
 html.dark .el-select .el-input__suffix .el-icon {

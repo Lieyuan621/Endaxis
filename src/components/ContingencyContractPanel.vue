@@ -847,8 +847,9 @@ function hideBrokenImage(event: Event) {
   box-shadow: 0 12px 28px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
 }
 
-:global(html[data-theme='light'] .cc-tag-tooltip-popper.el-popper .el-popper__arrow) {
-  display: none !important;
+:global(html[data-theme='light'] .cc-tag-tooltip-popper.el-popper .el-popper__arrow::before) {
+  background: var(--ea-tooltip-bg, #ffffff) !important;
+  border-color: color-mix(in srgb, #c62828 35%, var(--ea-dialog-border, #d8dbe0)) !important;
 }
 
 :global(html[data-theme='light'] .cc-tag-tooltip) {

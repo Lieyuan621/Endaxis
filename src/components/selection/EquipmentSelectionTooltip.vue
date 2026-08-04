@@ -85,8 +85,13 @@ const setPreview = computed(() => {
   color: #1a1b1e;
 }
 
-:global(html[data-theme='light'] .equipment-selection-preview-popper.el-popper .el-popper__arrow) {
-  display: none !important;
+:global(
+  html[data-theme='light']
+    .equipment-selection-preview-popper.el-popper
+    .el-popper__arrow::before
+) {
+  background: #ffffff !important;
+  border-color: rgba(26, 27, 30, 0.14) !important;
 }
 
 :global(html[data-theme='light'] .equipment-selection-preview__name) {

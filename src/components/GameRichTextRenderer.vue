@@ -253,8 +253,11 @@ function renderTermTooltip(term, locale, depth) {
   box-shadow: 0 14px 34px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
 }
 
-:global(html[data-theme='light'] .game-rich-text-term-popper.el-popper .el-popper__arrow) {
-  display: none !important;
+:global(
+  html[data-theme='light'] .game-rich-text-term-popper.el-popper .el-popper__arrow::before
+) {
+  background: var(--ea-tooltip-bg, #ffffff) !important;
+  border-color: var(--ea-dialog-border, #d8dbe0) !important;
 }
 
 :global(html[data-theme='light'] .game-rich-text-tooltip) {

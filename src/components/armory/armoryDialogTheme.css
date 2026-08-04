@@ -45,6 +45,12 @@
   border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.06));
 }
 
+.armory-dialog.base-stats-dialog .section,
+.armory-dialog.enemy-base-stats-dialog .section {
+  background: transparent;
+  border: none;
+}
+
 .armory-dialog .skill-icon-frame {
   border-color: var(--ea-border-strong, #555);
   background: var(--ea-fill-muted, #222228);
@@ -124,7 +130,8 @@ html[data-theme='light'] .armory-dialog .section {
   border-color: var(--ea-border, #d8dbe0);
 }
 
-html[data-theme='light'] .armory-dialog.base-stats-dialog .section {
+html[data-theme='light'] .armory-dialog.base-stats-dialog .section,
+html[data-theme='light'] .armory-dialog.enemy-base-stats-dialog .section {
   background: transparent;
   border-color: var(--ea-border, #d8dbe0);
 }
@@ -272,8 +279,11 @@ html[data-theme='light'] .operator-edit-tooltip-popper.el-popper.is-dark {
  * Rotated-square arrows read as diamonds on light chrome.
  * Hide them — content readability matters more than the pointer.
  */
-html[data-theme='light'] .operator-edit-tooltip-popper.el-popper .el-popper__arrow {
-  display: none !important;
+html[data-theme='light']
+  .operator-edit-tooltip-popper.el-popper
+  .el-popper__arrow::before {
+  background: var(--ea-tooltip-bg, #ffffff) !important;
+  border-color: var(--ea-dialog-border, #d8dbe0) !important;
 }
 
 html[data-theme='light'] .operator-edit-tooltip {

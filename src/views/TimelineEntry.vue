@@ -12,13 +12,36 @@ function chunkLoadingFallback() {
   });
 }
 
+function dismissBootLoader() {
+  if (typeof document === 'undefined') return;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.getElementById('boot-loader')?.remove();
+    });
+  });
+}
+
+function loadInitialView(loader) {
+  return loader().then(
+    module => {
+      dismissBootLoader();
+      return module;
+    },
+    error => {
+      dismissBootLoader();
+      throw error;
+    },
+  );
+}
+
 const TimelineEditor = defineAsyncComponent({
-  loader: () => import('./TimelineEditor.vue'),
+  loader: () => loadInitialView(() => import('./TimelineEditor.vue')),
   loadingComponent: { render: chunkLoadingFallback },
   delay: 0,
 });
 const MobileAppShell = defineAsyncComponent({
-  loader: () => import('./MobileAppShell.vue'),
+  loader: () => loadInitialView(() => import('./MobileAppShell.vue')),
   loadingComponent: { render: chunkLoadingFallback },
   delay: 0,
 });
@@ -36,7 +59,7 @@ function detectMobileViewer() {
   return isSmall && (isAndroid || coarsePointer);
 }
 
-const isMobileViewer = ref(false);
+const isMobileViewer = ref(detectMobileViewer());
 const activeComponent = computed(() => (isMobileViewer.value ? MobileAppShell : TimelineEditor));
 
 function refreshMode() {

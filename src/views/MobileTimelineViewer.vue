@@ -6,9 +6,7 @@ import {
   ElInput,
   ElMessage,
   ElButton,
-  ElDropdown,
-  ElDropdownMenu,
-  ElDropdownItem,
+  ElPopover,
   ElMessageBox,
 } from 'element-plus';
 import { useTimelineStore } from '@/stores/timelineStore.js';
@@ -56,6 +54,7 @@ const selectedActionId = ref(null);
 const importVisible = ref(false);
 const shareCode = ref('');
 const importing = ref(false);
+const moreMenuOpen = ref(false);
 let unregisterBackHandler = null;
 
 const scenarioList = computed(() => (Array.isArray(store.scenarioList) ? store.scenarioList : []));
@@ -128,6 +127,10 @@ onMounted(() => {
     // ignore
   }
   unregisterBackHandler = registerBackHandler(() => {
+    if (moreMenuOpen.value) {
+      moreMenuOpen.value = false;
+      return true;
+    }
     if (actionInfoOpen.value) {
       actionInfoOpen.value = false;
       return true;
@@ -159,6 +162,7 @@ function changeLocale(next) {
 }
 
 function handleReset() {
+  moreMenuOpen.value = false;
   ElMessageBox.confirm(t('timeline.reset.confirm'), t('common.warning'), {
     confirmButtonText: t('timeline.reset.confirmButton'),
     cancelButtonText: t('common.cancel'),
@@ -170,21 +174,6 @@ function handleReset() {
       ElMessage.success(t('timeline.reset.done'));
     })
     .catch(() => {});
-}
-
-function handleMoreCommand(command) {
-  if (command === 'reset') {
-    handleReset();
-    return;
-  }
-  if (typeof command === 'string' && command.startsWith('locale:')) {
-    changeLocale(command.slice('locale:'.length));
-    return;
-  }
-  if (typeof command === 'string' && command.startsWith('appearance:')) {
-    const next = command.slice('appearance:'.length);
-    if (next === 'light' || next === 'dark') setAppearance(next);
-  }
 }
 
 function getTrackAvatar(track) {
@@ -1014,15 +1003,24 @@ async function doImport() {
           </span>
         </el-button>
 
-        <el-dropdown
+        <el-popover
+          v-model:visible="moreMenuOpen"
           trigger="click"
           placement="bottom-end"
           :teleported="true"
+          :width="260"
+          :show-arrow="true"
           popper-class="mobile-more-popper"
-          @command="handleMoreCommand"
         >
-          <el-button class="mobile-icon-btn" size="small" plain :title="t('timeline.mobile.more')">
-            <span class="btn-inline">
+          <template #reference>
+            <button
+              type="button"
+              class="ea-btn ea-btn--sm ea-btn--lift mobile-more-trigger"
+              :class="{ 'is-active': moreMenuOpen }"
+              :title="t('timeline.mobile.more')"
+              :aria-label="t('timeline.mobile.more')"
+              :aria-expanded="moreMenuOpen"
+            >
               <svg
                 viewBox="0 0 24 24"
                 width="16"
@@ -1038,118 +1036,127 @@ async function doImport() {
                 <circle cx="12" cy="12" r="1.6"></circle>
                 <circle cx="12" cy="19" r="1.6"></circle>
               </svg>
-            </span>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item divided disabled>
-                <div class="mobile-menu-item">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="14"
-                    height="14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M2 12h20"></path>
-                    <path d="M12 2a15 15 0 0 1 0 20"></path>
-                    <path d="M12 2a15 15 0 0 0 0 20"></path>
-                  </svg>
-                  <span>{{ t('common.language') }}</span>
-                </div>
-              </el-dropdown-item>
-              <el-dropdown-item command="locale:zh-CN" :disabled="locale === 'zh-CN'">
-                {{ t('locale.zhCN') }}
-              </el-dropdown-item>
-              <el-dropdown-item command="locale:en" :disabled="locale === 'en'">
-                {{ t('locale.en') }}
-              </el-dropdown-item>
-              <el-dropdown-item command="locale:ru" :disabled="locale === 'ru'">
-                {{ t('locale.ru') }}
-              </el-dropdown-item>
-
-              <el-dropdown-item divided disabled>
-                <div class="mobile-appearance-row">
-                  <span class="mobile-appearance-row__label">{{ t('common.appearance') }}</span>
-                  <div class="mobile-appearance-row__btns" role="group" :aria-label="t('common.appearance')">
-                    <button
-                      type="button"
-                      class="mobile-appearance-btn"
-                      :class="{ 'is-active': appearance === 'light' }"
-                      :title="t('common.appearanceLight')"
-                      :aria-label="t('common.appearanceLight')"
-                      @click.stop="setAppearance('light')"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="14"
-                        height="14"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                      >
-                        <circle cx="12" cy="12" r="4" />
-                        <path
-                          d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      class="mobile-appearance-btn"
-                      :class="{ 'is-active': appearance === 'dark' }"
-                      :title="t('common.appearanceDark')"
-                      :aria-label="t('common.appearanceDark')"
-                      @click.stop="setAppearance('dark')"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="14"
-                        height="14"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </el-dropdown-item>
-
-              <el-dropdown-item divided command="reset">
-                <div class="mobile-menu-item">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="14"
-                    height="14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path
-                      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                    ></path>
-                  </svg>
-                  <span>{{ t('common.reset') }}</span>
-                </div>
-              </el-dropdown-item>
-            </el-dropdown-menu>
+            </button>
           </template>
-        </el-dropdown>
+
+          <div class="mobile-more-panel">
+            <section class="mobile-more-section">
+              <h4 class="mobile-more-section__title">{{ t('common.language') }}</h4>
+              <div class="mobile-locale" :aria-label="t('common.language')">
+                <button
+                  type="button"
+                  class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
+                  :class="{ 'is-active': locale === 'zh-CN' }"
+                  :aria-pressed="locale === 'zh-CN'"
+                  @click="changeLocale('zh-CN')"
+                >
+                  {{ t('locale.zhCN') }}
+                </button>
+                <button
+                  type="button"
+                  class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
+                  :class="{ 'is-active': locale === 'en' }"
+                  :aria-pressed="locale === 'en'"
+                  @click="changeLocale('en')"
+                >
+                  {{ t('locale.en') }}
+                </button>
+                <button
+                  type="button"
+                  class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
+                  :class="{ 'is-active': locale === 'ru' }"
+                  :aria-pressed="locale === 'ru'"
+                  @click="changeLocale('ru')"
+                >
+                  {{ t('locale.ru') }}
+                </button>
+              </div>
+
+              <div class="mobile-appearance-row">
+                <span class="mobile-appearance-row__label">{{ t('common.appearance') }}</span>
+                <div
+                  class="mobile-appearance-row__btns"
+                  role="group"
+                  :aria-label="t('common.appearance')"
+                >
+                  <button
+                    type="button"
+                    class="ea-btn ea-btn--sm ea-btn--lift mobile-appearance-btn"
+                    :class="{ 'is-active': appearance === 'light' }"
+                    :title="t('common.appearanceLight')"
+                    :aria-label="t('common.appearanceLight')"
+                    @click="setAppearance('light')"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="12" r="4" />
+                      <path
+                        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="ea-btn ea-btn--sm ea-btn--lift mobile-appearance-btn"
+                    :class="{ 'is-active': appearance === 'dark' }"
+                    :title="t('common.appearanceDark')"
+                    :aria-label="t('common.appearanceDark')"
+                    @click="setAppearance('dark')"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="mobile-more-section">
+              <button
+                type="button"
+                class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-danger-dark mobile-reset-action"
+                @click="handleReset"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path
+                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                  />
+                </svg>
+                <span>{{ t('common.reset') }}</span>
+              </button>
+            </section>
+          </div>
+        </el-popover>
       </div>
     </div>
 
@@ -1650,15 +1657,64 @@ async function doImport() {
   flex: 0 0 auto;
 }
 
-.mobile-menu-item {
+.mobile-more-trigger.ea-btn {
+  width: 34px;
+  min-width: 34px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+}
+
+.mobile-more-panel {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mobile-more-section {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.mobile-menu-item svg {
-  flex: 0 0 auto;
-  opacity: 0.9;
+.mobile-more-section + .mobile-more-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ea-border);
+}
+
+.mobile-more-section__title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: color-mix(in srgb, var(--ea-gold) 90%, transparent);
+}
+
+.mobile-locale {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.mobile-locale__btn.ea-btn,
+.mobile-appearance-btn.ea-btn {
+  min-width: 0;
+  --ea-btn-bg: var(--ea-fill-soft);
+  --ea-btn-border: var(--ea-border);
+  --ea-btn-color: var(--ea-fg-secondary);
+  --ea-btn-bg-hover: var(--ea-btn-primary-hover-bg);
+  --ea-btn-border-hover: var(--ea-btn-primary-border);
+  --ea-btn-color-hover: var(--ea-btn-primary-fg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.mobile-locale__btn.ea-btn {
+  width: 100%;
+  padding: 5px 4px;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .mobile-appearance-row {
@@ -1667,11 +1723,12 @@ async function doImport() {
   justify-content: space-between;
   gap: 10px;
   width: 100%;
-  min-width: 160px;
+  margin-top: 2px;
 }
 
 .mobile-appearance-row__label {
-  font-size: 13px;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--ea-fg-muted);
 }
 
@@ -1681,44 +1738,39 @@ async function doImport() {
   gap: 4px;
 }
 
-.mobile-appearance-btn {
+.mobile-appearance-btn.ea-btn {
   width: 28px;
+  min-width: 28px;
   height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid var(--ea-border);
-  border-radius: 4px;
-  background: var(--ea-fill-soft);
-  color: var(--ea-fg-secondary);
-  cursor: pointer;
 }
 
-.mobile-appearance-btn.is-active {
-  border-color: rgba(180, 140, 0, 0.55);
-  background: rgba(180, 140, 0, 0.12);
-  color: var(--ea-gold);
-}
-
-:global(html[data-theme='dark'] .mobile-appearance-btn.is-active){
+.mobile-locale__btn.ea-btn.is-active,
+.mobile-appearance-btn.ea-btn.is-active {
   border-color: color-mix(in srgb, var(--ea-gold) 50%, transparent);
   background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
   color: #ffe38a;
 }
 
-.mobile-icon-btn {
-  --el-button-bg-color: var(--ea-btn-secondary-bg);
-  --el-button-border-color: var(--ea-btn-secondary-border);
-  --el-button-text-color: var(--ea-btn-secondary-fg);
-  --el-button-hover-bg-color: var(--ea-btn-secondary-hover-bg);
-  --el-button-hover-border-color: var(--ea-btn-secondary-hover-border);
-  --el-button-hover-text-color: var(--ea-btn-secondary-hover-fg);
-  border-radius: 0 !important;
-  padding: 0 10px !important;
-  min-width: 34px;
-  font-weight: 900;
-  letter-spacing: 2px;
+:global(html[data-theme='light'] .mobile-locale__btn.ea-btn.is-active),
+:global(html[data-theme='light'] .mobile-appearance-btn.ea-btn.is-active) {
+  border-color: rgba(180, 140, 0, 0.55);
+  background: rgba(180, 140, 0, 0.12);
+  color: var(--ea-gold);
+}
+
+.mobile-reset-action.ea-btn {
+  width: 100%;
+  justify-content: flex-start;
+  --ea-btn-bg: var(--ea-fill-soft);
+  --ea-btn-border: var(--ea-border);
+  --ea-btn-color: var(--ea-fg-secondary);
+  --ea-btn-bg-hover: rgba(255, 77, 79, 0.12);
+  --ea-btn-border-hover: var(--ea-danger-soft);
+  --ea-btn-color-hover: var(--ea-danger-soft);
 }
 
 .mobile-scenario-select {
@@ -1781,33 +1833,18 @@ async function doImport() {
   background-color: var(--ea-select-hover-bg) !important;
 }
 
-:global(.mobile-more-popper.el-popper) {
-  background-color: var(--ea-panel-elevated) !important;
-  border: 1px solid var(--ea-dialog-border) !important;
-  border-radius: 0 !important;
-  box-shadow: 0 10px 30px var(--ea-shadow-strong) !important;
-}
-
-:global(.mobile-more-popper .el-popper__arrow) {
-  overflow: hidden;
+:global(.mobile-more-popper.el-popover.el-popper) {
+  padding: 12px;
+  background: var(--ea-popover-bg);
+  border: 1px solid var(--ea-border);
+  border-radius: 0;
+  color: var(--ea-fg-secondary);
+  box-shadow: 0 10px 28px var(--ea-shadow-strong);
 }
 
 :global(.mobile-more-popper .el-popper__arrow::before) {
-  background: var(--ea-panel-elevated) !important;
-  border: 1px solid var(--ea-panel-elevated) !important;
-}
-
-:global(.mobile-more-popper .el-dropdown-menu__item) {
-  color: var(--ea-fg-secondary);
-}
-
-:global(.mobile-more-popper .el-dropdown-menu__item:hover) {
-  background: var(--ea-menu-hover-bg);
-  color: var(--ea-menu-hover-fg);
-}
-
-:global(.mobile-more-popper .el-dropdown-menu__item.is-disabled) {
-  color: var(--ea-fg-faint);
+  background: var(--ea-popover-bg);
+  border-color: var(--ea-border);
 }
 
 .mobile-scroll {

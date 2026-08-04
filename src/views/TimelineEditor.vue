@@ -1670,7 +1670,7 @@ onUnmounted(() => {
             placement="bottom-end"
             :width="280"
             trigger="click"
-            :show-arrow="false"
+            :show-arrow="true"
             popper-class="header-more-popper"
           >
             <template #reference>
@@ -3505,5 +3505,9 @@ onUnmounted(() => {
 .header-more-popper.el-popper.is-light,
 .header-more-popper.el-popper {
   color: var(--ea-fg-secondary);
+}
+.header-more-popper.el-popper .el-popper__arrow::before {
+  background: var(--ea-popover-bg);
+  border-color: var(--ea-border);
 }
 </style>

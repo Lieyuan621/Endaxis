@@ -1943,7 +1943,8 @@ html[data-theme='light'] .hit-editor-select-popper .el-select-group__title {
   color: var(--ea-fg-muted, rgba(26, 27, 30, 0.68)) !important;
 }
 
-html[data-theme='light'] .hit-editor-select-popper .el-popper__arrow {
-  display: none !important;
+html[data-theme='light'] .hit-editor-select-popper .el-popper__arrow::before {
+  background: var(--ea-popover-bg, #ffffff) !important;
+  border-color: var(--ea-border-strong, #d8dbe0) !important;
 }
 </style>

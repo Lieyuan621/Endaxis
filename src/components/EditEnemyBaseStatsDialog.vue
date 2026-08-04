@@ -3,6 +3,7 @@ import { onBeforeUnmount, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore';
 import CustomNumberInput from '@/components/CustomNumberInput.vue';
+import './armory/armoryDialogTheme.css';
 
 const ENEMY_RESISTANCE_ELEMENTS = ['physical', 'heat', 'cryo', 'electric', 'nature'];
 const COMMIT_DELAY_MS = 320;

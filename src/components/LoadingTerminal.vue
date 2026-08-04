@@ -42,7 +42,13 @@ defineProps({
   inset: 0;
   z-index: 9999;
   padding: 0;
-  background: rgba(24, 24, 28, 0.92);
+  background: var(--ea-workbench, #1e1f22);
+}
+
+@media (max-width: 768px) and (pointer: coarse) {
+  .endaxis-loading.is-fullscreen {
+    background: var(--ea-bg, #18181c);
+  }
 }
 
 .panel {
@@ -52,7 +58,7 @@ defineProps({
   padding: 22px 26px;
   border: 1px solid color-mix(in srgb, var(--ea-gold) 22%, transparent);
   background: rgba(0, 0, 0, 0.25);
-  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.55);
+  box-shadow: none;
   display: flex;
   align-items: center;
   gap: 14px;

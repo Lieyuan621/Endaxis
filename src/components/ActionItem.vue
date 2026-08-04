@@ -1051,8 +1051,17 @@ function handleActionDragStart(startPos, port) {
   box-shadow: 0 12px 28px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
 }
 
-:global(html[data-theme='light'] .action-requisite-tooltip-popper.el-popper .el-popper__arrow) {
-  display: none !important;
+:global(
+  html[data-theme='light']
+    .action-requisite-tooltip-popper.el-popper
+    .el-popper__arrow::before
+) {
+  background: var(--ea-tooltip-bg, #ffffff) !important;
+  border-color: color-mix(
+    in srgb,
+    #e11d48 45%,
+    var(--ea-dialog-border, #d8dbe0)
+  ) !important;
 }
 
 .action-item-content {
