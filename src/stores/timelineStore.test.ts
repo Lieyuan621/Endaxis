@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
+import { nextTick } from 'vue';
 import { useTimelineStore } from './timelineStore';
 import { setLocale } from '@/i18n';
 
@@ -170,5 +171,29 @@ describe('timeline skill library editing', () => {
 
     store.toggleActionsMultiSelection(['a-2', 'a-3']);
     expect([...store.multiSelectedIds].sort()).toEqual(['a-1', 'a-3']);
+  });
+
+  it('keeps scenario switching transactional until queued store watchers have flushed', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const store = useTimelineStore();
+      const firstScenarioId = store.activeScenarioId;
+      store.addScenario();
+
+      expect(store.activeScenarioId).not.toBe(firstScenarioId);
+
+      store.switchScenario(firstScenarioId);
+
+      expect(store.activeScenarioId).toBe(firstScenarioId);
+      expect(store.isSwitchingScenario).toBe(true);
+
+      await nextTick();
+      await vi.runOnlyPendingTimersAsync();
+
+      expect(store.isSwitchingScenario).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

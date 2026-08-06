@@ -58,10 +58,8 @@ const moreMenuOpen = ref(false);
 let unregisterBackHandler = null;
 
 const scenarioList = computed(() => (Array.isArray(store.scenarioList) ? store.scenarioList : []));
-const activeScenarioId = computed({
-  get: () => store.activeScenarioId,
-  set: nextId => store.switchScenario(nextId),
-});
+const selectedScenarioId = ref(store.activeScenarioId);
+const scenarioSwitching = ref(false);
 
 const tracks = computed(() => (Array.isArray(store.tracks) ? store.tracks.slice(0, 4) : []));
 const pxPerSecond = computed(() => {
@@ -117,6 +115,37 @@ const prepHeightPx = computed(() => battleStartYPx.value);
 
 function enforceMobilePrepExpanded() {
   store.prepExpanded = true;
+}
+
+function waitForScenarioSwitchFrame() {
+  return new Promise(resolve => {
+    if (typeof window.requestAnimationFrame !== 'function') {
+      window.setTimeout(resolve, 0);
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
+}
+
+async function handleScenarioChange(nextId) {
+  const targetId = String(nextId || '');
+  if (!targetId || targetId === store.activeScenarioId || scenarioSwitching.value) return;
+
+  selectedScenarioId.value = targetId;
+  scenarioSwitching.value = true;
+
+  try {
+    await nextTick();
+    await waitForScenarioSwitchFrame();
+    store.switchScenario(targetId);
+    await nextTick();
+  } finally {
+    selectedScenarioId.value = store.activeScenarioId;
+    scenarioSwitching.value = false;
+  }
 }
 
 onMounted(() => {
@@ -927,10 +956,14 @@ const operationLayout = computed(() => {
   };
 });
 
-watch(activeScenarioId, async () => {
-  await nextTick();
-  enforceMobilePrepExpanded();
-});
+watch(
+  () => store.activeScenarioId,
+  nextId => {
+    selectedScenarioId.value = nextId;
+    enforceMobilePrepExpanded();
+  },
+  { flush: 'sync' },
+);
 
 async function doImport() {
   const code = String(shareCode.value || '').trim();
@@ -964,11 +997,13 @@ async function doImport() {
       <div class="mobile-topbar-actions">
         <el-select
           v-if="scenarioList.length > 1"
-          v-model="activeScenarioId"
+          :model-value="selectedScenarioId"
+          :disabled="scenarioSwitching"
           size="small"
-          class="mobile-scenario-select"
+          :class="['mobile-scenario-select', { 'is-switching': scenarioSwitching }]"
           :teleported="true"
           popper-class="mobile-scenario-popper"
+          @change="handleScenarioChange"
         >
           <el-option
             v-for="(sc, idx) in scenarioList"

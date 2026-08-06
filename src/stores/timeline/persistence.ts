@@ -61,6 +61,7 @@ interface PersistenceDeps {
   initialGaugeMode: Ref<'empty' | 'full' | 'custom'>;
   customInitialGauges: Ref<Record<string, number>>;
   isLoading: Ref<boolean>;
+  isSwitchingScenario: Ref<boolean>;
   historyStack: Ref<string[]>;
   historyIndex: Ref<number>;
   operatorStore: ArmoryStoreLike & { operators: unknown };
@@ -113,6 +114,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     initialGaugeMode,
     customInitialGauges,
     isLoading,
+    isSwitchingScenario,
     historyStack,
     historyIndex,
     operatorStore,
@@ -132,6 +134,37 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
   } = deps;
 
   const STORAGE_KEY = 'endaxis_autosave';
+  let pendingAutoSaveId: number | null = null;
+  let pendingAutoSaveUsesIdleCallback = false;
+
+  function scheduleAutoSave(task: () => void) {
+    if (typeof window === 'undefined') {
+      task();
+      return;
+    }
+
+    if (pendingAutoSaveId != null) {
+      if (pendingAutoSaveUsesIdleCallback && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(pendingAutoSaveId);
+      } else {
+        window.clearTimeout(pendingAutoSaveId);
+      }
+    }
+
+    const run = () => {
+      pendingAutoSaveId = null;
+      pendingAutoSaveUsesIdleCallback = false;
+      task();
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      pendingAutoSaveUsesIdleCallback = true;
+      pendingAutoSaveId = window.requestIdleCallback(run, { timeout: 1_500 });
+    } else {
+      pendingAutoSaveUsesIdleCallback = false;
+      pendingAutoSaveId = window.setTimeout(run, 0);
+    }
+  }
 
   function initAutoSave() {
     watchThrottled(
@@ -161,6 +194,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         () => operatorStore.operators,
         () => weaponStore.weapons,
         () => gearStore.gears,
+        isSwitchingScenario,
       ],
       ([
         newTracks,
@@ -188,56 +222,61 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         newOperators,
         newWeapons,
         newGears,
+        switchingScenario,
       ]) => {
-        if (isLoading.value) return;
+        if (isLoading.value || switchingScenario) return;
 
-        const listToSave: any[] = JSON.parse(JSON.stringify(newScList));
-        listToSave.forEach(sc => {
-          if (sc?.data) dropLegacyTimedStatusData(sc.data);
-        });
-        const currentSc = listToSave.find(s => s.id === newActiveId);
+        scheduleAutoSave(() => {
+          if (isLoading.value || isSwitchingScenario.value) return;
 
-        if (currentSc) {
-          currentSc.data = {
-            tracks: newTracks,
-            connections: newConns,
-            operators: toRaw(newOperators),
-            weapons: toRaw(newWeapons),
-            gears: toRaw(newGears),
-            characterOverrides: newOverrides,
-            weaponOverrides: newWeaponOverrides,
-            equipmentCategoryOverrides: newEquipmentCatOverrides,
-            prepDuration: prepDuration.value,
-            prepExpanded: prepExpanded.value,
-            battleDuration: battleDuration.value,
-            trackRowHeightWeights: newTrackRowHeightWeights,
-            initialGaugeMode: newInitialGaugeMode,
-            customInitialGauges: newCustomInitialGauges,
+          const listToSave: any[] = JSON.parse(JSON.stringify(newScList));
+          listToSave.forEach(sc => {
+            if (sc?.data) dropLegacyTimedStatusData(sc.data);
+          });
+          const currentSc = listToSave.find(s => s.id === newActiveId);
+
+          if (currentSc) {
+            currentSc.data = {
+              tracks: newTracks,
+              connections: newConns,
+              operators: toRaw(newOperators),
+              weapons: toRaw(newWeapons),
+              gears: toRaw(newGears),
+              characterOverrides: newOverrides,
+              weaponOverrides: newWeaponOverrides,
+              equipmentCategoryOverrides: newEquipmentCatOverrides,
+              prepDuration: prepDuration.value,
+              prepExpanded: prepExpanded.value,
+              battleDuration: battleDuration.value,
+              trackRowHeightWeights: newTrackRowHeightWeights,
+              initialGaugeMode: newInitialGaugeMode,
+              customInitialGauges: newCustomInitialGauges,
+              systemConstants: newSys,
+              activeEnemyId: newEnemyId,
+              activeEnemyLevel: newEnemyLevel,
+              customEnemyParams: newCustomParams,
+              cycleBoundaries: newBoundaries,
+              switchEvents: newSwEvents,
+              simulationEndline: newSimEndline,
+              simulationStartline: newSimStartline,
+              inheritedInitialEffects: newInheritedInitialEffects,
+              inheritedInitialEnemyState: newInheritedInitialEnemyState,
+              contingencyContractTags: newContingencyContractTags,
+              globalConfig: newGlobalConfig,
+            };
+          }
+
+          const snapshot = {
+            version: '1.0.0',
+            timestamp: Date.now(),
+            scenarioList: listToSave,
+            activeScenarioId: newActiveId,
             systemConstants: newSys,
             activeEnemyId: newEnemyId,
             activeEnemyLevel: newEnemyLevel,
-            customEnemyParams: newCustomParams,
-            cycleBoundaries: newBoundaries,
-            switchEvents: newSwEvents,
-            simulationEndline: newSimEndline,
-            simulationStartline: newSimStartline,
-            inheritedInitialEffects: newInheritedInitialEffects,
-            inheritedInitialEnemyState: newInheritedInitialEnemyState,
-            contingencyContractTags: newContingencyContractTags,
-            globalConfig: newGlobalConfig,
           };
-        }
-
-        const snapshot = {
-          version: '1.0.0',
-          timestamp: Date.now(),
-          scenarioList: listToSave,
-          activeScenarioId: newActiveId,
-          systemConstants: newSys,
-          activeEnemyId: newEnemyId,
-          activeEnemyLevel: newEnemyLevel,
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProjectData(snapshot)));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProjectData(snapshot)));
+        });
       },
       { deep: true, throttle: 500 },
     );

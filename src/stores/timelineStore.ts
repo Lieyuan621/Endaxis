@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref, computed, watch, toRaw } from 'vue';
+import { ref, computed, watch, toRaw, nextTick } from 'vue';
 import { watchThrottled } from '@vueuse/core';
 import { createDefaultStats } from '@/simulation/defaultActorStats';
 import { simulate, type InitialEffect } from '@/simulation/simulator';
@@ -564,6 +564,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   const cycleBoundaries = ref<CycleBoundary[]>([]);
 
   const activeScenarioId = ref('default_sc');
+  const isSwitchingScenario = ref(false);
   function normalizeEnemyLevel(level: unknown) {
     const num = Number(level);
     if ([1, 20, 40, 60, 80, 90].includes(num)) return num;
@@ -605,7 +606,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   watchThrottled(
     [() => operatorStore.operators, () => weaponStore.weapons, () => gearStore.gears],
     () => {
-      if (isLoading.value) return;
+      if (isLoading.value || isSwitchingScenario.value) return;
       recomputeAllTrackOperatorStatuses();
       commitState();
     },
@@ -684,7 +685,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   watch(
     contingencyContractTags,
     () => {
-      if (isLoading.value) return;
+      if (isLoading.value || isSwitchingScenario.value) return;
       recomputeAllTrackOperatorStatuses();
       commitState();
     },
@@ -694,7 +695,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   watch(
     globalConfig,
     () => {
-      if (isLoading.value) return;
+      if (isLoading.value || isSwitchingScenario.value) return;
       recomputeAllTrackOperatorStatuses();
       commitState();
     },
@@ -1398,15 +1399,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     }, 200);
   }
 
-  function commitState() {
-    if (isRestoringHistory) return;
-
-    const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
-    if (currentScenario) {
-      currentScenario.data = _createSnapshot() ?? null;
-    }
-
-    const snapshot = JSON.stringify({
+  function _serializeSnapshot() {
+    return JSON.stringify({
       tracks: tracks.value,
       connections: connections.value,
       characterOverrides: characterOverrides.value,
@@ -1434,6 +1428,16 @@ export const useTimelineStore = defineStore('timeline', () => {
       weapons: weaponStore.weapons,
       gears: gearStore.gears,
     });
+  }
+
+  function commitState() {
+    if (isRestoringHistory) return;
+
+    const snapshot = _serializeSnapshot();
+    const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
+    if (currentScenario) {
+      currentScenario.data = dropLegacyTimedStatusData(JSON.parse(snapshot)) ?? null;
+    }
 
     if (historyStack.value[historyIndex.value] === snapshot) {
       return;
@@ -1558,59 +1562,24 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   function _createSnapshot(): ScenarioSnapshot {
     return dropLegacyTimedStatusData(
-      JSON.parse(
-        JSON.stringify({
-          tracks: tracks.value,
-          connections: connections.value,
-          characterOverrides: characterOverrides.value,
-          weaponOverrides: weaponOverrides.value,
-          equipmentCategoryOverrides: equipmentCategoryOverrides.value,
-          prepDuration: prepDuration.value,
-          prepExpanded: prepExpanded.value,
-          battleDuration: battleDuration.value,
-          trackRowHeightWeights: trackRowHeightWeights.value,
-          initialGaugeMode: initialGaugeMode.value,
-          customInitialGauges: customInitialGauges.value,
-          systemConstants: systemConstants.value,
-          activeEnemyId: activeEnemyId.value,
-          activeEnemyLevel: activeEnemyLevel.value,
-          customEnemyParams: customEnemyParams.value,
-          cycleBoundaries: cycleBoundaries.value,
-          switchEvents: switchEvents.value,
-          simulationEndline: simulationEndline.value,
-          simulationStartline: simulationStartline.value,
-          inheritedInitialEffects: inheritedInitialEffects.value,
-          inheritedInitialEnemyState: inheritedInitialEnemyState.value,
-          contingencyContractTags: contingencyContractTags.value,
-          globalConfig: globalConfig.value,
-          operators: operatorStore.operators,
-          weapons: weaponStore.weapons,
-          gears: gearStore.gears,
-        }),
-      ),
+      JSON.parse(_serializeSnapshot()),
     ) as ScenarioSnapshot;
   }
 
   function _loadSnapshot(data: ScenarioData | null | undefined) {
     if (!data) return;
-    const normalized = normalizePrepConfig(JSON.parse(JSON.stringify(data)));
+    const normalized = normalizePrepConfig(cloneJsonData(data));
     const incoming = dropLegacyTimedStatusData(normalized.snapshot);
     if (!incoming) return;
 
     restoreArmoryFromSnapshot(incoming);
-    const incomingTracks = incoming.tracks
-      ? JSON.parse(JSON.stringify(incoming.tracks))
-      : createDefaultTracks();
+    const incomingTracks = incoming.tracks || createDefaultTracks();
     tracks.value = normalizeTracks(incomingTracks);
-    connections.value = normalizeConnections(
-      JSON.parse(JSON.stringify(incoming.connections || [])),
-    );
+    connections.value = normalizeConnections(incoming.connections || []);
     normalizeComboLinksInTracks();
-    characterOverrides.value = JSON.parse(JSON.stringify(incoming.characterOverrides || {}));
-    weaponOverrides.value = JSON.parse(JSON.stringify(incoming.weaponOverrides || {}));
-    equipmentCategoryOverrides.value = JSON.parse(
-      JSON.stringify(incoming.equipmentCategoryOverrides || {}),
-    );
+    characterOverrides.value = incoming.characterOverrides || {};
+    weaponOverrides.value = incoming.weaponOverrides || {};
+    equipmentCategoryOverrides.value = incoming.equipmentCategoryOverrides || {};
     prepDuration.value = Math.max(MIN_PREP_DURATION, Number(incoming.prepDuration) || 0);
     prepExpanded.value = incoming.prepExpanded !== false;
     battleDuration.value =
@@ -1632,12 +1601,8 @@ export const useTimelineStore = defineStore('timeline', () => {
         incoming.customEnemyParams,
       );
     }
-    cycleBoundaries.value = incoming.cycleBoundaries
-      ? JSON.parse(JSON.stringify(incoming.cycleBoundaries))
-      : [];
-    switchEvents.value = incoming.switchEvents
-      ? JSON.parse(JSON.stringify(incoming.switchEvents))
-      : [];
+    cycleBoundaries.value = incoming.cycleBoundaries || [];
+    switchEvents.value = incoming.switchEvents || [];
     simulationEndline.value =
       incoming.simulationEndline != null && Number.isFinite(Number(incoming.simulationEndline))
         ? Number(incoming.simulationEndline)
@@ -1647,11 +1612,9 @@ export const useTimelineStore = defineStore('timeline', () => {
         ? Number(incoming.simulationStartline)
         : null;
     inheritedInitialEffects.value = Array.isArray(incoming.inheritedInitialEffects)
-      ? JSON.parse(JSON.stringify(incoming.inheritedInitialEffects))
+      ? (incoming.inheritedInitialEffects as Record<string, unknown>[])
       : [];
-    inheritedInitialEnemyState.value = incoming.inheritedInitialEnemyState
-      ? JSON.parse(JSON.stringify(incoming.inheritedInitialEnemyState))
-      : null;
+    inheritedInitialEnemyState.value = incoming.inheritedInitialEnemyState || null;
     contingencyContractTags.value = Array.isArray(incoming.contingencyContractTags)
       ? incoming.contingencyContractTags.map(Number).filter(Number.isFinite)
       : [];
@@ -1763,25 +1726,35 @@ export const useTimelineStore = defineStore('timeline', () => {
   function switchScenario(targetId: string) {
     if (targetId === activeScenarioId.value) return;
 
-    const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
-    if (currentScenario) {
-      currentScenario.data = _createSnapshot() ?? null;
-    }
-
     const targetScenario = scenarioList.value.find(s => s.id === targetId);
     if (!targetScenario) return;
 
-    if (targetScenario.data) {
-      _loadSnapshot(targetScenario.data);
-    } else {
-      targetScenario.data = _createSnapshot();
-    }
+    isSwitchingScenario.value = true;
 
-    activeScenarioId.value = targetId;
-    resetTimelineViewport();
-    historyStack.value = [];
-    historyIndex.value = -1;
-    commitState();
+    try {
+      const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
+      if (currentScenario) {
+        currentScenario.data = _createSnapshot() ?? null;
+      }
+
+      if (targetScenario.data) {
+        _loadSnapshot(targetScenario.data);
+      } else {
+        targetScenario.data = _createSnapshot();
+      }
+
+      activeScenarioId.value = targetId;
+      resetTimelineViewport();
+      historyStack.value = [];
+      historyIndex.value = -1;
+      commitState();
+    } finally {
+      void nextTick(() => {
+        setTimeout(() => {
+          isSwitchingScenario.value = false;
+        }, 0);
+      });
+    }
   }
 
   function addScenario() {
@@ -5936,6 +5909,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     initialGaugeMode,
     customInitialGauges,
     isLoading,
+    isSwitchingScenario,
     historyStack,
     historyIndex,
     operatorStore,
@@ -6161,6 +6135,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     enemyCategories,
     scenarioList,
     activeScenarioId,
+    isSwitchingScenario,
     switchScenario,
     addScenario,
     duplicateScenario,
