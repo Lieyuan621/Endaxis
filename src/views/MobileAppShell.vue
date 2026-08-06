@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { registerBackHandler } from '@/platform/nativeBridge';
+import { notifyNativeAppReady, registerBackHandler } from '@/platform/nativeBridge';
 import MobileTimelineViewer from './MobileTimelineViewer.vue';
 import MobileAnalysisView from './mobile/MobileAnalysisView.vue';
 
@@ -13,6 +13,7 @@ const activeView = computed(() =>
   view.value === 'timeline' ? MobileTimelineViewer : MobileAnalysisView,
 );
 let unregisterBackHandler: (() => void) | null = null;
+let readyFrame: number | null = null;
 
 function selectView(nextView: AppView) {
   if (view.value === nextView) return;
@@ -25,10 +26,20 @@ onMounted(() => {
     view.value = 'timeline';
     return true;
   });
+
+  void nextTick().then(() => {
+    readyFrame = window.requestAnimationFrame(() => {
+      readyFrame = window.requestAnimationFrame(() => {
+        readyFrame = null;
+        notifyNativeAppReady();
+      });
+    });
+  });
 });
 
 onUnmounted(() => {
   unregisterBackHandler?.();
+  if (readyFrame != null) window.cancelAnimationFrame(readyFrame);
 });
 </script>
 

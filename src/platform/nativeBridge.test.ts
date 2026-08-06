@@ -30,4 +30,25 @@ describe('nativeBridge', () => {
     expect(window.EndaxisHandleBack?.()).toBe(false);
     expect(olderHandler).toHaveBeenCalledOnce();
   });
+
+  it('notifies the Android host once when the app shell is ready', async () => {
+    const appReady = vi.fn();
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 EndaxisApp/1.0' });
+    vi.stubGlobal('window', { EndaxisNative: { appReady } });
+    const { notifyNativeAppReady } = await import('./nativeBridge');
+
+    expect(notifyNativeAppReady()).toBe(true);
+    expect(notifyNativeAppReady()).toBe(false);
+    expect(appReady).toHaveBeenCalledOnce();
+  });
+
+  it('does not notify a native bridge from a regular browser', async () => {
+    const appReady = vi.fn();
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/140.0' });
+    vi.stubGlobal('window', { EndaxisNative: { appReady } });
+    const { notifyNativeAppReady } = await import('./nativeBridge');
+
+    expect(notifyNativeAppReady()).toBe(false);
+    expect(appReady).not.toHaveBeenCalled();
+  });
 });
