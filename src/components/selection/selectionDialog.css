@@ -122,8 +122,8 @@
   margin-bottom: 12px;
   padding: 10px 0;
   border-bottom: 1px solid var(--ea-border-soft);
-  /* Match dialog chrome so sticky rarity bars don't flash a second surface. */
-  background: color-mix(in srgb, var(--ea-dialog-bg) 94%, transparent);
+  background: rgba(30, 30, 30, 0.94);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
@@ -371,8 +371,9 @@
 
 /* Light theme: selection dialogs (operator / weapon / equipment) */
 html[data-theme='light'] .rarity-header {
-  background: color-mix(in srgb, var(--ea-dialog-bg, #ffffff) 97%, transparent);
+  background: rgba(255, 255, 255, 0.97);
   border-bottom-color: var(--ea-dialog-divider, #e6e8ec);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
@@ -434,4 +435,106 @@ html[data-theme='light'] .char-selector-dialog .el-input__wrapper {
 
 html[data-theme='light'] .char-selector-dialog .el-input__inner {
   color: var(--ea-fg, #1a1b1e);
+}
+
+@media (max-width: 768px) {
+  .char-selector-dialog.el-dialog {
+    display: flex;
+    width: calc(100vw - 16px) !important;
+    max-width: none;
+    height: calc(100dvh - 16px);
+    margin: 8px auto !important;
+    flex-direction: column;
+  }
+
+  .char-selector-dialog .el-dialog__header {
+    flex: 0 0 auto;
+  }
+
+  .char-selector-dialog .el-dialog__body {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    padding: 10px 12px 12px;
+    overflow: hidden;
+  }
+
+  .selector-header {
+    flex: 0 0 auto;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+
+  .header-left-group {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .header-left-group .el-input {
+    width: auto !important;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .element-filters,
+  .class-filters,
+  .equipment-affix-filter-strip {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    padding-bottom: 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .element-filters > .ea-btn,
+  .class-filters > .ea-btn,
+  .equipment-affix-filter-strip > .ea-btn {
+    width: auto;
+    min-width: max-content;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .equipment-affix-filter-divider {
+    flex-shrink: 0;
+  }
+
+  .equipment-tier-picker {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+  }
+
+  .equipment-refine-buttons,
+  .equipment-refine-btn {
+    flex-shrink: 0;
+  }
+
+  .element-filters::-webkit-scrollbar,
+  .class-filters::-webkit-scrollbar,
+  .equipment-affix-filter-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .roster-scroll-container {
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 auto;
+    padding: 0 2px;
+    overscroll-behavior: contain;
+  }
+
+  .roster-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 6px;
+  }
+
+  .roster-card:hover {
+    transform: none;
+  }
 }

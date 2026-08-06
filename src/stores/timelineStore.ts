@@ -1379,6 +1379,10 @@ export const useTimelineStore = defineStore('timeline', () => {
   const historyStack = ref<string[]>([]);
   const historyIndex = ref(-1);
   const MAX_HISTORY = 50;
+  const canUndo = computed(() => historyIndex.value > 0);
+  const canRedo = computed(
+    () => historyIndex.value >= 0 && historyIndex.value < historyStack.value.length - 1,
+  );
   /** Suppress auto-commits while undoing/redoing (watchers would otherwise truncate the redo stack). */
   let isRestoringHistory = false;
   let restoreHistoryReleaseTimer: ReturnType<typeof setTimeout> | null = null;
@@ -6060,6 +6064,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     copySelection,
     pasteSelection,
     removeCurrentSelection,
+    canUndo,
+    canRedo,
     undo,
     redo,
     commitState,

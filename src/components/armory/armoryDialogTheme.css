@@ -279,9 +279,7 @@ html[data-theme='light'] .operator-edit-tooltip-popper.el-popper.is-dark {
  * Rotated-square arrows read as diamonds on light chrome.
  * Hide them — content readability matters more than the pointer.
  */
-html[data-theme='light']
-  .operator-edit-tooltip-popper.el-popper
-  .el-popper__arrow::before {
+html[data-theme='light'] .operator-edit-tooltip-popper.el-popper .el-popper__arrow::before {
   background: var(--ea-tooltip-bg, #ffffff) !important;
   border-color: var(--ea-dialog-border, #d8dbe0) !important;
 }
@@ -339,4 +337,50 @@ html[data-theme='light'] .operator-skill-tooltip-desc,
 html[data-theme='light'] .operator-skill-tooltip-desc .game-rich-text,
 html[data-theme='light'] .operator-skill-tooltip-resource {
   color: var(--ea-dialog-body, #3a3d44) !important;
+}
+
+@media (max-width: 768px) {
+  .gear-loadout-dialog.el-dialog {
+    display: flex;
+    width: calc(100vw - 16px) !important;
+    max-width: none;
+    max-height: calc(100dvh - 16px);
+    margin: 8px auto !important;
+    flex-direction: column;
+  }
+
+  .gear-loadout-dialog .el-dialog__header,
+  .gear-loadout-dialog .el-dialog__footer {
+    flex: 0 0 auto;
+  }
+
+  .gear-loadout-dialog .el-dialog__body {
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 10px 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .armory-dialog.el-dialog {
+    display: flex;
+    width: calc(100vw - 16px) !important;
+    max-width: none;
+    max-height: calc(100dvh - 16px);
+    margin: 8px auto !important;
+    flex-direction: column;
+  }
+
+  .armory-dialog .el-dialog__header,
+  .armory-dialog .el-dialog__footer {
+    flex: 0 0 auto;
+  }
+
+  .armory-dialog .el-dialog__body {
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 10px 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }

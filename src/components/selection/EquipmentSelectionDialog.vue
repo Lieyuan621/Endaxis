@@ -648,7 +648,7 @@ function onClosed() {
   targetTrackIndex.value = null;
 }
 
-defineExpose({ open, isOpen: () => visible.value });
+defineExpose({ open, close, isOpen: () => visible.value });
 </script>
 
 <template>
@@ -727,7 +727,7 @@ defineExpose({ open, isOpen: () => visible.value });
         <button
           v-for="category in categories"
           :key="`eqcat_${category.value}`"
-          class="ea-btn ea-btn--glass-cut"
+          class="ea-btn ea-btn--glass-cut equipment-filter-chip"
           :class="{ 'is-active': categoryFilter === category.value }"
           :style="{ '--ea-btn-accent': '#2dd4bf' }"
           @click="categoryFilter = category.value"

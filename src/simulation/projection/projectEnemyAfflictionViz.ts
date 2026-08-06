@@ -17,6 +17,7 @@ export interface EnemyAfflictionMarker {
   hitData?: any;
   damageHits?: any[];
   sourceId?: string;
+  actionId?: string;
   carryoverKey?: string;
   disabled?: boolean;
 }
@@ -31,6 +32,7 @@ export interface EnemyAfflictionSegment {
   row: number;
   tracksComboState: boolean;
   sourceId?: string;
+  actionId?: string;
   /** Duration-bar color from projection (source-group aware). */
   color?: string;
 }
@@ -58,6 +60,7 @@ export type PhysicalMarkerLike = {
   stacks?: number;
   icon?: string | null;
   sourceId?: string;
+  actionId?: string;
   time?: number;
   row?: number;
 };
@@ -90,6 +93,7 @@ export function pickRepresentativePhysicalMarker(
         icon: controlMarker.icon ?? null,
         row: 0,
         sourceId: controlMarker.sourceId,
+        actionId: controlMarker.actionId,
       };
     }
 
@@ -100,6 +104,7 @@ export function pickRepresentativePhysicalMarker(
       icon: null,
       row: 0,
       sourceId: physicalMarkers[0]!.sourceId,
+      actionId: physicalMarkers[0]!.actionId,
     };
   }
 
@@ -116,6 +121,7 @@ export function pickRepresentativePhysicalMarker(
       icon: representative.icon ?? null,
       row: 0,
       sourceId: representative.sourceId,
+      actionId: representative.actionId,
     };
   }
 
@@ -127,6 +133,7 @@ export function pickRepresentativePhysicalMarker(
       icon: representative.icon ?? null,
       row: 0,
       sourceId: representative.sourceId,
+      actionId: representative.actionId,
     };
   }
 
@@ -140,6 +147,7 @@ export function pickRepresentativePhysicalMarker(
     icon: representative.icon ?? null,
     row: 0,
     sourceId: representative.sourceId,
+    actionId: representative.actionId,
   };
 }
 
@@ -200,6 +208,7 @@ export function projectEnemyAfflictionViz(layout: any) {
       row,
       tracksComboState: typeKey === 'vulnerability',
       sourceId: segment.sourceId,
+      actionId: segment.actionId,
       carryoverKey: segment.carryoverKey,
       disabled: segment.disabled === true,
       color: typeof segment.color === 'string' ? segment.color : undefined,
@@ -216,6 +225,7 @@ export function projectEnemyAfflictionViz(layout: any) {
           isDamageHit: !!segment.isDamageHit,
           hitData: segment.hitData,
           sourceId: segment.sourceId,
+          actionId: segment.actionId,
         });
       else out.physical.segments.push({ ...base, kind: 'physical' });
       continue;
@@ -232,6 +242,7 @@ export function projectEnemyAfflictionViz(layout: any) {
           isDamageHit: !!segment.isDamageHit,
           hitData: segment.hitData,
           sourceId: segment.sourceId,
+          actionId: segment.actionId,
         });
       else out.attachment.segments.push({ ...base, kind: 'attachment' });
       continue;
@@ -249,6 +260,7 @@ export function projectEnemyAfflictionViz(layout: any) {
           isDamageHit: !!segment.isDamageHit,
           hitData: segment.hitData,
           sourceId: segment.sourceId,
+          actionId: segment.actionId,
         });
       else out.anomalies.segments.push({ ...base, kind: 'anomaly' });
       continue;
@@ -266,6 +278,7 @@ export function projectEnemyAfflictionViz(layout: any) {
           isDamageHit: !!segment.isDamageHit,
           hitData: segment.hitData,
           sourceId: segment.sourceId,
+          actionId: segment.actionId,
         });
       else out.statuses.segments.push({ ...base, kind: 'status' });
     }
@@ -350,6 +363,7 @@ function normalizePhysicalMarkers(group: EnemyAfflictionGroup) {
           icon: picked.icon ?? null,
           row: Number(picked.row) || 0,
           sourceId: picked.sourceId,
+          actionId: picked.actionId,
         });
       }
 

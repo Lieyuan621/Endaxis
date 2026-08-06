@@ -149,6 +149,42 @@ describe('actionCombatIcons', () => {
 
     expect(badges.map(item => item.key)).toEqual(['combustion']);
   });
+
+  it('keeps a delayed burst on its originating action instead of the action at its event time', () => {
+    const viz = {
+      attachment: {
+        markers: [
+          {
+            typeKey: 'heat_burst',
+            time: 11.2,
+            stacks: 1,
+            sourceId: 'op_a',
+            actionId: 'attachment_skill',
+            icon: '/icons/icon_energy_fusion_fire.webp',
+          },
+        ],
+        segments: [],
+      },
+    };
+
+    const originBadges = collectActionCombatBadges({
+      action: { instanceId: 'attachment_skill' },
+      trackId: 'op_a',
+      startTime: 10,
+      endTime: 10.5,
+      viz,
+    });
+    const laterBadges = collectActionCombatBadges({
+      action: { instanceId: 'later_skill' },
+      trackId: 'op_a',
+      startTime: 11,
+      endTime: 12,
+      viz,
+    });
+
+    expect(originBadges.map(item => item.key)).toEqual(['heat_burst']);
+    expect(laterBadges).toEqual([]);
+  });
 });
 
 describe('projectEnemyAfflictionViz physical normalize', () => {

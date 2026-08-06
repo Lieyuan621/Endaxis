@@ -11,6 +11,9 @@ import { ENEMY_TIERS, ENEMY_TIER_WEIGHT } from '@/utils/theme';
 const store = useTimelineStore();
 const { t, locale } = useI18n({ useScope: 'global' });
 const { enemyDatabase, enemyCategories } = storeToRefs(store);
+const props = defineProps({
+  selectorOnly: { type: Boolean, default: false },
+});
 
 const ENEMY_RESISTANCE_ELEMENTS = ['physical', 'heat', 'cryo', 'electric', 'nature'];
 const ENEMY_LEVELS = [1, 20, 40, 60, 80, 90];
@@ -134,14 +137,32 @@ function selectEnemy(id) {
   isEnemySelectorVisible.value = false;
 }
 
+function openSelector() {
+  isEnemySelectorVisible.value = true;
+}
+
+function closeSelector() {
+  isEnemySelectorVisible.value = false;
+}
+
+defineExpose({
+  openSelector,
+  close: closeSelector,
+  isOpen: () => isEnemySelectorVisible.value,
+});
+
 function setEnemyLevel(level) {
   store.setActiveEnemyLevel(level);
 }
 </script>
 
 <template>
-  <section class="enemy-settings-panel">
-    <button type="button" class="enemy-select-module" @click="isEnemySelectorVisible = true">
+  <section
+    class="enemy-settings-panel"
+    :class="{ 'is-selector-only': props.selectorOnly }"
+  >
+    <template v-if="!props.selectorOnly">
+    <button type="button" class="enemy-select-module" @click="openSelector">
       <div class="module-deco-line"></div>
       <div class="enemy-avatar-box">
         <img
@@ -195,13 +216,14 @@ function setEnemyLevel(level) {
     </div>
 
     <EditEnemyBaseStatsDialog v-model:visible="isStatsDialogVisible" />
+    </template>
 
     <el-dialog
       v-model="isEnemySelectorVisible"
       :title="t('resourceMonitor.enemy.dialogTitle')"
       width="640px"
       align-center
-      class="char-selector-dialog"
+      class="char-selector-dialog enemy-selector-dialog"
       :append-to-body="true"
     >
       <div class="selector-header">
@@ -345,6 +367,10 @@ function setEnemyLevel(level) {
   overflow: hidden;
   background: var(--ea-workbench-panel, #252526);
   color: var(--ea-fg, #f0f0f0);
+}
+
+.enemy-settings-panel.is-selector-only {
+  display: contents;
 }
 
 .enemy-select-module {

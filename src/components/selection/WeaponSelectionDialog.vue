@@ -128,7 +128,7 @@ onUnmounted(() => {
   window.removeEventListener('blur', resetModifierKey);
 });
 
-defineExpose({ open, isOpen: () => visible.value });
+defineExpose({ open, close, isOpen: () => visible.value });
 </script>
 
 <template>

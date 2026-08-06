@@ -672,6 +672,30 @@ html[data-theme='dark'] .hit-damage-detail-dialog .damage-value.forced {
 html[data-theme='dark'] .hit-damage-detail-dialog .mult-value {
   color: #b8d4ff;
 }
+
+@media (max-width: 768px) {
+  .hit-damage-detail-dialog.el-dialog {
+    display: flex;
+    width: calc(100vw - 16px) !important;
+    max-width: none;
+    max-height: calc(100dvh - 16px);
+    margin: 8px auto !important;
+    flex-direction: column;
+  }
+
+  .hit-damage-detail-dialog .el-dialog__header,
+  .hit-damage-detail-dialog .el-dialog__footer {
+    flex: 0 0 auto;
+  }
+
+  .hit-damage-detail-dialog .el-dialog__body {
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
 </style>
 
 <style>

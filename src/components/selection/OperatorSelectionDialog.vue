@@ -148,7 +148,7 @@ function onClosed() {
   targetTrackIndex.value = null;
 }
 
-defineExpose({ open, isOpen: () => visible.value });
+defineExpose({ open, close, isOpen: () => visible.value });
 </script>
 
 <template>

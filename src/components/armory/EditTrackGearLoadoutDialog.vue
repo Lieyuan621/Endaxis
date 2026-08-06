@@ -572,4 +572,25 @@ function openItemEditor(slot) {
   font-size: 12px;
   opacity: 0.95;
 }
+
+@media (max-width: 768px) {
+  .gear-slot-card {
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .gear-set-bonus-panel {
+    grid-column: auto;
+  }
+
+  .gear-main {
+    gap: 10px;
+  }
+
+  .gear-icon-frame {
+    width: 58px;
+    height: 58px;
+    flex-basis: 58px;
+  }
+}
 </style>

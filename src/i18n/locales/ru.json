@@ -334,11 +334,31 @@
       "import": "Импорт",
       "importing": "Импорт...",
       "more": "Ещё",
+      "undo": "Отмена",
+      "redo": "Повтор",
       "loadout": {
         "title": "Экипировка",
         "openAria": "Посмотреть экипировку: {name}",
+        "selectOperator": "Выбрать оператора",
+        "operatorStatus": "Оператор",
         "weapon": "Оружие",
         "equipment": "Снаряжение"
+      },
+      "skillLibrary": {
+        "title": "Библиотека навыков",
+        "selectTrack": "Выберите дорожку для добавления навыка",
+        "empty": "У оператора нет доступных навыков",
+        "placeHint": "Коснитесь позиции на выделенной дорожке",
+        "placed": "Размещено: «{name}»"
+      },
+      "display": {
+        "title": "Отображение таймлайна",
+        "showAllAttackSegments": "Все удары базовой атаки",
+        "showAnomalies": "Аномалии",
+        "showDurationBars": "Полосы длительности",
+        "showFreezeEffects": "Заморозка времени",
+        "showStaggerBreaks": "Ошеломление",
+        "showOperationHints": "Клавиши управления"
       },
       "actionInfo": {
         "title": "Информация о навыке",
@@ -349,7 +369,13 @@
         "spCost": "Затраты SP",
         "cooldown": "Перезарядка",
         "gaugeCost": "Затраты ульты",
-        "hits": "Число ударов"
+        "hits": "Число ударов",
+        "totalDamage": "Общий урон",
+        "damageHit": "Удар {index}",
+        "noDamage": "В текущей симуляции урон не нанесён",
+        "disable": "Отключить навык",
+        "enable": "Включить навык",
+        "delete": "Удалить навык"
       },
       "app": {
         "timeline": "Таймлайн",

@@ -334,11 +334,31 @@
       "import": "Import",
       "importing": "Importing...",
       "more": "More",
+      "undo": "Undo",
+      "redo": "Redo",
       "loadout": {
         "title": "Loadout",
         "openAria": "View {name}'s loadout",
+        "selectOperator": "Select Operator",
+        "operatorStatus": "Operator",
         "weapon": "Weapon",
         "equipment": "Equipment"
+      },
+      "skillLibrary": {
+        "title": "Operator Skill Library",
+        "selectTrack": "Select a track to add skills",
+        "empty": "This operator has no placeable skills",
+        "placeHint": "Tap a position on the highlighted track to place",
+        "placed": "Placed “{name}”"
+      },
+      "display": {
+        "title": "Timeline Display",
+        "showAllAttackSegments": "All basic attack segments",
+        "showAnomalies": "Anomalies",
+        "showDurationBars": "Duration bars",
+        "showFreezeEffects": "Freeze effects",
+        "showStaggerBreaks": "Stagger breaks",
+        "showOperationHints": "Operation keycaps"
       },
       "actionInfo": {
         "title": "Skill Info",
@@ -349,7 +369,13 @@
         "spCost": "SP Cost",
         "cooldown": "Cooldown",
         "gaugeCost": "Ult Gauge Cost",
-        "hits": "Hit Points"
+        "hits": "Hit Points",
+        "totalDamage": "Total Damage",
+        "damageHit": "Hit {index}",
+        "noDamage": "No damage was dealt in the current simulation",
+        "disable": "Disable Skill",
+        "enable": "Enable Skill",
+        "delete": "Delete Skill"
       },
       "app": {
         "timeline": "Timeline",

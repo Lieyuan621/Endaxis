@@ -130,6 +130,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         ctx.enemyLog(event);
         this.emitReactionDamageHit('artsBurst', 1, event.time, event.sourceId, ctx, {
           triggerElement: event.element,
+          actionId: event.actionId,
         });
         this.registry?.onStatusApplied(
           `${event.element}Burst`,
@@ -245,7 +246,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     ctx: SimulationContext,
   ): void {
     const state = ctx.state.enemy;
-    const { element, time, sourceId, sourceSkillType, sourceSkillId } = event;
+    const { element, time, sourceId, sourceSkillType, sourceSkillId, actionId } = event;
     if (state.hasInflictionBarrier(element, time)) return;
     const stacks = event.stacks ?? 1;
     const duration = event.effectiveDuration;
@@ -287,6 +288,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         element,
         stacks: state.infliction.stacks,
         sourceId,
+        actionId,
         effectiveDuration: duration,
         expiresAt: shiftedExpiry,
       });
@@ -330,11 +332,20 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         element,
         stacks,
         sourceId,
+        actionId,
         effectiveDuration: duration,
         expiresAt: shiftedExpiry,
       });
       ctx.queue.enqueue(
-        { type: 'ARTS_BURST', time: time + 1, element, sourceId, sourceSkillType, sourceSkillId },
+        {
+          type: 'ARTS_BURST',
+          time: time + 1,
+          element,
+          sourceId,
+          sourceSkillType,
+          sourceSkillId,
+          actionId,
+        },
         1,
       );
       this.registry?.onStatusApplied(
@@ -406,6 +417,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       element,
       stacks,
       sourceId,
+      actionId,
       effectiveDuration: duration,
       triggerOnly: true,
     });

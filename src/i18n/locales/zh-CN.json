@@ -334,11 +334,31 @@
       "import": "导入",
       "importing": "导入中...",
       "more": "更多",
+      "undo": "撤销",
+      "redo": "重做",
       "loadout": {
         "title": "干员配装",
         "openAria": "查看 {name} 配装",
+        "selectOperator": "选择干员",
+        "operatorStatus": "干员",
         "weapon": "武器",
         "equipment": "装备"
+      },
+      "skillLibrary": {
+        "title": "干员技能库",
+        "selectTrack": "选择轨道后添加技能",
+        "empty": "当前干员没有可放置的技能",
+        "placeHint": "轻触已高亮的轨道位置进行放置",
+        "placed": "已放置“{name}”"
+      },
+      "display": {
+        "title": "时间轴显示",
+        "showAllAttackSegments": "普攻全部段数",
+        "showAnomalies": "异常",
+        "showDurationBars": "持续时间",
+        "showFreezeEffects": "冻屏效果",
+        "showStaggerBreaks": "失衡",
+        "showOperationHints": "操作键位"
       },
       "actionInfo": {
         "title": "技能信息",
@@ -349,7 +369,13 @@
         "spCost": "技力消耗",
         "cooldown": "冷却时间",
         "gaugeCost": "充能消耗",
-        "hits": "判定点数"
+        "hits": "判定点数",
+        "totalDamage": "总伤害",
+        "damageHit": "判定点 {index}",
+        "noDamage": "当前模拟中未产生伤害",
+        "disable": "停用技能",
+        "enable": "启用技能",
+        "delete": "删除技能"
       },
       "app": {
         "timeline": "时间轴",

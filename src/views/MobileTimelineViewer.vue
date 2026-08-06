@@ -1,14 +1,6 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import {
-  ElAlert,
-  ElDialog,
-  ElInput,
-  ElMessage,
-  ElButton,
-  ElPopover,
-  ElMessageBox,
-} from 'element-plus';
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { ElAlert, ElDialog, ElInput, ElMessage, ElPopover, ElMessageBox } from 'element-plus';
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { useI18n } from 'vue-i18n';
 import { setLocale } from '@/i18n';
@@ -17,6 +9,7 @@ import {
   getGameSlotTypeName,
   getGearPieceGameName,
   getGearSetGameName,
+  getEnemyGameName,
   getOperatorGameName,
   getWeaponGameName,
   getWeaponSkillName,
@@ -25,6 +18,9 @@ import { resolveLeveled } from '@/data/types';
 import { toLegacyDisplayType } from '@/utils/hitModel';
 import { collectActionCombatBadges } from '@/utils/actionCombatIcons';
 import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
+import { translateBattleLogStatus } from '@/simulation/formatBattleLogLabels';
+import { isEffectOriginDamage } from '@/simulation/normalizeOperatorLogForBattleLog';
+import { sampleSpSeriesAtTime } from '@/simulation/projection/projectSpSeries';
 import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
@@ -39,29 +35,140 @@ import {
 import { useAppearance } from '@/composables/useAppearance';
 import { adaptColorForLightSurface, solidFillForLightTrack } from '@/utils/theme';
 import { registerBackHandler } from '@/platform/nativeBridge';
+import OperatorSelectionDialog from '@/components/selection/OperatorSelectionDialog.vue';
+import WeaponSelectionDialog from '@/components/selection/WeaponSelectionDialog.vue';
+import EquipmentSelectionDialog from '@/components/selection/EquipmentSelectionDialog.vue';
+import EditOperatorInstanceDialog from '@/components/armory/EditOperatorInstanceDialog.vue';
+import EditWeaponInstanceDialog from '@/components/armory/EditWeaponInstanceDialog.vue';
+import EditTrackGearLoadoutDialog from '@/components/armory/EditTrackGearLoadoutDialog.vue';
+import MobileSkillLibraryDrawer from '@/components/mobile/MobileSkillLibraryDrawer.vue';
+import StatDetailDialog from '@/components/StatDetailDialog.vue';
+import HitDamageDetailDialog from '@/components/HitDamageDetailDialog.vue';
+import EnemySettingsPanel from '@/components/EnemySettingsPanel.vue';
+import {
+  getSnappedTimelineDragDelta,
+  getStepSampleAtTime,
+  getVerticalEdgeScrollSpeed,
+  isTapGesture,
+  pointerYToTimelineTime,
+  snapTimelineTime,
+} from '@/utils/mobileTimelineEditing';
 
 const store = useTimelineStore();
-const { t, locale } = useI18n({ useScope: 'global' });
+const { t, te, locale } = useI18n({ useScope: 'global' });
 const { appearance, setAppearance } = useAppearance();
 const DEFAULT_ICON = '/icons/default_icon.webp';
+const MOBILE_TIMELINE_PREFS_KEY = 'endaxis:mobile-timeline-prefs:v1';
+
+function loadMobileTimelinePrefs() {
+  try {
+    const value = JSON.parse(localStorage.getItem(MOBILE_TIMELINE_PREFS_KEY) || '{}');
+    return {
+      showAllAttackSegments: value?.showAllAttackSegments === true,
+      showAnomalies:
+        typeof value?.showAnomalies === 'boolean'
+          ? value.showAnomalies
+          : value?.showBuffs !== false,
+      showDurationBars: value?.showDurationBars !== false,
+      showFreezeEffects: value?.showFreezeEffects !== false,
+      showStaggerBreaks: value?.showStaggerBreaks !== false,
+      showOperationHints: value?.showOperationHints !== false,
+    };
+  } catch {
+    return {
+      showAllAttackSegments: false,
+      showAnomalies: true,
+      showDurationBars: true,
+      showFreezeEffects: true,
+      showStaggerBreaks: true,
+      showOperationHints: true,
+    };
+  }
+}
+
+const mobileTimelinePrefs = loadMobileTimelinePrefs();
 
 const loadoutOpen = ref(false);
 const loadoutTrackIndex = ref(null);
+const operatorSelectionDialogRef = ref(null);
+const weaponSelectionDialogRef = ref(null);
+const equipmentSelectionDialogRef = ref(null);
+const enemySettingsPanelRef = ref(null);
+const operatorStatusOpen = ref(false);
+const weaponStatusOpen = ref(false);
+const equipmentStatusOpen = ref(false);
+const statDetailOpen = ref(false);
+const skillLibraryOpen = ref(false);
+const pendingPlacementSkill = shallowRef(null);
+const placementTrackIndex = ref(null);
+const mobileScrollRef = ref(null);
+const mobileTimelineRef = ref(null);
+const mobileGuideVisible = ref(false);
+const mobileGuideTime = ref(0);
+const draggingActionId = ref(null);
+const dragPreviewOffsetPx = ref(0);
+const dragPreviewLogicalTime = ref(null);
+let placementPointerStart = null;
+let suppressActionClickUntil = 0;
+let actionPointerSession = null;
+let actionLongPressTimer = null;
+let dragAutoScrollRaf = null;
+let dragAutoScrollSpeed = 0;
+let dragTargetIds = new Set();
+let mobileGuidePointerId = null;
+let mobileGuidePendingPointer = null;
+let mobileGuideRaf = null;
 
 const actionInfoOpen = ref(false);
 const selectedActionId = ref(null);
+const selectedDamageHit = shallowRef(null);
+const skillDamageOpen = ref(false);
+const effectDamageOpen = ref(false);
 
 const importVisible = ref(false);
 const shareCode = ref('');
 const importing = ref(false);
 const moreMenuOpen = ref(false);
+const showAllAttackSegments = ref(mobileTimelinePrefs.showAllAttackSegments);
+const showAnomalies = ref(mobileTimelinePrefs.showAnomalies);
+const showDurationBars = ref(mobileTimelinePrefs.showDurationBars);
+const showFreezeEffects = ref(mobileTimelinePrefs.showFreezeEffects);
+const showStaggerBreaks = ref(mobileTimelinePrefs.showStaggerBreaks);
+const showOperationHints = ref(mobileTimelinePrefs.showOperationHints);
 let unregisterBackHandler = null;
 
 const scenarioList = computed(() => (Array.isArray(store.scenarioList) ? store.scenarioList : []));
 const selectedScenarioId = ref(store.activeScenarioId);
 const scenarioSwitching = ref(false);
+const scenarioRenameActive = ref(false);
+const scenarioRenameInputRef = ref(null);
+const currentScenario = computed(
+  () =>
+    scenarioList.value.find(scenario => scenario?.id === store.activeScenarioId) ||
+    scenarioList.value[0] ||
+    null,
+);
 
 const tracks = computed(() => (Array.isArray(store.tracks) ? store.tracks.slice(0, 4) : []));
+const activeMobileTrackIndex = computed(() => {
+  const active = Number(store.activeTrackIndex);
+  if (Number.isInteger(active) && active >= 0 && active < tracks.value.length) return active;
+  const loadout = Number(loadoutTrackIndex.value);
+  if (Number.isInteger(loadout) && loadout >= 0 && loadout < tracks.value.length) return loadout;
+  return null;
+});
+const activeMobileTrack = computed(() => {
+  const index = activeMobileTrackIndex.value;
+  return index === null ? null : tracks.value[index] || null;
+});
+const activeEnemyDisplayName = computed(() => {
+  void locale.value;
+  if (store.activeEnemyId === 'custom') return t('resourceMonitor.enemy.custom');
+  const enemy = (store.enemyDatabase || []).find(item => item?.id === store.activeEnemyId);
+  return enemy
+    ? getEnemyGameName(enemy.id, locale.value)
+    : t('resourceMonitor.enemy.unknown');
+});
 const pxPerSecond = computed(() => {
   const raw = Number(store.timeBlockWidth) || 50;
   return Math.min(Math.max(raw, 20), 80);
@@ -107,6 +214,52 @@ function timeToY(time) {
   return COLLAPSED_PREP_PX + (v - prep) * pxPerSecond.value;
 }
 
+function flushMobileGuidePointer() {
+  mobileGuideRaf = null;
+  const pending = mobileGuidePendingPointer;
+  mobileGuidePendingPointer = null;
+  if (!pending) return;
+  mobileGuideTime.value = pointerYToTimelineTime({
+    clientY: pending.clientY,
+    timelineTop: pending.timelineTop,
+    pixelsPerSecond: pxPerSecond.value,
+    snapStep: Number(store.snapStep) || 1 / 30,
+    maxTime: viewDuration.value,
+  });
+}
+
+function queueMobileGuidePointer(event) {
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLElement)) return;
+  mobileGuidePendingPointer = {
+    clientY: event.clientY,
+    timelineTop: target.getBoundingClientRect().top,
+  };
+  if (mobileGuideRaf == null) {
+    mobileGuideRaf = window.requestAnimationFrame(flushMobileGuidePointer);
+  }
+}
+
+function beginMobileGuide(event) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  mobileGuidePointerId = event.pointerId;
+  mobileGuideVisible.value = true;
+  event.currentTarget?.setPointerCapture?.(event.pointerId);
+  queueMobileGuidePointer(event);
+}
+
+function moveMobileGuide(event) {
+  if (event.pointerId !== mobileGuidePointerId) return;
+  queueMobileGuidePointer(event);
+}
+
+function finishMobileGuide(event) {
+  if (event.pointerId !== mobileGuidePointerId) return;
+  queueMobileGuidePointer(event);
+  event.currentTarget?.releasePointerCapture?.(event.pointerId);
+  mobileGuidePointerId = null;
+}
+
 const viewDuration = computed(() => Number(store.viewDuration) || 0);
 const timelineHeightPx = computed(() => Math.max(0, Math.ceil(timeToY(viewDuration.value))));
 const prepDuration = computed(() => Math.max(0, Number(store.prepDuration) || 0));
@@ -135,6 +288,9 @@ async function handleScenarioChange(nextId) {
   if (!targetId || targetId === store.activeScenarioId || scenarioSwitching.value) return;
 
   selectedScenarioId.value = targetId;
+  cancelActionPointerSession();
+  cancelPlacement();
+  skillLibraryOpen.value = false;
   scenarioSwitching.value = true;
 
   try {
@@ -148,6 +304,63 @@ async function handleScenarioChange(nextId) {
   }
 }
 
+function startScenarioRename() {
+  if (!currentScenario.value || scenarioSwitching.value) return;
+  scenarioRenameActive.value = true;
+  nextTick(() => {
+    scenarioRenameInputRef.value?.focus?.();
+    scenarioRenameInputRef.value?.select?.();
+  });
+}
+
+function finishScenarioRename() {
+  scenarioRenameActive.value = false;
+}
+
+function handleDuplicateScenario() {
+  if (!currentScenario.value || scenarioSwitching.value) return;
+  if (scenarioList.value.length >= store.MAX_SCENARIOS) {
+    ElMessage.warning(t('timeline.scenario.limit', { max: store.MAX_SCENARIOS }));
+    return;
+  }
+  finishScenarioRename();
+  cancelActionPointerSession();
+  cancelPlacement();
+  store.duplicateScenario(currentScenario.value.id);
+  ElMessage.success(t('timeline.scenario.duplicated'));
+}
+
+function handleDeleteScenario() {
+  const scenario = currentScenario.value;
+  if (!scenario || scenarioSwitching.value || scenarioList.value.length <= 1) return;
+  finishScenarioRename();
+  ElMessageBox.confirm(t('timeline.scenario.deleteConfirm'), t('timeline.scenario.deleteTitle'), {
+    confirmButtonText: t('common.delete'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning',
+    lockScroll: false,
+  })
+    .then(() => {
+      cancelActionPointerSession();
+      cancelPlacement();
+      store.deleteScenario(scenario.id);
+      ElMessage.success(t('timeline.scenario.deleted'));
+    })
+    .catch(() => {});
+}
+
+function handleAddScenario() {
+  if (scenarioSwitching.value) return;
+  if (scenarioList.value.length >= store.MAX_SCENARIOS) {
+    ElMessage.warning(t('timeline.scenario.limit', { max: store.MAX_SCENARIOS }));
+    return;
+  }
+  finishScenarioRename();
+  cancelActionPointerSession();
+  cancelPlacement();
+  store.addScenario();
+}
+
 onMounted(() => {
   enforceMobilePrepExpanded();
   try {
@@ -156,6 +369,53 @@ onMounted(() => {
     // ignore
   }
   unregisterBackHandler = registerBackHandler(() => {
+    if (selectedDamageHit.value) {
+      selectedDamageHit.value = null;
+      return true;
+    }
+    if (statDetailOpen.value) {
+      statDetailOpen.value = false;
+      return true;
+    }
+    const selectionDialogs = [
+      enemySettingsPanelRef.value,
+      equipmentSelectionDialogRef.value,
+      weaponSelectionDialogRef.value,
+      operatorSelectionDialogRef.value,
+    ];
+    const openSelectionDialog = selectionDialogs.find(dialog => dialog?.isOpen?.());
+    if (openSelectionDialog) {
+      openSelectionDialog.close?.();
+      return true;
+    }
+    if (operatorStatusOpen.value) {
+      operatorStatusOpen.value = false;
+      return true;
+    }
+    if (weaponStatusOpen.value) {
+      weaponStatusOpen.value = false;
+      return true;
+    }
+    if (equipmentStatusOpen.value) {
+      equipmentStatusOpen.value = false;
+      return true;
+    }
+    if (skillLibraryOpen.value) {
+      skillLibraryOpen.value = false;
+      return true;
+    }
+    if (pendingPlacementSkill.value) {
+      cancelPlacement();
+      return true;
+    }
+    if (scenarioRenameActive.value) {
+      finishScenarioRename();
+      return true;
+    }
+    if (mobileGuideVisible.value) {
+      mobileGuideVisible.value = false;
+      return true;
+    }
     if (moreMenuOpen.value) {
       moreMenuOpen.value = false;
       return true;
@@ -177,6 +437,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  cancelActionPointerSession();
+  if (mobileGuideRaf != null) window.cancelAnimationFrame(mobileGuideRaf);
+  mobileGuideRaf = null;
+  mobileGuidePendingPointer = null;
   unregisterBackHandler?.();
   unregisterBackHandler = null;
   try {
@@ -190,6 +454,15 @@ function changeLocale(next) {
   locale.value = setLocale(next);
 }
 
+function openEnemySelector() {
+  enemySettingsPanelRef.value?.openSelector?.();
+}
+
+function openImportDialog() {
+  moreMenuOpen.value = false;
+  importVisible.value = true;
+}
+
 function handleReset() {
   moreMenuOpen.value = false;
   ElMessageBox.confirm(t('timeline.reset.confirm'), t('common.warning'), {
@@ -199,6 +472,8 @@ function handleReset() {
     lockScroll: false,
   })
     .then(() => {
+      cancelActionPointerSession();
+      cancelPlacement();
       store.resetProject();
       ElMessage.success(t('timeline.reset.done'));
     })
@@ -237,7 +512,9 @@ function getEquipmentStatRows(piece, instance) {
     return {
       key: `${effect?.id || effect?.stat?.modifier || 'stat'}-${index}`,
       label: formatEquipmentEffectLabel(effect, t, locale.value),
-      value: effect ? formatEquipmentEffectStatValue(effect, resolveLeveled(effect.value, refine)) : '',
+      value: effect
+        ? formatEquipmentEffectStatValue(effect, resolveLeveled(effect.value, refine))
+        : '',
       refine,
     };
   });
@@ -281,12 +558,480 @@ function getSelectedWeaponName() {
 function openLoadout(index) {
   const i = Number(index);
   if (!Number.isFinite(i) || i < 0 || i >= tracks.value.length) return;
-
-  const track = tracks.value[i];
-  if (!track?.id) return;
-
+  cancelPlacement();
+  store.selectTrack(i);
   loadoutTrackIndex.value = i;
   loadoutOpen.value = true;
+}
+
+function resolveEditingTrackIndex(preferredIndex = activeMobileTrackIndex.value) {
+  const preferred = Number(preferredIndex);
+  if (Number.isInteger(preferred) && preferred >= 0 && preferred < tracks.value.length) {
+    return preferred;
+  }
+  const firstAssigned = tracks.value.findIndex(track => track?.id);
+  return firstAssigned >= 0 ? firstAssigned : 0;
+}
+
+function openOperatorSelection(index = loadoutTrackIndex.value) {
+  const trackIndex = resolveEditingTrackIndex(index);
+  loadoutTrackIndex.value = trackIndex;
+  operatorSelectionDialogRef.value?.open?.(trackIndex);
+}
+
+function openWeaponSelection() {
+  const trackIndex = resolveEditingTrackIndex(loadoutTrackIndex.value);
+  if (!tracks.value[trackIndex]?.id) {
+    openOperatorSelection(trackIndex);
+    return;
+  }
+  weaponSelectionDialogRef.value?.open?.(trackIndex);
+}
+
+function openEquipmentSelection(slotKey) {
+  const trackIndex = resolveEditingTrackIndex(loadoutTrackIndex.value);
+  if (!tracks.value[trackIndex]?.id) {
+    openOperatorSelection(trackIndex);
+    return;
+  }
+  equipmentSelectionDialogRef.value?.open?.(trackIndex, slotKey);
+}
+
+function openOperatorStatus() {
+  if (!selectedOperatorInstance.value) return;
+  operatorStatusOpen.value = true;
+}
+
+function openWeaponStatus() {
+  if (!selectedWeaponInstance.value) return;
+  weaponStatusOpen.value = true;
+}
+
+function openEquipmentStatus() {
+  if (!hasSelectedEquipment.value) return;
+  equipmentStatusOpen.value = true;
+}
+
+function openStatDetail() {
+  if (!selectedTrack.value?.operatorStatus) return;
+  statDetailOpen.value = true;
+}
+
+function openSkillLibrary(index = activeMobileTrackIndex.value) {
+  const trackIndex = resolveEditingTrackIndex(index);
+  const track = tracks.value[trackIndex];
+  if (!track?.id) {
+    openOperatorSelection(trackIndex);
+    return;
+  }
+  store.selectTrack(trackIndex);
+  loadoutTrackIndex.value = trackIndex;
+  loadoutOpen.value = false;
+  skillLibraryOpen.value = true;
+}
+
+function beginSkillPlacement(skill) {
+  const trackIndex = activeMobileTrackIndex.value;
+  if (!skill || trackIndex === null || !tracks.value[trackIndex]?.id) return;
+  pendingPlacementSkill.value = skill;
+  placementTrackIndex.value = trackIndex;
+  skillLibraryOpen.value = false;
+}
+
+function cancelPlacement() {
+  pendingPlacementSkill.value = null;
+  placementTrackIndex.value = null;
+  placementPointerStart = null;
+}
+
+function getActionLogicalStart(action) {
+  return Number(action?.logicalStartTime ?? action?.startTime) || 0;
+}
+
+function getActionDragTargets(track, sourceAction) {
+  const allActions = tracks.value.flatMap(item => item?.actions || []);
+  let targets = [sourceAction];
+
+  if (sourceAction?.comboGroupId && sourceAction.comboLinked !== false) {
+    targets = allActions.filter(action => action?.comboGroupId === sourceAction.comboGroupId);
+  } else if (sourceAction?.attackGroupInstanceId) {
+    targets = allActions.filter(
+      action => action?.attackGroupInstanceId === sourceAction.attackGroupInstanceId,
+    );
+  } else if (
+    sourceAction?.parentSkillId &&
+    Number(sourceAction.segmentTotal) > 1 &&
+    Number(sourceAction.segmentIndex) > 0
+  ) {
+    const ordered = Array.isArray(track?.actions) ? track.actions : [];
+    const sourceIndex = ordered.indexOf(sourceAction);
+    const segmentIndex = Number(sourceAction.segmentIndex);
+    const segmentTotal = Number(sourceAction.segmentTotal);
+    let first = sourceIndex;
+    let last = sourceIndex;
+
+    while (first > 0) {
+      const current = ordered[first];
+      const previous = ordered[first - 1];
+      if (
+        previous?.parentSkillId !== sourceAction.parentSkillId ||
+        Number(previous?.segmentTotal) !== segmentTotal ||
+        Number(previous?.segmentIndex) !== Number(current?.segmentIndex) - 1
+      ) {
+        break;
+      }
+      first -= 1;
+    }
+    while (last >= 0 && last < ordered.length - 1) {
+      const current = ordered[last];
+      const next = ordered[last + 1];
+      if (
+        next?.parentSkillId !== sourceAction.parentSkillId ||
+        Number(next?.segmentTotal) !== segmentTotal ||
+        Number(next?.segmentIndex) !== Number(current?.segmentIndex) + 1
+      ) {
+        break;
+      }
+      last += 1;
+    }
+
+    const contiguous = ordered.slice(first, last + 1);
+    if (
+      contiguous.length === segmentTotal &&
+      Number(contiguous[0]?.segmentIndex) === 1 &&
+      Number(contiguous.at(-1)?.segmentIndex) === segmentTotal &&
+      segmentIndex <= segmentTotal
+    ) {
+      targets = contiguous;
+    }
+  }
+
+  return [...new Map(targets.filter(Boolean).map(action => [action.instanceId, action])).values()];
+}
+
+function clearActionLongPressTimer() {
+  if (actionLongPressTimer !== null) {
+    window.clearTimeout(actionLongPressTimer);
+    actionLongPressTimer = null;
+  }
+}
+
+function stopDragAutoScroll() {
+  dragAutoScrollSpeed = 0;
+  if (dragAutoScrollRaf !== null) {
+    window.cancelAnimationFrame(dragAutoScrollRaf);
+    dragAutoScrollRaf = null;
+  }
+}
+
+function clearDragPreviewFrame() {
+  if (actionPointerSession?.previewRaf != null) {
+    window.cancelAnimationFrame(actionPointerSession.previewRaf);
+    actionPointerSession.previewRaf = null;
+  }
+}
+
+function resetActionDragVisuals() {
+  draggingActionId.value = null;
+  dragPreviewOffsetPx.value = 0;
+  dragPreviewLogicalTime.value = null;
+  dragTargetIds = new Set();
+  document?.body?.classList?.remove('is-mobile-action-dragging');
+}
+
+function cancelActionPointerSession() {
+  clearActionLongPressTimer();
+  stopDragAutoScroll();
+  clearDragPreviewFrame();
+  window.removeEventListener('pointermove', handleActionPointerMove);
+  window.removeEventListener('pointerup', handleActionPointerUp);
+  window.removeEventListener('pointercancel', handleActionPointerCancel);
+  actionPointerSession = null;
+  resetActionDragVisuals();
+}
+
+function beginActionDrag() {
+  const session = actionPointerSession;
+  if (!session || session.scrolling || session.dragging) return;
+
+  const targets = getActionDragTargets(session.track, session.action);
+  if (targets.some(action => action?.isLocked || action?.locked)) {
+    ElMessage.warning({
+      message: t('timelineGrid.action.locked'),
+      duration: 1000,
+      grouping: true,
+    });
+    clearActionLongPressTimer();
+    return;
+  }
+
+  const timelineElement = mobileTimelineRef.value;
+  if (!(timelineElement instanceof HTMLElement)) return;
+
+  const timelineRect = timelineElement.getBoundingClientRect();
+  const visualStart = getVisualActionStartTime(session.action);
+  session.dragging = true;
+  session.targets = targets;
+  session.originalLogicalTimes = new Map(
+    targets.map(action => [action.instanceId, getActionLogicalStart(action)]),
+  );
+  session.primaryLogicalStart = getActionLogicalStart(session.action);
+  session.initialVisualStart = visualStart;
+  session.pointerStartTime = (session.startY - timelineRect.top) / pxPerSecond.value;
+  session.deltaTime = 0;
+  dragTargetIds = new Set(targets.map(action => action.instanceId));
+  draggingActionId.value = session.action.instanceId;
+  dragPreviewLogicalTime.value = session.primaryLogicalStart;
+  suppressActionClickUntil = Date.now() + 500;
+  document?.body?.classList?.add('is-mobile-action-dragging');
+
+  try {
+    session.element?.setPointerCapture?.(session.pointerId);
+  } catch {
+    // Pointer capture may be unavailable in an embedded WebView.
+  }
+}
+
+function flushActionDragPreview(clientY = actionPointerSession?.lastY) {
+  const session = actionPointerSession;
+  const timelineElement = mobileTimelineRef.value;
+  if (!session?.dragging || !(timelineElement instanceof HTMLElement) || !Number.isFinite(clientY)) {
+    return;
+  }
+
+  const timelineRect = timelineElement.getBoundingClientRect();
+  const pointerTime = (clientY - timelineRect.top) / pxPerSecond.value;
+  const originalTimes = [...session.originalLogicalTimes.values()];
+  const deltaTime = getSnappedTimelineDragDelta({
+    initialStart: session.primaryLogicalStart,
+    pointerDelta: pointerTime - session.pointerStartTime,
+    startTimes: originalTimes,
+    snapStep: Number(store.snapStep) || 1 / 30,
+    minTime: 0,
+    maxTime: viewDuration.value,
+  });
+  const previewLogicalStart = session.primaryLogicalStart + deltaTime;
+  const previewVisualStart = session.initialVisualStart + deltaTime;
+
+  session.deltaTime = deltaTime;
+  dragPreviewLogicalTime.value = previewLogicalStart;
+  dragPreviewOffsetPx.value =
+    timeToY(previewVisualStart) - timeToY(session.initialVisualStart);
+}
+
+function scheduleActionDragPreview(clientY) {
+  const session = actionPointerSession;
+  if (!session?.dragging) return;
+  session.lastY = clientY;
+  if (session.previewRaf != null) return;
+  session.previewRaf = window.requestAnimationFrame(() => {
+    if (!actionPointerSession) return;
+    actionPointerSession.previewRaf = null;
+    flushActionDragPreview();
+  });
+}
+
+function performDragAutoScroll() {
+  const session = actionPointerSession;
+  const scrollElement = mobileScrollRef.value;
+  if (!session?.dragging || !(scrollElement instanceof HTMLElement) || dragAutoScrollSpeed === 0) {
+    dragAutoScrollRaf = null;
+    return;
+  }
+
+  const previousTop = scrollElement.scrollTop;
+  scrollElement.scrollTop += dragAutoScrollSpeed;
+  if (scrollElement.scrollTop !== previousTop) flushActionDragPreview(session.lastY);
+  dragAutoScrollRaf = window.requestAnimationFrame(performDragAutoScroll);
+}
+
+function updateDragAutoScroll(clientY) {
+  const scrollElement = mobileScrollRef.value;
+  if (!(scrollElement instanceof HTMLElement)) return;
+  const rect = scrollElement.getBoundingClientRect();
+  dragAutoScrollSpeed = getVerticalEdgeScrollSpeed({
+    clientY,
+    top: rect.top,
+    bottom: rect.bottom,
+  });
+  if (dragAutoScrollSpeed !== 0 && dragAutoScrollRaf === null) {
+    dragAutoScrollRaf = window.requestAnimationFrame(performDragAutoScroll);
+  } else if (dragAutoScrollSpeed === 0) {
+    stopDragAutoScroll();
+  }
+}
+
+function handleActionPointerDown(event, track, action) {
+  if (
+    pendingPlacementSkill.value ||
+    actionPointerSession ||
+    event.button !== 0 ||
+    !action?.instanceId
+  ) {
+    return;
+  }
+
+  event.stopPropagation();
+
+  actionPointerSession = {
+    pointerId: event.pointerId,
+    track,
+    action,
+    element: event.currentTarget,
+    startX: event.clientX,
+    startY: event.clientY,
+    lastY: event.clientY,
+    initialScrollTop: mobileScrollRef.value?.scrollTop || 0,
+    scrolling: false,
+    dragging: false,
+    previewRaf: null,
+  };
+
+  window.addEventListener('pointermove', handleActionPointerMove, { passive: false });
+  window.addEventListener('pointerup', handleActionPointerUp);
+  window.addEventListener('pointercancel', handleActionPointerCancel);
+  actionLongPressTimer = window.setTimeout(beginActionDrag, 280);
+}
+
+function handleActionPointerMove(event) {
+  const session = actionPointerSession;
+  if (!session || event.pointerId !== session.pointerId) return;
+
+  const deltaX = event.clientX - session.startX;
+  const deltaY = event.clientY - session.startY;
+  const distance = Math.hypot(deltaX, deltaY);
+
+  if (!session.dragging) {
+    if (distance <= 8) return;
+    clearActionLongPressTimer();
+    session.scrolling = true;
+    suppressActionClickUntil = Date.now() + 250;
+    if (Math.abs(deltaY) >= Math.abs(deltaX) && mobileScrollRef.value) {
+      event.preventDefault();
+      mobileScrollRef.value.scrollTop = session.initialScrollTop - deltaY;
+    }
+    return;
+  }
+
+  event.preventDefault();
+  scheduleActionDragPreview(event.clientY);
+  updateDragAutoScroll(event.clientY);
+}
+
+function commitActionDrag() {
+  const session = actionPointerSession;
+  if (!session?.dragging) return;
+
+  clearDragPreviewFrame();
+  flushActionDragPreview(session.lastY);
+  const deltaTime = Number(session.deltaTime) || 0;
+  if (Math.abs(deltaTime) < 0.0001) return;
+
+  tracks.value.forEach(track => {
+    track.actions?.forEach(action => {
+      if (action.logicalStartTime === undefined) action.logicalStartTime = action.startTime;
+    });
+  });
+  session.targets.forEach(action => {
+    const original = session.originalLogicalTimes.get(action.instanceId);
+    if (!Number.isFinite(original)) return;
+    const nextStart = snapTimelineTime(
+      original + deltaTime,
+      Number(store.snapStep) || 1 / 30,
+      viewDuration.value,
+    );
+    action.logicalStartTime = nextStart;
+    action.startTime = nextStart;
+  });
+  store.refreshAllActionShifts();
+  tracks.value.forEach(track => {
+    track.actions?.sort((a, b) => (Number(a.startTime) || 0) - (Number(b.startTime) || 0));
+  });
+  store.commitState();
+}
+
+function finishActionPointerSession(event, shouldCommit) {
+  const session = actionPointerSession;
+  if (!session || event.pointerId !== session.pointerId) return;
+  if (shouldCommit) commitActionDrag();
+  if (session.dragging || session.scrolling) suppressActionClickUntil = Date.now() + 350;
+  cancelActionPointerSession();
+}
+
+function handleActionPointerUp(event) {
+  finishActionPointerSession(event, true);
+}
+
+function handleActionPointerCancel(event) {
+  finishActionPointerSession(event, false);
+}
+
+function handleTrackPointerDown(event, trackIndex) {
+  if (!pendingPlacementSkill.value || trackIndex !== placementTrackIndex.value) return;
+  placementPointerStart = {
+    pointerId: event.pointerId,
+    trackIndex,
+    x: event.clientX,
+    y: event.clientY,
+  };
+}
+
+function handleTrackPointerCancel() {
+  placementPointerStart = null;
+}
+
+function handleTrackPointerUp(event, trackIndex) {
+  const start = placementPointerStart;
+  placementPointerStart = null;
+  if (
+    !pendingPlacementSkill.value ||
+    !start ||
+    start.pointerId !== event.pointerId ||
+    start.trackIndex !== trackIndex ||
+    trackIndex !== placementTrackIndex.value ||
+    !isTapGesture(start, { x: event.clientX, y: event.clientY })
+  ) {
+    return;
+  }
+
+  const track = tracks.value[trackIndex];
+  const element = event.currentTarget;
+  if (!track?.id || !(element instanceof HTMLElement)) return;
+
+  const visualStartTime = pointerYToTimelineTime({
+    clientY: event.clientY,
+    timelineTop: element.getBoundingClientRect().top,
+    pixelsPerSecond: pxPerSecond.value,
+    snapStep: Number(store.snapStep) || 1 / 30,
+    maxTime: viewDuration.value,
+  });
+  const startTime = snapTimelineTime(
+    typeof store.toGameTime === 'function' ? store.toGameTime(visualStartTime) : visualStartTime,
+    Number(store.snapStep) || 1 / 30,
+    viewDuration.value,
+  );
+  const skillName = pendingPlacementSkill.value.name || t('skillType.unknown');
+  store.addSkillToTrack(track.id, pendingPlacementSkill.value, startTime);
+  suppressActionClickUntil = Date.now() + 350;
+  cancelPlacement();
+  ElMessage.success(t('timeline.mobile.skillLibrary.placed', { name: skillName }));
+}
+
+function handleActionClick(instanceId) {
+  if (pendingPlacementSkill.value || Date.now() < suppressActionClickUntil) return;
+  openActionInfo(instanceId);
+}
+
+function handleUndo() {
+  cancelActionPointerSession();
+  cancelPlacement();
+  store.undo();
+}
+
+function handleRedo() {
+  cancelActionPointerSession();
+  cancelPlacement();
+  store.redo();
 }
 
 const selectedTrack = computed(() => {
@@ -333,7 +1078,7 @@ const selectedWeaponSkillLines = computed(() => {
     selectedWeaponSkill3Level.value,
   ];
 
-  return (['skill1', 'skill2', 'skill3']).map((skillKey, index) => ({
+  return ['skill1', 'skill2', 'skill3'].map((skillKey, index) => ({
     key: skillKey,
     name: getWeaponSkillName(slug, skillKey, locale.value) || skillKey,
     tier: formatTierLabel(levels[index]),
@@ -374,9 +1119,7 @@ const equipmentSlots = computed(() => {
 
   return EQUIPMENT_SLOT_CONFIGS.map(config => {
     const equipmentId = track[config.idKey] || null;
-    const instance = track[config.instanceKey]
-      ? findGearInstance(track[config.instanceKey])
-      : null;
+    const instance = track[config.instanceKey] ? findGearInstance(track[config.instanceKey]) : null;
     const pieceId = instance?.gearPieceId || equipmentId;
     const item =
       typeof store.getEquipmentById === 'function' ? store.getEquipmentById(pieceId) : null;
@@ -403,9 +1146,7 @@ const equipmentSlots = computed(() => {
       level: level || null,
       levelColor: getEquipmentLevelColor(level),
       isGold,
-      name: pieceId
-        ? getGearPieceGameName(pieceId, locale.value) || item?.name || pieceId
-        : '',
+      name: pieceId ? getGearPieceGameName(pieceId, locale.value) || item?.name || pieceId : '',
       icon: piece?.icon || item?.icon || DEFAULT_ICON,
       setName:
         getGearSetGameName(piece?.setSlug || item?.category || '', locale.value) ||
@@ -417,6 +1158,8 @@ const equipmentSlots = computed(() => {
     };
   });
 });
+
+const hasSelectedEquipment = computed(() => equipmentSlots.value.some(slot => !!slot.instance));
 
 const selectedOperatorInstance = computed(() => {
   const id = selectedTrack.value?.operatorInstanceId;
@@ -457,10 +1200,13 @@ function getTypeLabel(action) {
   if (action?.kind === 'attack_segment') {
     const total = Number(action.attackSequenceTotal) || 0;
     const idx = Number(action.attackSequenceIndex) || 0;
-    if (total > 0 && idx === total) {
-      const named = String(action.name || '').trim();
-      if (named) return named;
-      return t('skillType.heavyAttack');
+    if (total > 0 && idx > 0) {
+      if (idx === total) {
+        const named = String(action.name || '').trim();
+        if (named) return named;
+        return t('skillType.heavyAttack');
+      }
+      return `A${idx}`;
     }
   }
 
@@ -529,6 +1275,23 @@ function getCompiledAction(action) {
   return store.compiledTimeline?.actionMap?.get(id) || null;
 }
 
+const freezeRegionBySourceId = computed(() => {
+  const regions = Array.isArray(store.globalExtensions) ? store.globalExtensions : [];
+  return new Map(regions.filter(region => region?.sourceId).map(region => [region.sourceId, region]));
+});
+
+function getActionFreezeRegion(action) {
+  return freezeRegionBySourceId.value.get(action?.instanceId) || null;
+}
+
+function getActionFreezeStyle(region) {
+  const start = Number(region?.time) || 0;
+  const amount = Math.max(0, Number(region?.amount) || 0);
+  return {
+    height: `${Math.max(2, timeToY(start + amount) - timeToY(start))}px`,
+  };
+}
+
 function getVisualActionStartTime(action) {
   const resolved = getCompiledAction(action);
   return Number(resolved?.realStartTime ?? action?.startTime) || 0;
@@ -569,6 +1332,7 @@ function getActionStyle(action, track = null) {
   const borderAlpha = isAttack ? (isLight ? 1 : 0.45) : isLight ? 1 : 0.9;
   const glowAlpha = isLight ? 0.12 : 0.16;
 
+  const isDragTarget = dragTargetIds.has(action?.instanceId);
   return {
     top: `${top}px`,
     height: `${height}px`,
@@ -585,6 +1349,9 @@ function getActionStyle(action, track = null) {
           ? `0 0 0 1px rgba(26, 27, 30, 0.22), 0 0 8px ${toRgba(color, glowAlpha)}`
           : `0 0 8px ${toRgba(color, glowAlpha)}`,
     opacity: isDisabled ? 0.45 : 1,
+    transform: isDragTarget ? `translateY(${dragPreviewOffsetPx.value}px)` : undefined,
+    willChange: isDragTarget ? 'transform' : undefined,
+    zIndex: isDragTarget ? 8 : 4,
   };
 }
 
@@ -593,7 +1360,7 @@ function getVisibleActions(track) {
   return list.filter(action => {
     if (!action) return false;
 
-    if (action.kind === 'attack_segment') {
+    if (!showAllAttackSegments.value && action.kind === 'attack_segment') {
       const total = Number(action.attackSequenceTotal) || 0;
       const idx = Number(action.attackSequenceIndex) || 0;
       if (total > 0 && idx > 0) return idx === total;
@@ -602,6 +1369,34 @@ function getVisibleActions(track) {
     return true;
   });
 }
+
+watch(
+  [
+    showAllAttackSegments,
+    showAnomalies,
+    showDurationBars,
+    showFreezeEffects,
+    showStaggerBreaks,
+    showOperationHints,
+  ],
+  ([attackSegments, anomalies, durationBars, freezeEffects, staggerBreaks, operationHints]) => {
+    try {
+      localStorage.setItem(
+        MOBILE_TIMELINE_PREFS_KEY,
+        JSON.stringify({
+          showAllAttackSegments: attackSegments,
+          showAnomalies: anomalies,
+          showDurationBars: durationBars,
+          showFreezeEffects: freezeEffects,
+          showStaggerBreaks: staggerBreaks,
+          showOperationHints: operationHints,
+        }),
+      );
+    } catch {
+      // Ignore storage failures in private mode and restricted WebViews.
+    }
+  },
+);
 
 function buildActionCombatEntry(track, action) {
   const node = getCompiledAction(action)?.node || action;
@@ -616,6 +1411,7 @@ function buildActionCombatEntry(track, action) {
   return {
     action,
     badges,
+    freezeRegion: getActionFreezeRegion(action),
     durationBars: badges
       .filter(badge => !badge.isMarker && badge.duration > 0)
       .map((badge, index) => ({
@@ -655,7 +1451,7 @@ function getCombatIconTitle(typeKey) {
   return String(typeKey || '');
 }
 
-function getDurationBarStyle(bar) {
+function getDurationBarStyle(bar, action = null) {
   const top = Math.round(timeToY(bar.startTime));
   const bottom = Math.round(timeToY(bar.endTime ?? bar.startTime + bar.duration));
   const height = Math.max(10, bottom - top);
@@ -665,6 +1461,10 @@ function getDurationBarStyle(bar) {
     height: `${height}px`,
     right: `${2 + lane * 10}px`,
     color: bar.color || '#aaaaaa',
+    transform: dragTargetIds.has(action?.instanceId)
+      ? `translateY(${dragPreviewOffsetPx.value}px)`
+      : undefined,
+    willChange: dragTargetIds.has(action?.instanceId) ? 'transform' : undefined,
   };
 }
 
@@ -678,8 +1478,53 @@ function formatBadgeDuration(duration) {
 function openActionInfo(instanceId) {
   const id = String(instanceId || '').trim();
   if (!id) return;
+  selectedDamageHit.value = null;
+  skillDamageOpen.value = false;
+  effectDamageOpen.value = false;
   selectedActionId.value = id;
   actionInfoOpen.value = true;
+}
+
+const selectedSourceAction = computed(() => {
+  const id = String(selectedActionId.value || '').trim();
+  if (!id) return null;
+  for (const track of tracks.value) {
+    const action = (Array.isArray(track?.actions) ? track.actions : []).find(
+      item => item?.instanceId === id,
+    );
+    if (action) return action;
+  }
+  return null;
+});
+
+function toggleSelectedActionDisabled() {
+  const id = String(selectedActionId.value || '').trim();
+  const action = selectedSourceAction.value;
+  if (!id || !action) return;
+  store.updateAction(id, { isDisabled: !action.isDisabled });
+}
+
+function removeSelectedAction() {
+  const id = String(selectedActionId.value || '').trim();
+  if (!id || !selectedSourceAction.value) return;
+
+  const attackGroupId = selectedSourceAction.value?.attackGroupInstanceId;
+  const groupedIds = attackGroupId
+    ? tracks.value
+        .flatMap(track => (Array.isArray(track?.actions) ? track.actions : []))
+        .filter(action => action?.attackGroupInstanceId === attackGroupId)
+        .map(action => action.instanceId)
+        .filter(Boolean)
+    : [];
+  if (groupedIds.length > 1) {
+    store.setMultiSelection(groupedIds);
+  } else {
+    store.clearSelection();
+    store.selectAction(id);
+  }
+  store.removeCurrentSelection();
+  actionInfoOpen.value = false;
+  selectedActionId.value = null;
 }
 
 const resolvedAction = computed(() => {
@@ -727,6 +1572,85 @@ const resolvedOperator = computed(() => {
 });
 
 const resolvedActionNode = computed(() => resolvedAction.value?.node || null);
+
+function getHitDisplayDamage(hitData) {
+  return (
+    Number(
+      store.getHitDisplayDamage?.(hitData) ??
+        hitData?._expectedDamage ??
+        hitData?._damageBreakdown?.expectedDamage ??
+        0,
+    ) || 0
+  );
+}
+
+function formatDamage(value) {
+  return Math.floor(Number(value) || 0).toLocaleString();
+}
+
+function getEffectDamageSourceLabel(entry) {
+  const hit = entry?.payload?.hitData;
+  if (!hit) return '';
+  const raw = String(hit.triggeredBy || hit._reactionMeta?.reactionType || hit.id || '').trim();
+  const cleaned = raw.replace(/^(dot:|reaction:|triggered:)/, '');
+  return cleaned ? translateBattleLogStatus(t, te, cleaned) || cleaned : '';
+}
+
+const selectedActionDamageHits = computed(() => {
+  const actionId = String(selectedActionId.value || '').trim();
+  if (!actionId || !resolvedAction.value) return [];
+
+  const actionStart = Number(resolvedAction.value.realStartTime) || 0;
+  return (Array.isArray(store.simLog) ? store.simLog : [])
+    .filter(
+      entry => entry?.type === 'DAMAGE_HIT' && String(entry?.payload?.actionId || '') === actionId,
+    )
+    .map(entry => ({
+      hitData: entry.payload?.hitData || null,
+      time: Number(entry.time) || 0,
+      isEffectDamage: isEffectOriginDamage(entry),
+      effectLabel: getEffectDamageSourceLabel(entry),
+    }))
+    .filter(entry => entry.hitData && !entry.hitData._noDamage)
+    .map((entry, index) => ({
+      ...entry,
+      key: `${actionId}-${index}-${entry.time}`,
+      index: index + 1,
+      offset: Math.max(0, entry.time - actionStart),
+      damage: getHitDisplayDamage(entry.hitData),
+      hasDetail: !!entry.hitData?._damageBreakdown,
+    }));
+});
+
+const selectedSkillDamageHits = computed(() =>
+  selectedActionDamageHits.value
+    .filter(hit => !hit.isEffectDamage)
+    .map((hit, index) => ({ ...hit, displayIndex: index + 1 })),
+);
+
+const selectedEffectDamageHits = computed(() =>
+  selectedActionDamageHits.value
+    .filter(hit => hit.isEffectDamage)
+    .map((hit, index) => ({ ...hit, displayIndex: index + 1 })),
+);
+
+function sumDamageHits(hits) {
+  return hits.reduce((total, hit) => total + hit.damage, 0);
+}
+
+const selectedActionTotalDamage = computed(() => sumDamageHits(selectedActionDamageHits.value));
+
+const selectedSkillDamageTotal = computed(() => sumDamageHits(selectedSkillDamageHits.value));
+const selectedEffectDamageTotal = computed(() => sumDamageHits(selectedEffectDamageHits.value));
+
+function openDamageHitDetail(hit) {
+  if (!hit?.hasDetail) return;
+  selectedDamageHit.value = hit.hitData;
+}
+
+function closeDamageHitDetail() {
+  selectedDamageHit.value = null;
+}
 
 const resolvedActionStats = computed(() => {
   const node = resolvedActionNode.value;
@@ -782,6 +1706,7 @@ watch(
   () => {
     if (!actionInfoOpen.value) return;
     if (!resolvedAction.value) {
+      selectedDamageHit.value = null;
       actionInfoOpen.value = false;
       selectedActionId.value = null;
     }
@@ -793,6 +1718,96 @@ const gridStyle = computed(() => {
   return {
     height: `${timelineHeightPx.value}px`,
     '--sec-px': `${secPx}px`,
+  };
+});
+
+function formatMobileResourceValue(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '0';
+  return String(Math.round(number * 1000) / 1000);
+}
+
+const mobileGuideTop = computed(() => Math.round(timeToY(mobileGuideTime.value)));
+const mobileGuidePanelBelow = computed(() => mobileGuideTop.value < 112);
+const mobileGuideSpSample = computed(() => {
+  const points = Array.isArray(store.spSeries) ? store.spSeries : [];
+  if (points.length > 0) return sampleSpSeriesAtTime(points, mobileGuideTime.value);
+  return {
+    sp: Number(store.systemConstants?.initialSp) || 0,
+    refundSp: 0,
+  };
+});
+const mobileGuideSpText = computed(() => {
+  const sp = Math.floor(Number(mobileGuideSpSample.value?.sp) || 0);
+  const refund = Math.floor(Number(mobileGuideSpSample.value?.refundSp) || 0);
+  return refund > 0 ? `${sp} (+${refund})` : String(sp);
+});
+const mobileGuideGaugeRows = computed(() =>
+  tracks.value
+    .filter(track => track?.id)
+    .map(track => {
+      const points = store.gaugeSeriesByTrackId?.get(track.id) || [];
+      const point = getStepSampleAtTime(points, mobileGuideTime.value);
+      const value = Number(point?.val) || 0;
+      const max = Math.max(0, Number(store.getTrackGaugeMax?.(track.id)) || 0);
+      return {
+        id: track.id,
+        name: getTrackName(track),
+        value: formatMobileResourceValue(value),
+        max: formatMobileResourceValue(max),
+        isFull: max > 0 && value >= max - 1e-9,
+        color: store.getCharacterElementColor?.(track.id) || 'var(--ea-info)',
+      };
+    }),
+);
+const mobileGuideStaggerText = computed(() => {
+  const point = getStepSampleAtTime(store.staggerSeries?.points || [], mobileGuideTime.value);
+  const value = Math.floor(Number(point?.val) || 0);
+  const max = Math.max(0, Number(store.systemConstants?.maxStagger) || 0);
+  return max > 0 ? `${value}/${max}` : String(value);
+});
+const mobileDamageSeries = computed(() => {
+  void store.simLogRevision;
+  let total = 0;
+  return (store.simLog || [])
+    .filter(entry => entry?.type === 'DAMAGE_HIT')
+    .map(entry => ({
+      time: Number(entry.time) || 0,
+      damage:
+        Number(
+          store.getHitDisplayDamage?.(entry.payload?.hitData) ??
+            entry.payload?.hitData?._expectedDamage ??
+            0,
+        ) || 0,
+    }))
+    .sort((left, right) => left.time - right.time)
+    .map(entry => {
+      total += entry.damage;
+      return { time: entry.time, total };
+    });
+});
+const mobileGuideEnemyHpText = computed(() => {
+  const max = Math.max(0, Number(store.systemConstants?.enemyHp) || 0);
+  if (max <= 0) return '';
+  const point = getStepSampleAtTime(mobileDamageSeries.value, mobileGuideTime.value);
+  const current = Math.max(0, Math.floor(max - (Number(point?.total) || 0)));
+  return `${current.toLocaleString()} / ${Math.floor(max).toLocaleString()}`;
+});
+
+const activeMobileFreezeRegion = computed(() => {
+  const sourceId = draggingActionId.value || (actionInfoOpen.value ? selectedActionId.value : null);
+  return sourceId ? freezeRegionBySourceId.value.get(sourceId) || null : null;
+});
+
+const activeMobileFreezeStyle = computed(() => {
+  const region = activeMobileFreezeRegion.value;
+  if (!region) return null;
+  const start = Number(region.time) || 0;
+  const amount = Math.max(0, Number(region.amount) || 0);
+  const previewOffset = draggingActionId.value === region.sourceId ? dragPreviewOffsetPx.value : 0;
+  return {
+    top: `${timeToY(start) + previewOffset}px`,
+    height: `${Math.max(2, timeToY(start + amount) - timeToY(start))}px`,
   };
 });
 
@@ -956,9 +1971,46 @@ const operationLayout = computed(() => {
   };
 });
 
+const mobileTimeRailStyle = computed(() =>
+  showOperationHints.value
+    ? operationLayout.value.vars
+    : {
+        '--opw': '0px',
+        '--capw': '0px',
+        '--capfs': '0px',
+        '--capgap': '0px',
+      },
+);
+
+const mobileStaggerBreakZones = computed(() => {
+  const duration = Math.max(0, viewDuration.value);
+  const segments = Array.isArray(store.staggerSeries?.lockSegments)
+    ? store.staggerSeries.lockSegments
+    : [];
+
+  return segments.flatMap((segment, index) => {
+    const start = Math.max(0, Math.min(duration, Number(segment?.start) || 0));
+    const end = Math.max(start, Math.min(duration, Number(segment?.end) || 0));
+    if (end <= start) return [];
+
+    const top = Math.round(timeToY(start));
+    const bottom = Math.round(timeToY(end));
+    return [
+      {
+        id: `stagger-break-${index}-${start}-${end}`,
+        top,
+        height: Math.max(2, bottom - top),
+      },
+    ];
+  });
+});
+
 watch(
   () => store.activeScenarioId,
   nextId => {
+    finishScenarioRename();
+    cancelPlacement();
+    skillLibraryOpen.value = false;
     selectedScenarioId.value = nextId;
     enforceMobilePrepExpanded();
   },
@@ -973,6 +2025,7 @@ async function doImport() {
   }
 
   try {
+    cancelPlacement();
     importing.value = true;
     const ok = await store.importShareString(code);
     if (!ok) {
@@ -995,32 +2048,29 @@ async function doImport() {
   <div class="mobile-viewer-root">
     <div class="mobile-topbar">
       <div class="mobile-topbar-actions">
-        <el-select
-          v-if="scenarioList.length > 1"
-          :model-value="selectedScenarioId"
-          :disabled="scenarioSwitching"
-          size="small"
-          :class="['mobile-scenario-select', { 'is-switching': scenarioSwitching }]"
-          :teleported="true"
-          popper-class="mobile-scenario-popper"
-          @change="handleScenarioChange"
-        >
-          <el-option
-            v-for="(sc, idx) in scenarioList"
-            :key="sc.id"
-            :label="sc?.name || t('timeline.scenario.defaultName', { index: idx + 1 })"
-            :value="sc.id"
-          />
-        </el-select>
-
-        <el-button
-          class="mobile-primary-btn"
-          size="small"
-          type="primary"
-          plain
-          @click="importVisible = true"
-        >
-          <span class="btn-inline">
+        <div class="mobile-scenario-tools">
+          <button
+            type="button"
+            class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--ghost ea-btn--no-shrink mobile-scenario-tool"
+            :disabled="scenarioSwitching"
+            :title="t('timeline.scenario.renameTooltip')"
+            :aria-label="t('timeline.scenario.renameTooltip')"
+            @click="startScenarioRename"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+              <path
+                d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--ghost ea-btn--no-shrink mobile-scenario-tool"
+            :disabled="scenarioSwitching"
+            :title="t('timeline.scenario.duplicateTooltip')"
+            :aria-label="t('timeline.scenario.duplicateTooltip')"
+            @click="handleDuplicateScenario"
+          >
             <svg
               viewBox="0 0 24 24"
               width="14"
@@ -1030,24 +2080,101 @@ async function doImport() {
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
+              aria-hidden="true"
             >
-              <polyline points="9 11 12 14 22 4"></polyline>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
             </svg>
-            <span>{{ t('timeline.mobile.import') }}</span>
-          </span>
-        </el-button>
+          </button>
+          <button
+            v-if="scenarioList.length > 1"
+            type="button"
+            class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--ghost ea-btn--hover-danger ea-btn--no-shrink mobile-scenario-tool"
+            :disabled="scenarioSwitching"
+            :title="t('timeline.scenario.deleteTooltip')"
+            :aria-label="t('timeline.scenario.deleteTooltip')"
+            @click="handleDeleteScenario"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              />
+            </svg>
+          </button>
+          <button
+            v-if="scenarioList.length < store.MAX_SCENARIOS"
+            type="button"
+            class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--ghost ea-btn--no-shrink mobile-scenario-tool"
+            :disabled="scenarioSwitching"
+            :title="t('timeline.scenario.addTooltip')"
+            :aria-label="t('timeline.scenario.addTooltip')"
+            @click="handleAddScenario"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        </div>
 
-        <el-popover
-          v-model:visible="moreMenuOpen"
-          trigger="click"
-          placement="bottom-end"
-          :teleported="true"
-          :width="260"
-          :show-arrow="true"
-          popper-class="mobile-more-popper"
-        >
-          <template #reference>
+        <div class="mobile-topbar-secondary">
+          <input
+            v-if="scenarioRenameActive && currentScenario"
+            ref="scenarioRenameInputRef"
+            v-model="currentScenario.name"
+            class="mobile-scenario-input"
+            :aria-label="t('timeline.scenario.renameTooltip')"
+            @blur="finishScenarioRename"
+            @keydown.enter="finishScenarioRename"
+            @keydown.esc="finishScenarioRename"
+          />
+          <el-select
+            v-else
+            :model-value="selectedScenarioId"
+            :disabled="scenarioSwitching"
+            size="small"
+            :class="['mobile-scenario-select', { 'is-switching': scenarioSwitching }]"
+            :teleported="true"
+            popper-class="mobile-scenario-popper"
+            @change="handleScenarioChange"
+          >
+            <el-option
+              v-for="(sc, idx) in scenarioList"
+              :key="sc.id"
+              :label="sc?.name || t('timeline.scenario.defaultName', { index: idx + 1 })"
+              :value="sc.id"
+            />
+          </el-select>
+
+          <el-popover
+            v-model:visible="moreMenuOpen"
+            trigger="click"
+            placement="bottom-end"
+            :teleported="true"
+            :width="260"
+            :show-arrow="true"
+            popper-class="mobile-more-popper"
+          >
+            <template #reference>
             <button
               type="button"
               class="ea-btn ea-btn--sm ea-btn--lift mobile-more-trigger"
@@ -1166,44 +2293,314 @@ async function doImport() {
             </section>
 
             <section class="mobile-more-section">
-              <button
-                type="button"
-                class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-danger-dark mobile-reset-action"
-                @click="handleReset"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  width="14"
-                  height="14"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
+              <h4 class="mobile-more-section__title">
+                {{ t('timeline.mobile.display.title') }}
+              </h4>
+              <div class="header-more-checklist header-more-checklist--grid">
+                <button
+                  type="button"
+                  class="header-more-check-row header-more-check-row--compact"
+                  :aria-pressed="showAllAttackSegments"
+                  @click="showAllAttackSegments = !showAllAttackSegments"
                 >
-                  <polyline points="3 6 5 6 21 6" />
-                  <path
-                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                  />
-                </svg>
-                <span>{{ t('common.reset') }}</span>
-              </button>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="showAllAttackSegments"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span>{{ t('timeline.mobile.display.showAllAttackSegments') }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="header-more-check-row header-more-check-row--compact"
+                  :aria-pressed="showAnomalies"
+                  @click="showAnomalies = !showAnomalies"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="showAnomalies"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span>{{ t('timeline.mobile.display.showAnomalies') }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="header-more-check-row header-more-check-row--compact"
+                  :aria-pressed="showDurationBars"
+                  @click="showDurationBars = !showDurationBars"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="showDurationBars"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span>{{ t('timeline.mobile.display.showDurationBars') }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="header-more-check-row header-more-check-row--compact"
+                  :aria-pressed="showFreezeEffects"
+                  @click="showFreezeEffects = !showFreezeEffects"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="showFreezeEffects"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span>{{ t('timeline.mobile.display.showFreezeEffects') }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="header-more-check-row header-more-check-row--compact"
+                  :aria-pressed="showStaggerBreaks"
+                  @click="showStaggerBreaks = !showStaggerBreaks"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="showStaggerBreaks"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span>{{ t('timeline.mobile.display.showStaggerBreaks') }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="header-more-check-row header-more-check-row--compact"
+                  :aria-pressed="showOperationHints"
+                  @click="showOperationHints = !showOperationHints"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="showOperationHints"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span>{{ t('timeline.mobile.display.showOperationHints') }}</span>
+                </button>
+              </div>
+            </section>
+
+            <section class="mobile-more-section">
+              <div class="mobile-project-actions">
+                <button
+                  type="button"
+                  class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-blue mobile-project-action"
+                  @click="openImportDialog"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="9 11 12 14 22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                  </svg>
+                  <span>{{ t('timeline.mobile.import') }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-danger-dark mobile-project-action"
+                  @click="handleReset"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path
+                      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                    />
+                  </svg>
+                  <span>{{ t('common.reset') }}</span>
+                </button>
+              </div>
             </section>
           </div>
-        </el-popover>
+          </el-popover>
+        </div>
       </div>
     </div>
 
-    <div class="mobile-scroll">
+    <div class="mobile-editbar">
+      <button type="button" class="mobile-editbar__library" @click="openSkillLibrary()">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path
+            d="M4 5h16M4 12h16M4 19h10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span>
+          {{
+            activeMobileTrack?.id
+              ? `${getTrackName(activeMobileTrack)} · ${t('timeline.mobile.skillLibrary.title')}`
+              : t('timeline.mobile.skillLibrary.selectTrack')
+          }}
+        </span>
+      </button>
+      <button
+        type="button"
+        class="mobile-editbar__enemy"
+        :title="t('resourceMonitor.enemy.dialogTitle')"
+        :aria-label="t('resourceMonitor.enemy.dialogTitle')"
+        @click="openEnemySelector"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <circle
+            cx="12"
+            cy="12"
+            r="7"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <path
+            d="M12 2v4M12 18v4M2 12h4M18 12h4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        </svg>
+        <span>{{ activeEnemyDisplayName }}</span>
+      </button>
+      <button
+        type="button"
+        class="mobile-editbar__icon"
+        :disabled="!store.canUndo"
+        :title="t('timeline.mobile.undo')"
+        :aria-label="t('timeline.mobile.undo')"
+        @click="handleUndo"
+      >
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+          <path
+            d="M9 7l-5 5 5 5M5 12h8a6 6 0 0 1 6 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="mobile-editbar__icon"
+        :disabled="!store.canRedo"
+        :title="t('timeline.mobile.redo')"
+        :aria-label="t('timeline.mobile.redo')"
+        @click="handleRedo"
+      >
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+          <path
+            d="M15 7l5 5-5 5M19 12h-8a6 6 0 0 0-6 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <div v-if="pendingPlacementSkill" class="mobile-placement-banner">
+      <div>
+        <strong>{{ pendingPlacementSkill.name }}</strong>
+        <span>{{ t('timeline.mobile.skillLibrary.placeHint') }}</span>
+      </div>
+      <button type="button" @click="cancelPlacement">
+        {{ t('common.cancel') }}
+      </button>
+    </div>
+
+    <div ref="mobileScrollRef" class="mobile-scroll">
       <div class="mobile-tracks-header">
         <div class="mobile-time-head">{{ t('timeline.mobile.time') }}</div>
         <div v-for="(track, idx) in tracks" :key="idx" class="mobile-track-head">
           <button
             type="button"
             class="mobile-avatar mobile-avatar-btn"
-            :class="{ 'is-disabled': !track?.id }"
-            :disabled="!track?.id"
             :aria-label="t('timeline.mobile.loadout.openAria', { name: getTrackName(track) })"
             @click.stop="openLoadout(idx)"
           >
@@ -1217,7 +2614,14 @@ async function doImport() {
       </div>
 
       <div class="mobile-timeline-wrap" :style="gridStyle">
-        <div class="mobile-time-rail" :style="operationLayout.vars">
+        <div
+          class="mobile-time-rail"
+          :style="mobileTimeRailStyle"
+          @pointerdown.prevent="beginMobileGuide"
+          @pointermove.prevent="moveMobileGuide"
+          @pointerup.prevent="finishMobileGuide"
+          @pointercancel="finishMobileGuide"
+        >
           <div
             v-if="prepDuration > 0"
             class="mobile-prep-zone"
@@ -1228,7 +2632,15 @@ async function doImport() {
             class="mobile-battle-start-line"
             :style="{ top: `${battleStartYPx}px` }"
           ></div>
-          <div class="mobile-op-layer">
+          <div v-if="showStaggerBreaks" class="mobile-stagger-break-layer" aria-hidden="true">
+            <div
+              v-for="zone in mobileStaggerBreakZones"
+              :key="zone.id"
+              class="mobile-stagger-break-zone"
+              :style="{ top: `${zone.top}px`, height: `${zone.height}px` }"
+            ></div>
+          </div>
+          <div v-if="showOperationHints" class="mobile-op-layer">
             <div
               v-for="op in operationLayout.items"
               :key="op.id"
@@ -1259,7 +2671,7 @@ async function doImport() {
           </div>
         </div>
 
-        <div class="mobile-timeline">
+        <div ref="mobileTimelineRef" class="mobile-timeline">
           <div
             v-if="prepDuration > 0"
             class="mobile-prep-zone mobile-prep-zone--grid"
@@ -1273,7 +2685,27 @@ async function doImport() {
             :style="{ top: `${battleStartYPx}px` }"
           ></div>
 
-          <div v-for="(track, idx) in tracks" :key="idx" class="mobile-track-col">
+          <div
+            v-if="showFreezeEffects && activeMobileFreezeRegion"
+            class="mobile-freeze-layer"
+          >
+            <div class="mobile-freeze-region" :style="activeMobileFreezeStyle">
+              <span>{{ store.formatTimeLabel(activeMobileFreezeRegion.amount) }}</span>
+            </div>
+          </div>
+
+          <div
+            v-for="(track, idx) in tracks"
+            :key="idx"
+            class="mobile-track-col"
+            :class="{
+              'is-placement-target': pendingPlacementSkill && idx === placementTrackIndex,
+              'is-placement-muted': pendingPlacementSkill && idx !== placementTrackIndex,
+            }"
+            @pointerdown="handleTrackPointerDown($event, idx)"
+            @pointerup="handleTrackPointerUp($event, idx)"
+            @pointercancel="handleTrackPointerCancel"
+          >
             <div class="mobile-actions-layer">
               <template
                 v-for="entry in visibleActionEntriesByTrackId[track.id] || []"
@@ -1281,9 +2713,10 @@ async function doImport() {
               >
                 <div
                   v-for="bar in entry.durationBars"
+                  v-show="showDurationBars"
                   :key="`dur_${entry.action.instanceId}_${bar.id}`"
                   class="mobile-cd-ibar"
-                  :style="getDurationBarStyle(bar)"
+                  :style="getDurationBarStyle(bar, entry.action)"
                   :title="`${getCombatIconTitle(bar.key)} · ${formatBadgeDuration(bar.duration)}`"
                 >
                   <div class="mobile-cd-ibar__start"></div>
@@ -1298,11 +2731,30 @@ async function doImport() {
                   :class="{
                     'is-info-target':
                       actionInfoOpen && selectedActionId === entry.action.instanceId,
+                    'is-dragging': draggingActionId === entry.action.instanceId,
+                    'is-drag-group':
+                      draggingActionId && dragTargetIds.has(entry.action.instanceId),
                   }"
-                  @click.stop="openActionInfo(entry.action.instanceId)"
+                  @pointerdown="handleActionPointerDown($event, track, entry.action)"
+                  @contextmenu.prevent
+                  @click.stop="handleActionClick(entry.action.instanceId)"
                 >
+                  <div
+                    v-if="showFreezeEffects && entry.freezeRegion"
+                    class="mobile-action-freeze"
+                    :style="getActionFreezeStyle(entry.freezeRegion)"
+                    :title="store.formatTimeLabel(entry.freezeRegion.amount)"
+                  >
+                    <div class="mobile-action-freeze__shimmer"></div>
+                  </div>
                   <span class="mobile-action-text">{{ getTypeLabel(entry.action) }}</span>
-                  <div v-if="entry.badges.length" class="mobile-action-icons">
+                  <span
+                    v-if="draggingActionId === entry.action.instanceId"
+                    class="mobile-action-drag-time mono"
+                  >
+                    {{ formatAxisLabel(dragPreviewLogicalTime) }}
+                  </span>
+                  <div v-if="showAnomalies && entry.badges.length" class="mobile-action-icons">
                     <div
                       v-for="badge in entry.badges"
                       :key="`${entry.action.instanceId}_${badge.id}`"
@@ -1320,6 +2772,65 @@ async function doImport() {
                   </div>
                 </div>
               </template>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="mobileGuideVisible"
+          class="mobile-resource-guide"
+          :style="{ top: `${mobileGuideTop}px` }"
+        >
+          <div
+            class="mobile-resource-guide__panel"
+            :class="{ 'is-below': mobileGuidePanelBelow }"
+          >
+            <button
+              type="button"
+              class="mobile-resource-guide__close"
+              :title="t('common.close')"
+              :aria-label="t('common.close')"
+              @pointerdown.stop.prevent
+              @click.stop="mobileGuideVisible = false"
+            >
+              <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+                <path
+                  d="M18 6 6 18M6 6l12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+            <div class="mobile-resource-guide__summary">
+              <span class="is-time">{{ formatAxisLabel(mobileGuideTime) }}</span>
+              <span class="is-sp"
+                >{{ t('timelineGrid.cursor.sp') }}: {{ mobileGuideSpText }}</span
+              >
+              <span class="is-stagger"
+                >{{ t('timelineGrid.cursor.stagger') }}: {{ mobileGuideStaggerText }}</span
+              >
+              <span v-if="mobileGuideEnemyHpText" class="is-hp"
+                >HP: {{ mobileGuideEnemyHpText }}</span
+              >
+            </div>
+            <div v-if="mobileGuideGaugeRows.length" class="mobile-resource-guide__gauges">
+              <div class="mobile-resource-guide__gauge-title">
+                {{ t('timelineGrid.cursor.gauge') }}
+              </div>
+              <div
+                v-for="row in mobileGuideGaugeRows"
+                :key="row.id"
+                class="mobile-resource-guide__gauge"
+                :class="{ 'is-full': row.isFull }"
+                :style="{ '--guide-gauge-color': row.color }"
+              >
+                <span class="mobile-resource-guide__gauge-name">{{ row.name }}</span>
+                <span class="mobile-resource-guide__gauge-value"
+                  >{{ row.value }}/{{ row.max }}</span
+                >
+              </div>
             </div>
           </div>
         </div>
@@ -1358,10 +2869,7 @@ async function doImport() {
         </div>
 
         <div class="m-drawer__content">
-          <div
-            v-if="resolvedAction"
-            class="tech-style actioninfo-hero"
-          >
+          <div v-if="resolvedAction" class="tech-style actioninfo-hero">
             <div class="actioninfo-hero__top">
               <div class="actioninfo-hero__avatar">
                 <img
@@ -1381,30 +2889,27 @@ async function doImport() {
                   <span class="dot">·</span>
                   <span class="mono">{{ getTypeLabel(resolvedAction.node) }}</span>
                 </div>
+              </div>
+              <div v-if="resolvedActionCombatIcons.length" class="actioninfo-combat-icons">
                 <div
-                  v-if="resolvedActionCombatIcons.length"
-                  class="actioninfo-combat-icons"
+                  v-for="icon in resolvedActionCombatIcons"
+                  :key="`info_${icon.id}`"
+                  class="actioninfo-combat-item"
+                  :title="getCombatIconTitle(icon.key)"
                 >
-                  <div
-                    v-for="icon in resolvedActionCombatIcons"
-                    :key="`info_${icon.id}`"
-                    class="actioninfo-combat-item"
-                    :title="getCombatIconTitle(icon.key)"
-                  >
-                    <div class="actioninfo-combat-icon-box">
-                      <img
-                        class="actioninfo-combat-icon"
-                        :src="withBaseUrl(icon.icon)"
-                        :alt="getCombatIconTitle(icon.key)"
-                        @error="onAssetError"
-                      />
-                      <span class="actioninfo-combat-stacks">{{ icon.stacks }}</span>
-                    </div>
-                    <div class="actioninfo-combat-meta">
-                      <div class="actioninfo-combat-name">{{ getCombatIconTitle(icon.key) }}</div>
-                      <div v-if="!icon.isMarker && icon.duration > 0" class="actioninfo-combat-dur">
-                        {{ formatBadgeDuration(icon.duration) }}
-                      </div>
+                  <div class="actioninfo-combat-icon-box">
+                    <img
+                      class="actioninfo-combat-icon"
+                      :src="withBaseUrl(icon.icon)"
+                      :alt="getCombatIconTitle(icon.key)"
+                      @error="onAssetError"
+                    />
+                    <span class="actioninfo-combat-stacks">{{ icon.stacks }}</span>
+                  </div>
+                  <div class="actioninfo-combat-meta">
+                    <div class="actioninfo-combat-name">{{ getCombatIconTitle(icon.key) }}</div>
+                    <div v-if="!icon.isMarker && icon.duration > 0" class="actioninfo-combat-dur">
+                      {{ formatBadgeDuration(icon.duration) }}
                     </div>
                   </div>
                 </div>
@@ -1431,6 +2936,147 @@ async function doImport() {
                 <div class="actioninfo-stat__label">{{ row.label }}</div>
                 <div class="actioninfo-stat__val mono">{{ row.value }}</div>
               </div>
+            </div>
+            <section class="actioninfo-damage">
+              <div class="actioninfo-damage__summary">
+                <span>{{ t('timeline.mobile.actionInfo.totalDamage') }}</span>
+                <strong class="mono">{{ formatDamage(selectedActionTotalDamage) }}</strong>
+              </div>
+              <div v-if="selectedActionDamageHits.length" class="actioninfo-damage__groups">
+                <section v-if="selectedSkillDamageHits.length" class="actioninfo-damage__group">
+                  <button
+                    type="button"
+                    class="actioninfo-damage__group-toggle"
+                    :aria-expanded="skillDamageOpen"
+                    @click="skillDamageOpen = !skillDamageOpen"
+                  >
+                    <span class="actioninfo-damage__group-title">
+                      {{ t('battleLog.ui.skillDamage') }}
+                      <small>{{ selectedSkillDamageHits.length }}</small>
+                    </span>
+                    <span class="actioninfo-damage__group-value">
+                      <strong class="mono">{{ formatDamage(selectedSkillDamageTotal) }}</strong>
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        aria-hidden="true"
+                        :class="{ 'is-open': skillDamageOpen }"
+                      >
+                        <path
+                          d="m8 10 4 4 4-4"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                  <div v-show="skillDamageOpen" class="actioninfo-damage__hits">
+                    <button
+                      v-for="hit in selectedSkillDamageHits"
+                      :key="hit.key"
+                      type="button"
+                      class="actioninfo-damage-hit"
+                      :class="{ 'has-detail': hit.hasDetail }"
+                      :disabled="!hit.hasDetail"
+                      @click="openDamageHitDetail(hit)"
+                    >
+                      <span class="actioninfo-damage-hit__label">
+                        {{
+                          t('timeline.mobile.actionInfo.damageHit', {
+                            index: hit.displayIndex,
+                          })
+                        }}
+                        <small class="mono">+{{ formatSec(hit.offset) }}s</small>
+                      </span>
+                      <strong class="mono">{{ formatDamage(hit.damage) }}</strong>
+                    </button>
+                  </div>
+                </section>
+
+                <section v-if="selectedEffectDamageHits.length" class="actioninfo-damage__group">
+                  <button
+                    type="button"
+                    class="actioninfo-damage__group-toggle"
+                    :aria-expanded="effectDamageOpen"
+                    @click="effectDamageOpen = !effectDamageOpen"
+                  >
+                    <span class="actioninfo-damage__group-title">
+                      {{ t('battleLog.ui.effectDamage') }}
+                      <small>{{ selectedEffectDamageHits.length }}</small>
+                    </span>
+                    <span class="actioninfo-damage__group-value">
+                      <strong class="mono">{{ formatDamage(selectedEffectDamageTotal) }}</strong>
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        aria-hidden="true"
+                        :class="{ 'is-open': effectDamageOpen }"
+                      >
+                        <path
+                          d="m8 10 4 4 4-4"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                  <div v-show="effectDamageOpen" class="actioninfo-damage__hits">
+                    <button
+                      v-for="hit in selectedEffectDamageHits"
+                      :key="hit.key"
+                      type="button"
+                      class="actioninfo-damage-hit"
+                      :class="{ 'has-detail': hit.hasDetail }"
+                      :disabled="!hit.hasDetail"
+                      @click="openDamageHitDetail(hit)"
+                    >
+                      <span class="actioninfo-damage-hit__label">
+                        <span>{{ hit.effectLabel || t('battleLog.ui.effectDamage') }}</span>
+                        <small class="mono">
+                          {{
+                            t('timeline.mobile.actionInfo.damageHit', {
+                              index: hit.displayIndex,
+                            })
+                          }}
+                          · +{{ formatSec(hit.offset) }}s
+                        </small>
+                      </span>
+                      <strong class="mono">{{ formatDamage(hit.damage) }}</strong>
+                    </button>
+                  </div>
+                </section>
+              </div>
+              <div v-else class="actioninfo-damage__empty">
+                {{ t('timeline.mobile.actionInfo.noDamage') }}
+              </div>
+            </section>
+            <div class="actioninfo-actions tech-style">
+              <button
+                type="button"
+                class="ea-btn ea-btn--sm ea-btn--glass-rect"
+                @click="toggleSelectedActionDisabled"
+              >
+                {{
+                  selectedSourceAction?.isDisabled
+                    ? t('timeline.mobile.actionInfo.enable')
+                    : t('timeline.mobile.actionInfo.disable')
+                }}
+              </button>
+              <button
+                type="button"
+                class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger"
+                @click="removeSelectedAction"
+              >
+                {{ t('timeline.mobile.actionInfo.delete') }}
+              </button>
             </div>
           </div>
 
@@ -1473,7 +3119,12 @@ async function doImport() {
         </div>
 
         <div class="m-drawer__content">
-          <div v-if="selectedTrack" class="loadout-header tech-style">
+          <button
+            v-if="selectedTrack"
+            type="button"
+            class="loadout-header loadout-editable tech-style"
+            @click="openOperatorSelection(loadoutTrackIndex)"
+          >
             <div class="loadout-operator">
               <div class="loadout-operator__avatar">
                 <img
@@ -1483,7 +3134,13 @@ async function doImport() {
                 />
               </div>
               <div class="loadout-operator__meta">
-                <div class="loadout-operator__name">{{ getTrackName(selectedTrack) }}</div>
+                <div class="loadout-operator__name">
+                  {{
+                    selectedTrack.id
+                      ? getTrackName(selectedTrack)
+                      : t('timeline.mobile.loadout.selectOperator')
+                  }}
+                </div>
                 <div v-if="selectedOperatorSummary" class="loadout-operator__sub">
                   {{ selectedOperatorSummary }}
                 </div>
@@ -1492,11 +3149,60 @@ async function doImport() {
                 </div>
               </div>
             </div>
+          </button>
+
+          <div v-if="selectedTrack?.id" class="loadout-quick-actions">
+            <button
+              type="button"
+              class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted"
+              :disabled="!selectedOperatorInstance"
+              @click="openOperatorStatus"
+            >
+              {{ t('timeline.mobile.loadout.operatorStatus') }}
+            </button>
+            <button
+              type="button"
+              class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted"
+              :disabled="!selectedWeaponInstance"
+              @click="openWeaponStatus"
+            >
+              {{ t('timeline.mobile.loadout.weapon') }}
+            </button>
+            <button
+              type="button"
+              class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted"
+              :disabled="!hasSelectedEquipment"
+              @click="openEquipmentStatus"
+            >
+              {{ t('timeline.mobile.loadout.equipment') }}
+            </button>
           </div>
+          <button
+            v-if="selectedTrack?.id"
+            type="button"
+            class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted loadout-stat-action"
+            :disabled="!selectedTrack.operatorStatus"
+            @click="openStatDetail"
+          >
+            {{ t('statDetail.button') }}
+          </button>
+          <button
+            v-if="selectedTrack?.id"
+            type="button"
+            class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold loadout-skill-action"
+            @click="openSkillLibrary(loadoutTrackIndex)"
+          >
+            {{ t('timeline.mobile.skillLibrary.title') }}
+          </button>
 
           <div class="m-field">
             <div class="m-label">{{ t('timeline.mobile.loadout.weapon') }}</div>
-            <div class="loadout-item tech-style">
+            <button
+              type="button"
+              class="loadout-item loadout-editable tech-style"
+              :disabled="!selectedTrack?.id"
+              @click="openWeaponSelection"
+            >
               <div class="loadout-item__icon">
                 <img
                   :src="withBaseUrl(selectedWeapon?.icon || DEFAULT_ICON)"
@@ -1522,17 +3228,19 @@ async function doImport() {
                   </div>
                 </div>
               </div>
-            </div>
+            </button>
           </div>
 
           <div class="m-field">
             <div class="m-label">{{ t('timeline.mobile.loadout.equipment') }}</div>
             <div class="loadout-eq-list">
-              <div
+              <button
                 v-for="slot in equipmentSlots"
                 :key="slot.slotKey"
+                type="button"
                 class="loadout-item tech-style border-gear"
                 :class="{ 'is-empty': !slot.id }"
+                @click="openEquipmentSelection(slot.slotKey)"
               >
                 <div class="loadout-item__icon">
                   <img
@@ -1563,8 +3271,7 @@ async function doImport() {
                     <template v-if="slot.refineLabel !== null">
                       <span class="dot">·</span>
                       <span class="mono"
-                        >{{ t('timelineGrid.equipmentDialog.refine') }}
-                        {{ slot.refineLabel }}</span
+                        >{{ t('timelineGrid.equipmentDialog.refine') }} {{ slot.refineLabel }}</span
                       >
                     </template>
                   </div>
@@ -1575,12 +3282,51 @@ async function doImport() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </el-drawer>
+
+    <MobileSkillLibraryDrawer
+      v-model="skillLibraryOpen"
+      :track-name="activeMobileTrack?.id ? getTrackName(activeMobileTrack) : ''"
+      @select="beginSkillPlacement"
+    />
+    <OperatorSelectionDialog ref="operatorSelectionDialogRef" />
+    <WeaponSelectionDialog ref="weaponSelectionDialogRef" />
+    <EquipmentSelectionDialog ref="equipmentSelectionDialogRef" />
+    <EnemySettingsPanel ref="enemySettingsPanelRef" selector-only />
+    <EditOperatorInstanceDialog
+      :visible="operatorStatusOpen"
+      :instance="selectedOperatorInstance"
+      :display-name="selectedTrack?.id ? getTrackName(selectedTrack) : ''"
+      @update:visible="operatorStatusOpen = $event"
+    />
+    <EditWeaponInstanceDialog
+      :visible="weaponStatusOpen"
+      :instance="selectedWeaponInstance"
+      :display-name="getSelectedWeaponName()"
+      @update:visible="weaponStatusOpen = $event"
+    />
+    <EditTrackGearLoadoutDialog
+      :visible="equipmentStatusOpen"
+      :track="selectedTrack"
+      @update:visible="equipmentStatusOpen = $event"
+    />
+    <StatDetailDialog
+      :visible="statDetailOpen"
+      :operator-status="selectedTrack?.operatorStatus || null"
+      :operator-name="selectedTrack?.id ? getTrackName(selectedTrack) : ''"
+      @update:visible="statDetailOpen = $event"
+    />
+    <HitDamageDetailDialog
+      :visible="!!selectedDamageHit"
+      :breakdown="selectedDamageHit?._damageBreakdown || null"
+      :hit-data="selectedDamageHit"
+      @update:visible="closeDamageHitDetail"
+    />
 
     <el-dialog
       v-model="importVisible"
@@ -1661,35 +3407,169 @@ async function doImport() {
 .mobile-topbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
+  gap: 6px;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .mobile-topbar-actions :deep(.el-button + .el-button) {
   margin-left: 0 !important;
 }
 
-.mobile-primary-btn {
-  --el-button-bg-color: var(--ea-btn-primary-bg);
-  --el-button-border-color: var(--ea-btn-primary-border);
-  --el-button-text-color: var(--ea-btn-primary-fg);
-  --el-button-hover-bg-color: var(--ea-btn-primary-hover-bg);
-  --el-button-hover-border-color: var(--ea-btn-primary-hover-border);
-  --el-button-hover-text-color: var(--ea-btn-primary-hover-fg);
-  border-radius: 0 !important;
-  font-weight: 900;
-  letter-spacing: 1px;
-}
-
-.btn-inline {
+.mobile-scenario-tools {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  line-height: 1;
+  gap: 2px;
+  flex: 0 0 auto;
 }
 
-.btn-inline svg {
+.mobile-topbar-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+  margin-left: auto;
+}
+
+.mobile-scenario-input {
+  height: 24px;
+  min-width: 0;
+  max-width: 288px;
+  flex: 1 1 288px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--ea-btn-secondary-border);
+  border-radius: 0;
+  outline: none;
+  background: var(--ea-fill-strong);
+  color: var(--ea-fg-secondary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mobile-scenario-input:focus {
+  border-color: color-mix(in srgb, var(--ea-gold) 60%, var(--ea-border));
+}
+
+.mobile-editbar {
+  display: flex;
+  height: 40px;
   flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--ea-border-soft);
+  background: var(--ea-chrome);
+  box-sizing: border-box;
+}
+
+.mobile-editbar__library,
+.mobile-editbar__enemy,
+.mobile-editbar__icon {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ea-border);
+  background: var(--ea-fill-soft);
+  color: var(--ea-fg-secondary);
+}
+
+.mobile-editbar__library,
+.mobile-editbar__enemy {
+  min-width: 0;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.mobile-editbar__library {
+  flex: 1 1 0;
+}
+
+.mobile-editbar__enemy {
+  max-width: 42%;
+  flex: 0 1 132px;
+  color: var(--ea-danger-soft, #ff7875);
+}
+
+.mobile-editbar__library span,
+.mobile-editbar__enemy span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-editbar__icon {
+  width: 34px;
+  flex: 0 0 34px;
+  padding: 0;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease,
+    opacity 140ms ease;
+}
+
+.mobile-editbar__icon:disabled {
+  border-color: var(--ea-border-soft);
+  background: transparent;
+  color: var(--ea-fg-faint);
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.mobile-placement-banner {
+  display: flex;
+  min-height: 46px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ea-gold) 55%, var(--ea-border));
+  background: color-mix(in srgb, var(--ea-gold) 10%, var(--ea-panel));
+  box-sizing: border-box;
+}
+
+.mobile-placement-banner > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobile-placement-banner strong,
+.mobile-placement-banner span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-placement-banner strong {
+  color: var(--ea-fg);
+  font-size: 12px;
+}
+
+.mobile-placement-banner span {
+  color: var(--ea-fg-muted);
+  font-size: 10px;
+}
+
+.mobile-placement-banner button {
+  height: 30px;
+  flex: 0 0 auto;
+  padding: 0 10px;
+  border: 1px solid var(--ea-border);
+  background: var(--ea-fill-muted);
+  color: var(--ea-fg-secondary);
 }
 
 .mobile-more-trigger.ea-btn {
@@ -1805,19 +3685,25 @@ async function doImport() {
   color: var(--ea-gold);
 }
 
-.mobile-reset-action.ea-btn {
+.mobile-project-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-project-action.ea-btn {
   width: 100%;
   justify-content: flex-start;
   --ea-btn-bg: var(--ea-fill-soft);
   --ea-btn-border: var(--ea-border);
   --ea-btn-color: var(--ea-fg-secondary);
-  --ea-btn-bg-hover: rgba(255, 77, 79, 0.12);
-  --ea-btn-border-hover: var(--ea-danger-soft);
-  --ea-btn-color-hover: var(--ea-danger-soft);
 }
 
 .mobile-scenario-select {
-  width: 108px;
+  width: 288px;
+  min-width: 0;
+  max-width: 288px;
+  flex: 1 1 288px;
   --el-fill-color-blank: var(--ea-fill-strong);
   --el-border-color: var(--ea-btn-secondary-border);
   --el-border-color-hover: var(--ea-btn-secondary-hover-border);
@@ -1955,6 +3841,138 @@ async function doImport() {
   border-right: 1px solid var(--ea-border);
   background: var(--ea-fill-muted);
   box-sizing: border-box;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.mobile-resource-guide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  height: 1px;
+  border-top: 1px solid color-mix(in srgb, var(--ea-gold) 82%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ea-gold) 55%, transparent);
+  pointer-events: none;
+}
+
+.mobile-resource-guide__panel {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  display: flex;
+  width: min(286px, calc(100vw - 66px));
+  max-width: calc(100vw - 66px);
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px 27px 6px 7px;
+  box-sizing: border-box;
+  border: 1px solid var(--ea-border);
+  border-radius: 0;
+  background: var(--ea-tooltip-bg, rgba(16, 16, 16, 0.92));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px var(--ea-shadow-strong);
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.mobile-resource-guide__close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ea-fg-muted);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.mobile-resource-guide__close:hover,
+.mobile-resource-guide__close:focus-visible {
+  border-color: var(--ea-border);
+  background: var(--ea-hover-fill);
+  color: var(--ea-fg);
+  outline: none;
+}
+
+.mobile-resource-guide__panel.is-below {
+  top: 5px;
+  bottom: auto;
+}
+
+.mobile-resource-guide__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 8px;
+}
+
+.mobile-resource-guide__summary .is-time {
+  color: var(--ea-fg);
+}
+
+.mobile-resource-guide__summary .is-sp {
+  color: var(--ea-gold);
+}
+
+.mobile-resource-guide__summary .is-stagger {
+  color: var(--ea-danger-soft, #ff7875);
+}
+
+.mobile-resource-guide__summary .is-hp {
+  color: var(--ea-danger, #ff4d4f);
+}
+
+.mobile-resource-guide__gauges {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px 8px;
+  padding-top: 5px;
+  border-top: 1px solid var(--ea-border-soft);
+}
+
+.mobile-resource-guide__gauge-title {
+  grid-column: 1 / -1;
+  color: var(--ea-info, #00e5ff);
+}
+
+.mobile-resource-guide__gauge {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  padding-left: 5px;
+  border-left: 2px solid var(--guide-gauge-color);
+  color: var(--ea-fg-secondary);
+}
+
+.mobile-resource-guide__gauge-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--guide-gauge-color);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-resource-guide__gauge-value {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.mobile-resource-guide__gauge.is-full .mobile-resource-guide__gauge-value {
+  color: var(--guide-gauge-color);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--guide-gauge-color) 45%, transparent);
 }
 
 .mobile-time-ticks {
@@ -1965,6 +3983,42 @@ async function doImport() {
   right: -1px;
   padding-left: var(--opw, 26px);
   pointer-events: none;
+}
+
+.mobile-stagger-break-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mobile-stagger-break-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  min-height: 2px;
+  border-top: 1px solid rgba(255, 213, 145, 0.45);
+  border-bottom: 1px solid rgba(255, 213, 145, 0.32);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 213, 145, 0.58) 0,
+      rgba(255, 213, 145, 0.58) 2px,
+      transparent 2px,
+      transparent 10px
+    ),
+    rgba(255, 156, 110, 0.1);
+  box-sizing: border-box;
+  animation: mobile-stagger-break-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes mobile-stagger-break-pulse {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 0.85;
+  }
 }
 
 .mobile-op-layer {
@@ -2151,7 +4205,40 @@ async function doImport() {
       var(--ea-grid-line) 1px,
       transparent 1px,
       transparent var(--sec-px)
-    );
+  );
+}
+
+.mobile-freeze-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mobile-freeze-region {
+  position: absolute;
+  left: 0;
+  right: 0;
+  min-height: 2px;
+  border-top: 1px dashed color-mix(in srgb, var(--ea-fg) 24%, transparent);
+  border-bottom: 1px dashed color-mix(in srgb, var(--ea-fg) 24%, transparent);
+  background: color-mix(in srgb, var(--ea-panel) 52%, transparent);
+  box-shadow: inset 0 0 14px color-mix(in srgb, #000 38%, transparent);
+  box-sizing: border-box;
+}
+
+.mobile-freeze-region span {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  color: var(--ea-fg-muted);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: var(--ea-action-fg-shadow);
+  white-space: nowrap;
 }
 
 .mobile-track-col {
@@ -2160,6 +4247,15 @@ async function doImport() {
 }
 .mobile-track-col:first-child {
   border-left: none;
+}
+
+.mobile-track-col.is-placement-target {
+  background: color-mix(in srgb, var(--ea-gold) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ea-gold) 55%, transparent);
+}
+
+.mobile-track-col.is-placement-muted {
+  opacity: 0.48;
 }
 
 .mobile-actions-layer {
@@ -2180,6 +4276,54 @@ async function doImport() {
   overflow: visible;
   border-radius: 0;
   z-index: 4;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobile-action-block.is-drag-group {
+  filter: brightness(1.08);
+}
+
+.mobile-action-block.is-dragging {
+  outline: 1px solid color-mix(in srgb, var(--ea-gold) 90%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ea-gold) 24%, transparent) !important;
+}
+
+.mobile-action-freeze {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-height: calc(100% - 1px);
+  overflow: hidden;
+  border-bottom: 1px solid color-mix(in srgb, var(--ea-fg) 30%, transparent);
+  background: color-mix(in srgb, var(--ea-fg) 6%, transparent);
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mobile-action-freeze__shimmer {
+  position: absolute;
+  inset: 0;
+  width: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--ea-fg) 16%, transparent) 50%,
+    transparent 100%
+  );
+  animation: mobile-freeze-shimmer 1.5s linear infinite;
+}
+
+@keyframes mobile-freeze-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(50%);
+  }
 }
 
 .mobile-action-icons {
@@ -2224,6 +4368,8 @@ async function doImport() {
 }
 
 .mobile-action-text {
+  position: relative;
+  z-index: 2;
   font-size: 12px;
   font-weight: 800;
   color: var(--ea-action-fg);
@@ -2235,6 +4381,22 @@ async function doImport() {
   letter-spacing: 1px;
   text-align: center;
   max-width: 100%;
+}
+
+.mobile-action-drag-time {
+  position: absolute;
+  top: -17px;
+  right: 0;
+  z-index: 9;
+  padding: 2px 4px;
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 48%, transparent);
+  background: var(--ea-panel-elevated);
+  color: var(--ea-gold);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .mobile-cd-ibar {
@@ -2348,6 +4510,122 @@ async function doImport() {
   padding-right: 0 !important;
 }
 
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog) {
+  width: min(94vw, 640px) !important;
+  height: min(88dvh, 760px);
+  max-height: 88dvh;
+  margin: auto !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .el-dialog__header) {
+  flex: 0 0 auto;
+  padding: 12px 14px 8px;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .el-dialog__body) {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 8px 10px 10px;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .selector-header) {
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .selector-header .el-input) {
+  width: 100% !important;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .enemy-level-picker) {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .enemy-level-buttons) {
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .enemy-level-btn) {
+  min-width: 0;
+  flex: 1 1 42px;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .enemy-filter-rows) {
+  max-height: none;
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .category-tabs),
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .tier-filters) {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .category-tabs::-webkit-scrollbar),
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .tier-filters::-webkit-scrollbar) {
+  display: none;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .category-tabs .ea-btn),
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .tier-filters .ea-btn) {
+  width: auto;
+  min-width: max-content;
+  flex: 0 0 auto;
+  min-height: 32px;
+  justify-content: center;
+  padding-right: 10px;
+  padding-left: 10px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .enemy-list-grid) {
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 6px 2px;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .enemy-group-section) {
+  margin-bottom: 16px;
+}
+
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .group-items) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 479px) {
+  :global(body.endaxis-mobile-viewer .enemy-selector-dialog .group-items) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 :global(.mobile-loadout-drawer),
 :global(.mobile-actioninfo-drawer) {
   background: var(--ea-panel) !important;
@@ -2437,7 +4715,7 @@ async function doImport() {
 
 .actioninfo-hero__top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
@@ -2459,6 +4737,7 @@ async function doImport() {
 
 .actioninfo-hero__meta {
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2481,16 +4760,21 @@ async function doImport() {
 }
 
 .actioninfo-combat-icons {
-  margin-top: 8px;
   display: flex;
+  width: min(42%, 150px);
+  min-width: 0;
+  flex: 0 1 150px;
   flex-direction: column;
-  gap: 8px;
+  align-items: flex-end;
+  gap: 6px;
 }
 
 .actioninfo-combat-item {
   display: flex;
+  max-width: 100%;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 7px;
 }
 
 .actioninfo-combat-icon-box {
@@ -2498,6 +4782,7 @@ async function doImport() {
   width: 22px;
   height: 22px;
   flex: 0 0 auto;
+  order: 2;
 }
 
 .actioninfo-combat-icon {
@@ -2525,13 +4810,19 @@ async function doImport() {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 2px;
+  text-align: right;
 }
 
 .actioninfo-combat-name {
+  max-width: 100%;
+  overflow: hidden;
   font-size: 12px;
   font-weight: 700;
   color: var(--ea-fg-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .actioninfo-combat-dur {
@@ -2547,6 +4838,157 @@ async function doImport() {
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
+}
+
+.actioninfo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actioninfo-damage {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ea-border-soft);
+}
+
+.actioninfo-damage__summary,
+.actioninfo-damage-hit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.actioninfo-damage__summary {
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+}
+
+.actioninfo-damage__summary strong {
+  color: var(--ea-gold);
+  font-size: 17px;
+}
+
+.actioninfo-damage__groups {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  border-top: 1px solid var(--ea-border-soft);
+}
+
+.actioninfo-damage__group {
+  border-bottom: 1px solid var(--ea-border-soft);
+}
+
+.actioninfo-damage__group-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ea-fg-secondary);
+  text-align: left;
+}
+
+.actioninfo-damage__group-title,
+.actioninfo-damage__group-value {
+  display: inline-flex;
+  align-items: center;
+}
+
+.actioninfo-damage__group-title {
+  min-width: 0;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.actioninfo-damage__group-title small {
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid var(--ea-border-soft);
+  color: var(--ea-fg-muted);
+  font-size: 9px;
+  line-height: 14px;
+  text-align: center;
+}
+
+.actioninfo-damage__group-value {
+  flex: 0 0 auto;
+  gap: 7px;
+}
+
+.actioninfo-damage__group-value strong {
+  color: var(--ea-fg);
+  font-size: 12px;
+}
+
+.actioninfo-damage__group-value svg {
+  color: var(--ea-fg-muted);
+  transition: transform 140ms ease;
+}
+
+.actioninfo-damage__group-value svg.is-open {
+  transform: rotate(180deg);
+}
+
+.actioninfo-damage__hits {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--ea-border-soft);
+}
+
+.actioninfo-damage-hit {
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 2px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ea-border-soft) 70%, transparent);
+  background: transparent;
+  color: var(--ea-fg-secondary);
+  text-align: left;
+}
+
+.actioninfo-damage-hit.has-detail:active {
+  background: var(--ea-fill-soft);
+}
+
+.actioninfo-damage-hit:disabled {
+  opacity: 1;
+}
+
+.actioninfo-damage-hit__label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.actioninfo-damage-hit__label small,
+.actioninfo-damage__empty {
+  color: var(--ea-fg-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.actioninfo-damage-hit strong {
+  flex: 0 0 auto;
+  color: var(--ea-fg);
+  font-size: 12px;
+}
+
+.actioninfo-damage__empty {
+  padding-top: 8px;
 }
 
 .time-chip {
@@ -2571,6 +5013,42 @@ async function doImport() {
 
 .loadout-header {
   margin-bottom: 14px;
+}
+
+.loadout-editable {
+  width: 100%;
+  border: 1px solid var(--ea-border-soft);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.loadout-header.loadout-editable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.loadout-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.loadout-quick-actions .ea-btn {
+  width: 100%;
+}
+
+.loadout-skill-action {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.loadout-stat-action {
+  width: 100%;
+  margin-bottom: 8px;
 }
 
 .loadout-operator {
@@ -2636,6 +5114,11 @@ async function doImport() {
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
+  width: 100%;
+  border: 1px solid var(--ea-border-soft);
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 
 .loadout-item.is-empty {

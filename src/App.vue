@@ -13,7 +13,7 @@ onMounted(async () => {
   await store.fetchGameData();
 
   // 2. 尝试读取浏览器缓存
-  store.loadFromBrowser();
+  await store.loadFromBrowser();
 
   // 3. 无论是否读取成功，都开启监听以进行后续的自动保存
   store.initAutoSave();

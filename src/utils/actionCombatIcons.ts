@@ -110,6 +110,19 @@ function makeBadge(
   };
 }
 
+function belongsToAction(
+  item: { actionId?: unknown },
+  actionId: string | null | undefined,
+  time: number,
+  start: number,
+  end: number,
+) {
+  const itemActionId = String(item?.actionId || '').trim();
+  const targetActionId = String(actionId || '').trim();
+  if (itemActionId && targetActionId) return itemActionId === targetActionId;
+  return time >= start - TIME_EPS && time <= end + TIME_EPS;
+}
+
 function upsertBadge(map: Map<string, ActionCombatBadge>, badge: ActionCombatBadge) {
   const prev = map.get(badge.key);
   if (!prev) {
@@ -125,12 +138,13 @@ function collectGroupBadges(options: {
   group: { markers?: any[]; segments?: any[] } | null | undefined;
   kind: ActionCombatBadge['kind'];
   trackId?: string | null;
+  actionId?: string | null;
   start: number;
   end: number;
   iconDatabase?: Record<string, string> | null;
   map: Map<string, ActionCombatBadge>;
 }) {
-  const { group, kind, trackId, start, end, iconDatabase, map } = options;
+  const { group, kind, trackId, actionId, start, end, iconDatabase, map } = options;
   if (!group) return;
 
   for (const segment of group.segments || []) {
@@ -139,7 +153,7 @@ function collectGroupBadges(options: {
     const segStart = Number(segment?.start);
     const segEnd = Number(segment?.end);
     if (!Number.isFinite(segStart)) continue;
-    if (segStart < start - TIME_EPS || segStart > end + TIME_EPS) continue;
+    if (!belongsToAction(segment, actionId, segStart, start, end)) continue;
     if (trackId && segment?.sourceId && segment.sourceId !== trackId) continue;
 
     const key = String(segment?.typeKey || '').trim();
@@ -167,7 +181,7 @@ function collectGroupBadges(options: {
     if (marker?.isDamageHit) continue;
     const time = Number(marker?.time);
     if (!Number.isFinite(time)) continue;
-    if (time < start - TIME_EPS || time > end + TIME_EPS) continue;
+    if (!belongsToAction(marker, actionId, time, start, end)) continue;
     if (trackId && marker?.sourceId && marker.sourceId !== trackId) continue;
 
     const key = String(marker?.typeKey || '').trim();
@@ -194,6 +208,7 @@ function collectGroupBadges(options: {
 /** Badges from sim affliction viz overlapping the action window. */
 export function collectCombatBadgesFromAfflictionViz(options: {
   trackId?: string | null;
+  actionId?: string | null;
   startTime: number;
   endTime: number;
   viz?: EnemyAfflictionVizLike | null;
@@ -204,6 +219,7 @@ export function collectCombatBadgesFromAfflictionViz(options: {
   const map = new Map<string, ActionCombatBadge>();
   const base = {
     trackId: options.trackId,
+    actionId: options.actionId,
     start,
     end,
     iconDatabase: options.iconDatabase,
@@ -226,7 +242,10 @@ export function collectActionCombatBadges(options: {
   viz?: EnemyAfflictionVizLike | null;
   iconDatabase?: Record<string, string> | null;
 }): ActionCombatBadge[] {
-  let badges = collectCombatBadgesFromAfflictionViz(options);
+  let badges = collectCombatBadgesFromAfflictionViz({
+    ...options,
+    actionId: options.action?.instanceId,
+  });
   // Mobile clarity: when a reaction fires, hide the attachment that triggered it.
   if (badges.some(item => item.kind === 'anomaly')) {
     badges = badges.filter(item => item.kind !== 'attachment');

@@ -537,4 +537,58 @@ function getSkillDescription(skillKey) {
   gap: 8px;
   width: 100%;
 }
+
+@media (max-width: 768px) {
+  .layout {
+    gap: 12px;
+  }
+
+  .header {
+    gap: 12px;
+  }
+
+  .portrait-frame {
+    width: 82px;
+    min-width: 82px;
+    height: 82px;
+  }
+
+  .name {
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .level-num {
+    font-size: 22px;
+  }
+
+  .level-selector {
+    overflow-x: auto;
+  }
+
+  .level-btn {
+    min-width: 42px;
+    flex: 0 0 auto;
+  }
+
+  .section {
+    padding: 12px;
+  }
+
+  .skill-row-main {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .skill-bar-area {
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+  }
+
+  .skill-slots {
+    flex: 0 0 auto;
+  }
+}
 </style>

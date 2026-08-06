@@ -6,7 +6,7 @@
 // existing saved timelines and share codes must keep round-tripping, so the
 // logic is moved verbatim and only its store bindings are injected.
 
-import { toRaw } from 'vue';
+import { nextTick, toRaw } from 'vue';
 import type { Ref } from 'vue';
 import { watchThrottled } from '@vueuse/core';
 import { compressGzip, decompressGzip } from '@/utils/gzipUtils';
@@ -27,6 +27,7 @@ import type { GlobalConfigState } from '@/data/globalConfig';
 import { createEmptyGlobalConfig } from '@/data/globalConfig';
 
 const tr = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
+const HISTORY_INIT_SETTLE_MS = 160;
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
 
@@ -282,9 +283,14 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     );
   }
 
-  function loadFromBrowser() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
+  async function loadFromBrowser() {
+    isLoading.value = true;
+    let loaded = false;
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+
       try {
         const data = deserializeProjectData(JSON.parse(raw)) as {
           scenarioList?: any[];
@@ -335,15 +341,20 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
           recomputeAllTrackOperatorStatuses();
         }
 
-        historyStack.value = [];
-        historyIndex.value = -1;
-        commitState();
-        return true;
+        loaded = true;
       } catch (e) {
         console.error('Auto-save load failed:', e);
       }
+    } finally {
+      await nextTick();
+      await new Promise(resolve => setTimeout(resolve, HISTORY_INIT_SETTLE_MS));
+      historyStack.value = [];
+      historyIndex.value = -1;
+      commitState();
+      isLoading.value = false;
     }
-    return false;
+
+    return loaded;
   }
 
   function resetProject() {

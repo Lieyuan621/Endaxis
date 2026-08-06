@@ -215,6 +215,8 @@ export interface InflictionApplyEvent {
   element: ArtsElement;
   stacks: number;
   sourceId: string;
+  /** Action that applied the infliction. */
+  actionId?: string;
   /** When true, this apply only triggered a reaction — no infliction bar remains. */
   triggerOnly?: boolean;
   /** Updated expiresAt after this apply (present on same-element reapply when timer is refreshed). */
@@ -230,6 +232,8 @@ export interface ArtsBurstEvent {
   time: number;
   element: ArtsElement;
   sourceId: string;
+  /** Original action that caused the delayed burst. */
+  actionId?: string;
   sourceSkillType?: string;
   sourceSkillId?: string;
 }

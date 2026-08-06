@@ -315,7 +315,9 @@ function promotedLabel() {
               >
                 {{ t('armory.baseStats.open') }}
                 <span
-                  v-if="instance.baseStatOverrides && Object.keys(instance.baseStatOverrides).length"
+                  v-if="
+                    instance.baseStatOverrides && Object.keys(instance.baseStatOverrides).length
+                  "
                   class="override-dot"
                 />
               </button>
@@ -340,7 +342,10 @@ function promotedLabel() {
                         v-if="getPotentialInfo(p).description"
                         class="operator-edit-tooltip-desc"
                       >
-                        <GameRichTextRenderer :text="getPotentialInfo(p).description" :locale="locale" />
+                        <GameRichTextRenderer
+                          :text="getPotentialInfo(p).description"
+                          :locale="locale"
+                        />
                       </div>
                     </div>
                   </template>
@@ -842,6 +847,65 @@ function promotedLabel() {
 
 :global(.operator-edit-tooltip-popper) {
   max-width: min(440px, calc(100vw - 48px));
+}
+
+@media (max-width: 768px) {
+  .layout {
+    gap: 12px;
+  }
+
+  .header {
+    gap: 12px;
+  }
+
+  .portrait-frame {
+    width: 92px;
+    min-width: 92px;
+    height: 92px;
+  }
+
+  .name {
+    font-size: 18px;
+  }
+
+  .level-num {
+    font-size: 22px;
+  }
+
+  .level-selector {
+    overflow-x: auto;
+  }
+
+  .level-btn {
+    min-width: 42px;
+    flex: 0 0 auto;
+  }
+
+  .section {
+    padding: 12px;
+  }
+
+  .skills-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 8px;
+  }
+
+  .skill-card {
+    min-width: 0;
+  }
+
+  .talent-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .talent-nodes {
+    max-width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+  }
 }
 
 :global(.operator-edit-tooltip-popper.el-popper.is-dark) {

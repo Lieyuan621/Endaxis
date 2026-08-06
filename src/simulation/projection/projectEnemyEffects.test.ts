@@ -4,6 +4,26 @@ import { projectFromSimLog } from './projectEnemyEffects';
 import { buildApplyExpireWindows } from './projectTriggeredEffects';
 
 describe('enemy effect projection display keys', () => {
+  it('preserves the originating action on delayed arts burst markers', () => {
+    const projection = projectFromSimLog([
+      {
+        type: 'ARTS_BURST',
+        time: 11.2,
+        element: 'heat',
+        sourceId: 'op_a',
+        actionId: 'attachment_skill',
+      },
+    ] as any);
+
+    expect(projection.segments).toEqual([
+      expect.objectContaining({
+        typeKey: 'infliction',
+        start: 11.2,
+        actionId: 'attachment_skill',
+      }),
+    ]);
+  });
+
   it('uses status names for display while preserving runtime status identity', () => {
     const projection = projectFromSimLog(
       [
