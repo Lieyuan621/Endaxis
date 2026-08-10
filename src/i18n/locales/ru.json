@@ -760,7 +760,9 @@
       "teamExcludeSameElement": "Команда (без того же элемента)",
       "enemy": "Враг",
       "owner": "Владелец",
-      "controlled": "Управляемый"
+      "controlled": "Управляемый",
+      "statusRecipients": "Получатели статуса",
+      "statusRecipientsExcludeSelf": "Получатели статуса (без себя)"
     },
     "statGroups": {
       "enemy": "Характеристики врага",
@@ -856,6 +858,7 @@
       "stacksFromConsume": "Стаки из расхода",
       "_condition": "Условие точки удара",
       "targetClasses": "Фильтр классов",
+      "targetElements": "Фильтр элементов",
       "attribute": "Атрибут",
       "conditionStatus": "Статус",
       "conditionStacks": "Ограничение стаков",

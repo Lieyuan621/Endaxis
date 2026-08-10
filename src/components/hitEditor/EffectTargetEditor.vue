@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EFFECT_TARGET_SCOPES, OPERATOR_CLASSES } from '@/data/enums';
-import { getGameClassName } from '@/data/gameText';
+import { DAMAGE_ELEMENTS, EFFECT_TARGET_SCOPES, OPERATOR_CLASSES } from '@/data/enums';
+import { getGameClassName, getGameElementName } from '@/data/gameText';
 
 const props = defineProps({
   modelValue: { default: undefined },
@@ -15,11 +15,28 @@ const NONE = '';
 
 function asTargetObject(value) {
   if (!value) return null;
-  if (typeof value === 'string') return { scope: value, classes: [] };
+  if (typeof value === 'string') return { scope: value, classes: [], elements: [] };
   return {
     scope: value.scope || '',
     classes: Array.isArray(value.classes) ? [...value.classes] : [],
+    elements: Array.isArray(value.elements) ? [...value.elements] : [],
   };
+}
+
+/** Collapses to the bare scope string when BOTH filters are empty, else the object form. */
+function emitTarget(scope, classes, elements) {
+  if (!scope) {
+    emit('update:modelValue', undefined);
+    return;
+  }
+  if (!classes.length && !elements.length) {
+    emit('update:modelValue', scope);
+    return;
+  }
+  const next = { scope };
+  if (classes.length) next.classes = classes;
+  if (elements.length) next.elements = elements;
+  emit('update:modelValue', next);
 }
 
 const scopeValue = computed({
@@ -27,12 +44,7 @@ const scopeValue = computed({
     return asTargetObject(props.modelValue)?.scope || NONE;
   },
   set(next) {
-    if (!next) {
-      emit('update:modelValue', undefined);
-      return;
-    }
-    const classes = classValues.value;
-    emit('update:modelValue', classes.length ? { scope: next, classes } : next);
+    emitTarget(next, classValues.value, elementValues.value);
   },
 });
 
@@ -41,13 +53,24 @@ const classValues = computed({
     return asTargetObject(props.modelValue)?.classes || [];
   },
   set(next) {
-    const scope = scopeValue.value;
-    if (!scope) {
-      emit('update:modelValue', undefined);
-      return;
-    }
-    const classes = Array.isArray(next) ? next.filter(Boolean) : [];
-    emit('update:modelValue', classes.length ? { scope, classes } : scope);
+    emitTarget(
+      scopeValue.value,
+      Array.isArray(next) ? next.filter(Boolean) : [],
+      elementValues.value,
+    );
+  },
+});
+
+const elementValues = computed({
+  get() {
+    return asTargetObject(props.modelValue)?.elements || [];
+  },
+  set(next) {
+    emitTarget(
+      scopeValue.value,
+      classValues.value,
+      Array.isArray(next) ? next.filter(Boolean) : [],
+    );
   },
 });
 
@@ -98,6 +121,27 @@ function scopeLabel(value) {
             :key="cls"
             :value="cls"
             :label="getGameClassName(cls, locale)"
+          />
+        </el-select>
+      </label>
+      <label v-if="scopeValue" class="field">
+        <span>{{ t('hitEditor.fields.targetElements') }}</span>
+        <el-select
+          :model-value="elementValues"
+          @update:model-value="value => (elementValues = value)"
+          size="small"
+          multiple
+          collapse-tags
+          collapse-tags-tooltip
+          clearable
+          class="effect-select-dark"
+          popper-class="hit-editor-select-popper"
+        >
+          <el-option
+            v-for="el in DAMAGE_ELEMENTS"
+            :key="el"
+            :value="el"
+            :label="getGameElementName(el, locale)"
           />
         </el-select>
       </label>

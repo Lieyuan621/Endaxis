@@ -1803,5 +1803,66 @@
         }
       }
     }
+  },
+  "liino": {
+    "name": "Liino",
+    "talents": [
+      {
+        "name": "Idol Zone",
+        "description": "During <@ba.key>Vocalist Stance</> or <@ba.key>Cosmovoice Stance</>, operators within the area of effect (AOE) gain Treatment Received Bonus <@ba.vup>+10%</> and DMG Taken <@ba.vup>-10%</>. These effects persist for 3s after leaving the AOE."
+      },
+      {
+        "name": "Idol Zone",
+        "description": "During <@ba.key>Vocalist Stance</> or <@ba.key>Cosmovoice Stance</>, operators within the area of effect (AOE) gain Treatment Received Bonus <@ba.vup>+20%</> and DMG Taken <@ba.vup>-20%</>. These effects persist for 3s after leaving the AOE."
+      },
+      {
+        "name": "Starry Boost of 1st Magnitude",
+        "description": "For 30s after casting Liino's combo skill <@ba.key>Delightful Harmonics</>, casting a battle skill of an <@ba.pulse>Electric</> or <@ba.natur>Nature</> operator <#ba.return>returns</> <@ba.vup>5</> SP. This effect cannot stack and ends after triggering."
+      },
+      {
+        "name": "Starry Boost of 1st Magnitude",
+        "description": "For 30s after casting Liino's combo skill <@ba.key>Delightful Harmonics</>, casting a battle skill of an <@ba.pulse>Electric</> or <@ba.natur>Nature</> operator <#ba.return>returns</> <@ba.vup>10</> SP. This effect cannot stack and ends after triggering."
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Flawless Stage Work",
+        "description": "After entering battle without her <@ba.key>Vocalist Stance</> active, the first casting of the battle skill <@ba.key>Dazzling Focus</> <#ba.return>returns</> <@ba.vup>25</> additional SP.\nEffects of ATK Boost granted by <@ba.key>Vocalist Stance</> and <@ba.key>Cosmovoice Stance</> are increased by <@ba.vup>+6%</>."
+      },
+      {
+        "name": "Committed Rehearsals",
+        "description": "Will <@ba.vup>+20</>, Treatment Efficiency <@ba.vup>+10%</>."
+      },
+      {
+        "name": "Longing for the Horizon",
+        "description": "Combo skill <@ba.key>Delightful Harmonics</> improved: Length of cooldown <@ba.vup>-1</>s. DMG Multiplier and HP Treatment are increased to <@ba.vup>1.4</> times the original."
+      },
+      {
+        "name": "Meteoric Rhythm",
+        "description": "Ultimate <@ba.key>Dawnstar Concerto</> improved: Ultimate Energy cost <@ba.vup>-15%</>."
+      },
+      {
+        "name": "Heart-Whipping Q&A",
+        "description": "<#ba.enhance>Amp</> effect of <@ba.key>Dawnstar Concerto</> is increased to <@ba.vup>1.2</> times the original.\nDMG Multipliers of battle skill <@ba.key>Dazzling Focus</> and ultimate <@ba.key>Dawnstar Concerto</> are increased to <@ba.vup>1.2</> times the original."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Starry Heart Throb",
+        "description": "BASIC ATTACK:\nAn attack with up to 5 sequences that deals <@ba.pulse>Electric DMG</>. As the controlled operator, <#ba.lastcombo>Final Strike</> also deals <@ba.poise>19</> Stagger.\n\nDIVE ATTACK:\nBasic attack performed in mid-air becomes a dive attack that deals <@ba.pulse>Electric DMG</> to nearby enemies.\n\nFINISHER:\nBasic attack performed near a Staggered enemy becomes a finisher that deals massive <@ba.pulse>Electric DMG</> and recovers some SP."
+      },
+      "battleSkill": {
+        "name": "Dazzling Focus",
+        "description": "Liino deals <@ba.pulse>Electric DMG</> to enemies and then enters her <@ba.key>Vocalist Stance</>. While this stance is active, if there are enemies nearby, Liino will perform an Additional ATK (that deals <@ba.pulse>Electric DMG</> to enemies) on a regular basis.\n<@ba.key>Vocalist Stance</>: While this stance is active, Liino grants the entire team an ATK Boost. After entering battle, Liino will also grant continuous <@ba.heal>HP Treatment</> to operators within range.\n<@ba.info>During Vocalist Stance, her battle skill is replaced with End Stance. Casting this will end her Vocalist Stance early without consuming any SP, after which the battle skill will enter a short cooldown.</>"
+      },
+      "comboSkill": {
+        "name": "Delightful Harmonics",
+        "description": "COMBO TRIGGER: While <@ba.key>Vocalist Stance</> is active, an <#ba.spellstatus>Arts Reaction</> is <#ba.consume>consumed</> or is applied on an enemy.\nLiino deals <@ba.pulse>Electric DMG</> to enemies, grants <@ba.heal>HP Treatment</> to the controlled operator, and gains additional Ultimate Energy.\nCasting the combo skill <@ba.key>Delightful Harmonics</> does not interrupt <@ba.key>Vocalist Stance</>."
+      },
+      "ultimate": {
+        "name": "Dawnstar Concerto",
+        "description": "Liino grants <@ba.heal>HP Treatment</> to the entire team, enters her <@ba.key>Cosmovoice Stance</> at the same time, unleashes a continuous display of Stage Pyrotechnics that deals <@ba.pulse>Electric DMG</>, and then triggers an <@ba.key>Electrifying Extravaganza</> that deals <@ba.pulse>Electric DMG</> and forcibly applies <#ba.conduct>Electrification</> to enemies in a large area of effect (AOE).\n<@ba.key>Cosmovoice Stance</>: This stance replaces Liino's <@ba.key>Vocalist Stance</>. While active, the stance grants the entire team <#ba.pulseenhance>Electric Amp</> and <#ba.naturalenhance>Nature Amp</> (effects are further increased by the attribute of Will) as well as an ATK Boost. The beats of Liino's song also deal <@ba.pulse>Electric DMG</> to enemies in the AOE and grant continuous <@ba.heal>HP Treatment</> to allied operators in the AOE. When the stance ends, deals 3 times the DMG from a single beat to enemies in the AOE, and grants 3 times the HP treatment from a single beat to the entire team. This effect does not trigger if the stance is ended early.\nDuring the stance, her battle skill is replaced with End Stance. <@ba.info>Casting the battle skill during Cosmovoice Stance ends it early and does not consume any SP.</>"
+      }
+    }
   }
 }

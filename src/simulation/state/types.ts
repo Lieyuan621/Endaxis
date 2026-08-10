@@ -5,6 +5,7 @@ import type { EnemyResistance } from '@/data/enemyResistance';
 export interface ActorSnapshot {
   id: string;
   element?: string;
+  class?: string;
   stats: ActorStats;
   baseStats?: BaseStatValues | null;
   triggerEffects?: any[];

@@ -28,7 +28,12 @@ function buildTriggerRegistryEntries(tracks: any[]) {
 
       const trigger = entry.triggerEffect.trigger || {};
       const effectIds = (entry.triggerEffect.effects || [])
-        .map((effect: any) => effect?.id || effect?.kind || '')
+        .map((effect: any) => {
+          if (effect?.id) return effect.id;
+          const consumes = effect?.operatorStatus ?? effect?.enemyStatus;
+          if (consumes === undefined) return effect?.kind || '';
+          return `${effect?.kind || ''}:${JSON.stringify(consumes)}`;
+        })
         .join(',');
       const key = [
         entry.sourceTrackId,
@@ -107,6 +112,7 @@ function buildCompiledTracks(tracks: any[], characterRoster: any[]) {
     return {
       ...track,
       element: charInfo?.element || track.element || 'physical',
+      class: charInfo?.class || track.class,
       acceptTeamGauge: acceptTeamUltEnergy !== false,
       acceptTeamUltEnergy: acceptTeamUltEnergy !== false,
       acceptSelfSpCostUltEnergy:

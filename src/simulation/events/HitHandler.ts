@@ -34,12 +34,7 @@ import {
   computeLevelCoefficient,
   computeArtsIntensityDamageMult,
 } from '@/data/stats/computeReactionDamage';
-import {
-  isEnemyEffect,
-  type DamageElement,
-  type Effect,
-  type ResolvedEffect,
-} from '@/data/types';
+import { isEnemyEffect, type DamageElement, type Effect, type ResolvedEffect } from '@/data/types';
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
@@ -181,8 +176,20 @@ export class HitHandler implements EventHandler<HitEvent> {
           ? (eff, t, tid, c) => this.registry!.applyCooldownReduction(eff, t, tid, c)
           : undefined,
         onInstantHeal: this.registry
-          ? (id, stat, src, t, st) =>
-              this.registry!.onStatusApplied(id, stat, 'self', src, t, ctx, st, hit.skillId)
+          ? (id, stat, src, t, st, healRecipients) =>
+              this.registry!.onStatusApplied(
+                id,
+                stat,
+                'self',
+                src,
+                t,
+                ctx,
+                st,
+                hit.skillId,
+                undefined,
+                undefined,
+                healRecipients,
+              )
           : undefined,
       });
     }
@@ -203,11 +210,7 @@ export class HitHandler implements EventHandler<HitEvent> {
     if (earlyActorEffects?.length || earlyEnemyEffects?.length) {
       // Settle applies (and onStatusApplied follow-ups) before reading mods for damage.
       // Skip consumed expires so stack scaling still sees pre-consume state.
-      const isSameTimeEffectApply = (ev: {
-        type: string;
-        time: number;
-        consumed?: boolean;
-      }) =>
+      const isSameTimeEffectApply = (ev: { type: string; time: number; consumed?: boolean }) =>
         Number(ev.time) === Number(e.time) &&
         (ev.type === 'OPERATOR_EFFECT_APPLY' ||
           ev.type === 'ENEMY_EFFECT_APPLY' ||
@@ -229,9 +232,7 @@ export class HitHandler implements EventHandler<HitEvent> {
     // (e.g. Arcane cluster strike queued from onFinisher with the finisher's actionId).
     const action = ctx.getAction(e.payload.actionId);
     const finisherMult =
-      !hit.triggered &&
-      action?.node.type === 'finisher' &&
-      ctx.state.enemy.isBroken(e.time)
+      !hit.triggered && action?.node.type === 'finisher' && ctx.state.enemy.isBroken(e.time)
         ? (ctx.state.enemy.config.finisherMultiplier ?? 1)
         : 1;
     hit._finisherMult = finisherMult;
@@ -701,8 +702,20 @@ export class HitHandler implements EventHandler<HitEvent> {
         ? (eff, t, tid, c) => this.registry!.applyCooldownReduction(eff, t, tid, c)
         : undefined,
       onInstantHeal: this.registry
-        ? (id, stat, src, t, st) =>
-            this.registry!.onStatusApplied(id, stat, 'self', src, t, ctx, st, hit.skillId)
+        ? (id, stat, src, t, st, healRecipients) =>
+            this.registry!.onStatusApplied(
+              id,
+              stat,
+              'self',
+              src,
+              t,
+              ctx,
+              st,
+              hit.skillId,
+              undefined,
+              undefined,
+              healRecipients,
+            )
         : undefined,
     });
     // Fire onHit triggers from TriggerRegistry (skip no-damage hits)

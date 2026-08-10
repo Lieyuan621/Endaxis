@@ -12,19 +12,11 @@ export const COMBAT_SKILL_TYPES = Object.freeze([
 ] as const);
 export type CombatSkillType = (typeof COMBAT_SKILL_TYPES)[number];
 
-export const SKILL_TYPES = Object.freeze([
-  ...COMBAT_SKILL_TYPES,
-  'finalStrike',
-  'dive',
-] as const);
+export const SKILL_TYPES = Object.freeze([...COMBAT_SKILL_TYPES, 'finalStrike', 'dive'] as const);
 export type SkillType = (typeof SKILL_TYPES)[number];
 
 /** Stat / editor scopes beyond `SkillType` (e.g. finisher attribution, non-skill damage). */
-export const SKILL_TYPE_SCOPES = Object.freeze([
-  ...SKILL_TYPES,
-  'finisher',
-  'nonSkill',
-] as const);
+export const SKILL_TYPE_SCOPES = Object.freeze([...SKILL_TYPES, 'finisher', 'nonSkill'] as const);
 export type SkillTypeScope = (typeof SKILL_TYPE_SCOPES)[number];
 
 export const ARTS_ELEMENTS = Object.freeze(['heat', 'cryo', 'electric', 'nature'] as const);
@@ -82,6 +74,8 @@ export const EFFECT_TARGET_SCOPES = Object.freeze([
   'enemy',
   'owner',
   'controlled',
+  'statusRecipients',
+  'statusRecipientsExcludeSelf',
 ] as const);
 export type EffectTargetScope = (typeof EFFECT_TARGET_SCOPES)[number];
 

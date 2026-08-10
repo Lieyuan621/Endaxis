@@ -1091,16 +1091,17 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   /** Migrate legacy single `customInitialGauge` into a per-operator map. */
   function resolveCustomInitialGaugesFromSnapshot(
-    snapshot: { customInitialGauges?: unknown; customInitialGauge?: unknown; tracks?: Track[] } | null | undefined,
+    snapshot:
+      | { customInitialGauges?: unknown; customInitialGauge?: unknown; tracks?: Track[] }
+      | null
+      | undefined,
   ): Record<string, number> {
     if (snapshot?.customInitialGauges != null) {
       return normalizeCustomInitialGauges(snapshot.customInitialGauges);
     }
     if (snapshot?.customInitialGauge == null) return {};
     const legacy = Math.max(0, Math.floor(Number(snapshot.customInitialGauge) || 0));
-    return Object.fromEntries(
-      (snapshot.tracks || []).filter(t => t?.id).map(t => [t.id!, legacy]),
-    );
+    return Object.fromEntries((snapshot.tracks || []).filter(t => t?.id).map(t => [t.id!, legacy]));
   }
 
   /** Scenario-scoped bulk initial ultimate-energy preset (toolbar control). */
@@ -1565,9 +1566,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   // ===================================================================================
 
   function _createSnapshot(): ScenarioSnapshot {
-    return dropLegacyTimedStatusData(
-      JSON.parse(_serializeSnapshot()),
-    ) as ScenarioSnapshot;
+    return dropLegacyTimedStatusData(JSON.parse(_serializeSnapshot())) as ScenarioSnapshot;
   }
 
   function _loadSnapshot(data: ScenarioData | null | undefined) {
@@ -1674,12 +1673,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  watch(
-    [showCursorGuide, isBoxSelectMode, snapStep, enableConnectionTool, buffLayoutMode],
-    () => {
-      persistTimelineToolbarPrefs();
-    },
-  );
+  watch([showCursorGuide, isBoxSelectMode, snapStep, enableConnectionTool, buffLayoutMode], () => {
+    persistTimelineToolbarPrefs();
+  });
 
   function toggleConnectionTool() {
     enableConnectionTool.value = !enableConnectionTool.value;
@@ -2628,7 +2624,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     kind?: string;
     condition?: unknown;
     stat?: CollectEffectStat | null;
-    target?: string | { scope?: string; classes?: string[] } | null;
+    target?: string | { scope?: string; classes?: string[]; elements?: string[] } | null;
     id?: string;
     stacks?: number;
     maxStacks?: number;
@@ -2800,35 +2796,44 @@ export const useTimelineStore = defineStore('timeline', () => {
     const targetObj = typeof rawTarget === 'object' && rawTarget ? rawTarget : null;
     const scope = typeof rawTarget === 'string' ? rawTarget : targetObj?.scope;
     const allowedClasses = Array.isArray(targetObj?.classes) ? targetObj.classes : null;
-
-    const candidateTrackIds = [...trackMetaById.keys()].filter(trackId => {
-      if (!allowedClasses?.length) return true;
-      const trackClass = trackMetaById.get(trackId)?.class;
-      return !!trackClass && allowedClasses.includes(trackClass);
-    });
+    const allowedElements = Array.isArray(targetObj?.elements) ? targetObj.elements : null;
 
     if (scope === 'enemy') return ['boss'];
     if (!sourceTrackId) return [];
 
+    const allTrackIds = [...trackMetaById.keys()];
     const sourceElement = trackMetaById.get(sourceTrackId)?.element || null;
-    switch (scope) {
-      case 'team':
-        return candidateTrackIds;
-      case 'teamExcludeSelf':
-        return candidateTrackIds.filter(trackId => trackId !== sourceTrackId);
-      case 'teamExcludeSameElement':
-        return candidateTrackIds.filter(trackId => {
-          if (trackId === sourceTrackId) return false;
-          return trackMetaById.get(trackId)?.element !== sourceElement;
-        });
-      case 'owner':
-      case 'self':
-      case undefined:
-      case null:
-        return [sourceTrackId];
-      default:
-        return [sourceTrackId];
-    }
+
+    const scoped = (() => {
+      switch (scope) {
+        case 'team':
+          return allTrackIds;
+        case 'teamExcludeSelf':
+          return allTrackIds.filter(trackId => trackId !== sourceTrackId);
+        case 'teamExcludeSameElement':
+          return allTrackIds.filter(trackId => {
+            if (trackId === sourceTrackId) return false;
+            return trackMetaById.get(trackId)?.element !== sourceElement;
+          });
+        case 'statusRecipients':
+        case 'statusRecipientsExcludeSelf':
+          // Recipients only exist during trigger dispatch; a passive can never have them.
+          return [];
+        default:
+          // 'owner' | 'self' | undefined | null
+          return [sourceTrackId];
+      }
+    })();
+
+    // classes/elements narrow every scope; unknown class/element never matches a non-empty filter.
+    return scoped.filter(trackId => {
+      const meta = trackMetaById.get(trackId);
+      if (allowedClasses?.length && !(meta?.class && allowedClasses.includes(meta.class)))
+        return false;
+      if (allowedElements?.length && !(meta?.element && allowedElements.includes(meta.element)))
+        return false;
+      return true;
+    });
   }
 
   function buildInitialRuntimeEffectsFromCollected(
@@ -2951,7 +2956,11 @@ export const useTimelineStore = defineStore('timeline', () => {
       // only one member is consumed mid-reaction even if the other is still active.
       const removeCondition = {
         kind: 'not',
-        condition: { kind: cond.kind, status: cond.status, ...(cond.stacks ? { stacks: cond.stacks } : {}) },
+        condition: {
+          kind: cond.kind,
+          status: cond.status,
+          ...(cond.stacks ? { stacks: cond.stacks } : {}),
+        },
       };
       const isTeamScoped =
         effect.target === 'team' ||

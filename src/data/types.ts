@@ -344,7 +344,8 @@ export interface TriggerEffect {
 // ─── Effect Target ────────────────────────────────────────────────────────────
 
 export type EffectTarget =
-  { scope: EffectTargetScope; classes?: operatorClass[] } | EffectTargetScope;
+  | { scope: EffectTargetScope; classes?: operatorClass[]; elements?: DamageElement[] }
+  | EffectTargetScope;
 
 // ─── Effect Base ─────────────────────────────────────────────────────────────
 

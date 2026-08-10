@@ -387,6 +387,7 @@ export class SimulationEngine {
       },
       allTrackIds: this.actors.map(a => a.id),
       elementByTrackId: new Map(this.actors.map(a => [a.id, a.element])),
+      classByTrackId: new Map(this.actors.map(a => [a.id, a.class])),
       consumedStacksWriteKeys: this.consumedStacksWriteKeys,
       getShiftedTime: this.getShiftedTime.bind(this),
       isUltimateEnhancementActive: this.isUltimateEnhancementActive.bind(this),

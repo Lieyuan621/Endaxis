@@ -189,6 +189,7 @@ export function getCharacterRoster(): any[] {
       id,
       slug,
       element: op.element,
+      class: op.class,
       rarity: op.rarity,
       weapon: op.weapon,
       name: getOperatorGameName(slug),

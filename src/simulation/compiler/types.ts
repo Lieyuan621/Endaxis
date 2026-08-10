@@ -87,6 +87,7 @@ export type ActorStatKeys = keyof ActorStats;
 export interface ScenarioTrack {
   id: string;
   element?: string;
+  class?: string;
   actions: Action[];
 
   stats: ActorStats;

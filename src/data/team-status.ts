@@ -238,16 +238,24 @@ function partitionByTarget(
     const scope = typeof rawTarget === 'string' ? rawTarget : (rawTarget?.scope ?? 'self');
     if (scope === 'team' || scope === 'teamExcludeSelf' || scope === 'teamExcludeSameElement') {
       const classes = typeof rawTarget === 'object' ? rawTarget?.classes : undefined;
+      const elements = typeof rawTarget === 'object' ? rawTarget?.elements : undefined;
       const sourceElement = slotElements[ce.sourceSlotIndex];
       for (let i = 0; i < 4; i++) {
         if (scope === 'teamExcludeSelf' && i === ce.sourceSlotIndex) continue;
         if (scope === 'teamExcludeSameElement' && slotElements[i] === sourceElement) continue;
-        if (classes) {
+        if (classes?.length) {
           const cls = slotClasses[i];
           if (!cls || !classes.includes(cls)) continue;
         }
+        if (elements?.length) {
+          const el = slotElements[i];
+          if (!el || !elements.includes(el as (typeof elements)[number])) continue;
+        }
         slotEffects[i]!.push(resolveForSlot(ce, i));
       }
+    } else if (scope === 'statusRecipients' || scope === 'statusRecipientsExcludeSelf') {
+      // Recipients only exist during trigger dispatch; a passive can never have them.
+      continue;
     } else {
       // 'self' (default) — only to source slot
       slotEffects[ce.sourceSlotIndex]?.push(ce);

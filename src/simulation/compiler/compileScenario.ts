@@ -133,6 +133,7 @@ function processActors(tracks: ScenarioTrack[]): ActorSnapshot[] {
       return {
         id: track.id,
         element: (track as any).element,
+        class: (track as any).class,
         stats: track.stats,
         baseStats: track.baseStats ?? null,
         triggerEffects: track.triggerEffects || [],

@@ -883,7 +883,9 @@
       "teamExcludeSameElement": "全队（不含同元素）",
       "enemy": "敌人",
       "owner": "持有者",
-      "controlled": "当前操控"
+      "controlled": "当前操控",
+      "statusRecipients": "状态接受者",
+      "statusRecipientsExcludeSelf": "状态接受者（不含自身）"
     },
     "statGroups": {
       "enemy": "敌人属性",
@@ -979,6 +981,7 @@
       "stacksFromConsume": "层数取自消耗",
       "_condition": "判定点条件",
       "targetClasses": "职业限制",
+      "targetElements": "元素限制",
       "attribute": "属性类型",
       "conditionStatus": "状态",
       "conditionStacks": "层数约束",

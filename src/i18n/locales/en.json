@@ -907,7 +907,9 @@
       "teamExcludeSameElement": "Team (exclude same element)",
       "enemy": "Enemy",
       "owner": "Owner",
-      "controlled": "Controlled"
+      "controlled": "Controlled",
+      "statusRecipients": "Status recipients",
+      "statusRecipientsExcludeSelf": "Status recipients (exclude self)"
     },
     "statGroups": {
       "enemy": "Enemy stats",
@@ -1003,6 +1005,7 @@
       "stacksFromConsume": "Stacks from consume",
       "_condition": "Hit condition",
       "targetClasses": "Class filter",
+      "targetElements": "Element filter",
       "attribute": "Attribute",
       "conditionStatus": "Status",
       "conditionStacks": "Stack constraint",

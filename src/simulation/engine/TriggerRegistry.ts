@@ -9,7 +9,12 @@ import type {
 import type { ResolvedAction } from '@/simulation/compiler/types';
 import { isEnemyEffect } from '@/data/types';
 import type { SimulationContext } from './SimulationContext';
-import type { SpChangeEvent, HitEvent, ActionStartEvent, SimEvent } from '@/simulation/events/event.types';
+import type {
+  SpChangeEvent,
+  HitEvent,
+  ActionStartEvent,
+  SimEvent,
+} from '@/simulation/events/event.types';
 import type { EnemyStatusSnapshot } from '@/simulation/engine/types';
 import { resolveEffectDefaults } from '@/data/effectPresets';
 import {
@@ -362,6 +367,8 @@ export class TriggerRegistry {
     skillId?: string,
     cumulativeStacks?: number,
     actionId?: string,
+    /** Tracks that RECEIVED this status (operator side only; omitted elsewhere). */
+    recipientTrackIds?: readonly string[],
   ): void {
     for (const entry of this.entries) {
       if (!this.matchesScope(entry, actorId)) continue;
@@ -391,6 +398,7 @@ export class TriggerRegistry {
         undefined,
         undefined,
         skillId,
+        recipientTrackIds,
       );
     }
   }
@@ -511,13 +519,17 @@ export class TriggerRegistry {
      *  downstream OPERATOR_EFFECT_APPLY / ENEMY_EFFECT_APPLY events as `sourceSkillId` so that
      *  onStatusApplied triggers with a `skillId:` filter on the applied status match correctly. */
     sourceSkillId?: string,
+    /** onStatusApplied only: tracks that received the triggering status. */
+    recipientTrackIds?: readonly string[],
   ): void {
     const enemySnap = preComputedEnemySnap ?? ctx.state.enemy.statusSnapshot();
     const selfTrackId = triggeringTrackId ?? sourceTrackId;
     for (const effect of effects) {
       const resolved = resolveEffectDefaults(effect);
 
-      // ICD check (trigger-specific — hit-attached effects don't have ICD)
+      // ICD check (trigger-specific — hit-attached effects don't have ICD).
+      // Keyed per source, not per target: one fire fans out to all recipients atomically, so
+      // this equals a per-target ICD unless two applies in-window hit disjoint recipient sets.
       if (resolved.icd !== undefined && resolved.icd > 0) {
         const key = resolved.icdGroup ?? `${sourceTrackId}:${resolved.id!}`;
         const last = this.lastFire.get(key) ?? -Infinity;
@@ -604,9 +616,23 @@ export class TriggerRegistry {
         statusActionId: actionId,
         hitConsumedStacks,
         triggeredByOverride,
+        recipientTrackIds,
         applyCooldownReduction: (eff, t, tid, c) => this.applyCooldownReduction(eff, t, tid, c),
-        onInstantHeal: (id, stat, src, t, st) =>
-          this.onStatusApplied(id, stat, 'self', src, t, ctx, st, sourceSkillId),
+        // Distinct name: a chained heal must report its OWN targets, not inherit this list.
+        onInstantHeal: (id, stat, src, t, st, healRecipients) =>
+          this.onStatusApplied(
+            id,
+            stat,
+            'self',
+            src,
+            t,
+            ctx,
+            st,
+            sourceSkillId,
+            undefined,
+            undefined,
+            healRecipients,
+          ),
       });
     }
   }

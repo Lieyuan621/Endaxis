@@ -2165,5 +2165,36 @@
         [44.8, 56, 56, 16.8, 16.8]
       ]
     }
+  },
+  "bedazzling-night-debut": {
+    "name": "Bedazzling Night Debut",
+    "type": "Polearm",
+    "skill1": {
+      "name": "Will",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156],
+      "description": "Will <@ba.vup>+{0}</>"
+    },
+    "skill2": {
+      "name": "Treatment Efficiency",
+      "values": [6, 10.7, 15.5, 20.2, 25, 29.8, 34.5, 39.3, 46.4],
+      "isPercent": true,
+      "description": "Treatment Efficiency <@ba.vup>+{0}%</>."
+    },
+    "skill3": {
+      "name": "Medicant: Shimmering Curtain",
+      "prefix": "Medicant",
+      "values": [
+        [16, 3.5],
+        [19.2, 4.2],
+        [22.4, 4.9],
+        [25.6, 5.6],
+        [28.8, 6.3],
+        [32, 7],
+        [35.2, 7.7],
+        [38.4, 8.4],
+        [44.8, 9.8]
+      ],
+      "description": "Main attribute <@ba.vup>+{0}%</>.\nWhen the wielder's skill grants HP Treatment to other operators in the team, the operator receiving the wielder's treatment also gains ATK <@ba.vup>+{1}%</> for 20s.\n<@ba.info>Max stacks for effects of the same name: 4. Duration of each stack is counted separately. Each operator can gain this effect at most once every 0.1s.</>"
+    }
   }
 }

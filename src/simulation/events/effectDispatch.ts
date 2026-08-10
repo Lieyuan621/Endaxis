@@ -582,19 +582,13 @@ function applyResolvedScalingStatic(
  * Extract the EffectTargetScope from any effect that may carry a `target` field.
  * Handles both shorthand (`target: 'self'`) and object (`target: { scope: 'self' }`) forms.
  */
-function getEffectTargetScope(effect: Effect | ResolvedEffect): EffectTargetScope | undefined {
-  const raw = (effect as { target?: EffectTarget }).target;
-  if (raw === undefined) return undefined;
-  return typeof raw === 'string' ? raw : raw.scope;
-}
-
 /**
  * Extract the full EffectTarget from any effect type that may carry one.
  * Normalizes the shorthand string form to an object.
  */
 export function getEffectTarget(
   effect: Effect | ResolvedEffect,
-): { scope: EffectTargetScope; classes?: string[] } | undefined {
+): { scope: EffectTargetScope; classes?: string[]; elements?: string[] } | undefined {
   const raw = (effect as { target?: EffectTarget }).target;
   if (raw === undefined) return undefined;
   return typeof raw === 'string' ? { scope: raw } : raw;
@@ -610,15 +604,38 @@ export function getEffectTarget(
  *                       (scope:'owner' target). Falls back to selfTrackId when omitted.
  * @param elementByTrackId – optional map of trackId→element for teamExcludeSameElement scope
  */
+export interface TargetResolutionContext {
+  selfTrackId: string;
+  allTrackIds: readonly string[];
+  ownerTrackId?: string;
+  elementByTrackId?: ReadonlyMap<string, string | undefined>;
+  classByTrackId?: ReadonlyMap<string, string | undefined>;
+  controlledTrackId?: string | null;
+  recipientTrackIds?: readonly string[];
+}
+
 export function resolveTargetTrackIds(
   effect: Effect | ResolvedEffect,
-  selfTrackId: string,
-  allTrackIds: readonly string[],
-  ownerTrackId?: string,
-  elementByTrackId?: ReadonlyMap<string, string | undefined>,
-  controlledTrackId?: string | null,
+  rc: TargetResolutionContext,
 ): string[] {
-  const scope = getEffectTargetScope(effect) ?? 'self';
+  const target = getEffectTarget(effect);
+  const tracks = resolveScopeTrackIds(target?.scope ?? 'self', rc);
+  // classes/elements narrow the resolved list for every scope. Empty/omitted = no filter;
+  // a track with an unknown class/element never matches a non-empty filter.
+  const byClass = target?.classes?.length
+    ? tracks.filter(id => matchesFilter(rc.classByTrackId?.get(id), target.classes!))
+    : tracks;
+  return target?.elements?.length
+    ? byClass.filter(id => matchesFilter(rc.elementByTrackId?.get(id), target.elements!))
+    : byClass;
+}
+
+function matchesFilter(value: string | undefined, allowed: readonly string[]): boolean {
+  return value !== undefined && allowed.includes(value);
+}
+
+function resolveScopeTrackIds(scope: EffectTargetScope, rc: TargetResolutionContext): string[] {
+  const { selfTrackId, allTrackIds, ownerTrackId, elementByTrackId, controlledTrackId } = rc;
   switch (scope) {
     case 'self':
       return [selfTrackId];
@@ -636,6 +653,10 @@ export function resolveTargetTrackIds(
         id => id !== selfTrackId && elementByTrackId?.get(id) !== selfElement,
       ) as string[];
     }
+    case 'statusRecipients':
+      return rc.recipientTrackIds ? [...rc.recipientTrackIds] : [];
+    case 'statusRecipientsExcludeSelf':
+      return rc.recipientTrackIds ? rc.recipientTrackIds.filter(id => id !== selfTrackId) : [];
     case 'enemy':
       return [];
     default:
@@ -654,13 +675,13 @@ export function resolveConsumeTrackIds(
   ctx: SimulationContext,
 ): string[] {
   if (!target) return [sourceTrackId];
-  return resolveTargetTrackIds(
-    { target } as unknown as Effect,
-    sourceTrackId,
-    ctx.allTrackIds,
-    sourceTrackId,
-    ctx.elementByTrackId,
-  );
+  return resolveTargetTrackIds({ target } as unknown as Effect, {
+    selfTrackId: sourceTrackId,
+    allTrackIds: ctx.allTrackIds,
+    ownerTrackId: sourceTrackId,
+    elementByTrackId: ctx.elementByTrackId,
+    classByTrackId: ctx.classByTrackId,
+  });
 }
 
 // ─── Shared dispatch helpers ────────────────────────────────────────────────
@@ -1115,6 +1136,7 @@ export interface EffectDispatchContext {
     targetTrackId: string,
     ctx: SimulationContext,
   ) => void;
+  recipientTrackIds?: readonly string[];
   /** Callback for zero-duration status heals (fires onStatusApplied signal). */
   onInstantHeal?: (
     id: string,
@@ -1122,6 +1144,7 @@ export interface EffectDispatchContext {
     sourceTrackId: string,
     time: number,
     skillType?: string,
+    recipientTrackIds?: readonly string[],
   ) => void;
 }
 
@@ -1143,16 +1166,20 @@ export function dispatchSingleActorEffect(
   const ownerTrackId = dc.ownerTrackId ?? sourceTrackId;
   const controlledTrackId = ctx.getControlledOperatorAt?.(time) ?? null;
 
+  const targetCtx: TargetResolutionContext = {
+    selfTrackId,
+    allTrackIds: ctx.allTrackIds,
+    ownerTrackId,
+    elementByTrackId: ctx.elementByTrackId,
+    classByTrackId: ctx.classByTrackId,
+    controlledTrackId,
+    recipientTrackIds: dc.recipientTrackIds,
+  };
+  const resolveTargets = (e: Effect | ResolvedEffect) => resolveTargetTrackIds(e, targetCtx);
+
   // ── cooldownReduction ──────────────────────────────────────────────────
   if (resolved.kind === 'cooldownReductionFlat' || resolved.kind === 'cooldownReductionPercent') {
-    const targets = resolveTargetTrackIds(
-      resolved,
-      selfTrackId,
-      ctx.allTrackIds,
-      ownerTrackId,
-      ctx.elementByTrackId,
-      controlledTrackId,
-    );
+    const targets = resolveTargets(resolved);
     for (const targetId of targets) {
       dc.applyCooldownReduction?.(resolved as any, time, targetId, ctx);
     }
@@ -1175,14 +1202,7 @@ export function dispatchSingleActorEffect(
         enemySnap,
         preConsumeOpStacks,
       );
-    const targets = resolveTargetTrackIds(
-      resolved,
-      selfTrackId,
-      ctx.allTrackIds,
-      ownerTrackId,
-      ctx.elementByTrackId,
-      controlledTrackId,
-    );
+    const targets = resolveTargets(resolved);
     const oneTimeDuration = resolveEffectLifecycle(resolved).duration;
     const expiresAt =
       oneTimeDuration > 0
@@ -1322,14 +1342,7 @@ export function dispatchSingleActorEffect(
   // ── spRecovery / spReturn ──────────────────────────────────────────────
   if (resolved.kind === 'spRecovery' || resolved.kind === 'spReturn') {
     const effectId = getRuntimeEffectId(resolved);
-    const targets = resolveTargetTrackIds(
-      resolved,
-      selfTrackId,
-      ctx.allTrackIds,
-      ownerTrackId,
-      ctx.elementByTrackId,
-      controlledTrackId,
-    );
+    const targets = resolveTargets(resolved);
     const spEff = resolved as ResolvedSpGainEffect | ResolvedSpReturnEffect;
     const gain = spEff.scaling
       ? applyResolvedScaling(
@@ -1366,14 +1379,7 @@ export function dispatchSingleActorEffect(
   // ── ultEnergyGain ──────────────────────────────────────────────────────
   if (resolved.kind === 'ultEnergyGain') {
     const effectId = getRuntimeEffectId(resolved);
-    const targets = resolveTargetTrackIds(
-      resolved,
-      selfTrackId,
-      ctx.allTrackIds,
-      ownerTrackId,
-      ctx.elementByTrackId,
-      controlledTrackId,
-    );
+    const targets = resolveTargets(resolved);
     const ue = resolved as ResolvedUltimateEnergyGainEffect;
     const gain = ue.scaling
       ? applyResolvedScaling(
@@ -1405,14 +1411,7 @@ export function dispatchSingleActorEffect(
 
   // ── status ─────────────────────────────────────────────────────────────
   if (resolved.kind === 'status') {
-    const targets = resolveTargetTrackIds(
-      resolved,
-      selfTrackId,
-      ctx.allTrackIds,
-      ownerTrackId,
-      ctx.elementByTrackId,
-      controlledTrackId,
-    );
+    const targets = resolveTargets(resolved);
     const lifecycle = resolveEffectLifecycle(resolved);
     const duration =
       dc.durationOverride !== undefined
@@ -1421,12 +1420,14 @@ export function dispatchSingleActorEffect(
 
     if (duration <= 0) {
       if (resolved.stat?.modifier === 'heal' && !resolved.silent) {
+        // A duration-0 heal is never stored, so `targets` is the only record of who was healed.
         dc.onInstantHeal?.(
           getRuntimeEffectId(resolved),
           resolved.stat,
           sourceTrackId,
           time,
           skillType,
+          targets,
         );
       }
       return;

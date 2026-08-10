@@ -36,8 +36,10 @@ export interface SimulationContext {
   };
   /** All track IDs currently active in the simulation. */
   allTrackIds: string[];
-  /** Map of trackId → operator element (for teamExcludeSameElement scope resolution). */
+  /** Map of trackId → operator element (teamExcludeSameElement scope, EffectTarget.elements filter). */
   elementByTrackId: ReadonlyMap<string, string | undefined>;
+  /** Map of trackId → operator class (EffectTarget.classes filter). */
+  classByTrackId: ReadonlyMap<string, string | undefined>;
   /** Status keys that need consumedStacks written at apply time (auto-inferred from readConsumedStacks). */
   consumedStacksWriteKeys: Set<string>;
   /** Compute the real-time end point of a duration starting at startTime, accounting for any time freezes within the window. */

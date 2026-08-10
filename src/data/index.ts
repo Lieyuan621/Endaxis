@@ -38,6 +38,7 @@ import gilberta from './operators/gilberta';
 import laevatain from './operators/laevatain';
 import last_rite from './operators/last-rite';
 import lifeng from './operators/lifeng';
+import liino from './operators/liino';
 import mifu from './operators/mifu';
 import perlica from './operators/perlica';
 import pogranichnik from './operators/pogranichnik';
@@ -107,6 +108,7 @@ const operatorSheets: Record<string, OperatorSheet> = {
   laevatain: laevatain,
   'last-rite': last_rite,
   lifeng: lifeng,
+  liino: liino,
   mifu: mifu,
   perlica: perlica,
   pogranichnik: pogranichnik,
