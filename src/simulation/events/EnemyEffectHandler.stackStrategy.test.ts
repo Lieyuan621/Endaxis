@@ -39,6 +39,38 @@ function createContext() {
 }
 
 describe('EnemyEffectHandler stack strategies', () => {
+  it('stacks repeated direct vulnerability applications by default', () => {
+    const handler = new EnemyEffectHandler();
+    const { ctx, logs } = createContext();
+    const apply = (sourceId: string) =>
+      handler.handle(
+        {
+          type: 'ENEMY_EFFECT_APPLY',
+          kind: 'physicalStatus',
+          time: 1,
+          physicalType: 'vulnerability',
+          effectiveDuration: 20,
+          sourceId,
+        } as any,
+        ctx,
+      );
+
+    apply('alpha');
+    apply('beta');
+
+    expect(ctx.state.enemy.vulnerability?.stacks).toBe(2);
+    expect(ctx.state.enemy.vulnerability?.sourceQueue).toEqual([
+      { sourceId: 'alpha', count: 1 },
+      { sourceId: 'beta', count: 1 },
+    ]);
+    expect(logs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'VULNERABILITY_CHANGE', stacks: 1 }),
+        expect.objectContaining({ type: 'VULNERABILITY_CHANGE', stacks: 2 }),
+      ]),
+    );
+  });
+
   it('replaces same-element infliction stacks when stack strategy is replace', () => {
     const handler = new EnemyEffectHandler();
     const { ctx } = createContext();

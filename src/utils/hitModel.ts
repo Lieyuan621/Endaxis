@@ -204,6 +204,21 @@ export function ensureEffectId(effect: EditorEffect): EditorEffect {
   return effect;
 }
 
+function normalizeEditorEffectRoute(effect: EditorEffect): EditorEffect {
+  const next = { ...effect };
+  ensureEffectId(next);
+
+  if (next.kind === 'physicalStatus' && PHYSICAL_STATUS_TYPES.has(next.physicalType || '')) {
+    // Runtime routing is authoritative when an older edit changed only physicalType.
+    if (!next.type || PHYSICAL_STATUS_TYPES.has(next.type)) next.type = next.physicalType;
+    if (!next.displayType || PHYSICAL_STATUS_TYPES.has(next.displayType)) {
+      next.displayType = next.physicalType;
+    }
+  }
+
+  return next;
+}
+
 function getHitEffectRows(hits: EditorHit[] = []): EditorEffect[][] {
   return (Array.isArray(hits) ? hits : []).map(hit => {
     if (!Array.isArray(hit?.effects)) hit.effects = [];
@@ -450,7 +465,7 @@ export function normalizeHits(
       };
       if (!next.element && defaultElement) next.element = defaultElement;
       next.effects = Array.isArray(hit.effects)
-        ? hit.effects.map(effect => ensureEffectId(effect))
+        ? hit.effects.map(effect => normalizeEditorEffectRoute(effect))
         : [];
       return decorateHitCompat(next);
     });

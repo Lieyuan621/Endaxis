@@ -19,7 +19,13 @@ const REACTION_KEYS = Object.freeze([
   'corrosion',
 ]);
 
-const PHYSICAL_STATUS_KEYS = Object.freeze(['breach', 'crush', 'lift', 'knockdown']);
+const PHYSICAL_STATUS_KEYS = Object.freeze([
+  'vulnerability',
+  'breach',
+  'crush',
+  'lift',
+  'knockdown',
+]);
 
 /** Element / scope amp presets shown under editor kind `amp` (效果分类 → 增幅). */
 const AMP_BONUS_KEYS = Object.freeze([

@@ -85,8 +85,9 @@ describe('effect display option filtering', () => {
     ]);
   });
 
-  it('uses four canonical physical anomaly display types', () => {
+  it('includes direct vulnerability authoring with the physical anomaly display types', () => {
     expect(optionValues(filterEffectOptionGroups(groups, 'physicalStatus'))).toEqual([
+      'vulnerability',
       'breach',
       'crush',
       'lift',
@@ -94,10 +95,10 @@ describe('effect display option filtering', () => {
     ]);
   });
 
-  it('keeps the current legacy physical vulnerability value displayable without adding it by default', () => {
+  it('does not duplicate the current physical vulnerability value', () => {
     expect(
       optionValues(filterEffectOptionGroups(groups, 'physicalStatus', 'vulnerability')),
-    ).toEqual(['breach', 'crush', 'lift', 'knockdown', 'vulnerability']);
+    ).toEqual(['vulnerability', 'breach', 'crush', 'lift', 'knockdown']);
   });
 
   it('hides the display-type picker for direct runtime kinds with no variants', () => {

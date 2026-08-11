@@ -45,6 +45,7 @@ export interface EnemyAfflictionGroup {
 }
 
 const PHYSICAL_REACTION_KEYS = new Set(['lift', 'knockdown', 'breach', 'crush']);
+const PHYSICAL_MARKER_KEYS = new Set([...PHYSICAL_REACTION_KEYS, 'vulnerability']);
 const PHYSICAL_STACKING_KEYS = new Set(['lift', 'knockdown']);
 const PHYSICAL_CONSUMING_KEYS = new Set(['breach', 'crush']);
 const PHYSICAL_MARKER_PRIORITY: Record<string, number> = {
@@ -75,7 +76,7 @@ export function pickRepresentativePhysicalMarker(
   previousStacks: number,
   activeStacks: number,
 ): PhysicalMarkerLike | null {
-  const physicalMarkers = markers.filter(marker => PHYSICAL_REACTION_KEYS.has(marker.typeKey));
+  const physicalMarkers = markers.filter(marker => PHYSICAL_MARKER_KEYS.has(marker.typeKey));
   if (physicalMarkers.length === 0) return null;
 
   const byPriority = (a: PhysicalMarkerLike, b: PhysicalMarkerLike) =>

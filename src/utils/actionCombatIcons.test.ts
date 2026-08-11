@@ -231,6 +231,67 @@ describe('projectEnemyAfflictionViz physical normalize', () => {
       expect.objectContaining({ typeKey: 'vulnerability', stacks: 1, time: 5 }),
     ]);
   });
+
+  it('shows direct vulnerability stack growth before a later lift marker', () => {
+    const viz = projectEnemyAfflictionViz({
+      positionedSegments: [
+        {
+          typeKey: 'physical_combo',
+          group: 0,
+          start: 1,
+          end: 1,
+          stacks: 1,
+          effect: { kind: 'physicalStatus', physicalType: 'vulnerability' },
+        },
+        {
+          typeKey: 'physical_combo',
+          group: 0,
+          start: 1,
+          end: 2,
+          stacks: 1,
+          effect: { kind: 'physicalStatus', physicalType: 'vulnerability' },
+        },
+        {
+          typeKey: 'physical_combo',
+          group: 0,
+          start: 2,
+          end: 2,
+          stacks: 1,
+          effect: { kind: 'physicalStatus', physicalType: 'vulnerability' },
+        },
+        {
+          typeKey: 'physical_combo',
+          group: 0,
+          start: 2,
+          end: 3,
+          stacks: 2,
+          effect: { kind: 'physicalStatus', physicalType: 'vulnerability' },
+        },
+        {
+          typeKey: 'physical_combo',
+          group: 0,
+          start: 3,
+          end: 3,
+          stacks: 1,
+          effect: { kind: 'physicalStatus', physicalType: 'lift' },
+        },
+        {
+          typeKey: 'physical_combo',
+          group: 0,
+          start: 3,
+          end: 8,
+          stacks: 3,
+          effect: { kind: 'physicalStatus', physicalType: 'vulnerability' },
+        },
+      ],
+    });
+
+    expect(viz.physical.markers).toEqual([
+      expect.objectContaining({ typeKey: 'vulnerability', time: 1, stacks: 1 }),
+      expect.objectContaining({ typeKey: 'vulnerability', time: 2, stacks: 2 }),
+      expect.objectContaining({ typeKey: 'lift', time: 3, stacks: 3 }),
+    ]);
+  });
 });
 
 describe('pickRepresentativePhysicalMarker', () => {

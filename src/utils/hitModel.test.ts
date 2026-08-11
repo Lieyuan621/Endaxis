@@ -141,6 +141,26 @@ describe('hit editor effect model', () => {
     });
   });
 
+  it('synchronizes stale physical anomaly display fields with the runtime physical type', () => {
+    const hit = cloneEditorHit({
+      effects: [
+        {
+          kind: 'physicalStatus',
+          type: 'breach',
+          displayType: 'breach',
+          physicalType: 'vulnerability',
+        },
+      ],
+    });
+
+    expect(hit.effects?.[0]).toMatchObject({
+      kind: 'physicalStatus',
+      type: 'vulnerability',
+      displayType: 'vulnerability',
+      physicalType: 'vulnerability',
+    });
+  });
+
   it('strips editor UI metadata when persisting hits', () => {
     const persisted = toPersistedEditorHits(
       [
