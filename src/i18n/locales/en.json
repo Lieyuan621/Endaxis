@@ -351,6 +351,13 @@
         "placeHint": "Tap a position on the highlighted track to place",
         "placed": "Placed “{name}”"
       },
+      "timeSettings": {
+        "title": "Timeline Settings",
+        "prepDuration": "Preparation duration",
+        "battleDuration": "Battle timeline duration",
+        "seconds": "sec",
+        "expandPrep": "Expand preparation area"
+      },
       "display": {
         "title": "Timeline Display",
         "showAllAttackSegments": "All basic attack segments",

@@ -7,6 +7,7 @@ import {
   isTapGesture,
   pointerYToTimelineTime,
   snapTimelineTime,
+  timelineYToTime,
 } from './mobileTimelineEditing';
 
 describe('mobile timeline editing helpers', () => {
@@ -25,6 +26,19 @@ describe('mobile timeline editing helpers', () => {
         maxTime: 20,
       }),
     ).toBe(2.5);
+  });
+
+  it('converts positions across a collapsed preparation area', () => {
+    const options = {
+      pixelsPerSecond: 40,
+      prepDuration: 5,
+      prepExpanded: false,
+      collapsedPrepPx: 18,
+    };
+
+    expect(timelineYToTime({ ...options, offsetY: 9 })).toBe(2.5);
+    expect(timelineYToTime({ ...options, offsetY: 18 })).toBe(5);
+    expect(timelineYToTime({ ...options, offsetY: 58 })).toBe(6);
   });
 
   it('clamps snapped times to the editable range', () => {

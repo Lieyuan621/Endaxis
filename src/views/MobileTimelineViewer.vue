@@ -1,6 +1,14 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
-import { ElAlert, ElDialog, ElInput, ElMessage, ElPopover, ElMessageBox } from 'element-plus';
+import {
+  ElAlert,
+  ElDialog,
+  ElInput,
+  ElInputNumber,
+  ElMessage,
+  ElPopover,
+  ElMessageBox,
+} from 'element-plus';
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { useI18n } from 'vue-i18n';
 import { setLocale } from '@/i18n';
@@ -21,6 +29,11 @@ import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
 import { translateBattleLogStatus } from '@/simulation/formatBattleLogLabels';
 import { isEffectOriginDamage } from '@/simulation/normalizeOperatorLogForBattleLog';
 import { sampleSpSeriesAtTime } from '@/simulation/projection/projectSpSeries';
+import {
+  buildCumulativeDamageSeries,
+  buildEnemyEffectGuideTimeline,
+  sampleEnemyEffectGuideTimeline,
+} from '@/utils/timelineGuideData';
 import {
   formatEquipmentEffectLabel,
   formatEquipmentEffectStatValue,
@@ -52,6 +65,7 @@ import {
   isTapGesture,
   pointerYToTimelineTime,
   snapTimelineTime,
+  timelineYToTime,
 } from '@/utils/mobileTimelineEditing';
 
 const store = useTimelineStore();
@@ -140,6 +154,10 @@ let unregisterBackHandler = null;
 const scenarioList = computed(() => (Array.isArray(store.scenarioList) ? store.scenarioList : []));
 const selectedScenarioId = ref(store.activeScenarioId);
 const scenarioSwitching = ref(false);
+const historyFeedback = ref(null);
+let historyFeedbackTimer = null;
+const prepDurationDraft = ref(Number(store.prepDuration) || 5);
+const battleDurationDraft = ref(Number(store.battleDuration) || 120);
 const scenarioRenameActive = ref(false);
 const scenarioRenameInputRef = ref(null);
 const currentScenario = computed(
@@ -214,6 +232,16 @@ function timeToY(time) {
   return COLLAPSED_PREP_PX + (v - prep) * pxPerSecond.value;
 }
 
+function mobileTimelineYToTime(offsetY) {
+  return timelineYToTime({
+    offsetY,
+    pixelsPerSecond: pxPerSecond.value,
+    prepDuration: Number(store.prepDuration) || 0,
+    prepExpanded: store.prepExpanded !== false,
+    collapsedPrepPx: COLLAPSED_PREP_PX,
+  });
+}
+
 function flushMobileGuidePointer() {
   mobileGuideRaf = null;
   const pending = mobileGuidePendingPointer;
@@ -225,6 +253,9 @@ function flushMobileGuidePointer() {
     pixelsPerSecond: pxPerSecond.value,
     snapStep: Number(store.snapStep) || 1 / 30,
     maxTime: viewDuration.value,
+    prepDuration: prepDuration.value,
+    prepExpanded: store.prepExpanded !== false,
+    collapsedPrepPx: COLLAPSED_PREP_PX,
   });
 }
 
@@ -266,14 +297,27 @@ const prepDuration = computed(() => Math.max(0, Number(store.prepDuration) || 0)
 const battleStartYPx = computed(() => Math.max(0, Math.round(timeToY(prepDuration.value))));
 const prepHeightPx = computed(() => battleStartYPx.value);
 
-function enforceMobilePrepExpanded() {
-  store.prepExpanded = true;
+function toggleMobilePrepExpanded() {
+  cancelActionPointerSession();
+  store.togglePrepExpanded();
 }
 
-function waitForScenarioSwitchFrame() {
+function applyMobilePrepDuration(value) {
+  const next = Number(value);
+  if (Number.isFinite(next)) store.setPrepDuration(next);
+  prepDurationDraft.value = Number(store.prepDuration) || 0;
+}
+
+function applyMobileBattleDuration(value) {
+  const next = Number(value);
+  if (Number.isFinite(next)) store.setBattleDuration(next);
+  battleDurationDraft.value = Number(store.battleDuration) || 0;
+}
+
+function waitForUiPaint() {
   return new Promise(resolve => {
     if (typeof window.requestAnimationFrame !== 'function') {
-      window.setTimeout(resolve, 0);
+      window.setTimeout(resolve, 16);
       return;
     }
 
@@ -295,7 +339,7 @@ async function handleScenarioChange(nextId) {
 
   try {
     await nextTick();
-    await waitForScenarioSwitchFrame();
+    await waitForUiPaint();
     store.switchScenario(targetId);
     await nextTick();
   } finally {
@@ -362,7 +406,6 @@ function handleAddScenario() {
 }
 
 onMounted(() => {
-  enforceMobilePrepExpanded();
   try {
     document?.body?.classList?.add('endaxis-mobile-viewer');
   } catch {
@@ -438,6 +481,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   cancelActionPointerSession();
+  if (historyFeedbackTimer != null) window.clearTimeout(historyFeedbackTimer);
+  historyFeedbackTimer = null;
   if (mobileGuideRaf != null) window.cancelAnimationFrame(mobileGuideRaf);
   mobileGuideRaf = null;
   mobileGuidePendingPointer = null;
@@ -777,7 +822,7 @@ function beginActionDrag() {
   );
   session.primaryLogicalStart = getActionLogicalStart(session.action);
   session.initialVisualStart = visualStart;
-  session.pointerStartTime = (session.startY - timelineRect.top) / pxPerSecond.value;
+  session.pointerStartTime = mobileTimelineYToTime(session.startY - timelineRect.top);
   session.deltaTime = 0;
   dragTargetIds = new Set(targets.map(action => action.instanceId));
   draggingActionId.value = session.action.instanceId;
@@ -800,7 +845,7 @@ function flushActionDragPreview(clientY = actionPointerSession?.lastY) {
   }
 
   const timelineRect = timelineElement.getBoundingClientRect();
-  const pointerTime = (clientY - timelineRect.top) / pxPerSecond.value;
+  const pointerTime = mobileTimelineYToTime(clientY - timelineRect.top);
   const originalTimes = [...session.originalLogicalTimes.values()];
   const deltaTime = getSnappedTimelineDragDelta({
     initialStart: session.primaryLogicalStart,
@@ -1004,6 +1049,9 @@ function handleTrackPointerUp(event, trackIndex) {
     pixelsPerSecond: pxPerSecond.value,
     snapStep: Number(store.snapStep) || 1 / 30,
     maxTime: viewDuration.value,
+    prepDuration: prepDuration.value,
+    prepExpanded: store.prepExpanded !== false,
+    collapsedPrepPx: COLLAPSED_PREP_PX,
   });
   const startTime = snapTimelineTime(
     typeof store.toGameTime === 'function' ? store.toGameTime(visualStartTime) : visualStartTime,
@@ -1022,16 +1070,40 @@ function handleActionClick(instanceId) {
   openActionInfo(instanceId);
 }
 
-function handleUndo() {
-  cancelActionPointerSession();
-  cancelPlacement();
-  store.undo();
+function finishHistoryFeedback(kind) {
+  if (historyFeedbackTimer != null) window.clearTimeout(historyFeedbackTimer);
+  historyFeedbackTimer = window.setTimeout(() => {
+    historyFeedbackTimer = null;
+    if (historyFeedback.value === kind) historyFeedback.value = null;
+  }, 140);
 }
 
-function handleRedo() {
+async function handleUndo() {
+  if (!store.canUndo || historyFeedback.value) return;
   cancelActionPointerSession();
   cancelPlacement();
-  store.redo();
+  historyFeedback.value = 'undo';
+  await nextTick();
+  await waitForUiPaint();
+  try {
+    store.undo();
+  } finally {
+    finishHistoryFeedback('undo');
+  }
+}
+
+async function handleRedo() {
+  if (!store.canRedo || historyFeedback.value) return;
+  cancelActionPointerSession();
+  cancelPlacement();
+  historyFeedback.value = 'redo';
+  await nextTick();
+  await waitForUiPaint();
+  try {
+    store.redo();
+  } finally {
+    finishHistoryFeedback('redo');
+  }
 }
 
 const selectedTrack = computed(() => {
@@ -1718,6 +1790,7 @@ const gridStyle = computed(() => {
   return {
     height: `${timelineHeightPx.value}px`,
     '--sec-px': `${secPx}px`,
+    '--grid-offset-y': store.prepExpanded === false ? `${prepHeightPx.value}px` : '0px',
   };
 });
 
@@ -1768,24 +1841,31 @@ const mobileGuideStaggerText = computed(() => {
 });
 const mobileDamageSeries = computed(() => {
   void store.simLogRevision;
-  let total = 0;
-  return (store.simLog || [])
-    .filter(entry => entry?.type === 'DAMAGE_HIT')
-    .map(entry => ({
-      time: Number(entry.time) || 0,
-      damage:
-        Number(
-          store.getHitDisplayDamage?.(entry.payload?.hitData) ??
-            entry.payload?.hitData?._expectedDamage ??
-            0,
-        ) || 0,
-    }))
-    .sort((left, right) => left.time - right.time)
-    .map(entry => {
-      total += entry.damage;
-      return { time: entry.time, total };
-    });
+  return buildCumulativeDamageSeries(
+    (store.simLog || []).filter(entry => entry?.type === 'DAMAGE_HIT'),
+    entry => Number(entry.time) || 0,
+    entry =>
+      Number(
+        store.getHitDisplayDamage?.(entry.payload?.hitData) ??
+          entry.payload?.hitData?._expectedDamage ??
+          0,
+      ) || 0,
+  );
 });
+const mobileEnemyEffectTimeline = computed(() =>
+  buildEnemyEffectGuideTimeline(store.enemyEffectLayout?.positionedSegments || []),
+);
+const mobileGuideEnemyEffects = computed(() =>
+  sampleEnemyEffectGuideTimeline(mobileEnemyEffectTimeline.value, mobileGuideTime.value, 8),
+);
+
+function getMobileGuideEffectIcon(effect) {
+  if (effect?.icon) return withBaseUrl(effect.icon);
+  for (const candidate of getDisplayKeyCandidates(effect?.typeKey)) {
+    if (store.iconDatabase?.[candidate]) return withBaseUrl(store.iconDatabase[candidate]);
+  }
+  return withBaseUrl(store.iconDatabase?.default || DEFAULT_ICON);
+}
 const mobileGuideEnemyHpText = computed(() => {
   const max = Math.max(0, Number(store.systemConstants?.enemyHp) || 0);
   if (max <= 0) return '';
@@ -1820,6 +1900,7 @@ const timeTicks = computed(() => {
   const max = Math.floor(duration);
   const prep = prepDuration.value;
   for (let v = 0; v <= max; v += step) {
+    if (store.prepExpanded === false && v < prep) continue;
     const isBattleStart = prep > 0 && Math.abs(v - prep) < 0.0001;
     const isMajor = isBattleStart || v % 5 === 0;
     ticks.push({ v, y: Math.round(timeToY(v)), isBattleStart, isMajor });
@@ -2012,9 +2093,22 @@ watch(
     cancelPlacement();
     skillLibraryOpen.value = false;
     selectedScenarioId.value = nextId;
-    enforceMobilePrepExpanded();
   },
   { flush: 'sync' },
+);
+
+watch(
+  () => store.prepDuration,
+  value => {
+    prepDurationDraft.value = Number(value) || 0;
+  },
+);
+
+watch(
+  () => store.battleDuration,
+  value => {
+    battleDurationDraft.value = Number(value) || 0;
+  },
 );
 
 async function doImport() {
@@ -2033,7 +2127,6 @@ async function doImport() {
       return;
     }
 
-    enforceMobilePrepExpanded();
     ElMessage.success(t('timeline.share.imported'));
     importVisible.value = false;
   } catch (e) {
@@ -2294,6 +2387,69 @@ async function doImport() {
 
             <section class="mobile-more-section">
               <h4 class="mobile-more-section__title">
+                {{ t('timeline.mobile.timeSettings.title') }}
+              </h4>
+              <div class="mobile-time-settings">
+                <label class="mobile-time-setting-row">
+                  <span>{{ t('timeline.mobile.timeSettings.prepDuration') }}</span>
+                  <span class="mobile-time-setting-row__control">
+                    <el-input-number
+                      v-model="prepDurationDraft"
+                      :min="1 / 60"
+                      :step="0.5"
+                      :precision="2"
+                      controls-position="right"
+                      size="small"
+                      @change="applyMobilePrepDuration"
+                    />
+                    <span>{{ t('timeline.mobile.timeSettings.seconds') }}</span>
+                  </span>
+                </label>
+                <label class="mobile-time-setting-row">
+                  <span>{{ t('timeline.mobile.timeSettings.battleDuration') }}</span>
+                  <span class="mobile-time-setting-row__control">
+                    <el-input-number
+                      v-model="battleDurationDraft"
+                      :min="30"
+                      :max="600"
+                      :step="10"
+                      :precision="0"
+                      controls-position="right"
+                      size="small"
+                      @change="applyMobileBattleDuration"
+                    />
+                    <span>{{ t('timeline.mobile.timeSettings.seconds') }}</span>
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  class="header-more-check-row header-more-check-row--compact mobile-prep-setting"
+                  :aria-pressed="store.prepExpanded !== false"
+                  @click="toggleMobilePrepExpanded"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="store.prepExpanded !== false"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span>{{ t('timeline.mobile.timeSettings.expandPrep') }}</span>
+                </button>
+              </div>
+            </section>
+
+            <section class="mobile-more-section">
+              <h4 class="mobile-more-section__title">
                 {{ t('timeline.mobile.display.title') }}
               </h4>
               <div class="header-more-checklist header-more-checklist--grid">
@@ -2546,7 +2702,8 @@ async function doImport() {
       </button>
       <button
         type="button"
-        class="mobile-editbar__icon"
+        class="mobile-editbar__icon mobile-editbar__icon--undo"
+        :class="{ 'is-history-feedback': historyFeedback === 'undo' }"
         :disabled="!store.canUndo"
         :title="t('timeline.mobile.undo')"
         :aria-label="t('timeline.mobile.undo')"
@@ -2565,7 +2722,8 @@ async function doImport() {
       </button>
       <button
         type="button"
-        class="mobile-editbar__icon"
+        class="mobile-editbar__icon mobile-editbar__icon--redo"
+        :class="{ 'is-history-feedback': historyFeedback === 'redo' }"
         :disabled="!store.canRedo"
         :title="t('timeline.mobile.redo')"
         :aria-label="t('timeline.mobile.redo')"
@@ -2624,9 +2782,40 @@ async function doImport() {
         >
           <div
             v-if="prepDuration > 0"
-            class="mobile-prep-zone"
+            class="mobile-prep-zone mobile-prep-zone--rail"
+            :class="{ 'is-collapsed': store.prepExpanded === false }"
             :style="{ height: `${prepHeightPx}px` }"
-          ></div>
+          >
+            <button
+              type="button"
+              class="mobile-prep-toggle"
+              :title="
+                store.prepExpanded === false
+                  ? t('timelineGrid.prep.expand')
+                  : t('timelineGrid.prep.collapseTitle')
+              "
+              :aria-label="
+                store.prepExpanded === false
+                  ? t('timelineGrid.prep.expand')
+                  : t('timelineGrid.prep.collapseTitle')
+              "
+              :aria-expanded="store.prepExpanded !== false"
+              @pointerdown.stop
+              @pointerup.stop
+              @click.stop="toggleMobilePrepExpanded"
+            >
+              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                <path
+                  d="M3 10l5-5 5 5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
           <div
             v-if="prepDuration > 0"
             class="mobile-battle-start-line"
@@ -2675,6 +2864,7 @@ async function doImport() {
           <div
             v-if="prepDuration > 0"
             class="mobile-prep-zone mobile-prep-zone--grid"
+            :class="{ 'is-collapsed': store.prepExpanded === false }"
             :style="{ height: `${prepHeightPx}px` }"
           >
             <div class="mobile-prep-center-label">{{ t('timelineGrid.prep.title') }}</div>
@@ -2831,6 +3021,38 @@ async function doImport() {
                   >{{ row.value }}/{{ row.max }}</span
                 >
               </div>
+            </div>
+            <div
+              v-if="mobileGuideEnemyEffects.buffs.length || mobileGuideEnemyEffects.overflow"
+              class="mobile-resource-guide__effects"
+            >
+              <el-popover
+                v-for="effect in mobileGuideEnemyEffects.buffs"
+                :key="effect.typeKey"
+                trigger="click"
+                placement="top"
+                :teleported="true"
+                :content="getCombatIconTitle(effect.typeKey)"
+              >
+                <template #reference>
+                  <button
+                    type="button"
+                    class="mobile-resource-guide__effect"
+                    :class="{ 'is-disabled': effect.disabled }"
+                    :aria-label="getCombatIconTitle(effect.typeKey)"
+                    @pointerdown.stop
+                  >
+                    <img :src="getMobileGuideEffectIcon(effect)" alt="" @error="onAssetError" />
+                    <span>{{ effect.stacks }}</span>
+                  </button>
+                </template>
+              </el-popover>
+              <span
+                v-if="mobileGuideEnemyEffects.overflow"
+                class="mobile-resource-guide__effect-more"
+              >
+                +{{ mobileGuideEnemyEffects.overflow }}
+              </span>
             </div>
           </div>
         </div>
@@ -3456,8 +3678,10 @@ async function doImport() {
 }
 
 .mobile-editbar {
-  display: flex;
-  height: 40px;
+  display: grid;
+  height: 72px;
+  grid-template-columns: minmax(0, 1fr) 34px 34px;
+  grid-template-rows: 30px 30px;
   flex: 0 0 auto;
   align-items: center;
   gap: 6px;
@@ -3490,12 +3714,16 @@ async function doImport() {
 }
 
 .mobile-editbar__library {
-  flex: 1 1 0;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
 }
 
 .mobile-editbar__enemy {
-  max-width: 42%;
-  flex: 0 1 132px;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  max-width: none;
   color: var(--ea-danger-soft, #ff7875);
 }
 
@@ -3515,7 +3743,36 @@ async function doImport() {
     border-color 140ms ease,
     background-color 140ms ease,
     color 140ms ease,
-    opacity 140ms ease;
+    opacity 140ms ease,
+    transform 80ms ease,
+    box-shadow 80ms ease;
+  touch-action: manipulation;
+}
+
+.mobile-editbar__icon--undo {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.mobile-editbar__icon--redo {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.mobile-editbar__icon:not(:disabled):active,
+.mobile-editbar__icon.is-history-feedback {
+  border-color: color-mix(in srgb, var(--ea-gold) 70%, var(--ea-border));
+  background: color-mix(in srgb, var(--ea-gold) 18%, var(--ea-fill-strong));
+  color: var(--ea-gold);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ea-gold) 24%, transparent);
+  transform: translateY(1px) scale(0.92);
+}
+
+.mobile-editbar__icon.is-history-feedback,
+.mobile-editbar__icon.is-history-feedback:disabled {
+  cursor: default;
+  opacity: 1;
+  transition-duration: 0ms;
 }
 
 .mobile-editbar__icon:disabled {
@@ -3612,6 +3869,52 @@ async function doImport() {
   font-weight: 700;
   letter-spacing: 0.5px;
   color: color-mix(in srgb, var(--ea-gold) 90%, transparent);
+}
+
+.mobile-time-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-time-setting-row {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mobile-time-setting-row__control {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--ea-fg-muted);
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  font-size: 10px;
+}
+
+.mobile-time-setting-row__control :deep(.el-input-number) {
+  width: 116px;
+}
+
+.mobile-time-setting-row__control :deep(.el-input__wrapper) {
+  border-radius: 0;
+  background: var(--ea-fill-muted);
+  box-shadow: 0 0 0 1px var(--ea-border) inset;
+}
+
+.mobile-time-setting-row__control :deep(.el-input__inner) {
+  color: var(--ea-fg);
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+}
+
+.mobile-prep-setting {
+  width: 100%;
 }
 
 .mobile-locale {
@@ -3975,6 +4278,58 @@ async function doImport() {
   text-shadow: 0 0 5px color-mix(in srgb, var(--guide-gauge-color) 45%, transparent);
 }
 
+.mobile-resource-guide__effects {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding-top: 5px;
+  border-top: 1px solid var(--ea-border-soft);
+}
+
+.mobile-resource-guide__effect {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  padding: 0;
+  border: 1px solid var(--ea-keycap-skill-border, #999);
+  border-radius: 0;
+  background: var(--ea-keycap-skill-bg, #333);
+  box-sizing: border-box;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.mobile-resource-guide__effect.is-disabled {
+  opacity: 0.42;
+  filter: grayscale(0.5);
+}
+
+.mobile-resource-guide__effect img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mobile-resource-guide__effect span {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.82);
+  color: var(--ea-gold);
+  font-size: 8px;
+  line-height: 1;
+}
+
+.mobile-resource-guide__effect-more {
+  color: var(--ea-fg-muted);
+  font-size: 10px;
+}
+
 .mobile-time-ticks {
   position: absolute;
   top: 0;
@@ -4160,8 +4515,43 @@ async function doImport() {
   pointer-events: none;
 }
 
+.mobile-prep-zone--rail {
+  pointer-events: auto;
+}
+
 .mobile-prep-zone--grid {
   z-index: 1;
+}
+
+.mobile-prep-toggle {
+  position: absolute;
+  z-index: 6;
+  top: 2px;
+  left: 50%;
+  display: inline-flex;
+  width: 30px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--ea-gold) 35%, var(--ea-border));
+  border-radius: 0;
+  background: color-mix(in srgb, var(--ea-gold) 9%, var(--ea-fill-strong));
+  color: var(--ea-gold);
+  transform: translateX(-50%);
+  touch-action: manipulation;
+}
+
+.mobile-prep-zone--rail.is-collapsed .mobile-prep-toggle {
+  top: 0;
+  width: 46px;
+  height: 18px;
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.mobile-prep-zone--rail.is-collapsed .mobile-prep-toggle svg {
+  transform: rotate(180deg);
 }
 
 .mobile-prep-center-label {
@@ -4175,6 +4565,11 @@ async function doImport() {
   letter-spacing: 2px;
   color: var(--ea-fg-faint);
   pointer-events: none;
+}
+
+.mobile-prep-zone--grid.is-collapsed .mobile-prep-center-label {
+  font-size: 9px;
+  letter-spacing: 0;
 }
 
 .mobile-battle-start-line {
@@ -4205,7 +4600,10 @@ async function doImport() {
       var(--ea-grid-line) 1px,
       transparent 1px,
       transparent var(--sec-px)
-  );
+    );
+  background-position:
+    0 0,
+    0 var(--grid-offset-y, 0px);
 }
 
 .mobile-freeze-layer {

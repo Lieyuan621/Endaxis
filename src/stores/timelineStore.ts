@@ -1404,6 +1404,65 @@ export const useTimelineStore = defineStore('timeline', () => {
     }, 200);
   }
 
+  const TRACK_STATUS_INPUT_KEYS = [
+    'id',
+    'operatorInstanceId',
+    'weaponId',
+    'weaponInstanceId',
+    'weaponCommon1Tier',
+    'weaponCommon2Tier',
+    'weaponBuffTier',
+    'weaponAppliedDeltas',
+    'equipmentAppliedDeltas',
+    'equipArmorId',
+    'equipGlovesId',
+    'equipAccessory1Id',
+    'equipAccessory2Id',
+    'equipArmorInstanceId',
+    'equipGlovesInstanceId',
+    'equipAccessory1InstanceId',
+    'equipAccessory2InstanceId',
+    'equipArmorRefineTier',
+    'equipGlovesRefineTier',
+    'equipAccessory1RefineTier',
+    'equipAccessory2RefineTier',
+  ] as const;
+
+  function getTrackStatusInputs(track: Partial<Track> | null | undefined) {
+    const source = (track || {}) as Record<string, unknown>;
+    return Object.fromEntries(TRACK_STATUS_INPUT_KEYS.map(key => [key, source[key]]));
+  }
+
+  function hasTrackStatusInputsChanged(snapshot: ScenarioSnapshot) {
+    const nextContingencyTags = Array.isArray(snapshot.contingencyContractTags)
+      ? snapshot.contingencyContractTags.map(Number).filter(Number.isFinite)
+      : [];
+    const nextSystemConstants = snapshot.systemConstants
+      ? normalizeEnemyConfig(systemConstants.value, snapshot.systemConstants)
+      : systemConstants.value;
+
+    return !isSameJsonData(
+      {
+        tracks: tracks.value.map(getTrackStatusInputs),
+        characterOverrides: characterOverrides.value,
+        weaponOverrides: weaponOverrides.value,
+        equipmentCategoryOverrides: equipmentCategoryOverrides.value,
+        systemConstants: systemConstants.value,
+        contingencyContractTags: contingencyContractTags.value,
+        globalConfig: globalConfig.value,
+      },
+      {
+        tracks: (snapshot.tracks || []).map(getTrackStatusInputs),
+        characterOverrides: snapshot.characterOverrides || {},
+        weaponOverrides: snapshot.weaponOverrides || {},
+        equipmentCategoryOverrides: snapshot.equipmentCategoryOverrides || {},
+        systemConstants: nextSystemConstants,
+        contingencyContractTags: nextContingencyTags,
+        globalConfig: normalizeGlobalConfig(snapshot.globalConfig),
+      },
+    );
+  }
+
   function _serializeSnapshot() {
     return JSON.stringify({
       tracks: tracks.value,
@@ -1494,7 +1553,8 @@ export const useTimelineStore = defineStore('timeline', () => {
       shiftSnapshotTimes(snapshot, MIN_PREP_DURATION - rawPrep);
     }
     dropLegacyTimedStatusData(snapshot);
-    restoreArmoryFromSnapshot(snapshot);
+    const statusInputsChanged = hasTrackStatusInputsChanged(snapshot);
+    const armoryChanged = restoreArmoryFromSnapshot(snapshot);
     tracks.value = normalizeTracks(snapshot.tracks);
     connections.value = normalizeConnections(snapshot.connections);
     characterOverrides.value = snapshot.characterOverrides || {};
@@ -1557,7 +1617,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     globalConfig.value = normalizeGlobalConfig(snapshot.globalConfig);
     initialGaugeMode.value = normalizeInitialGaugeMode(snapshot.initialGaugeMode);
     customInitialGauges.value = resolveCustomInitialGaugesFromSnapshot(snapshot);
-    recomputeAllTrackOperatorStatuses();
+    if (armoryChanged || statusInputsChanged) {
+      recomputeAllTrackOperatorStatuses();
+    }
     clearSelection();
   }
 
@@ -2506,15 +2568,37 @@ export const useTimelineStore = defineStore('timeline', () => {
     projectTrackLoadoutFromInstances(track);
   }
 
+  function isSameJsonData(left: unknown, right: unknown) {
+    const rawLeft = left && typeof left === 'object' ? toRaw(left) : left;
+    const rawRight = right && typeof right === 'object' ? toRaw(right) : right;
+    return JSON.stringify(rawLeft) === JSON.stringify(rawRight);
+  }
+
   function restoreArmoryFromSnapshot(snapshot: ScenarioSnapshot | null | undefined) {
-    if (Array.isArray(snapshot?.operators)) operatorStore.setAll(snapshot.operators);
-    else operatorStore.clearAll();
+    const nextOperators = Array.isArray(snapshot?.operators) ? snapshot.operators : [];
+    const nextWeapons = Array.isArray(snapshot?.weapons) ? snapshot.weapons : [];
+    const nextGears = Array.isArray(snapshot?.gears) ? snapshot.gears : [];
+    let changed = false;
 
-    if (Array.isArray(snapshot?.weapons)) weaponStore.setAll(snapshot.weapons);
-    else weaponStore.clearAll();
+    if (!isSameJsonData(operatorStore.operators, nextOperators)) {
+      if (nextOperators.length > 0) operatorStore.setAll(nextOperators);
+      else operatorStore.clearAll();
+      changed = true;
+    }
 
-    if (Array.isArray(snapshot?.gears)) gearStore.setAll(snapshot.gears);
-    else gearStore.clearAll();
+    if (!isSameJsonData(weaponStore.weapons, nextWeapons)) {
+      if (nextWeapons.length > 0) weaponStore.setAll(nextWeapons);
+      else weaponStore.clearAll();
+      changed = true;
+    }
+
+    if (!isSameJsonData(gearStore.gears, nextGears)) {
+      if (nextGears.length > 0) gearStore.setAll(nextGears);
+      else gearStore.clearAll();
+      changed = true;
+    }
+
+    return changed;
   }
 
   interface TrackOperatorStatus {

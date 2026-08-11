@@ -351,6 +351,13 @@
         "placeHint": "轻触已高亮的轨道位置进行放置",
         "placed": "已放置“{name}”"
       },
+      "timeSettings": {
+        "title": "时间轴设置",
+        "prepDuration": "战前准备时长",
+        "battleDuration": "战斗时间轴时长",
+        "seconds": "秒",
+        "expandPrep": "展开战前准备区"
+      },
       "display": {
         "title": "时间轴显示",
         "showAllAttackSegments": "普攻全部段数",

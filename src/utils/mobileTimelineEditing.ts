@@ -1,3 +1,5 @@
+import { sampleStepSeriesAtTime } from './timelineGuideData';
+
 export type PointerPosition = {
   x: number;
   y: number;
@@ -17,38 +19,66 @@ export function snapTimelineTime(value: number, step: number, maxTime: number) {
   return Math.min(normalizedMax, Math.max(0, snapped));
 }
 
+export function timelineYToTime({
+  offsetY,
+  pixelsPerSecond,
+  prepDuration = 0,
+  prepExpanded = true,
+  collapsedPrepPx = 18,
+}: {
+  offsetY: number;
+  pixelsPerSecond: number;
+  prepDuration?: number;
+  prepExpanded?: boolean;
+  collapsedPrepPx?: number;
+}) {
+  const y = Number.isFinite(offsetY) ? offsetY : 0;
+  const scale = Number.isFinite(pixelsPerSecond) && pixelsPerSecond > 0 ? pixelsPerSecond : 1;
+  const prep = Number.isFinite(prepDuration) ? Math.max(0, prepDuration) : 0;
+  const collapsedHeight = Number.isFinite(collapsedPrepPx) ? Math.max(1, collapsedPrepPx) : 18;
+
+  if (prep <= 0 || prepExpanded) return y / scale;
+  if (y <= collapsedHeight) return (y / collapsedHeight) * prep;
+  return prep + (y - collapsedHeight) / scale;
+}
+
 export function pointerYToTimelineTime({
   clientY,
   timelineTop,
   pixelsPerSecond,
   snapStep,
   maxTime,
+  prepDuration = 0,
+  prepExpanded = true,
+  collapsedPrepPx = 18,
 }: {
   clientY: number;
   timelineTop: number;
   pixelsPerSecond: number;
   snapStep: number;
   maxTime: number;
+  prepDuration?: number;
+  prepExpanded?: boolean;
+  collapsedPrepPx?: number;
 }) {
-  const scale = Number.isFinite(pixelsPerSecond) && pixelsPerSecond > 0 ? pixelsPerSecond : 1;
-  return snapTimelineTime((clientY - timelineTop) / scale, snapStep, maxTime);
+  return snapTimelineTime(
+    timelineYToTime({
+      offsetY: clientY - timelineTop,
+      pixelsPerSecond,
+      prepDuration,
+      prepExpanded,
+      collapsedPrepPx,
+    }),
+    snapStep,
+    maxTime,
+  );
 }
 
 export function getStepSampleAtTime<T extends { time?: number }>(
   points: T[] | null | undefined,
   time: number,
 ): T | null {
-  if (!Array.isArray(points) || points.length === 0) return null;
-
-  let lo = 0;
-  let hi = points.length - 1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((Number(points[mid]?.time) || 0) <= time) lo = mid + 1;
-    else hi = mid - 1;
-  }
-
-  return points[Math.max(0, hi)] || null;
+  return sampleStepSeriesAtTime(points, time);
 }
 
 export function clampTimelineGroupDelta({

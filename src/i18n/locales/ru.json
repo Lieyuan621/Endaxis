@@ -351,6 +351,13 @@
         "placeHint": "Коснитесь позиции на выделенной дорожке",
         "placed": "Размещено: «{name}»"
       },
+      "timeSettings": {
+        "title": "Настройки таймлайна",
+        "prepDuration": "Подготовка",
+        "battleDuration": "Длительность боя",
+        "seconds": "с",
+        "expandPrep": "Развернуть область подготовки"
+      },
       "display": {
         "title": "Отображение таймлайна",
         "showAllAttackSegments": "Все удары базовой атаки",

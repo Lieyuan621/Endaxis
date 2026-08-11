@@ -17,4 +17,10 @@ describe('TimelineGrid cursor guide', () => {
     expect(source).toContain('store.systemConstants.maxStagger');
     expect(source).toContain('{{ currentStaggerText }}');
   });
+
+  test('keeps guide information visible while the tracks scroll vertically', () => {
+    expect(source).toContain('const cursorGuideInfoStyle = computed');
+    expect(source).toContain('store.timelineScrollTop');
+    expect(source).toContain('class="cursor-guide__info" :style="cursorGuideInfoStyle"');
+  });
 });

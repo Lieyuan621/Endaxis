@@ -32,6 +32,13 @@ import {
   shouldStartTimelinePan,
 } from '@/utils/timelineSelectionGestures';
 import { sampleSpSeriesAtTime } from '@/simulation/projection/projectSpSeries';
+import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
+import {
+  buildCumulativeDamageSeries,
+  buildEnemyEffectGuideTimeline,
+  sampleEnemyEffectGuideTimeline,
+  sampleStepSeriesAtTime,
+} from '@/utils/timelineGuideData';
 
 const store = useTimelineStore();
 const connectionHandler = useDragConnection();
@@ -54,6 +61,8 @@ const trackLaneRefs = ref([]);
 const svgRenderKey = ref(0);
 const scrollbarHeight = ref(0);
 const isCursorVisible = ref(false);
+let cursorMoveRaf = null;
+let pendingCursorPosition = null;
 const hitDetailHit = ref(null);
 const showHitDetail = computed(() => hitDetailHit.value !== null);
 const hitDetailBreakdown = computed(() => hitDetailHit.value?._damageBreakdown ?? null);
@@ -1218,17 +1227,8 @@ const currentSpReturnText = computed(() => {
 
 const cachedStaggerData = computed(() => store.staggerSeries?.points || []);
 const currentStaggerValue = computed(() => {
-  const time = store.cursorCurrentTime;
-  const points = cachedStaggerData.value;
-  if (!points || points.length === 0) return 0;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    if (time >= p1.time && time < p2.time) {
-      return Math.floor(p1.val);
-    }
-  }
-  return Math.floor(points[points.length - 1].val);
+  const point = sampleStepSeriesAtTime(cachedStaggerData.value, store.cursorCurrentTime);
+  return Math.floor(Number(point?.val) || 0);
 });
 const currentStaggerMax = computed(() =>
   Math.max(0, Number(store.systemConstants.maxStagger) || 0),
@@ -1242,17 +1242,21 @@ const currentEnemyMaxHp = computed(() => {
   return Number(store.systemConstants.enemyHp ?? 0) || 0;
 });
 
-const currentEnemyDamageTaken = computed(() => {
-  const time = store.cursorCurrentTime;
-
-  return (store.simLog || [])
-    .filter(entry => entry.type === 'DAMAGE_HIT' && Number(entry.time) <= time)
-    .reduce((sum, entry) => {
+const cursorDamageSeries = computed(() => {
+  void store.simLogRevision;
+  return buildCumulativeDamageSeries(
+    (store.simLog || []).filter(entry => entry?.type === 'DAMAGE_HIT'),
+    entry => Number(entry.time) || 0,
+    entry => {
       const hitData = entry.payload?.hitData;
-      const damage =
-        Number(store.getHitDisplayDamage?.(hitData) ?? hitData?._expectedDamage ?? 0) || 0;
-      return sum + damage;
-    }, 0);
+      return Number(store.getHitDisplayDamage?.(hitData) ?? hitData?._expectedDamage ?? 0) || 0;
+    },
+  );
+});
+
+const currentEnemyDamageTaken = computed(() => {
+  const point = sampleStepSeriesAtTime(cursorDamageSeries.value, store.cursorCurrentTime);
+  return Number(point?.total) || 0;
 });
 
 const currentEnemyHp = computed(() => {
@@ -1266,20 +1270,6 @@ const currentEnemyHpText = computed(() => {
   if (!maxHp) return '';
   return `${currentEnemyHp.value.toLocaleString()} / ${maxHp.toLocaleString()}`;
 });
-
-function getStepPointAtTime(points, time) {
-  if (!points || points.length === 0) return null;
-
-  let lo = 0;
-  let hi = points.length - 1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((Number(points[mid].time) || 0) <= time) lo = mid + 1;
-    else hi = mid - 1;
-  }
-
-  return points[Math.max(0, hi)] || null;
-}
 
 function toMutedRgba(color, alpha = 0.78) {
   const c = String(color || '').trim();
@@ -1314,7 +1304,7 @@ const cursorGaugeRows = computed(() => {
     if (!track?.id) continue;
 
     const points = store.gaugeSeriesByTrackId.get(track.id) || [];
-    const point = getStepPointAtTime(points, time);
+    const point = sampleStepSeriesAtTime(points, time);
     const val = snapMs(point?.val ?? 0);
 
     const max = store.getTrackGaugeMax(track.id);
@@ -1338,12 +1328,57 @@ const cursorGaugeRows = computed(() => {
   return rows;
 });
 
+const CURSOR_EFFECT_ICON_LIMIT = 10;
+const cursorEnemyEffectTimeline = computed(() =>
+  buildEnemyEffectGuideTimeline(store.enemyEffectLayout?.positionedSegments || []),
+);
+const cursorEnemyEffects = computed(() =>
+  sampleEnemyEffectGuideTimeline(
+    cursorEnemyEffectTimeline.value,
+    store.cursorCurrentTime,
+    CURSOR_EFFECT_ICON_LIMIT,
+  ),
+);
+const cursorGuideInfoStyle = computed(() => ({
+  transform: `translate3d(0, ${Math.max(0, Number(store.timelineScrollTop) || 0) + 4}px, 0)`,
+}));
+
+function getCursorEffectTitle(typeKey) {
+  locale.value;
+  for (const candidate of getDisplayKeyCandidates(typeKey)) {
+    const localeKey = `effects.name.${candidate}`;
+    const translated = t(localeKey);
+    if (translated !== localeKey) return translated;
+  }
+  return String(typeKey || '');
+}
+
+function getCursorEffectIcon(effect) {
+  if (effect?.icon) return effect.icon;
+  for (const candidate of getDisplayKeyCandidates(effect?.typeKey)) {
+    if (store.iconDatabase?.[candidate]) return store.iconDatabase[candidate];
+  }
+  return store.iconDatabase?.default || '/icons/default_icon.webp';
+}
+
+function flushCursorMove() {
+  cursorMoveRaf = null;
+  const position = pendingCursorPosition;
+  pendingCursorPosition = null;
+  if (!position) return;
+  store.setCursorPosition(position.x, position.y);
+}
+
 function onGridMouseMove(evt) {
-  store.setCursorPosition(evt.clientX, evt.clientY);
+  pendingCursorPosition = { x: evt.clientX, y: evt.clientY };
   isCursorVisible.value = true;
+  if (cursorMoveRaf == null) cursorMoveRaf = window.requestAnimationFrame(flushCursorMove);
 }
 function onGridMouseLeave() {
   isCursorVisible.value = false;
+  pendingCursorPosition = null;
+  if (cursorMoveRaf != null) window.cancelAnimationFrame(cursorMoveRaf);
+  cursorMoveRaf = null;
 }
 
 function onContentMouseDown(evt) {
@@ -2476,6 +2511,9 @@ onMounted(() => {
   window.addEventListener('mouseup', onGlobalWindowMouseUp);
 });
 onUnmounted(() => {
+  if (cursorMoveRaf != null) window.cancelAnimationFrame(cursorMoveRaf);
+  cursorMoveRaf = null;
+  pendingCursorPosition = null;
   if (tracksContentRef.value) {
     // tracksContentRef.value.removeEventListener('scroll', syncRulerScroll);
     tracksContentRef.value.removeEventListener('scroll', syncVerticalScroll);
@@ -3296,39 +3334,60 @@ defineExpose({
           :style="{ transform: `translateX(${store.cursorPosTimeline.x}px)` }"
           v-show="isCursorVisible"
         >
-          <div class="guide-time-label">
-            {{ store.formatAxisTimeLabel(store.cursorCurrentTime) }}
-          </div>
+          <div class="cursor-guide__info" :style="cursorGuideInfoStyle">
+            <div class="guide-time-label">
+              {{ store.formatAxisTimeLabel(store.cursorCurrentTime) }}
+            </div>
 
-          <div class="guide-sp-label">
-            {{ t('timelineGrid.cursor.sp') }}: {{ currentSpValue }}{{ currentSpReturnText }}
-          </div>
-          <div class="guide-stagger-label">
-            {{ t('timelineGrid.cursor.stagger') }}: {{ currentStaggerText }}
-          </div>
+            <div class="guide-sp-label">
+              {{ t('timelineGrid.cursor.sp') }}: {{ currentSpValue }}{{ currentSpReturnText }}
+            </div>
+            <div class="guide-stagger-label">
+              {{ t('timelineGrid.cursor.stagger') }}: {{ currentStaggerText }}
+            </div>
 
-          <div v-if="cursorGaugeRows.length" class="guide-gauge-panel">
-            <div class="guide-gauge-title">{{ t('timelineGrid.cursor.gauge') }}</div>
-            <div class="guide-gauge-grid">
-              <div v-for="row in cursorGaugeRows" :key="row.id" class="guide-gauge-grid-row">
-                <span
-                  class="guide-gauge-name"
-                  :class="{ 'is-full': row.isFull }"
-                  :style="{ color: row.color, '--row-color': row.color }"
-                  >{{ row.name }}</span
-                >
-                <span class="guide-gauge-value" :class="{ 'is-full': row.isFull }">
-                  <span class="guide-gauge-current" :style="{ color: row.color }">{{
-                    row.val
-                  }}</span>
-                  <span class="guide-gauge-sep">/</span>
-                  <span class="guide-gauge-max">{{ row.max }}</span>
-                </span>
+            <div v-if="cursorGaugeRows.length" class="guide-gauge-panel">
+              <div class="guide-gauge-title">{{ t('timelineGrid.cursor.gauge') }}</div>
+              <div class="guide-gauge-grid">
+                <div v-for="row in cursorGaugeRows" :key="row.id" class="guide-gauge-grid-row">
+                  <span
+                    class="guide-gauge-name"
+                    :class="{ 'is-full': row.isFull }"
+                    :style="{ color: row.color, '--row-color': row.color }"
+                    >{{ row.name }}</span
+                  >
+                  <span class="guide-gauge-value" :class="{ 'is-full': row.isFull }">
+                    <span class="guide-gauge-current" :style="{ color: row.color }">{{
+                      row.val
+                    }}</span>
+                    <span class="guide-gauge-sep">/</span>
+                    <span class="guide-gauge-max">{{ row.max }}</span>
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          <div v-if="currentEnemyHpText" class="guide-enemy-hp-label">
-            HP: {{ currentEnemyHpText }}
+            <div v-if="currentEnemyHpText" class="guide-enemy-hp-label">
+              HP: {{ currentEnemyHpText }}
+            </div>
+            <div
+              v-if="cursorEnemyEffects.buffs.length || cursorEnemyEffects.overflow"
+              class="guide-enemy-effects"
+              @mousemove.stop
+            >
+              <div
+                v-for="effect in cursorEnemyEffects.buffs"
+                :key="effect.typeKey"
+                class="guide-enemy-effect"
+                :class="{ 'is-disabled': effect.disabled }"
+                :title="getCursorEffectTitle(effect.typeKey)"
+              >
+                <img :src="getCursorEffectIcon(effect)" alt="" />
+                <span>{{ effect.stacks }}</span>
+              </div>
+              <span v-if="cursorEnemyEffects.overflow" class="guide-enemy-effect-more">
+                +{{ cursorEnemyEffects.overflow }}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -4947,11 +5006,17 @@ body.capture-mode .davinci-range {
   box-shadow: 0 0 6px var(--ea-gold);
 }
 
+.cursor-guide__info {
+  width: max-content;
+  will-change: transform;
+}
+
 .guide-time-label,
 .guide-sp-label,
 .guide-stagger-label,
 .guide-enemy-hp-label,
-.guide-gauge-panel {
+.guide-gauge-panel,
+.guide-enemy-effects {
   width: fit-content;
   padding: 3px 6px;
   border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.1));
@@ -4988,6 +5053,52 @@ body.capture-mode .davinci-range {
 
 .guide-gauge-panel {
   margin-top: 2px;
+}
+
+.guide-enemy-effects {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  pointer-events: auto;
+}
+
+.guide-enemy-effect {
+  position: relative;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  border: 1px solid var(--ea-keycap-skill-border, #999);
+  background: var(--ea-keycap-skill-bg, #333);
+  box-sizing: border-box;
+}
+
+.guide-enemy-effect.is-disabled {
+  opacity: 0.42;
+  filter: grayscale(0.5);
+}
+
+.guide-enemy-effect img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guide-enemy-effect span {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.82);
+  color: var(--ea-gold);
+  font-size: 8px;
+  line-height: 1;
+}
+
+.guide-enemy-effect-more {
+  color: var(--ea-fg-muted, rgba(255, 255, 255, 0.55));
+  font-size: 10px;
 }
 
 .guide-gauge-title {

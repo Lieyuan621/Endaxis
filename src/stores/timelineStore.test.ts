@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { nextTick } from 'vue';
 import { useTimelineStore } from './timelineStore';
+import { useOperatorStore } from './operatorStore';
 import { setLocale } from '@/i18n';
 
 describe('timeline skill library editing', () => {
@@ -195,5 +196,70 @@ describe('timeline skill library editing', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('does not replace unchanged armory data during timeline undo and redo', () => {
+    const store = useTimelineStore();
+    const operatorStore = useOperatorStore();
+    operatorStore.setAll([
+      {
+        id: 'op-history-test',
+        operatorSlug: 'zhuang-fangyi',
+        level: 1,
+        promoted: false,
+        potential: 0,
+        skillLevels: {},
+        talentStates: {},
+        trustLevel: 0,
+      },
+    ] as any);
+
+    store.tracks[0]!.id = 'zhuang-fangyi';
+    store.tracks[0]!.operatorInstanceId = 'op-history-test';
+    store.commitState();
+    const armoryReference = operatorStore.operators;
+
+    store.tracks[0]!.actions.push({
+      id: 'history-skill',
+      instanceId: 'history-action',
+      name: 'History skill',
+      startTime: 1,
+      duration: 1,
+      hits: [],
+    } as any);
+    store.commitState();
+
+    store.undo();
+    expect(store.tracks[0]!.actions).toHaveLength(0);
+    expect(operatorStore.operators).toBe(armoryReference);
+
+    store.redo();
+    expect(store.tracks[0]!.actions.map(action => action.instanceId)).toEqual(['history-action']);
+    expect(operatorStore.operators).toBe(armoryReference);
+  });
+
+  it('still restores armory edits through history', () => {
+    const store = useTimelineStore();
+    const operatorStore = useOperatorStore();
+    operatorStore.setAll([
+      {
+        id: 'op-armory-history-test',
+        operatorSlug: 'zhuang-fangyi',
+        level: 1,
+        promoted: false,
+        potential: 0,
+        skillLevels: {},
+        talentStates: {},
+        trustLevel: 0,
+      },
+    ] as any);
+    store.commitState();
+
+    operatorStore.updateOperator('op-armory-history-test', { level: 20 });
+    store.commitState();
+    expect(operatorStore.operators[0]?.level).toBe(20);
+
+    store.undo();
+    expect(operatorStore.operators[0]?.level).toBe(1);
   });
 });
