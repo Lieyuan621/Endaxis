@@ -60,6 +60,18 @@ export interface SimulationContext {
     sourceActionId?: string,
     sourceSkillId?: string,
   ): void;
+  getComboCooldownState(actorId: string, time: number): RuntimeComboCooldown | null;
+  startComboCooldown(
+    actorId: string,
+    time: number,
+    duration: number,
+    sourceActionId: string,
+    sourceSkillId?: string,
+    forced?: boolean,
+  ): void;
+  clearComboCooldown(actorId: string, time: number): void;
+  getReducibleComboCooldownState(actorId: string, time: number): RuntimeComboCooldown | null;
+  reduceComboCooldown(actorId: string, time: number, reduction: number): number;
   /** Base stat values per track for damage calculation (baseAtk, weaponAtk, attrs, etc.). */
   getBaseStats: (trackId: string) => BaseStatValues | undefined;
   /** Enemy defense value for damage calculation. */
@@ -82,6 +94,16 @@ export interface SimulationContext {
   lmdiAttributionMode: 'stacks' | 'applier';
   /** Operator (track id) controlled at the given time, or null if none. Derived from switch events. */
   getControlledOperatorAt: (time: number) => string | null;
+}
+
+export interface RuntimeComboCooldown {
+  actorId: string;
+  start: number;
+  end: number;
+  baseDuration: number;
+  sourceActionId: string;
+  sourceSkillId?: string;
+  forced: boolean;
 }
 
 export interface EventHookContext extends SimulationContext {

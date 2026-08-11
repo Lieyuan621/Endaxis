@@ -279,26 +279,7 @@ export function evaluateEffectCondition(
     return (ctx.getAction(actionId)?.consumedStacks?.link ?? 0) > 0;
   }
   if (cond.kind === 'comboNotOnCooldown') {
-    const actions = ctx.getAllActions();
-    // Find the last combo action on this track (descending by start time)
-    let lastCombo: ResolvedAction | undefined;
-    for (let i = actions.length - 1; i >= 0; i--) {
-      const a = actions[i]!;
-      if (
-        a.trackId === sourceTrackId &&
-        a.node.type === 'comboSkill' &&
-        !a.node.isDisabled &&
-        a.realStartTime <= time
-      ) {
-        if (!lastCombo || a.realStartTime > lastCombo.realStartTime) lastCombo = a;
-      }
-    }
-    if (!lastCombo) return true;
-    const startTime = lastCombo.realStartTime;
-    const cd = lastCombo.node.cooldown ?? 0;
-    const cdReduction = ctx.state.getActor(sourceTrackId).getCdReduction(lastCombo.id);
-    const cooldownEnd = startTime + cd - cdReduction;
-    return time >= cooldownEnd;
+    return ctx.getComboCooldownState(sourceTrackId, time) === null;
   }
   if (cond.kind === 'ultimateCooldownReady') {
     let lastUltimate: ResolvedAction | undefined;

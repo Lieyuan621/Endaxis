@@ -10,8 +10,7 @@ describe('ActionItem display labels', () => {
   });
 
   test('hides cooldown bars when remaining CD was fully cleared mid-action', () => {
-    expect(source).toContain('const cdClearedByInterrupt = computed');
     expect(source).toContain('clearedRemaining === true');
-    expect(source).toContain('if (cdClearedByInterrupt.value) return 0;');
+    expect(source).toContain('if (entry.payload?.clearedRemaining === true) return 0;');
   });
 });

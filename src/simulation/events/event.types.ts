@@ -86,6 +86,15 @@ export type StaggerChangeEvent = SimBaseEvent<
 /** Fires once at t=0 so `onBattleStart` triggers can apply effects at the start of the fight. */
 export type BattleStartEvent = SimBaseEvent<'BATTLE_START', {}>;
 
+export type ComboCooldownControlEvent = SimBaseEvent<
+  'COMBO_COOLDOWN_CONTROL',
+  {
+    eventId: string;
+    mode: 'ready' | 'cooldown';
+    cooldownByActorId: Record<string, number>;
+  }
+>;
+
 export type UltEnergyChangeEvent = SimBaseEvent<
   'ULT_ENERGY_CHANGE',
   {
@@ -140,6 +149,7 @@ export type SimEvent =
   | StaggerChangeEvent
   | UltEnergyChangeEvent
   | BattleStartEvent
+  | ComboCooldownControlEvent
   // Enemy state events
   | EnemyEffectApplyEvent
   | EnemyEffectExpireEvent

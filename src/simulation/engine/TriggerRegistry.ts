@@ -651,10 +651,40 @@ export class TriggerRegistry {
     const rawValue = typeof effect.value === 'number' ? effect.value : 0;
     if (rawValue <= 0) return;
 
+    const comboState = ctx.getReducibleComboCooldownState(targetTrackId, time);
+    const matchesComboType =
+      !effect.skillTypes || passesSkillFilter(effect.skillTypes, 'comboSkill');
+    const matchesComboSkill =
+      !effect.skillId ||
+      (comboState?.sourceSkillId && passesSkillFilter(effect.skillId, comboState.sourceSkillId));
+    if (comboState && matchesComboType && matchesComboSkill) {
+      const requested =
+        effect.kind === 'cooldownReductionFlat'
+          ? rawValue
+          : (comboState.baseDuration * rawValue) / 100;
+      const reduction = ctx.reduceComboCooldown(targetTrackId, time, requested);
+      if (reduction > 0) {
+        ctx.state.getActor(targetTrackId).recordCdReduction(comboState.sourceActionId, reduction);
+        ctx.simLog({
+          type: 'CD_REDUCTION',
+          time,
+          payload: {
+            actorId: targetTrackId,
+            actionId: comboState.sourceActionId,
+            reduction,
+            clearedRemaining: ctx.getReducibleComboCooldownState(targetTrackId, time) === null,
+          },
+        });
+      }
+    }
+
     // Find all actions on the target track that are currently in cooldown and match filters.
     const matchingActions: ResolvedAction[] = [];
     for (const action of ctx.getAllActions()) {
       if (action.trackId !== targetTrackId) continue;
+      if (action.node.type === 'comboSkill' || comboState?.sourceActionId === action.id) {
+        continue;
+      }
       const cd = action.node.cooldown ?? 0;
       if (cd <= 0) continue;
       const cdStart = ctx.getActionCooldownStart(action);

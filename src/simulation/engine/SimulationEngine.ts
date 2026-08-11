@@ -3,7 +3,11 @@ import { PriorityQueue } from '@/simulation/engine/PriorityQueue.ts';
 import type { EventHandler } from '@/simulation/events/EventHandler.ts';
 import { GameState } from '@/simulation/state/GameState.ts';
 import type { SimEvent, SimEventType, SimLogEntry } from '@/simulation/events/event.types.ts';
-import type { EventHookContext, SimulationContext } from '@/simulation/engine/SimulationContext.ts';
+import type {
+  EventHookContext,
+  RuntimeComboCooldown,
+  SimulationContext,
+} from '@/simulation/engine/SimulationContext.ts';
 import type { ResolvedAction, ResolvedTimeline } from '../compiler/types.ts';
 import { isUltimateLikeAction } from '../compiler/types.ts';
 import type { EnemyStateEvent, OperatorStateEvent } from '../engine/types.ts';
@@ -20,6 +24,12 @@ type UltimateEnergyBlockWindow = {
   end: number;
 };
 
+type ReplacedComboCooldown = {
+  replacedAt: number;
+  state: RuntimeComboCooldown;
+  interval: RuntimeComboCooldown;
+};
+
 export class SimulationEngine {
   private queue = new PriorityQueue<SimEvent>();
   private handlers = new Map<SimEventType, EventHandler<SimEvent>>();
@@ -31,6 +41,9 @@ export class SimulationEngine {
   private ultimateEnergyBlockWindowsByActor?: Map<string, UltimateEnergyBlockWindow[]>;
   private enhancementBoundStatusesByActor?: Map<string, Set<string>>;
   private skillCooldownEnds = new Map<string, number>();
+  private comboCooldowns = new Map<string, RuntimeComboCooldown>();
+  private comboCooldownIntervals: RuntimeComboCooldown[] = [];
+  private replacedComboCooldowns = new Map<string, ReplacedComboCooldown>();
 
   /** Status keys that need consumedStacks written at apply time (auto-inferred from readConsumedStacks). */
   consumedStacksWriteKeys = new Set<string>();
@@ -165,8 +178,95 @@ export class SimulationEngine {
     });
   }
 
+  private getComboCooldownState(actorId: string, time: number) {
+    const state = this.comboCooldowns.get(actorId);
+    return state && state.end > time + 1e-6 ? state : null;
+  }
+
+  /** Same-frame reductions from a staged combo target the cooldown replaced by that stage. */
+  private getReducibleComboCooldownState(actorId: string, time: number) {
+    const current = this.getComboCooldownState(actorId, time);
+    if (current && current.start < time - 1e-6) return current;
+
+    const replaced = this.replacedComboCooldowns.get(actorId);
+    if (
+      replaced &&
+      Math.abs(replaced.replacedAt - time) <= 1e-6 &&
+      replaced.state.end > time + 1e-6
+    ) {
+      return replaced.state;
+    }
+    return null;
+  }
+
+  private startComboCooldown(
+    actorId: string,
+    time: number,
+    duration: number,
+    sourceActionId: string,
+    sourceSkillId?: string,
+    forced = false,
+  ) {
+    const baseDuration = Math.max(0, Number(duration) || 0);
+    if (baseDuration <= 0) {
+      this.clearComboCooldown(actorId, time);
+      return;
+    }
+    const previous = this.comboCooldowns.get(actorId);
+    if (previous && previous.end > time + 1e-6) {
+      this.replacedComboCooldowns.set(actorId, {
+        replacedAt: time,
+        state: { ...previous },
+        interval: previous,
+      });
+      previous.end = time;
+    } else {
+      this.replacedComboCooldowns.delete(actorId);
+    }
+    const interval: RuntimeComboCooldown = {
+      actorId,
+      start: time,
+      end: time + baseDuration,
+      baseDuration,
+      sourceActionId,
+      sourceSkillId,
+      forced,
+    };
+    this.comboCooldowns.set(actorId, interval);
+    this.comboCooldownIntervals.push(interval);
+  }
+
+  private clearComboCooldown(actorId: string, time: number) {
+    const active = this.comboCooldowns.get(actorId);
+    if (active) active.end = Math.min(active.end, time);
+    this.comboCooldowns.delete(actorId);
+    this.replacedComboCooldowns.delete(actorId);
+  }
+
+  private reduceComboCooldown(actorId: string, time: number, reduction: number) {
+    const state = this.getReducibleComboCooldownState(actorId, time);
+    if (!state) return 0;
+    const applied = Math.min(Math.max(0, Number(reduction) || 0), state.end - time);
+    state.end -= applied;
+    if (state.end <= time + 1e-6) {
+      const replaced = this.replacedComboCooldowns.get(actorId);
+      if (replaced?.state === state) {
+        // A completed stage handoff leaves the visible cooldown on the new stage only.
+        if (!replaced.interval.forced) replaced.interval.end = replaced.interval.start;
+        this.replacedComboCooldowns.delete(actorId);
+      } else {
+        this.comboCooldowns.delete(actorId);
+      }
+    }
+    return applied;
+  }
+
   getSimLog(): SimLogEntry[] {
     return this.simLog.toArray();
+  }
+
+  getComboCooldownIntervals(): RuntimeComboCooldown[] {
+    return this.comboCooldownIntervals.filter(interval => interval.end > interval.start + 1e-6);
   }
 
   logSimEntry(entry: SimLogEntry) {
@@ -455,6 +555,11 @@ export class SimulationEngine {
       getActionCooldownStart: this.getActionCooldownStart.bind(this),
       getSkillCooldownEnd: this.getSkillCooldownEnd.bind(this),
       applySkillCooldown: this.applySkillCooldown.bind(this),
+      getComboCooldownState: this.getComboCooldownState.bind(this),
+      getReducibleComboCooldownState: this.getReducibleComboCooldownState.bind(this),
+      startComboCooldown: this.startComboCooldown.bind(this),
+      clearComboCooldown: this.clearComboCooldown.bind(this),
+      reduceComboCooldown: this.reduceComboCooldown.bind(this),
       getAllActions: () => this.timeline.actions,
       getBaseStats: (trackId: string) => this.baseStatsByTrack.get(trackId),
       enemyDef: this.enemyDef,

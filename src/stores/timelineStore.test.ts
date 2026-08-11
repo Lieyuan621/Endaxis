@@ -302,4 +302,44 @@ describe('timeline skill library editing', () => {
     store.undo();
     expect(operatorStore.operators[0]?.level).toBe(1);
   });
+
+  it('deletes the selected combo cooldown control event', () => {
+    const store = useTimelineStore();
+    store.addComboCooldownEvent(3, 'cooldown');
+    const eventId = store.comboCooldownEvents[0]!.id;
+
+    store.selectComboCooldownEvent(eventId);
+    expect(store.removeCurrentSelection()).toEqual({ total: 1 });
+    expect(store.comboCooldownEvents).toHaveLength(0);
+    expect(store.selectedComboCooldownEventId).toBeNull();
+  });
+
+  it('exposes simulated combo cooldown intervals for timeline rendering', () => {
+    const store = useTimelineStore();
+    store.tracks[0]!.id = 'combo-render-test';
+    store.tracks[0]!.actions = [
+      {
+        id: 'combo-render-skill',
+        instanceId: 'combo-render-action',
+        skillId: 'combo-render-skill',
+        name: 'Combo',
+        type: 'comboSkill',
+        startTime: 2,
+        logicalStartTime: 2,
+        duration: 1,
+        cooldown: 10,
+        hits: [],
+      } as any,
+    ];
+    store.commitState();
+
+    expect(store.comboCooldownIntervals).toContainEqual(
+      expect.objectContaining({
+        actorId: 'combo-render-test',
+        sourceActionId: 'combo-render-action',
+        start: 2,
+        end: 12,
+      }),
+    );
+  });
 });

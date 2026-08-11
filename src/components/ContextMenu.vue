@@ -41,6 +41,11 @@ const targetCycleBoundary = computed(() => {
   return store.cycleBoundaries.find(b => b.id === store.contextMenu.targetId) || null;
 });
 
+const targetComboCooldownEvent = computed(() => {
+  if (store.contextMenu.targetType !== 'comboCooldownEvent') return null;
+  return store.comboCooldownEvents.find(event => event.id === store.contextMenu.targetId) || null;
+});
+
 function handleCreateInheritedScenario() {
   const result = store.createInheritedScenarioFromCycleBoundary(store.contextMenu.targetId);
 
@@ -95,7 +100,11 @@ function handlePaste() {
 }
 
 function handleDelete() {
-  if (!store.selectedConnectionId && !store.isActionSelected(store.contextMenu.targetId)) {
+  if (
+    store.contextMenu.targetType !== 'comboCooldownEvent' &&
+    !store.selectedConnectionId &&
+    !store.isActionSelected(store.contextMenu.targetId)
+  ) {
     store.selectAction(store.contextMenu.targetId);
   }
   const result = store.removeCurrentSelection();
@@ -182,6 +191,11 @@ function handleSetPort(type, direction) {
 
 function handleAddCycleBoundary() {
   store.addCycleBoundary(store.contextMenu.time);
+  close();
+}
+
+function handleAddComboCooldownEvent(mode) {
+  store.addComboCooldownEvent(store.contextMenu.time, mode);
   close();
 }
 
@@ -488,6 +502,35 @@ function handleToggleSimulationEndline() {
         </div>
       </template>
 
+      <template v-else-if="targetComboCooldownEvent">
+        <div class="menu-header">
+          {{
+            targetComboCooldownEvent.mode === 'ready'
+              ? t('contextMenu.comboCooldownReadyAll')
+              : t('contextMenu.comboCooldownStartAll')
+          }}
+        </div>
+
+        <div class="menu-item delete-item" @click="handleDelete">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              fill="none"
+              stroke-width="2"
+            >
+              <path
+                d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+              />
+            </svg>
+          </span>
+          <span class="label">{{ t('common.delete') }}</span>
+          <span class="shortcut-hint">Delete</span>
+        </div>
+      </template>
+
       <template v-else-if="targetCycleBoundary">
         <div class="menu-header">{{ t('contextMenu.cycleBoundary') }}</div>
 
@@ -658,6 +701,48 @@ function handleToggleSimulationEndline() {
           </span>
           <span class="label">{{ t('common.paste') }}</span>
           <span class="shortcut-hint">Ctrl+V</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="menu-label">{{ t('contextMenu.comboCooldownControl') }}</div>
+
+        <div class="menu-item" @click="handleAddComboCooldownEvent('ready')">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M20 11a8 8 0 1 1-2.3-5.7" />
+              <path d="M20 4v7h-7" />
+            </svg>
+          </span>
+          <span class="label">{{ t('contextMenu.comboCooldownReadyAll') }}</span>
+        </div>
+
+        <div class="menu-item" @click="handleAddComboCooldownEvent('cooldown')">
+          <span class="icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+          </span>
+          <span class="label">{{ t('contextMenu.comboCooldownStartAll') }}</span>
         </div>
 
         <div class="divider"></div>

@@ -22,6 +22,7 @@ import type {
   ScenarioSnapshot,
   EnemyConfigState,
   SwitchEvent,
+  ComboCooldownEvent,
   CycleBoundary,
   UltEnhancerContext,
   UltEnhancer,
@@ -114,6 +115,7 @@ import {
 } from '@/stores/timeline/normalizers';
 import { useTimelineLayouts } from '@/stores/timeline/layouts';
 import { useTimelineSimulation } from '@/stores/timeline/simulation';
+import { resolveEffectiveCooldown } from '@/simulation/compiler/compileScenario';
 import { useShifts } from '@/stores/timeline/shifts';
 import { useTimelinePersistence } from '@/stores/timeline/persistence';
 import { useSkillLibrary } from '@/stores/timeline/skillLibrary';
@@ -259,6 +261,12 @@ function shiftSnapshotTimes(snapshot: ScenarioSnapshot | null | undefined, delta
 
   if (Array.isArray(snapshot.switchEvents)) {
     snapshot.switchEvents.forEach(shiftStartLike);
+  }
+
+  if (Array.isArray(snapshot.comboCooldownEvents)) {
+    snapshot.comboCooldownEvents.forEach(event => {
+      event.time = shiftVal(event.time);
+    });
   }
 
   if (snapshot.simulationEndline != null && Number.isFinite(Number(snapshot.simulationEndline))) {
@@ -1223,6 +1231,8 @@ export const useTimelineStore = defineStore('timeline', () => {
   const selectedCycleBoundaryId = ref<string | null>(null);
   const switchEvents = ref<SwitchEvent[]>([]);
   const selectedSwitchEventId = ref<string | null>(null);
+  const comboCooldownEvents = ref<ComboCooldownEvent[]>([]);
+  const selectedComboCooldownEventId = ref<string | null>(null);
 
   const multiSelectedIds = ref<Set<string>>(new Set());
   const isBoxSelectMode = ref(Boolean(toolbarPrefs.isBoxSelectMode));
@@ -1482,6 +1492,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       customEnemyParams: customEnemyParams.value,
       cycleBoundaries: cycleBoundaries.value,
       switchEvents: switchEvents.value,
+      comboCooldownEvents: comboCooldownEvents.value,
       simulationEndline: simulationEndline.value,
       simulationStartline: simulationStartline.value,
       inheritedInitialEffects: inheritedInitialEffects.value,
@@ -1597,6 +1608,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
     cycleBoundaries.value = snapshot.cycleBoundaries || [];
     switchEvents.value = snapshot.switchEvents || [];
+    comboCooldownEvents.value = snapshot.comboCooldownEvents || [];
     simulationEndline.value =
       snapshot.simulationEndline != null && Number.isFinite(Number(snapshot.simulationEndline))
         ? Number(snapshot.simulationEndline)
@@ -1668,6 +1680,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
     cycleBoundaries.value = incoming.cycleBoundaries || [];
     switchEvents.value = incoming.switchEvents || [];
+    comboCooldownEvents.value = incoming.comboCooldownEvents || [];
     simulationEndline.value =
       incoming.simulationEndline != null && Number.isFinite(Number(incoming.simulationEndline))
         ? Number(incoming.simulationEndline)
@@ -2109,6 +2122,12 @@ export const useTimelineStore = defineStore('timeline', () => {
     });
 
     next.switchEvents = (next.switchEvents || [])
+      .filter(event => (Number(event.time) || 0) >= time - epsilon)
+      .map(event => ({
+        ...event,
+        time: shiftTime(event.time),
+      }));
+    next.comboCooldownEvents = (next.comboCooldownEvents || [])
       .filter(event => (Number(event.time) || 0) >= time - epsilon)
       .map(event => ({
         ...event,
@@ -3264,6 +3283,33 @@ export const useTimelineStore = defineStore('timeline', () => {
     };
   }
 
+  const comboCooldownByActorId = computed<Record<string, number>>(() => {
+    const result: Record<string, number> = {};
+    for (const track of tracks.value) {
+      if (!track.id) continue;
+      const patched = getTrackPatchedSkills(track);
+      const comboSkill = patched?.flatSkills?.comboSkill;
+      const levelKey = comboSkill?.levelKey;
+      const rawLevel = Number(levelKey ? patched?.operatorInstance?.skillLevels?.[levelKey] : 1);
+      const levelIndex = Math.max(0, Math.min((Number.isFinite(rawLevel) ? rawLevel : 1) - 1, 11));
+      const fallbackCooldown = Number(
+        track.actions.find(action => isComboLikeAction(action))?.cooldown,
+      );
+      const baseCooldown = resolveLevelNumber(
+        comboSkill?.cooldown,
+        levelIndex,
+        Number.isFinite(fallbackCooldown) ? fallbackCooldown : 0,
+      );
+      if (baseCooldown <= 0) continue;
+      result[track.id] = resolveEffectiveCooldown(
+        { type: 'comboSkill', cooldown: baseCooldown } as any,
+        track as any,
+        effectiveSystemConstants.value as any,
+      ).cooldown;
+    }
+    return result;
+  });
+
   function getActionSourceSkillKey(action: TimelineAction | null | undefined) {
     if (!action) return null;
     return action.sourceSkillKey || action.skillId || action.type || null;
@@ -4313,6 +4359,27 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
+  function addComboCooldownEvent(time: number, mode: ComboCooldownEvent['mode']) {
+    comboCooldownEvents.value.push({
+      id: `combo_cd_${uid()}`,
+      time: Math.max(0, snapTimeToFrame(Number(time) || 0)),
+      mode,
+    });
+    comboCooldownEvents.value.sort((a, b) => a.time - b.time);
+    commitState();
+  }
+
+  function updateComboCooldownEvent(id: string, time: number) {
+    const event = comboCooldownEvents.value.find(item => item.id === id);
+    if (event) event.time = Math.max(0, snapTimeToFrame(Number(time) || 0));
+  }
+
+  function selectComboCooldownEvent(id: string) {
+    const isSame = selectedComboCooldownEventId.value === id;
+    clearSelection();
+    if (!isSame) selectedComboCooldownEventId.value = id;
+  }
+
   function addCycleBoundary(time: number) {
     cycleBoundaries.value.push({
       id: `cb_${uid()}`,
@@ -4387,6 +4454,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     selectedAnomalyId.value = null;
     selectedCycleBoundaryId.value = null;
     selectedSwitchEventId.value = null;
+    selectedComboCooldownEventId.value = null;
     selectedLibrarySkillId.value = null;
     isEndlineSelected.value = false;
     isStartlineSelected.value = false;
@@ -4687,6 +4755,15 @@ export const useTimelineStore = defineStore('timeline', () => {
     if (selectedSwitchEventId.value) {
       switchEvents.value = switchEvents.value.filter(s => s.id !== selectedSwitchEventId.value);
       selectedSwitchEventId.value = null;
+      commitState();
+      return { total: 1 };
+    }
+
+    if (selectedComboCooldownEventId.value) {
+      comboCooldownEvents.value = comboCooldownEvents.value.filter(
+        event => event.id !== selectedComboCooldownEventId.value,
+      );
+      selectedComboCooldownEventId.value = null;
       commitState();
       return { total: 1 };
     }
@@ -5323,6 +5400,20 @@ export const useTimelineStore = defineStore('timeline', () => {
         return;
       }
 
+      if (selectedComboCooldownEventId.value) {
+        const event = comboCooldownEvents.value.find(
+          item => item.id === selectedComboCooldownEventId.value,
+        );
+        if (!event) return;
+        const newTime = Math.max(0, snapTimeToFrame(event.time + delta));
+        if (event.time !== newTime) {
+          event.time = newTime;
+          comboCooldownEvents.value.sort((a, b) => a.time - b.time);
+          commitState();
+        }
+        return;
+      }
+
       if (selectedCycleBoundaryId.value) {
         const boundary = cycleBoundaries.value.find(
           item => item.id === selectedCycleBoundaryId.value,
@@ -5666,6 +5757,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     simulationEndline,
     lmdiAttributionMode,
     controlledOperatorSegments,
+    comboCooldownEvents,
+    comboCooldownByActorId,
     viewDuration,
     durationBarColor,
   });
@@ -5683,6 +5776,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     enemyAfflictionViz,
     operatorEffectLayouts,
     comboWindowLayouts,
+    comboCooldownIntervals,
     requisiteWarnings,
     gaugeSeriesByTrackId,
     timeContext,
@@ -5959,6 +6053,9 @@ export const useTimelineStore = defineStore('timeline', () => {
     switchEvents.value.forEach(e => {
       e.time = shiftVal(e.time);
     });
+    comboCooldownEvents.value.forEach(event => {
+      event.time = shiftVal(event.time);
+    });
     if (simulationEndline.value != null) {
       simulationEndline.value = shiftVal(simulationEndline.value);
     }
@@ -5993,6 +6090,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     customEnemyParams,
     cycleBoundaries,
     switchEvents,
+    comboCooldownEvents,
     inheritedInitialEffects,
     inheritedInitialEnemyState,
     contingencyContractTags,
@@ -6210,6 +6308,11 @@ export const useTimelineStore = defineStore('timeline', () => {
     addSwitchEvent,
     updateSwitchEvent,
     selectSwitchEvent,
+    comboCooldownEvents,
+    selectedComboCooldownEventId,
+    addComboCooldownEvent,
+    updateComboCooldownEvent,
+    selectComboCooldownEvent,
     toggleActionLock,
     toggleActionDisable,
     setActionColor,
@@ -6285,6 +6388,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     enemyAfflictionViz,
     operatorEffectLayouts,
     comboWindowLayouts,
+    comboCooldownIntervals,
     requisiteWarnings,
     gaugeSeriesByTrackId,
     simLog,

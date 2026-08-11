@@ -12,6 +12,7 @@ import type { BaseStatValues } from '@/data/stats/types';
 import type { EnemyResistance } from '@/data/enemyResistance';
 import { normalizeEnemyResistance } from '@/data/enemyResistance';
 import type { ControlSegment } from '@/stores/timeline/controlledOperator';
+import type { ComboCooldownEvent } from '@/stores/timeline/types';
 
 export interface InitialEffect {
   kind?: 'status' | 'oneTime';
@@ -43,6 +44,8 @@ interface SimulationOptions {
   endlineTime?: number;
   lmdiAttributionMode?: 'stacks' | 'applier';
   controlledOperatorSegments?: ControlSegment[];
+  comboCooldownEvents?: ComboCooldownEvent[];
+  comboCooldownByActorId?: Record<string, number>;
 }
 
 export function simulate(
@@ -447,6 +450,18 @@ export function simulate(
   // Fire onBattleStart triggers at t=0 (after unconditional passives are seeded above).
   engine.enqueue({ type: 'BATTLE_START', time: 0, payload: {} });
 
+  for (const event of options.comboCooldownEvents ?? []) {
+    engine.enqueue({
+      type: 'COMBO_COOLDOWN_CONTROL',
+      time: Math.max(0, Number(event.time) || 0),
+      payload: {
+        eventId: event.id,
+        mode: event.mode,
+        cooldownByActorId: options.comboCooldownByActorId ?? {},
+      },
+    });
+  }
+
   timeline.actions.forEach(action => {
     // Keep disabled actions in the compiled timeline for editor rendering, but
     // never let them enter the simulator event queue.
@@ -565,5 +580,6 @@ export function simulate(
     enemyLog: engine.getEnemyLog(),
     operatorLog: engine.getOperatorLog(),
     actionEndTimes,
+    comboCooldownIntervals: engine.getComboCooldownIntervals(),
   };
 }

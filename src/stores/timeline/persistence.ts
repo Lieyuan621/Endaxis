@@ -22,6 +22,7 @@ import type {
   EnemyConfigState,
   CycleBoundary,
   SwitchEvent,
+  ComboCooldownEvent,
 } from './types';
 import type { GlobalConfigState } from '@/data/globalConfig';
 import { createEmptyGlobalConfig } from '@/data/globalConfig';
@@ -49,6 +50,7 @@ interface PersistenceDeps {
   customEnemyParams: Ref<EnemyConfigState>;
   cycleBoundaries: Ref<CycleBoundary[]>;
   switchEvents: Ref<SwitchEvent[]>;
+  comboCooldownEvents: Ref<ComboCooldownEvent[]>;
   simulationEndline: Ref<number | null>;
   simulationStartline: Ref<number | null>;
   inheritedInitialEffects: Ref<Record<string, unknown>[]>;
@@ -102,6 +104,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     customEnemyParams,
     cycleBoundaries,
     switchEvents,
+    comboCooldownEvents,
     simulationEndline,
     simulationStartline,
     inheritedInitialEffects,
@@ -183,6 +186,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         customEnemyParams,
         cycleBoundaries,
         switchEvents,
+        comboCooldownEvents,
         simulationEndline,
         simulationStartline,
         inheritedInitialEffects,
@@ -211,6 +215,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         newCustomParams,
         newBoundaries,
         newSwEvents,
+        newComboCooldownEvents,
         newSimEndline,
         newSimStartline,
         newInheritedInitialEffects,
@@ -258,6 +263,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
               customEnemyParams: newCustomParams,
               cycleBoundaries: newBoundaries,
               switchEvents: newSwEvents,
+              comboCooldownEvents: newComboCooldownEvents,
               simulationEndline: newSimEndline,
               simulationStartline: newSimStartline,
               inheritedInitialEffects: newInheritedInitialEffects,
@@ -369,6 +375,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     equipmentCategoryOverrides.value = {};
     cycleBoundaries.value = [];
     switchEvents.value = [];
+    comboCooldownEvents.value = [];
     simulationEndline.value = null;
     simulationStartline.value = null;
     inheritedInitialEffects.value = [];
@@ -449,6 +456,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         customEnemyParams: customEnemyParams.value,
         cycleBoundaries: cycleBoundaries.value,
         switchEvents: switchEvents.value,
+        comboCooldownEvents: comboCooldownEvents.value,
         simulationEndline: simulationEndline.value,
         simulationStartline: simulationStartline.value,
         inheritedInitialEffects: inheritedInitialEffects.value,
@@ -562,6 +570,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
           weaponOverrides.value = {};
           cycleBoundaries.value = [];
           switchEvents.value = [];
+          comboCooldownEvents.value = [];
           simulationEndline.value = null;
           simulationStartline.value = null;
           equipmentCategoryOverrides.value = {};

@@ -175,26 +175,6 @@ function onDamageHitClick(hit) {
 
 // 冷却计算 — 使用编译器预计算的 effective cooldown，仅叠加运行时 sim 缩减
 
-const simCdReduction = computed(() => {
-  const log = store.simLog || store.simulation?.simLog || [];
-  return log
-    .filter(
-      entry => entry.type === 'CD_REDUCTION' && entry.payload?.actionId === props.action.instanceId,
-    )
-    .reduce((sum, entry) => sum + (Number(entry.payload?.reduction) || 0), 0);
-});
-
-/** Mid-action full clear (e.g. Rossi combo2 wiping combo1 remaining CD) → hide CD bar. */
-const cdClearedByInterrupt = computed(() => {
-  const log = store.simLog || store.simulation?.simLog || [];
-  return log.some(
-    entry =>
-      entry.type === 'CD_REDUCTION' &&
-      entry.payload?.actionId === props.action.instanceId &&
-      entry.payload?.clearedRemaining === true,
-  );
-});
-
 /** Compiled effective cooldown (after passive stats), or null if not yet compiled.
  *
  *  Naming trap: `action.cooldown` 原本存的是技能面板原始冷却 (如 25s)，
@@ -211,16 +191,28 @@ const compiledCooldown = computed(() => {
 
 const effectiveComboCooldown = computed(() => {
   if (props.action.type !== 'comboSkill') return 0;
-  if (cdClearedByInterrupt.value) return 0;
-  const compiled = compiledCooldown.value;
-  return compiled != null ? Math.max(0, compiled - simCdReduction.value) : 0;
+  const interval = store.comboCooldownIntervals?.find(
+    item => item.sourceActionId === props.action.instanceId,
+  );
+  if (interval) return Math.max(0, Number(interval.end) - Number(interval.start));
+  return 0;
 });
 
 const effectiveUltimateCooldown = computed(() => {
   if (props.action.type !== 'ultimate') return 0;
-  if (cdClearedByInterrupt.value) return 0;
+  let reduction = 0;
+  for (const entry of store.simLog || store.simulation?.simLog || []) {
+    if (
+      entry.type !== 'CD_REDUCTION' ||
+      entry.payload?.actionId !== props.action.instanceId
+    ) {
+      continue;
+    }
+    if (entry.payload?.clearedRemaining === true) return 0;
+    reduction += Number(entry.payload?.reduction) || 0;
+  }
   const compiled = compiledCooldown.value;
-  return compiled != null ? Math.max(0, compiled - simCdReduction.value) : 0;
+  return compiled != null ? Math.max(0, compiled - reduction) : 0;
 });
 
 const SKILL_COOLDOWN_COLOR = '#ff6fae';
@@ -453,10 +445,6 @@ function getCooldownStyle(cooldown, rowIndex, startOverride = null) {
     opacity: 0.6,
   };
 }
-
-const cdStyle = computed(() => {
-  return getCooldownStyle(effectiveComboCooldown.value, 0);
-});
 
 const ultCdStyle = computed(() => {
   return getCooldownStyle(effectiveUltimateCooldown.value, 1);
@@ -766,26 +754,6 @@ function handleActionDragStart(startPos, port) {
     @click.stop
     @dragstart.prevent
   >
-    <div
-      v-if="showDecorations && !isGhostMode && effectiveComboCooldown > 0"
-      class="cd-bar-container bottom-bar"
-      :style="cdStyle"
-    >
-      <div class="cd-line" :style="{ backgroundColor: themeColor }"></div>
-
-      <span class="cd-text" :style="{ color: themeColor }">{{
-        store.formatTimeLabel(effectiveComboCooldown)
-      }}</span>
-
-      <div
-        class="cd-end-mark"
-        :style="{
-          backgroundColor: themeColor,
-          zIndex: 1,
-        }"
-      ></div>
-    </div>
-
     <div
       v-if="showDecorations && !isGhostMode && effectiveUltimateCooldown > 0"
       class="cd-bar-container bottom-bar"

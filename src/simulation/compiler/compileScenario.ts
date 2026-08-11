@@ -21,7 +21,7 @@ function clampPercent(value: unknown): number {
   return num;
 }
 
-function resolveEffectiveCooldown(
+export function resolveEffectiveCooldown(
   action: Action,
   track: ScenarioTrack,
   systemConstants?: Partial<SystemConstants>,

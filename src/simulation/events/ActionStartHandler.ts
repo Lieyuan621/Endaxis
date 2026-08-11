@@ -2,7 +2,7 @@ import type { EventHandler } from '@/simulation/events/EventHandler.ts';
 import type { ActionStartEvent } from '@/simulation/events/event.types.ts';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext.ts';
 import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
-import type { OperatorEffectExpireEvent } from '@/simulation/engine/types';
+import type { OperatorEffectExpireEvent, SourceSlot } from '@/simulation/engine/types';
 import { resolveEffectiveActionSkillType } from '@/simulation/events/actionSkillType';
 import { consumeSourceQueue } from '@/simulation/state/sourceQueue';
 import { evaluateSkillRequisites } from '@/simulation/requisites/evaluateSkillRequisites';
@@ -15,6 +15,19 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
 
   handle(e: ActionStartEvent, ctx: SimulationContext) {
     const isPrepAction = this.isPrepAction(e, ctx);
+    const action = ctx.getAction(e.payload.actionId);
+    const effectiveType = action
+      ? resolveEffectiveActionSkillType(action, e.time, e.payload.actorId, ctx)
+      : e.payload.type;
+    if (effectiveType === 'comboSkill' && action) {
+      ctx.startComboCooldown(
+        e.payload.actorId,
+        e.time,
+        Number(action.node.cooldown) || 0,
+        e.payload.actionId,
+        e.payload.skillId,
+      );
+    }
     ctx.simLog({
       type: 'ACTION_START',
       time: e.time,

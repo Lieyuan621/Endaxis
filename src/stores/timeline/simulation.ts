@@ -10,7 +10,7 @@ import type { Ref, ComputedRef } from 'vue';
 import { simulate, type InitialEffect } from '@/simulation/simulator';
 import { compileEndaxisScenario } from '@/simulation/compileEndaxisScenario';
 import { projectOptimizerResult } from '@/simulation/projection/projectOptimizerResult';
-import type { Track, RosterEntry, ScenarioListEntry } from './types';
+import type { Track, RosterEntry, ScenarioListEntry, ComboCooldownEvent } from './types';
 import type { DurationBarColorPrefs } from '@/simulation/projection/sourceGroupBarColors';
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
@@ -29,6 +29,8 @@ interface SimulationDeps {
   simulationEndline: Ref<number | null>;
   lmdiAttributionMode: Ref<'stacks' | 'applier'>;
   controlledOperatorSegments: ComputedRef<any>;
+  comboCooldownEvents: Ref<ComboCooldownEvent[]>;
+  comboCooldownByActorId: ComputedRef<Record<string, number>>;
   viewDuration: ComputedRef<number>;
   durationBarColor: Ref<DurationBarColorPrefs>;
 }
@@ -50,6 +52,8 @@ export function useTimelineSimulation(deps: SimulationDeps) {
     simulationEndline,
     lmdiAttributionMode,
     controlledOperatorSegments,
+    comboCooldownEvents,
+    comboCooldownByActorId,
     viewDuration,
     durationBarColor,
   } = deps;
@@ -98,6 +102,8 @@ export function useTimelineSimulation(deps: SimulationDeps) {
         endlineTime: scenario.endlineTime,
         lmdiAttributionMode: scenario.lmdiAttributionMode,
         controlledOperatorSegments: scenario.controlledOperatorSegments,
+        comboCooldownEvents: comboCooldownEvents.value,
+        comboCooldownByActorId: comboCooldownByActorId.value,
       },
     );
   });
@@ -158,6 +164,10 @@ export function useTimelineSimulation(deps: SimulationDeps) {
     return optimizerProjection.value.comboWindowLayouts;
   });
 
+  const comboCooldownIntervals = computed(() => {
+    return simulation.value?.comboCooldownIntervals ?? [];
+  });
+
   const requisiteWarnings = computed(() => {
     return optimizerProjection.value.requisiteWarnings;
   });
@@ -187,6 +197,7 @@ export function useTimelineSimulation(deps: SimulationDeps) {
     enemyAfflictionViz,
     operatorEffectLayouts,
     comboWindowLayouts,
+    comboCooldownIntervals,
     requisiteWarnings,
     gaugeSeriesByTrackId,
     timeContext,

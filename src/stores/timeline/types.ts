@@ -160,6 +160,7 @@ export interface ScenarioSnapshot {
   connections?: Connection[];
   cycleBoundaries?: CycleBoundary[];
   switchEvents?: SwitchEvent[];
+  comboCooldownEvents?: ComboCooldownEvent[];
   characterOverrides?: Record<string, unknown>;
   weaponOverrides?: Record<string, unknown>;
   equipmentCategoryOverrides?: Record<string, unknown>;
@@ -240,6 +241,12 @@ export interface TimelineRect {
 export interface SwitchEvent {
   id: string;
   [key: string]: unknown;
+}
+
+export interface ComboCooldownEvent {
+  id: string;
+  time: number;
+  mode: 'ready' | 'cooldown';
 }
 
 export interface CycleBoundary {

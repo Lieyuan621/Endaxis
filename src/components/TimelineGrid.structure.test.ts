@@ -35,3 +35,28 @@ describe('TimelineGrid track stacking', () => {
     expect(selectedLaneRule).not.toContain('z-index');
   });
 });
+
+describe('TimelineGrid combo cooldown controls', () => {
+  test('includes control markers in keyboard deletion and renders runtime cooldown bars', () => {
+    expect(source).toContain('store.selectedComboCooldownEventId');
+    expect(source).toContain('comboCooldownIntervalsByTrack');
+    expect(source).toContain('combo-cooldown-bar');
+  });
+
+  test('places control icons at the top of their guide lines', () => {
+    const markerRule = source.match(/\.combo-cooldown-marker\s*\{([^}]*)\}/)?.[1];
+
+    expect(markerRule).toBeDefined();
+    expect(markerRule).toContain('top: 0');
+  });
+});
+
+describe('TimelineGrid simulation range controls', () => {
+  test('includes selected start and end lines in keyboard deletion', () => {
+    const selectionGuard = source.match(/const hasSelection\s*=([\s\S]*?);/)?.[1];
+
+    expect(selectionGuard).toBeDefined();
+    expect(selectionGuard).toContain('store.isStartlineSelected');
+    expect(selectionGuard).toContain('store.isEndlineSelected');
+  });
+});

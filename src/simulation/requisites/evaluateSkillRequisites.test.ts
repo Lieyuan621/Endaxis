@@ -4,6 +4,8 @@ import { compileScenario } from '@/simulation/compiler/compileScenario';
 import type { Action, ScenarioData, ScenarioTrack } from '@/simulation/compiler/types';
 import { simulate } from '@/simulation/simulator';
 import type { InitialEffect } from '@/simulation/simulator';
+import { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
+import type { ComboCooldownEvent } from '@/stores/timeline/types';
 
 function createAction(id: string, type: Action['type'], patch: Partial<Action> = {}): Action {
   const startTime = Number(patch.startTime) || 0;
@@ -42,14 +44,22 @@ function createTrack(actions: Action[], id = 'laevatain'): ScenarioTrack {
   };
 }
 
-function run(actions: Action[], trackId = 'laevatain', initialEffects: InitialEffect[] = []) {
+function run(
+  actions: Action[],
+  trackId = 'laevatain',
+  initialEffects: InitialEffect[] = [],
+  comboCooldownEvents: ComboCooldownEvent[] = [],
+  comboCooldownByActorId: Record<string, number> = {},
+) {
   const scenario: ScenarioData = {
     tracks: [createTrack(actions, trackId)],
     connections: [],
   };
   const { timeline, teamConfig, enemyConfig, actors } = compileScenario(scenario);
-  return simulate(timeline, teamConfig, enemyConfig, actors, undefined, undefined, {
+  return simulate(timeline, teamConfig, enemyConfig, actors, new TriggerRegistry([]), undefined, {
     initialEffects,
+    comboCooldownEvents,
+    comboCooldownByActorId,
   });
 }
 
@@ -119,7 +129,147 @@ const ULTIMATE_COOLDOWN_REQUISITE = {
   messageKey: 'actionItem.requisiteTitle.ultimateSkillOnCooldown',
 };
 
+const COMBO_COOLDOWN_REQUISITE = {
+  id: 'combo-cooldown-ready',
+  condition: { kind: 'comboNotOnCooldown' as const },
+};
+
 describe('evaluateSkillRequisites', () => {
+  it('lets a forced-ready event end the current combo cooldown', () => {
+    const result = run(
+      [
+        createAction('combo', 'comboSkill', { startTime: 1, cooldown: 10 }),
+        createAction('check', 'basicAttack', {
+          startTime: 6,
+          requisites: [COMBO_COOLDOWN_REQUISITE],
+        }),
+      ],
+      'laevatain',
+      [],
+      [{ id: 'ready', time: 5, mode: 'ready' }],
+    );
+
+    expect(
+      result.simLog.some(
+        entry =>
+          entry.type === 'ACTION_REQUISITE_FAILED' && entry.payload.actionId === 'check_inst',
+      ),
+    ).toBe(false);
+    expect(result.comboCooldownIntervals).toContainEqual(
+      expect.objectContaining({
+        actorId: 'laevatain',
+        start: 1,
+        end: 5,
+        forced: false,
+      }),
+    );
+  });
+
+  it('starts the configured combo cooldown for every actor', () => {
+    const result = run(
+      [
+        createAction('blocked', 'basicAttack', {
+          startTime: 5,
+          requisites: [COMBO_COOLDOWN_REQUISITE],
+        }),
+        createAction('ready', 'basicAttack', {
+          startTime: 12,
+          requisites: [COMBO_COOLDOWN_REQUISITE],
+        }),
+      ],
+      'laevatain',
+      [],
+      [{ id: 'cooldown', time: 1, mode: 'cooldown' }],
+      { laevatain: 10 },
+    );
+
+    const failures = result.simLog.filter(entry => entry.type === 'ACTION_REQUISITE_FAILED');
+    expect(failures.map(entry => entry.payload.actionId)).toContain('blocked_inst');
+    expect(failures.map(entry => entry.payload.actionId)).not.toContain('ready_inst');
+  });
+
+  it('applies a same-frame control event before the combo action', () => {
+    const result = run(
+      [
+        createAction('combo', 'comboSkill', { startTime: 1, cooldown: 10 }),
+        createAction('check', 'basicAttack', {
+          startTime: 2,
+          requisites: [COMBO_COOLDOWN_REQUISITE],
+        }),
+      ],
+      'laevatain',
+      [],
+      [{ id: 'ready', time: 1, mode: 'ready' }],
+    );
+
+    expect(result.simLog).toContainEqual(
+      expect.objectContaining({
+        type: 'ACTION_REQUISITE_FAILED',
+        payload: expect.objectContaining({ actionId: 'check_inst' }),
+      }),
+    );
+  });
+
+  it('draws and truncates a forced combo cooldown interval', () => {
+    const result = run(
+      [],
+      'laevatain',
+      [],
+      [
+        { id: 'cooldown', time: 1, mode: 'cooldown' },
+        { id: 'ready', time: 5, mode: 'ready' },
+      ],
+      { laevatain: 10 },
+    );
+
+    expect(result.comboCooldownIntervals).toEqual([
+      expect.objectContaining({
+        actorId: 'laevatain',
+        start: 1,
+        end: 5,
+        forced: true,
+      }),
+    ]);
+  });
+
+  it('keeps a second-stage combo cooldown after its opening hit clears the first stage', () => {
+    const result = run([
+      createAction('combo-stage-1', 'comboSkill', { startTime: 1, cooldown: 10 }),
+      createAction('combo-stage-2', 'comboSkill', {
+        startTime: 2,
+        cooldown: 10,
+        hits: [
+          {
+            id: 'combo-stage-2-hit',
+            offset: 0,
+            multiplier: 0,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [
+              {
+                kind: 'cooldownReductionPercent',
+                skillTypes: 'comboSkill',
+                target: 'self',
+                value: 100,
+              },
+            ],
+          },
+        ],
+      }),
+    ]);
+
+    expect(result.comboCooldownIntervals).toEqual([
+      expect.objectContaining({
+        actorId: 'laevatain',
+        sourceActionId: 'combo-stage-2_inst',
+        start: 2,
+        end: 12,
+        forced: false,
+      }),
+    ]);
+  });
+
   it('logs unmet ultimate-enhancement release prerequisites', () => {
     const result = run([
       createAction('enhanced', 'battleSkill', {
