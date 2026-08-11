@@ -5,7 +5,7 @@ const sheet: GearPieceSheet = {
   icon: '/equipment/wisd01/item_equip_t2_suit_wisd01_edc_02.webp',
   slotType: 'kit',
   levelRequirement: 36,
-  defense: 10,
+  defense: 10.8,
   skill1: {
     effects: [
       {
@@ -22,13 +22,13 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'dmgBonus', elements: 'cryo' },
         target: 'self',
-        value: 11.7,
+        value: 11.666666667,
       },
       {
         kind: 'status',
         stat: { modifier: 'dmgBonus', elements: 'electric' },
         target: 'self',
-        value: 11.7,
+        value: 11.666666667,
       },
     ],
   },

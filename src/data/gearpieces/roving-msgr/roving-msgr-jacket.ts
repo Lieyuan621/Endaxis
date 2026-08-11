@@ -5,7 +5,7 @@ const sheet: GearPieceSheet = {
   icon: '/equipment/agi01/item_equip_t2_suit_agi01_body_01.webp',
   slotType: 'armor',
   levelRequirement: 36,
-  defense: 28,
+  defense: 28.8,
   skill1: {
     effects: [
       {
@@ -27,7 +27,14 @@ const sheet: GearPieceSheet = {
     ],
   },
   skill3: {
-    effects: [{ kind: 'status', stat: { modifier: 'atkFlat' }, target: 'self', value: 16 }],
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'atkFlat' },
+        target: 'self',
+        value: 16.187704478,
+      },
+    ],
   },
   setSlug: 'roving-msgr',
 };

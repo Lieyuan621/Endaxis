@@ -5,7 +5,7 @@ const sheet: GearPieceSheet = {
   icon: '/equipment/agi01/item_equip_t2_suit_agi01_hand_01.webp',
   slotType: 'gloves',
   levelRequirement: 36,
-  defense: 21,
+  defense: 21.6,
   skill1: {
     effects: [
       {
@@ -32,7 +32,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'dmgBonus', elements: 'physical' },
         target: 'self',
-        value: 9.7,
+        value: 9.722222222,
       },
     ],
   },

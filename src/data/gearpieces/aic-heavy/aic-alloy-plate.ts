@@ -5,7 +5,7 @@ const sheet: GearPieceSheet = {
   icon: '/equipment/stragi01/item_equip_t1_suit_stragi01_edc_02.webp',
   slotType: 'kit',
   levelRequirement: 28,
-  defense: 8,
+  defense: 8.4,
   skill1: {
     effects: [
       {
@@ -22,7 +22,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'protection' },
         target: 'self',
-        value: 7.5,
+        value: 7.49306198,
       },
     ],
   },

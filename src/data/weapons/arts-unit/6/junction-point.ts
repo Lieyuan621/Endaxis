@@ -21,7 +21,9 @@ const sheet: WeaponSheet = {
         kind: 'status',
         stat: { modifier: 'ultimateGainEfficiency' },
         target: 'self',
-        value: [6, 10.7, 15.5, 20.2, 25, 29.8, 34.5, 39.3, 46.4],
+        value: [
+          5.952381, 10.714286, 15.476191, 20.238096, 25, 29.761904, 34.52381, 39.285713, 46.42857,
+        ],
       },
     ],
   },

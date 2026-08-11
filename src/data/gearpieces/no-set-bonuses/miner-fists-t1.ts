@@ -28,7 +28,12 @@ const sheet: GearPieceSheet = {
   },
   skill3: {
     effects: [
-      { kind: 'status', stat: { modifier: 'ultimateGainEfficiency' }, target: 'self', value: 15.5 },
+      {
+        kind: 'status',
+        stat: { modifier: 'ultimateGainEfficiency' },
+        target: 'self',
+        value: 15.476190476,
+      },
     ],
   },
   setSlug: 'no-set-bonuses',

@@ -21,7 +21,7 @@ const sheet: WeaponSheet = {
         kind: 'status',
         stat: { modifier: 'artsIntensity' },
         target: 'self',
-        value: [8, 14, 21, 27, 34, 40, 46, 53, 62],
+        value: [8, 14, 20, 27, 33, 40, 46, 52, 62],
       },
     ],
   },

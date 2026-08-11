@@ -22,7 +22,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'protection' },
         target: 'self',
-        value: [17.8, 19.2, 20.6, 21.9],
+        value: [17.763157895, 19.19844861, 20.584498094, 21.923797626],
       },
     ],
   },

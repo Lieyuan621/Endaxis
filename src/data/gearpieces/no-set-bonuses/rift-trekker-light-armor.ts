@@ -16,7 +16,16 @@ const sheet: GearPieceSheet = {
       },
     ],
   },
-  skill2: {},
+  skill2: {
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'heal' },
+        target: 'self',
+        value: [10.8, 11.88, 12.96, 14.04],
+      },
+    ],
+  },
   setSlug: 'no-set-bonuses',
 };
 

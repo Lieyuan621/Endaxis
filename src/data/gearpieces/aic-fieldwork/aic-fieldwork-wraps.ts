@@ -32,7 +32,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'attributePercent', attribute: 'sub' },
         target: 'self',
-        value: [14.8, 16.2, 17.7, 19.2],
+        value: [14.751270852, 16.226397937, 17.701525023, 19.176652108],
       },
     ],
   },

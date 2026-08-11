@@ -32,7 +32,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'susceptibility' },
         target: 'self',
-        value: [41.4, 45.5, 49.7, 53.8],
+        value: [41.4, 45.54, 49.68, 53.82],
       },
     ],
   },
