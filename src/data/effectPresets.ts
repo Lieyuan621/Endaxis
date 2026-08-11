@@ -230,6 +230,8 @@ export function getEffectPresetKey(effect: Effect): string {
       return effect.id ?? 'spReturn';
     case 'ultEnergyGain':
       return effect.id ?? 'ultEnergyGain';
+    case 'skillCooldown':
+      return effect.id ?? effect.cooldownKey;
     case 'consume':
       return effect.id ?? 'consume';
   }
@@ -264,6 +266,7 @@ export function getEffectIcon(effect: Effect, currentStacks?: number): string {
     case 'spRecovery':
     case 'spReturn':
     case 'ultEnergyGain':
+    case 'skillCooldown':
     case 'consume':
       return FALLBACK_ICON;
   }
@@ -294,6 +297,7 @@ export function resolveEffectDefaults(effect: Effect | ResolvedEffect): Effect |
     case 'spReturn':
     case 'ultEnergyGain':
     case 'damageHit':
+    case 'skillCooldown':
     case 'consume':
     case 'cooldownReductionFlat':
     case 'cooldownReductionPercent':

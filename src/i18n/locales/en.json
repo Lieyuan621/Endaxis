@@ -1273,6 +1273,9 @@
     "artsIntensityDetail": "{value} pts",
     "effectiveness": "Effectiveness"
   },
+  "skillNames": {
+    "stanceTermination": "End Stance"
+  },
   "actionItem": {
     "damageHitTooltip": "Damage: {damage}",
     "lockedTitle": "Locked",
@@ -1287,6 +1290,10 @@
       "enhancedBasicDuringUltimate": "Use enhanced basic attacks during the ultimate duration",
       "enhancedBattleDuringUltimate": "Use enhanced battle skills during the ultimate duration",
       "enhancedComboDuringUltimate": "Use enhanced combo skills during the ultimate duration",
+      "liinoStanceTerminationOnly": "End Stance can only be used during Vocalist or Cosmovoice Stance",
+      "liinoUseStanceTermination": "Use End Stance while a stance is active",
+      "battleSkillOnCooldown": "Battle skill is still on cooldown",
+      "ultimateSkillOnCooldown": "Ultimate is still on cooldown",
       "arcaneUltimateArcanaRequired": "Cannot release ultimate. Perform two heavy attacks or finishers first"
     }
   }

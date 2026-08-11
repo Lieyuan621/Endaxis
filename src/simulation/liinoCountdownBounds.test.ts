@@ -83,8 +83,22 @@ function skillAction(
     triggerWindow: 0,
     animationTime: 0,
     isDisabled: false,
+    requisites: sheetSkill.requisites,
     hits,
   } as Action;
+}
+
+function stanceTerminationAction(startTime: number): Action {
+  const skill = liinoSheet.combatSkills.battleSkill.subSkills?.find(
+    entry => entry.id === 'liino-stance-termination',
+  );
+  if (!skill) throw new Error('Liino stance termination skill is missing');
+
+  return {
+    ...skillAction('end-stance', 'battleSkill', skill, startTime),
+    skillId: 'liino-stance-termination',
+    duration: 0.2,
+  };
 }
 
 function createTrack(id: string, actions: Action[]): ScenarioTrack {
@@ -251,5 +265,86 @@ describe('Liino countdown loops are bounded by their stance', () => {
       e => e.type === 'DAMAGE_HIT' && Math.abs(e.time - stanceEnd) < 1e-6,
     );
     expect(bursts).toHaveLength(1);
+  });
+
+  it('ends vocalist stance and applies a 3s battle-skill cooldown', () => {
+    const result = run(
+      [
+        skillAction('bs', 'battleSkill', liinoSheet.combatSkills.battleSkill, 1),
+        stanceTerminationAction(5),
+      ],
+      20,
+    );
+    const cooldown = (result.simLog as any[]).find(
+      entry =>
+        entry.type === 'SKILL_COOLDOWN_APPLY' && entry.payload.sourceActionId === 'end-stance_inst',
+    );
+    const consumedStances = result.operatorLog.filter(
+      (entry: any) =>
+        entry.type === 'OPERATOR_EFFECT_EXPIRE' &&
+        entry.id === 'liino-vocalist-stance' &&
+        entry.consumed,
+    );
+
+    expect(cooldown).toMatchObject({
+      time: 5,
+      payload: {
+        actorId: 'liino',
+        cooldownKey: 'liino-battle-skill',
+        duration: 3,
+        expiresAt: 8,
+      },
+    });
+    expect(consumedStances.map((entry: any) => entry.targetTrackId).sort()).toEqual([
+      'beta',
+      'liino',
+    ]);
+  });
+
+  it('ends cosmovoice stance without applying battle-skill cooldown', () => {
+    const result = run(
+      [
+        skillAction('ult', 'ultimate', liinoSheet.combatSkills.ultimate, 1),
+        stanceTerminationAction(5),
+      ],
+      20,
+    );
+    const cooldowns = (result.simLog as any[]).filter(
+      entry => entry.type === 'SKILL_COOLDOWN_APPLY',
+    );
+    const consumedStances = result.operatorLog.filter(
+      (entry: any) =>
+        entry.type === 'OPERATOR_EFFECT_EXPIRE' &&
+        entry.id === 'liino-cosmovoice-stance' &&
+        entry.consumed,
+    );
+
+    expect(cooldowns).toHaveLength(0);
+    expect(consumedStances.map((entry: any) => entry.targetTrackId).sort()).toEqual([
+      'beta',
+      'liino',
+    ]);
+  });
+
+  it('warns before the vocalist termination cooldown ends and allows the skill afterward', () => {
+    const runWithRetry = (retryTime: number) =>
+      run(
+        [
+          skillAction('bs', 'battleSkill', liinoSheet.combatSkills.battleSkill, 1),
+          stanceTerminationAction(5),
+          skillAction('retry', 'battleSkill', liinoSheet.combatSkills.battleSkill, retryTime),
+        ],
+        20,
+      );
+    const cooldownFailures = (result: any) =>
+      (result.simLog as any[]).filter(
+        entry =>
+          entry.type === 'ACTION_REQUISITE_FAILED' &&
+          entry.payload.actionId === 'retry_inst' &&
+          entry.payload.requisiteId === 'liino-battle-skill-cooldown-ready',
+      );
+
+    expect(cooldownFailures(runWithRetry(6))).toHaveLength(1);
+    expect(cooldownFailures(runWithRetry(8.1))).toHaveLength(0);
   });
 });

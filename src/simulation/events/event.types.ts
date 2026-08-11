@@ -256,6 +256,17 @@ export type SimLogEntry =
       }
     >
   | SimLogEntryBase<
+      'SKILL_COOLDOWN_APPLY',
+      {
+        actorId: string;
+        cooldownKey: string;
+        duration: number;
+        expiresAt: number;
+        sourceActionId?: string;
+        sourceSkillId?: string;
+      }
+    >
+  | SimLogEntryBase<
       'CD_REDUCTION',
       {
         actorId: string;

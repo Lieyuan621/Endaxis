@@ -223,6 +223,25 @@ const effectiveUltimateCooldown = computed(() => {
   return compiled != null ? Math.max(0, compiled - simCdReduction.value) : 0;
 });
 
+const SKILL_COOLDOWN_COLOR = '#ff6fae';
+
+const appliedSkillCooldown = computed(() => {
+  const log = store.simLog || store.simulation?.simLog || [];
+  const entry = log.find(
+    item =>
+      item.type === 'SKILL_COOLDOWN_APPLY' &&
+      item.payload?.sourceActionId === props.action.instanceId,
+  );
+  if (!entry) return null;
+
+  const startTime = Number(entry.time);
+  const expiresAt = Number(entry.payload?.expiresAt);
+  if (!Number.isFinite(startTime) || !Number.isFinite(expiresAt) || expiresAt <= startTime) {
+    return null;
+  }
+  return { startTime, duration: expiresAt - startTime };
+});
+
 /** Add a warning mark for any unmet prerequisites. */
 const requisiteWarning = computed(() => {
   return store.requisiteWarnings?.get(props.action.instanceId) ?? null;
@@ -405,7 +424,7 @@ function getTrackingBarTransform(leftPx, rowIndex) {
   return `translate(${layout.bar.leftEdge + leftPx}px, ${layout.bar.relativeY + TRACKING_BAR_ROW_GAP * rowIndex}px)`;
 }
 
-function getCooldownStyle(cooldown, rowIndex) {
+function getCooldownStyle(cooldown, rowIndex, startOverride = null) {
   const layout = actionLayout.value;
   if (!layout) return { display: 'none' };
 
@@ -415,8 +434,8 @@ function getCooldownStyle(cooldown, rowIndex) {
 
   // Ultimate CD starts after the enhancement window (incl. Laevatain extensions),
   // not at cast / animation end. Non-enhanced ultimates still start after animation.
-  let cdStart = start;
-  if (props.action.type === 'ultimate') {
+  let cdStart = Number.isFinite(startOverride) ? startOverride : start;
+  if (!Number.isFinite(startOverride) && props.action.type === 'ultimate') {
     const metrics = store.getUltimateEnhancementMetrics?.(props.action.instanceId);
     if (metrics?.finalEnd != null) {
       cdStart = metrics.finalEnd;
@@ -441,6 +460,17 @@ const cdStyle = computed(() => {
 
 const ultCdStyle = computed(() => {
   return getCooldownStyle(effectiveUltimateCooldown.value, 1);
+});
+
+const appliedSkillCooldownRow = computed(() => {
+  if (props.action.type === 'ultimate') return 3;
+  return effectiveComboCooldown.value > 0 ? 1 : 0;
+});
+
+const appliedSkillCooldownStyle = computed(() => {
+  const cooldown = appliedSkillCooldown.value;
+  if (!cooldown) return { display: 'none' };
+  return getCooldownStyle(cooldown.duration, appliedSkillCooldownRow.value, cooldown.startTime);
 });
 
 // 强化时间样式
@@ -518,7 +548,10 @@ const customBarsToRender = computed(() => {
   const bars = props.action.customBars || [];
   const resolvedAction = store.compiledTimeline?.actionMap?.get(props.action.instanceId);
   const base = Number(resolvedAction?.realStartTime ?? props.action.startTime) || 0;
-  const baseRow = props.action.type === 'ultimate' ? 3 : effectiveComboCooldown.value > 0 ? 1 : 0;
+  let baseRow = props.action.type === 'ultimate' ? 3 : effectiveComboCooldown.value > 0 ? 1 : 0;
+  if (appliedSkillCooldown.value) {
+    baseRow = Math.max(baseRow, appliedSkillCooldownRow.value + 1);
+  }
 
   return bars
     .map((bar, index) => {
@@ -771,6 +804,18 @@ function handleActionDragStart(startPos, port) {
           zIndex: 1,
         }"
       ></div>
+    </div>
+
+    <div
+      v-if="showDecorations && !isGhostMode && appliedSkillCooldown"
+      class="cd-bar-container bottom-bar"
+      :style="appliedSkillCooldownStyle"
+    >
+      <div class="cd-line" :style="{ backgroundColor: SKILL_COOLDOWN_COLOR }"></div>
+      <span class="cd-text" :style="{ color: SKILL_COOLDOWN_COLOR }">
+        {{ store.formatTimeLabel(appliedSkillCooldown.duration) }}
+      </span>
+      <div class="cd-end-mark" :style="{ backgroundColor: SKILL_COOLDOWN_COLOR }"></div>
     </div>
 
     <div

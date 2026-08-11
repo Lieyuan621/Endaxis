@@ -5199,7 +5199,6 @@ body.capture-mode .davinci-range {
 .track-row.is-active-drop .track-lane {
   border-top: 2px dashed #c0c0c0;
   border-bottom: 2px dashed #c0c0c0;
-  z-index: 1;
 }
 
 .actions-container {

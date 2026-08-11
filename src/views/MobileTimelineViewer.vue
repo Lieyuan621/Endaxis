@@ -193,6 +193,7 @@ const pxPerSecond = computed(() => {
 });
 
 const COLLAPSED_PREP_PX = 18;
+const SKILL_COOLDOWN_COLOR = '#ff6fae';
 
 function toRgba(color, alpha) {
   const a = Number(alpha);
@@ -1480,19 +1481,47 @@ function buildActionCombatEntry(track, action) {
     viz: store.enemyAfflictionViz,
     iconDatabase: store.iconDatabase,
   });
+  const durationBars = badges
+    .filter(badge => !badge.isMarker && badge.duration > 0)
+    .map((badge, index) => ({
+      ...badge,
+      lane: index,
+      color: typeof store.getColor === 'function' ? store.getColor(badge.key) : '#aaaaaa',
+    }));
+  const skillCooldown = skillCooldownBySourceActionId.value.get(action?.instanceId);
+  if (skillCooldown) {
+    durationBars.push({
+      id: `skill-cooldown-${action.instanceId}`,
+      key: 'skillCooldown',
+      startTime: skillCooldown.startTime,
+      endTime: skillCooldown.expiresAt,
+      duration: skillCooldown.expiresAt - skillCooldown.startTime,
+      lane: durationBars.length,
+      color: SKILL_COOLDOWN_COLOR,
+    });
+  }
+
   return {
     action,
     badges,
     freezeRegion: getActionFreezeRegion(action),
-    durationBars: badges
-      .filter(badge => !badge.isMarker && badge.duration > 0)
-      .map((badge, index) => ({
-        ...badge,
-        lane: index,
-        color: typeof store.getColor === 'function' ? store.getColor(badge.key) : '#aaaaaa',
-      })),
+    durationBars,
   };
 }
+
+const skillCooldownBySourceActionId = computed(() => {
+  const result = new Map();
+  for (const entry of Array.isArray(store.simLog) ? store.simLog : []) {
+    if (entry?.type !== 'SKILL_COOLDOWN_APPLY') continue;
+    const actionId = String(entry.payload?.sourceActionId || '').trim();
+    const startTime = Number(entry.time);
+    const expiresAt = Number(entry.payload?.expiresAt);
+    if (!actionId || !Number.isFinite(startTime) || !Number.isFinite(expiresAt)) continue;
+    if (expiresAt <= startTime) continue;
+    result.set(actionId, { startTime, expiresAt });
+  }
+  return result;
+});
 
 /** Memoized per-track action entries so scroll/render does not rebuild combat badges. */
 const visibleActionEntriesByTrackId = computed(() => {

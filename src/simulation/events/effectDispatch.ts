@@ -32,6 +32,7 @@ import type {
 import type { SimulationContext } from '@/simulation/engine/SimulationContext';
 import { resolveEffectDefaults, resolveEffectLifecycle } from '@/data/effectPresets';
 import type { ResolvedAction, ActorStats } from '@/simulation/compiler/types';
+import { isUltimateLikeAction } from '@/simulation/compiler/types';
 import { computeScalingBasis } from '@/data/stats';
 import { computeStats } from '@/data/stats/computeStats';
 import { resolveStatAttributes } from '@/data/collect';
@@ -299,8 +300,35 @@ export function evaluateEffectCondition(
     const cooldownEnd = startTime + cd - cdReduction;
     return time >= cooldownEnd;
   }
+  if (cond.kind === 'ultimateCooldownReady') {
+    let lastUltimate: ResolvedAction | undefined;
+    for (const action of ctx.getAllActions()) {
+      if (
+        action.id === actionId ||
+        action.trackId !== sourceTrackId ||
+        !isUltimateLikeAction(action.node) ||
+        action.node.isDisabled ||
+        action.realStartTime > time
+      ) {
+        continue;
+      }
+      if (!lastUltimate || action.realStartTime > lastUltimate.realStartTime) {
+        lastUltimate = action;
+      }
+    }
+    if (!lastUltimate) return true;
+
+    const cooldown = Number(lastUltimate.node.cooldown) || 0;
+    if (cooldown <= 0) return true;
+    const cooldownStart = ctx.getActionCooldownStart(lastUltimate);
+    const reduction = ctx.state.getActor(sourceTrackId).getCdReduction(lastUltimate.id);
+    return time >= cooldownStart + Math.max(0, cooldown - reduction) - 1e-6;
+  }
   if (cond.kind === 'ultimateEnhancement') {
     return ctx.isUltimateEnhancementActive(sourceTrackId, time);
+  }
+  if (cond.kind === 'skillCooldownReady') {
+    return ctx.getSkillCooldownEnd(sourceTrackId, cond.cooldownKey, time) <= time;
   }
   if (cond.kind === 'enemyStaggered') {
     return ctx.state.enemy.isBroken(time);
@@ -1176,6 +1204,14 @@ export function dispatchSingleActorEffect(
     recipientTrackIds: dc.recipientTrackIds,
   };
   const resolveTargets = (e: Effect | ResolvedEffect) => resolveTargetTrackIds(e, targetCtx);
+
+  if (resolved.kind === 'skillCooldown') {
+    const duration = resolveEffectLifecycle(resolved).duration;
+    for (const targetId of resolveTargets(resolved)) {
+      ctx.applySkillCooldown(targetId, resolved.cooldownKey, time, duration, actionId, skillId);
+    }
+    return;
+  }
 
   // ── cooldownReduction ──────────────────────────────────────────────────
   if (resolved.kind === 'cooldownReductionFlat' || resolved.kind === 'cooldownReductionPercent') {

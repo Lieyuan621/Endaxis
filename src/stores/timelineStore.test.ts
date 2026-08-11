@@ -159,6 +159,46 @@ describe('timeline skill library editing', () => {
     ).toBe(true);
   });
 
+  it('exposes Liino stance termination as a zero-cost short battle-skill action', async () => {
+    setLocale('zh-CN');
+    const store = useTimelineStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'liino');
+    store.selectTrack(0);
+
+    const stanceTermination = store.activeSkillLibrary.find(
+      (skill: any) => skill.skillKey === 'liino-stance-termination',
+    ) as any;
+    const battleSkill = store.activeSkillLibrary.find(
+      (skill: any) => skill.skillKey === 'battleSkill',
+    ) as any;
+    const ultimate = store.activeSkillLibrary.find(
+      (skill: any) => skill.skillKey === 'ultimate',
+    ) as any;
+
+    expect(stanceTermination).toMatchObject({
+      type: 'battleSkill',
+      skillId: 'liino-stance-termination',
+      name: '姿态中止',
+      duration: 0.2,
+      spCost: 0,
+      gaugeGain: 0,
+      teamGaugeGain: 0,
+    });
+    expect(stanceTermination.requisites).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'liino-stance-termination-active' })]),
+    );
+    expect(battleSkill.requisites).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'liino-battle-skill-cooldown-ready' }),
+      ]),
+    );
+    expect(ultimate.requisites).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'ultimate-cooldown-ready' })]),
+    );
+  });
+
   it('toggles multiple actions through the shared action selection path', () => {
     const store = useTimelineStore();
 

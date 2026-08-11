@@ -1273,6 +1273,9 @@
     "artsIntensityDetail": "{value} 点",
     "effectiveness": "异常效能"
   },
+  "skillNames": {
+    "stanceTermination": "姿态中止"
+  },
   "actionItem": {
     "damageHitTooltip": "伤害: {damage}",
     "lockedTitle": "位置已锁定",
@@ -1287,6 +1290,10 @@
       "enhancedBasicDuringUltimate": "终结技持续期间应释放强化普攻",
       "enhancedBattleDuringUltimate": "终结技持续期间应释放强化战技",
       "enhancedComboDuringUltimate": "终结技持续期间应释放强化连携",
+      "liinoStanceTerminationOnly": "只能在演唱姿态或高歌姿态期间释放姿态中止",
+      "liinoUseStanceTermination": "姿态持续期间应使用姿态中止",
+      "battleSkillOnCooldown": "战技仍在冷却",
+      "ultimateSkillOnCooldown": "终结技仍在冷却",
       "arcaneUltimateArcanaRequired": "无法释放终结技，需进行两次重击或处决"
     }
   }

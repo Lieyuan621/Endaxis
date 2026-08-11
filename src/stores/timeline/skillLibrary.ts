@@ -212,6 +212,10 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       if (isStandard) {
         return getI18nSkillType(skill.type || 'unknown');
       }
+      const localNameKey = skill?.name ? `skillNames.${skill.name}` : '';
+      if (localNameKey && i18n.global.te(localNameKey)) {
+        return String(i18n.global.t(localNameKey));
+      }
       if (!isStandard && skill?.skillKey) {
         return getOperatorSubSkillName(activeChar.id, skill.skillKey, undefined, skill?.name);
       }
@@ -236,7 +240,18 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       const skillKey = skill.skillKey || skill.type;
       const cooldown = resolveLevelNumber(skill?.cooldown, levelIndex, 0);
       const segmentData = buildSegmentModels(skillIdBase, skill, levelIndex);
-      const skillRequisites = Array.isArray(skill.requisites) ? skill.requisites : [];
+      const authoredRequisites = Array.isArray(skill.requisites) ? skill.requisites : [];
+      const ultimateCooldownRequisite = {
+        id: 'ultimate-cooldown-ready',
+        condition: { kind: 'ultimateCooldownReady' },
+        messageKey: 'actionItem.requisiteTitle.ultimateSkillOnCooldown',
+      };
+      const skillRequisites =
+        skill.type === 'ultimate' &&
+        cooldown > 0 &&
+        !authoredRequisites.some(item => item?.id === ultimateCooldownRequisite.id)
+          ? [...authoredRequisites, ultimateCooldownRequisite]
+          : authoredRequisites;
       const mergeRequisites = (segmentInfo?: Record<string, unknown> | null) => {
         const segmentRequisites = Array.isArray(segmentInfo?.requisites)
           ? segmentInfo.requisites
@@ -250,7 +265,14 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
             ? Number(skill?.ultimateEnergyGain ?? DEFAULT_COMBO_SKILL_UE) || 0
             : Number(skill?.ultimateEnergyGain) || 0;
       const baseDefaults = {
-        spCost: skill.type === 'battleSkill' ? systemConstants.value.skillSpCostDefault : 0,
+        spCost:
+          skill.type === 'battleSkill'
+            ? resolveLevelNumber(
+                skill?.spCost,
+                levelIndex,
+                systemConstants.value.skillSpCostDefault,
+              )
+            : 0,
         gaugeCost: skill.type === 'ultimate' ? Number(skill?.ultimateEnergyCost) || 100 : 0,
         gaugeGain: gaugeGainDefault,
         teamGaugeGain: skill.type === 'battleSkill' ? gaugeGainDefault : 0,

@@ -30,6 +30,7 @@ export class SimulationEngine {
   private operatorLogEntries: OperatorStateEvent[] = [];
   private ultimateEnergyBlockWindowsByActor?: Map<string, UltimateEnergyBlockWindow[]>;
   private enhancementBoundStatusesByActor?: Map<string, Set<string>>;
+  private skillCooldownEnds = new Map<string, number>();
 
   /** Status keys that need consumedStacks written at apply time (auto-inferred from readConsumedStacks). */
   consumedStacksWriteKeys = new Set<string>();
@@ -126,6 +127,42 @@ export class SimulationEngine {
 
   getAction(id: string) {
     return this.timeline.actionMap.get(id);
+  }
+
+  private getSkillCooldownMapKey(actorId: string, cooldownKey: string) {
+    return `${actorId}:${cooldownKey}`;
+  }
+
+  private getSkillCooldownEnd(actorId: string, cooldownKey: string, time: number) {
+    const end = this.skillCooldownEnds.get(this.getSkillCooldownMapKey(actorId, cooldownKey)) ?? 0;
+    return end > time + 1e-6 ? end : 0;
+  }
+
+  private applySkillCooldown(
+    actorId: string,
+    cooldownKey: string,
+    time: number,
+    duration: number,
+    sourceActionId?: string,
+    sourceSkillId?: string,
+  ) {
+    const safeDuration = Math.max(0, Number(duration) || 0);
+    if (safeDuration <= 0) return;
+    const mapKey = this.getSkillCooldownMapKey(actorId, cooldownKey);
+    const expiresAt = Math.max(this.skillCooldownEnds.get(mapKey) ?? 0, time + safeDuration);
+    this.skillCooldownEnds.set(mapKey, expiresAt);
+    this.simLog.enqueue({
+      type: 'SKILL_COOLDOWN_APPLY',
+      time,
+      payload: {
+        actorId,
+        cooldownKey,
+        duration: expiresAt - time,
+        expiresAt,
+        sourceActionId,
+        sourceSkillId,
+      },
+    });
   }
 
   getSimLog(): SimLogEntry[] {
@@ -324,6 +361,29 @@ export class SimulationEngine {
       if (win) return win.end;
     }
 
+    if (typeof enh === 'string' && enh) {
+      const apply = [...this.operatorLogEntries]
+        .reverse()
+        .find(
+          entry =>
+            entry.type === 'OPERATOR_EFFECT_APPLY' &&
+            entry.id === enh &&
+            entry.targetTrackId === action.trackId &&
+            entry.actionId === action.id,
+        );
+      if (apply?.type === 'OPERATOR_EFFECT_APPLY') {
+        const expiry = this.operatorLogEntries.find(
+          entry =>
+            entry.type === 'OPERATOR_EFFECT_EXPIRE' &&
+            entry.id === enh &&
+            entry.targetTrackId === action.trackId &&
+            entry.time >= apply.time - 1e-6 &&
+            entry.time <= apply.expiresAt + 1e-6,
+        );
+        return expiry?.time ?? apply.expiresAt;
+      }
+    }
+
     const animationTime = Math.max(
       0,
       Number(action.node.animationTime) || Number(action.freezeDuration) || 0,
@@ -393,6 +453,8 @@ export class SimulationEngine {
       isUltimateEnhancementActive: this.isUltimateEnhancementActive.bind(this),
       isUltimateEnergyBlocked: this.isUltimateEnergyBlocked.bind(this),
       getActionCooldownStart: this.getActionCooldownStart.bind(this),
+      getSkillCooldownEnd: this.getSkillCooldownEnd.bind(this),
+      applySkillCooldown: this.applySkillCooldown.bind(this),
       getAllActions: () => this.timeline.actions,
       getBaseStats: (trackId: string) => this.baseStatsByTrack.get(trackId),
       enemyDef: this.enemyDef,

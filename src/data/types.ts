@@ -264,9 +264,20 @@ export interface OperatorComboCdCondition {
   kind: 'comboNotOnCooldown';
 }
 
+/** True when the source operator's previous ultimate has finished cooling down. */
+export interface UltimateCooldownReadyCondition {
+  kind: 'ultimateCooldownReady';
+}
+
 /** True while the source operator is inside its own ultimate enhancement window. */
 export interface UltimateEnhancementCondition {
   kind: 'ultimateEnhancement';
+}
+
+/** True when the named runtime skill-cooldown bucket is not active on the source operator. */
+export interface SkillCooldownReadyCondition {
+  kind: 'skillCooldownReady';
+  cooldownKey: string;
 }
 
 export type EffectCondition =
@@ -276,7 +287,9 @@ export type EffectCondition =
   | OperatorCondition
   | OperatorHpCondition
   | OperatorComboCdCondition
+  | UltimateCooldownReadyCondition
   | UltimateEnhancementCondition
+  | SkillCooldownReadyCondition
   | ActionLinkConsumedCondition
   | NegatedCondition
   | OrCondition;
@@ -530,6 +543,14 @@ export interface CooldownReductionEffect extends EffectBase {
   skillId?: string | string[];
 }
 
+/** Starts or refreshes a runtime cooldown bucket shared by one or more skill actions. */
+export interface SkillCooldownEffect extends EffectBase {
+  kind: 'skillCooldown';
+  cooldownKey: string;
+  duration: Leveled<number>;
+  target?: EffectTarget;
+}
+
 /** Copies a named collected StatEffect and merges override fields over it.
  *  Resolved at collection time — expands into a ResolvedStatEffect.
  *  If the source is not active, produces no effect (silently dropped). */
@@ -672,7 +693,8 @@ export type Effect =
   | ConsumeEffect
   | DerivedEffect
   | OneTimeEffect
-  | CooldownReductionEffect;
+  | CooldownReductionEffect
+  | SkillCooldownEffect;
 
 export function isStatusEffect(
   effect: Effect | ResolvedEffect,
@@ -698,6 +720,7 @@ export function isEnemyEffect(effect: Effect | ResolvedEffect): boolean {
   if (effect.kind === 'damageHit' || effect.kind === 'damageOverTime') return false;
   if (effect.kind === 'cooldownReductionFlat' || effect.kind === 'cooldownReductionPercent')
     return false; // actor-side cooldown reduction
+  if (effect.kind === 'skillCooldown') return false;
   if (effect.kind === 'status') {
     const target = effect.target;
     const scope = typeof target === 'string' ? target : target?.scope;
@@ -845,6 +868,13 @@ export interface ResolvedOneTimeEffect extends ResolvedEffectBase {
   skillId?: string | string[];
 }
 
+export interface ResolvedSkillCooldownEffect extends ResolvedEffectBase {
+  kind: 'skillCooldown';
+  cooldownKey: string;
+  duration: number;
+  target?: EffectTarget;
+}
+
 export type ResolvedEffect =
   | ResolvedStatusEffect
   | ResolvedInflictionEffect
@@ -857,7 +887,8 @@ export type ResolvedEffect =
   | ResolvedSpReturnEffect
   | ResolvedUltimateEnergyGainEffect
   | ResolvedConsumeEffect
-  | ResolvedOneTimeEffect;
+  | ResolvedOneTimeEffect
+  | ResolvedSkillCooldownEffect;
 
 export interface ResolvedTriggerEffect {
   trigger: TriggerEvent;
@@ -891,6 +922,8 @@ export interface CombatSkillEntry {
   effects?: Effect[];
   icon?: string;
   cooldown?: Leveled<number>;
+  /** Explicit SP cost for a battle skill. Omit to use the project default. */
+  spCost?: Leveled<number>;
   ultimateEnergyCost?: number;
   ultimateEnergyGain?: number;
   animationTime?: number;
@@ -979,6 +1012,9 @@ export interface SubSkillEntry {
   effects?: Effect[];
   icon?: string;
   cooldown?: Leveled<number>;
+  /** Explicit SP cost for a battle-skill variant. Omit to use the project default. */
+  spCost?: Leveled<number>;
+  ultimateEnergyGain?: number;
   /** Release-time prerequisites shared by this sub-skill and its segments. */
   requisites?: SkillRequisite[];
 }

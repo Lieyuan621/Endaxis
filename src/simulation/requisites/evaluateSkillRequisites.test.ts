@@ -113,6 +113,12 @@ const YVONNE_OUTSIDE_ULTIMATE_BASIC_REQUISITE = {
   messageKey: 'actionItem.requisiteTitle.enhancedBasicDuringUltimate',
 };
 
+const ULTIMATE_COOLDOWN_REQUISITE = {
+  id: 'ultimate-cooldown-ready',
+  condition: { kind: 'ultimateCooldownReady' as const },
+  messageKey: 'actionItem.requisiteTitle.ultimateSkillOnCooldown',
+};
+
 describe('evaluateSkillRequisites', () => {
   it('logs unmet ultimate-enhancement release prerequisites', () => {
     const result = run([
@@ -423,5 +429,85 @@ describe('evaluateSkillRequisites', () => {
           entry.payload.actionId === 'second-ultimate_inst',
       ),
     ).toBe(false);
+  });
+
+  it('warns while the previous ultimate is cooling down and passes at the boundary', () => {
+    const failuresAt = (retryTime: number) => {
+      const result = run([
+        createAction('first-ultimate', 'ultimate', {
+          startTime: 0,
+          cooldown: 10,
+          animationTime: 1,
+        }),
+        createAction('retry-ultimate', 'ultimate', {
+          startTime: retryTime,
+          cooldown: 10,
+          requisites: [ULTIMATE_COOLDOWN_REQUISITE],
+        }),
+      ]);
+      return result.simLog.filter(
+        entry =>
+          entry.type === 'ACTION_REQUISITE_FAILED' &&
+          entry.payload.actionId === 'retry-ultimate_inst' &&
+          entry.payload.requisiteId === 'ultimate-cooldown-ready',
+      );
+    };
+
+    expect(failuresAt(10.9)).toHaveLength(1);
+    expect(failuresAt(11)).toHaveLength(0);
+  });
+
+  it('starts a status-bound ultimate cooldown when its enhancement is terminated', () => {
+    const failuresAt = (retryTime: number) => {
+      const result = run([
+        createAction('first-ultimate', 'ultimate', {
+          startTime: 0,
+          cooldown: 10,
+          enhancementTime: 'test-ultimate-stance',
+          hits: [
+            {
+              offset: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'test-ultimate-stance',
+                  kind: 'status',
+                  target: 'self',
+                  duration: 20,
+                },
+              ],
+            },
+          ],
+        }),
+        createAction('end-stance', 'battleSkill', {
+          startTime: 5,
+          hits: [
+            {
+              offset: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: 'consume', operatorStatus: 'test-ultimate-stance' }],
+            },
+          ],
+        }),
+        createAction('retry-ultimate', 'ultimate', {
+          startTime: retryTime,
+          cooldown: 10,
+          requisites: [ULTIMATE_COOLDOWN_REQUISITE],
+        }),
+      ]);
+      return result.simLog.filter(
+        entry =>
+          entry.type === 'ACTION_REQUISITE_FAILED' &&
+          entry.payload.actionId === 'retry-ultimate_inst' &&
+          entry.payload.requisiteId === 'ultimate-cooldown-ready',
+      );
+    };
+
+    expect(failuresAt(14.9)).toHaveLength(1);
+    expect(failuresAt(15)).toHaveLength(0);
   });
 });

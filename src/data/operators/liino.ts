@@ -1,4 +1,36 @@
-import type { OperatorSheet } from '../types';
+import type { EffectCondition, OperatorSheet, SkillRequisite } from '../types';
+
+const VOCALIST_STANCE = 'liino-vocalist-stance';
+const COSMOVOICE_STANCE = 'liino-cosmovoice-stance';
+const BATTLE_SKILL_COOLDOWN = 'liino-battle-skill';
+const STANCE_TERMINATION_SKILL = 'liino-stance-termination';
+
+const STANCE_ACTIVE_CONDITION: EffectCondition = {
+  kind: 'or',
+  conditions: [
+    { kind: 'operatorStatus', status: VOCALIST_STANCE },
+    { kind: 'operatorStatus', status: COSMOVOICE_STANCE },
+  ],
+};
+
+const STANCE_TERMINATION_REQUISITE: SkillRequisite = {
+  id: 'liino-stance-termination-active',
+  condition: STANCE_ACTIVE_CONDITION,
+  messageKey: 'actionItem.requisiteTitle.liinoStanceTerminationOnly',
+};
+
+const NORMAL_BATTLE_SKILL_REQUISITES: SkillRequisite[] = [
+  {
+    id: 'liino-battle-skill-outside-stance',
+    condition: { kind: 'not', condition: STANCE_ACTIVE_CONDITION },
+    messageKey: 'actionItem.requisiteTitle.liinoUseStanceTermination',
+  },
+  {
+    id: 'liino-battle-skill-cooldown-ready',
+    condition: { kind: 'skillCooldownReady', cooldownKey: BATTLE_SKILL_COOLDOWN },
+    messageKey: 'actionItem.requisiteTitle.battleSkillOnCooldown',
+  },
+];
 
 const sheet: OperatorSheet = {
   gameId: 'LIINO',
@@ -44,6 +76,7 @@ const sheet: OperatorSheet = {
           trigger: {
             kind: 'onActionStart',
             skillTypes: 'battleSkill',
+            skillId: 'battleSkill',
             triggerScope: 'global',
           },
           effects: [
@@ -92,6 +125,7 @@ const sheet: OperatorSheet = {
           trigger: {
             kind: 'onActionStart',
             skillTypes: 'battleSkill',
+            skillId: 'battleSkill',
           },
           effects: [
             {
@@ -318,6 +352,7 @@ const sheet: OperatorSheet = {
       ],
     },
     battleSkill: {
+      requisites: NORMAL_BATTLE_SKILL_REQUISITES,
       segments: [
         {
           spCost: 25,
@@ -362,7 +397,43 @@ const sheet: OperatorSheet = {
           ],
         },
       ],
+      subSkills: [
+        {
+          id: STANCE_TERMINATION_SKILL,
+          group: 'battleSkill',
+          name: 'stanceTermination',
+          spCost: 0,
+          ultimateEnergyGain: 0,
+          requisites: [STANCE_TERMINATION_REQUISITE],
+          segments: [
+            {
+              duration: 0.2,
+              damageGroups: [],
+            },
+          ],
+        },
+      ],
       triggers: [
+        {
+          trigger: {
+            kind: 'onActionStart',
+            skillId: STANCE_TERMINATION_SKILL,
+          },
+          effects: [
+            {
+              kind: 'skillCooldown',
+              cooldownKey: BATTLE_SKILL_COOLDOWN,
+              duration: 3,
+              target: 'self',
+              condition: { kind: 'operatorStatus', status: VOCALIST_STANCE },
+            },
+            {
+              kind: 'consume',
+              operatorStatus: [VOCALIST_STANCE, COSMOVOICE_STANCE],
+              consumeTarget: 'team',
+            },
+          ],
+        },
         {
           trigger: {
             kind: 'onStatusExpire',

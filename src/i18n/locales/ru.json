@@ -1150,6 +1150,9 @@
     "artsIntensityDetail": "{value} ед.",
     "effectiveness": "Эффективность"
   },
+  "skillNames": {
+    "stanceTermination": "Завершить стойку"
+  },
   "actionItem": {
     "damageHitTooltip": "Урон: {damage}",
     "lockedTitle": "Заблокировано",
@@ -1164,6 +1167,10 @@
       "enhancedBasicDuringUltimate": "Во время действия ультимейта используйте усиленные базовые атаки",
       "enhancedBattleDuringUltimate": "Во время действия ультимейта используйте усиленные боевые навыки",
       "enhancedComboDuringUltimate": "Во время действия ультимейта используйте усиленные комбо-навыки",
+      "liinoStanceTerminationOnly": "Завершение доступно только в стойке вокалистки или космоголоса",
+      "liinoUseStanceTermination": "Во время стойки используйте завершение стойки",
+      "battleSkillOnCooldown": "Боевой навык еще восстанавливается",
+      "ultimateSkillOnCooldown": "Ультимейт еще восстанавливается",
       "arcaneUltimateArcanaRequired": "Нельзя использовать ультимейт: сначала выполните две тяжелые атаки или добивания"
     }
   }

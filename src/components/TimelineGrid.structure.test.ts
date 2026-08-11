@@ -24,3 +24,14 @@ describe('TimelineGrid cursor guide', () => {
     expect(source).toContain('class="cursor-guide__info" :style="cursorGuideInfoStyle"');
   });
 });
+
+describe('TimelineGrid track stacking', () => {
+  test('does not put the selected lane above action decoration layers', () => {
+    const selectedLaneRule = source.match(
+      /\.track-row\.is-active-drop \.track-lane\s*\{([^}]*)\}/,
+    )?.[1];
+
+    expect(selectedLaneRule).toBeDefined();
+    expect(selectedLaneRule).not.toContain('z-index');
+  });
+});

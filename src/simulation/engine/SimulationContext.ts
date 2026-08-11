@@ -49,6 +49,17 @@ export interface SimulationContext {
   isUltimateEnergyBlocked(actorId: string, time: number): boolean;
   /** When an action's skill cooldown window starts (enhancement end for enhanced ultimates). */
   getActionCooldownStart(action: ResolvedAction): number;
+  /** Active runtime cooldown end for a shared skill bucket, or 0 when ready. */
+  getSkillCooldownEnd(actorId: string, cooldownKey: string, time: number): number;
+  /** Start or refresh a shared runtime skill cooldown. */
+  applySkillCooldown(
+    actorId: string,
+    cooldownKey: string,
+    time: number,
+    duration: number,
+    sourceActionId?: string,
+    sourceSkillId?: string,
+  ): void;
   /** Base stat values per track for damage calculation (baseAtk, weaponAtk, attrs, etc.). */
   getBaseStats: (trackId: string) => BaseStatValues | undefined;
   /** Enemy defense value for damage calculation. */
