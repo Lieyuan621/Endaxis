@@ -131,6 +131,38 @@ const expiryOf = (result: any, id: string) =>
   result.operatorLog.find((e: any) => e.type === 'OPERATOR_EFFECT_EXPIRE' && e.id === id)?.time;
 
 describe('Liino countdown loops are bounded by their stance', () => {
+  it.each([
+    {
+      skillType: 'battleSkill' as const,
+      sheetSkill: liinoSheet.combatSkills.battleSkill,
+      stanceId: 'liino-vocalist-stance',
+      expectedValue: 10,
+    },
+    {
+      skillType: 'ultimate' as const,
+      sheetSkill: liinoSheet.combatSkills.ultimate,
+      stanceId: 'liino-cosmovoice-stance',
+      expectedValue: 10,
+    },
+  ])('applies $stanceId as team ATK%', ({ skillType, sheetSkill, stanceId, expectedValue }) => {
+    const result = run([skillAction(skillType, skillType, sheetSkill, 1)], 80);
+    const applies = result.operatorLog.filter(
+      (entry: any) => entry.type === 'OPERATOR_EFFECT_APPLY' && entry.id === stanceId,
+    );
+
+    expect(applies).toEqual(
+      expect.arrayContaining(
+        ['liino', 'beta'].map(targetTrackId =>
+          expect.objectContaining({
+            targetTrackId,
+            stat: { modifier: 'atkPercent' },
+            value: expectedValue,
+          }),
+        ),
+      ),
+    );
+  });
+
   it('terminates with no endline set', () => {
     // The regression: previously this ran until the heap died.
     const result = run([
@@ -154,6 +186,41 @@ describe('Liino countdown loops are bounded by their stance', () => {
       expect(rearms.filter((t: number) => t >= stanceEnd!)).toEqual([]);
       expect(rearms.length).toBeGreaterThan(0);
     }
+  });
+
+  it('ends the vocalist stance on every team recipient when the ultimate starts', () => {
+    const result = run(
+      [
+        skillAction('bs', 'battleSkill', liinoSheet.combatSkills.battleSkill, 1),
+        skillAction('ult', 'ultimate', liinoSheet.combatSkills.ultimate, 10),
+      ],
+      100,
+    );
+    const consumedStances = result.operatorLog.filter(
+      (entry: any) =>
+        entry.type === 'OPERATOR_EFFECT_EXPIRE' &&
+        entry.id === 'liino-vocalist-stance' &&
+        entry.consumed,
+    );
+    const cosmovoiceStart = result.operatorLog.find(
+      (entry: any) =>
+        entry.type === 'OPERATOR_EFFECT_APPLY' && entry.id === 'liino-cosmovoice-stance',
+    )?.time;
+
+    expect(consumedStances.map((entry: any) => entry.targetTrackId).sort()).toEqual([
+      'beta',
+      'liino',
+    ]);
+    expect(cosmovoiceStart).toBeDefined();
+    expect(consumedStances.every((entry: any) => entry.time < cosmovoiceStart)).toBe(true);
+    expect(
+      result.operatorLog.filter(
+        (entry: any) =>
+          entry.type === 'OPERATOR_EFFECT_EXPIRE' &&
+          entry.id === 'liino-vocalist-stance' &&
+          !entry.consumed,
+      ),
+    ).toHaveLength(0);
   });
 
   it('emits 19 heal ticks and 5 damage ticks per battle skill, none at the boundary', () => {

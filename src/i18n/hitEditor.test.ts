@@ -63,10 +63,12 @@ const REQUIRED_GROUPS = {
   ],
 };
 
-/** Anomaly / physical keys share `effects.name` with the rest of the app — no hitEditor copy. */
+/** Runtime effect keys share `effects.name` with the rest of the app — no hitEditor copy. */
 const EFFECT_NAME_KEYS = Object.freeze([
   ...TREAT_AS_REACTION_TYPES,
   ...PHYSICAL_STATUS_TYPES,
+  'vocalistStance',
+  'cosmovoiceStance',
 ]);
 
 describe('hit editor localization', () => {
@@ -152,6 +154,8 @@ describe('hit editor localization', () => {
       crush: '猛击',
       lift: '击飞',
       knockdown: '倒地',
+      vocalistStance: '演唱姿态',
+      cosmovoiceStance: '高歌姿态',
     });
   });
 });

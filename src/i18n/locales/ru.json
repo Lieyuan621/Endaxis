@@ -725,6 +725,8 @@
       "cryo_burst": "Криовзрыв",
       "electric_burst": "Электризация",
       "wolvenBlood": "Волчья кровь",
+      "vocalistStance": "Стойка вокалистки",
+      "cosmovoiceStance": "Стойка космоголоса",
       "default": "По умолчанию",
       "ultEnergyGain": "Получение энергии ульты",
       "spRecovery": "Восстановление SP",
