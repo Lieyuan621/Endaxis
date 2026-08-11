@@ -28,7 +28,12 @@ const sheet: GearPieceSheet = {
   },
   skill3: {
     effects: [
-      { kind: 'status', stat: { modifier: 'ultimateGainEfficiency' }, target: 'self', value: 8.8 },
+      {
+        kind: 'status',
+        stat: { modifier: 'ultimateGainEfficiency' },
+        target: 'self',
+        value: 8.75,
+      },
     ],
   },
   setSlug: 'aburreys-legacy',

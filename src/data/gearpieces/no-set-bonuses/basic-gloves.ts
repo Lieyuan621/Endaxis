@@ -27,7 +27,14 @@ const sheet: GearPieceSheet = {
     ],
   },
   skill3: {
-    effects: [{ kind: 'status', stat: { modifier: 'flatHp' }, target: 'self', value: 77 }],
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'flatHp' },
+        target: 'self',
+        value: 77.212286977,
+      },
+    ],
   },
   setSlug: 'no-set-bonuses',
 };

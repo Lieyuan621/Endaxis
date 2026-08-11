@@ -22,7 +22,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'dmgBonus', skillTypes: 'basicAttack' },
         target: 'self',
-        value: [14.4, 15.8, 17.3, 18.7],
+        value: [14.4, 15.84, 17.28, 18.72],
       },
     ],
   },

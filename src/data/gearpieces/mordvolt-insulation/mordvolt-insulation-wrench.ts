@@ -5,7 +5,7 @@ const sheet: GearPieceSheet = {
   icon: '/equipment/wisd01/item_equip_t2_suit_wisd01_edc_01.webp',
   slotType: 'kit',
   levelRequirement: 36,
-  defense: 10,
+  defense: 10.8,
   skill1: {
     effects: [
       {

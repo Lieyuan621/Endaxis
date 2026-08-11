@@ -21,7 +21,10 @@ const sheet: WeaponSheet = {
         kind: 'status',
         stat: { modifier: 'dmgBonus', elements: 'electric' },
         target: 'self',
-        value: [4.4, 8, 11.6, 15.1, 18.7, 22.2, 25.8, 29.3, 34.7],
+        value: [
+          4.4444446, 8, 11.5555555, 15.111111, 18.666667, 22.222222, 25.777778, 29.333332,
+          34.666666,
+        ],
       },
     ],
   },

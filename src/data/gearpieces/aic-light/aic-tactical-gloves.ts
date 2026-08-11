@@ -5,7 +5,7 @@ const sheet: GearPieceSheet = {
   icon: '/equipment/wisdwill01/item_equip_t1_suit_wisdwill01_hand_01.webp',
   slotType: 'gloves',
   levelRequirement: 28,
-  defense: 16,
+  defense: 16.8,
   skill1: {
     effects: [
       {

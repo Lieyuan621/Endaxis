@@ -32,7 +32,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'dmgBonus', elements: ['heat', 'cryo', 'electric', 'nature'] },
         target: 'self',
-        value: [15.5, 17.1, 18.6, 20.2],
+        value: [15.526315789, 17.078947368, 18.631578947, 20.184210526],
       },
     ],
   },

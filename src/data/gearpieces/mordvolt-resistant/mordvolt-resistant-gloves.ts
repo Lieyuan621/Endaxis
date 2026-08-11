@@ -5,7 +5,7 @@ const sheet: GearPieceSheet = {
   icon: '/equipment/will01/item_equip_t2_suit_will01_hand_01.webp',
   slotType: 'gloves',
   levelRequirement: 36,
-  defense: 21,
+  defense: 21.6,
   skill1: {
     effects: [
       {
@@ -32,7 +32,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'heal' },
         target: 'self',
-        value: 8.8,
+        value: 8.75,
       },
     ],
   },

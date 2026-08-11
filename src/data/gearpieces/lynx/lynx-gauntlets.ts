@@ -32,7 +32,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'heal' },
         target: 'self',
-        value: [17.3, 19, 20.7, 22.4],
+        value: [17.25, 18.975, 20.7, 22.425],
       },
     ],
   },

@@ -27,7 +27,14 @@ const sheet: GearPieceSheet = {
     ],
   },
   skill3: {
-    effects: [{ kind: 'status', stat: { modifier: 'atkPercent' }, target: 'self', value: 12.3 }],
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'atkPercent' },
+        target: 'self',
+        value: 12.25,
+      },
+    ],
   },
   setSlug: 'mordvolt-insulation',
 };

@@ -32,7 +32,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'dmgBonus', skillTypes: 'ultimate' },
         target: 'self',
-        value: [25.9, 28.5, 31.1, 33.6],
+        value: [25.875, 28.4625, 31.05, 33.6375],
       },
     ],
   },

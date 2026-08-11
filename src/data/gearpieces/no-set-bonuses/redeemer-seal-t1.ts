@@ -22,7 +22,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'critRate' },
         target: 'self',
-        value: [10.8, 11.9, 13, 14],
+        value: [10.8, 11.88, 12.96, 14.04],
       },
     ],
   },

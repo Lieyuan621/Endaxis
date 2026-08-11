@@ -22,7 +22,7 @@ const sheet: GearPieceSheet = {
         kind: 'status',
         stat: { modifier: 'ultimateGainEfficiency' },
         target: 'self',
-        value: [25.7, 28.3, 30.9, 33.4],
+        value: [25.714285714, 28.285714286, 30.857142857, 33.428571429],
       },
     ],
   },

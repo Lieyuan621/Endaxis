@@ -22,7 +22,7 @@ const sheet: WeaponSheet = {
         kind: 'status',
         stat: { modifier: 'atkFlat' },
         target: 'self',
-        value: [12, 14, 17, 19, 22, 24, 26, 29, 34],
+        value: [12, 14.4, 16.8, 19.2, 21.6, 24, 26.4, 28.8, 33.6],
       },
     ],
   },

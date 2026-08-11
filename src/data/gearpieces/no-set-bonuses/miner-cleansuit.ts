@@ -5,7 +5,7 @@ const sheet: GearPieceSheet = {
   icon: '/equipment/tundra01/item_equip_t1_parts_tundra01_body_06.webp',
   slotType: 'armor',
   levelRequirement: 28,
-  defense: 22,
+  defense: 22.4,
   skill1: {
     effects: [
       {

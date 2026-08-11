@@ -27,7 +27,14 @@ const sheet: GearPieceSheet = {
     ],
   },
   skill3: {
-    effects: [{ kind: 'status', stat: { modifier: 'critRate' }, target: 'self', value: 7.3 }],
+    effects: [
+      {
+        kind: 'status',
+        stat: { modifier: 'critRate' },
+        target: 'self',
+        value: 7.35,
+      },
+    ],
   },
   setSlug: 'armored-msgr',
 };
