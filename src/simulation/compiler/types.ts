@@ -6,6 +6,7 @@ import type {
   EffectCondition,
   OperatorStat,
   ResolvedScalingDef,
+  SkillMultiplierDetail,
   SkillRequisite,
 } from '@/data/types';
 import type { DamageBreakdown } from '@/data/stats/computeDamage';
@@ -152,6 +153,7 @@ export interface Hit {
   _noDamage?: boolean;
   multiplier?: number;
   _multiplierScaling?: ResolvedScalingDef;
+  _multiplierDetail?: SkillMultiplierDetail;
   element?: string;
   spRecovery: number;
   spReturn: number;

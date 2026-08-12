@@ -21,6 +21,8 @@ import type {
   ResolvedSpReturnEffect,
   ResolvedUltimateEnergyGainEffect,
   ResolvedOneTimeEffect,
+  SkillMultiplierDetail,
+  SkillMultiplierSourceDetail,
 } from '@/data/types';
 import { isEnemyEffect } from '@/data/types';
 import type {
@@ -574,6 +576,8 @@ function applyResolvedScalingStatic(
   for (const term of scaling.additive ?? []) {
     if (typeof term === 'number') {
       additiveSum += term;
+    } else if ('value' in term) {
+      additiveSum += term.value;
     } else if ('basis' in term && attrs) {
       additiveSum +=
         computeScalingBasis(term.basis as string | string[], attrs) * (term.coefficient as number);
@@ -709,62 +713,153 @@ export function applyResolvedScaling(
   enemySnap?: EnemyStatusSnapshot,
   preConsumeOpStacks?: Map<string, number>,
 ): number {
-  // Sum additive terms separately so cap applies to additive portion only
-  let additiveSum = 0;
-  let liveAttrs: Attributes | undefined;
-  for (const term of scaling.additive ?? []) {
-    if (typeof term === 'number') {
-      additiveSum += term;
-    } else if ('basis' in term) {
-      if (liveAttrs === undefined) {
-        const baseStats = ctx.getBaseStats(sourceTrackId);
-        if (baseStats) {
-          const activeEntries = ctx.getOperatorEffects(sourceTrackId).getActiveEntries(time);
-          const dynamicMods: ResolvedStatModifier[] = [];
-          for (const entry of activeEntries) {
-            if (!entry.stat) continue;
-            dynamicMods.push({
-              stat: entry.stat,
-              value: entry.value * entry.stacks,
-              external: entry.external,
-            });
+  return resolveResolvedScalingValue(
+    base,
+    scaling,
+    sourceTrackId,
+    time,
+    ctx,
+    enemySnap,
+    preConsumeOpStacks,
+  );
+}
+
+export function applyResolvedScalingWithDetail(
+  base: number,
+  scaling: ResolvedScalingDef,
+  sourceTrackId: string,
+  time: number,
+  ctx: SimulationContext,
+  enemySnap?: EnemyStatusSnapshot,
+  preConsumeOpStacks?: Map<string, number>,
+): { value: number; detail: SkillMultiplierDetail } {
+  const sources: SkillMultiplierSourceDetail[] = [];
+  const value = resolveResolvedScalingValue(
+    base,
+    scaling,
+    sourceTrackId,
+    time,
+    ctx,
+    enemySnap,
+    preConsumeOpStacks,
+    sources,
+  );
+  return { value, detail: { base, sources } };
+}
+
+function resolveResolvedScalingValue(
+  base: number,
+  scaling: ResolvedScalingDef,
+  sourceTrackId: string,
+  time: number,
+  ctx: SimulationContext,
+  enemySnap?: EnemyStatusSnapshot,
+  preConsumeOpStacks?: Map<string, number>,
+  sources?: SkillMultiplierSourceDetail[],
+): number {
+  return applyScalingLevel(base, scaling, false);
+
+  function applyScalingLevel(
+    initialValue: number,
+    levelScaling: ResolvedScalingDef,
+    conditional: boolean,
+  ): number {
+    // Sum additive terms separately so cap applies to additive portion only.
+    let additiveSum = 0;
+    let liveAttrs: Attributes | undefined;
+    for (const term of levelScaling.additive ?? []) {
+      if (typeof term === 'number') {
+        additiveSum += term;
+        sources?.push({ kind: 'fixed', value: term });
+      } else if ('value' in term) {
+        additiveSum += term.value;
+        sources?.push({
+          kind: 'fixed',
+          value: term.value,
+          sourceLabel: term.sourceLabel,
+        });
+      } else if ('basis' in term) {
+        if (liveAttrs === undefined) {
+          const baseStats = ctx.getBaseStats(sourceTrackId);
+          if (baseStats) {
+            const activeEntries = ctx.getOperatorEffects(sourceTrackId).getActiveEntries(time);
+            const dynamicMods: ResolvedStatModifier[] = [];
+            for (const entry of activeEntries) {
+              if (!entry.stat) continue;
+              dynamicMods.push({
+                stat: entry.stat,
+                value: entry.value * entry.stacks,
+                external: entry.external,
+              });
+            }
+            liveAttrs = computeStats(baseStats, [], dynamicMods).attributes;
+          } else {
+            liveAttrs = { strength: 0, agility: 0, intellect: 0, will: 0 };
           }
-          liveAttrs = computeStats(baseStats, [], dynamicMods).attributes;
-        } else {
-          liveAttrs = { strength: 0, agility: 0, intellect: 0, will: 0 };
         }
+        const basisValue = computeScalingBasis(term.basis as string | string[], liveAttrs);
+        const contribution = basisValue * term.coefficient;
+        additiveSum += contribution;
+        sources?.push({
+          kind: 'attribute',
+          value: contribution,
+          sourceLabel: term.sourceLabel,
+          basis: term.basis,
+          basisValue,
+          coefficient: term.coefficient,
+        });
+      } else if ('key' in term) {
+        const stackCount =
+          term.target === 'enemy'
+            ? ((enemySnap ? getEnemyStatus(term.key, enemySnap, time).stacks : 0) ?? 0)
+            : (preConsumeOpStacks?.get(term.key) ??
+              ctx.getOperatorEffects(sourceTrackId).getStacks(term.key, time));
+        additiveSum += term.coefficient * stackCount;
+        sources?.push({
+          kind: 'stack',
+          value: term.coefficient * stackCount,
+          sourceLabel: term.sourceLabel,
+          key: term.key,
+          stacks: stackCount,
+          coefficient: term.coefficient,
+        });
       }
-      additiveSum +=
-        computeScalingBasis(term.basis as string | string[], liveAttrs) * term.coefficient;
-    } else if ('key' in term) {
-      const stackCount =
-        term.target === 'enemy'
-          ? ((enemySnap ? getEnemyStatus(term.key, enemySnap, time).stacks : 0) ?? 0)
-          : (preConsumeOpStacks?.get(term.key) ??
-            ctx.getOperatorEffects(sourceTrackId).getStacks(term.key, time));
-      additiveSum += term.coefficient * stackCount;
     }
-  }
-  if (scaling.cap !== undefined) additiveSum = Math.min(additiveSum, scaling.cap);
-  let value = base + additiveSum;
-  for (const m of scaling.multiplier ?? []) {
-    value *= m;
-  }
-  if (scaling.conditionalScaling !== undefined) {
-    const { condition, scaling: condScaling } = scaling.conditionalScaling;
-    if (evaluateEffectCondition(condition, time, sourceTrackId, ctx, enemySnap)) {
-      value = applyResolvedScaling(
-        value,
-        condScaling,
-        sourceTrackId,
-        time,
-        ctx,
-        enemySnap,
-        preConsumeOpStacks,
-      );
+    if (levelScaling.cap !== undefined) additiveSum = Math.min(additiveSum, levelScaling.cap);
+    let value = initialValue + additiveSum;
+    for (const m of levelScaling.multiplier ?? []) {
+      value *= m;
+      sources?.push({ kind: 'postMultiplier', value: m, conditional });
     }
+    if (levelScaling.conditionalScaling !== undefined) {
+      const { condition, scaling: condScaling } = levelScaling.conditionalScaling;
+      if (evaluateEffectCondition(condition, time, sourceTrackId, ctx, enemySnap)) {
+        value = applyScalingLevel(value, condScaling, true);
+      }
+    }
+    return value;
   }
-  return value;
+}
+
+function divideSkillMultiplierDetail(
+  detail: SkillMultiplierDetail,
+  divisor: number,
+): SkillMultiplierDetail {
+  if (divisor <= 1) return detail;
+  return {
+    base: detail.base / divisor,
+    sources: detail.sources.map(source =>
+      source.kind === 'postMultiplier'
+        ? source
+        : {
+            ...source,
+            value: source.value / divisor,
+            ...(source.coefficient !== undefined
+              ? { coefficient: source.coefficient / divisor }
+              : {}),
+          },
+    ),
+  };
 }
 
 /**
@@ -1015,9 +1110,10 @@ export function scheduleDotTicks(
   }
 
   // Resolve multiplier with scaling
-  const finalMultiplier = r.multiplierScaling
-    ? applyResolvedScaling(r.multiplier, r.multiplierScaling, sourceTrackId, time, ctx)
-    : r.multiplier;
+  const multiplierResolution: { value: number; detail?: SkillMultiplierDetail } =
+    r.multiplierScaling
+      ? applyResolvedScalingWithDetail(r.multiplier, r.multiplierScaling, sourceTrackId, time, ctx)
+      : { value: r.multiplier };
 
   // Compute tick count and per-tick multiplier
   const tickCount = r.skipFirstTick
@@ -1025,7 +1121,13 @@ export function scheduleDotTicks(
     : Math.floor(duration / r.interval) + 1;
 
   const tickMultiplier =
-    r.multiplierMode === 'split' && tickCount > 0 ? finalMultiplier / tickCount : finalMultiplier;
+    r.multiplierMode === 'split' && tickCount > 0
+      ? multiplierResolution.value / tickCount
+      : multiplierResolution.value;
+  const multiplierDetail =
+    multiplierResolution.detail && r.multiplierMode === 'split' && tickCount > 0
+      ? divideSkillMultiplierDetail(multiplierResolution.detail, tickCount)
+      : multiplierResolution.detail;
 
   // Inherit consumed stacks and stat effects from the source action (if any),
   // and merge in any effect-level consumedStatEffects baked into the DoT definition.
@@ -1051,6 +1153,7 @@ export function scheduleDotTicks(
           effectId,
           element: r.element,
           multiplier: tickMultiplier,
+          multiplierDetail,
           // By default a DoT tick is skill-type-agnostic (skill-type-scoped mods + link don't apply),
           // mirroring reaction damage. An effect may opt in via `skillType` to have its ticks treated
           // as that skill's damage (e.g. tangtang's ultimate DoT → inherits ult-scoped buffs + link).
@@ -1262,8 +1365,9 @@ export function dispatchSingleActorEffect(
   if (resolved.kind === 'damageHit') {
     const r = resolved as ResolvedDamageHitEffect;
     const effectId = getRuntimeEffectId(resolved);
-    let finalMultiplier = r.multiplierScaling
-      ? applyResolvedScaling(
+    const multiplierResolution: { value: number; detail?: SkillMultiplierDetail } =
+      r.multiplierScaling
+      ? applyResolvedScalingWithDetail(
           r.multiplier,
           r.multiplierScaling,
           sourceTrackId,
@@ -1272,7 +1376,8 @@ export function dispatchSingleActorEffect(
           enemySnap,
           preConsumeOpStacks,
         )
-      : r.multiplier;
+      : { value: r.multiplier };
+    let finalMultiplier = multiplierResolution.value;
 
     // Scale multiplier by operator's live crit rate at dispatch time
     let critRateScale: number | undefined;
@@ -1320,6 +1425,7 @@ export function dispatchSingleActorEffect(
             offset: 0,
             element: r.element,
             multiplier: finalMultiplier,
+            _multiplierDetail: multiplierResolution.detail,
             spRecovery: r.hit?.spRecovery ?? 0,
             spReturn: r.hit?.spReturn ?? 0,
             stagger: finalStagger,

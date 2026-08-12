@@ -59,6 +59,11 @@ export const STATUS_NAME_ALIASES = Object.freeze({
   PHYSICAL_LIFT: 'lift',
   PHYSICAL_CRUSH: 'crush',
   PHYSICAL_BREACH: 'breach',
+  // Runtime stack trackers used by skill multiplier scaling.
+  'avywenna-thunderlance': 'thunderlance',
+  'avywenna-thunderlance-ex': 'thunderlanceEx',
+  'tangtang-whirlpools': 'whirlpools',
+  'zhuangfangyi-battle-bonus-multiplier-tracker': 'consumeElectrification',
 } as const);
 
 export type StatusNameSource = {

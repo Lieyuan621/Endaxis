@@ -19,6 +19,7 @@ const { t, te, locale } = useI18n();
 const store = useTimelineStore();
 
 const atkOpen = ref(false);
+const multiplierOpen = ref(false);
 
 const ATTR_KEYS = ['strength', 'agility', 'intellect', 'will'];
 
@@ -152,6 +153,45 @@ const displayBase = computed(() => {
   return props.breakdown.base;
 });
 
+const skillMultiplierDetail = computed(() => props.breakdown?.multiplierDetail ?? null);
+
+function multiplierSourceLabel(source) {
+  if (source.sourceLabel) {
+    return resolveDamageBonusSourceLabel(source.sourceLabel, t, te, locale.value);
+  }
+  if (source.key) return translateEffectName(t, te, source.key);
+  if (source.kind === 'attribute') return t('hitDetail.attributeMultiplier');
+  if (source.kind === 'postMultiplier' && source.conditional) {
+    return t('hitDetail.conditionalMultiplier');
+  }
+  return t('hitDetail.fixedMultiplier');
+}
+
+function multiplierSourceDetail(source) {
+  if (source.kind === 'stack') {
+    return t('hitDetail.stackMultiplierDetail', {
+      stacks: Number(source.stacks) || 0,
+      coefficient: `${(Number(source.coefficient) || 0).toFixed(1)}%`,
+    });
+  }
+  if (source.kind === 'attribute') {
+    const basis = Array.isArray(source.basis) ? source.basis : [source.basis];
+    const basisLabel = basis.filter(Boolean).map(attrLabel).join(' + ');
+    return t('hitDetail.attributeMultiplierDetail', {
+      attribute: basisLabel,
+      value: (Number(source.basisValue) || 0).toFixed(1),
+      coefficient: (Number(source.coefficient) || 0).toFixed(3),
+    });
+  }
+  return '';
+}
+
+function multiplierSourceValue(source) {
+  if (source.kind === 'postMultiplier') return mult(source.value);
+  const value = Number(source.value) || 0;
+  return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+}
+
 const contextRows = computed(() => {
   if (!props.breakdown) return [];
   const rows = [];
@@ -237,7 +277,16 @@ const multiplierRows = computed(() => {
     });
   }
   if (b.directMultiplier !== 1) {
-    rows.push({ label: t('hitDetail.directMult'), detail: '', value: mult(b.directMultiplier) });
+    const directLines = (b.directMultiplierSources || []).map(src => {
+      const name = resolveDamageBonusSourceLabel(src.label, t, te, locale.value);
+      return `${name} ${mult(src.value)}`;
+    });
+    rows.push({
+      label: t('hitDetail.directMult'),
+      detail: '',
+      value: mult(b.directMultiplier),
+      tooltip: directLines.length ? directLines.join('\n') : undefined,
+    });
   }
   if (b.susceptMult !== 1) {
     const susceptLines = [
@@ -333,6 +382,7 @@ const multiplierRows = computed(() => {
 
 function onClose() {
   atkOpen.value = false;
+  multiplierOpen.value = false;
   emit('update:visible', false);
 }
 </script>
@@ -468,10 +518,43 @@ function onClose() {
               <td class="value-cell">+{{ (row.contrib * 100).toFixed(1) }}%</td>
             </tr>
           </template>
-          <tr>
-            <td class="label-cell">{{ t('hitDetail.multiplier') }}</td>
+          <tr
+            class="expandable-row"
+            :class="{ 'is-disabled': !skillMultiplierDetail?.sources?.length }"
+            @click="
+              skillMultiplierDetail?.sources?.length ? (multiplierOpen = !multiplierOpen) : null
+            "
+          >
+            <td class="label-cell">
+              <el-icon
+                v-if="skillMultiplierDetail?.sources?.length"
+                class="expand-icon"
+                :class="{ 'is-open': multiplierOpen }"
+                ><ArrowRight
+              /></el-icon>
+              {{ t('hitDetail.multiplier') }}
+            </td>
             <td class="value-cell">{{ displayMultiplier.toFixed(1) }}%</td>
           </tr>
+          <template v-if="multiplierOpen && skillMultiplierDetail?.sources?.length">
+            <tr class="sub-row">
+              <td class="label-cell indent-1">{{ t('hitDetail.baseMultiplier') }}</td>
+              <td class="value-cell">{{ skillMultiplierDetail.base.toFixed(1) }}%</td>
+            </tr>
+            <tr
+              v-for="(source, idx) in skillMultiplierDetail.sources"
+              :key="`skill-multiplier-${idx}`"
+              class="sub-row dim"
+            >
+              <td class="label-cell indent-2">
+                {{ multiplierSourceLabel(source) }}
+                <span v-if="multiplierSourceDetail(source)" class="mult-detail">
+                  {{ multiplierSourceDetail(source) }}
+                </span>
+              </td>
+              <td class="value-cell">{{ multiplierSourceValue(source) }}</td>
+            </tr>
+          </template>
           <tr class="bold">
             <td class="label-cell">{{ t('hitDetail.baseDamage') }}</td>
             <td class="value-cell">{{ num(displayBase) }}</td>

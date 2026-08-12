@@ -1270,8 +1270,17 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
   }
 
   private handleDotTick(event: DotTickSimEvent, ctx: SimulationContext): void {
-    const { sourceId, effectId, element, multiplier, skillType, skillId, canCrit, actionId } =
-      event.payload;
+    const {
+      sourceId,
+      effectId,
+      element,
+      multiplier,
+      multiplierDetail,
+      skillType,
+      skillId,
+      canCrit,
+      actionId,
+    } = event.payload;
 
     // Log for projection (diamond markers)
     ctx.enemyLog({ type: 'DOT_TICK', time: event.time, effectId, sourceId });
@@ -1288,6 +1297,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           hitData: {
             offset: 0,
             multiplier,
+            _multiplierDetail: multiplierDetail,
             spRecovery: 0,
             spReturn: 0,
             stagger: 0,

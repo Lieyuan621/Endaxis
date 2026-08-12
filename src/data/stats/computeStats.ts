@@ -195,6 +195,8 @@ export function computeStats(
     for (const term of effect.scaling.additive ?? []) {
       if (typeof term === 'number') {
         additiveSum += term;
+      } else if ('value' in term) {
+        additiveSum += term.value;
       } else if ('basis' in term) {
         additiveSum += computeScalingBasis(term.basis, attrs) * term.coefficient;
       }
@@ -443,6 +445,8 @@ export function computeStats(
           value: val,
           skillTypes: stat.skillTypes as ScopedDamageModifier['skillTypes'],
           skillId: stat.skillId as ScopedDamageModifier['skillId'],
+          effectId,
+          sourceLabel,
         });
         break;
       case 'resistanceIgnore':

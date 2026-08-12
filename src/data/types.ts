@@ -324,6 +324,7 @@ export function resolveLeveled(v: Leveled<number>, idx: number): number {
 export interface AttributeScaling {
   basis: string | string[];
   coefficient: Leveled<number>;
+  sourceLabel?: string;
 }
 
 export interface StackScaling {
@@ -333,11 +334,17 @@ export interface StackScaling {
   target?: 'enemy' | 'self';
   /** Multiplied against the stack count to produce the additive contribution. */
   coefficient: Leveled<number>;
+  sourceLabel?: string;
+}
+
+export interface FixedScaling {
+  value: Leveled<number>;
+  sourceLabel?: string;
 }
 
 export interface ScalingDef {
   /** Additive terms summed on top of the base value. Each term is an attribute scaling, a stack scaling, a fixed number, or a leveled number array. */
-  additive?: (AttributeScaling | StackScaling | Leveled<number>)[];
+  additive?: (AttributeScaling | StackScaling | FixedScaling | Leveled<number>)[];
   /** Post-computation multipliers. Each applied as (1 + m). */
   multiplier?: Leveled<number>[];
   cap?: Leveled<number>;
@@ -749,19 +756,43 @@ interface ResolvedEffectBase extends Omit<
 export interface ResolvedAttributeScaling {
   basis: string | string[];
   coefficient: number;
+  sourceLabel?: string;
 }
 
 export interface ResolvedStackScaling {
   key: string;
   target?: 'enemy' | 'self';
   coefficient: number;
+  sourceLabel?: string;
+}
+
+export interface ResolvedFixedScaling {
+  value: number;
+  sourceLabel?: string;
 }
 
 export interface ResolvedScalingDef {
-  additive?: (ResolvedAttributeScaling | ResolvedStackScaling | number)[];
+  additive?: (ResolvedAttributeScaling | ResolvedStackScaling | ResolvedFixedScaling | number)[];
   multiplier?: number[];
   cap?: number;
   conditionalScaling?: { condition: EffectCondition; scaling: ResolvedScalingDef };
+}
+
+export interface SkillMultiplierSourceDetail {
+  kind: 'fixed' | 'stack' | 'attribute' | 'postMultiplier';
+  value: number;
+  sourceLabel?: string;
+  key?: string;
+  stacks?: number;
+  coefficient?: number;
+  basis?: string | string[];
+  basisValue?: number;
+  conditional?: boolean;
+}
+
+export interface SkillMultiplierDetail {
+  base: number;
+  sources: SkillMultiplierSourceDetail[];
 }
 
 export interface ResolvedStatusEffect extends ResolvedEffectBase {

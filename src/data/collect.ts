@@ -322,12 +322,15 @@ export function collectEffects(
         const talentName = getOperatorTalentName(operatorSlug, talentFlatIndex, idx);
         for (const [patchIdx, patch] of (group.patches ?? []).entries()) {
           collectedPatches.push(
-            resolvePatchSkillLevel(
-              ensurePatchEffectIds(
-                patch,
-                makeEffectId(operatorSlug, `talent${groupIdx}`, `patch${patchIdx}`),
+            withPatchScalingSource(
+              resolvePatchSkillLevel(
+                ensurePatchEffectIds(
+                  patch,
+                  makeEffectId(operatorSlug, `talent${groupIdx}`, `patch${patchIdx}`),
+                ),
+                opInst,
               ),
-              opInst,
+              talentName,
             ),
           );
         }
@@ -356,12 +359,15 @@ export function collectEffects(
         const potentialName = getOperatorPotentialName(operatorSlug, i);
         for (const [patchIdx, patch] of (op.potentials[i]!.patches ?? []).entries()) {
           collectedPatches.push(
-            resolvePatchSkillLevel(
-              ensurePatchEffectIds(
-                patch,
-                makeEffectId(operatorSlug, `potential${i}`, `patch${patchIdx}`),
+            withPatchScalingSource(
+              resolvePatchSkillLevel(
+                ensurePatchEffectIds(
+                  patch,
+                  makeEffectId(operatorSlug, `potential${i}`, `patch${patchIdx}`),
+                ),
+                opInst,
               ),
-              opInst,
+              potentialName,
             ),
           );
         }
@@ -616,13 +622,23 @@ export function resolveScalingDef(scaling: ScalingDef, idx: number): ResolvedSca
     additive: scaling.additive?.map(term => {
       if (typeof term === 'number') return term;
       if (Array.isArray(term)) return resolveLeveled(term, idx);
+      if ('value' in term)
+        return {
+          value: resolveLeveled(term.value, idx),
+          sourceLabel: term.sourceLabel,
+        };
       if ('key' in term)
         return {
           key: term.key,
           target: term.target,
           coefficient: resolveLeveled(term.coefficient, idx),
+          sourceLabel: term.sourceLabel,
         };
-      return { basis: term.basis, coefficient: resolveLeveled(term.coefficient, idx) };
+      return {
+        basis: term.basis,
+        coefficient: resolveLeveled(term.coefficient, idx),
+        sourceLabel: term.sourceLabel,
+      };
     }),
     multiplier: scaling.multiplier?.map(m => resolveLeveled(m, idx)),
     ...(scaling.cap !== undefined ? { cap: resolveLeveled(scaling.cap, idx) } : {}),
@@ -664,6 +680,28 @@ function resolvePatchSkillLevel(
             ) as ScalingDef,
           }
         : {}),
+    },
+  };
+}
+
+function withPatchScalingSource(patch: Patch, sourceLabel: string): Patch {
+  if (patch.kind !== 'patchEffect' || !patch.effect) return patch;
+  const multiplierScaling = (patch.effect as { multiplierScaling?: ScalingDef }).multiplierScaling;
+  const annotate = (scaling: ScalingDef | undefined): ScalingDef | undefined => {
+    if (!scaling?.additive?.length) return scaling;
+    return {
+      ...scaling,
+      additive: scaling.additive.map(term => {
+        if (typeof term === 'number' || Array.isArray(term)) return { value: term, sourceLabel };
+        return { ...term, sourceLabel: term.sourceLabel ?? sourceLabel };
+      }),
+    };
+  };
+  return {
+    ...patch,
+    effect: {
+      ...patch.effect,
+      multiplierScaling: annotate(multiplierScaling),
     },
   };
 }
@@ -798,8 +836,14 @@ export function resolveEffect(effect: Effect, idx: number): ResolvedEffect {
 function mergeScaling(
   base: ResolvedScalingDef | ScalingDef | undefined,
   patch: ScalingDef,
+  sourceLabel?: string,
 ): ResolvedScalingDef {
-  const additive = [...(base?.additive ?? []), ...(patch.additive ?? [])];
+  const patchAdditive = (patch.additive ?? []).map(term => {
+    if (!sourceLabel) return term;
+    if (typeof term === 'number' || Array.isArray(term)) return { value: term, sourceLabel };
+    return { ...term, sourceLabel: term.sourceLabel ?? sourceLabel };
+  });
+  const additive = [...(base?.additive ?? []), ...patchAdditive];
   const multiplier = [...(base?.multiplier ?? []), ...(patch.multiplier ?? [])];
   const result: ResolvedScalingDef = {};
   if (additive.length) result.additive = additive as ResolvedScalingDef['additive'];
@@ -816,11 +860,17 @@ function mergeScaling(
 function applyEffectPatch(
   target: ResolvedEffect,
   patchFields: Partial<PatchableEffectFields>,
+  sourceLabel?: string,
 ): ResolvedEffect;
-function applyEffectPatch(target: Effect, patchFields: Partial<PatchableEffectFields>): Effect;
+function applyEffectPatch(
+  target: Effect,
+  patchFields: Partial<PatchableEffectFields>,
+  sourceLabel?: string,
+): Effect;
 function applyEffectPatch(
   target: Effect | ResolvedEffect,
   patchFields: Partial<PatchableEffectFields>,
+  sourceLabel?: string,
 ): Effect | ResolvedEffect {
   const fields = patchFields as Record<string, unknown>;
   const {
@@ -850,6 +900,7 @@ function applyEffectPatch(
     (merged as any).multiplierScaling = mergeScaling(
       (target as any).multiplierScaling,
       patchMultiplierScaling as ScalingDef,
+      sourceLabel,
     );
   }
   return merged as Effect | ResolvedEffect;
@@ -1035,7 +1086,9 @@ export function collectTriggerEffects(
         const idx = state - 1;
         const talentName = getOperatorTalentName(operatorSlug, talentFlatIndex, idx);
         for (const patch of group.patches ?? [])
-          collectedPatches.push(resolvePatchSkillLevel(patch, opInst));
+          collectedPatches.push(
+            withPatchScalingSource(resolvePatchSkillLevel(patch, opInst), talentName),
+          );
         for (let teIdx = 0; teIdx < (group.triggers?.length ?? 0); teIdx++) {
           const te = group.triggers![teIdx]!;
           const teLvlIdx = te.skillLevelKey
@@ -1069,7 +1122,9 @@ export function collectTriggerEffects(
         if (i + 1 > opInst.potential) continue;
         const potentialName = getOperatorPotentialName(operatorSlug, i);
         for (const patch of op.potentials[i]!.patches ?? [])
-          collectedPatches.push(resolvePatchSkillLevel(patch, opInst));
+          collectedPatches.push(
+            withPatchScalingSource(resolvePatchSkillLevel(patch, opInst), potentialName),
+          );
         for (let teIdx = 0; teIdx < (op.potentials[i]!.triggers?.length ?? 0); teIdx++) {
           const te = op.potentials[i]!.triggers![teIdx]!;
           const basePath = makeEffectId(operatorSlug, `potential${i}`, `trigger${teIdx}`);
@@ -1614,7 +1669,7 @@ export function patchCombatSkills(
     Partial<Pick<OperatorInstance, 'skillLevels'>>,
   collectedById?: Map<string, CollectedEffect>,
 ): Record<string, FlatSkillEntry> {
-  const patches: { patch: Patch; idx: number }[] = [];
+  const patches: { patch: Patch; idx: number; sourceLabel?: string }[] = [];
   const withSkillLevel = (patch: Patch) =>
     opInst.skillLevels ? resolvePatchSkillLevel(patch, opInst as OperatorInstance) : patch;
   // Why op.gameId is optional
@@ -1623,36 +1678,43 @@ export function patchCombatSkills(
     const state = opInst.talentStates[String(groupIdx)];
     if (!state || state <= 0) continue;
     const idx = state - 1;
+    const talentFlatStartIndex = op.talents
+      .slice(0, groupIdx)
+      .reduce((sum, group) => sum + (group.levels ?? 0), 0);
+    const sourceLabel = getOperatorTalentName(slug, talentFlatStartIndex, idx);
     for (const [patchIdx, patch] of (op.talents[groupIdx]!.patches ?? []).entries())
       patches.push({
         patch: withSkillLevel(
           ensurePatchEffectIds(patch, makeEffectId(slug, `talent${groupIdx}`, `patch${patchIdx}`)),
         ),
         idx,
+        sourceLabel,
       });
   }
   for (let i = 0; i < op.potentials.length; i++) {
     if (i + 1 > opInst.potential) continue;
+    const sourceLabel = getOperatorPotentialName(slug, i);
     for (const [patchIdx, patch] of (op.potentials[i]!.patches ?? []).entries())
       patches.push({
         patch: withSkillLevel(
           ensurePatchEffectIds(patch, makeEffectId(slug, `potential${i}`, `patch${patchIdx}`)),
         ),
         idx: 0,
+        sourceLabel,
       });
   }
 
   if (patches.length === 0)
     return expandCombatSkills(op.combatSkills, undefined, op.finisherElement, op.diveElement);
 
-  const patchEffectsByTarget = new Map<string, PatchEffect[]>();
+  const patchEffectsByTarget = new Map<string, { patch: PatchEffect; sourceLabel?: string }[]>();
   const patchHitsByTarget = new Map<string, { patch: PatchHit; idx: number }[]>();
   const patchTicksByTarget = new Map<string, PatchTick[]>();
   const appendEffectsByTarget = new Map<string, Effect[]>();
-  for (const { patch: p, idx } of patches) {
+  for (const { patch: p, idx, sourceLabel } of patches) {
     if (p.kind === 'patchEffect') {
       const list = patchEffectsByTarget.get(p.targetEffect) ?? [];
-      list.push(p);
+      list.push({ patch: p, sourceLabel });
       patchEffectsByTarget.set(p.targetEffect, list);
     } else if (p.kind === 'patchHit') {
       const list = patchHitsByTarget.get(p.targetHit) ?? [];
@@ -1790,7 +1852,10 @@ export function patchCombatSkills(
                 if (!eff.id) return eff;
                 const effectPatches = patchEffectsByTarget.get(eff.id);
                 if (!effectPatches) return eff;
-                return effectPatches.reduce((acc, p) => applyEffectPatch(acc, p.effect), eff);
+                return effectPatches.reduce(
+                  (acc, entry) => applyEffectPatch(acc, entry.patch.effect, entry.sourceLabel),
+                  eff,
+                );
               });
             }
           }

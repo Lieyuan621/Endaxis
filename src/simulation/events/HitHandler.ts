@@ -5,7 +5,7 @@ import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
 import type { OperatorEffectExpireEvent } from '@/simulation/engine/types';
 import {
   evaluateEffectCondition,
-  applyResolvedScaling,
+  applyResolvedScalingWithDetail,
   dispatchEnemyEffects,
   scheduleConsumption,
   conditionHasConsume,
@@ -123,9 +123,9 @@ export class HitHandler implements EventHandler<HitEvent> {
     // Resolve multiplierScaling (attribute + stack based) at hit time.
     // Use a local variable — never mutate hit.multiplier, which is shared
     // across simulation runs via the compiled timeline.
-    const resolvedMultiplier =
+    const multiplierResolution =
       hit._multiplierScaling && hit.multiplier != null
-        ? applyResolvedScaling(
+        ? applyResolvedScalingWithDetail(
             hit.multiplier,
             hit._multiplierScaling,
             e.payload.sourceId,
@@ -133,7 +133,14 @@ export class HitHandler implements EventHandler<HitEvent> {
             ctx,
             ctx.state.enemy.statusSnapshot(),
           )
-        : hit.multiplier;
+        : hit.multiplier != null
+          ? {
+              value: hit.multiplier,
+              detail: hit._multiplierDetail,
+            }
+          : undefined;
+    const resolvedMultiplier = multiplierResolution?.value;
+    const multiplierDetail = multiplierResolution?.detail;
     // Evaluate condition against live enemy state before firing
     if (hit._condition) {
       const snap = ctx.state.enemy.statusSnapshot();
@@ -335,6 +342,7 @@ export class HitHandler implements EventHandler<HitEvent> {
       const reactionHitParams = {
         attack: operatorStatus.attack,
         multiplier: resolvedMultiplier,
+        multiplierDetail,
         critRate: noCrit ? 0 : operatorStatus.critRate,
         critDmg: noCrit ? 0 : operatorStatus.critDmg,
         dmgBonus: mods.dmgBonus,
@@ -343,6 +351,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         ampBonus: mods.ampBonus,
         ampBonusSources: [...mods.ampBonusSources],
         directMultiplier: mods.directMultiplier,
+        directMultiplierSources: [...mods.directMultiplierSources],
         enemyDef: ctx.enemyDef,
         resistanceIgnore: mods.resistanceIgnore,
         resistanceIgnoreSources: [...mods.resistanceIgnoreSources],
@@ -522,7 +531,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         hit._canCrit === false ? { ...operatorStatus, critRate: 0, critDmg: 0 } : operatorStatus;
 
       const breakdown = computeHitDamageWithBreakdown(
-        { ...hit, multiplier: resolvedMultiplier },
+        { ...hit, multiplier: resolvedMultiplier, _multiplierDetail: multiplierDetail },
         effectiveStatus,
         ctx.enemyDef,
         enemyStatus,

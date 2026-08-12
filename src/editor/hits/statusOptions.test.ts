@@ -14,6 +14,11 @@ describe('statusOptions', () => {
   test('maps infliction ids to effects.name keys', () => {
     expect(resolveStatusLocaleKey('cryoInfliction')).toBe('cryo_infliction');
     expect(resolveStatusLocaleKey('vulnerability')).toBe('vulnerability');
+    expect(resolveStatusLocaleKey('zhuangfangyi-battle-bonus-multiplier-tracker')).toBe(
+      'consumeElectrification',
+    );
+    expect(resolveStatusLocaleKey('avywenna-thunderlance')).toBe('thunderlance');
+    expect(resolveStatusLocaleKey('tangtang-whirlpools')).toBe('whirlpools');
   });
 
   test('translates shared anomaly keys via effects.name only', () => {

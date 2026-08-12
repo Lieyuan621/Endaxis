@@ -11,6 +11,7 @@ import daPanSheet from '@/data/operators/da-pan';
 import snowshineSheet from '@/data/operators/snowshine';
 import mifuSheet from '@/data/operators/mifu';
 import zhuangFangyiSheet from '@/data/operators/zhuang-fangyi';
+import rossiSheet from '@/data/operators/rossi';
 import { setLocale } from '@/i18n';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
@@ -308,13 +309,10 @@ describe('optimizer damage golden baselines', () => {
       talentStates: { '0': 2 },
     });
     const team = createTeam(operator.id);
-    const battleHits = resolveOperatorSheetHits(
-      zhuangFangyiSheet,
-      'battleSkill',
-      11,
-      0,
-      { talentStates: { '0': 2 }, potential: 0 },
-    );
+    const battleHits = resolveOperatorSheetHits(zhuangFangyiSheet, 'battleSkill', 11, 0, {
+      talentStates: { '0': 2 },
+      potential: 0,
+    });
     const tracks = [
       createTrack('zhuang-fangyi', [
         createAction('battle_1', 'battleSkill', { startTime: 0, hits: battleHits }),
@@ -330,8 +328,7 @@ describe('optimizer damage golden baselines', () => {
     );
     const thunderHitEntries = result.simLog.filter(
       entry =>
-        entry.type === 'DAMAGE_HIT' &&
-        entry.payload.hitData.id === 'zhuang-fangyi-thunder-strike',
+        entry.type === 'DAMAGE_HIT' && entry.payload.hitData.id === 'zhuang-fangyi-thunder-strike',
     );
     const thunderHits = thunderHitEntries.map(entry => entry.payload.hitData);
 
@@ -961,6 +958,7 @@ describe('optimizer damage golden baselines', () => {
       ampBonus: 0.3,
       ampMult: 1.3,
       directMultiplier: 1.5,
+      directMultiplierSources: [{ label: 'self-direct', value: 1.5 }],
       susceptibility: 0.45000000000000007,
       susceptMult: 1.4500000000000002,
       increasedDmgTaken: 0.3,
@@ -973,6 +971,89 @@ describe('optimizer damage golden baselines', () => {
       nonCritDamage: 3749,
       critDamage: 9373,
       expectedDamage: 6842,
+    });
+  });
+
+  it('records stack-based skill multiplier detail at hit time', () => {
+    const result = runScenario([
+      createTrack('alpha', [
+        createAction('setup_multiplier_stack', 'battleSkill', {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'multiplier-stack',
+                  kind: 'status',
+                  target: 'self',
+                  value: 0,
+                  stacks: 2,
+                  maxStacks: 4,
+                  duration: 10,
+                } as Effect,
+              ],
+            },
+          ],
+        }),
+        createAction('scaled_hit', 'battleSkill', {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              _multiplierScaling: {
+                additive: [{ key: 'multiplier-stack', target: 'self', coefficient: 5 }],
+              },
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+            },
+          ],
+        }),
+      ]),
+    ]);
+    const hit = damageByAction(result, 'scaled_hit_inst');
+
+    expect(hit._damageBreakdown?.multiplierDetail).toEqual({
+      base: 100,
+      sources: [
+        {
+          kind: 'stack',
+          value: 10,
+          key: 'multiplier-stack',
+          stacks: 2,
+          coefficient: 5,
+        },
+      ],
+    });
+  });
+
+  it('attributes a potential patch that adds triggered-damage multiplier', () => {
+    setLocale('zh-CN');
+    const operator = createOperatorInstance('rossi', {
+      talentStates: { '1': 2 },
+      potential: 3,
+    });
+    const team = createTeam(operator.id);
+    const tracks = [createTrack('rossi', [])];
+    const triggers = collectRuntimeTriggers(team, [operator], [], [], tracks);
+    const talentDamage = triggers
+      .flatMap(entry => entry.triggerEffect.effects)
+      .find(effect => effect.id === 'rossi-talent-2');
+
+    expect(talentDamage).toMatchObject({
+      multiplier: 24,
+      multiplierScaling: {
+        additive: [{ value: 8, sourceLabel: '有形的责任' }],
+      },
+    });
+    expect(rossiSheet.potentials[2]?.patches?.[0]).toMatchObject({
+      kind: 'patchEffect',
+      targetEffect: 'rossi-talent-2',
     });
   });
 

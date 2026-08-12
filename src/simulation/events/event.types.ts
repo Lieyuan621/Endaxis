@@ -1,4 +1,5 @@
 import type { ActionType, ResolvedHit, ConsumedStatEffect } from '../compiler/types';
+import type { SkillMultiplierDetail } from '@/data/types';
 import type {
   EnemyEffectApplyEvent,
   EnemyEffectExpireEvent,
@@ -128,6 +129,7 @@ export type DotTickSimEvent = SimBaseEvent<
     effectId: string;
     element: string;
     multiplier: number;
+    multiplierDetail?: SkillMultiplierDetail;
     /** Action type (e.g. 'comboSkill'). Matches `stat.skillTypes` on DOT-tick damage. */
     skillType?: string;
     /** Specific skillId (e.g. 'alesh-enhanced-combo'). Matches `stat.skillId` on DOT-tick damage. */

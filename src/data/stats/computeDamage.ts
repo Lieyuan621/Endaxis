@@ -15,6 +15,7 @@
 
 import type { ScopedDamageModifier, StatSourceEntry } from './types';
 import type { DamageElement } from '../types';
+import type { SkillMultiplierDetail } from '../types';
 import type { ConsumedStatEffect } from '@/simulation/compiler/types';
 import type { OperatorStatus, ComputedEnemyStatus } from '@/types';
 
@@ -98,6 +99,7 @@ interface FilteredModifiers {
   ampBonus: number;
   ampBonusSources: DamageModifierSource[];
   directMultiplier: number;
+  directMultiplierSources: DamageModifierSource[];
   resistanceIgnore: number;
   resistanceIgnoreSources: DamageModifierSource[];
   susceptibilityAmplify: number;
@@ -160,6 +162,7 @@ export function filterDamageModifiers(
   let susceptibilityAmplify = 1;
   const dmgBonusSources: DamageModifierSource[] = [];
   const ampBonusSources: DamageModifierSource[] = [];
+  const directMultiplierSources: DamageModifierSource[] = [];
   const resistanceIgnoreSources: DamageModifierSource[] = [];
   const susceptibilityAmplifySources: DamageModifierSource[] = [];
 
@@ -192,6 +195,10 @@ export function filterDamageModifiers(
       case 'directMultiplier':
         if (!matchesSkillType(mod.skillTypes, skillType)) continue;
         directMultiplier *= mod.value;
+        directMultiplierSources.push({
+          label: mod.sourceLabel || mod.effectId || 'directMultiplier',
+          value: mod.value,
+        });
         break;
       case 'resistanceIgnore':
         if (!matchesSkillType(mod.skillTypes, skillType)) continue;
@@ -219,6 +226,7 @@ export function filterDamageModifiers(
     ampBonus,
     ampBonusSources,
     directMultiplier,
+    directMultiplierSources,
     resistanceIgnore,
     resistanceIgnoreSources,
     susceptibilityAmplify,
@@ -324,6 +332,7 @@ interface MutableDamageStats {
   ampBonus: number;
   ampBonusSources: DamageModifierSource[];
   directMultiplier: number;
+  directMultiplierSources: DamageModifierSource[];
   resistanceIgnore: number;
   resistanceIgnoreSources: DamageModifierSource[];
   susceptibilityAmplify: number;
@@ -402,6 +411,13 @@ export function applyConsumedStatEffects(
         break;
       case 'directMultiplier':
         stats.directMultiplier *= ce.value;
+        stats.directMultiplierSources.push({
+          label:
+            (typeof ce.sourceLabel === 'string' && ce.sourceLabel.trim()) ||
+            (typeof ce.id === 'string' && ce.id.trim()) ||
+            'directMultiplier',
+          value: ce.value,
+        });
         break;
       case 'resistanceIgnore':
         stats.resistanceIgnore += ce.value / 100;
@@ -422,6 +438,7 @@ export const STAGGER_DAMAGE_MULTIPLIER = 1.3;
 interface HitDamageParams {
   attack: number;
   multiplier: number; // percentage, e.g. 155
+  multiplierDetail?: SkillMultiplierDetail;
   skillType?: string;
   critRate: number; // decimal
   critDmg: number; // decimal
@@ -431,6 +448,7 @@ interface HitDamageParams {
   ampBonus: number; // decimal
   ampBonusSources?: DamageModifierSource[];
   directMultiplier: number; // pre-computed product
+  directMultiplierSources?: DamageModifierSource[];
   enemyDef: number;
   resistanceIgnore: number; // decimal
   resistanceIgnoreSources?: DamageModifierSource[];
@@ -456,6 +474,7 @@ export interface DamageBreakdown {
   /** Present when the hit was computed with full operator ATK components. */
   atkDetail?: AtkDetailSnapshot;
   multiplier: number;
+  multiplierDetail?: SkillMultiplierDetail;
   skillType?: string;
   element?: string;
   base: number;
@@ -470,6 +489,7 @@ export interface DamageBreakdown {
   ampMult: number;
   ampBonusSources?: DamageModifierSource[];
   directMultiplier: number;
+  directMultiplierSources?: DamageModifierSource[];
   susceptibility: number;
   susceptMult: number;
   susceptibilitySources?: DamageModifierSource[];
@@ -544,6 +564,7 @@ export function computeExpectedDamageWithBreakdown(
     attack: p.attack,
     atkDetail: p.atkDetail,
     multiplier: p.multiplier,
+    multiplierDetail: p.multiplierDetail,
     skillType: p.skillType,
     element,
     base,
@@ -558,6 +579,9 @@ export function computeExpectedDamageWithBreakdown(
     ampMult,
     ampBonusSources: p.ampBonusSources?.length ? p.ampBonusSources : undefined,
     directMultiplier: p.directMultiplier,
+    directMultiplierSources: p.directMultiplierSources?.length
+      ? p.directMultiplierSources
+      : undefined,
     susceptibility: p.susceptibility,
     susceptMult,
     susceptibilitySources: p.susceptibilitySources?.length ? p.susceptibilitySources : undefined,
@@ -600,6 +624,7 @@ export function computeHitDamageWithBreakdown(
     skillId?: string;
     consumedStacks?: Record<string, number>;
     consumedStatEffects?: ConsumedStatEffect[];
+    _multiplierDetail?: SkillMultiplierDetail;
   },
   operatorStatus: OperatorStatus,
   enemyDef: number,
@@ -626,6 +651,7 @@ export function computeHitDamageWithBreakdown(
     ...mods,
     dmgBonusSources: [...mods.dmgBonusSources],
     ampBonusSources: [...mods.ampBonusSources],
+    directMultiplierSources: [...mods.directMultiplierSources],
     resistanceIgnoreSources: [...mods.resistanceIgnoreSources],
     susceptibilityAmplifySources: [...mods.susceptibilityAmplifySources],
     atkDetail: snapshotAtkDetail(operatorStatus),
@@ -653,6 +679,7 @@ export function computeHitDamageWithBreakdown(
     {
       attack: stats.attack,
       multiplier: hit.multiplier,
+      multiplierDetail: hit._multiplierDetail,
       skillType: hit.skillType,
       critRate: stats.critRate,
       critDmg: stats.critDmg,
@@ -662,6 +689,7 @@ export function computeHitDamageWithBreakdown(
       ampBonus: stats.ampBonus,
       ampBonusSources: stats.ampBonusSources,
       directMultiplier: stats.directMultiplier,
+      directMultiplierSources: stats.directMultiplierSources,
       enemyDef,
       resistanceIgnore: stats.resistanceIgnore,
       resistanceIgnoreSources: stats.resistanceIgnoreSources,
