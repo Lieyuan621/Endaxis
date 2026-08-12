@@ -1067,6 +1067,7 @@ export function collectTriggerEffects(
       // Potentials
       for (let i = 0; i < op.potentials.length; i++) {
         if (i + 1 > opInst.potential) continue;
+        const potentialName = getOperatorPotentialName(operatorSlug, i);
         for (const patch of op.potentials[i]!.patches ?? [])
           collectedPatches.push(resolvePatchSkillLevel(patch, opInst));
         for (let teIdx = 0; teIdx < (op.potentials[i]!.triggers?.length ?? 0); teIdx++) {
@@ -1075,7 +1076,11 @@ export function collectTriggerEffects(
           const stampedTe = {
             ...te,
             effects: te.effects.map((eff, effIdx) =>
-              stampTriggerEffect(hydrateTriggerEffect(eff, 'operator'), basePath, effIdx),
+              stampTriggerEffect(
+                hydrateTriggerEffect(eff, 'operator', potentialName),
+                basePath,
+                effIdx,
+              ),
             ),
           };
           const resolved = resolveTriggerEffectLevel(stampedTe, 0);

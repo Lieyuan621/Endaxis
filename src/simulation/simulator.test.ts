@@ -10,6 +10,7 @@ import { projectEnemyAfflictionViz } from './projection/projectEnemyAfflictionVi
 import { projectActionBuffs } from './projection/projectActionBuffs';
 import { createDefaultStats } from '@/simulation/defaultActorStats';
 import { collectTriggerEffects, patchCombatSkills } from '@/data/collect';
+import { getOperatorPotentialName } from '@/data/gameText';
 import estellaSheet from '@/data/operators/estella';
 import perlicaSheet from '@/data/operators/perlica';
 import mifuSheet from '@/data/operators/mifu';
@@ -1204,6 +1205,14 @@ describe('optimizer-native runtime parity', () => {
     expect(potential3.hit._damageBreakdown?.attack).toBeGreaterThan(
       potential2.hit._damageBreakdown?.attack ?? 0,
     );
+    expect(potential3.hit._damageBreakdown?.atkDetail?.atkPercentSources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: getOperatorPotentialName('perlica', 2),
+          value: 0.2,
+        }),
+      ]),
+    );
     expect(potential4.hit._expectedDamage).toBeGreaterThan(potential3.hit._expectedDamage ?? 0);
     expect(potential4.result.operatorLog).toEqual(
       expect.arrayContaining([
@@ -1212,6 +1221,7 @@ describe('optimizer-native runtime parity', () => {
           targetTrackId: 'perlica',
           value: 20,
           effect: expect.objectContaining({
+            name: getOperatorPotentialName('perlica', 2),
             stat: expect.objectContaining({ modifier: 'atkPercent' }),
           }),
         }),
