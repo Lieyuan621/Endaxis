@@ -4,6 +4,7 @@ import { nextTick } from 'vue';
 import { useTimelineStore } from './timelineStore';
 import { useOperatorStore } from './operatorStore';
 import { setLocale } from '@/i18n';
+import { serializeProjectData } from '@/utils/timeSerialization';
 
 describe('timeline skill library editing', () => {
   beforeEach(() => {
@@ -75,6 +76,54 @@ describe('timeline skill library editing', () => {
     expect(insertedAction).toBeTruthy();
     expect(insertedAction.duration).toBe(2.25);
     expect(insertedAction.hits).toMatchObject(editedHits);
+  });
+
+  it('preserves user-edited action duration after operator status refresh', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'zhuang-fangyi');
+    store.selectTrack(0);
+
+    const battleSkill = store.activeSkillLibrary.find(
+      (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
+    ) as any;
+    expect(battleSkill).toBeTruthy();
+
+    store.addSkillToTrack('zhuang-fangyi', battleSkill, 1);
+    const action = store.tracks[0]!.actions.find(
+      (item: any) => item.id === battleSkill.id,
+    ) as any;
+    expect(action).toBeTruthy();
+
+    const sheetDuration = Number(action.duration) || 0;
+    const customDuration = sheetDuration > 0 ? sheetDuration + 1.5 : 3.25;
+    store.updateAction(action.instanceId, { duration: customDuration });
+    expect(action.duration).toBe(customDuration);
+    store.commitState();
+
+    localStorage.setItem(
+      'endaxis_autosave',
+      JSON.stringify(
+        serializeProjectData({
+          version: '1.0.0',
+          timestamp: Date.now(),
+          scenarioList: JSON.parse(JSON.stringify(store.scenarioList)),
+          activeScenarioId: store.activeScenarioId,
+          systemConstants: store.systemConstants,
+          activeEnemyId: store.activeEnemyId,
+          activeEnemyLevel: store.activeEnemyLevel,
+        }),
+      ),
+    );
+
+    await store.loadFromBrowser();
+
+    const reloaded = store.tracks[0]!.actions.find(
+      (item: any) => item.instanceId === action.instanceId,
+    ) as any;
+    expect(reloaded).toBeTruthy();
+    expect(reloaded.duration).toBe(customDuration);
   });
 
   it('names generic basic attacks as 普攻 and only the final segment as 重击', async () => {

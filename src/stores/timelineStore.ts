@@ -3412,7 +3412,12 @@ export const useTimelineStore = defineStore('timeline', () => {
         { preserveCondition: true },
       );
 
-      if (Number.isFinite(refreshPayload.duration) && refreshPayload.duration > 0) {
+      const currentDuration = Number(action.duration) || 0;
+      if (
+        currentDuration <= 0 &&
+        Number.isFinite(refreshPayload.duration) &&
+        refreshPayload.duration > 0
+      ) {
         action.duration = refreshPayload.duration;
       }
       if (refreshPayload.element) {
