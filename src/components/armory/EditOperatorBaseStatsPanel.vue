@@ -37,6 +37,7 @@ const ATTR_ICON = {
 /** Local draft so typing does not hit store/timeline every keystroke. */
 const draft = ref({});
 let commitTimer = null;
+let draftDirty = false;
 
 const sheetDefaults = computed(() => {
   if (!props.instance) return null;
@@ -46,6 +47,7 @@ const sheetDefaults = computed(() => {
 
 function syncDraftFromStore() {
   draft.value = { ...(props.instance?.baseStatOverrides ?? {}) };
+  draftDirty = false;
 }
 
 function clearCommitTimer() {
@@ -71,6 +73,7 @@ function commitDraftNow() {
   operatorStore.updateOperator(props.instance.id, {
     baseStatOverrides: Object.keys(cleaned).length ? cleaned : undefined,
   });
+  draftDirty = false;
 }
 
 function scheduleCommit() {
@@ -96,15 +99,16 @@ watch(
 watch(
   () => props.instance?.id,
   () => {
-    if (props.visible) {
-      clearCommitTimer();
-      syncDraftFromStore();
-    }
+    clearCommitTimer();
+    if (props.instance) syncDraftFromStore();
   },
+  { immediate: true },
 );
 
 onBeforeUnmount(() => {
-  commitDraftNow();
+  if (commitTimer != null || props.visible || draftDirty) {
+    commitDraftNow();
+  }
 });
 
 function isOverridden(key) {
@@ -135,6 +139,7 @@ function setOverride(key, raw) {
   const n = Number(raw);
   if (!Number.isFinite(n)) return;
   draft.value = { ...draft.value, [key]: n };
+  draftDirty = true;
   scheduleCommit();
 }
 
@@ -142,11 +147,13 @@ function clearOverride(key) {
   const next = { ...draft.value };
   delete next[key];
   draft.value = next;
+  draftDirty = true;
   commitDraftNow();
 }
 
 function clearAll() {
   draft.value = {};
+  draftDirty = true;
   commitDraftNow();
 }
 
