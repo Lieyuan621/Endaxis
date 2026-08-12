@@ -288,7 +288,7 @@ const sheet: OperatorSheet = {
           battleSkill: {
             segments: [
               {
-                duration: 1.167,
+                duration: 0.5,
                 spCost: 100,
                 damageGroups: [
                   {
@@ -791,7 +791,7 @@ const sheet: OperatorSheet = {
           battleSkill: {
             segments: [
               {
-                duration: 1.167,
+                duration: 0.5,
                 spCost: 100,
                 damageGroups: [
                   {
