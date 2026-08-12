@@ -247,6 +247,16 @@ function takeStoredHitMatch(unusedStored: Dict[], rawHit: Dict | undefined): Dic
   }
 
   const offset = Number(rawHit.offset) || 0;
+  const byBaselineOffset = unusedStored.findIndex(hit => {
+    const baseline = hit?.[SHEET_BASELINE_KEY] as Dict | undefined;
+    return (
+      baseline != null &&
+      Object.prototype.hasOwnProperty.call(baseline, 'offset') &&
+      Math.abs((Number(baseline.offset) || 0) - offset) < 1e-9
+    );
+  });
+  if (byBaselineOffset >= 0) return unusedStored.splice(byBaselineOffset, 1)[0];
+
   const byOffset = unusedStored.findIndex(
     hit => Math.abs((Number(hit?.offset) || 0) - offset) < 1e-9,
   );
