@@ -5,16 +5,12 @@ export type SupportedLocale = 'zh-CN' | 'en';
 
 export const SUPPORTED_LOCALES: SupportedLocale[] = ['zh-CN', 'en'];
 
+/** Any Chinese tag selects zh-CN; everything else — including no preference at all — is English. */
 export function normalizeLocale(raw: unknown): SupportedLocale {
-  if (!raw) return 'zh-CN';
-  const v = String(raw).trim();
-  if (!v) return 'zh-CN';
-
-  const lower = v.toLowerCase();
-  if (lower === 'zh' || lower === 'zh-cn' || lower === 'zh-hans') return 'zh-CN';
-  if (lower === 'en' || lower.startsWith('en-')) return 'en';
-
-  return 'zh-CN';
+  const lower = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  return lower === 'zh' || lower.startsWith('zh-') ? 'zh-CN' : 'en';
 }
 
 export function getElementPlusLocale(locale: unknown) {
