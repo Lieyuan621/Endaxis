@@ -10,6 +10,8 @@ import estellaSheet from '@/data/operators/estella';
 import daPanSheet from '@/data/operators/da-pan';
 import snowshineSheet from '@/data/operators/snowshine';
 import mifuSheet from '@/data/operators/mifu';
+import zhuangFangyiSheet from '@/data/operators/zhuang-fangyi';
+import { setLocale } from '@/i18n';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
 import type { Effect, TriggerEffect } from '@/data/types';
@@ -294,6 +296,77 @@ function totalDamage(result: ReturnType<typeof runScenario>) {
 }
 
 describe('optimizer damage golden baselines', () => {
+  it('resets Zhuang Fangyi T1 to 18% and adds 2% per Thunder Strike with talent attribution', () => {
+    setLocale('zh-CN');
+    const operator = createOperatorInstance('zhuang-fangyi', {
+      skillLevels: {
+        basicAttack: 1,
+        battleSkill: 12,
+        comboSkill: 1,
+        ultimate: 1,
+      },
+      talentStates: { '0': 2 },
+    });
+    const team = createTeam(operator.id);
+    const battleHits = resolveOperatorSheetHits(
+      zhuangFangyiSheet,
+      'battleSkill',
+      11,
+      0,
+      { talentStates: { '0': 2 }, potential: 0 },
+    );
+    const tracks = [
+      createTrack('zhuang-fangyi', [
+        createAction('battle_1', 'battleSkill', { startTime: 0, hits: battleHits }),
+        createAction('battle_2', 'battleSkill', { startTime: 7, hits: battleHits }),
+      ]),
+    ];
+    const result = runScenario(
+      tracks,
+      createRegistry(collectRuntimeTriggers(team, [operator], [], [], tracks)),
+    );
+    const t1Applies = result.operatorLog.filter(
+      entry => entry.type === 'OPERATOR_EFFECT_APPLY' && entry.id === 'zhuang-fangyi-t1',
+    );
+    const thunderHitEntries = result.simLog.filter(
+      entry =>
+        entry.type === 'DAMAGE_HIT' &&
+        entry.payload.hitData.id === 'zhuang-fangyi-thunder-strike',
+    );
+    const thunderHits = thunderHitEntries.map(entry => entry.payload.hitData);
+
+    expect(
+      t1Applies.map(entry => ({
+        value: entry.value,
+        time: entry.time,
+        expiresAt: entry.expiresAt,
+        actionId: entry.actionId,
+      })),
+    ).toEqual([
+      { value: 18, time: 0, expiresAt: 5, actionId: 'battle_1_inst' },
+      { value: 20, time: 1.367, expiresAt: 6.367, actionId: 'battle_1_inst' },
+      { value: 18, time: 7, expiresAt: 12, actionId: 'battle_2_inst' },
+      { value: 20, time: 8, expiresAt: 13, actionId: 'battle_2_inst' },
+      { value: 22, time: 8.6, expiresAt: 13.6, actionId: 'battle_2_inst' },
+    ]);
+    expect(
+      thunderHitEntries.map(entry => ({
+        actionId: entry.payload.actionId,
+        time: entry.time,
+        ampBonus: entry.payload.hitData._damageBreakdown?.ampBonus,
+      })),
+    ).toEqual([
+      { actionId: 'battle_1_inst', time: 1.367, ampBonus: 0.18 },
+      { actionId: 'battle_2_inst', time: 8, ampBonus: 0.18 },
+      { actionId: 'battle_2_inst', time: 8.6, ampBonus: 0.2 },
+    ]);
+    expect(
+      thunderHits.every(hit =>
+        hit._damageBreakdown?.ampBonusSources?.some(source => source.label === '天地造化'),
+      ),
+    ).toBe(true);
+  });
+
   it('locks real Estella sheet battle-skill hit damage and damage type', () => {
     const result = runScenario([
       createTrack('alpha', [

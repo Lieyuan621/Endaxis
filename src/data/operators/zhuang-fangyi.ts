@@ -378,7 +378,7 @@ const sheet: OperatorSheet = {
               kind: 'status',
               stat: { modifier: 'ampBonus', elements: 'electric' },
               target: 'self',
-              value: [10, 19],
+              value: [10, 20],
               scaling: {
                 additive: [
                   {

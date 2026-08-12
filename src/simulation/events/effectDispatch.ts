@@ -1133,7 +1133,7 @@ export interface EffectDispatchContext {
   /** Duration override for duringAction triggers. */
   durationOverride?: number;
   /** Forward into OPERATOR_EFFECT_APPLY for duringAction runtime extension. */
-  statusActionId?: string;
+  durationActionId?: string;
   /** Override triggeredBy on DAMAGE_HIT. Defaults to resolved.name ?? resolved.id. */
   triggeredByOverride?: string;
   /** Pre-resolved consumedStacks for damageHit readConsumedStacks (trigger-only). */
@@ -1497,7 +1497,8 @@ export function dispatchSingleActorEffect(
           sourceSkillType: skillType,
           sourceSkillId: skillId,
           stackStrategy: lifecycle.stackStrategy,
-          actionId: dc.statusActionId,
+          actionId,
+          durationActionId: dc.durationActionId,
           ...(ctx.consumedStacksWriteKeys.has(effectId) && actionId
             ? { consumedStacks: ctx.getAction(actionId)?.consumedStacks }
             : {}),

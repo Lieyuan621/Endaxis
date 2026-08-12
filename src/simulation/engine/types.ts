@@ -366,6 +366,8 @@ export interface OperatorEffectApplyEvent {
   sourceSkillId?: string;
   stackStrategy?: 'REFRESH_DURATION' | 'INDEPENDENT' | 'REPLACE';
   /** Set for effects applied via duringAction trigger; used to reschedule expiry on hit.durationExtension. */
+  durationActionId?: string;
+  /** Source action that applied this effect, retained for log attribution. */
   actionId?: string;
   /** Snapshotted consumed stacks from the action that applied this effect. */
   consumedStacks?: Record<string, number>;
@@ -384,8 +386,10 @@ export interface OperatorEffectExpireEvent {
   consumed: boolean;
   id: string;
   stacksToConsume?: number;
-  /** Mirrors actionId from the apply event; allows HitHandler to reschedule duringAction expiries. */
+  /** Source action that applied this effect, retained for log attribution. */
   actionId?: string;
+  /** Mirrors durationActionId from the apply event for duringAction expiry rescheduling. */
+  durationActionId?: string;
   /** Action type that caused consumption. Used by onStatusConsumed/Expire triggers' `skillTypes` filter. */
   sourceSkillType?: string;
   /** Specific skillId that caused consumption. Used by onStatusConsumed/Expire triggers' `skillId` filter. */

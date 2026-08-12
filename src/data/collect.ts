@@ -1024,11 +1024,16 @@ export function collectTriggerEffects(
       }
 
       // Talents
+      let talentFlatIndex = 0;
       for (let groupIdx = 0; groupIdx < op.talents.length; groupIdx++) {
         const group = op.talents[groupIdx]!;
         const state = opInst.talentStates[String(groupIdx)];
-        if (!state || state <= 0) continue;
+        if (!state || state <= 0) {
+          talentFlatIndex += group.levels ?? 0;
+          continue;
+        }
         const idx = state - 1;
+        const talentName = getOperatorTalentName(operatorSlug, talentFlatIndex, idx);
         for (const patch of group.patches ?? [])
           collectedPatches.push(resolvePatchSkillLevel(patch, opInst));
         for (let teIdx = 0; teIdx < (group.triggers?.length ?? 0); teIdx++) {
@@ -1040,7 +1045,11 @@ export function collectTriggerEffects(
           const stampedTe = {
             ...te,
             effects: te.effects.map((eff, effIdx) =>
-              stampTriggerEffect(hydrateTriggerEffect(eff, 'operator'), basePath, effIdx),
+              stampTriggerEffect(
+                hydrateTriggerEffect(eff, 'operator', talentName),
+                basePath,
+                effIdx,
+              ),
             ),
           };
           const resolved = resolveTriggerEffectLevel(stampedTe, teLvlIdx);
@@ -1052,6 +1061,7 @@ export function collectTriggerEffects(
             sourceSkillType: te.damageEffectSkillType,
           });
         }
+        talentFlatIndex += group.levels ?? 0;
       }
 
       // Potentials

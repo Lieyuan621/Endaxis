@@ -613,7 +613,7 @@ export class TriggerRegistry {
         consumedStacks,
         preConsumeOpStacks,
         durationOverride,
-        statusActionId: actionId,
+        durationActionId: durationOverride !== undefined ? actionId : undefined,
         hitConsumedStacks,
         triggeredByOverride,
         recipientTrackIds,

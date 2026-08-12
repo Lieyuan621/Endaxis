@@ -170,7 +170,6 @@ export class HitHandler implements EventHandler<HitEvent> {
         skillType: hit.skillType,
         skillId: hit.skillId,
         actionId: e.payload.actionId,
-        statusActionId: e.payload.actionId,
         spReason: 'hit',
         applyCooldownReduction: this.registry
           ? (eff, t, tid, c) => this.registry!.applyCooldownReduction(eff, t, tid, c)
@@ -696,7 +695,6 @@ export class HitHandler implements EventHandler<HitEvent> {
       skillType: hit.skillType,
       skillId: hit.skillId,
       actionId: e.payload.actionId,
-      statusActionId: e.payload.actionId,
       spReason: 'hit',
       applyCooldownReduction: this.registry
         ? (eff, t, tid, c) => this.registry!.applyCooldownReduction(eff, t, tid, c)
@@ -742,7 +740,7 @@ export class HitHandler implements EventHandler<HitEvent> {
     const expireEvents = ctx.queue.collect(
       ev =>
         ev.type === 'OPERATOR_EFFECT_EXPIRE' &&
-        (ev as OperatorEffectExpireEvent).actionId === actionId,
+        (ev as OperatorEffectExpireEvent).durationActionId === actionId,
     ) as OperatorEffectExpireEvent[];
     for (const ev of expireEvents) {
       ctx.queue.enqueue({ ...ev, time: ev.time - extension }, 2);

@@ -433,6 +433,8 @@ export function computeStats(
           modifier: 'ampBonus',
           value: pct,
           elements: stat.elements as ScopedDamageModifier['elements'],
+          effectId,
+          sourceLabel,
         });
         break;
       case 'directMultiplier':

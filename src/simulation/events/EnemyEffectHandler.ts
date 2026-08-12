@@ -540,20 +540,17 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           event.stackStrategy,
         );
         if (hasVuln || forced) {
-          // Only deal damage + stagger when vulnerability was present (not forced without vuln)
-          if (hasVuln) {
-            const ai = this.getSourceArtsIntensity(sourceId, time, ctx);
-            this.emitReactionDamageHit(
-              physicalType as ReactionDamageType,
-              1,
-              time,
-              sourceId,
-              ctx,
-              { actionId },
-              LIFT_KNOCKDOWN_BASE_STAGGER,
-              computeArtsIntensityStaggerMult(ai),
-            );
-          }
+          const ai = this.getSourceArtsIntensity(sourceId, time, ctx);
+          this.emitReactionDamageHit(
+            physicalType as ReactionDamageType,
+            1,
+            time,
+            sourceId,
+            ctx,
+            { actionId },
+            LIFT_KNOCKDOWN_BASE_STAGGER,
+            computeArtsIntensityStaggerMult(ai),
+          );
           this.registry?.onStatusApplied(
             physicalType,
             undefined,

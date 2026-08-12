@@ -328,6 +328,7 @@ const sheet: OperatorSheet = {
       ],
     },
     battleSkill: {
+      spCost: 25,
       requisites: [
         {
           id: 'liino-battle-skill-no-stance',

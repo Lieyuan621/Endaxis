@@ -194,6 +194,7 @@ describe('timeline skill library editing', () => {
         expect.objectContaining({ id: 'liino-battle-skill-cooldown-ready' }),
       ]),
     );
+    expect(battleSkill.spCost).toBe(25);
     expect(ultimate.requisites).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: 'ultimate-cooldown-ready' })]),
     );

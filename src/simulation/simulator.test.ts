@@ -3462,6 +3462,58 @@ describe('Contingency runtime enemy mechanics', () => {
       ),
     ).toBe(false);
   });
+
+  it.each(['lift', 'knockdown'] as const)(
+    'keeps forced %s reaction damage when super armor prevents control without vulnerability',
+    physicalType => {
+      const result = runScenario(
+        [
+          createTrack('alpha', [
+            createAction(`forced_${physicalType}`, 'ultimate', {
+              hits: [
+                {
+                  id: `${physicalType}_hit`,
+                  offset: 0,
+                  multiplier: 0,
+                  spRecovery: 0,
+                  spReturn: 0,
+                  stagger: 0,
+                  effects: [
+                    { kind: 'physicalStatus', physicalType, forced: true } as Effect,
+                  ],
+                },
+              ],
+            }),
+          ]),
+        ],
+        undefined,
+        { systemConstants: { superArmor: 30 } },
+      );
+      const statusEvent = result.enemyLog.find(
+        (event: any) =>
+          event.type === 'PHYSICAL_STATUS' && event.physicalType === physicalType,
+      ) as any;
+      const reactionHit = result.simLog.find(
+        (entry: any) =>
+          entry.type === 'DAMAGE_HIT' &&
+          entry.payload.hitData._reactionMeta?.reactionType === physicalType,
+      ) as any;
+
+      expect(statusEvent.actualControl).toBe(false);
+      expect(reactionHit?.payload.hitData._reactionMeta).toMatchObject({
+        reactionType: physicalType,
+        level: 1,
+      });
+      expect(reactionHit?.payload.hitData._expectedDamage).toBeGreaterThan(0);
+      expect(result.enemyLog).toContainEqual(
+        expect.objectContaining({
+          type: 'VULNERABILITY_CHANGE',
+          stacks: 1,
+          trigger: physicalType,
+        }),
+      );
+    },
+  );
 });
 
 describe('external dmgBonus via initial effect (Poor Basics regression)', () => {
