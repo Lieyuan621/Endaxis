@@ -141,10 +141,7 @@ export function pickRepresentativePhysicalMarker(
   return {
     typeKey: representative.typeKey,
     time: representative.time,
-    stacks: Math.min(
-      4,
-      Math.max(activeStacks, previousStacks, Number(representative.stacks) || 1),
-    ),
+    stacks: Math.min(4, Math.max(activeStacks, previousStacks, Number(representative.stacks) || 1)),
     icon: representative.icon ?? null,
     row: 0,
     sourceId: representative.sourceId,
@@ -175,7 +172,7 @@ function getEnemySegmentTypeKey(segment: any) {
   const effect = segment?.effect;
   if (effect && Object.keys(effect).length > 0) {
     const resolved = resolveEffectDisplayKey(effect);
-    if (resolved) return resolved;
+    if (resolved && resolved !== 'status') return resolved;
   }
 
   const raw = String(segment?.typeKey || '');

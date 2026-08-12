@@ -1001,10 +1001,7 @@ const lastDamageSnapshot = computed(() => {
       Number(store.effectiveSystemConstants?.superArmor ?? store.systemConstants.superArmor) || 0,
   });
 
-  const remainingHp = Math.max(
-    0,
-    Math.min(maxHp, Math.round(maxHp - damageUntil + healingUntil)),
-  );
+  const remainingHp = Math.max(0, Math.min(maxHp, Math.round(maxHp - damageUntil + healingUntil)));
 
   const segments = store.enemyEffectLayout?.positionedSegments || [];
   const byKey = new Map();
@@ -1021,7 +1018,10 @@ const lastDamageSnapshot = computed(() => {
     // Prefer effect-derived keys (nature_infliction / corrosion) over layout aliases
     // (infliction / reaction:corrosion) so titles hit effects.name i18n.
     const fromEffect = seg.effect ? resolveEffectDisplayKey(seg.effect) : '';
-    const displayTypeKey = fromEffect && fromEffect !== 'default' ? fromEffect : rawTypeKey;
+    // 'status' is the kind-only fallback for nameless statuses — no better than rawTypeKey,
+    // and it would merge every such status into one row.
+    const displayTypeKey =
+      fromEffect && fromEffect !== 'default' && fromEffect !== 'status' ? fromEffect : rawTypeKey;
     const stacks = Math.max(1, Number(seg.stacks) || 1);
     const prev = byKey.get(displayTypeKey);
     if (!prev || stacks > prev.stacks) {
@@ -1075,7 +1075,9 @@ const staggerRatio = computed(() => {
         </div>
         <div v-else class="module-meta-body enemy-status-meta">
           <div class="readout-header">
-            <span class="readout-title readout-title--hp">{{ t('resourceMonitor.modules.enemyStatus') }}</span>
+            <span class="readout-title readout-title--hp">{{
+              t('resourceMonitor.modules.enemyStatus')
+            }}</span>
           </div>
           <div class="readout-value readout-value--hp">
             {{ enemyRemainingHp.toLocaleString()
@@ -1087,10 +1089,7 @@ const staggerRatio = computed(() => {
               :style="{ width: `${enemyHpRatio * 100}%` }"
             ></div>
           </div>
-          <div
-            v-if="lastHitBuffIcons.length || lastHitBuffOverflow"
-            class="last-hit-buffs"
-          >
+          <div v-if="lastHitBuffIcons.length || lastHitBuffOverflow" class="last-hit-buffs">
             <div
               v-for="buff in lastHitBuffIcons"
               :key="buff.typeKey"
@@ -1118,7 +1117,9 @@ const staggerRatio = computed(() => {
         </div>
         <div v-else class="module-meta-body stagger-meta">
           <div class="readout-header">
-            <span class="readout-title readout-title--stagger">{{ t('resourceMonitor.modules.stagger') }}</span>
+            <span class="readout-title readout-title--stagger">{{
+              t('resourceMonitor.modules.stagger')
+            }}</span>
           </div>
           <div class="readout-value readout-value--stagger">
             {{ currentStaggerValue
@@ -1143,7 +1144,9 @@ const staggerRatio = computed(() => {
         </div>
         <div v-else class="module-meta-body sp-meta">
           <div class="readout-header">
-            <span class="readout-title readout-title--sp">{{ t('resourceMonitor.modules.sp') }}</span>
+            <span class="readout-title readout-title--sp">{{
+              t('resourceMonitor.modules.sp')
+            }}</span>
           </div>
           <div class="module-control-row">
             <label>{{ t('resourceMonitor.labels.initialSp') }}</label>
@@ -1232,10 +1235,7 @@ const staggerRatio = computed(() => {
                 ></span>
               </button>
             </div>
-            <div
-              v-if="activeSectionCollapsed.affliction"
-              class="section-collapsed-strip"
-            >
+            <div v-if="activeSectionCollapsed.affliction" class="section-collapsed-strip">
               <button
                 type="button"
                 class="section-toggle-btn is-in-strip"
@@ -1366,10 +1366,7 @@ const staggerRatio = computed(() => {
                 ></span>
               </button>
             </div>
-            <div
-              v-if="activeSectionCollapsed.stagger"
-              class="section-collapsed-strip"
-            >
+            <div v-if="activeSectionCollapsed.stagger" class="section-collapsed-strip">
               <button
                 type="button"
                 class="section-toggle-btn is-in-strip"
@@ -1516,10 +1513,7 @@ const staggerRatio = computed(() => {
                 ></span>
               </button>
             </div>
-            <div
-              v-if="activeSectionCollapsed.sp"
-              class="section-collapsed-strip"
-            >
+            <div v-if="activeSectionCollapsed.sp" class="section-collapsed-strip">
               <button
                 type="button"
                 class="section-toggle-btn is-in-strip"

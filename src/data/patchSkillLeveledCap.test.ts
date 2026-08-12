@@ -1,48 +1,35 @@
 import { describe, it, expect } from 'vitest';
-import { collectEffects } from './collect';
-import type { OperatorInstance, GearInstance, TeamSlot, TeamInstance } from '../types';
+import { patchCombatSkills } from './collect';
+import { applyForm } from './forms';
+import arcaneSheet from './operators/arcane';
+import type { OperatorInstance } from '../types';
 
-// Arcane's will form: comboSkill effect `arcane-combo-susceptibility` has a combo-level-leveled
+// Arcane's will form: comboSkill hit effect `arcane-combo-susceptibility` has a combo-level-leveled
 // cap; its p1 potential patches the cap via `skillLevelKey: 'comboSkill'`, so the leveled array
 // resolves at the combo skill's level instead of being spliced raw.
-const willGloves: GearInstance = {
-  id: 'g1',
-  gearPieceId: 'xiranflow-gloves',
-  artificingLevels: [3, 3, 3],
-};
+//
+// The effect lives in `comboSkill.segments[].damageGroups[].hits[].effects[]`, which `collectEffects`
+// does not walk — `patchCombatSkills` is the pipeline that merges potential patches into hit effects.
 
-function arcaneP1(comboLevel: number): OperatorInstance {
-  return {
-    id: 'op1',
-    operatorSlug: 'arcane',
-    level: 1 as OperatorInstance['level'],
-    promoted: false,
-    potential: 1,
-    skillLevels: { comboSkill: comboLevel },
-    talentStates: {},
-    trustLevel: 0,
-  };
+function arcaneP1(
+  comboLevel: number,
+): Pick<OperatorInstance, 'talentStates' | 'potential'> &
+  Partial<Pick<OperatorInstance, 'skillLevels'>> {
+  return { talentStates: {}, potential: 1, skillLevels: { comboSkill: comboLevel } };
 }
 
-const EMPTY_SLOT: TeamSlot = {
-  operatorId: null,
-  weaponId: null,
-  gear: { armor: null, gloves: null, kit1: null, kit2: null },
-};
-
-function willFormTeam(): TeamInstance {
-  const slot: TeamSlot = {
-    operatorId: 'op1',
-    weaponId: null,
-    gear: { armor: null, gloves: 'g1', kit1: null, kit2: null },
-  };
-  return { id: 't1', name: '', slots: [slot, EMPTY_SLOT, EMPTY_SLOT, EMPTY_SLOT] };
+function findHitEffect(skill: any, effectId: string) {
+  for (const segment of skill?.segments ?? [])
+    for (const group of segment?.damageGroups ?? [])
+      for (const hit of group?.hits ?? [])
+        for (const effect of hit?.effects ?? []) if (effect?.id === effectId) return effect;
+  return undefined;
 }
 
 function susceptibility(comboLevel: number) {
-  const effects = collectEffects(willFormTeam(), [arcaneP1(comboLevel)], [], [willGloves]);
-  const ce = effects.find(e => e.effect.id === 'arcane-combo-susceptibility');
-  return (ce?.effect as any)?.scaling;
+  const willForm = applyForm(arcaneSheet, 'will');
+  const flatSkills = patchCombatSkills(willForm, arcaneP1(comboLevel));
+  return findHitEffect(flatSkills.comboSkill, 'arcane-combo-susceptibility')?.scaling;
 }
 
 describe('patchEffect skillLevelKey — arcane p1 cap', () => {

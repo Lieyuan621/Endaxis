@@ -2362,9 +2362,7 @@ describe('optimizer-native runtime parity', () => {
 
     const linkApplies = result.operatorLog.filter(
       (entry: any) =>
-        entry.type === 'OPERATOR_EFFECT_APPLY' &&
-        entry.stat?.modifier === 'link' &&
-        !entry.silent,
+        entry.type === 'OPERATOR_EFFECT_APPLY' && entry.stat?.modifier === 'link' && !entry.silent,
     );
     expect(linkApplies.every((entry: any) => entry.id === 'link')).toBe(true);
 
@@ -2637,7 +2635,7 @@ describe('optimizer-native runtime parity', () => {
           stacks: 1,
           icon: null,
           sourceId: 'alpha',
-          effect: { kind: 'status', id: 'resistanceShred' },
+          effect: { kind: 'status', stat: { modifier: 'resistanceShred' } },
         },
       ],
     });
@@ -2664,6 +2662,31 @@ describe('optimizer-native runtime parity', () => {
     });
     expect(viz.anomalies.rowCount).toBe(2);
     expect(viz.statuses.rowCount).toBe(1);
+  });
+
+  it('keeps nameless enemy statuses in separate rows', () => {
+    // syntheticStatusEffect() builds {kind:'status', id, name: undefined} whenever an
+    // ENEMY_STATUS_APPLY arrives without an effect. Those resolve to the bare kind 'status',
+    // which used to merge every one of them into a single row and label.
+    const namelessSegment = (id: string, subRow: number) => ({
+      group: 4,
+      subRow,
+      start: 1,
+      end: 5,
+      stacks: 1,
+      icon: null,
+      typeKey: `state:${id}`,
+      effect: { kind: 'status', id, target: { scope: 'enemy' } },
+    });
+    const viz = projectEnemyAfflictionViz({
+      positionedSegments: [namelessSegment('boss-enrage', 0), namelessSegment('boss-shield', 1)],
+    });
+
+    expect(viz.statuses.segments.map((s: any) => s.typeKey)).toEqual([
+      'boss-enrage',
+      'boss-shield',
+    ]);
+    expect(viz.statuses.rowCount).toBe(2);
   });
 
   it('normalizes physical marker display without changing runtime effect state', () => {
@@ -2707,7 +2730,7 @@ describe('optimizer-native runtime parity', () => {
 });
 
 describe('global onActionStart target owner (Type-50 Yinglung)', () => {
-  it("applies oneTime to the trigger owner when a teammate starts a battle skill", () => {
+  it('applies oneTime to the trigger owner when a teammate starts a battle skill', () => {
     const yinglungTrigger: TriggerEffect = {
       trigger: { kind: 'onActionStart', skillTypes: 'battleSkill', triggerScope: 'global' },
       effects: [
@@ -2763,9 +2786,7 @@ describe('global onActionStart target owner (Type-50 Yinglung)', () => {
     );
 
     const comboHit = result.simLog.find(
-      entry =>
-        entry.type === 'DAMAGE_HIT' &&
-        entry.payload.actionId === 'wearer_combo_inst',
+      entry => entry.type === 'DAMAGE_HIT' && entry.payload.actionId === 'wearer_combo_inst',
     );
     expect(comboHit?.type).toBe('DAMAGE_HIT');
     if (comboHit?.type === 'DAMAGE_HIT') {
@@ -2777,9 +2798,7 @@ describe('global onActionStart target owner (Type-50 Yinglung)', () => {
         }),
       ]);
       expect(comboHit.payload.hitData._damageBreakdown?.dmgBonusSources).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ label: 'yinglungsEdge', value: 0.2 }),
-        ]),
+        expect.arrayContaining([expect.objectContaining({ label: 'yinglungsEdge', value: 0.2 })]),
       );
     }
 
@@ -3764,9 +3783,7 @@ describe('beforeDamage enemy status freeze extension', () => {
                     duration: 10,
                     applyTiming: 'beforeDamage',
                     scaling: {
-                      additive: [
-                        { key: 'whirlpools', target: 'self', coefficient: 5 },
-                      ],
+                      additive: [{ key: 'whirlpools', target: 'self', coefficient: 5 }],
                     },
                     condition: {
                       kind: 'operatorStatus',
@@ -3869,9 +3886,7 @@ describe('beforeDamage enemy status freeze extension', () => {
 
     const result = runScenario(tracks);
     const applies = result.enemyLog.filter(
-      e =>
-        e.type === 'ENEMY_STATUS_APPLY' &&
-        (e.id === 'prison-marker' || e.id === 'combo-vuln'),
+      e => e.type === 'ENEMY_STATUS_APPLY' && (e.id === 'prison-marker' || e.id === 'combo-vuln'),
     );
     expect(applies).toHaveLength(2);
 
@@ -4018,10 +4033,7 @@ describe('independent enemy status instance ids', () => {
     // First expiry must still fire (was previously cancelled by the second grant).
     const firstExpire = result.enemyLog.find(
       e =>
-        e.type === 'ENEMY_EFFECT_EXPIRE' &&
-        e.kind === 'status' &&
-        e.id === first.id &&
-        !e.consumed,
+        e.type === 'ENEMY_EFFECT_EXPIRE' && e.kind === 'status' && e.id === first.id && !e.consumed,
     );
     expect(firstExpire?.time).toBeCloseTo(first.expiresAt, 1);
 
@@ -4219,9 +4231,7 @@ describe('independent enemy status instance ids', () => {
 
     const removed = throughSolidify.operatorLog.some(
       entry =>
-        entry.type === 'OPERATOR_EFFECT_EXPIRE' &&
-        entry.id === 'yvonne-p2-cryo' &&
-        entry.time <= 1,
+        entry.type === 'OPERATOR_EFFECT_EXPIRE' && entry.id === 'yvonne-p2-cryo' && entry.time <= 1,
     );
     expect(removed).toBe(false);
     expect(damageFor(throughSolidify, 'yvonne_ba_inst')).toBeGreaterThan(baseline);

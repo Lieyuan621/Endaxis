@@ -478,8 +478,7 @@ export function collectEffects(
         for (const raw of slot.effects ?? []) {
           if (raw.kind !== 'status') continue;
           const pieceName =
-            getGearPieceGameName(gInst.gearPieceId, i18n.global.locale.value) ||
-            gInst.gearPieceId;
+            getGearPieceGameName(gInst.gearPieceId, i18n.global.locale.value) || gInst.gearPieceId;
           const resolved = resolveContextualAttributes(
             resolveEffect(
               ensureEffectId(
@@ -643,9 +642,12 @@ export function resolveScalingDef(scaling: ScalingDef, idx: number): ResolvedSca
  * (indexed by that skill's level), so a leveled `cap`/`additive` array in a patch resolves
  * correctly instead of being spliced raw by `mergeScaling`. Other patches pass through unchanged.
  */
-function resolvePatchSkillLevel(patch: Patch, opInst: OperatorInstance): Patch {
+function resolvePatchSkillLevel(
+  patch: Patch,
+  opInst: Pick<OperatorInstance, 'skillLevels'>,
+): Patch {
   if (patch.kind !== 'patchEffect' || !patch.skillLevelKey || !patch.effect) return patch;
-  const idx = Math.min((opInst.skillLevels[patch.skillLevelKey] ?? 1) - 1, 11);
+  const idx = Math.min((opInst.skillLevels?.[patch.skillLevelKey] ?? 1) - 1, 11);
   const e = patch.effect as Record<string, unknown>;
   return {
     ...patch,
@@ -1190,8 +1192,7 @@ export function collectTriggerEffects(
               const te = triggers[teIdx]!;
               const basePath = makeEffectId(wInst.weaponSlug, skillKey, `trigger${teIdx}`);
               const weaponName =
-                getWeaponGameName(wInst.weaponSlug, i18n.global.locale.value) ||
-                wInst.weaponSlug;
+                getWeaponGameName(wInst.weaponSlug, i18n.global.locale.value) || wInst.weaponSlug;
               const stampedTe = {
                 ...te,
                 effects: te.effects.map((eff, effIdx) =>
@@ -1594,10 +1595,13 @@ export function patchCombatSkills(
     finisherElement?: DamageElement;
     diveElement?: DamageElement;
   },
-  opInst: Pick<OperatorInstance, 'talentStates' | 'potential'>,
+  opInst: Pick<OperatorInstance, 'talentStates' | 'potential'> &
+    Partial<Pick<OperatorInstance, 'skillLevels'>>,
   collectedById?: Map<string, CollectedEffect>,
 ): Record<string, FlatSkillEntry> {
   const patches: { patch: Patch; idx: number }[] = [];
+  const withSkillLevel = (patch: Patch) =>
+    opInst.skillLevels ? resolvePatchSkillLevel(patch, opInst as OperatorInstance) : patch;
   // Why op.gameId is optional
   const slug = resolveOperatorSlug(op.gameId) ?? 'unknown';
   for (let groupIdx = 0; groupIdx < op.talents.length; groupIdx++) {
@@ -1606,9 +1610,8 @@ export function patchCombatSkills(
     const idx = state - 1;
     for (const [patchIdx, patch] of (op.talents[groupIdx]!.patches ?? []).entries())
       patches.push({
-        patch: ensurePatchEffectIds(
-          patch,
-          makeEffectId(slug, `talent${groupIdx}`, `patch${patchIdx}`),
+        patch: withSkillLevel(
+          ensurePatchEffectIds(patch, makeEffectId(slug, `talent${groupIdx}`, `patch${patchIdx}`)),
         ),
         idx,
       });
@@ -1617,7 +1620,9 @@ export function patchCombatSkills(
     if (i + 1 > opInst.potential) continue;
     for (const [patchIdx, patch] of (op.potentials[i]!.patches ?? []).entries())
       patches.push({
-        patch: ensurePatchEffectIds(patch, makeEffectId(slug, `potential${i}`, `patch${patchIdx}`)),
+        patch: withSkillLevel(
+          ensurePatchEffectIds(patch, makeEffectId(slug, `potential${i}`, `patch${patchIdx}`)),
+        ),
         idx: 0,
       });
   }

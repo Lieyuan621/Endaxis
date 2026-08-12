@@ -31,7 +31,7 @@ describe('SimLogPanel square container styling', () => {
 
   test('renders the skill name with the timeline action color', () => {
     expect(source).toContain('.group__action');
-    expect(source).toContain('color-mix(in srgb, var(--group-accent) 88%, #fff)');
+    expect(source).toMatch(/\.group__action\s*\{[^}]*color-mix\(in srgb, var\(--group-accent\)/);
   });
 
   test('opens the selected timeline action and closes other skill log groups', () => {

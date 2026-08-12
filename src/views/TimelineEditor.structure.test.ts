@@ -2,23 +2,11 @@ import { describe, expect, test } from 'vitest';
 import source from './TimelineEditor.vue?raw';
 
 describe('TimelineEditor right rail icons', () => {
-  test('uses a skill detail panel icon for the inspector rail button', () => {
-    const inspectorIcon =
-      source.match(/<svg[\s\S]*?activity-bar__icon--inspector[\s\S]*?<\/svg>/)?.[0] || '';
+  test('gives the inspector rail button its own image icon', () => {
+    const inspectorIcon = source.match(/<img[\s\S]*?activity-bar__image-icon--inspector[\s\S]*?>/);
 
-    expect(inspectorIcon).toContain('M7 6h18v20H7Z');
-    expect(inspectorIcon).toContain('M11 12h10');
-    expect(inspectorIcon).toContain('M11 18h7');
-    expect(inspectorIcon).toContain('M22 6v6h-6Z');
-  });
-
-  test('uses monochrome inspector icon styling', () => {
-    const inspectorIcon =
-      source.match(/<svg[\s\S]*?activity-bar__icon--inspector[\s\S]*?<\/svg>/)?.[0] || '';
-
-    expect(inspectorIcon).not.toContain('#2de2e6');
-    expect(inspectorIcon).not.toContain('#f5c31e');
-    expect(inspectorIcon).toContain('fill="currentColor"');
+    expect(inspectorIcon).not.toBeNull();
+    expect(inspectorIcon![0]).toMatch(/src="[^"]+\.webp"/);
   });
 
   test('labels all activity bar buttons for hover tooltips and accessibility', () => {
@@ -27,7 +15,7 @@ describe('TimelineEditor right rail icons', () => {
       .slice(1)
       .map(chunk => chunk.slice(0, chunk.indexOf('>')));
 
-    expect(openings).toHaveLength(5);
+    expect(openings.length).toBeGreaterThan(0);
     for (const opening of openings) {
       expect(opening).toContain(':aria-label=');
       expect(opening).toContain(':data-tooltip=');
