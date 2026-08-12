@@ -5,6 +5,9 @@ const PHYSICAL_REACTIONS = ['lift', 'knockdown', 'crush', 'breach'];
 const TRACKER_IDS = Object.fromEntries(
   [...INFLICTIONS, ...PHYSICAL_REACTIONS].map(x => [x, `antal-tracker-${x}`]),
 );
+const TRACKER_EXTENDER_IDS = Object.fromEntries(
+  [...INFLICTIONS, ...PHYSICAL_REACTIONS].map(x => [x, `antal-tracker-extender-${x}`]),
+);
 
 const INFLICTION_AND_REACTION_TRACKER: TriggerEffect[] = [
   ...INFLICTIONS,
@@ -33,6 +36,19 @@ const INFLICTION_AND_REACTION_TRACKER: TriggerEffect[] = [
   ],
 }));
 
+const COMBO_SKILL_EFFECTS_EXTENDER: Effect[] = [...INFLICTIONS, ...PHYSICAL_REACTIONS].map(x => ({
+  id: TRACKER_EXTENDER_IDS[x],
+  kind: 'status' as const,
+  target: 'self' as const,
+  duration: 6,
+  hide: true,
+  condition: {
+    kind: 'operatorStatus',
+    status: TRACKER_IDS[x]!,
+    consume: true,
+  },
+}));
+
 const COMBO_SKILL_EFFECTS: Effect[] = [...INFLICTIONS, ...PHYSICAL_REACTIONS].map(x => ({
   ...(INFLICTIONS.includes(x)
     ? {
@@ -46,7 +62,7 @@ const COMBO_SKILL_EFFECTS: Effect[] = [...INFLICTIONS, ...PHYSICAL_REACTIONS].ma
       }),
   condition: {
     kind: 'operatorStatus',
-    status: TRACKER_IDS[x]!,
+    status: TRACKER_EXTENDER_IDS[x]!,
     consume: true,
   },
 }));
@@ -302,6 +318,14 @@ const sheet: OperatorSheet = {
         {
           duration: 0.8,
           damageGroups: [
+            {
+              hits: [
+                {
+                  offset: 0,
+                  effects: COMBO_SKILL_EFFECTS_EXTENDER,
+                },
+              ],
+            },
             {
               element: 'electric',
               multiplier: [151, 166, 181, 196, 211, 227, 242, 257, 272, 291, 313, 340],
