@@ -122,24 +122,6 @@ function openGearLoadoutDialog() {
   showGearLoadoutDialog.value = true;
 }
 
-function getFullTypeName(type) {
-  const displayType =
-    type === 'basicAttack'
-      ? 'attack'
-      : type === 'battleSkill'
-        ? 'skill'
-        : type === 'comboSkill'
-          ? 'link'
-          : type === 'finisher'
-            ? 'execution'
-            : type === 'dive'
-              ? 'dive'
-              : type;
-  const key = `skillType.${displayType}`;
-  const out = t(key);
-  return out === key ? t('skillType.unknown') : out;
-}
-
 // 图标路径
 const WEAPON_ICON_MAP = {
   sword: '/icons/icon_attack_sword.webp',
@@ -201,6 +183,9 @@ function getSkillThemeColor(skill) {
   if (skill.type === 'finisher') return store.getColor('execution');
   if (skill.type === 'basicAttack') return store.getColor('attack');
   if (skill.type === 'dive') return store.getColor('dodge');
+  // Neutral on purpose — a non-skill deals no attributed damage, so it must not borrow the
+  // operator's element colour and read as a damage source.
+  if (skill.type === 'nonSkill') return store.getColor('default');
   if (skill.type === 'battleSkill')
     return skill.element ? store.getColor(skill.element) : store.getColor('skill');
   if (skill.type === 'ultimate')
@@ -240,6 +225,7 @@ function getSegmentChipLabel(seg) {
       ultimate: 'U',
       finisher: 'X',
       dive: 'D',
+      nonSkill: 'N',
     }[seg.type] || '?';
   return `${seg.segmentIndex || seg.sequenceIndex || ''}${suffix}`;
 }
@@ -385,10 +371,8 @@ function onNativeDragStart(evt, skill) {
             <div class="card-edge"></div>
             <div class="card-body">
               <div class="skill-meta">
-                <span v-if="!skill.name.includes(getFullTypeName(skill.type))" class="skill-type">{{
-                  getFullTypeName(skill.type)
-                }}</span>
-                <span v-else class="skill-type-empty"></span>
+                <!-- Spacer only: the skill name already says what the action is. -->
+                <span class="skill-type-empty"></span>
                 <span class="skill-time">{{ formatDurationLabel(skill.duration) }}s</span>
               </div>
               <div class="skill-name">{{ skill.name }}</div>
@@ -683,11 +667,6 @@ function onNativeDragStart(evt, skill) {
   flex: 1;
 }
 
-.skill-card:not(:has(.skill-type)) .skill-name {
-  font-size: 14px;
-  margin-top: 2px;
-}
-
 .card-edge {
   position: absolute;
   left: 0;
@@ -712,14 +691,6 @@ function onNativeDragStart(evt, skill) {
   align-items: center;
   margin-bottom: 2px;
 }
-.skill-type {
-  font-size: 9px;
-  color: var(--accent-color);
-  filter: brightness(0.8);
-  font-weight: bold;
-  text-transform: uppercase;
-  opacity: 0.6;
-}
 .skill-time {
   position: absolute;
   top: 5px;
@@ -742,7 +713,7 @@ function onNativeDragStart(evt, skill) {
   opacity: 0.4;
 }
 .skill-name {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ea-fg, rgba(255, 255, 255, 0.9));
   font-weight: bold;
   margin-top: 2px;
@@ -802,86 +773,81 @@ function onNativeDragStart(evt, skill) {
 }
 
 /* Light: opaque cards + readable type; white weapon glyphs → ink. */
-:global(html[data-theme='light'] .library-container .header-tool-btn){
+:global(html[data-theme='light'] .library-container .header-tool-btn) {
   color: var(--ea-icon-muted);
 }
-:global(html[data-theme='light'] .library-container .header-tool-btn:hover){
+:global(html[data-theme='light'] .library-container .header-tool-btn:hover) {
   color: var(--ea-icon-strong);
   background: var(--ea-hover-fill);
 }
-:global(html[data-theme='light'] .library-container .loadout-action-btn){
+:global(html[data-theme='light'] .library-container .loadout-action-btn) {
   background: var(--ea-fill-input);
   border-color: var(--ea-border);
   color: var(--ea-fg-secondary);
 }
-:global(html[data-theme='light'] .library-container .loadout-action-btn:hover:not(:disabled)){
+:global(html[data-theme='light'] .library-container .loadout-action-btn:hover:not(:disabled)) {
   color: var(--ea-fg);
   border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
   box-shadow: 0 0 8px color-mix(in srgb, var(--ea-gold) 16%, transparent);
 }
-:global(html[data-theme='light'] .library-container .section-title){
+:global(html[data-theme='light'] .library-container .section-title) {
   color: var(--ea-fg);
 }
-:global(html[data-theme='light'] .library-container .section-hint){
+:global(html[data-theme='light'] .library-container .section-hint) {
   color: var(--ea-fg-secondary);
 }
-:global(html[data-theme='light'] .library-container .section-title-box){
+:global(html[data-theme='light'] .library-container .section-title-box) {
   border-left-color: var(--ea-border-strong);
 }
 /* Scope to library grid — do not paint armory dialog .skill-card. */
-:global(html[data-theme='light'] .library-container .skill-card){
+:global(html[data-theme='light'] .library-container .skill-card) {
   background: #ffffff;
   border-color: var(--ea-border-strong);
   box-shadow: 0 1px 2px var(--ea-shadow);
 }
-:global(html[data-theme='light'] .library-container .skill-card:hover){
+:global(html[data-theme='light'] .library-container .skill-card:hover) {
   background: var(--ea-surface-soft);
   border-color: var(--accent-color);
 }
-:global(html[data-theme='light'] .library-container .skill-card.is-selected){
+:global(html[data-theme='light'] .library-container .skill-card.is-selected) {
   background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
   border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
   box-shadow: none;
 }
-:global(html[data-theme='light'] .library-container .skill-name){
+:global(html[data-theme='light'] .library-container .skill-name) {
   color: var(--ea-fg);
 }
-:global(html[data-theme='light'] .library-container .skill-type){
-  filter: none;
-  opacity: 0.95;
-  color: var(--ea-fg-secondary);
-}
-:global(html[data-theme='light'] .library-container .skill-time){
+:global(html[data-theme='light'] .library-container .skill-time) {
   color: var(--ea-fg-muted);
 }
-:global(html[data-theme='light'] .library-container .card-body){
+:global(html[data-theme='light'] .library-container .card-body) {
   box-shadow: none;
 }
-:global(html[data-theme='light'] .library-container .weapon-icon-inner){
+:global(html[data-theme='light'] .library-container .weapon-icon-inner) {
   filter: brightness(0) opacity(0.72);
   opacity: 1;
 }
-:global(html[data-theme='light'] .library-container .skill-card:hover .weapon-icon-inner){
+:global(html[data-theme='light'] .library-container .skill-card:hover .weapon-icon-inner) {
   filter: brightness(0) opacity(0.92);
   transform: scale(1.1);
   opacity: 1;
 }
-:global(html[data-theme='light'] .library-container .attack-segment-chip){
+:global(html[data-theme='light'] .library-container .attack-segment-chip) {
   background: var(--ea-chip-fill);
   border-color: var(--ea-border-strong);
   color: var(--ea-fg-secondary);
 }
-:global(html[data-theme='light'] .library-container .attack-segment-chip:hover){
+:global(html[data-theme='light'] .library-container .attack-segment-chip:hover) {
   background: var(--ea-chip-fill-hover);
   color: var(--ea-fg);
 }
-:global(html[data-theme='light'] .library-container .attack-segment-chip.is-selected){
+:global(html[data-theme='light'] .library-container .attack-segment-chip.is-selected) {
   background: color-mix(in srgb, var(--ea-gold) 14%, transparent);
   border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
   color: var(--ea-gold);
   box-shadow: none;
 }
-:global(html[data-theme='light'] .library-container .attack-segment-chip:not(.is-last)::after){
+:global(html[data-theme='light'] .library-container .attack-segment-chip:not(.is-last)::after) {
   color: var(--ea-fg-faint);
 }
 

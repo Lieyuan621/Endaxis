@@ -490,9 +490,18 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       .map(skill => buildStandardOrVariantSkill(skill, { isStandard: false }))
       .filter(isSkill);
 
+    // A nonSkill has no rank of its own, so it would sort last. Rank it by the skill it hangs off
+    // (`levelKey`) instead, keeping the sub-skill rule: variants sit under their parent skill.
+    const sortWeight = (skill: Record<string, unknown>) => {
+      const type = String(skill.type ?? '');
+      if (type !== 'nonSkill') return TYPE_ORDER[type] || 99;
+      const parent = flatSkills[String(skill.skillKey ?? '')]?.levelKey;
+      return TYPE_ORDER[String(parent ?? '')] || 99;
+    };
+
     const visibleSkills = [...standardSkills, ...variantSkills].sort((a, b) => {
-      const weightA = TYPE_ORDER[a.type as string] || 99;
-      const weightB = TYPE_ORDER[b.type as string] || 99;
+      const weightA = sortWeight(a);
+      const weightB = sortWeight(b);
 
       if (weightA !== weightB) {
         return weightA - weightB;

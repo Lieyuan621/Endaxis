@@ -13,6 +13,7 @@ import type {
   PhysicalStatus,
   SkillType,
   StackStrategy,
+  SubSkillGroup,
   TreatAsReaction,
 } from './enums';
 
@@ -30,6 +31,7 @@ export type {
   SkillType,
   SkillTypeScope,
   StackStrategy,
+  SubSkillGroup,
   TreatAsReaction,
 } from './enums';
 
@@ -58,6 +60,7 @@ export {
   SKILL_TYPE_SCOPES,
   STACKS_COMPARES,
   STACK_STRATEGIES,
+  SUB_SKILL_GROUPS,
   TREAT_AS_REACTION_TYPES,
   isPhysicalStatusType,
   isReactionType,
@@ -955,9 +958,11 @@ export interface FlatSkillEntry extends Omit<CombatSkillEntry, 'subSkills'> {
   /** Key into opInst.skillLevels. For subSkills and finisher/dive, points at the parent
    *  skill's combatSkills key (e.g. 'basicAttack'). */
   levelKey: string;
-  /** Skill type tag: `'basicAttack' | 'battleSkill' | 'comboSkill' | 'ultimate' | 'finisher' | 'dive'`.
-   *  For subSkills this equals the parent combatSkills key — generic trigger filters targeting
-   *  e.g. `'comboSkill'` match the parent AND every sub-variant by plain equality. */
+  /** Skill type tag: a `CombatSkillType`, `'finisher' | 'dive'`, or `'nonSkill'`.
+   *  For subSkills this equals `sub.group`, which need not match the parent combatSkills key —
+   *  e.g. yvonne/laevatain/zhuang-fangyi nest a `group: 'basicAttack'` variant under `ultimate:` so it
+   *  scales off the ultimate's level. Generic trigger filters targeting e.g. `'comboSkill'` match the
+   *  parent AND every sub-variant grouped there, by plain equality. */
   type: string;
   /** SubSkill's author-provided `name`. Used as the i18n lookup key and override-key segment
    *  so that back-compat with user-stored overrides is preserved. */
@@ -1005,7 +1010,7 @@ export function createDiveEntry(element: DamageElement): CombatSkillEntry {
 }
 
 export interface SubSkillEntry {
-  group: CombatSkillType;
+  group: SubSkillGroup;
   name: string;
   id?: string;
   segments: Segment[];

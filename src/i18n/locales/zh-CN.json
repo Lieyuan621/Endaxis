@@ -640,6 +640,7 @@
     "ultimate": "终结技",
     "weapon": "武器",
     "set": "套装",
+    "nonSkill": "非技能",
     "unknown": "技能"
   },
   "enemyTier": {

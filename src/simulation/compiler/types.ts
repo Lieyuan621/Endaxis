@@ -207,7 +207,7 @@ export interface ResolvedHit extends Hit {
 }
 
 export type ActionType =
-  'finisher' | 'dive' | 'battleSkill' | 'comboSkill' | 'ultimate' | 'basicAttack';
+  'finisher' | 'dive' | 'battleSkill' | 'comboSkill' | 'ultimate' | 'basicAttack' | 'nonSkill';
 
 export function resolveOptimizerSkillType(action: { type?: ActionType | null }) {
   return action?.type || null;

@@ -167,6 +167,10 @@ function resolveAction(
   const isFinalStrikeAction =
     action.type === 'basicAttack' && (sequenceTotal === 0 || sequenceIndex === sequenceTotal);
   const lastHitIndex = (action.hits?.length ?? 0) - 1;
+  // A nonSkill action's damage carries no skill-type attribution — the whole point of the type.
+  // Leave it undefined rather than stamping the literal, which is what `skillTypes: 'nonSkill'`
+  // modifiers actually match (see matchesSkillType in computeDamage).
+  const actionSkillType = action.type === 'nonSkill' ? undefined : action.type;
 
   const resolvedHits: ResolvedHit[] = (action.hits || []).map((hit, hitIndex) => {
     const realTime = timeCtx.getShiftedEndTime(realStartTime, Number(hit.offset) || 0, item.id);
@@ -179,7 +183,7 @@ function resolveAction(
       realTime,
       realOffset: realTime - realStartTime,
       time: timeCtx.toGameTime(realTime),
-      skillType: treatAsSkillType ?? (isFinalHit ? 'finalStrike' : action.type),
+      skillType: treatAsSkillType ?? (isFinalHit ? 'finalStrike' : actionSkillType),
       skillId: (hit as any).skillId ?? action.skillId,
       element: hit.element || action.element,
       _actionInstanceId: item.id,

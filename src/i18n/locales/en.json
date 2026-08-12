@@ -640,6 +640,7 @@
     "ultimate": "Ultimate",
     "weapon": "Weapon",
     "set": "Set",
+    "nonSkill": "Non-skill",
     "unknown": "Skill"
   },
   "enemyTier": {

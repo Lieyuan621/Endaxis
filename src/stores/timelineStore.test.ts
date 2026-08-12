@@ -159,7 +159,7 @@ describe('timeline skill library editing', () => {
     ).toBe(true);
   });
 
-  it('exposes Liino stance termination as a zero-cost short battle-skill action', async () => {
+  it('exposes Liino stance termination as a zero-cost short nonSkill action', async () => {
     setLocale('zh-CN');
     const store = useTimelineStore();
     await store.fetchGameData();
@@ -178,7 +178,7 @@ describe('timeline skill library editing', () => {
     ) as any;
 
     expect(stanceTermination).toMatchObject({
-      type: 'battleSkill',
+      type: 'nonSkill',
       skillId: 'liino-stance-termination',
       name: '姿态中止',
       duration: 0.2,
@@ -197,6 +197,11 @@ describe('timeline skill library editing', () => {
     expect(ultimate.requisites).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: 'ultimate-cooldown-ready' })]),
     );
+
+    // Sub-skill rule: a nonSkill variant ranks by its parent skill, so it sits directly beneath
+    // the battle skill rather than falling to the end of the library.
+    const keys = store.activeSkillLibrary.map((skill: any) => skill.skillKey);
+    expect(keys.indexOf('liino-stance-termination')).toBe(keys.indexOf('battleSkill') + 1);
   });
 
   it('toggles multiple actions through the shared action selection path', () => {

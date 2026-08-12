@@ -634,6 +634,7 @@
     "ultimate": "Ультимейт",
     "weapon": "Оружие",
     "set": "Сет",
+    "nonSkill": "Не навык",
     "unknown": "Навык"
   },
   "enemyTier": {

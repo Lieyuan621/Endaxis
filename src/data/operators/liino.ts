@@ -1,36 +1,12 @@
-import type { EffectCondition, OperatorSheet, SkillRequisite } from '../types';
-
-const VOCALIST_STANCE = 'liino-vocalist-stance';
-const COSMOVOICE_STANCE = 'liino-cosmovoice-stance';
-const BATTLE_SKILL_COOLDOWN = 'liino-battle-skill';
-const STANCE_TERMINATION_SKILL = 'liino-stance-termination';
+import type { EffectCondition, OperatorSheet } from '../types';
 
 const STANCE_ACTIVE_CONDITION: EffectCondition = {
   kind: 'or',
   conditions: [
-    { kind: 'operatorStatus', status: VOCALIST_STANCE },
-    { kind: 'operatorStatus', status: COSMOVOICE_STANCE },
+    { kind: 'operatorStatus', status: 'liino-vocalist-stance' },
+    { kind: 'operatorStatus', status: 'liino-cosmovoice-stance' },
   ],
 };
-
-const STANCE_TERMINATION_REQUISITE: SkillRequisite = {
-  id: 'liino-stance-termination-active',
-  condition: STANCE_ACTIVE_CONDITION,
-  messageKey: 'actionItem.requisiteTitle.liinoStanceTerminationOnly',
-};
-
-const NORMAL_BATTLE_SKILL_REQUISITES: SkillRequisite[] = [
-  {
-    id: 'liino-battle-skill-outside-stance',
-    condition: { kind: 'not', condition: STANCE_ACTIVE_CONDITION },
-    messageKey: 'actionItem.requisiteTitle.liinoUseStanceTermination',
-  },
-  {
-    id: 'liino-battle-skill-cooldown-ready',
-    condition: { kind: 'skillCooldownReady', cooldownKey: BATTLE_SKILL_COOLDOWN },
-    messageKey: 'actionItem.requisiteTitle.battleSkillOnCooldown',
-  },
-];
 
 const sheet: OperatorSheet = {
   gameId: 'LIINO',
@@ -352,7 +328,18 @@ const sheet: OperatorSheet = {
       ],
     },
     battleSkill: {
-      requisites: NORMAL_BATTLE_SKILL_REQUISITES,
+      requisites: [
+        {
+          id: 'liino-battle-skill-no-stance',
+          condition: { kind: 'not', condition: STANCE_ACTIVE_CONDITION },
+          messageKey: 'actionItem.requisiteTitle.liinoUseStanceTermination',
+        },
+        {
+          id: 'liino-battle-skill-cooldown-ready',
+          condition: { kind: 'skillCooldownReady', cooldownKey: 'liino-battle-skill' },
+          messageKey: 'actionItem.requisiteTitle.battleSkillOnCooldown',
+        },
+      ],
       segments: [
         {
           spCost: 25,
@@ -399,12 +386,18 @@ const sheet: OperatorSheet = {
       ],
       subSkills: [
         {
-          id: STANCE_TERMINATION_SKILL,
-          group: 'battleSkill',
+          id: 'liino-stance-termination',
+          group: 'nonSkill',
           name: 'stanceTermination',
           spCost: 0,
           ultimateEnergyGain: 0,
-          requisites: [STANCE_TERMINATION_REQUISITE],
+          requisites: [
+            {
+              id: 'liino-stance-termination-active',
+              condition: STANCE_ACTIVE_CONDITION,
+              messageKey: 'actionItem.requisiteTitle.liinoStanceTerminationOnly',
+            },
+          ],
           segments: [
             {
               duration: 0.2,
@@ -417,19 +410,19 @@ const sheet: OperatorSheet = {
         {
           trigger: {
             kind: 'onActionStart',
-            skillId: STANCE_TERMINATION_SKILL,
+            skillId: 'liino-stance-termination',
           },
           effects: [
             {
               kind: 'skillCooldown',
-              cooldownKey: BATTLE_SKILL_COOLDOWN,
+              cooldownKey: 'liino-battle-skill',
               duration: 3,
               target: 'self',
-              condition: { kind: 'operatorStatus', status: VOCALIST_STANCE },
+              condition: { kind: 'operatorStatus', status: 'liino-vocalist-stance' },
             },
             {
               kind: 'consume',
-              operatorStatus: [VOCALIST_STANCE, COSMOVOICE_STANCE],
+              operatorStatus: ['liino-vocalist-stance', 'liino-cosmovoice-stance'],
               consumeTarget: 'team',
             },
           ],
