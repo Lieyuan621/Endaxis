@@ -1,6 +1,5 @@
 import { createI18n } from 'vue-i18n';
 import en from './locales/en.json';
-import ru from './locales/ru.json';
 import zhCN from './locales/zh-CN.json';
 import { normalizeLocale, SUPPORTED_LOCALES, type SupportedLocale } from './elementPlusLocale';
 
@@ -33,7 +32,6 @@ export const i18n = createI18n({
   fallbackLocale: 'zh-CN',
   messages: {
     en,
-    ru,
     'zh-CN': zhCN,
   },
 });

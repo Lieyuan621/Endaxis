@@ -10,10 +10,8 @@ describe('battle log localization', () => {
     expect(message.skillType.attack).toBe('普攻');
   });
 
-  test('en/ru include cdReductionText', () => {
+  test('en includes cdReductionText', () => {
     const en = i18n.global.getLocaleMessage('en') as Record<string, any>;
-    const ru = i18n.global.getLocaleMessage('ru') as Record<string, any>;
     expect(en.battleLog.ui.cdReductionText).toContain('{amount}');
-    expect(ru.battleLog.ui.cdReductionText).toContain('{amount}');
   });
 });

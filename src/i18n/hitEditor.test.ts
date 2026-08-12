@@ -72,14 +72,14 @@ const EFFECT_NAME_KEYS = Object.freeze([
 ]);
 
 describe('hit editor localization', () => {
-  test.each(['zh-CN', 'en', 'ru'])('%s has a shared none label for hit editor selects', locale => {
+  test.each(['zh-CN', 'en'])('%s has a shared none label for hit editor selects', locale => {
     const message = i18n.global.getLocaleMessage(locale) as Record<string, any>;
 
     expect(message.common.none, `${locale}.common.none`).toEqual(expect.any(String));
     expect(message.common.none).not.toBe('');
   });
 
-  test.each(['zh-CN', 'en', 'ru'])('%s has labels for editor enums and fields', locale => {
+  test.each(['zh-CN', 'en'])('%s has labels for editor enums and fields', locale => {
     const message = i18n.global.getLocaleMessage(locale) as Record<string, unknown>;
     const hitEditor = message.hitEditor as Record<string, string | Record<string, string>>;
 

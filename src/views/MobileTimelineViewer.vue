@@ -183,9 +183,7 @@ const activeEnemyDisplayName = computed(() => {
   void locale.value;
   if (store.activeEnemyId === 'custom') return t('resourceMonitor.enemy.custom');
   const enemy = (store.enemyDatabase || []).find(item => item?.id === store.activeEnemyId);
-  return enemy
-    ? getEnemyGameName(enemy.id, locale.value)
-    : t('resourceMonitor.enemy.unknown');
+  return enemy ? getEnemyGameName(enemy.id, locale.value) : t('resourceMonitor.enemy.unknown');
 });
 const pxPerSecond = computed(() => {
   const raw = Number(store.timeBlockWidth) || 50;
@@ -841,7 +839,11 @@ function beginActionDrag() {
 function flushActionDragPreview(clientY = actionPointerSession?.lastY) {
   const session = actionPointerSession;
   const timelineElement = mobileTimelineRef.value;
-  if (!session?.dragging || !(timelineElement instanceof HTMLElement) || !Number.isFinite(clientY)) {
+  if (
+    !session?.dragging ||
+    !(timelineElement instanceof HTMLElement) ||
+    !Number.isFinite(clientY)
+  ) {
     return;
   }
 
@@ -861,8 +863,7 @@ function flushActionDragPreview(clientY = actionPointerSession?.lastY) {
 
   session.deltaTime = deltaTime;
   dragPreviewLogicalTime.value = previewLogicalStart;
-  dragPreviewOffsetPx.value =
-    timeToY(previewVisualStart) - timeToY(session.initialVisualStart);
+  dragPreviewOffsetPx.value = timeToY(previewVisualStart) - timeToY(session.initialVisualStart);
 }
 
 function scheduleActionDragPreview(clientY) {
@@ -1350,7 +1351,9 @@ function getCompiledAction(action) {
 
 const freezeRegionBySourceId = computed(() => {
   const regions = Array.isArray(store.globalExtensions) ? store.globalExtensions : [];
-  return new Map(regions.filter(region => region?.sourceId).map(region => [region.sourceId, region]));
+  return new Map(
+    regions.filter(region => region?.sourceId).map(region => [region.sourceId, region]),
+  );
 });
 
 function getActionFreezeRegion(action) {
@@ -2297,387 +2300,378 @@ async function doImport() {
             popper-class="mobile-more-popper"
           >
             <template #reference>
-            <button
-              type="button"
-              class="ea-btn ea-btn--sm ea-btn--lift mobile-more-trigger"
-              :class="{ 'is-active': moreMenuOpen }"
-              :title="t('timeline.mobile.more')"
-              :aria-label="t('timeline.mobile.more')"
-              :aria-expanded="moreMenuOpen"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
+              <button
+                type="button"
+                class="ea-btn ea-btn--sm ea-btn--lift mobile-more-trigger"
+                :class="{ 'is-active': moreMenuOpen }"
+                :title="t('timeline.mobile.more')"
+                :aria-label="t('timeline.mobile.more')"
+                :aria-expanded="moreMenuOpen"
               >
-                <circle cx="12" cy="5" r="1.6"></circle>
-                <circle cx="12" cy="12" r="1.6"></circle>
-                <circle cx="12" cy="19" r="1.6"></circle>
-              </svg>
-            </button>
-          </template>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="5" r="1.6"></circle>
+                  <circle cx="12" cy="12" r="1.6"></circle>
+                  <circle cx="12" cy="19" r="1.6"></circle>
+                </svg>
+              </button>
+            </template>
 
-          <div class="mobile-more-panel">
-            <section class="mobile-more-section">
-              <h4 class="mobile-more-section__title">{{ t('common.language') }}</h4>
-              <div class="mobile-locale" :aria-label="t('common.language')">
-                <button
-                  type="button"
-                  class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
-                  :class="{ 'is-active': locale === 'zh-CN' }"
-                  :aria-pressed="locale === 'zh-CN'"
-                  @click="changeLocale('zh-CN')"
-                >
-                  {{ t('locale.zhCN') }}
-                </button>
-                <button
-                  type="button"
-                  class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
-                  :class="{ 'is-active': locale === 'en' }"
-                  :aria-pressed="locale === 'en'"
-                  @click="changeLocale('en')"
-                >
-                  {{ t('locale.en') }}
-                </button>
-                <button
-                  type="button"
-                  class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
-                  :class="{ 'is-active': locale === 'ru' }"
-                  :aria-pressed="locale === 'ru'"
-                  @click="changeLocale('ru')"
-                >
-                  {{ t('locale.ru') }}
-                </button>
-              </div>
-
-              <div class="mobile-appearance-row">
-                <span class="mobile-appearance-row__label">{{ t('common.appearance') }}</span>
-                <div
-                  class="mobile-appearance-row__btns"
-                  role="group"
-                  :aria-label="t('common.appearance')"
-                >
+            <div class="mobile-more-panel">
+              <section class="mobile-more-section">
+                <h4 class="mobile-more-section__title">{{ t('common.language') }}</h4>
+                <div class="mobile-locale" :aria-label="t('common.language')">
                   <button
                     type="button"
-                    class="ea-btn ea-btn--sm ea-btn--lift mobile-appearance-btn"
-                    :class="{ 'is-active': appearance === 'light' }"
-                    :title="t('common.appearanceLight')"
-                    :aria-label="t('common.appearanceLight')"
-                    @click="setAppearance('light')"
+                    class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
+                    :class="{ 'is-active': locale === 'zh-CN' }"
+                    :aria-pressed="locale === 'zh-CN'"
+                    @click="changeLocale('zh-CN')"
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <circle cx="12" cy="12" r="4" />
-                      <path
-                        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-                      />
-                    </svg>
+                    {{ t('locale.zhCN') }}
                   </button>
                   <button
                     type="button"
-                    class="ea-btn ea-btn--sm ea-btn--lift mobile-appearance-btn"
-                    :class="{ 'is-active': appearance === 'dark' }"
-                    :title="t('common.appearanceDark')"
-                    :aria-label="t('common.appearanceDark')"
-                    @click="setAppearance('dark')"
+                    class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
+                    :class="{ 'is-active': locale === 'en' }"
+                    :aria-pressed="locale === 'en'"
+                    @click="changeLocale('en')"
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
+                    {{ t('locale.en') }}
                   </button>
                 </div>
-              </div>
-            </section>
 
-            <section class="mobile-more-section">
-              <h4 class="mobile-more-section__title">
-                {{ t('timeline.mobile.timeSettings.title') }}
-              </h4>
-              <div class="mobile-time-settings">
-                <label class="mobile-time-setting-row">
-                  <span>{{ t('timeline.mobile.timeSettings.prepDuration') }}</span>
-                  <span class="mobile-time-setting-row__control">
-                    <el-input-number
-                      v-model="prepDurationDraft"
-                      :min="1 / 60"
-                      :step="0.5"
-                      :precision="2"
-                      controls-position="right"
-                      size="small"
-                      @change="applyMobilePrepDuration"
-                    />
-                    <span>{{ t('timeline.mobile.timeSettings.seconds') }}</span>
-                  </span>
-                </label>
-                <label class="mobile-time-setting-row">
-                  <span>{{ t('timeline.mobile.timeSettings.battleDuration') }}</span>
-                  <span class="mobile-time-setting-row__control">
-                    <el-input-number
-                      v-model="battleDurationDraft"
-                      :min="30"
-                      :max="600"
-                      :step="10"
-                      :precision="0"
-                      controls-position="right"
-                      size="small"
-                      @change="applyMobileBattleDuration"
-                    />
-                    <span>{{ t('timeline.mobile.timeSettings.seconds') }}</span>
-                  </span>
-                </label>
-                <button
-                  type="button"
-                  class="header-more-check-row header-more-check-row--compact mobile-prep-setting"
-                  :aria-pressed="store.prepExpanded !== false"
-                  @click="toggleMobilePrepExpanded"
-                >
-                  <svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
-                    stroke-width="1.5"
-                    aria-hidden="true"
+                <div class="mobile-appearance-row">
+                  <span class="mobile-appearance-row__label">{{ t('common.appearance') }}</span>
+                  <div
+                    class="mobile-appearance-row__btns"
+                    role="group"
+                    :aria-label="t('common.appearance')"
                   >
-                    <rect x="1" y="1" width="14" height="14" rx="2" />
-                    <polyline
-                      v-if="store.prepExpanded !== false"
-                      points="3,8 6.5,11.5 13,4.5"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  <span>{{ t('timeline.mobile.timeSettings.expandPrep') }}</span>
-                </button>
-              </div>
-            </section>
+                    <button
+                      type="button"
+                      class="ea-btn ea-btn--sm ea-btn--lift mobile-appearance-btn"
+                      :class="{ 'is-active': appearance === 'light' }"
+                      :title="t('common.appearanceLight')"
+                      :aria-label="t('common.appearanceLight')"
+                      @click="setAppearance('light')"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="12" r="4" />
+                        <path
+                          d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="ea-btn ea-btn--sm ea-btn--lift mobile-appearance-btn"
+                      :class="{ 'is-active': appearance === 'dark' }"
+                      :title="t('common.appearanceDark')"
+                      :aria-label="t('common.appearanceDark')"
+                      @click="setAppearance('dark')"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </section>
 
-            <section class="mobile-more-section">
-              <h4 class="mobile-more-section__title">
-                {{ t('timeline.mobile.display.title') }}
-              </h4>
-              <div class="header-more-checklist header-more-checklist--grid">
-                <button
-                  type="button"
-                  class="header-more-check-row header-more-check-row--compact"
-                  :aria-pressed="showAllAttackSegments"
-                  @click="showAllAttackSegments = !showAllAttackSegments"
-                >
-                  <svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
-                    stroke-width="1.5"
-                    aria-hidden="true"
+              <section class="mobile-more-section">
+                <h4 class="mobile-more-section__title">
+                  {{ t('timeline.mobile.timeSettings.title') }}
+                </h4>
+                <div class="mobile-time-settings">
+                  <label class="mobile-time-setting-row">
+                    <span>{{ t('timeline.mobile.timeSettings.prepDuration') }}</span>
+                    <span class="mobile-time-setting-row__control">
+                      <el-input-number
+                        v-model="prepDurationDraft"
+                        :min="1 / 60"
+                        :step="0.5"
+                        :precision="2"
+                        controls-position="right"
+                        size="small"
+                        @change="applyMobilePrepDuration"
+                      />
+                      <span>{{ t('timeline.mobile.timeSettings.seconds') }}</span>
+                    </span>
+                  </label>
+                  <label class="mobile-time-setting-row">
+                    <span>{{ t('timeline.mobile.timeSettings.battleDuration') }}</span>
+                    <span class="mobile-time-setting-row__control">
+                      <el-input-number
+                        v-model="battleDurationDraft"
+                        :min="30"
+                        :max="600"
+                        :step="10"
+                        :precision="0"
+                        controls-position="right"
+                        size="small"
+                        @change="applyMobileBattleDuration"
+                      />
+                      <span>{{ t('timeline.mobile.timeSettings.seconds') }}</span>
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    class="header-more-check-row header-more-check-row--compact mobile-prep-setting"
+                    :aria-pressed="store.prepExpanded !== false"
+                    @click="toggleMobilePrepExpanded"
                   >
-                    <rect x="1" y="1" width="14" height="14" rx="2" />
-                    <polyline
-                      v-if="showAllAttackSegments"
-                      points="3,8 6.5,11.5 13,4.5"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  <span>{{ t('timeline.mobile.display.showAllAttackSegments') }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="header-more-check-row header-more-check-row--compact"
-                  :aria-pressed="showAnomalies"
-                  @click="showAnomalies = !showAnomalies"
-                >
-                  <svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
-                    stroke-width="1.5"
-                    aria-hidden="true"
-                  >
-                    <rect x="1" y="1" width="14" height="14" rx="2" />
-                    <polyline
-                      v-if="showAnomalies"
-                      points="3,8 6.5,11.5 13,4.5"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  <span>{{ t('timeline.mobile.display.showAnomalies') }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="header-more-check-row header-more-check-row--compact"
-                  :aria-pressed="showDurationBars"
-                  @click="showDurationBars = !showDurationBars"
-                >
-                  <svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
-                    stroke-width="1.5"
-                    aria-hidden="true"
-                  >
-                    <rect x="1" y="1" width="14" height="14" rx="2" />
-                    <polyline
-                      v-if="showDurationBars"
-                      points="3,8 6.5,11.5 13,4.5"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  <span>{{ t('timeline.mobile.display.showDurationBars') }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="header-more-check-row header-more-check-row--compact"
-                  :aria-pressed="showFreezeEffects"
-                  @click="showFreezeEffects = !showFreezeEffects"
-                >
-                  <svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
-                    stroke-width="1.5"
-                    aria-hidden="true"
-                  >
-                    <rect x="1" y="1" width="14" height="14" rx="2" />
-                    <polyline
-                      v-if="showFreezeEffects"
-                      points="3,8 6.5,11.5 13,4.5"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  <span>{{ t('timeline.mobile.display.showFreezeEffects') }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="header-more-check-row header-more-check-row--compact"
-                  :aria-pressed="showStaggerBreaks"
-                  @click="showStaggerBreaks = !showStaggerBreaks"
-                >
-                  <svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
-                    stroke-width="1.5"
-                    aria-hidden="true"
-                  >
-                    <rect x="1" y="1" width="14" height="14" rx="2" />
-                    <polyline
-                      v-if="showStaggerBreaks"
-                      points="3,8 6.5,11.5 13,4.5"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  <span>{{ t('timeline.mobile.display.showStaggerBreaks') }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="header-more-check-row header-more-check-row--compact"
-                  :aria-pressed="showOperationHints"
-                  @click="showOperationHints = !showOperationHints"
-                >
-                  <svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
-                    stroke-width="1.5"
-                    aria-hidden="true"
-                  >
-                    <rect x="1" y="1" width="14" height="14" rx="2" />
-                    <polyline
-                      v-if="showOperationHints"
-                      points="3,8 6.5,11.5 13,4.5"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  <span>{{ t('timeline.mobile.display.showOperationHints') }}</span>
-                </button>
-              </div>
-            </section>
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <rect x="1" y="1" width="14" height="14" rx="2" />
+                      <polyline
+                        v-if="store.prepExpanded !== false"
+                        points="3,8 6.5,11.5 13,4.5"
+                        stroke-width="2"
+                      />
+                    </svg>
+                    <span>{{ t('timeline.mobile.timeSettings.expandPrep') }}</span>
+                  </button>
+                </div>
+              </section>
 
-            <section class="mobile-more-section">
-              <div class="mobile-project-actions">
-                <button
-                  type="button"
-                  class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-blue mobile-project-action"
-                  @click="openImportDialog"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="14"
-                    height="14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
+              <section class="mobile-more-section">
+                <h4 class="mobile-more-section__title">
+                  {{ t('timeline.mobile.display.title') }}
+                </h4>
+                <div class="header-more-checklist header-more-checklist--grid">
+                  <button
+                    type="button"
+                    class="header-more-check-row header-more-check-row--compact"
+                    :aria-pressed="showAllAttackSegments"
+                    @click="showAllAttackSegments = !showAllAttackSegments"
                   >
-                    <polyline points="9 11 12 14 22 4" />
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                  </svg>
-                  <span>{{ t('timeline.mobile.import') }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-danger-dark mobile-project-action"
-                  @click="handleReset"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="14"
-                    height="14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <rect x="1" y="1" width="14" height="14" rx="2" />
+                      <polyline
+                        v-if="showAllAttackSegments"
+                        points="3,8 6.5,11.5 13,4.5"
+                        stroke-width="2"
+                      />
+                    </svg>
+                    <span>{{ t('timeline.mobile.display.showAllAttackSegments') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="header-more-check-row header-more-check-row--compact"
+                    :aria-pressed="showAnomalies"
+                    @click="showAnomalies = !showAnomalies"
                   >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path
-                      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                    />
-                  </svg>
-                  <span>{{ t('common.reset') }}</span>
-                </button>
-              </div>
-            </section>
-          </div>
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <rect x="1" y="1" width="14" height="14" rx="2" />
+                      <polyline
+                        v-if="showAnomalies"
+                        points="3,8 6.5,11.5 13,4.5"
+                        stroke-width="2"
+                      />
+                    </svg>
+                    <span>{{ t('timeline.mobile.display.showAnomalies') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="header-more-check-row header-more-check-row--compact"
+                    :aria-pressed="showDurationBars"
+                    @click="showDurationBars = !showDurationBars"
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <rect x="1" y="1" width="14" height="14" rx="2" />
+                      <polyline
+                        v-if="showDurationBars"
+                        points="3,8 6.5,11.5 13,4.5"
+                        stroke-width="2"
+                      />
+                    </svg>
+                    <span>{{ t('timeline.mobile.display.showDurationBars') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="header-more-check-row header-more-check-row--compact"
+                    :aria-pressed="showFreezeEffects"
+                    @click="showFreezeEffects = !showFreezeEffects"
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <rect x="1" y="1" width="14" height="14" rx="2" />
+                      <polyline
+                        v-if="showFreezeEffects"
+                        points="3,8 6.5,11.5 13,4.5"
+                        stroke-width="2"
+                      />
+                    </svg>
+                    <span>{{ t('timeline.mobile.display.showFreezeEffects') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="header-more-check-row header-more-check-row--compact"
+                    :aria-pressed="showStaggerBreaks"
+                    @click="showStaggerBreaks = !showStaggerBreaks"
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <rect x="1" y="1" width="14" height="14" rx="2" />
+                      <polyline
+                        v-if="showStaggerBreaks"
+                        points="3,8 6.5,11.5 13,4.5"
+                        stroke-width="2"
+                      />
+                    </svg>
+                    <span>{{ t('timeline.mobile.display.showStaggerBreaks') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="header-more-check-row header-more-check-row--compact"
+                    :aria-pressed="showOperationHints"
+                    @click="showOperationHints = !showOperationHints"
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <rect x="1" y="1" width="14" height="14" rx="2" />
+                      <polyline
+                        v-if="showOperationHints"
+                        points="3,8 6.5,11.5 13,4.5"
+                        stroke-width="2"
+                      />
+                    </svg>
+                    <span>{{ t('timeline.mobile.display.showOperationHints') }}</span>
+                  </button>
+                </div>
+              </section>
+
+              <section class="mobile-more-section">
+                <div class="mobile-project-actions">
+                  <button
+                    type="button"
+                    class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-blue mobile-project-action"
+                    @click="openImportDialog"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <polyline points="9 11 12 14 22 4" />
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                    </svg>
+                    <span>{{ t('timeline.mobile.import') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-danger-dark mobile-project-action"
+                    @click="handleReset"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <polyline points="3 6 5 6 21 6" />
+                      <path
+                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                      />
+                    </svg>
+                    <span>{{ t('common.reset') }}</span>
+                  </button>
+                </div>
+              </section>
+            </div>
           </el-popover>
         </div>
       </div>
@@ -2710,14 +2704,7 @@ async function doImport() {
         @click="openEnemySelector"
       >
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-          <circle
-            cx="12"
-            cy="12"
-            r="7"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          />
+          <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2" />
           <path
             d="M12 2v4M12 18v4M2 12h4M18 12h4"
             fill="none"
@@ -2904,10 +2891,7 @@ async function doImport() {
             :style="{ top: `${battleStartYPx}px` }"
           ></div>
 
-          <div
-            v-if="showFreezeEffects && activeMobileFreezeRegion"
-            class="mobile-freeze-layer"
-          >
+          <div v-if="showFreezeEffects && activeMobileFreezeRegion" class="mobile-freeze-layer">
             <div class="mobile-freeze-region" :style="activeMobileFreezeStyle">
               <span>{{ store.formatTimeLabel(activeMobileFreezeRegion.amount) }}</span>
             </div>
@@ -2951,8 +2935,7 @@ async function doImport() {
                     'is-info-target':
                       actionInfoOpen && selectedActionId === entry.action.instanceId,
                     'is-dragging': draggingActionId === entry.action.instanceId,
-                    'is-drag-group':
-                      draggingActionId && dragTargetIds.has(entry.action.instanceId),
+                    'is-drag-group': draggingActionId && dragTargetIds.has(entry.action.instanceId),
                   }"
                   @pointerdown="handleActionPointerDown($event, track, entry.action)"
                   @contextmenu.prevent
@@ -3000,10 +2983,7 @@ async function doImport() {
           class="mobile-resource-guide"
           :style="{ top: `${mobileGuideTop}px` }"
         >
-          <div
-            class="mobile-resource-guide__panel"
-            :class="{ 'is-below': mobileGuidePanelBelow }"
-          >
+          <div class="mobile-resource-guide__panel" :class="{ 'is-below': mobileGuidePanelBelow }">
             <button
               type="button"
               class="mobile-resource-guide__close"
@@ -3024,9 +3004,7 @@ async function doImport() {
             </button>
             <div class="mobile-resource-guide__summary">
               <span class="is-time">{{ formatAxisLabel(mobileGuideTime) }}</span>
-              <span class="is-sp"
-                >{{ t('timelineGrid.cursor.sp') }}: {{ mobileGuideSpText }}</span
-              >
+              <span class="is-sp">{{ t('timelineGrid.cursor.sp') }}: {{ mobileGuideSpText }}</span>
               <span class="is-stagger"
                 >{{ t('timelineGrid.cursor.stagger') }}: {{ mobileGuideStaggerText }}</span
               >
