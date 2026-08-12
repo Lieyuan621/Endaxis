@@ -356,9 +356,9 @@ describe('optimizer damage golden baselines', () => {
         ampBonus: entry.payload.hitData._damageBreakdown?.ampBonus,
       })),
     ).toEqual([
-      { actionId: 'battle_1_inst', time: 1.367, ampBonus: 0.18 },
-      { actionId: 'battle_2_inst', time: 8, ampBonus: 0.18 },
-      { actionId: 'battle_2_inst', time: 8.6, ampBonus: 0.2 },
+      { actionId: 'battle_1_inst', time: 1.367, ampBonus: 0.2 },
+      { actionId: 'battle_2_inst', time: 8, ampBonus: 0.2 },
+      { actionId: 'battle_2_inst', time: 8.6, ampBonus: 0.22 },
     ]);
     expect(
       thunderHits.every(hit =>

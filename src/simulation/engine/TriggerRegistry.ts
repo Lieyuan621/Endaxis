@@ -121,7 +121,7 @@ export class TriggerRegistry {
     }
   }
 
-  onHit(event: HitEvent, ctx: SimulationContext): void {
+  onHit(event: HitEvent, ctx: SimulationContext, timing: 'beforeDamage' | 'afterDamage'): void {
     const actorId = event.payload.sourceId;
     // Skip reaction damage — reactions are not direct skill hits
     if ((event.payload.hitData as any)._reactionMeta) return;
@@ -131,6 +131,8 @@ export class TriggerRegistry {
       const { trigger } = entry.triggerEffect;
       if (trigger.kind !== 'onHit') continue;
       const t = trigger as Extract<TriggerEvent, { kind: 'onHit' }>;
+      const triggerTiming = t.timing === 'beforeDamage' ? 'beforeDamage' : 'afterDamage';
+      if (triggerTiming !== timing) continue;
       if (t.skillTypes || t.skillId) {
         const action = ctx.getAction(event.payload.actionId);
         if (!action) continue;

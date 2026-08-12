@@ -220,6 +220,17 @@ export class HitHandler implements EventHandler<HitEvent> {
       }
     }
 
+    // A small number of hit triggers must update stats before their own hit is
+    // calculated. Default onHit triggers still run after damage.
+    if (hit.multiplier && this.registry) {
+      this.registry.onHit(e, ctx, 'beforeDamage');
+      const isSameTimeOperatorEffect = (ev: { type: string; time: number }) =>
+        Number(ev.time) === Number(e.time) && ev.type === 'OPERATOR_EFFECT_APPLY';
+      for (let i = 0; i < 8 && ctx.flushQueuedEvents(isSameTimeOperatorEffect) > 0; i++) {
+        /* cascade */
+      }
+    }
+
     // Compute expected damage using live operator + enemy state at time T
     const staggerMult = ctx.state.enemy.isBroken(e.time) ? STAGGER_DAMAGE_MULTIPLIER : 1;
     hit._staggerMult = staggerMult;
@@ -717,7 +728,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         : undefined,
     });
     // Fire onHit triggers from TriggerRegistry (skip no-damage hits)
-    if (hit.multiplier) this.registry?.onHit(e, ctx);
+    if (hit.multiplier) this.registry?.onHit(e, ctx, 'afterDamage');
     this.registry?.onFinalStrike(e, ctx);
     this.registry?.onDive(e, ctx);
     this.registry?.onFinisher(e, ctx);

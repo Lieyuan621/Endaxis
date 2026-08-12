@@ -371,7 +371,11 @@ const sheet: OperatorSheet = {
           ],
         },
         {
-          trigger: { kind: 'onHit', skillId: 'zhuang-fangyi-thunder-strike' },
+          trigger: {
+            kind: 'onHit',
+            skillId: 'zhuang-fangyi-thunder-strike',
+            timing: 'beforeDamage',
+          },
           effects: [
             {
               id: 'zhuang-fangyi-t1',
