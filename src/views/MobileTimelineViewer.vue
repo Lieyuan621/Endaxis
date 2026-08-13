@@ -64,6 +64,7 @@ import {
   getVerticalEdgeScrollSpeed,
   isTapGesture,
   pointerYToTimelineTime,
+  remapSwappedIndex,
   snapTimelineTime,
   timelineYToTime,
 } from '@/utils/mobileTimelineEditing';
@@ -122,9 +123,14 @@ const mobileGuideTime = ref(0);
 const draggingActionId = ref(null);
 const dragPreviewOffsetPx = ref(0);
 const dragPreviewLogicalTime = ref(null);
+const draggingTrackIndex = ref(null);
+const trackDropTargetIndex = ref(null);
+const trackDragOffsetX = ref(0);
 let placementPointerStart = null;
 let suppressActionClickUntil = 0;
+let suppressTrackClickUntil = 0;
 let actionPointerSession = null;
+let trackPointerSession = null;
 let actionLongPressTimer = null;
 let dragAutoScrollRaf = null;
 let dragAutoScrollSpeed = 0;
@@ -480,6 +486,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   cancelActionPointerSession();
+  resetTrackPointerSession();
   if (historyFeedbackTimer != null) window.clearTimeout(historyFeedbackTimer);
   historyFeedbackTimer = null;
   if (mobileGuideRaf != null) window.cancelAnimationFrame(mobileGuideRaf);
@@ -606,6 +613,84 @@ function openLoadout(index) {
   store.selectTrack(i);
   loadoutTrackIndex.value = i;
   loadoutOpen.value = true;
+}
+
+function getTrackDropTargetIndex(clientX) {
+  const heads = document.querySelectorAll('.mobile-track-head[data-track-index]');
+  for (const head of heads) {
+    const rect = head.getBoundingClientRect();
+    if (clientX >= rect.left && clientX <= rect.right) {
+      const index = Number(head.getAttribute('data-track-index'));
+      return Number.isInteger(index) ? index : null;
+    }
+  }
+  return null;
+}
+
+function resetTrackPointerSession() {
+  trackPointerSession = null;
+  draggingTrackIndex.value = null;
+  trackDropTargetIndex.value = null;
+  trackDragOffsetX.value = 0;
+}
+
+function handleTrackAvatarPointerDown(event, index) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  trackPointerSession = {
+    pointerId: event.pointerId,
+    index,
+    startX: event.clientX,
+    startY: event.clientY,
+    dragging: false,
+  };
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+}
+
+function handleTrackAvatarPointerMove(event) {
+  const session = trackPointerSession;
+  if (!session || event.pointerId !== session.pointerId) return;
+
+  const deltaX = event.clientX - session.startX;
+  const deltaY = event.clientY - session.startY;
+  if (!session.dragging) {
+    if (Math.hypot(deltaX, deltaY) < 8 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    session.dragging = true;
+    draggingTrackIndex.value = session.index;
+  }
+
+  event.preventDefault();
+  trackDragOffsetX.value = deltaX;
+  trackDropTargetIndex.value = getTrackDropTargetIndex(event.clientX);
+}
+
+function finishTrackAvatarPointer(event, shouldCommit) {
+  const session = trackPointerSession;
+  if (!session || event.pointerId !== session.pointerId) return;
+
+  if (session.dragging) {
+    suppressTrackClickUntil = Date.now() + 350;
+    const targetIndex = trackDropTargetIndex.value;
+    if (shouldCommit && Number.isInteger(targetIndex) && targetIndex !== session.index) {
+      loadoutTrackIndex.value = remapSwappedIndex(
+        loadoutTrackIndex.value,
+        session.index,
+        targetIndex,
+      );
+      placementTrackIndex.value = remapSwappedIndex(
+        placementTrackIndex.value,
+        session.index,
+        targetIndex,
+      );
+      store.moveTrack(session.index, targetIndex);
+    }
+  }
+
+  resetTrackPointerSession();
+}
+
+function handleTrackAvatarClick(index) {
+  if (Date.now() < suppressTrackClickUntil) return;
+  openLoadout(index);
 }
 
 function resolveEditingTrackIndex(preferredIndex = activeMobileTrackIndex.value) {
@@ -2785,12 +2870,32 @@ async function doImport() {
     <div ref="mobileScrollRef" class="mobile-scroll">
       <div class="mobile-tracks-header">
         <div class="mobile-time-head">{{ t('timeline.mobile.time') }}</div>
-        <div v-for="(track, idx) in tracks" :key="idx" class="mobile-track-head">
+        <div
+          v-for="(track, idx) in tracks"
+          :key="idx"
+          class="mobile-track-head"
+          :class="{
+            'is-drag-source': draggingTrackIndex === idx,
+            'is-drop-target': trackDropTargetIndex === idx && draggingTrackIndex !== idx,
+          }"
+          :data-track-index="idx"
+        >
           <button
             type="button"
             class="mobile-avatar mobile-avatar-btn"
+            :class="{ 'is-dragging': draggingTrackIndex === idx }"
+            :style="
+              draggingTrackIndex === idx
+                ? { transform: `translateX(${trackDragOffsetX}px)` }
+                : undefined
+            "
             :aria-label="t('timeline.mobile.loadout.openAria', { name: getTrackName(track) })"
-            @click.stop="openLoadout(idx)"
+            :aria-grabbed="draggingTrackIndex === idx"
+            @pointerdown="handleTrackAvatarPointerDown($event, idx)"
+            @pointermove="handleTrackAvatarPointerMove"
+            @pointerup="finishTrackAvatarPointer($event, true)"
+            @pointercancel="finishTrackAvatarPointer($event, false)"
+            @click.stop="handleTrackAvatarClick(idx)"
           >
             <img
               :src="withBaseUrl(getTrackAvatar(track))"
@@ -4150,8 +4255,19 @@ async function doImport() {
 }
 
 .mobile-track-head {
+  position: relative;
   display: flex;
   justify-content: center;
+  transition: background-color 120ms ease;
+}
+
+.mobile-track-head.is-drop-target {
+  background: color-mix(in srgb, var(--ea-gold) 16%, transparent);
+  box-shadow: inset 0 -2px var(--ea-gold);
+}
+
+.mobile-track-head.is-drag-source {
+  z-index: 2;
 }
 
 .mobile-avatar {
@@ -5142,10 +5258,25 @@ async function doImport() {
   border: none;
   padding: 0;
   line-height: 0;
+  touch-action: pan-y;
+  transition:
+    opacity 120ms ease,
+    box-shadow 120ms ease;
+  will-change: transform;
 }
 
 .mobile-avatar-btn:not(.is-disabled) {
   cursor: pointer;
+}
+
+.mobile-avatar-btn.is-dragging {
+  z-index: 3;
+  opacity: 0.82;
+  cursor: grabbing;
+  box-shadow:
+    0 8px 20px var(--ea-shadow),
+    0 0 0 2px var(--ea-gold);
+  transition: none;
 }
 
 .mobile-avatar-btn.is-disabled {

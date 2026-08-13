@@ -81,6 +81,12 @@ export function getStepSampleAtTime<T extends { time?: number }>(
   return sampleStepSeriesAtTime(points, time);
 }
 
+export function remapSwappedIndex(index: number | null, fromIndex: number, toIndex: number) {
+  if (index === fromIndex) return toIndex;
+  if (index === toIndex) return fromIndex;
+  return index;
+}
+
 export function clampTimelineGroupDelta({
   desiredDelta,
   startTimes,

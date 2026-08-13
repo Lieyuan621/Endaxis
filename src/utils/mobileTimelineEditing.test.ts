@@ -6,6 +6,7 @@ import {
   getVerticalEdgeScrollSpeed,
   isTapGesture,
   pointerYToTimelineTime,
+  remapSwappedIndex,
   snapTimelineTime,
   timelineYToTime,
 } from './mobileTimelineEditing';
@@ -14,6 +15,13 @@ describe('mobile timeline editing helpers', () => {
   it('distinguishes taps from scroll gestures', () => {
     expect(isTapGesture({ x: 10, y: 10 }, { x: 15, y: 14 })).toBe(true);
     expect(isTapGesture({ x: 10, y: 10 }, { x: 10, y: 25 })).toBe(false);
+  });
+
+  it('keeps mobile editing targets attached to tracks after swapping them', () => {
+    expect(remapSwappedIndex(0, 0, 3)).toBe(3);
+    expect(remapSwappedIndex(3, 0, 3)).toBe(0);
+    expect(remapSwappedIndex(2, 0, 3)).toBe(2);
+    expect(remapSwappedIndex(null, 0, 3)).toBeNull();
   });
 
   it('converts pointer positions to snapped timeline time', () => {
