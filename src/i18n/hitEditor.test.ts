@@ -69,6 +69,8 @@ const EFFECT_NAME_KEYS = Object.freeze([
   ...PHYSICAL_STATUS_TYPES,
   'vocalistStance',
   'cosmovoiceStance',
+  'firefangVesperwings',
+  'pursuit',
 ]);
 
 describe('hit editor localization', () => {
@@ -156,6 +158,8 @@ describe('hit editor localization', () => {
       knockdown: '倒地',
       vocalistStance: '演唱姿态',
       cosmovoiceStance: '高歌姿态',
+      firefangVesperwings: '衔火血翼',
+      pursuit: '追猎',
     });
   });
 });

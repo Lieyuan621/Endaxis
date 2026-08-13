@@ -320,6 +320,7 @@ const sheet: OperatorSheet = {
                       stat: { modifier: 'susceptibility', elements: 'heat' },
                       value: [5, 5, 5, 6, 6, 6, 6, 6, 6, 6.5, 6.5, 7],
                       duration: 45,
+                      icon: '/operators/camille/icon_battle_camille_normal_skill_bat.webp',
                       applyTiming: 'beforeDamage',
                     },
                     {
@@ -488,7 +489,7 @@ const sheet: OperatorSheet = {
                       target: 'self',
                       value: 100,
                       duration: 15,
-                      icon: '/operators/camille/avatar.webp',
+                      icon: '/operators/camille/icon_battle_camille_ult_state.webp',
                     },
                   ],
                 },

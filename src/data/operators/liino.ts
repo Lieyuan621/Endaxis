@@ -362,7 +362,7 @@ const sheet: OperatorSheet = {
                       target: 'team',
                       value: [6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 10],
                       duration: 60,
-                      icon: '/operators/liino/icon_battle_buff_liino_normalskill_music.png',
+                      icon: '/operators/liino/icon_battle_buff_liino_normalskill_music.webp',
                     },
                     {
                       id: 'liino-battle-hit-countdown',
@@ -584,7 +584,7 @@ const sheet: OperatorSheet = {
                       target: 'team',
                       value: 10,
                       duration: 15,
-                      icon: '/operators/liino/icon_battle_buff_liino_ultskill_music.png',
+                      icon: '/operators/liino/icon_battle_buff_liino_ultskill_music.webp',
                     },
                     {
                       id: 'liino-ultimate-hit-countdown',
