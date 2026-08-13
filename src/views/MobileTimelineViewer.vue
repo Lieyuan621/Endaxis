@@ -855,7 +855,7 @@ function flushActionDragPreview(clientY = actionPointerSession?.lastY) {
     pointerDelta: pointerTime - session.pointerStartTime,
     startTimes: originalTimes,
     snapStep: Number(store.snapStep) || 1 / 30,
-    minTime: 0,
+    minTime: store.prepExpanded === false ? prepDuration.value : 0,
     maxTime: viewDuration.value,
   });
   const previewLogicalStart = session.primaryLogicalStart + deltaTime;
@@ -1055,10 +1055,14 @@ function handleTrackPointerUp(event, trackIndex) {
     prepExpanded: store.prepExpanded !== false,
     collapsedPrepPx: COLLAPSED_PREP_PX,
   });
-  const startTime = snapTimelineTime(
-    typeof store.toGameTime === 'function' ? store.toGameTime(visualStartTime) : visualStartTime,
-    Number(store.snapStep) || 1 / 30,
-    viewDuration.value,
+  const minStartTime = store.prepExpanded === false ? prepDuration.value : 0;
+  const startTime = Math.max(
+    minStartTime,
+    snapTimelineTime(
+      typeof store.toGameTime === 'function' ? store.toGameTime(visualStartTime) : visualStartTime,
+      Number(store.snapStep) || 1 / 30,
+      viewDuration.value,
+    ),
   );
   const skillName = pendingPlacementSkill.value.name || t('skillType.unknown');
   store.addSkillToTrack(track.id, pendingPlacementSkill.value, startTime);
@@ -1484,6 +1488,9 @@ function buildActionCombatEntry(track, action) {
     viz: store.enemyAfflictionViz,
     iconDatabase: store.iconDatabase,
   });
+  const hiddenBadges = badges.length > 4 ? badges.slice(3) : [];
+  const displayedBadges = hiddenBadges.length ? badges.slice(0, 3) : badges;
+  const hasMultipleBadges = displayedBadges.length + Number(Boolean(hiddenBadges.length)) > 1;
   const durationBars = badges
     .filter(badge => !badge.isMarker && badge.duration > 0)
     .map((badge, index) => ({
@@ -1507,6 +1514,9 @@ function buildActionCombatEntry(track, action) {
   return {
     action,
     badges,
+    displayedBadges,
+    hiddenBadges,
+    hasMultipleBadges,
     freezeRegion: getActionFreezeRegion(action),
     durationBars,
   };
@@ -1553,6 +1563,10 @@ function getCombatIconTitle(typeKey) {
     if (out !== localeKey) return out;
   }
   return String(typeKey || '');
+}
+
+function getCombatIconOverflowTitle(badges) {
+  return badges.map(badge => getCombatIconTitle(badge.key)).join('、');
 }
 
 function getDurationBarStyle(bar, action = null) {
@@ -2801,37 +2815,7 @@ async function doImport() {
             class="mobile-prep-zone mobile-prep-zone--rail"
             :class="{ 'is-collapsed': store.prepExpanded === false }"
             :style="{ height: `${prepHeightPx}px` }"
-          >
-            <button
-              type="button"
-              class="mobile-prep-toggle"
-              :title="
-                store.prepExpanded === false
-                  ? t('timelineGrid.prep.expand')
-                  : t('timelineGrid.prep.collapseTitle')
-              "
-              :aria-label="
-                store.prepExpanded === false
-                  ? t('timelineGrid.prep.expand')
-                  : t('timelineGrid.prep.collapseTitle')
-              "
-              :aria-expanded="store.prepExpanded !== false"
-              @pointerdown.stop
-              @pointerup.stop
-              @click.stop="toggleMobilePrepExpanded"
-            >
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-                <path
-                  d="M3 10l5-5 5 5"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
+          ></div>
           <div
             v-if="prepDuration > 0"
             class="mobile-battle-start-line"
@@ -2883,7 +2867,42 @@ async function doImport() {
             :class="{ 'is-collapsed': store.prepExpanded === false }"
             :style="{ height: `${prepHeightPx}px` }"
           >
-            <div class="mobile-prep-center-label">{{ t('timelineGrid.prep.title') }}</div>
+            <button
+              type="button"
+              class="mobile-prep-center-label"
+              :title="
+                store.prepExpanded === false
+                  ? t('timelineGrid.prep.expand')
+                  : t('timelineGrid.prep.collapseTitle')
+              "
+              :aria-label="
+                store.prepExpanded === false
+                  ? t('timelineGrid.prep.expand')
+                  : t('timelineGrid.prep.collapseTitle')
+              "
+              :aria-expanded="store.prepExpanded !== false"
+              @pointerdown.stop
+              @pointerup.stop
+              @click.stop="toggleMobilePrepExpanded"
+            >
+              <span>{{ t('timelineGrid.prep.title') }}</span>
+              <span
+                class="mobile-prep-title-icon"
+                :class="{ 'is-collapsed': store.prepExpanded === false }"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+                  <path
+                    d="M3 10l5-5 5 5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+            </button>
           </div>
           <div
             v-if="prepDuration > 0"
@@ -2936,6 +2955,7 @@ async function doImport() {
                       actionInfoOpen && selectedActionId === entry.action.instanceId,
                     'is-dragging': draggingActionId === entry.action.instanceId,
                     'is-drag-group': draggingActionId && dragTargetIds.has(entry.action.instanceId),
+                    'has-multiple-badges': showAnomalies && entry.hasMultipleBadges,
                   }"
                   @pointerdown="handleActionPointerDown($event, track, entry.action)"
                   @contextmenu.prevent
@@ -2956,9 +2976,13 @@ async function doImport() {
                   >
                     {{ formatAxisLabel(dragPreviewLogicalTime) }}
                   </span>
-                  <div v-if="showAnomalies && entry.badges.length" class="mobile-action-icons">
+                  <div
+                    v-if="showAnomalies && entry.badges.length"
+                    class="mobile-action-icons"
+                    :class="{ 'is-multiple': entry.hasMultipleBadges }"
+                  >
                     <div
-                      v-for="badge in entry.badges"
+                      v-for="badge in entry.displayedBadges"
                       :key="`${entry.action.instanceId}_${badge.id}`"
                       class="mobile-action-icon-box"
                       :title="getCombatIconTitle(badge.key)"
@@ -2969,7 +2993,16 @@ async function doImport() {
                         :alt="getCombatIconTitle(badge.key)"
                         @error="onAssetError"
                       />
-                      <span class="mobile-action-stacks">{{ badge.stacks }}</span>
+                      <span v-if="badge.stacks > 1" class="mobile-action-stacks">
+                        {{ badge.stacks }}
+                      </span>
+                    </div>
+                    <div
+                      v-if="entry.hiddenBadges.length"
+                      class="mobile-action-icon-more"
+                      :title="getCombatIconOverflowTitle(entry.hiddenBadges)"
+                    >
+                      +{{ entry.hiddenBadges.length }}
                     </div>
                   </div>
                 </div>
@@ -4522,59 +4555,49 @@ async function doImport() {
   pointer-events: none;
 }
 
-.mobile-prep-zone--rail {
-  pointer-events: auto;
-}
-
 .mobile-prep-zone--grid {
-  z-index: 1;
-}
-
-.mobile-prep-toggle {
-  position: absolute;
   z-index: 6;
-  top: 2px;
-  left: 50%;
-  display: inline-flex;
-  width: 30px;
-  height: 24px;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--ea-gold) 35%, var(--ea-border));
-  border-radius: 0;
-  background: color-mix(in srgb, var(--ea-gold) 9%, var(--ea-fill-strong));
-  color: var(--ea-gold);
-  transform: translateX(-50%);
-  touch-action: manipulation;
-}
-
-.mobile-prep-zone--rail.is-collapsed .mobile-prep-toggle {
-  top: 0;
-  width: 46px;
-  height: 18px;
-  border-top: 0;
-  border-bottom: 0;
-}
-
-.mobile-prep-zone--rail.is-collapsed .mobile-prep-toggle svg {
-  transform: rotate(180deg);
 }
 
 .mobile-prep-center-label {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
+  min-height: 28px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 2px;
   color: var(--ea-fg-faint);
-  pointer-events: none;
+  white-space: nowrap;
+  pointer-events: auto;
+  touch-action: manipulation;
+  transform: translate(-50%, -50%);
+}
+
+.mobile-prep-title-icon {
+  display: inline-flex;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.mobile-prep-title-icon.is-collapsed svg {
+  transform: rotate(180deg);
 }
 
 .mobile-prep-zone--grid.is-collapsed .mobile-prep-center-label {
+  min-height: 18px;
+  padding: 0 4px;
   font-size: 9px;
   letter-spacing: 0;
 }
@@ -4733,29 +4756,48 @@ async function doImport() {
 
 .mobile-action-icons {
   position: absolute;
-  right: 1px;
+  right: 2px;
   top: 50%;
   transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  display: grid;
+  grid-template-columns: 14px;
+  grid-auto-rows: 14px;
+  gap: 2px;
   z-index: 5;
   pointer-events: none;
 }
 
+.mobile-action-icons.is-multiple {
+  grid-template-columns: repeat(2, 14px);
+}
+
 .mobile-action-icon-box {
   position: relative;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   flex: 0 0 auto;
 }
 
 .mobile-action-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   display: block;
   object-fit: contain;
   filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.mobile-action-icon-more {
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ea-fg) 28%, transparent);
+  background: color-mix(in srgb, var(--ea-panel) 88%, transparent);
+  color: var(--ea-fg-muted);
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  box-sizing: border-box;
 }
 
 .mobile-action-stacks {
@@ -4786,6 +4828,11 @@ async function doImport() {
   letter-spacing: 1px;
   text-align: center;
   max-width: 100%;
+}
+
+.mobile-action-block.has-multiple-badges .mobile-action-text {
+  padding-right: 34px;
+  padding-left: 4px;
 }
 
 .mobile-action-drag-time {

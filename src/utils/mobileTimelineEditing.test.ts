@@ -78,6 +78,19 @@ describe('mobile timeline editing helpers', () => {
     ).toBe(1);
   });
 
+  it('keeps dragged actions out of a collapsed preparation area', () => {
+    expect(
+      getSnappedTimelineDragDelta({
+        initialStart: 6,
+        pointerDelta: -5,
+        startTimes: [6, 8],
+        snapStep: 0.5,
+        minTime: 5,
+        maxTime: 20,
+      }),
+    ).toBe(-1);
+  });
+
   it('calculates proportional edge auto-scroll speed', () => {
     expect(getVerticalEdgeScrollSpeed({ clientY: 100, top: 100, bottom: 500 })).toBe(-10);
     expect(getVerticalEdgeScrollSpeed({ clientY: 472, top: 100, bottom: 500 })).toBe(5);
