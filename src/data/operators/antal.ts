@@ -309,6 +309,7 @@ const sheet: OperatorSheet = {
               target: 'enemy',
               triggerScope: 'global',
             },
+            condition: { kind: 'enemyStatus', status: 'antal-battle-focus' },
           },
         ],
         duration: 5,
