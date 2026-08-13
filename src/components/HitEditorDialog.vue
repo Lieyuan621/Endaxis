@@ -613,10 +613,11 @@ function save() {
               :model-value="draft.treatAsReaction || ''"
               @update:model-value="value => patchHit('treatAsReaction', optionalString(value))"
               size="small"
+              :empty-values="[null, undefined]"
               class="effect-select-dark"
               popper-class="hit-editor-select-popper"
             >
-              <el-option value="" :label="t('common.noneParen')" />
+              <el-option value="" :label="t('common.none')" />
               <el-option
                 v-for="anomalyType in TREAT_AS_ANOMALY_TYPES"
                 :key="anomalyType"
@@ -631,10 +632,11 @@ function save() {
               :model-value="draft.treatAsSkillType || ''"
               @update:model-value="value => patchHit('treatAsSkillType', optionalString(value))"
               size="small"
+              :empty-values="[null, undefined]"
               class="effect-select-dark"
               popper-class="hit-editor-select-popper"
             >
-              <el-option value="" :label="t('common.noneParen')" />
+              <el-option value="" :label="t('common.none')" />
               <el-option
                 v-for="skillType in SKILL_TYPES"
                 :key="skillType"
@@ -738,7 +740,7 @@ function save() {
                     class="effect-select-dark"
                     popper-class="hit-editor-select-popper"
                   >
-                    <el-option value="default" :label="t('common.none')" />
+                    <el-option value="default" :label="t('common.default')" />
                     <el-option-group
                       v-for="group in filteredEffectOptions"
                       :key="group.label"
@@ -816,6 +818,7 @@ function save() {
                         value => patchSelectedEffect('stackStrategy', optionalString(value))
                       "
                       size="small"
+                      :empty-values="[null, undefined]"
                       class="effect-select-dark"
                       popper-class="hit-editor-select-popper"
                     >
@@ -836,6 +839,7 @@ function save() {
                         value => patchSelectedEffect('applyTiming', optionalString(value))
                       "
                       size="small"
+                      :empty-values="[null, undefined]"
                       class="effect-select-dark"
                       popper-class="hit-editor-select-popper"
                     >
@@ -1042,6 +1046,7 @@ function save() {
                       collapse-tags
                       collapse-tags-tooltip
                       clearable
+                      :placeholder="t('common.none')"
                       class="effect-select-dark"
                       popper-class="hit-editor-select-popper"
                     >
@@ -1154,6 +1159,7 @@ function save() {
                         value => patchSelectedEffect('multiplierMode', optionalString(value))
                       "
                       size="small"
+                      :empty-values="[null, undefined]"
                       class="effect-select-dark"
                       popper-class="hit-editor-select-popper"
                     >
@@ -1295,6 +1301,7 @@ function save() {
                       collapse-tags
                       collapse-tags-tooltip
                       clearable
+                      :placeholder="t('common.default')"
                       class="effect-select-dark"
                       popper-class="hit-editor-select-popper"
                     >
@@ -1332,6 +1339,7 @@ function save() {
                       size="small"
                       clearable
                       filterable
+                      :empty-values="[null, undefined]"
                       class="effect-select-dark"
                       popper-class="hit-editor-select-popper"
                     >
@@ -1390,6 +1398,7 @@ function save() {
                         value => patchSelectedEffect('consumeScope', optionalString(value))
                       "
                       size="small"
+                      :empty-values="[null, undefined]"
                       class="effect-select-dark"
                       popper-class="hit-editor-select-popper"
                     >

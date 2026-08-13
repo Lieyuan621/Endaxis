@@ -91,6 +91,7 @@ function statusLabel(value) {
           collapse-tags
           collapse-tags-tooltip
           clearable
+          :placeholder="t('common.none')"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
@@ -113,6 +114,7 @@ function statusLabel(value) {
           collapse-tags
           collapse-tags-tooltip
           clearable
+          :placeholder="t('common.none')"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >

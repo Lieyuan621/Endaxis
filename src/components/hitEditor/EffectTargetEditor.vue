@@ -91,6 +91,7 @@ function scopeLabel(value) {
           @update:model-value="value => (scopeValue = value)"
           size="small"
           clearable
+          :empty-values="[null, undefined]"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
@@ -113,6 +114,7 @@ function scopeLabel(value) {
           collapse-tags
           collapse-tags-tooltip
           clearable
+          :placeholder="t('common.default')"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
@@ -134,6 +136,7 @@ function scopeLabel(value) {
           collapse-tags
           collapse-tags-tooltip
           clearable
+          :placeholder="t('common.default')"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >

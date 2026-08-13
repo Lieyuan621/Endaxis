@@ -244,6 +244,7 @@ function statusLabel(value) {
           @update:model-value="value => (kindValue = value)"
           size="small"
           clearable
+          :empty-values="[null, undefined]"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
