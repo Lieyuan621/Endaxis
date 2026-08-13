@@ -75,6 +75,7 @@ describe('timeline skill library editing', () => {
 
     expect(insertedAction).toBeTruthy();
     expect(insertedAction.duration).toBe(2.25);
+    expect(insertedAction._sheetDurationBaseline).toBe(firstSegment.duration);
     expect(insertedAction.hits).toMatchObject(editedHits);
   });
 
@@ -124,6 +125,136 @@ describe('timeline skill library editing', () => {
     ) as any;
     expect(reloaded).toBeTruthy();
     expect(reloaded.duration).toBe(customDuration);
+    expect(reloaded._sheetDurationBaseline).toBe(sheetDuration);
+  });
+
+  it('preserves a zero user-edited action duration after reload', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'zhuang-fangyi');
+    store.selectTrack(0);
+
+    const battleSkill = store.activeSkillLibrary.find(
+      (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
+    ) as any;
+    store.addSkillToTrack('zhuang-fangyi', battleSkill, 1);
+    const action = store.tracks[0]!.actions.find(
+      (item: any) => item.id === battleSkill.id,
+    ) as any;
+    const sheetDuration = action._sheetDurationBaseline;
+
+    store.updateAction(action.instanceId, { duration: 0 });
+    localStorage.setItem(
+      'endaxis_autosave',
+      JSON.stringify(
+        serializeProjectData({
+          version: '1.0.0',
+          timestamp: Date.now(),
+          scenarioList: JSON.parse(JSON.stringify(store.scenarioList)),
+          activeScenarioId: store.activeScenarioId,
+          systemConstants: store.systemConstants,
+          activeEnemyId: store.activeEnemyId,
+          activeEnemyLevel: store.activeEnemyLevel,
+        }),
+      ),
+    );
+
+    await store.loadFromBrowser();
+
+    const reloaded = store.tracks[0]!.actions.find(
+      (item: any) => item.instanceId === action.instanceId,
+    ) as any;
+    expect(reloaded.duration).toBe(0);
+    expect(reloaded._sheetDurationBaseline).toBe(sheetDuration);
+  });
+
+  it('updates an untouched action duration when its sheet baseline changes', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'zhuang-fangyi');
+    store.selectTrack(0);
+
+    const battleSkill = store.activeSkillLibrary.find(
+      (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
+    ) as any;
+    store.addSkillToTrack('zhuang-fangyi', battleSkill, 1);
+    const action = store.tracks[0]!.actions.find(
+      (item: any) => item.id === battleSkill.id,
+    ) as any;
+    const currentSheetDuration = action._sheetDurationBaseline;
+    const oldSheetDuration = currentSheetDuration + 1;
+    action.duration = oldSheetDuration;
+    action._sheetDurationBaseline = oldSheetDuration;
+    store.commitState();
+
+    localStorage.setItem(
+      'endaxis_autosave',
+      JSON.stringify(
+        serializeProjectData({
+          version: '1.0.0',
+          timestamp: Date.now(),
+          scenarioList: JSON.parse(JSON.stringify(store.scenarioList)),
+          activeScenarioId: store.activeScenarioId,
+          systemConstants: store.systemConstants,
+          activeEnemyId: store.activeEnemyId,
+          activeEnemyLevel: store.activeEnemyLevel,
+        }),
+      ),
+    );
+
+    await store.loadFromBrowser();
+
+    const reloaded = store.tracks[0]!.actions.find(
+      (item: any) => item.instanceId === action.instanceId,
+    ) as any;
+    expect(reloaded.duration).toBe(currentSheetDuration);
+    expect(reloaded._sheetDurationBaseline).toBe(currentSheetDuration);
+  });
+
+  it('preserves a legacy action duration while establishing its first sheet baseline', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'zhuang-fangyi');
+    store.selectTrack(0);
+
+    const battleSkill = store.activeSkillLibrary.find(
+      (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
+    ) as any;
+    store.addSkillToTrack('zhuang-fangyi', battleSkill, 1);
+    const action = store.tracks[0]!.actions.find(
+      (item: any) => item.id === battleSkill.id,
+    ) as any;
+    const sheetDuration = action._sheetDurationBaseline;
+    const legacyDuration = sheetDuration + 2;
+    action.duration = legacyDuration;
+    delete action._sheetDurationBaseline;
+    store.commitState();
+
+    localStorage.setItem(
+      'endaxis_autosave',
+      JSON.stringify(
+        serializeProjectData({
+          version: '1.0.0',
+          timestamp: Date.now(),
+          scenarioList: JSON.parse(JSON.stringify(store.scenarioList)),
+          activeScenarioId: store.activeScenarioId,
+          systemConstants: store.systemConstants,
+          activeEnemyId: store.activeEnemyId,
+          activeEnemyLevel: store.activeEnemyLevel,
+        }),
+      ),
+    );
+
+    await store.loadFromBrowser();
+
+    const reloaded = store.tracks[0]!.actions.find(
+      (item: any) => item.instanceId === action.instanceId,
+    ) as any;
+    expect(reloaded.duration).toBe(legacyDuration);
+    expect(reloaded._sheetDurationBaseline).toBe(sheetDuration);
   });
 
   it('names generic basic attacks as 普攻 and only the final segment as 重击', async () => {

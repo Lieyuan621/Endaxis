@@ -8,7 +8,7 @@ import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState';
 import { resolveEffectValueStatic } from '@/simulation/events/effectDispatch';
 import { compileEndaxisScenario } from '@/simulation/compileEndaxisScenario';
 import { i18n } from '@/i18n';
-import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame } from '@/utils/time';
+import { FRAME_DURATION, formatTimeWithFrames, snapTimeToFrame, timeToFrame } from '@/utils/time';
 import { isEquipmentArtificable } from '@/utils/equipmentLevels';
 import type {
   TimelineAction,
@@ -3412,13 +3412,23 @@ export const useTimelineStore = defineStore('timeline', () => {
         { preserveCondition: true },
       );
 
-      const currentDuration = Number(action.duration) || 0;
-      if (
-        currentDuration <= 0 &&
-        Number.isFinite(refreshPayload.duration) &&
-        refreshPayload.duration > 0
-      ) {
-        action.duration = refreshPayload.duration;
+      const sheetDuration = Number(refreshPayload.duration);
+      if (Number.isFinite(sheetDuration) && sheetDuration >= 0) {
+        const currentDuration = Number(action.duration);
+        const previousSheetDuration = Number(action._sheetDurationBaseline);
+        const hasDurationBaseline = Number.isFinite(previousSheetDuration);
+
+        if (!hasDurationBaseline) {
+          // Legacy actions have no way to distinguish a sheet value from a user override.
+          // Preserve their current value once, then use this sheet snapshot going forward.
+          if (!Number.isFinite(currentDuration)) action.duration = sheetDuration;
+        } else if (
+          !Number.isFinite(currentDuration) ||
+          timeToFrame(currentDuration) === timeToFrame(previousSheetDuration)
+        ) {
+          action.duration = sheetDuration;
+        }
+        action._sheetDurationBaseline = sheetDuration;
       }
       if (refreshPayload.element) {
         action.element = refreshPayload.element;

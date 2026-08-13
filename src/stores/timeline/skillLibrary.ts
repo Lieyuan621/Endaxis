@@ -193,6 +193,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         element: (element as string) || activeChar.element || 'physical',
         icon: (icon as string) || '',
         duration,
+        _sheetDurationBaseline: duration,
         cooldown,
         spCost,
         gaugeCost,

@@ -18,6 +18,7 @@ export interface TimelineAction {
   startTime: number;
   logicalStartTime?: number;
   duration?: number;
+  _sheetDurationBaseline?: number;
   cooldown?: number;
   spCost?: number;
   gaugeCost?: number;

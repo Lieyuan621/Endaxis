@@ -9,6 +9,7 @@ const FRAME_TIME_META = Object.freeze({
 type TimeMode = 'toFrame' | 'toTime';
 
 const DIRECT_TIME_KEYS = new Set([
+  '_sheetDurationBaseline',
   'animationTime',
   'consumptionOffset',
   'cooldown',
