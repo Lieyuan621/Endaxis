@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { notifyNativeAppReady, registerBackHandler } from '@/platform/nativeBridge';
+import { markBootReady, onBootReady } from '@/utils/bootLoader';
 import MobileTimelineViewer from './MobileTimelineViewer.vue';
 import MobileAnalysisView from './mobile/MobileAnalysisView.vue';
 
@@ -13,6 +14,7 @@ const activeView = computed(() =>
   view.value === 'timeline' ? MobileTimelineViewer : MobileAnalysisView,
 );
 let unregisterBackHandler: (() => void) | null = null;
+let unregisterBootReady: (() => void) | null = null;
 let readyFrame: number | null = null;
 
 function selectView(nextView: AppView) {
@@ -21,17 +23,20 @@ function selectView(nextView: AppView) {
 }
 
 onMounted(() => {
+  markBootReady('view');
   unregisterBackHandler = registerBackHandler(() => {
     if (view.value === 'timeline') return false;
     view.value = 'timeline';
     return true;
   });
 
-  void nextTick().then(() => {
-    readyFrame = window.requestAnimationFrame(() => {
+  unregisterBootReady = onBootReady(() => {
+    void nextTick().then(() => {
       readyFrame = window.requestAnimationFrame(() => {
-        readyFrame = null;
-        notifyNativeAppReady();
+        readyFrame = window.requestAnimationFrame(() => {
+          readyFrame = null;
+          notifyNativeAppReady();
+        });
       });
     });
   });
@@ -39,6 +44,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   unregisterBackHandler?.();
+  unregisterBootReady?.();
   if (readyFrame != null) window.cancelAnimationFrame(readyFrame);
 });
 </script>

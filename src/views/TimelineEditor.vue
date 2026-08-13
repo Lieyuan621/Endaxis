@@ -7,6 +7,7 @@ import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import { snapdom } from '@zumer/snapdom';
 import { useI18n } from 'vue-i18n';
 import { setLocale } from '@/i18n';
+import { markBootReady } from '@/utils/bootLoader';
 
 // 组件引入
 import TimelineGrid from '../components/TimelineGrid.vue';
@@ -449,6 +450,7 @@ watch(
 );
 
 onMounted(() => {
+  markBootReady('view');
   restoreWorkbenchLayout();
   window.addEventListener('keydown', handleGlobalKeydown, true);
   window.addEventListener('resize', updateScrollMask); // 窗口缩放时重算

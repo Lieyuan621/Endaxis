@@ -95,6 +95,16 @@
         color: #00e5ff;
       }
 
+      .boot-loader.is-error .scanner,
+      .boot-loader.is-error .spinner {
+        animation: none;
+        opacity: 0.45;
+      }
+
+      .boot-loader.is-error .message {
+        color: #ff6b6b;
+      }
+
       /* Match the surface revealed after the initial view is ready. */
       html[data-theme='light'] .boot-loader {
         background: #e0e0e0;

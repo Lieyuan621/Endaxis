@@ -3,8 +3,10 @@ import { computed, onMounted, onUnmounted, ref, h } from 'vue';
 import { defineAsyncComponent } from 'vue';
 import LoadingTerminal from '@/components/LoadingTerminal.vue';
 import { isNativeApp } from '@/platform/nativeBridge';
+import { reportBootLoadFailure } from '@/utils/bootLoader';
 
 function chunkLoadingFallback() {
+  if (typeof document !== 'undefined' && document.getElementById('boot-loader')) return null;
   return h(LoadingTerminal, {
     fullScreen: true,
     scanner: true,
@@ -12,24 +14,11 @@ function chunkLoadingFallback() {
   });
 }
 
-function dismissBootLoader() {
-  if (typeof document === 'undefined') return;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      document.getElementById('boot-loader')?.remove();
-    });
-  });
-}
-
 function loadInitialView(loader) {
   return loader().then(
-    module => {
-      dismissBootLoader();
-      return module;
-    },
+    module => module,
     error => {
-      dismissBootLoader();
+      reportBootLoadFailure();
       throw error;
     },
   );
