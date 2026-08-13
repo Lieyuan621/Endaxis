@@ -11,6 +11,7 @@ import daPanSheet from '@/data/operators/da-pan';
 import snowshineSheet from '@/data/operators/snowshine';
 import mifuSheet from '@/data/operators/mifu';
 import zhuangFangyiSheet from '@/data/operators/zhuang-fangyi';
+import liinoSheet from '@/data/operators/liino';
 import rossiSheet from '@/data/operators/rossi';
 import { setLocale } from '@/i18n';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
@@ -109,6 +110,7 @@ function runScenario(
     enemyResistance?: EnemyResistance;
     lmdiAttributionMode?: 'stacks' | 'applier';
     initialEffects?: any[];
+    initialEnemyState?: any;
   } = {},
 ) {
   const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks));
@@ -121,6 +123,7 @@ function runScenario(
     enemyResistance: options.enemyResistance,
     lmdiAttributionMode: options.lmdiAttributionMode,
     initialEffects: options.initialEffects,
+    initialEnemyState: options.initialEnemyState,
   });
 }
 
@@ -297,6 +300,152 @@ function totalDamage(result: ReturnType<typeof runScenario>) {
 }
 
 describe('optimizer damage golden baselines', () => {
+  it('keeps Liino existing combo window usable without retriggering it during ultimate', () => {
+    const liino = createOperatorInstance('liino');
+    const team = createTeam(liino.id);
+    const ultimateHits = resolveOperatorSheetHits(liinoSheet, 'ultimate', 11);
+    const applyElectrification = (id: string, startTime: number) =>
+      createAction(id, 'battleSkill', {
+        startTime,
+        hits: [
+          {
+            offset: 0,
+            multiplier: 0,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [
+              {
+                id: 'electrification',
+                kind: 'status',
+                target: 'enemy',
+                duration: 10,
+              },
+            ],
+          },
+        ],
+      });
+    const tracks = [
+      createTrack('liino', [
+        applyElectrification('before_ultimate', 0),
+        createAction('ultimate', 'ultimate', {
+          skillId: 'ultimate',
+          startTime: 1,
+          hits: ultimateHits,
+        }),
+        applyElectrification('during_ultimate', 4),
+        createAction('combo', 'comboSkill', {
+          skillId: 'comboSkill',
+          startTime: 4.5,
+        }),
+      ]),
+    ];
+    const result = runScenario(
+      tracks,
+      createRegistry(collectRuntimeTriggers(team, [liino], [], [], tracks)),
+    );
+    const windowEvents = result.operatorLog.filter(entry => entry.id === 'liino-combo-window');
+
+    expect(windowEvents.filter(entry => entry.type === 'OPERATOR_EFFECT_APPLY')).toHaveLength(1);
+    expect(windowEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'OPERATOR_EFFECT_EXPIRE',
+          consumed: true,
+          time: 4.5,
+        }),
+      ]),
+    );
+  });
+
+  it('stacks Liino T2 and Zhuang Fangyi potential 3 SP returns', () => {
+    const zhuang = createOperatorInstance('zhuang-fangyi', { potential: 3 });
+    const liino = createOperatorInstance('liino', { talentStates: { '1': 2 } });
+    const team = createTeam(zhuang.id);
+    team.slots[1]!.operatorId = liino.id;
+
+    const battleHits = resolveOperatorSheetHits(zhuangFangyiSheet, 'battleSkill', 11, 0, {
+      talentStates: {},
+      potential: 3,
+    });
+    const tracks = [
+      createTrack('zhuang-fangyi', [
+        createAction('zhuang_battle', 'battleSkill', {
+          skillId: 'battleSkill',
+          startTime: 1,
+          spCost: 100,
+          hits: battleHits,
+        }),
+      ], { element: 'electric' }),
+      createTrack('liino', [
+        createAction('liino_combo', 'comboSkill', {
+          skillId: 'comboSkill',
+          startTime: 0,
+        }),
+      ], { element: 'electric' }),
+    ];
+    const result = runScenario(
+      tracks,
+      createRegistry(collectRuntimeTriggers(team, [zhuang, liino], [], [], tracks)),
+      {
+        initialEnemyState: {
+          debuffs: {
+            electrification: {
+              level: 1,
+              remainingDuration: 30,
+              sourceId: 'liino',
+            },
+          },
+        },
+      },
+    );
+
+    const returnEvents = result.simLog.filter(
+      entry => entry.type === 'SP_CHANGE' && entry.payload.spType === 'return',
+    );
+    expect(
+      returnEvents.map(entry => ({
+        change: entry.payload.change,
+        sourceId: entry.payload.sourceId,
+      })),
+    ).toEqual([
+      { change: 10, sourceId: 'zhuang_battle_inst' },
+      { change: 10, sourceId: 'zhuang_battle_inst' },
+    ]);
+    expect(returnEvents[1]?.payload.refundSp).toBe(20);
+  });
+
+  it('accelerates an active Zhuang Fangyi combo cooldown when her ultimate activates', () => {
+    const ultimateHits = resolveOperatorSheetHits(zhuangFangyiSheet, 'ultimate', 11);
+    const result = runScenario(
+      [
+        createTrack('zhuang-fangyi', [
+          createAction('combo', 'comboSkill', {
+            skillId: 'comboSkill',
+            startTime: 0,
+            cooldown: 18,
+          }),
+          createAction('ultimate', 'ultimate', {
+            skillId: 'ultimate',
+            startTime: 1,
+            hits: ultimateHits,
+          }),
+        ]),
+      ],
+      createRegistry([]),
+    );
+
+    expect(result.comboCooldownIntervals).toHaveLength(1);
+    expect(result.comboCooldownIntervals[0]).toEqual(
+      expect.objectContaining({
+        actorId: 'zhuang-fangyi',
+        start: 0,
+        baseDuration: 18,
+      }),
+    );
+    expect(result.comboCooldownIntervals[0]!.end).toBeCloseTo(7.2375, 6);
+  });
+
   it('resets Zhuang Fangyi T1 to 18% and adds 2% per Thunder Strike with talent attribution', () => {
     setLocale('zh-CN');
     const operator = createOperatorInstance('zhuang-fangyi', {

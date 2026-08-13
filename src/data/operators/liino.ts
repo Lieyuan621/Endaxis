@@ -520,6 +520,13 @@ const sheet: OperatorSheet = {
               target: 'enemy',
               triggerScope: 'global',
             },
+            condition: {
+              kind: 'not',
+              condition: {
+                kind: 'operatorStatus',
+                status: 'liino-cosmovoice-stance',
+              },
+            },
           },
           {
             trigger: {
@@ -527,6 +534,13 @@ const sheet: OperatorSheet = {
               status: ['combustion', 'electrification', 'solidification', 'corrosion'],
               target: 'enemy',
               triggerScope: 'global',
+            },
+            condition: {
+              kind: 'not',
+              condition: {
+                kind: 'operatorStatus',
+                status: 'liino-cosmovoice-stance',
+              },
             },
           },
         ],

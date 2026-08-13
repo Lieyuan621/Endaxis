@@ -548,6 +548,8 @@ export interface UltimateEnergyGainEffect extends EffectBase {
 export interface CooldownReductionEffect extends EffectBase {
   kind: 'cooldownReductionFlat' | 'cooldownReductionPercent';
   value: Leveled<number>;
+  /** Percentage reductions normally use the skill's base cooldown. */
+  percentBasis?: 'base' | 'remaining';
   target?: EffectTarget;
   skillTypes?: SkillType | SkillType[];
   skillId?: string | string[];

@@ -343,14 +343,16 @@ export function scheduleConsumption(
   ctx: SimulationContext,
   skillType?: string,
   skillId?: string,
+  actionId?: string,
 ): void {
   if (Array.isArray(condition)) {
-    for (const c of condition) scheduleConsumption(c, time, sourceId, ctx, skillType, skillId);
+    for (const c of condition)
+      scheduleConsumption(c, time, sourceId, ctx, skillType, skillId, actionId);
     return;
   }
   if (condition.kind === 'or') {
     for (const c of condition.conditions)
-      scheduleConsumption(c, time, sourceId, ctx, skillType, skillId);
+      scheduleConsumption(c, time, sourceId, ctx, skillType, skillId, actionId);
     return;
   }
   if (condition.kind === 'enemyStatus') {
@@ -387,7 +389,7 @@ export function scheduleConsumption(
               sourceId,
               sourceSkillType: skillType,
               sourceSkillId: skillId,
-              actionId: matchingEntry?.actionId,
+              actionId: actionId ?? matchingEntry?.actionId,
               ...(stacksToConsume !== undefined && { stacksToConsume }),
             } as EnemyEffectExpireEvent,
             3,
@@ -424,6 +426,7 @@ export function scheduleConsumption(
               sourceId,
               sourceSkillType: skillType,
               sourceSkillId: skillId,
+              actionId,
               ...(stacksToConsume !== undefined && { stacksToConsume }),
             } as EnemyEffectExpireEvent,
             3,
@@ -441,6 +444,7 @@ export function scheduleConsumption(
               sourceId,
               sourceSkillType: skillType,
               sourceSkillId: skillId,
+              actionId,
             } as EnemyEffectExpireEvent,
             3,
           );
@@ -458,6 +462,7 @@ export function scheduleConsumption(
               sourceId,
               sourceSkillType: skillType,
               sourceSkillId: skillId,
+              actionId,
             } as EnemyEffectExpireEvent,
             3,
           );
@@ -478,7 +483,7 @@ export function scheduleConsumption(
               sourceId,
               sourceSkillType: skillType,
               sourceSkillId: skillId,
-              actionId: match.entry.actionId,
+              actionId: actionId ?? match.entry.actionId,
               ...(stacksToConsume !== undefined && { stacksToConsume }),
             } as EnemyEffectExpireEvent,
             3,
@@ -919,7 +924,7 @@ export function dispatchEnemyEffects(
     const cond = (resolved as { condition?: EffectCondition | EffectCondition[] }).condition;
     if (!evaluateEffectCondition(cond, time, sourceId, ctx, undefined, actionId)) continue;
     if (cond && conditionHasConsume(cond))
-      scheduleConsumption(cond, time, sourceId, ctx, skillType, skillId);
+      scheduleConsumption(cond, time, sourceId, ctx, skillType, skillId, actionId);
     const lifecycle = resolveEffectLifecycle(resolved);
     switch (resolved.kind) {
       case 'infliction':
@@ -1654,7 +1659,15 @@ export function dispatchActorEffects(
     if (!evaluateEffectCondition(cond, dc.time, dc.sourceTrackId, dc.ctx, undefined, dc.actionId))
       continue;
     if (cond && conditionHasConsume(cond))
-      scheduleConsumption(cond, dc.time, dc.sourceTrackId, dc.ctx, dc.skillType, dc.skillId);
+      scheduleConsumption(
+        cond,
+        dc.time,
+        dc.sourceTrackId,
+        dc.ctx,
+        dc.skillType,
+        dc.skillId,
+        dc.actionId,
+      );
 
     if (resolved.kind === 'consume') {
       dispatchConsumeEffect(

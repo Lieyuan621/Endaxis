@@ -809,6 +809,13 @@ const sheet: OperatorSheet = {
                       duration: 25,
                       hide: true,
                     },
+                    {
+                      kind: 'cooldownReductionPercent',
+                      skillTypes: 'comboSkill',
+                      target: 'self',
+                      value: 75,
+                      percentBasis: 'remaining',
+                    },
                   ],
                 },
               ],

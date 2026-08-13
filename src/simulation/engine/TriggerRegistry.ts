@@ -550,7 +550,15 @@ export class TriggerRegistry {
       // Schedule consumption if the condition (or any element of a compound condition) has consume.
       const cond = resolved.condition;
       if (conditionHasConsume(cond)) {
-        scheduleConsumption(cond!, time, sourceTrackId, ctx, sourceSkillType, sourceSkillId);
+        scheduleConsumption(
+          cond!,
+          time,
+          sourceTrackId,
+          ctx,
+          sourceSkillType,
+          sourceSkillId,
+          actionId,
+        );
       }
 
       if (resolved.kind === 'consume') {
@@ -643,6 +651,7 @@ export class TriggerRegistry {
     effect: {
       kind: 'cooldownReductionFlat' | 'cooldownReductionPercent';
       value: number;
+      percentBasis?: 'base' | 'remaining';
       skillTypes?: any;
       skillId?: any;
     },
@@ -663,7 +672,11 @@ export class TriggerRegistry {
       const requested =
         effect.kind === 'cooldownReductionFlat'
           ? rawValue
-          : (comboState.baseDuration * rawValue) / 100;
+          : ((effect.percentBasis === 'remaining'
+              ? comboState.end - time
+              : comboState.baseDuration) *
+              rawValue) /
+            100;
       const reduction = ctx.reduceComboCooldown(targetTrackId, time, requested);
       if (reduction > 0) {
         ctx.state.getActor(targetTrackId).recordCdReduction(comboState.sourceActionId, reduction);

@@ -689,7 +689,15 @@ export class HitHandler implements EventHandler<HitEvent> {
 
     // Schedule consumption at priority 3 (after all other checks at the same time)
     if (hit._condition && conditionHasConsume(hit._condition)) {
-      scheduleConsumption(hit._condition, e.time, sourceId, ctx, hit.skillType, hit.skillId);
+      scheduleConsumption(
+        hit._condition,
+        e.time,
+        sourceId,
+        ctx,
+        hit.skillType,
+        hit.skillId,
+        e.payload.actionId,
+      );
     }
 
     // Dispatch enemy-targeting effects from this hit
