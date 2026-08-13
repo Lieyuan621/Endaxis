@@ -24,7 +24,7 @@ const INFLICTION_TRACKER: TriggerEffect[] = INFLICTIONS.map(x => ({
       kind: 'status' as const,
       target: 'owner' as const,
       duration: 6,
-      // hide: true,
+      hide: true,
     },
     ...INFLICTIONS.filter(y => x !== y).map(y => ({
       kind: 'consume' as const,
