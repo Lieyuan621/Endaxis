@@ -1365,7 +1365,6 @@ function handleStartConnection(id, type = null) {
   position: relative;
   backdrop-filter: blur(5px);
   transition: all 0.2s;
-  clip-path: polygon(0 0, 100% 0, 100% 90%, 97% 100%, 0 100%);
 }
 .tick-item.red-theme {
   border-left-color: #ff7875 !important;

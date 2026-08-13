@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { ArrowRight } from '@element-plus/icons-vue';
 import draggable from 'vuedraggable';
 import CustomNumberInput from './CustomNumberInput.vue';
 import EffectConditionEditor from './hitEditor/EffectConditionEditor.vue';
@@ -78,6 +79,7 @@ const { t, te } = useI18n({ useScope: 'global' });
 
 const draft = ref(null);
 const selectedEffectId = ref(null);
+const advancedSettingsOpen = ref(false);
 
 const open = computed({
   get: () => props.visible,
@@ -97,6 +99,7 @@ watch(
     if (!props.visible) return;
     draft.value = cloneEditorHit(props.hit || {}, defaultElementKey.value);
     selectedEffectId.value = null;
+    advancedSettingsOpen.value = false;
   },
   { immediate: true, deep: true },
 );
@@ -106,6 +109,30 @@ const dialogTitle = computed(() => t('hitEditor.title', { index: props.hitIndex 
 const selectedEffect = computed(() => {
   const effects = draft.value?.effects || [];
   return effects.find(effect => effect._id === selectedEffectId.value) || null;
+});
+
+function hasConfiguredAdvancedSettings(effect) {
+  if (!effect) return false;
+  const condition = effect.condition;
+  const hasCondition =
+    condition != null &&
+    (typeof condition !== 'object' || Object.keys(condition).length > 0);
+
+  return Boolean(
+    effect.stackStrategy ||
+      effect.applyTiming ||
+      Number(effect.durationExtension) ||
+      Number(effect.icd) ||
+      effect.icdGroup ||
+      effect.stacks === 'fromConsume' ||
+      effect.hide ||
+      effect.ignoreTimeShift ||
+      hasCondition,
+  );
+}
+
+watch(selectedEffectId, () => {
+  advancedSettingsOpen.value = false;
 });
 
 const effectList = computed({
@@ -726,46 +753,6 @@ function save() {
                     </el-option-group>
                   </el-select>
                 </label>
-                <label v-if="canEditStackStrategy" class="field">
-                  <span>{{ t('hitEditor.stackStrategy') }}</span>
-                  <el-select
-                    :model-value="selectedStackStrategyValue"
-                    @update:model-value="
-                      value => patchSelectedEffect('stackStrategy', optionalString(value))
-                    "
-                    size="small"
-                    class="effect-select-dark"
-                    popper-class="hit-editor-select-popper"
-                  >
-                    <el-option value="" :label="t('common.default')" />
-                    <el-option
-                      v-for="strategy in STACK_STRATEGIES"
-                      :key="strategy"
-                      :value="strategy"
-                      :label="stackStrategyLabel(strategy)"
-                    />
-                  </el-select>
-                </label>
-                <label class="field">
-                  <span>{{ t('hitEditor.applyTiming') }}</span>
-                  <el-select
-                    :model-value="selectedEffect.applyTiming || ''"
-                    @update:model-value="
-                      value => patchSelectedEffect('applyTiming', optionalString(value))
-                    "
-                    size="small"
-                    class="effect-select-dark"
-                    popper-class="hit-editor-select-popper"
-                  >
-                    <el-option value="" :label="t('common.default')" />
-                    <el-option
-                      v-for="timing in APPLY_TIMINGS"
-                      :key="timing"
-                      :value="timing"
-                      :label="applyTimingLabel(timing)"
-                    />
-                  </el-select>
-                </label>
               </div>
 
               <div class="field-grid field-grid--effect-input-row">
@@ -779,18 +766,6 @@ function save() {
                     :min="0"
                     :step="1"
                     :activeColor="'var(--ea-gold)'"
-                  />
-                </label>
-                <label class="field">
-                  <span>{{ t('hitEditor.durationExtension') }}</span>
-                  <CustomNumberInput
-                    :model-value="frameValue(selectedEffect.durationExtension || 0)"
-                    @update:model-value="
-                      value => patchSelectedEffect('durationExtension', timeValueFromFrame(value))
-                    "
-                    :min="0"
-                    :step="1"
-                    :activeColor="'#00e5ff'"
                   />
                 </label>
                 <label class="field">
@@ -818,84 +793,154 @@ function save() {
                 </label>
               </div>
 
-              <div class="field-grid field-grid--effect-input-row">
-                <label class="field">
-                  <span>ICD</span>
-                  <CustomNumberInput
-                    :model-value="selectedEffect.icd || 0"
-                    @update:model-value="value => patchSelectedEffectNumber('icd', value)"
-                    :min="0"
-                    :activeColor="'var(--ea-gold)'"
-                  />
-                </label>
-              </div>
+              <button
+                type="button"
+                class="advanced-settings-toggle"
+                :class="{ 'has-values': hasConfiguredAdvancedSettings(selectedEffect) }"
+                :aria-expanded="advancedSettingsOpen"
+                @click="advancedSettingsOpen = !advancedSettingsOpen"
+              >
+                <el-icon class="advanced-settings-toggle__icon" :class="{ 'is-open': advancedSettingsOpen }">
+                  <ArrowRight />
+                </el-icon>
+                <span>{{ t('hitEditor.advancedSettings') }}</span>
+              </button>
 
-              <div class="field-grid field-grid--effect-text-row">
-                <label class="field">
-                  <span>ID</span>
-                  <input
-                    class="simple-input"
-                    :value="displayTextValue(selectedEffect.id)"
-                    @input="event => patchSelectedEffect('id', optionalString(event.target.value))"
-                  />
-                </label>
-                <label class="field">
-                  <span>{{ t('common.name') }}</span>
-                  <input
-                    class="simple-input"
-                    :value="displayTextValue(selectedEffect.name)"
-                    @input="
-                      event => patchSelectedEffect('name', optionalString(event.target.value))
-                    "
-                  />
-                </label>
-                <label class="field">
-                  <span>{{ t('hitEditor.icdGroup') }}</span>
-                  <input
-                    class="simple-input"
-                    :value="selectedEffect.icdGroup || ''"
-                    @input="
-                      event => patchSelectedEffect('icdGroup', optionalString(event.target.value))
-                    "
-                  />
-                </label>
-              </div>
+              <div v-if="advancedSettingsOpen" class="advanced-settings-body">
+                <div class="field-grid field-grid--effect-select-row">
+                  <label v-if="canEditStackStrategy" class="field">
+                    <span>{{ t('hitEditor.stackStrategy') }}</span>
+                    <el-select
+                      :model-value="selectedStackStrategyValue"
+                      @update:model-value="
+                        value => patchSelectedEffect('stackStrategy', optionalString(value))
+                      "
+                      size="small"
+                      class="effect-select-dark"
+                      popper-class="hit-editor-select-popper"
+                    >
+                      <el-option value="" :label="t('common.default')" />
+                      <el-option
+                        v-for="strategy in STACK_STRATEGIES"
+                        :key="strategy"
+                        :value="strategy"
+                        :label="stackStrategyLabel(strategy)"
+                      />
+                    </el-select>
+                  </label>
+                  <label class="field">
+                    <span>{{ t('hitEditor.applyTiming') }}</span>
+                    <el-select
+                      :model-value="selectedEffect.applyTiming || ''"
+                      @update:model-value="
+                        value => patchSelectedEffect('applyTiming', optionalString(value))
+                      "
+                      size="small"
+                      class="effect-select-dark"
+                      popper-class="hit-editor-select-popper"
+                    >
+                      <el-option value="" :label="t('common.default')" />
+                      <el-option
+                        v-for="timing in APPLY_TIMINGS"
+                        :key="timing"
+                        :value="timing"
+                        :label="applyTimingLabel(timing)"
+                      />
+                    </el-select>
+                  </label>
+                </div>
 
-              <div class="field-grid field-grid--effect-check-row">
-                <label class="check-field ea-check-rect">
-                  <input
-                    type="checkbox"
-                    :checked="selectedEffect.stacks === 'fromConsume'"
-                    @change="event => patchSelectedEffectStacksFromConsume(event.target.checked)"
-                  />
-                  <span>{{ fieldLabel('stacksFromConsume') }}</span>
-                </label>
-                <label class="check-field ea-check-rect">
-                  <input
-                    type="checkbox"
-                    :checked="!!selectedEffect.hide"
-                    @change="event => patchSelectedEffectBool('hide', event.target.checked)"
-                  />
-                  <span>{{ t('hitEditor.hide') }}</span>
-                </label>
-                <label class="check-field ea-check-rect">
-                  <input
-                    type="checkbox"
-                    :checked="!!selectedEffect.ignoreTimeShift"
-                    @change="
-                      event => patchSelectedEffectBool('ignoreTimeShift', event.target.checked)
-                    "
-                  />
-                  <span>{{ t('hitEditor.ignoreTimeShift') }}</span>
-                </label>
-              </div>
+                <div class="field-grid field-grid--effect-input-row">
+                  <label class="field">
+                    <span>{{ t('hitEditor.durationExtension') }}</span>
+                    <CustomNumberInput
+                      :model-value="frameValue(selectedEffect.durationExtension || 0)"
+                      @update:model-value="
+                        value => patchSelectedEffect('durationExtension', timeValueFromFrame(value))
+                      "
+                      :min="0"
+                      :step="1"
+                      :activeColor="'#00e5ff'"
+                    />
+                  </label>
+                  <label class="field">
+                    <span>ICD</span>
+                    <CustomNumberInput
+                      :model-value="selectedEffect.icd || 0"
+                      @update:model-value="value => patchSelectedEffectNumber('icd', value)"
+                      :min="0"
+                      :activeColor="'var(--ea-gold)'"
+                    />
+                  </label>
+                </div>
 
-              <EffectConditionEditor
-                :model-value="selectedEffect.condition"
-                :operator-status-options="operatorStatusOptions"
-                :operator-status-name-by-id="operatorStatusNameById"
-                @update:model-value="value => patchSelectedEffect('condition', value)"
-              />
+                <div class="field-grid field-grid--effect-text-row">
+                  <label class="field">
+                    <span>ID</span>
+                    <input
+                      class="simple-input"
+                      :value="displayTextValue(selectedEffect.id)"
+                      @input="event => patchSelectedEffect('id', optionalString(event.target.value))"
+                    />
+                  </label>
+                  <label class="field">
+                    <span>{{ t('common.name') }}</span>
+                    <input
+                      class="simple-input"
+                      :value="displayTextValue(selectedEffect.name)"
+                      @input="
+                        event => patchSelectedEffect('name', optionalString(event.target.value))
+                      "
+                    />
+                  </label>
+                  <label class="field">
+                    <span>{{ t('hitEditor.icdGroup') }}</span>
+                    <input
+                      class="simple-input"
+                      :value="selectedEffect.icdGroup || ''"
+                      @input="
+                        event => patchSelectedEffect('icdGroup', optionalString(event.target.value))
+                      "
+                    />
+                  </label>
+                </div>
+
+                <div class="field-grid field-grid--effect-check-row">
+                  <label class="check-field ea-check-rect">
+                    <input
+                      type="checkbox"
+                      :checked="selectedEffect.stacks === 'fromConsume'"
+                      @change="event => patchSelectedEffectStacksFromConsume(event.target.checked)"
+                    />
+                    <span>{{ fieldLabel('stacksFromConsume') }}</span>
+                  </label>
+                  <label class="check-field ea-check-rect">
+                    <input
+                      type="checkbox"
+                      :checked="!!selectedEffect.hide"
+                      @change="event => patchSelectedEffectBool('hide', event.target.checked)"
+                    />
+                    <span>{{ t('hitEditor.hide') }}</span>
+                  </label>
+                  <label class="check-field ea-check-rect">
+                    <input
+                      type="checkbox"
+                      :checked="!!selectedEffect.ignoreTimeShift"
+                      @change="
+                        event => patchSelectedEffectBool('ignoreTimeShift', event.target.checked)
+                      "
+                    />
+                    <span>{{ t('hitEditor.ignoreTimeShift') }}</span>
+                  </label>
+                </div>
+
+                <EffectConditionEditor
+                  :model-value="selectedEffect.condition"
+                  :operator-status-options="operatorStatusOptions"
+                  :operator-status-name-by-id="operatorStatusNameById"
+                  @update:model-value="value => patchSelectedEffect('condition', value)"
+                />
+              </div>
             </div>
 
             <div class="kind-field-groups">
@@ -1488,6 +1533,55 @@ function save() {
   font-weight: 700;
   letter-spacing: 0.4px;
   text-transform: uppercase;
+}
+
+.advanced-settings-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.08));
+  color: var(--ea-fg-secondary, #cfd3dc);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 6px;
+  min-height: 30px;
+  padding: 8px 2px 0;
+  text-align: left;
+  width: 100%;
+}
+
+.advanced-settings-toggle:hover,
+.advanced-settings-toggle:focus-visible {
+  color: var(--ea-gold);
+  outline: none;
+}
+
+.advanced-settings-toggle.has-values::after {
+  background: var(--ea-gold);
+  content: '';
+  height: 4px;
+  margin-left: 2px;
+  width: 4px;
+}
+
+.advanced-settings-toggle__icon {
+  color: currentColor;
+  transition: transform 0.16s ease;
+}
+
+.advanced-settings-toggle__icon.is-open {
+  transform: rotate(90deg);
+}
+
+.advanced-settings-body {
+  border-left: 2px solid color-mix(in srgb, var(--ea-gold) 28%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 10px;
 }
 
 .kind-field-groups {
