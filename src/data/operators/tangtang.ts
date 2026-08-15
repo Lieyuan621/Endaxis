@@ -39,6 +39,7 @@ const sheet: OperatorSheet = {
               name: 'waterspouts',
               kind: 'damageOverTime',
               element: 'cryo',
+              skillType: 'battleSkill',
               multiplier: [133, 147, 160, 174, 187, 200, 214, 227, 240, 257, 277, 300],
               multiplierMode: 'split',
               multiplierScaling: {
@@ -357,6 +358,7 @@ const sheet: OperatorSheet = {
                       name: 'waterspouts',
                       kind: 'damageOverTime',
                       element: 'cryo',
+                      skillType: 'battleSkill',
                       multiplier: [133, 147, 160, 174, 187, 200, 214, 227, 240, 257, 277, 300],
                       multiplierMode: 'split',
                       multiplierScaling: {

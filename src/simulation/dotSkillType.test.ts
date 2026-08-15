@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { scheduleDotTicks } from '@/simulation/events/effectDispatch';
-import type { ResolvedDamageOverTimeEffect } from '@/data/types';
+import tangtangSheet from '@/data/operators/tangtang';
+import type { DamageOverTimeEffect, ResolvedDamageOverTimeEffect } from '@/data/types';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext';
 
 // A DoT effect may opt into a skillType so its ticks are treated as that skill's damage
@@ -37,5 +38,32 @@ describe('damageOverTime opt-in skillType propagates to ticks', () => {
     const ticks = captureTicks(baseDot);
     expect(ticks.length).toBeGreaterThan(0);
     expect(ticks.every(t => t.payload.skillType === undefined)).toBe(true);
+  });
+});
+
+describe('Tangtang waterspout skill type', () => {
+  it('treats every waterspout DoT as battle skill damage', () => {
+    const waterspouts: DamageOverTimeEffect[] = [];
+    const visit = (value: unknown): void => {
+      if (!value || typeof value !== 'object') return;
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+
+      const effect = value as Partial<DamageOverTimeEffect>;
+      if (
+        effect.kind === 'damageOverTime' &&
+        (effect.id === 'waterspouts' || effect.id === 'tangtang-t2-waterspouts')
+      ) {
+        waterspouts.push(effect as DamageOverTimeEffect);
+      }
+      Object.values(value).forEach(visit);
+    };
+
+    visit(tangtangSheet);
+
+    expect(waterspouts).toHaveLength(2);
+    expect(waterspouts.every(effect => effect.skillType === 'battleSkill')).toBe(true);
   });
 });
