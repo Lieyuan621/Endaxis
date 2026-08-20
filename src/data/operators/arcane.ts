@@ -69,6 +69,18 @@ const ULTIMATE_ARCANA_REQUISITE: SkillRequisite = {
   messageKey: 'actionItem.requisiteTitle.arcaneUltimateArcanaRequired',
 };
 
+const ULTIMATE_COOLDOWN_REQUISITE: SkillRequisite = {
+  id: 'ultimate-cooldown-ready',
+  condition: {
+    kind: 'or',
+    conditions: [
+      { kind: 'ultimateCooldownReady' },
+      { kind: 'operatorStatus', status: 'arcane-gloompurge-arcana-ready' },
+    ],
+  },
+  messageKey: 'actionItem.requisiteTitle.ultimateSkillOnCooldown',
+};
+
 const sheet: OperatorSheet = {
   new: true,
   gameId: 'ARCANE',
@@ -488,7 +500,7 @@ const sheet: OperatorSheet = {
             ],
           },
           ultimate: {
-            requisites: [ULTIMATE_ARCANA_REQUISITE],
+            requisites: [ULTIMATE_ARCANA_REQUISITE, ULTIMATE_COOLDOWN_REQUISITE],
             segments: [
               {
                 duration: 2.417,
@@ -918,7 +930,7 @@ const sheet: OperatorSheet = {
             ],
           },
           ultimate: {
-            requisites: [ULTIMATE_ARCANA_REQUISITE],
+            requisites: [ULTIMATE_ARCANA_REQUISITE, ULTIMATE_COOLDOWN_REQUISITE],
             segments: [
               {
                 duration: 2.417,

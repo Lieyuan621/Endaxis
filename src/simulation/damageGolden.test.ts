@@ -13,6 +13,7 @@ import mifuSheet from '@/data/operators/mifu';
 import zhuangFangyiSheet from '@/data/operators/zhuang-fangyi';
 import liinoSheet from '@/data/operators/liino';
 import rossiSheet from '@/data/operators/rossi';
+import lastRiteSheet from '@/data/operators/last-rite';
 import { setLocale } from '@/i18n';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
@@ -774,6 +775,61 @@ describe('optimizer damage golden baselines', () => {
     });
     expect(reactionHit?._lmdiSelf).toBe(2720);
     expect(reactionHit?._lmdiExternal).toEqual({});
+  });
+
+  it('snapshots consumed infliction stacks for Last Rite hypothermia', () => {
+    const lastRite = createOperatorInstance('last-rite', { talentStates: { '0': 2 } });
+    const tracks = [
+      createTrack('last-rite', [
+        createAction('heat', 'battleSkill', {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: 'infliction', element: 'heat', stacks: 2 } as Effect],
+            },
+          ],
+        }),
+        createAction('cryo', 'battleSkill', {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: 'infliction', element: 'cryo' } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const triggers = collectRuntimeTriggers(createTeam(lastRite.id), [lastRite], [], [], tracks);
+    const result = runScenario(tracks, createRegistry(triggers));
+
+    expect(result.enemyLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ENEMY_STATUS_APPLY',
+          stat: { modifier: 'susceptibility', elements: 'cryo' },
+          value: 8,
+        }),
+      ]),
+    );
+  });
+
+  it('uses the corrected Last Rite pursuit delay', () => {
+    const lastRiteSkills = patchCombatSkills(lastRiteSheet, { talentStates: {}, potential: 0 });
+    const pursuit = lastRiteSkills.battleSkill?.triggers?.[0]?.effects?.find(
+      effect => effect.id === 'lastrite-mirages-hit',
+    ) as { offset?: number } | undefined;
+
+    expect(pursuit?.offset).toBe(0.4);
   });
 
   it('locks physical vulnerability consumption and physical reaction damage', () => {

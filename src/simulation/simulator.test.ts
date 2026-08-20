@@ -2472,6 +2472,59 @@ describe('optimizer-native runtime parity', () => {
     expect(windowExpires[0]?.time).toBeCloseTo(1.5, 5);
   });
 
+  it('does not alter combo cooldown when Camille pursuit is treated as comboSkill', () => {
+    const readyStatus: Effect = {
+      id: 'camille-hunter-pursuit-ready',
+      kind: 'status',
+      target: 'self',
+      duration: 10,
+    } as Effect;
+    const result = runScenario([
+      createTrack('camille', [
+        createAction('real-combo', 'comboSkill', {
+          startTime: 0,
+          cooldown: 20,
+        }),
+        createAction('setup-pursuit', 'battleSkill', {
+          startTime: 0.5,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [readyStatus],
+            },
+          ],
+        }),
+        createAction('pursuit', 'battleSkill', {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              treatAsSkillType: 'comboSkill',
+              _condition: { kind: 'operatorStatus', status: 'camille-hunter-pursuit-ready' },
+            },
+          ],
+        }),
+      ]),
+    ]);
+
+    expect(result.comboCooldownIntervals).toEqual([
+      expect.objectContaining({
+        actorId: 'camille',
+        sourceActionId: 'real-combo_inst',
+        start: 0,
+        end: 20,
+      }),
+    ]);
+  });
+
   it('blocks positive ultimate energy gains during own ultimate enhancement window', () => {
     const simulation = runScenario([
       createTrack(

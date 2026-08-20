@@ -1022,6 +1022,9 @@ export function dispatchEnemyEffects(
             actionId,
             icon: resolved.icon,
             effect: resolved,
+            ...(consumedStacks !== undefined && enemySnap
+              ? { scalingEnemySnapshot: enemySnap }
+              : {}),
             ...(ctx.consumedStacksWriteKeys.has(baseEffectId) && actionId
               ? { consumedStacks: ctx.getAction(actionId)?.consumedStacks }
               : {}),

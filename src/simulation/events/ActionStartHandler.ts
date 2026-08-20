@@ -16,10 +16,7 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
   handle(e: ActionStartEvent, ctx: SimulationContext) {
     const isPrepAction = this.isPrepAction(e, ctx);
     const action = ctx.getAction(e.payload.actionId);
-    const effectiveType = action
-      ? resolveEffectiveActionSkillType(action, e.time, e.payload.actorId, ctx)
-      : e.payload.type;
-    if (effectiveType === 'comboSkill' && action) {
+    if (action?.node.type === 'comboSkill') {
       ctx.startComboCooldown(
         e.payload.actorId,
         e.time,

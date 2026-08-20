@@ -385,6 +385,54 @@ describe('timeline skill library editing', () => {
     expect(keys.indexOf('liino-stance-termination')).toBe(keys.indexOf('battleSkill') + 1);
   });
 
+  it('keeps Arcane second-ultimate cooldown bypass after reload', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'arcane');
+    store.selectTrack(0);
+
+    const ultimate = store.activeSkillLibrary.find(
+      (skill: any) => skill.skillKey === 'ultimate' && !skill.hiddenInLibraryGrid,
+    ) as any;
+    const cooldownRequisite = ultimate.requisites.find(
+      (item: any) => item.id === 'ultimate-cooldown-ready',
+    );
+    expect(cooldownRequisite?.condition).toEqual({
+      kind: 'or',
+      conditions: [
+        { kind: 'ultimateCooldownReady' },
+        { kind: 'operatorStatus', status: 'arcane-gloompurge-arcana-ready' },
+      ],
+    });
+
+    store.addSkillToTrack('arcane', ultimate, 1);
+    const action = store.tracks[0]!.actions.find((item: any) => item.id === ultimate.id) as any;
+    const insertedRequisites = JSON.parse(JSON.stringify(action.requisites));
+
+    localStorage.setItem(
+      'endaxis_autosave',
+      JSON.stringify(
+        serializeProjectData({
+          version: '1.0.0',
+          timestamp: Date.now(),
+          scenarioList: JSON.parse(JSON.stringify(store.scenarioList)),
+          activeScenarioId: store.activeScenarioId,
+          systemConstants: store.systemConstants,
+          activeEnemyId: store.activeEnemyId,
+          activeEnemyLevel: store.activeEnemyLevel,
+        }),
+      ),
+    );
+
+    await store.loadFromBrowser();
+
+    const reloaded = store.tracks[0]!.actions.find(
+      (item: any) => item.instanceId === action.instanceId,
+    ) as any;
+    expect(reloaded.requisites).toEqual(insertedRequisites);
+  });
+
   it('toggles multiple actions through the shared action selection path', () => {
     const store = useTimelineStore();
 

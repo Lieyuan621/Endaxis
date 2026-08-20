@@ -75,6 +75,18 @@ const ARCANE_ULTIMATE_ARCANA_REQUISITE = {
   messageKey: 'actionItem.requisiteTitle.arcaneUltimateArcanaRequired',
 };
 
+const ARCANE_ULTIMATE_COOLDOWN_REQUISITE = {
+  id: 'ultimate-cooldown-ready',
+  condition: {
+    kind: 'or' as const,
+    conditions: [
+      { kind: 'ultimateCooldownReady' as const },
+      { kind: 'operatorStatus' as const, status: 'arcane-gloompurge-arcana-ready' },
+    ],
+  },
+  messageKey: 'actionItem.requisiteTitle.ultimateSkillOnCooldown',
+};
+
 const LAEVATAIN_OUTSIDE_ULTIMATE_BASIC_REQUISITE = {
   id: 'laevatain-basic-outside-ultimate-enhancement',
   condition: { kind: 'not' as const, condition: { kind: 'ultimateEnhancement' as const } },
@@ -484,7 +496,10 @@ describe('evaluateSkillRequisites', () => {
           gaugeCost: 100,
           enhancementTime: 'arcane-gloompurger-array',
           animationTime: 0,
-          requisites: [ARCANE_ULTIMATE_ARCANA_REQUISITE],
+          requisites: [
+            ARCANE_ULTIMATE_ARCANA_REQUISITE,
+            ARCANE_ULTIMATE_COOLDOWN_REQUISITE,
+          ],
           hits: [
             {
               offset: 0,
@@ -507,7 +522,10 @@ describe('evaluateSkillRequisites', () => {
           gaugeCost: 100,
           enhancementTime: 'arcane-gloompurger-array',
           animationTime: 0,
-          requisites: [ARCANE_ULTIMATE_ARCANA_REQUISITE],
+          requisites: [
+            ARCANE_ULTIMATE_ARCANA_REQUISITE,
+            ARCANE_ULTIMATE_COOLDOWN_REQUISITE,
+          ],
         }),
       ],
       'arcane',
@@ -533,7 +551,11 @@ describe('evaluateSkillRequisites', () => {
           gaugeCost: 100,
           enhancementTime: 'arcane-gloompurger-array',
           animationTime: 0,
-          requisites: [ARCANE_ULTIMATE_ARCANA_REQUISITE],
+          cooldown: 20,
+          requisites: [
+            ARCANE_ULTIMATE_ARCANA_REQUISITE,
+            ARCANE_ULTIMATE_COOLDOWN_REQUISITE,
+          ],
           hits: [
             {
               offset: 0,
@@ -556,7 +578,11 @@ describe('evaluateSkillRequisites', () => {
           gaugeCost: 100,
           enhancementTime: 'arcane-gloompurger-array',
           animationTime: 0,
-          requisites: [ARCANE_ULTIMATE_ARCANA_REQUISITE],
+          cooldown: 20,
+          requisites: [
+            ARCANE_ULTIMATE_ARCANA_REQUISITE,
+            ARCANE_ULTIMATE_COOLDOWN_REQUISITE,
+          ],
         }),
       ],
       'arcane',

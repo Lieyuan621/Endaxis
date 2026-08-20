@@ -176,6 +176,8 @@ export type EnemyEffectApplyEvent = {
       icon?: string;
       consumedStacks?: Record<string, number>;
       effect?: Effect;
+      /** Enemy state captured when a trigger was dispatched, used by stack-based scaling. */
+      scalingEnemySnapshot?: EnemyStatusSnapshot;
       sourceBreakdown?: Record<string, number>;
       /** When true, applying this effect does not fire onStatusApplied triggers. */
       silent?: boolean;

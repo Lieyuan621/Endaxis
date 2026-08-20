@@ -277,7 +277,7 @@ const sheet: OperatorSheet = {
               element: 'cryo',
               multiplier: [142, 156, 171, 185, 199, 213, 228, 242, 256, 274, 295, 320],
               readConsumedStacks: { statusKey: 'lastrite-hypothermic-perfusion', target: 'self' },
-              offset: 0.267,
+              offset: 0.4,
               hit: {
                 effects: [
                   {
