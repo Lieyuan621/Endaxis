@@ -9,3 +9,10 @@ export function passesSkillFilter(filter: string | string[], skillId: string): b
   if (arr.includes('basicAttack') && (skillId === 'finalStrike' || skillId === 'dive')) return true;
   return false;
 }
+
+/** dmgBonus-only scope: finishers receive damage bonuses scoped to basic attacks. */
+export function passesDmgBonusSkillFilter(filter: string | string[], skillType: string): boolean {
+  if (passesSkillFilter(filter, skillType)) return true;
+  const arr = Array.isArray(filter) ? filter : [filter];
+  return arr.includes('basicAttack') && skillType === 'finisher';
+}

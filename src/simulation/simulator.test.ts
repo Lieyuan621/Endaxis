@@ -4166,7 +4166,30 @@ describe('independent enemy status instance ids', () => {
     expect(stacked / baseline).toBeCloseTo(1.2, 2);
   });
 
+  it('places both Yvonne combo energy gains on the first hit', () => {
+    const baseHits = resolveOperatorSheetHits(yvonneSheet, 'comboSkill');
+    const energyHits = baseHits.filter(hit =>
+      hit.effects?.some(effect => effect.kind === 'ultEnergyGain'),
+    );
+    expect(energyHits).toHaveLength(1);
+    expect(Number(energyHits[0]?.offset)).toBe(
+      Math.min(...baseHits.map(hit => Number(hit.offset))),
+    );
+    expect(
+      energyHits[0]?.effects
+        ?.filter(effect => effect.kind === 'ultEnergyGain')
+        .map(effect => effect.value),
+    ).toEqual([10, 10]);
+  });
+
   it('arms enemyStatus conditional passives from ally apply and keeps OR buff through solidification', () => {
+    const battleHits = resolveOperatorSheetHits(yvonneSheet, 'battleSkill');
+    const battleHit = battleHits.find(hit => hit.id === 'yvonne-battle-hit');
+    const solidification = battleHit?.effects?.find(
+      effect => effect.kind === 'reaction' && effect.reactionType === 'solidification',
+    );
+    expect(solidification).toMatchObject({ applyTiming: 'beforeDamage' });
+
     const freezingPointTriggers = [
       {
         sourceTrackId: 'yvonne',
@@ -4180,15 +4203,38 @@ describe('independent enemy status instance ids', () => {
           effects: [
             {
               id: 'yvonne-p2-cryo',
+              name: 'Freezing Point',
               kind: 'status' as const,
               stat: { modifier: 'critDmg' as const },
               target: 'owner' as const,
-              value: 50,
+              value: 20,
               duration: 999,
               condition: {
                 kind: 'not' as const,
                 condition: { kind: 'operatorStatus' as const, status: 'yvonne-p2-cryo' },
               },
+            },
+          ],
+        },
+      },
+      {
+        sourceTrackId: 'yvonne',
+        triggerEffect: {
+          trigger: {
+            kind: 'onStatusApplied' as const,
+            status: 'solidification',
+            target: 'enemy' as const,
+            triggerScope: 'global' as const,
+          },
+          effects: [
+            {
+              id: 'yvonne-p2-solidification',
+              name: 'Freezing Point',
+              kind: 'status' as const,
+              stat: { modifier: 'critDmg' as const },
+              target: 'owner' as const,
+              value: 20,
+              duration: 999,
             },
           ],
         },
@@ -4301,23 +4347,8 @@ describe('independent enemy status instance ids', () => {
         createTrack('yvonne', [
           createAction('force_solidify', 'battleSkill', {
             startTime: 0.5,
-            hits: [
-              {
-                offset: 0,
-                multiplier: 1,
-                spRecovery: 0,
-                spReturn: 0,
-                stagger: 0,
-                effects: [
-                  {
-                    kind: 'reaction',
-                    reactionType: 'solidification',
-                    requiresInfliction: ['cryo'],
-                    forced: true,
-                  } as Effect,
-                ],
-              },
-            ],
+            element: 'cryo',
+            hits: battleHits,
           }),
           createAction('yvonne_ba', 'basicAttack', {
             startTime: 1,
@@ -4349,6 +4380,17 @@ describe('independent enemy status instance ids', () => {
         entry.type === 'OPERATOR_EFFECT_EXPIRE' && entry.id === 'yvonne-p2-cryo' && entry.time <= 1,
     );
     expect(removed).toBe(false);
+    const solidifyDamageEntry = throughSolidify.simLog.find(
+      entry => entry.type === 'DAMAGE_HIT' && entry.payload.actionId === 'force_solidify_inst',
+    );
+    expect(solidifyDamageEntry?.type).toBe('DAMAGE_HIT');
+    if (!solidifyDamageEntry || solidifyDamageEntry.type !== 'DAMAGE_HIT') {
+      throw new Error('Missing Yvonne battle-skill damage hit');
+    }
+    const freezingPointValues = solidifyDamageEntry.payload.hitData._damageBreakdown?.critDmgSources
+      ?.filter(source => source.label === 'Freezing Point')
+      .map(source => source.value);
+    expect(freezingPointValues).toEqual([0.2, 0.2]);
     expect(damageFor(throughSolidify, 'yvonne_ba_inst')).toBeGreaterThan(baseline);
   });
 });

@@ -1265,6 +1265,8 @@
     "critRateScaleTooltip": "该命中使用额外暴击率缩放。",
     "dmgBonus": "伤害加成",
     "critMult": "暴击期望",
+    "rawCritRate": "原始暴击率",
+    "critRateCap": "暴击率上限",
     "ampBonus": "增幅",
     "directMult": "直接倍率",
     "susceptibility": "脆弱",

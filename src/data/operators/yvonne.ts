@@ -331,6 +331,7 @@ const sheet: OperatorSheet = {
                       kind: 'reaction',
                       reactionType: 'solidification',
                       requiresInfliction: ['cryo', 'nature'],
+                      applyTiming: 'beforeDamage',
                     },
                     {
                       kind: 'ultEnergyGain',
@@ -398,6 +399,10 @@ const sheet: OperatorSheet = {
                           kind: 'ultEnergyGain',
                           value: 10,
                         },
+                        {
+                          kind: 'ultEnergyGain',
+                          value: 10,
+                        },
                       ]
                     : [],
               },
@@ -410,13 +415,7 @@ const sheet: OperatorSheet = {
                 {
                   offset: 3.63,
                   stagger: 10,
-                  effects: [
-                    {
-                      kind: 'ultEnergyGain',
-                      value: 10,
-                    },
-                    { kind: 'reaction', reactionType: 'solidification' },
-                  ],
+                  effects: [{ kind: 'reaction', reactionType: 'solidification' }],
                 },
               ],
             },

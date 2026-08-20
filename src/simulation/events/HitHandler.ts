@@ -344,7 +344,9 @@ export class HitHandler implements EventHandler<HitEvent> {
         multiplier: resolvedMultiplier,
         multiplierDetail,
         critRate: noCrit ? 0 : operatorStatus.critRate,
+        critRateSources: noCrit ? [] : [...(operatorStatus.critRateSources ?? [])],
         critDmg: noCrit ? 0 : operatorStatus.critDmg,
+        critDmgSources: noCrit ? [] : [...(operatorStatus.critDmgSources ?? [])],
         dmgBonus: mods.dmgBonus,
         dmgBonusExternalMult: mods.dmgBonusExternalMult,
         dmgBonusSources: [...mods.dmgBonusSources],
@@ -528,7 +530,15 @@ export class HitHandler implements EventHandler<HitEvent> {
       }
 
       const effectiveStatus =
-        hit._canCrit === false ? { ...operatorStatus, critRate: 0, critDmg: 0 } : operatorStatus;
+        hit._canCrit === false
+          ? {
+              ...operatorStatus,
+              critRate: 0,
+              critRateSources: [],
+              critDmg: 0,
+              critDmgSources: [],
+            }
+          : operatorStatus;
 
       const breakdown = computeHitDamageWithBreakdown(
         { ...hit, multiplier: resolvedMultiplier, _multiplierDetail: multiplierDetail },

@@ -1265,6 +1265,8 @@
     "critRateScaleTooltip": "This hit uses an extra crit-rate scale.",
     "dmgBonus": "Damage Bonus",
     "critMult": "Crit Expectation",
+    "rawCritRate": "Raw CRIT Rate",
+    "critRateCap": "CRIT Rate Cap",
     "ampBonus": "Amp",
     "directMult": "Direct Multiplier",
     "susceptibility": "Susceptibility",

@@ -10,6 +10,7 @@ import type {
 } from './types';
 import { ATTR_MAP } from './baseValues';
 import { computeScalingBasis } from './scaling';
+import { passesDmgBonusSkillFilter, passesSkillFilter } from '@/data/filter';
 
 /** Intrinsic baseline label — StatDetailDialog translates via statDetail.baseSource. */
 export const STAT_SOURCE_BASE_LABEL = '__base__';
@@ -295,16 +296,13 @@ export function computeStats(
         if (targetSkillType != null) return false;
       } else {
         const types = stat.skillTypes;
-        const arr = Array.isArray(types) ? types : [types];
-        if (!targetSkillType || !arr.includes(targetSkillType as never)) {
-          // basicAttack scope also matches finalStrike and dive
-          if (!(
-            arr.includes('basicAttack' as never) &&
-            (targetSkillType === 'finalStrike' || targetSkillType === 'dive')
-          )) {
-            return false;
-          }
-        }
+        const arr = (Array.isArray(types) ? types : [types]) as string[];
+        if (!targetSkillType) return false;
+        const matches =
+          stat.modifier === 'dmgBonus'
+            ? passesDmgBonusSkillFilter(arr, targetSkillType)
+            : passesSkillFilter(arr, targetSkillType);
+        if (!matches) return false;
       }
     }
     if ('skillId' in stat && stat.skillId != null) {

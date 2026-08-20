@@ -15,6 +15,7 @@ import type {
   ScopedDamageModifier,
 } from '@/data/stats/types';
 import { EnemyState } from '@/simulation/state/EnemyState';
+import { passesSkillFilter } from '@/data/filter';
 
 // ─── Shared fixtures ─────────────────────────────────────────────────────────
 
@@ -496,6 +497,28 @@ describe("dmgBonus skillTypes:'nonSkill' scope", () => {
     };
     expect(filterDamageModifiers([battle], 'heat', 'battleSkill', undefined).dmgBonus).toBe(-0.6);
     expect(filterDamageModifiers([battle], 'heat', undefined, undefined).dmgBonus).toBe(0);
+  });
+
+  it('basicAttack-scoped dmgBonus also matches final strikes, dives, and finishers', () => {
+    const basic: ScopedDamageModifier = {
+      modifier: 'dmgBonus',
+      value: 0.5,
+      skillTypes: 'basicAttack',
+    };
+    expect(filterDamageModifiers([basic], 'physical', 'basicAttack', undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([basic], 'physical', 'finalStrike', undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([basic], 'physical', 'dive', undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([basic], 'physical', 'finisher', undefined).dmgBonus).toBe(0.5);
+    expect(filterDamageModifiers([basic], 'physical', 'battleSkill', undefined).dmgBonus).toBe(0);
+    expect(passesSkillFilter('basicAttack', 'finisher')).toBe(false);
+    expect(
+      filterDamageModifiers(
+        [{ modifier: 'ampBonus', value: 0.5, skillTypes: 'basicAttack' }],
+        'physical',
+        'finisher',
+        undefined,
+      ).ampBonus,
+    ).toBe(0);
   });
 });
 

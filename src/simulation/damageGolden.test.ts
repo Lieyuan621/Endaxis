@@ -20,6 +20,7 @@ import type { BaseStatValues } from '@/data/stats/types';
 import type { Effect, TriggerEffect } from '@/data/types';
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from '@/types';
 import type { EnemyResistance } from '@/data/enemyResistance';
+import { computeExpectedDamageWithBreakdown } from '@/data/stats/computeDamage';
 
 type TrackPatch = Omit<Partial<ScenarioTrack>, 'stats'> & {
   stats?: Partial<ScenarioTrack['stats']>;
@@ -301,6 +302,45 @@ function totalDamage(result: ReturnType<typeof runScenario>) {
 }
 
 describe('optimizer damage golden baselines', () => {
+  it('caps expected crit rate while retaining raw rate and source snapshots', () => {
+    const breakdown = computeExpectedDamageWithBreakdown({
+      attack: 1000,
+      multiplier: 100,
+      critRate: 1.25,
+      critRateSources: [
+        { label: '__base__', value: 0.05 },
+        { label: 'crit-buff', value: 1.2 },
+      ],
+      critDmg: 0.5,
+      critDmgSources: [{ label: '__base__', value: 0.5 }],
+      dmgBonus: 0,
+      dmgBonusExternalMult: 1,
+      ampBonus: 0,
+      directMultiplier: 1,
+      enemyDef: 100,
+      resistanceIgnore: 0,
+      resistanceShred: 0,
+      susceptibility: 0,
+      increasedDmgTaken: 0,
+      dmgTakenExternalMult: 1,
+      linkStacks: 0,
+      staggerMult: 1,
+      finisherMult: 1,
+    });
+
+    expect(breakdown).toMatchObject({
+      critRateRaw: 1.25,
+      critRate: 1,
+      critRateSources: [
+        { label: '__base__', value: 0.05 },
+        { label: 'crit-buff', value: 1.2 },
+      ],
+      critDmgSources: [{ label: '__base__', value: 0.5 }],
+      critMult: 1.5,
+      expectedDamage: 750,
+    });
+  });
+
   it('keeps Liino existing combo window usable without retriggering it during ultimate', () => {
     const liino = createOperatorInstance('liino');
     const team = createTeam(liino.id);
@@ -370,20 +410,28 @@ describe('optimizer damage golden baselines', () => {
       potential: 3,
     });
     const tracks = [
-      createTrack('zhuang-fangyi', [
-        createAction('zhuang_battle', 'battleSkill', {
-          skillId: 'battleSkill',
-          startTime: 1,
-          spCost: 100,
-          hits: battleHits,
-        }),
-      ], { element: 'electric' }),
-      createTrack('liino', [
-        createAction('liino_combo', 'comboSkill', {
-          skillId: 'comboSkill',
-          startTime: 0,
-        }),
-      ], { element: 'electric' }),
+      createTrack(
+        'zhuang-fangyi',
+        [
+          createAction('zhuang_battle', 'battleSkill', {
+            skillId: 'battleSkill',
+            startTime: 1,
+            spCost: 100,
+            hits: battleHits,
+          }),
+        ],
+        { element: 'electric' },
+      ),
+      createTrack(
+        'liino',
+        [
+          createAction('liino_combo', 'comboSkill', {
+            skillId: 'comboSkill',
+            startTime: 0,
+          }),
+        ],
+        { element: 'electric' },
+      ),
     ];
     const result = runScenario(
       tracks,
@@ -583,6 +631,47 @@ describe('optimizer damage golden baselines', () => {
       expectedDamage: 435,
     });
     expect(def300._expectedDamage).toBeLessThan(def100._expectedDamage!);
+  });
+
+  it('applies basic-attack damage bonuses to finisher hits', () => {
+    const result = runScenario([
+      createTrack('alpha', [
+        createAction('apply_basic_bonus', 'battleSkill', {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'basic-dmg-bonus',
+                  kind: 'status',
+                  stat: { modifier: 'dmgBonus', skillTypes: 'basicAttack' },
+                  target: 'self',
+                  value: 50,
+                  duration: 10,
+                } as Effect,
+              ],
+            },
+          ],
+        }),
+        createAction('finisher_hit', 'finisher', {
+          startTime: 1,
+          element: 'physical',
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ]);
+    const hit = damageByAction(result, 'finisher_hit_inst');
+
+    expect(hit._damageBreakdown).toMatchObject({
+      skillType: 'finisher',
+      dmgBonus: 0.5,
+      dmgBonusMult: 1.5,
+      dmgBonusSources: [{ label: 'basic-dmg-bonus', value: 0.5 }],
+    });
   });
 
   it('keeps neutral enemy resistance at the old damage result', () => {
@@ -1157,8 +1246,17 @@ describe('optimizer damage golden baselines', () => {
       base: 2040,
       dmgBonus: 0.2,
       dmgBonusMult: 1.2,
+      critRateRaw: 0.55,
       critRate: 0.55,
+      critRateSources: [
+        { label: '__base__', value: 0.05 },
+        { label: 'self-crit-rate', value: 0.5 },
+      ],
       critDmg: 1.5,
+      critDmgSources: [
+        { label: '__base__', value: 0.5 },
+        { label: 'self-crit-dmg', value: 1 },
+      ],
       critMult: 1.8250000000000002,
       ampBonus: 0.3,
       ampMult: 1.3,
@@ -1282,6 +1380,24 @@ describe('optimizer damage golden baselines', () => {
                   value: 80,
                   skillTypes: 'battleSkill',
                 } as Effect,
+                {
+                  id: 'next-battle-crit-rate',
+                  name: 'One-time CRIT Rate',
+                  kind: 'oneTime',
+                  stat: { modifier: 'critRate' },
+                  target: 'self',
+                  value: 25,
+                  skillTypes: 'battleSkill',
+                } as Effect,
+                {
+                  id: 'next-battle-crit-dmg',
+                  name: 'One-time CRIT DMG',
+                  kind: 'oneTime',
+                  stat: { modifier: 'critDmg' },
+                  target: 'self',
+                  value: 50,
+                  skillTypes: 'battleSkill',
+                } as Effect,
               ],
             },
           ],
@@ -1294,19 +1410,44 @@ describe('optimizer damage golden baselines', () => {
     ]);
     const hit = damageByAction(result, 'consume_onetime_inst');
 
-    expect(hit.consumedStatEffects).toEqual([
-      expect.objectContaining({
-        id: 'next-battle-dmg',
-        stat: { modifier: 'dmgBonus' },
-        value: 80,
-      }),
-    ]);
+    expect(hit.consumedStatEffects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'next-battle-dmg',
+          stat: { modifier: 'dmgBonus' },
+          value: 80,
+        }),
+        expect.objectContaining({
+          id: 'next-battle-crit-rate',
+          sourceLabel: 'One-time CRIT Rate',
+          stat: { modifier: 'critRate' },
+          value: 25,
+        }),
+        expect.objectContaining({
+          id: 'next-battle-crit-dmg',
+          sourceLabel: 'One-time CRIT DMG',
+          stat: { modifier: 'critDmg' },
+          value: 50,
+        }),
+      ]),
+    );
     expect(hit._damageBreakdown).toMatchObject({
       dmgBonus: 0.8,
       dmgBonusMult: 1.8,
+      critRateRaw: 0.3,
+      critRate: 0.3,
+      critRateSources: [
+        { label: '__base__', value: 0.05 },
+        { label: 'One-time CRIT Rate', value: 0.25 },
+      ],
+      critDmg: 1,
+      critDmgSources: [
+        { label: '__base__', value: 0.5 },
+        { label: 'One-time CRIT DMG', value: 0.5 },
+      ],
       nonCritDamage: 1530,
-      critDamage: 2295,
-      expectedDamage: 1568,
+      critDamage: 3060,
+      expectedDamage: 1989,
     });
     expect(result.operatorLog).toEqual(
       expect.arrayContaining([
