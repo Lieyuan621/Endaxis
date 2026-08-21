@@ -61,7 +61,7 @@ const sheet: OperatorSheet = {
             {
               id: 'yvonne-t1',
               kind: 'status',
-              stat: { modifier: 'dmgBonus', skillTypes: 'basicAttack' },
+              stat: { modifier: 'dmgBonus', skillTypes: 'finalStrike' },
               target: 'self',
               value: [0, 50],
               duration: 999,
@@ -336,6 +336,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'ultEnergyGain',
                       value: 10,
+                      applyTiming: 'beforeDamage',
                       condition: {
                         kind: 'enemyStatus',
                         status: ['cryoInfliction', 'natureInfliction'],
@@ -344,6 +345,7 @@ const sheet: OperatorSheet = {
                     {
                       kind: 'ultEnergyGain',
                       value: 0,
+                      applyTiming: 'beforeDamage',
                       scaling: {
                         additive: [
                           {

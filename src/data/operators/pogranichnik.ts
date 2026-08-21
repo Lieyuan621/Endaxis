@@ -473,6 +473,10 @@ const sheet: OperatorSheet = {
                   stagger: 3,
                   effects: [
                     {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
+                    {
                       kind: 'consume',
                       operatorStatus: 'pogranichnik-combo-tracker',
                       condition: {
@@ -558,10 +562,6 @@ const sheet: OperatorSheet = {
                   spRecovery: 23,
                   stagger: 9,
                   effects: [
-                    {
-                      kind: 'ultEnergyGain',
-                      value: 10,
-                    },
                     {
                       kind: 'consume',
                       operatorStatus: 'pogranichnik-combo-tracker',

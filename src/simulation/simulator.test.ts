@@ -14,6 +14,7 @@ import { getOperatorPotentialName } from '@/data/gameText';
 import estellaSheet from '@/data/operators/estella';
 import perlicaSheet from '@/data/operators/perlica';
 import mifuSheet from '@/data/operators/mifu';
+import pogranichnikSheet from '@/data/operators/pogranichnik';
 import yvonneSheet from '@/data/operators/yvonne';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
@@ -1919,6 +1920,46 @@ describe('optimizer-native runtime parity', () => {
       ]),
     );
   });
+
+  it.each([1, 2, 3, 4])(
+    'grants Pogranichnik combo ultimate energy after consuming %i vulnerability stacks',
+    consumedStacks => {
+      const comboHits = resolveOperatorSheetHits(pogranichnikSheet, 'comboSkill', 0, 11);
+      const result = runScenario([
+        createTrack('alpha', [
+          createAction('prime_pogranichnik_combo', 'battleSkill', {
+            startTime: 0,
+            hits: [
+              {
+                offset: 0,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [
+                  {
+                    id: 'pogranichnik-combo-tracker',
+                    kind: 'status',
+                    target: 'self',
+                    stacks: consumedStacks,
+                    maxStacks: 4,
+                    duration: 999,
+                    hide: true,
+                  } as Effect,
+                ],
+              },
+            ],
+          }),
+          createAction('pogranichnik_combo', 'comboSkill', {
+            startTime: 1,
+            duration: 3,
+            hits: comboHits,
+          }),
+        ]),
+      ]);
+
+      expect(result.state.snapshot().actors[0]?.resources.gauge).toBe(10);
+    },
+  );
 
   it('projects optimizer-native logs through the UI result adapter', () => {
     const gearEffect: Effect = {
@@ -4180,6 +4221,105 @@ describe('independent enemy status instance ids', () => {
         ?.filter(effect => effect.kind === 'ultEnergyGain')
         .map(effect => effect.value),
     ).toEqual([10, 10]);
+  });
+
+  it.each(['cryo', 'nature'] as const)(
+    'grants Yvonne battle-skill energy before consuming %s infliction',
+    element => {
+      const battleHits = resolveOperatorSheetHits(yvonneSheet, 'battleSkill');
+      const result = runScenario([
+        createTrack('yvonne', [
+          createAction('prime_infliction', 'basicAttack', {
+            startTime: 0,
+            element,
+            hits: [
+              {
+                offset: 0,
+                multiplier: 0,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [{ kind: 'infliction', element, stacks: 2 } as Effect],
+              },
+            ],
+          }),
+          createAction('yvonne_battle', 'battleSkill', {
+            startTime: 1,
+            element: 'cryo',
+            hits: battleHits,
+          }),
+        ]),
+      ]);
+
+      expect(result.state.snapshot().actors[0]?.resources.gauge).toBe(70);
+      expect(result.enemyLog).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'INFLICTION_CONSUMED',
+            element,
+            consumedStacks: 2,
+          }),
+          expect.objectContaining({
+            type: 'REACTION_TRIGGER',
+            reactionType: 'solidification',
+            level: 2,
+          }),
+        ]),
+      );
+    },
+  );
+
+  it('limits Yvonne Tech Combo damage bonus to the empowered final strike', () => {
+    const operator = createOperatorInstance('op_yvonne', 'yvonne');
+    operator.talentStates = { '0': 2 };
+    const tracks = [
+      createTrack('yvonne', [
+        createAction('activate_yvonne_t1', 'battleSkill', {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  kind: 'reaction',
+                  reactionType: 'solidification',
+                  forced: true,
+                } as Effect,
+              ],
+            },
+          ],
+        }),
+        createAction('yvonne_finisher', 'finisher', {
+          startTime: 1,
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+        createAction('yvonne_final_strike', 'basicAttack', {
+          startTime: 2,
+          hits: [{ offset: 0, multiplier: 100, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+    const team = createTeam(operator.id);
+    const triggerEffects = collectRuntimeTriggers(team, [operator], [], [], tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+    const finisherEntry = result.simLog.find(
+      entry => entry.type === 'DAMAGE_HIT' && entry.payload.actionId === 'yvonne_finisher_inst',
+    );
+    const finalStrikeEntry = result.simLog.find(
+      entry => entry.type === 'DAMAGE_HIT' && entry.payload.actionId === 'yvonne_final_strike_inst',
+    );
+
+    expect(finisherEntry?.type).toBe('DAMAGE_HIT');
+    expect(finalStrikeEntry?.type).toBe('DAMAGE_HIT');
+    if (finisherEntry?.type !== 'DAMAGE_HIT' || finalStrikeEntry?.type !== 'DAMAGE_HIT') {
+      throw new Error('Missing Yvonne finisher or final-strike damage hit');
+    }
+    expect(finisherEntry.payload.hitData._damageBreakdown?.dmgBonus).toBe(0);
+    expect(finalStrikeEntry.payload.hitData._damageBreakdown?.dmgBonus).toBe(0.5);
   });
 
   it('arms enemyStatus conditional passives from ally apply and keeps OR buff through solidification', () => {
