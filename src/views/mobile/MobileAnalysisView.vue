@@ -372,4 +372,23 @@ h2 {
   color: var(--ea-fg-muted);
   text-align: center;
 }
+
+@media (min-width: 769px) and (max-width: 1366px) {
+  .analysis-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metrics {
+    grid-column: 1 / -1;
+  }
+
+  .analysis-section:nth-of-type(3) {
+    grid-column: 1 / -1;
+  }
+
+  .damage-chart {
+    height: 340px;
+  }
+}
 </style>

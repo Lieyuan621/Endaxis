@@ -5845,4 +5845,52 @@ async function doImport() {
   min-width: 0;
   word-break: break-word;
 }
+
+@media (min-width: 769px) and (max-width: 1366px) {
+  .mobile-editbar {
+    height: 44px;
+    grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.72fr) 38px 38px;
+    grid-template-rows: 32px;
+    gap: 8px;
+    padding: 6px 12px;
+  }
+
+  .mobile-editbar__library {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .mobile-editbar__enemy {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .mobile-editbar__icon {
+    width: 38px;
+    height: 32px;
+    flex-basis: 38px;
+  }
+
+  .mobile-editbar__icon--undo {
+    grid-column: 3;
+  }
+
+  .mobile-editbar__icon--redo {
+    grid-column: 4;
+  }
+
+  .mobile-resource-guide__panel {
+    width: min(440px, calc(100vw - 80px));
+  }
+
+  .m-drawer {
+    width: min(100%, 880px);
+    margin: 0 auto;
+  }
+
+  .m-drawer__content {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+}
 </style>

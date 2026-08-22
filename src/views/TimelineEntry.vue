@@ -4,6 +4,7 @@ import { defineAsyncComponent } from 'vue';
 import LoadingTerminal from '@/components/LoadingTerminal.vue';
 import { isNativeApp } from '@/platform/nativeBridge';
 import { reportBootLoadFailure } from '@/utils/bootLoader';
+import { shouldUseTouchLayout } from '@/utils/touchLayout';
 
 function chunkLoadingFallback() {
   if (typeof document !== 'undefined' && document.getElementById('boot-loader')) return null;
@@ -39,13 +40,16 @@ function detectMobileViewer() {
   if (typeof window === 'undefined') return false;
   if (isNativeApp()) return true;
 
-  const width = Number(window.innerWidth) || 0;
-  const isSmall = width > 0 && width <= 768;
-
   const coarsePointer = !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '');
+  const browserNavigator = typeof navigator === 'undefined' ? undefined : navigator;
 
-  return isSmall && (isAndroid || coarsePointer);
+  return shouldUseTouchLayout({
+    viewportWidth: window.innerWidth,
+    coarsePointer,
+    userAgent: browserNavigator?.userAgent,
+    platform: browserNavigator?.platform,
+    maxTouchPoints: browserNavigator?.maxTouchPoints,
+  });
 }
 
 const isMobileViewer = ref(detectMobileViewer());

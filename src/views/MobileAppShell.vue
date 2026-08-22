@@ -166,4 +166,11 @@ onUnmounted(() => {
   background: var(--ea-gold);
   transform: translateX(-50%);
 }
+
+@media (min-width: 769px) and (max-width: 1366px) {
+  .bottom-nav {
+    padding-right: max(0px, calc((100% - 560px) / 2));
+    padding-left: max(0px, calc((100% - 560px) / 2));
+  }
+}
 </style>

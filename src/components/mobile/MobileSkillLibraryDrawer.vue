@@ -287,4 +287,17 @@ function choose(skill, allowZeroDuration = false) {
   font-size: 13px;
   text-align: center;
 }
+
+@media (min-width: 769px) and (max-width: 1366px) {
+  .skill-library-shell {
+    width: min(100%, 920px);
+    margin: 0 auto;
+  }
+
+  .skill-library-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+  }
+}
 </style>
