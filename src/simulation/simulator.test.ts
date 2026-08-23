@@ -4709,4 +4709,74 @@ describe('Yvonne potential 5 ultimate buffs', () => {
       ]),
     );
   });
+
+  it('opens Alesh combo window when Endministrator Originium Crystals are consumed', () => {
+    const operator = createOperatorInstance('op_alesh', 'alesh');
+    const tracks = [
+      createTrack('alesh', [
+        createAction('apply_originium_crystals', 'comboSkill', {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  kind: 'status',
+                  id: 'endministrator-originium-crystals',
+                  target: 'enemy',
+                  duration: 10,
+                } as Effect,
+              ],
+            },
+          ],
+        }),
+        createAction('consume_originium_crystals', 'battleSkill', {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  kind: 'consume',
+                  enemyStatus: 'endministrator-originium-crystals',
+                } as Effect,
+              ],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const team = createTeam(operator.id);
+    const triggerEffects = collectRuntimeTriggers(team, [operator], [], [], tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+
+    expect(result.enemyLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ENEMY_EFFECT_EXPIRE',
+          id: 'endministrator-originium-crystals',
+          consumed: true,
+          time: 1,
+        }),
+      ]),
+    );
+    expect(result.operatorLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'OPERATOR_EFFECT_APPLY',
+          id: 'alesh-combo-window',
+          targetTrackId: 'alesh',
+          time: 1,
+        }),
+      ]),
+    );
+  });
 });

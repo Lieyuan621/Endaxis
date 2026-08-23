@@ -321,7 +321,7 @@ const sheet: OperatorSheet = {
                 'electrification',
                 'solidification',
                 'corrosion',
-                'originiumCrystals',
+                'endministrator-originium-crystals',
               ],
               target: 'enemy',
               triggerScope: 'global',
