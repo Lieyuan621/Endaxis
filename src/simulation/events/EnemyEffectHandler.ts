@@ -1503,6 +1503,8 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         time,
         ctx,
         event.scalingEnemySnapshot ?? ctx.state.enemy.statusSnapshot(),
+        undefined,
+        actionId,
       );
     }
 

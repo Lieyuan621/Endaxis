@@ -158,7 +158,7 @@ const BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i => {
         additive: [
           {
             key: 'zhuangfangyi-battle-bonus-multiplier-tracker',
-            target: 'self',
+            target: 'action',
             coefficient: [3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 8, 9],
           },
         ],
@@ -199,7 +199,7 @@ const BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i => {
         additive: [
           {
             key: 'zhuangfangyi-battle-bonus-multiplier-tracker',
-            target: 'self',
+            target: 'action',
             coefficient: [3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 8, 9].map(i => 6 * i),
           },
         ],
@@ -246,7 +246,7 @@ const ENHANCED_BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i =>
         additive: [
           {
             key: 'zhuangfangyi-battle-bonus-multiplier-tracker',
-            target: 'self',
+            target: 'action',
             coefficient: [8, 9, 10, 11, 11, 12, 13, 14, 15, 16, 17, 18],
           },
         ],
@@ -286,7 +286,7 @@ const ENHANCED_BATTLE_HIT_GROUPS: HitGroup[] = [...Array(9).keys()].flatMap(i =>
         additive: [
           {
             key: 'zhuangfangyi-battle-bonus-multiplier-tracker',
-            target: 'self',
+            target: 'action',
             coefficient: [8, 9, 10, 11, 11, 12, 13, 14, 15, 16, 17, 18].map(i => 6 * i),
           },
         ],

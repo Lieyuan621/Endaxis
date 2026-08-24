@@ -132,6 +132,8 @@ export class HitHandler implements EventHandler<HitEvent> {
             e.time,
             ctx,
             ctx.state.enemy.statusSnapshot(),
+            undefined,
+            e.payload.actionId,
           )
         : hit.multiplier != null
           ? {

@@ -330,8 +330,8 @@ export interface AttributeScaling {
 export interface StackScaling {
   /** The id of the effect whose current stack count is used. */
   key: string;
-  /** Whether to read stacks from the enemy or the operator (self). Defaults to 'self'. */
-  target?: 'enemy' | 'self';
+  /** Whether to read stacks from the enemy, operator, or current action snapshot. Defaults to 'self'. */
+  target?: 'enemy' | 'self' | 'action';
   /** Multiplied against the stack count to produce the additive contribution. */
   coefficient: Leveled<number>;
   sourceLabel?: string;
@@ -763,7 +763,7 @@ export interface ResolvedAttributeScaling {
 
 export interface ResolvedStackScaling {
   key: string;
-  target?: 'enemy' | 'self';
+  target?: 'enemy' | 'self' | 'action';
   coefficient: number;
   sourceLabel?: string;
 }

@@ -562,6 +562,116 @@ describe('optimizer damage golden baselines', () => {
     ).toBe(true);
   });
 
+  it('keeps Zhuang Fangyi consumed Electrification scaling on the owning action', () => {
+    const trackerId = 'zhuangfangyi-battle-bonus-multiplier-tracker';
+    const enhancedHits = resolveOperatorSheetHits(
+      zhuangFangyiSheet,
+      'enhancedBattleSkill',
+      11,
+    );
+    const generationHit = enhancedHits.find(
+      hit => hit.id === 'zhuang-fangyi-battle-sunderblades-generation-hit',
+    );
+    const finalHit = enhancedHits.find(
+      hit =>
+        hit.id === 'zhuang-fangyi-thunder-strike' &&
+        hit.effects?.some(
+          effect =>
+            effect.kind === 'consume' &&
+            effect.operatorStatus === 'zhuangfangyi-battle-bonus-multiplier-tracker',
+        ),
+    );
+    const trackerEffect = generationHit?.effects?.find(effect => effect.id === trackerId);
+    const consumeTrackerEffect = finalHit?.effects?.find(
+      effect => effect.kind === 'consume' && effect.operatorStatus === trackerId,
+    );
+    if (!finalHit || !trackerEffect || !consumeTrackerEffect) {
+      throw new Error('Missing Zhuang Fangyi enhanced battle tracker effects');
+    }
+
+    const result = runScenario(
+      [
+        createTrack('zhuang-fangyi', [
+          createAction('free_enhanced_battle', 'battleSkill', {
+            startTime: 0,
+            duration: 0.2,
+            hits: [
+              {
+                offset: 1,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [consumeTrackerEffect],
+              },
+            ],
+          }),
+          createAction('next_enhanced_battle', 'battleSkill', {
+            startTime: 0.3,
+            hits: [
+              {
+                offset: 0.2,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                effects: [trackerEffect],
+              },
+              {
+                ...finalHit,
+                offset: 1.2,
+                _condition: undefined,
+                effects: [],
+              },
+            ],
+          }),
+        ]),
+      ],
+      undefined,
+      {
+        initialEnemyState: {
+          debuffs: {
+            electrification: {
+              level: 3,
+              remainingDuration: 30,
+              sourceId: 'zhuang-fangyi',
+            },
+          },
+        },
+      },
+    );
+    const hit = result.simLog
+      .flatMap(entry =>
+        entry.type === 'DAMAGE_HIT' &&
+        entry.payload.actionId === 'next_enhanced_battle_inst'
+          ? [entry.payload.hitData]
+          : [],
+      )
+      .find(candidate => candidate._damageBreakdown);
+
+    expect(result.operatorLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'OPERATOR_EFFECT_EXPIRE',
+          id: trackerId,
+          consumed: true,
+          time: 1,
+        }),
+      ]),
+    );
+    expect(hit?._damageBreakdown?.multiplier).toBe(810);
+    expect(hit?._damageBreakdown?.multiplierDetail).toEqual({
+      base: 486,
+      sources: [
+        {
+          kind: 'stack',
+          value: 324,
+          key: trackerId,
+          stacks: 3,
+          coefficient: 108,
+        },
+      ],
+    });
+  });
+
   it('locks real Estella sheet battle-skill hit damage and damage type', () => {
     const result = runScenario([
       createTrack('alpha', [

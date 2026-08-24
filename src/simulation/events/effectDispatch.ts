@@ -717,6 +717,7 @@ export function applyResolvedScaling(
   ctx: SimulationContext,
   enemySnap?: EnemyStatusSnapshot,
   preConsumeOpStacks?: Map<string, number>,
+  actionId?: string,
 ): number {
   return resolveResolvedScalingValue(
     base,
@@ -726,6 +727,8 @@ export function applyResolvedScaling(
     ctx,
     enemySnap,
     preConsumeOpStacks,
+    undefined,
+    actionId,
   );
 }
 
@@ -737,6 +740,7 @@ export function applyResolvedScalingWithDetail(
   ctx: SimulationContext,
   enemySnap?: EnemyStatusSnapshot,
   preConsumeOpStacks?: Map<string, number>,
+  actionId?: string,
 ): { value: number; detail: SkillMultiplierDetail } {
   const sources: SkillMultiplierSourceDetail[] = [];
   const value = resolveResolvedScalingValue(
@@ -748,6 +752,7 @@ export function applyResolvedScalingWithDetail(
     enemySnap,
     preConsumeOpStacks,
     sources,
+    actionId,
   );
   return { value, detail: { base, sources } };
 }
@@ -761,6 +766,7 @@ function resolveResolvedScalingValue(
   enemySnap?: EnemyStatusSnapshot,
   preConsumeOpStacks?: Map<string, number>,
   sources?: SkillMultiplierSourceDetail[],
+  actionId?: string,
 ): number {
   return applyScalingLevel(base, scaling, false);
 
@@ -817,8 +823,10 @@ function resolveResolvedScalingValue(
         const stackCount =
           term.target === 'enemy'
             ? ((enemySnap ? getEnemyStatus(term.key, enemySnap, time).stacks : 0) ?? 0)
-            : (preConsumeOpStacks?.get(term.key) ??
-              ctx.getOperatorEffects(sourceTrackId).getStacks(term.key, time));
+            : term.target === 'action'
+              ? (actionId ? ctx.getAction(actionId)?.consumedStacks?.[term.key] : 0) ?? 0
+              : (preConsumeOpStacks?.get(term.key) ??
+                ctx.getOperatorEffects(sourceTrackId).getStacks(term.key, time));
         additiveSum += term.coefficient * stackCount;
         sources?.push({
           kind: 'stack',
@@ -1120,7 +1128,16 @@ export function scheduleDotTicks(
   // Resolve multiplier with scaling
   const multiplierResolution: { value: number; detail?: SkillMultiplierDetail } =
     r.multiplierScaling
-      ? applyResolvedScalingWithDetail(r.multiplier, r.multiplierScaling, sourceTrackId, time, ctx)
+      ? applyResolvedScalingWithDetail(
+          r.multiplier,
+          r.multiplierScaling,
+          sourceTrackId,
+          time,
+          ctx,
+          undefined,
+          undefined,
+          sourceActionId,
+        )
       : { value: r.multiplier };
 
   // Compute tick count and per-tick multiplier
@@ -1329,6 +1346,7 @@ export function dispatchSingleActorEffect(
         ctx,
         enemySnap,
         preConsumeOpStacks,
+        actionId,
       );
     const targets = resolveTargets(resolved);
     const oneTimeDuration = resolveEffectLifecycle(resolved).duration;
@@ -1383,6 +1401,7 @@ export function dispatchSingleActorEffect(
           ctx,
           enemySnap,
           preConsumeOpStacks,
+          actionId,
         )
       : { value: r.multiplier };
     let finalMultiplier = multiplierResolution.value;
@@ -1417,6 +1436,7 @@ export function dispatchSingleActorEffect(
           ctx,
           enemySnap,
           preConsumeOpStacks,
+          actionId,
         )
       : (r.hit?.stagger ?? 0);
     const parentAction = actionId ? ctx.getAction(actionId) : undefined;
@@ -1484,6 +1504,7 @@ export function dispatchSingleActorEffect(
           ctx,
           enemySnap,
           preConsumeOpStacks,
+          actionId,
         )
       : spEff.value;
     if (gain > 0) {
@@ -1521,6 +1542,7 @@ export function dispatchSingleActorEffect(
           ctx,
           enemySnap,
           preConsumeOpStacks,
+          actionId,
         )
       : ue.value;
     if (gain > 0) {
@@ -1572,6 +1594,14 @@ export function dispatchSingleActorEffect(
           resolveConsumeTargetStacks(resolved.condition, sourceTrackId, time, ctx))
         : baseStacks;
 
+    if (resolved.stacks === 'fromConsume' && actionId) {
+      const sourceAction = ctx.getAction(actionId);
+      if (sourceAction) {
+        if (!sourceAction.consumedStacks) sourceAction.consumedStacks = {};
+        sourceAction.consumedStacks[effectId] = stacks;
+      }
+    }
+
     let value = typeof resolved.value === 'number' ? resolved.value : 0;
     if (resolved.stat && resolved.scaling)
       value = applyResolvedScaling(
@@ -1582,6 +1612,7 @@ export function dispatchSingleActorEffect(
         ctx,
         enemySnap,
         preConsumeOpStacks,
+        actionId,
       );
 
     for (const targetId of targets) {
