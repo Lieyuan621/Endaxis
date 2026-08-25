@@ -413,9 +413,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     return normalizeEnemyConfig(DEFAULT_SYSTEM_CONSTANTS);
   }
 
-  const systemConstants = ref<EnemyConfigState>(createDefaultSystemConstantsState());
-  const customEnemyParams = ref<EnemyConfigState>(
-    normalizeEnemyConfig({
+  function createDefaultCustomEnemyParams() {
+    return normalizeEnemyConfig({
       maxStagger: 100,
       staggerNodeCount: 0,
       staggerNodeDuration: 2,
@@ -423,8 +422,11 @@ export const useTimelineStore = defineStore('timeline', () => {
       executionRecovery: 25,
       enemyHp: 100000,
       superArmor: 0,
-    }),
-  );
+    });
+  }
+
+  const systemConstants = ref<EnemyConfigState>(createDefaultSystemConstantsState());
+  const customEnemyParams = ref<EnemyConfigState>(createDefaultCustomEnemyParams());
 
   watch(
     systemConstants,
@@ -1727,6 +1729,72 @@ export const useTimelineStore = defineStore('timeline', () => {
     customInitialGauges.value = resolveCustomInitialGaugesFromSnapshot(incoming);
     recomputeAllTrackOperatorStatuses();
     clearSelection();
+  }
+
+  function createResetScenarioSnapshot(preserveLoadout: boolean): ScenarioSnapshot {
+    const currentSnapshot = preserveLoadout ? _createSnapshot() : null;
+    const resetTracks = preserveLoadout
+      ? normalizeTracks(currentSnapshot?.tracks).map(track => ({
+          ...track,
+          actions: [],
+          initialGauge: 0,
+          maxGaugeOverride: null,
+        }))
+      : createDefaultTracks();
+
+    return {
+      tracks: resetTracks,
+      connections: [],
+      characterOverrides: {},
+      weaponOverrides: {},
+      equipmentCategoryOverrides: {},
+      prepDuration: 5,
+      prepExpanded: true,
+      battleDuration: DEFAULT_BATTLE_DURATION,
+      trackRowHeightWeights: [],
+      initialGaugeMode: 'empty',
+      customInitialGauges: {},
+      systemConstants: createDefaultSystemConstantsState(),
+      activeEnemyId: 'custom',
+      activeEnemyLevel: 90,
+      customEnemyParams: createDefaultCustomEnemyParams(),
+      cycleBoundaries: [],
+      switchEvents: [],
+      comboCooldownEvents: [],
+      simulationEndline: null,
+      simulationStartline: null,
+      inheritedInitialEffects: [],
+      inheritedInitialEnemyState: null,
+      contingencyContractTags: [],
+      globalConfig: createEmptyGlobalConfig(),
+      operators: preserveLoadout ? cloneJsonData(currentSnapshot?.operators ?? []) : [],
+      weapons: preserveLoadout ? cloneJsonData(currentSnapshot?.weapons ?? []) : [],
+      gears: preserveLoadout ? cloneJsonData(currentSnapshot?.gears ?? []) : [],
+    };
+  }
+
+  function resetCurrentScenario({ preserveLoadout = false } = {}) {
+    const currentScenario = scenarioList.value.find(s => s.id === activeScenarioId.value);
+    if (!currentScenario) return;
+
+    const resetSnapshot = createResetScenarioSnapshot(preserveLoadout);
+    isSwitchingScenario.value = true;
+
+    try {
+      _loadSnapshot(resetSnapshot);
+      currentScenario.editorPrefs = { snapStep: FRAME_DURATION };
+      restoreScenarioEditorPrefs(currentScenario);
+      resetTimelineViewport();
+      historyStack.value = [];
+      historyIndex.value = -1;
+      commitState();
+    } finally {
+      void nextTick(() => {
+        setTimeout(() => {
+          isSwitchingScenario.value = false;
+        }, 0);
+      });
+    }
   }
 
   // ===================================================================================
@@ -6323,6 +6391,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     initAutoSave,
     loadFromBrowser,
     resetProject,
+    resetCurrentScenario,
     selectedConnectionId,
     selectConnection,
     selectAnomaly,

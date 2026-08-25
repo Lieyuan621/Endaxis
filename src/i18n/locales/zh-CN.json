@@ -267,7 +267,7 @@
       "languageTooltip": "切换语言",
       "loadTooltip": "导入 .json 项目文件或 .png 图片",
       "receiveTooltip": "粘贴数据码导入项目",
-      "resetTooltip": "清空所有内容"
+      "resetTooltip": "选择重置范围"
     },
     "shortcuts": {
       "dialogTitle": "快捷键一览",
@@ -398,9 +398,17 @@
     },
     "loading": "正在加载资源...",
     "reset": {
-      "confirm": "确定要清空当前所有进度吗？这将清空所有方案数据。",
-      "confirmButton": "确定清空",
-      "done": "项目已重置"
+      "title": "选择重置范围",
+      "currentKeepLoadout": "重置当前方案并保留配装",
+      "currentKeepLoadoutDescription": "清空当前方案的时间轴与战斗设置，保留干员、武器和装备。",
+      "current": "重置当前方案",
+      "currentDescription": "清空当前方案的全部内容，其他方案不受影响。",
+      "all": "重置全部方案",
+      "allDescription": "删除所有方案及配装数据，并恢复为初始项目。",
+      "confirmButton": "确认重置",
+      "currentKeepLoadoutDone": "当前方案已重置，配装已保留",
+      "currentDone": "当前方案已重置",
+      "done": "全部方案已重置"
     },
     "scenario": {
       "addTooltip": "新建方案",

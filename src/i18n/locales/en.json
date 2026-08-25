@@ -267,7 +267,7 @@
       "languageTooltip": "Language",
       "loadTooltip": "Import .json project file or .png image",
       "receiveTooltip": "Paste data code to import project",
-      "resetTooltip": "Clear all content"
+      "resetTooltip": "Choose reset scope"
     },
     "shortcuts": {
       "dialogTitle": "Keyboard Shortcuts",
@@ -398,9 +398,17 @@
     },
     "loading": "Loading resources...",
     "reset": {
-      "confirm": "Are you sure you want to clear all current progress? This will clear all plan data.",
-      "confirmButton": "Confirm Clear",
-      "done": "Project has been reset"
+      "title": "Choose Reset Scope",
+      "currentKeepLoadout": "Reset Current Project and Keep Loadout",
+      "currentKeepLoadoutDescription": "Clear the current timeline and combat settings while keeping operators, weapons, and gear.",
+      "current": "Reset Current Project",
+      "currentDescription": "Clear all content in the current project without affecting other projects.",
+      "all": "Reset All Projects",
+      "allDescription": "Delete all projects and loadout data, then restore the initial project.",
+      "confirmButton": "Confirm Reset",
+      "currentKeepLoadoutDone": "Current project reset; loadout preserved",
+      "currentDone": "Current project has been reset",
+      "done": "All projects have been reset"
     },
     "scenario": {
       "addTooltip": "New Project",

@@ -3,6 +3,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { nextTick } from 'vue';
 import { useTimelineStore } from './timelineStore';
 import { useOperatorStore } from './operatorStore';
+import { useWeaponStore } from './weaponStore';
+import { useGearStore } from './gearStore';
 import { setLocale } from '@/i18n';
 import { serializeProjectData } from '@/utils/timeSerialization';
 
@@ -491,6 +493,67 @@ describe('timeline skill library editing', () => {
 
     store.duplicateScenario(firstScenarioId);
     expect(store.snapStep).toBeCloseTo(0.1);
+  });
+
+  it('resets only the active scenario', () => {
+    const store = useTimelineStore();
+    const firstScenarioId = store.activeScenarioId;
+    store.tracks[0]!.id = 'zhuang-fangyi';
+    store.tracks[0]!.actions = [
+      { id: 'first-skill', instanceId: 'first-action', startTime: 1 } as any,
+    ];
+    store.commitState();
+
+    store.addScenario();
+    store.tracks[0]!.id = 'alesh';
+    store.tracks[0]!.actions = [
+      { id: 'second-skill', instanceId: 'second-action', startTime: 2 } as any,
+    ];
+    store.resetCurrentScenario();
+
+    expect(store.scenarioList).toHaveLength(2);
+    expect(store.tracks.every(track => track.id === null && track.actions.length === 0)).toBe(true);
+
+    store.switchScenario(firstScenarioId);
+    expect(store.tracks[0]!.id).toBe('zhuang-fangyi');
+    expect(store.tracks[0]!.actions.map(action => action.instanceId)).toEqual(['first-action']);
+  });
+
+  it('can reset the active scenario while preserving its operator loadout', async () => {
+    const store = useTimelineStore();
+    const operatorStore = useOperatorStore();
+    const weaponStore = useWeaponStore();
+    const gearStore = useGearStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'zhuang-fangyi');
+    store.updateTrackWeapon('zhuang-fangyi', 'forgeborn-scathe');
+    store.updateTrackEquipment('zhuang-fangyi', 'armor', 'xiranflow-light-armor');
+
+    const trackBefore = store.tracks[0]!;
+    const operatorInstanceId = trackBefore.operatorInstanceId;
+    const weaponInstanceId = trackBefore.weaponInstanceId;
+    const armorInstanceId = trackBefore.equipArmorInstanceId;
+    trackBefore.actions = [
+      { id: 'placed-skill', instanceId: 'placed-action', startTime: 6 } as any,
+    ];
+    store.connections.push({ id: 'placed-connection' } as any);
+    store.setBattleDuration(240);
+    store.resetCurrentScenario({ preserveLoadout: true });
+
+    const resetTrack = store.tracks[0]!;
+    expect(resetTrack.id).toBe('zhuang-fangyi');
+    expect(resetTrack.operatorInstanceId).toBe(operatorInstanceId);
+    expect(resetTrack.weaponId).toBe('forgeborn-scathe');
+    expect(resetTrack.weaponInstanceId).toBe(weaponInstanceId);
+    expect(resetTrack.equipArmorId).toBe('xiranflow-light-armor');
+    expect(resetTrack.equipArmorInstanceId).toBe(armorInstanceId);
+    expect(resetTrack.actions).toHaveLength(0);
+    expect(store.connections).toHaveLength(0);
+    expect(store.battleDuration).toBe(120);
+    expect(operatorStore.operators.map(item => item.id)).toContain(operatorInstanceId);
+    expect(weaponStore.weapons.map(item => item.id)).toContain(weaponInstanceId);
+    expect(gearStore.gears.map(item => item.id)).toContain(armorInstanceId);
   });
 
   it('does not replace unchanged armory data during timeline undo and redo', () => {

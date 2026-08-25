@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import {
   ElAlert,
   ElDialog,
@@ -149,6 +149,7 @@ const importVisible = ref(false);
 const shareCode = ref('');
 const importing = ref(false);
 const moreMenuOpen = ref(false);
+const openTimelineResetDialog = inject('openTimelineResetDialog', () => {});
 const showAllAttackSegments = ref(mobileTimelinePrefs.showAllAttackSegments);
 const showAnomalies = ref(mobileTimelinePrefs.showAnomalies);
 const showDurationBars = ref(mobileTimelinePrefs.showDurationBars);
@@ -514,21 +515,11 @@ function openImportDialog() {
   importVisible.value = true;
 }
 
-function handleReset() {
+function openResetDialog() {
   moreMenuOpen.value = false;
-  ElMessageBox.confirm(t('timeline.reset.confirm'), t('common.warning'), {
-    confirmButtonText: t('timeline.reset.confirmButton'),
-    cancelButtonText: t('common.cancel'),
-    type: 'warning',
-    lockScroll: false,
-  })
-    .then(() => {
-      cancelActionPointerSession();
-      cancelPlacement();
-      store.resetProject();
-      ElMessage.success(t('timeline.reset.done'));
-    })
-    .catch(() => {});
+  cancelActionPointerSession();
+  cancelPlacement();
+  openTimelineResetDialog({ lockScroll: false });
 }
 
 function getTrackAvatar(track) {
@@ -2748,7 +2739,7 @@ async function doImport() {
                   <button
                     type="button"
                     class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-danger-dark mobile-project-action"
-                    @click="handleReset"
+                    @click="openResetDialog"
                   >
                     <svg
                       viewBox="0 0 24 24"

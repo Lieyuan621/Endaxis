@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { onMounted, onUnmounted, ref, nextTick, computed, watch } from 'vue';
+import { onMounted, onUnmounted, ref, nextTick, computed, inject, watch } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import { useShareProject } from '@/composables/useShareProject';
 import { useAppearance } from '@/composables/useAppearance';
@@ -513,6 +513,7 @@ let dragCounter = 0;
 const displayMenuOpen = ref(false);
 const moreMenuOpen = ref(false);
 const shortcutsDialogVisible = ref(false);
+const openTimelineResetDialog = inject('openTimelineResetDialog', () => {});
 
 watch(displayMenuOpen, open => {
   if (open) moreMenuOpen.value = false;
@@ -535,7 +536,7 @@ function runMoreProjectAction(action) {
   closeMoreMenu();
   if (action === 'load') triggerImport();
   else if (action === 'receive') openImportShareDialog();
-  else if (action === 'reset') handleReset();
+  else if (action === 'reset') openTimelineResetDialog();
 }
 
 function selectLocaleFromMore(next) {
@@ -981,20 +982,6 @@ async function processExport() {
     store.setTimelineShift(originalShift);
     loading.close();
   }
-}
-
-// === 重置与快捷键 ===
-function handleReset() {
-  ElMessageBox.confirm(t('timeline.reset.confirm'), t('common.warning'), {
-    confirmButtonText: t('timeline.reset.confirmButton'),
-    cancelButtonText: t('common.cancel'),
-    type: 'warning',
-  })
-    .then(() => {
-      store.resetProject();
-      ElMessage.success(t('timeline.reset.done'));
-    })
-    .catch(() => {});
 }
 
 // === 接收数据码逻辑 ===
