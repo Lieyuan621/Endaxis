@@ -219,13 +219,22 @@
       "smallImageExported": "Small image exported: {filename}"
     },
     "header": {
+      "display": "Display",
+      "displayTooltip": "Timeline display and guide line",
       "more": "More",
-      "moreTooltip": "View, project, and preferences",
-      "sectionView": "View",
+      "moreTooltip": "Editing tools, project, and preferences",
+      "sectionEditTools": "Editing tools",
       "sectionProject": "Project",
       "sectionPrefs": "Preferences",
       "sectionViewLayers": "Layers",
+      "sectionViewBehavior": "View behavior",
       "sectionViewOperators": "Operators",
+      "cursorGuide": "Guide line",
+      "buffLayout": "Buff layout",
+      "editTools": {
+        "boxSelect": "Box select",
+        "connection": "Connection editing"
+      },
       "sectionDurationBarColor": "Duration bar tint",
       "coloredDurationBarsEnable": "Enable tinting",
       "durationBarSaturation": "Saturation",
@@ -535,13 +544,12 @@
       "selectedCount": "{count} actions selected"
     },
     "toolbar": {
-      "boxSelect": "Box select (Ctrl+B)",
       "buffLayoutCompact": "Compact",
       "buffLayoutLoose": "Loose",
-      "buffLayoutMode": "Buff layout: {mode}",
-      "connectionTool": "Connection tool (Alt+L)",
-      "cursorGuide": "Guide line (Ctrl+G)",
       "initialGauge": "Initial gauge: left-click cycles 0 / full / custom (per operator, remembered); right-click sets all operators",
+      "initialGaugeEmptyShort": "Empty",
+      "initialGaugeFullShort": "Full",
+      "initialGaugeCustomShort": "Custom",
       "initialGaugeAppliedCustom": "Initial gauge: custom (per operator)",
       "initialGaugeAppliedEmpty": "Initial gauge: 0",
       "initialGaugeAppliedFull": "Initial gauge: full",

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import displayMenuSource from '../components/TimelineDisplayMenu.vue?raw';
 import source from './TimelineEditor.vue?raw';
 
 describe('TimelineEditor right rail icons', () => {
@@ -33,5 +34,21 @@ describe('TimelineEditor right rail icons', () => {
     expect(source).toContain('.activity-bar__button.is-active:hover .activity-bar__image-icon');
     expect(source).toContain('translateY(-2px)');
     expect(source).toContain('drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2))');
+  });
+
+  test('keeps display settings separate from the more menu', () => {
+    expect(source).toContain('v-model:visible="displayMenuOpen"');
+    expect(source).toContain('<TimelineDisplayMenu />');
+    expect(source).not.toContain("t('timeline.header.sectionView')");
+  });
+
+  test('promotes the guide line to the top of the display menu', () => {
+    const guideIndex = displayMenuSource.indexOf('class="timeline-display-guide"');
+    const scrollIndex = displayMenuSource.indexOf('class="timeline-display-scroll"');
+
+    expect(guideIndex).toBeGreaterThan(-1);
+    expect(guideIndex).toBeLessThan(scrollIndex);
+    expect(displayMenuSource).toContain('Ctrl + G');
+    expect(displayMenuSource).toContain(':aria-pressed="store.showCursorGuide"');
   });
 });

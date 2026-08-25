@@ -590,7 +590,12 @@ export const useTimelineStore = defineStore('timeline', () => {
   }
 
   const scenarioList = ref<ScenarioListEntry[]>([
-    { id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null },
+    {
+      id: 'default_sc',
+      name: tr('timeline.scenario.defaultName', { index: 1 }),
+      data: null,
+      editorPrefs: { snapStep: FRAME_DURATION },
+    },
   ]);
 
   watchThrottled(
@@ -1052,7 +1057,6 @@ export const useTimelineStore = defineStore('timeline', () => {
   type TimelineToolbarPrefs = {
     showCursorGuide?: boolean;
     isBoxSelectMode?: boolean;
-    snapStep?: number;
     enableConnectionTool?: boolean;
     buffLayoutMode?: 'compact' | 'loose';
   };
@@ -1068,7 +1072,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function normalizeToolbarSnapStep(value: unknown): number {
+  function normalizeScenarioSnapStep(value: unknown): number {
     const parsed = Number(value);
     if (parsed === COARSE_SNAP_STEP || parsed === FRAME_DURATION) return parsed;
     return FRAME_DURATION;
@@ -1218,7 +1222,29 @@ export const useTimelineStore = defineStore('timeline', () => {
   const timelineViewLayers = ref(loadTimelineViewLayers());
   const durationBarColor = ref(loadDurationBarColor());
   const cursorPosition = ref({ x: 0, y: 0 });
-  const snapStep = ref(normalizeToolbarSnapStep(toolbarPrefs.snapStep));
+  const snapStep = ref(FRAME_DURATION);
+
+  function restoreScenarioEditorPrefs(scenario: ScenarioListEntry | null | undefined) {
+    const normalizedSnapStep = normalizeScenarioSnapStep(scenario?.editorPrefs?.snapStep);
+    snapStep.value = normalizedSnapStep;
+    if (scenario) {
+      scenario.editorPrefs = {
+        ...scenario.editorPrefs,
+        snapStep: normalizedSnapStep,
+      };
+    }
+  }
+
+  function setScenarioSnapStep(value: unknown) {
+    const normalizedSnapStep = normalizeScenarioSnapStep(value);
+    snapStep.value = normalizedSnapStep;
+    const scenario = scenarioList.value.find(item => item.id === activeScenarioId.value);
+    if (!scenario) return;
+    scenario.editorPrefs = {
+      ...scenario.editorPrefs,
+      snapStep: normalizedSnapStep,
+    };
+  }
 
   const draggingSkillData = ref<Record<string, unknown> | null>(null);
   const isLibraryPlaceMode = ref(false);
@@ -1738,7 +1764,6 @@ export const useTimelineStore = defineStore('timeline', () => {
       const payload: TimelineToolbarPrefs = {
         showCursorGuide: showCursorGuide.value,
         isBoxSelectMode: isBoxSelectMode.value,
-        snapStep: snapStep.value,
         enableConnectionTool: enableConnectionTool.value,
         buffLayoutMode: buffLayoutMode.value,
       };
@@ -1748,7 +1773,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  watch([showCursorGuide, isBoxSelectMode, snapStep, enableConnectionTool, buffLayoutMode], () => {
+  watch([showCursorGuide, isBoxSelectMode, enableConnectionTool, buffLayoutMode], () => {
     persistTimelineToolbarPrefs();
   });
 
@@ -1772,10 +1797,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
 
     buffLayoutMode.value = mode;
-  }
-
-  function toggleBuffLayoutMode() {
-    setBuffLayoutMode(buffLayoutMode.value === 'compact' ? 'loose' : 'compact');
   }
 
   function createConnection(
@@ -1819,6 +1840,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       }
 
       activeScenarioId.value = targetId;
+      restoreScenarioEditorPrefs(targetScenario);
       resetTimelineViewport();
       historyStack.value = [];
       historyIndex.value = -1;
@@ -1863,8 +1885,15 @@ export const useTimelineStore = defineStore('timeline', () => {
       inheritedInitialEnemyState: null,
     };
 
-    scenarioList.value.push({ id: newId, name: newName, data: emptySnapshot });
+    const newScenario: ScenarioListEntry = {
+      id: newId,
+      name: newName,
+      data: emptySnapshot,
+      editorPrefs: { snapStep: FRAME_DURATION },
+    };
+    scenarioList.value.push(newScenario);
     activeScenarioId.value = newId;
+    restoreScenarioEditorPrefs(newScenario);
     _loadSnapshot(emptySnapshot);
     resetTimelineViewport();
 
@@ -1886,8 +1915,17 @@ export const useTimelineStore = defineStore('timeline', () => {
     const newName = `${source.name} (${tr('timeline.scenario.copySuffix')})`;
     const newData = JSON.parse(JSON.stringify(source.data || _createSnapshot()));
 
-    scenarioList.value.push({ id: newId, name: newName, data: newData });
+    const newScenario: ScenarioListEntry = {
+      id: newId,
+      name: newName,
+      data: newData,
+      editorPrefs: {
+        snapStep: normalizeScenarioSnapStep(source.editorPrefs?.snapStep),
+      },
+    };
+    scenarioList.value.push(newScenario);
     activeScenarioId.value = newId;
+    restoreScenarioEditorPrefs(newScenario);
     _loadSnapshot(newData);
 
     historyStack.value = [];
@@ -2204,13 +2242,18 @@ export const useTimelineStore = defineStore('timeline', () => {
     const sourceName = currentScenario.name || tr('timeline.scenario.unnamed');
     const newName = `${sourceName} 继承 ${formatTimeLabel(boundaryTime)}`;
 
-    scenarioList.value.push({
+    const inheritedScenario: ScenarioListEntry = {
       id: newId,
       name: newName,
       data: newData,
-    });
+      editorPrefs: {
+        snapStep: normalizeScenarioSnapStep(currentScenario.editorPrefs?.snapStep),
+      },
+    };
+    scenarioList.value.push(inheritedScenario);
 
     activeScenarioId.value = newId;
+    restoreScenarioEditorPrefs(inheritedScenario);
     _loadSnapshot(newData);
     resetTimelineViewport();
 
@@ -4233,9 +4276,9 @@ export const useTimelineStore = defineStore('timeline', () => {
   }
   function toggleSnapStep() {
     if (snapStep.value > FRAME_DURATION) {
-      snapStep.value = FRAME_DURATION;
+      setScenarioSnapStep(FRAME_DURATION);
     } else {
-      snapStep.value = COARSE_SNAP_STEP;
+      setScenarioSnapStep(COARSE_SNAP_STEP);
     }
   }
 
@@ -6136,6 +6179,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     initializeOptimizerGameData,
     dropLegacyTimedStatusData,
     normalizePrepConfig,
+    restoreScenarioEditorPrefs,
   });
   const {
     initAutoSave,
@@ -6297,7 +6341,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     validConnectionTargetIds,
     createConnection,
     toggleConnectionTool,
-    toggleBuffLayoutMode,
+    setBuffLayoutMode,
     cycleBoundaries,
     selectedCycleBoundaryId,
     addCycleBoundary,

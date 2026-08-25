@@ -219,13 +219,22 @@
       "smallImageExported": "小图已导出：{filename}"
     },
     "header": {
+      "display": "显示",
+      "displayTooltip": "时间轴显示与辅助线",
       "more": "更多",
-      "moreTooltip": "视图、项目与偏好",
-      "sectionView": "视图",
+      "moreTooltip": "编辑工具、项目与偏好",
+      "sectionEditTools": "编辑工具",
       "sectionProject": "项目",
       "sectionPrefs": "偏好",
       "sectionViewLayers": "显示内容",
+      "sectionViewBehavior": "视图行为",
       "sectionViewOperators": "干员",
+      "cursorGuide": "辅助线",
+      "buffLayout": "Buff 排布",
+      "editTools": {
+        "boxSelect": "框选",
+        "connection": "连线编辑"
+      },
       "sectionDurationBarColor": "持续时间染色",
       "coloredDurationBarsEnable": "启用染色",
       "durationBarSaturation": "饱和度",
@@ -535,13 +544,12 @@
       "selectedCount": "选中了 {count} 个动作"
     },
     "toolbar": {
-      "boxSelect": "框选 (Ctrl+B)",
       "buffLayoutCompact": "紧凑",
       "buffLayoutLoose": "松散",
-      "buffLayoutMode": "Buff 排布：{mode}",
-      "connectionTool": "连线工具 (Alt+L)",
-      "cursorGuide": "辅助线 (Ctrl+G)",
       "initialGauge": "初始充能：左键切换 0 / 充满 / 自定义（按干员记忆）；右键统一改所有干员充能",
+      "initialGaugeEmptyShort": "空",
+      "initialGaugeFullShort": "满",
+      "initialGaugeCustomShort": "自定义",
       "initialGaugeAppliedCustom": "初始充能：自定义（按干员）",
       "initialGaugeAppliedEmpty": "初始充能：0",
       "initialGaugeAppliedFull": "初始充能：充满",

@@ -472,6 +472,27 @@ describe('timeline skill library editing', () => {
     }
   });
 
+  it('stores snap precision per scenario and defaults new scenarios to one frame', () => {
+    const store = useTimelineStore();
+    const firstScenarioId = store.activeScenarioId;
+    const canUndoBefore = store.canUndo;
+
+    expect(store.snapStep).toBeCloseTo(1 / 60);
+    store.toggleSnapStep();
+    expect(store.snapStep).toBeCloseTo(0.1);
+    expect(store.scenarioList[0]?.editorPrefs?.snapStep).toBeCloseTo(0.1);
+    expect(store.canUndo).toBe(canUndoBefore);
+
+    store.addScenario();
+    expect(store.snapStep).toBeCloseTo(1 / 60);
+
+    store.switchScenario(firstScenarioId);
+    expect(store.snapStep).toBeCloseTo(0.1);
+
+    store.duplicateScenario(firstScenarioId);
+    expect(store.snapStep).toBeCloseTo(0.1);
+  });
+
   it('does not replace unchanged armory data during timeline undo and redo', () => {
     const store = useTimelineStore();
     const operatorStore = useOperatorStore();

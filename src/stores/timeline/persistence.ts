@@ -85,6 +85,7 @@ interface PersistenceDeps {
   initializeOptimizerGameData: () => void;
   dropLegacyTimedStatusData: (snapshot: any) => any;
   normalizePrepConfig: (snapshot: any) => { snapshot: any; migrated: boolean };
+  restoreScenarioEditorPrefs: (scenario: ScenarioListEntry | null | undefined) => void;
 }
 
 // ─── Composable ──────────────────────────────────────────────────────────────
@@ -135,6 +136,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     initializeOptimizerGameData,
     dropLegacyTimedStatusData,
     normalizePrepConfig,
+    restoreScenarioEditorPrefs,
   } = deps;
 
   const STORAGE_KEY = 'endaxis_autosave';
@@ -325,6 +327,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         activeScenarioId.value = data.activeScenarioId || scenarioList.value[0]!.id;
 
         const currentSc = scenarioList.value.find(s => s.id === activeScenarioId.value);
+        restoreScenarioEditorPrefs(currentSc);
         if (currentSc && currentSc.data) {
           _loadSnapshot(currentSc.data);
         } else {
@@ -393,9 +396,15 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     activeEnemyLevel.value = 90;
     // Reset scenarios to the default single-scenario state.
     scenarioList.value = [
-      { id: 'default_sc', name: tr('timeline.scenario.defaultName', { index: 1 }), data: null },
+      {
+        id: 'default_sc',
+        name: tr('timeline.scenario.defaultName', { index: 1 }),
+        data: null,
+        editorPrefs: {},
+      },
     ];
     activeScenarioId.value = 'default_sc';
+    restoreScenarioEditorPrefs(scenarioList.value[0]);
 
     recomputeAllTrackOperatorStatuses();
     clearSelection();
@@ -561,6 +570,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         activeScenarioId.value = validId;
 
         const currentSc = scenarioList.value.find(s => s.id === activeScenarioId.value);
+        restoreScenarioEditorPrefs(currentSc);
         if (currentSc && currentSc.data) {
           _loadSnapshot(currentSc.data);
         } else {

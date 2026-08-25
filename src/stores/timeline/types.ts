@@ -198,6 +198,10 @@ export interface ScenarioListEntry {
   id: string;
   name: string;
   data: ScenarioData | null;
+  /** Editing preferences that follow this scenario without entering combat undo history. */
+  editorPrefs?: {
+    snapStep?: number;
+  };
 }
 
 /** Runtime enemy/system configuration (systemConstants + customEnemyParams). */

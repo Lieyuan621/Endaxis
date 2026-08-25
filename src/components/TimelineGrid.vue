@@ -533,12 +533,25 @@ const trackOperatorFormNames = computed(() => {
 
 const isGameTimeCollapsed = ref(true);
 const showGameTime = computed(() => !isGameTimeCollapsed.value || store.isCapturing);
-// Two tool-button rows + zoom need more header height than the old single row.
-const gridRowHeight = computed(() => (showGameTime.value ? '88px' : '76px'));
+const gridRowHeight = computed(() => (showGameTime.value ? '72px' : '60px'));
 
 const isUnifiedGaugeEditorOpen = ref(false);
 const unifiedGaugeDraft = ref('');
 const unifiedGaugeInputRef = ref(null);
+
+const initialGaugeDisplayValue = computed(() => {
+  if (store.initialGaugeMode === 'empty') {
+    return t('timelineGrid.toolbar.initialGaugeEmptyShort');
+  }
+  if (store.initialGaugeMode === 'full') {
+    return t('timelineGrid.toolbar.initialGaugeFullShort');
+  }
+  const values = (store.tracks || [])
+    .flatMap(track => (track?.id ? [Number(store.customInitialGauges?.[track.id])] : []))
+    .filter(Number.isFinite);
+  if (values.length && values.every(value => value === values[0])) return String(values[0]);
+  return t('timelineGrid.toolbar.initialGaugeCustomShort');
+});
 
 function defaultUnifiedGaugeDraftValue() {
   const gauges = store.customInitialGauges || {};
@@ -2697,6 +2710,7 @@ defineExpose({
                 <path d="M19 10h2v4h-2" />
                 <path d="M7 10v4M11 10v4M15 10v4" stroke-width="1.75" />
               </svg>
+              <span class="gauge-tool-value">{{ initialGaugeDisplayValue }}</span>
             </button>
             <div
               v-if="isUnifiedGaugeEditorOpen"
@@ -2719,114 +2733,11 @@ defineExpose({
           </div>
 
           <button
-            class="mini-tool-btn"
-            :class="{ 'is-active': store.showCursorGuide }"
-            @click="store.toggleCursorGuide"
-            :title="t('timelineGrid.toolbar.cursorGuide')"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="12"
-              height="12"
-              stroke="currentColor"
-              stroke-width="2.5"
-              fill="none"
-            >
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="6" x2="12" y2="18"></line>
-              <line x1="6" y1="12" x2="18" y2="12"></line>
-            </svg>
-          </button>
-
-          <button
-            class="mini-tool-btn"
-            :class="{ 'is-active': store.isBoxSelectMode }"
-            @click="store.toggleBoxSelectMode"
-            :title="t('timelineGrid.toolbar.boxSelect')"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="12"
-              height="12"
-              stroke="currentColor"
-              stroke-width="2.5"
-              fill="none"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 4" />
-              <path d="M8 12h8" stroke-width="1.5" />
-              <path d="M12 8v8" stroke-width="1.5" />
-            </svg>
-          </button>
-
-          <button
-            class="mini-tool-btn"
-            :class="{ 'is-active': store.snapStep < 0.1 }"
+            class="mini-tool-btn snap-tool-btn"
             @click="store.toggleSnapStep"
             :title="t('timelineGrid.toolbar.snapPrecision')"
           >
             <span class="btn-text">{{ store.snapStep < 0.05 ? '1f' : '0.1s' }}</span>
-          </button>
-
-          <button
-            class="mini-tool-btn"
-            :class="{ 'is-active': connectionHandler.toolEnabled.value }"
-            @click="store.toggleConnectionTool"
-            :title="t('timelineGrid.toolbar.connectionTool')"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              stroke="currentColor"
-              stroke-width="2"
-              fill="none"
-            >
-              <path d="M5 4h14c3 0 3 8 0 8h-14c-3 0-3 8 0 8h14" />
-              <circle cx="5" cy="4" r="2" fill="currentColor" />
-              <circle cx="19" cy="20" r="2" fill="currentColor" />
-            </svg>
-          </button>
-
-          <button
-            class="mini-tool-btn"
-            :class="{ 'is-active': store.buffLayoutMode === 'loose' }"
-            @click="store.toggleBuffLayoutMode"
-            :title="
-              t('timelineGrid.toolbar.buffLayoutMode', {
-                mode: t(
-                  store.buffLayoutMode === 'loose'
-                    ? 'timelineGrid.toolbar.buffLayoutLoose'
-                    : 'timelineGrid.toolbar.buffLayoutCompact',
-                ),
-              })
-            "
-          >
-            <svg
-              v-if="store.buffLayoutMode === 'loose'"
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              stroke="currentColor"
-              stroke-width="2"
-              fill="none"
-            >
-              <line x1="4" y1="5" x2="20" y2="5" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="19" x2="20" y2="19" />
-            </svg>
-            <svg
-              v-else
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              stroke="currentColor"
-              stroke-width="2"
-              fill="none"
-            >
-              <line x1="4" y1="8" x2="20" y2="8" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="16" x2="20" y2="16" />
-            </svg>
           </button>
         </div>
 
@@ -3429,7 +3340,7 @@ defineExpose({
         </div>
 
         <div
-          v-if="store.showCursorGuide && !store.isBoxSelectMode"
+          v-if="store.showCursorGuide && !isBoxSelecting"
           class="cursor-guide"
           :style="{ transform: `translateX(${store.cursorPosTimeline.x}px)` }"
           v-show="isCursorVisible"
@@ -3961,6 +3872,7 @@ defineExpose({
 .initial-gauge-tool {
   position: relative;
   min-width: 0;
+  grid-column: span 2;
 }
 
 .initial-gauge-tool .mini-tool-btn {
@@ -4010,6 +3922,23 @@ defineExpose({
 .gauge-tool-icon {
   display: block;
   flex-shrink: 0;
+}
+
+.gauge-tool-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.initial-gauge-tool .mini-tool-btn {
+  gap: 5px;
+}
+
+.snap-tool-btn .btn-text {
+  color: var(--ea-gold);
 }
 
 .btn-text {
