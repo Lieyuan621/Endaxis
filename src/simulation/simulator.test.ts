@@ -4779,4 +4779,50 @@ describe('Yvonne potential 5 ultimate buffs', () => {
       ]),
     );
   });
+
+  it('grants Alesh talent energy when Endministrator applies Originium Crystals', () => {
+    const operator = createOperatorInstance('op_alesh', 'alesh');
+    operator.talentStates = { '0': 1 };
+    const tracks = [
+      createTrack('alesh', []),
+      createTrack('endministrator', [
+        createAction('apply_originium_crystals', 'comboSkill', {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  kind: 'status',
+                  id: 'endministrator-originium-crystals',
+                  target: 'enemy',
+                  duration: 10,
+                } as Effect,
+              ],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const team = createTeam(operator.id);
+    const triggerEffects = collectRuntimeTriggers(team, [operator], [], [], tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+
+    expect(result.simLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ULT_ENERGY_CHANGE',
+          payload: expect.objectContaining({
+            actorId: 'alesh',
+            change: 3,
+            gauge: 3,
+          }),
+        }),
+      ]),
+    );
+  });
 });

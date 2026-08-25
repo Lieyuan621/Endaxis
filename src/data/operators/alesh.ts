@@ -25,7 +25,7 @@ const sheet: OperatorSheet = {
         {
           trigger: {
             kind: 'onStatusApplied',
-            status: 'solidification',
+            status: ['solidification', 'endministrator-originium-crystals'],
             target: 'enemy',
             triggerScope: 'global',
           },
