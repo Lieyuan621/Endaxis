@@ -550,11 +550,6 @@
   padding: 7px 8px;
 }
 
-.header-more-tool-row.is-active {
-  background: color-mix(in srgb, var(--ea-gold) 8%, transparent);
-  color: var(--ea-fg);
-}
-
 .header-more-tool-row__icon {
   color: var(--ea-fg-secondary);
   transition: color 0.2s ease;
@@ -620,7 +615,6 @@
 }
 
 .header-more-segment button.is-active {
-  background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
   color: var(--ea-gold);
 }
 

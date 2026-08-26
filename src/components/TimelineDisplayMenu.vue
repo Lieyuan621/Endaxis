@@ -316,12 +316,6 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
   color: var(--ea-fg);
 }
 
-.timeline-display-guide.is-active {
-  border-color: color-mix(in srgb, var(--ea-gold) 65%, var(--ea-border));
-  background: color-mix(in srgb, var(--ea-gold) 9%, transparent);
-  color: var(--ea-fg);
-}
-
 .timeline-display-guide__icon {
   flex-shrink: 0;
   color: var(--ea-fg-muted);

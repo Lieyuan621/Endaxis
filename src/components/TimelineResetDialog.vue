@@ -189,7 +189,6 @@ function confirm() {
   width: min(460px, 100%);
   overflow: hidden;
   border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.14));
-  border-radius: 7px;
   background: var(--ea-panel-bg, #1c1c1c);
   color: var(--ea-fg, #eee);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
@@ -217,7 +216,6 @@ function confirm() {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 4px;
   background: transparent;
   color: var(--ea-text-muted, #aaa);
   cursor: pointer;
@@ -243,7 +241,6 @@ function confirm() {
   display: grid;
   margin: 16px;
   border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.14));
-  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -261,21 +258,10 @@ function confirm() {
   color: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.16s ease;
 }
 
 .timeline-reset-option:last-child {
   border-bottom: 0;
-}
-
-.timeline-reset-option:hover,
-.timeline-reset-option.is-selected {
-  background: rgba(253, 217, 0, 0.08);
-}
-
-.timeline-reset-option.is-danger:hover,
-.timeline-reset-option.is-danger.is-selected {
-  background: rgba(255, 86, 96, 0.09);
 }
 
 .timeline-reset-option__icon {
@@ -284,7 +270,6 @@ function confirm() {
   display: grid;
   place-items: center;
   border: 1px solid rgba(253, 217, 0, 0.42);
-  border-radius: 5px;
   color: var(--ea-accent, #fdd900);
 }
 
