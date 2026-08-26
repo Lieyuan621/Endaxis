@@ -172,6 +172,7 @@ export interface ResolvedHit extends Hit {
   time: number;
   triggered?: boolean;
   triggeredBy?: string;
+  canTriggerOnHit?: boolean;
   skillType?: string;
   skillId?: string;
   element?: string;

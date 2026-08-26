@@ -125,7 +125,8 @@ export class TriggerRegistry {
     const actorId = event.payload.sourceId;
     // Skip reaction damage — reactions are not direct skill hits
     if ((event.payload.hitData as any)._reactionMeta) return;
-    if ((event.payload.hitData as any).triggered) return;
+    if ((event.payload.hitData as any).triggered && !(event.payload.hitData as any).canTriggerOnHit)
+      return;
     for (const entry of this.entries) {
       if (!this.matchesScope(entry, actorId)) continue;
       const { trigger } = entry.triggerEffect;

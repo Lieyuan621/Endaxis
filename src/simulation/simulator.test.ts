@@ -16,6 +16,8 @@ import perlicaSheet from '@/data/operators/perlica';
 import mifuSheet from '@/data/operators/mifu';
 import pogranichnikSheet from '@/data/operators/pogranichnik';
 import yvonneSheet from '@/data/operators/yvonne';
+import arcaneSheet from '@/data/operators/arcane';
+import { applyForm } from '@/data/forms';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
 import type { Effect, TriggerEffect } from '@/data/types';
@@ -4824,5 +4826,60 @@ describe('Yvonne potential 5 ultimate buffs', () => {
         }),
       ]),
     );
+  });
+
+  it('lets Arcane intelligence-form combo follow-up hits open Endministrator combo windows', () => {
+    const arcane = createOperatorInstance('op_arcane', 'arcane');
+    const endministrator = createOperatorInstance('op_endministrator', 'endministrator');
+    arcane.skillLevels = { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 };
+    endministrator.skillLevels = {
+      basicAttack: 12,
+      battleSkill: 12,
+      comboSkill: 12,
+      ultimate: 12,
+    };
+
+    const intelligenceForm = applyForm(arcaneSheet, 'int');
+    const comboHits = resolveOperatorSheetHits(intelligenceForm, 'comboSkill');
+    const battleHits = resolveOperatorSheetHits(intelligenceForm, 'battleSkill');
+    const tracks = [
+      createTrack('arcane', [
+        createAction('arcane_combo', 'comboSkill', {
+          startTime: 0,
+          element: 'nature',
+          hits: comboHits as any,
+        }),
+        createAction('arcane_battle', 'battleSkill', {
+          startTime: 1.2,
+          element: 'nature',
+          hits: battleHits as any,
+        }),
+      ]),
+      createTrack('endministrator', []),
+    ];
+    const team = createTeam(arcane.id);
+    team.slots[1]!.operatorId = endministrator.id;
+    const triggerEffects = collectRuntimeTriggers(team, [arcane, endministrator], [], [], tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+
+    const followUpHits = result.simLog.filter(
+      entry =>
+        entry.type === 'DAMAGE_HIT' &&
+        entry.payload.actionId === 'arcane_battle_inst' &&
+        entry.payload.hitData.triggered === true &&
+        entry.payload.hitData.canTriggerOnHit === true &&
+        entry.payload.hitData.skillType === 'comboSkill',
+    );
+    const windowApplies = result.operatorLog.filter(
+      entry =>
+        entry.type === 'OPERATOR_EFFECT_APPLY' &&
+        entry.id === 'endministrator-combo-window' &&
+        entry.targetTrackId === 'endministrator',
+    );
+
+    expect(followUpHits).toHaveLength(5);
+    for (const hit of followUpHits) {
+      expect(windowApplies.some(entry => Math.abs(entry.time - hit.time) < 0.001)).toBe(true);
+    }
   });
 });

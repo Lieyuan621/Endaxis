@@ -18,7 +18,7 @@ const sheet: OperatorSheet = {
     'Base ATK': [30, 92, 157, 222, 287, 319],
     'Base HP': [500, 1566, 2689, 3811, 4934, 5495],
   },
-  defaultPotential: 2,
+  defaultPotential: 3,
   talents: [
     {
       levels: 2,

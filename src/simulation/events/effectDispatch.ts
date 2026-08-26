@@ -1463,6 +1463,7 @@ export function dispatchSingleActorEffect(
             time: hitTime,
             triggered: true,
             triggeredBy: dc.triggeredByOverride ?? resolved.name ?? effectId,
+            canTriggerOnHit: r.canTriggerOnHit === true,
             skillType,
             consumedStacks: dc.hitConsumedStacks ?? parentAction?.consumedStacks,
             consumedStatEffects: parentAction?.consumedStatEffects,

@@ -489,6 +489,8 @@ export interface DamageHitEffect extends EffectBase {
   readConsumedStacks?: { statusKey: string; target: 'enemy' | 'self' };
   /** When true, the resolved multiplier is scaled by the operator's current crit rate at dispatch time. */
   scaleByCrit?: boolean;
+  /** Allow this triggered damage to fire matching onHit triggers. Disabled by default to prevent chains. */
+  canTriggerOnHit?: boolean;
 }
 
 /** Schedules periodic DAMAGE_HIT events over a duration. Always targets the enemy. */
@@ -847,6 +849,7 @@ export interface ResolvedDamageHitEffect extends ResolvedEffectBase {
   };
   readConsumedStacks?: { statusKey: string; target: 'enemy' | 'self' };
   scaleByCrit?: boolean;
+  canTriggerOnHit?: boolean;
 }
 
 export interface ResolvedDamageOverTimeEffect extends ResolvedEffectBase {

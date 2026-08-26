@@ -481,6 +481,8 @@ const sheet: OperatorSheet = {
                   ...map(range(5), (hitIndex: number) => ({
                     kind: 'damageHit' as const,
                     element: 'nature' as const,
+                    // These follow-up strikes still count as combo-skill damage for onHit triggers.
+                    canTriggerOnHit: true,
                     multiplier: map(
                       [222, 244, 266, 289, 311, 333, 355, 377, 400, 427, 461, 500],
                       levelMult => (levelMult / 5) * (hitIndex === 4 ? 2.6 : 0.6),
