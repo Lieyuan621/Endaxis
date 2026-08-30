@@ -62,20 +62,6 @@ const sheet: OperatorSheet = {
               applyTiming: 'beforeDamage',
             },
             {
-              id: 'tangtang-waterspouts-sp-return',
-              kind: 'spReturn',
-              value: 0,
-              scaling: {
-                additive: [
-                  {
-                    key: 'tangtang-whirlpools',
-                    target: 'self',
-                    coefficient: 20,
-                  },
-                ],
-              },
-            },
-            {
               id: 'tangtang-waterspouts-susceptibility',
               kind: 'status',
               stat: {
