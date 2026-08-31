@@ -375,6 +375,12 @@ const sheet: OperatorSheet = {
                       offset: 1.27,
                       spRecovery: [20, 20, 20, 20, 20, 22, 22, 22, 22, 23, 23, 25],
                       stagger: 10,
+                      effects: [
+                        {
+                          kind: 'ultEnergyGain',
+                          value: 10,
+                        },
+                      ],
                     },
                   ],
                 },

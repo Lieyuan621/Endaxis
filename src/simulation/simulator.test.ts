@@ -17,6 +17,7 @@ import mifuSheet from '@/data/operators/mifu';
 import pogranichnikSheet from '@/data/operators/pogranichnik';
 import yvonneSheet from '@/data/operators/yvonne';
 import arcaneSheet from '@/data/operators/arcane';
+import aleshSheet from '@/data/operators/alesh';
 import { applyForm } from '@/data/forms';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
@@ -1962,6 +1963,28 @@ describe('optimizer-native runtime parity', () => {
       expect(result.state.snapshot().actors[0]?.resources.gauge).toBe(10);
     },
   );
+
+  it('grants Alesh enhanced combo 10 ultimate energy', () => {
+    const enhancedComboHits = resolveOperatorSheetHits(aleshSheet, 'alesh-enhanced-combo', 0, 11);
+    const result = runScenario([
+      createTrack('alesh', [
+        createAction('alesh_enhanced_combo', 'comboSkill', {
+          skillId: 'alesh-enhanced-combo',
+          duration: 1.3,
+          hits: enhancedComboHits,
+        }),
+      ]),
+    ]);
+
+    expect(result.simLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ULT_ENERGY_CHANGE',
+          payload: expect.objectContaining({ actorId: 'alesh', change: 10 }),
+        }),
+      ]),
+    );
+  });
 
   it('projects optimizer-native logs through the UI result adapter', () => {
     const gearEffect: Effect = {
