@@ -1352,7 +1352,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   }
 
   function patchDurationBarColor(
-    patch: Partial<DurationBarColorPrefs> & {
+    patch: Omit<Partial<DurationBarColorPrefs>, 'sources' | 'surfaces'> & {
       sources?: Partial<DurationBarColorPrefs['sources']>;
       surfaces?: Partial<DurationBarColorPrefs['surfaces']>;
     },
@@ -3696,7 +3696,9 @@ export const useTimelineStore = defineStore('timeline', () => {
       string,
       unknown
     >;
-    const canArtifice = isEquipmentArtificable(level);
+    const normalizedLevel =
+      typeof level === 'number' || typeof level === 'string' ? level : null;
+    const canArtifice = isEquipmentArtificable(normalizedLevel);
     const size = canArtifice ? 4 : 1;
 
     const normalizePrimary = (input: unknown) => {
@@ -3789,7 +3791,9 @@ export const useTimelineStore = defineStore('timeline', () => {
       const base = { ...(eq || {}) } as Record<string, unknown>;
       base.canonicalGearPieceId =
         resolveGearPieceSlug(base.id as string | null | undefined) || null;
-      const canArtifice = isEquipmentArtificable(base.level);
+      const normalizedLevel =
+        typeof base.level === 'number' || typeof base.level === 'string' ? base.level : null;
+      const canArtifice = isEquipmentArtificable(normalizedLevel);
       const legacy = base.affixes70 && typeof base.affixes70 === 'object' ? base.affixes70 : null;
       const affixesInput =
         base.affixes && typeof base.affixes === 'object' ? base.affixes : legacy || null;

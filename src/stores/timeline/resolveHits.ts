@@ -334,11 +334,12 @@ function mergeStoredHitWithSheetEntry(
   if (pickedMultiplier === sheetHit.multiplier) {
     Object.assign(nextHit, sheetMultiplier);
   } else {
-    nextHit.multiplier = Number(pickedMultiplier) || 0;
+    const multiplier = Number(pickedMultiplier) || 0;
+    nextHit.multiplier = multiplier;
     if (stored._multiplierScaling !== undefined) {
       nextHit._multiplierScaling = stored._multiplierScaling;
     }
-    if (!(nextHit.multiplier > 0)) nextHit._noDamage = true;
+    if (!(multiplier > 0)) nextHit._noDamage = true;
     else {
       delete nextHit._noDamage;
       delete nextHit._multiplierScaling;
@@ -420,7 +421,7 @@ export function resolveHitsFromSheet(
   // Match by id/offset — never rely on array index. PropertiesPanel sorts hits by
   // offset for display and can write that order back; sheet extract order follows
   // damageGroups (e.g. Tangtang BS damage hits before the earlier waterspout hit).
-  const unusedStored = (storedHits || []).map(hit => ({ ...(hit as Dict) }));
+  const unusedStored = (storedHits || []).map(hit => ({ ...(hit as unknown as Dict) }));
   const resolved: Dict[] = [];
 
   for (const rawEntry of rawEntries) {

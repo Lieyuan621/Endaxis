@@ -61,6 +61,14 @@ type DialogRootLike = {
   querySelectorAll?: (selector: string) => Iterable<VisibleElementLike>;
 };
 
+function getDefaultDialogRoot(): DialogRootLike | null {
+  if (typeof document === 'undefined') return null;
+  return {
+    querySelectorAll: selector =>
+      Array.from(document.querySelectorAll(selector)) as unknown as VisibleElementLike[],
+  };
+}
+
 function isVisiblyRenderedElement(element: VisibleElementLike | null | undefined): boolean {
   if (!element) return false;
   if (element.getAttribute?.('aria-hidden') === 'true') return false;
@@ -74,7 +82,7 @@ function isVisiblyRenderedElement(element: VisibleElementLike | null | undefined
 }
 
 export function hasVisibleElementPlusDialog(
-  root: DialogRootLike | null | undefined = typeof document === 'undefined' ? null : document,
+  root: DialogRootLike | null | undefined = getDefaultDialogRoot(),
 ): boolean {
   const overlays = Array.from(root?.querySelectorAll?.('.el-overlay') ?? []);
   return overlays.some(overlay => {

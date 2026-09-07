@@ -241,6 +241,10 @@ export interface Action {
   sourceSkillKey?: string;
   segmentIndex?: number;
   attackSegmentIndex?: number;
+  /** Position within a complete basic-attack sequence (1-based). */
+  attackSequenceIndex?: number;
+  /** Number of actions in the complete basic-attack sequence. */
+  attackSequenceTotal?: number;
   name: string;
   startTime: number;
   logicalStartTime: number;

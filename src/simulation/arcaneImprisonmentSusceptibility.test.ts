@@ -10,6 +10,7 @@ import { createDefaultStats } from '@/simulation/defaultActorStats';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
 import type { OperatorInstance, TeamInstance } from '@/types';
+import type { EnemyStatusApplyEvent } from './engine/types';
 
 const BASE_STATS: BaseStatValues = {
   level: 60,
@@ -178,7 +179,8 @@ describe('Arcane battle skill vs combo susceptibility', () => {
         e.consumed,
     );
     const detonateApplies = result.enemyLog.filter(
-      e => e.type === 'ENEMY_STATUS_APPLY' && e.id === 'arcane-combo-susceptibility-detonate',
+      (e): e is EnemyStatusApplyEvent =>
+        e.type === 'ENEMY_STATUS_APPLY' && e.id === 'arcane-combo-susceptibility-detonate',
     );
     const detonateNaturalExpires = result.enemyLog.filter(
       e =>

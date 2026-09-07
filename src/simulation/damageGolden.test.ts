@@ -21,6 +21,11 @@ import type { Effect, TriggerEffect } from '@/data/types';
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from '@/types';
 import type { EnemyResistance } from '@/data/enemyResistance';
 import { computeExpectedDamageWithBreakdown } from '@/data/stats/computeDamage';
+import type { SimLogEntry } from './events/event.types';
+import type { OperatorEffectApplyEvent } from './engine/types';
+
+type DamageHitLogEntry = Extract<SimLogEntry, { type: 'DAMAGE_HIT' }>;
+type SpChangeLogEntry = Extract<SimLogEntry, { type: 'SP_CHANGE' }>;
 
 type TrackPatch = Omit<Partial<ScenarioTrack>, 'stats'> & {
   stats?: Partial<ScenarioTrack['stats']>;
@@ -450,7 +455,8 @@ describe('optimizer damage golden baselines', () => {
     );
 
     const returnEvents = result.simLog.filter(
-      entry => entry.type === 'SP_CHANGE' && entry.payload.spType === 'return',
+      (entry): entry is SpChangeLogEntry =>
+        entry.type === 'SP_CHANGE' && entry.payload.spType === 'return',
     );
     expect(
       returnEvents.map(entry => ({
@@ -522,10 +528,11 @@ describe('optimizer damage golden baselines', () => {
       createRegistry(collectRuntimeTriggers(team, [operator], [], [], tracks)),
     );
     const t1Applies = result.operatorLog.filter(
-      entry => entry.type === 'OPERATOR_EFFECT_APPLY' && entry.id === 'zhuang-fangyi-t1',
+      (entry): entry is OperatorEffectApplyEvent =>
+        entry.type === 'OPERATOR_EFFECT_APPLY' && entry.id === 'zhuang-fangyi-t1',
     );
     const thunderHitEntries = result.simLog.filter(
-      entry =>
+      (entry): entry is DamageHitLogEntry =>
         entry.type === 'DAMAGE_HIT' && entry.payload.hitData.id === 'zhuang-fangyi-thunder-strike',
     );
     const thunderHits = thunderHitEntries.map(entry => entry.payload.hitData);

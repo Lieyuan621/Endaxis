@@ -92,7 +92,9 @@ export function useDamageAnalysis() {
       return {
         name,
         value: Math.round(damage),
-        itemStyle: { color: info?.element ? ANALYSIS_ELEMENT_COLORS[info.element] : '#888' },
+        itemStyle: {
+          color: info?.element ? (ANALYSIS_ELEMENT_COLORS[info.element] ?? '#888') : '#888',
+        },
       };
     });
     operatorChartData.sort((a, b) => b.value - a.value);

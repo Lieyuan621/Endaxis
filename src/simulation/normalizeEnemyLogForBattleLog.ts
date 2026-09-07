@@ -82,10 +82,14 @@ export function mergeCorrosionTicksInBattleLog(entries: BattleLogEntry[]): Battl
       continue;
     }
 
-    span.payload.endResShred = Number.isFinite(resShred) ? resShred : span.payload.endResShred;
-    span.payload.tickCount = (Number(span.payload.tickCount) || 0) + 1;
-    span.payload.endTime = entry.time;
-    if (Number.isFinite(level) && level > 0) span.payload.level = level;
+    const currentSpan = span;
+    if (!currentSpan) continue;
+    currentSpan.payload.endResShred = Number.isFinite(resShred)
+      ? resShred
+      : currentSpan.payload.endResShred;
+    currentSpan.payload.tickCount = (Number(currentSpan.payload.tickCount) || 0) + 1;
+    currentSpan.payload.endTime = entry.time;
+    if (Number.isFinite(level) && level > 0) currentSpan.payload.level = level;
   }
 
   flushSpan();

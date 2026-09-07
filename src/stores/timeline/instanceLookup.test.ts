@@ -15,10 +15,11 @@ describe('resolveEffectiveOperatorForTrack', () => {
   });
 
   test('returns base sheet unchanged for form-less operators', () => {
-    const base = getOperator('lifeng') ?? getOperator('camille');
+    const slug = getOperator('lifeng') ? 'lifeng' : 'camille';
+    const base = getOperator(slug);
     expect(base).toBeTruthy();
     expect(base?.forms).toBeFalsy();
-    const effective = resolveEffectiveOperatorForTrack({ id: base!.id }, base!);
+    const effective = resolveEffectiveOperatorForTrack({ id: slug }, base!);
     expect(effective).toBe(base);
   });
 });

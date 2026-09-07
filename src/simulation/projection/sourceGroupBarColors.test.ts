@@ -16,7 +16,7 @@ describe('resolveDurationBarColor', () => {
     const effect = statusEffect({
       id: 'atk_up',
       sourceGroup: 'weapon',
-      stat: { atkPercent: 0.1 },
+      stat: { modifier: 'atkPercent' },
     });
     const anomaly = { kind: 'infliction', element: 'heat' } as Effect;
     const colored = resolveDurationBarColor({

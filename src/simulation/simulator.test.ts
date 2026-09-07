@@ -23,6 +23,10 @@ import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resol
 import type { BaseStatValues } from '@/data/stats/types';
 import type { Effect, TriggerEffect } from '@/data/types';
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from '@/types';
+import type {
+  EnemyEffectExpireEvent,
+  EnemyStatusApplyEvent,
+} from './engine/types';
 import { CRITERION_MECHANISMS } from '@/data/contingencyContracts/criteriaEffects';
 import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState';
 import {
@@ -2444,7 +2448,7 @@ describe('optimizer-native runtime parity', () => {
 
     const layout = projectActionBuffs(result.operatorLog, 30).get('alpha');
     const linkBars = (layout?.upper ?? []).filter(
-      seg => seg.effect?.stat && (seg.effect.stat as any).modifier === 'link',
+      seg => seg.effect?.kind === 'status' && seg.effect.stat?.modifier === 'link',
     );
     // Same lane (not two vertical layers); stack count reaches 2 after the second grant.
     expect(linkBars.length).toBeGreaterThan(0);
@@ -4067,7 +4071,8 @@ describe('beforeDamage enemy status freeze extension', () => {
 
     const result = runScenario(tracks);
     const applies = result.enemyLog.filter(
-      e => e.type === 'ENEMY_STATUS_APPLY' && (e.id === 'prison-marker' || e.id === 'combo-vuln'),
+      (e): e is EnemyStatusApplyEvent =>
+        e.type === 'ENEMY_STATUS_APPLY' && (e.id === 'prison-marker' || e.id === 'combo-vuln'),
     );
     expect(applies).toHaveLength(2);
 
@@ -4200,7 +4205,8 @@ describe('independent enemy status instance ids', () => {
 
     const result = runScenario(tracks, registry(triggerEffects));
     const applies = result.enemyLog.filter(
-      e => e.type === 'ENEMY_STATUS_APPLY' && String(e.id).startsWith('shared-vuln'),
+      (e): e is EnemyStatusApplyEvent =>
+        e.type === 'ENEMY_STATUS_APPLY' && String(e.id).startsWith('shared-vuln'),
     );
     expect(applies).toHaveLength(2);
     expect(new Set(applies.map(e => e.id)).size).toBe(2);
@@ -4213,7 +4219,7 @@ describe('independent enemy status instance ids', () => {
 
     // First expiry must still fire (was previously cancelled by the second grant).
     const firstExpire = result.enemyLog.find(
-      e =>
+      (e): e is Extract<EnemyEffectExpireEvent, { kind: 'status' }> =>
         e.type === 'ENEMY_EFFECT_EXPIRE' && e.kind === 'status' && e.id === first.id && !e.consumed,
     );
     expect(firstExpire?.time).toBeCloseTo(first.expiresAt, 1);

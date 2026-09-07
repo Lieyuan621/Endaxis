@@ -948,8 +948,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           sourceId,
           ctx,
           effectiveDuration,
-          sourceSkillType,
-          sourceSkillId,
           debuffEffectiveness,
           css,
           actionId,
@@ -979,8 +977,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
           sourceId,
           ctx,
           effectiveDuration,
-          sourceSkillType,
-          sourceSkillId,
           css,
         );
         if (!isForced)
@@ -1091,6 +1087,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         expiresAt,
         sourceId,
         sourceSkillType,
+        sourceSkillId,
         icon: undefined,
         effect: { kind: 'status', hide: true } as any,
         sourceBreakdown: computeSourceBreakdown(sourceId, consumedStackSources, level),
@@ -1183,6 +1180,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         expiresAt,
         sourceId,
         sourceSkillType,
+        sourceSkillId,
         icon: undefined,
         effect: { kind: 'status', id: 'corrosion:resShred', name: 'corrosion', hide: true } as any,
         sourceBreakdown: computeSourceBreakdown(sourceId, consumedStackSources, level),
@@ -1327,8 +1325,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     sourceId: string,
     ctx: SimulationContext,
     effectiveDuration: number,
-    sourceSkillType?: string,
-    sourceSkillId?: string,
     effectiveness?: number,
     consumedStackSources?: Record<string, number>,
     actionId?: string,
@@ -1381,8 +1377,6 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     sourceId: string,
     ctx: SimulationContext,
     effectiveDuration: number,
-    sourceSkillType?: string,
-    sourceSkillId?: string,
     consumedStackSources?: Record<string, number>,
   ): void {
     const duration = effectiveDuration || getReactionDuration('solidification', level);

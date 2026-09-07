@@ -10,6 +10,9 @@ import { createDefaultStats } from '@/simulation/defaultActorStats';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
 import type { OperatorInstance, TeamInstance } from '@/types';
+import type { SimLogEntry } from './events/event.types';
+
+type DamageHitLogEntry = Extract<SimLogEntry, { type: 'DAMAGE_HIT' }>;
 
 const BASE_STATS: BaseStatValues = {
   level: 60,
@@ -160,7 +163,7 @@ function runArcaneScenario(
 
 function clusterLasers(simLog: ReturnType<typeof simulate>['simLog']) {
   return simLog.filter(
-    entry =>
+    (entry): entry is DamageHitLogEntry =>
       entry.type === 'DAMAGE_HIT' &&
       entry.payload.sourceId === 'arcane' &&
       entry.payload.hitData?.triggered === true &&

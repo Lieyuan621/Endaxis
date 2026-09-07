@@ -5,6 +5,7 @@ import {
   type GlobalConfigInjection,
   type GlobalConfigState,
   type GlobalModifier,
+  type GlobalOperatorStatModifier,
   type OperatorStatModifier,
 } from './types';
 
@@ -62,7 +63,7 @@ function newModifierId(prefix: string): string {
 
 export function createDefaultOperatorStatModifier(
   choiceKey = GLOBAL_CONFIG_OPERATOR_STAT_CHOICES[0]?.key,
-): GlobalModifier {
+): GlobalOperatorStatModifier {
   const choice =
     GLOBAL_CONFIG_OPERATOR_STAT_CHOICES.find(c => c.key === choiceKey) ||
     GLOBAL_CONFIG_OPERATOR_STAT_CHOICES[0]!;

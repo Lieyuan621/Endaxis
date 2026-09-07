@@ -226,7 +226,7 @@ describe('Liino countdown loops are bounded by their stance', () => {
       'liino',
     ]);
     expect(cosmovoiceStart).toBeDefined();
-    expect(consumedStances.every((entry: any) => entry.time < cosmovoiceStart)).toBe(true);
+    expect(consumedStances.every((entry: any) => entry.time < cosmovoiceStart!)).toBe(true);
     expect(
       result.operatorLog.filter(
         (entry: any) =>

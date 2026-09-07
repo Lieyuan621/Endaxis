@@ -171,7 +171,6 @@ export class TriggerRegistry {
   }
 
   onFinalStrike(event: HitEvent, ctx: SimulationContext): void {
-    const actorId = event.payload.sourceId;
     const action = ctx.getAction(event.payload.actionId);
     if (!action) return;
 
@@ -225,7 +224,6 @@ export class TriggerRegistry {
   }
 
   onFinisher(event: HitEvent, ctx: SimulationContext): void {
-    const actorId = event.payload.sourceId;
     const action = ctx.getAction(event.payload.actionId);
     if (!action) return;
 

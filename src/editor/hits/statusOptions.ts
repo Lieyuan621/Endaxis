@@ -83,8 +83,11 @@ export function resolveStatusNameKey(
   const key = String(statusKey || '').trim();
   if (!key) return key;
   let mapped: string | undefined;
-  if (nameById instanceof Map) mapped = nameById.get(key);
-  else if (nameById) mapped = nameById[key];
+  if (nameById && typeof (nameById as ReadonlyMap<string, string>).get === 'function') {
+    mapped = (nameById as ReadonlyMap<string, string>).get(key);
+  } else if (nameById) {
+    mapped = (nameById as Readonly<Record<string, string>>)[key];
+  }
   if (mapped) return resolveStatusLocaleKey(mapped);
   return resolveStatusLocaleKey(key);
 }

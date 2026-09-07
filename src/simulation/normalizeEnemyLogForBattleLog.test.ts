@@ -150,7 +150,7 @@ describe('normalizeEnemyLogForBattleLog', () => {
         level: 2,
       },
     });
-    expect(merged[1].type).toBe('DEBUFF_APPLY');
+    expect(merged[1]!.type).toBe('DEBUFF_APPLY');
     expect(merged[2]).toMatchObject({
       type: 'CORROSION_SPAN',
       payload: {
@@ -161,6 +161,6 @@ describe('normalizeEnemyLogForBattleLog', () => {
       },
     });
 
-    expect(formatEnemyBattleLogSummary(merged[0], t, te)).toContain('3.60 → 5.28');
+    expect(formatEnemyBattleLogSummary(merged[0]!, t, te)).toContain('3.60 → 5.28');
   });
 });

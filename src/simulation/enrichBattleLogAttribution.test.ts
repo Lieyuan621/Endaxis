@@ -24,8 +24,8 @@ describe('enrichBattleLogAttribution', () => {
       },
     ]);
 
-    expect(enriched[1].payload.sourceId).toBe('laevatain');
-    expect(enriched[2].payload.sourceId).toBe('laevatain');
+    expect(enriched[1]!.payload.sourceId).toBe('laevatain');
+    expect(enriched[2]!.payload.sourceId).toBe('laevatain');
   });
 
   it('copies operator apply source/action onto matching expire', () => {
@@ -54,7 +54,7 @@ describe('enrichBattleLogAttribution', () => {
       },
     ]);
 
-    expect(enriched[1].payload.sourceId).toBe('alpha');
-    expect(enriched[1].payload.actionId).toBe('act_1');
+    expect(enriched[1]!.payload.sourceId).toBe('alpha');
+    expect(enriched[1]!.payload.actionId).toBe('act_1');
   });
 });
