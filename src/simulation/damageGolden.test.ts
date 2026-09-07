@@ -346,11 +346,12 @@ describe('optimizer damage golden baselines', () => {
     });
   });
 
-  it('keeps Liino existing combo window usable without retriggering it during ultimate', () => {
+  it('opens Liino combo window only during Vocalist Stance and keeps it usable in ultimate', () => {
     const liino = createOperatorInstance('liino');
     const team = createTeam(liino.id);
+    const battleHits = resolveOperatorSheetHits(liinoSheet, 'battleSkill', 11);
     const ultimateHits = resolveOperatorSheetHits(liinoSheet, 'ultimate', 11);
-    const applyElectrification = (id: string, startTime: number) =>
+    const applyEnemyStatus = (id: string, startTime: number, status: string) =>
       createAction(id, 'battleSkill', {
         startTime,
         hits: [
@@ -362,7 +363,7 @@ describe('optimizer damage golden baselines', () => {
             stagger: 0,
             effects: [
               {
-                id: 'electrification',
+                id: status,
                 kind: 'status',
                 target: 'enemy',
                 duration: 10,
@@ -373,13 +374,19 @@ describe('optimizer damage golden baselines', () => {
       });
     const tracks = [
       createTrack('liino', [
-        applyElectrification('before_ultimate', 0),
+        applyEnemyStatus('before_vocalist', 0, 'combustion'),
+        createAction('battle_skill', 'battleSkill', {
+          skillId: 'battleSkill',
+          startTime: 0.1,
+          hits: battleHits,
+        }),
+        applyEnemyStatus('during_vocalist', 0.7, 'electrification'),
         createAction('ultimate', 'ultimate', {
           skillId: 'ultimate',
           startTime: 1,
           hits: ultimateHits,
         }),
-        applyElectrification('during_ultimate', 4),
+        applyEnemyStatus('during_ultimate', 4, 'corrosion'),
         createAction('combo', 'comboSkill', {
           skillId: 'comboSkill',
           startTime: 4.5,
@@ -391,8 +398,14 @@ describe('optimizer damage golden baselines', () => {
       createRegistry(collectRuntimeTriggers(team, [liino], [], [], tracks)),
     );
     const windowEvents = result.operatorLog.filter(entry => entry.id === 'liino-combo-window');
+    const windowApplies = windowEvents.filter(entry => entry.type === 'OPERATOR_EFFECT_APPLY');
 
-    expect(windowEvents.filter(entry => entry.type === 'OPERATOR_EFFECT_APPLY')).toHaveLength(1);
+    expect(windowApplies).toEqual([
+      expect.objectContaining({
+        type: 'OPERATOR_EFFECT_APPLY',
+        time: 0.7,
+      }),
+    ]);
     expect(windowEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

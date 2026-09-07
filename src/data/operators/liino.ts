@@ -521,11 +521,8 @@ const sheet: OperatorSheet = {
               triggerScope: 'global',
             },
             condition: {
-              kind: 'not',
-              condition: {
-                kind: 'operatorStatus',
-                status: 'liino-cosmovoice-stance',
-              },
+              kind: 'operatorStatus',
+              status: 'liino-vocalist-stance',
             },
           },
           {
@@ -536,11 +533,8 @@ const sheet: OperatorSheet = {
               triggerScope: 'global',
             },
             condition: {
-              kind: 'not',
-              condition: {
-                kind: 'operatorStatus',
-                status: 'liino-cosmovoice-stance',
-              },
+              kind: 'operatorStatus',
+              status: 'liino-vocalist-stance',
             },
           },
         ],
