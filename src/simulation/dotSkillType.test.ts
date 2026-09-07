@@ -42,6 +42,15 @@ describe('damageOverTime opt-in skillType propagates to ticks', () => {
 });
 
 describe('Tangtang waterspout skill type', () => {
+  it('keeps combo skill damage as cryo damage', () => {
+    const damageGroups = tangtangSheet.combatSkills.comboSkill.segments?.flatMap(
+      segment => segment.damageGroups ?? [],
+    );
+
+    expect(damageGroups).not.toHaveLength(0);
+    expect(damageGroups?.every(group => group.element === 'cryo')).toBe(true);
+  });
+
   it('treats every waterspout DoT as battle skill damage', () => {
     const waterspouts: DamageOverTimeEffect[] = [];
     const visit = (value: unknown): void => {

@@ -434,6 +434,7 @@ const sheet: OperatorSheet = {
           duration: 1.03,
           damageGroups: [
             {
+              element: 'cryo',
               multiplier: [107, 117, 128, 139, 149, 160, 171, 181, 192, 205, 221, 240],
               multiplierMode: 'split',
               hits: [
