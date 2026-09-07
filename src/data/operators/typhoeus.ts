@@ -62,7 +62,40 @@ const sheet: OperatorSheet = {
     basicAttack: {
       segments: [
         {
-          duration: 0.367,
+          duration: 0.35,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [16, 18, 19, 21, 22, 24, 26, 27, 29, 31, 33, 36],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.233,
+                },
+                {
+                  offset: 0.333,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 0.433,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [16, 18, 19, 21, 22, 24, 26, 27, 29, 31, 33, 36],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.317,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 0.717,
           damageGroups: [
             {
               element: 'nature',
@@ -71,6 +104,54 @@ const sheet: OperatorSheet = {
               hits: [
                 {
                   offset: 0.2,
+                },
+                {
+                  offset: 0.517,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 0.9,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [16, 18, 19, 21, 22, 24, 26, 27, 29, 31, 33, 36],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.217,
+                },
+                {
+                  offset: 0.583,
+                },
+                {
+                  offset: 0.717,
+                },
+                {
+                  offset: 0.817,
+                },
+                {
+                  offset: 0.917,
+                },
+                {
+                  offset: 1.05,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 1.35,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [16, 18, 19, 21, 22, 24, 26, 27, 29, 31, 33, 36],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.75,
                 },
               ],
             },
@@ -81,7 +162,7 @@ const sheet: OperatorSheet = {
     battleSkill: {
       segments: [
         {
-          duration: 1.73,
+          duration: 0.85,
           damageGroups: [
             {
               element: 'nature',
@@ -89,8 +170,85 @@ const sheet: OperatorSheet = {
               multiplierMode: 'split',
               hits: [
                 {
-                  offset: 0.73,
-                  stagger: 10,
+                  offset: 0.167,
+                },
+                {
+                  offset: 0.333,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 0.633,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [62, 68, 75, 81, 87, 93, 99, 106, 112, 120, 129, 140],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.083,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 0.633,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [62, 68, 75, 81, 87, 93, 99, 106, 112, 120, 129, 140],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.083,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 0.633,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [62, 68, 75, 81, 87, 93, 99, 106, 112, 120, 129, 140],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.083,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 0.633,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [62, 68, 75, 81, 87, 93, 99, 106, 112, 120, 129, 140],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.083,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          duration: 1.35,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [62, 68, 75, 81, 87, 93, 99, 106, 112, 120, 129, 140],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 0.367,
                 },
               ],
             },
@@ -105,7 +263,7 @@ const sheet: OperatorSheet = {
       },
       segments: [
         {
-          duration: 1.37,
+          duration: 2,
           damageGroups: [
             {
               element: 'nature',
@@ -113,8 +271,25 @@ const sheet: OperatorSheet = {
               multiplierMode: 'split',
               hits: [
                 {
-                  offset: 0.67,
-                  stagger: 10,
+                  offset: 1.317,
+                },
+                {
+                  offset: 1.517,
+                },
+                {
+                  offset: 1.617,
+                },
+                {
+                  offset: 1.65,
+                },
+                {
+                  offset: 1.683,
+                },
+                {
+                  offset: 1.75,
+                },
+                {
+                  offset: 1.817,
                 },
               ],
             },
@@ -127,13 +302,24 @@ const sheet: OperatorSheet = {
       element: 'nature',
       segments: [
         {
-          duration: 2.37,
-          damageGroups: [],
+          duration: 2.75,
+          damageGroups: [
+            {
+              element: 'nature',
+              multiplier: [62, 68, 75, 81, 87, 93, 99, 106, 112, 120, 129, 140],
+              multiplierMode: 'split',
+              hits: [
+                {
+                  offset: 2.117,
+                },
+              ],
+            },
+          ],
         },
       ],
-      ultimateEnergyCost: 300,
-      animationTime: 2.07,
-      cooldown: 10,
+      ultimateEnergyCost: 200,
+      animationTime: 2,
+      cooldown: 20,
     },
   },
 };
