@@ -1109,10 +1109,7 @@
       "empty": "无连线",
       "thisSkill": "本技能",
       "outPort": "出",
-      "inPort": "入",
-      "consume": "消耗",
-      "consumed": "被消耗",
-      "offset": "提前"
+      "inPort": "入"
     }
   },
   "resourceMonitor": {

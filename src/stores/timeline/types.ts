@@ -116,10 +116,9 @@ export interface Track {
   [key: string]: unknown;
 }
 
-/** A dependency/consumption link drawn between two timeline nodes. */
+/** A visual link drawn between two timeline nodes. */
 export interface Connection {
   id: string;
-  isConsumption?: boolean;
   sourcePort?: string | null;
   targetPort?: string | null;
   fromNodeId?: string | null;

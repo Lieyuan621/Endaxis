@@ -387,12 +387,6 @@
   --ea-btn-bg-hover: rgba(255, 77, 79, 0.12);
 }
 
-.ea-btn--glass-rect-hover-accent {
-  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-btn-accent) 12%, transparent);
-  --ea-btn-border-hover: var(--ea-btn-accent);
-  --ea-btn-color-hover: var(--ea-btn-accent);
-}
-
 .ea-btn--glass-rect-accent {
   --ea-btn-bg: color-mix(in srgb, var(--ea-btn-accent) 10%, transparent);
   --ea-btn-border: color-mix(in srgb, var(--ea-btn-accent) 40%, transparent);
@@ -458,14 +452,6 @@
   --ea-btn-border-hover: var(--ea-btn-accent);
   --ea-btn-color-hover: var(--ea-btn-accent);
   box-shadow: 0 0 10px color-mix(in srgb, var(--ea-btn-accent) 22%, transparent);
-}
-
-.ea-btn--glass-rect-tag {
-  --ea-btn-font-size: 10px;
-  --ea-btn-font-weight: 800;
-  --ea-btn-py: 0px;
-  --ea-btn-px: 8px;
-  height: 22px;
 }
 
 /* Shared checklist used by desktop and mobile timeline display menus. */

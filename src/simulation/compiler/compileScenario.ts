@@ -214,7 +214,7 @@ export function compileScenario(
   };
 
   const { actions, actors } = normalizeScenario(scenario, mergedSystemConstants);
-  const compiledTimeline = compileTimeline(actions, scenario.connections);
+  const compiledTimeline = compileTimeline(actions);
 
   return {
     timeline: compiledTimeline,

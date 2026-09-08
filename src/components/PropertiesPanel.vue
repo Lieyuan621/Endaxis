@@ -24,24 +24,6 @@ import { translateEffectName } from '@/editor/hits/statusOptions';
 const store = useTimelineStore();
 const connectionHandler = useDragConnection();
 const { t, te, tm } = useI18n({ useScope: 'global' });
-const props = defineProps({
-  onResetPanel: {
-    type: Function,
-    default: null,
-  },
-  onCollapsePanel: {
-    type: Function,
-    default: null,
-  },
-});
-
-function handleResetPanel() {
-  props.onResetPanel?.();
-}
-
-function handleCollapsePanel() {
-  props.onCollapsePanel?.();
-}
 // ===================================================================================
 // 1. 常量与配置
 // ===================================================================================
@@ -568,21 +550,6 @@ function handleStartConnection(id, type = null) {
             t('propertiesPanel.globalMode')
           }}</span>
         </div>
-        <div class="header-actions">
-          <button type="button" class="header-tool-btn" @click="handleResetPanel">
-            <svg
-              viewBox="0 0 24 24"
-              width="11"
-              height="11"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M3 12a9 9 0 1 0 3-6.7" />
-              <path d="M3 3v5h5" />
-            </svg>
-          </button>
-        </div>
       </div>
       <div class="header-divider"></div>
     </div>
@@ -976,45 +943,6 @@ function handleStartConnection(id, type = null) {
             </div>
 
             <div class="conn-row-actions">
-              <template v-if="conn.isOutgoing && conn.rawConnection.fromEffectIndex != null">
-                <div
-                  class="ea-btn ea-btn--glass-rect ea-btn--glass-rect-tag ea-btn--accent-gold ea-btn--glass-rect-hover-accent"
-                  :class="{ active: conn.rawConnection.isConsumption }"
-                  @click="
-                    store.updateConnection(conn.id, {
-                      isConsumption: !conn.rawConnection.isConsumption,
-                    })
-                  "
-                >
-                  {{
-                    conn.rawConnection.isConsumption
-                      ? t('propertiesPanel.connections.consumed')
-                      : t('propertiesPanel.connections.consume')
-                  }}
-                </div>
-
-                <div v-if="conn.rawConnection.isConsumption" class="offset-mini">
-                  <span
-                    style="color: #666; font-size: 10px; margin-right: 2px; white-space: nowrap"
-                    >{{ t('propertiesPanel.connections.offset') }}</span
-                  >
-                  <CustomNumberInput
-                    :model-value="frameValue(conn.rawConnection.consumptionOffset || 0)"
-                    @update:model-value="
-                      val =>
-                        store.updateConnection(conn.id, {
-                          consumptionOffset: timeValueFromFrame(val),
-                        })
-                    "
-                    :step="0.1"
-                    :min="-10"
-                    :max="10"
-                    active-color="var(--ea-gold)"
-                    style="width: 50px"
-                  />
-                </div>
-              </template>
-
               <div class="spacer"></div>
               <button
                 class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger"
@@ -1101,33 +1029,6 @@ function handleStartConnection(id, type = null) {
   background: #333;
   padding: 1px 4px;
   border-radius: 2px;
-}
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  margin-right: -2px;
-}
-.header-tool-btn {
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--ea-icon-muted, rgba(255, 255, 255, 0.34));
-  cursor: pointer;
-  padding: 0;
-  transition:
-    color 0.14s ease,
-    background-color 0.14s ease;
-}
-.header-tool-btn:hover {
-  color: var(--ea-icon-strong, rgba(255, 255, 255, 0.86));
-  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.055));
 }
 .skill-type-minimal {
   font-size: 11px;
@@ -1531,18 +1432,11 @@ function handleStartConnection(id, type = null) {
   letter-spacing: -1px;
   font-weight: bold;
 }
-.offset-mini {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-}
 .spacer {
   flex: 1;
 }
 
 .mode-badge,
-.header-tool-btn,
 .skill-type-minimal,
 .section-container,
 .direction-tag,
@@ -1567,13 +1461,6 @@ function handleStartConnection(id, type = null) {
 }
 
 /* Light: solid panels instead of near-invisible white glass. */
-:global(html[data-theme='light'] .properties-panel .header-tool-btn) {
-  color: var(--ea-icon-muted);
-}
-:global(html[data-theme='light'] .properties-panel .header-tool-btn:hover) {
-  color: var(--ea-icon-strong);
-  background: var(--ea-hover-fill);
-}
 :global(html[data-theme='light'] .properties-panel .section-container) {
   background: var(--ea-panel-elevated);
   border-color: var(--ea-border-strong);

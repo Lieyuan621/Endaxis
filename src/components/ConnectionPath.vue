@@ -25,7 +25,6 @@ const props = defineProps({
   isDimmed: { type: Boolean, default: false },
   isHighlighted: { type: Boolean, default: false },
   isSelectable: { type: Boolean, default: true },
-  isConsumption: { type: Boolean, default: false },
   isPreview: { type: Boolean, default: false },
 });
 
@@ -63,7 +62,6 @@ const pathData = computed(() => {
       'is-highlighted': isHighlighted,
       'is-preview': isPreview,
       'is-selectable': isSelectable,
-      'is-consumption': isConsumption,
     }"
     @click.stop="emit('click', $event)"
     @contextmenu.prevent.stop="emit('contextmenu', $event)"
@@ -162,20 +160,6 @@ const pathData = computed(() => {
   stroke-width: 3;
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
   z-index: 999;
-}
-
-.connector-group.is-consumption {
-  opacity: 0.4;
-}
-
-.connector-group.is-consumption .main-path {
-  stroke-dasharray: 2, 6;
-  stroke-linecap: round;
-  /* animation: dash-flow 60s linear infinite; */
-}
-
-.connector-group.is-consumption.is-selected {
-  opacity: 0.8;
 }
 
 .hover-zone {

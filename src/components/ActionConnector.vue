@@ -136,7 +136,7 @@ function onContextMenu(evt) {
   store.openContextMenu(evt, props.connection.id);
 }
 
-const getRectByNodeId = (nodeId, { connection = null, isSource = false } = {}) => {
+const getRectByNodeId = nodeId => {
   const info = store.resolveNode(nodeId);
   if (!info) return null;
 
@@ -146,11 +146,6 @@ const getRectByNodeId = (nodeId, { connection = null, isSource = false } = {}) =
   }
 
   if (info.type === 'effect') {
-    if (isSource && connection?.isConsumption) {
-      const transferId = `${nodeId}_transfer`;
-      const transferLayout = store.effectLayouts.get(transferId);
-      if (transferLayout?.rect) return transferLayout.rect;
-    }
     const layout = store.effectLayouts.get(nodeId);
     return layout?.rect || null;
   }
@@ -178,7 +173,7 @@ const calculatePoint = (nodeId, isSource, connection = null) => {
     }
   }
 
-  const rect = getRectByNodeId(nodeId, { connection, isSource });
+  const rect = getRectByNodeId(nodeId);
   if (rect) {
     const userPort = isSource ? connection?.sourcePort : connection?.targetPort;
     const defaultPort = isSource ? 'right' : 'left';
@@ -255,7 +250,6 @@ const onDragTarget = evt => {
   <ConnectionPath
     v-if="coordinateInfo && isConnectionVisible"
     :id="connection.id"
-    :is-consumption="connection.isConsumption"
     :start-point="coordinateInfo.startPoint"
     :end-point="coordinateInfo.endPoint"
     :start-direction="coordinateInfo.startDirection"

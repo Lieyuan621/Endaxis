@@ -1109,10 +1109,7 @@
       "empty": "No connections",
       "thisSkill": "This Skill",
       "outPort": "out",
-      "inPort": "in",
-      "consume": "Consume",
-      "consumed": "Consumed",
-      "offset": "Offset"
+      "inPort": "in"
     }
   },
   "resourceMonitor": {

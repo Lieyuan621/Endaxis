@@ -1,7 +1,6 @@
 import { TimeContext } from './timeContext';
 import { resolveEffectLifecycle } from '@/data/effectPresets';
 import type {
-  Connection,
   ActionNode,
   ResolvedTimeline,
   ResolvedAction,
@@ -149,7 +148,6 @@ function resolveAction(
         realStartTime: effectRealStartTime,
         realDuration: round(effectRealEndTime - effectRealStartTime),
         displayDuration: round(effectRealEndTime - effectRealStartTime),
-        isConsumed: false,
         extensionAmount: round(round(effectRealEndTime - effectRealStartTime) - baseDuration),
         hitIndex,
         effectIndex,
@@ -219,31 +217,6 @@ function resolveAction(
     extensionAmount: actionExtension,
     freezeDuration: realFreezeDuration,
   };
-}
-
-function resolveConsumption(resolvedActions: ResolvedAction[], connections: Connection[]) {
-  if (!connections?.length) return;
-
-  resolvedActions.forEach(producer => {
-    if (producer.node.isDisabled) return;
-    producer.effects.forEach(effect => {
-      const conn = connections.find(c => c.isConsumption && c.fromEffectId === effect.id);
-      if (!conn?.to) return;
-
-      const consumer = resolvedActions.find(a => a.id === conn.to);
-      if (!consumer || consumer.node.isDisabled) return;
-
-      const consumptionOffset = Number(conn.consumptionOffset) || 0;
-      const consumptionTime = consumer.realStartTime - consumptionOffset;
-      const cutDuration = consumptionTime - effect.realStartTime;
-      const snappedCut = round(cutDuration);
-
-      if (snappedCut >= 0) {
-        effect.displayDuration = Math.min(effect.displayDuration, snappedCut);
-        effect.isConsumed = true;
-      }
-    });
-  });
 }
 
 function resolveActions(
@@ -317,10 +290,7 @@ function rebuildEffectMap(resolvedActions: ResolvedAction[]) {
   return effectMap;
 }
 
-export function compileTimeline(
-  actions: ActionNode[],
-  connections: Connection[] = [],
-): ResolvedTimeline {
+export function compileTimeline(actions: ActionNode[]): ResolvedTimeline {
   const sortedActions = actions.toSorted((a, b) => a.node.startTime - b.node.startTime);
 
   const { stopSources, sourceShiftMap, timeExtensions } = calculateTimeShifts(sortedActions);
@@ -336,10 +306,6 @@ export function compileTimeline(
 
   applyActionInterruptions(resolvedActions);
   const finalEffectMap = rebuildEffectMap(resolvedActions);
-
-  if (connections.length > 0) {
-    resolveConsumption(resolvedActions, connections);
-  }
 
   const totalDuration = resolvedActions.reduce(
     (max, a) => Math.max(max, round(a.realStartTime + a.realDuration)),

@@ -1869,12 +1869,10 @@ export const useTimelineStore = defineStore('timeline', () => {
   function createConnection(
     fromPortDir: string | null | undefined,
     targetPortDir: string | null | undefined,
-    isConsumption = false,
     connectionData?: Partial<Connection>,
   ) {
     const rawConn = {
       id: `conn_${uid()}`,
-      isConsumption,
       sourcePort: fromPortDir || 'right',
       targetPort: targetPortDir || 'left',
       ...connectionData,
@@ -4969,14 +4967,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     commitState();
   }
 
-  function updateConnection(id: string, payload: Record<string, unknown>) {
-    const conn = connections.value.find(c => c.id === id);
-    if (conn) {
-      Object.assign(conn, payload);
-      commitState();
-    }
-  }
-
   function updateAction(actionId: string, patch: Record<string, unknown>) {
     const locate = (id: string) => {
       for (const t of tracks.value) {
@@ -6089,7 +6079,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     syncAllWeaponModifiers,
     getModifierLabel,
     removeConnection,
-    updateConnection,
     updateConnectionPort,
     getColor,
     toggleCursorGuide,

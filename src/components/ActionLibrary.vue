@@ -15,25 +15,6 @@ const store = useTimelineStore();
 const operatorStore = useOperatorStore();
 const weaponStore = useWeaponStore();
 const { t, locale } = useI18n();
-const props = defineProps({
-  onResetPanel: {
-    type: Function,
-    default: null,
-  },
-  onCollapsePanel: {
-    type: Function,
-    default: null,
-  },
-});
-
-function handleResetPanel() {
-  props.onResetPanel?.();
-}
-
-function handleCollapsePanel() {
-  props.onCollapsePanel?.();
-}
-
 // === 核心数据逻辑 ===
 const activeTrack = computed(() =>
   store.activeTrackIndex !== null && store.activeTrackIndex !== undefined
@@ -276,21 +257,6 @@ function onNativeDragStart(evt, skill) {
             >
           </h3>
         </div>
-        <div class="header-actions">
-          <button type="button" class="header-tool-btn" @click="handleResetPanel">
-            <svg
-              viewBox="0 0 24 24"
-              width="11"
-              height="11"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M3 12a9 9 0 1 0 3-6.7" />
-              <path d="M3 3v5h5" />
-            </svg>
-          </button>
-        </div>
       </div>
       <div class="header-divider"></div>
 
@@ -476,33 +442,6 @@ function onNativeDragStart(evt, skill) {
   line-height: 1;
   text-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
   white-space: nowrap;
-}
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  margin-right: -2px;
-}
-.header-tool-btn {
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  color: var(--ea-icon-muted, rgba(255, 255, 255, 0.34));
-  cursor: pointer;
-  padding: 0;
-  transition:
-    color 0.14s ease,
-    background-color 0.14s ease;
-}
-.header-tool-btn:hover {
-  color: var(--ea-icon-strong, rgba(255, 255, 255, 0.86));
-  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.055));
 }
 .loadout-actions {
   display: grid;
@@ -773,13 +712,6 @@ function onNativeDragStart(evt, skill) {
 }
 
 /* Light: opaque cards + readable type; white weapon glyphs → ink. */
-:global(html[data-theme='light'] .library-container .header-tool-btn) {
-  color: var(--ea-icon-muted);
-}
-:global(html[data-theme='light'] .library-container .header-tool-btn:hover) {
-  color: var(--ea-icon-strong);
-  background: var(--ea-hover-fill);
-}
 :global(html[data-theme='light'] .library-container .loadout-action-btn) {
   background: var(--ea-fill-input);
   border-color: var(--ea-border);

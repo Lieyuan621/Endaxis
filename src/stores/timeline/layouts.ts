@@ -208,7 +208,6 @@ export function useTimelineLayouts(deps: LayoutsDeps) {
           localTransform,
           barData: {
             width: finalBarWidth,
-            isConsumed: effect.isConsumed,
             displayDuration,
             extensionAmount: effect.extensionAmount,
           },
@@ -216,20 +215,6 @@ export function useTimelineLayouts(deps: LayoutsDeps) {
           actionId: resAction.id,
           flatIndex: effect.flatIndex,
         });
-
-        if (effect.isConsumed) {
-          const barLeft = absoluteLeft + ICON_SIZE + BAR_MARGIN;
-          const barRight = barLeft + finalBarWidth;
-
-          const transferRect = {
-            left: barRight,
-            width: 0,
-            right: barRight,
-            height: ICON_SIZE,
-            top: absoluteTop,
-          };
-          layoutMap.set(`${effectId}_transfer`, { rect: transferRect });
-        }
       });
     });
 

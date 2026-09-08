@@ -49,8 +49,6 @@ export interface Connection {
   fromEffectIndex?: number | null;
   toEffectId?: string | null;
   toEffectIndex?: number | null;
-  isConsumption?: boolean;
-  consumptionOffset?: number;
   targetPort?: string;
   sourcePort?: string;
 }
@@ -306,7 +304,6 @@ export interface ResolvedEffect extends EffectNode {
   realDuration: number;
   realStartTime: number;
   displayDuration: number;
-  isConsumed: boolean;
   extensionAmount: number;
 }
 

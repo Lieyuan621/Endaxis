@@ -43,12 +43,11 @@ interface DragState {
 // The timeline store's connection API. Declared here from the consumer side while
 // the store is still JavaScript; Phase 2 moves these types onto the store itself.
 interface ConnectionStoreMethods {
-  getConnectionById(id: string): { isConsumption?: boolean; sourcePort?: string | null } | null;
+  getConnectionById(id: string): { sourcePort?: string | null } | null;
   removeConnection(id: string): void;
   createConnection(
     sourcePort: string | null | undefined,
     targetPort: string | null,
-    isConsumption: boolean,
     data: unknown,
   ): void;
   resolveNode(id: string | null): NodeLike | null;
@@ -132,24 +131,14 @@ export function useDragConnection() {
     clearSnap();
   }
 
-  function handleLinkDrop(
-    _fromNode: NodeLike,
-    _toNode: NodeLike,
-    targetPort: string | null,
-    connectionData: unknown,
-  ) {
+  function handleLinkDrop(targetPort: string | null, connectionData: unknown) {
     const state = connectionDragState.value;
 
-    let isConsumption = false;
     if (state.existingConnectionId) {
-      const connection = api.getConnectionById(state.existingConnectionId);
-      if (connection) {
-        isConsumption = connection.isConsumption ?? false;
-        api.removeConnection(state.existingConnectionId);
-      }
+      api.removeConnection(state.existingConnectionId);
     }
 
-    api.createConnection(state.sourcePort, targetPort, isConsumption, connectionData);
+    api.createConnection(state.sourcePort, targetPort, connectionData);
   }
 
   function validateConnection(fromId: string | null | undefined, toId: string | null | undefined) {
@@ -222,7 +211,7 @@ export function useDragConnection() {
     if (fromNode && toNode) {
       const connectionData = validateConnection(state.sourceId, finalTargetId);
       if (connectionData) {
-        handleLinkDrop(fromNode, toNode, finalPort, connectionData);
+        handleLinkDrop(finalPort, connectionData);
       }
     }
 

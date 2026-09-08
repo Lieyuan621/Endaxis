@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { compileTimeline } from './compileTimeline';
+import { compileScenario } from './compileScenario';
 import type { Action, ActionNode, CompiledEffect } from './types';
 
 function createAction(action: Partial<Action>): Action {
@@ -337,7 +338,7 @@ describe('compileTimeline', () => {
     });
   });
 
-  it('resolves consumed effects', () => {
+  it('keeps effect duration when a saved connection carries obsolete consumption metadata', () => {
     const producer = createMockAction('PROD', 0, 10, {
       hits: [
         {
@@ -362,13 +363,24 @@ describe('compileTimeline', () => {
       },
     ];
 
-    const result = compileTimeline([producer, consumer], connections);
+    const { timeline: result } = compileScenario({
+      tracks: [producer, consumer].map((action, index) => ({
+        id: `track-${index}`,
+        actions: [{ ...action.node, instanceId: action.id }],
+        stats: {} as any,
+        gaugeEfficiency: 0,
+        originiumArtsPower: 0,
+        linkCdReduction: 0,
+        initialGauge: 0,
+      })),
+      connections,
+    });
 
     const rProd = result.actions.find(a => a.id === 'PROD')!;
     const effect = rProd.effects[0];
 
     expect(effect).toBeDefined();
-    expect(effect?.isConsumed).toBe(true);
-    expect(effect?.displayDuration).toBe(5);
+    expect(effect?.realDuration).toBe(10);
+    expect(effect?.displayDuration).toBe(10);
   });
 });

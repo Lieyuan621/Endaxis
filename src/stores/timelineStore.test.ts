@@ -8,6 +8,7 @@ import { useGearStore } from './gearStore';
 import { setLocale } from '@/i18n';
 import { deserializeProjectData, serializeProjectData } from '@/utils/timeSerialization';
 import { buildResolvedSegmentPayload } from './timeline/resolveHits';
+import { useDragConnection } from '@/composables/useDragConnection';
 
 describe('timeline skill library editing', () => {
   beforeEach(() => {
@@ -122,6 +123,40 @@ describe('timeline skill library editing', () => {
     const restored = deserializeProjectData(serialized) as any;
     expect(restored.tracks[0].actions.map((action: any) => action.startTime)).toEqual([6, 7.5]);
     expect(restored.tracks[0].actions[0].followupDelay).toBe(0.5);
+  });
+
+  it('creates and reconnects ordinary action links with their selected ports', () => {
+    const store = useTimelineStore();
+    store.tracks[0]!.id = 'connection-track';
+    store.tracks[0]!.actions = [1, 3, 5].map((startTime, index) => ({
+      instanceId: `connection-action-${index}`,
+      type: 'battleSkill',
+      startTime,
+      duration: 1,
+      hits: [],
+    }));
+    const drag = useDragConnection();
+    drag.newConnectionFrom({ x: 0, y: 0 }, 'connection-action-0', 'bottom');
+    drag.endDrag('connection-action-1', 'top');
+
+    expect(store.connections).toHaveLength(1);
+    expect(store.connections[0]).toMatchObject({
+      from: 'connection-action-0',
+      to: 'connection-action-1',
+      sourcePort: 'bottom',
+      targetPort: 'top',
+    });
+
+    drag.moveConnectionEnd(store.connections[0]!.id, { x: 0, y: 0 });
+    drag.endDrag('connection-action-2', 'left');
+
+    expect(store.connections).toHaveLength(1);
+    expect(store.connections[0]).toMatchObject({
+      from: 'connection-action-0',
+      to: 'connection-action-2',
+      sourcePort: 'bottom',
+      targetPort: 'left',
+    });
   });
 
   it('exposes segmented skill children as editable library models', async () => {

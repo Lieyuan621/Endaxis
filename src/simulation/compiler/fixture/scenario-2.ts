@@ -738,7 +738,6 @@ export const scenario = {
   connections: [
     {
       id: 'conn_y6tuuz7',
-      isConsumption: false,
       sourcePort: 'right',
       targetPort: 'left',
       from: 'inst_6wgpfl3',
@@ -750,7 +749,6 @@ export const scenario = {
     },
     {
       id: 'conn_idoc2xd',
-      isConsumption: false,
       sourcePort: 'bottom-right',
       targetPort: 'left',
       from: 'inst_m4jt0hp',
@@ -762,7 +760,6 @@ export const scenario = {
     },
     {
       id: 'conn_w6ktlh2',
-      isConsumption: false,
       sourcePort: 'right',
       targetPort: 'left',
       from: 'inst_hkc1ibd',
@@ -774,7 +771,6 @@ export const scenario = {
     },
     {
       id: 'conn_i2whgic',
-      isConsumption: false,
       sourcePort: 'right',
       targetPort: 'left',
       from: 'inst_wi5a1dj',
@@ -786,7 +782,6 @@ export const scenario = {
     },
     {
       id: 'conn_lfbf55e',
-      isConsumption: false,
       sourcePort: 'bottom',
       targetPort: 'top',
       from: 'inst_wi5a1dj',
@@ -798,7 +793,6 @@ export const scenario = {
     },
     {
       id: 'conn_98nir0m',
-      isConsumption: false,
       sourcePort: 'right',
       targetPort: 'bottom-left',
       from: 'inst_xywmm49',
@@ -810,7 +804,6 @@ export const scenario = {
     },
     {
       id: 'conn_iwjx9dr',
-      isConsumption: false,
       sourcePort: 'bottom-right',
       targetPort: 'left',
       from: 'inst_nejrrla',

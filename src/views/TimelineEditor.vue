@@ -1467,10 +1467,7 @@ onUnmounted(() => {
       <template v-if="!isLeftPanelCollapsed">
         <div class="workbench-panel__body action-library-stack" :style="leftPanelStackStyle">
           <div class="action-library-stack__main action-library">
-            <ActionLibrary
-              :on-reset-panel="() => resetWorkbenchLayout('left')"
-              :on-collapse-panel="() => toggleWorkbenchPanel('left')"
-            />
+            <ActionLibrary />
           </div>
           <div v-if="!isBottomPanelCollapsed" class="action-library-stack__divider"></div>
           <div
@@ -2063,11 +2060,7 @@ onUnmounted(() => {
     >
       <template v-if="!isRightPanelCollapsed">
         <div class="workbench-panel__body properties-sidebar__body">
-          <PropertiesPanel
-            v-if="rightPanelTool === 'inspector'"
-            :on-reset-panel="() => resetWorkbenchLayout('right')"
-            :on-collapse-panel="() => toggleWorkbenchPanel('right')"
-          />
+          <PropertiesPanel v-if="rightPanelTool === 'inspector'" />
           <SimLogPanel v-else :on-collapse-panel="() => toggleWorkbenchPanel('right')" />
         </div>
       </template>
