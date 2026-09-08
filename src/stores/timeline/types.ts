@@ -4,7 +4,7 @@
 // transient fields — so the sprawling objects declare their common fields and
 // keep an index signature for the rest. Phase 2b decomposition builds on these.
 
-import type { SkillRequisite } from '@/data/types';
+import type { ConditionalFreeze, SkillRequisite } from '@/data/types';
 import type { GlobalConfigState } from '@/data/globalConfig';
 
 /** A skill/action instance placed on a track's timeline. */
@@ -49,6 +49,7 @@ export interface TimelineAction {
   kind?: string;
   triggerWindow?: number;
   animationTime?: number;
+  conditionalFreeze?: ConditionalFreeze;
   enhancementTime?: number | string;
   realStartTime?: number;
   realDuration?: number;

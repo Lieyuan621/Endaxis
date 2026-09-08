@@ -298,6 +298,11 @@ const sheet: OperatorSheet = {
       ],
     },
     battleSkill: {
+      conditionalFreeze: {
+        operatorStatus: 'camille-hunter-pursuit-ready',
+        duration: 0.5,
+        compression: 'comboSkill',
+      },
       segments: [
         {
           duration: 0.9,

@@ -466,6 +466,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         payload: segmentData.aggregatePayload,
         requisites: mergeRequisites(segmentData.segmentPayloads[0]),
         override: globalOverride,
+        extra: skill.conditionalFreeze ? { conditionalFreeze: skill.conditionalFreeze } : {},
       });
     };
 

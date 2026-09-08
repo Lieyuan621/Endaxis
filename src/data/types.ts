@@ -951,6 +951,15 @@ export interface PotentialEntry {
   patches?: Patch[];
 }
 
+/** An action-start freeze gated by a self status granted/consumed by skill hits.
+ * This is timing metadata, not a skill-type override or a general trigger condition. */
+export interface ConditionalFreeze {
+  operatorStatus: string;
+  duration: number;
+  /** Opt into mutual combo-style compression. Omit for an isolated fixed freeze. */
+  compression?: 'comboSkill';
+}
+
 export interface CombatSkillEntry {
   /** Optional so a general-form skill can be an empty `{}` placeholder filled by a form override. */
   segments?: Segment[];
@@ -966,6 +975,7 @@ export interface CombatSkillEntry {
   ultimateEnergyCost?: number;
   ultimateEnergyGain?: number;
   animationTime?: number;
+  conditionalFreeze?: ConditionalFreeze;
   /** Ultimate enhancement window. A number = fixed seconds; a string = an operator-status id whose
    *  active interval defines the window (ends when that status is consumed or expires). */
   enhancementTime?: number | string;

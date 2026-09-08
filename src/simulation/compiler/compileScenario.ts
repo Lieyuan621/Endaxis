@@ -1,4 +1,5 @@
 import { compileTimeline } from './compileTimeline';
+import type { InitialEffect } from '@/simulation/simulator';
 import type {
   ActionNode,
   ActorStats,
@@ -202,8 +203,10 @@ export function compileScenario(
   scenario: ScenarioData,
   {
     systemConstants,
+    initialEffects,
   }: {
     systemConstants?: Partial<SystemConstants>;
+    initialEffects?: readonly InitialEffect[];
     db?: GameDatabase;
   } = {},
 ): CompiledScenario {
@@ -214,7 +217,10 @@ export function compileScenario(
   };
 
   const { actions, actors } = normalizeScenario(scenario, mergedSystemConstants);
-  const compiledTimeline = compileTimeline(actions);
+  const compiledTimeline = compileTimeline(actions, {
+    initialEffects,
+    prepDuration: mergedSystemConstants.prepDuration,
+  });
 
   return {
     timeline: compiledTimeline,

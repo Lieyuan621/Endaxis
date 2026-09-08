@@ -37,6 +37,17 @@ interface SkillInput {
   element?: string;
 }
 
+interface ResolvedSegmentPayload {
+  id: string;
+  duration: number;
+  followupDelay: number;
+  skillId?: string;
+  requisites?: Segment['requisites'];
+  spCost?: number;
+  payload: { hits: ResolvedHit[] };
+  element: string;
+}
+
 // resolveLeveledValue / resolveScalingDef expect concrete argument types; these
 // wrappers cast at the dynamic-data boundary once instead of at every call.
 const rlv = (value: unknown, level: number): number =>
@@ -540,7 +551,7 @@ export function buildResolvedSegmentPayload(
   let cursor = 0;
   let aggregateElement: string | null = null;
   const aggregateHits: Dict[] = [];
-  const segmentPayloads: Dict[] = [];
+  const segmentPayloads: ResolvedSegmentPayload[] = [];
 
   rawSegments.forEach((segment, index) => {
     const rawEntries = extractRawEntries(skill, index);

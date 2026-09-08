@@ -3431,7 +3431,7 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   interface FlatSkillLike {
     segments?: (Segment | undefined)[];
-    requisites?: unknown[];
+    requisites?: Segment['requisites'];
     levelKey?: string;
     cooldown?: number | number[];
     type?: string;
@@ -3493,6 +3493,12 @@ export const useTimelineStore = defineStore('timeline', () => {
       const sourceSkillKey = getActionSourceSkillKey(action);
       const flatSkill = sourceSkillKey ? flatSkills?.[sourceSkillKey] : null;
       if (!flatSkill) return;
+
+      if (flatSkill.conditionalFreeze) {
+        action.conditionalFreeze = flatSkill.conditionalFreeze;
+      } else {
+        delete action.conditionalFreeze;
+      }
 
       const rawLevel = Number(skillLevels?.[flatSkill.levelKey ?? ''] ?? 1);
       const levelIndex = Math.max(0, Math.min((Number.isFinite(rawLevel) ? rawLevel : 1) - 1, 11));
@@ -4758,8 +4764,8 @@ export const useTimelineStore = defineStore('timeline', () => {
     const newAction = createActionFromSkill(skill, actionStartTime);
     track.actions.push(newAction);
     track.actions.sort((a, b) => a.startTime - b.startTime);
-    if (isComboLikeAction(skill) || isUltimateLikeAction(skill)) {
-      const amount = isComboLikeAction(skill) ? 0.5 : Number(skill.animationTime) || 1.5;
+    const amount = getActionFreezeDurations([newAction]).get(newAction.instanceId!) ?? 0;
+    if (amount > 0) {
       pushSubsequentActions(actionStartTime, amount, newAction.instanceId);
     }
     commitState();
@@ -4771,14 +4777,14 @@ export const useTimelineStore = defineStore('timeline', () => {
     const targets = new Set(multiSelectedIds.value);
     if (selectedActionId.value) targets.add(selectedActionId.value);
 
-    targets.forEach(id => {
-      const actionWrap = getActionById(id);
-      const action = actionWrap ? actionWrap.node : null;
-
-      if (action && (isComboLikeAction(action) || isUltimateLikeAction(action))) {
-        const amount = isComboLikeAction(action) ? 0.5 : Number(action.animationTime) || 1.5;
-        itemsToPull.push({ time: action.startTime, amount });
-      }
+    const selectedActions = Array.from(targets).flatMap(id => {
+      const action = getActionById(id)?.node;
+      return action ? [action] : [];
+    });
+    const freezeAmounts = getActionFreezeDurations(selectedActions);
+    selectedActions.forEach(action => {
+      const amount = freezeAmounts.get(action.instanceId!) ?? 0;
+      if (amount > 0) itemsToPull.push({ time: action.startTime, amount });
     });
 
     if (selectedSwitchEventId.value) {
@@ -5659,8 +5665,16 @@ export const useTimelineStore = defineStore('timeline', () => {
     isComboLikeAction,
     isUltimateLikeAction,
     getUltimateEnhancementExtender,
+    getFreezeOptions: () => ({
+      initialEffects: [
+        ...runtimeInitialEffects.value,
+        ...inheritedInitialEffects.value,
+      ] as unknown as InitialEffect[],
+      prepDuration: prepDuration.value,
+    }),
   });
   const {
+    getActionFreezeDurations,
     refreshAllActionShifts,
     getShiftedEndTime,
     getUltimateEnhancementMetrics,

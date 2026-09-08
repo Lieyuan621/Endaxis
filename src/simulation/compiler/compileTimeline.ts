@@ -9,6 +9,7 @@ import type {
   TimeExtension,
 } from './types';
 import { isComboSkillLikeAction, isUltimateLikeAction } from './types';
+import { resolveConditionalFreezeTiming, type FreezeOptions } from './conditionalFreeze';
 
 interface ShiftContext {
   shift: number;
@@ -21,18 +22,43 @@ function round(num: number, factor: number = 1000): number {
   return Math.round(num * factor) / factor;
 }
 
-function getNominalFreezeDuration(action: ActionNode['node']): number {
+function getNominalFreezeDuration(action: ActionNode['node'], conditionalDuration = 0): number {
   if (isComboSkillLikeAction(action)) return 0.5;
   if (isUltimateLikeAction(action)) return Number(action.animationTime) || 1.5;
-  return 0;
+  return conditionalDuration;
 }
 
-function calculateTimeShifts(startSortedActions: ActionNode[]) {
-  const stopSources = startSortedActions.filter(item => {
+function calculateTimeShifts(
+  startSortedActions: ActionNode[],
+  conditionalDurations: Map<string, number>,
+  nonCompressing: ReadonlySet<string>,
+) {
+  const staticSources = startSortedActions.filter(item => {
     const a = item.node;
     const hasWindow = (a.triggerWindow || 0) >= 0;
     return (isComboSkillLikeAction(a) || isUltimateLikeAction(a)) && hasWindow && !a.isDisabled;
   });
+  const staticIds = new Set(staticSources.map(item => item.id));
+  const stopSources = startSortedActions.filter(
+    item => staticIds.has(item.id) || conditionalDurations.has(item.id),
+  );
+  if (conditionalDurations.size) {
+    // A candidate was evaluated after the existing same-time freeze(s). Keep
+    // that causal order when inserting it, even if it came first in the input.
+    stopSources.sort(
+      (a, b) =>
+        a.node.startTime - b.node.startTime ||
+        Number(conditionalDurations.has(a.id)) - Number(conditionalDurations.has(b.id)),
+    );
+  }
+
+  const participatesInCompression = (item: ActionNode) =>
+    staticIds.has(item.id) ||
+    (item.node.conditionalFreeze?.compression === 'comboSkill' && !nonCompressing.has(item.id));
+  const compressionSources = stopSources.filter(participatesInCompression);
+  const nextCompressionSource = new Map(
+    compressionSources.map((item, index) => [item.id, compressionSources[index + 1]]),
+  );
 
   const sourceShiftMap = new Map<string, ShiftContext>();
   const timeExtensions: TimeExtension[] = [];
@@ -40,22 +66,25 @@ function calculateTimeShifts(startSortedActions: ActionNode[]) {
   let lastRealEnd = 0;
   let cumulativeFreezeTime = 0;
 
-  stopSources.forEach((sourceItem, index) => {
+  stopSources.forEach(sourceItem => {
     const source = sourceItem.node;
-    const nextSourceItem = stopSources[index + 1];
+    const nextSourceItem = nextCompressionSource.get(sourceItem.id);
     const nextSource = nextSourceItem?.node;
 
     const gameStart = source.startTime;
     const realStart = round(Math.max(gameStart, lastRealEnd));
 
     let amount = 0;
-    if (isUltimateLikeAction(source)) {
+    if (conditionalDurations.has(sourceItem.id) && !participatesInCompression(sourceItem)) {
+      amount = conditionalDurations.get(sourceItem.id)!;
+    } else if (isUltimateLikeAction(source)) {
       amount = Number(source.animationTime) || 1.5;
     } else if (nextSource) {
       const gap = nextSource.startTime - source.startTime;
-      amount = Math.min(0.5, Math.max(0.1, round(gap)));
+      const nominal = getNominalFreezeDuration(source, conditionalDurations.get(sourceItem.id));
+      amount = Math.min(nominal, Math.max(0.1, round(gap)));
     } else {
-      amount = 0.5;
+      amount = getNominalFreezeDuration(source, conditionalDurations.get(sourceItem.id));
     }
 
     const shift = round(realStart - gameStart);
@@ -80,40 +109,57 @@ function calculateTimeShifts(startSortedActions: ActionNode[]) {
     lastRealEnd = round(realStart + amount);
   });
 
-  return { stopSources, sourceShiftMap, timeExtensions };
+  const actionStartTimes = new Map<string, number>();
+  const effectiveDurations = new Map<string, number>();
+  let sourceIndex = -1;
+  for (const item of startSortedActions) {
+    const start = item.node.startTime;
+    while (stopSources[sourceIndex + 1] && stopSources[sourceIndex + 1]!.node.startTime <= start)
+      sourceIndex++;
+    const activeSource = stopSources[sourceIndex];
+    const ctx = activeSource ? sourceShiftMap.get(activeSource.id) : undefined;
+    const own = sourceShiftMap.get(item.id);
+    actionStartTimes.set(
+      item.id,
+      own?.realStart ?? (ctx ? round(Math.max(start + ctx.shift, ctx.realEnd)) : start),
+    );
+    const nominal = getNominalFreezeDuration(item.node, conditionalDurations.get(item.id));
+    effectiveDurations.set(
+      item.id,
+      round(Math.max(0, item.node.duration - nominal + (own?.amount ?? nominal))),
+    );
+  }
+  return {
+    sourceShiftMap,
+    timeExtensions,
+    actionStartTimes,
+    effectiveDurations,
+    timeContext: new TimeContext(timeExtensions),
+  };
+}
+
+/** Shared by compiler and editor stop-shifting; never executes the simulator. */
+export function calculateTimelineShifts(actions: ActionNode[], options: FreezeOptions = {}) {
+  const sorted = actions.toSorted((a, b) => a.node.startTime - b.node.startTime);
+  const timing = resolveConditionalFreezeTiming(
+    sorted,
+    (durations, nonCompressing) => calculateTimeShifts(sorted, durations, nonCompressing),
+    options,
+  );
+  return { ...timing, sortedActions: sorted };
 }
 
 function resolveAction(
   item: ActionNode,
-  stopSources: ActionNode[],
-  sourceShiftMap: Map<string, ShiftContext>,
-  timeCtx: TimeContext,
+  timing: ReturnType<typeof calculateTimelineShifts>,
 ): ResolvedAction {
   const action = item.node;
   const startTime = action.startTime;
 
-  let realStartTime = startTime;
-  const activeSourceItem = [...stopSources].reverse().find(s => s.node.startTime <= startTime);
-
-  const realFreezeDuration = sourceShiftMap.get(item.id)?.amount;
-  const nominalFreezeDuration = getNominalFreezeDuration(action);
-
-  if (activeSourceItem) {
-    const ctx = sourceShiftMap.get(activeSourceItem.id)!;
-    if (item.id === activeSourceItem.id) {
-      realStartTime = round(ctx.realStart);
-    } else {
-      const normalShifted = startTime + ctx.shift;
-      realStartTime = round(Math.max(normalShifted, ctx.realEnd));
-    }
-  }
-
-  const effectiveDuration = round(
-    Math.max(
-      0,
-      action.duration - nominalFreezeDuration + (realFreezeDuration ?? nominalFreezeDuration),
-    ),
-  );
+  const timeCtx = timing.timeContext;
+  const realStartTime = timing.actionStartTimes.get(item.id)!;
+  const realFreezeDuration = timing.sourceShiftMap.get(item.id)?.amount;
+  const effectiveDuration = timing.effectiveDurations.get(item.id)!;
   const realEndTime = timeCtx.getShiftedEndTime(realStartTime, effectiveDuration, item.id);
   const realDuration = round(realEndTime - realStartTime);
   const actionExtension = round(realDuration - action.duration);
@@ -219,18 +265,13 @@ function resolveAction(
   };
 }
 
-function resolveActions(
-  actions: ActionNode[],
-  stopSources: ActionNode[],
-  sourceShiftMap: Map<string, ShiftContext>,
-  timeCtx: TimeContext,
-) {
+function resolveActions(actions: ActionNode[], timing: ReturnType<typeof calculateTimelineShifts>) {
   const resolvedActions: ResolvedAction[] = [];
   const actionMap = new Map<string, ResolvedAction>();
   const effectMap = new Map<string, ResolvedEffect>();
 
   for (const item of actions) {
-    const resolvedAction = resolveAction(item, stopSources, sourceShiftMap, timeCtx);
+    const resolvedAction = resolveAction(item, timing);
     resolvedActions.push(resolvedAction);
     actionMap.set(resolvedAction.id, resolvedAction);
     resolvedAction.effects.forEach(effect => {
@@ -290,19 +331,12 @@ function rebuildEffectMap(resolvedActions: ResolvedAction[]) {
   return effectMap;
 }
 
-export function compileTimeline(actions: ActionNode[]): ResolvedTimeline {
-  const sortedActions = actions.toSorted((a, b) => a.node.startTime - b.node.startTime);
-
-  const { stopSources, sourceShiftMap, timeExtensions } = calculateTimeShifts(sortedActions);
-
-  const timeCtx = new TimeContext(timeExtensions);
-
-  const { resolvedActions, actionMap } = resolveActions(
-    sortedActions,
-    stopSources,
-    sourceShiftMap,
-    timeCtx,
-  );
+export function compileTimeline(
+  actions: ActionNode[],
+  options: FreezeOptions = {},
+): ResolvedTimeline {
+  const timing = calculateTimelineShifts(actions, options);
+  const { resolvedActions, actionMap } = resolveActions(timing.sortedActions, timing);
 
   applyActionInterruptions(resolvedActions);
   const finalEffectMap = rebuildEffectMap(resolvedActions);
@@ -316,8 +350,8 @@ export function compileTimeline(actions: ActionNode[]): ResolvedTimeline {
     actions: resolvedActions,
     actionMap,
     effectMap: finalEffectMap,
-    timeExtensions,
-    timeContext: timeCtx,
+    timeExtensions: timing.timeExtensions,
+    timeContext: timing.timeContext,
     meta: {
       totalDuration,
     },

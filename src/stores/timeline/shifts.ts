@@ -11,6 +11,9 @@ import { snapTimeToFrame } from '@/utils/time';
 import { snapMs } from '@/utils/precision';
 import { buildWindowsFromLog } from '@/simulation/projection/projectOperatorEffects';
 import type { Track, TimelineAction, UltEnhancer } from './types';
+import { calculateTimelineShifts } from '@/simulation/compiler/compileTimeline';
+import type { ActionNode } from '@/simulation/compiler/types';
+import type { FreezeOptions } from '@/simulation/compiler/conditionalFreeze';
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
 
@@ -22,6 +25,7 @@ interface ShiftsDeps {
   isComboLikeAction: (action: { type?: string } | null | undefined) => boolean;
   isUltimateLikeAction: (action: { type?: string } | null | undefined) => boolean;
   getUltimateEnhancementExtender: (trackId: string | null | undefined) => UltEnhancer | null;
+  getFreezeOptions: () => FreezeOptions;
 }
 
 // ─── Composable ──────────────────────────────────────────────────────────────
@@ -35,75 +39,55 @@ export function useShifts(deps: ShiftsDeps) {
     isComboLikeAction,
     isUltimateLikeAction,
     getUltimateEnhancementExtender,
+    getFreezeOptions,
   } = deps;
+
+  function getLogicalTiming() {
+    // Shallow timing views only: hits and effects remain shared, read-only data.
+    const actions = tracks.value.flatMap((track, trackIndex) =>
+      track.actions.map(action => ({
+        type: 'action',
+        id: action.instanceId,
+        trackId: track.id,
+        trackIndex,
+        node: { ...action, startTime: action.logicalStartTime ?? action.startTime },
+      })),
+    ) as ActionNode[];
+    return calculateTimelineShifts(actions, getFreezeOptions());
+  }
+
+  function getActionFreezeDurations(actions: readonly TimelineAction[]) {
+    const amounts = new Map<string, number>();
+    let timing: ReturnType<typeof getLogicalTiming> | undefined;
+    for (const action of actions) {
+      if (!action.instanceId) continue;
+      if (isComboLikeAction(action)) amounts.set(action.instanceId, 0.5);
+      else if (isUltimateLikeAction(action))
+        amounts.set(action.instanceId, Number(action.animationTime) || 1.5);
+      else if (action.conditionalFreeze) {
+        timing ??= getLogicalTiming();
+        // Placement/deletion moves authored positions by the nominal freeze,
+        // just as ordinary combos do. Compression is derived after that move.
+        amounts.set(
+          action.instanceId,
+          timing.sourceShiftMap.has(action.instanceId) ? action.conditionalFreeze.duration : 0,
+        );
+      }
+    }
+    return amounts;
+  }
 
   function refreshAllActionShifts(excludeIds: string | (string | undefined)[] = []) {
     const excludeSet = new Set(Array.isArray(excludeIds) ? excludeIds : [excludeIds]);
-
-    const allActions = tracks.value
-      .flatMap(t => t.actions)
-      .sort((a, b) => (a.logicalStartTime ?? a.startTime) - (b.logicalStartTime ?? b.startTime));
-
-    const stopSources = allActions.filter(
-      a =>
-        (isComboLikeAction(a) || isUltimateLikeAction(a)) &&
-        !a.isDisabled &&
-        (a.triggerWindow || 0) >= 0,
-    );
-
-    let lastPhysicalEnd = 0;
-    const sourceShiftMap = new Map();
-
-    stopSources.forEach((source, index) => {
-      const nextSource = stopSources[index + 1];
-
-      const physicalStart = Math.max(source.logicalStartTime!, lastPhysicalEnd);
-
-      let amount = 0;
-      if (isUltimateLikeAction(source)) {
-        amount = Number(source.animationTime) || 1.5;
-      } else {
-        if (nextSource) {
-          const gap = nextSource.logicalStartTime! - source.logicalStartTime!;
-          amount = Math.min(0.5, Math.max(0.1, snapTimeToFrame(gap)));
-        } else {
-          amount = 0.5;
-        }
+    const timing = getLogicalTiming();
+    for (const track of tracks.value) {
+      for (const action of track.actions) {
+        if (!action.instanceId || excludeSet.has(action.instanceId)) continue;
+        const start = snapTimeToFrame(timing.actionStartTimes.get(action.instanceId)!);
+        if (action.startTime !== start) action.startTime = start;
       }
-
-      const shift = physicalStart - source.logicalStartTime!;
-      sourceShiftMap.set(source.instanceId, {
-        shift,
-        amount,
-        physicalStart,
-        physicalEnd: physicalStart + amount,
-      });
-
-      lastPhysicalEnd = physicalStart + amount;
-    });
-
-    allActions.forEach(a => {
-      if (excludeSet.has(a.instanceId)) return;
-
-      const activeSource = [...stopSources]
-        .reverse()
-        .find(s => s.logicalStartTime! <= a.logicalStartTime!);
-
-      if (activeSource) {
-        const ctx = sourceShiftMap.get(activeSource.instanceId);
-
-        if (a.instanceId === activeSource.instanceId) {
-          a.startTime = snapTimeToFrame(ctx.physicalStart);
-        } else {
-          const normalShiftedTime = a.logicalStartTime! + ctx.shift;
-          a.startTime = snapTimeToFrame(Math.max(normalShiftedTime, ctx.physicalEnd));
-        }
-      } else {
-        a.startTime = a.logicalStartTime!;
-      }
-    });
-
-    tracks.value.forEach(t => t.actions.sort((a, b) => a.startTime - b.startTime));
+      track.actions.sort((a, b) => a.startTime - b.startTime);
+    }
   }
 
   function getShiftedEndTime(
@@ -267,6 +251,7 @@ export function useShifts(deps: ShiftsDeps) {
   }
 
   return {
+    getActionFreezeDurations,
     refreshAllActionShifts,
     getShiftedEndTime,
     getUltimateEnhancementMetrics,

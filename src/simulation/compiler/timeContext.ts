@@ -50,20 +50,21 @@ export class TimeContext {
   ): number {
     let currentTimeLimit = startTime + duration;
     const processedExtensions = new Set<string>();
-    let changed = true;
-
-    while (changed) {
-      changed = false;
-      for (const ext of this.extensions) {
-        if (ext.sourceId === excludeActionId) continue;
-        if (processedExtensions.has(ext.sourceId)) continue;
-
-        if (ext.time >= startTime && ext.time < currentTimeLimit) {
-          currentTimeLimit = round(currentTimeLimit + ext.amount);
-          processedExtensions.add(ext.sourceId);
-          changed = true;
-        }
-      }
+    // Compiler extensions are ordered by real start. Skip the unrelated prefix;
+    // walking forward also visits any later freezes reached by an extension.
+    let lo = 0;
+    let hi = this.extensions.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (this.extensions[mid]!.time < startTime) lo = mid + 1;
+      else hi = mid;
+    }
+    for (let index = lo; index < this.extensions.length; index++) {
+      const ext = this.extensions[index]!;
+      if (ext.time >= currentTimeLimit) break;
+      if (ext.sourceId === excludeActionId || processedExtensions.has(ext.sourceId)) continue;
+      currentTimeLimit = round(currentTimeLimit + ext.amount);
+      processedExtensions.add(ext.sourceId);
     }
     return currentTimeLimit;
   }

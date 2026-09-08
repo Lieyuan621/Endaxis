@@ -155,6 +155,7 @@ export function compileEndaxisScenario(input: CompileEndaxisScenarioInput) {
       tracks: compiledTracks,
     },
     {
+      initialEffects: runtimeInitialEffects,
       systemConstants: {
         ...systemConstants,
         prepDuration: Number(prepDuration) || 0,

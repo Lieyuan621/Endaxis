@@ -9,6 +9,7 @@ import { setLocale } from '@/i18n';
 import { deserializeProjectData, serializeProjectData } from '@/utils/timeSerialization';
 import { buildResolvedSegmentPayload } from './timeline/resolveHits';
 import { useDragConnection } from '@/composables/useDragConnection';
+import * as timelineCompiler from '@/simulation/compiler/compileTimeline';
 
 describe('timeline skill library editing', () => {
   beforeEach(() => {
@@ -26,6 +27,216 @@ describe('timeline skill library editing', () => {
         storage.clear();
       },
     });
+  });
+
+  it('freezes Camille pursuit without changing the battle-skill identity', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'camille');
+    store.selectTrack(0);
+    const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+    const skill = store.activeSkillLibrary.find((s: any) => s.type === 'battleSkill') as any;
+    store.addSkillToTrack('camille', ultimate, 0);
+    store.addSkillToTrack('camille', skill, 6);
+    store.addSkillToTrack('camille', skill, 10);
+
+    const pursuit = store.tracks[0]!.actions[1]!;
+    const ordinary = store.tracks[0]!.actions[2]!;
+    expect(store.compiledTimeline!.actionMap.get(pursuit.instanceId!)?.freezeDuration).toBe(0.5);
+    expect(
+      store.compiledTimeline!.actionMap.get(ordinary.instanceId!)?.freezeDuration,
+    ).toBeUndefined();
+    expect(pursuit.type).toBe('battleSkill');
+    expect(store.globalExtensions.map(e => e.amount)).toEqual([2.3, 0.5]);
+    expect(
+      store.operatorLog.some(
+        (event: any) =>
+          event.type === 'OPERATOR_EFFECT_EXPIRE' &&
+          event.id === 'camille-hunter-pursuit-ready' &&
+          event.time === 8.633,
+      ),
+    ).toBe(true);
+    expect(store.comboCooldownIntervals).toEqual([]);
+  });
+
+  it('refreshes Camille freeze metadata on reload without saving an activated flag', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'camille');
+    store.selectTrack(0);
+    const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+    const skill = store.activeSkillLibrary.find((s: any) => s.type === 'battleSkill') as any;
+    store.addSkillToTrack('camille', ultimate, 0);
+    store.addSkillToTrack('camille', skill, 6);
+    const pursuitId = store.tracks[0]!.actions[1]!.instanceId!;
+    delete store.tracks[0]!.actions[1]!.conditionalFreeze;
+    localStorage.setItem(
+      'endaxis_autosave',
+      JSON.stringify(
+        serializeProjectData({
+          version: '1.0.0',
+          timestamp: Date.now(),
+          scenarioList: JSON.parse(JSON.stringify(store.scenarioList)),
+          activeScenarioId: store.activeScenarioId,
+          systemConstants: store.systemConstants,
+          activeEnemyId: store.activeEnemyId,
+          activeEnemyLevel: store.activeEnemyLevel,
+        }),
+      ),
+    );
+    await store.loadFromBrowser();
+    expect(store.compiledTimeline!.actionMap.get(pursuitId)?.freezeDuration).toBe(0.5);
+    const reloaded = store.tracks[0]!.actions.find(a => a.instanceId === pursuitId)!;
+    expect(reloaded).not.toHaveProperty('freezeDuration');
+    const restored = deserializeProjectData(serializeProjectData({ actions: [reloaded] })) as any;
+    expect(restored.actions[0].conditionalFreeze.duration).toBe(0.5);
+    expect(restored.actions[0].conditionalFreeze.compression).toBe('comboSkill');
+  });
+
+  it.each(['before', 'after'] as const)(
+    'compresses Camille and ordinary combos in the editor with the combo %s pursuit',
+    async position => {
+      const store = useTimelineStore();
+      await store.fetchGameData();
+      store.changeTrackOperator(0, null, 'camille');
+      store.selectTrack(0);
+      const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+      const skill = store.activeSkillLibrary.find((s: any) => s.type === 'battleSkill') as any;
+      store.addSkillToTrack('camille', ultimate, 0);
+      store.addSkillToTrack('camille', skill, 6);
+      const pursuitId = store.tracks[0]!.actions[1]!.instanceId!;
+      const comboTime = position === 'before' ? 5.8 : 6.2;
+      store.tracks[1]!.actions = [
+        {
+          id: 'combo',
+          instanceId: 'combo',
+          type: 'comboSkill',
+          startTime: comboTime,
+          logicalStartTime: comboTime,
+          duration: 1,
+          hits: [],
+        },
+      ];
+      store.commitState();
+      store.refreshAllActionShifts();
+      const compressedId = position === 'before' ? 'combo' : pursuitId;
+      expect(store.compiledTimeline!.actionMap.get(compressedId)?.freezeDuration).toBe(0.2);
+      expect(store.tracks[0]!.actions[1]!.startTime).toBe(6);
+      expect(store.tracks[1]!.actions[0]!.startTime).toBe(comboTime);
+      store.updateAction('combo', { startTime: 10 });
+      expect(store.compiledTimeline!.actionMap.get(pursuitId)?.freezeDuration).toBe(0.5);
+      store.undo();
+      expect(store.compiledTimeline!.actionMap.get(compressedId)?.freezeDuration).toBe(0.2);
+      store.redo();
+      expect(store.compiledTimeline!.actionMap.get(pursuitId)?.freezeDuration).toBe(0.5);
+    },
+  );
+
+  it('uses nominal freeze time for Camille insertion just like ordinary combos', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'camille');
+    store.selectTrack(0);
+    const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+    const skill = store.activeSkillLibrary.find((s: any) => s.type === 'battleSkill') as any;
+    store.addSkillToTrack('camille', ultimate, 0);
+    store.tracks[1]!.actions = [
+      {
+        id: 'combo',
+        instanceId: 'combo',
+        type: 'comboSkill',
+        startTime: 6.2,
+        logicalStartTime: 6.2,
+        duration: 1,
+        hits: [],
+      },
+    ];
+    store.addSkillToTrack('camille', skill, 6);
+    const pursuitId = store.tracks[0]!.actions[1]!.instanceId!;
+    expect(store.tracks[1]!.actions[0]!.startTime).toBe(6.7);
+    expect(store.compiledTimeline!.actionMap.get(pursuitId)?.freezeDuration).toBe(0.5);
+    store.setMultiSelection([pursuitId]);
+    store.removeCurrentSelection();
+    expect(store.tracks[1]!.actions[0]!.startTime).toBe(6.2);
+  });
+
+  it('pushes and pulls later actions when placing and deleting Camille pursuit, including history', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'camille');
+    store.selectTrack(0);
+    const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+    const skill = store.activeSkillLibrary.find((s: any) => s.type === 'battleSkill') as any;
+    store.addSkillToTrack('camille', ultimate, 0);
+    store.addSkillToTrack('camille', skill, 10);
+    const laterId = store.tracks[0]!.actions[1]!.instanceId!;
+    store.addSkillToTrack('camille', skill, 6);
+    const pursuitId = store.tracks[0]!.actions[1]!.instanceId!;
+    const laterStart = () =>
+      store.tracks[0]!.actions.find(a => a.instanceId === laterId)!.startTime;
+    expect(laterStart()).toBe(10.5);
+    store.setMultiSelection([pursuitId]);
+    store.removeCurrentSelection();
+    expect(laterStart()).toBe(10);
+    // The remaining skill now becomes the pursuit; derived timing must be rebuilt.
+    expect(store.compiledTimeline!.actionMap.get(laterId)?.freezeDuration).toBe(0.5);
+    store.undo();
+    expect(laterStart()).toBe(10.5);
+    expect(store.compiledTimeline!.actionMap.get(laterId)?.freezeDuration).toBeUndefined();
+    store.redo();
+    expect(laterStart()).toBe(10);
+  });
+
+  it('shares Camille conditional stop-shifting between editor and compiler', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'camille');
+    store.selectTrack(0);
+    const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+    const skill = store.activeSkillLibrary.find((s: any) => s.type === 'battleSkill') as any;
+    store.addSkillToTrack('camille', ultimate, 0);
+    store.addSkillToTrack('camille', skill, 6);
+    store.tracks[1]!.actions = [
+      {
+        id: 'spectator',
+        instanceId: 'spectator',
+        type: 'battleSkill',
+        startTime: 6.2,
+        logicalStartTime: 6.2,
+        duration: 1,
+        hits: [],
+      },
+    ];
+    store.refreshAllActionShifts();
+    expect(store.tracks[1]!.actions[0]!.startTime).toBe(6.5);
+    expect(store.compiledTimeline!.actionMap.get('spectator')?.realStartTime).toBe(6.5);
+    const pursuitId = store.tracks[0]!.actions[1]!.instanceId!;
+    store.updateAction(pursuitId, { startTime: 22 });
+    store.refreshAllActionShifts();
+    expect(store.tracks[1]!.actions[0]!.startTime).toBe(6.2);
+    expect(store.compiledTimeline!.actionMap.get(pursuitId)?.freezeDuration).toBeUndefined();
+  });
+
+  it('resolves conditional timing only once when deleting multiple Camille actions', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'camille');
+    store.selectTrack(0);
+    const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+    const skill = store.activeSkillLibrary.find((s: any) => s.type === 'battleSkill') as any;
+    store.addSkillToTrack('camille', ultimate, 0);
+    store.addSkillToTrack('camille', skill, 6);
+    store.addSkillToTrack('camille', skill, 10);
+    store.setMultiSelection(store.tracks[0]!.actions.slice(1).map(a => a.instanceId!));
+    // Observe the real timing function; do not replace its computation.
+    const timingCalls = vi.spyOn(timelineCompiler, 'calculateTimelineShifts');
+    try {
+      expect(store.removeCurrentSelection().total).toBe(2);
+      expect(timingCalls).toHaveBeenCalledTimes(1);
+      expect(store.tracks[0]!.actions).toHaveLength(1);
+    } finally {
+      timingCalls.mockRestore();
+    }
   });
 
   function createActionsWithStaleGrouping() {

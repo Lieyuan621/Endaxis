@@ -8,6 +8,7 @@ import type {
   ResolvedScalingDef,
   SkillMultiplierDetail,
   SkillRequisite,
+  ConditionalFreeze,
 } from '@/data/types';
 import type { DamageBreakdown } from '@/data/stats/computeDamage';
 import type { BaseStatValues } from '@/data/stats/types';
@@ -268,6 +269,7 @@ export interface Action {
   duration: number;
   triggerWindow?: number;
   animationTime?: number;
+  conditionalFreeze?: ConditionalFreeze;
   treatAsSkillType?: ActionType;
   isDisabled?: boolean;
   weaponId?: string | null;
