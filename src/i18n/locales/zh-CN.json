@@ -1064,14 +1064,7 @@
       "spCost": "技力消耗",
       "gaugeCost": "充能消耗",
       "enhancementTimeS": "强化时间(f)",
-      "enhancementFollowsStatus": "跟随{status}",
-      "followupDelayS": "下一段间隔(f)",
-      "comboSegment": "连携段",
-      "comboLink": "连携绑定"
-    },
-    "combo": {
-      "unlink": "解绑",
-      "relink": "重绑"
+      "enhancementFollowsStatus": "跟随{status}"
     },
     "damage": {
       "title": "伤害判定点",

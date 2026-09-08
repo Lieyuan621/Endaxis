@@ -769,12 +769,10 @@ function getActionLogicalStart(action) {
 }
 
 function getActionDragTargets(track, sourceAction) {
-  const allActions = tracks.value.flatMap(item => item?.actions || []);
   let targets = [sourceAction];
 
-  if (sourceAction?.comboGroupId && sourceAction.comboLinked !== false) {
-    targets = allActions.filter(action => action?.comboGroupId === sourceAction.comboGroupId);
-  } else if (sourceAction?.attackGroupInstanceId) {
+  if (sourceAction?.attackGroupInstanceId) {
+    const allActions = tracks.value.flatMap(item => item?.actions || []);
     targets = allActions.filter(
       action => action?.attackGroupInstanceId === sourceAction.attackGroupInstanceId,
     );

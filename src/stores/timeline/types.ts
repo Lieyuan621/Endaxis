@@ -52,14 +52,6 @@ export interface TimelineAction {
   enhancementTime?: number | string;
   realStartTime?: number;
   realDuration?: number;
-  comboGroupId?: string;
-  comboSegmentIndex?: number;
-  comboSegmentTotal?: number;
-  comboLinked?: boolean;
-  comboFollowupDelay?: number;
-  comboPrevId?: string | null;
-  comboNextId?: string | null;
-  comboParentSkillId?: string | null;
   attackSegmentIndex?: number;
   [key: string]: unknown;
 }

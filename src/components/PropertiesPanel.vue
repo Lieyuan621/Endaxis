@@ -180,45 +180,6 @@ const currentSkillType = computed(() => {
   return toLegacyDisplayType(targetData.value?.type) || 'unknown';
 });
 
-// === 分段连携 ===
-const isComboInstance = computed(() => {
-  if (isLibraryMode.value) return false;
-  const a = targetData.value;
-  if (!a) return false;
-  const idx = Number(a.comboSegmentIndex) || 0;
-  const total = Number(a.comboSegmentTotal) || 0;
-  return !!a.comboGroupId && idx > 0 && total >= 2 && idx <= total;
-});
-
-const comboLinked = computed(() => {
-  if (!isComboInstance.value) return false;
-  return targetData.value.comboLinked !== false;
-});
-
-const isComboSeg1 = computed(() => {
-  if (!isComboInstance.value) return false;
-  return Number(targetData.value.comboSegmentIndex) === 1;
-});
-
-const isComboHasNext = computed(() => {
-  if (!isComboInstance.value) return false;
-  const idx = Number(targetData.value.comboSegmentIndex) || 0;
-  const total = Number(targetData.value.comboSegmentTotal) || 0;
-  return idx > 0 && total > 0 && idx < total;
-});
-
-const comboSegmentText = computed(() => {
-  if (!isComboInstance.value) return '';
-  const idx = Number(targetData.value.comboSegmentIndex) || 0;
-  const total = Number(targetData.value.comboSegmentTotal) || 2;
-  return `${idx}/${total}`;
-});
-
-function toggleComboLinked() {
-  if (!isComboInstance.value) return;
-  updateActionProp('comboLinked', !comboLinked.value);
-}
-
 // === 统一更新函数===
 function commitUpdate(payload) {
   if (!targetData.value) return;
@@ -648,39 +609,6 @@ function handleStartConnection(id, type = null) {
               @update:model-value="val => updateActionFrameProp('cooldown', val)"
               :step="1"
               :min="0"
-              :activeColor="HIGHLIGHT_COLORS.default"
-              text-align="center"
-            />
-          </div>
-
-          <div class="form-group compact" v-if="isComboInstance">
-            <label>{{ t('propertiesPanel.labels.comboSegment') }}</label>
-            <div class="combo-hint">{{ comboSegmentText }}</div>
-          </div>
-
-          <div class="form-group compact" v-if="isComboInstance">
-            <label>{{ t('propertiesPanel.labels.comboLink') }}</label>
-            <button
-              type="button"
-              class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent"
-              @click.stop="toggleComboLinked"
-            >
-              {{
-                comboLinked ? t('propertiesPanel.combo.unlink') : t('propertiesPanel.combo.relink')
-              }}
-            </button>
-          </div>
-
-          <div
-            class="form-group compact"
-            v-if="currentSkillType === 'link' && isComboHasNext && comboLinked"
-          >
-            <label>{{ t('propertiesPanel.labels.followupDelayS') }}</label>
-            <CustomNumberInput
-              :model-value="frameValue(targetData.comboFollowupDelay || 0)"
-              @update:model-value="val => updateActionFrameProp('comboFollowupDelay', val)"
-              :min="0"
-              :step="1"
               :activeColor="HIGHLIGHT_COLORS.default"
               text-align="center"
             />
@@ -1623,19 +1551,6 @@ function handleStartConnection(id, type = null) {
   border-radius: var(--right-panel-container-radius);
 }
 
-.combo-hint {
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--ea-fill-input, #16161a);
-  box-shadow: 0 0 0 1px var(--ea-border-strong, #333) inset;
-  color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.7));
-  font-family: 'Roboto Mono', 'Consolas', monospace;
-  font-size: 12px;
-  user-select: none;
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -1652,61 +1567,56 @@ function handleStartConnection(id, type = null) {
 }
 
 /* Light: solid panels instead of near-invisible white glass. */
-:global(html[data-theme='light'] .properties-panel .header-tool-btn){
+:global(html[data-theme='light'] .properties-panel .header-tool-btn) {
   color: var(--ea-icon-muted);
 }
-:global(html[data-theme='light'] .properties-panel .header-tool-btn:hover){
+:global(html[data-theme='light'] .properties-panel .header-tool-btn:hover) {
   color: var(--ea-icon-strong);
   background: var(--ea-hover-fill);
 }
-:global(html[data-theme='light'] .properties-panel .section-container){
+:global(html[data-theme='light'] .properties-panel .section-container) {
   background: var(--ea-panel-elevated);
   border-color: var(--ea-border-strong);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: 0 1px 2px var(--ea-shadow);
 }
-:global(html[data-theme='light'] .properties-panel .section-container.tech-style){
+:global(html[data-theme='light'] .properties-panel .section-container.tech-style) {
   background: var(--ea-panel-elevated);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border-color: var(--ea-border-strong);
   border-left-color: var(--ea-border-strong);
 }
-:global(html[data-theme='light'] .properties-panel .section-container.tech-style::before){
+:global(html[data-theme='light'] .properties-panel .section-container.tech-style::before) {
   border-right-color: var(--ea-border-strong);
   border-bottom-color: var(--ea-border-strong);
 }
-:global(html[data-theme='light'] .properties-panel .section-summary){
+:global(html[data-theme='light'] .properties-panel .section-summary) {
   color: var(--ea-fg-muted);
 }
-:global(html[data-theme='light'] .properties-panel .tech-style .form-group.compact label){
+:global(html[data-theme='light'] .properties-panel .tech-style .form-group.compact label) {
   color: var(--ea-fg-muted) !important;
 }
-:global(html[data-theme='light'] .properties-panel .form-group.compact label){
+:global(html[data-theme='light'] .properties-panel .form-group.compact label) {
   color: var(--ea-fg-muted);
 }
-:global(html[data-theme='light'] .properties-panel .readonly-field){
+:global(html[data-theme='light'] .properties-panel .readonly-field) {
   color: var(--ea-fg);
   background: rgba(179, 127, 235, 0.1);
 }
-:global(html[data-theme='light'] .properties-panel .empty-hint){
+:global(html[data-theme='light'] .properties-panel .empty-hint) {
   color: var(--ea-fg-faint);
 }
-:global(html[data-theme='light'] .properties-panel .simple-input){
+:global(html[data-theme='light'] .properties-panel .simple-input) {
   color: var(--ea-fg);
   border-bottom-color: var(--ea-border-strong);
 }
-:global(html[data-theme='light'] .properties-panel .tick-item){
+:global(html[data-theme='light'] .properties-panel .tick-item) {
   background: var(--ea-fill-soft) !important;
   border-color: var(--ea-border) !important;
   border-left-color: var(--ea-border-strong) !important;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-}
-:global(html[data-theme='light'] .properties-panel .combo-hint){
-  background-color: var(--ea-fill-input);
-  box-shadow: 0 0 0 1px var(--ea-border) inset;
-  color: var(--ea-fg-secondary);
 }
 </style>

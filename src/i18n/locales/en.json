@@ -1064,14 +1064,7 @@
       "spCost": "SP Cost",
       "gaugeCost": "Charge Cost",
       "enhancementTimeS": "Enhancement Time (f)",
-      "enhancementFollowsStatus": "Follows {status}",
-      "followupDelayS": "Next Delay (f)",
-      "comboSegment": "Combo Segment",
-      "comboLink": "Combo Link"
-    },
-    "combo": {
-      "unlink": "Unlink",
-      "relink": "Relink"
+      "enhancementFollowsStatus": "Follows {status}"
     },
     "damage": {
       "title": "Damage Points",

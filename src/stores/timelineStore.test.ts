@@ -6,7 +6,8 @@ import { useOperatorStore } from './operatorStore';
 import { useWeaponStore } from './weaponStore';
 import { useGearStore } from './gearStore';
 import { setLocale } from '@/i18n';
-import { serializeProjectData } from '@/utils/timeSerialization';
+import { deserializeProjectData, serializeProjectData } from '@/utils/timeSerialization';
+import { buildResolvedSegmentPayload } from './timeline/resolveHits';
 
 describe('timeline skill library editing', () => {
   beforeEach(() => {
@@ -24,6 +25,103 @@ describe('timeline skill library editing', () => {
         storage.clear();
       },
     });
+  });
+
+  function createActionsWithStaleGrouping() {
+    return [6, 8].map((startTime, index) => ({
+      id: `independent-skill-${index}`,
+      instanceId: `independent-action-${index}`,
+      type: 'battleSkill',
+      startTime,
+      logicalStartTime: startTime,
+      duration: 1,
+      hits: [],
+      comboGroupId: 'obsolete-group',
+      comboSegmentIndex: index + 1,
+      comboSegmentTotal: 2,
+      comboLinked: true,
+      comboFollowupDelay: index === 0 ? 1 : 0,
+    }));
+  }
+
+  it.each([{ duration: 2 }, { startTime: 7 }])(
+    'edits only the requested action despite stale grouping metadata: %j',
+    patch => {
+      const store = useTimelineStore();
+      store.tracks[0]!.id = 'independent-actions';
+      store.tracks[0]!.actions = createActionsWithStaleGrouping();
+      store.commitState();
+
+      store.updateAction('independent-action-0', patch);
+
+      expect(store.tracks[0]!.actions[0]).toMatchObject(patch);
+      expect(store.tracks[0]!.actions[1]).toMatchObject({
+        startTime: 8,
+        logicalStartTime: 8,
+        duration: 1,
+      });
+
+      store.undo();
+      expect(store.tracks[0]!.actions[0]).toMatchObject({ startTime: 6, duration: 1 });
+      store.redo();
+      expect(store.tracks[0]!.actions[0]).toMatchObject(patch);
+      expect(store.tracks[0]!.actions[1]).toMatchObject({ startTime: 8, duration: 1 });
+    },
+  );
+
+  it('deletes only selected actions despite stale grouping metadata, including after undo', () => {
+    const store = useTimelineStore();
+    store.tracks[0]!.id = 'independent-actions';
+    store.tracks[0]!.actions = createActionsWithStaleGrouping();
+    store.commitState();
+    store.setMultiSelection(['independent-action-0']);
+
+    expect(store.removeCurrentSelection().total).toBe(1);
+    expect(store.tracks[0]!.actions.map(action => action.instanceId)).toEqual([
+      'independent-action-1',
+    ]);
+
+    store.undo();
+    expect(store.tracks[0]!.actions).toHaveLength(2);
+    store.redo();
+    expect(store.tracks[0]!.actions.map(action => action.instanceId)).toEqual([
+      'independent-action-1',
+    ]);
+  });
+
+  it('keeps current segment gaps in aggregate hits, placement, and frame serialization', () => {
+    const store = useTimelineStore();
+    store.tracks[0]!.id = 'segment-timing';
+    const resolved = buildResolvedSegmentPayload('timing-skill', {
+      segments: [
+        { duration: 1, gap: 0.5, damageGroups: [{ hits: [{ offset: 0.25 }] }] },
+        { duration: 2, damageGroups: [{ hits: [{ offset: 0.25 }] }] },
+      ],
+    });
+    expect(resolved.totalDuration).toBe(3.5);
+    expect(resolved.aggregatePayload.hits.map(hit => hit.offset)).toEqual([0.25, 1.75]);
+
+    store.addSkillToTrack(
+      'segment-timing',
+      {
+        id: 'timing-skill',
+        type: 'battleSkill',
+        segments: resolved.segmentPayloads.map(segment => ({
+          id: segment.id,
+          duration: segment.duration,
+          followupDelay: segment.followupDelay,
+          hits: segment.payload.hits,
+        })),
+      },
+      6,
+    );
+    expect(store.tracks[0]!.actions.map(action => action.startTime)).toEqual([6, 7.5]);
+
+    const serialized = serializeProjectData({ tracks: store.tracks }) as any;
+    expect(serialized.tracks[0].actions[0].followupDelay).toBe(30);
+    const restored = deserializeProjectData(serialized) as any;
+    expect(restored.tracks[0].actions.map((action: any) => action.startTime)).toEqual([6, 7.5]);
+    expect(restored.tracks[0].actions[0].followupDelay).toBe(0.5);
   });
 
   it('exposes segmented skill children as editable library models', async () => {
@@ -94,9 +192,7 @@ describe('timeline skill library editing', () => {
     expect(battleSkill).toBeTruthy();
 
     store.addSkillToTrack('zhuang-fangyi', battleSkill, 1);
-    const action = store.tracks[0]!.actions.find(
-      (item: any) => item.id === battleSkill.id,
-    ) as any;
+    const action = store.tracks[0]!.actions.find((item: any) => item.id === battleSkill.id) as any;
     expect(action).toBeTruthy();
 
     const sheetDuration = Number(action.duration) || 0;
@@ -141,9 +237,7 @@ describe('timeline skill library editing', () => {
       (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
     ) as any;
     store.addSkillToTrack('zhuang-fangyi', battleSkill, 1);
-    const action = store.tracks[0]!.actions.find(
-      (item: any) => item.id === battleSkill.id,
-    ) as any;
+    const action = store.tracks[0]!.actions.find((item: any) => item.id === battleSkill.id) as any;
     const sheetDuration = action._sheetDurationBaseline;
 
     store.updateAction(action.instanceId, { duration: 0 });
@@ -182,9 +276,7 @@ describe('timeline skill library editing', () => {
       (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
     ) as any;
     store.addSkillToTrack('zhuang-fangyi', battleSkill, 1);
-    const action = store.tracks[0]!.actions.find(
-      (item: any) => item.id === battleSkill.id,
-    ) as any;
+    const action = store.tracks[0]!.actions.find((item: any) => item.id === battleSkill.id) as any;
     const currentSheetDuration = action._sheetDurationBaseline;
     const oldSheetDuration = currentSheetDuration + 1;
     action.duration = oldSheetDuration;
@@ -226,9 +318,7 @@ describe('timeline skill library editing', () => {
       (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
     ) as any;
     store.addSkillToTrack('zhuang-fangyi', battleSkill, 1);
-    const action = store.tracks[0]!.actions.find(
-      (item: any) => item.id === battleSkill.id,
-    ) as any;
+    const action = store.tracks[0]!.actions.find((item: any) => item.id === battleSkill.id) as any;
     const sheetDuration = action._sheetDurationBaseline;
     const legacyDuration = sheetDuration + 2;
     action.duration = legacyDuration;

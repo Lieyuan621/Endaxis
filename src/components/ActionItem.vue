@@ -40,15 +40,7 @@ const displayLabel = computed(() => {
   const type = props.action.type;
   const width = secWidth.value;
 
-  const variantSuffix = isVariant.value ? '*' : '';
-  const comboIdx = Number(props.action.comboSegmentIndex) || 0;
-  const comboTotal = Number(props.action.comboSegmentTotal) || 0;
-  const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
-  const comboSuffix =
-    props.action.kind !== 'segment' && comboTotal >= 2 && comboIdx >= 1
-      ? CIRCLED[comboIdx - 1] || `(${comboIdx})`
-      : '';
-  const suffix = `${variantSuffix}${comboSuffix}`;
+  const suffix = isVariant.value ? '*' : '';
 
   if (props.action.kind === 'attack_segment') {
     const total = Number(props.action.attackSequenceTotal) || 0;
@@ -110,9 +102,7 @@ const themePaint = computed(() => {
   const fill = isLight
     ? solidFillForLightTrack(color, isAttack ? 0.7 : 0.48)
     : hexToRgba(color, 0.15);
-  const attackBorder = isLight
-    ? `1.5px solid ${color}`
-    : `1.5px solid ${hexToRgba(color, 0.4)}`;
+  const attackBorder = isLight ? `1.5px solid ${color}` : `1.5px solid ${hexToRgba(color, 0.4)}`;
   const glowAlpha = isLight ? 0.18 : 0.5;
   // Soft outer ring separates dashed skill edges from 1px grid lines.
   const edgeRing = isLight ? '0 0 0 1px rgba(26, 27, 30, 0.22)' : 'none';
@@ -202,10 +192,7 @@ const effectiveUltimateCooldown = computed(() => {
   if (props.action.type !== 'ultimate') return 0;
   let reduction = 0;
   for (const entry of store.simLog || store.simulation?.simLog || []) {
-    if (
-      entry.type !== 'CD_REDUCTION' ||
-      entry.payload?.actionId !== props.action.instanceId
-    ) {
+    if (entry.type !== 'CD_REDUCTION' || entry.payload?.actionId !== props.action.instanceId) {
       continue;
     }
     if (entry.payload?.clearedRemaining === true) return 0;
@@ -394,11 +381,7 @@ const style = computed(() => {
     backgroundColor: fill,
     backdropFilter: glassBlur,
     color: textColor,
-    boxShadow: selected
-      ? `0 0 10px ${glow}`
-      : isLight
-        ? paint.edgeRing
-        : 'none',
+    boxShadow: selected ? `0 0 10px ${glow}` : isLight ? paint.edgeRing : 'none',
   };
 });
 
@@ -986,7 +969,7 @@ function handleActionDragStart(startPos, port) {
 .action-item-wrapper:hover {
   filter: brightness(1.2);
 }
-:global(html[data-theme='light'] .action-item-wrapper:hover){
+:global(html[data-theme='light'] .action-item-wrapper:hover) {
   filter: brightness(1.04);
 }
 
@@ -1065,16 +1048,10 @@ function handleActionDragStart(startPos, port) {
 }
 
 :global(
-  html[data-theme='light']
-    .action-requisite-tooltip-popper.el-popper
-    .el-popper__arrow::before
+  html[data-theme='light'] .action-requisite-tooltip-popper.el-popper .el-popper__arrow::before
 ) {
   background: var(--ea-tooltip-bg, #ffffff) !important;
-  border-color: color-mix(
-    in srgb,
-    #e11d48 45%,
-    var(--ea-dialog-border, #d8dbe0)
-  ) !important;
+  border-color: color-mix(in srgb, #e11d48 45%, var(--ea-dialog-border, #d8dbe0)) !important;
 }
 
 .action-item-content {
