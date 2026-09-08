@@ -1267,6 +1267,7 @@
     "stackMultiplierDetail": "{stacks} stacks × {coefficient}",
     "attributeMultiplierDetail": "{attribute} {value} × {coefficient}",
     "baseDamage": "Base Damage",
+    "flatBaseDamage": "Flat Base Damage",
     "critRateScale": "Crit Rate Scale",
     "critRateScaleTooltip": "This hit uses an extra crit-rate scale.",
     "dmgBonus": "Damage Bonus",

@@ -475,11 +475,23 @@ export interface PhysicalStatusEffect extends EffectBase {
   effectiveness?: Leveled<number>;
 }
 
+/** Base damage = selected live stat * multiplier / 100 + flat. Defaults to ATK. */
+export interface DamageBase {
+  stat: 'attack' | 'defense';
+  flat?: Leveled<number>;
+}
+
+export interface ResolvedDamageBase {
+  stat: DamageBase['stat'];
+  flat?: number;
+}
+
 /** Dispatches a DAMAGE_HIT event from the trigger owner. Always targets the enemy. */
 export interface DamageHitEffect extends EffectBase {
   kind: 'damageHit';
   element: DamageElement;
   multiplier: Leveled<number>;
+  damageBase?: DamageBase;
   multiplierScaling?: ScalingDef;
   staggerScaling?: ScalingDef;
   /** Delay in seconds before the hit fires (default 0). */
@@ -838,6 +850,7 @@ export interface ResolvedDamageHitEffect extends ResolvedEffectBase {
   kind: 'damageHit';
   element: DamageElement;
   multiplier: number;
+  damageBase?: ResolvedDamageBase;
   multiplierScaling?: ResolvedScalingDef;
   staggerScaling?: ResolvedScalingDef;
   offset?: number;

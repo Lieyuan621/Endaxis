@@ -14,6 +14,7 @@ import zhuangFangyiSheet from '@/data/operators/zhuang-fangyi';
 import liinoSheet from '@/data/operators/liino';
 import rossiSheet from '@/data/operators/rossi';
 import lastRiteSheet from '@/data/operators/last-rite';
+import catcherSheet from '@/data/operators/catcher';
 import { setLocale } from '@/i18n';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
@@ -306,7 +307,208 @@ function totalDamage(result: ReturnType<typeof runScenario>) {
   return damageHits(result).reduce((sum, hit) => sum + Number(hit._expectedDamage), 0);
 }
 
+function runCatcherPotential(
+  potential: number,
+  skillKey: 'basicAttack' | 'battleSkill' | 'comboSkill' | 'ultimate',
+  talentStates = {},
+  options: Parameters<typeof runScenario>[2] = {},
+) {
+  const operator = createOperatorInstance('catcher', { potential, talentStates });
+  const tracks = [
+    createTrack('catcher', [
+      createAction(`catcher_${skillKey}`, skillKey, {
+        duration: 3.43,
+        hits: resolveOperatorSheetHits(catcherSheet, skillKey, 0, 0, operator),
+      }),
+    ]),
+  ];
+  return runScenario(
+    tracks,
+    createRegistry(collectRuntimeTriggers(createTeam(operator.id), [operator], [], [], tracks)),
+    options,
+  );
+}
+
 describe('optimizer damage golden baselines', () => {
+  it('applies physical bonuses but not battle-skill bonuses to Catcher P1 defense damage', () => {
+    const result = runCatcherPotential(
+      1,
+      'battleSkill',
+      {},
+      {
+        initialEffects: [
+          {
+            targetTrackId: 'catcher',
+            id: 'armor:defense',
+            stat: { modifier: 'flatDef' },
+            value: 100,
+            sourceId: 'catcher',
+          },
+          {
+            targetTrackId: 'catcher',
+            id: 'physical-buff',
+            stat: { modifier: 'dmgBonus', elements: 'physical' },
+            value: 20,
+            sourceId: 'catcher',
+          },
+          {
+            targetTrackId: 'catcher',
+            id: 'skill-buff',
+            stat: { modifier: 'dmgBonus', skillTypes: 'battleSkill' },
+            value: 50,
+            sourceId: 'catcher',
+          },
+        ],
+      },
+    );
+    const extra = damageHits(result).filter(hit => hit.triggered && !hit._reactionMeta);
+    expect(extra).toHaveLength(1);
+    expect(extra[0]!._damageBreakdown).toMatchObject({
+      base: 800,
+      damageBase: { stat: 'defense', value: 100, flat: 300 },
+      dmgBonus: 0.2,
+    });
+  });
+
+  it('does not retrigger Catcher P1 from Global Perspective shockwaves', () => {
+    const extra = damageHits(runCatcherPotential(1, 'ultimate', { '1': 2 })).filter(
+      hit => hit.triggered && !hit._reactionMeta,
+    );
+    expect(extra).toHaveLength(4);
+    expect(extra.filter(hit => hit.damageBase?.stat === 'defense')).toHaveLength(3);
+    expect(
+      extra.filter(hit => !hit.damageBase).map(hit => hit._damageBreakdown?.multiplier),
+    ).toEqual([135]);
+  });
+
+  it.each([
+    { potential: 0, skill: 'battleSkill' as const, expected: 0 },
+    { potential: 1, skill: 'battleSkill' as const, expected: 1 },
+    { potential: 1, skill: 'ultimate' as const, expected: 3 },
+    { potential: 1, skill: 'basicAttack' as const, expected: 0 },
+    { potential: 1, skill: 'comboSkill' as const, expected: 0 },
+  ])(
+    'Catcher P$potential adds $expected potential hits for $skill without recursive triggers',
+    ({ potential, skill, expected }) => {
+      const hits = damageHits(runCatcherPotential(potential, skill));
+      const extra = hits.filter(hit => hit.triggered && !hit._reactionMeta);
+      expect(extra).toHaveLength(expected);
+      for (const hit of extra) {
+        expect(hit._damageBreakdown).toMatchObject({
+          element: 'physical',
+          base: 300,
+          damageBase: { stat: 'defense', value: 0, flat: 300 },
+        });
+        expect(hit._damageBreakdown?.skillType).toBeUndefined();
+      }
+    },
+  );
+
+  it('uses live defense plus flat damage without attack scaling and attributes external defense', () => {
+    const tracks = [
+      createTrack('catcher', [
+        createAction('defense_damage', 'ultimate', {
+          hits: [0, 2].map(offset => ({
+            offset,
+            multiplier: 500,
+            damageBase: { stat: 'defense' as const, flat: 300 },
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+          })),
+        }),
+      ]),
+      createTrack('support', [
+        createAction('defense_buff', 'battleSkill', {
+          startTime: 1,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  kind: 'status',
+                  stat: { modifier: 'flatDef' },
+                  value: 20,
+                  target: 'team',
+                  duration: 10,
+                },
+              ],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const result = runScenario(tracks, undefined, {
+      initialEffects: [
+        {
+          targetTrackId: 'catcher',
+          id: 'armor:defense',
+          stat: { modifier: 'flatDef' },
+          value: 100,
+          sourceId: 'catcher',
+        },
+        {
+          targetTrackId: 'catcher',
+          id: 'def-percent',
+          stat: { modifier: 'defPercent' },
+          value: 50,
+          sourceId: 'catcher',
+        },
+        {
+          targetTrackId: 'catcher',
+          id: 'atk-buff',
+          stat: { modifier: 'atkPercent' },
+          value: 100,
+          sourceId: 'support',
+        },
+      ],
+    });
+    const hits = damageHits(result);
+    expect(hits.map(hit => hit._damageBreakdown?.base)).toEqual([1050, 1150]);
+    expect(hits.map(hit => hit._damageBreakdown?.damageBase?.value)).toEqual([150, 170]);
+    expect((hits[0]!._lmdiExternal as Record<string, number>)?.support ?? 0).toBe(0);
+    expect((hits[1]!._lmdiExternal as Record<string, number>)?.support).toBeGreaterThan(0);
+    for (const hit of hits) {
+      expect(
+        (hit._lmdiSelf ?? 0) +
+          Object.values(hit._lmdiExternal ?? {}).reduce((sum, value) => sum + value, 0),
+      ).toBeCloseTo(hit._expectedDamage!, 8);
+    }
+  });
+
+  it.each([
+    { stage: 0, levelIndex: 0, expected: [] },
+    { stage: 1, levelIndex: 0, expected: [60] },
+    { stage: 2, levelIndex: 0, expected: [135] },
+    { stage: 0, levelIndex: 11, expected: [] },
+    { stage: 1, levelIndex: 11, expected: [60] },
+    { stage: 2, levelIndex: 11, expected: [135] },
+  ])(
+    'Catcher Global Perspective stage $stage at skill index $levelIndex applies the correct shockwave multiplier',
+    ({ stage, levelIndex, expected }) => {
+      const hits = resolveOperatorSheetHits(catcherSheet, 'ultimate', levelIndex, 0, {
+        talentStates: { '1': stage },
+        potential: 0,
+      });
+      const result = runScenario([
+        createTrack('catcher', [
+          createAction('catcher_ultimate', 'ultimate', { duration: 3.43, hits }),
+        ]),
+      ]);
+      const shockwaves = damageHits(result).filter(hit => hit.triggeredBy && !hit._reactionMeta);
+
+      // The existing implementation combines the shockwaves: 2 x 30% / 3 x 45%.
+      expect(shockwaves.map(hit => hit._damageBreakdown?.multiplier)).toEqual(expected);
+      for (const hit of shockwaves) {
+        expect(hit._damageBreakdown?.element).toBe('physical');
+      }
+    },
+  );
+
   it('caps expected crit rate while retaining raw rate and source snapshots', () => {
     const breakdown = computeExpectedDamageWithBreakdown({
       attack: 1000,
@@ -584,11 +786,7 @@ describe('optimizer damage golden baselines', () => {
 
   it('keeps Zhuang Fangyi consumed Electrification scaling on the owning action', () => {
     const trackerId = 'zhuangfangyi-battle-bonus-multiplier-tracker';
-    const enhancedHits = resolveOperatorSheetHits(
-      zhuangFangyiSheet,
-      'enhancedBattleSkill',
-      11,
-    );
+    const enhancedHits = resolveOperatorSheetHits(zhuangFangyiSheet, 'enhancedBattleSkill', 11);
     const generationHit = enhancedHits.find(
       hit => hit.id === 'zhuang-fangyi-battle-sunderblades-generation-hit',
     );
@@ -660,8 +858,7 @@ describe('optimizer damage golden baselines', () => {
     );
     const hit = result.simLog
       .flatMap(entry =>
-        entry.type === 'DAMAGE_HIT' &&
-        entry.payload.actionId === 'next_enhanced_battle_inst'
+        entry.type === 'DAMAGE_HIT' && entry.payload.actionId === 'next_enhanced_battle_inst'
           ? [entry.payload.hitData]
           : [],
       )

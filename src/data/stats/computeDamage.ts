@@ -8,13 +8,15 @@
  *   ATK * (multiplier/100) * (1+dmgBonus) * (1+critRate*critDmg)
  *     * (1+ampBonus) * directMult * (1+susceptibility) * (1+increasedDmgTaken)
  *     * linkMult * defMult * resMult
+ * Optional damageBase replaces ATK with the selected live stat and adds a flat
+ * amount before applying these damage modifiers.
  *
  * Enemy resistance is stored as resistance points: 20 means the target takes 80% damage.
  * Resistance ignore and shred subtract from enemy resistance before converting to resMult.
  */
 
 import type { ScopedDamageModifier, StatSourceEntry } from './types';
-import type { DamageElement } from '../types';
+import type { DamageElement, ResolvedDamageBase } from '../types';
 import type { SkillMultiplierDetail } from '../types';
 import type { ConsumedStatEffect } from '@/simulation/compiler/types';
 import type { OperatorStatus, ComputedEnemyStatus } from '@/types';
@@ -444,6 +446,7 @@ export const STAGGER_DAMAGE_MULTIPLIER = 1.3;
 
 interface HitDamageParams {
   attack: number;
+  damageBase?: DamageBaseSnapshot;
   multiplier: number; // percentage, e.g. 155
   multiplierDetail?: SkillMultiplierDetail;
   skillType?: string;
@@ -478,8 +481,29 @@ interface HitDamageParams {
 
 // ─── Damage breakdown (for detail dialog) ──────────────────────────────────
 
+export interface DamageBaseSnapshot {
+  stat: ResolvedDamageBase['stat'];
+  value: number;
+  flat: number;
+}
+
+/** Reuse the hit's computed stats; never run another stat pass for an alternate base. */
+export function snapshotDamageBase(
+  definition: ResolvedDamageBase | undefined,
+  status: Pick<OperatorStatus, 'attack' | 'defense'>,
+  attack = status.attack,
+): DamageBaseSnapshot | undefined {
+  if (!definition) return undefined;
+  return {
+    stat: definition.stat,
+    value: definition.stat === 'attack' ? attack : status.defense,
+    flat: definition.flat ?? 0,
+  };
+}
+
 export interface DamageBreakdown {
   attack: number;
+  damageBase?: DamageBaseSnapshot;
   /** Present when the hit was computed with full operator ATK components. */
   atkDetail?: AtkDetailSnapshot;
   multiplier: number;
@@ -542,7 +566,7 @@ export function computeExpectedDamageWithBreakdown(
   p: HitDamageParams,
   element?: string,
 ): DamageBreakdown {
-  const base = p.attack * (p.multiplier / 100);
+  const base = (p.damageBase?.value ?? p.attack) * (p.multiplier / 100) + (p.damageBase?.flat ?? 0);
   const dmgBonusMult = 1 + p.dmgBonus;
   const critRateRaw = p.critRate;
   const critRate = Math.min(critRateRaw, 1);
@@ -576,6 +600,7 @@ export function computeExpectedDamageWithBreakdown(
 
   return {
     attack: p.attack,
+    ...(p.damageBase ? { damageBase: p.damageBase } : {}),
     atkDetail: p.atkDetail,
     multiplier: p.multiplier,
     multiplierDetail: p.multiplierDetail,
@@ -635,6 +660,7 @@ export function computeExpectedDamageWithBreakdown(
 export function computeHitDamageWithBreakdown(
   hit: {
     multiplier?: number;
+    damageBase?: ResolvedDamageBase;
     skillType?: string;
     skillId?: string;
     consumedStacks?: Record<string, number>;
@@ -650,7 +676,7 @@ export function computeHitDamageWithBreakdown(
   enemyResistance: number = 0,
   enemyEntries: Parameters<typeof collectEnemyHitModifierSources>[0] = [],
 ): DamageBreakdown | null {
-  if (hit.multiplier == null || hit.multiplier === 0) return null;
+  if (hit.multiplier == null || (hit.multiplier === 0 && !hit.damageBase?.flat)) return null;
 
   const mods = filterDamageModifiers(
     operatorStatus.damageModifiers ?? [],
@@ -695,6 +721,7 @@ export function computeHitDamageWithBreakdown(
   return computeExpectedDamageWithBreakdown(
     {
       attack: stats.attack,
+      damageBase: snapshotDamageBase(hit.damageBase, operatorStatus, stats.attack),
       multiplier: hit.multiplier,
       multiplierDetail: hit._multiplierDetail,
       skillType: hit.skillType,

@@ -6,6 +6,7 @@ import type {
   EffectCondition,
   OperatorStat,
   ResolvedScalingDef,
+  ResolvedDamageBase,
   SkillMultiplierDetail,
   SkillRequisite,
   ConditionalFreeze,
@@ -152,6 +153,7 @@ export interface Hit {
   offset: number;
   _noDamage?: boolean;
   multiplier?: number;
+  damageBase?: ResolvedDamageBase;
   _multiplierScaling?: ResolvedScalingDef;
   _multiplierDetail?: SkillMultiplierDetail;
   element?: string;

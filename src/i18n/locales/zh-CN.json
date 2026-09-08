@@ -1267,6 +1267,7 @@
     "stackMultiplierDetail": "{stacks} 层 × {coefficient}",
     "attributeMultiplierDetail": "{attribute} {value} × {coefficient}",
     "baseDamage": "基础伤害",
+    "flatBaseDamage": "固定基础伤害",
     "critRateScale": "暴击率缩放",
     "critRateScaleTooltip": "该命中使用额外暴击率缩放。",
     "dmgBonus": "伤害加成",

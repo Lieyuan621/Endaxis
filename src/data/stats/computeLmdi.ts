@@ -10,6 +10,7 @@
 
 import type { ResolvedStatModifier, BaseStatValues } from './types';
 import type { DamageBreakdown } from './computeDamage';
+import type { ResolvedDamageBase } from '../types';
 import type { ComputedEnemyStatus } from '@/types';
 import type { ConsumedStatEffect } from '@/simulation/compiler/types';
 import { computeStats } from './computeStats';
@@ -18,6 +19,7 @@ import {
   filterDamageModifiers,
   computeExpectedDamageWithBreakdown,
   applyConsumedStatEffects,
+  snapshotDamageBase,
 } from './computeDamage';
 import { computeArtsIntensityDamageMult } from './computeReactionDamage';
 
@@ -41,6 +43,7 @@ interface LmdiParams {
   externalEnemyMods: SourceTaggedMod[];
   hit: {
     multiplier: number;
+    damageBase?: ResolvedDamageBase;
     skillType?: string;
     skillId?: string;
     consumedStacks?: Record<string, number>;
@@ -175,6 +178,7 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
   const selfBreakdown = computeExpectedDamageWithBreakdown(
     {
       attack: selfStats.attack,
+      damageBase: snapshotDamageBase(hit.damageBase, selfOpStatus, selfStats.attack),
       multiplier: hit.multiplier,
       skillType: hit.skillType,
       critRate: selfStats.critRate,
@@ -218,11 +222,14 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
     sources: Record<string, number>; // sourceId → contribution magnitude
   }> = [];
 
-  // (a) base = ATK × (mult/100)
+  // (a) base = selected stat × (mult/100) + flat
   factors.push({
     actual: actualBreakdown.base,
     self: selfBreakdown.base,
-    sources: groupExternalByStatCategory(externalOperatorMods, 'atk'),
+    sources: groupExternalByStatCategory(
+      externalOperatorMods,
+      hit.damageBase?.stat === 'defense' ? 'def' : 'atk',
+    ),
   });
 
   // (b) dmgBonusMult = 1 + dmgBonus
@@ -680,6 +687,8 @@ function matchesCategory(mod: ResolvedStatModifier, category: string): boolean {
   // OperatorStat may be a string or `{ modifier }` object; EnemyStat is always object form.
   // Categories like `atk` / `crit` group multiple modifiers; others match the modifier name.
   switch (category) {
+    case 'def':
+      return key === 'flatDef' || key === 'defPercent';
     case 'atk':
       return key === 'atkPercent' || key === 'atkFlat' || key === 'attributeAtkPercent';
     case 'crit':

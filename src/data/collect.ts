@@ -723,6 +723,14 @@ export function resolveEffect(effect: Effect, idx: number): ResolvedEffect {
     return {
       ...base,
       multiplier: resolveLeveled(effect.multiplier, idx),
+      ...(effect.damageBase
+        ? {
+            damageBase: {
+              ...effect.damageBase,
+              flat: resolveLeveled(effect.damageBase.flat ?? 0, idx),
+            },
+          }
+        : {}),
       ...(effect.multiplierScaling
         ? { multiplierScaling: resolveScalingDef(effect.multiplierScaling, idx) }
         : {}),

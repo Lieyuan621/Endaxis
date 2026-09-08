@@ -90,7 +90,8 @@ function reactionLabel(value) {
   return translateEffectName(t, te, value);
 }
 
-const atkDetail = computed(() => props.breakdown?.atkDetail ?? null);
+const usesDefense = computed(() => props.breakdown?.damageBase?.stat === 'defense');
+const atkDetail = computed(() => (usesDefense.value ? null : (props.breakdown?.atkDetail ?? null)));
 
 const baseAtkTotal = computed(() => {
   const detail = atkDetail.value;
@@ -164,7 +165,10 @@ const displayMultiplier = computed(() => {
 const displayBase = computed(() => {
   if (!props.breakdown) return 0;
   const scale = props.hitData?._critRateScale;
-  if (scale && scale > 0) return props.breakdown.base / scale;
+  if (scale && scale > 0) {
+    const flat = props.breakdown.damageBase?.flat ?? 0;
+    return (props.breakdown.base - flat) / scale + flat;
+  }
   return props.breakdown.base;
 });
 
@@ -467,9 +471,9 @@ function onClose() {
               <el-icon v-if="atkDetail" class="expand-icon" :class="{ 'is-open': atkOpen }"
                 ><ArrowRight
               /></el-icon>
-              {{ t('hitDetail.attack') }}
+              {{ usesDefense ? t('statDetail.defense') : t('hitDetail.attack') }}
             </td>
-            <td class="value-cell">{{ num(breakdown.attack) }}</td>
+            <td class="value-cell">{{ num(breakdown.damageBase?.value ?? breakdown.attack) }}</td>
           </tr>
           <template v-if="atkOpen && atkDetail">
             <tr class="sub-row">
@@ -577,6 +581,10 @@ function onClose() {
               <td class="value-cell">{{ multiplierSourceValue(source) }}</td>
             </tr>
           </template>
+          <tr v-if="breakdown.damageBase?.flat">
+            <td class="label-cell">{{ t('hitDetail.flatBaseDamage') }}</td>
+            <td class="value-cell">{{ num(breakdown.damageBase.flat) }}</td>
+          </tr>
           <tr class="bold">
             <td class="label-cell">{{ t('hitDetail.baseDamage') }}</td>
             <td class="value-cell">{{ num(displayBase) }}</td>

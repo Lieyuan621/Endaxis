@@ -43,7 +43,7 @@ const sheet: OperatorSheet = {
               {
                 kind: 'damageHit',
                 element: 'physical',
-                multiplier: [30, 30],
+                multiplier: [30, 45],
                 multiplierScaling: {
                   multiplier: [[2, 3]],
                 },
@@ -56,7 +56,19 @@ const sheet: OperatorSheet = {
   ],
   potentials: [
     {
-      // TODO
+      triggers: [
+        {
+          trigger: { kind: 'onHit', skillTypes: ['battleSkill', 'ultimate'] },
+          effects: [
+            {
+              kind: 'damageHit',
+              element: 'physical',
+              multiplier: 500,
+              damageBase: { stat: 'defense', flat: 300 },
+            },
+          ],
+        },
+      ],
     },
     {
       effects: [

@@ -824,7 +824,7 @@ function resolveResolvedScalingValue(
           term.target === 'enemy'
             ? ((enemySnap ? getEnemyStatus(term.key, enemySnap, time).stacks : 0) ?? 0)
             : term.target === 'action'
-              ? (actionId ? ctx.getAction(actionId)?.consumedStacks?.[term.key] : 0) ?? 0
+              ? ((actionId ? ctx.getAction(actionId)?.consumedStacks?.[term.key] : 0) ?? 0)
               : (preConsumeOpStacks?.get(term.key) ??
                 ctx.getOperatorEffects(sourceTrackId).getStacks(term.key, time));
         additiveSum += term.coefficient * stackCount;
@@ -1393,17 +1393,17 @@ export function dispatchSingleActorEffect(
     const effectId = getRuntimeEffectId(resolved);
     const multiplierResolution: { value: number; detail?: SkillMultiplierDetail } =
       r.multiplierScaling
-      ? applyResolvedScalingWithDetail(
-          r.multiplier,
-          r.multiplierScaling,
-          sourceTrackId,
-          time,
-          ctx,
-          enemySnap,
-          preConsumeOpStacks,
-          actionId,
-        )
-      : { value: r.multiplier };
+        ? applyResolvedScalingWithDetail(
+            r.multiplier,
+            r.multiplierScaling,
+            sourceTrackId,
+            time,
+            ctx,
+            enemySnap,
+            preConsumeOpStacks,
+            actionId,
+          )
+        : { value: r.multiplier };
     let finalMultiplier = multiplierResolution.value;
 
     // Scale multiplier by operator's live crit rate at dispatch time
@@ -1453,6 +1453,7 @@ export function dispatchSingleActorEffect(
             offset: 0,
             element: r.element,
             multiplier: finalMultiplier,
+            damageBase: r.damageBase,
             _multiplierDetail: multiplierResolution.detail,
             spRecovery: r.hit?.spRecovery ?? 0,
             spReturn: r.hit?.spReturn ?? 0,

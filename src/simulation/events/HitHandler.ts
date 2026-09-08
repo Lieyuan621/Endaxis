@@ -569,6 +569,7 @@ export class HitHandler implements EventHandler<HitEvent> {
               stat: entry.stat,
               value: entry.value * entry.stacks,
               external: entry.external,
+              effectId: entry.id,
             };
             if (entry.sourceId === hittingTrackId) selfOpMods.push(mod);
             else extOpMods.push({ sourceId: entry.sourceId, mod });
@@ -609,6 +610,7 @@ export class HitHandler implements EventHandler<HitEvent> {
             externalEnemyMods: extEnemyMods,
             hit: {
               multiplier: hit.multiplier!,
+              damageBase: hit.damageBase,
               skillType: hit.skillType,
               skillId: hit.skillId,
               consumedStacks: hit.consumedStacks,
