@@ -29,6 +29,77 @@ describe('timeline skill library editing', () => {
     });
   });
 
+  it('shares configured enhancement timing with the simulator and history', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'laevatain');
+    store.selectTrack(0);
+    const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+    store.addSkillToTrack('laevatain', ultimate, 0);
+    const ult = store.tracks[0]!.actions[0]!;
+    // The library rule must survive moving to a different actor identity.
+    store.tracks[0]!.id = 'generic-operator';
+    store.tracks[0]!.actions.push({
+      id: 'battle',
+      instanceId: 'battle',
+      type: 'battleSkill',
+      startTime: 5,
+      logicalStartTime: 5,
+      duration: 3,
+      hits: [],
+    });
+    store.commitState();
+    expect(store.getUltimateEnhancementMetrics(ult.instanceId!)?.finalEnd).toBeCloseTo(20.07, 5);
+    store.updateAction('battle', { isDisabled: true });
+    expect(store.getUltimateEnhancementMetrics(ult.instanceId!)?.finalEnd).toBeCloseTo(17.07, 5);
+    store.undo();
+    expect(store.getUltimateEnhancementMetrics(ult.instanceId!)?.finalEnd).toBeCloseTo(20.07, 5);
+    store.redo();
+    expect(store.getUltimateEnhancementMetrics(ult.instanceId!)?.finalEnd).toBeCloseTo(17.07, 5);
+  });
+
+  it('restores enhancement rules from the skill library when reloading an existing project', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'laevatain');
+    store.selectTrack(0);
+    const ultimate = store.activeSkillLibrary.find((s: any) => s.type === 'ultimate') as any;
+    store.addSkillToTrack('laevatain', ultimate, 0);
+    const ult = store.tracks[0]!.actions[0]!;
+    const id = ult.instanceId!;
+    store.tracks[0]!.actions.push({
+      id: 'battle',
+      instanceId: 'battle',
+      type: 'battleSkill',
+      startTime: 5,
+      logicalStartTime: 5,
+      duration: 3,
+      hits: [],
+    });
+    delete ult.enhancementExtension;
+    store.commitState();
+    localStorage.setItem(
+      'endaxis_autosave',
+      JSON.stringify(
+        serializeProjectData({
+          version: '1.0.0',
+          timestamp: Date.now(),
+          scenarioList: JSON.parse(JSON.stringify(store.scenarioList)),
+          activeScenarioId: store.activeScenarioId,
+          systemConstants: store.systemConstants,
+          activeEnemyId: store.activeEnemyId,
+          activeEnemyLevel: store.activeEnemyLevel,
+        }),
+      ),
+    );
+    await store.loadFromBrowser();
+    expect(store.tracks[0]!.actions.find(a => a.instanceId === id)?.enhancementExtension).toEqual({
+      skillTypes: ['battleSkill', 'comboSkill'],
+    });
+    // Project serialization quantizes 2.07 seconds of animation to 62 frames.
+    expect(store.getUltimateEnhancementMetrics(id)?.finalEnd).toBeCloseTo(18 + 62 / 30, 5);
+  });
+
   it('freezes Camille pursuit without changing the battle-skill identity', async () => {
     const store = useTimelineStore();
     await store.fetchGameData();

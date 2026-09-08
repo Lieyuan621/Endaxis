@@ -960,6 +960,12 @@ export interface ConditionalFreeze {
   compression?: 'comboSkill';
 }
 
+/** Extend a numeric enhancement window by the configured durations of the
+ * owner's matching actions started inside it (including newly extended time). */
+export interface EnhancementExtension {
+  skillTypes: ('battleSkill' | 'comboSkill')[];
+}
+
 export interface CombatSkillEntry {
   /** Optional so a general-form skill can be an empty `{}` placeholder filled by a form override. */
   segments?: Segment[];
@@ -979,6 +985,7 @@ export interface CombatSkillEntry {
   /** Ultimate enhancement window. A number = fixed seconds; a string = an operator-status id whose
    *  active interval defines the window (ends when that status is consumed or expires). */
   enhancementTime?: number | string;
+  enhancementExtension?: EnhancementExtension;
   /** Combo skill activation window. When the trigger fires, a window of `duration` seconds opens
    *  during which this combo skill can be used. */
   comboWindow?: {

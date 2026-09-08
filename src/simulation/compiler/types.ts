@@ -9,6 +9,7 @@ import type {
   SkillMultiplierDetail,
   SkillRequisite,
   ConditionalFreeze,
+  EnhancementExtension,
 } from '@/data/types';
 import type { DamageBreakdown } from '@/data/stats/computeDamage';
 import type { BaseStatValues } from '@/data/stats/types';
@@ -266,6 +267,7 @@ export interface Action {
   ultimateEnergyGain?: number;
   teamUltimateEnergyGain?: number;
   enhancementTime?: number | string;
+  enhancementExtension?: EnhancementExtension;
   duration: number;
   triggerWindow?: number;
   animationTime?: number;

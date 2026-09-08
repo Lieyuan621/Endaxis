@@ -24,8 +24,6 @@ import type {
   SwitchEvent,
   ComboCooldownEvent,
   CycleBoundary,
-  UltEnhancerContext,
-  UltEnhancer,
 } from '@/stores/timeline/types';
 import { useOperatorStore } from '@/stores/operatorStore';
 import { useWeaponStore } from '@/stores/weaponStore';
@@ -166,70 +164,6 @@ const isComboLikeAction = (action: { type?: string } | null | undefined) =>
   resolveActionOptimizerSkillType(action) === 'comboSkill';
 const isUltimateLikeAction = (action: { type?: string } | null | undefined) =>
   resolveActionOptimizerSkillType(action) === 'ultimate';
-
-const createOwnSkillLinkEnhancer = ({
-  linkSubtract = 0.0,
-}: { linkSubtract?: number } = {}): UltEnhancer => {
-  return ({
-    track,
-    enhStart,
-    baseDuration,
-    ultimateAction,
-    getShiftedEndTime,
-  }: UltEnhancerContext) => {
-    const epsilon = 0.0001;
-    const processed = new Set();
-    let extraDuration = 0;
-
-    let guard = 0;
-    while (guard++ < 200) {
-      const currentEnd = getShiftedEndTime(
-        enhStart,
-        baseDuration + extraDuration,
-        ultimateAction.instanceId,
-      );
-
-      let foundAny = false;
-      for (const a of track?.actions || []) {
-        if (!a || a.isDisabled || (a.triggerWindow || 0) < 0) continue;
-        const actionSkillType = resolveActionOptimizerSkillType(a);
-        if (actionSkillType !== 'battleSkill' && actionSkillType !== 'comboSkill') continue;
-        if (processed.has(a.instanceId)) continue;
-
-        const t = Number(a.startTime) || 0;
-        if (t + epsilon < enhStart) continue;
-        if (t >= currentEnd - epsilon) continue;
-
-        let delta = Number(a.duration) || 0;
-        if (actionSkillType === 'comboSkill') {
-          delta = Math.max(0, delta - linkSubtract);
-        }
-        processed.add(a.instanceId);
-
-        if (delta <= 0) continue;
-        extraDuration += delta;
-        foundAny = true;
-      }
-
-      if (!foundAny) break;
-    }
-
-    return extraDuration;
-  };
-};
-
-const laevatainEnhancementExtender = createOwnSkillLinkEnhancer({ linkSubtract: 0 });
-
-const ULTIMATE_ENHANCEMENT_EXTENDERS: Record<string, UltEnhancer> = {
-  laevatain: laevatainEnhancementExtender,
-};
-
-function getUltimateEnhancementExtender(trackId: string | null | undefined) {
-  const key = String(trackId ?? '').trim();
-  return (
-    ULTIMATE_ENHANCEMENT_EXTENDERS[key] ?? ULTIMATE_ENHANCEMENT_EXTENDERS[key.toLowerCase()] ?? null
-  );
-}
 
 function shiftSnapshotTimes(snapshot: ScenarioSnapshot | null | undefined, delta: number) {
   const d = Number(delta) || 0;
@@ -3437,6 +3371,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     type?: string;
     animationTime?: number;
     enhancementTime?: number | string;
+    enhancementExtension?: TimelineAction['enhancementExtension'];
     [key: string]: unknown;
   }
 
@@ -3498,6 +3433,12 @@ export const useTimelineStore = defineStore('timeline', () => {
         action.conditionalFreeze = flatSkill.conditionalFreeze;
       } else {
         delete action.conditionalFreeze;
+      }
+      // Timing metadata must refresh even for ultimates with no damage hits.
+      if (flatSkill.enhancementExtension) {
+        action.enhancementExtension = flatSkill.enhancementExtension;
+      } else {
+        delete action.enhancementExtension;
       }
 
       const rawLevel = Number(skillLevels?.[flatSkill.levelKey ?? ''] ?? 1);
@@ -5664,7 +5605,6 @@ export const useTimelineStore = defineStore('timeline', () => {
     simulation,
     isComboLikeAction,
     isUltimateLikeAction,
-    getUltimateEnhancementExtender,
     getFreezeOptions: () => ({
       initialEffects: [
         ...runtimeInitialEffects.value,

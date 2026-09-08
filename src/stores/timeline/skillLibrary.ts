@@ -17,7 +17,7 @@ import {
   findOperatorInstance,
   resolveEffectiveOperatorForTrack,
 } from '@/stores/timeline/instanceLookup';
-import type { Track, RosterEntry, EnemyConfigState } from './types';
+import type { Track, TimelineAction, RosterEntry, EnemyConfigState } from './types';
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
 
@@ -152,6 +152,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       gaugeGain?: any;
       teamGaugeGain?: any;
       enhancementTime?: any;
+      enhancementExtension?: TimelineAction['enhancementExtension'];
       animationTime?: any;
       payload?: any;
       requisites?: any;
@@ -175,6 +176,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
       gaugeGain = 0,
       teamGaugeGain = 0,
       enhancementTime = 0,
+      enhancementExtension,
       animationTime = 0,
       payload,
       requisites,
@@ -200,6 +202,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         gaugeGain,
         teamGaugeGain,
         enhancementTime,
+        ...(enhancementExtension ? { enhancementExtension } : {}),
         animationTime,
         ...(Array.isArray(requisites) && requisites.length ? { requisites } : {}),
         hits: cloneJsonData(safePayload.hits) || [],
@@ -402,6 +405,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
                   ? baseDefaults.teamGaugeGain
                   : 0,
             enhancementTime: idx === 0 ? baseDefaults.enhancementTime : 0,
+            enhancementExtension: idx === 0 ? skill.enhancementExtension : undefined,
             animationTime: idx === 0 ? baseDefaults.animationTime : 0,
             payload: segmentInfo.payload,
             requisites: mergeRequisites(segmentInfo),
@@ -431,6 +435,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
           gaugeGain: baseDefaults.gaugeGain,
           teamGaugeGain: baseDefaults.teamGaugeGain,
           enhancementTime: baseDefaults.enhancementTime,
+          enhancementExtension: skill.enhancementExtension,
           animationTime: baseDefaults.animationTime,
           payload: segmentData.aggregatePayload,
           requisites: skillRequisites,
@@ -462,6 +467,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
         gaugeGain: baseDefaults.gaugeGain,
         teamGaugeGain: baseDefaults.teamGaugeGain,
         enhancementTime: baseDefaults.enhancementTime,
+        enhancementExtension: skill.enhancementExtension,
         animationTime: baseDefaults.animationTime,
         payload: segmentData.aggregatePayload,
         requisites: mergeRequisites(segmentData.segmentPayloads[0]),

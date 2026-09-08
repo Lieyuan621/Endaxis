@@ -23,10 +23,7 @@ import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resol
 import type { BaseStatValues } from '@/data/stats/types';
 import type { Effect, TriggerEffect } from '@/data/types';
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from '@/types';
-import type {
-  EnemyEffectExpireEvent,
-  EnemyStatusApplyEvent,
-} from './engine/types';
+import type { EnemyEffectExpireEvent, EnemyStatusApplyEvent } from './engine/types';
 import { CRITERION_MECHANISMS } from '@/data/contingencyContracts/criteriaEffects';
 import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState';
 import {
@@ -2653,30 +2650,37 @@ describe('optimizer-native runtime parity', () => {
     expect(engine.getActionCooldownStart(ult!)).toBeCloseTo(9.03, 5);
   });
 
-  it('delays Laevatain ultimate cooldown until extended enhancement ends', () => {
-    const { timeline, teamConfig, enemyConfig, actors } = compileScenario(
-      createScenario([
-        createTrack('laevatain', [
-          createAction('ult', 'ultimate', {
-            startTime: 0,
-            duration: 2.07,
-            animationTime: 2.07,
-            enhancementTime: 15,
-            cooldown: 10,
-          }),
-          createAction('bs', 'battleSkill', {
-            startTime: 5,
-            duration: 3,
-          }),
+  it.each(['laevatain', 'generic-operator'])(
+    'extends configured ultimate cooldown for %s',
+    actorId => {
+      const { timeline, teamConfig, enemyConfig, actors } = compileScenario(
+        createScenario([
+          createTrack(actorId, [
+            createAction('ult', 'ultimate', {
+              startTime: 0,
+              duration: 2.07,
+              animationTime: 2.07,
+              enhancementTime: 15,
+              enhancementExtension: { skillTypes: ['battleSkill', 'comboSkill'] },
+              cooldown: 10,
+            }),
+            createAction('bs', 'battleSkill', {
+              startTime: 5,
+              duration: 3,
+            }),
+          ]),
         ]),
-      ]),
-    );
-    const engine = createEngine(teamConfig, enemyConfig, actors, timeline);
-    const ult = timeline.actions.find(a => a.node.type === 'ultimate');
-    expect(ult).toBeTruthy();
-    // enhStart 2.07 + base 15 + battle 3 = 20.07
-    expect(engine.getActionCooldownStart(ult!)).toBeCloseTo(20.07, 5);
-  });
+      );
+      const engine = createEngine(teamConfig, enemyConfig, actors, timeline);
+      const ult = timeline.actions.find(a => a.node.type === 'ultimate');
+      expect(ult).toBeTruthy();
+      // enhStart 2.07 + base 15 + battle 3 = 20.07
+      expect(engine.getActionCooldownStart(ult!)).toBeCloseTo(20.07, 5);
+      expect(engine.isUltimateEnergyBlocked(actorId, 19)).toBe(true);
+      expect(engine.isUltimateEnhancementActive(actorId, 19)).toBe(true);
+      expect(engine.isUltimateEnergyBlocked(actorId, 20.1)).toBe(false);
+    },
+  );
 
   it('blocks positive ultimate energy gains during status-bound ultimate enhancement window', () => {
     const simulation = runScenario([
@@ -3611,9 +3615,7 @@ describe('Contingency runtime enemy mechanics', () => {
                   spRecovery: 0,
                   spReturn: 0,
                   stagger: 0,
-                  effects: [
-                    { kind: 'physicalStatus', physicalType, forced: true } as Effect,
-                  ],
+                  effects: [{ kind: 'physicalStatus', physicalType, forced: true } as Effect],
                 },
               ],
             }),
@@ -3623,8 +3625,7 @@ describe('Contingency runtime enemy mechanics', () => {
         { systemConstants: { superArmor: 30 } },
       );
       const statusEvent = result.enemyLog.find(
-        (event: any) =>
-          event.type === 'PHYSICAL_STATUS' && event.physicalType === physicalType,
+        (event: any) => event.type === 'PHYSICAL_STATUS' && event.physicalType === physicalType,
       ) as any;
       const reactionHit = result.simLog.find(
         (entry: any) =>

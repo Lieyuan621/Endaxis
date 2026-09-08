@@ -10,6 +10,11 @@ import type {
 } from '@/simulation/engine/SimulationContext.ts';
 import type { ResolvedAction, ResolvedTimeline } from '../compiler/types.ts';
 import { isUltimateLikeAction } from '../compiler/types.ts';
+import {
+  getNumericUltimateEnhancements,
+  getUltimateEnhancementStart,
+  getStatusBoundUltimateCooldownStart,
+} from '../ultimateEnhancement';
 import type { EnemyStateEvent, OperatorStateEvent } from '../engine/types.ts';
 import type { BaseStatValues } from '@/data/stats/types';
 import { createDefaultEnemyResistance } from '@/data/enemyResistance';
@@ -307,42 +312,13 @@ export class SimulationEngine {
       windows.set(window.actorId, list);
     };
 
-    for (const action of this.timeline.actions) {
-      if (action.node.type !== 'ultimate' || action.node.isDisabled) continue;
-
-      const enhancementTime = Math.max(0, Number(action.node.enhancementTime) || 0);
-      if (enhancementTime <= 0) continue;
-
-      const start = Number(action.realStartTime) || 0;
-
-      const animationTime = Math.max(
-        0,
-        Number(action.node.animationTime) || Number(action.freezeDuration) || 0,
-      );
-
-      const enhancementStart = this.timeline.timeContext.getShiftedEndTime(
-        start,
-        animationTime,
-        action.id,
-      );
-
-      const extraDuration = this.getUltimateEnhancementExtraDuration(
-        action,
-        enhancementStart,
-        enhancementTime,
-      );
-
-      const end = this.timeline.timeContext.getShiftedEndTime(
-        enhancementStart,
-        enhancementTime + extraDuration,
-        action.id,
-      );
-
+    for (const [id, metrics] of getNumericUltimateEnhancements(this.timeline)) {
+      const action = this.timeline.actionMap.get(id)!;
       addWindow({
         actorId: action.trackId,
-        sourceId: action.id,
-        start: enhancementStart,
-        end,
+        sourceId: id,
+        start: metrics.enhStart,
+        end: metrics.finalEnd,
       });
     }
 
@@ -352,54 +328,6 @@ export class SimulationEngine {
 
     this.ultimateEnergyBlockWindowsByActor = windows;
     return windows;
-  }
-
-  private getUltimateEnhancementExtraDuration(
-    ultimateAction: ResolvedTimeline['actions'][number],
-    enhancementStart: number,
-    baseDuration: number,
-  ) {
-    if (ultimateAction.trackId !== 'laevatain') return 0;
-
-    const epsilon = 0.0001;
-    const processed = new Set<string>();
-    let extraDuration = 0;
-    let guard = 0;
-
-    while (guard++ < 200) {
-      const currentEnd = this.timeline.timeContext.getShiftedEndTime(
-        enhancementStart,
-        baseDuration + extraDuration,
-        ultimateAction.id,
-      );
-
-      let foundAny = false;
-
-      for (const action of this.timeline.actions) {
-        if (action.trackId !== ultimateAction.trackId) continue;
-        if (action.id === ultimateAction.id) continue;
-        if (action.node.isDisabled || (action.node.triggerWindow || 0) < 0) continue;
-        if (action.node.type !== 'battleSkill' && action.node.type !== 'comboSkill') continue;
-        if (processed.has(action.id)) continue;
-
-        const t = Number(action.realStartTime) || 0;
-        if (t + epsilon < enhancementStart) continue;
-        if (t >= currentEnd - epsilon) continue;
-
-        let delta = Number(action.node.duration) || 0;
-
-        processed.add(action.id);
-
-        if (delta <= 0) continue;
-
-        extraDuration += delta;
-        foundAny = true;
-      }
-
-      if (!foundAny) break;
-    }
-
-    return extraDuration;
   }
 
   /**
@@ -446,8 +374,8 @@ export class SimulationEngine {
 
   /**
    * When an action's skill cooldown bar starts.
-   * Enhanced ultimates (Yvonne / Zhuang / Laevatain, etc.) start CD after the enhancement
-   * window ends — including Laevatain's battle/combo extensions.
+   * Enhanced ultimates start CD after the shared enhancement window ends,
+   * including any data-configured action-duration extensions.
    */
   getActionCooldownStart(action: ResolvedAction): number {
     if (!isUltimateLikeAction(action.node)) {
@@ -461,38 +389,8 @@ export class SimulationEngine {
       if (win) return win.end;
     }
 
-    if (typeof enh === 'string' && enh) {
-      const apply = [...this.operatorLogEntries]
-        .reverse()
-        .find(
-          entry =>
-            entry.type === 'OPERATOR_EFFECT_APPLY' &&
-            entry.id === enh &&
-            entry.targetTrackId === action.trackId &&
-            entry.actionId === action.id,
-        );
-      if (apply?.type === 'OPERATOR_EFFECT_APPLY') {
-        const expiry = this.operatorLogEntries.find(
-          entry =>
-            entry.type === 'OPERATOR_EFFECT_EXPIRE' &&
-            entry.id === enh &&
-            entry.targetTrackId === action.trackId &&
-            entry.time >= apply.time - 1e-6 &&
-            entry.time <= apply.expiresAt + 1e-6,
-        );
-        return expiry?.time ?? apply.expiresAt;
-      }
-    }
-
-    const animationTime = Math.max(
-      0,
-      Number(action.node.animationTime) || Number(action.freezeDuration) || 0,
-    );
-    return this.timeline.timeContext.getShiftedEndTime(
-      Number(action.realStartTime) || 0,
-      animationTime,
-      action.id,
-    );
+    const statusEnd = getStatusBoundUltimateCooldownStart(action, this.operatorLogEntries);
+    return statusEnd ?? getUltimateEnhancementStart(this.timeline, action);
   }
 
   run() {

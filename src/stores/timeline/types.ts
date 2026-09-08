@@ -4,7 +4,7 @@
 // transient fields — so the sprawling objects declare their common fields and
 // keep an index signature for the rest. Phase 2b decomposition builds on these.
 
-import type { ConditionalFreeze, SkillRequisite } from '@/data/types';
+import type { ConditionalFreeze, EnhancementExtension, SkillRequisite } from '@/data/types';
 import type { GlobalConfigState } from '@/data/globalConfig';
 
 /** A skill/action instance placed on a track's timeline. */
@@ -51,6 +51,7 @@ export interface TimelineAction {
   animationTime?: number;
   conditionalFreeze?: ConditionalFreeze;
   enhancementTime?: number | string;
+  enhancementExtension?: EnhancementExtension;
   realStartTime?: number;
   realDuration?: number;
   attackSegmentIndex?: number;
@@ -60,18 +61,6 @@ export interface TimelineAction {
 export interface TrackStatusState {
   [key: string]: unknown;
 }
-
-/** Context passed to an ultimate-enhancement extender to compute extra freeze duration. */
-export interface UltEnhancerContext {
-  track: Track | null | undefined;
-  enhStart: number;
-  baseDuration: number;
-  ultimateAction: TimelineAction;
-  getShiftedEndTime: (start: number, duration: number, instanceId?: string) => number;
-}
-
-/** An operator-specific hook that extends an ultimate's enhancement window. */
-export type UltEnhancer = (context: UltEnhancerContext) => number;
 
 export interface TriggerEffectEntry {
   triggerEffect?: unknown;

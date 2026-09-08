@@ -496,10 +496,7 @@ const sheet: OperatorSheet = {
                 {
                   offset: 0.67,
                   stagger: 10,
-                  effects: [
-                    GAIN_MELTING_FLAME_EFFECT,
-                    { kind: 'ultEnergyGain', value: 25 },
-                  ],
+                  effects: [GAIN_MELTING_FLAME_EFFECT, { kind: 'ultEnergyGain', value: 25 }],
                 },
               ],
             },
@@ -518,6 +515,7 @@ const sheet: OperatorSheet = {
       ],
       ultimateEnergyCost: 300,
       enhancementTime: 15,
+      enhancementExtension: { skillTypes: ['battleSkill', 'comboSkill'] },
       animationTime: 2.07,
       cooldown: 10,
       subSkills: [
@@ -570,7 +568,9 @@ const sheet: OperatorSheet = {
                   hits: [
                     {
                       offset: 0.3,
-                      effects: [{ kind: 'infliction', element: 'heat', applyTiming: 'beforeDamage' }],
+                      effects: [
+                        { kind: 'infliction', element: 'heat', applyTiming: 'beforeDamage' },
+                      ],
                     },
                   ],
                 },
