@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDeleteIcon, EaDialog, EaFilterChip, EaInput } from '@/design-system';
 import { computed, ref } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
@@ -652,7 +653,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     v-model="visible"
     :title="t('timelineGrid.equipmentDialog.title', { slot: slotLabel })"
     width="600px"
@@ -663,125 +664,107 @@ defineExpose({ open, close, isOpen: () => visible.value });
   >
     <div class="selector-header">
       <div class="header-left-group">
-        <el-input
+        <EaInput
           v-model="searchQuery"
           :placeholder="t('timelineGrid.equipmentDialog.searchPlaceholder')"
           :prefix-icon="Search"
           clearable
           style="width: 180px"
         />
-        <button
-          class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift"
+        <EaButton
+          variant="danger"
           :disabled="!currentEquipmentId"
           :title="t('timelineGrid.equipmentDialog.unequipTooltip')"
           @click="remove"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path d="M3 6h18" />
-            <path
-              d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-            />
-          </svg>
+          <EaDeleteIcon />
           {{ t('common.unequip') }}
-        </button>
+        </EaButton>
         <div class="equipment-tier-picker">
           <span class="tier-label">{{ t('timelineGrid.equipmentDialog.refine') }}</span>
           <div class="equipment-refine-buttons">
-            <button
+            <EaButton
+              size="sm"
               v-for="tier in refineTiers"
               :key="`tier_${tier}`"
               type="button"
-              class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold equipment-refine-btn"
+              class="equipment-refine-btn"
               :class="{ 'is-active': refineTier === tier }"
               @click="setRefineTier(tier)"
             >
               {{ tier === 0 ? t('timelineGrid.equipmentDialog.refineBase') : tier }}
-            </button>
+            </EaButton>
           </div>
         </div>
       </div>
       <div class="element-filters">
-        <button
-          class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-          :class="{ 'is-active': categoryFilter === 'ALL' }"
-          :style="{ '--ea-btn-accent': '#2dd4bf' }"
+        <EaFilterChip
+          :selected="categoryFilter === 'ALL'"
+          :accent="'#2dd4bf'"
           @click="categoryFilter = 'ALL'"
         >
           {{ t('timelineGrid.equipmentDialog.allCategories') }}
-        </button>
-        <button
-          class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-          :class="{ 'is-active': categoryFilter === '__UNCAT__' }"
-          :style="{ '--ea-btn-accent': '#888' }"
+        </EaFilterChip>
+        <EaFilterChip
+          :selected="categoryFilter === '__UNCAT__'"
+          :accent="'#888'"
           @click="categoryFilter = '__UNCAT__'"
         >
           {{ t('timelineGrid.equipmentDialog.uncategorized') }}
-        </button>
-        <button
+        </EaFilterChip>
+        <EaFilterChip
           v-for="category in categories"
           :key="`eqcat_${category.value}`"
-          class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-          :class="{ 'is-active': categoryFilter === category.value }"
-          :style="{ '--ea-btn-accent': '#2dd4bf' }"
+          :selected="categoryFilter === category.value"
+          :accent="'#2dd4bf'"
           @click="categoryFilter = category.value"
         >
           {{ category.label }}
-        </button>
+        </EaFilterChip>
       </div>
       <div class="equipment-affix-filter-section">
         <div class="equipment-affix-filter-strip">
-          <button
-            class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-            :class="{ 'is-active': affixFilter === 'ALL' }"
-            :style="{ '--ea-btn-accent': '#2dd4bf' }"
+          <EaFilterChip
+            :selected="affixFilter === 'ALL'"
+            :accent="'#2dd4bf'"
             @click="affixFilter = 'ALL'"
           >
             {{ t('timelineGrid.equipmentDialog.allAffixes') }}
-          </button>
+          </EaFilterChip>
           <template
             v-for="(group, groupIndex) in affixFilterGroups"
             :key="`eq_affix_group_${group.key}`"
           >
             <span v-if="groupIndex > 0" class="equipment-affix-filter-divider" aria-hidden="true" />
-            <button
+            <EaFilterChip
               v-for="option in group.items"
               :key="`eq_affix_filter_${option.value}`"
-              class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-              :class="{ 'is-active': affixFilter === option.value }"
-              :style="{ '--ea-btn-accent': option.accent }"
+              :selected="affixFilter === option.value"
+              :accent="option.accent"
               @click="affixFilter = option.value"
             >
               {{ option.label }}
-            </button>
+            </EaFilterChip>
           </template>
         </div>
       </div>
       <div class="element-filters">
-        <button
-          class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-          :class="{ 'is-active': levelFilter === 'ALL' }"
-          :style="{ '--ea-btn-accent': '#2dd4bf' }"
+        <EaFilterChip
+          :selected="levelFilter === 'ALL'"
+          :accent="'#2dd4bf'"
           @click="levelFilter = 'ALL'"
         >
           {{ t('timelineGrid.equipmentDialog.allLevels') }}
-        </button>
-        <button
+        </EaFilterChip>
+        <EaFilterChip
           v-for="level in EQUIPMENT_LEVELS"
           :key="`eqlv_${level}`"
-          class="ea-btn ea-btn--glass-cut equipment-filter-chip"
-          :class="{ 'is-active': levelFilter === level }"
-          :style="{ '--ea-btn-accent': getEquipmentLevelColor(level) }"
+          :selected="levelFilter === level"
+          :accent="getEquipmentLevelColor(level)"
           @click="levelFilter = level"
         >
           Lv{{ level }}
-        </button>
+        </EaFilterChip>
       </div>
     </div>
     <div class="roster-scroll-container">
@@ -881,7 +864,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
         {{ t('timelineGrid.equipmentDialog.empty') }}
       </div>
     </div>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style src="./selectionDialog.css"></style>

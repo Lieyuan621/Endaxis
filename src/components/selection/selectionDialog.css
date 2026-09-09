@@ -56,28 +56,12 @@
 }
 
 .equipment-affix-filter-strip {
-  --equipment-filter-cut: 10px;
   --equipment-filter-divider-skew: -18deg;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 8px;
   min-width: 0;
-}
-
-.equipment-filter-chip {
-  --equipment-filter-cut-size: var(--equipment-filter-cut, 10px);
-  height: 26px;
-  min-width: 0;
-  padding-right: 14px;
-  padding-left: 14px;
-  clip-path: polygon(
-    var(--equipment-filter-cut-size) 0,
-    100% 0,
-    calc(100% - var(--equipment-filter-cut-size)) 100%,
-    0 100%
-  );
-  white-space: nowrap;
 }
 
 .equipment-affix-filter-divider {
@@ -356,19 +340,6 @@
   box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
 }
 
-.char-selector-dialog .el-dialog__body {
-  color: #ccc;
-}
-
-.char-selector-dialog .el-input__wrapper {
-  background-color: #2b2b2b;
-  box-shadow: 0 0 0 1px #444 inset;
-}
-
-.char-selector-dialog .el-input__inner {
-  color: #fff;
-}
-
 /* Light theme: selection dialogs (operator / weapon / equipment) */
 html[data-theme='light'] .rarity-header {
   background: rgba(255, 255, 255, 0.97);
@@ -424,19 +395,6 @@ html[data-theme='light'] .eq-affix-icon-img {
   filter: drop-shadow(0 1px 1px rgba(26, 27, 30, 0.25));
 }
 
-html[data-theme='light'] .char-selector-dialog .el-dialog__body {
-  color: var(--ea-dialog-body, #3a3d44);
-}
-
-html[data-theme='light'] .char-selector-dialog .el-input__wrapper {
-  background-color: var(--ea-fill-input, var(--ea-surface-soft));
-  box-shadow: 0 0 0 1px var(--ea-border, #d8dbe0) inset;
-}
-
-html[data-theme='light'] .char-selector-dialog .el-input__inner {
-  color: var(--ea-fg, #1a1b1e);
-}
-
 @media (max-width: 768px) {
   .char-selector-dialog.el-dialog {
     display: flex;
@@ -472,7 +430,7 @@ html[data-theme='light'] .char-selector-dialog .el-input__inner {
     flex-wrap: wrap;
   }
 
-  .header-left-group .el-input {
+  .header-left-group .ea-input {
     width: auto !important;
     min-width: 0;
     flex: 1 1 auto;
@@ -491,9 +449,9 @@ html[data-theme='light'] .char-selector-dialog .el-input__inner {
     -webkit-overflow-scrolling: touch;
   }
 
-  .element-filters > .ea-btn,
-  .class-filters > .ea-btn,
-  .equipment-affix-filter-strip > .ea-btn {
+  .element-filters > .ea-filter-chip,
+  .class-filters > .ea-filter-chip,
+  .equipment-affix-filter-strip > .ea-filter-chip {
     width: auto;
     min-width: max-content;
     flex: 0 0 auto;

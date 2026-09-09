@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDeleteIcon, EaInput, EaOption, EaSelect } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ATTRIBUTES } from '@/data/enums';
@@ -89,7 +90,13 @@ function toEditableTerm(term) {
 
 function normalizeBasisList(basis) {
   const parts = Array.isArray(basis) ? basis : [basis];
-  const list = parts.map(part => String(part || '').trim().toLowerCase()).filter(Boolean);
+  const list = parts
+    .map(part =>
+      String(part || '')
+        .trim()
+        .toLowerCase(),
+    )
+    .filter(Boolean);
   return list.length ? list : ['strength'];
 }
 
@@ -259,29 +266,29 @@ function termKindLabel(value) {
       <div class="term-row__fields field-grid field-grid--effect-select-row">
         <label class="field">
           <span>{{ t('common.type') }}</span>
-          <el-select
+          <EaSelect
             :model-value="term.kind"
             @update:model-value="value => changeAdditiveKind(index, value)"
-            size="small"
+            size="sm"
             class="effect-select-dark"
             popper-class="hit-editor-select-popper"
           >
-            <el-option
+            <EaOption
               v-for="kind in TERM_KINDS"
               :key="kind"
               :value="kind"
               :label="termKindLabel(kind)"
             />
-          </el-select>
+          </EaSelect>
         </label>
 
         <template v-if="term.kind === 'flat'">
           <label class="field">
             <span>{{ t('common.value') }}</span>
-            <input
-              class="simple-input"
-              :value="term.value"
-              @change="event => updateAdditive(index, { value: event.target.value })"
+            <EaInput
+              :model-value="term.value"
+              size="sm"
+              @change="value => updateAdditive(index, { value })"
             />
           </label>
         </template>
@@ -289,7 +296,7 @@ function termKindLabel(value) {
         <template v-else-if="term.kind === 'stack'">
           <label class="field">
             <span>{{ t('hitEditor.fields.conditionTarget') }}</span>
-            <el-select
+            <EaSelect
               :model-value="term.target"
               @update:model-value="
                 value =>
@@ -301,38 +308,38 @@ function termKindLabel(value) {
                         : props.operatorStatusOptions[0] || term.key,
                   })
               "
-              size="small"
+              size="sm"
               class="effect-select-dark"
               popper-class="hit-editor-select-popper"
             >
-              <el-option value="self" :label="t('hitEditor.targetScopes.self')" />
-              <el-option value="enemy" :label="t('hitEditor.targetScopes.enemy')" />
-            </el-select>
+              <EaOption value="self" :label="t('hitEditor.targetScopes.self')" />
+              <EaOption value="enemy" :label="t('hitEditor.targetScopes.enemy')" />
+            </EaSelect>
           </label>
           <label class="field">
             <span>{{ t('hitEditor.fields.conditionStatus') }}</span>
-            <el-select
+            <EaSelect
               :model-value="term.key"
               @update:model-value="value => updateAdditive(index, { key: value })"
-              size="small"
+              size="sm"
               filterable
               class="effect-select-dark"
               popper-class="hit-editor-select-popper"
             >
-              <el-option
+              <EaOption
                 v-for="status in stackStatusOptions(term)"
                 :key="status"
                 :value="status"
                 :label="statusLabel(status)"
               />
-            </el-select>
+            </EaSelect>
           </label>
           <label class="field">
             <span>{{ t('common.value') }}</span>
-            <input
-              class="simple-input"
-              :value="term.coefficient"
-              @change="event => updateAdditive(index, { coefficient: event.target.value })"
+            <EaInput
+              :model-value="term.coefficient"
+              size="sm"
+              @change="value => updateAdditive(index, { coefficient: value })"
             />
           </label>
         </template>
@@ -340,96 +347,82 @@ function termKindLabel(value) {
         <template v-else>
           <label class="field">
             <span>{{ t('hitEditor.fields.attribute') }}</span>
-            <el-select
+            <EaSelect
               :model-value="term.basis"
               @update:model-value="value => updateAdditive(index, { basis: value })"
-              size="small"
+              size="sm"
               multiple
               collapse-tags
               collapse-tags-tooltip
               class="effect-select-dark"
               popper-class="hit-editor-select-popper"
             >
-              <el-option
+              <EaOption
                 v-for="attr in basisOptions(term)"
                 :key="attr"
                 :value="attr"
                 :label="getGameAttributeName(attr, locale)"
               />
-            </el-select>
+            </EaSelect>
           </label>
           <label class="field">
             <span>{{ t('common.value') }}</span>
-            <input
-              class="simple-input"
-              :value="term.coefficient"
-              @change="event => updateAdditive(index, { coefficient: event.target.value })"
+            <EaInput
+              :model-value="term.coefficient"
+              size="sm"
+              @change="value => updateAdditive(index, { coefficient: value })"
             />
           </label>
         </template>
       </div>
 
-      <button
+      <EaButton
+        variant="danger"
+        size="sm"
+        icon-only
         type="button"
-        class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger term-remove"
+        class="term-remove"
+        :title="t('common.delete')"
+        :aria-label="t('common.delete')"
         @click="removeAdditive(index)"
       >
-        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-          <path
-            d="M3 3l10 10M13 3L3 13"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
+        <EaDeleteIcon />
+      </EaButton>
     </div>
 
-    <button type="button" class="add-effect-bar" @click="addAdditive">
+    <EaButton type="button" class="add-effect-bar" @click="addAdditive">
       + {{ t('hitEditor.addScalingTerm') }}
-    </button>
+    </EaButton>
 
     <div v-for="(text, index) in multiplierTexts" :key="`mul-${index}`" class="term-row">
       <div class="term-row__fields field-grid field-grid--effect-input-row">
         <label class="field">
           <span>{{ termKindLabel('multiplier') }}</span>
-          <input
-            class="simple-input"
-            :value="text"
-            @change="event => updateMultiplier(index, event.target.value)"
-          />
+          <EaInput :model-value="text" size="sm" @change="updateMultiplier(index, $event)" />
         </label>
       </div>
-      <button
+      <EaButton
+        variant="danger"
+        size="sm"
+        icon-only
         type="button"
-        class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger term-remove"
+        class="term-remove"
+        :title="t('common.delete')"
+        :aria-label="t('common.delete')"
         @click="removeMultiplier(index)"
       >
-        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-          <path
-            d="M3 3l10 10M13 3L3 13"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
+        <EaDeleteIcon />
+      </EaButton>
     </div>
 
-    <button type="button" class="add-effect-bar" @click="addMultiplier">
+    <EaButton type="button" class="add-effect-bar" @click="addMultiplier">
       + {{ t('hitEditor.addScalingMultiplier') }}
-    </button>
+    </EaButton>
 
     <div class="field-grid field-grid--effect-text-row">
       <label class="field">
         <span>{{ t('hitEditor.fields.scalingCap') }}</span>
-        <input
-          class="simple-input"
-          :value="capText"
-          @change="event => commitCap(event.target.value)"
-        />
+        <EaInput :model-value="capText" size="sm" @change="commitCap" />
       </label>
     </div>
   </div>
@@ -482,30 +475,6 @@ function termKindLabel(value) {
 }
 
 .effect-select-dark,
-.simple-input {
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.simple-input {
-  appearance: none;
-  background: var(--ea-fill-input, #111);
-  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.16));
-  border-radius: 0;
-  color: var(--ea-fg, #f0f0f0);
-  font-family: inherit;
-  font-size: 12px;
-  height: 31px;
-  line-height: 1.2;
-  min-height: 31px;
-  padding: 0 8px;
-}
-
-.simple-input:focus {
-  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
-  outline: none;
-}
-
 .term-remove {
   flex: 0 0 auto;
   height: 31px;

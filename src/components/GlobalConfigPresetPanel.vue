@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore';
@@ -28,29 +29,29 @@ function selectPreset(id) {
     </div>
 
     <div class="preset-grid" role="radiogroup" :aria-label="t('globalConfig.title')">
-      <button
+      <EaButton
         type="button"
         class="preset-tile"
         :class="{ 'is-selected': !selectedPresetId }"
-        :aria-pressed="!selectedPresetId"
+        :pressed="!selectedPresetId"
         @click="selectPreset(null)"
       >
         <span class="preset-tile-name">{{ t('globalConfig.presetNone') }}</span>
-      </button>
+      </EaButton>
 
-      <button
+      <EaButton
         v-for="preset in GLOBAL_CONFIG_PRESETS"
         :key="preset.id"
         type="button"
         class="preset-tile"
         :class="{ 'is-selected': selectedPresetId === preset.id }"
-        :aria-pressed="selectedPresetId === preset.id"
+        :pressed="selectedPresetId === preset.id"
         :title="preset.description || preset.name"
         @click="selectPreset(preset.id)"
       >
         <span class="preset-tile-name">{{ preset.name }}</span>
         <span v-if="preset.description" class="preset-tile-desc">{{ preset.description }}</span>
-      </button>
+      </EaButton>
     </div>
   </div>
 </template>

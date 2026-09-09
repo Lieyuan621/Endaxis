@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
 import { onBeforeUnmount, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore';
@@ -128,7 +129,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     width="440px"
     append-to-body
@@ -235,17 +236,13 @@ onBeforeUnmount(() => {
     </div>
 
     <template #footer>
-      <div class="footer">
-        <button
-          type="button"
-          class="ea-btn ea-btn--sm ea-btn--glass-rect"
-          @click="onVisible(false)"
-        >
+      <EaDialogActions>
+        <EaButton size="sm" type="button" @click="onVisible(false)">
           {{ t('common.close') }}
-        </button>
-      </div>
+        </EaButton>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>
@@ -294,10 +291,5 @@ onBeforeUnmount(() => {
   width: 88px !important;
   height: 26px !important;
   flex-shrink: 0;
-}
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 </style>

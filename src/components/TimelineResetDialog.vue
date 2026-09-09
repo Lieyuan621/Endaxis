@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { EaButton } from '@/design-system';
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -103,7 +104,7 @@ function confirm() {
         >
           <header class="timeline-reset-dialog__header">
             <h2 class="timeline-reset-dialog__title">{{ t('timeline.reset.title') }}</h2>
-            <button
+            <EaButton
               type="button"
               class="timeline-reset-dialog__close"
               :aria-label="t('common.close')"
@@ -112,7 +113,7 @@ function confirm() {
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M6 6l12 12M18 6 6 18" />
               </svg>
-            </button>
+            </EaButton>
           </header>
 
           <div
@@ -120,7 +121,7 @@ function confirm() {
             role="radiogroup"
             :aria-label="t('timeline.reset.title')"
           >
-            <button
+            <EaButton
               v-for="option in options"
               :key="option.mode"
               type="button"
@@ -152,20 +153,16 @@ function confirm() {
                 <small>{{ option.description }}</small>
               </span>
               <span class="timeline-reset-option__radio" aria-hidden="true"></span>
-            </button>
+            </EaButton>
           </div>
 
           <footer class="timeline-reset-dialog__footer">
-            <button type="button" class="ea-btn ea-btn--glass-rect" @click="close">
+            <EaButton type="button" @click="close">
               {{ t('common.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="ea-btn ea-btn--glass-rect ea-btn--accent-red"
-              @click="confirm"
-            >
+            </EaButton>
+            <EaButton variant="danger" type="button" @click="confirm">
               {{ t('timeline.reset.confirmButton') }}
-            </button>
+            </EaButton>
           </footer>
         </section>
       </div>

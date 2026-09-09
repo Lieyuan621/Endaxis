@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { EaButton, EaDeleteIcon } from '@/design-system';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
@@ -416,7 +417,7 @@ function hideBrokenImage(event: Event) {
                   </div>
                 </div>
               </template>
-              <button
+              <EaButton
                 type="button"
                 class="cc-tag"
                 :class="{
@@ -437,7 +438,7 @@ function hideBrokenImage(event: Event) {
                 <span v-else class="cc-tag-icon-fallback">{{ cell.tag.score }}</span>
                 <span v-if="cell.tag.roman" class="cc-tag-roman">{{ cell.tag.roman }}</span>
                 <span class="cc-tag-score">+{{ cell.tag.score }}</span>
-              </button>
+              </EaButton>
             </el-tooltip>
           </div>
         </div>
@@ -449,14 +450,15 @@ function hideBrokenImage(event: Event) {
             <img src="/contingency_contract/deco_contract_027.webp" alt="" aria-hidden="true" />
             <strong>{{ selectedScore }}</strong>
           </div>
-          <button
+          <EaButton
+            size="sm"
             type="button"
-            class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted cc-clear-btn"
+            class="cc-clear-btn"
             :disabled="selectedTags.length === 0"
             @click="clearSelection"
           >
             {{ t('common.reset') }}
-          </button>
+          </EaButton>
         </div>
         <div v-if="selectedTags.length" class="cc-selected-list">
           <div v-for="tag in selectedTags" :key="tag.id" class="cc-selected-row">
@@ -481,14 +483,18 @@ function hideBrokenImage(event: Event) {
                 >
               </div>
             </div>
-            <button
+            <EaButton
+              variant="danger"
+              size="sm"
+              icon-only
               type="button"
-              class="ea-btn ea-btn--icon ea-btn--icon-28 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger cc-selected-remove"
+              class="cc-selected-remove"
               :title="t('common.delete')"
+              :aria-label="t('common.delete')"
               @click="removeTag(tag.id)"
             >
-              ×
-            </button>
+              <EaDeleteIcon />
+            </EaButton>
           </div>
         </div>
         <template v-else>
@@ -513,8 +519,6 @@ function hideBrokenImage(event: Event) {
 
 .cc-clear-btn {
   height: 22px;
-  --ea-btn-py: 0;
-  --ea-btn-px: 9px;
   font-size: 10px;
 }
 

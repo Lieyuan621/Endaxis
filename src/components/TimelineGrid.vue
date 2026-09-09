@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { ref, provide, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import { refThrottled } from '@vueuse/core';
 import { useTimelineStore } from '../stores/timelineStore.js';
@@ -375,16 +376,11 @@ function getTrackBuffContentPaddingNeeds(index) {
   const showLower = store.isTimelineViewLayerVisible('lowerBuffs');
 
   const operatorLayout = store.operatorEffectLayouts.get(track.id);
-  const upperNeed = showUpper
-    ? Math.max(0, Number(operatorLayout?.groupHeights?.[0]) || 0)
-    : 0;
+  const upperNeed = showUpper ? Math.max(0, Number(operatorLayout?.groupHeights?.[0]) || 0) : 0;
 
   const actionBuffLayout = store.trackBuffLayouts.get(track.id);
-  const lowerLaneCount = showLower
-    ? Math.max(0, Number(actionBuffLayout?.lowerLaneCount) || 0)
-    : 0;
-  const lowerNeed =
-    lowerLaneCount > 0 ? lowerLaneCount * EQUIPMENT_BUFF_LANE_PITCH : 0;
+  const lowerLaneCount = showLower ? Math.max(0, Number(actionBuffLayout?.lowerLaneCount) || 0) : 0;
+  const lowerNeed = lowerLaneCount > 0 ? lowerLaneCount * EQUIPMENT_BUFF_LANE_PITCH : 0;
 
   return {
     topNeed: upperNeed > 0 ? upperNeed + BUFF_LAYER_MARGIN : 0,
@@ -403,12 +399,7 @@ function getTrackBuffAdjustedRowMetrics(index, basePadding, requestedRowHeight) 
 
   // Symmetric padding keeps the 50px lane (and avatar/name) centered in the row.
   const { topNeed, bottomNeed } = getTrackBuffContentPaddingNeeds(index);
-  const pad = Math.max(
-    TRACK_ROW_BASE_PADDING,
-    TRACK_ROW_MIN_PADDING,
-    topNeed,
-    bottomNeed,
-  );
+  const pad = Math.max(TRACK_ROW_BASE_PADDING, TRACK_ROW_MIN_PADDING, topNeed, bottomNeed);
   return {
     topPadding: pad,
     bottomPadding: pad,
@@ -2665,7 +2656,7 @@ defineExpose({
       <div class="corner-controls">
         <div class="corner-button-row">
           <div class="initial-gauge-tool">
-            <button
+            <EaButton
               class="mini-tool-btn"
               :class="{
                 'is-active': store.initialGaugeMode !== 'empty',
@@ -2711,7 +2702,7 @@ defineExpose({
                 <path d="M7 10v4M11 10v4M15 10v4" stroke-width="1.75" />
               </svg>
               <span class="gauge-tool-value">{{ initialGaugeDisplayValue }}</span>
-            </button>
+            </EaButton>
             <div
               v-if="isUnifiedGaugeEditorOpen"
               class="prep-duration-popover initial-gauge-popover"
@@ -2732,13 +2723,13 @@ defineExpose({
             </div>
           </div>
 
-          <button
+          <EaButton
             class="mini-tool-btn snap-tool-btn"
             @click="store.toggleSnapStep"
             :title="t('timelineGrid.toolbar.snapPrecision')"
           >
             <span class="btn-text">{{ store.snapStep < 0.05 ? '1f' : '0.1s' }}</span>
-          </button>
+          </EaButton>
         </div>
 
         <div class="corner-zoom-row">
@@ -2801,7 +2792,7 @@ defineExpose({
           class="prep-ruler-controls"
           :style="{ left: `${prepZoneWidthPxRounded}px` }"
         >
-          <button
+          <EaButton
             type="button"
             class="prep-mini-btn"
             :title="t('timelineGrid.prep.setDurationTitle')"
@@ -2820,14 +2811,14 @@ defineExpose({
               <circle cx="12" cy="12" r="9"></circle>
               <path d="M12 7v6l4 2"></path>
             </svg>
-          </button>
+          </EaButton>
         </div>
         <div
           v-if="activePrepDuration > 0 && !store.prepExpanded"
           class="prep-zone-controls"
           :style="{ width: `${prepZoneWidthPxRounded}px`, bottom: showGameTime ? '40px' : '20px' }"
         >
-          <button
+          <EaButton
             type="button"
             class="prep-mini-btn"
             :title="t('timelineGrid.prep.setDurationTitle')"
@@ -2846,7 +2837,7 @@ defineExpose({
               <circle cx="12" cy="12" r="9"></circle>
               <path d="M12 7v6l4 2"></path>
             </svg>
-          </button>
+          </EaButton>
         </div>
 
         <div
@@ -2873,7 +2864,7 @@ defineExpose({
           <div class="battle-end-handle" @mousedown.stop.prevent="onBattleResizeMouseDown"></div>
         </div>
         <div class="battle-end-controls" :style="{ left: `${battleEndPxRounded}px` }">
-          <button
+          <EaButton
             type="button"
             class="prep-mini-btn"
             :title="t('timelineGrid.battle.setDurationTitle')"
@@ -2892,7 +2883,7 @@ defineExpose({
               <circle cx="12" cy="12" r="9"></circle>
               <path d="M12 7v6l4 2"></path>
             </svg>
-          </button>
+          </EaButton>
           <span class="battle-end-label">{{ Math.round(activeBattleDuration) }}s</span>
         </div>
         <div
@@ -2922,7 +2913,7 @@ defineExpose({
           :style="{ width: `${prepZoneWidthPxRounded}px` }"
         >
           <div v-if="showGameTime" class="prep-rtgt-row prep-rtgt-row--game">
-            <button
+            <EaButton
               type="button"
               class="timeline-label interactable"
               :title="t('timelineGrid.ruler.gameTimeCollapseTitle')"
@@ -2953,7 +2944,7 @@ defineExpose({
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </span>
-            </button>
+            </EaButton>
           </div>
           <div class="prep-rtgt-row prep-rtgt-row--real">
             <template v-if="showGameTime">
@@ -2974,7 +2965,7 @@ defineExpose({
               </div>
             </template>
             <template v-else>
-              <button
+              <EaButton
                 type="button"
                 class="timeline-label interactable expand-btn"
                 :title="t('timelineGrid.ruler.gameTimeExpandTitle')"
@@ -2992,7 +2983,7 @@ defineExpose({
                 >
                   <polyline points="18 15 12 9 6 15"></polyline>
                 </svg>
-              </button>
+              </EaButton>
             </template>
           </div>
         </div>
@@ -3177,7 +3168,7 @@ defineExpose({
                 </div>
               </div>
               <div class="trigger-info" @click="!track.id && openCharacterSelector(index)">
-                <button
+                <EaButton
                   v-if="store.tracks[index]?.id"
                   type="button"
                   class="track-stat-detail-btn"
@@ -3186,7 +3177,7 @@ defineExpose({
                   @click.stop="openStatDetail(index)"
                 >
                   {{ t('statDetail.button') }}
-                </button>
+                </EaButton>
                 <span class="trigger-name">
                   <span class="trigger-name__main">{{
                     track.name || t('timelineGrid.track.selectOperator')
@@ -3311,10 +3302,7 @@ defineExpose({
       @contextmenu="onBackgroundContextMenu"
       @auxclick.prevent
     >
-      <div
-        class="tracks-content-scroller"
-        :style="tracksScrollerStyle"
-      >
+      <div class="tracks-content-scroller" :style="tracksScrollerStyle">
         <div
           v-if="trackDividerOffsets.length"
           class="track-divider-overlay"
@@ -3624,7 +3612,7 @@ defineExpose({
             :style="{ width: `${prepZoneWidthPxRounded}px` }"
           >
             <div class="prep-collapsed-text">{{ t('timelineGrid.prep.title') }}</div>
-            <button
+            <EaButton
               type="button"
               class="prep-collapsed-toggle"
               @click.stop="store.togglePrepExpanded"
@@ -3642,7 +3630,7 @@ defineExpose({
               >
                 <polyline points="8 6 16 12 8 18"></polyline>
               </svg>
-            </button>
+            </EaButton>
             <div class="prep-collapsed-text">{{ t('timelineGrid.prep.expand') }}</div>
           </div>
 
@@ -3651,7 +3639,7 @@ defineExpose({
             class="prep-expanded-collapse"
             :style="{ left: `${Math.max(0, prepZoneWidthPxRounded - 18)}px` }"
           >
-            <button
+            <EaButton
               type="button"
               class="prep-mini-btn"
               :title="t('timelineGrid.prep.collapseTitle')"
@@ -3669,7 +3657,7 @@ defineExpose({
               >
                 <polyline points="16 6 8 12 16 18"></polyline>
               </svg>
-            </button>
+            </EaButton>
           </div>
           <ContextMenu />
           <svg class="connections-svg">
@@ -3812,14 +3800,13 @@ defineExpose({
       </div>
     </div>
 
-      <div class="timeline-horizontal-scrollbar" ref="fakeScrollbarRef" @scroll="onFakeScroll">
-        <div class="scrollbar-spacer" :style="{ width: `${totalWidthComputed}px` }"></div>
-      </div>
+    <div class="timeline-horizontal-scrollbar" ref="fakeScrollbarRef" @scroll="onFakeScroll">
+      <div class="scrollbar-spacer" :style="{ width: `${totalWidthComputed}px` }"></div>
+    </div>
 
     <OperatorSelectionDialog ref="operatorSelectionDialogRef" />
     <WeaponSelectionDialog ref="weaponSelectionDialogRef" />
     <EquipmentSelectionDialog ref="equipmentSelectionDialogRef" />
-
   </div>
 </template>
 
@@ -4777,7 +4764,9 @@ body.capture-mode .davinci-range {
   color: var(--ea-gold);
   box-shadow: 0 1px 2px rgba(26, 27, 30, 0.08);
 }
-:global(html[data-theme='light'] .timeline-grid-layout .track-stat-detail-btn:hover:not(:disabled)) {
+:global(
+  html[data-theme='light'] .timeline-grid-layout .track-stat-detail-btn:hover:not(:disabled)
+) {
   background: color-mix(in srgb, var(--ea-gold) 14%, #ffffff);
   border-color: var(--ea-gold);
   color: var(--ea-gold-hover);
@@ -6091,11 +6080,18 @@ body.capture-mode .davinci-range {
 :global(html[data-theme='light'] .timeline-grid-layout .initial-gauge-control) {
   --initial-gauge-accent: #0b6e99;
 }
-:global(html[data-theme='light'] .timeline-grid-layout .initial-gauge-input-wrap .custom-number-input) {
+:global(
+  html[data-theme='light'] .timeline-grid-layout .initial-gauge-input-wrap .custom-number-input
+) {
   background: var(--ea-surface-row);
   box-shadow: 0 0 0 1px rgba(11, 110, 153, 0.35) inset;
 }
-:global(html[data-theme='light'] .timeline-grid-layout .initial-gauge-input-wrap .custom-number-input:focus-within) {
+:global(
+  html[data-theme='light']
+    .timeline-grid-layout
+    .initial-gauge-input-wrap
+    .custom-number-input:focus-within
+) {
   background: #ffffff;
   box-shadow: 0 0 0 1px rgba(11, 110, 153, 0.75) inset;
 }

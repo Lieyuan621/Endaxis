@@ -1,0 +1,69 @@
+body,
+html,
+#app {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--ea-bg, #18181c);
+  color: var(--ea-fg, #f0f0f0);
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  scrollbar-color: var(--ea-scrollbar-thumb, #9a9a9a) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--ea-scrollbar-thumb, #9a9a9a);
+  background-clip: padding-box;
+  transition: background var(--ea-control-transition);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ea-scrollbar-thumb-hover, #7a7a7a);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--ea-scrollbar-thumb-active, #5e5e5e);
+}
+
+.hidden {
+  display: none !important;
+}
+
+body.is-lib-dragging .action-item-wrapper {
+  opacity: 0.5 !important;
+  filter: grayscale(0.5);
+  pointer-events: none !important;
+  transition: opacity var(--ea-control-transition);
+}
+
+.action-item-wrapper.is-moving {
+  z-index: 999 !important;
+  border-color: var(--ea-gold) !important;
+  opacity: 0.9 !important;
+  box-shadow: 0 0 15px color-mix(in srgb, var(--ea-gold) 50%, transparent) !important;
+  cursor: grabbing !important;
+  transform: scale(1);
+  transition: none !important;
+}

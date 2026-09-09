@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDeleteIcon, EaDialog, EaInput } from '@/design-system';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
@@ -132,7 +133,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     v-model="visible"
     :title="t('timelineGrid.weaponDialog.title')"
     width="600px"
@@ -143,34 +144,22 @@ defineExpose({ open, close, isOpen: () => visible.value });
   >
     <div class="selector-header">
       <div class="header-left-group">
-        <el-input
+        <EaInput
           v-model="searchQuery"
           :placeholder="t('timelineGrid.weaponDialog.searchPlaceholder')"
           :prefix-icon="Search"
           clearable
           style="width: 180px"
         />
-        <button
-          class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift"
+        <EaButton
+          variant="danger"
           :disabled="!currentWeaponId"
           :title="t('timelineGrid.weaponDialog.unequipTooltip')"
           @click="remove"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path d="M3 6h18" />
-            <path
-              d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-            />
-          </svg>
+          <EaDeleteIcon />
           {{ t('common.unequip') }}
-        </button>
+        </EaButton>
       </div>
     </div>
     <div class="roster-scroll-container">
@@ -220,7 +209,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
         {{ t('timelineGrid.weaponDialog.empty') }}
       </div>
     </div>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style src="./selectionDialog.css"></style>

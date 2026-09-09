@@ -1,0 +1,357 @@
+.ea-button,
+.ea-filter-chip,
+.ea-switch {
+  appearance: none;
+  box-sizing: border-box;
+  border: var(--ea-control-border-width) solid var(--ea-control-border);
+  border-radius: var(--ea-control-radius);
+  margin: 0;
+  background: var(--ea-control-bg);
+  color: var(--ea-control-fg);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--ea-control-transition),
+    border-color var(--ea-control-transition),
+    color var(--ea-control-transition),
+    box-shadow var(--ea-control-transition),
+    opacity var(--ea-control-transition);
+}
+
+.ea-button:hover:not(:disabled),
+.ea-filter-chip:hover:not(:disabled),
+.ea-switch:hover:not(:disabled) {
+  border-color: var(--ea-control-border-hover);
+  background: var(--ea-control-bg-hover);
+  color: var(--ea-control-fg-hover);
+}
+
+.ea-button:focus-visible,
+.ea-filter-chip:focus-visible,
+.ea-switch:focus-visible,
+.ea-checkbox__input:focus-visible + .ea-checkbox__box {
+  outline: none;
+  box-shadow: var(--ea-focus-ring);
+}
+
+.ea-button:disabled,
+.ea-filter-chip:disabled,
+.ea-switch:disabled {
+  opacity: var(--ea-control-disabled-opacity);
+  cursor: not-allowed;
+}
+
+.ea-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ea-control-gap);
+  min-width: 0;
+  padding: 0 var(--ea-control-padding-x-md);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ea-button--sm,
+.ea-filter-chip--sm {
+  height: var(--ea-control-height-sm);
+  padding-right: var(--ea-control-padding-x-sm);
+  padding-left: var(--ea-control-padding-x-sm);
+  font-size: var(--ea-control-font-size-sm);
+}
+
+.ea-button--md,
+.ea-filter-chip--md {
+  height: var(--ea-control-height-md);
+  padding-right: var(--ea-control-padding-x-md);
+  padding-left: var(--ea-control-padding-x-md);
+  font-size: var(--ea-control-font-size-md);
+}
+
+.ea-button--lg,
+.ea-filter-chip--lg {
+  height: var(--ea-control-height-lg);
+  padding-right: var(--ea-control-padding-x-lg);
+  padding-left: var(--ea-control-padding-x-lg);
+  font-size: var(--ea-control-font-size-lg);
+}
+
+.ea-button--primary {
+  border-color: var(--ea-gold);
+  background: var(--ea-gold);
+  color: #151515;
+}
+
+.ea-button--primary:hover:not(:disabled) {
+  border-color: var(--ea-gold-hover);
+  background: var(--ea-gold-hover);
+  color: #050505;
+}
+
+.ea-button--danger {
+  border-color: color-mix(in srgb, var(--ea-danger) 55%, transparent);
+  background: color-mix(in srgb, var(--ea-danger) 12%, transparent);
+  color: var(--ea-danger-soft);
+}
+
+.ea-button--danger:hover:not(:disabled) {
+  border-color: var(--ea-danger);
+  background: color-mix(in srgb, var(--ea-danger) 22%, transparent);
+  color: #fff;
+}
+
+.ea-button--ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.ea-button[aria-pressed='true'] {
+  border-color: var(--ea-gold);
+  background: color-mix(in srgb, var(--ea-gold) 16%, transparent);
+  color: var(--ea-gold);
+  box-shadow: inset 0 -2px 0 var(--ea-gold);
+}
+
+.ea-button--icon-only {
+  width: var(--ea-control-height-md);
+  padding: 0;
+}
+
+.ea-button--sm.ea-button--icon-only {
+  width: var(--ea-control-height-sm);
+}
+
+.ea-button--lg.ea-button--icon-only {
+  width: var(--ea-control-height-lg);
+}
+
+.ea-control--no-shrink {
+  flex-shrink: 0;
+}
+
+.ea-button__spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ea-control-spin 700ms linear infinite;
+}
+
+@keyframes ea-control-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ea-filter-chip {
+  --ea-filter-accent: var(--ea-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.ea-filter-chip--selected {
+  border-color: var(--ea-filter-accent);
+  background: color-mix(in srgb, var(--ea-filter-accent) 16%, transparent);
+  color: var(--ea-filter-accent);
+  box-shadow: inset 0 -2px 0 var(--ea-filter-accent);
+}
+
+.ea-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ea-fg-secondary);
+  font-size: var(--ea-control-font-size-md);
+  cursor: pointer;
+}
+
+.ea-checkbox__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ea-checkbox__box {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 1px solid var(--ea-control-border);
+  border-radius: var(--ea-control-radius);
+  background: var(--ea-fill-input);
+}
+
+.ea-checkbox__input:checked + .ea-checkbox__box {
+  border-color: var(--ea-gold);
+  background: var(--ea-gold);
+}
+
+.ea-checkbox__input:indeterminate + .ea-checkbox__box {
+  border-color: var(--ea-gold);
+  background: var(--ea-gold);
+}
+
+.ea-checkbox__input:checked + .ea-checkbox__box::after {
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid #111;
+  border-width: 0 2px 2px 0;
+  content: '';
+  transform: rotate(45deg);
+}
+
+.ea-checkbox__input:indeterminate + .ea-checkbox__box::after {
+  position: absolute;
+  top: 6px;
+  left: 3px;
+  width: 8px;
+  height: 2px;
+  background: #111;
+  content: '';
+}
+
+.ea-checkbox--disabled {
+  opacity: var(--ea-control-disabled-opacity);
+  cursor: not-allowed;
+}
+
+.ea-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.ea-switch__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border: 1px solid var(--ea-control-border);
+  background: var(--ea-fill-input);
+}
+
+.ea-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  background: var(--ea-fg-muted);
+  transition:
+    transform var(--ea-control-transition),
+    background-color var(--ea-control-transition);
+}
+
+.ea-switch--checked .ea-switch__track {
+  border-color: var(--ea-gold);
+  background: color-mix(in srgb, var(--ea-gold) 20%, transparent);
+}
+
+.ea-switch--checked .ea-switch__thumb {
+  background: var(--ea-gold);
+  transform: translateX(16px);
+}
+
+.ea-form-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ea-form-field--horizontal {
+  grid-template-columns: minmax(100px, auto) minmax(0, 1fr);
+  align-items: center;
+}
+
+.ea-form-field__label {
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ea-form-field__required,
+.ea-form-field__error {
+  color: var(--ea-control-error);
+}
+
+.ea-form-field__control {
+  min-width: 0;
+}
+
+.ea-form-field__hint,
+.ea-form-field__error {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.ea-form-field__hint {
+  color: var(--ea-fg-muted);
+}
+
+.ea-form-field--horizontal .ea-form-field__hint,
+.ea-form-field--horizontal .ea-form-field__error {
+  grid-column: 2;
+}
+
+.ea-input,
+.ea-textarea,
+.ea-number-input,
+.ea-select {
+  --el-border-radius-base: var(--ea-control-radius);
+  --el-color-primary: var(--ea-gold);
+  width: 100%;
+}
+
+.ea-input .el-input__wrapper,
+.ea-textarea .el-textarea__inner,
+.ea-number-input .el-input__wrapper,
+.ea-select .el-select__wrapper {
+  border-radius: var(--ea-control-radius);
+}
+
+.ea-input--invalid .el-input__wrapper,
+.ea-textarea--invalid .el-textarea__inner,
+.ea-number-input--invalid .el-input__wrapper,
+.ea-select--invalid .el-select__wrapper {
+  box-shadow: 0 0 0 1px var(--ea-control-error) inset;
+}
+
+.ea-input--inline .el-input__wrapper {
+  padding: 0;
+  background: transparent !important;
+  box-shadow: 0 -1px 0 var(--ea-control-border) inset !important;
+}
+
+.ea-input--inline .el-input__wrapper.is-focus {
+  background: transparent !important;
+  box-shadow: 0 -1px 0 var(--ea-gold) inset !important;
+}
+
+.ea-select--inline .el-select__wrapper {
+  min-height: var(--ea-control-height-sm);
+  padding: 0 20px 0 4px;
+  background: transparent;
+  box-shadow: 0 -1px 0 var(--ea-control-border) inset;
+}
+
+.ea-select--inline .el-select__wrapper.is-focused {
+  box-shadow: 0 -1px 0 var(--ea-gold) inset;
+}
+
+.ea-textarea--code .el-textarea__inner {
+  font-family: 'Roboto Mono', Consolas, monospace;
+}

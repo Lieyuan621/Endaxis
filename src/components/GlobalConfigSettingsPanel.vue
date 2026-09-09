@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore';
@@ -35,13 +36,9 @@ const summaryRows = computed(() =>
         <span class="summary-label">{{ row.label }}</span>
         <span class="summary-value">{{ row.value }}</span>
       </div>
-      <button
-        type="button"
-        class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold stats-edit-btn"
-        @click="isEditDialogVisible = true"
-      >
+      <EaButton size="sm" type="button" class="stats-edit-btn" @click="isEditDialogVisible = true">
         {{ t('globalConfig.editCustom') }}
-      </button>
+      </EaButton>
     </div>
 
     <EditGlobalModifiersDialog v-model:visible="isEditDialogVisible" />
@@ -101,11 +98,11 @@ const summaryRows = computed(() =>
   padding: 4px 0 2px;
 }
 
-:global(html[data-theme='light'] .global-config-settings .summary-row){
+:global(html[data-theme='light'] .global-config-settings .summary-row) {
   background: var(--ea-surface-sunken);
   border-color: var(--ea-border);
 }
-:global(html[data-theme='light'] .global-config-settings .empty-hint){
+:global(html[data-theme='light'] .global-config-settings .empty-hint) {
   color: var(--ea-fg-muted);
 }
 

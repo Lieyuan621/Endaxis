@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDialog, EaDialogActions, EaNumberInput } from '@/design-system';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBaseStatValues } from '@/data/stats/baseValues';
@@ -176,7 +177,7 @@ function setCritPct(key, pctRaw) {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     width="520px"
     append-to-body
@@ -204,18 +205,20 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
-                <el-input-number
+                <EaNumberInput
                   :model-value="attrDisplayValue(key)"
                   :min="0"
                   :step="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setOverride(key, $event)"
                 />
                 <span class="affix unit" aria-hidden="true" />
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden(key) }"
                   :tabindex="isOverridden(key) ? 0 : -1"
@@ -223,7 +226,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride(key)"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
 
@@ -233,18 +236,20 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
-                <el-input-number
+                <EaNumberInput
                   :model-value="baseAtkDisplay()"
                   :min="0"
                   :step="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setOverride('baseAtk', $event)"
                 />
                 <span class="affix unit" aria-hidden="true" />
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden('baseAtk') }"
                   :tabindex="isOverridden('baseAtk') ? 0 : -1"
@@ -252,7 +257,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride('baseAtk')"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
 
@@ -262,18 +267,20 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
-                <el-input-number
+                <EaNumberInput
                   :model-value="baseHpDisplay()"
                   :min="0"
                   :step="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setOverride('baseHp', $event)"
                 />
                 <span class="affix unit" aria-hidden="true" />
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden('baseHp') }"
                   :tabindex="isOverridden('baseHp') ? 0 : -1"
@@ -281,7 +288,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride('baseHp')"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
           </div>
@@ -296,20 +303,22 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
-                <el-input-number
+                <EaNumberInput
                   :model-value="pctInputValue(intrinsicDisplay('critRate'))"
                   :min="0"
                   :max="100"
                   :step="0.1"
                   :precision="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setCritPct('critRate', $event)"
                 />
                 <span class="affix unit">%</span>
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden('critRate') }"
                   :tabindex="isOverridden('critRate') ? 0 : -1"
@@ -317,7 +326,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride('critRate')"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
 
@@ -327,19 +336,21 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
-                <el-input-number
+                <EaNumberInput
                   :model-value="pctInputValue(intrinsicDisplay('critDmg'))"
                   :min="0"
                   :step="0.1"
                   :precision="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setCritPct('critDmg', $event)"
                 />
                 <span class="affix unit">%</span>
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden('critDmg') }"
                   :tabindex="isOverridden('critDmg') ? 0 : -1"
@@ -347,7 +358,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride('critDmg')"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
 
@@ -357,17 +368,19 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
-                <el-input-number
+                <EaNumberInput
                   :model-value="intrinsicDisplay('artsIntensity')"
                   :step="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setOverride('artsIntensity', $event)"
                 />
                 <span class="affix unit" aria-hidden="true" />
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden('artsIntensity') }"
                   :tabindex="isOverridden('artsIntensity') ? 0 : -1"
@@ -375,7 +388,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride('artsIntensity')"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
 
@@ -385,17 +398,19 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix">+</span>
-                <el-input-number
+                <EaNumberInput
                   :model-value="intrinsicDisplay('ultimateGainEfficiency')"
                   :step="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setOverride('ultimateGainEfficiency', $event)"
                 />
                 <span class="affix unit">%</span>
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden('ultimateGainEfficiency') }"
                   :tabindex="isOverridden('ultimateGainEfficiency') ? 0 : -1"
@@ -403,7 +418,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride('ultimateGainEfficiency')"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
 
@@ -413,20 +428,22 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
-                <el-input-number
+                <EaNumberInput
                   :model-value="intrinsicDisplay('comboCdReductionPercent')"
                   :min="0"
                   :max="100"
                   :step="0.1"
                   :precision="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setOverride('comboCdReductionPercent', $event)"
                 />
                 <span class="affix unit">%</span>
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden('comboCdReductionPercent') }"
                   :tabindex="isOverridden('comboCdReductionPercent') ? 0 : -1"
@@ -434,7 +451,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride('comboCdReductionPercent')"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
 
@@ -444,18 +461,20 @@ function setCritPct(key, pctRaw) {
               </div>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
-                <el-input-number
+                <EaNumberInput
                   :model-value="intrinsicDisplay('defense')"
                   :min="0"
                   :step="1"
                   :controls="false"
-                  size="small"
+                  size="sm"
                   class="num-input"
                   @update:model-value="setOverride('defense', $event)"
                 />
                 <span class="affix unit" aria-hidden="true" />
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger reset-btn"
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  class="reset-btn"
                   type="button"
                   :class="{ invisible: !isOverridden('defense') }"
                   :tabindex="isOverridden('defense') ? 0 : -1"
@@ -463,7 +482,7 @@ function setCritPct(key, pctRaw) {
                   @click="clearOverride('defense')"
                 >
                   {{ t('armory.baseStats.resetOne') }}
-                </button>
+                </EaButton>
               </div>
             </div>
           </div>
@@ -472,25 +491,22 @@ function setCritPct(key, pctRaw) {
     </template>
 
     <template #footer>
-      <div class="footer">
-        <button
-          class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger"
+      <EaDialogActions>
+        <EaButton
+          variant="danger"
+          size="sm"
           type="button"
           :disabled="!hasAnyOverride"
           @click="clearAll"
         >
           {{ t('armory.baseStats.resetAll') }}
-        </button>
-        <button
-          class="ea-btn ea-btn--sm ea-btn--glass-rect"
-          type="button"
-          @click="onDialogVisible(false)"
-        >
+        </EaButton>
+        <EaButton size="sm" type="button" @click="onDialogVisible(false)">
           {{ t('common.close') }}
-        </button>
-      </div>
+        </EaButton>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>
@@ -572,10 +588,5 @@ function setCritPct(key, pctRaw) {
 .reset-btn.invisible {
   visibility: hidden;
   pointer-events: none;
-}
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 </style>

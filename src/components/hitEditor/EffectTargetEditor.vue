@@ -1,4 +1,5 @@
 <script setup>
+import { EaOption, EaSelect } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { DAMAGE_ELEMENTS, EFFECT_TARGET_SCOPES, OPERATOR_CLASSES } from '@/data/enums';
@@ -86,30 +87,30 @@ function scopeLabel(value) {
     <div class="field-grid field-grid--effect-select-row">
       <label class="field">
         <span>{{ t('hitEditor.fields.target') }}</span>
-        <el-select
+        <EaSelect
           :model-value="scopeValue"
           @update:model-value="value => (scopeValue = value)"
-          size="small"
+          size="sm"
           clearable
           :empty-values="[null, undefined]"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option :value="NONE" :label="t('common.none')" />
-          <el-option
+          <EaOption :value="NONE" :label="t('common.none')" />
+          <EaOption
             v-for="scope in EFFECT_TARGET_SCOPES"
             :key="scope"
             :value="scope"
             :label="scopeLabel(scope)"
           />
-        </el-select>
+        </EaSelect>
       </label>
       <label v-if="scopeValue" class="field">
         <span>{{ t('hitEditor.fields.targetClasses') }}</span>
-        <el-select
+        <EaSelect
           :model-value="classValues"
           @update:model-value="value => (classValues = value)"
-          size="small"
+          size="sm"
           multiple
           collapse-tags
           collapse-tags-tooltip
@@ -118,20 +119,20 @@ function scopeLabel(value) {
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option
+          <EaOption
             v-for="cls in OPERATOR_CLASSES"
             :key="cls"
             :value="cls"
             :label="getGameClassName(cls, locale)"
           />
-        </el-select>
+        </EaSelect>
       </label>
       <label v-if="scopeValue" class="field">
         <span>{{ t('hitEditor.fields.targetElements') }}</span>
-        <el-select
+        <EaSelect
           :model-value="elementValues"
           @update:model-value="value => (elementValues = value)"
-          size="small"
+          size="sm"
           multiple
           collapse-tags
           collapse-tags-tooltip
@@ -140,13 +141,13 @@ function scopeLabel(value) {
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option
+          <EaOption
             v-for="el in DAMAGE_ELEMENTS"
             :key="el"
             :value="el"
             :label="getGameElementName(el, locale)"
           />
-        </el-select>
+        </EaSelect>
       </label>
     </div>
   </div>

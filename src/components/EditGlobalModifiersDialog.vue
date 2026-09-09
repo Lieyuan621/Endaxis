@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
 import { computed, onBeforeUnmount, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore';
@@ -124,7 +125,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     width="440px"
     append-to-body
@@ -155,37 +156,40 @@ onBeforeUnmount(() => {
                 t,
               )
             }}</span>
-            <button
+            <EaButton
+              size="sm"
               type="button"
-              class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold add-btn"
+              class="add-btn"
               @click="addOperatorEntry(group.choice.key)"
             >
               {{ t('globalConfig.addEntry') }}
-            </button>
+            </EaButton>
           </div>
           <div v-if="group.entries.length > 0" class="stat-block-body">
             <div v-for="mod in group.entries" :key="mod.id" class="stat-entry">
               <span
                 class="affix prefix"
                 :aria-hidden="valueKindOf(group.choice) !== 'percentPlus'"
-              >{{ valueKindOf(group.choice) === 'percentPlus' ? '+' : '' }}</span>
+                >{{ valueKindOf(group.choice) === 'percentPlus' ? '+' : '' }}</span
+              >
               <CustomNumberInput
                 :model-value="mod.value"
                 :step="inputStep(group.choice)"
                 class="stat-input"
                 @update:model-value="setModifierValue(mod.id, $event)"
               />
-              <span
-                class="affix unit"
-                :aria-hidden="valueKindOf(group.choice) === 'flat'"
-              >{{ valueKindOf(group.choice) === 'flat' ? '' : '%' }}</span>
-              <button
+              <span class="affix unit" :aria-hidden="valueKindOf(group.choice) === 'flat'">{{
+                valueKindOf(group.choice) === 'flat' ? '' : '%'
+              }}</span>
+              <EaButton
+                variant="danger"
+                size="sm"
                 type="button"
-                class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger remove-btn"
+                class="remove-btn"
                 @click="removeModifier(mod.id)"
               >
                 {{ t('common.delete') }}
-              </button>
+              </EaButton>
             </div>
           </div>
         </div>
@@ -193,17 +197,13 @@ onBeforeUnmount(() => {
     </div>
 
     <template #footer>
-      <div class="footer">
-        <button
-          type="button"
-          class="ea-btn ea-btn--sm ea-btn--glass-rect"
-          @click="onVisible(false)"
-        >
+      <EaDialogActions>
+        <EaButton size="sm" type="button" @click="onVisible(false)">
           {{ t('common.close') }}
-        </button>
-      </div>
+        </EaButton>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>
@@ -289,10 +289,4 @@ onBeforeUnmount(() => {
   justify-content: center;
   white-space: nowrap;
 }
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
 </style>
-

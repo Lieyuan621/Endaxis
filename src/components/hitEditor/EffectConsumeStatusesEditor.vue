@@ -1,4 +1,5 @@
 <script setup>
+import { EaOption, EaSelect } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
@@ -68,9 +69,7 @@ const operatorOptions = computed(() =>
   collectStatusOptions(props.operatorStatusOptions, operatorKeys.value),
 );
 
-const enemyOptions = computed(() =>
-  collectStatusOptions(KNOWN_ENEMY_STATUS_KEYS, enemyKeys.value),
-);
+const enemyOptions = computed(() => collectStatusOptions(KNOWN_ENEMY_STATUS_KEYS, enemyKeys.value));
 
 function statusLabel(value) {
   return translateEffectName(t, te, value, props.operatorStatusNameById);
@@ -82,10 +81,10 @@ function statusLabel(value) {
     <div class="field-grid field-grid--effect-select-row">
       <label class="field">
         <span>{{ t('hitEditor.fields.operatorStatus') }}</span>
-        <el-select
+        <EaSelect
           :model-value="operatorKeys"
           @update:model-value="value => (operatorKeys = value)"
-          size="small"
+          size="sm"
           multiple
           filterable
           collapse-tags
@@ -95,20 +94,20 @@ function statusLabel(value) {
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option
+          <EaOption
             v-for="status in operatorOptions"
             :key="status"
             :value="status"
             :label="statusLabel(status)"
           />
-        </el-select>
+        </EaSelect>
       </label>
       <label class="field">
         <span>{{ t('hitEditor.fields.enemyStatus') }}</span>
-        <el-select
+        <EaSelect
           :model-value="enemyKeys"
           @update:model-value="value => (enemyKeys = value)"
-          size="small"
+          size="sm"
           multiple
           filterable
           collapse-tags
@@ -118,13 +117,13 @@ function statusLabel(value) {
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option
+          <EaOption
             v-for="status in enemyOptions"
             :key="status"
             :value="status"
             :label="statusLabel(status)"
           />
-        </el-select>
+        </EaSelect>
       </label>
     </div>
   </div>

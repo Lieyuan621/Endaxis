@@ -3,6 +3,15 @@ import displayMenuSource from '../components/TimelineDisplayMenu.vue?raw';
 import source from './TimelineEditor.vue?raw';
 
 describe('TimelineEditor right rail icons', () => {
+  test('leaves enough workspace height for a taller resource monitor', () => {
+    const mainMinHeight = Number(
+      source.match(/const TIMELINE_MAIN_MIN_HEIGHT = (\d+);/)?.[1] ?? Number.NaN,
+    );
+    const maxBottomPanelHeight = 900 - mainMinHeight - 1;
+
+    expect(maxBottomPanelHeight).toBeGreaterThanOrEqual(379);
+  });
+
   test('gives the inspector rail button its own image icon', () => {
     const inspectorIcon = source.match(/<img[\s\S]*?activity-bar__image-icon--inspector[\s\S]*?>/);
 
@@ -49,6 +58,6 @@ describe('TimelineEditor right rail icons', () => {
     expect(guideIndex).toBeGreaterThan(-1);
     expect(guideIndex).toBeLessThan(scrollIndex);
     expect(displayMenuSource).toContain('Ctrl + G');
-    expect(displayMenuSource).toContain(':aria-pressed="store.showCursorGuide"');
+    expect(displayMenuSource).toContain(':pressed="store.showCursorGuide"');
   });
 });

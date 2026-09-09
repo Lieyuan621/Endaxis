@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import CustomNumberInput from './CustomNumberInput.vue';
@@ -1223,7 +1224,7 @@ const staggerRatio = computed(() => {
           >
             <div v-if="!activeSectionCollapsed.affliction" class="section-topbar">
               <div class="section-topbar-line"></div>
-              <button
+              <EaButton
                 type="button"
                 class="section-toggle-btn"
                 :class="{ 'is-collapsed': activeSectionCollapsed.affliction }"
@@ -1233,16 +1234,16 @@ const staggerRatio = computed(() => {
                   class="section-toggle-chevron"
                   :class="{ 'is-collapsed': activeSectionCollapsed.affliction }"
                 ></span>
-              </button>
+              </EaButton>
             </div>
             <div v-if="activeSectionCollapsed.affliction" class="section-collapsed-strip">
-              <button
+              <EaButton
                 type="button"
                 class="section-toggle-btn is-in-strip"
                 @click="toggleSectionCollapsed('affliction')"
               >
                 <span class="section-toggle-chevron is-collapsed"></span>
-              </button>
+              </EaButton>
             </div>
             <div
               v-else
@@ -1354,7 +1355,7 @@ const staggerRatio = computed(() => {
           >
             <div v-if="!activeSectionCollapsed.stagger" class="section-topbar">
               <div class="section-topbar-line"></div>
-              <button
+              <EaButton
                 type="button"
                 class="section-toggle-btn"
                 :class="{ 'is-collapsed': activeSectionCollapsed.stagger }"
@@ -1364,16 +1365,16 @@ const staggerRatio = computed(() => {
                   class="section-toggle-chevron"
                   :class="{ 'is-collapsed': activeSectionCollapsed.stagger }"
                 ></span>
-              </button>
+              </EaButton>
             </div>
             <div v-if="activeSectionCollapsed.stagger" class="section-collapsed-strip">
-              <button
+              <EaButton
                 type="button"
                 class="section-toggle-btn is-in-strip"
                 @click="toggleSectionCollapsed('stagger')"
               >
                 <span class="section-toggle-chevron is-collapsed"></span>
-              </button>
+              </EaButton>
             </div>
             <div
               v-else
@@ -1501,7 +1502,7 @@ const staggerRatio = computed(() => {
           >
             <div v-if="!activeSectionCollapsed.sp" class="section-topbar">
               <div class="section-topbar-line"></div>
-              <button
+              <EaButton
                 type="button"
                 class="section-toggle-btn"
                 :class="{ 'is-collapsed': activeSectionCollapsed.sp }"
@@ -1511,16 +1512,16 @@ const staggerRatio = computed(() => {
                   class="section-toggle-chevron"
                   :class="{ 'is-collapsed': activeSectionCollapsed.sp }"
                 ></span>
-              </button>
+              </EaButton>
             </div>
             <div v-if="activeSectionCollapsed.sp" class="section-collapsed-strip">
-              <button
+              <EaButton
                 type="button"
                 class="section-toggle-btn is-in-strip"
                 @click="toggleSectionCollapsed('sp')"
               >
                 <span class="section-toggle-chevron is-collapsed"></span>
-              </button>
+              </EaButton>
             </div>
             <div
               v-else
@@ -2024,6 +2025,7 @@ const staggerRatio = computed(() => {
 }
 
 .section-toggle-btn:hover {
+  background: transparent;
   color: var(--ea-fg, #fff);
 }
 

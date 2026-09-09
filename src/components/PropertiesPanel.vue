@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDeleteIcon, EaInput, EaSelect } from '@/design-system';
 import { computed, ref, watch } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import draggable from 'vuedraggable';
@@ -508,9 +509,8 @@ const relevantConnections = computed(() => {
     })
     .filter(Boolean);
 });
-function updateConnPort(connId, type, event) {
-  const val = event.target.value;
-  store.updateConnectionPort(connId, type, val);
+function updateConnPort(connId, type, value) {
+  store.updateConnectionPort(connId, type, value);
 }
 
 function handleStartConnection(id, type = null) {
@@ -653,10 +653,7 @@ function handleStartConnection(id, type = null) {
             {{ t('propertiesPanel.damage.sp') }}: {{ totalSpGain }}
           </div>
           <div class="spacer"></div>
-          <button
-            class="ea-btn ea-btn--icon ea-btn--icon-22 ea-btn--icon-plus ea-btn--icon-plus-red"
-            @click.stop="addDamageTick"
-          >
+          <EaButton variant="danger" size="sm" icon-only @click.stop="addDamageTick">
             <svg
               viewBox="0 0 24 24"
               width="14"
@@ -668,7 +665,7 @@ function handleStartConnection(id, type = null) {
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-          </button>
+          </EaButton>
           <el-icon :class="{ 'is-rotated': isTicksExpanded }" class="toggle-arrow"
             ><ArrowRight
           /></el-icon>
@@ -687,9 +684,10 @@ function handleStartConnection(id, type = null) {
             <div class="tick-header">
               <span class="tick-idx">HIT {{ index + 1 }}</span>
               <div class="tick-actions">
-                <button
+                <EaButton
+                  size="sm"
+                  icon-only
                   type="button"
-                  class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-gold"
                   :title="t('hitEditor.open')"
                   @click="openHitEditor(index)"
                 >
@@ -707,14 +705,18 @@ function handleStartConnection(id, type = null) {
                     <path d="M12 20h9" />
                     <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
                   </svg>
-                </button>
-                <button
+                </EaButton>
+                <EaButton
+                  variant="danger"
+                  size="sm"
+                  icon-only
                   type="button"
-                  class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger"
+                  :title="t('hitEditor.deleteHit')"
+                  :aria-label="t('hitEditor.deleteHit')"
                   @click="removeDamageTick(index)"
                 >
-                  x
-                </button>
+                  <EaDeleteIcon />
+                </EaButton>
               </div>
             </div>
             <div class="hit-summary-grid">
@@ -765,10 +767,7 @@ function handleStartConnection(id, type = null) {
 
         <div class="section-header-tech">
           <div class="spacer"></div>
-          <button
-            class="ea-btn ea-btn--icon ea-btn--icon-22 ea-btn--icon-plus ea-btn--icon-plus-cyan"
-            @click.stop="addCustomBar"
-          >
+          <EaButton size="sm" icon-only @click.stop="addCustomBar">
             <svg
               viewBox="0 0 24 24"
               width="14"
@@ -780,7 +779,7 @@ function handleStartConnection(id, type = null) {
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-          </button>
+          </EaButton>
           <el-icon :class="{ 'is-rotated': isBarsExpanded }" class="toggle-arrow"
             ><ArrowRight
           /></el-icon>
@@ -792,20 +791,23 @@ function handleStartConnection(id, type = null) {
           </div>
           <div v-for="(bar, index) in customBarsList" :key="index" class="tick-item blue-theme">
             <div class="tick-header">
-              <input
-                type="text"
-                :value="bar.text"
-                @input="e => updateCustomBarItem(index, 'text', e.target.value)"
+              <EaInput
+                :model-value="bar.text"
+                size="sm"
+                @input="value => updateCustomBarItem(index, 'text', value)"
                 :placeholder="t('propertiesPanel.bars.namePlaceholder')"
-                class="simple-input"
               />
-              <button
+              <EaButton
+                variant="danger"
+                size="sm"
+                icon-only
                 type="button"
-                class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
                 @click="removeCustomBar(index)"
               >
-                x
-              </button>
+                <EaDeleteIcon />
+              </EaButton>
             </div>
             <div class="tick-row">
               <div class="tick-col">
@@ -842,8 +844,9 @@ function handleStartConnection(id, type = null) {
           </div>
           <div class="spacer"></div>
 
-          <button
-            class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold ea-btn--glass-rect-accent"
+          <EaButton
+            variant="primary"
+            size="sm"
             @click.stop="handleStartConnection(store.selectedActionId)"
             :class="{
               'is-linking':
@@ -868,7 +871,7 @@ function handleStartConnection(id, type = null) {
                 ? t('propertiesPanel.connections.chooseTarget')
                 : t('propertiesPanel.connections.new')
             }}
-          </button>
+          </EaButton>
         </div>
 
         <div v-if="relevantConnections.length === 0" class="empty-hint">
@@ -916,40 +919,42 @@ function handleStartConnection(id, type = null) {
               <div class="port-config">
                 <div class="port-select-wrapper">
                   <span class="port-label">{{ t('propertiesPanel.connections.outPort') }}</span>
-                  <select
+                  <EaSelect
                     class="mini-select"
-                    :value="conn.rawConnection.sourcePort || 'right'"
-                    @change="e => updateConnPort(conn.id, 'source', e)"
-                  >
-                    <option v-for="opt in PORT_OPTIONS" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                    size="sm"
+                    variant="inline"
+                    :model-value="conn.rawConnection.sourcePort || 'right'"
+                    :options="PORT_OPTIONS"
+                    @change="value => updateConnPort(conn.id, 'source', value)"
+                  />
                 </div>
                 <span class="port-arrow">>></span>
                 <div class="port-select-wrapper">
                   <span class="port-label">{{ t('propertiesPanel.connections.inPort') }}</span>
-                  <select
+                  <EaSelect
                     class="mini-select"
-                    :value="conn.rawConnection.targetPort || 'left'"
-                    @change="e => updateConnPort(conn.id, 'target', e)"
-                  >
-                    <option v-for="opt in PORT_OPTIONS" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                    size="sm"
+                    variant="inline"
+                    :model-value="conn.rawConnection.targetPort || 'left'"
+                    :options="PORT_OPTIONS"
+                    @change="value => updateConnPort(conn.id, 'target', value)"
+                  />
                 </div>
               </div>
             </div>
 
             <div class="conn-row-actions">
               <div class="spacer"></div>
-              <button
-                class="ea-btn ea-btn--icon ea-btn--icon-18 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger"
+              <EaButton
+                variant="danger"
+                size="sm"
+                icon-only
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
                 @click="store.removeConnection(conn.id)"
               >
-                x
-              </button>
+                <EaDeleteIcon />
+              </EaButton>
             </div>
           </div>
         </div>
@@ -1169,21 +1174,6 @@ function handleStartConnection(id, type = null) {
   font-style: italic;
 }
 
-/* Buttons & Inputs */
-.simple-input {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--ea-border-strong, #555);
-  color: var(--ea-fg, #ccc);
-  width: 100%;
-  font-size: 12px;
-  padding: 0 0 2px 0;
-}
-.simple-input:focus {
-  outline: none;
-  border-color: #00e5ff;
-}
-
 /* Ticks & Anomalies List */
 .tick-item {
   background: rgba(255, 255, 255, 0.02) !important;
@@ -1394,37 +1384,25 @@ function handleStartConnection(id, type = null) {
   gap: 4px;
 }
 .mini-select {
+  width: 72px;
   font-family: 'Inter', sans-serif;
   font-weight: bold;
   color: #aaa;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-.port-label {
-  font-size: 9px;
-  color: #666;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-.mini-select {
-  background: transparent;
-  border: none;
-  color: #aaa;
   font-size: 10px;
-  font-weight: bold;
   cursor: pointer;
-  padding: 0 2px;
   text-align: center;
-  appearance: none;
-  outline: none;
   transition: color 0.2s;
 }
 .mini-select:hover {
   color: var(--ea-gold);
 }
-.mini-select option {
-  background: #2a2a2a;
-  color: var(--ea-fg, #eee);
+.port-label {
+  color: #666;
+  font-size: 9px;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 .port-arrow {
   font-size: 8px;
@@ -1494,10 +1472,6 @@ function handleStartConnection(id, type = null) {
 }
 :global(html[data-theme='light'] .properties-panel .empty-hint) {
   color: var(--ea-fg-faint);
-}
-:global(html[data-theme='light'] .properties-panel .simple-input) {
-  color: var(--ea-fg);
-  border-bottom-color: var(--ea-border-strong);
 }
 :global(html[data-theme='light'] .properties-panel .tick-item) {
   background: var(--ea-fill-soft) !important;

@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore.js';
@@ -103,9 +104,10 @@ function choose(skill, allowZeroDuration = false) {
           <strong>{{ t('timeline.mobile.skillLibrary.title') }}</strong>
           <span>{{ trackName }}</span>
         </div>
-        <button
+        <EaButton
+          size="lg"
+          icon-only
           type="button"
-          class="ea-btn ea-btn--icon ea-btn--icon-38 ea-btn--glass-rect ea-btn--radius-6"
           :aria-label="t('common.close')"
           @click="emit('update:modelValue', false)"
         >
@@ -118,7 +120,7 @@ function choose(skill, allowZeroDuration = false) {
               stroke-linecap="round"
             />
           </svg>
-        </button>
+        </EaButton>
       </header>
 
       <div v-if="skills.length" class="skill-library-list">
@@ -128,7 +130,7 @@ function choose(skill, allowZeroDuration = false) {
           class="skill-library-item"
           :style="{ '--skill-accent': getSkillThemeColor(skill) }"
         >
-          <button type="button" class="skill-library-main" @click="choose(skill, true)">
+          <EaButton type="button" class="skill-library-main" @click="choose(skill, true)">
             <img v-if="skill.icon" :src="skill.icon" alt="" class="skill-library-icon" />
             <span class="skill-library-copy">
               <span class="skill-library-meta">
@@ -136,9 +138,9 @@ function choose(skill, allowZeroDuration = false) {
               </span>
               <strong>{{ skill.name }}</strong>
             </span>
-          </button>
+          </EaButton>
           <div v-if="getSegments(skill).length > 1" class="skill-segment-list">
-            <button
+            <EaButton
               v-for="segment in getSegments(skill)"
               :key="segment.id"
               type="button"
@@ -147,7 +149,7 @@ function choose(skill, allowZeroDuration = false) {
               @click="choose(segment)"
             >
               {{ getSegmentLabel(segment) }}
-            </button>
+            </EaButton>
           </div>
         </article>
       </div>

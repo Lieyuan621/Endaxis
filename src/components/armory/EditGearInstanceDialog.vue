@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getGearPiece, getQualityTier } from '@/data';
@@ -81,7 +82,7 @@ function formatStatValue(effect, value) {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     width="560px"
     append-to-body
@@ -132,16 +133,18 @@ function formatStatValue(effect, value) {
             </div>
             <div v-if="isGold" class="stat-bar-area">
               <div class="stat-slots">
-                <button
+                <EaButton
+                  size="sm"
+                  icon-only
                   v-for="artSlot in 3"
                   :key="artSlot"
-                  class="ea-btn ea-btn--icon ea-btn--icon-22 ea-btn--glass-rect ea-btn--accent-gold art-slot"
+                  class="art-slot"
                   :class="{ 'is-active': slotClass(slotIdx, artSlot) === 'slot-active' }"
                   @click="setArtificingLevel(slotIdx, artSlot)"
                 >
                   <template v-if="slotClass(slotIdx, artSlot) === 'slot-empty'">&nbsp;</template>
                   <template v-else>/</template>
-                </button>
+                </EaButton>
               </div>
               <span class="stat-level">{{ instance.artificingLevels[slotIdx] ?? 0 }}/3</span>
             </div>
@@ -152,20 +155,16 @@ function formatStatValue(effect, value) {
     </template>
 
     <template #footer>
-      <div class="footer">
-        <button
-          v-if="isGold"
-          class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill"
-          @click="maxOut"
-        >
+      <EaDialogActions>
+        <EaButton variant="primary" size="sm" v-if="isGold" @click="maxOut">
           {{ t('common.max') }}
-        </button>
-        <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">
+        </EaButton>
+        <EaButton size="sm" @click="emit('update:visible', false)">
           {{ t('common.close') }}
-        </button>
-      </div>
+        </EaButton>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>
@@ -300,11 +299,5 @@ function formatStatValue(effect, value) {
 .stat-locked {
   color: var(--ea-dialog-hint, #777);
   font-size: 12px;
-}
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  width: 100%;
 }
 </style>

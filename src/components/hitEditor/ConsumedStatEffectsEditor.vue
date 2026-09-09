@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDeleteIcon, EaInput } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EffectStatEditor from './EffectStatEditor.vue';
@@ -85,34 +86,31 @@ function addRow() {
         <div class="field-grid field-grid--effect-input-row">
           <label class="field">
             <span>{{ t('common.value') }}</span>
-            <input
-              class="simple-input"
-              :value="row.valueText"
-              @change="event => updateRow(index, { valueText: event.target.value })"
+            <EaInput
+              :model-value="row.valueText"
+              size="sm"
+              @change="value => updateRow(index, { valueText: value })"
             />
           </label>
         </div>
       </div>
-      <button
+      <EaButton
+        variant="danger"
+        size="sm"
+        icon-only
         type="button"
-        class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger term-remove"
+        class="term-remove"
+        :title="t('common.delete')"
+        :aria-label="t('common.delete')"
         @click="removeRow(index)"
       >
-        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-          <path
-            d="M3 3l10 10M13 3L3 13"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
+        <EaDeleteIcon />
+      </EaButton>
     </div>
 
-    <button type="button" class="add-effect-bar" @click="addRow">
+    <EaButton type="button" class="add-effect-bar" @click="addRow">
       + {{ t('hitEditor.addConsumedStatEffect') }}
-    </button>
+    </EaButton>
   </div>
 </template>
 
@@ -161,27 +159,6 @@ function addRow() {
   font-size: 11px;
   gap: 5px;
   min-width: 0;
-}
-
-.simple-input {
-  appearance: none;
-  background: var(--ea-fill-input, #111);
-  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.16));
-  border-radius: 0;
-  box-sizing: border-box;
-  color: var(--ea-fg, #f0f0f0);
-  font-family: inherit;
-  font-size: 12px;
-  height: 31px;
-  line-height: 1.2;
-  min-height: 31px;
-  padding: 0 8px;
-  width: 100%;
-}
-
-.simple-input:focus {
-  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
-  outline: none;
 }
 
 .term-remove {

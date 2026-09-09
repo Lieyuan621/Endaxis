@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed, ref, watch } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import { useOperatorStore } from '@/stores/operatorStore';
@@ -266,15 +267,15 @@ function onNativeDragStart(evt, skill) {
       </div>
 
       <div class="loadout-actions">
-        <button
+        <EaButton
           type="button"
           class="loadout-action-btn"
           :disabled="!activeOperatorInstance"
           @click="openOperatorEditDialog"
         >
           {{ t('actionLibrary.tabs.operator') }}
-        </button>
-        <button
+        </EaButton>
+        <EaButton
           type="button"
           class="loadout-action-btn"
           :disabled="!activeWeaponInstance"
@@ -282,8 +283,8 @@ function onNativeDragStart(evt, skill) {
           @click="openWeaponEditDialog"
         >
           {{ t('actionLibrary.tabs.weapon') }}
-        </button>
-        <button
+        </EaButton>
+        <EaButton
           type="button"
           class="loadout-action-btn"
           :disabled="!hasAnyEquipmentEquipped"
@@ -291,7 +292,7 @@ function onNativeDragStart(evt, skill) {
           @click="openGearLoadoutDialog"
         >
           {{ t('actionLibrary.tabs.set') }}
-        </button>
+        </EaButton>
       </div>
     </div>
 

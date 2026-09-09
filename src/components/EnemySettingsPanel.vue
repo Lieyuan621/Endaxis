@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDialog, EaFilterChip, EaInput } from '@/design-system';
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { Search } from '@element-plus/icons-vue';
@@ -157,68 +158,66 @@ function setEnemyLevel(level) {
 </script>
 
 <template>
-  <section
-    class="enemy-settings-panel"
-    :class="{ 'is-selector-only': props.selectorOnly }"
-  >
+  <section class="enemy-settings-panel" :class="{ 'is-selector-only': props.selectorOnly }">
     <template v-if="!props.selectorOnly">
-    <button type="button" class="enemy-select-module" @click="openSelector">
-      <div class="module-deco-line"></div>
-      <div class="enemy-avatar-box">
-        <img
-          v-if="!activeEnemyInfo.isCustom"
-          :src="activeEnemyInfo.avatar"
-          @error="e => (e.target.src = '/Endaxis/avatars/default_enemy.webp')"
-        />
-        <div v-else class="custom-avatar-placeholder">?</div>
-        <div class="scan-line"></div>
-      </div>
-      <div class="enemy-info-col">
-        <div class="enemy-name-line">
-          <span class="enemy-name">{{ activeEnemyInfo.name }}</span>
-          <span v-if="!activeEnemyInfo.isCustom" class="enemy-level-badge"
-            >Lv{{ store.activeEnemyLevel }}</span
-          >
+      <EaButton type="button" class="enemy-select-module" @click="openSelector">
+        <div class="module-deco-line"></div>
+        <div class="enemy-avatar-box">
+          <img
+            v-if="!activeEnemyInfo.isCustom"
+            :src="activeEnemyInfo.avatar"
+            @error="e => (e.target.src = '/Endaxis/avatars/default_enemy.webp')"
+          />
+          <div v-else class="custom-avatar-placeholder">?</div>
+          <div class="scan-line"></div>
         </div>
-        <div class="click-hint">{{ t('resourceMonitor.enemy.clickToChange') }}</div>
-      </div>
-    </button>
+        <div class="enemy-info-col">
+          <div class="enemy-name-line">
+            <span class="enemy-name">{{ activeEnemyInfo.name }}</span>
+            <span v-if="!activeEnemyInfo.isCustom" class="enemy-level-badge"
+              >Lv{{ store.activeEnemyLevel }}</span
+            >
+          </div>
+          <div class="click-hint">{{ t('resourceMonitor.enemy.clickToChange') }}</div>
+        </div>
+      </EaButton>
 
-    <div class="stats-summary">
-      <div class="summary-row">
-        <span class="summary-label">{{ t('resourceMonitor.labels.enemyHp') }}</span>
-        <span class="summary-value">{{ summaryHp.toLocaleString() }}</span>
+      <div class="stats-summary">
+        <div class="summary-row">
+          <span class="summary-label">{{ t('resourceMonitor.labels.enemyHp') }}</span>
+          <span class="summary-value">{{ summaryHp.toLocaleString() }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">{{ t('resourceMonitor.labels.maxStagger') }}</span>
+          <span class="summary-value">{{ summaryStagger.toLocaleString() }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">{{ t('resourceMonitor.labels.staggerNodes') }}</span>
+          <span class="summary-value">{{ summaryStaggerNodes }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">{{ t('resourceMonitor.labels.resistanceTitle') }}</span>
+          <span class="summary-value summary-value--res">
+            <template v-for="(item, index) in resistanceSummary" :key="item.key">
+              <span v-if="index > 0" class="res-sep">/</span>
+              <span class="res-value" :style="{ color: item.color }">{{ item.value }}</span>
+            </template>
+          </span>
+        </div>
+        <EaButton
+          size="sm"
+          type="button"
+          class="stats-edit-btn"
+          @click="isStatsDialogVisible = true"
+        >
+          {{ t('resourceMonitor.enemy.editStats') }}
+        </EaButton>
       </div>
-      <div class="summary-row">
-        <span class="summary-label">{{ t('resourceMonitor.labels.maxStagger') }}</span>
-        <span class="summary-value">{{ summaryStagger.toLocaleString() }}</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">{{ t('resourceMonitor.labels.staggerNodes') }}</span>
-        <span class="summary-value">{{ summaryStaggerNodes }}</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">{{ t('resourceMonitor.labels.resistanceTitle') }}</span>
-        <span class="summary-value summary-value--res">
-          <template v-for="(item, index) in resistanceSummary" :key="item.key">
-            <span v-if="index > 0" class="res-sep">/</span>
-            <span class="res-value" :style="{ color: item.color }">{{ item.value }}</span>
-          </template>
-        </span>
-      </div>
-      <button
-        type="button"
-        class="ea-btn ea-btn--sm ea-btn--glass-rect stats-edit-btn"
-        @click="isStatsDialogVisible = true"
-      >
-        {{ t('resourceMonitor.enemy.editStats') }}
-      </button>
-    </div>
 
-    <EditEnemyBaseStatsDialog v-model:visible="isStatsDialogVisible" />
+      <EditEnemyBaseStatsDialog v-model:visible="isStatsDialogVisible" />
     </template>
 
-    <el-dialog
+    <EaDialog
       v-model="isEnemySelectorVisible"
       :title="t('resourceMonitor.enemy.dialogTitle')"
       width="640px"
@@ -227,7 +226,7 @@ function setEnemyLevel(level) {
       :append-to-body="true"
     >
       <div class="selector-header">
-        <el-input
+        <EaInput
           v-model="enemySearchQuery"
           :placeholder="t('resourceMonitor.enemy.searchPlaceholder')"
           :prefix-icon="Search"
@@ -237,52 +236,50 @@ function setEnemyLevel(level) {
         <div class="enemy-level-picker">
           <span class="tier-label">{{ t('resourceMonitor.enemy.level') }}</span>
           <div class="enemy-level-buttons">
-            <button
+            <EaButton
+              size="sm"
               v-for="level in ENEMY_LEVELS"
               :key="`enemy_level_${level}`"
               type="button"
-              class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold enemy-level-btn"
+              class="enemy-level-btn"
               :class="{ 'is-active': store.activeEnemyLevel === level }"
               @click="setEnemyLevel(level)"
             >
               {{ level }}
-            </button>
+            </EaButton>
           </div>
         </div>
       </div>
 
       <div class="enemy-filter-rows">
         <div class="category-tabs">
-          <button
-            class="ea-btn ea-btn--glass-cut"
-            :class="{ 'is-active': activeCategoryTab === CATEGORY_ALL }"
-            :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
+          <EaFilterChip
+            :selected="activeCategoryTab === CATEGORY_ALL"
+            :accent="'var(--ea-gold)'"
             @click="activeCategoryTab = CATEGORY_ALL"
           >
             {{ t('common.all') }}
-          </button>
-          <button
+          </EaFilterChip>
+          <EaFilterChip
             v-for="cat in enemyCategories"
             :key="cat"
-            class="ea-btn ea-btn--glass-cut"
-            :class="{ 'is-active': activeCategoryTab === cat }"
-            :style="{ '--ea-btn-accent': 'var(--ea-gold)' }"
+            :selected="activeCategoryTab === cat"
+            :accent="'var(--ea-gold)'"
             @click="activeCategoryTab = cat"
           >
             {{ cat }}
-          </button>
+          </EaFilterChip>
         </div>
         <div class="tier-filters">
-          <button
+          <EaFilterChip
             v-for="tier in TIER_FILTERS"
             :key="tier.value"
-            class="ea-btn ea-btn--glass-cut"
-            :class="{ 'is-active': activeTierFilter === tier.value }"
-            :style="{ '--ea-btn-accent': tier.color }"
+            :selected="activeTierFilter === tier.value"
+            :accent="tier.color"
             @click="activeTierFilter = tier.value"
           >
             {{ tier.label }}
-          </button>
+          </EaFilterChip>
         </div>
       </div>
 
@@ -354,7 +351,7 @@ function setEnemyLevel(level) {
           {{ t('resourceMonitor.enemy.empty') }}
         </div>
       </div>
-    </el-dialog>
+    </EaDialog>
   </section>
 </template>
 
@@ -375,6 +372,7 @@ function setEnemyLevel(level) {
 
 .enemy-select-module {
   width: 100%;
+  height: auto;
   padding: 8px 10px;
   background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
   border: none;
@@ -598,12 +596,12 @@ function setEnemyLevel(level) {
   white-space: normal;
 }
 
-.category-tabs .ea-btn,
-.tier-filters .ea-btn {
+.category-tabs .ea-filter-chip,
+.tier-filters .ea-filter-chip {
   flex: none;
   margin-bottom: 2px;
-  --ea-btn-py: 6px;
-  --ea-btn-px: 16px;
+  padding-right: 16px;
+  padding-left: 16px;
 }
 
 .enemy-list-grid {
@@ -829,15 +827,5 @@ function setEnemyLevel(level) {
 :global(html[data-theme='light'] .enemy-settings-panel .enemy-avatar) {
   background: var(--ea-chip-fill);
   border-color: rgba(26, 27, 30, 0.14);
-}
-:global(html[data-theme='light'] .char-selector-dialog .el-dialog__body) {
-  color: var(--ea-dialog-body, #3a3d44);
-}
-:global(html[data-theme='light'] .char-selector-dialog .el-input__wrapper) {
-  background-color: var(--ea-fill-input, var(--ea-surface-soft)) !important;
-  box-shadow: 0 0 0 1px var(--ea-border, #d8dbe0) inset !important;
-}
-:global(html[data-theme='light'] .char-selector-dialog .el-input__inner) {
-  color: var(--ea-fg, #1a1b1e) !important;
 }
 </style>

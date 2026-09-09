@@ -1,14 +1,17 @@
 <script setup>
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import {
-  ElAlert,
-  ElDialog,
-  ElInput,
-  ElInputNumber,
-  ElMessage,
-  ElPopover,
-  ElMessageBox,
-} from 'element-plus';
+  EaButton,
+  EaDeleteIcon,
+  EaDialog,
+  EaDialogActions,
+  EaInput,
+  EaNumberInput,
+  EaOption,
+  EaSelect,
+  EaTextarea,
+} from '@/design-system';
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { ElAlert, ElMessage, ElPopover, ElMessageBox } from 'element-plus';
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { useI18n } from 'vue-i18n';
 import { setLocale } from '@/i18n';
@@ -2262,9 +2265,12 @@ async function doImport() {
     <div class="mobile-topbar">
       <div class="mobile-topbar-actions">
         <div class="mobile-scenario-tools">
-          <button
+          <EaButton
+            variant="ghost"
+            size="sm"
+            icon-only
             type="button"
-            class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--ghost ea-btn--no-shrink mobile-scenario-tool"
+            class="mobile-scenario-tool ea-control--no-shrink"
             :disabled="scenarioSwitching"
             :title="t('timeline.scenario.renameTooltip')"
             :aria-label="t('timeline.scenario.renameTooltip')"
@@ -2275,10 +2281,13 @@ async function doImport() {
                 d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
               />
             </svg>
-          </button>
-          <button
+          </EaButton>
+          <EaButton
+            variant="ghost"
+            size="sm"
+            icon-only
             type="button"
-            class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--ghost ea-btn--no-shrink mobile-scenario-tool"
+            class="mobile-scenario-tool ea-control--no-shrink"
             :disabled="scenarioSwitching"
             :title="t('timeline.scenario.duplicateTooltip')"
             :aria-label="t('timeline.scenario.duplicateTooltip')"
@@ -2298,37 +2307,28 @@ async function doImport() {
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
             </svg>
-          </button>
-          <button
+          </EaButton>
+          <EaButton
             v-if="scenarioList.length > 1"
             type="button"
-            class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--ghost ea-btn--hover-danger ea-btn--no-shrink mobile-scenario-tool"
+            class="ea-control--no-shrink mobile-scenario-tool"
+            variant="danger"
+            size="sm"
+            icon-only
             :disabled="scenarioSwitching"
             :title="t('timeline.scenario.deleteTooltip')"
             :aria-label="t('timeline.scenario.deleteTooltip')"
             @click="handleDeleteScenario"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <polyline points="3 6 5 6 21 6" />
-              <path
-                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-              />
-            </svg>
-          </button>
-          <button
+            <EaDeleteIcon />
+          </EaButton>
+          <EaButton
+            variant="ghost"
+            size="sm"
+            icon-only
             v-if="scenarioList.length < store.MAX_SCENARIOS"
             type="button"
-            class="ea-btn ea-btn--icon ea-btn--icon-24 ea-btn--ghost ea-btn--no-shrink mobile-scenario-tool"
+            class="mobile-scenario-tool ea-control--no-shrink"
             :disabled="scenarioSwitching"
             :title="t('timeline.scenario.addTooltip')"
             :aria-label="t('timeline.scenario.addTooltip')"
@@ -2346,37 +2346,39 @@ async function doImport() {
             >
               <path d="M12 5v14M5 12h14" />
             </svg>
-          </button>
+          </EaButton>
         </div>
 
         <div class="mobile-topbar-secondary">
-          <input
+          <EaInput
             v-if="scenarioRenameActive && currentScenario"
             ref="scenarioRenameInputRef"
             v-model="currentScenario.name"
+            variant="inline"
+            size="sm"
             class="mobile-scenario-input"
             :aria-label="t('timeline.scenario.renameTooltip')"
             @blur="finishScenarioRename"
             @keydown.enter="finishScenarioRename"
             @keydown.esc="finishScenarioRename"
           />
-          <el-select
+          <EaSelect
             v-else
             :model-value="selectedScenarioId"
             :disabled="scenarioSwitching"
-            size="small"
+            size="sm"
             :class="['mobile-scenario-select', { 'is-switching': scenarioSwitching }]"
             :teleported="true"
             popper-class="mobile-scenario-popper"
             @change="handleScenarioChange"
           >
-            <el-option
+            <EaOption
               v-for="(sc, idx) in scenarioList"
               :key="sc.id"
               :label="sc?.name || t('timeline.scenario.defaultName', { index: idx + 1 })"
               :value="sc.id"
             />
-          </el-select>
+          </EaSelect>
 
           <el-popover
             v-model:visible="moreMenuOpen"
@@ -2388,9 +2390,10 @@ async function doImport() {
             popper-class="mobile-more-popper"
           >
             <template #reference>
-              <button
+              <EaButton
+                size="sm"
                 type="button"
-                class="ea-btn ea-btn--sm ea-btn--lift mobile-more-trigger"
+                class="mobile-more-trigger"
                 :class="{ 'is-active': moreMenuOpen }"
                 :title="t('timeline.mobile.more')"
                 :aria-label="t('timeline.mobile.more')"
@@ -2411,31 +2414,33 @@ async function doImport() {
                   <circle cx="12" cy="12" r="1.6"></circle>
                   <circle cx="12" cy="19" r="1.6"></circle>
                 </svg>
-              </button>
+              </EaButton>
             </template>
 
             <div class="mobile-more-panel">
               <section class="mobile-more-section">
                 <h4 class="mobile-more-section__title">{{ t('common.language') }}</h4>
                 <div class="mobile-locale" :aria-label="t('common.language')">
-                  <button
+                  <EaButton
+                    size="sm"
                     type="button"
-                    class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
+                    class="mobile-locale__btn"
                     :class="{ 'is-active': locale === 'zh-CN' }"
-                    :aria-pressed="locale === 'zh-CN'"
+                    :pressed="locale === 'zh-CN'"
                     @click="changeLocale('zh-CN')"
                   >
                     {{ t('locale.zhCN') }}
-                  </button>
-                  <button
+                  </EaButton>
+                  <EaButton
+                    size="sm"
                     type="button"
-                    class="ea-btn ea-btn--sm ea-btn--lift mobile-locale__btn"
+                    class="mobile-locale__btn"
                     :class="{ 'is-active': locale === 'en' }"
-                    :aria-pressed="locale === 'en'"
+                    :pressed="locale === 'en'"
                     @click="changeLocale('en')"
                   >
                     {{ t('locale.en') }}
-                  </button>
+                  </EaButton>
                 </div>
 
                 <div class="mobile-appearance-row">
@@ -2445,9 +2450,10 @@ async function doImport() {
                     role="group"
                     :aria-label="t('common.appearance')"
                   >
-                    <button
+                    <EaButton
+                      size="sm"
                       type="button"
-                      class="ea-btn ea-btn--sm ea-btn--lift mobile-appearance-btn"
+                      class="mobile-appearance-btn"
                       :class="{ 'is-active': appearance === 'light' }"
                       :title="t('common.appearanceLight')"
                       :aria-label="t('common.appearanceLight')"
@@ -2469,10 +2475,11 @@ async function doImport() {
                           d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
                         />
                       </svg>
-                    </button>
-                    <button
+                    </EaButton>
+                    <EaButton
+                      size="sm"
                       type="button"
-                      class="ea-btn ea-btn--sm ea-btn--lift mobile-appearance-btn"
+                      class="mobile-appearance-btn"
                       :class="{ 'is-active': appearance === 'dark' }"
                       :title="t('common.appearanceDark')"
                       :aria-label="t('common.appearanceDark')"
@@ -2491,7 +2498,7 @@ async function doImport() {
                       >
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                       </svg>
-                    </button>
+                    </EaButton>
                   </div>
                 </div>
               </section>
@@ -2504,13 +2511,13 @@ async function doImport() {
                   <label class="mobile-time-setting-row">
                     <span>{{ t('timeline.mobile.timeSettings.prepDuration') }}</span>
                     <span class="mobile-time-setting-row__control">
-                      <el-input-number
+                      <EaNumberInput
                         v-model="prepDurationDraft"
                         :min="1 / 60"
                         :step="0.5"
                         :precision="2"
                         controls-position="right"
-                        size="small"
+                        size="sm"
                         @change="applyMobilePrepDuration"
                       />
                       <span>{{ t('timeline.mobile.timeSettings.seconds') }}</span>
@@ -2519,23 +2526,23 @@ async function doImport() {
                   <label class="mobile-time-setting-row">
                     <span>{{ t('timeline.mobile.timeSettings.battleDuration') }}</span>
                     <span class="mobile-time-setting-row__control">
-                      <el-input-number
+                      <EaNumberInput
                         v-model="battleDurationDraft"
                         :min="30"
                         :max="600"
                         :step="10"
                         :precision="0"
                         controls-position="right"
-                        size="small"
+                        size="sm"
                         @change="applyMobileBattleDuration"
                       />
                       <span>{{ t('timeline.mobile.timeSettings.seconds') }}</span>
                     </span>
                   </label>
-                  <button
+                  <EaButton
                     type="button"
                     class="header-more-check-row header-more-check-row--compact mobile-prep-setting"
-                    :aria-pressed="store.prepExpanded !== false"
+                    :pressed="store.prepExpanded !== false"
                     @click="toggleMobilePrepExpanded"
                   >
                     <svg
@@ -2555,7 +2562,7 @@ async function doImport() {
                       />
                     </svg>
                     <span>{{ t('timeline.mobile.timeSettings.expandPrep') }}</span>
-                  </button>
+                  </EaButton>
                 </div>
               </section>
 
@@ -2564,10 +2571,10 @@ async function doImport() {
                   {{ t('timeline.mobile.display.title') }}
                 </h4>
                 <div class="header-more-checklist header-more-checklist--grid">
-                  <button
+                  <EaButton
                     type="button"
                     class="header-more-check-row header-more-check-row--compact"
-                    :aria-pressed="showAllAttackSegments"
+                    :pressed="showAllAttackSegments"
                     @click="showAllAttackSegments = !showAllAttackSegments"
                   >
                     <svg
@@ -2587,11 +2594,11 @@ async function doImport() {
                       />
                     </svg>
                     <span>{{ t('timeline.mobile.display.showAllAttackSegments') }}</span>
-                  </button>
-                  <button
+                  </EaButton>
+                  <EaButton
                     type="button"
                     class="header-more-check-row header-more-check-row--compact"
-                    :aria-pressed="showAnomalies"
+                    :pressed="showAnomalies"
                     @click="showAnomalies = !showAnomalies"
                   >
                     <svg
@@ -2611,11 +2618,11 @@ async function doImport() {
                       />
                     </svg>
                     <span>{{ t('timeline.mobile.display.showAnomalies') }}</span>
-                  </button>
-                  <button
+                  </EaButton>
+                  <EaButton
                     type="button"
                     class="header-more-check-row header-more-check-row--compact"
-                    :aria-pressed="showDurationBars"
+                    :pressed="showDurationBars"
                     @click="showDurationBars = !showDurationBars"
                   >
                     <svg
@@ -2635,11 +2642,11 @@ async function doImport() {
                       />
                     </svg>
                     <span>{{ t('timeline.mobile.display.showDurationBars') }}</span>
-                  </button>
-                  <button
+                  </EaButton>
+                  <EaButton
                     type="button"
                     class="header-more-check-row header-more-check-row--compact"
-                    :aria-pressed="showFreezeEffects"
+                    :pressed="showFreezeEffects"
                     @click="showFreezeEffects = !showFreezeEffects"
                   >
                     <svg
@@ -2659,11 +2666,11 @@ async function doImport() {
                       />
                     </svg>
                     <span>{{ t('timeline.mobile.display.showFreezeEffects') }}</span>
-                  </button>
-                  <button
+                  </EaButton>
+                  <EaButton
                     type="button"
                     class="header-more-check-row header-more-check-row--compact"
-                    :aria-pressed="showStaggerBreaks"
+                    :pressed="showStaggerBreaks"
                     @click="showStaggerBreaks = !showStaggerBreaks"
                   >
                     <svg
@@ -2683,11 +2690,11 @@ async function doImport() {
                       />
                     </svg>
                     <span>{{ t('timeline.mobile.display.showStaggerBreaks') }}</span>
-                  </button>
-                  <button
+                  </EaButton>
+                  <EaButton
                     type="button"
                     class="header-more-check-row header-more-check-row--compact"
-                    :aria-pressed="showOperationHints"
+                    :pressed="showOperationHints"
                     @click="showOperationHints = !showOperationHints"
                   >
                     <svg
@@ -2707,15 +2714,16 @@ async function doImport() {
                       />
                     </svg>
                     <span>{{ t('timeline.mobile.display.showOperationHints') }}</span>
-                  </button>
+                  </EaButton>
                 </div>
               </section>
 
               <section class="mobile-more-section">
                 <div class="mobile-project-actions">
-                  <button
+                  <EaButton
+                    size="sm"
                     type="button"
-                    class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-blue mobile-project-action"
+                    class="mobile-project-action"
                     @click="openImportDialog"
                   >
                     <svg
@@ -2733,10 +2741,12 @@ async function doImport() {
                       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                     </svg>
                     <span>{{ t('timeline.mobile.import') }}</span>
-                  </button>
-                  <button
+                  </EaButton>
+                  <EaButton
+                    variant="danger"
+                    size="sm"
                     type="button"
-                    class="ea-btn ea-btn--sm ea-btn--lift ea-btn--hover-danger-dark mobile-project-action"
+                    class="mobile-project-action"
                     @click="openResetDialog"
                   >
                     <svg
@@ -2756,7 +2766,7 @@ async function doImport() {
                       />
                     </svg>
                     <span>{{ t('common.reset') }}</span>
-                  </button>
+                  </EaButton>
                 </div>
               </section>
             </div>
@@ -2766,7 +2776,7 @@ async function doImport() {
     </div>
 
     <div class="mobile-editbar">
-      <button type="button" class="mobile-editbar__library" @click="openSkillLibrary()">
+      <EaButton type="button" class="mobile-editbar__library" @click="openSkillLibrary()">
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
           <path
             d="M4 5h16M4 12h16M4 19h10"
@@ -2783,8 +2793,8 @@ async function doImport() {
               : t('timeline.mobile.skillLibrary.selectTrack')
           }}
         </span>
-      </button>
-      <button
+      </EaButton>
+      <EaButton
         type="button"
         class="mobile-editbar__enemy"
         :title="t('resourceMonitor.enemy.dialogTitle')"
@@ -2803,8 +2813,8 @@ async function doImport() {
           <circle cx="12" cy="12" r="1.5" fill="currentColor" />
         </svg>
         <span>{{ activeEnemyDisplayName }}</span>
-      </button>
-      <button
+      </EaButton>
+      <EaButton
         type="button"
         class="mobile-editbar__icon mobile-editbar__icon--undo"
         :class="{ 'is-history-feedback': historyFeedback === 'undo' }"
@@ -2823,8 +2833,8 @@ async function doImport() {
             stroke-linejoin="round"
           />
         </svg>
-      </button>
-      <button
+      </EaButton>
+      <EaButton
         type="button"
         class="mobile-editbar__icon mobile-editbar__icon--redo"
         :class="{ 'is-history-feedback': historyFeedback === 'redo' }"
@@ -2843,7 +2853,7 @@ async function doImport() {
             stroke-linejoin="round"
           />
         </svg>
-      </button>
+      </EaButton>
     </div>
 
     <div v-if="pendingPlacementSkill" class="mobile-placement-banner">
@@ -2851,9 +2861,9 @@ async function doImport() {
         <strong>{{ pendingPlacementSkill.name }}</strong>
         <span>{{ t('timeline.mobile.skillLibrary.placeHint') }}</span>
       </div>
-      <button type="button" @click="cancelPlacement">
+      <EaButton type="button" @click="cancelPlacement">
         {{ t('common.cancel') }}
-      </button>
+      </EaButton>
     </div>
 
     <div ref="mobileScrollRef" class="mobile-scroll">
@@ -2869,7 +2879,7 @@ async function doImport() {
           }"
           :data-track-index="idx"
         >
-          <button
+          <EaButton
             type="button"
             class="mobile-avatar mobile-avatar-btn"
             :class="{ 'is-dragging': draggingTrackIndex === idx }"
@@ -2891,7 +2901,7 @@ async function doImport() {
               :alt="getTrackName(track)"
               @error="onAssetError"
             />
-          </button>
+          </EaButton>
         </div>
       </div>
 
@@ -2961,7 +2971,7 @@ async function doImport() {
             :class="{ 'is-collapsed': store.prepExpanded === false }"
             :style="{ height: `${prepHeightPx}px` }"
           >
-            <button
+            <EaButton
               type="button"
               class="mobile-prep-center-label"
               :title="
@@ -2996,7 +3006,7 @@ async function doImport() {
                   />
                 </svg>
               </span>
-            </button>
+            </EaButton>
           </div>
           <div
             v-if="prepDuration > 0"
@@ -3111,7 +3121,7 @@ async function doImport() {
           :style="{ top: `${mobileGuideTop}px` }"
         >
           <div class="mobile-resource-guide__panel" :class="{ 'is-below': mobileGuidePanelBelow }">
-            <button
+            <EaButton
               type="button"
               class="mobile-resource-guide__close"
               :title="t('common.close')"
@@ -3128,7 +3138,7 @@ async function doImport() {
                   stroke-linecap="round"
                 />
               </svg>
-            </button>
+            </EaButton>
             <div class="mobile-resource-guide__summary">
               <span class="is-time">{{ formatAxisLabel(mobileGuideTime) }}</span>
               <span class="is-sp">{{ t('timelineGrid.cursor.sp') }}: {{ mobileGuideSpText }}</span>
@@ -3169,7 +3179,7 @@ async function doImport() {
                 :content="getCombatIconTitle(effect.typeKey)"
               >
                 <template #reference>
-                  <button
+                  <EaButton
                     type="button"
                     class="mobile-resource-guide__effect"
                     :class="{ 'is-disabled': effect.disabled }"
@@ -3178,7 +3188,7 @@ async function doImport() {
                   >
                     <img :src="getMobileGuideEffectIcon(effect)" alt="" @error="onAssetError" />
                     <span>{{ effect.stacks }}</span>
-                  </button>
+                  </EaButton>
                 </template>
               </el-popover>
               <span
@@ -3206,9 +3216,11 @@ async function doImport() {
       <div class="m-drawer">
         <div class="m-drawer__header">
           <div class="m-drawer__title">{{ t('timeline.mobile.actionInfo.title') }}</div>
-          <button
+          <EaButton
+            size="lg"
+            icon-only
             type="button"
-            class="ea-btn ea-btn--icon ea-btn--icon-38 ea-btn--glass-rect ea-btn--radius-6 m-drawer__close"
+            class="m-drawer__close"
             :aria-label="t('common.close')"
             @click="actionInfoOpen = false"
           >
@@ -3221,7 +3233,7 @@ async function doImport() {
                 stroke-linecap="round"
               />
             </svg>
-          </button>
+          </EaButton>
         </div>
 
         <div class="m-drawer__content">
@@ -3300,7 +3312,7 @@ async function doImport() {
               </div>
               <div v-if="selectedActionDamageHits.length" class="actioninfo-damage__groups">
                 <section v-if="selectedSkillDamageHits.length" class="actioninfo-damage__group">
-                  <button
+                  <EaButton
                     type="button"
                     class="actioninfo-damage__group-toggle"
                     :aria-expanded="skillDamageOpen"
@@ -3329,9 +3341,9 @@ async function doImport() {
                         />
                       </svg>
                     </span>
-                  </button>
+                  </EaButton>
                   <div v-show="skillDamageOpen" class="actioninfo-damage__hits">
-                    <button
+                    <EaButton
                       v-for="hit in selectedSkillDamageHits"
                       :key="hit.key"
                       type="button"
@@ -3349,12 +3361,12 @@ async function doImport() {
                         <small class="mono">+{{ formatSec(hit.offset) }}s</small>
                       </span>
                       <strong class="mono">{{ formatDamage(hit.damage) }}</strong>
-                    </button>
+                    </EaButton>
                   </div>
                 </section>
 
                 <section v-if="selectedEffectDamageHits.length" class="actioninfo-damage__group">
-                  <button
+                  <EaButton
                     type="button"
                     class="actioninfo-damage__group-toggle"
                     :aria-expanded="effectDamageOpen"
@@ -3383,9 +3395,9 @@ async function doImport() {
                         />
                       </svg>
                     </span>
-                  </button>
+                  </EaButton>
                   <div v-show="effectDamageOpen" class="actioninfo-damage__hits">
-                    <button
+                    <EaButton
                       v-for="hit in selectedEffectDamageHits"
                       :key="hit.key"
                       type="button"
@@ -3406,7 +3418,7 @@ async function doImport() {
                         </small>
                       </span>
                       <strong class="mono">{{ formatDamage(hit.damage) }}</strong>
-                    </button>
+                    </EaButton>
                   </div>
                 </section>
               </div>
@@ -3415,24 +3427,16 @@ async function doImport() {
               </div>
             </section>
             <div class="actioninfo-actions tech-style">
-              <button
-                type="button"
-                class="ea-btn ea-btn--sm ea-btn--glass-rect"
-                @click="toggleSelectedActionDisabled"
-              >
+              <EaButton size="sm" type="button" @click="toggleSelectedActionDisabled">
                 {{
                   selectedSourceAction?.isDisabled
                     ? t('timeline.mobile.actionInfo.enable')
                     : t('timeline.mobile.actionInfo.disable')
                 }}
-              </button>
-              <button
-                type="button"
-                class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-red ea-btn--glass-rect-danger"
-                @click="removeSelectedAction"
-              >
+              </EaButton>
+              <EaButton variant="danger" size="sm" type="button" @click="removeSelectedAction">
                 {{ t('timeline.mobile.actionInfo.delete') }}
-              </button>
+              </EaButton>
             </div>
           </div>
 
@@ -3456,9 +3460,11 @@ async function doImport() {
       <div class="m-drawer">
         <div class="m-drawer__header">
           <div class="m-drawer__title">{{ t('timeline.mobile.loadout.title') }}</div>
-          <button
+          <EaButton
+            size="lg"
+            icon-only
             type="button"
-            class="ea-btn ea-btn--icon ea-btn--icon-38 ea-btn--glass-rect ea-btn--radius-6 m-drawer__close"
+            class="m-drawer__close"
             :aria-label="t('common.close')"
             @click="loadoutOpen = false"
           >
@@ -3471,11 +3477,11 @@ async function doImport() {
                 stroke-linecap="round"
               />
             </svg>
-          </button>
+          </EaButton>
         </div>
 
         <div class="m-drawer__content">
-          <button
+          <EaButton
             v-if="selectedTrack"
             type="button"
             class="loadout-header loadout-editable tech-style"
@@ -3505,55 +3511,58 @@ async function doImport() {
                 </div>
               </div>
             </div>
-          </button>
+          </EaButton>
 
           <div v-if="selectedTrack?.id" class="loadout-quick-actions">
-            <button
+            <EaButton
+              size="sm"
               type="button"
-              class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted"
               :disabled="!selectedOperatorInstance"
               @click="openOperatorStatus"
             >
               {{ t('timeline.mobile.loadout.operatorStatus') }}
-            </button>
-            <button
+            </EaButton>
+            <EaButton
+              size="sm"
               type="button"
-              class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted"
               :disabled="!selectedWeaponInstance"
               @click="openWeaponStatus"
             >
               {{ t('timeline.mobile.loadout.weapon') }}
-            </button>
-            <button
+            </EaButton>
+            <EaButton
+              size="sm"
               type="button"
-              class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted"
               :disabled="!hasSelectedEquipment"
               @click="openEquipmentStatus"
             >
               {{ t('timeline.mobile.loadout.equipment') }}
-            </button>
+            </EaButton>
           </div>
-          <button
+          <EaButton
+            size="sm"
             v-if="selectedTrack?.id"
             type="button"
-            class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted loadout-stat-action"
+            class="loadout-stat-action"
             :disabled="!selectedTrack.operatorStatus"
             @click="openStatDetail"
           >
             {{ t('statDetail.button') }}
-          </button>
-          <button
+          </EaButton>
+          <EaButton
+            variant="primary"
+            size="sm"
             v-if="selectedTrack?.id"
             type="button"
-            class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold loadout-skill-action"
+            class="loadout-skill-action"
             @click="openSkillLibrary(loadoutTrackIndex)"
           >
             {{ t('timeline.mobile.skillLibrary.title') }}
-          </button>
+          </EaButton>
 
           <div class="m-field">
             <div class="m-label">{{ t('timeline.mobile.loadout.weapon') }}</div>
-            <button
+            <EaButton
               type="button"
               class="loadout-item loadout-editable tech-style"
               :disabled="!selectedTrack?.id"
@@ -3584,13 +3593,13 @@ async function doImport() {
                   </div>
                 </div>
               </div>
-            </button>
+            </EaButton>
           </div>
 
           <div class="m-field">
             <div class="m-label">{{ t('timeline.mobile.loadout.equipment') }}</div>
             <div class="loadout-eq-list">
-              <button
+              <EaButton
                 v-for="slot in equipmentSlots"
                 :key="slot.slotKey"
                 type="button"
@@ -3638,7 +3647,7 @@ async function doImport() {
                     </div>
                   </div>
                 </div>
-              </button>
+              </EaButton>
             </div>
           </div>
         </div>
@@ -3684,7 +3693,7 @@ async function doImport() {
       @update:visible="closeDamageHitDetail"
     />
 
-    <el-dialog
+    <EaDialog
       v-model="importVisible"
       :title="t('timeline.import.dialogTitle')"
       width="92%"
@@ -3705,9 +3714,9 @@ async function doImport() {
           style="margin-bottom: 10px"
         />
 
-        <el-input
+        <EaTextarea
           v-model="shareCode"
-          type="textarea"
+          variant="code"
           :rows="6"
           :placeholder="t('timeline.import.dialogPlaceholder')"
           resize="none"
@@ -3715,25 +3724,22 @@ async function doImport() {
         />
       </div>
       <template #footer>
-        <span class="dialog-footer">
-          <button
-            type="button"
-            class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted"
-            @click="importVisible = false"
-          >
+        <EaDialogActions>
+          <EaButton size="sm" type="button" @click="importVisible = false">
             {{ t('common.cancel') }}
-          </button>
-          <button
+          </EaButton>
+          <EaButton
+            variant="primary"
+            size="sm"
             type="button"
-            class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold"
             :disabled="importing"
             @click="doImport"
           >
             {{ importing ? t('timeline.mobile.importing') : t('timeline.import.dialogConfirm') }}
-          </button>
-        </span>
+          </EaButton>
+        </EaDialogActions>
       </template>
-    </el-dialog>
+    </EaDialog>
   </div>
 </template>
 
@@ -3769,10 +3775,6 @@ async function doImport() {
   min-width: 0;
 }
 
-.mobile-topbar-actions :deep(.el-button + .el-button) {
-  margin-left: 0 !important;
-}
-
 .mobile-scenario-tools {
   display: inline-flex;
   align-items: center;
@@ -3791,24 +3793,13 @@ async function doImport() {
 }
 
 .mobile-scenario-input {
-  height: 24px;
   min-width: 0;
   max-width: 288px;
   flex: 1 1 288px;
-  padding: 0 8px;
-  box-sizing: border-box;
-  border: 1px solid var(--ea-btn-secondary-border);
-  border-radius: 0;
-  outline: none;
-  background: var(--ea-fill-strong);
   color: var(--ea-fg-secondary);
   font: inherit;
   font-size: 12px;
   font-weight: 700;
-}
-
-.mobile-scenario-input:focus {
-  border-color: color-mix(in srgb, var(--ea-gold) 60%, var(--ea-border));
 }
 
 .mobile-editbar {
@@ -3954,7 +3945,7 @@ async function doImport() {
   font-size: 10px;
 }
 
-.mobile-placement-banner button {
+.mobile-placement-banner .ea-button {
   height: 30px;
   flex: 0 0 auto;
   padding: 0 10px;
@@ -3963,19 +3954,18 @@ async function doImport() {
   color: var(--ea-fg-secondary);
 }
 
-.mobile-more-trigger.ea-btn {
+.mobile-more-trigger.ea-button {
   width: 34px;
   min-width: 34px;
   height: 24px;
   padding: 0;
   justify-content: center;
-  --ea-btn-bg: var(--ea-btn-secondary-bg);
-  --ea-btn-border: var(--ea-btn-secondary-border);
-  --ea-btn-color: var(--ea-btn-secondary-fg);
-  --ea-btn-bg-hover: var(--ea-btn-secondary-hover-bg);
-  --ea-btn-border-hover: var(--ea-btn-secondary-hover-border);
-  --ea-btn-color-hover: var(--ea-btn-secondary-hover-fg);
-  --ea-btn-radius: 0;
+  --ea-control-bg: var(--ea-btn-secondary-bg);
+  --ea-control-border: var(--ea-btn-secondary-border);
+  --ea-control-fg: var(--ea-btn-secondary-fg);
+  --ea-control-bg-hover: var(--ea-btn-secondary-hover-bg);
+  --ea-control-border-hover: var(--ea-btn-secondary-hover-border);
+  --ea-control-fg-hover: var(--ea-btn-secondary-hover-fg);
   border-radius: 0;
 }
 
@@ -4057,20 +4047,20 @@ async function doImport() {
   gap: 4px;
 }
 
-.mobile-locale__btn.ea-btn,
-.mobile-appearance-btn.ea-btn {
+.mobile-locale__btn.ea-button,
+.mobile-appearance-btn.ea-button {
   min-width: 0;
-  --ea-btn-bg: var(--ea-fill-soft);
-  --ea-btn-border: var(--ea-border);
-  --ea-btn-color: var(--ea-fg-secondary);
-  --ea-btn-bg-hover: var(--ea-btn-primary-hover-bg);
-  --ea-btn-border-hover: var(--ea-btn-primary-border);
-  --ea-btn-color-hover: var(--ea-btn-primary-fg);
+  --ea-control-bg: var(--ea-fill-soft);
+  --ea-control-border: var(--ea-border);
+  --ea-control-fg: var(--ea-fg-secondary);
+  --ea-control-bg-hover: var(--ea-btn-primary-hover-bg);
+  --ea-control-border-hover: var(--ea-btn-primary-border);
+  --ea-control-fg-hover: var(--ea-btn-primary-fg);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
-.mobile-locale__btn.ea-btn {
+.mobile-locale__btn.ea-button {
   width: 100%;
   padding: 5px 4px;
   font-size: 11px;
@@ -4098,7 +4088,7 @@ async function doImport() {
   gap: 4px;
 }
 
-.mobile-appearance-btn.ea-btn {
+.mobile-appearance-btn.ea-button {
   width: 28px;
   min-width: 28px;
   height: 28px;
@@ -4108,15 +4098,15 @@ async function doImport() {
   padding: 0;
 }
 
-.mobile-locale__btn.ea-btn.is-active,
-.mobile-appearance-btn.ea-btn.is-active {
+.mobile-locale__btn.ea-button.is-active,
+.mobile-appearance-btn.ea-button.is-active {
   border-color: color-mix(in srgb, var(--ea-gold) 50%, transparent);
   background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
   color: #ffe38a;
 }
 
-:global(html[data-theme='light'] .mobile-locale__btn.ea-btn.is-active),
-:global(html[data-theme='light'] .mobile-appearance-btn.ea-btn.is-active) {
+:global(html[data-theme='light'] .mobile-locale__btn.ea-button.is-active),
+:global(html[data-theme='light'] .mobile-appearance-btn.ea-button.is-active) {
   border-color: rgba(180, 140, 0, 0.55);
   background: rgba(180, 140, 0, 0.12);
   color: var(--ea-gold);
@@ -4128,12 +4118,12 @@ async function doImport() {
   gap: 8px;
 }
 
-.mobile-project-action.ea-btn {
+.mobile-project-action.ea-button {
   width: 100%;
   justify-content: flex-start;
-  --ea-btn-bg: var(--ea-fill-soft);
-  --ea-btn-border: var(--ea-border);
-  --ea-btn-color: var(--ea-fg-secondary);
+  --ea-control-bg: var(--ea-fill-soft);
+  --ea-control-border: var(--ea-border);
+  --ea-control-fg: var(--ea-fg-secondary);
 }
 
 .mobile-scenario-select {
@@ -4993,31 +4983,6 @@ async function doImport() {
   text-shadow: var(--ea-action-fg-shadow);
 }
 
-:deep(.el-dialog) {
-  background-color: var(--ea-dialog-bg);
-  border: 1px solid var(--ea-dialog-border);
-  border-radius: 8px;
-  box-shadow: 0 10px 30px var(--ea-shadow-strong);
-}
-:deep(.el-dialog__header) {
-  margin-right: 0;
-  border-bottom: 1px solid var(--ea-dialog-divider);
-  padding: 15px 20px;
-}
-:deep(.el-dialog__title) {
-  color: var(--ea-dialog-title);
-  font-size: 16px;
-  font-weight: 600;
-}
-:deep(.el-dialog__body) {
-  color: var(--ea-dialog-body);
-  padding: 25px 25px 10px 25px;
-}
-:deep(.el-dialog__footer) {
-  padding: 15px 25px 20px;
-  border-top: 1px solid var(--ea-dialog-divider);
-}
-
 .share-import-container {
   display: flex;
   flex-direction: column;
@@ -5028,13 +4993,6 @@ async function doImport() {
   font-size: 12px;
   margin: 0;
 }
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  width: 100%;
-}
-
 .tech-style {
   background: linear-gradient(135deg, var(--ea-fill-soft) 0%, transparent 100%);
   border: 1px solid var(--ea-border);
@@ -5045,18 +5003,6 @@ async function doImport() {
 
 .tech-style.border-gear {
   border-left-color: var(--ea-gear-accent, #2dd4bf);
-}
-
-:deep(.el-textarea__inner) {
-  background-color: var(--ea-fill-input) !important;
-  box-shadow: inset 0 0 0 1px var(--ea-border) !important;
-  color: var(--ea-fg) !important;
-  border: none !important;
-  font-family: monospace;
-}
-:deep(.el-textarea__inner:focus) {
-  background-color: var(--ea-panel-elevated) !important;
-  box-shadow: inset 0 0 0 1px var(--ea-gold) !important;
 }
 
 :global(body.endaxis-mobile-viewer) {
@@ -5146,8 +5092,8 @@ async function doImport() {
   display: none;
 }
 
-:global(body.endaxis-mobile-viewer .enemy-selector-dialog .category-tabs .ea-btn),
-:global(body.endaxis-mobile-viewer .enemy-selector-dialog .tier-filters .ea-btn) {
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .category-tabs .ea-filter-chip),
+:global(body.endaxis-mobile-viewer .enemy-selector-dialog .tier-filters .ea-filter-chip) {
   width: auto;
   min-width: max-content;
   flex: 0 0 auto;
@@ -5609,7 +5555,7 @@ async function doImport() {
   margin-bottom: 8px;
 }
 
-.loadout-quick-actions .ea-btn {
+.loadout-quick-actions .ea-button {
   width: 100%;
 }
 

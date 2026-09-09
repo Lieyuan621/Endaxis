@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { EaButton } from '@/design-system';
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import VChart from 'vue-echarts';
@@ -218,20 +219,22 @@ const contributionChartOption = computed<ChartOption>(() => {
         <div class="section-heading">
           <h2>{{ t('timeline.analysis.contributionByOperator') }}</h2>
           <div class="mode-switch" role="group">
-            <button
+            <EaButton
               type="button"
               :class="{ active: store.lmdiAttributionMode === 'applier' }"
+              :pressed="store.lmdiAttributionMode === 'applier'"
               @click="store.lmdiAttributionMode = 'applier'"
             >
               {{ t('timeline.analysis.lmdiModeApplier') }}
-            </button>
-            <button
+            </EaButton>
+            <EaButton
               type="button"
               :class="{ active: store.lmdiAttributionMode === 'stacks' }"
+              :pressed="store.lmdiAttributionMode === 'stacks'"
               @click="store.lmdiAttributionMode = 'stacks'"
             >
               {{ t('timeline.analysis.lmdiModeStacks') }}
-            </button>
+            </EaButton>
           </div>
         </div>
         <VChart

@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getOperator, getOperatorTalentGroups } from '@/data';
@@ -264,7 +265,7 @@ function promotedLabel() {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     width="760px"
     append-to-body
@@ -300,19 +301,15 @@ function promotedLabel() {
               <span class="level-text">{{ t('armory.common.level') }}</span>
             </div>
             <div class="row row-actions">
-              <button
-                class="ea-btn ea-btn--sm ea-btn--glass-rect"
+              <EaButton
+                size="sm"
                 :disabled="!canPromote"
                 :style="instance.promoted ? { borderColor: color, color } : {}"
                 @click="update({ promoted: !instance.promoted })"
               >
                 {{ promotedLabel() }}
-              </button>
-              <button
-                class="ea-btn ea-btn--sm ea-btn--glass-rect"
-                type="button"
-                @click="baseStatsPanelVisible = true"
-              >
+              </EaButton>
+              <EaButton size="sm" type="button" @click="baseStatsPanelVisible = true">
                 {{ t('armory.baseStats.open') }}
                 <span
                   v-if="
@@ -320,7 +317,7 @@ function promotedLabel() {
                   "
                   class="override-dot"
                 />
-              </button>
+              </EaButton>
             </div>
             <div class="row">
               <span class="section-label">{{ t('armory.common.potential') }}</span>
@@ -350,7 +347,7 @@ function promotedLabel() {
                     </div>
                   </template>
 
-                  <button
+                  <EaButton
                     class="diamond"
                     :class="{ active: instance.potential >= p }"
                     :style="instance.potential >= p ? { background: potentialColor } : {}"
@@ -363,10 +360,11 @@ function promotedLabel() {
         </div>
 
         <div class="level-selector">
-          <button
+          <EaButton
             v-for="lv in LEVELS"
             :key="lv"
-            class="ea-btn ea-btn--sm ea-btn--glass-rect level-btn"
+            class="level-btn"
+            size="sm"
             :style="
               instance.level === lv
                 ? {
@@ -379,7 +377,7 @@ function promotedLabel() {
             @click="update({ level: lv })"
           >
             Lv{{ lv }}
-          </button>
+          </EaButton>
         </div>
 
         <div class="section">
@@ -409,23 +407,23 @@ function promotedLabel() {
               </el-tooltip>
               <div class="skill-name">{{ getSkillTypeName(key) }}</div>
               <div class="skill-controls">
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect"
+                <EaButton
+                  size="sm"
                   :disabled="(instance.skillLevels[key] ?? 1) <= 1"
                   @click="decrementSkill(key)"
                 >
                   -
-                </button>
+                </EaButton>
                 <span class="skill-rank">{{
                   skillLevelLabel(instance.skillLevels[key] ?? 1)
                 }}</span>
-                <button
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect"
+                <EaButton
+                  size="sm"
                   :disabled="(instance.skillLevels[key] ?? 1) >= skillMax"
                   @click="incrementSkill(key)"
                 >
                   +
-                </button>
+                </EaButton>
               </div>
             </div>
           </div>
@@ -460,7 +458,7 @@ function promotedLabel() {
                   </template>
 
                   <span class="talent-node-tooltip-anchor">
-                    <button
+                    <EaButton
                       class="talent-node"
                       :class="{
                         active: (instance.trustLevel ?? 0) >= lvl,
@@ -477,7 +475,7 @@ function promotedLabel() {
                         :src="ATTR_ICON[attrKey] ?? '/icons/default_icon.webp'"
                         class="talent-icon"
                       />
-                    </button>
+                    </EaButton>
                   </span>
                 </el-tooltip>
               </template>
@@ -516,7 +514,7 @@ function promotedLabel() {
                   </template>
 
                   <span class="talent-node-tooltip-anchor">
-                    <button
+                    <EaButton
                       class="talent-node"
                       :class="{ active: (instance.talentStates[String(groupIdx)] ?? 0) >= lvl }"
                       :style="
@@ -527,7 +525,7 @@ function promotedLabel() {
                       @click="setTalentState(groupIdx, lvl)"
                     >
                       <img :src="getTalentIcon(groupIdx)" class="talent-icon" />
-                    </button>
+                    </EaButton>
                   </span>
                 </el-tooltip>
               </template>
@@ -538,19 +536,16 @@ function promotedLabel() {
     </template>
 
     <template #footer>
-      <div class="footer">
-        <button
-          class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill"
-          @click="maxOut"
-        >
+      <EaDialogActions>
+        <EaButton variant="primary" size="sm" @click="maxOut">
           {{ t('common.max') }}
-        </button>
-        <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">
+        </EaButton>
+        <EaButton size="sm" @click="emit('update:visible', false)">
           {{ t('common.close') }}
-        </button>
-      </div>
+        </EaButton>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 
   <EditOperatorBaseStatsPanel
     v-if="instance"
@@ -833,12 +828,6 @@ function promotedLabel() {
 .talent-node.is-multi-attr .talent-icon {
   width: 16px;
   height: 16px;
-}
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  width: 100%;
 }
 .talent-node-tooltip-anchor {
   display: inline-flex;

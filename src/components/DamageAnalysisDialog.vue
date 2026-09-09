@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { EaButton, EaDialog } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import VChart from 'vue-echarts';
@@ -180,7 +181,7 @@ const elementChartOption = computed<ChartOption>(() => {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     @update:model-value="onClose"
     width="90vw"
@@ -217,26 +218,28 @@ const elementChartOption = computed<ChartOption>(() => {
                   placement="top"
                   :show-after="300"
                 >
-                  <button
+                  <EaButton
                     class="lmdi-mode-btn"
                     :class="{ active: store.lmdiAttributionMode === 'applier' }"
+                    :pressed="store.lmdiAttributionMode === 'applier'"
                     @click="store.lmdiAttributionMode = 'applier'"
                   >
                     {{ t('timeline.analysis.lmdiModeApplier') }}
-                  </button>
+                  </EaButton>
                 </el-tooltip>
                 <el-tooltip
                   :content="t('timeline.analysis.lmdiModeStacksTip')"
                   placement="top"
                   :show-after="300"
                 >
-                  <button
+                  <EaButton
                     class="lmdi-mode-btn"
                     :class="{ active: store.lmdiAttributionMode === 'stacks' }"
+                    :pressed="store.lmdiAttributionMode === 'stacks'"
                     @click="store.lmdiAttributionMode = 'stacks'"
                   >
                     {{ t('timeline.analysis.lmdiModeStacks') }}
-                  </button>
+                  </EaButton>
                 </el-tooltip>
               </div>
             </div>
@@ -284,7 +287,7 @@ const elementChartOption = computed<ChartOption>(() => {
         </el-collapse>
       </div>
     </div>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>

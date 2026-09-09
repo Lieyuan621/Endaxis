@@ -1,4 +1,12 @@
 <script setup>
+import {
+  EaButton,
+  EaDialog,
+  EaDialogActions,
+  EaInput,
+  EaNumberInput,
+  EaSwitch,
+} from '@/design-system';
 import { computed, nextTick, ref, watch } from 'vue';
 import { ElLoading, ElMessage } from 'element-plus';
 import { snapdom } from '@zumer/snapdom';
@@ -65,15 +73,14 @@ watch(
   },
 );
 
-const watermarkText = computed(() =>
-  String(form.value.filename || 'Endaxis')
-    .replace(/\.png$/i, '')
-    .trim() || 'Endaxis',
+const watermarkText = computed(
+  () =>
+    String(form.value.filename || 'Endaxis')
+      .replace(/\.png$/i, '')
+      .trim() || 'Endaxis',
 );
 
-const maxDuration = computed(() =>
-  Math.max(10, Math.round(Number(store.TOTAL_DURATION) || 120)),
-);
+const maxDuration = computed(() => Math.max(10, Math.round(Number(store.TOTAL_DURATION) || 120)));
 
 function close() {
   visible.value = false;
@@ -142,7 +149,7 @@ async function saveImage() {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     v-model="visible"
     :title="t('timeline.export.smallPreviewTitle')"
     width="880px"
@@ -184,10 +191,12 @@ async function saveImage() {
             role="group"
             :aria-label="t('timeline.export.cardAppearanceLabel')"
           >
-            <button
+            <EaButton
+              size="sm"
               type="button"
-              class="ea-btn ea-btn--sm ea-btn--lift card-appearance__btn"
+              class="card-appearance__btn"
               :class="{ 'is-active': form.cardAppearance === 'light' }"
+              :pressed="form.cardAppearance === 'light'"
               :title="t('common.appearanceLight')"
               :aria-label="t('common.appearanceLight')"
               @click="setCardAppearance('light')"
@@ -208,11 +217,13 @@ async function saveImage() {
                   d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
                 />
               </svg>
-            </button>
-            <button
+            </EaButton>
+            <EaButton
+              size="sm"
               type="button"
-              class="ea-btn ea-btn--sm ea-btn--lift card-appearance__btn"
+              class="card-appearance__btn"
               :class="{ 'is-active': form.cardAppearance === 'dark' }"
+              :pressed="form.cardAppearance === 'dark'"
               :title="t('common.appearanceDark')"
               :aria-label="t('common.appearanceDark')"
               @click="setCardAppearance('dark')"
@@ -230,28 +241,28 @@ async function saveImage() {
               >
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               </svg>
-            </button>
+            </EaButton>
           </div>
         </div>
 
         <div class="form-item">
           <label>{{ t('timeline.export.filenameLabel') }}</label>
-          <el-input
+          <EaInput
             v-model="form.filename"
             :placeholder="t('timeline.export.filenamePlaceholder')"
-            size="default"
+            size="md"
           />
         </div>
 
         <div class="form-item">
           <label>{{ t('timeline.export.durationLabel') }}</label>
-          <el-input-number
+          <EaNumberInput
             v-model="form.duration"
             :min="10"
             :max="maxDuration"
             :step="10"
             :precision="0"
-            size="default"
+            size="md"
             style="width: 100%"
           />
           <div class="hint">
@@ -307,46 +318,48 @@ async function saveImage() {
 
         <div class="form-item form-item--row">
           <span>{{ t('timeline.export.showCombatIcons') }}</span>
-          <el-switch v-model="form.showCombatIcons" />
+          <EaSwitch
+            v-model="form.showCombatIcons"
+            :aria-label="t('timeline.export.showCombatIcons')"
+          />
         </div>
 
         <div class="form-item form-item--row">
           <span>{{ t('timeline.export.showDurationBars') }}</span>
-          <el-switch v-model="form.showDurationBars" />
+          <EaSwitch
+            v-model="form.showDurationBars"
+            :aria-label="t('timeline.export.showDurationBars')"
+          />
         </div>
 
         <div class="form-item form-item--row">
           <span>{{ t('timeline.export.showKeycaps') }}</span>
-          <el-switch v-model="form.showKeycaps" />
+          <EaSwitch v-model="form.showKeycaps" :aria-label="t('timeline.export.showKeycaps')" />
         </div>
 
         <div class="form-item form-item--row">
           <span>{{ t('timeline.export.showPrep') }}</span>
-          <el-switch v-model="form.showPrep" />
+          <EaSwitch v-model="form.showPrep" :aria-label="t('timeline.export.showPrep')" />
         </div>
 
         <div class="form-item form-item--row">
           <span>{{ t('timeline.export.showTimeTicks') }}</span>
-          <el-switch v-model="form.showTimeTicks" />
+          <EaSwitch v-model="form.showTimeTicks" :aria-label="t('timeline.export.showTimeTicks')" />
         </div>
       </div>
     </div>
 
     <template #footer>
-      <span class="dialog-footer">
-        <button type="button" class="ea-btn ea-btn--sm ea-btn--lift ea-btn--outline-muted" @click="close">
+      <EaDialogActions>
+        <EaButton size="sm" type="button" @click="close">
           {{ t('common.cancel') }}
-        </button>
-        <button
-          type="button"
-          class="ea-btn ea-btn--sm ea-btn--lift ea-btn--fill-gold"
-          @click="saveImage"
-        >
+        </EaButton>
+        <EaButton variant="primary" size="sm" type="button" @click="saveImage">
           {{ t('timeline.export.saveSmallImage') }}
-        </button>
-      </span>
+        </EaButton>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>
@@ -433,12 +446,12 @@ async function saveImage() {
   gap: 4px;
 }
 
-.card-appearance__btn.ea-btn {
+.card-appearance__btn.ea-button {
   min-width: 30px;
   padding: 4px 8px;
 }
 
-.card-appearance__btn.ea-btn.is-active {
+.card-appearance__btn.ea-button.is-active {
   color: var(--ea-gold);
   border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
   background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
@@ -485,20 +498,6 @@ async function saveImage() {
 .small-image-export-dialog .el-dialog__footer {
   padding: 15px 25px 20px;
   border-top: 1px solid var(--ea-dialog-divider);
-}
-
-.small-image-export-dialog .dialog-footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px 10px;
-  width: 100%;
-}
-
-.small-image-export-dialog .dialog-footer .ea-btn {
-  flex: 0 0 auto;
-  white-space: nowrap;
 }
 
 .small-image-export-dialog .el-dialog__body {

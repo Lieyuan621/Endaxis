@@ -178,22 +178,21 @@ html[data-theme='light'] .armory-dialog .skill-card {
  * Match dark-mode “one surface” feel: controls tint into the section wash
  * instead of solid white chips sitting on grey.
  */
-html[data-theme='light'] .armory-dialog .section .ea-btn--glass-rect,
-html[data-theme='light'] .armory-dialog .section .ea-btn--glass-rect:disabled,
-html[data-theme='light'] .armory-dialog .section .ea-btn--glass-rect[disabled] {
-  --ea-btn-bg: var(--ea-chip-fill);
-  --ea-btn-border: rgba(26, 27, 30, 0.14);
-  --ea-btn-color: #3a3d44;
-  --ea-btn-bg-hover: var(--ea-chip-fill-hover);
+html[data-theme='light'] .armory-dialog .section .ea-button,
+html[data-theme='light'] .armory-dialog .section .ea-button:disabled {
+  --ea-control-bg: var(--ea-chip-fill);
+  --ea-control-border: rgba(26, 27, 30, 0.14);
+  --ea-control-fg: #3a3d44;
+  --ea-control-bg-hover: var(--ea-chip-fill-hover);
   background: var(--ea-chip-fill);
   border-color: rgba(26, 27, 30, 0.14);
   color: #3a3d44;
   box-shadow: none;
 }
 
-html[data-theme='light'] .armory-dialog .section .ea-btn--glass-rect:hover:not(:disabled) {
-  --ea-btn-bg: var(--ea-chip-fill-hover);
-  --ea-btn-border: rgba(26, 27, 30, 0.28);
+html[data-theme='light'] .armory-dialog .section .ea-button:hover:not(:disabled) {
+  --ea-control-bg: var(--ea-chip-fill-hover);
+  --ea-control-border: rgba(26, 27, 30, 0.28);
   background: var(--ea-chip-fill-hover);
   border-color: rgba(26, 27, 30, 0.28);
   color: #1a1b1e;
@@ -206,12 +205,12 @@ html[data-theme='light'] .armory-dialog .skill-controls {
   overflow: hidden;
 }
 
-html[data-theme='light'] .armory-dialog .skill-controls .ea-btn--glass-rect {
+html[data-theme='light'] .armory-dialog .skill-controls .ea-button {
   border-radius: 0;
   border: none;
   background: transparent;
-  --ea-btn-bg: transparent;
-  --ea-btn-border: transparent;
+  --ea-control-bg: transparent;
+  --ea-control-border: transparent;
 }
 
 html[data-theme='light'] .armory-dialog .skill-rank {

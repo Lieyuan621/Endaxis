@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore.js';
@@ -11,11 +12,11 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
 
 <template>
   <div class="timeline-display-menu">
-    <button
+    <EaButton
       type="button"
       class="timeline-display-guide"
       :class="{ 'is-active': store.showCursorGuide }"
-      :aria-pressed="store.showCursorGuide"
+      :pressed="store.showCursorGuide"
       @click="store.toggleCursorGuide"
     >
       <svg
@@ -51,7 +52,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
         <rect x="1" y="1" width="14" height="14" rx="2" />
         <polyline v-if="store.showCursorGuide" points="3,8 6.5,11.5 13,4.5" stroke-width="2" />
       </svg>
-    </button>
+    </EaButton>
 
     <div class="timeline-display-scroll">
       <section class="timeline-display-section">
@@ -61,20 +62,22 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
         <div class="header-more-mode-row">
           <span>{{ t('timeline.header.buffLayout') }}</span>
           <div class="header-more-segment" role="group">
-            <button
+            <EaButton
               type="button"
               :class="{ 'is-active': store.buffLayoutMode === 'compact' }"
+              :pressed="store.buffLayoutMode === 'compact'"
               @click="store.setBuffLayoutMode('compact')"
             >
               {{ t('timelineGrid.toolbar.buffLayoutCompact') }}
-            </button>
-            <button
+            </EaButton>
+            <EaButton
               type="button"
               :class="{ 'is-active': store.buffLayoutMode === 'loose' }"
+              :pressed="store.buffLayoutMode === 'loose'"
               @click="store.setBuffLayoutMode('loose')"
             >
               {{ t('timelineGrid.toolbar.buffLayoutLoose') }}
-            </button>
+            </EaButton>
           </div>
         </div>
       </section>
@@ -84,7 +87,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
           {{ t('timeline.header.sectionViewLayers') }}
         </h4>
         <div class="header-more-checklist header-more-checklist--grid">
-          <button
+          <EaButton
             v-for="layerId in store.TIMELINE_VIEW_LAYER_IDS"
             :key="layerId"
             type="button"
@@ -108,7 +111,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
               />
             </svg>
             <span>{{ t(`timeline.header.viewLayers.${layerId}`) }}</span>
-          </button>
+          </EaButton>
         </div>
       </section>
 
@@ -118,7 +121,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
         </h4>
         <div v-if="hasOperatorTracks" class="header-more-checklist header-more-checklist--grid">
           <template v-for="(track, index) in store.teamTracksInfo" :key="index">
-            <button
+            <EaButton
               v-if="track.id"
               type="button"
               class="header-more-check-row header-more-check-row--compact"
@@ -141,7 +144,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
                 />
               </svg>
               <span>{{ track.name }}</span>
-            </button>
+            </EaButton>
           </template>
         </div>
         <p v-else class="timeline-display-empty">
@@ -155,7 +158,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
         </h4>
 
         <div class="header-more-checklist">
-          <button
+          <EaButton
             type="button"
             class="header-more-check-row"
             @click="store.toggleColoredDurationBars()"
@@ -177,7 +180,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
               />
             </svg>
             <span>{{ t('timeline.header.coloredDurationBarsEnable') }}</span>
-          </button>
+          </EaButton>
         </div>
 
         <div v-if="store.durationBarColor.enabled" class="timeline-display-color-controls">
@@ -221,7 +224,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
             {{ t('timeline.header.durationBarColorSources') }}
           </h4>
           <div class="header-more-checklist header-more-checklist--grid">
-            <button
+            <EaButton
               v-for="sourceId in store.DURATION_BAR_COLOR_SOURCE_IDS"
               :key="sourceId"
               type="button"
@@ -245,14 +248,14 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
                 />
               </svg>
               <span>{{ t(`timeline.header.durationBarColorSource.${sourceId}`) }}</span>
-            </button>
+            </EaButton>
           </div>
 
           <h4 class="timeline-display-section__title">
             {{ t('timeline.header.durationBarColorSurfaces') }}
           </h4>
           <div class="header-more-checklist header-more-checklist--grid">
-            <button
+            <EaButton
               v-for="surfaceId in store.DURATION_BAR_COLOR_SURFACE_IDS"
               :key="surfaceId"
               type="button"
@@ -276,7 +279,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
                 />
               </svg>
               <span>{{ t(`timeline.header.durationBarColorSurface.${surfaceId}`) }}</span>
-            </button>
+            </EaButton>
           </div>
         </div>
       </section>

@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getWeapon } from '@/data';
@@ -165,7 +166,7 @@ function getSkillDescription(skillKey) {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     width="700px"
     append-to-body
@@ -203,19 +204,19 @@ function getSkillDescription(skillKey) {
               <span class="value">{{ baseAtk }}</span>
             </div>
             <div class="row">
-              <button
-                class="ea-btn ea-btn--sm ea-btn--glass-rect"
+              <EaButton
+                size="sm"
                 :disabled="!canTune"
                 :style="instance.tuned ? { borderColor: color, color } : {}"
                 @click="update({ tuned: !instance.tuned })"
               >
                 {{ tunedLabel() }}
-              </button>
+              </EaButton>
             </div>
             <div class="row">
               <span class="section-label">{{ t('armory.common.potential') }}</span>
               <div class="diamonds">
-                <button
+                <EaButton
                   v-for="p in 5"
                   :key="p"
                   class="diamond"
@@ -229,10 +230,11 @@ function getSkillDescription(skillKey) {
         </div>
 
         <div class="level-selector">
-          <button
+          <EaButton
             v-for="lv in LEVELS"
             :key="lv"
-            class="ea-btn ea-btn--sm ea-btn--glass-rect level-btn"
+            class="level-btn"
+            size="sm"
             :style="
               instance.level === lv
                 ? {
@@ -245,7 +247,7 @@ function getSkillDescription(skillKey) {
             @click="handleLevelChange(lv)"
           >
             Lv{{ lv }}
-          </button>
+          </EaButton>
         </div>
 
         <div class="section">
@@ -258,7 +260,7 @@ function getSkillDescription(skillKey) {
               </div>
               <div class="skill-bar-area">
                 <div class="skill-slots">
-                  <button
+                  <EaButton
                     v-for="slot in ABSOLUTE_MAX"
                     :key="slot"
                     class="skill-slot"
@@ -269,7 +271,7 @@ function getSkillDescription(skillKey) {
                     <template v-if="slotClass(sk, slot) === 'slot-locked'">&times;</template>
                     <template v-else-if="slotClass(sk, slot) === 'slot-empty'">&nbsp;</template>
                     <template v-else>/</template>
-                  </button>
+                  </EaButton>
                 </div>
                 <span class="skill-counter"
                   >{{ getSkillLevel(sk) }}/{{ getSkillBoundsForKey(sk).max }}</span
@@ -288,19 +290,16 @@ function getSkillDescription(skillKey) {
     </template>
 
     <template #footer>
-      <div class="footer">
-        <button
-          class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill"
-          @click="maxOut"
-        >
+      <EaDialogActions>
+        <EaButton variant="primary" size="sm" @click="maxOut">
           {{ t('common.max') }}
-        </button>
-        <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">
+        </EaButton>
+        <EaButton size="sm" @click="emit('update:visible', false)">
           {{ t('common.close') }}
-        </button>
-      </div>
+        </EaButton>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>
@@ -531,13 +530,6 @@ function getSkillDescription(skillKey) {
   font-size: 12px;
   line-height: 1.55;
 }
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  width: 100%;
-}
-
 @media (max-width: 768px) {
   .layout {
     gap: 12px;

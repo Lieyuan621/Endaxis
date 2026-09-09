@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaFilterChip, EaInput, EaOption, EaSelect } from '@/design-system';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { formatSimLogEntry } from '@/simulation/formatSimLogEntry.ts';
@@ -358,9 +359,7 @@ function getEffectDamageSourceLabel(entry, group) {
   const hit = entry?.payload?.hitData;
   if (!hit) return '';
 
-  const rawBy = String(
-    hit.triggeredBy || hit._reactionMeta?.reactionType || hit.id || '',
-  ).trim();
+  const rawBy = String(hit.triggeredBy || hit._reactionMeta?.reactionType || hit.id || '').trim();
   const cleaned = rawBy.replace(/^(dot:|reaction:|triggered:)/, '');
   const effectPart = cleaned ? translateBattleLogStatus(t, te, cleaned) || cleaned : '';
 
@@ -900,9 +899,9 @@ onMounted(() => {
 
         <div class="header-actions">
           <span v-if="isDirty" class="simlog-dirty">{{ t('battleLog.dirtyHint') }}</span>
-          <button type="button" class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="refresh">
+          <EaButton size="sm" type="button" @click="refresh">
             {{ t('battleLog.refresh') }}
-          </button>
+          </EaButton>
         </div>
       </div>
       <div class="header-divider"></div>
@@ -914,81 +913,78 @@ onMounted(() => {
           {{ t('battleLog.ui.filtered') }} {{ filteredEntryCount }} /
           {{ t('battleLog.ui.actionGroups') }} {{ filteredGroupCount }}
         </div>
-        <button
-          type="button"
-          class="ea-btn ea-btn--glass-rect simlog-chip simlog-chip--tool"
-          @click="clearTypes"
-        >
+        <EaButton type="button" variant="ghost" size="sm" @click="clearTypes">
           {{ t('battleLog.ui.clear') }}
-        </button>
+        </EaButton>
       </div>
 
       <div class="simlog-presets">
         <div class="simlog-filter-label">{{ t('battleLog.presets.label') }}</div>
         <div class="simlog-presets__list">
-          <button
+          <EaFilterChip
             v-for="preset in BATTLE_LOG_TYPE_PRESETS"
             :key="preset.id"
-            type="button"
-            class="ea-btn ea-btn--glass-rect simlog-preset"
-            :class="{ 'is-active': activeTypePreset === preset.id }"
+            class="simlog-preset"
+            size="sm"
+            :selected="activeTypePreset === preset.id"
+            accent="var(--ea-simlog-preset-accent)"
             @click="applyTypePreset(preset.id)"
           >
             {{ t(preset.i18nKey) }}
-          </button>
+          </EaFilterChip>
         </div>
       </div>
 
       <div class="simlog-types-row">
         <div class="simlog-filter-label">{{ t('battleLog.ui.types') }}</div>
         <div class="simlog-types">
-          <button
+          <EaFilterChip
             v-for="item in typeFilterItems"
             :key="item.type"
-            type="button"
-            class="ea-btn ea-btn--glass-rect simlog-chip"
-            :class="{ 'is-active': selectedTypes.has(item.type) }"
+            class="simlog-chip"
+            size="sm"
+            :selected="selectedTypes.has(item.type)"
             :title="item.type"
             @click="toggleType(item.type)"
           >
             {{ item.label }}
-          </button>
+          </EaFilterChip>
         </div>
       </div>
 
       <div v-if="skillKindFilterItems.length > 0" class="simlog-types-row">
         <div class="simlog-filter-label">{{ t('battleLog.ui.skillKinds') }}</div>
         <div class="simlog-types">
-          <button
+          <EaFilterChip
             v-for="item in skillKindFilterItems"
             :key="item.kind"
-            type="button"
-            class="ea-btn ea-btn--glass-rect simlog-chip"
-            :class="{ 'is-active': selectedSkillKinds.has(item.kind) }"
+            class="simlog-chip"
+            size="sm"
+            :selected="selectedSkillKinds.has(item.kind)"
             :title="item.kind"
             @click="toggleSkillKind(item.kind)"
           >
             {{ item.label }}
-          </button>
+          </EaFilterChip>
         </div>
       </div>
 
       <div class="simlog-filter-bottom">
-        <input
+        <EaInput
           v-model="keyword"
           class="simlog-search"
-          type="text"
+          size="sm"
           :placeholder="t('battleLog.searchPlaceholder')"
         />
 
         <label class="simlog-limit">
           <span class="simlog-limit__label">{{ t('battleLog.limit') }}</span>
-          <el-select v-model="limit" size="small" class="effect-select-dark simlog-limit-select">
-            <el-option :label="t('battleLog.ui.allResults')" value="all" />
-            <el-option label="200" value="200" />
-            <el-option label="1000" value="1000" />
-            <el-option label="5000" value="5000" />
-          </el-select>
+          <EaSelect v-model="limit" size="sm" class="effect-select-dark simlog-limit-select">
+            <EaOption :label="t('battleLog.ui.allResults')" value="all" />
+            <EaOption label="200" value="200" />
+            <EaOption label="1000" value="1000" />
+            <EaOption label="5000" value="5000" />
+          </EaSelect>
         </label>
       </div>
     </div>
@@ -1047,10 +1043,7 @@ onMounted(() => {
                 <span class="group-section__count">{{ group.damage.length }}</span>
               </div>
 
-              <div
-                v-if="getSkillDamageEntries(group).length > 0"
-                class="damage-subgroup"
-              >
+              <div v-if="getSkillDamageEntries(group).length > 0" class="damage-subgroup">
                 <div class="damage-subgroup__heading">
                   <span class="damage-subgroup__title">{{ t('battleLog.ui.skillDamage') }}</span>
                   <span class="damage-subgroup__count">{{
@@ -1117,10 +1110,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div
-                v-if="getEffectDamageEntries(group).length > 0"
-                class="damage-subgroup"
-              >
+              <div v-if="getEffectDamageEntries(group).length > 0" class="damage-subgroup">
                 <div class="damage-subgroup__heading">
                   <span class="damage-subgroup__title">{{ t('battleLog.ui.effectDamage') }}</span>
                   <span class="damage-subgroup__count">{{
@@ -1251,9 +1241,7 @@ onMounted(() => {
                   <template v-else-if="isOperatorChannelEntry(entry)">
                     <span class="event-pill">{{ formatOperatorEffectVerb(entry) }}</span>
                     <span class="event-text">{{ formatOperatorEffectSummary(entry) }}</span>
-                    <span
-                      v-if="entry.payload?.targetTrackId"
-                      class="event-muted"
+                    <span v-if="entry.payload?.targetTrackId" class="event-muted"
                       >-> {{ getTrackDisplayName(entry.payload.targetTrackId) }}</span
                     >
                     <span class="event-muted">{{ getTypeLabel(entry.type) }}</span>
@@ -1528,15 +1516,6 @@ onMounted(() => {
   border-radius: 0;
 }
 
-.simlog-filters,
-.simlog-filters .simlog-preset,
-.simlog-filters .simlog-chip,
-.simlog-filters .simlog-search,
-.simlog-filters :deep(.el-select__wrapper),
-.simlog-filters :deep(.el-input__wrapper) {
-  border-radius: 0;
-}
-
 .simlog-filter-top,
 .simlog-filter-bottom {
   display: flex;
@@ -1593,76 +1572,13 @@ onMounted(() => {
 }
 
 .simlog-preset {
-  --ea-btn-accent: #38bdf8;
-  --ea-btn-py: 4px;
-  --ea-btn-px: 10px;
-  --ea-btn-font-size: 11px;
-  --ea-btn-bg: color-mix(in srgb, var(--ea-btn-accent) 10%, transparent);
-  --ea-btn-border: color-mix(in srgb, var(--ea-btn-accent) 28%, transparent);
-  --ea-btn-color: #7dd3fc;
-  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-btn-accent) 16%, transparent);
-  --ea-btn-border-hover: color-mix(in srgb, var(--ea-btn-accent) 42%, transparent);
-  --ea-btn-color-hover: #bae6fd;
-  border-radius: 0;
-  min-height: 24px;
-}
-
-.simlog-preset.is-active {
-  --ea-btn-bg: color-mix(in srgb, var(--ea-btn-accent) 18%, transparent);
-  --ea-btn-border: color-mix(in srgb, var(--ea-btn-accent) 48%, transparent);
-  --ea-btn-color: #7dd3fc;
-  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-btn-accent) 24%, transparent);
-  --ea-btn-border-hover: color-mix(in srgb, var(--ea-btn-accent) 58%, transparent);
-  --ea-btn-color-hover: #7dd3fc;
-}
-
-.simlog-chip {
-  --ea-btn-accent: var(--ea-gold);
-  --ea-btn-py: 4px;
-  --ea-btn-px: 10px;
-  --ea-btn-font-size: 11px;
-  border-radius: var(--right-panel-container-radius);
-  min-height: 24px;
-}
-
-.simlog-chip--tool {
-  --ea-btn-font-size: 10px;
-  --ea-btn-px: 8px;
-}
-
-.simlog-chip.is-active {
-  --ea-btn-bg: color-mix(in srgb, var(--ea-gold) 12%, transparent);
-  --ea-btn-border: color-mix(in srgb, var(--ea-gold) 36%, transparent);
-  --ea-btn-color: var(--ea-gold);
-  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-gold) 18%, transparent);
-  --ea-btn-border-hover: color-mix(in srgb, var(--ea-gold) 48%, transparent);
-  --ea-btn-color-hover: var(--ea-gold);
-}
-
-.simlog-search {
-  appearance: none;
-  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.12));
-  background: var(--ea-fill-input, rgba(0, 0, 0, 0.18));
-  color: var(--ea-fg, rgba(255, 255, 255, 0.88));
-  font-size: 12px;
-  outline: none;
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
+  --ea-simlog-preset-accent: #38bdf8;
 }
 
 .simlog-search {
   flex: 1;
   min-width: 0;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 0;
   font-family: 'Roboto Mono', 'Consolas', monospace;
-}
-
-.simlog-search:focus {
-  border-color: color-mix(in srgb, var(--ea-gold) 45%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ea-gold) 16%, transparent) inset;
 }
 
 .simlog-limit {
@@ -2064,7 +1980,8 @@ onMounted(() => {
   min-height: 18px;
   padding: 0 6px;
   border-radius: 2px;
-  border: 1px solid color-mix(in srgb, var(--section-accent) 28%, var(--ea-border, rgba(255, 255, 255, 0.08)));
+  border: 1px solid
+    color-mix(in srgb, var(--section-accent) 28%, var(--ea-border, rgba(255, 255, 255, 0.08)));
   background: color-mix(in srgb, var(--section-accent) 10%, transparent);
   color: color-mix(in srgb, var(--section-accent) 55%, var(--ea-fg, #1a1b1e));
   font-size: 10px;
@@ -2159,78 +2076,52 @@ onMounted(() => {
   }
 }
 
-:global(html[data-theme='light'] .simlog-panel .simlog-block){
+:global(html[data-theme='light'] .simlog-panel .simlog-block) {
   background: #ffffff;
   border-color: var(--ea-border-strong);
   border-left-color: var(--ea-border-strong);
   box-shadow: 0 1px 2px var(--ea-shadow);
 }
-:global(html[data-theme='light'] .simlog-panel .simlog-presets){
+:global(html[data-theme='light'] .simlog-panel .simlog-presets) {
   background: rgba(11, 110, 153, 0.07);
   border-color: rgba(11, 110, 153, 0.28);
 }
-:global(html[data-theme='light'] .simlog-panel .simlog-presets .simlog-filter-label){
+:global(html[data-theme='light'] .simlog-panel .simlog-presets .simlog-filter-label) {
   color: #085578;
 }
-:global(html[data-theme='light'] .simlog-panel .simlog-preset){
-  --ea-btn-accent: #0b6e99;
-  --ea-btn-bg: #ffffff;
-  --ea-btn-border: rgba(11, 110, 153, 0.35);
-  --ea-btn-color: #085578;
-  --ea-btn-bg-hover: rgba(11, 110, 153, 0.1);
-  --ea-btn-border-hover: rgba(11, 110, 153, 0.5);
-  --ea-btn-color-hover: #064860;
+:global(html[data-theme='light'] .simlog-panel .simlog-preset) {
+  --ea-simlog-preset-accent: #0b6e99;
 }
-:global(html[data-theme='light'] .simlog-panel .simlog-preset.is-active){
-  --ea-btn-bg: color-mix(in srgb, #0b6e99 14%, #ffffff);
-  --ea-btn-border: rgba(11, 110, 153, 0.55);
-  --ea-btn-color: #064860;
-  --ea-btn-color-hover: #064860;
-}
-:global(html[data-theme='light'] .simlog-panel .simlog-chip){
-  --ea-btn-accent: var(--ea-gold);
-  --ea-btn-bg: #ffffff;
-  --ea-btn-border: var(--ea-border-strong);
-  --ea-btn-color: var(--ea-fg);
-  --ea-btn-color-hover: var(--ea-fg);
-}
-:global(html[data-theme='light'] .simlog-panel .simlog-chip.is-active){
-  --ea-btn-bg: color-mix(in srgb, var(--ea-gold) 16%, #ffffff);
-  --ea-btn-border: color-mix(in srgb, var(--ea-gold) 48%, transparent);
-  --ea-btn-color: var(--ea-gold);
-  --ea-btn-bg-hover: color-mix(in srgb, var(--ea-gold) 22%, #ffffff);
-  --ea-btn-border-hover: var(--ea-gold);
-  --ea-btn-color-hover: var(--ea-gold);
-  box-shadow: none;
-}
-:global(html[data-theme='light'] .simlog-panel .group__action){
+:global(html[data-theme='light'] .simlog-panel .group__action) {
   text-shadow: none;
 }
-:global(html[data-theme='light'] .simlog-panel .group__summary:hover){
+:global(html[data-theme='light'] .simlog-panel .group__summary:hover) {
   background: var(--ea-hover-fill);
 }
-:global(html[data-theme='light'] .simlog-panel .event-row.is-jumpable:hover){
+:global(html[data-theme='light'] .simlog-panel .event-row.is-jumpable:hover) {
   background: var(--ea-hover-fill);
 }
-:global(html[data-theme='light'] .simlog-panel .event-lmdi){
+:global(html[data-theme='light'] .simlog-panel .event-lmdi) {
   background: var(--ea-surface-row);
   border-left-color: rgba(11, 110, 153, 0.35);
 }
-:global(html[data-theme='light'] .simlog-panel .event-pill--skill){
+:global(html[data-theme='light'] .simlog-panel .event-pill--skill) {
   color: #b42318;
   border-color: rgba(180, 35, 24, 0.28);
   background: rgba(180, 35, 24, 0.08);
 }
-:global(html[data-theme='light'] .simlog-panel .event-pill--effect){
+:global(html[data-theme='light'] .simlog-panel .event-pill--effect) {
   color: #0b6e99;
   border-color: rgba(11, 110, 153, 0.28);
   background: rgba(11, 110, 153, 0.08);
 }
-:global(html[data-theme='light'] .simlog-panel .simlog-empty){
+:global(html[data-theme='light'] .simlog-panel .simlog-empty) {
   background: var(--ea-surface-sunken);
   border-color: var(--ea-border);
 }
-:global(html[data-theme='light'] .simlog-panel .effect-select-dark.simlog-limit-select .el-input__wrapper){
+:global(
+  html[data-theme='light'] .simlog-panel .effect-select-dark.simlog-limit-select .el-input__wrapper
+) {
   background-color: var(--ea-surface-row) !important;
   border-color: var(--ea-border-strong);
 }

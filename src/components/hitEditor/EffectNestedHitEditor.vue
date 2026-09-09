@@ -1,4 +1,5 @@
 <script setup>
+import { EaInput, EaTextarea } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CustomNumberInput from '../CustomNumberInput.vue';
@@ -105,27 +106,19 @@ const effectsJson = computed({
     <div class="field-grid field-grid--effect-text-row">
       <label class="field">
         <span>{{ t('hitEditor.fields.spRecovery') }}</span>
-        <input
-          class="simple-input"
-          :value="spRecoveryText"
-          @change="event => (spRecoveryText = event.target.value)"
+        <EaInput
+          :model-value="spRecoveryText"
+          size="sm"
+          @change="value => (spRecoveryText = value)"
         />
       </label>
       <label class="field">
         <span>{{ t('hitEditor.fields.spReturn') }}</span>
-        <input
-          class="simple-input"
-          :value="spReturnText"
-          @change="event => (spReturnText = event.target.value)"
-        />
+        <EaInput :model-value="spReturnText" size="sm" @change="value => (spReturnText = value)" />
       </label>
       <label class="field">
         <span>{{ t('hitEditor.fields.stagger') }}</span>
-        <input
-          class="simple-input"
-          :value="staggerText"
-          @change="event => (staggerText = event.target.value)"
-        />
+        <EaInput :model-value="staggerText" size="sm" @change="value => (staggerText = value)" />
       </label>
     </div>
     <div class="field-grid field-grid--effect-input-row">
@@ -141,10 +134,12 @@ const effectsJson = computed({
     </div>
     <label class="json-field">
       <span>{{ t('hitEditor.fields.hitEffects') }}</span>
-      <textarea
-        class="json-input"
-        :value="effectsJson"
-        @change="event => (effectsJson = event.target.value)"
+      <EaTextarea
+        :model-value="effectsJson"
+        variant="code"
+        size="sm"
+        :rows="4"
+        @change="value => (effectsJson = value)"
         :placeholder="t('hitEditor.hitEffectsPlaceholder')"
       />
     </label>
@@ -185,48 +180,11 @@ const effectsJson = computed({
   min-width: 0;
 }
 
-.simple-input {
-  appearance: none;
-  background: var(--ea-fill-input, #111);
-  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.16));
-  border-radius: 0;
-  box-sizing: border-box;
-  color: var(--ea-fg, #f0f0f0);
-  font-family: inherit;
-  font-size: 12px;
-  height: 31px;
-  line-height: 1.2;
-  min-height: 31px;
-  padding: 0 8px;
-  width: 100%;
-}
-
-.simple-input:focus {
-  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
-  outline: none;
-}
-
 .json-field {
   color: var(--ea-fg-secondary, #cfd3dc);
   display: flex;
   flex-direction: column;
   font-size: 11px;
   gap: 5px;
-}
-
-.json-input {
-  background: var(--ea-fill-input, #111);
-  border: 1px solid var(--ea-border-strong, rgba(255, 255, 255, 0.16));
-  color: var(--ea-fg, #f0f0f0);
-  font-family: Consolas, 'Courier New', monospace;
-  font-size: 11px;
-  min-height: 72px;
-  padding: 8px;
-  resize: vertical;
-}
-
-.json-input:focus {
-  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
-  outline: none;
 }
 </style>

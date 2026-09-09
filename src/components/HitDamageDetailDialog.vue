@@ -1,4 +1,5 @@
 <script setup>
+import { EaCheckbox, EaDialog, EaDialogActions } from '@/design-system';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ArrowRight } from '@element-plus/icons-vue';
@@ -413,7 +414,7 @@ function onClose() {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     :title="t('hitDetail.title')"
     width="420px"
@@ -668,14 +669,18 @@ function onClose() {
     </div>
 
     <template #footer>
-      <div class="dialog-footer">
-        <label v-if="canForceCrit" class="ea-check-rect ea-check-rect--sm force-crit-check">
-          <input type="checkbox" :checked="isForcedCrit" @change="toggleForcedCrit" />
-          <span>{{ t('hitDetail.forceCrit') }}</span>
-        </label>
-      </div>
+      <EaDialogActions align="start">
+        <EaCheckbox
+          v-if="canForceCrit"
+          :model-value="isForcedCrit"
+          class="force-crit-check"
+          @update:model-value="toggleForcedCrit"
+        >
+          {{ t('hitDetail.forceCrit') }}
+        </EaCheckbox>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>
@@ -812,12 +817,6 @@ tr.is-sub {
   line-height: 1;
   cursor: help;
   vertical-align: baseline;
-}
-.dialog-footer {
-  min-height: 22px;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
 }
 .force-crit-check {
   margin-right: auto;

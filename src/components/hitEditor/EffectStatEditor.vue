@@ -1,4 +1,5 @@
 <script setup>
+import { EaOption, EaOptionGroup, EaSelect } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
@@ -107,15 +108,9 @@ const attributeValue = computed({
   },
 });
 
-const showElements = computed(() =>
-  ELEMENT_SCOPED_STAT_MODIFIERS.includes(modifierValue.value),
-);
-const showSkillScope = computed(() =>
-  SKILL_SCOPED_STAT_MODIFIERS.includes(modifierValue.value),
-);
-const showAttribute = computed(() =>
-  ATTRIBUTE_STAT_MODIFIERS.includes(modifierValue.value),
-);
+const showElements = computed(() => ELEMENT_SCOPED_STAT_MODIFIERS.includes(modifierValue.value));
+const showSkillScope = computed(() => SKILL_SCOPED_STAT_MODIFIERS.includes(modifierValue.value));
+const showAttribute = computed(() => ATTRIBUTE_STAT_MODIFIERS.includes(modifierValue.value));
 
 function patchScope(key, raw) {
   if (!modifierValue.value) return;
@@ -145,58 +140,58 @@ function skillTypeLabel(value) {
     <div class="field-grid field-grid--effect-select-row">
       <label class="field">
         <span>{{ t('hitEditor.fields.stat') }}</span>
-        <el-select
+        <EaSelect
           :model-value="modifierValue"
           @update:model-value="value => (modifierValue = value)"
-          size="small"
+          size="sm"
           clearable
           filterable
           :empty-values="[null, undefined]"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option :value="NONE" :label="t('common.none')" />
-          <el-option-group :label="t('hitEditor.statGroups.enemy')">
-            <el-option
+          <EaOption :value="NONE" :label="t('common.none')" />
+          <EaOptionGroup :label="t('hitEditor.statGroups.enemy')">
+            <EaOption
               v-for="mod in ENEMY_STAT_MODIFIERS"
               :key="mod"
               :value="mod"
               :label="modifierLabel(mod)"
             />
-          </el-option-group>
-          <el-option-group :label="t('hitEditor.statGroups.operator')">
-            <el-option
+          </EaOptionGroup>
+          <EaOptionGroup :label="t('hitEditor.statGroups.operator')">
+            <EaOption
               v-for="mod in OPERATOR_STAT_MODIFIERS"
               :key="mod"
               :value="mod"
               :label="modifierLabel(mod)"
             />
-          </el-option-group>
-        </el-select>
+          </EaOptionGroup>
+        </EaSelect>
       </label>
       <label v-if="showAttribute" class="field">
         <span>{{ t('hitEditor.fields.attribute') }}</span>
-        <el-select
+        <EaSelect
           :model-value="attributeValue"
           @update:model-value="value => (attributeValue = value)"
-          size="small"
+          size="sm"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option
+          <EaOption
             v-for="attr in ATTRIBUTES"
             :key="attr"
             :value="attr"
             :label="getGameAttributeName(attr, locale)"
           />
-        </el-select>
+        </EaSelect>
       </label>
       <label v-if="showElements" class="field">
         <span>{{ t('common.element') }}</span>
-        <el-select
+        <EaSelect
           :model-value="elementValues"
           @update:model-value="value => (elementValues = value)"
-          size="small"
+          size="sm"
           multiple
           collapse-tags
           collapse-tags-tooltip
@@ -205,20 +200,20 @@ function skillTypeLabel(value) {
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option
+          <EaOption
             v-for="element in DAMAGE_ELEMENTS"
             :key="element"
             :value="element"
             :label="getGameElementName(element, locale)"
           />
-        </el-select>
+        </EaSelect>
       </label>
       <label v-if="showSkillScope" class="field">
         <span>{{ t('hitEditor.fields.skillTypes') }}</span>
-        <el-select
+        <EaSelect
           :model-value="skillTypeValues"
           @update:model-value="value => (skillTypeValues = value)"
-          size="small"
+          size="sm"
           multiple
           collapse-tags
           collapse-tags-tooltip
@@ -227,13 +222,13 @@ function skillTypeLabel(value) {
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option
+          <EaOption
             v-for="skill in SKILL_TYPE_SCOPES"
             :key="skill"
             :value="skill"
             :label="skillTypeLabel(skill)"
           />
-        </el-select>
+        </EaSelect>
       </label>
     </div>
   </div>

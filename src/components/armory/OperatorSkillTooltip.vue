@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import GameRichTextRenderer from '@/components/GameRichTextRenderer.vue';
@@ -179,7 +180,7 @@ function getFirstSegmentNumber(skill, field, levelIndex) {
     </div>
 
     <div v-if="hasFormSwitcher" class="operator-skill-tooltip-forms">
-      <button
+      <EaButton
         v-for="form in formOptions"
         :key="form.key"
         class="operator-skill-tooltip-form"
@@ -195,7 +196,7 @@ function getFirstSegmentNumber(skill, field, levelIndex) {
         <span v-if="activeFormKey === form.key" class="operator-skill-tooltip-form-badge">
           {{ t('armory.operator.skillTooltip.active') }}
         </span>
-      </button>
+      </EaButton>
     </div>
 
     <div v-if="skillDescription" class="operator-skill-tooltip-desc">
@@ -345,5 +346,4 @@ function getFirstSegmentNumber(skill, field, levelIndex) {
   font-weight: 700;
   line-height: 1.2;
 }
-
 </style>

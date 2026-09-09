@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getGearPiece } from '@/data';
@@ -217,7 +218,7 @@ function openItemEditor(slot) {
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     :model-value="visible"
     width="980px"
     append-to-body
@@ -269,27 +270,25 @@ function openItemEditor(slot) {
             </span>
             <template v-if="slot.isGold">
               <div class="refine-buttons">
-                <button
+                <EaButton
+                  size="sm"
                   v-for="level in [0, 1, 2, 3]"
                   :key="`${slot.slotKey}-${level}`"
                   type="button"
-                  class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--accent-gold refine-btn"
+                  class="refine-btn"
                   :class="{ 'is-active': isUniformRefineActive(slot, level) }"
                   @click="setRefine(slot, level)"
                 >
                   {{ level === 0 ? tr('timelineGrid.equipmentDialog.refineBase', 'Base') : level }}
-                </button>
+                </EaButton>
               </div>
             </template>
             <span v-else class="refine-locked">{{ t('actionLibrary.hints.noRefineNonGold') }}</span>
           </div>
 
-          <button
-            class="ea-btn ea-btn--sm ea-btn--glass-rect edit-item-btn"
-            @click="openItemEditor(slot)"
-          >
+          <EaButton size="sm" class="edit-item-btn" @click="openItemEditor(slot)">
             {{ t('actionLibrary.buttons.editItem') }}
-          </button>
+          </EaButton>
         </template>
 
         <div v-else class="empty-slot">
@@ -333,19 +332,16 @@ function openItemEditor(slot) {
     />
 
     <template #footer>
-      <div class="footer">
-        <button
-          class="ea-btn ea-btn--sm ea-btn--glass-rect ea-btn--square ea-btn--hover-gold-fill"
-          @click="maxOut"
-        >
+      <EaDialogActions>
+        <EaButton variant="primary" size="sm" @click="maxOut">
           {{ t('common.max') }}
-        </button>
-        <button class="ea-btn ea-btn--sm ea-btn--glass-rect" @click="emit('update:visible', false)">
+        </EaButton>
+        <EaButton size="sm" @click="emit('update:visible', false)">
           {{ t('common.close') }}
-        </button>
-      </div>
+        </EaButton>
+      </EaDialogActions>
     </template>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style scoped>
@@ -551,13 +547,6 @@ function openItemEditor(slot) {
 .edit-item-btn {
   align-self: flex-end;
   min-width: 110px;
-}
-
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  width: 100%;
 }
 
 @media (max-width: 900px) {

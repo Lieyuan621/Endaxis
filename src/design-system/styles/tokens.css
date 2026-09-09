@@ -1,0 +1,45 @@
+:root {
+  --ea-blue: #4a90e2;
+  --ea-orange: #e6a23c;
+  --ea-success: #4caf50;
+  --ea-success-dark: #2e7d32;
+  --ea-success-hover: #388e3c;
+  --ea-danger: #ff4d4f;
+  --ea-danger-soft: #ff7875;
+  --ea-danger-dark: #a61d24;
+  --ea-info: #00e5ff;
+  --ea-purple: #722ed1;
+
+  --ea-control-height-sm: 28px;
+  --ea-control-height-md: 32px;
+  --ea-control-height-lg: 40px;
+  --ea-control-radius: 0;
+  --ea-control-border-width: 1px;
+  --ea-control-font-size-sm: 12px;
+  --ea-control-font-size-md: 13px;
+  --ea-control-font-size-lg: 14px;
+  --ea-control-gap: 6px;
+  --ea-control-padding-x-sm: 10px;
+  --ea-control-padding-x-md: 14px;
+  --ea-control-padding-x-lg: 16px;
+  --ea-control-transition: 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ea-control-disabled-opacity: 0.48;
+  --ea-focus-ring: 0 0 0 2px color-mix(in srgb, var(--ea-gold) 34%, transparent);
+
+  --ea-control-bg: var(--ea-btn-secondary-bg);
+  --ea-control-bg-hover: var(--ea-btn-secondary-hover-bg);
+  --ea-control-bg-active: var(--ea-active-fill);
+  --ea-control-border: var(--ea-btn-secondary-border);
+  --ea-control-border-hover: var(--ea-btn-secondary-hover-border);
+  --ea-control-fg: var(--ea-btn-secondary-fg);
+  --ea-control-fg-hover: var(--ea-btn-secondary-hover-fg);
+  --ea-control-placeholder: var(--ea-fg-faint);
+  --ea-control-error: var(--ea-danger);
+  --ea-accent: var(--ea-gold);
+
+  --ea-dialog-width-sm: 440px;
+  --ea-dialog-width-md: 640px;
+  --ea-dialog-width-lg: 900px;
+  --ea-dialog-padding-x: 20px;
+  --ea-dialog-padding-y: 16px;
+}

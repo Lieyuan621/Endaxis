@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton, EaDeleteIcon, EaDialog, EaFilterChip, EaInput } from '@/design-system';
 import { computed, ref } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
@@ -152,7 +153,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
 </script>
 
 <template>
-  <el-dialog
+  <EaDialog
     v-model="visible"
     :title="t('timelineGrid.operatorDialog.title')"
     width="600px"
@@ -163,56 +164,42 @@ defineExpose({ open, close, isOpen: () => visible.value });
   >
     <div class="selector-header">
       <div class="header-left-group">
-        <el-input
+        <EaInput
           v-model="searchQuery"
           :placeholder="t('timelineGrid.operatorDialog.searchPlaceholder')"
           :prefix-icon="Search"
           clearable
           style="width: 180px"
         />
-        <button
-          class="ea-btn ea-btn--glass-cut ea-btn--glass-cut-danger ea-btn--cut-left ea-btn--lift"
+        <EaButton
+          variant="danger"
           :title="t('timelineGrid.operatorDialog.clearTrack')"
           @click="remove"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path d="M3 6h18" />
-            <path
-              d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-            />
-          </svg>
+          <EaDeleteIcon />
           {{ t('common.unequip') }}
-        </button>
+        </EaButton>
       </div>
       <div class="element-filters">
-        <button
+        <EaFilterChip
           v-for="element in elementFilters"
           :key="element.value"
-          class="ea-btn ea-btn--glass-cut"
-          :class="{ 'is-active': elementFilter === element.value }"
-          :style="{ '--ea-btn-accent': element.color }"
+          :selected="elementFilter === element.value"
+          :accent="element.color"
           @click="elementFilter = element.value"
         >
           {{ element.label }}
-        </button>
+        </EaFilterChip>
       </div>
       <div class="class-filters">
-        <button
+        <EaFilterChip
           v-for="operatorClass in classFilters"
           :key="operatorClass.value"
-          class="ea-btn ea-btn--glass-cut"
-          :class="{ 'is-active': classFilter === operatorClass.value }"
+          :selected="classFilter === operatorClass.value"
           @click="classFilter = operatorClass.value"
         >
           {{ operatorClass.label }}
-        </button>
+        </EaFilterChip>
       </div>
     </div>
     <div class="roster-scroll-container">
@@ -265,7 +252,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
         {{ t('timelineGrid.operatorDialog.empty') }}
       </div>
     </div>
-  </el-dialog>
+  </EaDialog>
 </template>
 
 <style src="./selectionDialog.css"></style>

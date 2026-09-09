@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed, ref } from 'vue';
 import { ElIcon } from 'element-plus';
 import { ArrowUp, ArrowDown } from '@element-plus/icons-vue';
@@ -151,7 +152,7 @@ function increment() {
       @blur="handleBlur"
     />
     <div class="controls-stack">
-      <button
+      <EaButton
         class="control-btn increment"
         @mousedown="startChange(increment)"
         @mouseup="stopChange"
@@ -160,8 +161,8 @@ function increment() {
         :disabled="isMaxDisabled"
       >
         <el-icon><ArrowUp /></el-icon>
-      </button>
-      <button
+      </EaButton>
+      <EaButton
         class="control-btn decrement"
         @mousedown="startChange(decrement)"
         @mouseup="stopChange"
@@ -170,7 +171,7 @@ function increment() {
         :disabled="isMinDisabled"
       >
         <el-icon><ArrowDown /></el-icon>
-      </button>
+      </EaButton>
     </div>
   </div>
 </template>

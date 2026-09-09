@@ -1,12 +1,9 @@
 <script setup>
+import { EaCheckbox, EaOption, EaSelect } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import CustomNumberInput from '../CustomNumberInput.vue';
-import {
-  EFFECT_CONDITION_KINDS,
-  HP_COMPARES,
-  STACKS_COMPARES,
-} from '@/data/enums';
+import { EFFECT_CONDITION_KINDS, HP_COMPARES, STACKS_COMPARES } from '@/data/enums';
 import {
   collectStatusOptions,
   KNOWN_ENEMY_STATUS_KEYS,
@@ -50,9 +47,7 @@ function createCondition(kind, seed = {}) {
     const next = {
       kind,
       status:
-        typeof seed?.status === 'string' && seed.status.trim()
-          ? seed.status.trim()
-          : fallback,
+        typeof seed?.status === 'string' && seed.status.trim() ? seed.status.trim() : fallback,
     };
     if (seed?.stacks) next.stacks = seed.stacks;
     if (seed?.consume === true) next.consume = true;
@@ -239,23 +234,23 @@ function statusLabel(value) {
     <div class="field-grid field-grid--effect-select-row">
       <label class="field">
         <span>{{ heading }}</span>
-        <el-select
+        <EaSelect
           :model-value="kindValue"
           @update:model-value="value => (kindValue = value)"
-          size="small"
+          size="sm"
           clearable
           :empty-values="[null, undefined]"
           class="effect-select-dark"
           popper-class="hit-editor-select-popper"
         >
-          <el-option :value="NONE" :label="t('common.none')" />
-          <el-option
+          <EaOption :value="NONE" :label="t('common.none')" />
+          <EaOption
             v-for="kind in SIMPLE_KINDS"
             :key="kind"
             :value="kind"
             :label="kindLabel(kind)"
           />
-        </el-select>
+        </EaSelect>
       </label>
     </div>
 
@@ -263,71 +258,61 @@ function statusLabel(value) {
       <div class="field-grid field-grid--effect-select-row">
         <label class="field">
           <span>{{ t('hitEditor.fields.conditionStatus') }}</span>
-          <el-select
+          <EaSelect
             :model-value="statusValue"
             @update:model-value="value => (statusValue = value)"
-            size="small"
+            size="sm"
             filterable
             class="effect-select-dark"
             popper-class="hit-editor-select-popper"
           >
-            <el-option
+            <EaOption
               v-for="status in statusSelectOptions"
               :key="status"
               :value="status"
               :label="statusLabel(status)"
             />
-          </el-select>
+          </EaSelect>
         </label>
         <label v-if="kindValue === 'operatorStatus'" class="field">
           <span>{{ t('hitEditor.fields.conditionTarget') }}</span>
-          <el-select
+          <EaSelect
             :model-value="operatorTarget"
             @update:model-value="value => (operatorTarget = value)"
-            size="small"
+            size="sm"
             class="effect-select-dark"
             popper-class="hit-editor-select-popper"
           >
-            <el-option value="self" :label="t('hitEditor.targetScopes.self')" />
-            <el-option value="controlled" :label="t('hitEditor.targetScopes.controlled')" />
-          </el-select>
+            <EaOption value="self" :label="t('hitEditor.targetScopes.self')" />
+            <EaOption value="controlled" :label="t('hitEditor.targetScopes.controlled')" />
+          </EaSelect>
         </label>
       </div>
       <div class="field-grid field-grid--effect-check-row">
-        <label class="check-field ea-check-rect">
-          <input
-            type="checkbox"
-            :checked="stacksEnabled"
-            @change="event => (stacksEnabled = event.target.checked)"
-          />
-          <span>{{ t('hitEditor.fields.conditionStacks') }}</span>
-        </label>
-        <label class="check-field ea-check-rect">
-          <input
-            type="checkbox"
-            :checked="consumeAll"
-            @change="event => (consumeAll = event.target.checked)"
-          />
-          <span>{{ t('hitEditor.fields.conditionConsume') }}</span>
-        </label>
+        <EaCheckbox v-model="stacksEnabled" class="check-field">
+          {{ t('hitEditor.fields.conditionStacks') }}
+        </EaCheckbox>
+        <EaCheckbox v-model="consumeAll" class="check-field">
+          {{ t('hitEditor.fields.conditionConsume') }}
+        </EaCheckbox>
       </div>
       <div v-if="stacksEnabled" class="field-grid field-grid--effect-select-row">
         <label class="field">
           <span>{{ t('common.stacks') }}</span>
-          <el-select
+          <EaSelect
             :model-value="stacksCompare"
             @update:model-value="value => (stacksCompare = value)"
-            size="small"
+            size="sm"
             class="effect-select-dark"
             popper-class="hit-editor-select-popper"
           >
-            <el-option
+            <EaOption
               v-for="compare in STACKS_COMPARES"
               :key="compare"
               :value="compare"
               :label="compareLabel('stacksCompares', compare)"
             />
-          </el-select>
+          </EaSelect>
         </label>
       </div>
       <div v-if="stacksEnabled" class="field-grid field-grid--effect-input-row">
@@ -347,20 +332,20 @@ function statusLabel(value) {
       <div class="field-grid field-grid--effect-select-row">
         <label class="field">
           <span>{{ t('hitEditor.fields.hpCompare') }}</span>
-          <el-select
+          <EaSelect
             :model-value="hpCompare"
             @update:model-value="value => (hpCompare = value)"
-            size="small"
+            size="sm"
             class="effect-select-dark"
             popper-class="hit-editor-select-popper"
           >
-            <el-option
+            <EaOption
               v-for="compare in HP_COMPARES"
               :key="compare"
               :value="compare"
               :label="compareLabel('hpCompares', compare)"
             />
-          </el-select>
+          </EaSelect>
         </label>
       </div>
       <div class="field-grid field-grid--effect-input-row">

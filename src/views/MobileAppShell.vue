@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { EaButton } from '@/design-system';
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { notifyNativeAppReady, registerBackHandler } from '@/platform/nativeBridge';
@@ -58,7 +59,7 @@ onUnmounted(() => {
     </main>
 
     <nav class="bottom-nav" :aria-label="t('timeline.mobile.app.navigation')">
-      <button
+      <EaButton
         type="button"
         :class="{ active: view === 'timeline' }"
         :aria-current="view === 'timeline' ? 'page' : undefined"
@@ -78,8 +79,8 @@ onUnmounted(() => {
           <path d="M6 15c2.2 0 2.8-6 5-6s2.8 6 5 6c1.5 0 2.1-2.1 3-3.3" />
         </svg>
         {{ t('timeline.mobile.app.timeline') }}
-      </button>
-      <button
+      </EaButton>
+      <EaButton
         type="button"
         :class="{ active: view === 'analysis' }"
         :aria-current="view === 'analysis' ? 'page' : undefined"
@@ -99,7 +100,7 @@ onUnmounted(() => {
           <path d="M12 3a9 9 0 0 1 9 9h-9z" />
         </svg>
         {{ t('timeline.mobile.app.analysis') }}
-      </button>
+      </EaButton>
     </nav>
   </div>
 </template>
