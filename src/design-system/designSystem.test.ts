@@ -155,6 +155,28 @@ describe('design-system component contracts', () => {
     expect(html).toContain('role="alert"');
   });
 
+  test('EaFormField keeps rich label content inside the associated label element', async () => {
+    const field = getComponent('EaFormField');
+    expect(field).toBeDefined();
+    if (!field) return;
+
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            field,
+            { controlId: 'strength' },
+            {
+              label: () => [h('img', { src: '/strength.webp', alt: '' }), 'Strength'],
+              default: () => h('input', { id: 'strength' }),
+            },
+          ),
+      }),
+    );
+
+    expect(html).toMatch(/<label[^>]*for="strength"[^>]*>.*strength\.webp.*Strength.*<\/label>/);
+  });
+
   test('EaInput consumes the surrounding field error state', async () => {
     const field = getComponent('EaFormField');
     const input = getComponent('EaInput');

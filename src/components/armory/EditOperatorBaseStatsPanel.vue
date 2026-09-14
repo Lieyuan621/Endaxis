@@ -1,5 +1,5 @@
 <script setup>
-import { EaButton, EaDialog, EaDialogActions, EaNumberInput } from '@/design-system';
+import { EaButton, EaDialog, EaDialogActions, EaFormField, EaNumberInput } from '@/design-system';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBaseStatValues } from '@/data/stats/baseValues';
@@ -193,16 +193,20 @@ function setCritPct(key, pctRaw) {
         <div class="section">
           <div class="section-title">{{ t('statDetail.attributes') }}</div>
           <div class="rows">
-            <div
+            <EaFormField
               v-for="key in ATTR_KEYS"
               :key="key"
+              :control-id="`operator-base-${key}`"
+              layout="horizontal"
               class="row"
               :class="{ overridden: isOverridden(key) }"
             >
-              <div class="label">
-                <img :src="ATTR_ICON[key]" class="attr-icon" alt="" />
-                <span>{{ t(`stats.${key}`) }}</span>
-              </div>
+              <template #label>
+                <span class="label">
+                  <img :src="ATTR_ICON[key]" class="attr-icon" alt="" />
+                  <span>{{ t(`stats.${key}`) }}</span>
+                </span>
+              </template>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
                 <EaNumberInput
@@ -228,12 +232,17 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
 
-            <div class="row" :class="{ overridden: isOverridden('baseAtk') }">
-              <div class="label">
-                <span>{{ t('statDetail.baseAtk') }}</span>
-              </div>
+            <EaFormField
+              control-id="operator-base-atk"
+              layout="horizontal"
+              class="row"
+              :class="{ overridden: isOverridden('baseAtk') }"
+            >
+              <template #label>
+                <span class="label">{{ t('statDetail.baseAtk') }}</span>
+              </template>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
                 <EaNumberInput
@@ -259,12 +268,17 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
 
-            <div class="row" :class="{ overridden: isOverridden('baseHp') }">
-              <div class="label">
-                <span>{{ t('statDetail.baseHp') }}</span>
-              </div>
+            <EaFormField
+              control-id="operator-base-hp"
+              layout="horizontal"
+              class="row"
+              :class="{ overridden: isOverridden('baseHp') }"
+            >
+              <template #label>
+                <span class="label">{{ t('statDetail.baseHp') }}</span>
+              </template>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
                 <EaNumberInput
@@ -290,17 +304,22 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
           </div>
         </div>
 
         <div class="section">
           <div class="section-title">{{ t('statDetail.stats') }}</div>
           <div class="rows">
-            <div class="row" :class="{ overridden: isOverridden('critRate') }">
-              <div class="label">
-                <span>{{ t('stats.crit_rate') }}</span>
-              </div>
+            <EaFormField
+              control-id="operator-base-crit-rate"
+              layout="horizontal"
+              class="row"
+              :class="{ overridden: isOverridden('critRate') }"
+            >
+              <template #label>
+                <span class="label">{{ t('stats.crit_rate') }}</span>
+              </template>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
                 <EaNumberInput
@@ -328,12 +347,17 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
 
-            <div class="row" :class="{ overridden: isOverridden('critDmg') }">
-              <div class="label">
-                <span>{{ t('stats.crit_dmg') }}</span>
-              </div>
+            <EaFormField
+              control-id="operator-base-crit-damage"
+              layout="horizontal"
+              class="row"
+              :class="{ overridden: isOverridden('critDmg') }"
+            >
+              <template #label>
+                <span class="label">{{ t('stats.crit_dmg') }}</span>
+              </template>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
                 <EaNumberInput
@@ -360,12 +384,17 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
 
-            <div class="row" :class="{ overridden: isOverridden('artsIntensity') }">
-              <div class="label">
-                <span>{{ t('stats.originium_arts_power') }}</span>
-              </div>
+            <EaFormField
+              control-id="operator-base-arts-intensity"
+              layout="horizontal"
+              class="row"
+              :class="{ overridden: isOverridden('artsIntensity') }"
+            >
+              <template #label>
+                <span class="label">{{ t('stats.originium_arts_power') }}</span>
+              </template>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
                 <EaNumberInput
@@ -390,12 +419,17 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
 
-            <div class="row" :class="{ overridden: isOverridden('ultimateGainEfficiency') }">
-              <div class="label">
-                <span>{{ t('stats.ult_charge_eff') }}</span>
-              </div>
+            <EaFormField
+              control-id="operator-base-ultimate-gain-efficiency"
+              layout="horizontal"
+              class="row"
+              :class="{ overridden: isOverridden('ultimateGainEfficiency') }"
+            >
+              <template #label>
+                <span class="label">{{ t('stats.ult_charge_eff') }}</span>
+              </template>
               <div class="controls">
                 <span class="affix prefix">+</span>
                 <EaNumberInput
@@ -420,12 +454,17 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
 
-            <div class="row" :class="{ overridden: isOverridden('comboCdReductionPercent') }">
-              <div class="label">
-                <span>{{ t('statDetail.comboCdReduction') }}</span>
-              </div>
+            <EaFormField
+              control-id="operator-base-combo-cd-reduction"
+              layout="horizontal"
+              class="row"
+              :class="{ overridden: isOverridden('comboCdReductionPercent') }"
+            >
+              <template #label>
+                <span class="label">{{ t('statDetail.comboCdReduction') }}</span>
+              </template>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
                 <EaNumberInput
@@ -453,12 +492,17 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
 
-            <div class="row" :class="{ overridden: isOverridden('defense') }">
-              <div class="label">
-                <span>{{ t('statDetail.defense') }}</span>
-              </div>
+            <EaFormField
+              control-id="operator-base-defense"
+              layout="horizontal"
+              class="row"
+              :class="{ overridden: isOverridden('defense') }"
+            >
+              <template #label>
+                <span class="label">{{ t('statDetail.defense') }}</span>
+              </template>
               <div class="controls">
                 <span class="affix prefix" aria-hidden="true" />
                 <EaNumberInput
@@ -484,7 +528,7 @@ function setCritPct(key, pctRaw) {
                   {{ t('armory.baseStats.resetOne') }}
                 </EaButton>
               </div>
-            </div>
+            </EaFormField>
           </div>
         </div>
       </div>
@@ -532,9 +576,9 @@ function setCritPct(key, pctRaw) {
   gap: 8px;
 }
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 8px 10px;
   border-radius: 0;

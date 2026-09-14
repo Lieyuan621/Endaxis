@@ -1,5 +1,5 @@
 <script setup>
-import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
+import { EaButton, EaDialog, EaDialogActions, EaFormField } from '@/design-system';
 import { onBeforeUnmount, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore';
@@ -145,84 +145,114 @@ onBeforeUnmount(() => {
       <div class="section">
         <div class="section-title">{{ t('resourceMonitor.sections.enemy') }}</div>
         <div class="rows">
-          <div class="row">
-            <span class="label">{{ t('resourceMonitor.labels.enemyHp') }}</span>
+          <EaFormField control-id="enemy-base-hp" layout="horizontal" class="row">
+            <template #label>
+              <span class="label">{{ t('resourceMonitor.labels.enemyHp') }}</span>
+            </template>
             <CustomNumberInput
+              input-id="enemy-base-hp"
               :model-value="draft.enemyHp"
               :min="1"
               active-color="#ff7875"
               class="stat-input"
               @update:model-value="setScalar('enemyHp', $event)"
             />
-          </div>
-          <div class="row">
-            <span class="label">{{ t('resourceMonitor.labels.maxStagger') }}</span>
+          </EaFormField>
+          <EaFormField control-id="enemy-base-max-stagger" layout="horizontal" class="row">
+            <template #label>
+              <span class="label">{{ t('resourceMonitor.labels.maxStagger') }}</span>
+            </template>
             <CustomNumberInput
+              input-id="enemy-base-max-stagger"
               :model-value="draft.maxStagger"
               :min="1"
               active-color="#ff9c6e"
               class="stat-input"
               @update:model-value="setScalar('maxStagger', $event)"
             />
-          </div>
-          <div class="row">
-            <span class="label">{{ t('resourceMonitor.labels.staggerNodes') }}</span>
+          </EaFormField>
+          <EaFormField control-id="enemy-base-stagger-nodes" layout="horizontal" class="row">
+            <template #label>
+              <span class="label">{{ t('resourceMonitor.labels.staggerNodes') }}</span>
+            </template>
             <CustomNumberInput
+              input-id="enemy-base-stagger-nodes"
               :model-value="draft.staggerNodeCount"
               :min="0"
               class="stat-input"
               @update:model-value="setScalar('staggerNodeCount', $event)"
             />
-          </div>
-          <div class="row">
-            <span class="label">{{ t('resourceMonitor.labels.nodeDuration') }}</span>
+          </EaFormField>
+          <EaFormField control-id="enemy-base-node-duration" layout="horizontal" class="row">
+            <template #label>
+              <span class="label">{{ t('resourceMonitor.labels.nodeDuration') }}</span>
+            </template>
             <CustomNumberInput
+              input-id="enemy-base-node-duration"
               :model-value="draft.staggerNodeDuration"
               :step="0.1"
               active-color="#ff9c6e"
               class="stat-input"
               @update:model-value="setScalar('staggerNodeDuration', $event)"
             />
-          </div>
-          <div class="row">
-            <span class="label">{{ t('resourceMonitor.labels.breakDuration') }}</span>
+          </EaFormField>
+          <EaFormField control-id="enemy-base-break-duration" layout="horizontal" class="row">
+            <template #label>
+              <span class="label">{{ t('resourceMonitor.labels.breakDuration') }}</span>
+            </template>
             <CustomNumberInput
+              input-id="enemy-base-break-duration"
               :model-value="draft.staggerBreakDuration"
               :step="0.5"
               active-color="#ff9c6e"
               class="stat-input"
               @update:model-value="setScalar('staggerBreakDuration', $event)"
             />
-          </div>
-          <div class="row">
-            <span class="label">{{ t('resourceMonitor.labels.executionRecovery') }}</span>
+          </EaFormField>
+          <EaFormField control-id="enemy-base-execution-recovery" layout="horizontal" class="row">
+            <template #label>
+              <span class="label">{{ t('resourceMonitor.labels.executionRecovery') }}</span>
+            </template>
             <CustomNumberInput
+              input-id="enemy-base-execution-recovery"
               :model-value="draft.executionRecovery"
               :min="0"
               class="stat-input"
               @update:model-value="setScalar('executionRecovery', $event)"
             />
-          </div>
-          <div class="row">
-            <span class="label">{{ t('resourceMonitor.labels.superArmor') }}</span>
+          </EaFormField>
+          <EaFormField control-id="enemy-base-super-armor" layout="horizontal" class="row">
+            <template #label>
+              <span class="label">{{ t('resourceMonitor.labels.superArmor') }}</span>
+            </template>
             <CustomNumberInput
+              input-id="enemy-base-super-armor"
               :model-value="draft.superArmor"
               :min="0"
               class="stat-input"
               @update:model-value="setScalar('superArmor', $event)"
             />
-          </div>
+          </EaFormField>
         </div>
       </div>
 
       <div class="section">
         <div class="section-title">{{ t('resourceMonitor.labels.resistanceTitle') }}</div>
         <div class="rows">
-          <div v-for="element in ENEMY_RESISTANCE_ELEMENTS" :key="element" class="row">
-            <span class="label" :style="{ color: getTypeColor(element) }">
-              {{ t(`resourceMonitor.resistance.${element}`) }}
-            </span>
+          <EaFormField
+            v-for="element in ENEMY_RESISTANCE_ELEMENTS"
+            :key="element"
+            :control-id="`enemy-base-resistance-${element}`"
+            layout="horizontal"
+            class="row"
+          >
+            <template #label>
+              <span class="label" :style="{ color: getTypeColor(element) }">
+                {{ t(`resourceMonitor.resistance.${element}`) }}
+              </span>
+            </template>
             <CustomNumberInput
+              :input-id="`enemy-base-resistance-${element}`"
               :model-value="draft.resistance[element]"
               :min="0"
               :step="1"
@@ -230,7 +260,7 @@ onBeforeUnmount(() => {
               class="stat-input"
               @update:model-value="setResistance(element, $event)"
             />
-          </div>
+          </EaFormField>
         </div>
       </div>
     </div>
@@ -268,9 +298,9 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 8px 10px;
   border-radius: 0;
@@ -279,7 +309,6 @@ onBeforeUnmount(() => {
 }
 .label {
   min-width: 0;
-  flex: 1;
   font-size: 13px;
   color: var(--ea-fg-secondary, rgba(255, 255, 255, 0.78));
 }

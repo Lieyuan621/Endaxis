@@ -34,8 +34,8 @@ provide(eaFormFieldKey, { controlId, describedBy, invalid });
 
 <template>
   <div class="ea-form-field" :class="`ea-form-field--${layout}`">
-    <label v-if="label" class="ea-form-field__label" :for="controlId">
-      {{ label }}
+    <label v-if="label || $slots.label" class="ea-form-field__label" :for="controlId">
+      <slot name="label">{{ label }}</slot>
       <span v-if="required" class="ea-form-field__required" aria-hidden="true">*</span>
     </label>
     <div class="ea-form-field__control"><slot /></div>

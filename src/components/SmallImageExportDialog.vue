@@ -3,6 +3,7 @@ import {
   EaButton,
   EaDialog,
   EaDialogActions,
+  EaFormField,
   EaInput,
   EaNumberInput,
   EaSwitch,
@@ -243,17 +244,21 @@ async function saveImage() {
           </div>
         </div>
 
-        <div class="form-item">
-          <label>{{ t('timeline.export.filenameLabel') }}</label>
+        <EaFormField control-id="small-export-filename" :label="t('timeline.export.filenameLabel')">
           <EaInput
             v-model="form.filename"
             :placeholder="t('timeline.export.filenamePlaceholder')"
             size="md"
           />
-        </div>
+        </EaFormField>
 
-        <div class="form-item">
-          <label>{{ t('timeline.export.durationLabel') }}</label>
+        <EaFormField
+          control-id="small-export-duration"
+          :label="t('timeline.export.durationLabel')"
+          :hint="`${t('timeline.export.durationHintMax', { max: maxDuration })} · ${t(
+            'timeline.export.smallDurationHint',
+          )}`"
+        >
           <EaNumberInput
             v-model="form.duration"
             :min="10"
@@ -263,16 +268,15 @@ async function saveImage() {
             size="md"
             style="width: 100%"
           />
-          <div class="hint">
-            {{ t('timeline.export.durationHintMax', { max: maxDuration }) }}
-            · {{ t('timeline.export.smallDurationHint') }}
-          </div>
-        </div>
+        </EaFormField>
 
-        <div class="form-item">
-          <label>{{ t('timeline.export.cardWidthLabel') }}</label>
+        <EaFormField
+          control-id="small-export-card-width"
+          :label="t('timeline.export.cardWidthLabel')"
+        >
           <div class="ea-range-row">
             <input
+              id="small-export-card-width"
               v-model.number="form.cardWidth"
               class="ea-range"
               type="range"
@@ -282,12 +286,15 @@ async function saveImage() {
             />
             <span class="ea-range-value">{{ form.cardWidth }}</span>
           </div>
-        </div>
+        </EaFormField>
 
-        <div class="form-item">
-          <label>{{ t('timeline.export.blockHeightLabel') }}</label>
+        <EaFormField
+          control-id="small-export-block-height"
+          :label="t('timeline.export.blockHeightLabel')"
+        >
           <div class="ea-range-row">
             <input
+              id="small-export-block-height"
               v-model.number="form.blockHeight"
               class="ea-range"
               type="range"
@@ -297,12 +304,15 @@ async function saveImage() {
             />
             <span class="ea-range-value">{{ form.blockHeight }}</span>
           </div>
-        </div>
+        </EaFormField>
 
-        <div class="form-item">
-          <label>{{ t('timeline.export.timeScaleLabel') }}</label>
+        <EaFormField
+          control-id="small-export-time-scale"
+          :label="t('timeline.export.timeScaleLabel')"
+        >
           <div class="ea-range-row">
             <input
+              id="small-export-time-scale"
               v-model.number="form.pxPerSecond"
               class="ea-range"
               type="range"
@@ -312,7 +322,7 @@ async function saveImage() {
             />
             <span class="ea-range-value">{{ form.pxPerSecond }}</span>
           </div>
-        </div>
+        </EaFormField>
 
         <div class="form-item form-item--row">
           <span>{{ t('timeline.export.showCombatIcons') }}</span>
@@ -422,7 +432,6 @@ async function saveImage() {
   gap: 6px;
 }
 
-.form-item label,
 .form-item--row span {
   font-size: 12px;
   color: var(--ea-fg-secondary);
@@ -432,11 +441,6 @@ async function saveImage() {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-}
-
-.hint {
-  font-size: 11px;
-  color: var(--ea-dialog-hint);
 }
 
 .card-appearance {

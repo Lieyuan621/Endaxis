@@ -6,6 +6,7 @@ import { ArrowUp, ArrowDown } from '@element-plus/icons-vue';
 
 const props = defineProps({
   modelValue: { type: Number, required: true },
+  inputId: { type: String, default: undefined },
   min: { type: Number, default: -Infinity },
   max: { type: Number, default: Infinity },
   step: { type: Number, default: 1 },
@@ -144,6 +145,7 @@ function increment() {
   <div class="custom-number-input" :class="containerClass" :style="containerStyle" tabindex="0">
     <div v-if="$slots.prepend" class="prepend-slot"><slot name="prepend"></slot></div>
     <input
+      :id="inputId"
       type="text"
       class="value-display"
       :style="inputStyle"
