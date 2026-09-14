@@ -3884,7 +3884,10 @@ defineExpose({
   color: var(--ea-fg-muted, #888);
   cursor: pointer;
   padding: 0;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
   min-width: 0;
 }
 
@@ -4541,7 +4544,9 @@ body.capture-mode .davinci-range {
   border: 2px dashed var(--ea-keycap-border, #666);
   box-sizing: border-box;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 }
 
 .avatar-placeholder:hover {
@@ -5501,7 +5506,10 @@ body.capture-mode .davinci-range {
   background: currentColor;
   opacity: 0.1;
   box-sizing: border-box;
-  transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition:
+    background-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .target-highlight-box::after {

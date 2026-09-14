@@ -3,7 +3,7 @@
   top: -12px;
   right: 0;
   z-index: 5;
-  padding: 2px 10px;
+  padding: 2px var(--ea-space-2);
   border: 1px solid #444;
   border-bottom: 0;
   background: #1a1a1a;

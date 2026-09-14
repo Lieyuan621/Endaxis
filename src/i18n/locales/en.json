@@ -1068,6 +1068,7 @@
     },
     "damage": {
       "title": "Damage Points",
+      "add": "Add Damage Point",
       "system": "Trigger System",
       "stagger": "Stagger",
       "sp": "SP",

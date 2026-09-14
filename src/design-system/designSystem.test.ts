@@ -39,6 +39,23 @@ async function renderComponent(name: string, props: Record<string, unknown>, con
 }
 
 describe('design-system component contracts', () => {
+  test('EaActivityRailButton exposes its side, selection, label, and optical icon size', async () => {
+    const html = await renderComponent('EaActivityRailButton', {
+      side: 'right',
+      active: true,
+      icon: '/icons/activity.webp',
+      label: 'Inspector',
+      iconSize: 26,
+    });
+
+    expect(html).toContain('ea-activity-rail-button--right');
+    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('aria-label="Inspector"');
+    expect(html).toContain('data-tooltip="Inspector"');
+    expect(html).toContain('src="/icons/activity.webp"');
+    expect(html).toMatch(/style="[^"]*--ea-activity-rail-icon-size:26px/);
+  });
+
   test('EaButton prevents duplicate actions while loading', async () => {
     const html = await renderComponent('EaButton', { loading: true }, 'Save');
 

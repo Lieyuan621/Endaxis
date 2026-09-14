@@ -458,7 +458,11 @@ function onNativeDragStart(evt, skill) {
   border-radius: 0;
   cursor: pointer;
   font-size: 12px;
-  transition: all 0.2s ease;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
 }
 .loadout-action-btn:hover:not(:disabled) {
   color: var(--ea-fg, #fff);
@@ -520,7 +524,11 @@ function onNativeDragStart(evt, skill) {
   cursor: grab;
   overflow: hidden;
   box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .skill-card:hover {
   background: rgba(255, 255, 255, 0.08);
@@ -560,7 +568,11 @@ function onNativeDragStart(evt, skill) {
   user-select: none;
   cursor: grab;
   box-sizing: border-box;
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
   border-radius: 0;
   min-width: 0;
 }
@@ -675,7 +687,9 @@ function onNativeDragStart(evt, skill) {
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
 }
 
@@ -687,7 +701,10 @@ function onNativeDragStart(evt, skill) {
   margin-right: 2px;
   margin-bottom: 2px;
   pointer-events: none;
-  transition: all 0.2s ease;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .skill-card:hover .card-bg-deco {

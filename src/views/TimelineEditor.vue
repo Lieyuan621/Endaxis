@@ -1,5 +1,6 @@
 <script setup>
 import {
+  EaActivityRailButton,
   EaButton,
   EaDeleteIcon,
   EaDialog,
@@ -1388,88 +1389,39 @@ onUnmounted(() => {
   >
     <aside class="activity-bar">
       <div class="activity-bar__group activity-bar__group--top">
-        <EaButton
-          type="button"
-          class="activity-bar__button activity-bar__button--lib"
-          :class="{ 'is-active': !isLeftPanelCollapsed }"
-          :aria-label="t('timeline.activityBar.library')"
-          :data-tooltip="t('timeline.activityBar.library')"
+        <EaActivityRailButton
+          side="left"
+          :active="!isLeftPanelCollapsed"
+          icon="/icons/btn_character.webp"
+          :label="t('timeline.activityBar.library')"
           @click="toggleActivityPanel('library')"
-        >
-          <img
-            class="activity-bar__image-icon activity-bar__image-icon--lib"
-            src="/icons/btn_character.webp"
-            alt=""
-            aria-hidden="true"
-          />
-        </EaButton>
+        />
       </div>
       <div class="activity-bar__group activity-bar__group--bottom">
-        <EaButton
-          type="button"
-          class="activity-bar__button activity-bar__button--global"
-          :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'global' }"
-          :aria-label="t('timeline.activityBar.globalConfig')"
-          :data-tooltip="t('timeline.activityBar.globalConfig')"
+        <EaActivityRailButton
+          side="left"
+          :active="!isBottomPanelCollapsed && leftBottomTool === 'global'"
+          icon="/icons/setting_tab_setting.webp"
+          :label="t('timeline.activityBar.globalConfig')"
           @click="toggleBottomTool('global')"
-        >
-          <img
-            class="activity-bar__image-icon activity-bar__image-icon--global"
-            src="/icons/setting_tab_setting.webp"
-            alt=""
-            aria-hidden="true"
-          />
-        </EaButton>
+        />
 
-        <EaButton
-          type="button"
-          class="activity-bar__button activity-bar__button--contract"
-          :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'contract' }"
-          :aria-label="t('timeline.activityBar.contract')"
-          :data-tooltip="t('timeline.activityBar.contract')"
+        <EaActivityRailButton
+          side="left"
+          :active="!isBottomPanelCollapsed && leftBottomTool === 'contract'"
+          icon="/contingency_contract/deco_contract_028.webp"
+          :icon-size="28"
+          :label="t('timeline.activityBar.contract')"
           @click="toggleBottomTool('contract')"
-        >
-          <img
-            class="activity-bar__image-icon activity-bar__image-icon--contract"
-            src="/contingency_contract/deco_contract_028.webp"
-            alt=""
-            aria-hidden="true"
-          />
-        </EaButton>
+        />
 
-        <EaButton
-          type="button"
-          class="activity-bar__button activity-bar__button--panel"
-          :class="{ 'is-active': !isBottomPanelCollapsed && leftBottomTool === 'enemy' }"
-          :aria-label="t('timeline.activityBar.resourceMonitor')"
-          :data-tooltip="t('timeline.activityBar.resourceMonitor')"
+        <EaActivityRailButton
+          side="left"
+          :active="!isBottomPanelCollapsed && leftBottomTool === 'enemy'"
+          icon="/icons/icon_wiki_group_monster_hongshan.webp"
+          :label="t('timeline.activityBar.resourceMonitor')"
           @click="toggleBottomTool('enemy')"
-        >
-          <svg
-            class="activity-bar__icon activity-bar__icon--panel"
-            viewBox="0 0 288 288"
-            aria-hidden="true"
-          >
-            <defs>
-              <mask id="enemyPanelMask">
-                <rect width="288" height="288" fill="black" />
-
-                <g fill="white">
-                  <rect x="74" y="38" width="140" height="38" />
-                  <circle cx="80" cy="131" r="40" />
-                  <path d=" M40 89 H248 V194 H210 L192 214 V256 H96 V214 L78 194 H40 Z " />
-                </g>
-
-                <g fill="black">
-                  <path d="M95 130 L117 152 L95 174 L73 152 Z" />
-                  <path d="M193 130 L215 152 L193 174 L171 152 Z" />
-                </g>
-              </mask>
-            </defs>
-
-            <rect width="288" height="288" fill="currentColor" mask="url(#enemyPanelMask)" />
-          </svg>
-        </EaButton>
+        />
       </div>
     </aside>
 
@@ -2082,37 +2034,21 @@ onUnmounted(() => {
 
     <aside v-if="RIGHT_TOOLS_VISIBLE" class="activity-bar activity-bar--right">
       <div class="activity-bar__group activity-bar__group--top">
-        <EaButton
-          type="button"
-          class="activity-bar__button activity-bar__button--inspector"
-          :class="{ 'is-active': !isRightPanelCollapsed && rightPanelTool === 'inspector' }"
-          :aria-label="t('timeline.activityBar.inspector')"
-          :data-tooltip="t('timeline.activityBar.inspector')"
+        <EaActivityRailButton
+          side="right"
+          :active="!isRightPanelCollapsed && rightPanelTool === 'inspector'"
+          icon="/icons/btn_week_raid.webp"
+          :label="t('timeline.activityBar.inspector')"
           @click="toggleRightTool('inspector')"
-        >
-          <img
-            class="activity-bar__image-icon activity-bar__image-icon--inspector"
-            src="/icons/btn_week_raid.webp"
-            alt=""
-            aria-hidden="true"
-          />
-        </EaButton>
+        />
 
-        <EaButton
-          type="button"
-          class="activity-bar__button activity-bar__button--battle-log"
-          :class="{ 'is-active': !isRightPanelCollapsed && rightPanelTool === 'battleLog' }"
-          :aria-label="t('timeline.activityBar.battleLog')"
-          :data-tooltip="t('timeline.activityBar.battleLog')"
+        <EaActivityRailButton
+          side="right"
+          :active="!isRightPanelCollapsed && rightPanelTool === 'battleLog'"
+          icon="/icons/btn_manual.webp"
+          :label="t('timeline.activityBar.battleLog')"
           @click="toggleRightTool('battleLog')"
-        >
-          <img
-            class="activity-bar__image-icon activity-bar__image-icon--battle-log"
-            src="/icons/btn_manual.webp"
-            alt=""
-            aria-hidden="true"
-          />
-        </EaButton>
+        />
       </div>
     </aside>
 
@@ -2289,7 +2225,7 @@ onUnmounted(() => {
   align-items: center;
   background: var(--ea-activity-bg);
   border-right: 1px solid var(--ea-border-soft);
-  padding: 10px 0 12px;
+  padding: var(--ea-space-2) 0 var(--ea-space-3);
 }
 .activity-bar--right {
   grid-column: 7;
@@ -2300,165 +2236,15 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--ea-space-1);
   width: 100%;
 }
 .activity-bar__group--top {
-  padding-top: 2px;
+  padding-top: var(--ea-space-1);
 }
 .activity-bar__group--bottom {
   margin-top: auto;
-  padding-top: 14px;
-}
-.activity-bar__button {
-  position: relative;
-  width: 100%;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--ea-icon-muted);
-  cursor: pointer;
-  padding: 0;
-  transition:
-    color 0.14s ease,
-    background-color 0.14s ease,
-    transform 0.14s ease;
-}
-.activity-bar__button::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  z-index: 30;
-  max-width: 180px;
-  padding: 5px 8px;
-  border: 1px solid var(--ea-border);
-  background: var(--ea-tooltip-bg);
-  color: var(--ea-icon-strong);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translate(6px, -50%);
-  transition:
-    opacity 0.12s ease,
-    transform 0.12s ease;
-  pointer-events: none;
-  box-shadow: 0 6px 18px var(--ea-shadow);
-}
-.activity-bar--right .activity-bar__button::before {
-  left: auto;
-  right: calc(100% + 8px);
-  transform: translate(-6px, -50%);
-}
-.activity-bar__button::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: var(--ea-fill-soft);
-  border: 1px solid var(--ea-border-soft);
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  transition:
-    opacity 0.14s ease,
-    background-color 0.14s ease,
-    border-color 0.14s ease,
-    transform 0.14s ease;
-  pointer-events: none;
-}
-.activity-bar__button:hover {
-  color: var(--ea-icon-strong);
-  background: var(--ea-fill-soft);
-  transform: translateY(-1px);
-}
-.activity-bar__button:hover::before {
-  opacity: 1;
-  transform: translate(0, -50%);
-}
-.activity-bar--right .activity-bar__button:hover::before {
-  transform: translate(0, -50%);
-}
-.activity-bar__button:hover::after {
-  opacity: 0.76;
-  transform: translate(-50%, -52%);
-  border-color: var(--ea-border);
-}
-.activity-bar__button.is-active {
-  color: var(--ea-fg);
-}
-.activity-bar__button.is-active::after {
-  opacity: 1;
-  background: var(--ea-hover-fill);
-  border-color: var(--ea-border-soft);
-}
-.activity-bar__icon {
-  width: 24px;
-  height: 24px;
-  display: block;
-  opacity: 0.78;
-  transition:
-    transform 0.14s ease,
-    opacity 0.14s ease,
-    filter 0.14s ease;
-}
-.activity-bar__button:hover .activity-bar__icon {
-  opacity: 1;
-  transform: translateY(-2px) scale(1.06);
-  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2));
-}
-.activity-bar__button.is-active .activity-bar__icon {
-  opacity: 1;
-  transform: scale(1.02);
-}
-.activity-bar__button.is-active:hover .activity-bar__icon {
-  transform: translateY(-3px) scale(1.1);
-  filter: drop-shadow(0 3px 10px rgba(255, 255, 255, 0.28));
-}
-.activity-bar__button--lib .activity-bar__image-icon--lib {
-  width: 24px;
-  height: 24px;
-}
-.activity-bar__button--global .activity-bar__image-icon--global,
-.activity-bar__button--inspector .activity-bar__image-icon--inspector,
-.activity-bar__button--battle-log .activity-bar__image-icon--battle-log {
-  width: 24px;
-  height: 24px;
-}
-.activity-bar__button--panel .activity-bar__icon {
-  width: 24px;
-  height: 24px;
-  transform: translateY(0.5px);
-}
-.activity-bar__image-icon {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  display: block;
-  opacity: 0.78;
-  filter: saturate(0.9) brightness(0.82);
-  transition:
-    transform 0.14s ease,
-    opacity 0.14s ease,
-    filter 0.14s ease;
-}
-.activity-bar__button.is-active .activity-bar__image-icon {
-  opacity: 1;
-  filter: saturate(1.06) brightness(1.06) drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2));
-  transform: scale(1.04);
-}
-.activity-bar__button:hover .activity-bar__image-icon,
-.activity-bar__button.is-active:hover .activity-bar__image-icon {
-  opacity: 1;
-  filter: saturate(1.12) brightness(1.12) drop-shadow(0 3px 10px rgba(255, 255, 255, 0.28));
-  transform: translateY(-3px) scale(1.1);
+  padding-top: var(--ea-space-3);
 }
 .workbench-panel {
   position: relative;
@@ -2544,25 +2330,17 @@ onUnmounted(() => {
   align-items: center;
   gap: 2px;
   padding: 2px 4px 2px 6px;
-  border-radius: 8px 0 0 8px;
   border: 1px solid var(--ea-border-soft);
   border-right: none;
-  background: var(--ea-panel-chrome-bg);
-  backdrop-filter: blur(4px);
-  opacity: 0.18;
-  transform: translateX(2px);
-  transition:
-    opacity 0.14s ease,
-    background-color 0.14s ease,
-    transform 0.14s ease;
+  background: var(--ea-workbench-panel);
+  opacity: 0.56;
+  transition: opacity 0.14s ease;
 }
 .action-library-panel:hover .panel-chrome,
 .properties-sidebar:hover .panel-chrome,
 .resource-monitor-panel:hover .panel-chrome,
 .panel-chrome:focus-within {
   opacity: 1;
-  background: var(--ea-panel-chrome-bg-hover);
-  transform: translateX(0);
 }
 .panel-chrome--left {
   right: 0;
@@ -2585,7 +2363,6 @@ onUnmounted(() => {
 }
 .panel-chrome__btn:hover {
   color: var(--ea-icon-strong);
-  background: var(--ea-hover-fill);
 }
 .workbench-resizer {
   position: relative;
@@ -2762,19 +2539,6 @@ onUnmounted(() => {
   color: var(--ea-fg);
 }
 
-/* Light mode: white UI glyphs → ink silhouette (assets are white-on-transparent). */
-:global(html[data-theme='light'] .activity-bar__image-icon) {
-  filter: brightness(0) opacity(0.72);
-  opacity: 1;
-}
-:global(html[data-theme='light'] .activity-bar__button.is-active .activity-bar__image-icon) {
-  filter: brightness(0) opacity(0.92);
-}
-:global(html[data-theme='light'] .activity-bar__button:hover .activity-bar__image-icon),
-:global(html[data-theme='light'] .activity-bar__button.is-active:hover .activity-bar__image-icon) {
-  filter: brightness(0) opacity(1);
-  transform: translateY(-3px) scale(1.1);
-}
 :global(html[data-theme='light'] .header-more-action.ea-button),
 :global(html[data-theme='light'] .header-more-locale__btn.ea-button),
 :global(html[data-theme='light'] .header-more-appearance__btn.ea-button) {
@@ -3046,7 +2810,10 @@ onUnmounted(() => {
   background-color: var(--ea-tab-idle-bg);
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
   user-select: none;
   flex-shrink: 0;
 }

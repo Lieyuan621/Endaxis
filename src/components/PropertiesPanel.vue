@@ -653,7 +653,15 @@ function handleStartConnection(id, type = null) {
             {{ t('propertiesPanel.damage.sp') }}: {{ totalSpGain }}
           </div>
           <div class="spacer"></div>
-          <EaButton variant="danger" size="sm" icon-only @click.stop="addDamageTick">
+          <EaButton
+            variant="ghost"
+            size="sm"
+            icon-only
+            class="damage-add-button"
+            :title="t('propertiesPanel.damage.add')"
+            :aria-label="t('propertiesPanel.damage.add')"
+            @click.stop="addDamageTick"
+          >
             <svg
               viewBox="0 0 24 24"
               width="14"
@@ -977,11 +985,11 @@ function handleStartConnection(id, type = null) {
 /* Base & Layout */
 .properties-panel {
   --right-panel-container-radius: 0;
-  padding: 15px;
+  padding: var(--ea-space-3);
   background-color: var(--ea-workbench-panel, #252525);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: var(--ea-space-3);
   height: 100%;
   box-sizing: border-box;
   overflow-y: auto;
@@ -997,20 +1005,20 @@ function handleStartConnection(id, type = null) {
 .panel-header {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ea-space-1);
   margin-bottom: 0;
 }
 .header-main-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: var(--ea-space-2);
   overflow: hidden;
 }
 .left-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ea-space-2);
   flex: 1;
   min-width: 0;
 }
@@ -1033,14 +1041,12 @@ function handleStartConnection(id, type = null) {
   color: #888;
   background: #333;
   padding: 1px 4px;
-  border-radius: 2px;
 }
 .skill-type-minimal {
   font-size: 11px;
   color: #666;
   background: rgba(255, 255, 255, 0.05);
   padding: 2px 8px;
-  border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   letter-spacing: 1px;
 }
@@ -1059,23 +1065,19 @@ function handleStartConnection(id, type = null) {
 /* Sections */
 .section-container {
   margin-bottom: 0;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
   overflow: hidden;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 .section-container.tech-style {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-  backdrop-filter: blur(10px);
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03));
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-left: 3px solid rgba(255, 255, 255, 0.2);
-  padding: 12px;
+  padding: var(--ea-space-3);
   position: relative;
   overflow: visible !important;
   flex-shrink: 0;
-  margin-top: 12px !important;
+  margin-top: var(--ea-space-3) !important;
 }
 .section-container.tech-style.border-red {
   border-left-color: #ff7875 !important;
@@ -1083,24 +1085,13 @@ function handleStartConnection(id, type = null) {
 .section-container.tech-style.border-blue {
   border-left-color: #00e5ff !important;
 }
-.section-container.tech-style::before {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  width: 10px;
-  height: 10px;
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  pointer-events: none;
-}
 .section-header-tech {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: var(--ea-space-2);
+  margin-bottom: var(--ea-space-1);
   height: 26px;
-  padding: 0 4px;
+  padding: 0 var(--ea-space-1);
 }
 .section-summary {
   min-width: 0;
@@ -1119,8 +1110,20 @@ function handleStartConnection(id, type = null) {
   transition: transform 0.2s;
 }
 .section-content-tech {
-  margin-top: 10px;
+  margin-top: var(--ea-space-2);
   animation: fadeIn 0.2s ease;
+}
+.damage-add-button.ea-button {
+  --ea-control-bg: transparent;
+  --ea-control-bg-hover: color-mix(in srgb, var(--ea-danger-soft) 12%, transparent);
+  --ea-control-border: color-mix(in srgb, var(--ea-danger-soft) 48%, transparent);
+  --ea-control-border-hover: var(--ea-danger-soft);
+  --ea-control-fg: var(--ea-danger-soft);
+  --ea-control-fg-hover: #fff;
+  border-color: var(--ea-control-border);
+}
+.damage-add-button.ea-button:hover:not(:disabled) {
+  border-color: var(--ea-control-border-hover);
 }
 .tech-style .form-group.compact label {
   font-size: 11px !important;
@@ -1132,14 +1135,14 @@ function handleStartConnection(id, type = null) {
   display: block;
 }
 .tech-style .attribute-grid {
-  gap: 8px 12px !important;
-  padding: 8px 8px !important;
+  gap: var(--ea-space-2) var(--ea-space-3) !important;
+  padding: var(--ea-space-2) !important;
 }
 .attribute-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 10px;
+  gap: var(--ea-space-2);
+  padding: var(--ea-space-2);
 }
 .form-group.compact label {
   font-size: 10px;
@@ -1179,23 +1182,24 @@ function handleStartConnection(id, type = null) {
   background: rgba(255, 255, 255, 0.02) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   border-left: 3px solid rgba(255, 255, 255, 0.2) !important;
-  padding: 10px !important;
-  margin-bottom: 10px !important;
+  padding: var(--ea-space-2) !important;
+  margin-bottom: var(--ea-space-2) !important;
   position: relative;
-  backdrop-filter: blur(5px);
-  transition: all 0.2s;
+  transition:
+    background-color var(--ea-control-transition),
+    border-color var(--ea-control-transition);
 }
 .tick-item.red-theme {
   border-left-color: #ff7875 !important;
-  background: linear-gradient(90deg, rgba(255, 120, 117, 0.08) 0%, transparent 100%) !important;
+  background: rgba(255, 120, 117, 0.055) !important;
 }
 .tick-item.red-theme.tick-item--has-stagger {
   border-left-color: #ffd666 !important;
-  background: linear-gradient(90deg, rgba(255, 214, 102, 0.12) 0%, transparent 100%) !important;
+  background: rgba(255, 214, 102, 0.07) !important;
 }
 .tick-item.blue-theme {
   border-left-color: #00e5ff !important;
-  background: linear-gradient(90deg, rgba(0, 229, 255, 0.08) 0%, transparent 100%) !important;
+  background: rgba(0, 229, 255, 0.055) !important;
 }
 .tick-header {
   display: flex;
@@ -1273,18 +1277,18 @@ function handleStartConnection(id, type = null) {
 .connections-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 8px;
+  gap: var(--ea-space-2);
+  margin-top: var(--ea-space-2);
 }
 .connection-card {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%) !important;
+  background: var(--ea-fill-soft, rgba(255, 255, 255, 0.03)) !important;
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-left: 3px solid #666;
-  padding: 10px;
+  padding: var(--ea-space-2);
   position: relative;
-  backdrop-filter: blur(5px);
-  clip-path: polygon(0 0, 100% 0, 100% 90%, 97% 100%, 0 100%);
-  transition: all 0.2s;
+  transition:
+    background-color var(--ea-control-transition),
+    border-color var(--ea-control-transition);
 }
 .connection-card:hover {
   background: rgba(255, 255, 255, 0.06) !important;
@@ -1306,7 +1310,6 @@ function handleStartConnection(id, type = null) {
   font-size: 10px;
   font-weight: 800;
   padding: 2px 6px;
-  border-radius: 10px;
   white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1352,7 +1355,6 @@ function handleStartConnection(id, type = null) {
   width: 16px;
   height: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
 }
 
 /* Connection Tools Rows */
@@ -1375,7 +1377,6 @@ function handleStartConnection(id, type = null) {
   background: rgba(0, 0, 0, 0.4) !important;
   padding: 2px 10px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 12px;
   width: fit-content;
 }
 .port-select-wrapper {
@@ -1442,20 +1443,11 @@ function handleStartConnection(id, type = null) {
 :global(html[data-theme='light'] .properties-panel .section-container) {
   background: var(--ea-panel-elevated);
   border-color: var(--ea-border-strong);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: 0 1px 2px var(--ea-shadow);
 }
 :global(html[data-theme='light'] .properties-panel .section-container.tech-style) {
   background: var(--ea-panel-elevated);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   border-color: var(--ea-border-strong);
   border-left-color: var(--ea-border-strong);
-}
-:global(html[data-theme='light'] .properties-panel .section-container.tech-style::before) {
-  border-right-color: var(--ea-border-strong);
-  border-bottom-color: var(--ea-border-strong);
 }
 :global(html[data-theme='light'] .properties-panel .section-summary) {
   color: var(--ea-fg-muted);
@@ -1477,7 +1469,5 @@ function handleStartConnection(id, type = null) {
   background: var(--ea-fill-soft) !important;
   border-color: var(--ea-border) !important;
   border-left-color: var(--ea-border-strong) !important;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 </style>

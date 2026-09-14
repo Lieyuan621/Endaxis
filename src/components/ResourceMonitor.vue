@@ -2098,7 +2098,11 @@ const staggerRatio = computed(() => {
   border: 1px solid #666;
   transform: rotate(45deg);
   box-sizing: border-box;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition:
+    background-color 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    border-color 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   pointer-events: none;
 }
 

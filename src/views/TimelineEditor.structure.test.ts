@@ -13,36 +13,45 @@ describe('TimelineEditor right rail icons', () => {
   });
 
   test('gives the inspector rail button its own image icon', () => {
-    const inspectorIcon = source.match(/<img[\s\S]*?activity-bar__image-icon--inspector[\s\S]*?>/);
+    const inspectorButton = source.match(
+      /<EaActivityRailButton[\s\S]*?:label="t\('timeline\.activityBar\.inspector'\)"[\s\S]*?\/>/,
+    );
 
-    expect(inspectorIcon).not.toBeNull();
-    expect(inspectorIcon![0]).toMatch(/src="[^"]+\.webp"/);
+    expect(inspectorButton).not.toBeNull();
+    expect(inspectorButton![0]).toContain('icon="/icons/btn_week_raid.webp"');
+  });
+
+  test('uses the Hongshan monster image for the resource monitor rail button', () => {
+    const resourceMonitorButton = source.match(
+      /<EaActivityRailButton[\s\S]*?:label="t\('timeline\.activityBar\.resourceMonitor'\)"[\s\S]*?\/>/,
+    );
+
+    expect(resourceMonitorButton).not.toBeNull();
+    expect(resourceMonitorButton![0]).toContain(
+      'icon="/icons/icon_wiki_group_monster_hongshan.webp"',
+    );
+    expect(source).not.toContain('enemyPanelMask');
+    expect(source).not.toContain('activity-bar__icon');
   });
 
   test('labels all activity bar buttons for hover tooltips and accessibility', () => {
     const openings = source
-      .split('class="activity-bar__button')
+      .split('<EaActivityRailButton')
       .slice(1)
-      .map(chunk => chunk.slice(0, chunk.indexOf('>')));
+      .map(chunk => chunk.slice(0, chunk.indexOf('/>')));
 
-    expect(openings.length).toBeGreaterThan(0);
+    expect(openings).toHaveLength(6);
     for (const opening of openings) {
-      expect(opening).toContain(':aria-label=');
-      expect(opening).toContain(':data-tooltip=');
-      expect(opening).not.toContain(':title=');
+      expect(opening).toContain(':label=');
+      expect(opening).toContain(':active=');
     }
   });
 
-  test('adds visible hover motion to activity bar icons', () => {
-    expect(source).toContain('.activity-bar__button::before');
-    expect(source).toContain('content: attr(data-tooltip)');
-    expect(source).toContain('.activity-bar__button:hover::before');
-    expect(source).toContain('transform: translateY(-1px)');
-    expect(source).toContain('.activity-bar__button:hover .activity-bar__icon');
-    expect(source).toContain('.activity-bar__button.is-active:hover .activity-bar__icon');
-    expect(source).toContain('.activity-bar__button.is-active:hover .activity-bar__image-icon');
-    expect(source).toContain('translateY(-2px)');
-    expect(source).toContain('drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2))');
+  test('delegates activity rail visuals to the shared component', () => {
+    expect(source).toContain('EaActivityRailButton');
+    expect(source).not.toContain('class="activity-bar__button');
+    expect(source).not.toContain('.activity-bar__button');
+    expect(source).not.toContain('.activity-bar__image-icon');
   });
 
   test('keeps display settings separate from the more menu', () => {
