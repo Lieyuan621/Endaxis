@@ -1,4 +1,5 @@
 <script setup>
+import { EaButton } from '@/design-system';
 import { computed, onMounted, onUnmounted } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import { ElMessage } from 'element-plus';
@@ -231,7 +232,7 @@ function handleToggleSimulationEndline() {
       <template v-if="targetEnemyCarryoverBuff">
         <div class="menu-header">{{ t('resourceMonitor.modules.enemyStatus') }}</div>
 
-        <div class="menu-item delete-item" @click="handleEnemyCarryoverBuffDelete">
+        <EaButton class="menu-item delete-item" @click="handleEnemyCarryoverBuffDelete">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -247,11 +248,11 @@ function handleToggleSimulationEndline() {
             </svg>
           </span>
           <span class="label">{{ t('common.delete') }}</span>
-        </div>
+        </EaButton>
 
         <div class="divider"></div>
 
-        <div class="menu-item" @click="handleEnemyCarryoverBuffMute">
+        <EaButton class="menu-item" @click="handleEnemyCarryoverBuffMute">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -277,13 +278,13 @@ function handleToggleSimulationEndline() {
               ? t('contextMenu.enableCalc')
               : t('contextMenu.disableCalc')
           }}</span>
-        </div>
+        </EaButton>
       </template>
 
       <template v-else-if="targetEnemyBuffAction">
         <div class="menu-header">{{ targetEnemyBuffAction.name }}</div>
 
-        <div class="menu-item delete-item" @click="handleEnemyBuffDelete">
+        <EaButton class="menu-item delete-item" @click="handleEnemyBuffDelete">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -299,11 +300,11 @@ function handleToggleSimulationEndline() {
             </svg>
           </span>
           <span class="label">{{ t('common.delete') }}</span>
-        </div>
+        </EaButton>
 
         <div class="divider"></div>
 
-        <div class="menu-item" @click="handleEnemyBuffMute">
+        <EaButton class="menu-item" @click="handleEnemyBuffMute">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -329,13 +330,13 @@ function handleToggleSimulationEndline() {
               ? t('contextMenu.enableCalc')
               : t('contextMenu.disableCalc')
           }}</span>
-        </div>
+        </EaButton>
       </template>
 
       <template v-else-if="targetAction">
         <div class="menu-header">{{ targetAction.name }}</div>
 
-        <div class="menu-item" @click="handleCopy">
+        <EaButton class="menu-item" @click="handleCopy">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -353,9 +354,9 @@ function handleToggleSimulationEndline() {
           </span>
           <span class="label">{{ t('common.copy') }}</span>
           <span class="shortcut-hint">Ctrl+C</span>
-        </div>
+        </EaButton>
 
-        <div class="menu-item" @click="handlePaste" :class="{ disabled: !store.clipboard }">
+        <EaButton class="menu-item" :disabled="!store.clipboard" @click="handlePaste">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -375,9 +376,9 @@ function handleToggleSimulationEndline() {
           </span>
           <span class="label">{{ t('common.paste') }}</span>
           <span class="shortcut-hint">Ctrl+V</span>
-        </div>
+        </EaButton>
 
-        <div class="menu-item delete-item" @click="handleDelete">
+        <EaButton class="menu-item delete-item" @click="handleDelete">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -397,11 +398,11 @@ function handleToggleSimulationEndline() {
           </span>
           <span class="label">{{ t('common.delete') }}</span>
           <span class="shortcut-hint">Delete</span>
-        </div>
+        </EaButton>
 
         <div class="divider"></div>
 
-        <div class="menu-item" @click="handleLock">
+        <EaButton class="menu-item" @click="handleLock">
           <span class="icon">
             <svg
               v-if="targetAction.isLocked"
@@ -435,9 +436,9 @@ function handleToggleSimulationEndline() {
           <span class="label">{{
             targetAction.isLocked ? t('contextMenu.unlockPosition') : t('contextMenu.lockPosition')
           }}</span>
-        </div>
+        </EaButton>
 
-        <div class="menu-item" @click="handleMute">
+        <EaButton class="menu-item" @click="handleMute">
           <span class="icon">
             <svg
               v-if="targetAction.isDisabled"
@@ -471,17 +472,17 @@ function handleToggleSimulationEndline() {
           <span class="label">{{
             targetAction.isDisabled ? t('contextMenu.enableCalc') : t('contextMenu.disableCalc')
           }}</span>
-        </div>
+        </EaButton>
 
         <div class="divider"></div>
         <div class="menu-label">{{ t('contextMenu.color') }}</div>
         <div class="color-grid">
-          <div
+          <EaButton
             v-for="c in PRESET_COLORS"
             :key="c.val || 'def'"
             class="color-dot"
             :style="{ background: c.val || '#555' }"
-            :class="{ 'is-active': targetAction.customColor === c.val }"
+            :pressed="targetAction.customColor === c.val"
             :title="c.label"
             @click="handleColor(c.val)"
           >
@@ -498,7 +499,7 @@ function handleToggleSimulationEndline() {
             >
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
-          </div>
+          </EaButton>
         </div>
       </template>
 
@@ -511,7 +512,7 @@ function handleToggleSimulationEndline() {
           }}
         </div>
 
-        <div class="menu-item delete-item" @click="handleDelete">
+        <EaButton class="menu-item delete-item" @click="handleDelete">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -528,20 +529,20 @@ function handleToggleSimulationEndline() {
           </span>
           <span class="label">{{ t('common.delete') }}</span>
           <span class="shortcut-hint">Delete</span>
-        </div>
+        </EaButton>
       </template>
 
       <template v-else-if="targetCycleBoundary">
         <div class="menu-header">{{ t('contextMenu.cycleBoundary') }}</div>
 
-        <div class="menu-item" @click="handleCreateInheritedScenario">
+        <EaButton class="menu-item" @click="handleCreateInheritedScenario">
           <span class="icon">⟲</span>
           <span class="label">{{ t('contextMenu.createInheritedScenario') }}</span>
-        </div>
+        </EaButton>
 
         <div class="divider"></div>
 
-        <div class="menu-item delete-item" @click="handleDelete">
+        <EaButton class="menu-item delete-item" @click="handleDelete">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -558,39 +559,40 @@ function handleToggleSimulationEndline() {
           </span>
           <span class="label">{{ t('common.delete') }}</span>
           <span class="shortcut-hint">Delete</span>
-        </div>
+        </EaButton>
       </template>
 
       <template v-else-if="targetConnection">
         <div class="menu-header">{{ t('contextMenu.connectionSettings') }}</div>
 
-        <div class="menu-item has-submenu">
-          <span class="icon">
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 9V5 M12 15V19 M9 12H5 M15 12H19" />
-            </svg>
-          </span>
-          <span class="label">{{ t('contextMenu.setSourcePort') }}</span>
-          <span class="arrow">▶</span>
-
+        <div class="menu-submenu">
+          <EaButton class="menu-item has-submenu" aria-haspopup="true">
+            <span class="icon">
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 9V5 M12 15V19 M9 12H5 M15 12H19" />
+              </svg>
+            </span>
+            <span class="label">{{ t('contextMenu.setSourcePort') }}</span>
+            <span class="arrow">▶</span>
+          </EaButton>
           <div class="submenu-grid ea-floating-surface">
-            <div
+            <EaButton
               v-for="(opt, i) in DIRECTION_OPTS"
               :key="i"
               class="grid-item"
-              :class="{
-                'is-active': (targetConnection.sourcePort || 'right') === opt.val,
-                spacer: opt.isSpacer,
-              }"
-              @click="!opt.isSpacer && handleSetPort('source', opt.val)"
+              icon-only
+              :disabled="opt.isSpacer"
+              :class="{ spacer: opt.isSpacer }"
+              :pressed="(targetConnection.sourcePort || 'right') === opt.val"
+              @click="handleSetPort('source', opt.val)"
               :title="opt.label"
             >
               <svg
@@ -607,37 +609,38 @@ function handleToggleSimulationEndline() {
               >
                 <path :d="BASE_ARROW_PATH" />
               </svg>
-            </div>
+            </EaButton>
           </div>
         </div>
 
-        <div class="menu-item has-submenu">
-          <span class="icon">
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <rect x="5" y="5" width="14" height="14" rx="2" />
-              <path d="M12 12h.01" />
-            </svg>
-          </span>
-          <span class="label">{{ t('contextMenu.setTargetPort') }}</span>
-          <span class="arrow">▶</span>
-
+        <div class="menu-submenu">
+          <EaButton class="menu-item has-submenu" aria-haspopup="true">
+            <span class="icon">
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="5" y="5" width="14" height="14" rx="2" />
+                <path d="M12 12h.01" />
+              </svg>
+            </span>
+            <span class="label">{{ t('contextMenu.setTargetPort') }}</span>
+            <span class="arrow">▶</span>
+          </EaButton>
           <div class="submenu-grid ea-floating-surface">
-            <div
+            <EaButton
               v-for="(opt, i) in DIRECTION_OPTS"
               :key="i"
               class="grid-item"
-              :class="{
-                'is-active': (targetConnection.targetPort || 'left') === opt.val,
-                spacer: opt.isSpacer,
-              }"
-              @click="!opt.isSpacer && handleSetPort('target', opt.val)"
+              icon-only
+              :disabled="opt.isSpacer"
+              :class="{ spacer: opt.isSpacer }"
+              :pressed="(targetConnection.targetPort || 'left') === opt.val"
+              @click="handleSetPort('target', opt.val)"
               :title="opt.label"
             >
               <svg
@@ -654,12 +657,12 @@ function handleToggleSimulationEndline() {
               >
                 <path :d="BASE_ARROW_PATH" />
               </svg>
-            </div>
+            </EaButton>
           </div>
         </div>
 
         <div class="divider"></div>
-        <div class="menu-item delete-item" @click="handleDelete">
+        <EaButton class="menu-item delete-item" @click="handleDelete">
           <span class="icon"
             ><svg
               viewBox="0 0 24 24"
@@ -675,13 +678,13 @@ function handleToggleSimulationEndline() {
           ></span>
           <span class="label">{{ t('common.delete') }}</span>
           <span class="shortcut-hint">Delete</span>
-        </div>
+        </EaButton>
       </template>
 
       <template v-else>
         <div class="menu-header">{{ t('contextMenu.globalOps') }}</div>
 
-        <div class="menu-item" @click="handlePaste" :class="{ disabled: !store.clipboard }">
+        <EaButton class="menu-item" :disabled="!store.clipboard" @click="handlePaste">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -701,13 +704,13 @@ function handleToggleSimulationEndline() {
           </span>
           <span class="label">{{ t('common.paste') }}</span>
           <span class="shortcut-hint">Ctrl+V</span>
-        </div>
+        </EaButton>
 
         <div class="divider"></div>
 
         <div class="menu-label">{{ t('contextMenu.comboCooldownControl') }}</div>
 
-        <div class="menu-item" @click="handleAddComboCooldownEvent('ready')">
+        <EaButton class="menu-item" @click="handleAddComboCooldownEvent('ready')">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -724,9 +727,9 @@ function handleToggleSimulationEndline() {
             </svg>
           </span>
           <span class="label">{{ t('contextMenu.comboCooldownReadyAll') }}</span>
-        </div>
+        </EaButton>
 
-        <div class="menu-item" @click="handleAddComboCooldownEvent('cooldown')">
+        <EaButton class="menu-item" @click="handleAddComboCooldownEvent('cooldown')">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -743,11 +746,11 @@ function handleToggleSimulationEndline() {
             </svg>
           </span>
           <span class="label">{{ t('contextMenu.comboCooldownStartAll') }}</span>
-        </div>
+        </EaButton>
 
         <div class="divider"></div>
 
-        <div class="menu-item" @click="handleAddCycleBoundary">
+        <EaButton class="menu-item" @click="handleAddCycleBoundary">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -765,9 +768,9 @@ function handleToggleSimulationEndline() {
             </svg>
           </span>
           <span class="label">{{ t('contextMenu.addCycleBoundary') }}</span>
-        </div>
+        </EaButton>
 
-        <div class="menu-item" @click="handleToggleSimulationStartline">
+        <EaButton class="menu-item" @click="handleToggleSimulationStartline">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -789,9 +792,9 @@ function handleToggleSimulationEndline() {
               ? t('contextMenu.removeSimulationStartline')
               : t('contextMenu.addSimulationStartline')
           }}</span>
-        </div>
+        </EaButton>
 
-        <div class="menu-item" @click="handleToggleSimulationEndline">
+        <EaButton class="menu-item" @click="handleToggleSimulationEndline">
           <span class="icon">
             <svg
               viewBox="0 0 24 24"
@@ -813,26 +816,27 @@ function handleToggleSimulationEndline() {
               ? t('contextMenu.removeSimulationEndline')
               : t('contextMenu.addSimulationEndline')
           }}</span>
-        </div>
+        </EaButton>
 
-        <div class="menu-item has-submenu">
-          <span class="icon">
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M16 3h5v5M8 21H3v-5M21 3l-7 7M3 21l7-7" />
-            </svg>
-          </span>
-          <span class="label">{{ t('contextMenu.addSwitchEvent') }}</span>
-          <span class="arrow">▶</span>
-
+        <div class="menu-submenu">
+          <EaButton class="menu-item has-submenu" aria-haspopup="true">
+            <span class="icon">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M16 3h5v5M8 21H3v-5M21 3l-7 7M3 21l7-7" />
+              </svg>
+            </span>
+            <span class="label">{{ t('contextMenu.addSwitchEvent') }}</span>
+            <span class="arrow">▶</span>
+          </EaButton>
           <div class="submenu-list ea-floating-surface">
-            <div
+            <EaButton
               v-for="track in store.teamTracksInfo"
               v-show="track.id"
               :key="track.id"
@@ -844,7 +848,7 @@ function handleToggleSimulationEndline() {
             >
               <img :src="track.avatar" class="mini-avatar" />
               <span class="sub-label">{{ track.name }}</span>
-            </div>
+            </EaButton>
           </div>
         </div>
       </template>
@@ -883,29 +887,26 @@ function handleToggleSimulationEndline() {
 }
 
 .menu-item {
-  height: 32px;
-  padding: 0 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: background 0.1s;
-  color: var(--ea-floating-fg);
   position: relative;
+  display: flex;
+  width: 100%;
+  height: 32px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ea-floating-fg);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 0.1s;
 }
 
-.menu-item:hover {
-  background: var(--ea-menu-hover-bg);
-  color: var(--ea-menu-hover-fg);
-}
-
-.menu-item.delete-item:hover {
-  background: color-mix(in srgb, var(--ea-danger) 14%, transparent);
-  color: var(--ea-danger);
-}
-
-.menu-item.disabled {
+.menu-item:disabled {
   opacity: 0.5;
-  pointer-events: none;
 }
 
 .menu-item .icon {
@@ -931,10 +932,6 @@ function handleToggleSimulationEndline() {
   font-family: 'Consolas', monospace;
 }
 
-.menu-item:hover .shortcut-hint {
-  color: currentColor;
-}
-
 .divider {
   height: 1px;
   background: var(--ea-border-soft);
@@ -945,18 +942,22 @@ function handleToggleSimulationEndline() {
   justify-content: space-between;
 }
 
+.menu-submenu {
+  position: relative;
+}
+
 .menu-item .arrow {
   font-size: 10px;
   color: var(--ea-fg-faint);
   margin-left: 10px;
 }
 
-.menu-item.has-submenu:hover .submenu-grid,
-.menu-item.has-submenu:hover .submenu-list {
+.menu-submenu:focus-within .submenu-grid,
+.menu-submenu:focus-within .submenu-list {
   display: grid;
 }
 
-.menu-item.has-submenu:hover .submenu-list {
+.menu-submenu:focus-within .submenu-list {
   display: flex;
   flex-direction: column;
 }
@@ -975,9 +976,15 @@ function handleToggleSimulationEndline() {
 
 .grid-item {
   display: flex;
+  width: 30px;
+  height: 30px;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
   color: #888;
   transition:
@@ -985,12 +992,7 @@ function handleToggleSimulationEndline() {
     color 0.1s;
 }
 
-.grid-item:hover {
-  background: var(--ea-hover-fill);
-  color: var(--ea-fg);
-}
-
-.grid-item.is-active {
+.grid-item[aria-pressed='true'] {
   background: var(--ea-gold);
   color: #000;
 }
@@ -1006,19 +1008,20 @@ function handleToggleSimulationEndline() {
 }
 
 .submenu-list-item {
+  width: 100%;
   height: 32px;
   padding: 0 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   cursor: pointer;
   transition: background 0.1s;
   color: var(--ea-floating-fg);
-}
-
-.submenu-list-item:hover {
-  background: var(--ea-menu-hover-bg);
-  color: var(--ea-menu-hover-fg);
 }
 
 .mini-avatar {
@@ -1040,7 +1043,9 @@ function handleToggleSimulationEndline() {
 .color-dot {
   width: 18px;
   height: 18px;
-  border-radius: 3px;
+  min-width: 18px;
+  padding: 0;
+  border-radius: 0;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -1052,15 +1057,52 @@ function handleToggleSimulationEndline() {
   color: #fff;
 }
 
-.color-dot:hover {
-  transform: scale(1.1);
-  border-color: #fff;
-  z-index: 1;
-}
-
-.color-dot.is-active {
+.color-dot[aria-pressed='true'] {
   border-color: #fff;
   box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .menu-item.ea-button:hover:not(:disabled) {
+    background: var(--ea-menu-hover-bg);
+    color: var(--ea-menu-hover-fg);
+    box-shadow: none;
+  }
+
+  .menu-item.ea-button.delete-item:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ea-danger) 14%, transparent);
+    color: var(--ea-danger);
+  }
+
+  .menu-item:hover .shortcut-hint {
+    color: currentColor;
+  }
+
+  .menu-submenu:hover .submenu-grid,
+  .menu-submenu:hover .submenu-list {
+    display: grid;
+  }
+
+  .menu-submenu:hover .submenu-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .grid-item.ea-button:hover:not(:disabled) {
+    background: var(--ea-hover-fill);
+    color: var(--ea-fg);
+  }
+
+  .submenu-list-item.ea-button:hover:not(:disabled) {
+    background: var(--ea-menu-hover-bg);
+    color: var(--ea-menu-hover-fg);
+  }
+
+  .color-dot.ea-button:hover:not(:disabled) {
+    z-index: 1;
+    border-color: #fff;
+    transform: scale(1.1);
+  }
 }
 
 @keyframes fadeIn {

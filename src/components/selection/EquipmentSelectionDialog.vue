@@ -781,11 +781,15 @@ defineExpose({ open, close, isOpen: () => visible.value });
           <div class="rarity-line"></div>
         </div>
         <div class="roster-grid">
-          <div
+          <EaButton
             v-for="equipment in group.list"
             :key="equipment.id"
             class="roster-card equipment-roster-card"
             :class="{ 'is-ability-match-both': equipment.abilityMatch?.type === 'both' }"
+            variant="ghost"
+            :pressed="
+              currentEquipmentId === equipment.id || currentEquipmentId === equipment.canonicalId
+            "
             @click="select(equipment.id)"
           >
             <EaTooltip
@@ -864,7 +868,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
             >
               {{ t('timelineGrid.weaponDialog.equipped') }}
             </div>
-          </div>
+          </EaButton>
         </div>
       </template>
       <div v-if="groups.length === 0" class="empty-roster">

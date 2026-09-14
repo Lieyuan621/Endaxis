@@ -73,6 +73,19 @@ describe('design-system component contracts', () => {
     expect(html).toContain('aria-pressed="true"');
   });
 
+  test('EaCloseButton renders one labelled close control with the requested size', async () => {
+    const html = await renderComponent('EaCloseButton', {
+      label: 'Close panel',
+      size: 'sm',
+    });
+
+    expect(html).toContain('<button');
+    expect(html).toContain('aria-label="Close panel"');
+    expect(html).toContain('title="Close panel"');
+    expect(html).toContain('ea-close-button--sm');
+    expect(html).toContain('viewBox="0 0 24 24"');
+  });
+
   test('EaButton keeps slotted layout items as direct button children', async () => {
     const button = getComponent('EaButton');
     expect(button).toBeDefined();

@@ -173,11 +173,13 @@ defineExpose({ open, close, isOpen: () => visible.value });
           <div class="rarity-line"></div>
         </div>
         <div class="roster-grid">
-          <div
+          <EaButton
             v-for="weapon in group.list"
             :key="weapon.id"
             class="roster-card"
             :class="[`rarity-${rarity(weapon)}-style`]"
+            variant="ghost"
+            :pressed="currentWeaponId === weapon.id"
             @click="select(weapon.id)"
           >
             <EaTooltip
@@ -202,7 +204,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
             <div v-if="currentWeaponId === weapon.id" class="in-team-tag weapon-equipped">
               {{ t('timelineGrid.weaponDialog.equipped') }}
             </div>
-          </div>
+          </EaButton>
         </div>
       </template>
       <div v-if="groups.length === 0" class="empty-roster">

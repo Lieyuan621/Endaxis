@@ -331,9 +331,14 @@ function onNativeDragStart(evt, skill) {
             class="skill-card"
             :class="{ 'is-selected': store.selectedLibrarySkillId === skill.id }"
             :title="getSkillCardTooltip(skill)"
+            role="button"
+            tabindex="0"
+            :aria-pressed="store.selectedLibrarySkillId === skill.id"
             draggable="true"
             @dragstart="onNativeDragStart($event, skill)"
             @click="onSkillClick(skill.id)"
+            @keydown.enter.prevent="onSkillClick(skill.id)"
+            @keydown.space.stop.prevent="onSkillClick(skill.id)"
           >
             <div class="card-edge"></div>
             <div class="card-body">
@@ -365,8 +370,14 @@ function onNativeDragStart(evt, skill) {
                 'is-last': idx === getVisibleSkillSegments(skill).length - 1,
               }"
               :draggable="!isAttackSegmentDisabled(seg)"
+              role="button"
+              :tabindex="isAttackSegmentDisabled(seg) ? -1 : 0"
+              :aria-pressed="store.selectedLibrarySkillId === seg.id"
+              :aria-disabled="isAttackSegmentDisabled(seg)"
               @dragstart="onAttackSegmentDragStart($event, seg)"
               @click.stop="onAttackSegmentClick(seg)"
+              @keydown.enter.stop.prevent="onAttackSegmentClick(seg)"
+              @keydown.space.stop.prevent="onAttackSegmentClick(seg)"
             >
               {{ getSegmentChipLabel(seg) }}
             </div>
@@ -464,11 +475,6 @@ function onNativeDragStart(evt, skill) {
     box-shadow 0.2s ease,
     opacity 0.2s ease;
 }
-.loadout-action-btn:hover:not(:disabled) {
-  color: var(--ea-fg, #fff);
-  border-color: var(--ea-gold);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 16%, transparent);
-}
 .loadout-action-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -529,11 +535,6 @@ function onNativeDragStart(evt, skill) {
     border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.skill-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-color);
-  transform: translateY(-2px);
 }
 .skill-card.is-selected {
   border-color: var(--ea-gold);
@@ -600,12 +601,6 @@ function onNativeDragStart(evt, skill) {
   font-size: 11px;
   line-height: 1;
   pointer-events: none;
-}
-
-.attack-segment-chip:hover {
-  border-color: var(--accent-color);
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .attack-segment-chip.is-selected {
@@ -707,17 +702,6 @@ function onNativeDragStart(evt, skill) {
     transform 0.2s ease;
 }
 
-.skill-card:hover .card-bg-deco {
-  opacity: 0.85;
-  transform: scale(1.05);
-}
-
-.skill-card:hover .weapon-icon-inner {
-  filter: brightness(1.5) drop-shadow(0 0 8px #fff);
-  transform: scale(1.1);
-  opacity: 1;
-}
-
 .card-bg-deco-empty {
   position: absolute;
   right: 0;
@@ -735,11 +719,6 @@ function onNativeDragStart(evt, skill) {
   border-color: var(--ea-border);
   color: var(--ea-fg-secondary);
 }
-:global(html[data-theme='light'] .library-container .loadout-action-btn:hover:not(:disabled)) {
-  color: var(--ea-fg);
-  border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--ea-gold) 16%, transparent);
-}
 :global(html[data-theme='light'] .library-container .section-title) {
   color: var(--ea-fg);
 }
@@ -754,10 +733,6 @@ function onNativeDragStart(evt, skill) {
   background: #ffffff;
   border-color: var(--ea-border-strong);
   box-shadow: 0 1px 2px var(--ea-shadow);
-}
-:global(html[data-theme='light'] .library-container .skill-card:hover) {
-  background: var(--ea-surface-soft);
-  border-color: var(--accent-color);
 }
 :global(html[data-theme='light'] .library-container .skill-card.is-selected) {
   background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
@@ -777,19 +752,10 @@ function onNativeDragStart(evt, skill) {
   filter: brightness(0) opacity(0.72);
   opacity: 1;
 }
-:global(html[data-theme='light'] .library-container .skill-card:hover .weapon-icon-inner) {
-  filter: brightness(0) opacity(0.92);
-  transform: scale(1.1);
-  opacity: 1;
-}
 :global(html[data-theme='light'] .library-container .attack-segment-chip) {
   background: var(--ea-chip-fill);
   border-color: var(--ea-border-strong);
   color: var(--ea-fg-secondary);
-}
-:global(html[data-theme='light'] .library-container .attack-segment-chip:hover) {
-  background: var(--ea-chip-fill-hover);
-  color: var(--ea-fg);
 }
 :global(html[data-theme='light'] .library-container .attack-segment-chip.is-selected) {
   background: color-mix(in srgb, var(--ea-gold) 14%, transparent);
@@ -799,6 +765,70 @@ function onNativeDragStart(evt, skill) {
 }
 :global(html[data-theme='light'] .library-container .attack-segment-chip:not(.is-last)::after) {
   color: var(--ea-fg-faint);
+}
+
+.skill-card:focus-visible,
+.attack-segment-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--ea-focus-ring);
+}
+
+.attack-segment-chip[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: var(--ea-control-disabled-opacity);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .loadout-action-btn:hover:not(:disabled) {
+    color: var(--ea-fg, #fff);
+    border-color: var(--ea-gold);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 16%, transparent);
+  }
+
+  .skill-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+  }
+
+  .attack-segment-chip:hover {
+    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+
+  .skill-card:hover .card-bg-deco {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+
+  .skill-card:hover .weapon-icon-inner {
+    filter: brightness(1.5) drop-shadow(0 0 8px #fff);
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  :global(html[data-theme='light'] .library-container .loadout-action-btn:hover:not(:disabled)) {
+    border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+    color: var(--ea-fg);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--ea-gold) 16%, transparent);
+  }
+
+  :global(html[data-theme='light'] .library-container .skill-card:hover) {
+    border-color: var(--accent-color);
+    background: var(--ea-surface-soft);
+  }
+
+  :global(html[data-theme='light'] .library-container .skill-card:hover .weapon-icon-inner) {
+    filter: brightness(0) opacity(0.92);
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  :global(html[data-theme='light'] .library-container .attack-segment-chip:hover) {
+    background: var(--ea-chip-fill-hover);
+    color: var(--ea-fg);
+  }
 }
 
 /* Slider 自定义 */

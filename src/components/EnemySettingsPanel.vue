@@ -289,9 +289,10 @@ function setEnemyLevel(level) {
             {{ t('resourceMonitor.enemy.specialGroup') }} <span class="count">(1)</span>
           </div>
           <div class="group-items">
-            <div
+            <EaButton
               class="enemy-card"
-              :class="{ selected: store.activeEnemyId === 'custom' }"
+              variant="ghost"
+              :pressed="store.activeEnemyId === 'custom'"
               style="--tier-color: var(--ea-gold)"
               @click="selectEnemy('custom')"
             >
@@ -302,7 +303,7 @@ function setEnemyLevel(level) {
                 <div class="name">{{ t('resourceMonitor.enemy.custom') }}</div>
                 <div class="desc">{{ t('resourceMonitor.enemy.customDesc') }}</div>
               </div>
-            </div>
+            </EaButton>
           </div>
         </div>
 
@@ -311,14 +312,15 @@ function setEnemyLevel(level) {
             {{ group.name }} <span class="count">({{ group.list.length }})</span>
           </div>
           <div class="group-items">
-            <div
+            <EaButton
               v-for="enemy in group.list"
               :key="enemy.id"
               class="enemy-card"
               :class="{
-                selected: store.activeEnemyId === enemy.id,
                 'has-tier': enemy.tier && enemy.tier !== 'normal',
               }"
+              variant="ghost"
+              :pressed="store.activeEnemyId === enemy.id"
               :style="{ '--tier-color': getTierColor(enemy.tier) }"
               @click="selectEnemy(enemy.id)"
             >
@@ -343,7 +345,7 @@ function setEnemyLevel(level) {
                   }}
                 </div>
               </div>
-            </div>
+            </EaButton>
           </div>
         </div>
 
@@ -383,10 +385,6 @@ function setEnemyLevel(level) {
   cursor: pointer;
   position: relative;
   text-align: left;
-}
-
-.enemy-select-module:hover {
-  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.06));
 }
 
 .module-deco-line {
@@ -649,12 +647,17 @@ function setEnemyLevel(level) {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   padding: 8px;
   background: var(--ea-fill-muted, rgba(255, 255, 255, 0.04));
   border: 1px solid var(--ea-border-soft, rgba(255, 255, 255, 0.05));
   border-left: 3px solid var(--ea-border-strong, #444);
   cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: normal;
   transition:
     border-color 0.16s ease,
     background-color 0.16s ease;
@@ -667,41 +670,25 @@ function setEnemyLevel(level) {
   border-left-color: var(--tier-color);
 }
 
-.enemy-card:hover {
-  background: color-mix(in srgb, var(--ea-gold) 7%, transparent);
-}
-
-.enemy-card.has-tier:hover {
-  background: color-mix(in srgb, var(--tier-color) 10%, rgba(255, 255, 255, 0.03));
-}
-
-.enemy-card.selected {
+.enemy-card[aria-pressed='true'] {
   background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
   border-top-color: color-mix(in srgb, var(--ea-gold) 18%, transparent);
   border-right-color: color-mix(in srgb, var(--ea-gold) 18%, transparent);
   border-bottom-color: color-mix(in srgb, var(--ea-gold) 18%, transparent);
 }
 
-.enemy-card.has-tier.selected {
+.enemy-card.has-tier[aria-pressed='true'] {
   background: color-mix(in srgb, var(--tier-color) 16%, rgba(255, 255, 255, 0.03));
   border-top-color: color-mix(in srgb, var(--tier-color) 24%, transparent);
   border-right-color: color-mix(in srgb, var(--tier-color) 24%, transparent);
   border-bottom-color: color-mix(in srgb, var(--tier-color) 24%, transparent);
 }
 
-.enemy-card.selected:hover {
-  background: color-mix(in srgb, var(--ea-gold) 15%, transparent);
-}
-
-.enemy-card.has-tier.selected:hover {
-  background: color-mix(in srgb, var(--tier-color) 20%, rgba(255, 255, 255, 0.03));
-}
-
-.enemy-card.selected .name {
+.enemy-card[aria-pressed='true'] .name {
   color: var(--ea-fg, #fff);
 }
 
-.enemy-card.has-tier.selected .name {
+.enemy-card.has-tier[aria-pressed='true'] .name {
   color: var(--tier-color);
 }
 
@@ -792,7 +779,7 @@ function setEnemyLevel(level) {
   border-color: color-mix(in srgb, var(--ea-gold) 40%, transparent);
 }
 
-.enemy-card.selected .enemy-avatar-wrapper.is-custom {
+.enemy-card[aria-pressed='true'] .enemy-avatar-wrapper.is-custom {
   background: color-mix(in srgb, var(--ea-gold) 12%, transparent);
 }
 
@@ -807,14 +794,37 @@ function setEnemyLevel(level) {
   background: var(--ea-surface-row);
   border-color: var(--ea-border);
 }
-:global(html[data-theme='light'] .enemy-settings-panel .enemy-card:hover) {
-  background: rgba(180, 140, 0, 0.1);
-}
-:global(html[data-theme='light'] .enemy-settings-panel .enemy-card.selected) {
+:global(html[data-theme='light'] .enemy-settings-panel .enemy-card[aria-pressed='true']) {
   background: rgba(180, 140, 0, 0.14);
   border-top-color: rgba(180, 140, 0, 0.35);
   border-right-color: rgba(180, 140, 0, 0.35);
   border-bottom-color: rgba(180, 140, 0, 0.35);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enemy-select-module:hover {
+    background: var(--ea-hover-fill, rgba(255, 255, 255, 0.06));
+  }
+
+  .enemy-card.ea-button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ea-gold) 7%, transparent);
+  }
+
+  .enemy-card.ea-button.has-tier:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--tier-color) 10%, rgba(255, 255, 255, 0.03));
+  }
+
+  .enemy-card.ea-button[aria-pressed='true']:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ea-gold) 15%, transparent);
+  }
+
+  .enemy-card.ea-button.has-tier[aria-pressed='true']:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--tier-color) 20%, rgba(255, 255, 255, 0.03));
+  }
+
+  :global(html[data-theme='light'] .enemy-settings-panel .enemy-card:hover) {
+    background: rgba(180, 140, 0, 0.1);
+  }
 }
 :global(html[data-theme='light'] .enemy-settings-panel .summary-row) {
   background: var(--ea-surface-row);

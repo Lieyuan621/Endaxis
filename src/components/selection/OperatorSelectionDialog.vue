@@ -213,14 +213,13 @@ defineExpose({ open, close, isOpen: () => visible.value });
           <div class="rarity-line"></div>
         </div>
         <div class="roster-grid">
-          <div
+          <EaButton
             v-for="operator in group.list"
             :key="operator.id"
             class="roster-card"
-            :class="[
-              { 'is-selected': selectedIds.includes(operator.id) },
-              `rarity-${operator.rarity}-style`,
-            ]"
+            :class="[`rarity-${operator.rarity}-style`]"
+            variant="ghost"
+            :pressed="selectedIds.includes(operator.id)"
             @click="select(operator.id)"
           >
             <div
@@ -245,7 +244,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
             <div v-if="selectedIds.includes(operator.id)" class="in-team-tag">
               {{ t('timelineGrid.operatorDialog.inTeam') }}
             </div>
-          </div>
+          </EaButton>
         </div>
       </template>
       <div v-if="groups.length === 0" class="empty-roster">

@@ -155,14 +155,26 @@
 .roster-card {
   position: relative;
   display: flex;
+  width: 100%;
+  height: auto;
   flex-direction: column;
   align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
   cursor: pointer;
+  font: inherit;
+  white-space: normal;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.roster-card:hover {
-  transform: translateY(-4px);
+.roster-card.ea-button[aria-pressed='true'] {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
 }
 
 .selection-card-tooltip-target {
@@ -289,10 +301,6 @@
   white-space: nowrap;
 }
 
-.roster-card:hover .card-name {
-  color: #fff;
-}
-
 .in-team-tag {
   position: absolute;
   inset: 0;
@@ -335,11 +343,6 @@
   box-shadow: 0 4px 12px rgba(255, 140, 0, 0.2);
 }
 
-.rarity-6-style:hover .card-avatar-wrapper {
-  border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
-  box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
-}
-
 /* Light theme: selection dialogs (operator / weapon / equipment) */
 html[data-theme='light'] .rarity-header {
   background: rgba(255, 255, 255, 0.97);
@@ -372,10 +375,6 @@ html[data-theme='light'] .card-name {
   color: rgba(26, 27, 30, 0.62);
 }
 
-html[data-theme='light'] .roster-card:hover .card-name {
-  color: #1a1b1e;
-}
-
 html[data-theme='light'] .in-team-tag {
   background: rgba(255, 255, 255, 0.82);
   border-color: rgba(180, 140, 0, 0.55);
@@ -393,6 +392,29 @@ html[data-theme='light'] .equipment-affix-filter-divider::before {
 
 html[data-theme='light'] .eq-affix-icon-img {
   filter: drop-shadow(0 1px 1px rgba(26, 27, 30, 0.25));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .roster-card.ea-button:hover:not(:disabled) {
+    border-color: transparent;
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+    transform: translateY(-4px);
+  }
+
+  .roster-card:hover .card-name {
+    color: #fff;
+  }
+
+  .rarity-6-style:hover .card-avatar-wrapper {
+    border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
+    box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
+  }
+
+  html[data-theme='light'] .roster-card:hover .card-name {
+    color: #1a1b1e;
+  }
 }
 
 @media (max-width: 768px) {
@@ -479,9 +501,5 @@ html[data-theme='light'] .eq-affix-icon-img {
   .roster-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px 6px;
-  }
-
-  .roster-card:hover {
-    transform: none;
   }
 }

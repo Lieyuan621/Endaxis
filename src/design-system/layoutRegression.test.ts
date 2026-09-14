@@ -9,6 +9,10 @@ import hitEditorSource from '../components/HitEditorDialog.vue?raw';
 import propertiesPanelSource from '../components/PropertiesPanel.vue?raw';
 import resourceMonitorSource from '../components/ResourceMonitor.vue?raw';
 import timelineResetSource from '../components/TimelineResetDialog.vue?raw';
+import equipmentSelectionSource from '../components/selection/EquipmentSelectionDialog.vue?raw';
+import operatorSelectionSource from '../components/selection/OperatorSelectionDialog.vue?raw';
+import weaponSelectionSource from '../components/selection/WeaponSelectionDialog.vue?raw';
+import mobileAppShellSource from '../views/MobileAppShell.vue?raw';
 import mobileTimelineSource from '../views/MobileTimelineViewer.vue?raw';
 import timelineGridSource from '../components/TimelineGrid.vue?raw';
 import timelineEditorSource from '../views/TimelineEditor.vue?raw';
@@ -46,6 +50,32 @@ function getBlockBody(source: string, header: string) {
   }
 
   return '';
+}
+
+function unguardedHoverCount(source: string) {
+  const styleBlocks = [...source.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)];
+  const styleSource = styleBlocks.length ? styleBlocks.map(match => match[1]).join('\n') : source;
+  const tokens = styleSource.match(
+    /@media\s*\(hover:\s*hover\)\s*and\s*\(pointer:\s*fine\)\s*\{|:hover|[{}]/g,
+  );
+  if (!tokens) return 0;
+
+  const guardedStack = [false];
+  let count = 0;
+
+  for (const token of tokens) {
+    if (token.startsWith('@media')) {
+      guardedStack.push(true);
+    } else if (token === '{') {
+      guardedStack.push(guardedStack.at(-1) || false);
+    } else if (token === '}') {
+      if (guardedStack.length > 1) guardedStack.pop();
+    } else if (!guardedStack.at(-1)) {
+      count += 1;
+    }
+  }
+
+  return count;
 }
 
 describe('design-system layout regressions', () => {
@@ -91,28 +121,66 @@ describe('design-system layout regressions', () => {
   });
 
   test('gives dialog close controls one square, background-free interaction contract', () => {
-    const closeRule = getRuleBody(
-      dialogStyles,
-      ':is(.ea-dialog .el-dialog__headerbtn, .ea-dialog-close-button.ea-button)',
-    );
-    const hoverMedia = getBlockBody(dialogStyles, '@media (hover: hover) and (pointer: fine)');
-    const hoverRule = getRuleBody(
-      hoverMedia,
-      ':is(.ea-dialog .el-dialog__headerbtn, .ea-dialog-close-button.ea-button):hover',
-    );
+    const closeRule = getRuleBody(dialogStyles, '.ea-dialog .el-dialog__headerbtn');
+    const closeComponentRule = getRuleBody(controlStyles, '.ea-close-button--md.ea-button');
+    const hoverMedia = getBlockBody(controlStyles, '@media (hover: hover) and (pointer: fine)');
+    const hoverRule = getRuleBody(hoverMedia, '.ea-close-button.ea-button:hover:not(:disabled)');
 
     expect(closeRule).toContain('width: 32px;');
     expect(closeRule).toContain('height: 32px;');
     expect(closeRule).toContain('background: transparent;');
+    expect(closeComponentRule).toContain('width: 32px;');
+    expect(closeComponentRule).toContain('height: 32px;');
     expect(hoverRule).toContain('background: transparent;');
     expect(hoverRule).toContain('color: var(--ea-gold);');
+    expect(dialogStyles).not.toContain('ea-dialog-close-button');
   });
 
   test('routes custom dialog close buttons through the shared close contract', () => {
-    expect(timelineResetSource).toMatch(
-      /class="ea-dialog-close-button timeline-reset-dialog__close"/,
-    );
+    expect(timelineResetSource).toMatch(/<EaCloseButton\b/);
+    expect(mobileTimelineSource.match(/<EaCloseButton\b/g)).toHaveLength(3);
+    expect(mobileTimelineSource).not.toMatch(/mobile-resource-guide__close/);
     expect(hitEditorSource).not.toMatch(/\.el-dialog__close:hover/);
+  });
+
+  test('uses button contracts for menus, scenario tabs, and ordinary selection cards', () => {
+    expect(contextMenuSource).not.toMatch(/<div\s+class="menu-item\b/);
+    expect(contextMenuSource).toMatch(/<EaButton\b[^>]*class="menu-item\b/s);
+    expect(timelineEditorSource).toMatch(
+      /<EaButton\b[^>]*class="ts-tab-item"[^>]*:pressed="sc\.id === store\.activeScenarioId"/s,
+    );
+    expect(enemySettingsSource).not.toMatch(/<div\s+[^>]*class="enemy-card\b/s);
+
+    for (const source of [
+      operatorSelectionSource,
+      weaponSelectionSource,
+      equipmentSelectionSource,
+    ]) {
+      expect(source).not.toMatch(/<div\s+[^>]*class="roster-card\b/s);
+      expect(source).toMatch(/<EaButton\b[^>]*class="roster-card\b/s);
+    }
+  });
+
+  test('keeps draggable library cards keyboard operable without changing their drag surface', () => {
+    expect(actionLibrarySource).toMatch(
+      /class="skill-card"[\s\S]*?role="button"[\s\S]*?tabindex="0"[\s\S]*?@keydown\.enter\.prevent/s,
+    );
+    expect(actionLibrarySource).toMatch(
+      /class="attack-segment-chip"[\s\S]*?:aria-disabled=[\s\S]*?@keydown\.space\.stop\.prevent/s,
+    );
+  });
+
+  test('guards touch-reachable hover feedback behind a fine hover pointer', () => {
+    for (const [name, source] of [
+      ['ActionLibrary', actionLibrarySource],
+      ['ContextMenu', contextMenuSource],
+      ['EnemySettingsPanel', enemySettingsSource],
+      ['selectionDialog', selectionDialogStyles],
+      ['MobileTimelineViewer', mobileTimelineSource],
+      ['TimelineEditor', timelineEditorSource],
+    ]) {
+      expect(unguardedHoverCount(source), name).toBe(0);
+    }
   });
 
   test('limits shared hover feedback to devices with a fine hover pointer', () => {
@@ -131,12 +199,40 @@ describe('design-system layout regressions', () => {
     expect(rule).toContain('color: var(--ea-gold);');
   });
 
+  test('lets specialized card and scenario buttons retain their own pressed chrome', () => {
+    const rosterPressedRule = getRuleBody(
+      selectionDialogStyles,
+      ".roster-card.ea-button[aria-pressed='true']",
+    );
+    const timelineHoverMedia = getBlockBody(
+      timelineEditorSource,
+      '@media (hover: hover) and (pointer: fine)',
+    );
+    const activeScenarioHoverRule = getRuleBody(
+      timelineHoverMedia,
+      ".ts-tab-item[aria-pressed='true']:hover",
+    );
+
+    expect(rosterPressedRule).toContain('border: 0;');
+    expect(rosterPressedRule).toContain('background: transparent;');
+    expect(rosterPressedRule).toContain('box-shadow: none;');
+    expect(activeScenarioHoverRule).toContain('background-color: var(--ea-tab-active-bg);');
+    expect(activeScenarioHoverRule).toContain('color: var(--ea-tab-active-fg);');
+  });
+
   test('lets mobile loadout compound cards grow around their content', () => {
     for (const selector of ['.loadout-header', '.loadout-item']) {
       const rule = getRuleBody(mobileTimelineSource, selector);
 
       expect(rule).toContain('height: auto;');
     }
+  });
+
+  test('lets mobile bottom navigation buttons fill the bar instead of keeping control height', () => {
+    const rule = getRuleBody(mobileAppShellSource, '.bottom-nav button');
+
+    expect(rule).toContain('height: auto;');
+    expect(rule).toContain('align-self: stretch;');
   });
 
   test('keeps damage analysis chrome aligned with the square control geometry', () => {

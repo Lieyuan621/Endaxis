@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EaButton } from '@/design-system';
+import { EaButton, EaCloseButton } from '@/design-system';
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -104,17 +104,7 @@ function confirm() {
         >
           <header class="timeline-reset-dialog__header">
             <h2 class="timeline-reset-dialog__title">{{ t('timeline.reset.title') }}</h2>
-            <EaButton
-              type="button"
-              icon-only
-              class="ea-dialog-close-button timeline-reset-dialog__close"
-              :aria-label="t('common.close')"
-              @click="close"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6 6 18" />
-              </svg>
-            </EaButton>
+            <EaCloseButton :label="t('common.close')" @click="close" />
           </header>
 
           <div
@@ -205,7 +195,6 @@ function confirm() {
   font-weight: 700;
 }
 
-.timeline-reset-dialog__close svg,
 .timeline-reset-option__icon svg {
   width: 18px;
   height: 18px;

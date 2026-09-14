@@ -134,6 +134,8 @@ onUnmounted(() => {
 .bottom-nav button {
   position: relative;
   min-width: 0;
+  height: auto;
+  align-self: stretch;
   border: 0;
   background: transparent;
   color: var(--ea-fg-muted);

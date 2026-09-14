@@ -1,6 +1,7 @@
 <script setup>
 import {
   EaButton,
+  EaCloseButton,
   EaDeleteIcon,
   EaDialog,
   EaDialogActions,
@@ -3119,24 +3120,12 @@ async function doImport() {
           :style="{ top: `${mobileGuideTop}px` }"
         >
           <div class="mobile-resource-guide__panel" :class="{ 'is-below': mobileGuidePanelBelow }">
-            <EaButton
-              type="button"
-              class="mobile-resource-guide__close"
-              :title="t('common.close')"
-              :aria-label="t('common.close')"
+            <EaCloseButton
+              size="sm"
+              :label="t('common.close')"
               @pointerdown.stop.prevent
               @click.stop="mobileGuideVisible = false"
-            >
-              <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
-                <path
-                  d="M18 6 6 18M6 6l12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                />
-              </svg>
-            </EaButton>
+            />
             <div class="mobile-resource-guide__summary">
               <span class="is-time">{{ formatAxisLabel(mobileGuideTime) }}</span>
               <span class="is-sp">{{ t('timelineGrid.cursor.sp') }}: {{ mobileGuideSpText }}</span>
@@ -3205,24 +3194,12 @@ async function doImport() {
       <div class="m-drawer">
         <div class="m-drawer__header">
           <div class="m-drawer__title">{{ t('timeline.mobile.actionInfo.title') }}</div>
-          <EaButton
+          <EaCloseButton
             size="lg"
-            icon-only
-            type="button"
             class="m-drawer__close"
-            :aria-label="t('common.close')"
+            :label="t('common.close')"
             @click="actionInfoOpen = false"
-          >
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path
-                d="M18 6L6 18M6 6l12 12"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </EaButton>
+          />
         </div>
 
         <div class="m-drawer__content">
@@ -3440,24 +3417,12 @@ async function doImport() {
       <div class="m-drawer">
         <div class="m-drawer__header">
           <div class="m-drawer__title">{{ t('timeline.mobile.loadout.title') }}</div>
-          <EaButton
+          <EaCloseButton
             size="lg"
-            icon-only
-            type="button"
             class="m-drawer__close"
-            :aria-label="t('common.close')"
+            :label="t('common.close')"
             @click="loadoutOpen = false"
-          >
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path
-                d="M18 6L6 18M6 6l12 12"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </EaButton>
+          />
         </div>
 
         <div class="m-drawer__content">
@@ -4158,10 +4123,16 @@ async function doImport() {
   color: var(--ea-fg-secondary) !important;
 }
 
-:global(.mobile-scenario-popper .el-select-dropdown__item.hover),
-:global(.mobile-scenario-popper .el-select-dropdown__item:hover) {
+:global(.mobile-scenario-popper .el-select-dropdown__item.hover) {
   background: var(--ea-select-hover-bg) !important;
   color: var(--ea-gold) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(.mobile-scenario-popper .el-select-dropdown__item:hover) {
+    background: var(--ea-select-hover-bg) !important;
+    color: var(--ea-gold) !important;
+  }
 }
 
 :global(.mobile-scenario-popper .el-select-dropdown__item.selected) {
@@ -4283,30 +4254,11 @@ async function doImport() {
   line-height: 1.25;
 }
 
-.mobile-resource-guide__close {
+.mobile-resource-guide__panel > .ea-close-button {
   position: absolute;
   top: 4px;
   right: 4px;
-  display: inline-flex;
-  width: 20px;
-  height: 20px;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: var(--ea-fg-muted);
-  cursor: pointer;
   pointer-events: auto;
-}
-
-.mobile-resource-guide__close:hover,
-.mobile-resource-guide__close:focus-visible {
-  border-color: var(--ea-border);
-  background: var(--ea-hover-fill);
-  color: var(--ea-fg);
-  outline: none;
 }
 
 .mobile-resource-guide__panel.is-below {

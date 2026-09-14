@@ -1543,15 +1543,17 @@ onUnmounted(() => {
             :style="tabsMaskStyle"
             @scroll="updateScrollMask"
           >
-            <div
+            <EaButton
               v-for="(sc, index) in store.scenarioList"
               :key="sc.id"
               class="ts-tab-item"
-              :class="{ 'is-active': sc.id === store.activeScenarioId }"
+              variant="ghost"
+              size="sm"
+              :pressed="sc.id === store.activeScenarioId"
               @click="store.switchScenario(sc.id)"
             >
               {{ formatIndex(index) }}
-            </div>
+            </EaButton>
 
             <EaButton
               size="sm"
@@ -2307,10 +2309,6 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 0;
 }
-.workbench-icon-btn:hover {
-  color: var(--ea-icon-strong);
-  background: var(--ea-hover-fill);
-}
 .workbench-panel__body {
   flex: 1;
   min-height: 0;
@@ -2331,9 +2329,6 @@ onUnmounted(() => {
   opacity: 0.56;
   transition: opacity 0.14s ease;
 }
-.action-library-panel:hover .panel-chrome,
-.properties-sidebar:hover .panel-chrome,
-.resource-monitor-panel:hover .panel-chrome,
 .panel-chrome:focus-within {
   opacity: 1;
 }
@@ -2356,9 +2351,6 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 0;
 }
-.panel-chrome__btn:hover {
-  color: var(--ea-icon-strong);
-}
 .workbench-resizer {
   position: relative;
   background: var(--ea-border-soft);
@@ -2380,7 +2372,6 @@ onUnmounted(() => {
     opacity 0.12s ease,
     background-color 0.12s ease;
 }
-.workbench-resizer:hover::before,
 .workbench-resizer.is-active::before {
   opacity: 1;
   background: var(--ea-active-fill);
@@ -2504,10 +2495,6 @@ onUnmounted(() => {
   color: var(--ea-fg-muted);
   cursor: pointer;
   padding: 0;
-}
-.workbench-rail__button:hover {
-  color: var(--ea-fg);
-  background: var(--ea-hover-fill);
 }
 
 /* Header */
@@ -2779,9 +2766,6 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ts-title-text:hover {
-  border-bottom-color: var(--ea-fg-muted);
-}
 
 .ts-title-input {
   --ea-control-border: var(--ea-gold);
@@ -2812,11 +2796,7 @@ onUnmounted(() => {
   user-select: none;
   flex-shrink: 0;
 }
-.ts-tab-item:hover {
-  background-color: var(--ea-hover-fill);
-  color: var(--ea-fg);
-}
-.ts-tab-item.is-active {
+.ts-tab-item[aria-pressed='true'] {
   background-color: var(--ea-tab-active-bg);
   color: var(--ea-tab-active-fg);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -2927,5 +2907,46 @@ onUnmounted(() => {
   gap: 20px;
   font-size: 24px;
   font-weight: bold;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .workbench-icon-btn:hover {
+    background: var(--ea-hover-fill);
+    color: var(--ea-icon-strong);
+  }
+
+  .action-library-panel:hover .panel-chrome,
+  .properties-sidebar:hover .panel-chrome,
+  .resource-monitor-panel:hover .panel-chrome {
+    opacity: 1;
+  }
+
+  .panel-chrome__btn:hover {
+    color: var(--ea-icon-strong);
+  }
+
+  .workbench-resizer:hover::before {
+    background: var(--ea-active-fill);
+    opacity: 1;
+  }
+
+  .workbench-rail__button:hover {
+    background: var(--ea-hover-fill);
+    color: var(--ea-fg);
+  }
+
+  .ts-title-text:hover {
+    border-bottom-color: var(--ea-fg-muted);
+  }
+
+  .ts-tab-item.ea-button:hover:not(:disabled) {
+    background-color: var(--ea-hover-fill);
+    color: var(--ea-fg);
+  }
+
+  .ts-tab-item[aria-pressed='true']:hover {
+    background-color: var(--ea-tab-active-bg);
+    color: var(--ea-tab-active-fg);
+  }
 }
 </style>

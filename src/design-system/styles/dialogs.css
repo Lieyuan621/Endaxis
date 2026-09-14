@@ -19,7 +19,7 @@
   letter-spacing: 0.02em;
 }
 
-:is(.ea-dialog .el-dialog__headerbtn, .ea-dialog-close-button.ea-button) {
+.ea-dialog .el-dialog__headerbtn {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -41,7 +41,7 @@
   transition: color var(--ea-control-transition);
 }
 
-:is(.ea-dialog .el-dialog__headerbtn, .ea-dialog-close-button.ea-button):focus-visible {
+.ea-dialog .el-dialog__headerbtn:focus-visible {
   outline: none;
   box-shadow: var(--ea-focus-ring);
 }
@@ -93,7 +93,7 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  :is(.ea-dialog .el-dialog__headerbtn, .ea-dialog-close-button.ea-button):hover {
+  .ea-dialog .el-dialog__headerbtn:hover {
     border-color: transparent;
     background: transparent;
     color: var(--ea-gold);
