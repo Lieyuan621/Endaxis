@@ -377,6 +377,8 @@ interface ReactionLmdiParams {
   hit: { multiplier: number };
   hittingTrackId: string;
   element: string | undefined;
+  /** Optional scoped damage source, such as a Nature Burst. */
+  damageType?: import('../types').ArtsBurstDamageType;
   enemyDef: number;
   enemyResistance?: number;
   /** The actual (full-buffed) standard-part breakdown (before reaction multipliers). */
@@ -416,6 +418,7 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
     hit,
     hittingTrackId,
     element,
+    damageType,
     enemyDef,
     enemyResistance = 0,
     actualStandardBreakdown,
@@ -438,7 +441,7 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
   // ── 2. Compute self-only enemy status ─────────────────────────────────────
   const selfEnemyStatus: ComputedEnemyStatus =
     selfEnemyMods.length > 0
-      ? computeEnemyStats([], selfEnemyMods)
+      ? computeEnemyStats([], selfEnemyMods, damageType)
       : {
           susceptibility: 0,
           resistanceShred: 0,

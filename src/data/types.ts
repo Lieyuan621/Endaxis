@@ -3,6 +3,7 @@
 
 import type {
   ApplyTiming,
+  ArtsBurstDamageType,
   ArtsElement,
   ArtsReaction,
   Attribute,
@@ -19,6 +20,7 @@ import type {
 
 export type {
   ApplyTiming,
+  ArtsBurstDamageType,
   ArtsElement,
   ArtsReaction,
   Attribute,
@@ -39,6 +41,7 @@ export type operatorClass = OperatorClass;
 
 export {
   APPLY_TIMINGS,
+  ARTS_BURST_DAMAGE_TYPES,
   ARTS_ELEMENTS,
   ATTRIBUTES,
   ATTRIBUTE_STAT_MODIFIERS,
@@ -72,7 +75,12 @@ export {
 /** Stats that debuff the enemy or modify how it receives damage. */
 export type EnemyStat =
   | { modifier: 'susceptibility'; elements?: DamageElement | DamageElement[] }
-  | { modifier: 'increasedDmgTaken'; elements?: DamageElement | DamageElement[] }
+  | {
+      modifier: 'increasedDmgTaken';
+      elements?: DamageElement | DamageElement[];
+      /** Restrict the modifier to damage caused by the listed Arts Bursts. */
+      damageTypes?: ArtsBurstDamageType | ArtsBurstDamageType[];
+    }
   | { modifier: 'resistanceShred'; elements?: DamageElement | DamageElement[] }
   | { modifier: 'slowed' }
   | { modifier: 'weaken' }
@@ -345,7 +353,7 @@ export interface FixedScaling {
 export interface ScalingDef {
   /** Additive terms summed on top of the base value. Each term is an attribute scaling, a stack scaling, a fixed number, or a leveled number array. */
   additive?: (AttributeScaling | StackScaling | FixedScaling | Leveled<number>)[];
-  /** Post-computation multipliers. Each applied as (1 + m). */
+  /** Post-computation multiplier factors, applied in order. */
   multiplier?: Leveled<number>[];
   cap?: Leveled<number>;
   /** Scaling terms that only apply when the given condition is met. */
@@ -448,10 +456,12 @@ export interface InflictionEffect extends EffectBase {
   element: ArtsElement;
 }
 
-/** Arts burst (same-element infliction re-apply). Log/display only — no lasting state. */
+/** Arts Burst damage with no lasting state. */
 export interface BurstEffect extends EffectBase {
   kind: 'burst';
   element: ArtsElement;
+  /** Scales the Arts Burst's normal damage from a base value of 1. */
+  scaling?: ScalingDef;
 }
 
 /** Always targets the enemy — no target field needed. */
@@ -627,6 +637,8 @@ export type PatchableStatusEffectFields = PatchableEffectBaseFields &
 export type PatchableReactionEffectFields = PatchableEffectBaseFields &
   Pick<ReactionEffect, 'effectiveness'>;
 
+export type PatchableBurstEffectFields = PatchableEffectBaseFields & Pick<BurstEffect, 'scaling'>;
+
 export type PatchableDamageHitEffectFields = PatchableEffectBaseFields &
   Pick<DamageHitEffect, 'multiplier' | 'multiplierScaling' | 'staggerScaling' | 'hit'>;
 
@@ -645,6 +657,7 @@ export type PatchableDamageOverTimeEffectFields = PatchableEffectBaseFields &
 export type PatchableEffectFields =
   | PatchableStatusEffectFields
   | PatchableReactionEffectFields
+  | PatchableBurstEffectFields
   | PatchableDamageHitEffectFields
   | PatchableDamageOverTimeEffectFields
   | PatchableSpGainEffectFields
@@ -817,6 +830,7 @@ export interface ResolvedInflictionEffect extends ResolvedEffectBase {
 export interface ResolvedBurstEffect extends ResolvedEffectBase {
   kind: 'burst';
   element: ArtsElement;
+  scaling?: ResolvedScalingDef;
 }
 
 export interface ResolvedReactionEffect extends ResolvedEffectBase {
@@ -1208,7 +1222,7 @@ export interface HitGroup {
   multiplierScaling?: ScalingDef;
   hits: Hit[];
   condition?: EffectCondition | EffectCondition[];
-  treatAsSkillType?: CombatSkillType;
+  treatAsSkillType?: SkillType;
 }
 
 export interface Tick {

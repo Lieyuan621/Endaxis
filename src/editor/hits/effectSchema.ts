@@ -40,7 +40,7 @@ export const EFFECT_KIND_FIELDS: Readonly<Record<string, readonly string[]>> = O
   status: ['target', 'stat', 'value', 'scaling', 'silent', 'external'],
   amp: ['target', 'stat', 'value', 'scaling', 'silent', 'external'],
   infliction: ['element'],
-  burst: ['element'],
+  burst: ['element', 'scaling'],
   reaction: ['reactionType', 'requiresInfliction', 'effectiveness', 'defaultLevel'],
   physicalStatus: ['physicalType', 'forced', 'effectiveness'],
   damageHit: [
@@ -108,7 +108,10 @@ export function createEffectKindDefaults(
     case 'infliction':
       return { kind: 'infliction', element: next.element || 'heat' };
     case 'burst':
-      return { kind: 'burst', element: next.element || 'heat' };
+      return {
+        kind: 'burst',
+        element: next.element || 'heat',
+      };
     case 'reaction':
       return { kind: 'reaction', reactionType: next.reactionType || 'combustion' };
     case 'physicalStatus':

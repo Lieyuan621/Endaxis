@@ -27,6 +27,15 @@ export type SubSkillGroup = (typeof SUB_SKILL_GROUPS)[number];
 export const ARTS_ELEMENTS = Object.freeze(['heat', 'cryo', 'electric', 'nature'] as const);
 export type ArtsElement = (typeof ARTS_ELEMENTS)[number];
 
+/** Damage-source scope used by effects that apply only to a specific Arts Burst. */
+export const ARTS_BURST_DAMAGE_TYPES = Object.freeze([
+  'heatBurst',
+  'cryoBurst',
+  'electricBurst',
+  'natureBurst',
+] as const);
+export type ArtsBurstDamageType = (typeof ARTS_BURST_DAMAGE_TYPES)[number];
+
 export const DAMAGE_ELEMENTS = Object.freeze(['physical', ...ARTS_ELEMENTS] as const);
 export type DamageElement = (typeof DAMAGE_ELEMENTS)[number];
 

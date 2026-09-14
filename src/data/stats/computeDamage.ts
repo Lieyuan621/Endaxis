@@ -237,12 +237,17 @@ export function filterDamageModifiers(
 export function collectEnemyHitModifierSources(
   entries: ReadonlyArray<{
     id: string;
-    stat?: { modifier?: string; elements?: string | string[] | null };
+    stat?: {
+      modifier?: string;
+      elements?: string | string[] | null;
+      damageTypes?: string | string[] | null;
+    };
     value: number;
     stacks: number;
     effect?: { name?: string | null } | null;
   }>,
   element: string | undefined,
+  damageType?: string,
 ): {
   susceptibilitySources: DamageModifierSource[];
   resistanceShredSources: DamageModifierSource[];
@@ -286,6 +291,14 @@ export function collectEnemyHitModifierSources(
     }
 
     if (modifier === 'increasedDmgTaken') {
+      const scopedDamageTypes = entry.stat?.damageTypes;
+      const damageTypes =
+        scopedDamageTypes == null
+          ? []
+          : Array.isArray(scopedDamageTypes)
+            ? scopedDamageTypes
+            : [scopedDamageTypes];
+      if (damageTypes.length > 0 && (!damageType || !damageTypes.includes(damageType))) continue;
       const elements = entry.stat?.elements;
       const arr = elements == null ? [] : Array.isArray(elements) ? elements : [elements];
       const label =

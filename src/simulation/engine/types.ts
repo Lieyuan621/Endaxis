@@ -238,6 +238,8 @@ export interface ArtsBurstEvent {
   actionId?: string;
   sourceSkillType?: string;
   sourceSkillId?: string;
+  /** Multiplier applied to the Arts Burst's normal damage. Defaults to 1. */
+  damageMultiplier?: number;
 }
 
 export interface ReactionTriggerEvent {

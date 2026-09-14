@@ -56,6 +56,7 @@ const sheet: WeaponSheet = {
             stacks: 4,
             maxStacks: 4,
             duration: 15,
+            icon: '/icons/icon_battle_buff_wpn_funnel_0019.png',
           },
         ],
       },

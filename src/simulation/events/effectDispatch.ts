@@ -824,7 +824,7 @@ function resolveResolvedScalingValue(
           term.target === 'enemy'
             ? ((enemySnap ? getEnemyStatus(term.key, enemySnap, time).stacks : 0) ?? 0)
             : term.target === 'action'
-              ? (actionId ? ctx.getAction(actionId)?.consumedStacks?.[term.key] : 0) ?? 0
+              ? ((actionId ? ctx.getAction(actionId)?.consumedStacks?.[term.key] : 0) ?? 0)
               : (preConsumeOpStacks?.get(term.key) ??
                 ctx.getOperatorEffects(sourceTrackId).getStacks(term.key, time));
         additiveSum += term.coefficient * stackCount;
@@ -935,6 +935,34 @@ export function dispatchEnemyEffects(
       scheduleConsumption(cond, time, sourceId, ctx, skillType, skillId, actionId);
     const lifecycle = resolveEffectLifecycle(resolved);
     switch (resolved.kind) {
+      case 'burst': {
+        const damageMultiplier = resolved.scaling
+          ? applyResolvedScaling(
+              1,
+              resolved.scaling as ResolvedScalingDef,
+              sourceId,
+              time,
+              ctx,
+              enemySnap,
+              undefined,
+              actionId,
+            )
+          : 1;
+        ctx.queue.enqueue(
+          {
+            type: 'ARTS_BURST',
+            time,
+            element: resolved.element,
+            sourceId,
+            sourceSkillType: skillType,
+            sourceSkillId: skillId,
+            actionId,
+            damageMultiplier,
+          },
+          1,
+        );
+        break;
+      }
       case 'infliction':
         ctx.queue.enqueue(
           {
@@ -1393,17 +1421,17 @@ export function dispatchSingleActorEffect(
     const effectId = getRuntimeEffectId(resolved);
     const multiplierResolution: { value: number; detail?: SkillMultiplierDetail } =
       r.multiplierScaling
-      ? applyResolvedScalingWithDetail(
-          r.multiplier,
-          r.multiplierScaling,
-          sourceTrackId,
-          time,
-          ctx,
-          enemySnap,
-          preConsumeOpStacks,
-          actionId,
-        )
-      : { value: r.multiplier };
+        ? applyResolvedScalingWithDetail(
+            r.multiplier,
+            r.multiplierScaling,
+            sourceTrackId,
+            time,
+            ctx,
+            enemySnap,
+            preConsumeOpStacks,
+            actionId,
+          )
+        : { value: r.multiplier };
     let finalMultiplier = multiplierResolution.value;
 
     // Scale multiplier by operator's live crit rate at dispatch time

@@ -1,5 +1,6 @@
 import type { ComputedEnemyStatus } from '../../types';
 import type { SheetStatEffect, ResolvedStatModifier } from './types';
+import type { ArtsBurstDamageType } from '../types';
 
 /** Extract the base numeric value from a sheet effect (already level-resolved). */
 function getEffectValue(effect: SheetStatEffect): number {
@@ -21,6 +22,7 @@ function getEffectValue(effect: SheetStatEffect): number {
 export function computeEnemyStats(
   sheetEffects: SheetStatEffect[],
   dynamicModifiers: ResolvedStatModifier[],
+  damageType?: ArtsBurstDamageType,
 ): ComputedEnemyStatus {
   let susceptibility = 0;
   let resistanceShred = 0;
@@ -65,6 +67,11 @@ export function computeEnemyStats(
         break;
       }
       case 'increasedDmgTaken': {
+        const damageTypeField = stat.damageTypes;
+        if (damageTypeField != null) {
+          const damageTypes = Array.isArray(damageTypeField) ? damageTypeField : [damageTypeField];
+          if (!damageType || !damageTypes.includes(damageType)) break;
+        }
         const elemField = stat.elements;
         if (external) {
           const factor = Math.max(0, 1 + pct);

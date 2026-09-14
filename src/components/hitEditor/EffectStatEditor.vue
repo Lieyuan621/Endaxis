@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
+  ARTS_BURST_DAMAGE_TYPES,
   ATTRIBUTES,
   ATTRIBUTE_STAT_MODIFIERS,
   DAMAGE_ELEMENTS,
@@ -42,6 +43,12 @@ function buildStat(modifier, seed = {}) {
   if (ELEMENT_SCOPED_STAT_MODIFIERS.includes(modifier)) {
     const elements = asList(seed?.elements);
     if (elements.length) next.elements = elements.length === 1 ? elements[0] : elements;
+  }
+  if (modifier === 'increasedDmgTaken') {
+    const damageTypes = asList(seed?.damageTypes);
+    if (damageTypes.length) {
+      next.damageTypes = damageTypes.length === 1 ? damageTypes[0] : damageTypes;
+    }
   }
   if (SKILL_SCOPED_STAT_MODIFIERS.includes(modifier)) {
     const skillTypes = asList(seed?.skillTypes);
@@ -90,6 +97,15 @@ const skillTypeValues = computed({
   },
 });
 
+const damageTypeValues = computed({
+  get() {
+    return asList(isPlainObject(props.modelValue) ? props.modelValue.damageTypes : null);
+  },
+  set(next) {
+    patchScope('damageTypes', next);
+  },
+});
+
 const attributeValue = computed({
   get() {
     const attr = isPlainObject(props.modelValue) ? props.modelValue.attribute : '';
@@ -107,15 +123,10 @@ const attributeValue = computed({
   },
 });
 
-const showElements = computed(() =>
-  ELEMENT_SCOPED_STAT_MODIFIERS.includes(modifierValue.value),
-);
-const showSkillScope = computed(() =>
-  SKILL_SCOPED_STAT_MODIFIERS.includes(modifierValue.value),
-);
-const showAttribute = computed(() =>
-  ATTRIBUTE_STAT_MODIFIERS.includes(modifierValue.value),
-);
+const showElements = computed(() => ELEMENT_SCOPED_STAT_MODIFIERS.includes(modifierValue.value));
+const showSkillScope = computed(() => SKILL_SCOPED_STAT_MODIFIERS.includes(modifierValue.value));
+const showDamageTypes = computed(() => modifierValue.value === 'increasedDmgTaken');
+const showAttribute = computed(() => ATTRIBUTE_STAT_MODIFIERS.includes(modifierValue.value));
 
 function patchScope(key, raw) {
   if (!modifierValue.value) return;
@@ -135,6 +146,13 @@ function modifierLabel(value) {
 
 function skillTypeLabel(value) {
   const key = `hitEditor.skillTypes.${value}`;
+  const out = t(key);
+  return out === key ? value : out;
+}
+
+function damageTypeLabel(value) {
+  const localeKey = String(value).replace(/Burst$/, '_burst');
+  const key = `effects.name.${localeKey}`;
   const out = t(key);
   return out === key ? value : out;
 }
@@ -232,6 +250,28 @@ function skillTypeLabel(value) {
             :key="skill"
             :value="skill"
             :label="skillTypeLabel(skill)"
+          />
+        </el-select>
+      </label>
+      <label v-if="showDamageTypes" class="field">
+        <span>{{ t('hitEditor.fields.damageTypes') }}</span>
+        <el-select
+          :model-value="damageTypeValues"
+          @update:model-value="value => (damageTypeValues = value)"
+          size="small"
+          multiple
+          collapse-tags
+          collapse-tags-tooltip
+          clearable
+          :placeholder="t('common.default')"
+          class="effect-select-dark"
+          popper-class="hit-editor-select-popper"
+        >
+          <el-option
+            v-for="damageType in ARTS_BURST_DAMAGE_TYPES"
+            :key="damageType"
+            :value="damageType"
+            :label="damageTypeLabel(damageType)"
           />
         </el-select>
       </label>
