@@ -1993,7 +1993,6 @@ const staggerRatio = computed(() => {
     height 0.12s ease;
 }
 
-.section-resize-handle:hover::after,
 .section-resize-handle.is-active::after {
   height: 2px;
   background: color-mix(in srgb, var(--ea-gold) 55%, transparent);
@@ -2022,11 +2021,6 @@ const staggerRatio = computed(() => {
   top: 50%;
   width: 24px;
   height: 14px;
-}
-
-.section-toggle-btn:hover {
-  background: transparent;
-  color: var(--ea-fg, #fff);
 }
 
 .section-toggle-chevron {
@@ -2112,13 +2106,6 @@ const staggerRatio = computed(() => {
   box-shadow: 0 0 6px 2px rgba(100, 200, 255, 0.6);
 }
 
-.affliction-item.is-damage-hit:hover .enemy-damage-diamond {
-  background-color: var(--ea-gold);
-  border-color: #fff;
-  box-shadow: 0 0 4px color-mix(in srgb, var(--ea-gold) 80%, transparent);
-  transform: rotate(45deg) scale(1.3);
-}
-
 .anomaly-icon-box {
   width: var(--aff-icon-size, 20px);
   height: var(--aff-icon-size, 20px);
@@ -2138,23 +2125,11 @@ const staggerRatio = computed(() => {
     box-shadow 0.12s ease;
 }
 
-.anomaly-icon-box:hover {
-  filter: brightness(1.18);
-  border-color: rgba(255, 255, 255, 0.95);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.22),
-    0 4px 12px rgba(0, 0, 0, 0.46);
-}
-
 .anomaly-icon {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: filter 0.12s ease;
-}
-
-.anomaly-icon-box:hover .anomaly-icon {
-  filter: brightness(1.12) saturate(1.08);
 }
 
 .anomaly-stacks {
@@ -2187,11 +2162,43 @@ const staggerRatio = computed(() => {
     box-shadow 0.12s ease;
 }
 
-.anomaly-duration-bar:hover {
-  filter: brightness(1.16) saturate(1.08);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.18),
-    0 2px 8px rgba(0, 0, 0, 0.5);
+@media (hover: hover) and (pointer: fine) {
+  .section-resize-handle:hover::after {
+    height: 2px;
+    background: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  }
+
+  .section-toggle-btn:hover {
+    background: transparent;
+    color: var(--ea-fg, #fff);
+  }
+
+  .affliction-item.is-damage-hit:hover .enemy-damage-diamond {
+    border-color: #fff;
+    background-color: var(--ea-gold);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--ea-gold) 80%, transparent);
+    transform: rotate(45deg) scale(1.3);
+  }
+
+  .anomaly-icon-box:hover {
+    border-color: rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.22),
+      0 4px 12px rgba(0, 0, 0, 0.46);
+    filter: brightness(1.18);
+  }
+
+  .anomaly-icon-box:hover .anomaly-icon {
+    filter: brightness(1.12) saturate(1.08);
+  }
+
+  .anomaly-duration-bar:hover {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.18),
+      0 2px 8px rgba(0, 0, 0, 0.5);
+    filter: brightness(1.16) saturate(1.08);
+  }
 }
 
 .striped-bg {

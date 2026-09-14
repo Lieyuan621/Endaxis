@@ -74,7 +74,7 @@
 .ea-button--primary {
   border-color: var(--ea-gold);
   background: var(--ea-gold);
-  color: #151515;
+  color: var(--ea-on-accent);
 }
 
 .ea-button--danger {
@@ -292,13 +292,13 @@ html[data-theme='light']
   .ea-button--primary:hover:not(:disabled) {
     border-color: var(--ea-gold-hover);
     background: var(--ea-gold-hover);
-    color: #050505;
+    color: var(--ea-on-accent);
   }
 
   .ea-button--danger:hover:not(:disabled) {
     border-color: var(--ea-danger);
     background: color-mix(in srgb, var(--ea-danger) 22%, transparent);
-    color: #fff;
+    color: var(--ea-on-danger);
   }
 
   .ea-button[aria-pressed='true']:hover:not(:disabled) {
@@ -390,7 +390,7 @@ html[data-theme='light']
   left: 5px;
   width: 4px;
   height: 8px;
-  border: solid #111;
+  border: solid var(--ea-on-accent);
   border-width: 0 2px 2px 0;
   content: '';
   transform: rotate(45deg);
@@ -402,7 +402,7 @@ html[data-theme='light']
   left: 3px;
   width: 8px;
   height: 2px;
-  background: #111;
+  background: var(--ea-on-accent);
   content: '';
 }
 

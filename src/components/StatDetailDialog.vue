@@ -557,16 +557,8 @@ function onClose() {
   cursor: pointer;
 }
 
-.expandable-row:hover {
-  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.05));
-}
-
 .expandable-row.is-disabled {
   cursor: default;
-}
-
-.expandable-row.is-disabled:hover {
-  background: transparent;
 }
 
 .expand-icon {
@@ -584,8 +576,18 @@ function onClose() {
   color: var(--ea-fg-secondary, #bbb);
 }
 
-.expandable-row:hover .expand-icon {
-  color: var(--ea-fg-secondary, #bbb);
+@media (hover: hover) and (pointer: fine) {
+  .expandable-row:hover {
+    background: var(--ea-hover-fill, rgba(255, 255, 255, 0.05));
+  }
+
+  .expandable-row.is-disabled:hover {
+    background: transparent;
+  }
+
+  .expandable-row:hover .expand-icon {
+    color: var(--ea-fg-secondary, #bbb);
+  }
 }
 
 .attr-badge {

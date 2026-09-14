@@ -1523,10 +1523,15 @@ function save() {
   width: 100%;
 }
 
-.advanced-settings-toggle:hover,
 .advanced-settings-toggle:focus-visible {
   color: var(--ea-gold);
   outline: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .advanced-settings-toggle:hover {
+    color: var(--ea-gold);
+  }
 }
 
 .advanced-settings-toggle.has-values::after {
@@ -1659,9 +1664,11 @@ function save() {
   width: 100%;
 }
 
-.add-effect-bar:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .add-effect-bar:hover {
+    border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
+    background: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .effect-row.is-active {
@@ -1843,9 +1850,14 @@ function save() {
   font-size: 11px;
 }
 
-:global(.hit-editor-select-popper .el-select-dropdown__item.is-hovering),
-:global(.hit-editor-select-popper .el-select-dropdown__item:hover) {
+:global(.hit-editor-select-popper .el-select-dropdown__item.is-hovering) {
   background: var(--ea-hover-fill, rgba(255, 255, 255, 0.08));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(.hit-editor-select-popper .el-select-dropdown__item:hover) {
+    background: var(--ea-hover-fill, rgba(255, 255, 255, 0.08));
+  }
 }
 
 :global(.hit-editor-select-popper .el-select-dropdown__item.is-selected) {
@@ -1938,10 +1950,16 @@ html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item {
   color: var(--ea-fg-secondary, #3a3d44) !important;
 }
 
-html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item.is-hovering,
-html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item:hover {
+html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item.is-hovering {
   background: var(--ea-hover-fill, rgba(26, 27, 30, 0.07)) !important;
   color: var(--ea-fg, #1a1b1e) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item:hover {
+    background: var(--ea-hover-fill, rgba(26, 27, 30, 0.07)) !important;
+    color: var(--ea-fg, #1a1b1e) !important;
+  }
 }
 
 html[data-theme='light'] .hit-editor-select-popper .el-select-dropdown__item.is-selected {

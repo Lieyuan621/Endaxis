@@ -743,14 +743,8 @@ function onClose() {
 .expandable-row {
   cursor: pointer;
 }
-.expandable-row:hover {
-  background: var(--ea-hover-fill, rgba(255, 255, 255, 0.05));
-}
 .expandable-row.is-disabled {
   cursor: default;
-}
-.expandable-row.is-disabled:hover {
-  background: transparent;
 }
 .expand-icon {
   margin-right: 4px;
@@ -765,8 +759,18 @@ function onClose() {
   transform: rotate(90deg);
   color: var(--ea-fg-secondary, #bbb);
 }
-.expandable-row:hover .expand-icon {
-  color: var(--ea-fg-secondary, #bbb);
+@media (hover: hover) and (pointer: fine) {
+  .expandable-row:hover {
+    background: var(--ea-hover-fill, rgba(255, 255, 255, 0.05));
+  }
+
+  .expandable-row.is-disabled:hover {
+    background: transparent;
+  }
+
+  .expandable-row:hover .expand-icon {
+    color: var(--ea-fg-secondary, #bbb);
+  }
 }
 .sub-row {
   border-bottom-color: var(--ea-border-soft, rgba(255, 255, 255, 0.03)) !important;

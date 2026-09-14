@@ -175,8 +175,10 @@ const pathData = computed(() => {
   }
 }
 
-.connector-group:hover .hover-zone {
-  stroke-opacity: 0.4;
+@media (hover: hover) and (pointer: fine) {
+  .connector-group:hover .hover-zone {
+    stroke-opacity: 0.4;
+  }
 }
 
 .path-shadow {
@@ -212,9 +214,11 @@ const pathData = computed(() => {
   z-index: 1000;
 }
 
-.drag-handle-dot:hover {
-  r: 7;
-  fill: var(--ea-gold);
+@media (hover: hover) and (pointer: fine) {
+  .drag-handle-dot:hover {
+    r: 7;
+    fill: var(--ea-gold);
+  }
 }
 
 .moving-circle {

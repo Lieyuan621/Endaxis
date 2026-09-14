@@ -310,20 +310,31 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
     color 0.2s ease;
 }
 
-.timeline-display-guide:hover {
-  border-color: var(--ea-border-strong);
-  background: var(--ea-hover-fill);
-  color: var(--ea-fg);
-}
-
 .timeline-display-guide__icon {
   flex-shrink: 0;
   color: var(--ea-fg-muted);
 }
 
-.timeline-display-guide:hover .timeline-display-guide__icon,
 .timeline-display-guide[aria-pressed='true'] .timeline-display-guide__icon {
   color: var(--ea-gold);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .timeline-display-guide:hover {
+    border-color: var(--ea-border-strong);
+    background: var(--ea-hover-fill);
+    color: var(--ea-fg);
+  }
+
+  .timeline-display-guide[aria-pressed='true']:hover:not(:disabled) {
+    border-color: var(--ea-gold);
+    background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
+    color: var(--ea-gold);
+  }
+
+  .timeline-display-guide:hover .timeline-display-guide__icon {
+    color: var(--ea-gold);
+  }
 }
 
 .timeline-display-guide__content {

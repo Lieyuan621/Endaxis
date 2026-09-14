@@ -220,10 +220,12 @@ const ports = [
     pointer-events: none;
   }
 
-  &:hover {
-    transform: scale(1.2);
-    background-color: var(--ea-gold);
-    border-color: var(--ea-gold);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      border-color: var(--ea-gold);
+      background-color: var(--ea-gold);
+      transform: scale(1.2);
+    }
   }
 }
 

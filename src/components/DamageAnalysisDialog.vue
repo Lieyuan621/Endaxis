@@ -360,14 +360,21 @@ const elementChartOption = computed<ChartOption>(() => {
   white-space: nowrap;
 }
 
-.lmdi-mode-btn:hover {
-  background: var(--ea-hover-fill);
-  color: var(--ea-fg-secondary);
-}
-
 .lmdi-mode-btn[aria-pressed='true'] {
   background: var(--ea-active-fill);
   color: var(--ea-fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lmdi-mode-btn:hover {
+    background: var(--ea-hover-fill);
+    color: var(--ea-fg-secondary);
+  }
+
+  .lmdi-mode-btn[aria-pressed='true']:hover {
+    background: var(--ea-active-fill);
+    color: var(--ea-fg);
+  }
 }
 
 .chart {

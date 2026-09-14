@@ -1646,16 +1646,6 @@ onMounted(() => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.group__summary:hover {
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.group__summary.is-jumpable:hover .group__action {
-  color: var(--ea-fg, #fff);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 .group__summary::-webkit-details-marker {
   display: none;
 }
@@ -1889,10 +1879,6 @@ onMounted(() => {
   padding-right: 4px;
 }
 
-.event-row.is-jumpable:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
 .event-row + .event-row {
   border-top: 1px dashed rgba(255, 255, 255, 0.04);
 }
@@ -2071,15 +2057,30 @@ onMounted(() => {
 :global(html[data-theme='light'] .simlog-panel .group__action) {
   text-shadow: none;
 }
-:global(html[data-theme='light'] .simlog-panel .group__summary:hover) {
-  background: var(--ea-hover-fill);
-}
-:global(html[data-theme='light'] .simlog-panel .event-row.is-jumpable:hover) {
-  background: var(--ea-hover-fill);
-}
 :global(html[data-theme='light'] .simlog-panel .event-lmdi) {
   background: var(--ea-surface-row);
   border-left-color: rgba(11, 110, 153, 0.35);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group__summary:hover {
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .group__summary.is-jumpable:hover .group__action {
+    color: var(--ea-fg, #fff);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .event-row.is-jumpable:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  :global(html[data-theme='light'] .simlog-panel .group__summary:hover),
+  :global(html[data-theme='light'] .simlog-panel .event-row.is-jumpable:hover) {
+    background: var(--ea-hover-fill);
+  }
 }
 :global(html[data-theme='light'] .simlog-panel .event-pill--skill) {
   color: #b42318;

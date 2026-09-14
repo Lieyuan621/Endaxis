@@ -1,8 +1,12 @@
+import { readFileSync } from 'node:fs';
 import { createSSRApp, defineComponent, h, type Component } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { describe, expect, test } from 'vitest';
 import { getEaSelectPopperClass } from './components/EaSelect/selectPopperClass';
+
+const controlsCss = readFileSync(new URL('./styles/controls.css', import.meta.url), 'utf8');
+const tokensCss = readFileSync(new URL('./styles/tokens.css', import.meta.url), 'utf8');
 
 type ComponentModule = { default: Component };
 
@@ -40,6 +44,16 @@ async function renderComponent(name: string, props: Record<string, unknown>, con
 }
 
 describe('design-system component contracts', () => {
+  test('shared controls consume semantic foreground colors for accent and danger fills', () => {
+    expect(tokensCss).toContain('--ea-on-accent:');
+    expect(tokensCss).toContain('--ea-on-danger:');
+    expect(controlsCss).toContain('color: var(--ea-on-accent);');
+    expect(controlsCss).toContain('color: var(--ea-on-danger);');
+    expect(controlsCss).not.toMatch(
+      /(?:color|background|border):\s*(?:#151515|#050505|#fff|#111)\b/,
+    );
+  });
+
   test('EaActivityRailButton exposes its side, selection, label, and optical icon size', async () => {
     const html = await renderComponent('EaActivityRailButton', {
       side: 'right',

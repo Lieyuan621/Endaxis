@@ -967,11 +967,14 @@ function handleActionDragStart(startPos, port) {
   color: var(--ea-action-fg);
   text-shadow: var(--ea-action-fg-shadow, 0 1px 2px rgba(0, 0, 0, 0.8));
 }
-.action-item-wrapper:hover {
-  filter: brightness(1.2);
-}
-:global(html[data-theme='light'] .action-item-wrapper:hover) {
-  filter: brightness(1.04);
+@media (hover: hover) and (pointer: fine) {
+  .action-item-wrapper:hover {
+    filter: brightness(1.2);
+  }
+
+  :global(html[data-theme='light'] .action-item-wrapper:hover) {
+    filter: brightness(1.04);
+  }
 }
 
 .action-item-wrapper.is-perfect-link-action::after {
@@ -1101,16 +1104,18 @@ function handleActionDragStart(startPos, port) {
   box-shadow: 0 0 8px rgba(255, 209, 102, 0.9);
 }
 
-.tick-marker:hover {
-  background-color: var(--ea-gold);
-  border-color: #fff;
-  transform: translateY(50%) rotate(45deg) scale(1.65);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--ea-gold) 100%, transparent);
-  z-index: 30;
-}
+@media (hover: hover) and (pointer: fine) {
+  .tick-marker:hover {
+    z-index: 30;
+    border-color: #fff;
+    background-color: var(--ea-gold);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--ea-gold) 100%, transparent);
+    transform: translateY(50%) rotate(45deg) scale(1.65);
+  }
 
-.tick-marker.is-triggered:hover {
-  transform: translateY(calc(50% + 14px + var(--stack-index, 0) * 10px)) rotate(45deg) scale(1.35);
+  .tick-marker.is-triggered:hover {
+    transform: translateY(calc(50% + 14px + var(--stack-index, 0) * 10px)) rotate(45deg) scale(1.35);
+  }
 }
 
 /* === 其他样式 === */

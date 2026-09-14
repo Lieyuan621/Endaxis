@@ -3891,12 +3891,6 @@ defineExpose({
   min-width: 0;
 }
 
-.mini-tool-btn:hover {
-  background: var(--ea-hover-fill, #444);
-  color: var(--ea-fg-secondary, #ccc);
-  border-color: var(--ea-border-strong, #777);
-}
-
 .mini-tool-btn[aria-pressed='true'] {
   color: var(--ea-gold);
   border-color: var(--ea-gold);
@@ -3911,6 +3905,12 @@ defineExpose({
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .mini-tool-btn:hover {
+    border-color: var(--ea-border-strong, #777);
+    background: var(--ea-hover-fill, #444);
+    color: var(--ea-fg-secondary, #ccc);
+  }
+
   .mini-tool-btn.is-gauge-custom[aria-pressed='true']:hover:not(:disabled) {
     color: #7dd3fc;
     border-color: #38bdf8;
@@ -3991,10 +3991,6 @@ defineExpose({
   transition: color 0.2s;
 }
 
-.zoom-icon:hover {
-  color: var(--ea-gold);
-}
-
 .davinci-range {
   flex: 1;
   -webkit-appearance: none;
@@ -4023,11 +4019,6 @@ body.capture-mode .davinci-range {
   opacity: 0;
 }
 
-.davinci-range::-webkit-slider-thumb:hover {
-  transform: scale(1.3);
-  background: #fff;
-}
-
 .davinci-range::-moz-range-thumb {
   width: 8px;
   height: 8px;
@@ -4046,29 +4037,15 @@ body.capture-mode .davinci-range {
   color: #888;
   transition: color 0.2s;
 
-  &:hover {
-    color: #e0e0e0;
-  }
-
   &.interactable {
     cursor: pointer;
     position: relative;
-
-    &:hover {
-      color: var(--ea-gold);
-    }
   }
 
   &.expand-btn {
     justify-content: center;
     align-items: center;
     color: #888;
-
-    &:hover {
-      color: var(--ea-gold);
-      background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
-      border-radius: 4px;
-    }
   }
 }
 
@@ -4081,8 +4058,33 @@ body.capture-mode .davinci-range {
   color: #888;
 }
 
-.timeline-label.interactable:hover .collapse-hint-icon {
-  opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+  .zoom-icon:hover {
+    color: var(--ea-gold);
+  }
+
+  .davinci-range::-webkit-slider-thumb:hover {
+    background: #fff;
+    transform: scale(1.3);
+  }
+
+  .timeline-label:hover {
+    color: #e0e0e0;
+  }
+
+  .timeline-label.interactable:hover,
+  .timeline-label.expand-btn:hover {
+    color: var(--ea-gold);
+  }
+
+  .timeline-label.expand-btn:hover {
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
+  }
+
+  .timeline-label.interactable:hover .collapse-hint-icon {
+    opacity: 1;
+  }
 }
 
 /* ==========================================================================
@@ -4281,9 +4283,6 @@ body.capture-mode .davinci-range {
   outline: none;
   transition: color 0.12s ease;
 }
-.prep-mini-btn:hover {
-  color: var(--ea-gold);
-}
 .prep-mini-btn:focus-visible {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ea-gold) 35%, transparent);
 }
@@ -4362,11 +4361,15 @@ body.capture-mode .davinci-range {
   outline: none;
 }
 
-.prep-collapsed-toggle:hover {
-  color: var(--ea-gold);
-}
 .prep-collapsed-toggle:focus-visible {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ea-gold) 35%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .prep-mini-btn:hover,
+  .prep-collapsed-toggle:hover {
+    color: var(--ea-gold);
+  }
 }
 
 .time-ruler-track {
@@ -4559,11 +4562,6 @@ body.capture-mode .davinci-range {
     border-color 0.2s;
 }
 
-.avatar-placeholder:hover {
-  border-color: var(--ea-gold);
-  background: var(--ea-keycap-skill-bg, #555);
-}
-
 .avatar-placeholder::before {
   content: '';
   position: absolute;
@@ -4590,11 +4588,6 @@ body.capture-mode .davinci-range {
   transition: background-color 0.2s;
 }
 
-.avatar-placeholder:hover::before,
-.avatar-placeholder:hover::after {
-  background-color: var(--ea-gold);
-}
-
 .avatar-change-hint {
   position: absolute;
   top: 0;
@@ -4612,12 +4605,24 @@ body.capture-mode .davinci-range {
   pointer-events: none;
 }
 
-.trigger-avatar-box:hover .avatar-change-hint {
-  opacity: 1;
-}
+@media (hover: hover) and (pointer: fine) {
+  .avatar-placeholder:hover {
+    border-color: var(--ea-gold);
+    background: var(--ea-keycap-skill-bg, #555);
+  }
 
-.trigger-avatar-box:hover .avatar-image {
-  border-color: var(--ea-gold);
+  .avatar-placeholder:hover::before,
+  .avatar-placeholder:hover::after {
+    background-color: var(--ea-gold);
+  }
+
+  .trigger-avatar-box:hover .avatar-change-hint {
+    opacity: 1;
+  }
+
+  .trigger-avatar-box:hover .avatar-image {
+    border-color: var(--ea-gold);
+  }
 }
 
 .trigger-info {
@@ -4725,10 +4730,6 @@ body.capture-mode .davinci-range {
   font-size: 9px;
 }
 
-.initial-gauge-input-wrap :deep(.control-btn:hover:not(:disabled)) {
-  color: var(--ea-fg, #e0f2fe);
-}
-
 .initial-gauge-max {
   flex: 0 0 auto;
   color: var(--ea-fg-muted, rgba(186, 230, 253, 0.62));
@@ -4762,12 +4763,6 @@ body.capture-mode .davinci-range {
     background-color 0.14s ease;
 }
 
-.track-stat-detail-btn:hover:not(:disabled) {
-  color: var(--ea-gold-hover);
-  border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
-  background: color-mix(in srgb, var(--ea-gold) 20%, transparent);
-}
-
 .track-stat-detail-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -4779,15 +4774,28 @@ body.capture-mode .davinci-range {
   color: var(--ea-gold);
   box-shadow: 0 1px 2px rgba(26, 27, 30, 0.08);
 }
-:global(
-  html[data-theme='light'] .timeline-grid-layout .track-stat-detail-btn:hover:not(:disabled)
-) {
-  background: color-mix(in srgb, var(--ea-gold) 14%, #ffffff);
-  border-color: var(--ea-gold);
-  color: var(--ea-gold-hover);
-}
 :global(html[data-theme='light'] .timeline-grid-layout .trigger-name) {
   color: var(--ea-fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .initial-gauge-input-wrap :deep(.control-btn:hover:not(:disabled)) {
+    color: var(--ea-fg, #e0f2fe);
+  }
+
+  .track-stat-detail-btn:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--ea-gold) 72%, transparent);
+    background: color-mix(in srgb, var(--ea-gold) 20%, transparent);
+    color: var(--ea-gold-hover);
+  }
+
+  :global(
+    html[data-theme='light'] .timeline-grid-layout .track-stat-detail-btn:hover:not(:disabled)
+  ) {
+    border-color: var(--ea-gold);
+    background: color-mix(in srgb, var(--ea-gold) 14%, #ffffff);
+    color: var(--ea-gold-hover);
+  }
 }
 
 .gear-panel {
@@ -4836,11 +4844,6 @@ body.capture-mode .davinci-range {
 .weapon-box.weapon-empty {
   border: 2px dashed var(--ea-keycap-skill-border, #666);
 }
-.weapon-slot-compact:hover .weapon-box {
-  border-color: var(--ea-gold);
-  background: var(--ea-keycap-skill-bg, #555);
-  box-shadow: none;
-}
 .weapon-box img {
   width: 100%;
   height: 100%;
@@ -4871,11 +4874,6 @@ body.capture-mode .davinci-range {
   height: 16px;
   transform: translate(-50%, -50%);
 }
-.weapon-slot-compact:hover .weapon-placeholder::before,
-.weapon-slot-compact:hover .weapon-placeholder::after {
-  background: var(--ea-gold);
-}
-
 .equip-slots-compact {
   pointer-events: auto;
   flex: 1 1 auto;
@@ -4907,12 +4905,6 @@ body.capture-mode .davinci-range {
 .equip-box.equip-empty {
   border: 2px dashed var(--ea-keycap-skill-border, #666);
   background: var(--ea-keycap-bg, #444);
-}
-
-.equip-box:hover {
-  border-color: #2dd4bf;
-  background: var(--ea-keycap-skill-bg, #555);
-  box-shadow: none;
 }
 
 .equip-box img {
@@ -4947,9 +4939,28 @@ body.capture-mode .davinci-range {
   height: 12px;
   transform: translate(-50%, -50%);
 }
-.equip-box:hover .equip-placeholder::before,
-.equip-box:hover .equip-placeholder::after {
-  background: #2dd4bf;
+@media (hover: hover) and (pointer: fine) {
+  .weapon-slot-compact:hover .weapon-box {
+    border-color: var(--ea-gold);
+    background: var(--ea-keycap-skill-bg, #555);
+    box-shadow: none;
+  }
+
+  .weapon-slot-compact:hover .weapon-placeholder::before,
+  .weapon-slot-compact:hover .weapon-placeholder::after {
+    background: var(--ea-gold);
+  }
+
+  .equip-box:hover {
+    border-color: #2dd4bf;
+    background: var(--ea-keycap-skill-bg, #555);
+    box-shadow: none;
+  }
+
+  .equip-box:hover .equip-placeholder::before,
+  .equip-box:hover .equip-placeholder::after {
+    background: #2dd4bf;
+  }
 }
 
 .gear-hint-row {
@@ -5034,7 +5045,6 @@ body.capture-mode .davinci-range {
     height 0.12s ease;
 }
 
-.track-divider-handle:hover .track-divider-line,
 .track-divider-handle.is-active .track-divider-line {
   height: 2px;
   background: color-mix(in srgb, var(--ea-gold) 55%, transparent);
@@ -5055,9 +5065,6 @@ body.capture-mode .davinci-range {
   opacity: 0.7;
   transition: opacity 0.2s;
   pointer-events: auto;
-}
-.timeline-horizontal-scrollbar:hover {
-  opacity: 1;
 }
 .scrollbar-spacer {
   height: 1px;
@@ -5470,11 +5477,6 @@ body.capture-mode .davinci-range {
   color: inherit;
 }
 
-.reorder-btn:hover {
-  background-color: #444;
-  color: #ccc;
-}
-
 .reorder-btn.disabled {
   opacity: 0.2;
   pointer-events: none;
@@ -5608,12 +5610,6 @@ body.capture-mode .davinci-range {
     box-shadow 0.1s;
 }
 
-.cycle-guide:hover {
-  width: 2px;
-  background: #e0c4ff;
-  box-shadow: 0 0 8px #e0c4ff;
-}
-
 .cycle-guide.is-selected {
   background: #fff;
   box-shadow:
@@ -5685,12 +5681,6 @@ body.capture-mode .davinci-range {
   transition:
     background-color 0.1s,
     box-shadow 0.1s;
-}
-
-.endline-guide:hover {
-  width: 2px;
-  background: #ee3333;
-  box-shadow: 0 0 8px #ee3333;
 }
 
 .endline-guide.is-selected {
@@ -5779,12 +5769,6 @@ body.capture-mode .davinci-range {
   transition:
     background-color 0.1s,
     box-shadow 0.1s;
-}
-
-.startline-guide:hover {
-  width: 2px;
-  background: #33ee55;
-  box-shadow: 0 0 8px #33ee55;
 }
 
 .startline-guide.is-selected {
@@ -6119,7 +6103,42 @@ body.capture-mode .davinci-range {
 :global(html[data-theme='light'] .timeline-grid-layout .timeline-label) {
   color: var(--ea-fg-muted);
 }
-:global(html[data-theme='light'] .timeline-grid-layout .timeline-label:hover) {
-  color: var(--ea-fg);
+@media (hover: hover) and (pointer: fine) {
+  .track-divider-handle:hover .track-divider-line {
+    height: 2px;
+    background: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  }
+
+  .timeline-horizontal-scrollbar:hover {
+    opacity: 1;
+  }
+
+  .reorder-btn:hover {
+    background-color: #444;
+    color: #ccc;
+  }
+
+  .cycle-guide:hover {
+    width: 2px;
+    background: #e0c4ff;
+    box-shadow: 0 0 8px #e0c4ff;
+  }
+
+  .endline-guide:hover {
+    width: 2px;
+    background: #ee3333;
+    box-shadow: 0 0 8px #ee3333;
+  }
+
+  .startline-guide:hover {
+    width: 2px;
+    background: #33ee55;
+    box-shadow: 0 0 8px #33ee55;
+  }
+
+  :global(html[data-theme='light'] .timeline-grid-layout .timeline-label:hover) {
+    color: var(--ea-fg);
+  }
 }
 </style>

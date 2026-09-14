@@ -495,8 +495,10 @@ function termKindLabel(value) {
   width: 100%;
 }
 
-.add-effect-bar:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .add-effect-bar:hover {
+    border-color: color-mix(in srgb, var(--ea-gold) 80%, transparent);
+    background: rgba(255, 255, 255, 0.08);
+  }
 }
 </style>

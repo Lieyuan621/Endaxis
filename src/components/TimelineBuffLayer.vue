@@ -38,9 +38,7 @@ const items = computed(() => {
         const showIcon = segment.showIcon !== false;
         const iconOffsetPx = showIcon ? ICON_SIZE + BAR_GAP : 0;
         const showDurationBar = segment.effect?.kind !== 'oneTime';
-        const widthPx = showDurationBar
-          ? Math.max(0, endPx - startPx - iconOffsetPx - BAR_GAP)
-          : 0;
+        const widthPx = showDurationBar ? Math.max(0, endPx - startPx - iconOffsetPx - BAR_GAP) : 0;
         return {
           key: `${segment.effectId || segment.typeKey}-${segment.start}-${index}`,
           start: segment.start,
@@ -195,25 +193,11 @@ function getItemStyle(buff) {
   will-change: transform;
 }
 
-.timeline-buff-icon-box:hover {
-  z-index: 12;
-  transform: scale(1.18);
-  filter: brightness(1.18);
-  border-color: rgba(255, 255, 255, 0.95);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.22),
-    0 4px 12px rgba(0, 0, 0, 0.46);
-}
-
 .timeline-buff-icon {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: filter 0.12s ease;
-}
-
-.timeline-buff-icon-box:hover .timeline-buff-icon {
-  filter: brightness(1.12) saturate(1.08);
 }
 
 .timeline-buff-fallback {
@@ -253,11 +237,27 @@ function getItemStyle(buff) {
     box-shadow 0.12s ease;
 }
 
-.timeline-buff-duration-bar:hover {
-  filter: brightness(1.16) saturate(1.08);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.18),
-    0 2px 8px rgba(0, 0, 0, 0.5);
+@media (hover: hover) and (pointer: fine) {
+  .timeline-buff-icon-box:hover {
+    z-index: 12;
+    border-color: rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.22),
+      0 4px 12px rgba(0, 0, 0, 0.46);
+    filter: brightness(1.18);
+    transform: scale(1.18);
+  }
+
+  .timeline-buff-icon-box:hover .timeline-buff-icon {
+    filter: brightness(1.12) saturate(1.08);
+  }
+
+  .timeline-buff-duration-bar:hover {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.18),
+      0 2px 8px rgba(0, 0, 0, 0.5);
+    filter: brightness(1.16) saturate(1.08);
+  }
 }
 
 .timeline-buff-striped-bg {

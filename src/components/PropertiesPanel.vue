@@ -1122,8 +1122,10 @@ function handleStartConnection(id, type = null) {
   --ea-control-fg-hover: #fff;
   border-color: var(--ea-control-border);
 }
-.damage-add-button.ea-button:hover:not(:disabled) {
-  border-color: var(--ea-control-border-hover);
+@media (hover: hover) and (pointer: fine) {
+  .damage-add-button.ea-button:hover:not(:disabled) {
+    border-color: var(--ea-control-border-hover);
+  }
 }
 .tech-style .form-group.compact label {
   font-size: 11px !important;
@@ -1286,9 +1288,11 @@ function handleStartConnection(id, type = null) {
     background-color var(--ea-control-transition),
     border-color var(--ea-control-transition);
 }
-.connection-card:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.1);
+@media (hover: hover) and (pointer: fine) {
+  .connection-card:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
 }
 .connection-card.outgoing {
   border-left-color: var(--ea-gold) !important;
@@ -1392,8 +1396,10 @@ function handleStartConnection(id, type = null) {
   text-align: center;
   transition: color 0.2s;
 }
-.mini-select:hover {
-  color: var(--ea-gold);
+@media (hover: hover) and (pointer: fine) {
+  .mini-select:hover {
+    color: var(--ea-gold);
+  }
 }
 .port-label {
   color: #666;

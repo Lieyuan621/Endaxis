@@ -102,11 +102,6 @@ function selectPreset(id) {
   text-align: center;
 }
 
-.preset-tile:hover {
-  border-color: var(--ea-border-strong, rgba(255, 255, 255, 0.28));
-  background: var(--ea-fill-strong, #303034);
-}
-
 .preset-tile[aria-pressed='true'] {
   border-color: color-mix(in srgb, var(--ea-gold, #ffe08a) 55%, transparent);
   background: color-mix(in srgb, var(--ea-gold, #ffe08a) 12%, var(--ea-keycap-bg, #333338));
@@ -138,11 +133,29 @@ function selectPreset(id) {
   border-color: var(--ea-border-strong);
   box-shadow: 0 1px 2px var(--ea-shadow);
 }
-:global(html[data-theme='light'] .global-config-presets .preset-tile:hover) {
-  background: var(--ea-surface-soft);
-}
 :global(html[data-theme='light'] .global-config-presets .preset-tile[aria-pressed='true']) {
   background: color-mix(in srgb, var(--ea-gold) 14%, #ffffff);
   border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .preset-tile:hover {
+    border-color: var(--ea-border-strong, rgba(255, 255, 255, 0.28));
+    background: var(--ea-fill-strong, #303034);
+  }
+
+  :global(html[data-theme='light'] .global-config-presets .preset-tile:hover) {
+    background: var(--ea-surface-soft);
+  }
+
+  .preset-tile[aria-pressed='true']:hover {
+    border-color: color-mix(in srgb, var(--ea-gold, #ffe08a) 55%, transparent);
+    background: color-mix(in srgb, var(--ea-gold, #ffe08a) 12%, var(--ea-keycap-bg, #333338));
+  }
+
+  :global(html[data-theme='light'] .global-config-presets .preset-tile[aria-pressed='true']:hover) {
+    border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+    background: color-mix(in srgb, var(--ea-gold) 14%, #ffffff);
+  }
 }
 </style>

@@ -602,12 +602,6 @@ function hideBrokenImage(event: Event) {
   box-sizing: border-box;
 }
 
-.cc-tag:hover {
-  border-color: rgba(255, 111, 101, 0.86);
-  background: var(--ea-fill-strong, #303033);
-  box-shadow: 0 0 10px rgba(188, 40, 36, 0.14);
-}
-
 .cc-tag[aria-pressed='true'] {
   border-color: #ffdbd8;
   background: #a91512;
@@ -631,11 +625,6 @@ function hideBrokenImage(event: Event) {
 .cc-tag.is-conflict-muted {
   opacity: 0.42;
   filter: grayscale(0.55);
-}
-
-.cc-tag.is-conflict-muted:hover {
-  opacity: 0.72;
-  filter: grayscale(0.18);
 }
 
 .cc-tag img {
@@ -875,14 +864,6 @@ function hideBrokenImage(event: Event) {
 :global(html[data-theme='light'] .cc-panel .cc-tag img) {
   filter: brightness(0) opacity(0.72);
 }
-:global(html[data-theme='light'] .cc-panel .cc-tag:hover) {
-  background: var(--ea-chip-fill-hover);
-  border-color: rgba(180, 50, 45, 0.55);
-  box-shadow: 0 0 8px rgba(180, 50, 45, 0.12);
-}
-:global(html[data-theme='light'] .cc-panel .cc-tag:hover img) {
-  filter: brightness(0) opacity(0.88);
-}
 :global(html[data-theme='light'] .cc-panel .cc-tag[aria-pressed='true'] img) {
   filter: brightness(0) invert(1) opacity(0.95);
 }
@@ -892,6 +873,35 @@ function hideBrokenImage(event: Event) {
 }
 :global(html[data-theme='light'] .cc-panel .cc-tag:not([aria-pressed='true']) .cc-tag-roman) {
   color: var(--ea-fg-secondary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cc-tag:hover {
+    border-color: rgba(255, 111, 101, 0.86);
+    background: var(--ea-fill-strong, #303033);
+    box-shadow: 0 0 10px rgba(188, 40, 36, 0.14);
+  }
+
+  .cc-tag.is-conflict-muted:hover {
+    opacity: 0.72;
+    filter: grayscale(0.18);
+  }
+
+  :global(html[data-theme='light'] .cc-panel .cc-tag:hover) {
+    border-color: rgba(180, 50, 45, 0.55);
+    background: var(--ea-chip-fill-hover);
+    box-shadow: 0 0 8px rgba(180, 50, 45, 0.12);
+  }
+
+  :global(html[data-theme='light'] .cc-panel .cc-tag:hover img) {
+    filter: brightness(0) opacity(0.88);
+  }
+
+  :global(html[data-theme='light'] .cc-panel .cc-tag[aria-pressed='true']:hover:not(:disabled)) {
+    border-color: #8a1c1c;
+    background: #c62828;
+    box-shadow: none;
+  }
 }
 :global(html[data-theme='light'] .cc-panel .cc-tag:not([aria-pressed='true']) .cc-tag-score) {
   color: #b42318;

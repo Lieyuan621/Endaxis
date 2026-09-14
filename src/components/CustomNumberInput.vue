@@ -200,8 +200,10 @@ function increment() {
   width: 100%;
 }
 
-.custom-number-input.has-hover:hover {
-  box-shadow: 0 0 0 1px var(--hover-border-color) inset;
+@media (hover: hover) and (pointer: fine) {
+  .custom-number-input.has-hover:hover {
+    box-shadow: 0 0 0 1px var(--hover-border-color) inset;
+  }
 }
 
 .custom-number-input:focus {
@@ -248,9 +250,11 @@ function increment() {
   justify-content: center;
 }
 
-.control-btn:hover:not(:disabled) {
-  background-color: var(--ea-hover-fill, rgba(255, 255, 255, 0.04));
-  color: var(--ea-gold);
+@media (hover: hover) and (pointer: fine) {
+  .control-btn:hover:not(:disabled) {
+    background-color: var(--ea-hover-fill, rgba(255, 255, 255, 0.04));
+    color: var(--ea-gold);
+  }
 }
 
 .control-btn:active:not(:disabled) {

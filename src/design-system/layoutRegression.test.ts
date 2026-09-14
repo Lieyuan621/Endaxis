@@ -5,6 +5,7 @@ import actionLibrarySource from '../components/ActionLibrary.vue?raw';
 import contextMenuSource from '../components/ContextMenu.vue?raw';
 import damageAnalysisSource from '../components/DamageAnalysisDialog.vue?raw';
 import enemySettingsSource from '../components/EnemySettingsPanel.vue?raw';
+import globalConfigPresetSource from '../components/GlobalConfigPresetPanel.vue?raw';
 import hitEditorSource from '../components/HitEditorDialog.vue?raw';
 import propertiesPanelSource from '../components/PropertiesPanel.vue?raw';
 import resourceMonitorSource from '../components/ResourceMonitor.vue?raw';
@@ -15,6 +16,7 @@ import weaponSelectionSource from '../components/selection/WeaponSelectionDialog
 import mobileAppShellSource from '../views/MobileAppShell.vue?raw';
 import mobileTimelineSource from '../views/MobileTimelineViewer.vue?raw';
 import timelineGridSource from '../components/TimelineGrid.vue?raw';
+import timelineDisplayMenuSource from '../components/TimelineDisplayMenu.vue?raw';
 import timelineEditorSource from '../views/TimelineEditor.vue?raw';
 
 const elementPlusStyles = readFileSync(
@@ -29,6 +31,22 @@ const selectionDialogStyles = readFileSync(
   'utf8',
 );
 const tokenStyles = readFileSync(new URL('./styles/tokens.css', import.meta.url), 'utf8');
+const featureVueSources = import.meta.glob<string>(
+  ['../components/**/*.vue', '../views/**/*.vue'],
+  {
+    eager: true,
+    import: 'default',
+    query: '?raw',
+  },
+);
+const featureSources = [
+  ...Object.entries(featureVueSources),
+  [
+    '../components/armory/armoryDialogTheme.css',
+    readFileSync(new URL('../components/armory/armoryDialogTheme.css', import.meta.url), 'utf8'),
+  ],
+  ['../components/selection/selectionDialog.css', selectionDialogStyles],
+] as Array<[string, string]>;
 
 function getRuleBody(source: string, selector: string) {
   const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -111,6 +129,20 @@ describe('design-system layout regressions', () => {
     expect(rule).toContain('background: var(--ea-floating-bg) !important;');
   });
 
+  test('routes Element Plus adapter surfaces through shared theme colors', () => {
+    expect(elementPlusStyles).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
+    expect(elementPlusStyles).toContain('background-color: var(--ea-dialog-bg) !important;');
+    expect(elementPlusStyles).toContain('background-color: var(--ea-fill-input) !important;');
+    expect(elementPlusStyles).toContain('color: var(--ea-control-placeholder) !important;');
+    expect(elementPlusStyles).toContain('box-shadow: var(--ea-floating-shadow) !important;');
+  });
+
+  test('routes shared pattern colors through design tokens', () => {
+    expect(patternStyles).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
+    expect(patternStyles).toContain('--ea-range-track: var(--ea-border-strong);');
+    expect(patternStyles).toContain('color: var(--ea-fg-secondary);');
+  });
+
   test('keeps shared drawers on the panel surface with an unpadded content body', () => {
     const drawerRule = getRuleBody(dialogStyles, '.ea-drawer.el-drawer');
     const bodyRule = getRuleBody(dialogStyles, '.ea-drawer .el-drawer__body');
@@ -170,17 +202,18 @@ describe('design-system layout regressions', () => {
     );
   });
 
-  test('guards touch-reachable hover feedback behind a fine hover pointer', () => {
-    for (const [name, source] of [
-      ['ActionLibrary', actionLibrarySource],
-      ['ContextMenu', contextMenuSource],
-      ['EnemySettingsPanel', enemySettingsSource],
-      ['selectionDialog', selectionDialogStyles],
-      ['MobileTimelineViewer', mobileTimelineSource],
-      ['TimelineEditor', timelineEditorSource],
-    ]) {
-      expect(unguardedHoverCount(source), name).toBe(0);
-    }
+  test('guards feature hover feedback behind a fine hover pointer', () => {
+    const sourcesToCheck: Array<[string, string]> = [
+      ['./styles/element-plus.css', elementPlusStyles],
+      ['./styles/patterns.css', patternStyles],
+      ...featureSources,
+    ];
+    const violations = sourcesToCheck
+      .filter(([, source]) => unguardedHoverCount(source) > 0)
+      .map(([path]) => path)
+      .sort();
+
+    expect(violations).toEqual([]);
   });
 
   test('limits shared hover feedback to devices with a fine hover pointer', () => {
@@ -218,6 +251,44 @@ describe('design-system layout regressions', () => {
     expect(rosterPressedRule).toContain('box-shadow: none;');
     expect(activeScenarioHoverRule).toContain('background-color: var(--ea-tab-active-bg);');
     expect(activeScenarioHoverRule).toContain('color: var(--ea-tab-active-fg);');
+  });
+
+  test('keeps custom pressed controls selected while hovered', () => {
+    const analysisHoverMedia = getBlockBody(
+      damageAnalysisSource,
+      '@media (hover: hover) and (pointer: fine)',
+    );
+    const presetHoverMedia = getBlockBody(
+      globalConfigPresetSource,
+      '@media (hover: hover) and (pointer: fine)',
+    );
+    const patternHoverMedia = getBlockBody(
+      patternStyles,
+      '@media (hover: hover) and (pointer: fine)',
+    );
+    const displayMenuHoverMedia = getBlockBody(
+      timelineDisplayMenuSource,
+      '@media (hover: hover) and (pointer: fine)',
+    );
+
+    expect(getRuleBody(analysisHoverMedia, ".lmdi-mode-btn[aria-pressed='true']:hover")).toContain(
+      'background: var(--ea-active-fill);',
+    );
+    expect(getRuleBody(presetHoverMedia, ".preset-tile[aria-pressed='true']:hover")).toContain(
+      'background: color-mix(in srgb, var(--ea-gold, #ffe08a) 12%, var(--ea-keycap-bg, #333338));',
+    );
+    expect(
+      getRuleBody(
+        patternHoverMedia,
+        ".header-more-check-row[aria-pressed='true']:hover:not(:disabled)",
+      ),
+    ).toContain('color: var(--ea-gold);');
+    expect(
+      getRuleBody(
+        displayMenuHoverMedia,
+        ".timeline-display-guide[aria-pressed='true']:hover:not(:disabled)",
+      ),
+    ).toContain('color: var(--ea-gold);');
   });
 
   test('lets mobile loadout compound cards grow around their content', () => {

@@ -190,12 +190,14 @@ html[data-theme='light'] .armory-dialog .section .ea-button:disabled {
   box-shadow: none;
 }
 
-html[data-theme='light'] .armory-dialog .section .ea-button:hover:not(:disabled) {
-  --ea-control-bg: var(--ea-chip-fill-hover);
-  --ea-control-border: rgba(26, 27, 30, 0.28);
-  background: var(--ea-chip-fill-hover);
-  border-color: rgba(26, 27, 30, 0.28);
-  color: #1a1b1e;
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme='light'] .armory-dialog .section .ea-button:hover:not(:disabled) {
+    --ea-control-bg: var(--ea-chip-fill-hover);
+    --ea-control-border: rgba(26, 27, 30, 0.28);
+    border-color: rgba(26, 27, 30, 0.28);
+    background: var(--ea-chip-fill-hover);
+    color: #1a1b1e;
+  }
 }
 
 html[data-theme='light'] .armory-dialog .skill-controls {
