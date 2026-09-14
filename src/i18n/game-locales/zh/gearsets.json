@@ -95,5 +95,9 @@
   "aic-fieldwork": {
     "setName": "集成实训",
     "description": "3件套组效果：装备者造成的所有类型伤害<@ba.vup>+20%</>，受到的所有类型伤害<@ba.vup>-10%</>，终结技充能效率<@ba.vup>+10%</>。"
+  },
+  "deep-rampart": {
+    "setName": "险关",
+    "description": "3件套组效果：装备者法术伤害<@ba.vup>+16%</>。\n当装备者造成<#ba.naturalburst>自然爆发</>、<#ba.crystburst>寒冷爆发</>时，源石技艺强度<@ba.vup>+16</>，持续20秒。该效果最多叠加3层，每层单独计算持续时间，每0.1秒最多触发一次。"
   }
 }

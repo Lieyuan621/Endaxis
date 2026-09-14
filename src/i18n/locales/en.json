@@ -883,7 +883,12 @@
       "gloompurgerArray": "Gloompurger Array",
       "clusterStrike": "Cluster Strike",
       "gloompurgeArcana": "Gloompurge Arcana",
-      "dreamStriving": "Dream Striving"
+      "dreamStriving": "Dream Striving",
+      "windform": "Windform",
+      "huntingArrow": "Hunting Arrow",
+      "sign": "Sign",
+      "hovering": "Hovering",
+      "hailOfArrows": "Hail of Arrows"
     }
   },
   "hitEditor": {

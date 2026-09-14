@@ -3,7 +3,7 @@ import type { WeaponSheet } from '../../../types';
 const sheet: WeaponSheet = {
   rarity: 6,
   type: 'arts-unit',
-  icon: '',
+  icon: '/weapons/arts-unit/wpn_artsunit_0020.webp',
   baseAtk: [50, 144, 243, 342, 441, 490],
   skill1: {
     effects: [
@@ -21,7 +21,9 @@ const sheet: WeaponSheet = {
         kind: 'status',
         stat: { modifier: 'dmgBonus', elements: 'nature' },
         target: 'self',
-        value: [5.6, 10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 43.3],
+        value: [
+          5.5555556, 10, 14.444445, 18.888889, 23.333333, 27.77778, 32.222223, 36.666667, 43.333334,
+        ],
       },
     ],
   },
@@ -32,7 +34,6 @@ const sheet: WeaponSheet = {
         stat: { modifier: 'artsIntensity' },
         target: 'self',
         value: [15, 18, 21, 24, 27, 30, 33, 36, 42],
-        duration: 15,
       },
       {
         kind: 'status',
