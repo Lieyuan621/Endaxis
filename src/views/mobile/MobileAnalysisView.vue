@@ -221,7 +221,6 @@ const contributionChartOption = computed<ChartOption>(() => {
           <div class="mode-switch" role="group">
             <EaButton
               type="button"
-              :class="{ active: store.lmdiAttributionMode === 'applier' }"
               :pressed="store.lmdiAttributionMode === 'applier'"
               @click="store.lmdiAttributionMode = 'applier'"
             >
@@ -229,7 +228,6 @@ const contributionChartOption = computed<ChartOption>(() => {
             </EaButton>
             <EaButton
               type="button"
-              :class="{ active: store.lmdiAttributionMode === 'stacks' }"
               :pressed="store.lmdiAttributionMode === 'stacks'"
               @click="store.lmdiAttributionMode = 'stacks'"
             >
@@ -355,7 +353,7 @@ h2 {
   border-right: 0;
 }
 
-.mode-switch button.active {
+.mode-switch button[aria-pressed='true'] {
   background: var(--ea-gold);
   color: #171717;
   font-weight: 800;

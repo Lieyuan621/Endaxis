@@ -1,5 +1,5 @@
 <script setup>
-import { EaCheckbox, EaDialog, EaDialogActions } from '@/design-system';
+import { EaCheckbox, EaDialog, EaDialogActions, EaTooltip } from '@/design-system';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ArrowRight } from '@element-plus/icons-vue';
@@ -610,7 +610,7 @@ function onClose() {
                     ><ArrowRight
                   /></el-icon>
                   {{ row.label }}
-                  <el-tooltip
+                  <EaTooltip
                     v-if="row.tooltip"
                     :content="row.tooltip"
                     placement="top"
@@ -618,7 +618,7 @@ function onClose() {
                     popper-class="hit-detail-source-tooltip"
                   >
                     <span class="hint-icon" aria-hidden="true">ⓘ</span>
-                  </el-tooltip>
+                  </EaTooltip>
                   <span v-if="row.detail" class="mult-detail">{{ row.detail }}</span>
                 </td>
                 <td class="value-cell mult-value">{{ row.value }}</td>
@@ -836,26 +836,8 @@ html[data-theme='dark'] .hit-damage-detail-dialog .mult-value {
 }
 
 @media (max-width: 768px) {
-  .hit-damage-detail-dialog.el-dialog {
-    display: flex;
-    width: calc(100vw - 16px) !important;
-    max-width: none;
-    max-height: calc(100dvh - 16px);
-    margin: 8px auto !important;
-    flex-direction: column;
-  }
-
-  .hit-damage-detail-dialog .el-dialog__header,
-  .hit-damage-detail-dialog .el-dialog__footer {
-    flex: 0 0 auto;
-  }
-
   .hit-damage-detail-dialog .el-dialog__body {
-    min-height: 0;
-    flex: 1 1 auto;
     padding: 12px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
   }
 }
 </style>

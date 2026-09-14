@@ -1,5 +1,5 @@
 <script setup>
-import { EaButton } from '@/design-system';
+import { EaButton, EaDrawer } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTimelineStore } from '@/stores/timelineStore.js';
@@ -88,14 +88,9 @@ function choose(skill, allowZeroDuration = false) {
 </script>
 
 <template>
-  <el-drawer
+  <EaDrawer
     :model-value="modelValue"
-    direction="btt"
     size="78%"
-    :with-header="false"
-    :append-to-body="true"
-    :lock-scroll="false"
-    class="mobile-skill-library-drawer"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <div class="skill-library-shell">
@@ -157,19 +152,10 @@ function choose(skill, allowZeroDuration = false) {
         {{ t('timeline.mobile.skillLibrary.empty') }}
       </div>
     </div>
-  </el-drawer>
+  </EaDrawer>
 </template>
 
 <style scoped>
-:global(.mobile-skill-library-drawer),
-:global(.mobile-skill-library-drawer .el-drawer__body) {
-  background: var(--ea-panel) !important;
-}
-
-:global(.mobile-skill-library-drawer .el-drawer__body) {
-  padding: 0 !important;
-}
-
 .skill-library-shell {
   display: flex;
   flex-direction: column;

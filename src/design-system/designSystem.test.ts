@@ -2,6 +2,7 @@ import { createSSRApp, defineComponent, h, type Component } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { describe, expect, test } from 'vitest';
+import { getEaSelectPopperClass } from './components/EaSelect/selectPopperClass';
 
 type ComponentModule = { default: Component };
 
@@ -271,6 +272,12 @@ describe('design-system component contracts', () => {
     expect(html).toContain('ea-select--inline');
   });
 
+  test('EaSelect carries its control size into the teleported option list', () => {
+    expect(getEaSelectPopperClass('sm', 'feature-options')).toBe(
+      'ea-select-popper ea-select-popper--sm feature-options',
+    );
+  });
+
   test('EaOption and EaOptionGroup are available for custom select content', () => {
     const option = getComponent('EaOption');
     const optionGroup = getComponent('EaOptionGroup');
@@ -279,6 +286,71 @@ describe('design-system component contracts', () => {
     expect(componentSources['./components/EaOption/EaOption.vue']).toContain(
       '<slot>{{ label }}</slot>',
     );
+  });
+
+  test('EaTooltip and EaPopover expose shared floating-surface adapters', () => {
+    expect(getComponent('EaTooltip')).toBeDefined();
+    expect(getComponent('EaPopover')).toBeDefined();
+  });
+
+  test('EaDrawer owns the shared mobile drawer defaults while preserving dismissal overrides', async () => {
+    const drawer = getComponent('EaDrawer');
+    expect(drawer).toBeDefined();
+    if (!drawer) return;
+
+    const app = configureElementPlusSsr(
+      createSSRApp({
+        render: () =>
+          h('main', [
+            h(
+              drawer,
+              { modelValue: true, size: '78%', closeOnClickModal: false },
+              { default: () => 'Fixed drawer body' },
+            ),
+            h(drawer, { modelValue: true }, { default: () => 'Dismissible drawer body' }),
+          ]),
+      }),
+    );
+    app.component(
+      'ElDrawer',
+      defineComponent({
+        inheritAttrs: false,
+        props: {
+          direction: String,
+          size: [String, Number],
+          withHeader: Boolean,
+          appendToBody: Boolean,
+          lockScroll: Boolean,
+          closeOnClickModal: Boolean,
+        },
+        setup:
+          (props, { slots }) =>
+          () =>
+            h(
+              'section',
+              {
+                'data-direction': props.direction,
+                'data-size': String(props.size),
+                'data-with-header': String(props.withHeader),
+                'data-append-to-body': String(props.appendToBody),
+                'data-lock-scroll': String(props.lockScroll),
+                'data-close-on-click-modal': String(props.closeOnClickModal),
+              },
+              slots.default?.(),
+            ),
+      }),
+    );
+
+    const html = await renderToString(app);
+    expect(html).toContain('data-direction="btt"');
+    expect(html).toContain('data-size="78%"');
+    expect(html).toContain('data-with-header="false"');
+    expect(html).toContain('data-append-to-body="true"');
+    expect(html).toContain('data-lock-scroll="false"');
+    expect(html).toContain('data-close-on-click-modal="false"');
+    expect(html).toContain('data-close-on-click-modal="true"');
+    expect(html).toContain('Fixed drawer body');
+    expect(html).toContain('Dismissible drawer body');
   });
 
   test('EaDialog locks every dismissal path while busy', async () => {

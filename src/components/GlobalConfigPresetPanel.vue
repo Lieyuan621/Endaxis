@@ -32,7 +32,6 @@ function selectPreset(id) {
       <EaButton
         type="button"
         class="preset-tile"
-        :class="{ 'is-selected': !selectedPresetId }"
         :pressed="!selectedPresetId"
         @click="selectPreset(null)"
       >
@@ -44,7 +43,6 @@ function selectPreset(id) {
         :key="preset.id"
         type="button"
         class="preset-tile"
-        :class="{ 'is-selected': selectedPresetId === preset.id }"
         :pressed="selectedPresetId === preset.id"
         :title="preset.description || preset.name"
         @click="selectPreset(preset.id)"
@@ -109,7 +107,7 @@ function selectPreset(id) {
   background: var(--ea-fill-strong, #303034);
 }
 
-.preset-tile.is-selected {
+.preset-tile[aria-pressed='true'] {
   border-color: color-mix(in srgb, var(--ea-gold, #ffe08a) 55%, transparent);
   background: color-mix(in srgb, var(--ea-gold, #ffe08a) 12%, var(--ea-keycap-bg, #333338));
 }
@@ -121,7 +119,7 @@ function selectPreset(id) {
   color: var(--ea-fg, rgba(255, 255, 255, 0.9));
 }
 
-.preset-tile.is-selected .preset-tile-name {
+.preset-tile[aria-pressed='true'] .preset-tile-name {
   color: var(--ea-gold, #ffe08a);
 }
 
@@ -143,7 +141,7 @@ function selectPreset(id) {
 :global(html[data-theme='light'] .global-config-presets .preset-tile:hover) {
   background: var(--ea-surface-soft);
 }
-:global(html[data-theme='light'] .global-config-presets .preset-tile.is-selected) {
+:global(html[data-theme='light'] .global-config-presets .preset-tile[aria-pressed='true']) {
   background: color-mix(in srgb, var(--ea-gold) 14%, #ffffff);
   border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
 }

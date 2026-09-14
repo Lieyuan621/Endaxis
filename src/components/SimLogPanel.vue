@@ -979,7 +979,7 @@ onMounted(() => {
 
         <label class="simlog-limit">
           <span class="simlog-limit__label">{{ t('battleLog.limit') }}</span>
-          <EaSelect v-model="limit" size="sm" class="effect-select-dark simlog-limit-select">
+          <EaSelect v-model="limit" size="sm" class="simlog-limit-select">
             <EaOption :label="t('battleLog.ui.allResults')" value="all" />
             <EaOption label="200" value="200" />
             <EaOption label="1000" value="1000" />
@@ -1592,30 +1592,6 @@ onMounted(() => {
   width: 88px;
 }
 
-:deep(.effect-select-dark.simlog-limit-select .el-input__wrapper) {
-  min-height: 28px;
-  height: 28px;
-  box-sizing: border-box;
-  background-color: var(--ea-fill-input, #111);
-  box-shadow: none;
-  border: 1px solid var(--ea-border-strong, #444);
-  border-radius: var(--right-panel-container-radius);
-}
-
-:deep(.effect-select-dark.simlog-limit-select .el-select__wrapper) {
-  border-radius: var(--right-panel-container-radius);
-}
-
-:deep(.effect-select-dark.simlog-limit-select .el-input__inner),
-:deep(.effect-select-dark.simlog-limit-select .el-select__selected-item) {
-  color: var(--ea-fg, #eee);
-  font-size: 11px;
-}
-
-:deep(.effect-select-dark.simlog-limit-select .el-select__placeholder) {
-  color: var(--ea-fg-faint, rgba(255, 255, 255, 0.4));
-}
-
 .simlog-body {
   flex: 1;
   min-height: 0;
@@ -2118,11 +2094,5 @@ onMounted(() => {
 :global(html[data-theme='light'] .simlog-panel .simlog-empty) {
   background: var(--ea-surface-sunken);
   border-color: var(--ea-border);
-}
-:global(
-  html[data-theme='light'] .simlog-panel .effect-select-dark.simlog-limit-select .el-input__wrapper
-) {
-  background-color: var(--ea-surface-row) !important;
-  border-color: var(--ea-border-strong);
 }
 </style>

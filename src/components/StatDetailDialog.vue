@@ -623,25 +623,8 @@ tr.is-sub {
 
 <style>
 @media (max-width: 768px) {
-  .stat-detail-dialog.el-dialog {
-    display: flex;
-    width: calc(100vw - 16px) !important;
-    max-width: none;
-    max-height: calc(100dvh - 16px);
-    margin: 8px auto !important;
-    flex-direction: column;
-  }
-
-  .stat-detail-dialog .el-dialog__header {
-    flex: 0 0 auto;
-  }
-
   .stat-detail-dialog .el-dialog__body {
-    min-height: 0;
-    flex: 1 1 auto;
     padding: 12px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
   }
 }
 </style>

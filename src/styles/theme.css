@@ -86,6 +86,10 @@ html[data-theme='dark'] {
   --ea-icon-muted: rgba(255, 255, 255, 0.42);
   --ea-icon-strong: rgba(255, 255, 255, 0.86);
   --ea-popover-bg: #2a2a2e;
+  --ea-floating-bg: var(--ea-popover-bg);
+  --ea-floating-border: var(--ea-border);
+  --ea-floating-fg: var(--ea-fg-secondary);
+  --ea-floating-shadow: 0 10px 28px var(--ea-shadow-strong);
   --ea-tab-idle-bg: rgba(255, 255, 255, 0.08);
   --ea-tab-idle-fg: #aaaaaa;
   --ea-tab-active-bg: #e0e0e0;
@@ -182,6 +186,10 @@ html[data-theme='light'] {
   --ea-icon-muted: rgba(26, 27, 30, 0.48);
   --ea-icon-strong: rgba(26, 27, 30, 0.9);
   --ea-popover-bg: #ffffff;
+  --ea-floating-bg: var(--ea-popover-bg);
+  --ea-floating-border: var(--ea-border);
+  --ea-floating-fg: var(--ea-fg-secondary);
+  --ea-floating-shadow: 0 10px 28px var(--ea-shadow-strong);
   --ea-tab-idle-bg: rgba(26, 27, 30, 0.08);
   --ea-tab-idle-fg: #5a616c;
   --ea-tab-active-bg: #1a1b1e;

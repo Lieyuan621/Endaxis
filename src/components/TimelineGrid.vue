@@ -2659,9 +2659,9 @@ defineExpose({
             <EaButton
               class="mini-tool-btn"
               :class="{
-                'is-active': store.initialGaugeMode !== 'empty',
                 'is-gauge-custom': store.initialGaugeMode === 'custom',
               }"
+              :pressed="store.initialGaugeMode !== 'empty'"
               @click="onInitialGaugeToolClick"
               @contextmenu="onInitialGaugeToolContextMenu"
               :title="t('timelineGrid.toolbar.initialGauge')"
@@ -3897,16 +3897,26 @@ defineExpose({
   border-color: var(--ea-border-strong, #777);
 }
 
-.mini-tool-btn.is-active {
+.mini-tool-btn[aria-pressed='true'] {
   color: var(--ea-gold);
   border-color: var(--ea-gold);
   background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
+  box-shadow: none;
 }
 
-.mini-tool-btn.is-gauge-custom.is-active {
+.mini-tool-btn.is-gauge-custom[aria-pressed='true'] {
   color: #7dd3fc;
   border-color: #38bdf8;
   background: rgba(56, 189, 248, 0.12);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mini-tool-btn.is-gauge-custom[aria-pressed='true']:hover:not(:disabled) {
+    color: #7dd3fc;
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    box-shadow: none;
+  }
 }
 
 .gauge-tool-icon {

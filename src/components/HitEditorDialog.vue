@@ -1774,23 +1774,6 @@ function save() {
   font-weight: 700;
 }
 
-:global(.hit-editor-dialog.el-dialog .el-dialog__headerbtn),
-:global(.hit-editor-dialog .el-dialog__headerbtn) {
-  height: 32px;
-  top: 6px;
-  width: 32px;
-}
-
-:global(.hit-editor-dialog.el-dialog .el-dialog__close),
-:global(.hit-editor-dialog .el-dialog__close) {
-  color: var(--ea-fg-secondary, #cfd3dc);
-}
-
-:global(.hit-editor-dialog.el-dialog .el-dialog__close:hover),
-:global(.hit-editor-dialog .el-dialog__close:hover) {
-  color: var(--ea-gold);
-}
-
 :global(.hit-editor-dialog.el-dialog .el-dialog__body),
 :global(.hit-editor-dialog .el-dialog__body) {
   color: var(--ea-dialog-body, #e8edf5);

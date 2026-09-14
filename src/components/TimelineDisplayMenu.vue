@@ -15,7 +15,6 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
     <EaButton
       type="button"
       class="timeline-display-guide"
-      :class="{ 'is-active': store.showCursorGuide }"
       :pressed="store.showCursorGuide"
       @click="store.toggleCursorGuide"
     >
@@ -64,7 +63,6 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
           <div class="header-more-segment" role="group">
             <EaButton
               type="button"
-              :class="{ 'is-active': store.buffLayoutMode === 'compact' }"
               :pressed="store.buffLayoutMode === 'compact'"
               @click="store.setBuffLayoutMode('compact')"
             >
@@ -72,7 +70,6 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
             </EaButton>
             <EaButton
               type="button"
-              :class="{ 'is-active': store.buffLayoutMode === 'loose' }"
               :pressed="store.buffLayoutMode === 'loose'"
               @click="store.setBuffLayoutMode('loose')"
             >
@@ -325,7 +322,7 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
 }
 
 .timeline-display-guide:hover .timeline-display-guide__icon,
-.timeline-display-guide.is-active .timeline-display-guide__icon {
+.timeline-display-guide[aria-pressed='true'] .timeline-display-guide__icon {
   color: var(--ea-gold);
 }
 

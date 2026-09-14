@@ -3,6 +3,7 @@ import { computed, inject, useAttrs } from 'vue';
 import { ElOption, ElSelect } from 'element-plus';
 import { eaFormFieldKey } from '../fieldContext';
 import type { EaControlSize } from '../types';
+import { getEaSelectPopperClass } from './selectPopperClass';
 
 export type EaSelectValue = string | number | boolean;
 
@@ -57,9 +58,7 @@ const isInvalid = computed(() => props.invalid || Boolean(field?.invalid.value))
 const elementSize = computed(() =>
   props.size === 'md' ? 'default' : props.size === 'sm' ? 'small' : 'large',
 );
-const mergedPopperClass = computed(() =>
-  ['ea-select-popper', props.popperClass].filter(Boolean).join(' '),
-);
+const mergedPopperClass = computed(() => getEaSelectPopperClass(props.size, props.popperClass));
 </script>
 
 <template>

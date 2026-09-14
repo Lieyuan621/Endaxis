@@ -49,4 +49,6 @@
   --ea-dialog-width-lg: 900px;
   --ea-dialog-padding-x: 20px;
   --ea-dialog-padding-y: 16px;
+
+  --ea-z-context-menu: 10000;
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EaButton, EaDialog } from '@/design-system';
+import { EaButton, EaDialog, EaTooltip } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import VChart from 'vue-echarts';
@@ -42,6 +42,7 @@ const chartPaint = computed(() => {
     tooltip: {
       backgroundColor: isLight ? '#ffffff' : '#2a2a2a',
       borderColor: isLight ? '#d8dbe0' : '#444',
+      borderRadius: 0,
       textStyle: { color: isLight ? '#1a1b1e' : '#f0f0f0', fontSize: 13 },
     },
     legendText: isLight ? '#3a3d44' : '#ccc',
@@ -213,34 +214,32 @@ const elementChartOption = computed<ChartOption>(() => {
             <div class="chart-title-row">
               <h3 class="chart-title">{{ t('timeline.analysis.contributionByOperator') }}</h3>
               <div class="lmdi-mode-toggle">
-                <el-tooltip
+                <EaTooltip
                   :content="t('timeline.analysis.lmdiModeApplierTip')"
                   placement="top"
                   :show-after="300"
                 >
                   <EaButton
                     class="lmdi-mode-btn"
-                    :class="{ active: store.lmdiAttributionMode === 'applier' }"
                     :pressed="store.lmdiAttributionMode === 'applier'"
                     @click="store.lmdiAttributionMode = 'applier'"
                   >
                     {{ t('timeline.analysis.lmdiModeApplier') }}
                   </EaButton>
-                </el-tooltip>
-                <el-tooltip
+                </EaTooltip>
+                <EaTooltip
                   :content="t('timeline.analysis.lmdiModeStacksTip')"
                   placement="top"
                   :show-after="300"
                 >
                   <EaButton
                     class="lmdi-mode-btn"
-                    :class="{ active: store.lmdiAttributionMode === 'stacks' }"
                     :pressed="store.lmdiAttributionMode === 'stacks'"
                     @click="store.lmdiAttributionMode = 'stacks'"
                   >
                     {{ t('timeline.analysis.lmdiModeStacks') }}
                   </EaButton>
-                </el-tooltip>
+                </EaTooltip>
               </div>
             </div>
             <VChart :option="contributionChartOption" autoresize class="chart" />
@@ -321,7 +320,7 @@ const elementChartOption = computed<ChartOption>(() => {
 .chart-card {
   background: color-mix(in srgb, var(--ea-fg) 5%, var(--ea-dialog-bg));
   border: 1px solid var(--ea-border);
-  border-radius: 6px;
+  border-radius: var(--ea-control-radius);
   padding: 16px;
 }
 
@@ -343,7 +342,7 @@ const elementChartOption = computed<ChartOption>(() => {
   display: flex;
   gap: 0;
   border: 1px solid var(--ea-border-strong);
-  border-radius: 4px;
+  border-radius: var(--ea-control-radius);
   overflow: hidden;
 }
 
@@ -366,7 +365,7 @@ const elementChartOption = computed<ChartOption>(() => {
   color: var(--ea-fg-secondary);
 }
 
-.lmdi-mode-btn.active {
+.lmdi-mode-btn[aria-pressed='true'] {
   background: var(--ea-active-fill);
   color: var(--ea-fg);
 }
@@ -386,7 +385,7 @@ const elementChartOption = computed<ChartOption>(() => {
   flex: 1;
   background: color-mix(in srgb, var(--ea-fg) 5%, var(--ea-dialog-bg));
   border: 1px solid var(--ea-border);
-  border-radius: 6px;
+  border-radius: var(--ea-control-radius);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -411,7 +410,7 @@ const elementChartOption = computed<ChartOption>(() => {
 .warning-banner {
   background: color-mix(in srgb, #ffab40 10%, transparent);
   border: 1px solid color-mix(in srgb, #ffab40 35%, transparent);
-  border-radius: 6px;
+  border-radius: var(--ea-control-radius);
   padding: 10px 16px;
   margin-bottom: 24px;
 }
@@ -453,7 +452,7 @@ const elementChartOption = computed<ChartOption>(() => {
   --el-collapse-content-text-color: var(--ea-fg-muted);
   --el-collapse-header-font-size: 13px;
   --el-collapse-content-font-size: 13px;
-  border-radius: 6px;
+  border-radius: var(--ea-control-radius);
   overflow: hidden;
 }
 

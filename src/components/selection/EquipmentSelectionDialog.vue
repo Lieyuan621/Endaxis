@@ -1,5 +1,12 @@
 <script setup>
-import { EaButton, EaDeleteIcon, EaDialog, EaFilterChip, EaInput } from '@/design-system';
+import {
+  EaButton,
+  EaDeleteIcon,
+  EaDialog,
+  EaFilterChip,
+  EaInput,
+  EaTooltip,
+} from '@/design-system';
 import { computed, ref } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
@@ -689,7 +696,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
               :key="`tier_${tier}`"
               type="button"
               class="equipment-refine-btn"
-              :class="{ 'is-active': refineTier === tier }"
+              :pressed="refineTier === tier"
               @click="setRefineTier(tier)"
             >
               {{ tier === 0 ? t('timelineGrid.equipmentDialog.refineBase') : tier }}
@@ -781,7 +788,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
             :class="{ 'is-ability-match-both': equipment.abilityMatch?.type === 'both' }"
             @click="select(equipment.id)"
           >
-            <el-tooltip
+            <EaTooltip
               placement="top-start"
               effect="dark"
               :show-after="160"
@@ -848,7 +855,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
                 </div>
                 <div class="card-name">{{ equipment.name }}</div>
               </div>
-            </el-tooltip>
+            </EaTooltip>
             <div
               v-if="
                 currentEquipmentId === equipment.id || currentEquipmentId === equipment.canonicalId

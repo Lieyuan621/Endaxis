@@ -72,33 +72,6 @@ const preview = computed(() => {
   max-width: min(440px, calc(100vw - 32px));
 }
 
-:global(.weapon-selection-preview-popper.el-popper.is-dark) {
-  background: #050505;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.72);
-}
-
-:global(.weapon-selection-preview-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: #050505;
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-:global(html[data-theme='light'] .weapon-selection-preview-popper.el-popper.is-dark) {
-  background: #ffffff;
-  border: 1px solid rgba(26, 27, 30, 0.14);
-  box-shadow: 0 14px 34px rgba(26, 27, 30, 0.16);
-  color: #1a1b1e;
-}
-
-:global(
-  html[data-theme='light']
-    .weapon-selection-preview-popper.el-popper
-    .el-popper__arrow::before
-) {
-  background: #ffffff !important;
-  border-color: rgba(26, 27, 30, 0.14) !important;
-}
-
 :global(html[data-theme='light'] .weapon-selection-preview__name) {
   border-bottom-color: rgba(26, 27, 30, 0.12);
   color: #1a1b1e;

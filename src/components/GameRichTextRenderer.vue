@@ -1,6 +1,6 @@
 <script setup>
+import { EaTooltip } from '@/design-system';
 import { computed, defineComponent, h } from 'vue';
-import { ElTooltip } from 'element-plus';
 import {
   getRichTextStyle,
   getRichTextTerm,
@@ -41,7 +41,8 @@ const RichTextNodes = defineComponent({
 function renderRichTextNode(node, key, locale, depth, termTooltips) {
   if (node.type === 'text') return [node.text];
   if (node.type === 'image') return renderImageNode(node, key);
-  if (node.type === 'style') return [renderStyledChildren(node.id, node.children, key, locale, depth, termTooltips)];
+  if (node.type === 'style')
+    return [renderStyledChildren(node.id, node.children, key, locale, depth, termTooltips)];
   return [renderTermNode(node, key, locale, depth, termTooltips)];
 }
 
@@ -81,7 +82,7 @@ function renderTermNode(node, key, locale, depth, termTooltips) {
   if (!term || !isExplainable) return content;
 
   return h(
-    ElTooltip,
+    EaTooltip,
     {
       key,
       placement: 'top',
@@ -199,15 +200,6 @@ function renderTermTooltip(term, locale, depth) {
 
 :global(.game-rich-text-term-popper.el-popper.is-dark) {
   padding: 0 !important;
-  background: #202126;
-  color: #f1f1f1;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
-}
-
-:global(.game-rich-text-term-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: #202126;
-  border-color: rgba(255, 255, 255, 0.16);
 }
 
 :global(.game-rich-text-tooltip) {
@@ -244,20 +236,6 @@ function renderTermTooltip(term, locale, depth) {
   font-weight: 500;
   line-height: 1.45;
   white-space: pre-wrap;
-}
-
-:global(html[data-theme='light'] .game-rich-text-term-popper.el-popper.is-dark) {
-  background: var(--ea-tooltip-bg, #ffffff);
-  color: var(--ea-fg, #1a1b1e);
-  border-color: var(--ea-dialog-border, #d8dbe0);
-  box-shadow: 0 14px 34px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
-}
-
-:global(
-  html[data-theme='light'] .game-rich-text-term-popper.el-popper .el-popper__arrow::before
-) {
-  background: var(--ea-tooltip-bg, #ffffff) !important;
-  border-color: var(--ea-dialog-border, #d8dbe0) !important;
 }
 
 :global(html[data-theme='light'] .game-rich-text-tooltip) {

@@ -1,5 +1,5 @@
 <script setup>
-import { EaButton, EaDialog, EaDialogActions } from '@/design-system';
+import { EaButton, EaDialog, EaDialogActions, EaTooltip } from '@/design-system';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getOperator, getOperatorTalentGroups } from '@/data';
@@ -322,7 +322,7 @@ function promotedLabel() {
             <div class="row">
               <span class="section-label">{{ t('armory.common.potential') }}</span>
               <div class="diamonds">
-                <el-tooltip
+                <EaTooltip
                   v-for="p in 5"
                   :key="p"
                   placement="top"
@@ -349,11 +349,11 @@ function promotedLabel() {
 
                   <EaButton
                     class="diamond"
-                    :class="{ active: instance.potential >= p }"
+                    :pressed="instance.potential >= p"
                     :style="instance.potential >= p ? { background: potentialColor } : {}"
                     @click="update({ potential: instance.potential === p ? p - 1 : p })"
                   />
-                </el-tooltip>
+                </EaTooltip>
               </div>
             </div>
           </div>
@@ -384,7 +384,7 @@ function promotedLabel() {
           <div class="section-title">{{ t('armory.common.skills') }}</div>
           <div class="skills-row">
             <div v-for="key in SKILL_ORDER" :key="key" class="skill-card">
-              <el-tooltip
+              <EaTooltip
                 placement="top"
                 effect="dark"
                 :show-after="120"
@@ -404,7 +404,7 @@ function promotedLabel() {
                 <div class="skill-icon-frame" :style="{ borderColor: elColor }">
                   <img :src="getSkillIcon(key)" class="skill-icon" />
                 </div>
-              </el-tooltip>
+              </EaTooltip>
               <div class="skill-name">{{ getSkillTypeName(key) }}</div>
               <div class="skill-controls">
                 <EaButton
@@ -443,7 +443,7 @@ function promotedLabel() {
                   class="talent-chain"
                   :class="{ active: (instance.trustLevel ?? 0) >= lvl }"
                 />
-                <el-tooltip
+                <EaTooltip
                   placement="top"
                   effect="dark"
                   :show-after="120"
@@ -461,10 +461,10 @@ function promotedLabel() {
                     <EaButton
                       class="talent-node"
                       :class="{
-                        active: (instance.trustLevel ?? 0) >= lvl,
                         disabled: lvl > maxTrust,
                         'is-multi-attr': trustAttributeIconKeys.length > 1,
                       }"
+                      :pressed="(instance.trustLevel ?? 0) >= lvl"
                       :style="(instance.trustLevel ?? 0) >= lvl ? { borderColor: elColor } : {}"
                       :disabled="lvl > maxTrust"
                       @click="setTrustLevel(lvl)"
@@ -477,7 +477,7 @@ function promotedLabel() {
                       />
                     </EaButton>
                   </span>
-                </el-tooltip>
+                </EaTooltip>
               </template>
             </div>
           </div>
@@ -492,7 +492,7 @@ function promotedLabel() {
                   class="talent-chain"
                   :class="{ active: (instance.talentStates[String(groupIdx)] ?? 0) >= lvl }"
                 />
-                <el-tooltip
+                <EaTooltip
                   placement="top"
                   effect="dark"
                   :show-after="120"
@@ -516,7 +516,7 @@ function promotedLabel() {
                   <span class="talent-node-tooltip-anchor">
                     <EaButton
                       class="talent-node"
-                      :class="{ active: (instance.talentStates[String(groupIdx)] ?? 0) >= lvl }"
+                      :pressed="(instance.talentStates[String(groupIdx)] ?? 0) >= lvl"
                       :style="
                         (instance.talentStates[String(groupIdx)] ?? 0) >= lvl
                           ? { borderColor: elColor }
@@ -527,7 +527,7 @@ function promotedLabel() {
                       <img :src="getTalentIcon(groupIdx)" class="talent-icon" />
                     </EaButton>
                   </span>
-                </el-tooltip>
+                </EaTooltip>
               </template>
             </div>
           </div>
@@ -682,8 +682,15 @@ function promotedLabel() {
   cursor: pointer;
   padding: 0;
 }
-.diamond.active {
+.diamond[aria-pressed='true'] {
   border-color: transparent;
+  box-shadow: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .diamond[aria-pressed='true']:hover:not(:disabled) {
+    border-color: transparent;
+    box-shadow: none;
+  }
 }
 .level-selector {
   display: flex;
@@ -808,9 +815,21 @@ function promotedLabel() {
   justify-content: center;
   flex-shrink: 0;
 }
-.talent-node:not(.active) {
+.talent-node[aria-pressed='false'] {
   opacity: 0.35;
   filter: grayscale(1);
+}
+.talent-node[aria-pressed='true'] {
+  color: inherit;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .talent-node[aria-pressed='true']:hover:not(:disabled) {
+    background: var(--ea-hover-fill, #444);
+    color: inherit;
+    box-shadow: none;
+  }
 }
 .talent-node.disabled {
   opacity: 0.2;
@@ -899,15 +918,6 @@ function promotedLabel() {
 
 :global(.operator-edit-tooltip-popper.el-popper.is-dark) {
   padding: 0 !important;
-  background: #202126;
-  color: #f1f1f1;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
-}
-
-:global(.operator-edit-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: #202126;
-  border-color: rgba(255, 255, 255, 0.16);
 }
 
 :global(.operator-edit-tooltip) {

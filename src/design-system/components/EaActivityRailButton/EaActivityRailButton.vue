@@ -35,7 +35,7 @@ const iconStyle = computed(() => {
     type="button"
     variant="ghost"
     class="ea-activity-rail-button"
-    :class="[`ea-activity-rail-button--${side}`, { 'is-active': active }]"
+    :class="`ea-activity-rail-button--${side}`"
     :pressed="active"
     :disabled="disabled"
     :aria-label="label"

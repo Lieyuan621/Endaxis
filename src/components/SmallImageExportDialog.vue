@@ -195,7 +195,6 @@ async function saveImage() {
               size="sm"
               type="button"
               class="card-appearance__btn"
-              :class="{ 'is-active': form.cardAppearance === 'light' }"
               :pressed="form.cardAppearance === 'light'"
               :title="t('common.appearanceLight')"
               :aria-label="t('common.appearanceLight')"
@@ -222,7 +221,6 @@ async function saveImage() {
               size="sm"
               type="button"
               class="card-appearance__btn"
-              :class="{ 'is-active': form.cardAppearance === 'dark' }"
               :pressed="form.cardAppearance === 'dark'"
               :title="t('common.appearanceDark')"
               :aria-label="t('common.appearanceDark')"
@@ -451,7 +449,7 @@ async function saveImage() {
   padding: 4px 8px;
 }
 
-.card-appearance__btn.ea-button.is-active {
+.card-appearance__btn.ea-button[aria-pressed='true'] {
   color: var(--ea-gold);
   border-color: color-mix(in srgb, var(--ea-gold) 55%, transparent);
   background: color-mix(in srgb, var(--ea-gold) 12%, transparent);

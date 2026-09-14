@@ -139,7 +139,7 @@ function formatStatValue(effect, value) {
                   v-for="artSlot in 3"
                   :key="artSlot"
                   class="art-slot"
-                  :class="{ 'is-active': slotClass(slotIdx, artSlot) === 'slot-active' }"
+                  :pressed="slotClass(slotIdx, artSlot) === 'slot-active'"
                   @click="setArtificingLevel(slotIdx, artSlot)"
                 >
                   <template v-if="slotClass(slotIdx, artSlot) === 'slot-empty'">&nbsp;</template>
@@ -285,7 +285,7 @@ function formatStatValue(effect, value) {
 .art-slot {
   font-family: 'Roboto Mono', monospace;
 }
-.art-slot:not(.is-active) {
+.art-slot[aria-pressed='false'] {
   color: transparent;
 }
 .stat-level {

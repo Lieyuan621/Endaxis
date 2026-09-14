@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createSSRApp, defineComponent, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { createI18n } from 'vue-i18n';
+import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import HitDamageDetailDialog from './HitDamageDetailDialog.vue';
 import zh from '@/i18n/locales/zh-CN.json';
 import en from '@/i18n/locales/en.json';
@@ -43,9 +44,11 @@ async function renderDetail(locale: string, defenseBased: boolean, critRateScale
     breakdown,
     hitData: { _critRateScale: critRateScale },
   });
+  app.provide(ID_INJECTION_KEY, { prefix: 1030, current: 0 });
+  app.provide(ZINDEX_INJECTION_KEY, { current: 0 });
   app.use(createI18n({ legacy: false, locale, messages: { 'zh-CN': zh, en } }));
   // Render dialog content without Element Plus's browser-only overlay/teleport.
-  for (const name of ['ElDialog', 'ElIcon', 'ElTooltip']) {
+  for (const name of ['ElDialog', 'ElIcon']) {
     app.component(
       name,
       defineComponent({

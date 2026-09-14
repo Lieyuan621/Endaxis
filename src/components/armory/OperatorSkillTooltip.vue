@@ -184,10 +184,8 @@ function getFirstSegmentNumber(skill, field, levelIndex) {
         v-for="form in formOptions"
         :key="form.key"
         class="operator-skill-tooltip-form"
-        :class="{
-          selected: displayFormKey === form.key,
-          active: activeFormKey === form.key,
-        }"
+        :pressed="displayFormKey === form.key"
+        :data-active="activeFormKey === form.key || undefined"
         @click.stop.prevent="setSelectedForm(form.key)"
         @pointerdown.stop
         @mousedown.stop
@@ -287,14 +285,23 @@ function getFirstSegmentNumber(skill, field, levelIndex) {
   line-height: 1.1;
 }
 
-.operator-skill-tooltip-form.selected {
+.operator-skill-tooltip-form[aria-pressed='true'] {
   color: #fff;
   border-bottom-color: #fff;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.12));
   box-shadow: inset 0 -2px 0 #fff;
 }
 
-.operator-skill-tooltip-form.active {
+@media (hover: hover) and (pointer: fine) {
+  .operator-skill-tooltip-form[aria-pressed='true']:hover:not(:disabled) {
+    color: #fff;
+    border-bottom-color: #fff;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.12));
+    box-shadow: inset 0 -2px 0 #fff;
+  }
+}
+
+.operator-skill-tooltip-form[data-active='true'] {
   color: #fff;
 }
 

@@ -222,7 +222,7 @@ function handleToggleSimulationEndline() {
   <Teleport to="body">
     <div
       v-if="store.contextMenu.visible"
-      class="custom-context-menu"
+      class="custom-context-menu ea-floating-surface"
       :style="menuStyle"
       @click.stop
       @contextmenu.prevent
@@ -581,7 +581,7 @@ function handleToggleSimulationEndline() {
           <span class="label">{{ t('contextMenu.setSourcePort') }}</span>
           <span class="arrow">▶</span>
 
-          <div class="submenu-grid">
+          <div class="submenu-grid ea-floating-surface">
             <div
               v-for="(opt, i) in DIRECTION_OPTS"
               :key="i"
@@ -628,7 +628,7 @@ function handleToggleSimulationEndline() {
           <span class="label">{{ t('contextMenu.setTargetPort') }}</span>
           <span class="arrow">▶</span>
 
-          <div class="submenu-grid">
+          <div class="submenu-grid ea-floating-surface">
             <div
               v-for="(opt, i) in DIRECTION_OPTS"
               :key="i"
@@ -831,7 +831,7 @@ function handleToggleSimulationEndline() {
           <span class="label">{{ t('contextMenu.addSwitchEvent') }}</span>
           <span class="arrow">▶</span>
 
-          <div class="submenu-list">
+          <div class="submenu-list ea-floating-surface">
             <div
               v-for="track in store.teamTracksInfo"
               v-show="track.id"
@@ -855,16 +855,10 @@ function handleToggleSimulationEndline() {
 <style scoped>
 .custom-context-menu {
   position: fixed;
-  z-index: 10000;
-  background: #2b2b2b;
-  border: 1px solid #444;
-  border-radius: 6px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+  z-index: var(--ea-z-context-menu);
   min-width: 180px;
   padding: 6px 0;
-  font-family: 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
-  color: #e0e0e0;
   user-select: none;
   animation: fadeIn 0.1s ease-out;
 }
@@ -872,9 +866,9 @@ function handleToggleSimulationEndline() {
 .menu-header {
   padding: 6px 12px;
   font-size: 12px;
-  color: #777;
+  color: var(--ea-fg-muted);
   font-weight: 600;
-  border-bottom: 1px solid #3a3a3a;
+  border-bottom: 1px solid var(--ea-border-soft);
   margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -885,7 +879,7 @@ function handleToggleSimulationEndline() {
 .menu-label {
   padding: 4px 12px;
   font-size: 11px;
-  color: #777;
+  color: var(--ea-fg-muted);
 }
 
 .menu-item {
@@ -895,17 +889,18 @@ function handleToggleSimulationEndline() {
   display: flex;
   align-items: center;
   transition: background 0.1s;
-  color: #ccc;
+  color: var(--ea-floating-fg);
   position: relative;
 }
 
 .menu-item:hover {
-  background: #007fd4;
-  color: #fff;
+  background: var(--ea-menu-hover-bg);
+  color: var(--ea-menu-hover-fg);
 }
 
 .menu-item.delete-item:hover {
-  background: #ff7875;
+  background: color-mix(in srgb, var(--ea-danger) 14%, transparent);
+  color: var(--ea-danger);
 }
 
 .menu-item.disabled {
@@ -931,18 +926,18 @@ function handleToggleSimulationEndline() {
 
 .shortcut-hint {
   font-size: 11px;
-  color: #666;
+  color: var(--ea-fg-faint);
   margin-left: 10px;
   font-family: 'Consolas', monospace;
 }
 
 .menu-item:hover .shortcut-hint {
-  color: rgba(255, 255, 255, 0.7);
+  color: currentColor;
 }
 
 .divider {
   height: 1px;
-  background: #3a3a3a;
+  background: var(--ea-border-soft);
   margin: 4px 0;
 }
 
@@ -952,7 +947,7 @@ function handleToggleSimulationEndline() {
 
 .menu-item .arrow {
   font-size: 10px;
-  color: #666;
+  color: var(--ea-fg-faint);
   margin-left: 10px;
 }
 
@@ -971,10 +966,6 @@ function handleToggleSimulationEndline() {
   position: absolute;
   left: 100%;
   top: -4px;
-  background: #2b2b2b;
-  border: 1px solid #444;
-  border-radius: 6px;
-  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.5);
   padding: 4px;
   grid-template-columns: repeat(3, 30px);
   grid-template-rows: repeat(3, 30px);
@@ -989,12 +980,14 @@ function handleToggleSimulationEndline() {
   border-radius: 4px;
   cursor: pointer;
   color: #888;
-  transition: all 0.1s;
+  transition:
+    background-color 0.1s,
+    color 0.1s;
 }
 
 .grid-item:hover {
-  background: #444;
-  color: #fff;
+  background: var(--ea-hover-fill);
+  color: var(--ea-fg);
 }
 
 .grid-item.is-active {
@@ -1007,10 +1000,6 @@ function handleToggleSimulationEndline() {
   position: absolute;
   left: 100%;
   top: -4px;
-  background: #2b2b2b;
-  border: 1px solid #444;
-  border-radius: 6px;
-  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.5);
   padding: 4px 0;
   min-width: 140px;
   z-index: 100;
@@ -1024,19 +1013,19 @@ function handleToggleSimulationEndline() {
   gap: 8px;
   cursor: pointer;
   transition: background 0.1s;
-  color: #ccc;
+  color: var(--ea-floating-fg);
 }
 
 .submenu-list-item:hover {
-  background: #007fd4;
-  color: #fff;
+  background: var(--ea-menu-hover-bg);
+  color: var(--ea-menu-hover-fg);
 }
 
 .mini-avatar {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1px solid #666;
+  border: 1px solid var(--ea-border-strong);
   object-fit: cover;
   flex-shrink: 0;
 }

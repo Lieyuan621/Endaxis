@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EaButton, EaDeleteIcon } from '@/design-system';
+import { EaButton, EaDeleteIcon, EaTooltip } from '@/design-system';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
@@ -398,7 +398,7 @@ function hideBrokenImage(event: Event) {
             class="cc-tag-slot"
             :style="{ left: `${cell.left}px`, top: `${cell.top}px` }"
           >
-            <el-tooltip
+            <EaTooltip
               placement="right"
               effect="dark"
               popper-class="cc-tag-tooltip-popper"
@@ -421,10 +421,10 @@ function hideBrokenImage(event: Event) {
                 type="button"
                 class="cc-tag"
                 :class="{
-                  'is-selected': isSelected(cell.tag.id),
                   'is-locked': !canSelect(cell.tag),
                   'is-conflict-muted': isConflictMuted(cell.tag),
                 }"
+                :pressed="isSelected(cell.tag.id)"
                 @click="toggleTag(cell.tag)"
               >
                 <span class="cc-tag-check">&#10003;</span>
@@ -439,7 +439,7 @@ function hideBrokenImage(event: Event) {
                 <span v-if="cell.tag.roman" class="cc-tag-roman">{{ cell.tag.roman }}</span>
                 <span class="cc-tag-score">+{{ cell.tag.score }}</span>
               </EaButton>
-            </el-tooltip>
+            </EaTooltip>
           </div>
         </div>
       </div>
@@ -608,9 +608,20 @@ function hideBrokenImage(event: Event) {
   box-shadow: 0 0 10px rgba(188, 40, 36, 0.14);
 }
 
-.cc-tag.is-selected {
+.cc-tag[aria-pressed='true'] {
   border-color: #ffdbd8;
   background: #a91512;
+  color: #fff;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cc-tag[aria-pressed='true']:hover:not(:disabled) {
+    border-color: #ffdbd8;
+    background: #a91512;
+    color: #fff;
+    box-shadow: none;
+  }
 }
 
 .cc-tag.is-locked {
@@ -649,7 +660,7 @@ function hideBrokenImage(event: Event) {
   opacity: 0;
 }
 
-.cc-tag.is-selected .cc-tag-check {
+.cc-tag[aria-pressed='true'] .cc-tag-check {
   opacity: 1;
 }
 
@@ -810,14 +821,7 @@ function hideBrokenImage(event: Event) {
 }
 
 :global(.cc-tag-tooltip-popper.el-popper.is-dark) {
-  background: rgba(37, 37, 38, 0.98);
-  border: 1px solid rgba(196, 66, 60, 0.45);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
-}
-
-:global(.cc-tag-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: rgba(37, 37, 38, 0.98);
-  border-color: rgba(196, 66, 60, 0.45);
+  --ea-floating-border: rgba(196, 66, 60, 0.45);
 }
 
 :global(.cc-tag-tooltip) {
@@ -845,15 +849,7 @@ function hideBrokenImage(event: Event) {
 }
 
 :global(html[data-theme='light'] .cc-tag-tooltip-popper.el-popper.is-dark) {
-  background: var(--ea-tooltip-bg, #ffffff);
-  color: var(--ea-fg, #1a1b1e);
-  border-color: color-mix(in srgb, #c62828 35%, var(--ea-dialog-border, #d8dbe0));
-  box-shadow: 0 12px 28px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
-}
-
-:global(html[data-theme='light'] .cc-tag-tooltip-popper.el-popper .el-popper__arrow::before) {
-  background: var(--ea-tooltip-bg, #ffffff) !important;
-  border-color: color-mix(in srgb, #c62828 35%, var(--ea-dialog-border, #d8dbe0)) !important;
+  --ea-floating-border: color-mix(in srgb, #c62828 35%, var(--ea-dialog-border, #d8dbe0));
 }
 
 :global(html[data-theme='light'] .cc-tag-tooltip) {
@@ -887,22 +883,22 @@ function hideBrokenImage(event: Event) {
 :global(html[data-theme='light'] .cc-panel .cc-tag:hover img) {
   filter: brightness(0) opacity(0.88);
 }
-:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected img) {
+:global(html[data-theme='light'] .cc-panel .cc-tag[aria-pressed='true'] img) {
   filter: brightness(0) invert(1) opacity(0.95);
 }
-:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected) {
+:global(html[data-theme='light'] .cc-panel .cc-tag[aria-pressed='true']) {
   background: #c62828;
   border-color: #8a1c1c;
 }
-:global(html[data-theme='light'] .cc-panel .cc-tag:not(.is-selected) .cc-tag-roman) {
+:global(html[data-theme='light'] .cc-panel .cc-tag:not([aria-pressed='true']) .cc-tag-roman) {
   color: var(--ea-fg-secondary);
 }
-:global(html[data-theme='light'] .cc-panel .cc-tag:not(.is-selected) .cc-tag-score) {
+:global(html[data-theme='light'] .cc-panel .cc-tag:not([aria-pressed='true']) .cc-tag-score) {
   color: #b42318;
 }
-:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected .cc-tag-roman),
-:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected .cc-tag-score),
-:global(html[data-theme='light'] .cc-panel .cc-tag.is-selected .cc-tag-check) {
+:global(html[data-theme='light'] .cc-panel .cc-tag[aria-pressed='true'] .cc-tag-roman),
+:global(html[data-theme='light'] .cc-panel .cc-tag[aria-pressed='true'] .cc-tag-score),
+:global(html[data-theme='light'] .cc-panel .cc-tag[aria-pressed='true'] .cc-tag-check) {
   color: #fff;
 }
 :global(html[data-theme='light'] .cc-panel .cc-conflict-link-svg) {

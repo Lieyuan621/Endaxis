@@ -1,5 +1,5 @@
 <script setup>
-import { EaButton, EaDeleteIcon, EaDialog, EaInput } from '@/design-system';
+import { EaButton, EaDeleteIcon, EaDialog, EaInput, EaTooltip } from '@/design-system';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
@@ -180,7 +180,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
             :class="[`rarity-${rarity(weapon)}-style`]"
             @click="select(weapon.id)"
           >
-            <el-tooltip
+            <EaTooltip
               placement="top-start"
               effect="dark"
               :show-after="160"
@@ -198,7 +198,7 @@ defineExpose({ open, close, isOpen: () => visible.value });
                 </div>
                 <div class="card-name">{{ weapon.name }}</div>
               </div>
-            </el-tooltip>
+            </EaTooltip>
             <div v-if="currentWeaponId === weapon.id" class="in-team-tag weapon-equipped">
               {{ t('timelineGrid.weaponDialog.equipped') }}
             </div>

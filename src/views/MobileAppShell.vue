@@ -61,7 +61,6 @@ onUnmounted(() => {
     <nav class="bottom-nav" :aria-label="t('timeline.mobile.app.navigation')">
       <EaButton
         type="button"
-        :class="{ active: view === 'timeline' }"
         :aria-current="view === 'timeline' ? 'page' : undefined"
         @click="selectView('timeline')"
       >
@@ -82,7 +81,6 @@ onUnmounted(() => {
       </EaButton>
       <EaButton
         type="button"
-        :class="{ active: view === 'analysis' }"
         :aria-current="view === 'analysis' ? 'page' : undefined"
         @click="selectView('analysis')"
       >
@@ -153,11 +151,11 @@ onUnmounted(() => {
   height: 21px;
   flex: 0 0 21px;
 }
-.bottom-nav button.active {
+.bottom-nav button[aria-current='page'] {
   color: var(--ea-gold);
 }
 
-.bottom-nav button.active::before {
+.bottom-nav button[aria-current='page']::before {
   content: '';
   position: absolute;
   top: 0;

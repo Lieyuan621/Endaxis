@@ -178,6 +178,34 @@ html.dark .ea-select-popper .el-select-dropdown__item.selected {
   font-weight: 700 !important;
 }
 
+.ea-select-popper--sm .el-select-dropdown__item {
+  height: var(--ea-control-height-sm) !important;
+  font-size: var(--ea-control-font-size-sm) !important;
+  line-height: var(--ea-control-height-sm) !important;
+}
+
+.ea-select-popper--md .el-select-dropdown__item {
+  height: var(--ea-control-height-md) !important;
+  font-size: var(--ea-control-font-size-md) !important;
+  line-height: var(--ea-control-height-md) !important;
+}
+
+.ea-select-popper--lg .el-select-dropdown__item {
+  height: var(--ea-control-height-lg) !important;
+  font-size: var(--ea-control-font-size-lg) !important;
+  line-height: var(--ea-control-height-lg) !important;
+}
+
+.ea-tooltip-popper.el-popper {
+  padding: var(--ea-space-2) 10px;
+  font-size: var(--ea-control-font-size-sm);
+  line-height: 1.4;
+}
+
+.ea-popover-popper.el-popover.el-popper {
+  padding: var(--ea-space-3);
+}
+
 /* Element Plus exposes rotated squares; use directional triangles for all poppers. */
 html body .el-popper.el-popper.el-popper[data-popper-placement] > .el-popper__arrow {
   overflow: visible;
@@ -193,6 +221,10 @@ html body .el-popper.el-popper.el-popper[data-popper-placement] > .el-popper__ar
   border-radius: 0 !important;
   background: var(--ea-popper-arrow-bg, var(--el-bg-color-overlay, #fff));
   transform: none !important;
+}
+
+.ea-floating-surface.el-popper > .el-popper__arrow::before {
+  background: var(--ea-floating-bg) !important;
 }
 
 html.dark .el-popper.is-dark {

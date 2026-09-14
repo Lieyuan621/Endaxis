@@ -1,4 +1,5 @@
 <script setup>
+import { EaTooltip } from '@/design-system';
 import { computed } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import { useDragConnection } from '../composables/useDragConnection';
@@ -881,7 +882,7 @@ function handleActionDragStart(startPos, port) {
       </svg>
     </div>
 
-    <el-tooltip
+    <EaTooltip
       v-if="showDecorations && requisiteWarning"
       :content="requisiteTitle"
       placement="top"
@@ -907,7 +908,7 @@ function handleActionDragStart(startPos, port) {
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
       </div>
-    </el-tooltip>
+    </EaTooltip>
 
     <template v-if="showDecorations && action.type === 'ultimate' && !action.isDisabled">
       <div class="ultimate-side-bar left-bar" :style="{ backgroundColor: themeColor }"></div>
@@ -1026,32 +1027,11 @@ function handleActionDragStart(startPos, port) {
 }
 
 :global(.action-requisite-tooltip-popper.el-popper.is-dark) {
-  padding: 8px 10px;
-  background: #202126;
-  color: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(255, 77, 79, 0.45);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-:global(.action-requisite-tooltip-popper.el-popper.is-dark .el-popper__arrow::before) {
-  background: #202126;
-  border-color: rgba(255, 77, 79, 0.45);
+  --ea-floating-border: rgba(255, 77, 79, 0.45);
 }
 
 :global(html[data-theme='light'] .action-requisite-tooltip-popper.el-popper.is-dark) {
-  background: var(--ea-tooltip-bg, #ffffff);
-  color: var(--ea-fg, #1a1b1e);
-  border-color: color-mix(in srgb, #e11d48 45%, var(--ea-dialog-border, #d8dbe0));
-  box-shadow: 0 12px 28px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18));
-}
-
-:global(
-  html[data-theme='light'] .action-requisite-tooltip-popper.el-popper .el-popper__arrow::before
-) {
-  background: var(--ea-tooltip-bg, #ffffff) !important;
-  border-color: color-mix(in srgb, #e11d48 45%, var(--ea-dialog-border, #d8dbe0)) !important;
+  --ea-floating-border: color-mix(in srgb, #e11d48 45%, var(--ea-dialog-border, #d8dbe0));
 }
 
 .action-item-content {
@@ -1094,7 +1074,11 @@ function handleActionDragStart(startPos, port) {
   border: 1px solid #333;
   transform: translateY(50%) rotate(45deg);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition:
+    background-color 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    border-color 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   pointer-events: auto;
   cursor: default;
 }

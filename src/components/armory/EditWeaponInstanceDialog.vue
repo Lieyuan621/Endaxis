@@ -220,7 +220,7 @@ function getSkillDescription(skillKey) {
                   v-for="p in 5"
                   :key="p"
                   class="diamond"
-                  :class="{ active: instance.potential >= p }"
+                  :pressed="instance.potential >= p"
                   :style="instance.potential >= p ? { background: potentialColor } : {}"
                   @click="update({ potential: instance.potential === p ? p - 1 : p })"
                 />
@@ -421,8 +421,15 @@ function getSkillDescription(skillKey) {
   cursor: pointer;
   padding: 0;
 }
-.diamond.active {
+.diamond[aria-pressed='true'] {
   border-color: transparent;
+  box-shadow: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .diamond[aria-pressed='true']:hover:not(:disabled) {
+    border-color: transparent;
+    box-shadow: none;
+  }
 }
 .level-selector {
   display: flex;

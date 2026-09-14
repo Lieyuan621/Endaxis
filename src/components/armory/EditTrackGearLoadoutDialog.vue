@@ -276,7 +276,7 @@ function openItemEditor(slot) {
                   :key="`${slot.slotKey}-${level}`"
                   type="button"
                   class="refine-btn"
-                  :class="{ 'is-active': isUniformRefineActive(slot, level) }"
+                  :pressed="isUniformRefineActive(slot, level)"
                   @click="setRefine(slot, level)"
                 >
                   {{ level === 0 ? tr('timelineGrid.equipmentDialog.refineBase', 'Base') : level }}

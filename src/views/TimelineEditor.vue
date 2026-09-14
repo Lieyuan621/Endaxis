@@ -8,6 +8,7 @@ import {
   EaFormField,
   EaInput,
   EaNumberInput,
+  EaPopover,
   EaTextarea,
 } from '@/design-system';
 import { onMounted, onUnmounted, ref, nextTick, computed, inject, watch } from 'vue';
@@ -1616,19 +1617,17 @@ onUnmounted(() => {
             {{ t('common.export') }}
           </EaButton>
 
-          <el-popover
+          <EaPopover
             v-model:visible="displayMenuOpen"
             placement="bottom-end"
             :width="280"
             trigger="click"
             :show-arrow="true"
-            popper-class="header-more-popper"
           >
             <template #reference>
               <EaButton
                 size="sm"
                 type="button"
-                :class="{ 'is-active': displayMenuOpen }"
                 :title="t('timeline.header.displayTooltip')"
                 :aria-expanded="displayMenuOpen"
                 :aria-label="t('timeline.header.display')"
@@ -1652,21 +1651,19 @@ onUnmounted(() => {
             </template>
 
             <TimelineDisplayMenu />
-          </el-popover>
+          </EaPopover>
 
-          <el-popover
+          <EaPopover
             v-model:visible="moreMenuOpen"
             placement="bottom-end"
             :width="280"
             trigger="click"
             :show-arrow="true"
-            popper-class="header-more-popper"
           >
             <template #reference>
               <EaButton
                 size="sm"
                 type="button"
-                :class="{ 'is-active': moreMenuOpen }"
                 :title="t('timeline.header.moreTooltip')"
                 :aria-expanded="moreMenuOpen"
                 :aria-label="t('timeline.header.more')"
@@ -1699,7 +1696,6 @@ onUnmounted(() => {
                   <EaButton
                     type="button"
                     class="header-more-check-row header-more-tool-row"
-                    :class="{ 'is-active': store.isBoxSelectMode }"
                     :pressed="store.isBoxSelectMode"
                     @click="store.toggleBoxSelectMode"
                   >
@@ -1742,7 +1738,6 @@ onUnmounted(() => {
                   <EaButton
                     type="button"
                     class="header-more-check-row header-more-tool-row"
-                    :class="{ 'is-active': store.enableConnectionTool }"
                     :pressed="store.enableConnectionTool"
                     @click="store.toggleConnectionTool"
                   >
@@ -1875,7 +1870,7 @@ onUnmounted(() => {
                       size="sm"
                       type="button"
                       class="header-more-locale__btn"
-                      :class="{ 'is-active': locale === 'zh-CN' }"
+                      :pressed="locale === 'zh-CN'"
                       :title="t('locale.zhCN')"
                       @click="selectLocaleFromMore('zh-CN')"
                     >
@@ -1885,7 +1880,7 @@ onUnmounted(() => {
                       size="sm"
                       type="button"
                       class="header-more-locale__btn"
-                      :class="{ 'is-active': locale === 'en' }"
+                      :pressed="locale === 'en'"
                       :title="t('locale.en')"
                       @click="selectLocaleFromMore('en')"
                     >
@@ -1927,7 +1922,7 @@ onUnmounted(() => {
                       size="sm"
                       type="button"
                       class="header-more-appearance__btn"
-                      :class="{ 'is-active': appearance === 'light' }"
+                      :pressed="appearance === 'light'"
                       :title="t('common.appearanceLight')"
                       :aria-label="t('common.appearanceLight')"
                       @click="selectAppearanceFromMore('light')"
@@ -1953,7 +1948,7 @@ onUnmounted(() => {
                       size="sm"
                       type="button"
                       class="header-more-appearance__btn"
-                      :class="{ 'is-active': appearance === 'dark' }"
+                      :pressed="appearance === 'dark'"
                       :title="t('common.appearanceDark')"
                       :aria-label="t('common.appearanceDark')"
                       @click="selectAppearanceFromMore('dark')"
@@ -1976,7 +1971,7 @@ onUnmounted(() => {
                 </div>
               </section>
             </div>
-          </el-popover>
+          </EaPopover>
         </div>
       </header>
 
@@ -2534,7 +2529,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
 }
-.header-controls .ea-button.is-active {
+.header-controls .ea-button[aria-expanded='true'] {
   background: var(--ea-active-fill);
   color: var(--ea-fg);
 }
@@ -2695,14 +2690,14 @@ onUnmounted(() => {
   justify-content: center;
   padding: 0;
 }
-.header-more-locale__btn.ea-button.is-active,
-.header-more-appearance__btn.ea-button.is-active {
+.header-more-locale__btn.ea-button[aria-pressed='true'],
+.header-more-appearance__btn.ea-button[aria-pressed='true'] {
   border-color: color-mix(in srgb, var(--ea-gold) 50%, transparent);
   background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
   color: #ffe38a;
 }
-:global(html[data-theme='light'] .header-more-locale__btn.ea-button.is-active),
-:global(html[data-theme='light'] .header-more-appearance__btn.ea-button.is-active) {
+:global(html[data-theme='light'] .header-more-locale__btn.ea-button[aria-pressed='true']),
+:global(html[data-theme='light'] .header-more-appearance__btn.ea-button[aria-pressed='true']) {
   border-color: rgba(180, 140, 0, 0.55);
   background: rgba(180, 140, 0, 0.12);
   color: var(--ea-gold);
@@ -2932,22 +2927,5 @@ onUnmounted(() => {
   gap: 20px;
   font-size: 24px;
   font-weight: bold;
-}
-</style>
-
-<style>
-.header-more-popper.el-popover.el-popper {
-  padding: 12px;
-  background: var(--ea-popover-bg);
-  border: 1px solid var(--ea-border);
-  box-shadow: 0 10px 28px var(--ea-shadow-strong);
-}
-.header-more-popper.el-popper.is-light,
-.header-more-popper.el-popper {
-  color: var(--ea-fg-secondary);
-}
-.header-more-popper.el-popper .el-popper__arrow::before {
-  background: var(--ea-popover-bg);
-  border-color: var(--ea-border);
 }
 </style>

@@ -238,21 +238,21 @@ html[data-theme='light'] .armory-dialog .talent-icon {
   filter: brightness(0) opacity(0.72);
 }
 
-html[data-theme='light'] .armory-dialog .talent-node:not(.active) {
+html[data-theme='light'] .armory-dialog .talent-node[aria-pressed='false'] {
   opacity: 0.62;
   filter: none;
 }
 
-html[data-theme='light'] .armory-dialog .talent-node:not(.active) .talent-icon {
+html[data-theme='light'] .armory-dialog .talent-node[aria-pressed='false'] .talent-icon {
   filter: brightness(0) opacity(0.42);
 }
 
-html[data-theme='light'] .armory-dialog .talent-node.active {
+html[data-theme='light'] .armory-dialog .talent-node[aria-pressed='true'] {
   opacity: 1;
   filter: none;
 }
 
-html[data-theme='light'] .armory-dialog .talent-node.active .talent-icon {
+html[data-theme='light'] .armory-dialog .talent-node[aria-pressed='true'] .talent-icon {
   filter: brightness(0) opacity(0.88);
 }
 
@@ -264,23 +264,6 @@ html[data-theme='light'] .gear-loadout-dialog .gear-slot-card,
 html[data-theme='light'] .gear-loadout-dialog .gear-set-bonus-panel {
   background: var(--ea-surface-row);
   border-color: var(--ea-border, #d8dbe0);
-}
-
-html[data-theme='light'] .armory-dialog .operator-edit-tooltip-popper.el-popper.is-dark,
-html[data-theme='light'] .operator-edit-tooltip-popper.el-popper.is-dark {
-  background: var(--ea-tooltip-bg, #ffffff) !important;
-  color: var(--ea-fg, #1a1b1e) !important;
-  border-color: var(--ea-dialog-border, #d8dbe0) !important;
-  box-shadow: 0 14px 34px var(--ea-shadow-strong, rgba(26, 27, 30, 0.18)) !important;
-}
-
-/*
- * Rotated-square arrows read as diamonds on light chrome.
- * Hide them — content readability matters more than the pointer.
- */
-html[data-theme='light'] .operator-edit-tooltip-popper.el-popper .el-popper__arrow::before {
-  background: var(--ea-tooltip-bg, #ffffff) !important;
-  border-color: var(--ea-dialog-border, #d8dbe0) !important;
 }
 
 html[data-theme='light'] .operator-edit-tooltip {
@@ -321,14 +304,14 @@ html[data-theme='light'] .operator-skill-tooltip-form {
   color: var(--ea-fg-secondary, rgba(26, 27, 30, 0.84)) !important;
 }
 
-html[data-theme='light'] .operator-skill-tooltip-form.selected {
+html[data-theme='light'] .operator-skill-tooltip-form[aria-pressed='true'] {
   color: var(--ea-fg, #1a1b1e) !important;
   border-bottom-color: var(--ea-fg, #1a1b1e) !important;
   background: linear-gradient(180deg, #ffffff, var(--ea-surface-soft)) !important;
   box-shadow: inset 0 -2px 0 var(--ea-fg, #1a1b1e) !important;
 }
 
-html[data-theme='light'] .operator-skill-tooltip-form.active {
+html[data-theme='light'] .operator-skill-tooltip-form[data-active='true'] {
   color: var(--ea-fg, #1a1b1e) !important;
 }
 
@@ -339,47 +322,8 @@ html[data-theme='light'] .operator-skill-tooltip-resource {
 }
 
 @media (max-width: 768px) {
-  .gear-loadout-dialog.el-dialog {
-    display: flex;
-    width: calc(100vw - 16px) !important;
-    max-width: none;
-    max-height: calc(100dvh - 16px);
-    margin: 8px auto !important;
-    flex-direction: column;
-  }
-
-  .gear-loadout-dialog .el-dialog__header,
-  .gear-loadout-dialog .el-dialog__footer {
-    flex: 0 0 auto;
-  }
-
-  .gear-loadout-dialog .el-dialog__body {
-    min-height: 0;
-    flex: 1 1 auto;
-    padding: 10px 12px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-
-  .armory-dialog.el-dialog {
-    display: flex;
-    width: calc(100vw - 16px) !important;
-    max-width: none;
-    max-height: calc(100dvh - 16px);
-    margin: 8px auto !important;
-    flex-direction: column;
-  }
-
-  .armory-dialog .el-dialog__header,
-  .armory-dialog .el-dialog__footer {
-    flex: 0 0 auto;
-  }
-
+  .gear-loadout-dialog .el-dialog__body,
   .armory-dialog .el-dialog__body {
-    min-height: 0;
-    flex: 1 1 auto;
     padding: 10px 12px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
   }
 }

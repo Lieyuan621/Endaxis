@@ -4,14 +4,16 @@ import {
   EaDeleteIcon,
   EaDialog,
   EaDialogActions,
+  EaDrawer,
   EaInput,
   EaNumberInput,
   EaOption,
+  EaPopover,
   EaSelect,
   EaTextarea,
 } from '@/design-system';
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
-import { ElAlert, ElMessage, ElPopover, ElMessageBox } from 'element-plus';
+import { ElAlert, ElMessage, ElMessageBox } from 'element-plus';
 import { useTimelineStore } from '@/stores/timelineStore.js';
 import { useI18n } from 'vue-i18n';
 import { setLocale } from '@/i18n';
@@ -2380,21 +2382,19 @@ async function doImport() {
             />
           </EaSelect>
 
-          <el-popover
+          <EaPopover
             v-model:visible="moreMenuOpen"
             trigger="click"
             placement="bottom-end"
             :teleported="true"
             :width="260"
             :show-arrow="true"
-            popper-class="mobile-more-popper"
           >
             <template #reference>
               <EaButton
                 size="sm"
                 type="button"
                 class="mobile-more-trigger"
-                :class="{ 'is-active': moreMenuOpen }"
                 :title="t('timeline.mobile.more')"
                 :aria-label="t('timeline.mobile.more')"
                 :aria-expanded="moreMenuOpen"
@@ -2425,7 +2425,6 @@ async function doImport() {
                     size="sm"
                     type="button"
                     class="mobile-locale__btn"
-                    :class="{ 'is-active': locale === 'zh-CN' }"
                     :pressed="locale === 'zh-CN'"
                     @click="changeLocale('zh-CN')"
                   >
@@ -2435,7 +2434,6 @@ async function doImport() {
                     size="sm"
                     type="button"
                     class="mobile-locale__btn"
-                    :class="{ 'is-active': locale === 'en' }"
                     :pressed="locale === 'en'"
                     @click="changeLocale('en')"
                   >
@@ -2454,7 +2452,7 @@ async function doImport() {
                       size="sm"
                       type="button"
                       class="mobile-appearance-btn"
-                      :class="{ 'is-active': appearance === 'light' }"
+                      :pressed="appearance === 'light'"
                       :title="t('common.appearanceLight')"
                       :aria-label="t('common.appearanceLight')"
                       @click="setAppearance('light')"
@@ -2480,7 +2478,7 @@ async function doImport() {
                       size="sm"
                       type="button"
                       class="mobile-appearance-btn"
-                      :class="{ 'is-active': appearance === 'dark' }"
+                      :pressed="appearance === 'dark'"
                       :title="t('common.appearanceDark')"
                       :aria-label="t('common.appearanceDark')"
                       @click="setAppearance('dark')"
@@ -2770,7 +2768,7 @@ async function doImport() {
                 </div>
               </section>
             </div>
-          </el-popover>
+          </EaPopover>
         </div>
       </div>
     </div>
@@ -3170,7 +3168,7 @@ async function doImport() {
               v-if="mobileGuideEnemyEffects.buffs.length || mobileGuideEnemyEffects.overflow"
               class="mobile-resource-guide__effects"
             >
-              <el-popover
+              <EaPopover
                 v-for="effect in mobileGuideEnemyEffects.buffs"
                 :key="effect.typeKey"
                 trigger="click"
@@ -3190,7 +3188,7 @@ async function doImport() {
                     <span>{{ effect.stacks }}</span>
                   </EaButton>
                 </template>
-              </el-popover>
+              </EaPopover>
               <span
                 v-if="mobileGuideEnemyEffects.overflow"
                 class="mobile-resource-guide__effect-more"
@@ -3203,16 +3201,7 @@ async function doImport() {
       </div>
     </div>
 
-    <el-drawer
-      v-model="actionInfoOpen"
-      direction="btt"
-      size="85%"
-      :with-header="false"
-      :append-to-body="true"
-      :lock-scroll="false"
-      :close-on-click-modal="false"
-      class="mobile-actioninfo-drawer"
-    >
+    <EaDrawer v-model="actionInfoOpen" size="85%" :close-on-click-modal="false">
       <div class="m-drawer">
         <div class="m-drawer__header">
           <div class="m-drawer__title">{{ t('timeline.mobile.actionInfo.title') }}</div>
@@ -3445,18 +3434,9 @@ async function doImport() {
           </div>
         </div>
       </div>
-    </el-drawer>
+    </EaDrawer>
 
-    <el-drawer
-      v-model="loadoutOpen"
-      direction="btt"
-      size="85%"
-      :with-header="false"
-      :append-to-body="true"
-      :lock-scroll="false"
-      :close-on-click-modal="false"
-      class="mobile-loadout-drawer"
-    >
+    <EaDrawer v-model="loadoutOpen" size="85%" :close-on-click-modal="false">
       <div class="m-drawer">
         <div class="m-drawer__header">
           <div class="m-drawer__title">{{ t('timeline.mobile.loadout.title') }}</div>
@@ -3652,7 +3632,7 @@ async function doImport() {
           </div>
         </div>
       </div>
-    </el-drawer>
+    </EaDrawer>
 
     <MobileSkillLibraryDrawer
       v-model="skillLibraryOpen"
@@ -4098,15 +4078,15 @@ async function doImport() {
   padding: 0;
 }
 
-.mobile-locale__btn.ea-button.is-active,
-.mobile-appearance-btn.ea-button.is-active {
+.mobile-locale__btn.ea-button[aria-pressed='true'],
+.mobile-appearance-btn.ea-button[aria-pressed='true'] {
   border-color: color-mix(in srgb, var(--ea-gold) 50%, transparent);
   background: color-mix(in srgb, var(--ea-gold) 10%, transparent);
   color: #ffe38a;
 }
 
-:global(html[data-theme='light'] .mobile-locale__btn.ea-button.is-active),
-:global(html[data-theme='light'] .mobile-appearance-btn.ea-button.is-active) {
+:global(html[data-theme='light'] .mobile-locale__btn.ea-button[aria-pressed='true']),
+:global(html[data-theme='light'] .mobile-appearance-btn.ea-button[aria-pressed='true']) {
   border-color: rgba(180, 140, 0, 0.55);
   background: rgba(180, 140, 0, 0.12);
   color: var(--ea-gold);
@@ -4187,20 +4167,6 @@ async function doImport() {
 :global(.mobile-scenario-popper .el-select-dropdown__item.selected) {
   color: var(--ea-gold) !important;
   background-color: var(--ea-select-hover-bg) !important;
-}
-
-:global(.mobile-more-popper.el-popover.el-popper) {
-  padding: 12px;
-  background: var(--ea-popover-bg);
-  border: 1px solid var(--ea-border);
-  border-radius: 0;
-  color: var(--ea-fg-secondary);
-  box-shadow: 0 10px 28px var(--ea-shadow-strong);
-}
-
-:global(.mobile-more-popper .el-popper__arrow::before) {
-  background: var(--ea-popover-bg);
-  border-color: var(--ea-border);
 }
 
 .mobile-scroll {
@@ -5129,17 +5095,6 @@ async function doImport() {
   }
 }
 
-:global(.mobile-loadout-drawer),
-:global(.mobile-actioninfo-drawer) {
-  background: var(--ea-panel) !important;
-}
-
-:global(.mobile-loadout-drawer .el-drawer__body),
-:global(.mobile-actioninfo-drawer .el-drawer__body) {
-  padding: 0 !important;
-  background: var(--ea-panel) !important;
-}
-
 .m-drawer {
   padding: 0;
   box-sizing: border-box;
@@ -5530,6 +5485,7 @@ async function doImport() {
 }
 
 .loadout-header {
+  height: auto;
   margin-bottom: 14px;
 }
 
@@ -5629,6 +5585,7 @@ async function doImport() {
 
 .loadout-item {
   display: flex;
+  height: auto;
   align-items: flex-start;
   gap: 12px;
   padding: 12px;

@@ -242,7 +242,7 @@ function setEnemyLevel(level) {
               :key="`enemy_level_${level}`"
               type="button"
               class="enemy-level-btn"
-              :class="{ 'is-active': store.activeEnemyLevel === level }"
+              :pressed="store.activeEnemyLevel === level"
               @click="setEnemyLevel(level)"
             >
               {{ level }}

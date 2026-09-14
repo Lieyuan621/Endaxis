@@ -1259,10 +1259,6 @@ function handleStartConnection(id, type = null) {
 .tick-col.full-width {
   flex: 1;
 }
-:deep(.el-select-dropdown__item) {
-  font-size: 11px;
-}
-
 /* Connection Cards - Optimized */
 .connection-header-group {
   display: flex;

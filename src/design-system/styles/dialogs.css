@@ -19,6 +19,33 @@
   letter-spacing: 0.02em;
 }
 
+:is(.ea-dialog .el-dialog__headerbtn, .ea-dialog-close-button.ea-button) {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ea-control-radius);
+  background: transparent;
+  color: var(--ea-dialog-hint, var(--ea-text-muted, var(--ea-icon-muted)));
+  box-shadow: none;
+}
+
+.ea-dialog .el-dialog__headerbtn {
+  top: 8px;
+  right: 8px;
+}
+
+.ea-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: inherit;
+  font-size: 18px;
+  transition: color var(--ea-control-transition);
+}
+
+:is(.ea-dialog .el-dialog__headerbtn, .ea-dialog-close-button.ea-button):focus-visible {
+  outline: none;
+  box-shadow: var(--ea-focus-ring);
+}
+
 .ea-dialog .el-dialog__body {
   padding: var(--ea-dialog-padding-y) var(--ea-dialog-padding-x);
   color: var(--ea-dialog-body);
@@ -54,6 +81,28 @@
 
 .ea-dialog--busy {
   cursor: progress;
+}
+
+.ea-drawer.el-drawer {
+  background: var(--ea-panel) !important;
+}
+
+.ea-drawer .el-drawer__body {
+  padding: 0 !important;
+  background: var(--ea-panel) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.ea-dialog .el-dialog__headerbtn, .ea-dialog-close-button.ea-button):hover {
+    border-color: transparent;
+    background: transparent;
+    color: var(--ea-gold);
+    box-shadow: none;
+  }
+
+  .ea-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+    color: inherit;
+  }
 }
 
 @media (max-width: 768px) {
