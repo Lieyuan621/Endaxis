@@ -39,6 +39,7 @@ interface ArmoryStoreLike {
 interface PersistenceDeps {
   tracks: Ref<Track[]>;
   connections: Ref<Connection[]>;
+  forcedCritHitKeys: Ref<string[]>;
   characterOverrides: Ref<Record<string, unknown>>;
   weaponOverrides: Ref<Record<string, unknown>>;
   equipmentCategoryOverrides: Ref<Record<string, unknown>>;
@@ -94,6 +95,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
   const {
     tracks,
     connections,
+    forcedCritHitKeys,
     characterOverrides,
     weaponOverrides,
     equipmentCategoryOverrides,
@@ -177,6 +179,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
       [
         tracks,
         connections,
+        forcedCritHitKeys,
         characterOverrides,
         weaponOverrides,
         equipmentCategoryOverrides,
@@ -206,6 +209,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
       ([
         newTracks,
         newConns,
+        newForcedCritHitKeys,
         newOverrides,
         newWeaponOverrides,
         newEquipmentCatOverrides,
@@ -247,6 +251,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
             currentSc.data = {
               tracks: newTracks,
               connections: newConns,
+              forcedCritHitKeys: newForcedCritHitKeys,
               operators: toRaw(newOperators),
               weapons: toRaw(newWeapons),
               gears: toRaw(newGears),
@@ -334,6 +339,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
           restoreArmoryFromSnapshot(null);
           tracks.value = createDefaultTracks();
           connections.value = [];
+          forcedCritHitKeys.value = [];
           characterOverrides.value = {};
           weaponOverrides.value = {};
           equipmentCategoryOverrides.value = {};
@@ -373,6 +379,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     gearStore.clearAll();
     tracks.value = createDefaultTracks();
     connections.value = [];
+    forcedCritHitKeys.value = [];
     characterOverrides.value = {};
     weaponOverrides.value = {};
     equipmentCategoryOverrides.value = {};
@@ -447,6 +454,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
       currentSc.data = {
         tracks: tracks.value,
         connections: connections.value,
+        forcedCritHitKeys: forcedCritHitKeys.value,
         operators: toRaw(operatorStore.operators),
         weapons: toRaw(weaponStore.weapons),
         gears: toRaw(gearStore.gears),
@@ -576,6 +584,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
         } else {
           tracks.value = createDefaultTracks();
           connections.value = [];
+          forcedCritHitKeys.value = [];
           characterOverrides.value = {};
           weaponOverrides.value = {};
           cycleBoundaries.value = [];

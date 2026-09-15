@@ -59,6 +59,8 @@ interface LmdiParams {
   staggerMult: number;
   staggerSources: Record<string, number> | undefined;
   finisherMult: number;
+  /** Scenario override: the hit is evaluated at 100% critical rate. */
+  forceCrit?: boolean;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -113,6 +115,7 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
     staggerMult,
     staggerSources,
     finisherMult,
+    forceCrit = false,
   } = params;
 
   const actualDamage = actualBreakdown.expectedDamage;
@@ -158,6 +161,7 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
     ...selfMods,
   };
   applyConsumedStatEffects(selfStats, hit.consumedStatEffects, selfOpStatus);
+  if (forceCrit) selfStats.critRate = 1;
 
   const selfElementalSusc =
     element && selfEnemyStatus.elementalSusceptibility?.[element]
@@ -252,7 +256,7 @@ export function computeLmdiContributions(params: LmdiParams): LmdiResult {
   factors.push({
     actual: actualBreakdown.critMult,
     self: selfBreakdown.critMult,
-    sources: groupExternalByStatCategory(externalOperatorMods, 'crit'),
+    sources: groupExternalByStatCategory(externalOperatorMods, forceCrit ? 'critDmg' : 'crit'),
   });
 
   // (d) ampMult = 1 + ampBonus
@@ -405,6 +409,8 @@ interface ReactionLmdiParams {
   finisherMult: number;
   /** When true, all reaction debuff credit goes to the applier — skip the stack-provider split for factor (j). */
   creditToApplier?: boolean;
+  /** Scenario override: the crit-eligible reaction is evaluated at 100% critical rate. */
+  forceCrit?: boolean;
 }
 
 /**
@@ -488,7 +494,7 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
     {
       attack: selfOpStatus.attack,
       multiplier: hit.multiplier,
-      critRate: isCombustionDot ? 0 : selfOpStatus.critRate,
+      critRate: isCombustionDot ? 0 : params.forceCrit ? 1 : selfOpStatus.critRate,
       critDmg: isCombustionDot ? 0 : selfOpStatus.critDmg,
       dmgBonus: selfMods.dmgBonus,
       dmgBonusExternalMult: selfMods.dmgBonusExternalMult,
@@ -563,7 +569,10 @@ export function computeReactionLmdiContributions(params: ReactionLmdiParams): Lm
   factors.push({
     actual: actualStandardBreakdown.critMult,
     self: selfStandardBreakdown.critMult,
-    sources: groupExternalByStatCategory(externalOperatorMods, 'crit'),
+    sources: groupExternalByStatCategory(
+      externalOperatorMods,
+      params.forceCrit ? 'critDmg' : 'crit',
+    ),
   });
 
   // (d) ampMult

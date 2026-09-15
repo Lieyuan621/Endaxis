@@ -24,7 +24,11 @@ import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resol
 import type { BaseStatValues } from '@/data/stats/types';
 import type { Effect, TriggerEffect } from '@/data/types';
 import type { GearInstance, OperatorInstance, TeamInstance, WeaponInstance } from '@/types';
-import type { EnemyEffectExpireEvent, EnemyStatusApplyEvent } from './engine/types';
+import type {
+  EnemyEffectExpireEvent,
+  EnemyStatusApplyEvent,
+  OperatorEffectApplyEvent,
+} from './engine/types';
 import { CRITERION_MECHANISMS } from '@/data/contingencyContracts/criteriaEffects';
 import { resetEnemyStaggerCarryover } from '@/simulation/state/EnemyState';
 import {
@@ -120,6 +124,7 @@ function runScenario(
     lmdiAttributionMode?: 'stacks' | 'applier';
     systemConstants?: Record<string, any>;
     enemyResistance?: import('@/data/enemyResistance').EnemyResistance;
+    forcedCritHitKeys?: Set<string>;
   } = {},
 ) {
   const { timeline, teamConfig, enemyConfig, actors } = compileScenario(createScenario(tracks), {
@@ -133,6 +138,7 @@ function runScenario(
     enemyDef: 100,
     lmdiAttributionMode: options.lmdiAttributionMode,
     enemyResistance: options.enemyResistance,
+    forcedCritHitKeys: options.forcedCritHitKeys,
   });
 }
 
@@ -265,6 +271,283 @@ function resolveOperatorSheetHits(
   const rawEntries = extractRawEntries({ segments: [segment] }, 0);
   return resolveHitsFromSheet([], rawEntries, levelIndex, { preserveCondition: true });
 }
+
+describe('damage hit identity and forced crit', () => {
+  it('keeps direct and generated hit keys stable when an action moves', () => {
+    const runAt = (startTime: number) => {
+      const action = createAction('keyed-hit', 'battleSkill', {
+        instanceId: 'keyed-hit-inst',
+        startTime,
+        hits: [
+          {
+            offset: 0,
+            multiplier: 100,
+            spRecovery: 0,
+            spReturn: 0,
+            stagger: 0,
+            effects: [
+              {
+                id: 'keyed-followup',
+                kind: 'damageHit',
+                element: 'physical',
+                multiplier: 50,
+              } as Effect,
+            ],
+          },
+        ],
+      });
+
+      return runScenario([createTrack('alpha', [action])])
+        .simLog.filter(entry => entry.type === 'DAMAGE_HIT')
+        .map(entry => entry.payload.hitData._hitKey);
+    };
+
+    const originalKeys = runAt(1);
+    const shiftedKeys = runAt(8);
+
+    expect(originalKeys).toHaveLength(2);
+    expect(new Set(originalKeys).size).toBe(2);
+    expect(originalKeys.every(Boolean)).toBe(true);
+    expect(shiftedKeys).toEqual(originalKeys);
+  });
+
+  it('recalculates a generated hit as a guaranteed critical hit', () => {
+    const action = createAction('forced-generated', 'battleSkill', {
+      instanceId: 'forced-generated-inst',
+      hits: [
+        {
+          offset: 0,
+          multiplier: 0,
+          spRecovery: 0,
+          spReturn: 0,
+          stagger: 0,
+          effects: [
+            {
+              id: 'forced-generated-followup',
+              kind: 'damageHit',
+              element: 'physical',
+              multiplier: 100,
+            } as Effect,
+          ],
+        },
+      ],
+    });
+    const tracks = [createTrack('alpha', [action])];
+    const baseline = runScenario(tracks);
+    const baselineHit = baseline.simLog
+      .filter(entry => entry.type === 'DAMAGE_HIT')
+      .map(entry => entry.payload.hitData)
+      .find(hit => hit.triggered);
+
+    expect(baselineHit?._hitKey).toBeTruthy();
+    expect(baselineHit?._expectedDamage).toBeDefined();
+    expect(baselineHit?._damageBreakdown?.critDamage).toBeDefined();
+    expect(baselineHit!._expectedDamage!).toBeLessThan(baselineHit!._damageBreakdown!.critDamage);
+
+    const forced = runScenario(tracks, undefined, {
+      forcedCritHitKeys: new Set([baselineHit!._hitKey!]),
+    });
+    const forcedHit = forced.simLog
+      .filter(entry => entry.type === 'DAMAGE_HIT')
+      .map(entry => entry.payload.hitData)
+      .find(hit => hit.triggered);
+
+    expect(forcedHit?._hitKey).toBe(baselineHit?._hitKey);
+    expect(forcedHit?._forcedCrit).toBe(true);
+    expect(forcedHit?._damageBreakdown?.critRate).toBe(1);
+    expect(forcedHit?._expectedDamage).toBe(forcedHit?._damageBreakdown?.critDamage);
+  });
+
+  it('does not force a hit whose damage definition disables critical hits', () => {
+    const action = createAction('non-critical', 'battleSkill', {
+      instanceId: 'non-critical-inst',
+      hits: [
+        {
+          offset: 0,
+          multiplier: 100,
+          spRecovery: 0,
+          spReturn: 0,
+          stagger: 0,
+          _canCrit: false,
+        } as any,
+      ],
+    });
+    const tracks = [createTrack('alpha', [action])];
+    const baselineHit = runScenario(tracks).simLog.find(entry => entry.type === 'DAMAGE_HIT')
+      ?.payload.hitData;
+    const forcedHit = runScenario(tracks, undefined, {
+      forcedCritHitKeys: new Set([baselineHit!._hitKey!]),
+    }).simLog.find(entry => entry.type === 'DAMAGE_HIT')?.payload.hitData;
+
+    expect(forcedHit?._forcedCrit).not.toBe(true);
+    expect(forcedHit?._damageBreakdown?.critRate).toBe(0);
+    expect(forcedHit?._expectedDamage).toBe(baselineHit?._expectedDamage);
+  });
+
+  it('forces a generated arts-reaction hit by its stable key', () => {
+    const tracks = [
+      createTrack('alpha', [
+        createAction('heat-primer', 'battleSkill', {
+          startTime: 0,
+          element: 'heat',
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: 'infliction', element: 'heat', stacks: 2 } as Effect],
+            },
+          ],
+        }),
+      ]),
+      createTrack('beta', [
+        createAction('electric-trigger', 'battleSkill', {
+          startTime: 1,
+          element: 'electric',
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: 'infliction', element: 'electric', stacks: 1 } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const findReaction = (result: ReturnType<typeof runScenario>) =>
+      result.simLog
+        .filter(entry => entry.type === 'DAMAGE_HIT')
+        .map(entry => entry.payload.hitData)
+        .find(hit => hit._reactionMeta?.reactionType === 'electrification');
+    const baselineHit = findReaction(runScenario(tracks));
+    const forcedHit = findReaction(
+      runScenario(tracks, undefined, {
+        forcedCritHitKeys: new Set([baselineHit!._hitKey!]),
+      }),
+    );
+
+    expect(baselineHit?._hitKey).toBeTruthy();
+    expect(forcedHit?._hitKey).toBe(baselineHit?._hitKey);
+    expect(forcedHit?._forcedCrit).toBe(true);
+    expect(forcedHit?._damageBreakdown?.critRate).toBe(1);
+    expect(forcedHit?._expectedDamage).toBe(forcedHit?._damageBreakdown?.critDamage);
+  });
+
+  it('keeps combustion DoT unforceable even when its stable key is selected', () => {
+    const tracks = [
+      createTrack('alpha', [
+        createAction('nature-primer', 'battleSkill', {
+          startTime: 0,
+          element: 'nature',
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: 'infliction', element: 'nature', stacks: 2 } as Effect],
+            },
+          ],
+        }),
+      ]),
+      createTrack('beta', [
+        createAction('heat-trigger', 'battleSkill', {
+          startTime: 1,
+          element: 'heat',
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [{ kind: 'infliction', element: 'heat', stacks: 1 } as Effect],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const findFirstDot = (result: ReturnType<typeof runScenario>) =>
+      result.simLog
+        .filter(entry => entry.type === 'DAMAGE_HIT')
+        .map(entry => entry.payload.hitData)
+        .find(hit => hit._reactionMeta?.reactionType === 'combustion_dot');
+    const baselineHit = findFirstDot(runScenario(tracks));
+    const forcedHit = findFirstDot(
+      runScenario(tracks, undefined, {
+        forcedCritHitKeys: new Set([baselineHit!._hitKey!]),
+      }),
+    );
+
+    expect(baselineHit?._hitKey).toBeTruthy();
+    expect(forcedHit?._forcedCrit).not.toBe(true);
+    expect(forcedHit?._damageBreakdown?.critRate).toBe(0);
+    expect(forcedHit?._expectedDamage).toBe(baselineHit?._expectedDamage);
+  });
+
+  it('applies the enemy damage cap after a hit is forced to crit', () => {
+    const tracks = [
+      createTrack('alpha', [
+        createAction('capped-crit', 'battleSkill', {
+          hits: [{ offset: 0, multiplier: 1000, spRecovery: 0, spReturn: 0, stagger: 0 }],
+        }),
+      ]),
+    ];
+    const systemConstants = {
+      enemyHp: 1000,
+      enemyDamageCapWindowSeconds: 0.1,
+      enemyDamageCapRatio: 0.25,
+    };
+    const baselineHit = runScenario(tracks, undefined, { systemConstants }).simLog.find(
+      entry => entry.type === 'DAMAGE_HIT',
+    )?.payload.hitData;
+    const forcedHit = runScenario(tracks, undefined, {
+      systemConstants,
+      forcedCritHitKeys: new Set([baselineHit!._hitKey!]),
+    }).simLog.find(entry => entry.type === 'DAMAGE_HIT')?.payload.hitData;
+
+    expect(forcedHit?._forcedCrit).toBe(true);
+    expect(forcedHit?._expectedDamage).toBe(250);
+    expect(forcedHit?._damageBreakdown?.critDamage).toBe(250);
+    expect(forcedHit?._enemyDamageCap?.capped).toBe(true);
+  });
+
+  it('keeps forced crit at exactly 100% after consumed one-time crit-rate effects', () => {
+    const action = createAction('consumed-crit-rate', 'battleSkill', {
+      hits: [
+        {
+          offset: 0,
+          multiplier: 100,
+          spRecovery: 0,
+          spReturn: 0,
+          stagger: 0,
+          consumedStatEffects: [
+            {
+              id: 'one-time-crit-rate',
+              stat: { modifier: 'critRate' },
+              value: 30,
+            },
+          ],
+        } as any,
+      ],
+    });
+    const tracks = [createTrack('alpha', [action])];
+    const baselineHit = runScenario(tracks).simLog.find(entry => entry.type === 'DAMAGE_HIT')
+      ?.payload.hitData;
+    const forcedHit = runScenario(tracks, undefined, {
+      forcedCritHitKeys: new Set([baselineHit!._hitKey!]),
+    }).simLog.find(entry => entry.type === 'DAMAGE_HIT')?.payload.hitData;
+
+    expect(forcedHit?._damageBreakdown?.critRateRaw).toBe(1);
+    expect(forcedHit?._damageBreakdown?.critRateSources).toBeUndefined();
+  });
+});
 
 describe('optimizer-native runtime parity', () => {
   it('fully excludes disabled actions and restores them when re-enabled', () => {
@@ -1577,7 +1860,7 @@ describe('optimizer-native runtime parity', () => {
     const resourceIcons = Object.fromEntries(
       result.operatorLog
         .filter(
-          entry =>
+          (entry): entry is OperatorEffectApplyEvent =>
             entry.type === 'OPERATOR_EFFECT_APPLY' &&
             (entry.id === 'typhoeus-sign' || entry.id === 'typhoeus-hunting-arrow'),
         )

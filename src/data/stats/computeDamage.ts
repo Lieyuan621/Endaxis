@@ -679,6 +679,7 @@ export function computeHitDamageWithBreakdown(
     consumedStacks?: Record<string, number>;
     consumedStatEffects?: ConsumedStatEffect[];
     _multiplierDetail?: SkillMultiplierDetail;
+    _forcedCrit?: boolean;
   },
   operatorStatus: OperatorStatus,
   enemyDef: number,
@@ -714,6 +715,10 @@ export function computeHitDamageWithBreakdown(
   };
 
   applyConsumedStatEffects(stats, hit.consumedStatEffects, operatorStatus);
+  if (hit._forcedCrit) {
+    stats.critRate = 1;
+    stats.critRateSources = [];
+  }
 
   const elementalSusc =
     element && enemyStatus?.elementalSusceptibility?.[element]

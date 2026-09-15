@@ -1308,7 +1308,10 @@ const staggerRatio = computed(() => {
                     <div
                       v-if="it.isDamageHit"
                       class="enemy-damage-diamond"
-                      :class="{ 'link-buffed': it.hitData?.consumedStacks?.link > 0 }"
+                      :class="{
+                        'link-buffed': it.hitData?.consumedStacks?.link > 0,
+                        'is-forced-crit': store.isHitForcedCrit(it.hitData),
+                      }"
                     ></div>
                     <div
                       v-else-if="!it.hideIcon"
@@ -2104,6 +2107,12 @@ const staggerRatio = computed(() => {
   background-color: #64c8ff;
   border-color: #3a9fd4;
   box-shadow: 0 0 6px 2px rgba(100, 200, 255, 0.6);
+}
+
+.enemy-damage-diamond.is-forced-crit {
+  background-color: #ff6b6b;
+  border-color: #ffd166;
+  box-shadow: 0 0 8px rgba(255, 209, 102, 0.9);
 }
 
 .anomaly-icon-box {

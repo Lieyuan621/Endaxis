@@ -31,6 +31,7 @@ interface SimulationDeps {
   controlledOperatorSegments: ComputedRef<any>;
   comboCooldownEvents: Ref<ComboCooldownEvent[]>;
   comboCooldownByActorId: ComputedRef<Record<string, number>>;
+  forcedCritHitKeySet: ComputedRef<ReadonlySet<string>>;
   viewDuration: ComputedRef<number>;
   durationBarColor: Ref<DurationBarColorPrefs>;
 }
@@ -54,6 +55,7 @@ export function useTimelineSimulation(deps: SimulationDeps) {
     controlledOperatorSegments,
     comboCooldownEvents,
     comboCooldownByActorId,
+    forcedCritHitKeySet,
     viewDuration,
     durationBarColor,
   } = deps;
@@ -104,6 +106,7 @@ export function useTimelineSimulation(deps: SimulationDeps) {
         controlledOperatorSegments: scenario.controlledOperatorSegments,
         comboCooldownEvents: comboCooldownEvents.value,
         comboCooldownByActorId: comboCooldownByActorId.value,
+        forcedCritHitKeys: forcedCritHitKeySet.value,
       },
     );
   });

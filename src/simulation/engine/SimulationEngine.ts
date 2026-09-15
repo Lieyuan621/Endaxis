@@ -62,6 +62,8 @@ export class SimulationEngine {
   endlineTime?: number;
   /** LMDI attribution mode for reaction debuff contributions. */
   lmdiAttributionMode: 'stacks' | 'applier' = 'applier';
+  /** Scenario-local hit identities that resolve as guaranteed critical hits. */
+  forcedCritHitKeys: ReadonlySet<string> = new Set();
   /** Controlled-operator timeline (time-ascending segments). Empty = nobody controlled. */
   controlledOperatorSegments: ControlSegment[] = [];
   private enemyDamageCapWindows = new Map<number, number>();
@@ -464,6 +466,7 @@ export class SimulationEngine {
       enemyResistance: this.enemyResistance,
       applyEnemyDamageCap: this.applyEnemyDamageCap.bind(this),
       lmdiAttributionMode: this.lmdiAttributionMode,
+      forcedCritHitKeys: this.forcedCritHitKeys,
       getControlledOperatorAt: (time: number) => this.getControlledOperatorAt(time),
     };
 

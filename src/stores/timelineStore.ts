@@ -564,6 +564,8 @@ export const useTimelineStore = defineStore('timeline', () => {
 
   const tracks = ref(createDefaultTracks());
   const connections = ref<Connection[]>([]);
+  const forcedCritHitKeys = ref<string[]>([]);
+  const forcedCritHitKeySet = computed<ReadonlySet<string>>(() => new Set(forcedCritHitKeys.value));
   const characterOverrides = ref<Record<string, unknown>>({});
   const weaponOverrides = ref<Record<string, unknown>>({});
   const equipmentCategoryOverrides = ref<Record<string, unknown>>({});
@@ -1439,6 +1441,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return JSON.stringify({
       tracks: tracks.value,
       connections: connections.value,
+      forcedCritHitKeys: forcedCritHitKeys.value,
       characterOverrides: characterOverrides.value,
       weaponOverrides: weaponOverrides.value,
       equipmentCategoryOverrides: equipmentCategoryOverrides.value,
@@ -1530,6 +1533,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     const armoryChanged = restoreArmoryFromSnapshot(snapshot);
     tracks.value = normalizeTracks(snapshot.tracks);
     connections.value = normalizeConnections(snapshot.connections);
+    forcedCritHitKeys.value = Array.isArray(snapshot.forcedCritHitKeys)
+      ? [
+          ...new Set(
+            snapshot.forcedCritHitKeys.filter((key): key is string => typeof key === 'string'),
+          ),
+        ]
+      : [];
     characterOverrides.value = snapshot.characterOverrides || {};
     weaponOverrides.value = snapshot.weaponOverrides || {};
     equipmentCategoryOverrides.value = snapshot.equipmentCategoryOverrides || {};
@@ -1615,6 +1625,13 @@ export const useTimelineStore = defineStore('timeline', () => {
     const incomingTracks = incoming.tracks || createDefaultTracks();
     tracks.value = normalizeTracks(incomingTracks);
     connections.value = normalizeConnections(incoming.connections || []);
+    forcedCritHitKeys.value = Array.isArray(incoming.forcedCritHitKeys)
+      ? [
+          ...new Set(
+            incoming.forcedCritHitKeys.filter((key): key is string => typeof key === 'string'),
+          ),
+        ]
+      : [];
     characterOverrides.value = incoming.characterOverrides || {};
     weaponOverrides.value = incoming.weaponOverrides || {};
     equipmentCategoryOverrides.value = incoming.equipmentCategoryOverrides || {};
@@ -1678,6 +1695,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     return {
       tracks: resetTracks,
       connections: [],
+      forcedCritHitKeys: [],
       characterOverrides: {},
       weaponOverrides: {},
       equipmentCategoryOverrides: {},
@@ -1870,6 +1888,7 @@ export const useTimelineStore = defineStore('timeline', () => {
         { id: null, actions: [] },
       ],
       connections: [],
+      forcedCritHitKeys: [],
       characterOverrides: {},
       weaponOverrides: {},
       equipmentCategoryOverrides: {},
@@ -5506,31 +5525,51 @@ export const useTimelineStore = defineStore('timeline', () => {
     }
   }
 
-  function isHitForcedCrit(actionInstanceId: string, hitIndex: number) {
-    if (!actionInstanceId || hitIndex == null) return false;
-    const info = getActionById(actionInstanceId);
-    return Array.isArray(info?.node?.forcedCritHits) && info.node.forcedCritHits.includes(hitIndex);
+  function isHitForcedCrit(hit: Record<string, any> | null | undefined) {
+    if (!hit || hit._canCrit === false) return false;
+    if (typeof hit._hitKey === 'string' && forcedCritHitKeySet.value.has(hit._hitKey)) {
+      return true;
+    }
+    if (!hit._actionInstanceId || hit._hitIndex == null) return false;
+    const info = getActionById(hit._actionInstanceId);
+    return (
+      Array.isArray(info?.node?.forcedCritHits) && info.node.forcedCritHits.includes(hit._hitIndex)
+    );
   }
 
-  function toggleHitForcedCrit(actionInstanceId: string, hitIndex: number) {
-    if (!actionInstanceId || hitIndex == null) return;
-    const info = getActionById(actionInstanceId);
-    if (!info?.node) return;
+  function toggleHitForcedCrit(hit: Record<string, any> | null | undefined) {
+    const hitKey = typeof hit?._hitKey === 'string' ? hit._hitKey : '';
+    if (
+      !hitKey ||
+      hit?._canCrit === false ||
+      !hit?._damageBreakdown ||
+      Number(hit._damageBreakdown.critDmg) === 0
+    ) {
+      return false;
+    }
 
-    const list = Array.isArray(info.node.forcedCritHits) ? info.node.forcedCritHits : [];
-    if (list.includes(hitIndex)) {
-      const next = list.filter((item: number) => item !== hitIndex);
-      if (next.length) info.node.forcedCritHits = next;
-      else delete info.node.forcedCritHits;
+    const wasForced = isHitForcedCrit(hit);
+    if (wasForced) {
+      forcedCritHitKeys.value = forcedCritHitKeys.value.filter(key => key !== hitKey);
     } else {
-      info.node.forcedCritHits = [...list, hitIndex];
+      forcedCritHitKeys.value = [...forcedCritHitKeys.value, hitKey];
+    }
+
+    if (hit._actionInstanceId && hit._hitIndex != null) {
+      const info = getActionById(hit._actionInstanceId);
+      if (info?.node && Array.isArray(info.node.forcedCritHits)) {
+        const next = info.node.forcedCritHits.filter((item: number) => item !== hit._hitIndex);
+        if (next.length) info.node.forcedCritHits = next;
+        else delete info.node.forcedCritHits;
+      }
     }
     commitState();
+    return true;
   }
 
   function getHitDisplayDamage(hit: Record<string, any> | null | undefined) {
     if (!hit) return 0;
-    if (isHitForcedCrit(hit._actionInstanceId, hit._hitIndex) && hit._damageBreakdown) {
+    if (isHitForcedCrit(hit) && hit._damageBreakdown) {
       return hit._damageBreakdown.critDamage;
     }
     return hit._expectedDamage ?? hit._damageBreakdown?.expectedDamage ?? 0;
@@ -5558,6 +5597,7 @@ export const useTimelineStore = defineStore('timeline', () => {
     controlledOperatorSegments,
     comboCooldownEvents,
     comboCooldownByActorId,
+    forcedCritHitKeySet,
     viewDuration,
     durationBarColor,
   });
@@ -5885,6 +5925,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   const persistence = useTimelinePersistence({
     tracks,
     connections,
+    forcedCritHitKeys,
     characterOverrides,
     weaponOverrides,
     equipmentCategoryOverrides,

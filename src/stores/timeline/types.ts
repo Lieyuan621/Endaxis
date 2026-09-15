@@ -140,6 +140,8 @@ export interface ScenarioData {
 export interface ScenarioSnapshot {
   tracks?: Track[];
   connections?: Connection[];
+  /** Stable identities of damage hits that should be simulated as guaranteed critical hits. */
+  forcedCritHitKeys?: string[];
   cycleBoundaries?: CycleBoundary[];
   switchEvents?: SwitchEvent[];
   comboCooldownEvents?: ComboCooldownEvent[];

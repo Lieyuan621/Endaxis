@@ -92,6 +92,8 @@ export interface SimulationContext {
   };
   /** LMDI attribution mode for reaction debuff contributions. */
   lmdiAttributionMode: 'stacks' | 'applier';
+  /** Scenario-local hit identities that resolve as guaranteed critical hits. */
+  forcedCritHitKeys: ReadonlySet<string>;
   /** Operator (track id) controlled at the given time, or null if none. Derived from switch events. */
   getControlledOperatorAt: (time: number) => string | null;
 }

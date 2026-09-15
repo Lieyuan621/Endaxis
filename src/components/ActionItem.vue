@@ -822,10 +822,7 @@ function handleActionDragStart(startPos, port) {
           :class="{
             'is-triggered': tick.data?.triggered,
             'is-link-buffed': tick.linkBuffed,
-            'is-forced-crit': store.isHitForcedCrit(
-              tick.data?._actionInstanceId,
-              tick.data?._hitIndex,
-            ),
+            'is-forced-crit': store.isHitForcedCrit(tick.data),
           }"
           :title="getDamageHitTitle(tick)"
           @mousedown.stop="onDamageHitClick(tick)"

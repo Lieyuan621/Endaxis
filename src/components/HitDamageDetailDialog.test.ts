@@ -11,10 +11,18 @@ import { computeStats } from '@/data/stats/computeStats';
 
 // This read-only render does not edit timeline state or exercise force-crit controls.
 vi.mock('@/stores/timelineStore', () => ({
-  useTimelineStore: () => ({ isHitForcedCrit: () => false }),
+  useTimelineStore: () => ({
+    isHitForcedCrit: () => false,
+    toggleHitForcedCrit: () => false,
+  }),
 }));
 
-async function renderDetail(locale: string, defenseBased: boolean, critRateScale?: number) {
+async function renderDetail(
+  locale: string,
+  defenseBased: boolean,
+  critRateScale?: number,
+  hitData: Record<string, unknown> = {},
+) {
   const status = computeStats(
     {
       level: 60,
@@ -42,7 +50,7 @@ async function renderDetail(locale: string, defenseBased: boolean, critRateScale
   const app = createSSRApp(HitDamageDetailDialog, {
     visible: true,
     breakdown,
-    hitData: { _critRateScale: critRateScale },
+    hitData: { _critRateScale: critRateScale, ...hitData },
   });
   app.provide(ID_INJECTION_KEY, { prefix: 1030, current: 0 });
   app.provide(ZINDEX_INJECTION_KEY, { current: 0 });
@@ -55,14 +63,14 @@ async function renderDetail(locale: string, defenseBased: boolean, critRateScale
         setup:
           (_, { slots }) =>
           () =>
-            h('div', slots.default?.()),
+            h('div', [slots.default?.(), slots.footer?.()]),
       }),
     );
   }
   return renderToString(app);
 }
 
-describe('HitDamageDetailDialog damage base', () => {
+describe('HitDamageDetailDialog', () => {
   it('does not reverse-scale the flat term when displaying a crit-scaled multiplier', async () => {
     const html = await renderDetail('en', true, 0.5);
     expect(html).toContain('800');
@@ -91,5 +99,13 @@ describe('HitDamageDetailDialog damage base', () => {
     expect(html).toContain('Attack');
     expect(html).not.toContain('Flat Base Damage');
     expect(html).toContain('5,000');
+  });
+
+  it('offers force crit for a keyed generated hit even at zero natural crit rate', async () => {
+    const html = await renderDetail('zh-CN', false, undefined, {
+      _hitKey: 'v1:source:enemy:generated:status-damage:0',
+    });
+
+    expect(html).toContain('强制暴击');
   });
 });

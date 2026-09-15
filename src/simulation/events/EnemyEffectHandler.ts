@@ -206,6 +206,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
             time,
             triggered: true,
             triggeredBy: `reaction:${reactionType}`,
+            _canCrit: reactionType !== 'combustion_dot',
             _reactionMeta: {
               reactionType,
               level,

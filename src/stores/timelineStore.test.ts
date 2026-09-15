@@ -983,6 +983,57 @@ describe('timeline skill library editing', () => {
     expect(store.snapStep).toBeCloseTo(0.1);
   });
 
+  it('persists generated-hit forced crit through history and scenario duplication', () => {
+    const store = useTimelineStore();
+    const hit = {
+      _hitKey: 'v1:track:enemy:origin:burn:hit:0',
+      _canCrit: true,
+      _damageBreakdown: { critDmg: 200, expectedDamage: 120 },
+    } as any;
+
+    store.commitState();
+    expect(store.isHitForcedCrit(hit)).toBe(false);
+    expect(store.toggleHitForcedCrit(hit)).toBe(true);
+    expect(store.isHitForcedCrit(hit)).toBe(true);
+
+    store.undo();
+    expect(store.isHitForcedCrit(hit)).toBe(false);
+    store.redo();
+    expect(store.isHitForcedCrit(hit)).toBe(true);
+
+    const sourceScenarioId = store.activeScenarioId;
+    store.duplicateScenario(sourceScenarioId);
+    expect(store.isHitForcedCrit(hit)).toBe(true);
+
+    store.addScenario();
+    expect(store.isHitForcedCrit(hit)).toBe(false);
+  });
+
+  it('keeps legacy direct-hit forced crit compatible and removes it when toggled off', () => {
+    const store = useTimelineStore();
+    store.tracks[0]!.actions = [
+      {
+        id: 'skill',
+        instanceId: 'action-1',
+        startTime: 1,
+        forcedCritHits: [2],
+      } as any,
+    ];
+    store.commitState();
+    const hit = {
+      _hitKey: 'v1:action:action-1:hit:2',
+      _actionInstanceId: 'action-1',
+      _hitIndex: 2,
+      _canCrit: true,
+      _damageBreakdown: { critDmg: 200, expectedDamage: 120 },
+    } as any;
+
+    expect(store.isHitForcedCrit(hit)).toBe(true);
+    expect(store.toggleHitForcedCrit(hit)).toBe(true);
+    expect(store.isHitForcedCrit(hit)).toBe(false);
+    expect(store.tracks[0]!.actions[0]!.forcedCritHits).toBeUndefined();
+  });
+
   it('resets only the active scenario', () => {
     const store = useTimelineStore();
     const firstScenarioId = store.activeScenarioId;

@@ -136,16 +136,13 @@ const attrContribs = computed(() => {
 
 const canForceCrit = computed(
   () =>
-    props.hitData?._actionInstanceId != null &&
-    props.hitData?._hitIndex != null &&
+    typeof props.hitData?._hitKey === 'string' &&
+    props.hitData?._canCrit !== false &&
     !!props.breakdown &&
-    props.breakdown.critDmg !== 0 &&
-    props.breakdown.critMult !== 1,
+    props.breakdown.critDmg !== 0,
 );
 
-const isForcedCrit = computed(() =>
-  store.isHitForcedCrit(props.hitData?._actionInstanceId, props.hitData?._hitIndex),
-);
+const isForcedCrit = computed(() => store.isHitForcedCrit(props.hitData));
 
 const headlineDamage = computed(() => {
   if (!props.breakdown) return 0;
@@ -153,7 +150,7 @@ const headlineDamage = computed(() => {
 });
 
 function toggleForcedCrit() {
-  store.toggleHitForcedCrit(props.hitData?._actionInstanceId, props.hitData?._hitIndex);
+  store.toggleHitForcedCrit(props.hitData);
 }
 
 const displayMultiplier = computed(() => {

@@ -43,6 +43,7 @@ interface SimulationOptions {
   enemyResistance?: EnemyResistance;
   endlineTime?: number;
   lmdiAttributionMode?: 'stacks' | 'applier';
+  forcedCritHitKeys?: ReadonlySet<string>;
   controlledOperatorSegments?: ControlSegment[];
   comboCooldownEvents?: ComboCooldownEvent[];
   comboCooldownByActorId?: Record<string, number>;
@@ -76,6 +77,9 @@ export function simulate(
   if (options.endlineTime !== undefined) engine.endlineTime = options.endlineTime;
   if (options.lmdiAttributionMode !== undefined) {
     engine.lmdiAttributionMode = options.lmdiAttributionMode;
+  }
+  if (options.forcedCritHitKeys) {
+    engine.forcedCritHitKeys = options.forcedCritHitKeys;
   }
   if (options.controlledOperatorSegments) {
     engine.controlledOperatorSegments = options.controlledOperatorSegments;

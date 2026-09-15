@@ -180,6 +180,10 @@ export interface ResolvedHit extends Hit {
   element?: string;
   _actionInstanceId?: string;
   _hitIndex?: number;
+  /** Stable scenario-local identity used by per-hit outcome overrides. */
+  _hitKey?: string;
+  /** Whether this simulation resolved the hit as a guaranteed critical hit. */
+  _forcedCrit?: boolean;
   consumedStacks?: Record<string, number>;
   consumedStatEffects?: ConsumedStatEffect[];
   _expectedDamage?: number;
@@ -281,6 +285,8 @@ export interface Action {
   hits: Hit[];
   effects?: CompiledEffect[];
   requisites?: SkillRequisite[];
+  /** Legacy per-action force-crit selection retained for saved-project compatibility. */
+  forcedCritHits?: number[];
 
   isLocked?: boolean;
   customBars?: any[];

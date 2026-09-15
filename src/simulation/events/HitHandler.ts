@@ -113,17 +113,53 @@ function beforeDamageEnemyEffects(
 
 export class HitHandler implements EventHandler<HitEvent> {
   private registry?: TriggerRegistry;
+  private generatedHitCounts = new Map<string, number>();
+
   constructor(registry?: TriggerRegistry) {
     this.registry = registry;
   }
 
-  handle(e: HitEvent, ctx: SimulationContext) {
+  private assignHitKey(e: HitEvent, ctx: SimulationContext): void {
     const hit = e.payload.hitData;
+    if (hit._hitKey) return;
+
+    if (hit._actionInstanceId && hit._hitIndex != null) {
+      hit._hitKey = `v1:action:${encodeURIComponent(hit._actionInstanceId)}:hit:${hit._hitIndex}`;
+      return;
+    }
+
+    const actionId = String(e.payload.actionId || '');
+    const scope = ctx.getAction(actionId)
+      ? `action:${encodeURIComponent(actionId)}`
+      : `source:${encodeURIComponent(e.payload.sourceId || 'unknown')}`;
+    const origin = String(
+      hit.triggeredBy || hit._reactionMeta?.reactionType || hit.skillId || 'generated',
+    );
+    const bucket = `${scope}\u0000${origin}`;
+    const occurrence = this.generatedHitCounts.get(bucket) ?? 0;
+    this.generatedHitCounts.set(bucket, occurrence + 1);
+    hit._hitKey = `v1:${scope}:generated:${encodeURIComponent(origin)}:${occurrence}`;
+  }
+
+  handle(e: HitEvent, ctx: SimulationContext) {
+    this.assignHitKey(e, ctx);
+    const hit = e.payload.hitData;
+    const sourceAction = ctx.getAction(e.payload.actionId);
+    const legacyForced =
+      hit._actionInstanceId != null &&
+      hit._hitIndex != null &&
+      Array.isArray(sourceAction?.node?.forcedCritHits) &&
+      sourceAction.node.forcedCritHits.includes(hit._hitIndex);
+    const forceCrit =
+      hit._canCrit !== false &&
+      hit._reactionMeta?.reactionType !== 'combustion_dot' &&
+      ((hit._hitKey != null && ctx.forcedCritHitKeys.has(hit._hitKey)) || legacyForced);
+    if (forceCrit) hit._forcedCrit = true;
+    else delete hit._forcedCrit;
 
     // Stamp consumed one-time stat effects from parent action
-    const parentAction = ctx.getAction(e.payload.actionId);
-    if (parentAction?.consumedStatEffects?.length) {
-      hit.consumedStatEffects = parentAction.consumedStatEffects;
+    if (sourceAction?.consumedStatEffects?.length) {
+      hit.consumedStatEffects = sourceAction.consumedStatEffects;
     }
 
     // Resolve multiplierScaling (attribute + stack based) at hit time.
@@ -358,8 +394,8 @@ export class HitHandler implements EventHandler<HitEvent> {
         attack: operatorStatus.attack,
         multiplier: resolvedMultiplier,
         multiplierDetail,
-        critRate: noCrit ? 0 : operatorStatus.critRate,
-        critRateSources: noCrit ? [] : [...(operatorStatus.critRateSources ?? [])],
+        critRate: noCrit ? 0 : forceCrit ? 1 : operatorStatus.critRate,
+        critRateSources: noCrit || forceCrit ? [] : [...(operatorStatus.critRateSources ?? [])],
         critDmg: noCrit ? 0 : operatorStatus.critDmg,
         critDmgSources: noCrit ? [] : [...(operatorStatus.critDmgSources ?? [])],
         dmgBonus: mods.dmgBonus,
@@ -389,6 +425,10 @@ export class HitHandler implements EventHandler<HitEvent> {
         atkDetail: snapshotAtkDetail(operatorStatus),
       };
       applyConsumedStatEffects(reactionHitParams, hit.consumedStatEffects, operatorStatus);
+      if (forceCrit) {
+        reactionHitParams.critRate = 1;
+        reactionHitParams.critRateSources = [];
+      }
       const breakdown = computeReactionHitDamageWithBreakdown({
         hitParams: reactionHitParams,
         levelCoefficient: levelCoeff,
@@ -453,7 +493,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         {
           attack: operatorStatus.attack,
           multiplier: hit.multiplier!,
-          critRate: noCrit ? 0 : operatorStatus.critRate,
+          critRate: noCrit ? 0 : forceCrit ? 1 : operatorStatus.critRate,
           critDmg: noCrit ? 0 : operatorStatus.critDmg,
           dmgBonus: mods.dmgBonus,
           dmgBonusExternalMult: mods.dmgBonusExternalMult,
@@ -496,6 +536,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         finisherMult,
         damageType,
         creditToApplier,
+        forceCrit,
       });
       hit._lmdiSelf = lmdi.self;
       hit._lmdiExternal = lmdi.external;
@@ -554,7 +595,13 @@ export class HitHandler implements EventHandler<HitEvent> {
               critDmg: 0,
               critDmgSources: [],
             }
-          : operatorStatus;
+          : forceCrit
+            ? {
+                ...operatorStatus,
+                critRate: 1,
+                critRateSources: [],
+              }
+            : operatorStatus;
 
       const breakdown = computeHitDamageWithBreakdown(
         { ...hit, multiplier: resolvedMultiplier, _multiplierDetail: multiplierDetail },
@@ -640,6 +687,7 @@ export class HitHandler implements EventHandler<HitEvent> {
             staggerMult,
             staggerSources: hit._staggerContributions,
             finisherMult,
+            forceCrit,
           });
           hit._lmdiSelf = lmdi.self;
           hit._lmdiExternal = lmdi.external;
