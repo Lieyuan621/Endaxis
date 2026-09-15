@@ -935,6 +935,34 @@ export function dispatchEnemyEffects(
       scheduleConsumption(cond, time, sourceId, ctx, skillType, skillId, actionId);
     const lifecycle = resolveEffectLifecycle(resolved);
     switch (resolved.kind) {
+      case 'burst': {
+        const damageMultiplier = resolved.scaling
+          ? applyResolvedScaling(
+              1,
+              resolved.scaling as ResolvedScalingDef,
+              sourceId,
+              time,
+              ctx,
+              enemySnap,
+              undefined,
+              actionId,
+            )
+          : 1;
+        ctx.queue.enqueue(
+          {
+            type: 'ARTS_BURST',
+            time,
+            element: resolved.element,
+            sourceId,
+            sourceSkillType: skillType,
+            sourceSkillId: skillId,
+            actionId,
+            damageMultiplier,
+          },
+          1,
+        );
+        break;
+      }
       case 'infliction':
         ctx.queue.enqueue(
           {

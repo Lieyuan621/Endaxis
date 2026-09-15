@@ -95,5 +95,9 @@
   "aic-fieldwork": {
     "setName": "AIC Fieldwork",
     "description": "3-piece set effect: Wearer gains DMG Dealt <@ba.vup>+20%</> for all types of DMG, <@ba.vup>10%</> DMG Reduction against all types of DMG, and Ultimate Gain Efficiency <@ba.vup>+10%</>."
+  },
+  "deep-rampart": {
+    "setName": "Deep Rampart",
+    "description": "3-piece set effect: Wearer's Arts DMG Dealt <@ba.vup>+16%</>.\nWhen the wearer applies <#ba.naturalburst>Nature Burst</> or <#ba.crystburst>Cryo Burst</>, the wearer gains Arts Intensity <@ba.vup>+16</> for 20s. Max stacks for this effect: 3. Duration of each stack is counted separately. Effect only triggers once every 0.1s."
   }
 }

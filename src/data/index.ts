@@ -45,16 +45,20 @@ import pogranichnik from './operators/pogranichnik';
 import rossi from './operators/rossi';
 import snowshine from './operators/snowshine';
 import tangtang from './operators/tangtang';
+import typhoeus from './operators/typhoeus';
 import wulfgard from './operators/wulfgard';
 import xaihi from './operators/xaihi';
 import yvonne from './operators/yvonne';
 import zhuang_fangyi from './operators/zhuang-fangyi';
 
-// Weapon effect sheets (loaded via glob)
-const weaponModules = import.meta.glob('./weapons/**/*.ts', {
-  eager: true,
-  import: 'default',
-}) as Record<string, WeaponSheet>;
+// Weapon effect sheets (loaded via glob). Dessert Moment is an intentional empty placeholder.
+const weaponModules = import.meta.glob(
+  ['./weapons/**/*.ts', '!./weapons/sword/5/dessert-moment.ts'],
+  {
+    eager: true,
+    import: 'default',
+  },
+) as Record<string, WeaponSheet>;
 
 // Enemy sheets (loaded via glob)
 const enemyModules = import.meta.glob('./enemies/*.ts', {
@@ -71,6 +75,7 @@ import aic_light from './gearsets/aic-light';
 import armored_msgr from './gearsets/armored-msgr';
 import bonekrusha from './gearsets/bonekrusha';
 import catastrophe from './gearsets/catastrophe';
+import deep_rampart from './gearsets/deep-rampart';
 import eternal_xiranite from './gearsets/eternal-xiranite';
 import frontiers from './gearsets/frontiers';
 import grizzled_edge from './gearsets/grizzled-edge';
@@ -115,6 +120,7 @@ const operatorSheets: Record<string, OperatorSheet> = {
   rossi: rossi,
   snowshine: snowshine,
   tangtang: tangtang,
+  typhoeus: typhoeus,
   wulfgard: wulfgard,
   xaihi: xaihi,
   yvonne: yvonne,
@@ -228,6 +234,7 @@ const gearSetSheets: Record<string, GearSetSheet> = {
   'armored-msgr': armored_msgr,
   bonekrusha: bonekrusha,
   catastrophe: catastrophe,
+  'deep-rampart': deep_rampart,
   'eternal-xiranite': eternal_xiranite,
   frontiers: frontiers,
   'grizzled-edge': grizzled_edge,

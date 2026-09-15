@@ -883,7 +883,13 @@
       "gloompurgerArray": "Gloompurger Array",
       "clusterStrike": "Cluster Strike",
       "gloompurgeArcana": "Gloompurge Arcana",
-      "dreamStriving": "Dream Striving"
+      "dreamStriving": "Dream Striving",
+      "windform": "Windform",
+      "huntingArrow": "Hunting Arrow",
+      "sign": "Sign",
+      "hovering": "Hovering",
+      "hailOfArrows": "Hail of Arrows",
+      "barrageArray": "Barrage Array"
     }
   },
   "hitEditor": {
@@ -1002,6 +1008,7 @@
       "effectiveness": "Effectiveness",
       "defaultLevel": "Default level",
       "interval": "Interval",
+      "multiplier": "Multiplier",
       "multiplierMode": "Multiplier mode",
       "scaleByCrit": "Scale by crit",
       "snapshot": "Snapshot",
@@ -1030,6 +1037,7 @@
       "operatorStatus": "Operator status",
       "enemyStatus": "Enemy status",
       "skillTypes": "Skill types",
+      "damageTypes": "Damage types",
       "treatAsSkillType": "Treat as skill type",
       "stacksFromConsume": "Stacks from consume",
       "_condition": "Hit condition",

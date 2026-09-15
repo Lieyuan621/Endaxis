@@ -88,6 +88,51 @@ function runScenario(tracks: ScenarioTrack[], triggerRegistry?: TriggerRegistry)
 }
 
 describe('effect lifecycle runtime', () => {
+  it('dispatches an explicitly scaled Arts Burst with matching Burst-only damage taken', () => {
+    const result = runScenario([
+      createTrack('alpha', [
+        createAction('power_shot', 'battleSkill', {
+          element: 'nature',
+          hits: [
+            {
+              offset: 0,
+              multiplier: 100,
+              element: 'nature',
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  id: 'nature-burst-dmg-taken',
+                  kind: 'status',
+                  stat: { modifier: 'increasedDmgTaken', damageTypes: 'natureBurst' },
+                  target: 'enemy',
+                  value: 25,
+                  duration: 10,
+                },
+                {
+                  kind: 'burst',
+                  element: 'nature',
+                  scaling: { multiplier: [1.5, 1.1] },
+                },
+              ],
+            },
+          ],
+        }),
+      ]),
+    ]);
+
+    const hits = (result.simLog as any[])
+      .filter(entry => entry.type === 'DAMAGE_HIT')
+      .map(entry => entry.payload.hitData);
+    const powerShot = hits.find(hit => !hit.triggered);
+    const burst = hits.find(hit => hit.triggeredBy === 'reaction:artsBurst');
+
+    expect(powerShot?._damageBreakdown?.increasedDmgTaken).toBe(0);
+    expect(burst?.multiplier).toBeCloseTo(264, 10);
+    expect(burst?._damageBreakdown?.increasedDmgTaken).toBeCloseTo(0.25, 10);
+  });
+
   it('fires onStatusExpire for operator statuses with the apply skill context', () => {
     const triggerRegistry = new TriggerRegistry([
       {

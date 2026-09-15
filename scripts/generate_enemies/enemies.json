@@ -332,6 +332,18 @@
     {
       "gameId": "eny_0125_fdcentur",
       "category": "造裔"
+    },
+    {
+      "gameId": "eny_0127_bigents",
+      "category": "巫术造物"
+    },
+    {
+      "gameId": "eny_0128_babyents",
+      "category": "巫术造物"
+    },
+    {
+      "gameId": "eny_0129_slwood",
+      "category": "巫术造物"
     }
   ]
 }

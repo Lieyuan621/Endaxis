@@ -1864,5 +1864,70 @@
         "description": "Liino grants <@ba.heal>HP Treatment</> to the entire team, enters her <@ba.key>Cosmovoice Stance</> at the same time, unleashes a continuous display of Stage Pyrotechnics that deals <@ba.pulse>Electric DMG</>, and then triggers an <@ba.key>Electrifying Extravaganza</> that deals <@ba.pulse>Electric DMG</> and forcibly applies <#ba.conduct>Electrification</> to enemies in a large area of effect (AOE).\n<@ba.key>Cosmovoice Stance</>: This stance replaces Liino's <@ba.key>Vocalist Stance</>. While active, the stance grants the entire team <#ba.pulseenhance>Electric Amp</> and <#ba.naturalenhance>Nature Amp</> (effects are further increased by the attribute of Will) as well as an ATK Boost. The beats of Liino's song also deal <@ba.pulse>Electric DMG</> to enemies in the AOE and grant continuous <@ba.heal>HP Treatment</> to allied operators in the AOE. When the stance ends, deals 3 times the DMG from a single beat to enemies in the AOE, and grants 3 times the HP treatment from a single beat to the entire team. This effect does not trigger if the stance is ended early.\nDuring the stance, her battle skill is replaced with End Stance. <@ba.info>Casting the battle skill during Cosmovoice Stance ends it early and does not consume any SP.</>"
       }
     }
+  },
+  "typhoeus": {
+    "name": "Typhoeus",
+    "talents": [
+      {
+        "name": "Prey Checklist",
+        "description": "Whenever a <#ba.naturalburst>Nature Burst</> is triggered on an enemy, Typhoeus gains 1 <#ba.arrowenergy>Sign</>. DMG dealt by attacks empowered by consuming <#ba.arrownum>Hunting Arrows</> is increased to <@ba.vup>1.2</> times the original.\nWhen entering battle, Typhoeus immediately gains <@ba.vup>1</> <#ba.arrowenergy>Sign(s)</>.\nTyphoeus can have up to 4 <#ba.arrownum>Hunting Arrows</> and 8 <#ba.arrowenergy>Signs</>.\n<@ba.info>If Nature Burst is simultaneously triggered on multiple enemies, this only counts as one instance of Nature Burst when tallying the Signs gained by Typhoeus.</>"
+      },
+      {
+        "name": "Prey Checklist",
+        "description": "Whenever a <#ba.naturalburst>Nature Burst</> is triggered on an enemy, Typhoeus gains 1 <#ba.arrowenergy>Sign</>. DMG dealt by attacks empowered by consuming <#ba.arrownum>Hunting Arrows</> is increased to <@ba.vup>1.4</> times the original.\nWhen entering battle, Typhoeus immediately gains <@ba.vup>2</> <#ba.arrowenergy>Sign(s)</>.\nTyphoeus can have up to 4 <#ba.arrownum>Hunting Arrows</> and 8 <#ba.arrowenergy>Signs</>.\n<@ba.info>If Nature Burst is simultaneously triggered on multiple enemies, this only counts as one instance of Nature Burst when tallying the Signs gained by Typhoeus.</>"
+      },
+      {
+        "name": "Prey Checklist",
+        "description": "Whenever a <#ba.naturalburst>Nature Burst</> is triggered on an enemy, Typhoeus gains 1 <#ba.arrowenergy>Sign</>. DMG dealt by attacks empowered by consuming <#ba.arrownum>Hunting Arrows</> is increased to <@ba.vup>1.6</> times the original.\nWhen entering battle, Typhoeus immediately gains <@ba.vup>4</> <#ba.arrowenergy>Sign(s)</>.\nTyphoeus can have up to 4 <#ba.arrownum>Hunting Arrows</> and 8 <#ba.arrowenergy>Signs</>.\n<@ba.info>If Nature Burst is simultaneously triggered on multiple enemies, this only counts as one instance of Nature Burst when tallying the Signs gained by Typhoeus.</>"
+      },
+      {
+        "name": "Huntress's Focus",
+        "description": "When <@ba.key>Hovering</>, Typhoeus activates a <@ba.key>Protective Barrier</> that reduces her DMG Taken by <@ba.vup>15%</> and makes her harder to interrupt while it is active. The <@ba.key>Protective Barrier</> is shattered when Typhoeus takes DMG, and cannot be activated again for <@ba.vup>30</>s afterwards."
+      },
+      {
+        "name": "Huntress's Focus",
+        "description": "When <@ba.key>Hovering</>, Typhoeus activates a <@ba.key>Protective Barrier</> that reduces her DMG Taken by <@ba.vup>30%</> and makes her harder to interrupt while it is active. The <@ba.key>Protective Barrier</> is shattered when Typhoeus takes DMG, and cannot be activated again for <@ba.vup>18</>s afterwards."
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Samifjod Fletching",
+        "description": "When <@ba.key>Hovering</>, ATK <@ba.vup>+18%</> and ABATK DMG Dealt is increased to <@ba.vup>1.2</> times the original. \nTalent <@ba.key>Huntress's Focus</> improved: <@ba.key>Protective Barrier</> reactivation time <@ba.vup>-3</>s."
+      },
+      {
+        "name": "Huntress's Stride",
+        "description": "Agility <@ba.vup>+20</>, Arts Intensity <@ba.vup>+16</>."
+      },
+      {
+        "name": "Thorny Trap",
+        "description": "Combo skill <@ba.key>Rampant Thorns</> improved: Length of cooldown <@ba.vup>-2</>s. Enemies in the <@ba.key>Barrage Array</> suffer <#ba.naturalburst>Nature Burst</> DMG Taken <@ba.vup>+6%</>."
+      },
+      {
+        "name": "No Escape",
+        "description": "Ultimate <@ba.key>Call of Ice Mountain</> improved: Ultimate Energy cost <@ba.vup>-15%</>."
+      },
+      {
+        "name": "Fatal Shot",
+        "description": "Ultimate <@ba.key>Call of Ice Mountain</> improved: Gains <#ba.arrownum>Hunting Arrows</> <@ba.vup>+1</>. Ultimate DMG Dealt is increased to <@ba.vup>1.2</> times the original, while Nature Burst DMG Multiplier of <@ba.key>Power Shot</> is increased to <@ba.vup>1.1</> times the original."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Wildlands Huntress",
+        "description": "BASIC ATTACK: \nAn attack with up to 5 sequences that deals <@ba.natur>Nature DMG</>. As the controlled operator, <#ba.lastcombo>Final Strike</> also deals <@ba.poise>17</> Stagger. \n\nDIVE ATTACK: \nBasic attack performed in mid-air becomes a dive attack that deals <@ba.natur>Nature DMG</> to nearby enemies. \n\nFINISHER: \nBasic attack performed near a Staggered enemy becomes a finisher that deals massive <@ba.natur>Nature DMG</> and recovers some SP."
+      },
+      "battleSkill": {
+        "name": "Piercing Arrows of the Woods",
+        "description": "Typhoeus leaps into the air and enters a short <@ba.key>Hovering</> state, during which she can unleash 5 Aerial Basic Attacks (ABATK). Each ABATK can shoot arrows at up to 2 targets and deal <@ba.natur>Nature DMG</>.\nWhenever an ABATK hits an enemy with <#ba.naturalinflict>Nature Infliction</>, it consumes 1 stack of <#ba.naturalinflict>Nature Infliction</>, grants Typhoeus 1 <#ba.arrowenergy>Sign</>, and gives additional Ultimate Energy.\nIf Typhoeus has <#ba.arrownum>Hunting Arrow(s)</>, she consumes 1 <#ba.arrownum>Hunting Arrow</> and converts the ABATK into a <@ba.key>Power Shot</>.\n<@ba.key>Power Shot</>: After hitting an enemy, Power Shot forcibly applies 1 instance of <#ba.naturalburst>Nature Burst</>; if the target's <#ba.naturalinflict>Nature Infliction</> is consumed, then the DMG dealt by this <#ba.naturalburst>Nature Burst</> will be increased.\n<@ba.info>If Typhoeus is the controlled operator, her 5th ABATK is regarded as a Final Strike and a Power Shot, and does not consume Hunting Arrows.</>"
+      },
+      "comboSkill": {
+        "name": "Rampant Thorns",
+        "description": "COMBO TRIGGER: When Typhoeus reaches max <#ba.arrowenergy>Signs</>.\nTyphoeus converts all her <#ba.arrowenergy>Signs</> to <#ba.arrownum>Hunting Arrows</> and resets her Aerial Basic Attack (ABATK) attempts.\nTyphoeus focuses her \"Huntress's Gaze\" and launches a barrage at the target that creates a <@ba.key>Barrage Array</> at the target area. Enemies in the <@ba.key>Barrage Array</> take <@ba.natur>Nature DMG</> over time, are <#ba.slow>slowed</>, and suffer increased <#ba.naturalburst>Nature Burst</> DMG Taken.\n<@ba.info>Every 2 Signs convert to 1 Hunting Arrow.</>"
+      },
+      "ultimate": {
+        "name": "Call of Ice Mountain",
+        "description": "Typhoeus fires an Imbued Arrow that explodes after hitting the enemy and deals massive <@ba.natur>Nature DMG</> to enemies within the area of effect (AOE). She then enters a <@ba.key>Hovering</> state and her Aerial Basic Attack (ABATK) attempts are reset.\nFor her next 5 ABATKs, hitting an enemy triggers a <@ba.key>Hail of Arrows</> that deals <@ba.natur>Nature DMG</> at the target's location. Her 5th <@ba.key>Hail of Arrows</> is an empowered <@ba.key>Hail of Arrows</> that deals higher DMG.\nCasting the ultimate gives <@ba.vup>2</> <#ba.arrownum>Hunting Arrows</> immediately."
+      }
+    }
   }
 }

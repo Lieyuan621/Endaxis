@@ -654,9 +654,9 @@ export function resolveScalingDef(scaling: ScalingDef, idx: number): ResolvedSca
 }
 
 /**
- * Pre-resolve a `patchEffect`'s leveled scaling to scalars when it declares a `skillLevelKey`
- * (indexed by that skill's level), so a leveled `cap`/`additive` array in a patch resolves
- * correctly instead of being spliced raw by `mergeScaling`. Other patches pass through unchanged.
+ * Pre-resolve a `patchEffect`'s leveled fields to scalars when it declares a `skillLevelKey`
+ * (indexed by that skill's level), so arrays are not spliced into an already-resolved target.
+ * Other patches pass through unchanged.
  */
 function resolvePatchSkillLevel(
   patch: Patch,
@@ -669,6 +669,13 @@ function resolvePatchSkillLevel(
     ...patch,
     effect: {
       ...patch.effect,
+      ...(e.value !== undefined ? { value: resolveLeveled(e.value as Leveled<number>, idx) } : {}),
+      ...(e.multiplier !== undefined
+        ? { multiplier: resolveLeveled(e.multiplier as Leveled<number>, idx) }
+        : {}),
+      ...(e.effectiveness !== undefined
+        ? { effectiveness: resolveLeveled(e.effectiveness as Leveled<number>, idx) }
+        : {}),
       ...(e.scaling
         ? { scaling: resolveScalingDef(e.scaling as ScalingDef, idx) as ScalingDef }
         : {}),
@@ -770,6 +777,12 @@ export function resolveEffect(effect: Effect, idx: number): ResolvedEffect {
             })),
           }
         : {}),
+    } as ResolvedEffect;
+  }
+  if (effect.kind === 'burst') {
+    return {
+      ...base,
+      ...(effect.scaling ? { scaling: resolveScalingDef(effect.scaling, idx) } : {}),
     } as ResolvedEffect;
   }
   if (
@@ -891,6 +904,7 @@ function applyEffectPatch(
   if (
     patchScaling !== undefined &&
     (target.kind === 'status' ||
+      target.kind === 'burst' ||
       target.kind === 'spRecovery' ||
       target.kind === 'spReturn' ||
       target.kind === 'ultEnergyGain')

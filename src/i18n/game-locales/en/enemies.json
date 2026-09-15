@@ -244,5 +244,14 @@
   },
   "eny_0125_fdcentur": {
     "name": "Alleikhreos, Chiliarch"
+  },
+  "eny_0127_bigents": {
+    "name": "Gloomwald's Rage"
+  },
+  "eny_0128_babyents": {
+    "name": "Woodcraft Wanderer"
+  },
+  "eny_0129_slwood": {
+    "name": "Woodcraft Slug"
   }
 }

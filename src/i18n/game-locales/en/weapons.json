@@ -2196,5 +2196,67 @@
       ],
       "description": "Main attribute <@ba.vup>+{0}%</>.\nWhen the wielder's skill grants HP Treatment to other operators in the team, the operator receiving the wielder's treatment also gains ATK <@ba.vup>+{1}%</> for 20s.\n<@ba.info>Max stacks for effects of the same name: 4. Duration of each stack is counted separately. Each operator can gain this effect at most once every 0.1s.</>"
     }
+  },
+  "umbra-of-frigid": {
+    "name": "Umbra of Frigid Eventide",
+    "type": "Arts Unit",
+    "skill1": {
+      "name": "Agility",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156],
+      "description": "Agility <@ba.vup>+{0}</>"
+    },
+    "skill2": {
+      "name": "Attack",
+      "values": [5, 9, 13, 17, 21, 25, 29, 33, 39],
+      "isPercent": true,
+      "description": "ATK <@ba.vup>+{0}%</>"
+    },
+    "skill3": {
+      "name": "Detonate: Hunter Instinct",
+      "prefix": "Detonate",
+      "description": "Arts DMG Dealt <@ba.vup>+{0}%</>.\nAfter the wielder casts a battle skill, the wielder gains Arts Intensity <@ba.vup>+{1}</> and 4 stacks of <@ba.key>Windform</> for 15s.\n<@ba.info>This entire effect cannot stack. Max <@ba.key>Windform</> stacks: 4.</>\nWhen the wielder applies an <#ba.spellburst>Arts Burst</>, <#ba.consume>consume</> 1 stack of <@ba.key>Windform</> to grant the wielder Arts DMG Dealt <@ba.vup>+{2}%</> for 30s.\n<@ba.info>This effect can reach 4 stacks. Duration of each stack is counted separately. Effect only triggers once every 0.1s.</>",
+      "values": [
+        [16, 35, 4],
+        [19.2, 42, 4.8],
+        [22.4, 49, 5.6],
+        [25.6, 56, 6.4],
+        [28.8, 63, 7.2],
+        [32, 70, 8],
+        [35.2, 77, 8.8],
+        [38.4, 84, 9.6],
+        [44.8, 98, 11.2]
+      ]
+    }
+  },
+  "sufferings-end": {
+    "name": "Suffering's End",
+    "type": "Arts Unit",
+    "skill1": {
+      "name": "Agility",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156],
+      "description": "Agility <@ba.vup>+{0}</>"
+    },
+    "skill2": {
+      "name": "Nature DMG Dealt",
+      "values": [5.6, 10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 43.3],
+      "isPercent": true,
+      "description": "Nature DMG Dealt <@ba.vup>+{0}%</>"
+    },
+    "skill3": {
+      "name": "Detonate: Dawn of the Long Night",
+      "prefix": "Detonate",
+      "description": "Arts Intensity <@ba.vup>+{0}</>.\nWhen the wielder applies an <#ba.spellburst>Arts Burst</>, the wielder gains Nature DMG Dealt <@ba.vup>+{1}%</> for 25s.\n<@ba.info>Max stacks for this effect: 4. Duration of each stack is counted separately. Effect only triggers once every 0.1s.</>\nAt 4 stacks, the aforementioned effect grants an additional Nature DMG Dealt <@ba.vup>+{2}%</>.\n<@ba.info>This effect cannot stack.</>",
+      "values": [
+        [15, 2, 6],
+        [18, 2.4, 7.2],
+        [21, 2.8, 8.4],
+        [24, 3.2, 9.6],
+        [27, 3.6, 10.8],
+        [30, 4, 12],
+        [33, 4.4, 13.2],
+        [36, 4.8, 14.4],
+        [42, 5.6, 16.8]
+      ]
+    }
   }
 }

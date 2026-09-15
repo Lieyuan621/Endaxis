@@ -131,6 +131,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         this.emitReactionDamageHit('artsBurst', 1, event.time, event.sourceId, ctx, {
           triggerElement: event.element,
           actionId: event.actionId,
+          damageMultiplier: event.damageMultiplier,
         });
         this.registry?.onStatusApplied(
           `${event.element}Burst`,
@@ -178,12 +179,13 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
       effectiveness?: number;
       consumedStackSources?: Record<string, number>;
       actionId?: string;
+      damageMultiplier?: number;
     },
     stagger = 0,
     reactionStaggerMult?: number,
   ): void {
     const element = getReactionDamageElement(reactionType, opts?.triggerElement);
-    const multiplier = getReactionMultiplier(reactionType, level);
+    const multiplier = getReactionMultiplier(reactionType, level) * (opts?.damageMultiplier ?? 1);
 
     ctx.queue.enqueue(
       {
@@ -970,15 +972,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
         );
         break;
       case 'solidification':
-        this.applySolidification(
-          enemy,
-          time,
-          level,
-          sourceId,
-          ctx,
-          effectiveDuration,
-          css,
-        );
+        this.applySolidification(enemy, time, level, sourceId, ctx, effectiveDuration, css);
         if (!isForced)
           this.emitReactionDamageHit('solidification', level, time, sourceId, ctx, {
             effectiveness: sheetEffectiveness,
@@ -1486,8 +1480,7 @@ export class EnemyEffectHandler implements EventHandler<EnemyEffectEvents> {
     // statuses (e.g. Arcane 阵诀·意 combo susceptibility) get live will/intellect.
     let value = event.value;
     const effect = event.effect as
-      | { value?: number; scaling?: ResolvedScalingDef; stat?: unknown }
-      | undefined;
+      { value?: number; scaling?: ResolvedScalingDef; stat?: unknown } | undefined;
     if (effect?.scaling && effect.stat) {
       const base = typeof effect.value === 'number' ? effect.value : 0;
       value = applyResolvedScaling(

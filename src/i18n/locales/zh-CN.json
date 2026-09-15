@@ -883,7 +883,13 @@
       "gloompurgerArray": "破晦阵",
       "clusterStrike": "集束打击",
       "gloompurgeArcana": "破晦诀明",
-      "dreamStriving": "憧憬"
+      "dreamStriving": "憧憬",
+      "windform": "身形如风",
+      "huntingArrow": "猎矢",
+      "sign": "启示",
+      "hovering": "浮空",
+      "hailOfArrows": "箭雨",
+      "barrageArray": "箭阵"
     }
   },
   "hitEditor": {
@@ -977,6 +983,7 @@
       "effectiveness": "效果强度",
       "defaultLevel": "默认等级",
       "interval": "间隔",
+      "multiplier": "倍率",
       "multiplierMode": "倍率模式",
       "scaleByCrit": "按暴击缩放",
       "snapshot": "快照",
@@ -1005,6 +1012,7 @@
       "operatorStatus": "干员状态",
       "enemyStatus": "敌人状态",
       "skillTypes": "技能类型",
+      "damageTypes": "伤害类型",
       "treatAsSkillType": "视为技能类型",
       "stacksFromConsume": "层数取自消耗",
       "_condition": "判定点条件",

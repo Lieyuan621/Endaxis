@@ -19,7 +19,7 @@ DEFAULT_CDN_BASE = "https://data.akedata.wiki"
 DEFAULT_LEVELS = (1, 20, 40, 60, 80, 90)
 CONFIG_FORMAT = "EndaxisEnemyGenerationConfig"
 CONFIG_VERSION = 1
-OUTPUT_NEWLINE = "\r\n"
+OUTPUT_NEWLINE = "\n"
 DISPLAY_TYPE_TO_TIER = {
     0: "normal",
     1: "elite",
@@ -159,9 +159,12 @@ def level_attributes(row: dict[str, Any], enemy_id: str) -> dict[int, dict[int, 
         attrs = level_row.get("attrs")
         if not isinstance(attrs, list):
             raise GenerationError(f"{enemy_id}: level row {index} has no attrs list")
-        level = unique_attr(attrs, 0, f"{enemy_id} level row {index}")
-        if not isinstance(level, int) or level in result:
-            raise GenerationError(f"{enemy_id}: invalid or duplicate level {level!r}")
+        raw_level = unique_attr(attrs, 0, f"{enemy_id} level row {index}")
+        if not float(raw_level).is_integer():
+            raise GenerationError(f"{enemy_id}: invalid level {raw_level!r}")
+        level = int(raw_level)
+        if level in result:
+            raise GenerationError(f"{enemy_id}: duplicate level {raw_level!r}")
         values: dict[int, float | int] = {}
         for attr in attrs:
             attr_type = attr.get("attrType")
@@ -191,7 +194,9 @@ def format_number(value: float | int) -> str:
 
 
 def quote_ts(value: str) -> str:
-    return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'"
+    single_quoted = "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'"
+    double_quoted = json.dumps(value, ensure_ascii=False)
+    return min(single_quoted, double_quoted, key=len)
 
 
 def render_sheet(

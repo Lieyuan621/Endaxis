@@ -34,6 +34,10 @@ describe('hit/effect editor SSOT', () => {
         elements: ['heat', 'cryo', 'electric', 'nature'],
       },
     });
+    expect(createEffectKindDefaults('burst')).toMatchObject({
+      kind: 'burst',
+      element: 'heat',
+    });
   });
 
   test('domain physical / reaction enums are exposed for selects', () => {
@@ -61,6 +65,8 @@ describe('hit/effect editor SSOT', () => {
     expect(effectKindHasField('damageOverTime', 'consumedStatEffects')).toBe(true);
     expect(effectKindHasField('consume', 'operatorStatus')).toBe(true);
     expect(effectKindHasField('damageHit', 'hit')).toBe(true);
+    expect(effectKindHasField('burst', 'scaling')).toBe(true);
+    expect(effectKindHasField('burst', 'multiplier')).toBe(false);
     expect(effectKindHasField('derived', 'effect')).toBe(true);
     expect(OPERATOR_STAT_MODIFIERS).toEqual(
       expect.arrayContaining(['attributeFlat', 'attributePercent']),

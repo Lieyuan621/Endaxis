@@ -543,6 +543,17 @@ describe('Tremor (group 1032) mechanism data', () => {
 // ─── 改写：裹附 (Wrap) — group 1031 ────────────────────────────────────────────
 
 describe('external increasedDmgTaken (standalone damage-taken factor)', () => {
+  it('applies Arts Burst-scoped damage taken only to the matching Burst', () => {
+    const modifier: ResolvedStatModifier = {
+      stat: { modifier: 'increasedDmgTaken', damageTypes: 'natureBurst' },
+      value: 10,
+    };
+
+    expect(computeEnemyStats([], [modifier]).increasedDmgTaken).toBe(0);
+    expect(computeEnemyStats([], [modifier], 'heatBurst').increasedDmgTaken).toBe(0);
+    expect(computeEnemyStats([], [modifier], 'natureBurst').increasedDmgTaken).toBeCloseTo(0.1, 10);
+  });
+
   it('routes an external element-scoped increasedDmgTaken into the multiplicative factor', () => {
     const s = computeEnemyStats(
       [],

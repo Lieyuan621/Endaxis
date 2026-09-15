@@ -1,4 +1,16 @@
 {
+  "ba.arrowenergy": {
+    "name": "启示",
+    "description": "提弗洛斯消耗敌人身上的<@ba.naturalinflict>自然附着</>和敌人受到<#ba.naturalburst>自然爆发</>时可以积攒它，使用连携技可以将它转换成<#ba.arrownum>猎矢</>。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.arrownum": {
+    "name": "猎矢",
+    "description": "提弗洛斯可以在<@ba.key>浮空</>状态时消耗它来强化自己的射击，造成更高的伤害同时还能额外触发<#ba.naturalburst>自然爆发</>。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
   "ba.absorb": {
     "name": "吸收",
     "description": "状态以特殊的方式提前结束。<@ba.key>吸收</>不算作<#ba.consume>消耗</>。",

@@ -1,4 +1,16 @@
 {
+  "ba.arrowenergy": {
+    "name": "Sign",
+    "description": "Typhoeus gains Signs when she consumes the enemy's <@ba.naturalinflict>Nature Infliction</> stacks or when triggering <#ba.naturalburst>Nature Burst</> on enemies. Her combo skill can then convert the Signs into <#ba.arrownum>Hunting Arrows</>.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.arrownum": {
+    "name": "Hunting Arrow",
+    "description": "When Typhoeus is in her <@ba.key>Hovering</> state, she can consume Hunting Arrows to empower her shots, dealing higher DMG while also triggering <#ba.naturalburst>Nature Burst</>.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
   "ba.absorb": {
     "name": "Absorb",
     "description": "A way to end a Physical or Arts debuff early. <@ba.key>Absorb</> is not the same as <#ba.consume>consume</>.",

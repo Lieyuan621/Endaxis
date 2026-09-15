@@ -34,7 +34,13 @@ import {
   computeLevelCoefficient,
   computeArtsIntensityDamageMult,
 } from '@/data/stats/computeReactionDamage';
-import { isEnemyEffect, type DamageElement, type Effect, type ResolvedEffect } from '@/data/types';
+import {
+  isEnemyEffect,
+  type ArtsBurstDamageType,
+  type DamageElement,
+  type Effect,
+  type ResolvedEffect,
+} from '@/data/types';
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
@@ -304,9 +310,12 @@ export class HitHandler implements EventHandler<HitEvent> {
           external: entry.external,
         });
       }
-      const enemyStatus = computeEnemyStats([], enemyMods);
-
       const element = reactionMeta.element;
+      const damageType =
+        reactionMeta.reactionType === 'artsBurst' && element
+          ? (`${element}Burst` as ArtsBurstDamageType)
+          : undefined;
+      const enemyStatus = computeEnemyStats([], enemyMods, damageType);
       const enemyResistance = getEnemyResistanceValue(ctx, element);
       // Synthetic (treatAsReaction) hits scale by the level coefficient too — synthetic only
       // suppresses the reaction marker/vulnerability/triggers, not the coefficient.
@@ -340,7 +349,11 @@ export class HitHandler implements EventHandler<HitEvent> {
       const isCombustionDot = reactionMeta.reactionType === 'combustion_dot';
       const noCrit = hit._canCrit === false || isCombustionDot;
 
-      const enemySources = collectEnemyHitModifierSources(enemyEntriesForDamage, element);
+      const enemySources = collectEnemyHitModifierSources(
+        enemyEntriesForDamage,
+        element,
+        damageType,
+      );
       const reactionHitParams = {
         attack: operatorStatus.attack,
         multiplier: resolvedMultiplier,
@@ -481,6 +494,7 @@ export class HitHandler implements EventHandler<HitEvent> {
         staggerMult,
         staggerSources: hit._staggerContributions,
         finisherMult,
+        damageType,
         creditToApplier,
       });
       hit._lmdiSelf = lmdi.self;
