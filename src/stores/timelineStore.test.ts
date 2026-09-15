@@ -741,6 +741,33 @@ describe('timeline skill library editing', () => {
     }
   });
 
+  it('places only Typhoeus battle-skill stage four after library place rematching', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'typhoeus');
+    store.selectTrack(0);
+
+    const battleSkill = store.activeSkillLibrary.find(
+      (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
+    ) as any;
+    const fourthStage = battleSkill?.segments?.[3];
+    expect(fourthStage?.kind).toBe('segment');
+
+    const { findLibrarySkillForPlaceRematch } = await import('@/utils/librarySkillHotkeys');
+    const matched = findLibrarySkillForPlaceRematch(store.activeSkillLibrary, fourthStage);
+    expect(matched?.id).toBe(fourthStage.id);
+    if (!matched) return;
+
+    store.addSkillToTrack('typhoeus', matched, 10);
+    expect(store.tracks[0]!.actions).toHaveLength(1);
+    expect(store.tracks[0]!.actions[0]).toMatchObject({
+      id: fourthStage.id,
+      kind: 'segment',
+      segmentIndex: 4,
+      duration: fourthStage.duration,
+    });
+  });
+
   it('keeps Laevatain enhanced basic attack distinct from normal attack in the library', async () => {
     setLocale('zh-CN');
     const store = useTimelineStore();

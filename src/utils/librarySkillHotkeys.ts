@@ -99,7 +99,8 @@ function readSkillIdentityKey(skill: Record<string, unknown> | null | undefined)
 /**
  * Rematch a sticky place-mode skill onto another operator's library.
  * Prefer the same library `id` (same operator / variant), then the same skill
- * identity key (variants), then fall back to the same `type`.
+ * identity key (variants), then fall back to the same `type`. Segment children
+ * must stay on their corresponding segment instead of becoming the whole skill.
  */
 export function findLibrarySkillForPlaceRematch(
   library: ReadonlyArray<Record<string, unknown>>,
@@ -107,15 +108,43 @@ export function findLibrarySkillForPlaceRematch(
 ): Record<string, unknown> | null {
   if (!previous) return null;
 
+  const segmentKind =
+    previous.kind === 'segment' || previous.kind === 'attack_segment' ? previous.kind : null;
+  const segmentIndex = Number(previous.segmentIndex ?? previous.attackSegmentIndex);
   const previousId = typeof previous.id === 'string' ? previous.id.trim() : '';
   if (previousId) {
     for (const skill of library) {
-      if (!skill || skill.hiddenInLibraryGrid) continue;
-      if (skill.id === previousId) return skill;
+      if (!skill || (!segmentKind && skill.hiddenInLibraryGrid)) continue;
+      if (
+        skill.id === previousId &&
+        (!segmentKind ||
+          (skill.kind === segmentKind &&
+            skill.type === previous.type &&
+            Number(skill.segmentIndex ?? skill.attackSegmentIndex) === segmentIndex &&
+            (Number(skill.duration) || 0) > 0))
+      ) {
+        return skill;
+      }
     }
   }
 
   const skillKey = readSkillIdentityKey(previous);
+  if (segmentKind) {
+    if (!skillKey || !Number.isInteger(segmentIndex) || segmentIndex < 1) return null;
+    for (const skill of library) {
+      if (
+        skill?.kind === segmentKind &&
+        skill.type === previous.type &&
+        Number(skill.segmentIndex ?? skill.attackSegmentIndex) === segmentIndex &&
+        readSkillIdentityKey(skill) === skillKey &&
+        (Number(skill.duration) || 0) > 0
+      ) {
+        return skill;
+      }
+    }
+    return null;
+  }
+
   if (skillKey) {
     for (const skill of library) {
       if (!skill || skill.hiddenInLibraryGrid) continue;
