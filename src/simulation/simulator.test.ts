@@ -1836,6 +1836,30 @@ describe('optimizer-native runtime parity', () => {
     expect(hail.payload.hitData._critRateScale).toBeUndefined();
   });
 
+  it('pauses SP regeneration only for Typhoeus hovering, not its aerial follow-ups', () => {
+    const segments = typhoeusSheet.combatSkills.battleSkill.segments;
+    const actions = segments.map((segment, index) =>
+      createAction(`typhoeus-battle-${index + 1}`, 'battleSkill', {
+        startTime: 3 + index * 2,
+        duration: segment.duration,
+        skillId: 'battleSkill',
+        spCost: index === 0 ? 100 : 0,
+        segmentIndex: index + 1,
+        hits: resolveOperatorSheetHits(typhoeusSheet, 'battleSkill', index),
+      }),
+    );
+    const result = runScenario([createTrack('typhoeus', actions)]);
+
+    const pauses = result.simLog.filter(
+      entry => entry.type === 'SP_REGEN_PAUSE' && entry.payload.sourceId === 'typhoeus',
+    );
+    expect(pauses).toHaveLength(1);
+    expect(pauses[0]).toMatchObject({
+      time: 3,
+      payload: { sourceId: 'typhoeus', duration: 0.5 },
+    });
+  });
+
   it('projects Typhoeus Signs and Hunting Arrows with their in-game resource icons', () => {
     const operator = createOperatorInstance('op_typhoeus', 'typhoeus');
     operator.talentStates = { '0': 1 };

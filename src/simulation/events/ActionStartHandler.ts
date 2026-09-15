@@ -36,7 +36,10 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
       },
     });
     this.logRequisiteFailures(e, ctx);
-    const spFreezeDuration = isPrepAction ? 0 : this.getSpFreezeDuration(e);
+    const effectiveType = action
+      ? resolveEffectiveActionSkillType(action, e.time, e.payload.actorId, ctx)
+      : e.payload.type;
+    const spFreezeDuration = isPrepAction ? 0 : this.getSpFreezeDuration(e, effectiveType);
     if (spFreezeDuration > 0) {
       // 暂停SP再生
       ctx.queue.enqueue({
@@ -220,9 +223,12 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
     }
   }
 
-  private getSpFreezeDuration(e: ActionStartEvent) {
+  private getSpFreezeDuration(
+    e: ActionStartEvent,
+    effectiveType: ActionStartEvent['payload']['type'],
+  ) {
     if (e.payload.type === 'battleSkill') {
-      return 0.5;
+      return effectiveType === 'basicAttack' || effectiveType === 'finalStrike' ? 0 : 0.5;
     }
     if (e.payload.type === 'ultimate' || e.payload.type === 'comboSkill') {
       return e.payload.freezeDuration ?? 1.5;
