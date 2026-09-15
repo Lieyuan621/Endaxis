@@ -392,7 +392,7 @@ export const useTimelineStore = defineStore('timeline', () => {
   const MAX_SCENARIOS = 14;
 
   const prepDuration = ref(5);
-  const prepExpanded = ref(true);
+  const prepExpanded = ref(false);
   const battleDuration = ref(DEFAULT_BATTLE_DURATION);
 
   const viewDuration = computed(
@@ -1682,7 +1682,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       weaponOverrides: {},
       equipmentCategoryOverrides: {},
       prepDuration: 5,
-      prepExpanded: true,
+      prepExpanded: false,
       battleDuration: DEFAULT_BATTLE_DURATION,
       trackRowHeightWeights: [],
       initialGaugeMode: 'empty',
@@ -1874,7 +1874,7 @@ export const useTimelineStore = defineStore('timeline', () => {
       weaponOverrides: {},
       equipmentCategoryOverrides: {},
       prepDuration: 5,
-      prepExpanded: true,
+      prepExpanded: false,
       battleDuration: DEFAULT_BATTLE_DURATION,
       trackRowHeightWeights: [],
       initialGaugeMode: 'empty',

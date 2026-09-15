@@ -194,6 +194,17 @@ describe('design-system layout regressions', () => {
     }
   });
 
+  test('keeps sticky selection group headers on the shared dialog surface', () => {
+    const rarityHeaderRule = getRuleBody(selectionDialogStyles, '.rarity-header');
+    const lightRarityHeaderRule = getRuleBody(
+      selectionDialogStyles,
+      "html[data-theme='light'] .rarity-header",
+    );
+
+    expect(rarityHeaderRule).toContain('background: var(--ea-dialog-bg);');
+    expect(lightRarityHeaderRule).not.toMatch(/\bbackground\s*:/);
+  });
+
   test('keeps draggable library cards keyboard operable without changing their drag surface', () => {
     expect(actionLibrarySource).toMatch(
       /class="skill-card"[\s\S]*?role="button"[\s\S]*?tabindex="0"[\s\S]*?@keydown\.enter\.prevent/s,

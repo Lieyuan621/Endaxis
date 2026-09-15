@@ -386,7 +386,7 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     contingencyContractTags.value = [];
     globalConfig.value = createEmptyGlobalConfig();
     prepDuration.value = 5;
-    prepExpanded.value = true;
+    prepExpanded.value = false;
     battleDuration.value = 120;
     trackRowHeightWeights.value = [];
 

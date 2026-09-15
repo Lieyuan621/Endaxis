@@ -31,6 +31,7 @@ describe('timeline skill library editing', () => {
 
   it('shares configured enhancement timing with the simulator and history', async () => {
     const store = useTimelineStore();
+    store.togglePrepExpanded();
     await store.fetchGameData();
     store.changeTrackOperator(0, null, 'laevatain');
     store.selectTrack(0);
@@ -60,6 +61,7 @@ describe('timeline skill library editing', () => {
 
   it('restores enhancement rules from the skill library when reloading an existing project', async () => {
     const store = useTimelineStore();
+    store.togglePrepExpanded();
     await store.fetchGameData();
     store.changeTrackOperator(0, null, 'laevatain');
     store.selectTrack(0);
@@ -102,6 +104,7 @@ describe('timeline skill library editing', () => {
 
   it('freezes Camille pursuit without changing the battle-skill identity', async () => {
     const store = useTimelineStore();
+    store.togglePrepExpanded();
     await store.fetchGameData();
     store.changeTrackOperator(0, null, 'camille');
     store.selectTrack(0);
@@ -132,6 +135,7 @@ describe('timeline skill library editing', () => {
 
   it('refreshes Camille freeze metadata on reload without saving an activated flag', async () => {
     const store = useTimelineStore();
+    store.togglePrepExpanded();
     await store.fetchGameData();
     store.changeTrackOperator(0, null, 'camille');
     store.selectTrack(0);
@@ -168,6 +172,7 @@ describe('timeline skill library editing', () => {
     'compresses Camille and ordinary combos in the editor with the combo %s pursuit',
     async position => {
       const store = useTimelineStore();
+      store.togglePrepExpanded();
       await store.fetchGameData();
       store.changeTrackOperator(0, null, 'camille');
       store.selectTrack(0);
@@ -205,6 +210,7 @@ describe('timeline skill library editing', () => {
 
   it('uses nominal freeze time for Camille insertion just like ordinary combos', async () => {
     const store = useTimelineStore();
+    store.togglePrepExpanded();
     await store.fetchGameData();
     store.changeTrackOperator(0, null, 'camille');
     store.selectTrack(0);
@@ -233,6 +239,7 @@ describe('timeline skill library editing', () => {
 
   it('pushes and pulls later actions when placing and deleting Camille pursuit, including history', async () => {
     const store = useTimelineStore();
+    store.togglePrepExpanded();
     await store.fetchGameData();
     store.changeTrackOperator(0, null, 'camille');
     store.selectTrack(0);
@@ -260,6 +267,7 @@ describe('timeline skill library editing', () => {
 
   it('shares Camille conditional stop-shifting between editor and compiler', async () => {
     const store = useTimelineStore();
+    store.togglePrepExpanded();
     await store.fetchGameData();
     store.changeTrackOperator(0, null, 'camille');
     store.selectTrack(0);
@@ -919,6 +927,39 @@ describe('timeline skill library editing', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('starts the initial blank scenario with the preparation area collapsed', () => {
+    const store = useTimelineStore();
+
+    expect(store.prepExpanded).toBe(false);
+  });
+
+  it('starts a newly added scenario with the preparation area collapsed', () => {
+    const store = useTimelineStore();
+    store.togglePrepExpanded();
+
+    store.addScenario();
+
+    expect(store.prepExpanded).toBe(false);
+  });
+
+  it('resets the preparation area to collapsed with an empty scenario', () => {
+    const store = useTimelineStore();
+    store.togglePrepExpanded();
+
+    store.resetCurrentScenario();
+
+    expect(store.prepExpanded).toBe(false);
+  });
+
+  it('starts a reset project with the preparation area collapsed', () => {
+    const store = useTimelineStore();
+    store.togglePrepExpanded();
+
+    store.resetProject();
+
+    expect(store.prepExpanded).toBe(false);
   });
 
   it('stores snap precision per scenario and defaults new scenarios to one frame', () => {

@@ -106,9 +106,7 @@
   margin-bottom: 12px;
   padding: 10px 0;
   border-bottom: 1px solid var(--ea-border-soft);
-  background: rgba(30, 30, 30, 0.94);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: var(--ea-dialog-bg);
 }
 
 .rarity-header:first-child {
@@ -345,10 +343,7 @@
 
 /* Light theme: selection dialogs (operator / weapon / equipment) */
 html[data-theme='light'] .rarity-header {
-  background: rgba(255, 255, 255, 0.97);
   border-bottom-color: var(--ea-dialog-divider, #e6e8ec);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
 }
 
 html[data-theme='light'] .card-avatar-wrapper {
