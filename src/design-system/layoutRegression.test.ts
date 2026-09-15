@@ -18,6 +18,7 @@ import mobileTimelineSource from '../views/MobileTimelineViewer.vue?raw';
 import timelineGridSource from '../components/TimelineGrid.vue?raw';
 import timelineDisplayMenuSource from '../components/TimelineDisplayMenu.vue?raw';
 import timelineEditorSource from '../views/TimelineEditor.vue?raw';
+import timelineBuffLayerSource from '../components/TimelineBuffLayer.vue?raw';
 
 const elementPlusStyles = readFileSync(
   new URL('./styles/element-plus.css', import.meta.url),
@@ -224,12 +225,15 @@ describe('design-system layout regressions', () => {
     expect(guardedHoverRules).toBe(allHoverRules);
   });
 
-  test('keeps pressed buttons visually selected while hovered', () => {
+  test('keeps pressed-button hover customizable while retaining the default gold feedback', () => {
     const hoverMedia = getBlockBody(controlStyles, '@media (hover: hover) and (pointer: fine)');
     const rule = getRuleBody(hoverMedia, ".ea-button[aria-pressed='true']:hover:not(:disabled)");
 
-    expect(rule).toContain('border-color: var(--ea-gold);');
-    expect(rule).toContain('color: var(--ea-gold);');
+    expect(rule).toContain('border-color: var(--ea-control-pressed-border-hover, var(--ea-gold));');
+    expect(rule).toMatch(
+      /background:\s*var\(\s*--ea-control-pressed-bg-hover,\s*color-mix\(in srgb, var\(--ea-gold\) 22%, transparent\)\s*\);/,
+    );
+    expect(rule).toContain('color: var(--ea-control-pressed-fg-hover, var(--ea-gold));');
   });
 
   test('lets specialized card and scenario buttons retain their own pressed chrome', () => {
@@ -241,16 +245,24 @@ describe('design-system layout regressions', () => {
       timelineEditorSource,
       '@media (hover: hover) and (pointer: fine)',
     );
-    const activeScenarioHoverRule = getRuleBody(
+    const scenarioRule = getRuleBody(timelineEditorSource, '.ts-tab-item');
+    const selectedScenarioRule = getRuleBody(
+      timelineEditorSource,
+      ".ts-tab-item[aria-pressed='true']",
+    );
+    const inactiveScenarioHoverRule = getRuleBody(
       timelineHoverMedia,
-      ".ts-tab-item[aria-pressed='true']:hover",
+      ".ts-tab-item.ea-button:hover:not(:disabled):not([aria-pressed='true'])",
     );
 
     expect(rosterPressedRule).toContain('border: 0;');
     expect(rosterPressedRule).toContain('background: transparent;');
     expect(rosterPressedRule).toContain('box-shadow: none;');
-    expect(activeScenarioHoverRule).toContain('background-color: var(--ea-tab-active-bg);');
-    expect(activeScenarioHoverRule).toContain('color: var(--ea-tab-active-fg);');
+    expect(scenarioRule).toContain('--ea-control-pressed-border-hover: transparent;');
+    expect(scenarioRule).toContain('--ea-control-pressed-bg-hover: var(--ea-tab-active-bg);');
+    expect(scenarioRule).toContain('--ea-control-pressed-fg-hover: var(--ea-tab-active-fg);');
+    expect(selectedScenarioRule).toContain('border-color: transparent;');
+    expect(inactiveScenarioHoverRule).toContain('background-color: var(--ea-hover-fill);');
   });
 
   test('keeps custom pressed controls selected while hovered', () => {
@@ -349,6 +361,15 @@ describe('design-system layout regressions', () => {
     expect(rule).toMatch(/\bbackground:\s*transparent\s*;/);
   });
 
+  test('centers the asymmetric Typhoeus Sign artwork inside its timeline icon box', () => {
+    const rule = getRuleBody(
+      timelineBuffLayerSource,
+      ".timeline-buff-icon[src$='/deco_char_passive_typhoea_point.webp']",
+    );
+
+    expect(rule).toContain('transform: translate(1.5px, -0.5px);');
+  });
+
   test('keeps scrolling property cards free of expensive blur and catch-all transitions', () => {
     for (const selector of ['.tick-item', '.connection-card']) {
       const rule = getRuleBody(propertiesPanelSource, selector);
@@ -360,8 +381,11 @@ describe('design-system layout regressions', () => {
   });
 
   test('keeps activity-bar hover feedback flat and position-stable', () => {
+    const baseRule = getRuleBody(controlStyles, '.ea-activity-rail-button.ea-button');
     const rule = getRuleBody(controlStyles, '.ea-activity-rail-button:hover');
 
+    expect(baseRule).toContain('--ea-control-pressed-border-hover: transparent;');
+    expect(baseRule).toContain('--ea-control-pressed-bg-hover: transparent;');
     expect(rule).not.toMatch(/\bbackground\s*:/);
     expect(rule).not.toMatch(/\btransform\s*:/);
   });

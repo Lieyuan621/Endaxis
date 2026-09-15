@@ -145,9 +145,11 @@ export class TriggerRegistry {
         if (t.skillTypes && !passesSkillFilter(t.skillTypes, effectiveType)) continue;
         if (t.skillId) {
           const hitId = event.payload.hitData.id;
-          // Match against the hit's id first, then fall back to the action's skillId
+          const hitSkillId = event.payload.hitData.skillId;
+          // Match explicit hit ids and resolved hit-group skill ids before falling back to the action.
           if (
             !passesSkillFilter(t.skillId, hitId ?? '') &&
+            !passesSkillFilter(t.skillId, hitSkillId ?? '') &&
             !passesSkillFilter(t.skillId, action.node.skillId)
           )
             continue;

@@ -26,6 +26,25 @@ describe('timeline data roster', () => {
     expect(avywenna?.comboSkill_ultimateEnergyGain).toBe(0);
   });
 
+  it('charges Typhoeus battle-skill SP only on the opening segment', () => {
+    const typhoeus = getCharacterRoster().find(entry => entry.id === 'typhoeus');
+
+    expect(typhoeus?.battleSkill_spCost).toBe(100);
+    expect(typhoeus?.battleSkill_segments?.map((segment: any) => segment.spCost)).toEqual([
+      100, 0, 0, 0, 0, 0,
+    ]);
+  });
+
+  it('grants Typhoeus 10 ultimate energy on her combo-skill hit', () => {
+    const typhoeus = getCharacterRoster().find(entry => entry.id === 'typhoeus');
+    const energyEffects = (typhoeus?.comboSkill_damage_hits ?? []).flatMap((hit: any) =>
+      (hit.effects ?? []).filter((effect: any) => effect.kind === 'ultEnergyGain'),
+    );
+
+    expect(typhoeus?.comboSkill_ultimateEnergyGain).toBe(0);
+    expect(energyEffects).toEqual([expect.objectContaining({ value: 10 })]);
+  });
+
   it('splits Last Rite combo UE: base 40 on first hit, stack-scaled on second with consume', () => {
     const lastRite = getCharacterRoster().find(entry => entry.id === 'last-rite');
     const hits = lastRite?.comboSkill_damage_hits || [];

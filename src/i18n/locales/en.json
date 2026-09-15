@@ -1302,7 +1302,15 @@
     "effectiveness": "Effectiveness"
   },
   "skillNames": {
-    "stanceTermination": "End Stance"
+    "stanceTermination": "End Stance",
+    "typhoeus": {
+      "hovering": "Hovering",
+      "aerialShot1": "Aerial Shot 1",
+      "aerialShot2": "Aerial Shot 2",
+      "aerialShot3": "Aerial Shot 3",
+      "aerialShot4": "Aerial Shot 4",
+      "aerialFinalStrike": "Aerial Final Strike"
+    }
   },
   "actionItem": {
     "damageHitTooltip": "Damage: {damage}",

@@ -41,6 +41,7 @@ interface ResolvedSegmentPayload {
   id: string;
   duration: number;
   followupDelay: number;
+  name?: string;
   skillId?: string;
   requisites?: Segment['requisites'];
   spCost?: number;
@@ -578,6 +579,7 @@ export function buildResolvedSegmentPayload(
       id: `${skillIdBase}_seg${index + 1}`,
       duration: Number(segment?.duration) || 0,
       followupDelay,
+      ...(segment?.name ? { name: segment.name } : {}),
       ...(segmentSkillId ? { skillId: segmentSkillId } : {}),
       ...(segment?.requisites ? { requisites: segment.requisites } : {}),
       ...(segment?.spCost != null ? { spCost: Number(segment.spCost) || 0 } : {}),

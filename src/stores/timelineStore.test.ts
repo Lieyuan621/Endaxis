@@ -693,6 +693,46 @@ describe('timeline skill library editing', () => {
     ).toBe(true);
   });
 
+  it('uses authored localized names for Typhoeus battle-skill segments', async () => {
+    setLocale('zh-CN');
+    const store = useTimelineStore();
+    await store.fetchGameData();
+
+    store.changeTrackOperator(0, null, 'typhoeus');
+    store.selectTrack(0);
+
+    const getSegmentNames = () => {
+      const battleSkill = store.activeSkillLibrary.find(
+        (skill: any) => skill.type === 'battleSkill' && !skill.hiddenInLibraryGrid,
+      ) as any;
+      return battleSkill?.segments?.map((segment: any) => segment.name);
+    };
+
+    try {
+      expect(getSegmentNames()).toEqual([
+        '浮空',
+        '空中射击 1',
+        '空中射击 2',
+        '空中射击 3',
+        '空中射击 4',
+        '空中重击',
+      ]);
+
+      setLocale('en');
+      await nextTick();
+      expect(getSegmentNames()).toEqual([
+        'Hovering',
+        'Aerial Shot 1',
+        'Aerial Shot 2',
+        'Aerial Shot 3',
+        'Aerial Shot 4',
+        'Aerial Final Strike',
+      ]);
+    } finally {
+      setLocale('zh-CN');
+    }
+  });
+
   it('keeps Laevatain enhanced basic attack distinct from normal attack in the library', async () => {
     setLocale('zh-CN');
     const store = useTimelineStore();

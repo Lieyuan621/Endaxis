@@ -196,8 +196,12 @@ function getItemStyle(buff) {
 .timeline-buff-icon {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: filter 0.12s ease;
+}
+
+.timeline-buff-icon[src$='/deco_char_passive_typhoea_point.webp'] {
+  transform: translate(1.5px, -0.5px);
 }
 
 .timeline-buff-fallback {

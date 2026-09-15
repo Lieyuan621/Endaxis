@@ -262,6 +262,13 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
           : [];
         return [...skillRequisites, ...segmentRequisites];
       };
+      const getSegmentDisplayName = (segmentInfo: Record<string, unknown>, index: number) => {
+        const authoredName = typeof segmentInfo.name === 'string' ? segmentInfo.name.trim() : '';
+        const nameKey = authoredName ? `skillNames.${authoredName}` : '';
+        return nameKey && i18n.global.te(nameKey)
+          ? String(i18n.global.t(nameKey))
+          : `${displayName} ${index + 1}`;
+      };
       const gaugeGainDefault =
         skill.type === 'battleSkill'
           ? Number(skill?.ultimateEnergyGain ?? DEFAULT_BATTLE_SKILL_UE) || 0
@@ -390,7 +397,7 @@ export function useSkillLibrary(deps: SkillLibraryDeps) {
             type: actionType,
             skillId: segmentSkillId,
             skillKey,
-            name: `${displayName} ${idx + 1}`,
+            name: getSegmentDisplayName(segmentInfo, idx),
             element: segmentInfo.element,
             icon,
             duration: segmentInfo.duration,

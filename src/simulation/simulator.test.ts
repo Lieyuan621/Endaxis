@@ -18,6 +18,7 @@ import pogranichnikSheet from '@/data/operators/pogranichnik';
 import yvonneSheet from '@/data/operators/yvonne';
 import arcaneSheet from '@/data/operators/arcane';
 import aleshSheet from '@/data/operators/alesh';
+import typhoeusSheet from '@/data/operators/typhoeus';
 import { applyForm } from '@/data/forms';
 import { extractRawEntries, resolveHitsFromSheet } from '@/stores/timeline/resolveHits';
 import type { BaseStatValues } from '@/data/stats/types';
@@ -1457,6 +1458,136 @@ describe('optimizer-native runtime parity', () => {
     expect(applies).toHaveLength(2);
     expect(applies.map(entry => entry.time)).toEqual([1, 2]);
     expect(applies.every(entry => entry.effect?.sourceGroup === 'weapon')).toBe(true);
+  });
+
+  it('matches onHit skillId filters against the resolved hit skillId', () => {
+    const triggerEffects = [
+      {
+        sourceTrackId: 'alpha',
+        sourceSkillType: 'ultimate',
+        triggerEffect: {
+          trigger: { kind: 'onHit', skillId: 'group-hit' },
+          effects: [
+            {
+              id: 'group-follow-up',
+              kind: 'damageHit',
+              element: 'physical',
+              multiplier: 50,
+            } as Effect,
+          ],
+        },
+      },
+    ] satisfies TrackPatch['triggerEffects'];
+    const result = runScenario(
+      [
+        createTrack('alpha', [
+          createAction('battle', 'battleSkill', {
+            skillId: 'battleSkill',
+            hits: [
+              {
+                offset: 0,
+                multiplier: 100,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                skillId: 'group-hit',
+              },
+            ],
+          }),
+        ]),
+      ],
+      registry(triggerEffects),
+    );
+
+    expect(
+      result.simLog.filter(
+        entry =>
+          entry.type === 'DAMAGE_HIT' && entry.payload.hitData.triggeredBy === 'group-follow-up',
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('triggers Typhoeus Hail of Arrows at its authored ultimate multiplier', () => {
+    const operator = createOperatorInstance('op_typhoeus', 'typhoeus');
+    operator.skillLevels = {
+      basicAttack: 12,
+      battleSkill: 12,
+      comboSkill: 12,
+      ultimate: 12,
+    };
+    const tracks = [
+      createTrack('typhoeus', [
+        createAction('typhoeus-ultimate', 'ultimate', {
+          startTime: 0,
+          duration: 2.75,
+          element: 'nature',
+          hits: resolveOperatorSheetHits(typhoeusSheet, 'ultimate'),
+        }),
+        createAction('typhoeus-aerial', 'battleSkill', {
+          startTime: 3,
+          duration: 0.633,
+          skillId: 'battleSkill',
+          element: 'nature',
+          hits: resolveOperatorSheetHits(typhoeusSheet, 'battleSkill', 1),
+        }),
+      ]),
+    ];
+    const triggerEffects = collectRuntimeTriggers(
+      createTeam(operator.id),
+      [operator],
+      [],
+      [],
+      tracks,
+    );
+    const result = runScenario(tracks, registry(triggerEffects));
+    const hail = result.simLog.find(
+      entry =>
+        entry.type === 'DAMAGE_HIT' &&
+        entry.payload.hitData.triggeredBy === 'typhoeus-hail-of-arrows',
+    );
+
+    expect(hail?.type).toBe('DAMAGE_HIT');
+    if (hail?.type !== 'DAMAGE_HIT') return;
+    expect(hail.payload.hitData.multiplier).toBe(75);
+    expect(hail.payload.hitData.skillType).toBe('ultimate');
+    expect(hail.payload.hitData._critRateScale).toBeUndefined();
+  });
+
+  it('projects Typhoeus Signs and Hunting Arrows with their in-game resource icons', () => {
+    const operator = createOperatorInstance('op_typhoeus', 'typhoeus');
+    operator.talentStates = { '0': 1 };
+    const tracks = [
+      createTrack('typhoeus', [
+        createAction('typhoeus-ultimate', 'ultimate', {
+          startTime: 1,
+          duration: 2.75,
+          element: 'nature',
+          hits: resolveOperatorSheetHits(typhoeusSheet, 'ultimate'),
+        }),
+      ]),
+    ];
+    const triggerEffects = collectRuntimeTriggers(
+      createTeam(operator.id),
+      [operator],
+      [],
+      [],
+      tracks,
+    );
+    const result = runScenario(tracks, registry(triggerEffects));
+    const resourceIcons = Object.fromEntries(
+      result.operatorLog
+        .filter(
+          entry =>
+            entry.type === 'OPERATOR_EFFECT_APPLY' &&
+            (entry.id === 'typhoeus-sign' || entry.id === 'typhoeus-hunting-arrow'),
+        )
+        .map(entry => [entry.id, entry.effect?.icon]),
+    );
+
+    expect(resourceIcons).toEqual({
+      'typhoeus-sign': '/operators/typhoeus/deco_char_passive_typhoea_point.webp',
+      'typhoeus-hunting-arrow': '/operators/typhoeus/deco_char_passive_typhoea_arrow.webp',
+    });
   });
 
   it('keeps nested damageHit.hit.effects ids and sourceGroup through triggered runtime hits', () => {

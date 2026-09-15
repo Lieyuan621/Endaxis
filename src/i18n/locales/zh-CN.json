@@ -1302,7 +1302,15 @@
     "effectiveness": "异常效能"
   },
   "skillNames": {
-    "stanceTermination": "姿态中止"
+    "stanceTermination": "姿态中止",
+    "typhoeus": {
+      "hovering": "浮空",
+      "aerialShot1": "空中射击 1",
+      "aerialShot2": "空中射击 2",
+      "aerialShot3": "空中射击 3",
+      "aerialShot4": "空中射击 4",
+      "aerialFinalStrike": "空中重击"
+    }
   },
   "actionItem": {
     "damageHitTooltip": "伤害: {damage}",

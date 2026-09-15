@@ -157,6 +157,9 @@
   --ea-control-border-hover: transparent;
   --ea-control-fg: var(--ea-icon-muted);
   --ea-control-fg-hover: var(--ea-icon-strong);
+  --ea-control-pressed-border-hover: transparent;
+  --ea-control-pressed-bg-hover: transparent;
+  --ea-control-pressed-fg-hover: var(--ea-icon-strong);
   position: relative;
   width: 100%;
   height: 42px;
@@ -302,9 +305,12 @@ html[data-theme='light']
   }
 
   .ea-button[aria-pressed='true']:hover:not(:disabled) {
-    border-color: var(--ea-gold);
-    background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
-    color: var(--ea-gold);
+    border-color: var(--ea-control-pressed-border-hover, var(--ea-gold));
+    background: var(
+      --ea-control-pressed-bg-hover,
+      color-mix(in srgb, var(--ea-gold) 22%, transparent)
+    );
+    color: var(--ea-control-pressed-fg-hover, var(--ea-gold));
   }
 
   .ea-activity-rail-button:hover {

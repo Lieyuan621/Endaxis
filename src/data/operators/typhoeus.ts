@@ -1,10 +1,13 @@
 import type { Effect, OperatorSheet } from '../types';
 
+const COMBO_SKILL_ICON = '/operators/typhoeus/combo.webp';
+
 const HUNTING_ARROW_EFFECT: Effect = {
   id: 'typhoeus-hunting-arrow',
   name: 'huntingArrow',
   kind: 'status',
   target: 'self',
+  icon: '/operators/typhoeus/deco_char_passive_typhoea_arrow.webp',
   duration: 999,
   maxStacks: 4,
 };
@@ -14,6 +17,7 @@ const SIGN_EFFECT: Effect = {
   name: 'sign',
   kind: 'status',
   target: 'self',
+  icon: '/operators/typhoeus/deco_char_passive_typhoea_point.webp',
   duration: 999,
   maxStacks: 8,
 };
@@ -376,6 +380,7 @@ const sheet: OperatorSheet = {
     battleSkill: {
       segments: [
         {
+          name: 'typhoeus.hovering',
           duration: 0.85,
           damageGroups: [
             {
@@ -398,6 +403,8 @@ const sheet: OperatorSheet = {
           ],
         },
         {
+          name: 'typhoeus.aerialShot1',
+          spCost: 0,
           duration: 0.633,
           damageGroups: [
             {
@@ -416,6 +423,8 @@ const sheet: OperatorSheet = {
           ],
         },
         {
+          name: 'typhoeus.aerialShot2',
+          spCost: 0,
           duration: 0.633,
           damageGroups: [
             {
@@ -434,6 +443,8 @@ const sheet: OperatorSheet = {
           ],
         },
         {
+          name: 'typhoeus.aerialShot3',
+          spCost: 0,
           duration: 0.633,
           damageGroups: [
             {
@@ -452,6 +463,8 @@ const sheet: OperatorSheet = {
           ],
         },
         {
+          name: 'typhoeus.aerialShot4',
+          spCost: 0,
           duration: 0.633,
           damageGroups: [
             {
@@ -470,6 +483,8 @@ const sheet: OperatorSheet = {
           ],
         },
         {
+          name: 'typhoeus.aerialFinalStrike',
+          spCost: 0,
           duration: 1.35,
           damageGroups: [
             {
@@ -503,6 +518,7 @@ const sheet: OperatorSheet = {
       ],
     },
     comboSkill: {
+      icon: COMBO_SKILL_ICON,
       comboWindow: {
         triggers: [
           {
@@ -547,6 +563,10 @@ const sheet: OperatorSheet = {
                   stagger: 10,
                   effects: [
                     {
+                      kind: 'ultEnergyGain',
+                      value: 10,
+                    },
+                    {
                       ...HUNTING_ARROW_EFFECT,
                       stacks: 4,
                       condition: {
@@ -572,6 +592,7 @@ const sheet: OperatorSheet = {
                       multiplier: [45, 49, 54, 58, 62, 67, 71, 76, 80, 86, 93, 100],
                       interval: 2,
                       duration: 6,
+                      icon: COMBO_SKILL_ICON,
                       skipFirstTick: true,
                       snapshot: true,
                       cancelOnRefresh: true,
@@ -596,6 +617,7 @@ const sheet: OperatorSheet = {
                       target: 'enemy',
                       value: [6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 10],
                       duration: 6,
+                      icon: COMBO_SKILL_ICON,
                       hide: true,
                     },
                   ],
@@ -657,6 +679,7 @@ const sheet: OperatorSheet = {
                       id: 'typhoeus-hail-of-arrows',
                       kind: 'status',
                       target: 'self',
+                      duration: 999,
                       stacks: 5,
                       maxStacks: 5,
                       hide: true,
@@ -700,7 +723,6 @@ const sheet: OperatorSheet = {
                   },
                 },
               },
-              scaleByCrit: true,
               condition: {
                 kind: 'operatorStatus',
                 status: 'typhoeus-hail-of-arrows',

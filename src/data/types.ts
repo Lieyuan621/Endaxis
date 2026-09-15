@@ -1283,6 +1283,8 @@ export function isTickGroup(group: HitGroup | TickGroup): group is TickGroup {
 
 export interface Segment {
   duration: number;
+  /** Optional key under `skillNames` used for this segment's display name. */
+  name?: string;
   /** Gap (seconds) before this segment starts (relative to the previous segment's end). */
   gap?: number;
   /** Override the skillId for this segment's hits. */

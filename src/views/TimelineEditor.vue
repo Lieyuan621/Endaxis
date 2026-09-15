@@ -2777,6 +2777,10 @@ onUnmounted(() => {
 }
 
 .ts-tab-item {
+  --ea-control-pressed-border-hover: transparent;
+  --ea-control-pressed-bg-hover: var(--ea-tab-active-bg);
+  --ea-control-pressed-fg-hover: var(--ea-tab-active-fg);
+
   min-width: 40px;
   height: 24px;
   display: flex;
@@ -2797,6 +2801,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .ts-tab-item[aria-pressed='true'] {
+  border-color: transparent;
   background-color: var(--ea-tab-active-bg);
   color: var(--ea-tab-active-fg);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -2939,14 +2944,9 @@ onUnmounted(() => {
     border-bottom-color: var(--ea-fg-muted);
   }
 
-  .ts-tab-item.ea-button:hover:not(:disabled) {
+  .ts-tab-item.ea-button:hover:not(:disabled):not([aria-pressed='true']) {
     background-color: var(--ea-hover-fill);
     color: var(--ea-fg);
-  }
-
-  .ts-tab-item[aria-pressed='true']:hover {
-    background-color: var(--ea-tab-active-bg);
-    color: var(--ea-tab-active-fg);
   }
 }
 </style>
