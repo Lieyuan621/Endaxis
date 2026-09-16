@@ -65,6 +65,7 @@ const sheet: OperatorSheet = {
               target: 'self',
               value: [0, 50],
               duration: 999,
+              icon: '/operators/yvonne/talent 1.webp',
             },
           ],
         },
@@ -509,9 +510,7 @@ const sheet: OperatorSheet = {
                           id: 'yvonne-ultimate-enhanced-final-additional',
                           kind: 'damageHit',
                           element: 'cryo',
-                          multiplier: [
-                            267, 294, 320, 347, 374, 400, 427, 454, 480, 514, 554, 600,
-                          ],
+                          multiplier: [267, 294, 320, 347, 374, 400, 427, 454, 480, 514, 554, 600],
                           condition: {
                             kind: 'enemyStatus',
                             status: 'solidification',

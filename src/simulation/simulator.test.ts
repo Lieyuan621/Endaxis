@@ -4792,6 +4792,42 @@ describe('independent enemy status instance ids', () => {
     expect(finalStrikeEntry.payload.hitData._damageBreakdown?.dmgBonus).toBe(0.5);
   });
 
+  it('projects Yvonne Tech Combo with her first talent icon', () => {
+    const operator = createOperatorInstance('op_yvonne', 'yvonne');
+    operator.talentStates = { '0': 2 };
+    const tracks = [
+      createTrack('yvonne', [
+        createAction('activate_yvonne_t1', 'battleSkill', {
+          startTime: 0,
+          hits: [
+            {
+              offset: 0,
+              multiplier: 0,
+              spRecovery: 0,
+              spReturn: 0,
+              stagger: 0,
+              effects: [
+                {
+                  kind: 'reaction',
+                  reactionType: 'solidification',
+                  forced: true,
+                } as Effect,
+              ],
+            },
+          ],
+        }),
+      ]),
+    ];
+    const team = createTeam(operator.id);
+    const triggerEffects = collectRuntimeTriggers(team, [operator], [], [], tracks);
+    const result = runScenario(tracks, registry(triggerEffects));
+    const techCombo = projectActionBuffs(result.operatorLog, 5)
+      .get('yvonne')
+      ?.upper.find(segment => segment.effect?.id === 'yvonne-t1');
+
+    expect(techCombo?.icon).toBe('/operators/yvonne/talent 1.webp');
+  });
+
   it('arms enemyStatus conditional passives from ally apply and keeps OR buff through solidification', () => {
     const battleHits = resolveOperatorSheetHits(yvonneSheet, 'battleSkill');
     const battleHit = battleHits.find(hit => hit.id === 'yvonne-battle-hit');
