@@ -423,6 +423,28 @@ describe('design-system layout regressions', () => {
     }
   });
 
+  test('maps standard Element Plus controls onto the shared control height scale', () => {
+    const rule = getRuleBody(controlStyles, '.ea-select:not(.ea-select--inline)');
+
+    expect(controlStyles).toMatch(
+      /\.ea-input:not\(\.ea-input--inline\),\s*\.ea-number-input,\s*\.ea-select:not\(\.ea-select--inline\)/,
+    );
+    expect(rule).toContain('--el-component-size-small: var(--ea-control-height-sm);');
+    expect(rule).toContain('--el-component-size: var(--ea-control-height-md);');
+    expect(rule).toContain('--el-component-size-large: var(--ea-control-height-lg);');
+  });
+
+  test('overrides Element Plus select wrappers that hard-code their native size heights', () => {
+    for (const size of ['sm', 'md', 'lg']) {
+      const rule = getRuleBody(
+        controlStyles,
+        `.ea-select--${size}:not(.ea-select--inline) .el-select__wrapper`,
+      );
+
+      expect(rule).toContain(`min-height: var(--ea-control-height-${size});`);
+    }
+  });
+
   test('keeps resource monitor collapse controls transparent on hover', () => {
     const rule = getRuleBody(resourceMonitorSource, '.section-toggle-btn:hover');
 

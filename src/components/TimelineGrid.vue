@@ -32,6 +32,7 @@ import {
   shouldShowBoxSelectionToast,
   shouldStartTimelinePan,
 } from '@/utils/timelineSelectionGestures';
+import { createTimelineWheelHandler } from '@/utils/timelineWheelGestures';
 import { sampleSpSeriesAtTime } from '@/simulation/projection/projectSpSeries';
 import { getDisplayKeyCandidates } from '@/utils/effectDisplay';
 import {
@@ -1170,13 +1171,13 @@ function onRulerScroll(e) {
 
 const fakeScrollbarRef = ref(null);
 
-let ticking = false;
+let fakeScrollTicking = false;
 function onFakeScroll(e) {
-  if (ticking) return;
-  ticking = true;
+  if (fakeScrollTicking) return;
+  fakeScrollTicking = true;
   store.setTimelineShift(e.target.scrollLeft);
   requestAnimationFrame(() => {
-    ticking = false;
+    fakeScrollTicking = false;
   });
 }
 
@@ -1692,44 +1693,30 @@ function adjustZoom(delta, anchorTime = null) {
     store.setTimelineShift(newScrollLeft);
   });
 }
-function handleWheel(e) {
-  if (e.ctrlKey) {
-    e.preventDefault();
-
+function handleTimelineWheelGesture(gesture, e) {
+  if (gesture === 'zoom') {
     const timeAtMouse = store.cursorCurrentTime;
-
     const zoomSpeed = 0.15;
     const direction = e.deltaY < 0 ? 1 : -1;
     const delta = Math.round(store.timeBlockWidth * zoomSpeed * direction);
 
     adjustZoom(delta, timeAtMouse);
-  }
-}
-
-function handleTrackWheel(e) {
-  if (ticking) return;
-
-  ticking = true;
-  requestAnimationFrame(() => {
-    ticking = false;
-  });
-
-  if (e.ctrlKey) {
-    handleWheel(e);
     return;
   }
 
-  if (Math.abs(e.deltaX) > 0 || e.shiftKey) {
-    e.preventDefault();
-    // Stop the ruler overflow box from consuming the gesture as native scrollLeft.
-    pinRulerScroll();
-    let delta = e.deltaX;
-    if (e.shiftKey && delta === 0) delta = e.deltaY;
+  // Stop the ruler overflow box from consuming the gesture as native scrollLeft.
+  pinRulerScroll();
+  let delta = e.deltaX;
+  if (e.shiftKey && delta === 0) delta = e.deltaY;
 
-    const newLeft = store.timelineShift + delta;
-    store.setTimelineShift(newLeft);
-  }
+  const newLeft = store.timelineShift + delta;
+  store.setTimelineShift(newLeft);
 }
+
+const handleTrackWheel = createTimelineWheelHandler(
+  callback => requestAnimationFrame(callback),
+  handleTimelineWheelGesture,
+);
 
 // ===================================================================================
 // 对齐辅助线逻辑
@@ -2621,7 +2608,6 @@ onUnmounted(() => {
   if (tracksContentRef.value) {
     // tracksContentRef.value.removeEventListener('scroll', syncRulerScroll);
     tracksContentRef.value.removeEventListener('scroll', syncVerticalScroll);
-    // tracksContentRef.value.removeEventListener('wheel', handleWheel)
   }
   resizeObserver.forEach(obs => obs.disconnect());
   resizeObserver = [];
