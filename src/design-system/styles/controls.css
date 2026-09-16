@@ -285,11 +285,49 @@ html[data-theme='light']
   }
 
   .ea-button:hover:not(:disabled),
-  .ea-filter-chip:hover:not(:disabled),
-  .ea-switch:hover:not(:disabled) {
+  .ea-filter-chip:hover:not(:disabled) {
     border-color: var(--ea-control-border-hover);
     background: var(--ea-control-bg-hover);
     color: var(--ea-control-fg-hover);
+  }
+
+  .ea-checkbox:not(.ea-checkbox--disabled):hover {
+    color: var(--ea-control-fg-hover);
+  }
+
+  .ea-checkbox:not(.ea-checkbox--disabled):hover .ea-checkbox__box {
+    border-color: var(--ea-control-border-hover);
+    background: var(--ea-control-bg-hover);
+  }
+
+  .ea-checkbox:not(.ea-checkbox--disabled):hover .ea-checkbox__input:checked + .ea-checkbox__box {
+    border-color: var(--ea-gold-hover);
+    background: var(--ea-gold-hover);
+  }
+
+  .ea-checkbox:not(.ea-checkbox--disabled):hover
+    .ea-checkbox__input:indeterminate
+    + .ea-checkbox__box {
+    border-color: var(--ea-gold-hover);
+    background: var(--ea-gold-hover);
+  }
+
+  .ea-switch:hover:not(:disabled) .ea-switch__track {
+    border-color: var(--ea-control-border-hover);
+    background: var(--ea-control-bg-hover);
+  }
+
+  .ea-switch:hover:not(:disabled) .ea-switch__thumb {
+    background: var(--ea-control-fg-hover);
+  }
+
+  .ea-switch--checked:hover:not(:disabled) .ea-switch__track {
+    border-color: var(--ea-gold-hover);
+    background: color-mix(in srgb, var(--ea-gold-hover) 26%, transparent);
+  }
+
+  .ea-switch--checked:hover:not(:disabled) .ea-switch__thumb {
+    background: var(--ea-gold-hover);
   }
 
   .ea-button--primary:hover:not(:disabled) {
@@ -360,6 +398,7 @@ html[data-theme='light']
   color: var(--ea-fg-secondary);
   font-size: var(--ea-control-font-size-md);
   cursor: pointer;
+  transition: color var(--ea-control-transition);
 }
 
 .ea-checkbox__input {
@@ -378,6 +417,10 @@ html[data-theme='light']
   border: 1px solid var(--ea-control-border);
   border-radius: var(--ea-control-radius);
   background: var(--ea-fill-input);
+  transition:
+    background-color var(--ea-control-transition),
+    border-color var(--ea-control-transition),
+    box-shadow var(--ea-control-transition);
 }
 
 .ea-checkbox__input:checked + .ea-checkbox__box {
@@ -432,6 +475,9 @@ html[data-theme='light']
   height: 20px;
   border: 1px solid var(--ea-control-border);
   background: var(--ea-fill-input);
+  transition:
+    background-color var(--ea-control-transition),
+    border-color var(--ea-control-transition);
 }
 
 .ea-switch__thumb {

@@ -1,5 +1,12 @@
 <script setup>
-import { EaButton, EaDialog, EaDialogActions, EaTooltip } from '@/design-system';
+import {
+  EaButton,
+  EaDialog,
+  EaDialogActions,
+  EaMinusIcon,
+  EaPlusIcon,
+  EaTooltip,
+} from '@/design-system';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getOperator, getOperatorTalentGroups } from '@/data';
@@ -409,20 +416,26 @@ function promotedLabel() {
               <div class="skill-controls">
                 <EaButton
                   size="sm"
+                  icon-only
                   :disabled="(instance.skillLevels[key] ?? 1) <= 1"
+                  :title="t('common.decrease')"
+                  :aria-label="t('common.decrease')"
                   @click="decrementSkill(key)"
                 >
-                  -
+                  <EaMinusIcon />
                 </EaButton>
                 <span class="skill-rank">{{
                   skillLevelLabel(instance.skillLevels[key] ?? 1)
                 }}</span>
                 <EaButton
                   size="sm"
+                  icon-only
                   :disabled="(instance.skillLevels[key] ?? 1) >= skillMax"
+                  :title="t('common.increase')"
+                  :aria-label="t('common.increase')"
                   @click="incrementSkill(key)"
                 >
-                  +
+                  <EaPlusIcon />
                 </EaButton>
               </div>
             </div>

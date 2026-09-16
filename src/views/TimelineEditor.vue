@@ -9,6 +9,7 @@ import {
   EaInput,
   EaNumberInput,
   EaPopover,
+  EaPlusIcon,
   EaTextarea,
 } from '@/design-system';
 import { onMounted, onUnmounted, ref, nextTick, computed, inject, watch } from 'vue';
@@ -1562,8 +1563,9 @@ onUnmounted(() => {
               class="ts-add-btn ea-control--no-shrink"
               @click="handleAddScenario"
               :title="t('timeline.scenario.addTooltip')"
+              :aria-label="t('timeline.scenario.addTooltip')"
             >
-              +
+              <EaPlusIcon />
             </EaButton>
           </div>
         </div>
@@ -2809,7 +2811,6 @@ onUnmounted(() => {
 
 .ts-add-btn {
   margin-left: 4px;
-  font-size: 14px;
 }
 
 /* Workspace & Panels */

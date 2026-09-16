@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSSRApp, defineComponent, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { createI18n } from 'vue-i18n';
@@ -9,10 +9,18 @@ import en from '@/i18n/locales/en.json';
 import { computeHitDamageWithBreakdown } from '@/data/stats/computeDamage';
 import { computeStats } from '@/data/stats/computeStats';
 
-// This read-only render does not edit timeline state or exercise force-crit controls.
+const timelineStoreState = vi.hoisted(() => ({
+  forcedCrit: false,
+  simLog: [] as Array<Record<string, unknown>>,
+}));
+
+// This read-only render keeps simulation state local while exercising the real dialog output.
 vi.mock('@/stores/timelineStore', () => ({
   useTimelineStore: () => ({
-    isHitForcedCrit: () => false,
+    get simLog() {
+      return timelineStoreState.simLog;
+    },
+    isHitForcedCrit: () => timelineStoreState.forcedCrit,
     toggleHitForcedCrit: () => false,
   }),
 }));
@@ -22,6 +30,7 @@ async function renderDetail(
   defenseBased: boolean,
   critRateScale?: number,
   hitData: Record<string, unknown> = {},
+  breakdownOverride?: Record<string, unknown>,
 ) {
   const status = computeStats(
     {
@@ -37,16 +46,18 @@ async function renderDetail(
     [],
     [],
   );
-  const breakdown = computeHitDamageWithBreakdown(
-    {
-      multiplier: 500 * (critRateScale ?? 1),
-      ...(defenseBased ? { damageBase: { stat: 'defense' as const, flat: 300 } } : {}),
-    },
-    status,
-    100,
-    undefined,
-    'physical',
-  );
+  const breakdown =
+    breakdownOverride ??
+    computeHitDamageWithBreakdown(
+      {
+        multiplier: 500 * (critRateScale ?? 1),
+        ...(defenseBased ? { damageBase: { stat: 'defense' as const, flat: 300 } } : {}),
+      },
+      status,
+      100,
+      undefined,
+      'physical',
+    );
   const app = createSSRApp(HitDamageDetailDialog, {
     visible: true,
     breakdown,
@@ -71,6 +82,11 @@ async function renderDetail(
 }
 
 describe('HitDamageDetailDialog', () => {
+  beforeEach(() => {
+    timelineStoreState.forcedCrit = false;
+    timelineStoreState.simLog = [];
+  });
+
   it('does not reverse-scale the flat term when displaying a crit-scaled multiplier', async () => {
     const html = await renderDetail('en', true, 0.5);
     expect(html).toContain('800');
@@ -107,5 +123,84 @@ describe('HitDamageDetailDialog', () => {
     });
 
     expect(html).toContain('强制暴击');
+  });
+
+  it('uses the latest simulated hit after force crit is turned off while the dialog stays open', async () => {
+    const hitKey = 'v1:source:enemy:generated:status-damage:0';
+    const normalBreakdown = computeHitDamageWithBreakdown(
+      { multiplier: 500 },
+      computeStats(
+        {
+          level: 60,
+          baseAtk: 1000,
+          baseHp: 1000,
+          weaponAtk: 0,
+          baseAttrs: { strength: 0, agility: 0, intellect: 0, will: 0 },
+          mainAttributeName: 'strength',
+          secondaryAttributeName: 'will',
+          intrinsicOverrides: { defense: 100, critRate: 0 },
+        },
+        [],
+        [],
+      ),
+      100,
+      undefined,
+      'physical',
+    );
+    const staleForcedBreakdown = {
+      ...normalBreakdown,
+      critRate: 1,
+      critRateRaw: 1,
+      critMult: normalBreakdown.critDmg,
+      expectedDamage: normalBreakdown.critDamage,
+    };
+    timelineStoreState.simLog = [
+      {
+        type: 'DAMAGE_HIT',
+        time: 1,
+        payload: {
+          targetId: 'enemy',
+          sourceId: 'operator',
+          stagger: 0,
+          actionId: 'action-1',
+          hitData: {
+            _hitKey: hitKey,
+            _canCrit: true,
+            _damageBreakdown: normalBreakdown,
+          },
+        },
+      },
+      {
+        type: 'DAMAGE_HIT',
+        time: 2,
+        payload: {
+          targetId: 'enemy',
+          sourceId: 'operator',
+          stagger: 0,
+          actionId: 'action-2',
+          hitData: {
+            _hitKey: 'v1:action:action-2:hit:0',
+            _canCrit: true,
+            _damageBreakdown: { ...normalBreakdown, expectedDamage: 999 },
+          },
+        },
+      },
+    ];
+
+    const html = await renderDetail(
+      'en',
+      false,
+      undefined,
+      {
+        _hitKey: hitKey,
+        _canCrit: true,
+        _damageBreakdown: staleForcedBreakdown,
+      },
+      staleForcedBreakdown,
+    );
+    const headline = html.match(/class="damage-value[^"]*"[^>]*>(.*?)<\/span>/)?.[1];
+
+    expect(headline).toContain('2,500');
+    expect(headline).not.toContain('3,750');
   });
 });

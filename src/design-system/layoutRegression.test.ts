@@ -71,6 +71,10 @@ function getBlockBody(source: string, header: string) {
   return '';
 }
 
+function normalizeCssWhitespace(source: string) {
+  return source.replace(/\s+/g, ' ').trim();
+}
+
 function unguardedHoverCount(source: string) {
   const styleBlocks = [...source.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)];
   const styleSource = styleBlocks.length ? styleBlocks.map(match => match[1]).join('\n') : source;
@@ -236,6 +240,59 @@ describe('design-system layout regressions', () => {
     expect(guardedHoverRules).toBe(allHoverRules);
   });
 
+  test('gives enabled checkboxes visible hover feedback without losing their checked state', () => {
+    const hoverMedia = normalizeCssWhitespace(
+      getBlockBody(controlStyles, '@media (hover: hover) and (pointer: fine)'),
+    );
+    const labelRule = getRuleBody(hoverMedia, '.ea-checkbox:not(.ea-checkbox--disabled):hover');
+    const boxRule = getRuleBody(
+      hoverMedia,
+      '.ea-checkbox:not(.ea-checkbox--disabled):hover .ea-checkbox__box',
+    );
+    const checkedBoxRule = getRuleBody(
+      hoverMedia,
+      '.ea-checkbox:not(.ea-checkbox--disabled):hover .ea-checkbox__input:checked + .ea-checkbox__box',
+    );
+
+    expect(labelRule).toContain('color: var(--ea-control-fg-hover);');
+    expect(boxRule).toContain('border-color: var(--ea-control-border-hover);');
+    expect(boxRule).toContain('background: var(--ea-control-bg-hover);');
+    expect(checkedBoxRule).toContain('border-color: var(--ea-gold-hover);');
+    expect(checkedBoxRule).toContain('background: var(--ea-gold-hover);');
+  });
+
+  test('limits switch hover feedback to its track and thumb', () => {
+    const hoverMedia = getBlockBody(controlStyles, '@media (hover: hover) and (pointer: fine)');
+    const rootRule = getRuleBody(hoverMedia, '.ea-switch:hover:not(:disabled)');
+    const trackRule = getRuleBody(hoverMedia, '.ea-switch:hover:not(:disabled) .ea-switch__track');
+    const thumbRule = getRuleBody(hoverMedia, '.ea-switch:hover:not(:disabled) .ea-switch__thumb');
+
+    expect(rootRule).not.toMatch(/\b(?:background|border-color)\s*:/);
+    expect(trackRule).toContain('border-color: var(--ea-control-border-hover);');
+    expect(trackRule).toContain('background: var(--ea-control-bg-hover);');
+    expect(thumbRule).toContain('background: var(--ea-control-fg-hover);');
+  });
+
+  test('gives standard form controls hover feedback without overriding special states', () => {
+    const hoverMedia = normalizeCssWhitespace(
+      getBlockBody(elementPlusStyles, '@media (hover: hover) and (pointer: fine)'),
+    );
+
+    for (const selector of [
+      '.ea-input:not(.is-disabled):not(.ea-input--invalid):not(.ea-input--inline) .el-input__wrapper:not(.is-focus):hover',
+      '.ea-textarea:not(.is-disabled):not(.ea-textarea--invalid) .el-textarea__inner:not(:focus):hover',
+      '.ea-number-input:not(.is-disabled):not(.ea-number-input--invalid) .el-input__wrapper:not(.is-focus):hover',
+      '.ea-select:not(.is-disabled):not(.ea-select--invalid):not(.ea-select--inline) .el-select__wrapper:not(.is-focused):hover',
+    ]) {
+      expect(hoverMedia).toContain(selector);
+    }
+
+    expect(hoverMedia).toContain('background-color: var(--ea-control-bg-hover) !important;');
+    expect(hoverMedia).toContain(
+      'box-shadow: 0 0 0 1px var(--ea-control-border-hover) inset !important;',
+    );
+  });
+
   test('keeps pressed-button hover customizable while retaining the default gold feedback', () => {
     const hoverMedia = getBlockBody(controlStyles, '@media (hover: hover) and (pointer: fine)');
     const rule = getRuleBody(hoverMedia, ".ea-button[aria-pressed='true']:hover:not(:disabled)");
@@ -372,6 +429,14 @@ describe('design-system layout regressions', () => {
     expect(rule).toMatch(/\bbackground:\s*transparent\s*;/);
   });
 
+  test('keeps hit editor advanced settings hover flat while preserving its divider', () => {
+    const rule = getRuleBody(hitEditorSource, '.advanced-settings-toggle');
+
+    expect(rule).toContain('--ea-control-bg-hover: transparent;');
+    expect(rule).toContain('--ea-control-border-hover: var(--ea-border-soft);');
+    expect(rule).toContain('--ea-control-fg-hover: var(--ea-gold);');
+  });
+
   test('centers the asymmetric Typhoeus Sign artwork inside its timeline icon box', () => {
     const rule = getRuleBody(
       timelineBuffLayerSource,
@@ -389,6 +454,21 @@ describe('design-system layout regressions', () => {
       expect(rule).not.toMatch(/\btransition:\s*all\b/);
       expect(rule).not.toMatch(/\bclip-path\s*:/);
     }
+  });
+
+  test('keeps custom time bar controls separated by the shared spacing scale', () => {
+    const listRule = getRuleBody(propertiesPanelSource, '.custom-bar-list');
+    const cardRule = getRuleBody(propertiesPanelSource, '.custom-bar-card');
+    const headerRule = getRuleBody(propertiesPanelSource, '.custom-bar-card__header');
+    const fieldsRule = getRuleBody(propertiesPanelSource, '.custom-bar-card__fields');
+
+    expect(listRule).toContain('gap: var(--ea-space-2);');
+    expect(cardRule).toContain('padding: var(--ea-space-3) !important;');
+    expect(cardRule).toContain('margin-bottom: 0 !important;');
+    expect(headerRule).toContain('grid-template-columns: minmax(0, 1fr) auto;');
+    expect(headerRule).toContain('gap: var(--ea-space-2);');
+    expect(fieldsRule).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
+    expect(fieldsRule).toContain('gap: var(--ea-space-2);');
   });
 
   test('keeps activity-bar hover feedback flat and position-stable', () => {

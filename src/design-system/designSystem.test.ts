@@ -138,6 +138,28 @@ describe('design-system component contracts', () => {
     expect(html).not.toMatch(/>\s*[x×]\s*</i);
   });
 
+  test('EaPlusIcon renders a font-independent decorative add glyph', async () => {
+    const html = await renderComponent('EaPlusIcon', {});
+
+    expect(html).toContain('<svg');
+    expect(html).toContain('class="ea-plus-icon"');
+    expect(html).toContain('stroke="currentColor"');
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain('focusable="false"');
+    expect(html).not.toMatch(/>\s*\+\s*</);
+  });
+
+  test('EaMinusIcon renders a font-independent decorative subtract glyph', async () => {
+    const html = await renderComponent('EaMinusIcon', {});
+
+    expect(html).toContain('<svg');
+    expect(html).toContain('class="ea-minus-icon"');
+    expect(html).toContain('stroke="currentColor"');
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain('focusable="false"');
+    expect(html).not.toMatch(/>\s*-\s*</);
+  });
+
   test('EaFilterChip exposes its selected state to assistive technology', async () => {
     const html = await renderComponent('EaFilterChip', { selected: true }, 'Fire');
 

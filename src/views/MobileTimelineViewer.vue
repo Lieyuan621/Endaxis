@@ -10,6 +10,7 @@ import {
   EaNumberInput,
   EaOption,
   EaPopover,
+  EaPlusIcon,
   EaSelect,
   EaTextarea,
 } from '@/design-system';
@@ -2337,18 +2338,7 @@ async function doImport() {
             :aria-label="t('timeline.scenario.addTooltip')"
             @click="handleAddScenario"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <EaPlusIcon />
           </EaButton>
         </div>
 

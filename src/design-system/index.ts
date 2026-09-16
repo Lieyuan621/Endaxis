@@ -9,10 +9,12 @@ export { default as EaDeleteIcon } from './components/EaDeleteIcon/EaDeleteIcon.
 export { default as EaFilterChip } from './components/EaFilterChip/EaFilterChip.vue';
 export { default as EaFormField } from './components/EaFormField/EaFormField.vue';
 export { default as EaInput } from './components/EaInput/EaInput.vue';
+export { default as EaMinusIcon } from './components/EaMinusIcon/EaMinusIcon.vue';
 export { default as EaNumberInput } from './components/EaNumberInput/EaNumberInput.vue';
 export { default as EaOption } from './components/EaOption/EaOption.vue';
 export { default as EaOptionGroup } from './components/EaOptionGroup/EaOptionGroup.vue';
 export { default as EaPopover } from './components/EaPopover/EaPopover.vue';
+export { default as EaPlusIcon } from './components/EaPlusIcon/EaPlusIcon.vue';
 export { default as EaSelect } from './components/EaSelect/EaSelect.vue';
 export { default as EaSwitch } from './components/EaSwitch/EaSwitch.vue';
 export { default as EaTextarea } from './components/EaTextarea/EaTextarea.vue';

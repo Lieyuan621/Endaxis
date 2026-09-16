@@ -8,6 +8,7 @@ import {
   EaInput,
   EaOption,
   EaOptionGroup,
+  EaPlusIcon,
   EaSelect,
 } from '@/design-system';
 import { computed, ref, watch } from 'vue';
@@ -702,18 +703,7 @@ function save() {
           </draggable>
           <EaButton type="button" class="add-effect-bar" @click="addEffect">
             <span class="plus-icon">
-              <svg
-                viewBox="0 0 24 24"
-                width="10"
-                height="10"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="4"
-                aria-hidden="true"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <EaPlusIcon :size="10" :stroke-width="4" />
             </span>
             <span>{{ t('propertiesPanel.effects.addEffect') }}</span>
           </EaButton>
@@ -1506,6 +1496,9 @@ function save() {
 }
 
 .advanced-settings-toggle {
+  --ea-control-bg-hover: transparent;
+  --ea-control-border-hover: var(--ea-border-soft);
+  --ea-control-fg-hover: var(--ea-gold);
   align-items: center;
   background: transparent;
   border: 0;
@@ -1526,12 +1519,6 @@ function save() {
 .advanced-settings-toggle:focus-visible {
   color: var(--ea-gold);
   outline: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .advanced-settings-toggle:hover {
-    color: var(--ea-gold);
-  }
 }
 
 .advanced-settings-toggle.has-values::after {

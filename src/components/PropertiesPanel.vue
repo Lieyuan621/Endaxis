@@ -1,5 +1,5 @@
 <script setup>
-import { EaButton, EaDeleteIcon, EaInput, EaSelect } from '@/design-system';
+import { EaButton, EaDeleteIcon, EaInput, EaPlusIcon, EaSelect } from '@/design-system';
 import { computed, ref, watch } from 'vue';
 import { useTimelineStore } from '../stores/timelineStore.js';
 import draggable from 'vuedraggable';
@@ -662,17 +662,7 @@ function handleStartConnection(id, type = null) {
             :aria-label="t('propertiesPanel.damage.add')"
             @click.stop="addDamageTick"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
+            <EaPlusIcon :stroke-width="3" />
           </EaButton>
           <el-icon :class="{ 'is-rotated': isTicksExpanded }" class="toggle-arrow"
             ><ArrowRight
@@ -776,29 +766,23 @@ function handleStartConnection(id, type = null) {
         <div class="section-header-tech">
           <div class="spacer"></div>
           <EaButton size="sm" icon-only @click.stop="addCustomBar">
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
+            <EaPlusIcon :stroke-width="3" />
           </EaButton>
           <el-icon :class="{ 'is-rotated': isBarsExpanded }" class="toggle-arrow"
             ><ArrowRight
           /></el-icon>
         </div>
 
-        <div v-if="isBarsExpanded" class="section-content-tech" @click.stop>
+        <div v-if="isBarsExpanded" class="section-content-tech custom-bar-list" @click.stop>
           <div v-if="customBarsList.length === 0" class="empty-hint">
             {{ t('propertiesPanel.bars.empty') }}
           </div>
-          <div v-for="(bar, index) in customBarsList" :key="index" class="tick-item blue-theme">
-            <div class="tick-header">
+          <div
+            v-for="(bar, index) in customBarsList"
+            :key="index"
+            class="tick-item blue-theme custom-bar-card"
+          >
+            <div class="tick-header custom-bar-card__header">
               <EaInput
                 :model-value="bar.text"
                 size="sm"
@@ -817,7 +801,7 @@ function handleStartConnection(id, type = null) {
                 <EaDeleteIcon />
               </EaButton>
             </div>
-            <div class="tick-row">
+            <div class="tick-row custom-bar-card__fields">
               <div class="tick-col">
                 <label>{{ t('propertiesPanel.bars.offsetS') }}</label>
                 <CustomNumberInput
@@ -862,18 +846,7 @@ function handleStartConnection(id, type = null) {
                 connectionHandler.state.value.sourceId === store.selectedActionId,
             }"
           >
-            <span class="plus-icon"
-              ><svg
-                viewBox="0 0 24 24"
-                width="10"
-                height="10"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="4"
-              >
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line></svg
-            ></span>
+            <span class="plus-icon"><EaPlusIcon :size="10" :stroke-width="4" /></span>
             {{
               connectionHandler.isDragging.value
                 ? t('propertiesPanel.connections.chooseTarget')
@@ -1260,6 +1233,32 @@ function handleStartConnection(id, type = null) {
 }
 .tick-col.full-width {
   flex: 1;
+}
+.custom-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ea-space-2);
+}
+.custom-bar-card {
+  padding: var(--ea-space-3) !important;
+  margin-bottom: 0 !important;
+}
+.custom-bar-card__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ea-space-2);
+  margin-bottom: var(--ea-space-3);
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.custom-bar-card__header > .ea-input {
+  width: 100%;
+  min-width: 0;
+}
+.custom-bar-card__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ea-space-2);
 }
 /* Connection Cards - Optimized */
 .connection-header-group {

@@ -91,8 +91,30 @@ function reactionLabel(value) {
   return translateEffectName(t, te, value);
 }
 
-const usesDefense = computed(() => props.breakdown?.damageBase?.stat === 'defense');
-const atkDetail = computed(() => (usesDefense.value ? null : (props.breakdown?.atkDetail ?? null)));
+const activeHitData = computed(() => {
+  const selectedHit = props.hitData;
+  const hitKey = typeof selectedHit?._hitKey === 'string' ? selectedHit._hitKey : '';
+  if (!hitKey) return selectedHit;
+
+  const simLog = Array.isArray(store.simLog) ? store.simLog : [];
+  for (let index = simLog.length - 1; index >= 0; index -= 1) {
+    const entry = simLog[index];
+    if (entry?.type !== 'DAMAGE_HIT') continue;
+    const currentHit = entry.payload?.hitData;
+    if (currentHit?._hitKey === hitKey) return currentHit;
+  }
+
+  return selectedHit;
+});
+
+const activeBreakdown = computed(
+  () => activeHitData.value?._damageBreakdown ?? props.breakdown ?? null,
+);
+
+const usesDefense = computed(() => activeBreakdown.value?.damageBase?.stat === 'defense');
+const atkDetail = computed(() =>
+  usesDefense.value ? null : (activeBreakdown.value?.atkDetail ?? null),
+);
 
 const baseAtkTotal = computed(() => {
   const detail = atkDetail.value;
@@ -136,41 +158,43 @@ const attrContribs = computed(() => {
 
 const canForceCrit = computed(
   () =>
-    typeof props.hitData?._hitKey === 'string' &&
-    props.hitData?._canCrit !== false &&
-    !!props.breakdown &&
-    props.breakdown.critDmg !== 0,
+    typeof activeHitData.value?._hitKey === 'string' &&
+    activeHitData.value?._canCrit !== false &&
+    !!activeBreakdown.value &&
+    activeBreakdown.value.critDmg !== 0,
 );
 
-const isForcedCrit = computed(() => store.isHitForcedCrit(props.hitData));
+const isForcedCrit = computed(() => store.isHitForcedCrit(activeHitData.value));
 
 const headlineDamage = computed(() => {
-  if (!props.breakdown) return 0;
-  return isForcedCrit.value ? props.breakdown.critDamage : props.breakdown.expectedDamage;
+  if (!activeBreakdown.value) return 0;
+  return isForcedCrit.value
+    ? activeBreakdown.value.critDamage
+    : activeBreakdown.value.expectedDamage;
 });
 
 function toggleForcedCrit() {
-  store.toggleHitForcedCrit(props.hitData);
+  store.toggleHitForcedCrit(activeHitData.value);
 }
 
 const displayMultiplier = computed(() => {
-  if (!props.breakdown) return 0;
-  const scale = props.hitData?._critRateScale;
-  if (scale && scale > 0) return props.breakdown.multiplier / scale;
-  return props.breakdown.multiplier;
+  if (!activeBreakdown.value) return 0;
+  const scale = activeHitData.value?._critRateScale;
+  if (scale && scale > 0) return activeBreakdown.value.multiplier / scale;
+  return activeBreakdown.value.multiplier;
 });
 
 const displayBase = computed(() => {
-  if (!props.breakdown) return 0;
-  const scale = props.hitData?._critRateScale;
+  if (!activeBreakdown.value) return 0;
+  const scale = activeHitData.value?._critRateScale;
   if (scale && scale > 0) {
-    const flat = props.breakdown.damageBase?.flat ?? 0;
-    return (props.breakdown.base - flat) / scale + flat;
+    const flat = activeBreakdown.value.damageBase?.flat ?? 0;
+    return (activeBreakdown.value.base - flat) / scale + flat;
   }
-  return props.breakdown.base;
+  return activeBreakdown.value.base;
 });
 
-const skillMultiplierDetail = computed(() => props.breakdown?.multiplierDetail ?? null);
+const skillMultiplierDetail = computed(() => activeBreakdown.value?.multiplierDetail ?? null);
 
 function multiplierSourceLabel(source) {
   if (source.sourceLabel) {
@@ -210,49 +234,52 @@ function multiplierSourceValue(source) {
 }
 
 const contextRows = computed(() => {
-  if (!props.breakdown) return [];
+  if (!activeBreakdown.value) return [];
+  const breakdown = activeBreakdown.value;
+  const hitData = activeHitData.value;
   const rows = [];
-  if (props.breakdown.reactionType) {
+  if (breakdown.reactionType) {
     rows.push({
       label: t('hitDetail.reactionType'),
-      value: reactionLabel(props.breakdown.reactionType),
+      value: reactionLabel(breakdown.reactionType),
     });
   }
-  if (props.breakdown.skillType) {
+  if (breakdown.skillType) {
     rows.push({
       label: t('hitDetail.skillType'),
-      value: skillTypeLabel(props.breakdown.skillType),
+      value: skillTypeLabel(breakdown.skillType),
     });
   }
-  if (props.breakdown.element) {
+  if (breakdown.element) {
     rows.push({
       label: t('hitDetail.element'),
-      value: getGameElementName(props.breakdown.element, locale.value),
+      value: getGameElementName(breakdown.element, locale.value),
     });
   }
   if (
-    props.hitData?.triggeredBy &&
-    !props.breakdown.isReaction &&
-    !String(props.hitData.triggeredBy).startsWith('dot:')
+    hitData?.triggeredBy &&
+    !breakdown.isReaction &&
+    !String(hitData.triggeredBy).startsWith('dot:')
   ) {
     rows.push({
       label: t('hitDetail.triggeredBy'),
-      value: props.hitData.triggeredBy,
+      value: hitData.triggeredBy,
     });
   }
   return rows;
 });
 
 const multiplierRows = computed(() => {
-  if (!props.breakdown) return [];
-  const b = props.breakdown;
+  if (!activeBreakdown.value) return [];
+  const b = activeBreakdown.value;
+  const hitData = activeHitData.value;
   const rows = [];
 
-  if (props.hitData?._critRateScale != null) {
+  if (hitData?._critRateScale != null) {
     rows.push({
       label: t('hitDetail.critRateScale'),
-      detail: pct(props.hitData._critRateScale),
-      value: mult(props.hitData._critRateScale),
+      detail: pct(hitData._critRateScale),
+      value: mult(hitData._critRateScale),
       tooltip: t('hitDetail.critRateScaleTooltip'),
     });
   }
@@ -420,7 +447,7 @@ function onClose() {
     append-to-body
     @update:model-value="onClose"
   >
-    <div v-if="breakdown" class="hit-detail-content">
+    <div v-if="activeBreakdown" class="hit-detail-content">
       <template v-if="contextRows.length">
         <div class="section-label">{{ t('hitDetail.context') }}</div>
         <table class="stat-table">
@@ -447,11 +474,11 @@ function onClose() {
           <tbody>
             <tr class="dim">
               <td class="label-cell">{{ t('hitDetail.critDamage') }}</td>
-              <td class="value-cell">{{ num(breakdown.critDamage) }}</td>
+              <td class="value-cell">{{ num(activeBreakdown.critDamage) }}</td>
             </tr>
             <tr class="dim">
               <td class="label-cell">{{ t('hitDetail.nonCritDamage') }}</td>
-              <td class="value-cell">{{ num(breakdown.nonCritDamage) }}</td>
+              <td class="value-cell">{{ num(activeBreakdown.nonCritDamage) }}</td>
             </tr>
           </tbody>
         </table>
@@ -471,7 +498,9 @@ function onClose() {
               /></el-icon>
               {{ usesDefense ? t('statDetail.defense') : t('hitDetail.attack') }}
             </td>
-            <td class="value-cell">{{ num(breakdown.damageBase?.value ?? breakdown.attack) }}</td>
+            <td class="value-cell">
+              {{ num(activeBreakdown.damageBase?.value ?? activeBreakdown.attack) }}
+            </td>
           </tr>
           <template v-if="atkOpen && atkDetail">
             <tr class="sub-row">
@@ -579,9 +608,9 @@ function onClose() {
               <td class="value-cell">{{ multiplierSourceValue(source) }}</td>
             </tr>
           </template>
-          <tr v-if="breakdown.damageBase?.flat">
+          <tr v-if="activeBreakdown.damageBase?.flat">
             <td class="label-cell">{{ t('hitDetail.flatBaseDamage') }}</td>
-            <td class="value-cell">{{ num(breakdown.damageBase.flat) }}</td>
+            <td class="value-cell">{{ num(activeBreakdown.damageBase.flat) }}</td>
           </tr>
           <tr class="bold">
             <td class="label-cell">{{ t('hitDetail.baseDamage') }}</td>
@@ -623,35 +652,45 @@ function onClose() {
               <template v-if="row.kind === 'crit' && critOpen">
                 <tr class="sub-row">
                   <td class="label-cell indent-1">{{ t('stats.crit_rate') }}</td>
-                  <td class="value-cell">{{ pct(breakdown.critRate) }}</td>
-                </tr>
-                <tr v-if="breakdown.critRateRaw > breakdown.critRate" class="sub-row dim">
-                  <td class="label-cell indent-2">{{ t('hitDetail.rawCritRate') }}</td>
-                  <td class="value-cell">{{ pct(breakdown.critRateRaw) }}</td>
+                  <td class="value-cell">{{ pct(activeBreakdown.critRate) }}</td>
                 </tr>
                 <tr
-                  v-for="(source, idx) in breakdown.critRateSources || []"
+                  v-if="activeBreakdown.critRateRaw > activeBreakdown.critRate"
+                  class="sub-row dim"
+                >
+                  <td class="label-cell indent-2">{{ t('hitDetail.rawCritRate') }}</td>
+                  <td class="value-cell">{{ pct(activeBreakdown.critRateRaw) }}</td>
+                </tr>
+                <tr
+                  v-for="(source, idx) in activeBreakdown.critRateSources || []"
                   :key="`crit-rate-${idx}`"
                   class="sub-row dim"
                 >
                   <td
                     class="label-cell"
-                    :class="breakdown.critRateRaw > breakdown.critRate ? 'indent-3' : 'indent-2'"
+                    :class="
+                      activeBreakdown.critRateRaw > activeBreakdown.critRate
+                        ? 'indent-3'
+                        : 'indent-2'
+                    "
                   >
                     {{ resolveSourceLabel(source.label) }}
                   </td>
                   <td class="value-cell">{{ formatCritSourceValue(source) }}</td>
                 </tr>
-                <tr v-if="breakdown.critRateRaw > breakdown.critRate" class="sub-row dim">
+                <tr
+                  v-if="activeBreakdown.critRateRaw > activeBreakdown.critRate"
+                  class="sub-row dim"
+                >
                   <td class="label-cell indent-2">{{ t('hitDetail.critRateCap') }}</td>
-                  <td class="value-cell">{{ pct(breakdown.critRate) }}</td>
+                  <td class="value-cell">{{ pct(activeBreakdown.critRate) }}</td>
                 </tr>
                 <tr class="sub-row">
                   <td class="label-cell indent-1">{{ t('stats.crit_dmg') }}</td>
-                  <td class="value-cell">{{ pct(breakdown.critDmg) }}</td>
+                  <td class="value-cell">{{ pct(activeBreakdown.critDmg) }}</td>
                 </tr>
                 <tr
-                  v-for="(source, idx) in breakdown.critDmgSources || []"
+                  v-for="(source, idx) in activeBreakdown.critDmgSources || []"
                   :key="`crit-dmg-${idx}`"
                   class="sub-row dim"
                 >

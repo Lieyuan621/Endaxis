@@ -8,6 +8,8 @@
     "default": "Default",
     "edit": "Edit",
     "export": "Export",
+    "decrease": "Decrease",
+    "increase": "Increase",
     "all": "all",
     "language": "Language",
     "appearance": "Appearance",

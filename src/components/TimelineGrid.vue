@@ -1,5 +1,5 @@
 <script setup>
-import { EaButton } from '@/design-system';
+import { EaButton, EaMinusIcon, EaPlusIcon } from '@/design-system';
 import { ref, provide, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import { refThrottled } from '@vueuse/core';
 import { useTimelineStore } from '../stores/timelineStore.js';
@@ -2741,9 +2741,9 @@ defineExpose({
             <span
               class="zoom-icon"
               @click="adjustZoom(-Math.max(1, Math.round(store.timeBlockWidth * 0.1)), null)"
-              ><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
-                <path d="M19 13H5v-2h14v2z" /></svg
-            ></span>
+            >
+              <EaMinusIcon :size="10" :stroke-width="3" />
+            </span>
             <input
               type="range"
               class="davinci-range"
@@ -2755,9 +2755,9 @@ defineExpose({
             <span
               class="zoom-icon"
               @click="adjustZoom(Math.max(1, Math.round(store.timeBlockWidth * 0.1)), null)"
-              ><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
-                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg
-            ></span>
+            >
+              <EaPlusIcon :size="10" :stroke-width="3" />
+            </span>
           </div>
         </div>
       </div>

@@ -233,6 +233,17 @@ html[data-theme='light'] .el-popper {
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .ea-input:not(.is-disabled):not(.ea-input--invalid):not(.ea-input--inline)
+    .el-input__wrapper:not(.is-focus):hover,
+  .ea-textarea:not(.is-disabled):not(.ea-textarea--invalid) .el-textarea__inner:not(:focus):hover,
+  .ea-number-input:not(.is-disabled):not(.ea-number-input--invalid)
+    .el-input__wrapper:not(.is-focus):hover,
+  .ea-select:not(.is-disabled):not(.ea-select--invalid):not(.ea-select--inline)
+    .el-select__wrapper:not(.is-focused):hover {
+    background-color: var(--ea-control-bg-hover) !important;
+    box-shadow: 0 0 0 1px var(--ea-control-border-hover) inset !important;
+  }
+
   html[data-theme='light'] .ea-number-input .el-input-number__increase:hover,
   html[data-theme='light'] .ea-number-input .el-input-number__decrease:hover {
     background: var(--ea-chip-fill-hover) !important;
