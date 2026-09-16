@@ -292,6 +292,10 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
 }
 
 .timeline-display-guide {
+  --ea-control-pressed-border-hover: var(--ea-border-strong);
+  --ea-control-pressed-bg-hover: var(--ea-hover-fill);
+  --ea-control-pressed-fg-hover: var(--ea-fg);
+
   display: flex;
   align-items: center;
   gap: 10px;
@@ -315,6 +319,13 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
   color: var(--ea-fg-muted);
 }
 
+.timeline-display-guide.ea-button[aria-pressed='true'] {
+  border-color: var(--ea-border);
+  background: var(--ea-fill-soft);
+  color: var(--ea-fg-secondary);
+  box-shadow: none;
+}
+
 .timeline-display-guide[aria-pressed='true'] .timeline-display-guide__icon {
   color: var(--ea-gold);
 }
@@ -326,14 +337,15 @@ const hasOperatorTracks = computed(() => store.teamTracksInfo.some(track => trac
     color: var(--ea-fg);
   }
 
-  .timeline-display-guide[aria-pressed='true']:hover:not(:disabled) {
-    border-color: var(--ea-gold);
-    background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
+  .timeline-display-guide:hover .timeline-display-guide__icon {
     color: var(--ea-gold);
   }
 
-  .timeline-display-guide:hover .timeline-display-guide__icon {
-    color: var(--ea-gold);
+  .timeline-display-guide.ea-button[aria-pressed='true']:hover:not(:disabled) {
+    border-color: var(--ea-border-strong);
+    background: var(--ea-hover-fill);
+    color: var(--ea-fg);
+    box-shadow: none;
   }
 }
 

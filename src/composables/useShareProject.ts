@@ -7,10 +7,12 @@ export function useShareProject() {
   const { t } = useI18n({ useScope: 'global' });
 
   // 1. 复制分享码
-  async function copyShareCode() {
+  async function copyShareCode({
+    includeScenarios = null,
+  }: { includeScenarios?: string | string[] | null } = {}) {
     try {
       // 获取压缩后的长字符串
-      const shareStr = await store.exportShareString();
+      const shareStr = await store.exportShareString({ includeScenarios });
 
       // 写入剪贴板
       await navigator.clipboard.writeText(shareStr);

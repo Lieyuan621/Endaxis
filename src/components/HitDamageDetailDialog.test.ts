@@ -147,6 +147,10 @@ describe('HitDamageDetailDialog', () => {
       undefined,
       'physical',
     );
+    expect(normalBreakdown).not.toBeNull();
+    if (!normalBreakdown) {
+      throw new Error('Expected the normal hit to produce a damage breakdown');
+    }
     const staleForcedBreakdown = {
       ...normalBreakdown,
       critRate: 1,

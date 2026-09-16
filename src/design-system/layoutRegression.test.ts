@@ -333,7 +333,7 @@ describe('design-system layout regressions', () => {
     expect(inactiveScenarioHoverRule).toContain('background-color: var(--ea-hover-fill);');
   });
 
-  test('keeps custom pressed controls selected while hovered', () => {
+  test('keeps custom pressed controls selected with restrained hover feedback', () => {
     const analysisHoverMedia = getBlockBody(
       damageAnalysisSource,
       '@media (hover: hover) and (pointer: fine)',
@@ -342,14 +342,33 @@ describe('design-system layout regressions', () => {
       globalConfigPresetSource,
       '@media (hover: hover) and (pointer: fine)',
     );
+    const checkRowRule = getRuleBody(patternStyles, '\n.header-more-check-row');
+    const selectedCheckRowRule = getRuleBody(
+      patternStyles,
+      ".header-more-check-row.ea-button[aria-pressed='true']",
+    );
     const patternHoverMedia = getBlockBody(
       patternStyles,
       '@media (hover: hover) and (pointer: fine)',
     );
-    const displayMenuHoverMedia = getBlockBody(
+    const selectedCheckRowHoverRule = getRuleBody(
+      patternHoverMedia,
+      ".header-more-check-row.ea-button[aria-pressed='true']:hover:not(:disabled)",
+    );
+    const displayGuideRule = getRuleBody(timelineDisplayMenuSource, '.timeline-display-guide');
+    const selectedDisplayGuideRule = getRuleBody(
+      timelineDisplayMenuSource,
+      ".timeline-display-guide.ea-button[aria-pressed='true']",
+    );
+    const displayGuideHoverMedia = getBlockBody(
       timelineDisplayMenuSource,
       '@media (hover: hover) and (pointer: fine)',
     );
+    const selectedDisplayGuideHoverRule = getRuleBody(
+      displayGuideHoverMedia,
+      ".timeline-display-guide.ea-button[aria-pressed='true']:hover:not(:disabled)",
+    );
+    const miniToolRule = getRuleBody(timelineGridSource, '\n.mini-tool-btn');
 
     expect(getRuleBody(analysisHoverMedia, ".lmdi-mode-btn[aria-pressed='true']:hover")).toContain(
       'background: var(--ea-active-fill);',
@@ -357,18 +376,33 @@ describe('design-system layout regressions', () => {
     expect(getRuleBody(presetHoverMedia, ".preset-tile[aria-pressed='true']:hover")).toContain(
       'background: color-mix(in srgb, var(--ea-gold, #ffe08a) 12%, var(--ea-keycap-bg, #333338));',
     );
-    expect(
-      getRuleBody(
-        patternHoverMedia,
-        ".header-more-check-row[aria-pressed='true']:hover:not(:disabled)",
-      ),
-    ).toContain('color: var(--ea-gold);');
-    expect(
-      getRuleBody(
-        displayMenuHoverMedia,
-        ".timeline-display-guide[aria-pressed='true']:hover:not(:disabled)",
-      ),
-    ).toContain('color: var(--ea-gold);');
+    expect(checkRowRule).toContain('--ea-control-pressed-border-hover: var(--ea-border-strong);');
+    expect(checkRowRule).toContain('--ea-control-pressed-bg-hover: var(--ea-hover-fill);');
+    expect(checkRowRule).toContain('--ea-control-pressed-fg-hover: var(--ea-fg);');
+    expect(selectedCheckRowRule).toContain('border-color: var(--ea-border-soft);');
+    expect(selectedCheckRowRule).toContain('background: transparent;');
+    expect(selectedCheckRowRule).toContain('color: var(--ea-fg-secondary);');
+    expect(selectedCheckRowRule).toContain('box-shadow: none;');
+    expect(selectedCheckRowHoverRule).toContain('border-color: var(--ea-border-strong);');
+    expect(selectedCheckRowHoverRule).toContain('background: var(--ea-hover-fill);');
+    expect(selectedCheckRowHoverRule).toContain('color: var(--ea-fg);');
+    expect(displayGuideRule).toContain(
+      '--ea-control-pressed-border-hover: var(--ea-border-strong);',
+    );
+    expect(displayGuideRule).toContain('--ea-control-pressed-bg-hover: var(--ea-hover-fill);');
+    expect(displayGuideRule).toContain('--ea-control-pressed-fg-hover: var(--ea-fg);');
+    expect(selectedDisplayGuideRule).toContain('border-color: var(--ea-border);');
+    expect(selectedDisplayGuideRule).toContain('background: var(--ea-fill-soft);');
+    expect(selectedDisplayGuideRule).toContain('color: var(--ea-fg-secondary);');
+    expect(selectedDisplayGuideRule).toContain('box-shadow: none;');
+    expect(selectedDisplayGuideHoverRule).toContain('border-color: var(--ea-border-strong);');
+    expect(selectedDisplayGuideHoverRule).toContain('background: var(--ea-hover-fill);');
+    expect(selectedDisplayGuideHoverRule).toContain('color: var(--ea-fg);');
+    expect(miniToolRule).toContain('--ea-control-pressed-border-hover: var(--ea-gold);');
+    expect(miniToolRule).toContain(
+      '--ea-control-pressed-bg-hover: color-mix(in srgb, var(--ea-gold) 10%, transparent);',
+    );
+    expect(miniToolRule).toContain('--ea-control-pressed-fg-hover: var(--ea-gold);');
   });
 
   test('lets mobile loadout compound cards grow around their content', () => {

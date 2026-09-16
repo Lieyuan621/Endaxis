@@ -24,7 +24,7 @@ const isMaxDisabled = computed(() => props.modelValue >= props.max);
 
 // === Color Logic ===
 function lightenHex(hex, percent) {
-  if (!hex) return null;
+  if (!/^#[\da-f]{6}$/i.test(hex)) return null;
   let r = parseInt(hex.slice(1, 3), 16);
   let g = parseInt(hex.slice(3, 5), 16);
   let b = parseInt(hex.slice(5, 7), 16);
@@ -48,7 +48,8 @@ const containerStyle = computed(() => {
   if (props.borderColor) {
     style['--default-border-color'] = props.borderColor;
     style['--text-color'] = props.borderColor;
-    style['--hover-border-color'] = lightenHex(props.borderColor, 30) || '#999';
+    style['--hover-border-color'] =
+      lightenHex(props.borderColor, 30) || `color-mix(in srgb, ${props.borderColor} 70%, white)`;
   }
   if (props.activeColor) {
     style['--active-color'] = props.activeColor;

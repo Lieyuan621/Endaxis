@@ -494,8 +494,14 @@ export function useTimelinePersistence(deps: PersistenceDeps) {
     };
   }
 
-  function exportProject({ filename }: { filename?: string } = {}) {
-    const projectData = serializeProjectData(getProjectData());
+  function exportProject({
+    filename,
+    includeScenarios = null,
+  }: {
+    filename?: string;
+    includeScenarios?: string | string[] | null;
+  } = {}) {
+    const projectData = serializeProjectData(getProjectData({ includeScenarios }));
 
     const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');

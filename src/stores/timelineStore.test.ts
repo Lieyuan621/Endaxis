@@ -1085,6 +1085,42 @@ describe('timeline skill library editing', () => {
     expect(store.tracks[0]!.actions.map(action => action.instanceId)).toEqual(['first-action']);
   });
 
+  it('exports only the requested scenario to a project file', async () => {
+    const store = useTimelineStore();
+    store.addScenario();
+    const activeScenarioId = store.activeScenarioId;
+    const exportedBlobs: Blob[] = [];
+
+    vi.stubGlobal('document', {
+      createElement: () => ({ href: '', download: '', click: vi.fn() }),
+    });
+    vi.stubGlobal('URL', {
+      createObjectURL: (blob: Blob) => {
+        exportedBlobs.push(blob);
+        return 'blob:project-export';
+      },
+      revokeObjectURL: vi.fn(),
+    });
+
+    try {
+      (store.exportProject as (options: { filename: string; includeScenarios: string }) => void)({
+        filename: 'current.json',
+        includeScenarios: activeScenarioId,
+      });
+
+      expect(exportedBlobs).toHaveLength(1);
+      const [exportedBlob] = exportedBlobs;
+      if (!exportedBlob) {
+        throw new Error('Expected project export to create a Blob');
+      }
+      const exported = deserializeProjectData(JSON.parse(await exportedBlob.text())) as any;
+      expect(exported.scenarioList.map((scenario: any) => scenario.id)).toEqual([activeScenarioId]);
+      expect(exported.activeScenarioId).toBe(activeScenarioId);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('can reset the active scenario while preserving its operator loadout', async () => {
     const store = useTimelineStore();
     const operatorStore = useOperatorStore();

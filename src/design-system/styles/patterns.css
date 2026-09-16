@@ -62,6 +62,10 @@
 }
 
 .header-more-check-row {
+  --ea-control-pressed-border-hover: var(--ea-border-strong);
+  --ea-control-pressed-bg-hover: var(--ea-hover-fill);
+  --ea-control-pressed-fg-hover: var(--ea-fg);
+
   width: 100%;
   justify-content: flex-start;
   border: 0;
@@ -85,6 +89,13 @@
 
 .header-more-check-row:last-child {
   border-bottom: 0;
+}
+
+.header-more-check-row.ea-button[aria-pressed='true'] {
+  border-color: var(--ea-border-soft);
+  background: transparent;
+  color: var(--ea-fg-secondary);
+  box-shadow: none;
 }
 
 .header-more-check-row svg {
@@ -232,10 +243,11 @@ html[data-theme='light'] .is-active .ea-glyph-icon {
     color: var(--ea-fg);
   }
 
-  .header-more-check-row[aria-pressed='true']:hover:not(:disabled) {
-    border-color: var(--ea-gold);
-    background: color-mix(in srgb, var(--ea-gold) 22%, transparent);
-    color: var(--ea-gold);
+  .header-more-check-row.ea-button[aria-pressed='true']:hover:not(:disabled) {
+    border-color: var(--ea-border-strong);
+    background: var(--ea-hover-fill);
+    color: var(--ea-fg);
+    box-shadow: none;
   }
 
   .header-more-tool-row:hover .header-more-tool-row__icon {

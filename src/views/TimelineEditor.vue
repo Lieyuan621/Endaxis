@@ -5,9 +5,7 @@ import {
   EaDeleteIcon,
   EaDialog,
   EaDialogActions,
-  EaFormField,
   EaInput,
-  EaNumberInput,
   EaPopover,
   EaPlusIcon,
   EaTextarea,
@@ -34,6 +32,7 @@ import ResourceMonitor from '../components/ResourceMonitor.vue';
 import SimLogPanel from '../components/SimLogPanel.vue';
 import DamageAnalysisDialog from '../components/DamageAnalysisDialog.vue';
 import LoadingTerminal from '../components/LoadingTerminal.vue';
+import ExportDialog from '../components/ExportDialog.vue';
 import SmallImageExportDialog from '../components/SmallImageExportDialog.vue';
 import TimelineDisplayMenu from '../components/TimelineDisplayMenu.vue';
 
@@ -724,13 +723,11 @@ async function handleWindowDrop(e) {
 
 // === 导出长图相关 ===
 const exportDialogVisible = ref(false);
-const exportForm = ref({ filename: '', duration: 60 });
 const smallImageExportVisible = ref(false);
+const smallImageExportFilename = ref('');
+const smallImageExportDuration = ref(60);
 
 function openExportDialog() {
-  const dateStr = new Date().toISOString().slice(0, 10);
-  exportForm.value.filename = `Endaxis_Timeline_${dateStr}`;
-  exportForm.value.duration = 60;
   exportDialogVisible.value = true;
 }
 
@@ -738,18 +735,25 @@ const exportDurationMax = computed(() =>
   Math.max(10, Math.round(Number(store.TOTAL_DURATION) || 120)),
 );
 
-function openSmallImageExport() {
+function resolveExportScenarioSelection(scope) {
+  return scope === 'current' ? store.activeScenarioId : null;
+}
+
+function openSmallImageExport({ filename, duration }) {
   const dateStr = new Date().toISOString().slice(0, 10);
-  const current = String(exportForm.value.filename || '').trim();
+  const current = String(filename || '').trim();
   if (!current || /^Endaxis_Timeline_/i.test(current)) {
-    exportForm.value.filename = `Endaxis_Card_${dateStr}`;
+    smallImageExportFilename.value = `Endaxis_Card_${dateStr}`;
+  } else {
+    smallImageExportFilename.value = current;
   }
+  smallImageExportDuration.value = duration;
   exportDialogVisible.value = false;
   smallImageExportVisible.value = true;
 }
 
-function handleExportJson() {
-  let rawFilename = exportForm.value.filename || 'Endaxis_Export';
+function handleExportJson({ filename, scope }) {
+  let rawFilename = filename || 'Endaxis_Export';
   rawFilename = rawFilename.trim();
   if (rawFilename.toLowerCase().endsWith('.png')) {
     rawFilename = rawFilename.slice(0, -4);
@@ -761,13 +765,20 @@ function handleExportJson() {
   if (!userFilename.toLowerCase().endsWith('.json')) {
     userFilename += '.json';
   }
-  store.exportProject({ filename: userFilename });
+  store.exportProject({
+    filename: userFilename,
+    includeScenarios: resolveExportScenarioSelection(scope),
+  });
 }
 
-async function processExport() {
+async function handleCopyShareCode({ scope }) {
+  await copyShareCode({ includeScenarios: resolveExportScenarioSelection(scope) });
+}
+
+async function processExport({ filename, duration }) {
   exportDialogVisible.value = false;
-  const userDuration = exportForm.value.duration;
-  let rawFilename = exportForm.value.filename || 'Endaxis_Export';
+  const userDuration = duration;
+  let rawFilename = filename || 'Endaxis_Export';
   let userFilename = rawFilename;
   if (!userFilename.toLowerCase().endsWith('.png')) userFilename += '.png';
 
@@ -2085,62 +2096,21 @@ onUnmounted(() => {
       </div>
     </EaDialog>
 
-    <EaDialog
+    <ExportDialog
       v-model="exportDialogVisible"
-      :title="t('timeline.export.dialogTitle')"
-      width="640px"
-      align-center
-      class="custom-dialog export-settings-dialog"
-    >
-      <div class="export-form">
-        <EaFormField control-id="export-filename" :label="t('timeline.export.filenameLabel')">
-          <EaInput
-            v-model="exportForm.filename"
-            :placeholder="t('timeline.export.filenamePlaceholder')"
-            size="lg"
-          />
-        </EaFormField>
-        <EaFormField
-          control-id="export-duration"
-          :label="t('timeline.export.durationLabel')"
-          :hint="t('timeline.export.durationHintMax', { max: exportDurationMax })"
-        >
-          <EaNumberInput
-            v-model="exportForm.duration"
-            :min="10"
-            :max="exportDurationMax"
-            :step="10"
-            :precision="0"
-            size="lg"
-            style="width: 100%"
-          />
-        </EaFormField>
-      </div>
-      <template #footer>
-        <EaDialogActions>
-          <EaButton size="sm" type="button" @click="exportDialogVisible = false">
-            {{ t('common.cancel') }}
-          </EaButton>
-          <EaButton variant="primary" size="sm" type="button" @click="handleExportJson">
-            {{ t('timeline.export.exportJson') }}
-          </EaButton>
-          <EaButton variant="primary" size="sm" type="button" @click="copyShareCode">
-            {{ t('timeline.export.copyCode') }}
-          </EaButton>
-          <EaButton variant="primary" size="sm" type="button" @click="openSmallImageExport">
-            {{ t('timeline.export.exportSmallImage') }}
-          </EaButton>
-          <EaButton variant="primary" size="sm" type="button" @click="processExport">
-            {{ t('timeline.export.exportImage') }}
-          </EaButton>
-        </EaDialogActions>
-      </template>
-    </EaDialog>
+      :current-scenario-name="currentScenario?.name || t('timeline.scenario.unnamed')"
+      :scenario-count="store.scenarioList.length"
+      :max-duration="exportDurationMax"
+      @export-json="handleExportJson"
+      @copy-code="handleCopyShareCode"
+      @export-small-image="openSmallImageExport"
+      @export-long-image="processExport"
+    />
 
     <SmallImageExportDialog
       v-model="smallImageExportVisible"
-      :initial-filename="exportForm.filename"
-      :initial-duration="exportForm.duration"
+      :initial-filename="smallImageExportFilename"
+      :initial-duration="smallImageExportDuration"
     />
 
     <EaDialog
@@ -2842,13 +2812,6 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* Export Dialog Styles */
-.export-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 10px 0;
-}
 .share-import-container {
   display: flex;
   flex-direction: column;

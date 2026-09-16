@@ -3860,6 +3860,10 @@ defineExpose({
 }
 
 .mini-tool-btn {
+  --ea-control-pressed-border-hover: var(--ea-gold);
+  --ea-control-pressed-bg-hover: color-mix(in srgb, var(--ea-gold) 10%, transparent);
+  --ea-control-pressed-fg-hover: var(--ea-gold);
+
   height: 20px;
   display: flex;
   align-items: center;

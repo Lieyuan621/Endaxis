@@ -1838,6 +1838,10 @@ describe('optimizer-native runtime parity', () => {
 
   it('pauses SP regeneration only for Typhoeus hovering, not its aerial follow-ups', () => {
     const segments = typhoeusSheet.combatSkills.battleSkill.segments;
+    expect(segments).toBeDefined();
+    if (!segments) {
+      throw new Error('Expected Typhoeus battle skill to define aerial segments');
+    }
     const actions = segments.map((segment, index) =>
       createAction(`typhoeus-battle-${index + 1}`, 'battleSkill', {
         startTime: 3 + index * 2,

@@ -3,6 +3,7 @@ import type { ActionStartEvent } from '@/simulation/events/event.types.ts';
 import type { SimulationContext } from '@/simulation/engine/SimulationContext.ts';
 import type { TriggerRegistry } from '@/simulation/engine/TriggerRegistry';
 import type { OperatorEffectExpireEvent, SourceSlot } from '@/simulation/engine/types';
+import type { SkillTypeScope } from '@/data/enums';
 import { resolveEffectiveActionSkillType } from '@/simulation/events/actionSkillType';
 import { consumeSourceQueue } from '@/simulation/state/sourceQueue';
 import { evaluateSkillRequisites } from '@/simulation/requisites/evaluateSkillRequisites';
@@ -223,10 +224,7 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
     }
   }
 
-  private getSpFreezeDuration(
-    e: ActionStartEvent,
-    effectiveType: ActionStartEvent['payload']['type'],
-  ) {
+  private getSpFreezeDuration(e: ActionStartEvent, effectiveType: SkillTypeScope) {
     if (e.payload.type === 'battleSkill') {
       return effectiveType === 'basicAttack' || effectiveType === 'finalStrike' ? 0 : 0.5;
     }

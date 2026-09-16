@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import editorSource from '@/views/TimelineEditor.vue?raw';
+import exportDialogSource from '@/components/ExportDialog.vue?raw';
 import cardSource from '@/components/TimelineShareCard.vue?raw';
 import dialogSource from '@/components/SmallImageExportDialog.vue?raw';
 
@@ -7,7 +8,8 @@ describe('small image export wiring', () => {
   test('TimelineEditor exposes small image export entry', () => {
     expect(editorSource).toContain('SmallImageExportDialog');
     expect(editorSource).toContain('openSmallImageExport');
-    expect(editorSource).toContain('timeline.export.exportSmallImage');
+    expect(editorSource).toContain('@export-small-image="openSmallImageExport"');
+    expect(exportDialogSource).toContain('timeline.export.exportSmallImage');
   });
 
   test('share card uses fixed block height and combat icon toggle', () => {
