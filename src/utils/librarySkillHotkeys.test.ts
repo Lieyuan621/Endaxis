@@ -114,4 +114,41 @@ describe('librarySkillHotkeys', () => {
       findLibrarySkillForPlaceRematch(library, { id: 'x', type: 'dive', skillKey: 'dive' }),
     ).toBeNull();
   });
+
+  it('keeps a dragged segment instead of rematching it to the whole skill', () => {
+    const library = [
+      { id: 'battle-group', type: 'battleSkill', skillKey: 'battleSkill', kind: 'group' },
+      {
+        id: 'battle-stage-4',
+        type: 'battleSkill',
+        skillKey: 'battleSkill',
+        kind: 'segment',
+        segmentIndex: 4,
+        duration: 0.5,
+        hiddenInLibraryGrid: true,
+      },
+      { id: 'attack-group', type: 'basicAttack', skillKey: 'basicAttack', kind: 'attack_group' },
+      {
+        id: 'attack-stage-4',
+        type: 'basicAttack',
+        skillKey: 'basicAttack',
+        kind: 'attack_segment',
+        segmentIndex: 4,
+        duration: 0.5,
+        hiddenInLibraryGrid: true,
+      },
+    ];
+
+    const battleStage = library[1]!;
+    expect(findLibrarySkillForPlaceRematch(library, battleStage)?.id).toBe('battle-stage-4');
+    expect(
+      findLibrarySkillForPlaceRematch(library, { ...battleStage, id: 'other-stage-4' })?.id,
+    ).toBe('battle-stage-4');
+    expect(
+      findLibrarySkillForPlaceRematch(library, { ...battleStage, segmentIndex: 5 }),
+    ).toBeNull();
+
+    const attackStage = library[3]!;
+    expect(findLibrarySkillForPlaceRematch(library, attackStage)?.id).toBe('attack-stage-4');
+  });
 });

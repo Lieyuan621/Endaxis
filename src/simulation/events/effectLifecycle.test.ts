@@ -88,6 +88,86 @@ function runScenario(tracks: ScenarioTrack[], triggerRegistry?: TriggerRegistry)
 }
 
 describe('effect lifecycle runtime', () => {
+  it('matches onHit skillTypes against a hit treated as basicAttack', () => {
+    const triggerRegistry = new TriggerRegistry([
+      {
+        sourceTrackId: 'alpha',
+        triggerEffect: {
+          trigger: { kind: 'onHit', skillTypes: 'basicAttack' },
+          effects: [{ id: 'basic-hit-gain', kind: 'ultEnergyGain', value: 3 }],
+        },
+      },
+    ]);
+    const result = runScenario(
+      [
+        createTrack('alpha', [
+          createAction('aerial_attack', 'battleSkill', {
+            hits: [
+              {
+                offset: 0,
+                multiplier: 100,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                treatAsSkillType: 'basicAttack',
+              },
+            ],
+          }),
+        ]),
+      ],
+      triggerRegistry,
+    );
+
+    expect(result.simLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ULT_ENERGY_CHANGE',
+          payload: expect.objectContaining({ change: 3, sourceId: 'basic-hit-gain' }),
+        }),
+      ]),
+    );
+  });
+
+  it('fires onFinalStrike for a hit explicitly treated as finalStrike', () => {
+    const triggerRegistry = new TriggerRegistry([
+      {
+        sourceTrackId: 'alpha',
+        triggerEffect: {
+          trigger: { kind: 'onFinalStrike' },
+          effects: [{ id: 'final-strike-gain', kind: 'ultEnergyGain', value: 5 }],
+        },
+      },
+    ]);
+    const result = runScenario(
+      [
+        createTrack('alpha', [
+          createAction('aerial_final_strike', 'battleSkill', {
+            hits: [
+              {
+                offset: 0,
+                multiplier: 100,
+                spRecovery: 0,
+                spReturn: 0,
+                stagger: 0,
+                treatAsSkillType: 'finalStrike',
+              },
+            ],
+          }),
+        ]),
+      ],
+      triggerRegistry,
+    );
+
+    expect(result.simLog).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ULT_ENERGY_CHANGE',
+          payload: expect.objectContaining({ change: 5, sourceId: 'final-strike-gain' }),
+        }),
+      ]),
+    );
+  });
+
   it('dispatches an explicitly scaled Arts Burst with matching Burst-only damage taken', () => {
     const result = runScenario([
       createTrack('alpha', [

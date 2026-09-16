@@ -34,10 +34,6 @@ const HOVERING_EFFECT: Effect = {
 const POWER_SHOT_BURST_MULTIPLIER = [
   1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2, 1.2, 1.2, 1.25, 1.25, 1.3,
 ];
-const HAIL_OF_ARROWS_MULTIPLIER = [33, 37, 40, 43, 47, 50, 53, 57, 60, 64, 69, 75];
-const EMPOWERED_HAIL_OF_ARROWS_MULTIPLIER = [
-  89, 98, 107, 116, 124, 133, 142, 151, 160, 171, 184, 200,
-];
 
 const BATTLE_SKILL_BASE_EFFECTS: Effect[] = [
   HOVERING_EFFECT,
@@ -168,6 +164,7 @@ const sheet: OperatorSheet = {
             {
               ...SIGN_EFFECT,
               stacks: 1,
+              target: 'owner',
             },
           ],
         },
@@ -533,6 +530,17 @@ const sheet: OperatorSheet = {
               stacks: { compare: 'atLeast', count: 8 },
             },
           },
+          {
+            trigger: {
+              kind: 'onHit',
+              skillTypes: 'basicAttack',
+            },
+            condition: {
+              kind: 'operatorStatus',
+              status: 'typhoeus-sign',
+              stacks: { compare: 'atLeast', count: 8 },
+            },
+          },
         ],
         duration: 5,
       },
@@ -705,27 +713,29 @@ const sheet: OperatorSheet = {
               name: 'hailOfArrows',
               kind: 'damageHit',
               element: 'nature',
-              multiplier: HAIL_OF_ARROWS_MULTIPLIER,
-              multiplierScaling: {
-                conditionalScaling: {
-                  scaling: {
-                    additive: EMPOWERED_HAIL_OF_ARROWS_MULTIPLIER.map(
-                      (value, index) => value - HAIL_OF_ARROWS_MULTIPLIER[index]!,
-                    ),
-                  },
-                  condition: {
-                    kind: 'operatorStatus',
-                    status: 'typhoeus-hail-of-arrows',
-                    stacks: {
-                      compare: 'exact',
-                      count: 1,
-                    },
-                  },
-                },
-              },
+              multiplier: [33, 37, 40, 43, 47, 50, 53, 57, 60, 64, 69, 75],
               condition: {
                 kind: 'operatorStatus',
                 status: 'typhoeus-hail-of-arrows',
+                stacks: {
+                  compare: 'atLeast',
+                  count: 2,
+                },
+                consume: 1,
+              },
+            },
+            {
+              name: 'hailOfArrows',
+              kind: 'damageHit',
+              element: 'nature',
+              multiplier: [89, 98, 107, 116, 124, 133, 142, 151, 160, 171, 184, 200],
+              condition: {
+                kind: 'operatorStatus',
+                status: 'typhoeus-hail-of-arrows',
+                stacks: {
+                  compare: 'exact',
+                  count: 1,
+                },
                 consume: 1,
               },
             },

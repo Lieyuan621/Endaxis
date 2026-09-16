@@ -180,13 +180,19 @@ export class TriggerRegistry {
     if (!resolvedHits.length || event.payload.hitData !== resolvedHits[resolvedHits.length - 1])
       return;
 
-    // onFinalStrike is defined as the final hit of a basic attack sequence
-    if (action.node.type !== 'basicAttack') return;
+    // `treatAsSkillType: 'finalStrike'` promotes a hit authored under another
+    // action type (for example Typhoeus's aerial attack inside battleSkill).
+    // Keep the sequence check as a fallback for callers that do not stamp the
+    // compiled hit's effective skill type.
+    const hitSkillType = event.payload.hitData.skillType;
+    if (hitSkillType !== 'finalStrike') {
+      if (action.node.type !== 'basicAttack') return;
 
-    const node = action.node as any;
-    const sequenceIndex = Number(node.sequenceIndex ?? node.attackSequenceIndex) || 0;
-    const sequenceTotal = Number(node.sequenceTotal ?? node.attackSequenceTotal) || 0;
-    if (sequenceTotal > 0 && sequenceIndex !== sequenceTotal) return;
+      const node = action.node as any;
+      const sequenceIndex = Number(node.sequenceIndex ?? node.attackSequenceIndex) || 0;
+      const sequenceTotal = Number(node.sequenceTotal ?? node.attackSequenceTotal) || 0;
+      if (sequenceTotal > 0 && sequenceIndex !== sequenceTotal) return;
+    }
 
     // Absorb/consume first (e.g. Laevatain melting flame), then evaluate
     // conditional windows (e.g. Ardelia: heavy on target with no arts infliction).
