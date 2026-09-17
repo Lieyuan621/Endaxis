@@ -14,7 +14,7 @@ const sheet: GearSetSheet = {
       trigger: { kind: 'onActionStart', skillTypes: 'battleSkill' },
       effects: [
         {
-          kind: 'spRecovery',
+          kind: 'spReturn',
           value: 50,
           icd: 999,
         },
