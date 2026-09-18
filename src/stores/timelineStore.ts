@@ -3092,13 +3092,19 @@ export const useTimelineStore = defineStore('timeline', () => {
       const isEnemyStatus = cond.kind === 'enemyStatus';
       // Global enemy-status triggers set selfTrackId to the applier; remap sheet
       // `self` → `owner` so the talent buff lands on the passive owner.
+      const runtimePassiveEffect = {
+        ...effect,
+        duration: 999,
+        condition: idempotencyCondition,
+        hide: effect.hide ?? true,
+      };
       const armedEffect =
         isEnemyStatus &&
         (effect.target === 'self' ||
           effect.target === undefined ||
           (typeof effect.target === 'object' && effect.target?.scope === 'self'))
-          ? { ...effect, target: 'owner' as const, duration: 999, condition: idempotencyCondition }
-          : { ...effect, duration: 999, condition: idempotencyCondition };
+          ? { ...runtimePassiveEffect, target: 'owner' as const }
+          : runtimePassiveEffect;
       out.push({
         triggerEffect: {
           trigger: {

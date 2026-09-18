@@ -1262,4 +1262,108 @@ describe('timeline skill library editing', () => {
       }),
     );
   });
+
+  it('applies hidden gear damage bonus to finishers after the enemy becomes staggered', async () => {
+    const store = useTimelineStore();
+    await store.fetchGameData();
+    store.changeTrackOperator(0, null, 'zhuang-fangyi');
+    store.changeTrackOperator(1, null, 'estella');
+    store.updateTrackEquipment('estella', 'accessory1', 'bonekrusha-mask');
+
+    store.tracks[0]!.actions = [
+      {
+        id: 'break-enemy',
+        instanceId: 'break-enemy-action',
+        skillId: 'break-enemy',
+        name: 'Break enemy',
+        type: 'battleSkill',
+        element: 'physical',
+        startTime: 1,
+        logicalStartTime: 1,
+        duration: 0.1,
+        cooldown: 0,
+        hits: [
+          {
+            offset: 0,
+            multiplier: 0,
+            stagger: 100,
+            spRecovery: 0,
+            spReturn: 0,
+          },
+        ],
+      } as any,
+    ];
+    store.tracks[1]!.actions = [
+      {
+        id: 'damage-before-stagger',
+        instanceId: 'damage-before-stagger-action',
+        skillId: 'damage-before-stagger',
+        name: 'Damage before stagger',
+        type: 'battleSkill',
+        element: 'physical',
+        startTime: 0,
+        logicalStartTime: 0,
+        duration: 0.1,
+        cooldown: 0,
+        hits: [
+          {
+            offset: 0,
+            multiplier: 100,
+            stagger: 0,
+            spRecovery: 0,
+            spReturn: 0,
+          },
+        ],
+      } as any,
+      {
+        id: 'damage-staggered',
+        instanceId: 'damage-staggered-action',
+        skillId: 'damage-staggered',
+        name: 'Damage staggered enemy',
+        type: 'finisher',
+        element: 'physical',
+        startTime: 2,
+        logicalStartTime: 2,
+        duration: 0.1,
+        cooldown: 0,
+        hits: [
+          {
+            offset: 0,
+            multiplier: 100,
+            stagger: 0,
+            spRecovery: 0,
+            spReturn: 0,
+          },
+        ],
+      } as any,
+    ];
+    store.commitState();
+
+    const beforeEntry = store.simLog.find(
+      (entry: any) =>
+        entry.type === 'DAMAGE_HIT' && entry.payload.actionId === 'damage-before-stagger-action',
+    ) as any;
+    const staggeredEntry = store.simLog.find(
+      (entry: any) =>
+        entry.type === 'DAMAGE_HIT' && entry.payload.actionId === 'damage-staggered-action',
+    ) as any;
+
+    expect(beforeEntry?.payload.hitData._damageBreakdown?.dmgBonusSources ?? []).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ value: 0.5382 })]),
+    );
+    expect(staggeredEntry?.payload.hitData._damageBreakdown?.dmgBonusSources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          value: 0.5382,
+        }),
+      ]),
+    );
+    expect(
+      store.operatorEffectLayouts
+        .get('estella')
+        ?.positionedSegments.some(
+          (segment: any) => segment.effectId === 'estella-gear-implicit-effect3',
+        ) ?? false,
+    ).toBe(false);
+  });
 });

@@ -11,9 +11,12 @@ describe('damage bonus against staggered targets', () => {
     ['Aburrey Gauntlets', aburreyGauntlets],
     ['Aburrey Auditory Chip', aburreyAuditoryChip],
   ])('%s uses a conditional self damage bonus', (_name, sheet) => {
-    expect(sheet.skill3?.effects[0]).toMatchObject({
+    expect(sheet.skill3?.effects?.[0]).toMatchObject({
       kind: 'status',
-      stat: { modifier: 'dmgBonus' },
+      stat: {
+        modifier: 'dmgBonus',
+        elements: ['physical', 'heat', 'cryo', 'electric', 'nature'],
+      },
       target: 'self',
       condition: { kind: 'enemyStaggered' },
     });
