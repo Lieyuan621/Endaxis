@@ -53,6 +53,8 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
       });
     }
 
+    this.registry?.onActionStart(e, ctx, 'beforeSpCost');
+
     if (!isPrepAction && e.payload.spCost && e.payload.spCost > 0) {
       // Resolve battleSkillSPCostReduction from live active effects
       let finalSpCost = e.payload.spCost;
@@ -83,7 +85,7 @@ export class ActionStartHandler implements EventHandler<ActionStartEvent> {
 
     this.consumeLink(e, ctx);
     this.consumeOneTimeEffects(e, ctx);
-    this.registry?.onActionStart(e, ctx);
+    this.registry?.onActionStart(e, ctx, 'afterSpCost');
     this.registry?.onDuringAction(e, ctx);
   }
 

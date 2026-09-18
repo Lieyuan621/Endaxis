@@ -28,7 +28,13 @@ const sheet: GearPieceSheet = {
   },
   skill3: {
     effects: [
-      { kind: 'status', stat: { modifier: 'susceptibility' }, target: 'self', value: 29.4 },
+      {
+        kind: 'status',
+        stat: { modifier: 'dmgBonus' },
+        target: 'self',
+        value: 29.4,
+        condition: { kind: 'enemyStaggered' },
+      },
     ],
   },
   setSlug: 'aburreys-legacy',

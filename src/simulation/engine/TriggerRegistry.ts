@@ -276,7 +276,11 @@ export class TriggerRegistry {
     }
   }
 
-  onActionStart(event: ActionStartEvent, ctx: SimulationContext): void {
+  onActionStart(
+    event: ActionStartEvent,
+    ctx: SimulationContext,
+    phase: 'beforeSpCost' | 'afterSpCost' = 'afterSpCost',
+  ): void {
     const actorId = event.payload.actorId;
     const action = ctx.getAction(event.payload.actionId);
     for (const entry of this.entries) {
@@ -302,8 +306,12 @@ export class TriggerRegistry {
       }
       // Mirror onHit: sourceTrackId = trigger owner (gear/talent wearer), triggeringTrackId =
       // actor who started the action. Required for global + target:'owner' (e.g. Type-50 Yinglung).
+      const phaseEffects = entry.triggerEffect.effects.filter(effect =>
+        phase === 'beforeSpCost' ? effect.kind === 'spReturn' : effect.kind !== 'spReturn',
+      );
+      if (phaseEffects.length === 0) continue;
       this.dispatch(
-        entry.triggerEffect.effects,
+        phaseEffects,
         event.time,
         entry.sourceTrackId,
         ctx,

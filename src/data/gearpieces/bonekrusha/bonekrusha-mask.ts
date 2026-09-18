@@ -30,9 +30,10 @@ const sheet: GearPieceSheet = {
     effects: [
       {
         kind: 'status',
-        stat: { modifier: 'susceptibility' },
+        stat: { modifier: 'dmgBonus' },
         target: 'self',
         value: [41.4, 45.54, 49.68, 53.82],
+        condition: { kind: 'enemyStaggered' },
       },
     ],
   },

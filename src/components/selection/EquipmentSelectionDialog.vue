@@ -268,7 +268,9 @@ function isEquipmentPairModifierId(modifierId) {
   return modifierId === 'heat_nature_dmg_bonus' || modifierId === 'cryo_electric_dmg_bonus';
 }
 
-function getEquipmentDmgBonusModifierIds(stat) {
+function getEquipmentDmgBonusModifierIds(stat, condition) {
+  if (condition?.kind === 'enemyStaggered') return ['broken_dmg_bonus'];
+
   const elements = normalizeEquipmentStatArray(stat?.elements);
   if (elements.length > 0) {
     if (isEquipmentArtsDmgElements(elements)) {
@@ -315,7 +317,7 @@ function getEquipmentDmgBonusModifierIds(stat) {
   return ['all_skill_dmg_bonus'];
 }
 
-function getEquipmentEffectModifierIds(stat) {
+function getEquipmentEffectModifierIds(stat, condition) {
   if (!stat?.modifier) return [];
   if (stat.modifier === 'attributeFlat' || stat.modifier === 'attributePercent') {
     return normalizeEquipmentStatArray(stat.attribute)
@@ -330,7 +332,7 @@ function getEquipmentEffectModifierIds(stat) {
   if (stat.modifier === 'ultimateGainEfficiency') return ['ult_charge_eff'];
   if (stat.modifier === 'heal') return ['healing_effect'];
   if (stat.modifier === 'protection') return ['final_dmg_reduction'];
-  if (stat.modifier === 'dmgBonus') return getEquipmentDmgBonusModifierIds(stat);
+  if (stat.modifier === 'dmgBonus') return getEquipmentDmgBonusModifierIds(stat, condition);
   if (stat.modifier === 'susceptibility') {
     const elements = normalizeEquipmentStatArray(stat.elements);
     return elements.length > 0
@@ -423,7 +425,7 @@ function getEquipmentPieceAffixRows(eq) {
     return mergeEquipmentElementPairEffects(effects)
       .filter(effect => effect?.kind === 'status')
       .flatMap((effect, effectIndex) =>
-        getEquipmentEffectModifierIds(effect.stat).map(modifierId => {
+        getEquipmentEffectModifierIds(effect.stat, effect.condition).map(modifierId => {
           const label = getEquipmentEffectLabel(effect.stat, modifierId);
           const valueText = formatEquipmentEffectValue(effect);
           return {

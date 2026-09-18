@@ -619,7 +619,7 @@ describe('optimizer damage golden baselines', () => {
     );
   });
 
-  it('stacks Liino T2 and Zhuang Fangyi potential 3 SP returns', () => {
+  it('spends Liino T2 return before applying Zhuang Fangyi potential 3 return', () => {
     const zhuang = createOperatorInstance('zhuang-fangyi', { potential: 3 });
     const liino = createOperatorInstance('liino', { talentStates: { '1': 2 } });
     const team = createTeam(zhuang.id);
@@ -669,20 +669,40 @@ describe('optimizer damage golden baselines', () => {
       },
     );
 
-    const returnEvents = result.simLog.filter(
-      (entry): entry is SpChangeLogEntry =>
-        entry.type === 'SP_CHANGE' && entry.payload.spType === 'return',
+    const spEvents = result.simLog.filter(
+      (entry): entry is SpChangeLogEntry => entry.type === 'SP_CHANGE',
     );
     expect(
-      returnEvents.map(entry => ({
+      spEvents.map(entry => ({
         change: entry.payload.change,
         sourceId: entry.payload.sourceId,
+        spType: entry.payload.spType,
+        recoverSp: entry.payload.recoverSp,
+        refundSp: entry.payload.refundSp,
       })),
     ).toEqual([
-      { change: 10, sourceId: 'zhuang_battle_inst' },
-      { change: 10, sourceId: 'zhuang_battle_inst' },
+      {
+        change: 10,
+        sourceId: 'zhuang_battle_inst',
+        spType: 'return',
+        recoverSp: 204,
+        refundSp: 10,
+      },
+      {
+        change: -100,
+        sourceId: 'zhuang_battle_inst',
+        spType: 'recovery',
+        recoverSp: 114,
+        refundSp: 0,
+      },
+      {
+        change: 10,
+        sourceId: 'zhuang_battle_inst',
+        spType: 'return',
+        recoverSp: 114,
+        refundSp: 10,
+      },
     ]);
-    expect(returnEvents[1]?.payload.refundSp).toBe(20);
   });
 
   it('accelerates an active Zhuang Fangyi combo cooldown when her ultimate activates', () => {
@@ -2108,6 +2128,59 @@ describe('optimizer damage golden baselines', () => {
         }),
       ]),
     );
+  });
+
+  it('returns Catastrophe gear-set SP before consuming battle-skill SP', () => {
+    const operator = createOperatorInstance('estella');
+    const gear: GearInstance[] = [
+      {
+        id: 'catastrophe_armor',
+        gearPieceId: 'catastrophe-heavy-armor',
+        artificingLevels: [],
+      },
+      {
+        id: 'catastrophe_gloves',
+        gearPieceId: 'catastrophe-gloves',
+        artificingLevels: [],
+      },
+      {
+        id: 'catastrophe_filter',
+        gearPieceId: 'catastrophe-filter',
+        artificingLevels: [],
+      },
+    ];
+    const tracks = [
+      createTrack('alpha', [
+        createAction('catastrophe_battle', 'battleSkill', {
+          startTime: 1,
+          spCost: 100,
+        }),
+      ]),
+    ];
+    const team = createTeam(operator.id, null, {
+      armor: 'catastrophe_armor',
+      gloves: 'catastrophe_gloves',
+      kit1: 'catastrophe_filter',
+      kit2: null,
+    });
+    tracks[0]!.triggerEffects = collectRuntimeTriggers(team, [operator], [], gear, tracks);
+
+    const result = runEndaxisScenario(tracks);
+    const spEvents = result.simLog.filter(
+      (entry): entry is SpChangeLogEntry => entry.type === 'SP_CHANGE',
+    );
+
+    expect(
+      spEvents.map(entry => ({
+        change: entry.payload.change,
+        spType: entry.payload.spType,
+        recoverSp: entry.payload.recoverSp,
+        refundSp: entry.payload.refundSp,
+      })),
+    ).toEqual([
+      { change: 50, spType: 'return', recoverSp: 208, refundSp: 50 },
+      { change: -100, spType: 'recovery', recoverSp: 158, refundSp: 0 },
+    ]);
   });
 
   it('Mifu battle-skill treatAsReaction crush ignores unscoped all-skill dmgBonus', () => {
