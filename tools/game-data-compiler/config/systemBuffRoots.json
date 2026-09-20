@@ -1,0 +1,12 @@
+[
+  "buff_common_fire_fire_triggered",
+  "buff_common_pulse_pulse_triggered",
+  "buff_common_cryst_cryst_triggered",
+  "buff_common_natural_natural_triggered",
+  "buff_common_poise_break_damage_taken_scale",
+  {
+    "buffId": "buff_common_dash",
+    "owner": "caster",
+    "source": "caster"
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "name": "@endaxis/game-data-contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --project tsconfig.json"
+  }
+}

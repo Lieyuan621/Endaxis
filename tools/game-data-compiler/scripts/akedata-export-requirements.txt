@@ -1,0 +1,108 @@
+AKEData 补充导出需求
+
+一、需要补充导出的数据
+
+asset 导出为 JSON 最好，保留 asset 格式也可以适配。
+
+1. 投射物模板
+   路径：assets/beyond/dynamicassets/gamedata/projectile/data_<projectileId>.asset
+
+2. 能力实体模板
+   路径：assets/beyond/dynamicassets/gamedata/abilityentity/data_<entityId>.asset
+
+3. 角色运行模板
+   路径：assets/beyond/dynamicassets/gamedata/characterdata/data_<characterId>.asset
+
+4. GameplayTag 预定义表
+   路径：JsonData/Data/Json/GameplayConfig/GameplayTagPredefineTable.json
+
+5. 完整 GameplayTag 配置集
+   配置集：assets/beyond/dynamicassets/gamedata/gameplayconfig/gameplaytagconfigset.asset
+   成员目录：assets/beyond/dynamicassets/gamedata/gameplayconfig/gameplaytagconfig/
+
+6. TimeDilation 时间缩放配置
+   路径：assets/beyond/dynamicassets/gamedata/gameplayconfig/timedilationconfig.asset
+
+7. HitStop 命中停顿配置
+   路径：assets/beyond/dynamicassets/gamedata/gameplayconfig/hitstopconfig.asset
+
+8. SkillSetting 全局技能设定
+   路径：assets/beyond/dynamicassets/gamedata/gameplayconfig/skillsetting.asset
+
+9. GlobalBuff 模板
+   路径：assets/beyond/dynamicassets/gameplay/globalbuff/<globalBuffId>.asset
+
+10. 敌人模板
+    路径：assets/beyond/dynamicassets/gamedata/enemydata/data_<enemyId>.asset
+
+
+二、转换器使用的 AKEData 已有数据
+
+1. TableCfg 表格（31 张）
+
+   下载路径：<manifest 中对应版本的 tableCfgPath>/<表名>.json
+   游戏原始路径：Table/Data/TableCfg/<表名>.bytes
+
+   干员与技能养成：
+     CharacterTable
+     AttributeMetaTable
+     CharGrowthTable
+     CharacterPotentialTable
+     PotentialTalentEffectTable
+     SkillConditionTable
+     SkillPatchTable
+
+   武器、装备与物品：
+     WeaponBasicTable
+     WeaponBreakThroughTemplateTable
+     WeaponTalentTemplateTable
+     WeaponUpgradeTemplateTable
+     GemTable
+     EquipTable
+     EquipSuitTable
+     ItemTable
+     UseItemTable
+
+   敌人：
+     DisplayEnemyTypeTable
+     EnemyAbilityDescTable
+     EnemyAttributeTemplateTable
+     EnemyDisplayInfoTable
+     EnemyTable
+     EnemyTemplateDisplayInfoTable
+     EnemyTemplateTable
+
+   危机合约：
+     ActivityContingencyContractTable
+     CcTagTable
+     ContingencyContractTable
+     ContingencyContractLevelTable
+     ContingencyContractKeyLockTable
+
+   文本与本地化：
+     HyperlinkTextTable
+     I18nTextTable_CN
+     I18nTextTable_EN
+
+2. 技能动作数据
+
+   下载路径：public/Json/SkillData/<skillId>.json
+   游戏原始路径：JsonData/Data/Json/SkillData/<skillId>.json
+   用途：技能动作、时序、条件分支、伤害、Buff 与衍生实体引用等。
+
+3. 普通 Buff 数据
+
+   下载路径：public/Json/BuffData/<buffId>.json
+   游戏原始路径：JsonData/Data/Json/BuffData/<buffId>.json
+   用途：属性修改、触发条件、动作、生命周期等。
+   此集合不包含第一部分所列的 GlobalBuff 模板。
+
+4. 图片资源
+
+   下载路径：public/images/<asset-sync-index.json 中登记的原始相对路径>
+   范围：干员头像、技能/天赋、武器、装备、Buff/状态、敌人及消耗品等图片，按需导出。
+
+5. 版本与资源索引
+
+   manifest.json：选择游戏版本、热更新版本及 TableCfg 路径。
+   asset-sync-index.json：枚举 JSON 与图片，取得每项版本、大小及 MD5。

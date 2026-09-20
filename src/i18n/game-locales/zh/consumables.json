@@ -1,0 +1,102 @@
+{
+  "item_agmelee_1_sp_2_slimeml_1_1": {
+    "name": "爆辣焗烤源石虫",
+    "description": "使用后，增加30%防御力，持续300秒。"
+  },
+  "item_agrange_1_erhound_1_sp_1_1": {
+    "name": "雅各布的遗产",
+    "description": "使用后，增加27%攻击力，持续300秒。"
+  },
+  "item_agrange_1_lbshamman_bottled_1": {
+    "name": "简易镇痛药膏",
+    "description": "使用后，受到所有类型的伤害降低12%，持续300秒。"
+  },
+  "item_agrange_1_moss_2_lbmob_1_1": {
+    "name": "手工怪味酸糖",
+    "description": "使用后，增加18%防御力，持续300秒。"
+  },
+  "item_bottled_insec2_1": {
+    "name": "附术瓶",
+    "description": "使用后，造成的所有伤害增加18%，持续300秒。"
+  },
+  "item_bottled_insec2_2": {
+    "name": "附术铁瓶",
+    "description": "使用后，造成的所有伤害增加25%，持续300秒。"
+  },
+  "item_bottled_moss_1_2_1": {
+    "name": "意乱药剂",
+    "description": "使用后，终结技充能效率增加24%，持续300秒。"
+  },
+  "item_corp3_animal_1": {
+    "name": "清炖兽排参须汤",
+    "description": "使用后，增加180点攻击力，增加11%暴击率，持续300秒。"
+  },
+  "item_corp3_grass1_1": {
+    "name": "正本补元汤剂",
+    "description": "使用后，增加9%暴击率，造成的所有伤害增加18%，持续300秒。"
+  },
+  "item_corp4_animal_1": {
+    "name": "武陵炒饭",
+    "description": "使用后，增加68%防御力，持续300秒。"
+  },
+  "item_erhound_1_agmelee_1_moss_1_1": {
+    "name": "雾火之花",
+    "description": "使用后，受到所有类型的伤害降低17%，持续300秒。"
+  },
+  "item_ethillu_1_wgslime_1_wgthorns_1_1": {
+    "name": "回响秘剂",
+    "description": "使用后，连携技冷却时间缩减26%，持续300秒。"
+  },
+  "item_firebat_1_agrange_1_1": {
+    "name": "可食用巢雕",
+    "description": "使用后，增加7%攻击力，增加3%暴击率，造成的所有伤害增加7%，持续300秒。"
+  },
+  "item_hsfly_1_slimeml_1_hsmob_1_1": {
+    "name": "清炖息壤球",
+    "description": "使用后，增加21%暴击率，持续300秒。"
+  },
+  "item_hshog_1_hsmob_1_slimeml_1_1": {
+    "name": "武陵乱炒",
+    "description": "使用后，增加43点防御力，受到所有类型的伤害降低17%，持续300秒。"
+  },
+  "item_hsmob_1_dog_1_1": {
+    "name": "竹笋炒肉",
+    "description": "使用后，终结技充能效率增加21%，受治疗效率加成提高35%，持续300秒。"
+  },
+  "item_jzmonk_1_hsmob_1_1": {
+    "name": "陈皮拌笋",
+    "description": "使用后，增加25%暴击率，降低5%防御力，持续300秒。"
+  },
+  "item_klbuds_1_hsfly_1_1": {
+    "name": "洗灾秘剂",
+    "description": "使用后，增加31%防御力，受到所有类型的伤害降低17%，持续300秒。"
+  },
+  "item_klcreatures_1_wgthorns_1_1": {
+    "name": "蓄石秘剂",
+    "description": "使用后，终结技充能效率增加49%，持续300秒。"
+  },
+  "item_lbmob_1_dog_1_moss_1_1": {
+    "name": "塞什卡风肉排",
+    "description": "使用后，增加15点全能力，持续300秒。"
+  },
+  "item_lbshield_1_slimeml_1_dog_1_1": {
+    "name": "约翰老爹汉堡",
+    "description": "使用后，造成的物理伤害增加21%，持续300秒。"
+  },
+  "item_mimicw_1_moss_1_moss_2_1": {
+    "name": "开工日肉汤",
+    "description": "使用后，增加12%攻击力，持续300秒。"
+  },
+  "item_wgshoal_1_grass_1_grass_2_1": {
+    "name": "小糖画",
+    "description": "使用后，增加18%攻击力，增加9%暴击率，持续300秒。"
+  },
+  "item_wgslime_1_wgthorns_1_1": {
+    "name": "神秘气泡饮料",
+    "description": "使用后，增加18%防御力，受到所有类型的伤害降低11%，治疗效率加成提高12%，持续300秒。"
+  },
+  "item_wgthorns_1_hshog_1_hsmob_1_1": {
+    "name": "油爆“双脆”",
+    "description": "使用后，受到所有类型的伤害降低29%，持续300秒。"
+  }
+}

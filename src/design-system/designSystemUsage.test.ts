@@ -8,19 +8,59 @@ const vueSources = import.meta.glob<string>('../**/*.vue', {
   import: 'default',
   query: '?raw',
 });
-const featureSources = [
-  ...Object.entries(vueSources).filter(
-    ([path]) => path.startsWith('../') && !path.includes('/design-system/'),
+
+// 新版界面与旧版的目录结构不同。只把已经接入设计系统的新版组件放进硬门禁，
+// 其余页面迁移后再加入，不能因为合并上游就假装整个新版已经完成替换。
+const adoptedFeaturePaths = new Set([
+  '../ui/components/CustomNumberInput.vue',
+  '../ui/timeline/TimelineEditor.vue',
+  '../ui/timeline/results/BattleLogPanel.vue',
+  '../ui/timeline/components/ContingencyContractPanel.vue',
+  '../ui/timeline/results/DamageAnalysisDialog.vue',
+  '../ui/timeline/definitions/DefinitionHistoryControls.vue',
+  '../ui/timeline/components/EnemySettingsPanel.vue',
+  '../ui/timeline/library/GearInstanceDialog.vue',
+  '../ui/timeline/library/GearLoadoutBuildDialog.vue',
+  '../ui/timeline/library/GearSelectionDialog.vue',
+  '../ui/timeline/definitions/equipment/GearSetDefinitionWorkspaceDialog.vue',
+  '../ui/timeline/components/GlobalResourcePanel.vue',
+  '../ui/timeline/library/OperatorBuildDialog.vue',
+  '../ui/timeline/definitions/operators/OperatorLibraryMemberActions.vue',
+  '../ui/timeline/library/OperatorPanelDialog.vue',
+  '../ui/timeline/library/OperatorSelectionDialog.vue',
+  '../ui/timeline/definitions/skills/SkillDefinitionEditorDialog.vue',
+  '../ui/timeline/interaction/TimelineActionBlock.vue',
+  '../ui/timeline/interaction/TimelineActionContextMenu.vue',
+  '../ui/timeline/interaction/TimelineActionInspector.vue',
+  '../ui/timeline/results/TimelineBuffDetailDialog.vue',
+  '../ui/timeline/components/TimelineCornerToolbar.vue',
+  '../ui/timeline/interaction/TimelineDocumentMarkerInspector.vue',
+  '../ui/timeline/results/TimelineDurationBarColorControls.vue',
+  '../ui/timeline/results/TimelineEnemyEffects.vue',
+  '../ui/timeline/results/TimelineEnemyStatusSections.vue',
+  '../ui/timeline/interaction/TimelineExternalEventInspector.vue',
+  '../ui/timeline/components/TimelineHeaderToolbar.vue',
+  '../ui/timeline/results/TimelineHitDetailDialog.vue',
+  '../ui/timeline/library/TimelineLibrarySkillInspector.vue',
+  '../ui/timeline/interaction/TimelineMarkerContextMenu.vue',
+  '../ui/timeline/components/TimelineResetDialog.vue',
+  '../ui/timeline/components/TimelineRuler.vue',
+  '../ui/timeline/interaction/TimelineShortcutHelpDialog.vue',
+  '../ui/timeline/components/TimelineTrackHeader.vue',
+  '../ui/timeline/components/TimelineWorkbenchShell.vue',
+  '../ui/timeline/library/WeaponBuildDialog.vue',
+  '../ui/timeline/library/WeaponSelectionDialog.vue',
+]);
+const featureSources: Array<[string, string]> = [
+  ...Object.entries(vueSources).filter(([path]) => adoptedFeaturePaths.has(path)),
+  ...['armoryDialogTheme.css', 'selectionDialog.css'].map(
+    name =>
+      [
+        `../ui/timeline/library/${name}`,
+        readFileSync(new URL(`../ui/timeline/library/${name}`, import.meta.url), 'utf8'),
+      ] as [string, string],
   ),
-  [
-    '../components/armory/armoryDialogTheme.css',
-    readFileSync(new URL('../components/armory/armoryDialogTheme.css', import.meta.url), 'utf8'),
-  ],
-  [
-    '../components/selection/selectionDialog.css',
-    readFileSync(new URL('../components/selection/selectionDialog.css', import.meta.url), 'utf8'),
-  ],
-] as Array<[string, string]>;
+];
 
 function filesMatching(pattern: RegExp) {
   return featureSources
@@ -121,14 +161,11 @@ describe('design-system usage boundaries', () => {
   test('equipment refine toggles expose their selected state through EaButton', () => {
     const refineButtons = [
       [
-        openingTagFor('../components/armory/EditTrackGearLoadoutDialog.vue', 'refine-btn'),
-        ':pressed="isUniformRefineActive(slot, level)"',
+        openingTagFor('../ui/timeline/library/GearLoadoutBuildDialog.vue', 'refine-btn'),
+        ':pressed="isUniformLevel(slot.build, level)"',
       ],
       [
-        openingTagFor(
-          '../components/selection/EquipmentSelectionDialog.vue',
-          'equipment-refine-btn',
-        ),
+        openingTagFor('../ui/timeline/library/GearSelectionDialog.vue', 'equipment-refine-btn'),
         ':pressed="refineTier === tier"',
       ],
     ];
@@ -143,10 +180,7 @@ describe('design-system usage boundaries', () => {
   });
 
   test('feature select overrides stay limited to deliberate subsystem surfaces', () => {
-    const allowedOverrides = [
-      '../components/HitEditorDialog.vue',
-      '../views/MobileTimelineViewer.vue',
-    ];
+    const allowedOverrides: string[] = [];
 
     expect(filesMatching(/\.el-select__wrapper/)).toEqual(allowedOverrides);
     expect(filesMatching(/\.el-select-dropdown__item/)).toEqual(allowedOverrides);
@@ -184,9 +218,6 @@ describe('design-system usage boundaries', () => {
       .map(([path]) => path)
       .sort();
 
-    expect(owners).toEqual([
-      '../components/CustomNumberInput.vue',
-      '../components/TimelineGrid.vue',
-    ]);
+    expect(owners).toEqual(['../ui/components/CustomNumberInput.vue']);
   });
 });

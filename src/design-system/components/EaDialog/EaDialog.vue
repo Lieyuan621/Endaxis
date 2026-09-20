@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ElDialog } from 'element-plus';
 import { computed, useAttrs } from 'vue';
 
 defineOptions({ inheritAttrs: false });

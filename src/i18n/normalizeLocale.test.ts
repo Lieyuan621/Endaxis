@@ -3,8 +3,8 @@ import { SUPPORTED_LOCALES, normalizeLocale } from './elementPlusLocale';
 import { detectLocale } from './index';
 
 describe('normalizeLocale', () => {
-  it('offers exactly the two shipped locales', () => {
-    expect(SUPPORTED_LOCALES).toEqual(['zh-CN', 'en']);
+  it('offers every shipped locale', () => {
+    expect(SUPPORTED_LOCALES).toEqual(['zh-CN', 'en', 'ru']);
   });
 
   it('selects zh-CN for any Chinese tag', () => {
@@ -19,9 +19,9 @@ describe('normalizeLocale', () => {
     }
   });
 
-  it('sends every other language to English, including the retired ru', () => {
-    // Users with endaxis_locale:'ru' persisted, or a Russian browser, must land on English.
-    for (const raw of ['ru', 'ru-RU', 'RU', 'en', 'en-GB', 'fr', 'ja', 'nonsense']) {
+  it('keeps Russian and sends unsupported languages to English', () => {
+    for (const raw of ['ru', 'ru-RU', 'RU']) expect(normalizeLocale(raw)).toBe('ru');
+    for (const raw of ['en', 'en-GB', 'fr', 'ja', 'nonsense']) {
       expect(normalizeLocale(raw)).toBe('en');
     }
   });

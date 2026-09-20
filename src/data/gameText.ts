@@ -1,154 +1,21 @@
 import { i18n } from '@/i18n';
-import operatorsEn from '../i18n/game-locales/en/operators.json';
-import operatorsZh from '../i18n/game-locales/zh/operators.json';
-import weaponsEn from '../i18n/game-locales/en/weapons.json';
-import weaponsZh from '../i18n/game-locales/zh/weapons.json';
-import gearpiecesEn from '../i18n/game-locales/en/gearpieces.json';
-import gearpiecesZh from '../i18n/game-locales/zh/gearpieces.json';
-import gearsetsEn from '../i18n/game-locales/en/gearsets.json';
-import gearsetsZh from '../i18n/game-locales/zh/gearsets.json';
-import enemiesEn from '../i18n/game-locales/en/enemies.json';
-import enemiesZh from '../i18n/game-locales/zh/enemies.json';
+import { normalizeLocale } from '../i18n/elementPlusLocale';
+import { gameLocaleRegistry } from '../i18n/gameLocaleRegistry';
+import { weaponPresentationSlugByAsset } from './weaponPresentationSlugs';
 
-type GameLocale = 'en' | 'zh';
 type LocaleTable = Record<string, any>;
+/** 以slug直接索引条目的语言表；装备与术语有各自的嵌套结构。 */
+type EntryGameTextFamily = 'operators' | 'weapons' | 'enemies' | 'consumables';
 
-const operatorsEnTable = operatorsEn as LocaleTable;
-const operatorsZhTable = operatorsZh as LocaleTable;
-const weaponsEnTable = weaponsEn as LocaleTable;
-const weaponsZhTable = weaponsZh as LocaleTable;
-const gearpiecesEnTable = gearpiecesEn as LocaleTable;
-const gearpiecesZhTable = gearpiecesZh as LocaleTable;
-const gearsetsEnTable = gearsetsEn as LocaleTable;
-const gearsetsZhTable = gearsetsZh as LocaleTable;
-const enemiesEnTable = enemiesEn as LocaleTable;
-const enemiesZhTable = enemiesZh as LocaleTable;
-const gameEnumTerms = {
-  en: {
-    element: {
-      physical: 'Physical',
-      heat: 'Heat',
-      cryo: 'Cryo',
-      electric: 'Electric',
-      nature: 'Nature',
-      arts: 'Arts',
-    },
-    class: {
-      guard: 'Guard',
-      caster: 'Caster',
-      defender: 'Defender',
-      vanguard: 'Vanguard',
-      striker: 'Striker',
-      supporter: 'Supporter',
-    },
-    weaponType: {
-      sword: 'Sword',
-      greatsword: 'Greatsword',
-      polearm: 'Polearm',
-      handcannon: 'Handcannon',
-      'arts-unit': 'Arts Unit',
-      artsunit: 'Arts Unit',
-    },
-    slotType: {
-      armor: 'Armor',
-      gloves: 'Gloves',
-      kit: 'Kit',
-      kit1: 'Kit',
-      kit2: 'Kit',
-      accessory: 'Accessory',
-    },
-    quality: {
-      green: 'Green',
-      blue: 'Blue',
-      purple: 'Purple',
-      gold: 'Gold',
-    },
-    attribute: {
-      strength: 'Strength',
-      agility: 'Agility',
-      intellect: 'Intellect',
-      will: 'Will',
-      main: 'Main',
-      sub: 'Sub',
-    },
-    operatorUi: {
-      promote: 'Promote',
-      promoted: 'Promoted',
-      fullyPromoted: 'Fully promoted',
-      promotionUnavailable: 'Promotion unavailable',
-    },
-    weaponUi: {
-      tuned: 'Tuned',
-      fullyTuned: 'Fully tuned',
-      tuningUnavailable: 'Tuning unavailable',
-    },
-  },
-  zh: {
-    element: {
-      physical: '物理',
-      heat: '灼热',
-      cryo: '寒冷',
-      electric: '电磁',
-      nature: '自然',
-      arts: '法术',
-    },
-    class: {
-      guard: '近卫',
-      caster: '术师',
-      defender: '重装',
-      vanguard: '先锋',
-      striker: '突击',
-      supporter: '辅助',
-    },
-    weaponType: {
-      sword: '单手剑',
-      greatsword: '双手剑',
-      polearm: '长柄武器',
-      handcannon: '手铳',
-      'arts-unit': '施术单元',
-      artsunit: '施术单元',
-    },
-    slotType: {
-      armor: '护甲',
-      gloves: '护手',
-      kit: '配件',
-      kit1: '配件',
-      kit2: '配件',
-      accessory: '配件',
-    },
-    quality: {
-      green: '绿色',
-      blue: '蓝色',
-      purple: '紫色',
-      gold: '金色',
-    },
-    attribute: {
-      strength: '力量',
-      agility: '敏捷',
-      intellect: '智识',
-      will: '意志',
-      main: '主属性',
-      sub: '副属性',
-    },
-    operatorUi: {
-      promote: '精英化',
-      promoted: '精英化',
-      fullyPromoted: '满精英化',
-      promotionUnavailable: '无法精英化',
-    },
-    weaponUi: {
-      tuned: '突破',
-      fullyTuned: '满突破',
-      tuningUnavailable: '无法突破',
-    },
-  },
-} as const;
-
-function resolveGameLocale(localeLike?: string | null): GameLocale {
-  const locale = String(localeLike || i18n.global.locale.value || '').toLowerCase();
-  if (locale.startsWith('zh')) return 'zh';
-  return 'en';
-}
+type GameEnumGroup =
+  | 'element'
+  | 'class'
+  | 'weaponType'
+  | 'slotType'
+  | 'quality'
+  | 'attribute'
+  | 'operatorUi'
+  | 'weaponUi';
 
 function humanizeIdentifier(value: string | null | undefined) {
   if (!value) return '';
@@ -160,26 +27,20 @@ function humanizeIdentifier(value: string | null | undefined) {
     .replace(/\b\w/g, char => char.toUpperCase());
 }
 
-function getSource<T extends Record<string, any>>(
-  zhSource: T,
-  enSource: T,
-  locale?: string | null,
-) {
-  return resolveGameLocale(locale) === 'zh' ? zhSource : enSource;
+function getFamilySource(family: EntryGameTextFamily, locale?: string | null) {
+  return gameLocaleRegistry.getFamily(
+    normalizeLocale(locale ?? i18n.global.locale.value),
+    family,
+  ) as LocaleTable;
 }
 
-function getEntry<T extends Record<string, any>>(
-  zhSource: T,
-  enSource: T,
-  slug: string,
-  locale?: string | null,
-) {
-  const source = getSource(zhSource, enSource, locale);
+function getEntry(family: EntryGameTextFamily, slug: string, locale?: string | null) {
+  const source = getFamilySource(family, locale);
   return source?.[slug] || null;
 }
 
 function getEnemyEntry(slug: string, locale?: string | null) {
-  const source = getSource(enemiesZhTable, enemiesEnTable, locale);
+  const source = getFamilySource('enemies', locale);
   return source?.[slug] || source?.[slug?.replace(/-/g, '_')] || null;
 }
 
@@ -212,7 +73,7 @@ function formatIndexedDescription(template: string, values: unknown[]) {
 }
 
 function getOperatorEntry(slug: string, locale?: string | null) {
-  return getEntry(operatorsZhTable, operatorsEnTable, slug, locale);
+  return getEntry('operators', slug, locale);
 }
 
 function getOperatorCombatSkillEntry(
@@ -231,29 +92,66 @@ function getOperatorCombatSkillEntry(
   return { skill, formSkill };
 }
 
+const weaponAssetSlugByPresentation = Object.freeze(
+  Object.fromEntries(
+    Object.entries(weaponPresentationSlugByAsset).map(([assetSlug, presentationSlug]) => [
+      presentationSlug,
+      assetSlug,
+    ]),
+  ) as Readonly<Record<string, string>>,
+);
+
 function getWeaponEntry(slug: string, locale?: string | null) {
-  return getEntry(weaponsZhTable, weaponsEnTable, slug, locale);
+  return (
+    getEntry('weapons', slug, locale) ||
+    getEntry('weapons', weaponAssetSlugByPresentation[slug] ?? '', locale)
+  );
 }
 
 function getGearSetEntry(slug: string, locale?: string | null) {
-  return getEntry(gearsetsZhTable, gearsetsEnTable, slug, locale);
+  const source = gameLocaleRegistry.getFamily(
+    normalizeLocale(locale ?? i18n.global.locale.value),
+    'gears',
+  );
+  return (source.gearsets as LocaleTable)[slug] || null;
 }
 
 function getGameEnumValue(
-  group: keyof typeof gameEnumTerms.en,
+  group: GameEnumGroup,
   key: string | null | undefined,
   locale?: string | null,
 ) {
-  const normalizedKey = String(key || '')
-    .trim()
-    .toLowerCase();
-  const table = gameEnumTerms[resolveGameLocale(locale)][group] as Record<string, string>;
-  return table?.[normalizedKey] || table?.[normalizedKey.replace(/\s+/g, '')] || null;
+  const sourceKey = String(key || '').trim();
+  const compactKey = sourceKey.replace(/\s+/g, '');
+  const normalizedKey = compactKey.toLowerCase();
+  const terms = gameLocaleRegistry.getFamily(
+    normalizeLocale(locale ?? i18n.global.locale.value),
+    'terms',
+  ).enums as LocaleTable;
+  const table = terms[group] as Record<string, string> | undefined;
+  if (!table) return null;
+  return (
+    table[sourceKey] ||
+    table[compactKey] ||
+    table[normalizedKey] ||
+    Object.entries(table).find(([candidate]) => candidate.toLowerCase() === normalizedKey)?.[1] ||
+    null
+  );
 }
 
 export function getOperatorGameName(slug: string, locale?: string | null) {
   const entry = getOperatorEntry(slug, locale);
   return readTrimmedText(entry?.name) || humanizeIdentifier(slug);
+}
+
+export function getConsumableGameName(id: string, locale?: string | null) {
+  const entry = getEntry('consumables', id, locale);
+  return readTrimmedText(entry?.name) || humanizeIdentifier(id);
+}
+
+export function getConsumableGameDescription(id: string, locale?: string | null) {
+  const entry = getEntry('consumables', id, locale);
+  return readTrimmedText(entry?.description);
 }
 
 /** Localized operator form label (e.g. arcane `int` → 阵诀·智). */
@@ -374,6 +272,23 @@ export function getOperatorSubSkillName(
   locale?: string | null,
   fallback?: string | null,
 ) {
+  const semanticKey = `${subSkillKey} ${fallback ?? ''}`.replace(/[^a-z]/gi, '').toLowerCase();
+  const commonSkillTypeKey = semanticKey.includes('enhancedbasicattack')
+    ? 'enhancedAttack'
+    : semanticKey.includes('enhancedbattleskill')
+      ? 'enhancedSkill'
+      : semanticKey.includes('enhancedcomboskill')
+        ? 'enhancedLink'
+        : semanticKey.includes('enhancedultimate')
+          ? 'enhancedUltimate'
+          : null;
+  if (commonSkillTypeKey) {
+    const messages = i18n.global.getLocaleMessage(
+      normalizeLocale(locale ?? i18n.global.locale.value),
+    ) as LocaleTable;
+    const commonName = readTrimmedText(messages.skillType?.[commonSkillTypeKey]);
+    if (commonName) return commonName;
+  }
   const entry = getOperatorEntry(slug, locale);
   const table = entry?.subSkills;
   const fallbackKey = readTrimmedText(fallback);
@@ -425,7 +340,11 @@ export function getWeaponSkillPrefix(
 }
 
 export function getGearPieceGameName(slug: string, locale?: string | null) {
-  const entry = getEntry(gearpiecesZhTable, gearpiecesEnTable, slug, locale);
+  const source = gameLocaleRegistry.getFamily(
+    normalizeLocale(locale ?? i18n.global.locale.value),
+    'gears',
+  );
+  const entry = (source.gearpieces as LocaleTable)[slug];
   return typeof entry?.name === 'string' && entry.name.trim()
     ? entry.name.trim()
     : humanizeIdentifier(slug);
@@ -443,7 +362,7 @@ export function getGearSetGameDescription(slug: string, locale?: string | null) 
 }
 
 export function getGearSetZhName(slug: string) {
-  const entry = gearsetsZhTable?.[slug];
+  const entry = (gameLocaleRegistry.getFamily('zh-CN', 'gears').gearsets as LocaleTable)[slug];
   return readTrimmedText(entry?.setName ?? entry?.name);
 }
 
@@ -480,12 +399,12 @@ export function getOperatorUiLabel(
   key: 'promote' | 'promoted' | 'fullyPromoted' | 'promotionUnavailable',
   locale?: string | null,
 ) {
-  return gameEnumTerms[resolveGameLocale(locale)].operatorUi[key];
+  return getGameEnumValue('operatorUi', key, locale) || humanizeIdentifier(key);
 }
 
 export function getWeaponUiLabel(
   key: 'tuned' | 'fullyTuned' | 'tuningUnavailable',
   locale?: string | null,
 ) {
-  return gameEnumTerms[resolveGameLocale(locale)].weaponUi[key];
+  return getGameEnumValue('weaponUi', key, locale) || humanizeIdentifier(key);
 }

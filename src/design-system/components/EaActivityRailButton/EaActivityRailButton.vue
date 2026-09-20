@@ -6,13 +6,14 @@ const props = withDefaults(
   defineProps<{
     side?: 'left' | 'right';
     active?: boolean;
-    icon: string;
+    icon?: string;
     label: string;
     iconSize?: number;
     disabled?: boolean;
   }>(),
   {
     side: 'left',
+    icon: '',
     active: false,
     iconSize: 24,
     disabled: false,
@@ -43,7 +44,9 @@ const iconStyle = computed(() => {
     @click="emit('click', $event)"
   >
     <span class="ea-activity-rail-button__icon-frame" :style="iconStyle">
-      <img class="ea-activity-rail-button__icon" :src="icon" alt="" aria-hidden="true" />
+      <slot name="icon">
+        <img class="ea-activity-rail-button__icon" :src="icon" alt="" aria-hidden="true" />
+      </slot>
     </span>
   </EaButton>
 </template>

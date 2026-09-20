@@ -1,0 +1,11752 @@
+/** 由 tools/game-data-compiler 整名生成；不要手工编辑。 */
+import type {
+  ActionSequenceDefinition,
+  OperatorDefinition,
+  SkillDefinition,
+} from '../../core/game-data/operatorDefinition';
+import {
+  branch,
+  forEachContextTarget,
+  forEachTarget,
+  instantiateActionSequence,
+  repeatEachTick,
+  scheduled,
+  sequence,
+  step,
+  withActionBlackboardScope,
+  withSkillBlackboard,
+} from './definitionHelpers';
+
+const sharedActionSequence42: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    { atb: 0, atk_scale: 0, duration: 0, hit_index: 0 },
+    true,
+    sequence(
+      step('calculateActionValue', {
+        key: 'atk_scale',
+        operation: 'multiply',
+        left: { kind: 'blackboard', key: 'atk_scale' },
+        right: { kind: 'constant', value: 0.5 },
+      }),
+      step('applyBuff', {
+        buffId: 'buff_chr_0034_typhoea_normal_start_hittimes',
+        target: 'caster',
+        inheritSourceSkillCastInfo: true,
+      }),
+      step(
+        'dealDamage',
+        {
+          damageType: 'nature',
+          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+          tags: ['normalSkill'],
+        },
+        '\u0000endaxis-generated-identity:1',
+      ),
+      step('spawnAbilityEntity', {
+        abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+        childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+        source: 'currentAbilityEntity',
+        inheritActionBlackboard: true,
+        dieWhenSourceDies: false,
+        target: 'enemy',
+        overrideDurationSeconds: { kind: 'constant', value: 3 },
+      }),
+    ),
+    undefined,
+    { lifetime: 'execution', alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence1: ActionSequenceDefinition = sequence(
+  branch(
+    { kind: 'casterControlled' },
+    sequence(
+      branch(
+        {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+        },
+        sequence(
+          step('castSkillDuringAction', {
+            skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+            target: 'enemy',
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          }),
+        ),
+        sequence(
+          step('castSkillDuringAction', {
+            skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+            target: 'enemy',
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          }),
+        ),
+        { alwaysNext: true },
+      ),
+    ),
+    sequence(
+      step('castSkillDuringAction', {
+        skillId: 'chr_0034_typhoea_floating_attack2',
+        target: 'enemy',
+        skipApplyCost: true,
+        inheritSourceSkillCastInfo: true,
+        interruptCurrentSkillOnlyWhenTargetCastable: true,
+      }),
+    ),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence19: ActionSequenceDefinition = sequence(
+  branch(
+    { kind: 'casterControlled' },
+    sequence(
+      branch(
+        {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+        },
+        sequence(
+          step('castSkillDuringAction', {
+            skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+            target: 'enemy',
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          }),
+        ),
+        sequence(
+          step('castSkillDuringAction', {
+            skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+            target: 'enemy',
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          }),
+        ),
+        { alwaysNext: true },
+      ),
+    ),
+    sequence(
+      step('castSkillDuringAction', {
+        skillId: 'chr_0034_typhoea_floating_attack3',
+        target: 'enemy',
+        skipApplyCost: true,
+        inheritSourceSkillCastInfo: true,
+        interruptCurrentSkillOnlyWhenTargetCastable: true,
+      }),
+    ),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence25: ActionSequenceDefinition = sequence(
+  branch(
+    { kind: 'casterControlled' },
+    sequence(
+      branch(
+        {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+        },
+        sequence(
+          step('castSkillDuringAction', {
+            skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+            target: 'enemy',
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          }),
+        ),
+        sequence(
+          step('castSkillDuringAction', {
+            skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+            target: 'enemy',
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          }),
+        ),
+        { alwaysNext: true },
+      ),
+    ),
+    sequence(
+      step('castSkillDuringAction', {
+        skillId: 'chr_0034_typhoea_floating_attack4',
+        target: 'enemy',
+        skipApplyCost: true,
+        inheritSourceSkillCastInfo: true,
+        interruptCurrentSkillOnlyWhenTargetCastable: true,
+      }),
+    ),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence39: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {
+      atb: 0,
+      atk_scale: 0.2,
+      atk_scale_total: 0,
+      buff_stack: 0,
+      duration: 0,
+      hit_index: 0,
+      spellinflict_damage_add: 0.3,
+    },
+    true,
+    sequence(
+      step('calculateActionValue', {
+        key: 'atk_scale',
+        operation: 'multiply',
+        left: { kind: 'blackboard', key: 'atk_scale' },
+        right: { kind: 'constant', value: 0.5 },
+      }),
+      step('applyBuff', {
+        buffId: 'buff_chr_0034_typhoea_normal_start_hittimes',
+        target: 'caster',
+        inheritSourceSkillCastInfo: true,
+      }),
+      step(
+        'dealDamage',
+        {
+          damageType: 'nature',
+          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+          tags: ['normalSkill'],
+        },
+        '\u0000endaxis-generated-identity:1',
+      ),
+      step('spawnAbilityEntity', {
+        abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+        childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+        source: 'currentAbilityEntity',
+        inheritActionBlackboard: true,
+        dieWhenSourceDies: false,
+        target: 'enemy',
+        overrideDurationSeconds: { kind: 'constant', value: 3 },
+      }),
+    ),
+    undefined,
+    { lifetime: 'execution', alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence24: ActionSequenceDefinition = sequence(
+  step('readBuffStackCount', {
+    target: 'caster',
+    outputKey: 'arrow_num',
+    query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+  }),
+  {
+    kind: 'switch',
+    parameters: { choice: { kind: 'blackboard', key: 'arrow_num' }, alwaysNext: true },
+    options: [
+      {
+        value: { kind: 'constant', value: 0 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack3'] }),
+        ),
+      },
+      {
+        value: { kind: 'constant', value: 1 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack3'] }),
+        ),
+      },
+      {
+        value: { kind: 'constant', value: 2 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack3'] }),
+        ),
+      },
+      {
+        value: { kind: 'constant', value: 3 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack2'] }),
+        ),
+      },
+      {
+        value: { kind: 'constant', value: 4 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack1'] }),
+        ),
+      },
+    ],
+  },
+);
+
+const sharedActionSequence23: ActionSequenceDefinition = sequence(
+  step('readBuffStackCount', {
+    target: 'caster',
+    outputKey: 'arrow_num',
+    query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'] },
+  }),
+  {
+    kind: 'switch',
+    parameters: { choice: { kind: 'blackboard', key: 'arrow_num' }, alwaysNext: true },
+    options: [
+      {
+        value: { kind: 'constant', value: 0 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack3'] }),
+        ),
+      },
+      {
+        value: { kind: 'constant', value: 1 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack3'] }),
+        ),
+      },
+      {
+        value: { kind: 'constant', value: 2 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack3'] }),
+        ),
+      },
+      {
+        value: { kind: 'constant', value: 3 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack2'] }),
+        ),
+      },
+      {
+        value: { kind: 'constant', value: 4 },
+        sequence: sequence(
+          step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_floating_attack1'] }),
+        ),
+      },
+    ],
+  },
+);
+
+const sharedActionSequence48: ActionSequenceDefinition = sequence(
+  step('calculateActionValue', {
+    key: 'trigger_times',
+    operation: 'add',
+    left: { kind: 'blackboard', key: 'trigger_times' },
+    right: { kind: 'constant', value: 1 },
+  }),
+  step('applyBuff', {
+    buffId: 'buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain_timer',
+    target: 'buffOwner',
+    source: 'buffSource',
+    inheritSourceSkillCastInfo: true,
+  }),
+  branch(
+    {
+      kind: 'actionValueCompare',
+      left: { kind: 'blackboard', key: 'trigger_times', fallback: 0 },
+      operator: 'less',
+      right: { kind: 'constant', value: 5 },
+    },
+    sequence(
+      step('spawnAbilityEntity', {
+        abilityEntityId: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub',
+        childSkillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub1',
+        inheritActionBlackboard: true,
+        dieWhenSourceDies: false,
+      }),
+    ),
+    sequence(
+      step('spawnAbilityEntity', {
+        abilityEntityId: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub',
+        childSkillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub2',
+        inheritActionBlackboard: true,
+        dieWhenSourceDies: false,
+      }),
+    ),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence41: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence42, [
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+    ]),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence45: ActionSequenceDefinition = sequence(
+  {
+    kind: 'withActionBlackboardScope',
+    parameters: {
+      scopeKey: 'chr_0034_typhoea_combo_01_projhit:immediate-timeline:0',
+      lifetime: 'execution',
+      alwaysNext: true,
+      shareParentBlackboard: true,
+      initialValues: {},
+      inheritParent: true,
+    },
+    body: sequence(
+      step('applyBuff', {
+        buffId: 'buff_chr_0034_typhoea_combo_skill_arrow_hittimes',
+        target: 'enemy',
+        inheritSourceSkillCastInfo: true,
+      }),
+      step('calculateActionValue', {
+        key: 'atk_scale',
+        operation: 'divide',
+        left: { kind: 'blackboard', key: 'atk_scale' },
+        right: { kind: 'constant', value: 7 },
+      }),
+      step(
+        'dealDamage',
+        {
+          damageType: 'nature',
+          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+          tags: ['comboSkill'],
+          features: ['canBreakWeakness'],
+          stagger: { kind: 'blackboard', key: 'poise' },
+        },
+        '\u0000endaxis-generated-identity:0',
+      ),
+    ),
+  },
+  {
+    kind: 'withActionBlackboardScope',
+    parameters: {
+      scopeKey: 'chr_0034_typhoea_combo_01_projhit:immediate-timeline:1',
+      lifetime: 'execution',
+      alwaysNext: true,
+      shareParentBlackboard: true,
+      initialValues: {},
+      inheritParent: true,
+    },
+    body: sequence(
+      step('spawnAbilityEntity', {
+        abilityEntityId: 'abilityentity_chr_0034_typhoea_combo_presistdamage',
+        childSkillId: 'chr_0034_typhoea_combo_persistentdamage',
+        inheritActionBlackboard: true,
+        dieWhenSourceDies: false,
+      }),
+    ),
+  },
+);
+
+const sharedActionSequence38: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence39, [
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+    ]),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence40: ActionSequenceDefinition = sequence(
+  forEachTarget(
+    'enemy',
+    instantiateActionSequence(sharedActionSequence41, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+    ]),
+  ),
+);
+
+const sharedActionSequence37: ActionSequenceDefinition = sequence(
+  forEachTarget(
+    'enemy',
+    instantiateActionSequence(sharedActionSequence38, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+    ]),
+  ),
+);
+
+const sharedActionSequence13: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'buffStackCompare',
+      target: 'enemy',
+      tagQueryType: 'hasAny',
+      buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+      operator: 'greaterOrEqual',
+      value: { kind: 'constant', value: 1 },
+    },
+    sequence(
+      step('finishBuffsByTag', {
+        target: 'enemy',
+        tagQueryType: 'hasAny',
+        buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+        reason: 'early',
+        count: { kind: 'constant', value: 1 },
+      }),
+      step('changeResourceByActionValue', {
+        resource: 'ultimateEnergy',
+        amount: { kind: 'blackboard', key: 'usp_recover' },
+        coefficient: { kind: 'constant', value: 1 },
+        recipient: 'caster',
+      }),
+      step('calculateActionValue', {
+        key: 'total_damage_rate',
+        operation: 'multiply',
+        left: { kind: 'blackboard', key: 'total_damage_rate' },
+        right: { kind: 'blackboard', key: 'enchence_burst_damage_rate' },
+      }),
+      step('applyBuff', {
+        buffId: 'buff_common_natural_natural_triggered_typhoea',
+        target: 'enemy',
+        inheritSourceSkillCastInfo: true,
+        copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
+      }),
+      step('applyBuff', {
+        buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_2',
+        target: 'caster',
+        inheritSourceSkillCastInfo: true,
+      }),
+    ),
+    sequence(
+      step('applyBuff', {
+        buffId: 'buff_common_natural_natural_triggered_typhoea',
+        target: 'enemy',
+        inheritSourceSkillCastInfo: true,
+        copiedBlackboardAssignments: { damage_enhence: 'total_damage_rate' },
+      }),
+    ),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence44: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {
+      atb: 0,
+      atk_scale: 0,
+      atk_scale_persistent: 0,
+      hit_index: 0,
+      naturalinflect_stack: 0,
+      persistent_naturalburst_increase: 0,
+      persistent_slow: 0,
+      persistent_time: 0,
+      poise: 10,
+      recover_bufftime: 12,
+      usp: 0,
+    },
+    true,
+    instantiateActionSequence(sharedActionSequence45, ['\u0000endaxis-generated-identity:1']),
+    undefined,
+    { lifetime: 'execution', alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence46: ActionSequenceDefinition = sequence({
+  kind: 'switch',
+  parameters: {
+    choice: { kind: 'blackboard', key: 'EntityBB_floating_attack_index' },
+    alwaysNext: true,
+  },
+  options: [
+    {
+      value: { kind: 'constant', value: 0 },
+      sequence: sequence(
+        step('castSkillDuringAction', {
+          skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+          target: 'enemy',
+          skipApplyCost: true,
+          inheritSourceSkillCastInfo: false,
+          interruptCurrentSkillOnlyWhenTargetCastable: true,
+        }),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 1 },
+      sequence: sequence(
+        step('castSkillDuringAction', {
+          skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+          target: 'enemy',
+          skipApplyCost: true,
+          inheritSourceSkillCastInfo: false,
+          interruptCurrentSkillOnlyWhenTargetCastable: true,
+        }),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 2 },
+      sequence: sequence(
+        step('castSkillDuringAction', {
+          skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+          target: 'enemy',
+          skipApplyCost: true,
+          inheritSourceSkillCastInfo: false,
+          interruptCurrentSkillOnlyWhenTargetCastable: true,
+        }),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 3 },
+      sequence: sequence(
+        step('castSkillDuringAction', {
+          skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+          target: 'enemy',
+          skipApplyCost: true,
+          inheritSourceSkillCastInfo: false,
+          interruptCurrentSkillOnlyWhenTargetCastable: true,
+        }),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 4 },
+      sequence: sequence(
+        step('castSkillDuringAction', {
+          skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+          target: 'enemy',
+          skipApplyCost: true,
+          inheritSourceSkillCastInfo: false,
+          interruptCurrentSkillOnlyWhenTargetCastable: true,
+        }),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 5 },
+      sequence: sequence(
+        step('castSkillDuringAction', {
+          skillId: 'chr_0034_typhoea_normal_skill_floating_end',
+          target: 'enemy',
+          skipApplyCost: true,
+          inheritSourceSkillCastInfo: false,
+          interruptCurrentSkillOnlyWhenTargetCastable: true,
+        }),
+      ),
+    },
+  ],
+});
+
+const sharedActionSequence43: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'actionValueCompare',
+      left: { kind: 'blackboard', key: 'is_have_target', fallback: 0 },
+      operator: 'equal',
+      right: { kind: 'constant', value: 1 },
+    },
+    sequence(
+      withActionBlackboardScope(
+        '\u0000endaxis-generated-identity:0',
+        {},
+        true,
+        sequence(
+          withActionBlackboardScope(
+            '\u0000endaxis-generated-identity:1',
+            {
+              atb: 0,
+              atk_scale: 0,
+              atk_scale_persistent: 0,
+              hit_index: 0,
+              naturalinflect_stack: 0,
+              persistent_naturalburst_increase: 0,
+              persistent_slow: 0,
+              persistent_time: 0,
+              recover_bufftime: 12,
+              usp: 0,
+            },
+            true,
+            sequence(
+              step('calculateActionValue', {
+                key: 'atk_scale',
+                operation: 'divide',
+                left: { kind: 'blackboard', key: 'atk_scale' },
+                right: { kind: 'constant', value: 7 },
+              }),
+              step(
+                'dealDamage',
+                {
+                  damageType: 'nature',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['comboSkill'],
+                },
+                '\u0000endaxis-generated-identity:2',
+              ),
+            ),
+            undefined,
+            { lifetime: 'execution', alwaysNext: true },
+          ),
+        ),
+        {},
+        { lifetime: 'execution' },
+      ),
+    ),
+    sequence(
+      withActionBlackboardScope(
+        '\u0000endaxis-generated-identity:3',
+        {},
+        true,
+        sequence(
+          withActionBlackboardScope(
+            '\u0000endaxis-generated-identity:4',
+            {
+              atb: 0,
+              atk_scale: 0,
+              atk_scale_persistent: 0,
+              hit_index: 0,
+              naturalinflect_stack: 0,
+              persistent_naturalburst_increase: 0,
+              persistent_slow: 0,
+              persistent_time: 0,
+              recover_bufftime: 12,
+              usp: 0,
+            },
+            true,
+            sequence(
+              step('calculateActionValue', {
+                key: 'atk_scale',
+                operation: 'divide',
+                left: { kind: 'blackboard', key: 'atk_scale' },
+                right: { kind: 'constant', value: 7 },
+              }),
+              step(
+                'dealDamage',
+                {
+                  damageType: 'nature',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['comboSkill'],
+                },
+                '\u0000endaxis-generated-identity:5',
+              ),
+            ),
+            undefined,
+            { lifetime: 'execution', alwaysNext: true },
+          ),
+        ),
+        {},
+        { lifetime: 'execution' },
+      ),
+    ),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence47: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'buffIdStackCompare',
+      target: 'buffOwner',
+      buffIds: ['buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain_timer'],
+      operator: 'equal',
+      value: { kind: 'constant', value: 0 },
+    },
+    sharedActionSequence48,
+    sequence(
+      branch(
+        {
+          kind: 'actionValueCompare',
+          left: { kind: 'blackboard', key: 'trigger_times', fallback: 0 },
+          operator: 'less',
+          right: { kind: 'constant', value: 5 },
+        },
+        sequence(
+          step('spawnAbilityEntity', {
+            abilityEntityId: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub',
+            childSkillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub1',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          }),
+        ),
+        sequence(
+          step('spawnAbilityEntity', {
+            abilityEntityId: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub',
+            childSkillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub2',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          }),
+        ),
+        { alwaysNext: true },
+      ),
+    ),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence18: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'buffIdStackCompare',
+      target: 'caster',
+      buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+      operator: 'greaterOrEqual',
+      value: { kind: 'constant', value: 1 },
+    },
+    sequence(
+      step('readBuffStackCount', {
+        target: 'caster',
+        outputKey: 'arrow_num',
+        query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'] },
+      }),
+      {
+        kind: 'switch',
+        parameters: { choice: { kind: 'blackboard', key: 'arrow_num' }, alwaysNext: true },
+        options: [
+          {
+            value: { kind: 'constant', value: 0 },
+            sequence: sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack2'],
+              }),
+            ),
+          },
+          {
+            value: { kind: 'constant', value: 1 },
+            sequence: sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack2'],
+              }),
+            ),
+          },
+          {
+            value: { kind: 'constant', value: 2 },
+            sequence: sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack2'],
+              }),
+            ),
+          },
+          {
+            value: { kind: 'constant', value: 3 },
+            sequence: sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack2'],
+              }),
+            ),
+          },
+        ],
+      },
+    ),
+    sequence(
+      step('readBuffStackCount', {
+        target: 'caster',
+        outputKey: 'arrow_num',
+        query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+      }),
+      {
+        kind: 'switch',
+        parameters: { choice: { kind: 'blackboard', key: 'arrow_num' }, alwaysNext: true },
+        options: [
+          {
+            value: { kind: 'constant', value: 0 },
+            sequence: sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack2'],
+              }),
+            ),
+          },
+          {
+            value: { kind: 'constant', value: 1 },
+            sequence: sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack2'],
+              }),
+            ),
+          },
+          {
+            value: { kind: 'constant', value: 2 },
+            sequence: sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack2'],
+              }),
+            ),
+          },
+          {
+            value: { kind: 'constant', value: 3 },
+            sequence: sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack2'],
+              }),
+            ),
+          },
+        ],
+      },
+    ),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence22: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'buffIdStackCompare',
+      target: 'caster',
+      buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+      operator: 'greaterOrEqual',
+      value: { kind: 'constant', value: 1 },
+    },
+    sharedActionSequence23,
+    sharedActionSequence24,
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence3: ActionSequenceDefinition = sequence({
+  kind: 'switch',
+  parameters: { choice: { kind: 'blackboard', key: 'have_move_input' }, alwaysNext: true },
+  options: [
+    {
+      value: { kind: 'constant', value: 0 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 1 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 2 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 3 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 4 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+  ],
+});
+
+const sharedActionSequence21: ActionSequenceDefinition = sequence({
+  kind: 'switch',
+  parameters: { choice: { kind: 'blackboard', key: 'have_move_input' }, alwaysNext: true },
+  options: [
+    {
+      value: { kind: 'constant', value: 1 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 0 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 2 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 3 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+    {
+      value: { kind: 'constant', value: 4 },
+      sequence: sequence(
+        branch(
+          {
+            kind: 'entityTagMatch',
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+          },
+          sequence(
+            step('mergeContextTargets', {
+              saveToContextKey: 'tar1',
+              sources: [{ kind: 'target', target: 'enemy' }],
+            }),
+          ),
+          sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+        ),
+      ),
+    },
+  ],
+});
+
+const sharedActionSequence2: ActionSequenceDefinition = sequence(
+  branch({ kind: 'casterControlled' }, sharedActionSequence3, undefined, { alwaysNext: true }),
+);
+
+const sharedActionSequence20: ActionSequenceDefinition = sequence(
+  branch({ kind: 'casterControlled' }, sharedActionSequence21, undefined, { alwaysNext: true }),
+);
+
+const sharedActionSequence12: ActionSequenceDefinition = sequence(
+  step('readBuffStackCount', {
+    target: 'enemy',
+    outputKey: 'buff_stack',
+    query: {
+      kind: 'tag',
+      tagQueryType: 'hasAny',
+      buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+    },
+  }),
+  step('calculateActionValue', {
+    key: 'atk_scale_total',
+    operation: 'multiply',
+    left: { kind: 'blackboard', key: 'atk_scale_base' },
+    right: { kind: 'blackboard', key: 'atk_scale_enhence' },
+  }),
+  step('calculateActionValue', {
+    key: 'total_damage_rate',
+    operation: 'multiply',
+    left: { kind: 'blackboard', key: 'potential_damage_rate' },
+    right: { kind: 'constant', value: 1 },
+  }),
+  branch(
+    {
+      kind: 'actionValueCompare',
+      left: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      operator: 'equal',
+      right: { kind: 'constant', value: 1 },
+    },
+    sharedActionSequence13,
+    sequence(
+      branch(
+        {
+          kind: 'buffStackCompare',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+        sequence(
+          step('finishBuffsByTag', {
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+            reason: 'early',
+            count: { kind: 'constant', value: 1 },
+          }),
+          step('changeResourceByActionValue', {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'blackboard', key: 'usp_recover' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'caster',
+          }),
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_2',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+          }),
+        ),
+        undefined,
+        { alwaysNext: true },
+      ),
+    ),
+    { alwaysNext: true },
+  ),
+  branch(
+    {
+      kind: 'actionValueCompare',
+      left: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      operator: 'equal',
+      right: { kind: 'constant', value: 1 },
+    },
+    sequence(
+      step(
+        'dealDamage',
+        {
+          damageType: 'nature',
+          attackScale: { kind: 'blackboard', key: 'atk_scale_total' },
+          tags: ['normalAttack'],
+          gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Weak'],
+        },
+        '\u0000endaxis-generated-identity:0',
+      ),
+    ),
+    sequence(
+      step(
+        'dealDamage',
+        {
+          damageType: 'nature',
+          attackScale: { kind: 'blackboard', key: 'atk_scale_base' },
+          tags: ['normalAttack'],
+          gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Weak'],
+        },
+        '\u0000endaxis-generated-identity:1',
+      ),
+    ),
+    { alwaysNext: true },
+  ),
+  step('applyBuff', {
+    buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken',
+    target: 'enemy',
+    inheritSourceSkillCastInfo: true,
+  }),
+  step('spawnAbilityEntity', {
+    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+    source: 'currentAbilityEntity',
+    inheritActionBlackboard: true,
+    dieWhenSourceDies: false,
+    target: 'enemy',
+    overrideDurationSeconds: { kind: 'constant', value: 3 },
+  }),
+);
+
+const sharedActionSequence11: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'buffIdStackCompare',
+      target: 'enemy',
+      buffIds: ['buff_chr_0034_typhoea_floatingattack_damagetaken'],
+      operator: 'equal',
+      value: { kind: 'constant', value: 0 },
+    },
+    instantiateActionSequence(sharedActionSequence12, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+    ]),
+  ),
+);
+
+const sharedActionSequence34: ActionSequenceDefinition = sequence(
+  step('readBuffStackCount', {
+    target: 'enemy',
+    outputKey: 'buff_stack',
+    query: {
+      kind: 'tag',
+      tagQueryType: 'hasAny',
+      buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+    },
+  }),
+  step('calculateActionValue', {
+    key: 'atk_scale_total',
+    operation: 'multiply',
+    left: { kind: 'blackboard', key: 'atk_scale_base' },
+    right: { kind: 'blackboard', key: 'atk_scale_enhence' },
+  }),
+  step('calculateActionValue', {
+    key: 'total_damage_rate',
+    operation: 'multiply',
+    left: { kind: 'blackboard', key: 'potential_damage_rate' },
+    right: { kind: 'constant', value: 1 },
+  }),
+  branch(
+    {
+      kind: 'actionValueCompare',
+      left: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      operator: 'equal',
+      right: { kind: 'constant', value: 1 },
+    },
+    sharedActionSequence13,
+    sequence(
+      branch(
+        {
+          kind: 'buffStackCompare',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+        sequence(
+          step('finishBuffsByTag', {
+            target: 'enemy',
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+            reason: 'early',
+            count: { kind: 'constant', value: 1 },
+          }),
+          step('changeResourceByActionValue', {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'blackboard', key: 'usp_recover' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'caster',
+          }),
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_2',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+          }),
+        ),
+        undefined,
+        { alwaysNext: true },
+      ),
+    ),
+    { alwaysNext: true },
+  ),
+  branch(
+    { kind: 'casterControlled' },
+    sequence(
+      step('applyBuff', {
+        buffId: 'buff_chr_0034_typhoea_normal_attack5_atb_recovered',
+        target: 'caster',
+        inheritSourceSkillCastInfo: true,
+        copiedBlackboardAssignments: { atb: 'atb' },
+      }),
+    ),
+    undefined,
+    { alwaysNext: true },
+  ),
+  branch(
+    {
+      kind: 'actionValueCompare',
+      left: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      operator: 'equal',
+      right: { kind: 'constant', value: 1 },
+    },
+    sequence(
+      step(
+        'dealDamage',
+        {
+          damageType: 'nature',
+          attackScale: { kind: 'blackboard', key: 'atk_scale_total' },
+          tags: ['normalAttack', 'normalAttackLastCombo'],
+          gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Heavy'],
+          features: ['canBreakWeakness'],
+          stagger: { kind: 'blackboard', key: 'poise' },
+          staggerOnlyWhenCasterControlled: true,
+        },
+        '\u0000endaxis-generated-identity:0',
+      ),
+    ),
+    sequence(
+      step(
+        'dealDamage',
+        {
+          damageType: 'nature',
+          attackScale: { kind: 'blackboard', key: 'atk_scale_base' },
+          tags: ['normalAttack', 'normalAttackLastCombo'],
+          gameplayTags: ['Damage/TyphoeaSkill/FloatingHit_Weak'],
+          features: ['canBreakWeakness'],
+          stagger: { kind: 'blackboard', key: 'poise' },
+          staggerOnlyWhenCasterControlled: true,
+        },
+        '\u0000endaxis-generated-identity:1',
+      ),
+    ),
+    { alwaysNext: true },
+  ),
+  step('applyBuff', {
+    buffId: 'buff_chr_0034_typhoea_floatingattack_damagetaken',
+    target: 'enemy',
+    inheritSourceSkillCastInfo: true,
+  }),
+  step('spawnAbilityEntity', {
+    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+    source: 'currentAbilityEntity',
+    inheritActionBlackboard: true,
+    dieWhenSourceDies: false,
+    target: 'enemy',
+    overrideDurationSeconds: { kind: 'constant', value: 3 },
+  }),
+);
+
+const sharedActionSequence10: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {
+      atb: 0,
+      atk_scale_base: 0.5,
+      atk_scale_enhence: 1,
+      atk_scale_total: 0,
+      buff_stack: 0,
+      duration: 0,
+      enchence_burst_damage_rate: 1.5,
+      enhence_arrow: 0,
+      hit_index: 0,
+      naturalnflict_damageadd: 0.4,
+      potential_damage_rate: 1,
+      random_float: 0,
+      total_damage_rate: 1,
+      usp_recover: 5,
+    },
+    true,
+    instantiateActionSequence(sharedActionSequence11, [
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+    ]),
+    undefined,
+    { lifetime: 'execution', alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence33: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'buffIdStackCompare',
+      target: 'enemy',
+      buffIds: ['buff_chr_0034_typhoea_floatingattack_damagetaken'],
+      operator: 'equal',
+      value: { kind: 'constant', value: 0 },
+    },
+    instantiateActionSequence(sharedActionSequence34, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+    ]),
+  ),
+);
+
+const sharedActionSequence9: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence10, [
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+    ]),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence32: ActionSequenceDefinition = sequence(
+  {
+    kind: 'withActionBlackboardScope',
+    parameters: {
+      scopeKey: 'chr_0034_typhoea_floating_attack5_01_projhit:immediate-timeline:0',
+      lifetime: 'execution',
+      alwaysNext: true,
+      shareParentBlackboard: true,
+      initialValues: {},
+      inheritParent: true,
+    },
+    body: instantiateActionSequence(sharedActionSequence33, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+    ]),
+  },
+  {
+    kind: 'withActionBlackboardScope',
+    parameters: {
+      scopeKey: 'chr_0034_typhoea_floating_attack5_01_projhit:immediate-timeline:1',
+      lifetime: 'execution',
+      alwaysNext: true,
+      shareParentBlackboard: true,
+      initialValues: {},
+      inheritParent: true,
+    },
+    body: sequence(
+      branch(
+        { kind: 'casterControlled' },
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_normal_skill_hitstop',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+          }),
+        ),
+      ),
+    ),
+  },
+);
+
+const sharedActionSequence31: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {
+      atb: 0,
+      atk_scale_base: 0.5,
+      atk_scale_enhence: 1,
+      atk_scale_total: 0,
+      buff_stack: 0,
+      duration: 0,
+      enchence_burst_damage_rate: 1.5,
+      enhence_arrow: 0,
+      hit_index: 0,
+      naturalnflict_damageadd: 0.4,
+      poise: 0,
+      potential_damage_rate: 1,
+      random_float: 0,
+      total_damage_rate: 1,
+      usp_recover: 5,
+    },
+    true,
+    instantiateActionSequence(sharedActionSequence32, [
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+    ]),
+    undefined,
+    { lifetime: 'execution', alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence30: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence31, [
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+    ]),
+    {},
+    { lifetime: 'execution' },
+  ),
+  branch(
+    {
+      kind: 'all',
+      conditions: [
+        {
+          kind: 'actionValueCompare',
+          left: { kind: 'blackboard', key: 'trigger_arrow_recover', fallback: 0 },
+          operator: 'equal',
+          right: { kind: 'constant', value: 0 },
+        },
+        {
+          kind: 'actionValueCompare',
+          left: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+        {
+          kind: 'buffStackCompare',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 4 },
+        },
+      ],
+    },
+    sequence(
+      step('modifyActionValue', {
+        key: 'trigger_arrow_recover',
+        operation: 'assign',
+        value: { kind: 'constant', value: 1 },
+      }),
+    ),
+    undefined,
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence8: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'actionValueCompare',
+      left: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      operator: 'equal',
+      right: { kind: 'constant', value: 1 },
+    },
+    instantiateActionSequence(sharedActionSequence9, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+    ]),
+    instantiateActionSequence(sharedActionSequence9, [
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence14: ActionSequenceDefinition = sequence(
+  forEachTarget(
+    'enemy',
+    instantiateActionSequence(sharedActionSequence8, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+  ),
+);
+
+const sharedActionSequence7: ActionSequenceDefinition = sequence(
+  forEachContextTarget(
+    'tar1',
+    instantiateActionSequence(sharedActionSequence8, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+  ),
+);
+
+const sharedActionSequence36: ActionSequenceDefinition = sequence(
+  step('modifyActionValue', {
+    key: 'enhence_arrow',
+    operation: 'assign',
+    value: { kind: 'constant', value: 0 },
+  }),
+  forEachTarget(
+    'enemy',
+    instantiateActionSequence(sharedActionSequence8, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+  ),
+);
+
+const sharedActionSequence29: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'actionValueCompare',
+      left: { kind: 'blackboard', key: 'enhence_arrow', fallback: 0 },
+      operator: 'equal',
+      right: { kind: 'constant', value: 1 },
+    },
+    instantiateActionSequence(sharedActionSequence30, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+    ]),
+    instantiateActionSequence(sharedActionSequence30, [
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence35: ActionSequenceDefinition = sequence(
+  forEachTarget(
+    'enemy',
+    instantiateActionSequence(sharedActionSequence29, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+  ),
+);
+
+const sharedActionSequence28: ActionSequenceDefinition = sequence(
+  forEachContextTarget(
+    'tar1',
+    instantiateActionSequence(sharedActionSequence29, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+  ),
+);
+
+const sharedActionSequence6: ActionSequenceDefinition = sequence(
+  branch(
+    { kind: 'contextTargetCountCompare', contextKey: 'tar1', operator: 'greaterOrEqual', value: 1 },
+    instantiateActionSequence(sharedActionSequence7, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+    instantiateActionSequence(sharedActionSequence14, [
+      '\u0000endaxis-generated-identity:8',
+      '\u0000endaxis-generated-identity:9',
+      '\u0000endaxis-generated-identity:10',
+      '\u0000endaxis-generated-identity:11',
+      '\u0000endaxis-generated-identity:12',
+      '\u0000endaxis-generated-identity:13',
+      '\u0000endaxis-generated-identity:14',
+      '\u0000endaxis-generated-identity:15',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence27: ActionSequenceDefinition = sequence(
+  step('modifyActionValue', {
+    key: 'enhence_arrow',
+    operation: 'assign',
+    value: { kind: 'constant', value: 1 },
+  }),
+  branch(
+    {
+      kind: 'entityTagMatch',
+      target: 'enemy',
+      tagQueryType: 'hasAny',
+      tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+    },
+    sequence(
+      step('mergeContextTargets', {
+        saveToContextKey: 'tar1',
+        sources: [{ kind: 'target', target: 'enemy' }],
+      }),
+    ),
+    sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+  ),
+  branch(
+    { kind: 'contextTargetCountCompare', contextKey: 'tar1', operator: 'greaterOrEqual', value: 1 },
+    instantiateActionSequence(sharedActionSequence28, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+    ]),
+    instantiateActionSequence(sharedActionSequence35, [
+      '\u0000endaxis-generated-identity:8',
+      '\u0000endaxis-generated-identity:9',
+      '\u0000endaxis-generated-identity:10',
+      '\u0000endaxis-generated-identity:11',
+      '\u0000endaxis-generated-identity:12',
+      '\u0000endaxis-generated-identity:13',
+      '\u0000endaxis-generated-identity:14',
+      '\u0000endaxis-generated-identity:15',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence17: ActionSequenceDefinition = sequence(
+  branch(
+    { kind: 'casterControlled' },
+    instantiateActionSequence(sharedActionSequence6, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+      '\u0000endaxis-generated-identity:8',
+      '\u0000endaxis-generated-identity:9',
+      '\u0000endaxis-generated-identity:10',
+      '\u0000endaxis-generated-identity:11',
+      '\u0000endaxis-generated-identity:12',
+      '\u0000endaxis-generated-identity:13',
+      '\u0000endaxis-generated-identity:14',
+      '\u0000endaxis-generated-identity:15',
+    ]),
+    instantiateActionSequence(sharedActionSequence14, [
+      '\u0000endaxis-generated-identity:16',
+      '\u0000endaxis-generated-identity:17',
+      '\u0000endaxis-generated-identity:18',
+      '\u0000endaxis-generated-identity:19',
+      '\u0000endaxis-generated-identity:20',
+      '\u0000endaxis-generated-identity:21',
+      '\u0000endaxis-generated-identity:22',
+      '\u0000endaxis-generated-identity:23',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence5: ActionSequenceDefinition = sequence(
+  step('finishBuffsById', {
+    target: 'caster',
+    buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+    reason: 'other',
+    count: { kind: 'constant', value: 1 },
+  }),
+  step('modifyActionValue', {
+    key: 'enhence_arrow',
+    operation: 'assign',
+    value: { kind: 'constant', value: 1 },
+  }),
+  branch(
+    { kind: 'casterControlled' },
+    instantiateActionSequence(sharedActionSequence6, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+      '\u0000endaxis-generated-identity:8',
+      '\u0000endaxis-generated-identity:9',
+      '\u0000endaxis-generated-identity:10',
+      '\u0000endaxis-generated-identity:11',
+      '\u0000endaxis-generated-identity:12',
+      '\u0000endaxis-generated-identity:13',
+      '\u0000endaxis-generated-identity:14',
+      '\u0000endaxis-generated-identity:15',
+    ]),
+    instantiateActionSequence(sharedActionSequence14, [
+      '\u0000endaxis-generated-identity:16',
+      '\u0000endaxis-generated-identity:17',
+      '\u0000endaxis-generated-identity:18',
+      '\u0000endaxis-generated-identity:19',
+      '\u0000endaxis-generated-identity:20',
+      '\u0000endaxis-generated-identity:21',
+      '\u0000endaxis-generated-identity:22',
+      '\u0000endaxis-generated-identity:23',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence16: ActionSequenceDefinition = sequence(
+  step('finishBuffsById', {
+    target: 'caster',
+    buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+    reason: 'other',
+    count: { kind: 'constant', value: 1 },
+  }),
+  step('modifyActionValue', {
+    key: 'enhence_arrow',
+    operation: 'assign',
+    value: { kind: 'constant', value: 1 },
+  }),
+  branch(
+    { kind: 'casterControlled' },
+    instantiateActionSequence(sharedActionSequence6, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+      '\u0000endaxis-generated-identity:8',
+      '\u0000endaxis-generated-identity:9',
+      '\u0000endaxis-generated-identity:10',
+      '\u0000endaxis-generated-identity:11',
+      '\u0000endaxis-generated-identity:12',
+      '\u0000endaxis-generated-identity:13',
+      '\u0000endaxis-generated-identity:14',
+      '\u0000endaxis-generated-identity:15',
+    ]),
+    instantiateActionSequence(sharedActionSequence14, [
+      '\u0000endaxis-generated-identity:16',
+      '\u0000endaxis-generated-identity:17',
+      '\u0000endaxis-generated-identity:18',
+      '\u0000endaxis-generated-identity:19',
+      '\u0000endaxis-generated-identity:20',
+      '\u0000endaxis-generated-identity:21',
+      '\u0000endaxis-generated-identity:22',
+      '\u0000endaxis-generated-identity:23',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence26: ActionSequenceDefinition = sequence(
+  branch(
+    { kind: 'casterControlled' },
+    instantiateActionSequence(sharedActionSequence27, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+      '\u0000endaxis-generated-identity:8',
+      '\u0000endaxis-generated-identity:9',
+      '\u0000endaxis-generated-identity:10',
+      '\u0000endaxis-generated-identity:11',
+      '\u0000endaxis-generated-identity:12',
+      '\u0000endaxis-generated-identity:13',
+      '\u0000endaxis-generated-identity:14',
+      '\u0000endaxis-generated-identity:15',
+    ]),
+    instantiateActionSequence(sharedActionSequence36, [
+      '\u0000endaxis-generated-identity:16',
+      '\u0000endaxis-generated-identity:17',
+      '\u0000endaxis-generated-identity:18',
+      '\u0000endaxis-generated-identity:19',
+      '\u0000endaxis-generated-identity:20',
+      '\u0000endaxis-generated-identity:21',
+      '\u0000endaxis-generated-identity:22',
+      '\u0000endaxis-generated-identity:23',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence15: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'buffIdStackCompare',
+      target: 'caster',
+      buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+      operator: 'greaterOrEqual',
+      value: { kind: 'constant', value: 1 },
+    },
+    instantiateActionSequence(sharedActionSequence16, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+      '\u0000endaxis-generated-identity:8',
+      '\u0000endaxis-generated-identity:9',
+      '\u0000endaxis-generated-identity:10',
+      '\u0000endaxis-generated-identity:11',
+      '\u0000endaxis-generated-identity:12',
+      '\u0000endaxis-generated-identity:13',
+      '\u0000endaxis-generated-identity:14',
+      '\u0000endaxis-generated-identity:15',
+      '\u0000endaxis-generated-identity:16',
+      '\u0000endaxis-generated-identity:17',
+      '\u0000endaxis-generated-identity:18',
+      '\u0000endaxis-generated-identity:19',
+      '\u0000endaxis-generated-identity:20',
+      '\u0000endaxis-generated-identity:21',
+      '\u0000endaxis-generated-identity:22',
+      '\u0000endaxis-generated-identity:23',
+    ]),
+    instantiateActionSequence(sharedActionSequence17, [
+      '\u0000endaxis-generated-identity:24',
+      '\u0000endaxis-generated-identity:25',
+      '\u0000endaxis-generated-identity:26',
+      '\u0000endaxis-generated-identity:27',
+      '\u0000endaxis-generated-identity:28',
+      '\u0000endaxis-generated-identity:29',
+      '\u0000endaxis-generated-identity:30',
+      '\u0000endaxis-generated-identity:31',
+      '\u0000endaxis-generated-identity:32',
+      '\u0000endaxis-generated-identity:33',
+      '\u0000endaxis-generated-identity:34',
+      '\u0000endaxis-generated-identity:35',
+      '\u0000endaxis-generated-identity:36',
+      '\u0000endaxis-generated-identity:37',
+      '\u0000endaxis-generated-identity:38',
+      '\u0000endaxis-generated-identity:39',
+      '\u0000endaxis-generated-identity:40',
+      '\u0000endaxis-generated-identity:41',
+      '\u0000endaxis-generated-identity:42',
+      '\u0000endaxis-generated-identity:43',
+      '\u0000endaxis-generated-identity:44',
+      '\u0000endaxis-generated-identity:45',
+      '\u0000endaxis-generated-identity:46',
+      '\u0000endaxis-generated-identity:47',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence4: ActionSequenceDefinition = sequence(
+  step('calculateActionValue', {
+    key: 'EntityBB_floating_attack_times',
+    operation: 'add',
+    left: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
+    right: { kind: 'constant', value: 1 },
+  }),
+  branch(
+    {
+      kind: 'buffIdStackCompare',
+      target: 'caster',
+      buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+      operator: 'greaterOrEqual',
+      value: { kind: 'constant', value: 1 },
+    },
+    instantiateActionSequence(sharedActionSequence5, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+      '\u0000endaxis-generated-identity:4',
+      '\u0000endaxis-generated-identity:5',
+      '\u0000endaxis-generated-identity:6',
+      '\u0000endaxis-generated-identity:7',
+      '\u0000endaxis-generated-identity:8',
+      '\u0000endaxis-generated-identity:9',
+      '\u0000endaxis-generated-identity:10',
+      '\u0000endaxis-generated-identity:11',
+      '\u0000endaxis-generated-identity:12',
+      '\u0000endaxis-generated-identity:13',
+      '\u0000endaxis-generated-identity:14',
+      '\u0000endaxis-generated-identity:15',
+      '\u0000endaxis-generated-identity:16',
+      '\u0000endaxis-generated-identity:17',
+      '\u0000endaxis-generated-identity:18',
+      '\u0000endaxis-generated-identity:19',
+      '\u0000endaxis-generated-identity:20',
+      '\u0000endaxis-generated-identity:21',
+      '\u0000endaxis-generated-identity:22',
+      '\u0000endaxis-generated-identity:23',
+    ]),
+    instantiateActionSequence(sharedActionSequence15, [
+      '\u0000endaxis-generated-identity:24',
+      '\u0000endaxis-generated-identity:25',
+      '\u0000endaxis-generated-identity:26',
+      '\u0000endaxis-generated-identity:27',
+      '\u0000endaxis-generated-identity:28',
+      '\u0000endaxis-generated-identity:29',
+      '\u0000endaxis-generated-identity:30',
+      '\u0000endaxis-generated-identity:31',
+      '\u0000endaxis-generated-identity:32',
+      '\u0000endaxis-generated-identity:33',
+      '\u0000endaxis-generated-identity:34',
+      '\u0000endaxis-generated-identity:35',
+      '\u0000endaxis-generated-identity:36',
+      '\u0000endaxis-generated-identity:37',
+      '\u0000endaxis-generated-identity:38',
+      '\u0000endaxis-generated-identity:39',
+      '\u0000endaxis-generated-identity:40',
+      '\u0000endaxis-generated-identity:41',
+      '\u0000endaxis-generated-identity:42',
+      '\u0000endaxis-generated-identity:43',
+      '\u0000endaxis-generated-identity:44',
+      '\u0000endaxis-generated-identity:45',
+      '\u0000endaxis-generated-identity:46',
+      '\u0000endaxis-generated-identity:47',
+      '\u0000endaxis-generated-identity:48',
+      '\u0000endaxis-generated-identity:49',
+      '\u0000endaxis-generated-identity:50',
+      '\u0000endaxis-generated-identity:51',
+      '\u0000endaxis-generated-identity:52',
+      '\u0000endaxis-generated-identity:53',
+      '\u0000endaxis-generated-identity:54',
+      '\u0000endaxis-generated-identity:55',
+      '\u0000endaxis-generated-identity:56',
+      '\u0000endaxis-generated-identity:57',
+      '\u0000endaxis-generated-identity:58',
+      '\u0000endaxis-generated-identity:59',
+      '\u0000endaxis-generated-identity:60',
+      '\u0000endaxis-generated-identity:61',
+      '\u0000endaxis-generated-identity:62',
+      '\u0000endaxis-generated-identity:63',
+      '\u0000endaxis-generated-identity:64',
+      '\u0000endaxis-generated-identity:65',
+      '\u0000endaxis-generated-identity:66',
+      '\u0000endaxis-generated-identity:67',
+      '\u0000endaxis-generated-identity:68',
+      '\u0000endaxis-generated-identity:69',
+      '\u0000endaxis-generated-identity:70',
+      '\u0000endaxis-generated-identity:71',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+export const typhoeusChr_0034_typhoea_attack1: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_attack1',
+    timelineBlockFrames: 9,
+    naturalDurationFrames: 150,
+    exclusiveFrame: 15,
+    offsetRecordFrame: 7,
+    inputWindows: {
+      commandMappings: [
+        {
+          startFrame: 3,
+          endFrame: 43,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_attack2',
+        },
+      ],
+      allowedNextSkills: [{ startFrame: 9, endFrame: 43, skillIds: ['chr_0034_typhoea_attack2'] }],
+    },
+    costFrame: 13,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('calculateActionValue', {
+            key: 'atk_scale',
+            operation: 'divide',
+            left: { kind: 'blackboard', key: 'atk_scale' },
+            right: { kind: 'constant', value: 2 },
+          }),
+        ),
+        1,
+      ),
+      scheduled(
+        5,
+        sequence(
+          step('modifyActionValue', {
+            key: 'hit_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack1.actionGroupData.timelineActions[6]._sequenceActionData.actionData[1]:projectile_chr_0034_typhoea_archery_attack_01',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack1.actionGroupData.timelineActions[6]._sequenceActionData.actionData[1]:chr_0034_typhoea_attack1_01_projhit',
+                { atb: 0, atk_scale: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack1:/scheduledSequences/1/sequence/steps/1/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        5,
+      ),
+      scheduled(
+        8,
+        sequence(
+          step('modifyActionValue', {
+            key: 'hit_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 2 },
+          }),
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack1.actionGroupData.timelineActions[7]._sequenceActionData.actionData[1]:projectile_chr_0034_typhoea_archery_attack_01',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack1.actionGroupData.timelineActions[7]._sequenceActionData.actionData[1]:chr_0034_typhoea_attack1_01_projhit',
+                { atb: 0, atk_scale: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack1:/scheduledSequences/2/sequence/steps/1/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        8,
+      ),
+      scheduled(
+        9,
+        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_attack2'] })),
+        43,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_attack2',
+    skillType: 'basicAttack',
+    levelSource: 'basicAttack',
+    nativeSkillType: 'attack',
+  },
+  {
+    atb: 0,
+    atk_scale: [0.21, 0.23, 0.25, 0.27, 0.29, 0.31, 0.33, 0.35, 0.37, 0.39, 0.43, 0.46],
+    distance_to_target: 0,
+    hit_index: 0,
+    rootmotion_scale: 1,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_attack2: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_attack2',
+    timelineBlockFrames: 12,
+    naturalDurationFrames: 182,
+    exclusiveFrame: 13,
+    offsetRecordFrame: 8,
+    inputWindows: {
+      commandMappings: [
+        {
+          startFrame: 3,
+          endFrame: 29,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_attack3',
+        },
+      ],
+      allowedNextSkills: [{ startFrame: 12, endFrame: 29, skillIds: ['chr_0034_typhoea_attack3'] }],
+    },
+    costFrame: 11,
+    scheduledSequences: [
+      scheduled(
+        9,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack2.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0034_typhoea_archery_attack_01',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack2.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0034_typhoea_attack1_01_projhit',
+                { atb: 0, atk_scale: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        9,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_passive_increase_attackrange',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            isExtra: true,
+          }),
+        ),
+        41,
+      ),
+      scheduled(
+        12,
+        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_attack3'] })),
+        29,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_attack3',
+    skillType: 'basicAttack',
+    levelSource: 'basicAttack',
+    nativeSkillType: 'attack',
+  },
+  {
+    atb: 0,
+    atk_scale: [0.25, 0.28, 0.3, 0.33, 0.35, 0.38, 0.4, 0.43, 0.45, 0.48, 0.52, 0.56],
+    distance_to_target: 0,
+    rootmotion_scale: 1,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_attack3: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_attack3',
+    timelineBlockFrames: 20,
+    naturalDurationFrames: 185,
+    exclusiveFrame: 28,
+    offsetRecordFrame: 10,
+    inputWindows: {
+      commandMappings: [
+        {
+          startFrame: 8,
+          endFrame: 44,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_attack4',
+        },
+      ],
+      allowedNextSkills: [{ startFrame: 20, endFrame: 44, skillIds: ['chr_0034_typhoea_attack4'] }],
+    },
+    costFrame: 9,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('calculateActionValue', {
+            key: 'atk_scale',
+            operation: 'divide',
+            left: { kind: 'blackboard', key: 'atk_scale' },
+            right: { kind: 'constant', value: 2 },
+          }),
+        ),
+        1,
+      ),
+      scheduled(
+        5,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[3]:projectile_chr_0034_typhoea_archery_attack_03',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[3]:chr_0034_typhoea_attack3_01_projhit',
+                {
+                  atb: 0,
+                  atk_scale: 0,
+                  atk_scale_once: 0,
+                  duration: 0,
+                  hit_index: 0,
+                  hit_times: 0,
+                },
+                true,
+                sequence(
+                  branch(
+                    {
+                      kind: 'buffIdStackCompare',
+                      target: 'enemy',
+                      buffIds: ['buff_chr_0034_typhoea_attack_3_1_damagetaken'],
+                      operator: 'equal',
+                      value: { kind: 'constant', value: 0 },
+                    },
+                    sequence(
+                      step(
+                        'dealDamage',
+                        {
+                          damageType: 'nature',
+                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                          tags: ['normalAttack'],
+                        },
+                        'chr_0034_typhoea_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0/whenTrue/steps/0',
+                      ),
+                      step('applyBuff', {
+                        buffId: 'buff_chr_0034_typhoea_attack_3_1_damagetaken',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[4]:projectile_chr_0034_typhoea_archery_attack_03',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[4]:chr_0034_typhoea_attack3_01_projhit',
+                {
+                  atb: 0,
+                  atk_scale: 0,
+                  atk_scale_once: 0,
+                  duration: 0,
+                  hit_index: 0,
+                  hit_times: 0,
+                },
+                true,
+                sequence(
+                  branch(
+                    {
+                      kind: 'buffIdStackCompare',
+                      target: 'enemy',
+                      buffIds: ['buff_chr_0034_typhoea_attack_3_1_damagetaken'],
+                      operator: 'equal',
+                      value: { kind: 'constant', value: 0 },
+                    },
+                    sequence(
+                      step(
+                        'dealDamage',
+                        {
+                          damageType: 'nature',
+                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                          tags: ['normalAttack'],
+                        },
+                        'chr_0034_typhoea_attack3:/scheduledSequences/1/sequence/steps/1/body/steps/0/body/steps/0/whenTrue/steps/0',
+                      ),
+                      step('applyBuff', {
+                        buffId: 'buff_chr_0034_typhoea_attack_3_1_damagetaken',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[5]:projectile_chr_0034_typhoea_archery_attack_03',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[5]:chr_0034_typhoea_attack3_01_projhit',
+                {
+                  atb: 0,
+                  atk_scale: 0,
+                  atk_scale_once: 0,
+                  duration: 0,
+                  hit_index: 0,
+                  hit_times: 0,
+                },
+                true,
+                sequence(
+                  branch(
+                    {
+                      kind: 'buffIdStackCompare',
+                      target: 'enemy',
+                      buffIds: ['buff_chr_0034_typhoea_attack_3_1_damagetaken'],
+                      operator: 'equal',
+                      value: { kind: 'constant', value: 0 },
+                    },
+                    sequence(
+                      step(
+                        'dealDamage',
+                        {
+                          damageType: 'nature',
+                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                          tags: ['normalAttack'],
+                        },
+                        'chr_0034_typhoea_attack3:/scheduledSequences/1/sequence/steps/2/body/steps/0/body/steps/0/whenTrue/steps/0',
+                      ),
+                      step('applyBuff', {
+                        buffId: 'buff_chr_0034_typhoea_attack_3_1_damagetaken',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        8,
+      ),
+      scheduled(
+        14,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[6]._sequenceActionData.actionData[3]:projectile_chr_0034_typhoea_archery_attack_03',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[6]._sequenceActionData.actionData[3]:chr_0034_typhoea_attack3_02_projhit',
+                {
+                  atb: 0,
+                  atk_scale: 0,
+                  atk_scale_once: 0,
+                  duration: 0,
+                  hit_index: 0,
+                  hit_times: 0,
+                },
+                true,
+                sequence(
+                  branch(
+                    {
+                      kind: 'buffIdStackCompare',
+                      target: 'enemy',
+                      buffIds: ['buff_chr_0034_typhoea_attack_3_2_damagetaken'],
+                      operator: 'equal',
+                      value: { kind: 'constant', value: 0 },
+                    },
+                    sequence(
+                      step(
+                        'dealDamage',
+                        {
+                          damageType: 'nature',
+                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                          tags: ['normalAttack'],
+                        },
+                        'chr_0034_typhoea_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0/whenTrue/steps/0',
+                      ),
+                      step('applyBuff', {
+                        buffId: 'buff_chr_0034_typhoea_attack_3_2_damagetaken',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[6]._sequenceActionData.actionData[4]:projectile_chr_0034_typhoea_archery_attack_03',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[6]._sequenceActionData.actionData[4]:chr_0034_typhoea_attack3_02_projhit',
+                {
+                  atb: 0,
+                  atk_scale: 0,
+                  atk_scale_once: 0,
+                  duration: 0,
+                  hit_index: 0,
+                  hit_times: 0,
+                },
+                true,
+                sequence(
+                  branch(
+                    {
+                      kind: 'buffIdStackCompare',
+                      target: 'enemy',
+                      buffIds: ['buff_chr_0034_typhoea_attack_3_2_damagetaken'],
+                      operator: 'equal',
+                      value: { kind: 'constant', value: 0 },
+                    },
+                    sequence(
+                      step(
+                        'dealDamage',
+                        {
+                          damageType: 'nature',
+                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                          tags: ['normalAttack'],
+                        },
+                        'chr_0034_typhoea_attack3:/scheduledSequences/2/sequence/steps/1/body/steps/0/body/steps/0/whenTrue/steps/0',
+                      ),
+                      step('applyBuff', {
+                        buffId: 'buff_chr_0034_typhoea_attack_3_2_damagetaken',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[6]._sequenceActionData.actionData[5]:projectile_chr_0034_typhoea_archery_attack_03',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack3.actionGroupData.timelineActions[6]._sequenceActionData.actionData[5]:chr_0034_typhoea_attack3_02_projhit',
+                {
+                  atb: 0,
+                  atk_scale: 0,
+                  atk_scale_once: 0,
+                  duration: 0,
+                  hit_index: 0,
+                  hit_times: 0,
+                },
+                true,
+                sequence(
+                  branch(
+                    {
+                      kind: 'buffIdStackCompare',
+                      target: 'enemy',
+                      buffIds: ['buff_chr_0034_typhoea_attack_3_2_damagetaken'],
+                      operator: 'equal',
+                      value: { kind: 'constant', value: 0 },
+                    },
+                    sequence(
+                      step(
+                        'dealDamage',
+                        {
+                          damageType: 'nature',
+                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                          tags: ['normalAttack'],
+                        },
+                        'chr_0034_typhoea_attack3:/scheduledSequences/2/sequence/steps/2/body/steps/0/body/steps/0/whenTrue/steps/0',
+                      ),
+                      step('applyBuff', {
+                        buffId: 'buff_chr_0034_typhoea_attack_3_2_damagetaken',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        17,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_passive_increase_attackrange',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            isExtra: true,
+          }),
+        ),
+        41,
+      ),
+      scheduled(
+        20,
+        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_attack4'] })),
+        44,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_attack4',
+    skillType: 'basicAttack',
+    levelSource: 'basicAttack',
+    nativeSkillType: 'attack',
+  },
+  { atb: 0, atk_scale: [0.38, 0.42, 0.46, 0.49, 0.53, 0.57, 0.61, 0.65, 0.68, 0.73, 0.79, 0.86] },
+);
+
+export const typhoeusChr_0034_typhoea_attack4: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_attack4',
+    timelineBlockFrames: 27,
+    naturalDurationFrames: 170,
+    exclusiveFrame: 34,
+    offsetRecordFrame: 21,
+    inputWindows: {
+      commandMappings: [
+        {
+          startFrame: 15,
+          endFrame: 51,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_attack5',
+        },
+      ],
+      allowedNextSkills: [{ startFrame: 27, endFrame: 51, skillIds: ['chr_0034_typhoea_attack5'] }],
+    },
+    costFrame: 9,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('calculateActionValue', {
+            key: 'atk_scale_1',
+            operation: 'multiply',
+            left: { kind: 'blackboard', key: 'atk_scale' },
+            right: { kind: 'constant', value: 0.35 },
+          }),
+          step('calculateActionValue', {
+            key: 'atk_scale_2',
+            operation: 'multiply',
+            left: { kind: 'blackboard', key: 'atk_scale' },
+            right: { kind: 'constant', value: 0.13 },
+          }),
+        ),
+        1,
+      ),
+      scheduled(
+        5,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0034_typhoea_archery_attack_04_02',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0034_typhoea_attack4_01_projhit',
+                { atb: 0, atk_scale: 0, atk_scale_1: 0, atk_scale_2: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_1' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        5,
+      ),
+      scheduled(
+        15,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[3]:projectile_chr_0034_typhoea_archery_attack_04_01',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[3]:chr_0034_typhoea_attack4_02_projhit',
+                { atb: 0, atk_scale: 0, atk_scale_1: 0, atk_scale_2: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack4:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        15,
+      ),
+      scheduled(
+        18,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[3]:projectile_chr_0034_typhoea_archery_attack_04_01',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[3]:chr_0034_typhoea_attack4_02_projhit',
+                { atb: 0, atk_scale: 0, atk_scale_1: 0, atk_scale_2: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack4:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        18,
+      ),
+      scheduled(
+        21,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[7]._sequenceActionData.actionData[3]:projectile_chr_0034_typhoea_archery_attack_04_01',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[7]._sequenceActionData.actionData[3]:chr_0034_typhoea_attack4_02_projhit',
+                { atb: 0, atk_scale: 0, atk_scale_1: 0, atk_scale_2: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack4:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        21,
+      ),
+      scheduled(
+        24,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[8]._sequenceActionData.actionData[3]:projectile_chr_0034_typhoea_archery_attack_04_01',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[8]._sequenceActionData.actionData[3]:chr_0034_typhoea_attack4_02_projhit',
+                { atb: 0, atk_scale: 0, atk_scale_1: 0, atk_scale_2: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack4:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        24,
+      ),
+      scheduled(
+        27,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[9]._sequenceActionData.actionData[3]:projectile_chr_0034_typhoea_archery_attack_04_01',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack4.actionGroupData.timelineActions[9]._sequenceActionData.actionData[3]:chr_0034_typhoea_attack4_02_projhit',
+                { atb: 0, atk_scale: 0, atk_scale_1: 0, atk_scale_2: 0, duration: 0, hit_index: 0 },
+                true,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                      tags: ['normalAttack'],
+                    },
+                    'chr_0034_typhoea_attack4:/scheduledSequences/6/sequence/steps/0/body/steps/0/body/steps/0',
+                  ),
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow',
+                    childSkillId: 'chr_0034_typhoea_attack_deadarrow',
+                    inheritActionBlackboard: true,
+                    inheritSourceSkillCastInfo: false,
+                    dieWhenSourceDies: false,
+                    target: 'enemy',
+                    overrideDurationSeconds: { kind: 'constant', value: 3 },
+                  }),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        27,
+      ),
+      scheduled(
+        14,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_attack_4_addtionalbattleshape_onenemy',
+            target: 'enemy',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        28,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_passive_increase_attackrange',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            isExtra: true,
+          }),
+        ),
+        41,
+      ),
+      scheduled(
+        27,
+        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_attack5'] })),
+        51,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_attack5',
+    skillType: 'basicAttack',
+    levelSource: 'basicAttack',
+    nativeSkillType: 'attack',
+  },
+  {
+    atb: 0,
+    atk_scale: [0.42, 0.46, 0.5, 0.55, 0.59, 0.63, 0.67, 0.71, 0.76, 0.81, 0.87, 0.95],
+    atk_scale_1: 0,
+    atk_scale_2: 0,
+    proj_degree: 0,
+    proj_degree_high: 0,
+    proj_degree_low: 0,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_attack5: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_attack5',
+    timelineBlockFrames: 45,
+    naturalDurationFrames: 150,
+    exclusiveFrame: 44,
+    offsetRecordFrame: 22,
+    inputWindows: {
+      commandMappings: [
+        {
+          startFrame: 19,
+          endFrame: 62,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_attack1',
+        },
+      ],
+      allowedNextSkills: [{ startFrame: 46, endFrame: 62, skillIds: ['chr_0034_typhoea_attack1'] }],
+    },
+    costFrame: 23,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_heavyattack_atb_recover',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        22,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_attack5.actionGroupData.timelineActions[6]._sequenceActionData.actionData[1]:projectile_chr_0034_typhoea_archery_attack_05',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_attack5.actionGroupData.timelineActions[6]._sequenceActionData.actionData[1]:chr_0034_typhoea_attack5_01_projhit',
+                { atb: 12, atk_scale: 0.5, duration: 0, poise: 15 },
+                true,
+                sequence(
+                  branch(
+                    {
+                      kind: 'buffIdStackCompare',
+                      target: 'enemy',
+                      buffIds: ['buff_chr_0034_typhoea_attack_5_damagetaken'],
+                      operator: 'equal',
+                      value: { kind: 'constant', value: 0 },
+                    },
+                    sequence(
+                      branch(
+                        {
+                          kind: 'all',
+                          conditions: [
+                            { kind: 'casterControlled' },
+                            {
+                              kind: 'actionValueCompare',
+                              left: {
+                                kind: 'blackboard',
+                                key: 'EntityBB_heavyattack_atb_recover',
+                                fallback: 0,
+                              },
+                              operator: 'equal',
+                              right: { kind: 'constant', value: 0 },
+                            },
+                          ],
+                        },
+                        sequence(
+                          step('changeResourceByActionValue', {
+                            resource: 'sp',
+                            amount: { kind: 'blackboard', key: 'atb' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            recipient: 'team',
+                            spGainKind: 'gain',
+                            spGainSource: 'normalAttack',
+                          }),
+                          step('modifyActionValue', {
+                            key: 'EntityBB_heavyattack_atb_recover',
+                            operation: 'assign',
+                            value: { kind: 'constant', value: 1 },
+                          }),
+                        ),
+                        undefined,
+                        { alwaysNext: true },
+                      ),
+                      step(
+                        'dealDamage',
+                        {
+                          damageType: 'nature',
+                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                          tags: ['normalAttack', 'normalAttackLastCombo'],
+                          stagger: { kind: 'blackboard', key: 'poise' },
+                          staggerOnlyWhenCasterControlled: true,
+                        },
+                        'chr_0034_typhoea_attack5:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0/whenTrue/steps/1',
+                      ),
+                      step('applyBuff', {
+                        buffId: 'buff_chr_0034_typhoea_attack_5_damagetaken',
+                        target: 'enemy',
+                        count: { kind: 'constant', value: 0.3 },
+                        inheritSourceSkillCastInfo: true,
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        28,
+      ),
+      scheduled(
+        46,
+        sequence(step('reachSkillOperableBoundary', { skillIds: ['chr_0034_typhoea_attack1'] })),
+        62,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_attack1',
+    skillType: 'basicAttack',
+    levelSource: 'basicAttack',
+    nativeSkillType: 'attack',
+  },
+  {
+    atb: 21,
+    atk_scale: [0.56, 0.61, 0.67, 0.72, 0.78, 0.83, 0.89, 0.94, 1, 1.07, 1.15, 1.25],
+    poise: 17,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_floating_attack1: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_floating_attack1',
+    timelineBlockFrames: 18,
+    naturalDurationFrames: 160,
+    exclusiveFrame: 999,
+    offsetRecordFrame: 7,
+    inputWindows: {
+      hasConditionalActions: true,
+      allowedNextSkills: [
+        { startFrame: 18, endFrame: 25, skillIds: ['chr_0034_typhoea_floating_attack2'] },
+        { startFrame: 63, endFrame: 70, skillIds: ['chr_0034_typhoea_floating_attack2'] },
+        { startFrame: 93, endFrame: 100, skillIds: ['chr_0034_typhoea_floating_attack2'] },
+        { startFrame: 123, endFrame: 130, skillIds: ['chr_0034_typhoea_floating_attack2'] },
+        { startFrame: 153, endFrame: 160, skillIds: ['chr_0034_typhoea_floating_attack2'] },
+      ],
+    },
+    costFrame: 13,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('inheritBuffById', {
+            target: 'caster',
+            buffId: 'buff_chr_0034_typhoea_floatingmode',
+            inheritToNextSkillIds: [
+              'chr_0034_typhoea_normal_skill_floating_loop',
+              'chr_0034_typhoea_normal_skill_floating_end',
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_floating_attack2',
+              'chr_0034_typhoea_floating_attack3',
+              'chr_0034_typhoea_floating_attack4',
+              'chr_0034_typhoea_floating_attack5',
+              'chr_0034_typhoea_combo_skillfloating',
+              'chr_0034_typhoea_ultimate_skillfloating',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          }),
+        ),
+        160,
+      ),
+      scheduled(
+        0,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('modifyActionValue', {
+                key: 'have_move_input',
+                operation: 'assign',
+                value: { kind: 'constant', value: 2 },
+              }),
+              step('jumpTimeline', { destinationFrame: 75 }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        3,
+      ),
+      scheduled(22, sharedActionSequence1, 25),
+      scheduled(25, sequence(step('finishTimeline', {})), 28),
+      scheduled(67, sharedActionSequence1, 70),
+      scheduled(70, sequence(step('finishTimeline', {})), 73),
+      scheduled(97, sharedActionSequence1, 100),
+      scheduled(100, sequence(step('finishTimeline', {})), 103),
+      scheduled(127, sharedActionSequence1, 130),
+      scheduled(130, sequence(step('finishTimeline', {})), 133),
+      scheduled(157, sharedActionSequence1, 160),
+      scheduled(0, sharedActionSequence2, 1),
+      scheduled(45, sharedActionSequence2, 46),
+      scheduled(75, sharedActionSequence2, 76),
+      scheduled(105, sharedActionSequence2, 106),
+      scheduled(135, sharedActionSequence2, 136),
+      scheduled(
+        1,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        1,
+      ),
+      scheduled(
+        46,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/17/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        46,
+      ),
+      scheduled(
+        76,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        76,
+      ),
+      scheduled(
+        106,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[36]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/19/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        106,
+      ),
+      scheduled(
+        136,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack1.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack1:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        136,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        6,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        51,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        81,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        111,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        141,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        25,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        70,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        100,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        130,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        160,
+      ),
+      scheduled(
+        4,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        25,
+      ),
+      scheduled(
+        49,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        70,
+      ),
+      scheduled(
+        79,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        100,
+      ),
+      scheduled(
+        109,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        130,
+      ),
+      scheduled(
+        139,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        160,
+      ),
+      scheduled(18, sharedActionSequence18, 25),
+      scheduled(63, sharedActionSequence18, 70),
+      scheduled(93, sharedActionSequence18, 100),
+      scheduled(123, sharedActionSequence18, 130),
+      scheduled(153, sharedActionSequence18, 160),
+      scheduled(
+        0,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        14,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        17,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        48,
+      ),
+      scheduled(
+        59,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        62,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        78,
+      ),
+      scheduled(
+        89,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        92,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        108,
+      ),
+      scheduled(
+        119,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        122,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        138,
+      ),
+      scheduled(
+        149,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        152,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_floating_attack2',
+    skillType: 'basicAttack',
+    levelSource: 'battleSkill',
+    nativeSkillType: 'attack',
+  },
+  {
+    arrow_num: 0,
+    atb: 0,
+    atk_scale_base: [0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.46, 0.49, 0.52, 0.55, 0.6, 0.65],
+    atk_scale_enhence: 1.6,
+    camera_rotate_angle: 60,
+    damage_enhence: 0,
+    enchence_burst_damage_rate: [1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2, 1.2, 1.2, 1.25, 1.25, 1.3],
+    enemy_forward_num: 0,
+    enemy_turn_distance: 0,
+    enhence_arrow: 0,
+    have_move_input: 0,
+    hit_index: 0,
+    move_input_angle: 0,
+    potential_damage_rate: 1,
+    usp_recover: 12,
+    poise: 0,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_floating_attack2: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_floating_attack2',
+    timelineBlockFrames: 18,
+    naturalDurationFrames: 160,
+    exclusiveFrame: 999,
+    offsetRecordFrame: 7,
+    inputWindows: {
+      hasConditionalActions: true,
+      allowedNextSkills: [
+        { startFrame: 18, endFrame: 25, skillIds: ['chr_0034_typhoea_floating_attack3'] },
+        { startFrame: 63, endFrame: 70, skillIds: ['chr_0034_typhoea_floating_attack3'] },
+        { startFrame: 93, endFrame: 100, skillIds: ['chr_0034_typhoea_floating_attack3'] },
+        { startFrame: 123, endFrame: 130, skillIds: ['chr_0034_typhoea_floating_attack3'] },
+        { startFrame: 153, endFrame: 160, skillIds: ['chr_0034_typhoea_floating_attack3'] },
+      ],
+    },
+    costFrame: 13,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('inheritBuffById', {
+            target: 'caster',
+            buffId: 'buff_chr_0034_typhoea_floatingmode',
+            inheritToNextSkillIds: [
+              'chr_0034_typhoea_normal_skill_floating_loop',
+              'chr_0034_typhoea_normal_skill_floating_end',
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_floating_attack2',
+              'chr_0034_typhoea_floating_attack3',
+              'chr_0034_typhoea_floating_attack4',
+              'chr_0034_typhoea_floating_attack5',
+              'chr_0034_typhoea_combo_skillfloating',
+              'chr_0034_typhoea_ultimate_skillfloating',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          }),
+        ),
+        160,
+      ),
+      scheduled(
+        0,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('modifyActionValue', {
+                key: 'have_move_input',
+                operation: 'assign',
+                value: { kind: 'constant', value: 2 },
+              }),
+              step('jumpTimeline', { destinationFrame: 75 }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        3,
+      ),
+      scheduled(22, sharedActionSequence19, 25),
+      scheduled(25, sequence(step('finishTimeline', {})), 28),
+      scheduled(67, sharedActionSequence19, 70),
+      scheduled(70, sequence(step('finishTimeline', {})), 73),
+      scheduled(97, sharedActionSequence19, 100),
+      scheduled(100, sequence(step('finishTimeline', {})), 103),
+      scheduled(127, sharedActionSequence19, 130),
+      scheduled(130, sequence(step('finishTimeline', {})), 133),
+      scheduled(157, sharedActionSequence19, 160),
+      scheduled(0, sharedActionSequence20, 1),
+      scheduled(
+        1,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        1,
+      ),
+      scheduled(45, sharedActionSequence20, 46),
+      scheduled(
+        46,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        46,
+      ),
+      scheduled(75, sharedActionSequence20, 76),
+      scheduled(
+        76,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        76,
+      ),
+      scheduled(105, sharedActionSequence20, 106),
+      scheduled(
+        106,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        106,
+      ),
+      scheduled(135, sharedActionSequence20, 136),
+      scheduled(
+        136,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack2.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack2:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        136,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 2 },
+          }),
+        ),
+        6,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 2 },
+          }),
+        ),
+        51,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 2 },
+          }),
+        ),
+        81,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 2 },
+          }),
+        ),
+        111,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 2 },
+          }),
+        ),
+        141,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        25,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        70,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        100,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        130,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        160,
+      ),
+      scheduled(
+        4,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        25,
+      ),
+      scheduled(
+        49,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        70,
+      ),
+      scheduled(
+        79,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        100,
+      ),
+      scheduled(
+        109,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        130,
+      ),
+      scheduled(
+        139,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+              operator: 'greaterOrEqual',
+              value: { kind: 'constant', value: 1 },
+            },
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: {
+                  kind: 'id',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                },
+              }),
+            ),
+            sequence(
+              step('readBuffStackCount', {
+                target: 'caster',
+                outputKey: 'arrow_num',
+                query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        160,
+      ),
+      scheduled(18, sharedActionSequence22, 25),
+      scheduled(63, sharedActionSequence22, 70),
+      scheduled(93, sharedActionSequence22, 100),
+      scheduled(123, sharedActionSequence22, 130),
+      scheduled(153, sharedActionSequence22, 160),
+      scheduled(
+        0,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        14,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        17,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        48,
+      ),
+      scheduled(
+        59,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        62,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        78,
+      ),
+      scheduled(
+        89,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        92,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        108,
+      ),
+      scheduled(
+        119,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        122,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        138,
+      ),
+      scheduled(
+        149,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        152,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_floating_attack3',
+    skillType: 'basicAttack',
+    levelSource: 'battleSkill',
+    nativeSkillType: 'attack',
+  },
+  {
+    arrow_num: 0,
+    atb: 0,
+    atk_scale_base: [0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.46, 0.49, 0.52, 0.55, 0.6, 0.65],
+    atk_scale_enhence: 1.6,
+    camera_rotate_angle: 60,
+    enchence_burst_damage_rate: [1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2, 1.2, 1.2, 1.25, 1.25, 1.3],
+    enemy_forward_num: 0,
+    enemy_turn_distance: 0,
+    enhence_arrow: 0,
+    have_move_input: 0,
+    hit_index: 0,
+    move_input_angle: 0,
+    potential_damage_rate: 1,
+    usp_recover: 12,
+    poise: 0,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_floating_attack3: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_floating_attack3',
+    timelineBlockFrames: 18,
+    naturalDurationFrames: 160,
+    exclusiveFrame: 999,
+    offsetRecordFrame: 7,
+    inputWindows: {
+      hasConditionalActions: true,
+      allowedNextSkills: [
+        { startFrame: 18, endFrame: 26, skillIds: ['chr_0034_typhoea_floating_attack4'] },
+        { startFrame: 63, endFrame: 70, skillIds: ['chr_0034_typhoea_floating_attack4'] },
+        { startFrame: 93, endFrame: 100, skillIds: ['chr_0034_typhoea_floating_attack4'] },
+        { startFrame: 123, endFrame: 130, skillIds: ['chr_0034_typhoea_floating_attack4'] },
+        { startFrame: 153, endFrame: 160, skillIds: ['chr_0034_typhoea_floating_attack4'] },
+      ],
+    },
+    costFrame: 13,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('inheritBuffById', {
+            target: 'caster',
+            buffId: 'buff_chr_0034_typhoea_floatingmode',
+            inheritToNextSkillIds: [
+              'chr_0034_typhoea_normal_skill_floating_loop',
+              'chr_0034_typhoea_normal_skill_floating_end',
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_floating_attack2',
+              'chr_0034_typhoea_floating_attack3',
+              'chr_0034_typhoea_floating_attack4',
+              'chr_0034_typhoea_floating_attack5',
+              'chr_0034_typhoea_combo_skillfloating',
+              'chr_0034_typhoea_ultimate_skillfloating',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          }),
+        ),
+        160,
+      ),
+      scheduled(
+        0,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('modifyActionValue', {
+                key: 'have_move_input',
+                operation: 'assign',
+                value: { kind: 'constant', value: 2 },
+              }),
+              step('jumpTimeline', { destinationFrame: 75 }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        3,
+      ),
+      scheduled(23, sharedActionSequence25, 26),
+      scheduled(26, sequence(step('finishTimeline', {})), 29),
+      scheduled(67, sharedActionSequence25, 70),
+      scheduled(70, sequence(step('finishTimeline', {})), 73),
+      scheduled(97, sharedActionSequence25, 100),
+      scheduled(100, sequence(step('finishTimeline', {})), 103),
+      scheduled(127, sharedActionSequence25, 130),
+      scheduled(130, sequence(step('finishTimeline', {})), 133),
+      scheduled(157, sharedActionSequence25, 160),
+      scheduled(0, sharedActionSequence20, 1),
+      scheduled(
+        1,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        1,
+      ),
+      scheduled(45, sharedActionSequence20, 46),
+      scheduled(
+        46,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[31]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        46,
+      ),
+      scheduled(75, sharedActionSequence20, 76),
+      scheduled(
+        76,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[33]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        76,
+      ),
+      scheduled(105, sharedActionSequence20, 106),
+      scheduled(
+        106,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[35]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/18/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        106,
+      ),
+      scheduled(135, sharedActionSequence20, 136),
+      scheduled(
+        136,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack3.actionGroupData.timelineActions[37]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack3:/scheduledSequences/20/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        136,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 3 },
+          }),
+        ),
+        6,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 3 },
+          }),
+        ),
+        51,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 3 },
+          }),
+        ),
+        81,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 3 },
+          }),
+        ),
+        111,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 3 },
+          }),
+        ),
+        141,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        26,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        70,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        100,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        130,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        160,
+      ),
+      scheduled(
+        4,
+        sequence(
+          step('readBuffStackCount', {
+            target: 'caster',
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          }),
+        ),
+        26,
+      ),
+      scheduled(
+        49,
+        sequence(
+          step('readBuffStackCount', {
+            target: 'caster',
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          }),
+        ),
+        70,
+      ),
+      scheduled(
+        79,
+        sequence(
+          step('readBuffStackCount', {
+            target: 'caster',
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          }),
+        ),
+        100,
+      ),
+      scheduled(
+        109,
+        sequence(
+          step('readBuffStackCount', {
+            target: 'caster',
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          }),
+        ),
+        130,
+      ),
+      scheduled(
+        139,
+        sequence(
+          step('readBuffStackCount', {
+            target: 'caster',
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          }),
+        ),
+        160,
+      ),
+      scheduled(
+        18,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        26,
+      ),
+      scheduled(
+        63,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        70,
+      ),
+      scheduled(
+        93,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        100,
+      ),
+      scheduled(
+        123,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        130,
+      ),
+      scheduled(
+        153,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack4'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        160,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        15,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        18,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        48,
+      ),
+      scheduled(
+        60,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        63,
+      ),
+      scheduled(
+        75,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        78,
+      ),
+      scheduled(
+        90,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        93,
+      ),
+      scheduled(
+        105,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        108,
+      ),
+      scheduled(
+        120,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        123,
+      ),
+      scheduled(
+        135,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        138,
+      ),
+      scheduled(
+        150,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        153,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_floating_attack4',
+    skillType: 'basicAttack',
+    levelSource: 'battleSkill',
+    nativeSkillType: 'attack',
+  },
+  {
+    arrow_num: 0,
+    atb: 0,
+    atk_scale_base: [0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.46, 0.49, 0.52, 0.55, 0.6, 0.65],
+    atk_scale_enhence: 1.6,
+    camera_rotate_angle: 60,
+    enchence_burst_damage_rate: [1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2, 1.2, 1.2, 1.25, 1.25, 1.3],
+    enemy_forward_num: 0,
+    enemy_turn_distance: 0,
+    enhence_arrow: 0,
+    have_move_input: 0,
+    hit_index: 0,
+    move_input_angle: 0,
+    potential_damage_rate: 1,
+    usp_recover: 12,
+    poise: 0,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_floating_attack4: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_floating_attack4',
+    timelineBlockFrames: 28,
+    naturalDurationFrames: 740,
+    exclusiveFrame: 999,
+    offsetRecordFrame: 7,
+    inputWindows: {
+      commandMappings: [
+        {
+          startFrame: 8,
+          endFrame: 42,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_floating_attack5',
+        },
+        {
+          startFrame: 150,
+          endFrame: 197,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_floating_attack5',
+        },
+        {
+          startFrame: 300,
+          endFrame: 347,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_floating_attack5',
+        },
+        {
+          startFrame: 450,
+          endFrame: 497,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_floating_attack5',
+        },
+        {
+          startFrame: 603,
+          endFrame: 650,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_floating_attack5',
+        },
+      ],
+      hasConditionalActions: true,
+      allowedNextSkills: [
+        { startFrame: 28, endFrame: 42, skillIds: ['chr_0034_typhoea_floating_attack5'] },
+        { startFrame: 178, endFrame: 193, skillIds: ['chr_0034_typhoea_floating_attack5'] },
+        { startFrame: 328, endFrame: 342, skillIds: ['chr_0034_typhoea_floating_attack5'] },
+        { startFrame: 478, endFrame: 492, skillIds: ['chr_0034_typhoea_floating_attack5'] },
+        { startFrame: 628, endFrame: 642, skillIds: ['chr_0034_typhoea_floating_attack5'] },
+      ],
+    },
+    costFrame: 13,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('inheritBuffById', {
+            target: 'caster',
+            buffId: 'buff_chr_0034_typhoea_floatingmode',
+            inheritToNextSkillIds: [
+              'chr_0034_typhoea_normal_skill_floating_loop',
+              'chr_0034_typhoea_normal_skill_floating_end',
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_floating_attack2',
+              'chr_0034_typhoea_floating_attack3',
+              'chr_0034_typhoea_floating_attack4',
+              'chr_0034_typhoea_floating_attack5',
+              'chr_0034_typhoea_combo_skillfloating',
+              'chr_0034_typhoea_ultimate_skillfloating',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          }),
+        ),
+        739,
+      ),
+      scheduled(
+        0,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('modifyActionValue', {
+                key: 'have_move_input',
+                operation: 'assign',
+                value: { kind: 'constant', value: 2 },
+              }),
+              step('jumpTimeline', { destinationFrame: 300 }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        3,
+      ),
+      scheduled(
+        0,
+        sequence(
+          forEachTarget(
+            'enemy',
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_normal_skill_aimmedenemy_all',
+                target: 'enemy',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        3,
+      ),
+      scheduled(
+        150,
+        sequence(
+          forEachTarget(
+            'enemy',
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_normal_skill_aimmedenemy_all',
+                target: 'enemy',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        153,
+      ),
+      scheduled(
+        300,
+        sequence(
+          forEachTarget(
+            'enemy',
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_normal_skill_aimmedenemy_all',
+                target: 'enemy',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        303,
+      ),
+      scheduled(
+        450,
+        sequence(
+          forEachTarget(
+            'enemy',
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_normal_skill_aimmedenemy_all',
+                target: 'enemy',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        453,
+      ),
+      scheduled(
+        600,
+        sequence(
+          forEachTarget(
+            'enemy',
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_normal_skill_aimmedenemy_all',
+                target: 'enemy',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        603,
+      ),
+      scheduled(0, sharedActionSequence20, 1),
+      scheduled(
+        1,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/8/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        1,
+      ),
+      scheduled(150, sharedActionSequence20, 151),
+      scheduled(
+        151,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/10/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        151,
+      ),
+      scheduled(300, sharedActionSequence20, 301),
+      scheduled(
+        301,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/12/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        301,
+      ),
+      scheduled(450, sharedActionSequence20, 451),
+      scheduled(
+        451,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/14/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        451,
+      ),
+      scheduled(600, sharedActionSequence20, 601),
+      scheduled(
+        601,
+        instantiateActionSequence(sharedActionSequence4, [
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].succeedActions.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenTrue/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+          'SkillData.chr_0034_typhoea_floating_attack4.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0].failActions.actionData[1].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+          'chr_0034_typhoea_floating_attack4:/scheduledSequences/16/sequence/steps/1/whenFalse/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+        ]),
+        601,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 4 },
+          }),
+        ),
+        6,
+      ),
+      scheduled(
+        150,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 4 },
+          }),
+        ),
+        156,
+      ),
+      scheduled(
+        300,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 4 },
+          }),
+        ),
+        306,
+      ),
+      scheduled(
+        450,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 4 },
+          }),
+        ),
+        456,
+      ),
+      scheduled(
+        600,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 4 },
+          }),
+        ),
+        606,
+      ),
+      scheduled(
+        35,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        38,
+      ),
+      scheduled(
+        45,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              step('finishBuffsById', {
+                target: 'caster',
+                buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+                reason: 'other',
+              }),
+              step('modifyActionValue', {
+                key: 'EntityBB_floating_attack_index',
+                operation: 'assign',
+                value: { kind: 'constant', value: 0 },
+              }),
+            ),
+            undefined,
+            { alwaysNext: true },
+          ),
+        ),
+        81,
+      ),
+      scheduled(
+        185,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        188,
+      ),
+      scheduled(
+        195,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              step('finishBuffsById', {
+                target: 'caster',
+                buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+                reason: 'other',
+              }),
+              step('modifyActionValue', {
+                key: 'EntityBB_floating_attack_index',
+                operation: 'assign',
+                value: { kind: 'constant', value: 0 },
+              }),
+            ),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        229,
+      ),
+      scheduled(
+        335,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        338,
+      ),
+      scheduled(
+        345,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              step('finishBuffsById', {
+                target: 'caster',
+                buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+                reason: 'other',
+              }),
+              step('modifyActionValue', {
+                key: 'EntityBB_floating_attack_index',
+                operation: 'assign',
+                value: { kind: 'constant', value: 0 },
+              }),
+            ),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        379,
+      ),
+      scheduled(
+        485,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        488,
+      ),
+      scheduled(
+        495,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              step('finishBuffsById', {
+                target: 'caster',
+                buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+                reason: 'other',
+              }),
+              step('modifyActionValue', {
+                key: 'EntityBB_floating_attack_index',
+                operation: 'assign',
+                value: { kind: 'constant', value: 0 },
+              }),
+            ),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        590,
+      ),
+      scheduled(
+        635,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        638,
+      ),
+      scheduled(
+        645,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              step('finishBuffsById', {
+                target: 'caster',
+                buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+                reason: 'other',
+              }),
+              step('modifyActionValue', {
+                key: 'EntityBB_floating_attack_index',
+                operation: 'assign',
+                value: { kind: 'constant', value: 0 },
+              }),
+            ),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack5',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: true,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        679,
+      ),
+      scheduled(139, sequence(step('finishTimeline', {})), 140),
+      scheduled(289, sequence(step('finishTimeline', {})), 290),
+      scheduled(439, sequence(step('finishTimeline', {})), 440),
+      scheduled(589, sequence(step('finishTimeline', {})), 590),
+      scheduled(739, sequence(step('finishTimeline', {})), 740),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        45,
+      ),
+      scheduled(
+        150,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        197,
+      ),
+      scheduled(
+        300,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        347,
+      ),
+      scheduled(
+        450,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        497,
+      ),
+      scheduled(
+        600,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        647,
+      ),
+      scheduled(
+        0,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              forEachContextTarget(
+                'tar1',
+                sequence(
+                  branch(
+                    { kind: 'enemyRankIn', ranks: ['boss'] },
+                    sequence(
+                      step('calculateActionValue', {
+                        key: 'contain_boss',
+                        operation: 'add',
+                        left: { kind: 'blackboard', key: 'contain_boss' },
+                        right: { kind: 'constant', value: 1 },
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        3,
+      ),
+      scheduled(
+        150,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              forEachContextTarget(
+                'tar1',
+                sequence(
+                  branch(
+                    { kind: 'enemyRankIn', ranks: ['boss'] },
+                    sequence(
+                      step('calculateActionValue', {
+                        key: 'contain_boss',
+                        operation: 'add',
+                        left: { kind: 'blackboard', key: 'contain_boss' },
+                        right: { kind: 'constant', value: 1 },
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        153,
+      ),
+      scheduled(
+        300,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              forEachContextTarget(
+                'tar1',
+                sequence(
+                  branch(
+                    { kind: 'enemyRankIn', ranks: ['boss'] },
+                    sequence(
+                      step('calculateActionValue', {
+                        key: 'contain_boss',
+                        operation: 'add',
+                        left: { kind: 'blackboard', key: 'contain_boss' },
+                        right: { kind: 'constant', value: 1 },
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        303,
+      ),
+      scheduled(
+        450,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              forEachContextTarget(
+                'tar1',
+                sequence(
+                  branch(
+                    { kind: 'enemyRankIn', ranks: ['boss'] },
+                    sequence(
+                      step('calculateActionValue', {
+                        key: 'contain_boss',
+                        operation: 'add',
+                        left: { kind: 'blackboard', key: 'contain_boss' },
+                        right: { kind: 'constant', value: 1 },
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        453,
+      ),
+      scheduled(
+        600,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              forEachContextTarget(
+                'tar1',
+                sequence(
+                  branch(
+                    { kind: 'enemyRankIn', ranks: ['boss'] },
+                    sequence(
+                      step('calculateActionValue', {
+                        key: 'contain_boss',
+                        operation: 'add',
+                        left: { kind: 'blackboard', key: 'contain_boss' },
+                        right: { kind: 'constant', value: 1 },
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        603,
+      ),
+      scheduled(
+        28,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        42,
+      ),
+      scheduled(
+        178,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        193,
+      ),
+      scheduled(
+        328,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        342,
+      ),
+      scheduled(
+        478,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        492,
+      ),
+      scheduled(
+        628,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            sequence(
+              step('reachSkillOperableBoundary', {
+                skillIds: ['chr_0034_typhoea_floating_attack5'],
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        642,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        7,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        10,
+      ),
+      scheduled(
+        45,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        48,
+      ),
+      scheduled(
+        151,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        154,
+      ),
+      scheduled(
+        158,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        161,
+      ),
+      scheduled(
+        195,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        198,
+      ),
+      scheduled(
+        300,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        303,
+      ),
+      scheduled(
+        307,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        310,
+      ),
+      scheduled(
+        346,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        349,
+      ),
+      scheduled(
+        450,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        453,
+      ),
+      scheduled(
+        457,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        460,
+      ),
+      scheduled(
+        495,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        498,
+      ),
+      scheduled(
+        600,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        603,
+      ),
+      scheduled(
+        607,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        610,
+      ),
+      scheduled(
+        645,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        648,
+      ),
+    ],
+    timelineContinuationSkillId: 'chr_0034_typhoea_floating_attack5',
+    skillType: 'basicAttack',
+    levelSource: 'battleSkill',
+    nativeSkillType: 'attack',
+  },
+  {
+    atb: 0,
+    atk_scale_base: [0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.46, 0.49, 0.52, 0.55, 0.6, 0.65],
+    atk_scale_enhence: 1.6,
+    camera_rotate_angle: 60,
+    contain_boss: 0,
+    enchence_burst_damage_rate: [1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2, 1.2, 1.2, 1.25, 1.25, 1.3],
+    enemy_forward_num: 0,
+    enemy_turn_distance: 0,
+    enhence_arrow: 0,
+    have_move_input: 0,
+    hit_index: 0,
+    is_enemy_rightside: 0,
+    move_input_angle: 0,
+    potential_damage_rate: 1,
+    turn_angle_ratio: 0,
+    usp_recover: 12,
+    poise: 0,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_floating_attack5: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_floating_attack5',
+    timelineBlockFrames: 36,
+    naturalDurationFrames: 250,
+    exclusiveFrame: 35,
+    offsetRecordFrame: 7,
+    costFrame: 13,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('inheritBuffById', {
+            target: 'caster',
+            buffId: 'buff_chr_0034_typhoea_floatingmode',
+            inheritToNextSkillIds: [
+              'chr_0034_typhoea_normal_skill_floating_loop',
+              'chr_0034_typhoea_normal_skill_floating_end',
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_floating_attack2',
+              'chr_0034_typhoea_floating_attack3',
+              'chr_0034_typhoea_floating_attack4',
+              'chr_0034_typhoea_floating_attack5',
+              'chr_0034_typhoea_combo_skillfloating',
+              'chr_0034_typhoea_ultimate_skillfloating',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          }),
+        ),
+        250,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_heavyattack_atb_recover',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+          step('calculateActionValue', {
+            key: 'EntityBB_floating_attack_times',
+            operation: 'add',
+            left: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
+            right: { kind: 'constant', value: 1 },
+          }),
+          step('calculateActionValue', {
+            key: 'atb_end',
+            operation: 'multiply',
+            left: { kind: 'blackboard', key: 'atb' },
+            right: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
+          }),
+          step('calculateActionValue', {
+            key: 'poise_end',
+            operation: 'multiply',
+            left: { kind: 'blackboard', key: 'poise' },
+            right: { kind: 'blackboard', key: 'EntityBB_floating_attack_times' },
+          }),
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_times',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            instantiateActionSequence(sharedActionSequence26, [
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_05_enhence',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack5_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenTrue/steps/2/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenTrue/steps/2/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_05',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack5_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenTrue/steps/2/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenTrue/steps/2/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_05_enhence',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack5_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_05',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack5_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].failActions.actionData[2].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].failActions.actionData[2].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenFalse/steps/1/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenFalse/steps/1/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].failActions.actionData[2].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].succeedActions.actionData[1].failActions.actionData[2].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenFalse/steps/1/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenTrue/steps/0/whenFalse/steps/1/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+            ]),
+            instantiateActionSequence(sharedActionSequence26, [
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_05_enhence',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack5_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_05',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].succeedActions.actionData[3].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack5_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenTrue/steps/2/whenTrue/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_05_enhence',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack5_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_05',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].succeedActions.actionData[3].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack5_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenTrue/steps/2/whenFalse/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/5/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].failActions.actionData[2].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01_enhence',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].failActions.actionData[2].succeedActions.actionData[0].action.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenFalse/steps/1/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenFalse/steps/1/body/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].failActions.actionData[2].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_01',
+              'SkillData.chr_0034_typhoea_floating_attack5.actionGroupData.timelineActions[3]._sequenceActionData.actionData[6].failActions.actionData[1].failActions.actionData[2].succeedActions.actionData[0].action.actionData[0].failActions.actionData[0]:chr_0034_typhoea_floating_attack1_01_projhit',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenFalse/steps/1/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenTrue/steps/0',
+              'chr_0034_typhoea_floating_attack5:/scheduledSequences/1/sequence/steps/5/whenFalse/steps/0/whenFalse/steps/1/body/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/4/whenFalse/steps/0',
+            ]),
+            { alwaysNext: true },
+          ),
+        ),
+        0,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 5 },
+          }),
+        ),
+        6,
+      ),
+      scheduled(
+        15,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+            reason: 'other',
+          }),
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+        ),
+        18,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        23,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_can_use_floating_skill',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_heavyattack_atb_recover',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        0,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        0,
+      ),
+      scheduled(
+        1,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        2,
+      ),
+    ],
+    skillType: 'basicAttack',
+    levelSource: 'battleSkill',
+    nativeSkillType: 'attack',
+  },
+  {
+    atb: 23,
+    atb_end: 0,
+    atk_scale_base: [0.44, 0.49, 0.53, 0.58, 0.62, 0.66, 0.71, 0.75, 0.8, 0.85, 0.92, 1],
+    atk_scale_enhence: 1.6,
+    camera_rotate_angle: 30,
+    degree_1: 0,
+    degree_2: 0,
+    enchence_burst_damage_rate: [1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2, 1.2, 1.2, 1.25, 1.25, 1.3],
+    enhence_arrow: 0,
+    have_move_input: 0,
+    hit_index: 0,
+    move_input_angle: 0,
+    poise: 20,
+    poise_end: 0,
+    potential_damage_rate: 1,
+    trigger_arrow_recover: 0,
+    usp_recover: 12,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_power_attack: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_power_attack',
+    timelineBlockFrames: 40,
+    naturalDurationFrames: 180,
+    exclusiveFrame: 72,
+    offsetRecordFrame: 0,
+    inputWindows: {
+      allowedNextSkills: [
+        {
+          startFrame: 40,
+          endFrame: 99,
+          skillIds: [
+            'chr_0034_typhoea_normal_skill_floating_start',
+            'chr_0034_typhoea_combo_skill',
+          ],
+        },
+      ],
+    },
+    costFrame: 4,
+    scheduledSequences: [
+      scheduled(
+        38,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_power_attack_maintarget',
+            target: 'enemy',
+            inheritSourceSkillCastInfo: true,
+          }),
+          step('gainFinisherSp', { factor: 1, recipient: 'team' }),
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_power_attack.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:projectile_chr_0034_typhoea_archery_attack_power',
+            {},
+            true,
+            sequence(
+              withActionBlackboardScope(
+                'SkillData.chr_0034_typhoea_power_attack.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:chr_0034_typhoea_power_attack_projhit',
+                { atb: 0, atk_scale: 0, duration: 0 },
+                true,
+                sequence(
+                  forEachTarget(
+                    'enemy',
+                    sequence(
+                      branch(
+                        {
+                          kind: 'buffIdStackCompare',
+                          target: 'enemy',
+                          buffIds: ['buff_chr_0034_typhoea_power_attack_maintarget'],
+                          operator: 'greaterOrEqual',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                        sequence(
+                          step('mergeContextTargets', {
+                            saveToContextKey: 'maintar',
+                            sources: [{ kind: 'target', target: 'enemy' }],
+                          }),
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              calculation: 'breakingAttack',
+                              calculationMultiplier: 1,
+                              tags: ['normalAttack', 'powerAttack'],
+                            },
+                            'chr_0034_typhoea_power_attack:/scheduledSequences/0/sequence/steps/2/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/1',
+                          ),
+                        ),
+                        undefined,
+                        { alwaysNext: true },
+                      ),
+                    ),
+                  ),
+                ),
+                undefined,
+                { lifetime: 'execution', alwaysNext: true },
+              ),
+            ),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        41,
+      ),
+      scheduled(
+        39,
+        sequence(
+          forEachTarget(
+            'enemy',
+            sequence(
+              branch(
+                {
+                  kind: 'buffIdStackCompare',
+                  target: 'enemy',
+                  buffIds: ['buff_chr_0034_typhoea_power_attack_maintarget'],
+                  operator: 'greaterOrEqual',
+                  value: { kind: 'constant', value: 1 },
+                },
+                sequence(
+                  step('startTimeDilation', {
+                    scope: 'entity',
+                    durationSeconds: { kind: 'constant', value: 0.4 },
+                    slot: 'TimeDilation/Layer/Entity/HitStop',
+                    priority: 10,
+                    curve: {
+                      kind: 'inline',
+                      keys: [
+                        {
+                          time: -0.004907977,
+                          value: 0.4,
+                          inTangent: -1.27497,
+                          outTangent: -1.27497,
+                          weightedMode: 0,
+                          inWeight: 0,
+                          outWeight: 0,
+                        },
+                        {
+                          time: 0.25,
+                          value: 0.075,
+                          inTangent: 0,
+                          outTangent: 0,
+                          weightedMode: 0,
+                          inWeight: 0,
+                          outWeight: 0,
+                        },
+                        {
+                          time: 0.6871345,
+                          value: 0.075,
+                          inTangent: 0,
+                          outTangent: 0,
+                          weightedMode: 0,
+                          inWeight: 0,
+                          outWeight: 0,
+                        },
+                        {
+                          time: 1,
+                          value: 0.4,
+                          inTangent: 0.5041389,
+                          outTangent: 0.5041389,
+                          weightedMode: 0,
+                          inWeight: 0,
+                          outWeight: 0,
+                        },
+                      ],
+                    },
+                    finishByAction: false,
+                    targets: ['enemy', 'caster'],
+                  }),
+                  step('finishBuffsById', {
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0034_typhoea_power_attack_maintarget'],
+                    reason: 'other',
+                  }),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+          ),
+        ),
+        42,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_common_full_immune_medium',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        72,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_common_power_attack_disable_cast_skill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        40,
+      ),
+    ],
+    skillType: 'finisher',
+    levelSource: 'basicAttack',
+    nativeSkillType: 'breakingAttack',
+  },
+  { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
+);
+
+export const typhoeusChr_0034_typhoea_plunging_attack_end: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_plunging_attack_end',
+    timelineBlockFrames: 18,
+    naturalDurationFrames: 120,
+    exclusiveFrame: 17,
+    offsetRecordFrame: 0,
+    costFrame: 0,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_attack_plunging_onground'],
+            reason: 'other',
+          }),
+        ),
+        1,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('findOwnerSpawnedAbilityEntities', {
+            saveToContextKey: 'rune',
+            abilityEntityIds: [
+              'abilityentity_chr_0034_typhoea_arrow_onground',
+              'abilityentity_chr_0034_typhoea_combo_arrowfloating_1',
+              'abilityentity_chr_0034_typhoea_rune_1_onground',
+            ],
+          }),
+          forEachContextTarget('rune', sequence(step('finishCurrentAbilityEntity', {}))),
+          step(
+            'dealDamage',
+            {
+              damageType: 'nature',
+              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+              tags: ['normalAttack', 'plungingAttack'],
+            },
+            'chr_0034_typhoea_plunging_attack_end:/scheduledSequences/1/sequence/steps/2',
+          ),
+        ),
+        4,
+      ),
+    ],
+    skillType: 'plungingAttack',
+    levelSource: 'basicAttack',
+    nativeSkillType: 'attack',
+  },
+  { atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8] },
+);
+
+export const typhoeusChr_0034_typhoea_normal_skill_floating_start: SkillDefinition =
+  withSkillBlackboard(
+    {
+      key: 'chr_0034_typhoea_normal_skill_floating_start',
+      timelineBlockFrames: 100,
+      naturalDurationFrames: 40,
+      exclusiveFrame: 99,
+      offsetRecordFrame: 0,
+      inputWindows: {
+        commandMappings: [
+          {
+            startFrame: 21,
+            endFrame: 40,
+            input: 'basicAttack',
+            targetSkillId: 'chr_0034_typhoea_floating_attack1',
+          },
+        ],
+        allowedNextSkills: [
+          {
+            startFrame: 26,
+            endFrame: 40,
+            skillIds: [
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_normal_skill_floating_end',
+            ],
+          },
+        ],
+      },
+      costFrame: 0,
+      scheduledSequences: [
+        scheduled(
+          0,
+          sequence(
+            branch(
+              {
+                kind: 'actionValueCompare',
+                left: { kind: 'blackboard', key: 'atb_return', fallback: 0 },
+                operator: 'greater',
+                right: { kind: 'constant', value: 0 },
+              },
+              sequence(
+                step('changeResourceByActionValue', {
+                  resource: 'sp',
+                  amount: { kind: 'blackboard', key: 'atb_return' },
+                  coefficient: { kind: 'constant', value: 1 },
+                  recipient: 'team',
+                  spGainKind: 'refund',
+                  spGainSource: 'skill',
+                }),
+              ),
+            ),
+          ),
+          3,
+        ),
+        scheduled(
+          0,
+          sequence(
+            step('applyBuff', {
+              buffId: 'buff_chr_0034_typhoea_floatingmode',
+              target: 'caster',
+              inheritSourceSkillCastInfo: true,
+              finishByAction: true,
+              inheritToNextSkillIds: [
+                'chr_0034_typhoea_normal_skill_floating_loop',
+                'chr_0034_typhoea_normal_skill_floating_end',
+                'chr_0034_typhoea_floating_attack1',
+                'chr_0034_typhoea_floating_attack2',
+                'chr_0034_typhoea_floating_attack3',
+                'chr_0034_typhoea_floating_attack4',
+                'chr_0034_typhoea_floating_attack5',
+                'chr_0034_typhoea_combo_skillfloating',
+                'chr_0034_typhoea_ultimate_skillfloating',
+              ],
+              copiedBlackboardAssignments: { potential_atkup: 'potential_atkup', atk_up: 'atk_up' },
+            }),
+          ),
+          40,
+        ),
+        scheduled(
+          0,
+          sequence(
+            step('modifyActionValue', {
+              key: 'EntityBB_floating_attack_index',
+              operation: 'assign',
+              value: { kind: 'constant', value: 0 },
+            }),
+            step('modifyActionValue', {
+              key: 'EntityBB_floating_attack_times',
+              operation: 'assign',
+              value: { kind: 'constant', value: 0 },
+            }),
+            step('finishBuffsById', {
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_normal_start_hittimes'],
+              reason: 'other',
+            }),
+          ),
+          3,
+        ),
+        scheduled(
+          1,
+          sequence(
+            branch(
+              { kind: 'casterControlled' },
+              sequence(),
+              sequence(
+                step('mergeContextTargets', {
+                  saveToContextKey: 'tar2',
+                  sources: [{ kind: 'target', target: 'enemy' }],
+                }),
+              ),
+              { alwaysNext: true },
+            ),
+          ),
+          10,
+        ),
+        scheduled(
+          2,
+          sequence(
+            branch(
+              { kind: 'casterControlled' },
+              instantiateActionSequence(sharedActionSequence37, [
+                'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_00',
+                'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0]:chr_0034_typhoea_normal_skill_attack1_projhit',
+                'chr_0034_typhoea_normal_skill_floating_start:/scheduledSequences/4/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+              ]),
+              sequence(
+                branch(
+                  {
+                    kind: 'contextTargetCountCompare',
+                    contextKey: 'tar2',
+                    operator: 'greaterOrEqual',
+                    value: 1,
+                  },
+                  instantiateActionSequence(sharedActionSequence37, [
+                    'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_00',
+                    'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0]:chr_0034_typhoea_normal_skill_attack1_projhit',
+                    'chr_0034_typhoea_normal_skill_floating_start:/scheduledSequences/4/sequence/steps/0/whenFalse/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+                  ]),
+                  sequence(
+                    withActionBlackboardScope(
+                      'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].failActions.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_00',
+                      {},
+                      true,
+                      instantiateActionSequence(sharedActionSequence39, [
+                        'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].failActions.actionData[0].failActions.actionData[0]:chr_0034_typhoea_normal_skill_attack1_projhit',
+                        'chr_0034_typhoea_normal_skill_floating_start:/scheduledSequences/4/sequence/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+                      ]),
+                      {},
+                      { lifetime: 'execution' },
+                    ),
+                    withActionBlackboardScope(
+                      'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].failActions.actionData[0].failActions.actionData[2]:projectile_chr_0034_typhoea_archery_floating_attack_00',
+                      {},
+                      true,
+                      instantiateActionSequence(sharedActionSequence39, [
+                        'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].failActions.actionData[0].failActions.actionData[2]:chr_0034_typhoea_normal_skill_attack1_projhit',
+                        'chr_0034_typhoea_normal_skill_floating_start:/scheduledSequences/4/sequence/steps/0/whenFalse/steps/0/whenFalse/steps/1/body/steps/0/body/steps/0/whenTrue/steps/2',
+                      ]),
+                      {},
+                      { lifetime: 'execution' },
+                    ),
+                  ),
+                  { alwaysNext: true },
+                ),
+              ),
+              { alwaysNext: true },
+            ),
+          ),
+          5,
+        ),
+        scheduled(
+          7,
+          sequence(
+            branch(
+              { kind: 'casterControlled' },
+              instantiateActionSequence(sharedActionSequence40, [
+                'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_00',
+                'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0].action.actionData[0]:chr_0034_typhoea_normal_skill_attack2_projhit',
+                'chr_0034_typhoea_normal_skill_floating_start:/scheduledSequences/5/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+              ]),
+              sequence(
+                branch(
+                  {
+                    kind: 'contextTargetCountCompare',
+                    contextKey: 'tar2',
+                    operator: 'greaterOrEqual',
+                    value: 1,
+                  },
+                  instantiateActionSequence(sharedActionSequence40, [
+                    'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_00',
+                    'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].failActions.actionData[0].succeedActions.actionData[0].action.actionData[0]:chr_0034_typhoea_normal_skill_attack2_projhit',
+                    'chr_0034_typhoea_normal_skill_floating_start:/scheduledSequences/5/sequence/steps/0/whenFalse/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+                  ]),
+                  sequence(
+                    withActionBlackboardScope(
+                      'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].failActions.actionData[0].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_floating_attack_00',
+                      {},
+                      true,
+                      instantiateActionSequence(sharedActionSequence42, [
+                        'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].failActions.actionData[0].failActions.actionData[0]:chr_0034_typhoea_normal_skill_attack2_projhit',
+                        'chr_0034_typhoea_normal_skill_floating_start:/scheduledSequences/5/sequence/steps/0/whenFalse/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+                      ]),
+                      {},
+                      { lifetime: 'execution' },
+                    ),
+                    withActionBlackboardScope(
+                      'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].failActions.actionData[0].failActions.actionData[2]:projectile_chr_0034_typhoea_archery_floating_attack_00',
+                      {},
+                      true,
+                      instantiateActionSequence(sharedActionSequence42, [
+                        'SkillData.chr_0034_typhoea_normal_skill_floating_start.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].failActions.actionData[0].failActions.actionData[2]:chr_0034_typhoea_normal_skill_attack2_projhit',
+                        'chr_0034_typhoea_normal_skill_floating_start:/scheduledSequences/5/sequence/steps/0/whenFalse/steps/0/whenFalse/steps/1/body/steps/0/body/steps/0/whenTrue/steps/2',
+                      ]),
+                      {},
+                      { lifetime: 'execution' },
+                    ),
+                  ),
+                  { alwaysNext: true },
+                ),
+              ),
+              { alwaysNext: true },
+            ),
+          ),
+          10,
+        ),
+        scheduled(
+          12,
+          sequence(
+            branch(
+              {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_chr_0034_typhoea_normal_start_hittimes'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+              sequence(
+                step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
+                step('finishBuffsById', {
+                  target: 'caster',
+                  buffIds: ['buff_chr_0034_typhoea_normal_start_hittimes'],
+                  reason: 'other',
+                }),
+              ),
+              sequence(
+                step('finishBuffsById', {
+                  target: 'caster',
+                  buffIds: ['buff_chr_0034_typhoea_normal_start_hittimes'],
+                  reason: 'other',
+                }),
+              ),
+              { alwaysNext: true },
+            ),
+          ),
+          18,
+        ),
+        scheduled(
+          32,
+          sequence(
+            branch(
+              { kind: 'casterControlled' },
+              sequence(),
+              sequence(
+                step('castSkillDuringAction', {
+                  skillId: 'chr_0034_typhoea_floating_attack1',
+                  target: 'enemy',
+                  skipApplyCost: true,
+                  inheritSourceSkillCastInfo: true,
+                  interruptCurrentSkillOnlyWhenTargetCastable: true,
+                }),
+              ),
+              { alwaysNext: true },
+            ),
+          ),
+          35,
+        ),
+        scheduled(
+          37,
+          sequence(
+            step('castSkillDuringAction', {
+              skillId: 'chr_0034_typhoea_normal_skill_floating_loop',
+              target: 'enemy',
+              skipApplyCost: true,
+              inheritSourceSkillCastInfo: true,
+              interruptCurrentSkillOnlyWhenTargetCastable: true,
+            }),
+          ),
+          40,
+        ),
+        scheduled(
+          21,
+          sequence(
+            step('modifyActionValue', {
+              key: 'EntityBB_can_use_floating_skill',
+              operation: 'assign',
+              value: { kind: 'constant', value: 1 },
+            }),
+          ),
+          24,
+        ),
+        scheduled(
+          13,
+          sequence(
+            step('applyBuff', {
+              buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+              target: 'caster',
+              inheritSourceSkillCastInfo: true,
+            }),
+          ),
+          16,
+        ),
+      ],
+      costs: [{ resource: 'sp', value: 100 }],
+      skillType: 'battleSkill',
+      levelSource: 'battleSkill',
+      nativeSkillType: 'normalSkill',
+    },
+    {
+      addition_vertical: 0,
+      atb: 10,
+      atb_ratio: 0,
+      atb_return: 0,
+      atk_scale: [0.22, 0.25, 0.27, 0.29, 0.31, 0.33, 0.36, 0.38, 0.4, 0.43, 0.46, 0.5],
+      atk_scale_heavy: 0.6,
+      atk_scale_sub: 0.2,
+      atk_up: 0.08,
+      cam_angle: 0,
+      cam_duration: 0,
+      count: 0,
+      input_angle: 0,
+      look_at_x: 0,
+      num: 0,
+      poise: 0,
+      potential_atkup: 0,
+      random_float: 0,
+      spend_atb: 10,
+      stack: 0,
+      vertical: 0,
+    },
+  );
+
+export const typhoeusChr_0034_typhoea_normal_skill_floating_loop: SkillDefinition =
+  withSkillBlackboard(
+    {
+      key: 'chr_0034_typhoea_normal_skill_floating_loop',
+      timelineBlockFrames: 31,
+      naturalDurationFrames: 30,
+      exclusiveFrame: 30,
+      offsetRecordFrame: 0,
+      inputWindows: { hasConditionalActions: true },
+      costFrame: 0,
+      scheduledSequences: [
+        scheduled(
+          0,
+          sequence(
+            step('inheritBuffById', {
+              target: 'caster',
+              buffId: 'buff_chr_0034_typhoea_floatingmode',
+              inheritToNextSkillIds: [
+                'chr_0034_typhoea_normal_skill_floating_loop',
+                'chr_0034_typhoea_normal_skill_floating_end',
+                'chr_0034_typhoea_floating_attack1',
+                'chr_0034_typhoea_floating_attack2',
+                'chr_0034_typhoea_floating_attack3',
+                'chr_0034_typhoea_floating_attack4',
+                'chr_0034_typhoea_floating_attack5',
+                'chr_0034_typhoea_combo_skillfloating',
+                'chr_0034_typhoea_ultimate_skillfloating',
+              ],
+              finishByAction: true,
+              finishWithNextSkillIfNotInherited: true,
+            }),
+          ),
+          30,
+        ),
+        scheduled(
+          27,
+          sequence(
+            step('castSkillDuringAction', {
+              skillId: 'chr_0034_typhoea_normal_skill_floating_end',
+              target: 'enemy',
+              skipApplyCost: true,
+              inheritSourceSkillCastInfo: true,
+              interruptCurrentSkillOnlyWhenTargetCastable: true,
+            }),
+          ),
+          30,
+        ),
+        scheduled(
+          0,
+          sequence(
+            step('readBuffStackCount', {
+              target: 'caster',
+              outputKey: 'arrow_num',
+              query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+            }),
+            {
+              kind: 'switch',
+              parameters: {
+                choice: { kind: 'blackboard', key: 'EntityBB_floating_attack_index' },
+                alwaysNext: true,
+              },
+              options: [
+                { value: { kind: 'constant', value: 0 }, sequence: sequence() },
+                { value: { kind: 'constant', value: 2 }, sequence: sequence() },
+                { value: { kind: 'constant', value: 1 }, sequence: sequence() },
+                { value: { kind: 'constant', value: 3 }, sequence: sequence() },
+                { value: { kind: 'constant', value: 4 }, sequence: sequence() },
+                {
+                  value: { kind: 'constant', value: 5 },
+                  sequence: sequence(
+                    step('castSkillDuringAction', {
+                      skillId: 'chr_0034_typhoea_normal_skill_floating_end',
+                      target: 'enemy',
+                      skipApplyCost: true,
+                      inheritSourceSkillCastInfo: true,
+                      interruptCurrentSkillOnlyWhenTargetCastable: true,
+                    }),
+                  ),
+                },
+              ],
+            },
+          ),
+          30,
+        ),
+        scheduled(
+          0,
+          sequence(
+            step('readBuffStackCount', {
+              target: 'caster',
+              outputKey: 'arrow_num',
+              query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+            }),
+          ),
+          30,
+        ),
+        scheduled(
+          0,
+          sequence(
+            step('applyBuff', {
+              buffId: 'buff_chr_0034_typhoea_combo_skill_canusefloatingskill',
+              target: 'caster',
+              inheritSourceSkillCastInfo: true,
+              finishByAction: true,
+            }),
+          ),
+          30,
+        ),
+        scheduled(
+          0,
+          sequence(
+            branch(
+              {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+                operator: 'equal',
+                value: { kind: 'constant', value: 0 },
+              },
+              sequence(
+                step('applyBuff', {
+                  buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                  target: 'caster',
+                  inheritSourceSkillCastInfo: true,
+                }),
+              ),
+            ),
+          ),
+          3,
+        ),
+      ],
+      skillType: 'battleSkill',
+      levelSource: 'battleSkill',
+      nativeSkillType: 'extraActiveSkill',
+    },
+    { arrow_num: 0 },
+  );
+
+export const typhoeusChr_0034_typhoea_normal_skill_floating_end: SkillDefinition =
+  withSkillBlackboard(
+    {
+      key: 'chr_0034_typhoea_normal_skill_floating_end',
+      timelineBlockFrames: 26,
+      naturalDurationFrames: 100,
+      exclusiveFrame: 25,
+      offsetRecordFrame: 0,
+      costFrame: 0,
+      scheduledSequences: [
+        scheduled(
+          0,
+          sequence(
+            step('inheritBuffById', {
+              target: 'caster',
+              buffId: 'buff_chr_0034_typhoea_floatingmode',
+              inheritToNextSkillIds: [
+                'chr_0034_typhoea_normal_skill_floating_loop',
+                'chr_0034_typhoea_normal_skill_floating_end',
+                'chr_0034_typhoea_floating_attack1',
+                'chr_0034_typhoea_floating_attack2',
+                'chr_0034_typhoea_floating_attack3',
+                'chr_0034_typhoea_floating_attack4',
+                'chr_0034_typhoea_floating_attack5',
+                'chr_0034_typhoea_combo_skillfloating',
+                'chr_0034_typhoea_ultimate_skillfloating',
+              ],
+              finishByAction: true,
+              finishWithNextSkillIfNotInherited: true,
+            }),
+          ),
+          8,
+        ),
+        scheduled(
+          0,
+          sequence(
+            step('modifyActionValue', {
+              key: 'EntityBB_floating_attack_index',
+              operation: 'assign',
+              value: { kind: 'constant', value: 0 },
+            }),
+          ),
+          3,
+        ),
+        scheduled(
+          8,
+          sequence(
+            step('finishBuffsById', {
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+              reason: 'other',
+            }),
+          ),
+          14,
+        ),
+        scheduled(
+          6,
+          sequence(
+            step('modifyActionValue', {
+              key: 'EntityBB_can_use_floating_skill',
+              operation: 'assign',
+              value: { kind: 'constant', value: 0 },
+            }),
+          ),
+          9,
+        ),
+        scheduled(
+          0,
+          sequence(
+            step('finishBuffsById', {
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              reason: 'other',
+            }),
+          ),
+          3,
+        ),
+      ],
+      skillType: 'battleSkill',
+      levelSource: 'battleSkill',
+      nativeSkillType: 'extraActiveSkill',
+    },
+    {},
+  );
+
+export const typhoeusChr_0034_typhoea_combo_skill: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_combo_skill',
+    timelineBlockFrames: 48,
+    naturalDurationFrames: 241,
+    exclusiveFrame: 60,
+    offsetRecordFrame: 0,
+    inputWindows: {
+      allowedNextSkills: [
+        {
+          startFrame: 48,
+          endFrame: 99,
+          skillIds: ['chr_0034_typhoea_normal_skill_floating_start'],
+        },
+      ],
+    },
+    costFrame: 0,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          step('adjustSkillCooldown', {
+            target: 'caster',
+            skill: { kind: 'id', skillId: 'chr_0034_typhoea_combo_skillfloating' },
+            operation: 'set',
+            basis: 'baseDurationRatio',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('startTimeDilation', {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.833 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          }),
+        ),
+        22,
+      ),
+      scheduled(
+        40,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/2/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/2/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        43,
+      ),
+      scheduled(
+        43,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[21]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[21]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/3/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[21]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[21]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/3/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        46,
+      ),
+      scheduled(
+        44,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[23]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[23]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/4/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[23]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[23]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/4/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        47,
+      ),
+      scheduled(
+        45,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[25]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[25]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/5/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[25]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[25]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/5/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        48,
+      ),
+      scheduled(
+        47,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[27]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[27]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/6/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[27]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[27]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/6/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        50,
+      ),
+      scheduled(
+        49,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/7/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[29]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skill:/scheduledSequences/7/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        52,
+      ),
+      scheduled(
+        35,
+        sequence(
+          step('calculateActionValue', {
+            key: 'arrow_speed_basic',
+            operation: 'add',
+            left: { kind: 'blackboard', key: 'arrow_speed_basic' },
+            right: { kind: 'constant', value: 5 },
+          }),
+          step('calculateActionValue', {
+            key: 'arrow_rotate_1',
+            operation: 'add',
+            left: { kind: 'blackboard', key: 'arrow_rotate_1' },
+            right: { kind: 'constant', value: 70 },
+          }),
+          step('calculateActionValue', {
+            key: 'arrow_rotate_2',
+            operation: 'add',
+            left: { kind: 'blackboard', key: 'arrow_rotate_1' },
+            right: { kind: 'constant', value: 179 },
+          }),
+          step('modifyActionValue', {
+            key: 'is_have_target',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[30]._sequenceActionData.actionData[4].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_1',
+            {},
+            true,
+            instantiateActionSequence(sharedActionSequence44, [
+              'SkillData.chr_0034_typhoea_combo_skill.actionGroupData.timelineActions[30]._sequenceActionData.actionData[4].succeedActions.actionData[0]:chr_0034_typhoea_combo_01_projhit',
+              'chr_0034_typhoea_combo_skill:/scheduledSequences/8/sequence/steps/4/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+            ]),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
+        54,
+      ),
+      scheduled(
+        35,
+        sequence(
+          step('changeResourceByActionValue', {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'blackboard', key: 'usp' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'caster',
+          }),
+        ),
+        50,
+      ),
+      scheduled(
+        35,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_common_func_arrowreload',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+          }),
+        ),
+        38,
+      ),
+    ],
+    cooldownFrames: [630, 630, 630, 630, 630, 630, 630, 630, 630, 600, 600, 570],
+    skillType: 'comboSkill',
+    levelSource: 'comboSkill',
+    nativeSkillType: 'comboSkill',
+  },
+  {
+    arrow_rotate_1: 0,
+    arrow_rotate_2: 0,
+    arrow_speed_basic: 15,
+    atb: 0,
+    atk_scale: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
+    atk_scale_persistent: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
+    bullet_energy: 0,
+    cam_angle: 0,
+    cam_duration: 0,
+    count: 3,
+    duration: 5,
+    energy_to_bullet_ratio: 2,
+    input_angle: 0,
+    is_have_target: 0,
+    level: 1,
+    owner_mainchar_alpha: 0,
+    owner_mainchar_distance: 0,
+    persistent_naturalburst_increase: [
+      0.06, 0.06, 0.06, 0.07, 0.07, 0.07, 0.08, 0.08, 0.08, 0.09, 0.09, 0.1,
+    ],
+    persistent_slow: 0.6,
+    persistent_time: 6,
+    poise: 10,
+    select_radius: 4,
+    talent2: 0,
+    usp: 10,
+    persistent_slow_show: 0.4,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_combo_skillfloating: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_combo_skillfloating',
+    timelineBlockFrames: 180,
+    naturalDurationFrames: 70,
+    exclusiveFrame: 999,
+    offsetRecordFrame: 0,
+    inputWindows: {
+      commandMappings: [
+        {
+          startFrame: 40,
+          endFrame: 70,
+          input: 'basicAttack',
+          targetSkillId: 'chr_0034_typhoea_floating_attack1',
+        },
+      ],
+      hasConditionalActions: true,
+    },
+    costFrame: 0,
+    scheduledSequences: [
+      scheduled(180, sequence(step('finishTimeline', {})), 181),
+      scheduled(
+        0,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              branch(
+                {
+                  kind: 'entityTagMatch',
+                  target: 'enemy',
+                  tagQueryType: 'hasAny',
+                  tags: ['Skill/Character/chr_0034_typhoea/Locked'],
+                },
+                sequence(
+                  step('mergeContextTargets', {
+                    saveToContextKey: 'tar1',
+                    sources: [{ kind: 'target', target: 'enemy' }],
+                  }),
+                ),
+                sequence(step('mergeContextTargets', { saveToContextKey: 'tar1', sources: [] })),
+              ),
+            ),
+            undefined,
+            { alwaysNext: true },
+          ),
+        ),
+        3,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('inheritBuffById', {
+            target: 'caster',
+            buffId: 'buff_chr_0034_typhoea_floatingmode',
+            inheritToNextSkillIds: [
+              'chr_0034_typhoea_normal_skill_floating_loop',
+              'chr_0034_typhoea_normal_skill_floating_end',
+              'chr_0034_typhoea_floating_attack1',
+              'chr_0034_typhoea_floating_attack2',
+              'chr_0034_typhoea_floating_attack3',
+              'chr_0034_typhoea_floating_attack4',
+              'chr_0034_typhoea_floating_attack5',
+              'chr_0034_typhoea_combo_skillfloating',
+              'chr_0034_typhoea_ultimate_skillfloating',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          }),
+        ),
+        70,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('adjustSkillCooldown', {
+            target: 'caster',
+            skill: { kind: 'id', skillId: 'chr_0034_typhoea_combo_skill' },
+            operation: 'set',
+            basis: 'baseDurationRatio',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        3,
+      ),
+      scheduled(67, sharedActionSequence46, 70),
+      scheduled(
+        0,
+        sequence(
+          step('startTimeDilation', {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.833 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          }),
+        ),
+        22,
+      ),
+      scheduled(
+        39,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/6/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[24]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/6/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        42,
+      ),
+      scheduled(
+        43,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/7/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[26]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/7/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        46,
+      ),
+      scheduled(
+        44,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/8/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[28]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/8/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        47,
+      ),
+      scheduled(
+        45,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/9/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[30]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/9/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        48,
+      ),
+      scheduled(
+        47,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/10/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[32]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/10/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        50,
+      ),
+      scheduled(
+        49,
+        instantiateActionSequence(sharedActionSequence43, [
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/11/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/1',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_2',
+          'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[34]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0034_typhoea_combo_02_projhit',
+          'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/11/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
+        ]),
+        52,
+      ),
+      scheduled(
+        35,
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[35]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0034_typhoea_archery_combo_1',
+            {},
+            true,
+            instantiateActionSequence(sharedActionSequence44, [
+              'SkillData.chr_0034_typhoea_combo_skillfloating.actionGroupData.timelineActions[35]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0034_typhoea_combo_01_projhit',
+              'chr_0034_typhoea_combo_skillfloating:/scheduledSequences/12/sequence/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+            ]),
+            {},
+            { lifetime: 'execution' },
+          ),
+          step('modifyActionValue', {
+            key: 'is_have_target',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        54,
+      ),
+      scheduled(
+        35,
+        sequence(
+          step('changeResourceByActionValue', {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'blackboard', key: 'usp' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'caster',
+          }),
+        ),
+        38,
+      ),
+      scheduled(
+        35,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_common_func_arrowreload',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+          }),
+        ),
+        38,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_index',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        40,
+        sequence(
+          step('readBuffStackCount', {
+            target: 'caster',
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          }),
+        ),
+        70,
+      ),
+      scheduled(
+        57,
+        sequence(
+          step('readBuffStackCount', {
+            target: 'caster',
+            outputKey: 'arrow_num',
+            query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_num'] },
+          }),
+          branch(
+            { kind: 'casterControlled' },
+            sequence(),
+            sequence(
+              step('castSkillDuringAction', {
+                skillId: 'chr_0034_typhoea_floating_attack1',
+                target: 'enemy',
+                skipApplyCost: true,
+                inheritSourceSkillCastInfo: false,
+                interruptCurrentSkillOnlyWhenTargetCastable: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        74,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        57,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        60,
+      ),
+    ],
+    smartTarget: 'trigger',
+    cooldownFrames: [630, 630, 630, 630, 630, 630, 630, 630, 630, 600, 600, 570],
+    skillType: 'comboSkill',
+    levelSource: 'comboSkill',
+    nativeSkillType: 'comboSkill',
+  },
+  {
+    arrow_num: 0,
+    arrow_rotate_1: 0,
+    arrow_rotate_2: 0,
+    arrow_speed_basic: 15,
+    atb: 0,
+    atk_scale: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
+    atk_scale_persistent: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
+    bullet_energy: 0,
+    cam_angle: 0,
+    cam_duration: 0,
+    count: 3,
+    duration: 5,
+    energy_to_bullet_ratio: 2,
+    input_angle: 0,
+    is_have_target: 0,
+    level: 1,
+    owner_mainchar_alpha: 0,
+    owner_mainchar_distance: 0,
+    persistent_naturalburst_increase: [
+      0.06, 0.06, 0.06, 0.07, 0.07, 0.07, 0.08, 0.08, 0.08, 0.09, 0.09, 0.1,
+    ],
+    persistent_slow: 0.6,
+    persistent_time: 6,
+    poise: 10,
+    select_radius: 4,
+    talent2: 0,
+    usp: 10,
+    persistent_slow_show: 0.4,
+  },
+);
+
+export const typhoeusChr_0034_typhoea_ultimate_skillfloating: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'chr_0034_typhoea_ultimate_skillfloating',
+    timelineBlockFrames: 106,
+    naturalDurationFrames: 92,
+    exclusiveFrame: 105,
+    offsetRecordFrame: 0,
+    inputWindows: {
+      allowedNextSkills: [
+        {
+          startFrame: 100,
+          endFrame: 158,
+          skillIds: ['chr_0004_pelica_normal_skill', 'chr_0004_pelica_combo_skill'],
+        },
+      ],
+      hasConditionalActions: true,
+    },
+    costFrame: 0,
+    scheduledSequences: [
+      scheduled(
+        0,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_floatingmode',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+                finishByAction: true,
+                inheritToNextSkillIds: [
+                  'chr_0034_typhoea_normal_skill_floating_loop',
+                  'chr_0034_typhoea_normal_skill_floating_end',
+                  'chr_0034_typhoea_floating_attack1',
+                  'chr_0034_typhoea_floating_attack2',
+                  'chr_0034_typhoea_floating_attack3',
+                  'chr_0034_typhoea_floating_attack4',
+                  'chr_0034_typhoea_floating_attack5',
+                  'chr_0034_typhoea_combo_skillfloating',
+                  'chr_0034_typhoea_ultimate_skillfloating',
+                ],
+                copiedBlackboardAssignments: {
+                  potential_atkup: 'potential_atkup',
+                  atk_up: 'atk_up',
+                },
+              }),
+            ),
+            sequence(
+              step('inheritBuffById', {
+                target: 'caster',
+                buffId: 'buff_chr_0034_typhoea_floatingmode',
+                inheritToNextSkillIds: [
+                  'chr_0034_typhoea_normal_skill_floating_loop',
+                  'chr_0034_typhoea_normal_skill_floating_end',
+                  'chr_0034_typhoea_floating_attack1',
+                  'chr_0034_typhoea_floating_attack2',
+                  'chr_0034_typhoea_floating_attack3',
+                  'chr_0034_typhoea_floating_attack4',
+                  'chr_0034_typhoea_floating_attack5',
+                  'chr_0034_typhoea_combo_skillfloating',
+                  'chr_0034_typhoea_ultimate_skillfloating',
+                ],
+                finishByAction: true,
+                finishWithNextSkillIfNotInherited: true,
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        92,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('startTimeDilation', {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            targets: ['caster'],
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('startUltimateTimeDilation', {
+            priority: 100,
+            targetScale: { kind: 'constant', value: 0 },
+            ignoredTargets: [],
+          }),
+        ),
+        62,
+      ),
+      scheduled(0, sequence(step('hideUi', { onlyBlockInput: false })), 62),
+      scheduled(
+        0,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_floating_attack_times',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        61,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_can_trigger_combo',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+          branch(
+            {
+              kind: 'buffBlackboardValueCompare',
+              target: 'caster',
+              query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover'] },
+              desiredKey: 'truly_exit_fight',
+              outputKey: 'truly_exit_fight',
+              operator: 'less',
+              value: { kind: 'constant', value: 0.5 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_num',
+                target: 'caster',
+                count: { kind: 'blackboard', key: 'arrow_num_given' },
+                inheritSourceSkillCastInfo: true,
+              }),
+              step('modifyActionValue', {
+                key: 'EntityBB_floating_attack_index',
+                operation: 'assign',
+                value: { kind: 'constant', value: 0 },
+              }),
+            ),
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_passive_arrowrecover_exitfight',
+                target: 'caster',
+                count: { kind: 'blackboard', key: 'arrow_num_given' },
+                inheritSourceSkillCastInfo: true,
+              }),
+              step('modifyActionValue', {
+                key: 'EntityBB_floating_attack_index',
+                operation: 'assign',
+                value: { kind: 'constant', value: 0 },
+              }),
+            ),
+            { alwaysNext: true },
+          ),
+        ),
+        62,
+      ),
+      scheduled(
+        62,
+        sequence(
+          step('modifyActionValue', {
+            key: 'EntityBB_can_trigger_combo',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          }),
+        ),
+        63,
+      ),
+      scheduled(
+        61,
+        sequence(
+          step('spawnAbilityEntity', {
+            abilityEntityId: 'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain',
+            childSkillId: 'chr_0034_typhoea_ultimate_skill_arrowrain',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          }),
+        ),
+        62,
+      ),
+      scheduled(
+        89,
+        sequence(
+          branch(
+            { kind: 'casterControlled' },
+            sequence(
+              branch(
+                {
+                  kind: 'buffIdStackCompare',
+                  target: 'caster',
+                  buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+                  operator: 'greaterOrEqual',
+                  value: { kind: 'constant', value: 1 },
+                },
+                sharedActionSequence46,
+              ),
+            ),
+            sequence({
+              kind: 'switch',
+              parameters: {
+                choice: { kind: 'blackboard', key: 'EntityBB_floating_attack_index' },
+                alwaysNext: true,
+              },
+              options: [
+                {
+                  value: { kind: 'constant', value: 0 },
+                  sequence: sequence(
+                    step('castSkillDuringAction', {
+                      skillId: 'chr_0034_typhoea_floating_attack1',
+                      target: 'enemy',
+                      skipApplyCost: true,
+                      inheritSourceSkillCastInfo: false,
+                      interruptCurrentSkillOnlyWhenTargetCastable: true,
+                    }),
+                  ),
+                },
+                {
+                  value: { kind: 'constant', value: 1 },
+                  sequence: sequence(
+                    step('castSkillDuringAction', {
+                      skillId: 'chr_0034_typhoea_floating_attack2',
+                      target: 'enemy',
+                      skipApplyCost: true,
+                      inheritSourceSkillCastInfo: false,
+                      interruptCurrentSkillOnlyWhenTargetCastable: true,
+                    }),
+                  ),
+                },
+                {
+                  value: { kind: 'constant', value: 2 },
+                  sequence: sequence(
+                    step('castSkillDuringAction', {
+                      skillId: 'chr_0034_typhoea_floating_attack3',
+                      target: 'enemy',
+                      skipApplyCost: true,
+                      inheritSourceSkillCastInfo: false,
+                      interruptCurrentSkillOnlyWhenTargetCastable: true,
+                    }),
+                  ),
+                },
+                {
+                  value: { kind: 'constant', value: 3 },
+                  sequence: sequence(
+                    step('castSkillDuringAction', {
+                      skillId: 'chr_0034_typhoea_floating_attack4',
+                      target: 'enemy',
+                      skipApplyCost: true,
+                      inheritSourceSkillCastInfo: false,
+                      interruptCurrentSkillOnlyWhenTargetCastable: true,
+                    }),
+                  ),
+                },
+                {
+                  value: { kind: 'constant', value: 4 },
+                  sequence: sequence(
+                    step('castSkillDuringAction', {
+                      skillId: 'chr_0034_typhoea_floating_attack5',
+                      target: 'enemy',
+                      skipApplyCost: true,
+                      inheritSourceSkillCastInfo: false,
+                      interruptCurrentSkillOnlyWhenTargetCastable: true,
+                    }),
+                  ),
+                },
+                {
+                  value: { kind: 'constant', value: 5 },
+                  sequence: sequence(
+                    step('castSkillDuringAction', {
+                      skillId: 'chr_0034_typhoea_normal_skill_floating_end',
+                      target: 'enemy',
+                      skipApplyCost: true,
+                      inheritSourceSkillCastInfo: false,
+                      interruptCurrentSkillOnlyWhenTargetCastable: true,
+                    }),
+                  ),
+                },
+              ],
+            }),
+            { alwaysNext: true },
+          ),
+        ),
+        92,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('applyBuff', {
+            buffId: 'buff_common_damage_immune_ult_skill',
+            target: 'caster',
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          }),
+        ),
+        105,
+      ),
+      scheduled(
+        0,
+        sequence(
+          step('finishBuffsById', {
+            target: 'caster',
+            buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+            reason: 'other',
+          }),
+        ),
+        3,
+      ),
+      scheduled(
+        87,
+        sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'caster',
+              buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_common_arrowshow',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+              }),
+            ),
+          ),
+        ),
+        90,
+      ),
+    ],
+    cooldownFrames: 600,
+    costs: [{ resource: 'ultimateEnergy', value: 200 }],
+    skillType: 'ultimate',
+    levelSource: 'ultimate',
+    nativeSkillType: 'ultimateSkill',
+  },
+  {
+    arrow_energy_given: 0,
+    arrow_num_given: 2,
+    atk_scale_2: 0,
+    atk_scale_center: [
+      0.889, 0.978, 1.067, 1.155, 1.244, 1.333, 1.422, 1.511, 1.6, 1.711, 1.844, 2,
+    ],
+    atk_scale_main: [1.333, 1.467, 1.6, 1.733, 1.867, 2, 2.133, 2.267, 2.4, 2.567, 2.767, 3],
+    atk_scale_outer: [0.333, 0.367, 0.4, 0.433, 0.467, 0.5, 0.534, 0.567, 0.6, 0.642, 0.692, 0.75],
+    atk_up: 0.08,
+    crit: 0,
+    poise: 20,
+    potential_atkup: 0,
+    potential_damge_up: 1,
+    radius: 4,
+    select_radius: 10,
+    truly_exit_fight: 0,
+  },
+);
+
+export const typhoeusCommon_character_perfect_dodge: SkillDefinition = withSkillBlackboard(
+  {
+    key: 'common_character_perfect_dodge',
+    timelineBlockFrames: 16,
+    naturalDurationFrames: 15,
+    exclusiveFrame: 15,
+    offsetRecordFrame: 0,
+    costFrame: 0,
+    scheduledSequences: [],
+    skillType: 'dodge',
+    nativeSkillType: 'dodge',
+  },
+  {},
+);
+
+export const typhoeus: OperatorDefinition = {
+  slug: 'typhoeus',
+  gameId: 'TYPHOEUS',
+  rarity: 6,
+  weaponType: 'arts-unit',
+  element: 'nature',
+  role: 'striker',
+  mainAttribute: 'agility',
+  secondaryAttribute: 'will',
+  attributes: {
+    strength: [9, 28, 48, 68, 88, 97],
+    agility: [21, 54, 88, 123, 157, 174],
+    intellect: [10, 29, 49, 69, 89, 99],
+    will: [14, 37, 60, 84, 107, 119],
+    baseAttack: [30, 90, 153, 217, 280, 312],
+    baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
+  },
+  passiveUi: {
+    kind: 'buffCounters',
+    appearance: 'typhoeaArrows',
+    reserveArrowBuffId: 'buff_chr_0034_typhoea_passive_arrowrecover_exitfight',
+    battleArrowBuffId: 'buff_chr_0034_typhoea_normal_skill_arrow_num',
+    pointBuffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy',
+    maximumArrows: 4,
+    maximumPoints: 8,
+  },
+  skillGroups: [
+    {
+      key: 'basicAttack',
+      skillType: 'basicAttack',
+      levelSource: 'basicAttack',
+      skills: [
+        typhoeusChr_0034_typhoea_attack1,
+        typhoeusChr_0034_typhoea_attack2,
+        typhoeusChr_0034_typhoea_attack3,
+        typhoeusChr_0034_typhoea_attack4,
+        typhoeusChr_0034_typhoea_attack5,
+      ],
+      variants: [
+        {
+          key: 'enhancedBasicAttack',
+          levelSource: 'battleSkill',
+          libraryPresentation: 'enhanced',
+          skills: [
+            typhoeusChr_0034_typhoea_floating_attack1,
+            typhoeusChr_0034_typhoea_floating_attack2,
+            typhoeusChr_0034_typhoea_floating_attack3,
+            typhoeusChr_0034_typhoea_floating_attack4,
+            typhoeusChr_0034_typhoea_floating_attack5,
+          ],
+        },
+      ],
+    },
+    {
+      key: 'finisher',
+      skillType: 'finisher',
+      levelSource: 'basicAttack',
+      skills: typhoeusChr_0034_typhoea_power_attack,
+    },
+    {
+      key: 'plungingAttack',
+      skillType: 'plungingAttack',
+      levelSource: 'basicAttack',
+      skills: typhoeusChr_0034_typhoea_plunging_attack_end,
+    },
+    {
+      key: 'battleSkill',
+      skillType: 'battleSkill',
+      levelSource: 'battleSkill',
+      skills: typhoeusChr_0034_typhoea_normal_skill_floating_start,
+      replacementSkills: [
+        typhoeusChr_0034_typhoea_normal_skill_floating_loop,
+        typhoeusChr_0034_typhoea_normal_skill_floating_end,
+      ],
+      replacementSkillPlacements: {
+        chr_0034_typhoea_normal_skill_floating_loop: 'internal',
+        chr_0034_typhoea_normal_skill_floating_end: 'internal',
+      },
+    },
+    {
+      key: 'comboSkill',
+      skillType: 'comboSkill',
+      levelSource: 'comboSkill',
+      skills: typhoeusChr_0034_typhoea_combo_skill,
+      replacementSkills: [typhoeusChr_0034_typhoea_combo_skillfloating],
+      replacementSkillPlacements: { chr_0034_typhoea_combo_skillfloating: 'enhanced' },
+    },
+    {
+      key: 'ultimate',
+      skillType: 'ultimate',
+      levelSource: 'ultimate',
+      skills: typhoeusChr_0034_typhoea_ultimate_skillfloating,
+    },
+  ],
+  dodgeSkill: typhoeusCommon_character_perfect_dodge,
+  dashBuffs: [
+    { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
+  ],
+  skillSlots: [
+    {
+      key: 'battleSkill',
+      baseSkillKey: 'chr_0034_typhoea_normal_skill_floating_start',
+      replacementSkillKeys: [],
+    },
+    {
+      key: 'comboSkill',
+      baseSkillKey: 'chr_0034_typhoea_combo_skill',
+      replacementSkillKeys: ['chr_0034_typhoea_combo_skillfloating'],
+    },
+    {
+      key: 'ultimate',
+      baseSkillKey: 'chr_0034_typhoea_ultimate_skillfloating',
+      replacementSkillKeys: [],
+    },
+  ],
+  playerActionRoutes: {
+    basicAttack: {
+      kind: 'basicAttack',
+      skillKeys: [
+        'chr_0034_typhoea_attack1',
+        'chr_0034_typhoea_attack2',
+        'chr_0034_typhoea_attack3',
+        'chr_0034_typhoea_attack4',
+        'chr_0034_typhoea_attack5',
+        'chr_0034_typhoea_power_attack',
+        'chr_0034_typhoea_plunging_attack_end',
+        'chr_0034_typhoea_floating_attack1',
+        'chr_0034_typhoea_floating_attack2',
+        'chr_0034_typhoea_floating_attack3',
+        'chr_0034_typhoea_floating_attack4',
+        'chr_0034_typhoea_floating_attack5',
+      ],
+      normalAttackSkillKeys: [
+        'chr_0034_typhoea_attack1',
+        'chr_0034_typhoea_attack2',
+        'chr_0034_typhoea_attack3',
+        'chr_0034_typhoea_attack4',
+        'chr_0034_typhoea_attack5',
+      ],
+      defaultSkillKey: 'chr_0034_typhoea_attack1',
+    },
+    battleSkill: { kind: 'skillSlot', skillSlotKey: 'battleSkill' },
+    comboSkill: { kind: 'skillSlot', skillSlotKey: 'comboSkill' },
+    ultimate: { kind: 'skillSlot', skillSlotKey: 'ultimate' },
+  },
+  playerActionModes: [
+    {
+      modeId: 'floating',
+      modeLayer: 'floating',
+      defaultEnabled: false,
+      normalAttackSkillKeys: [
+        'chr_0034_typhoea_floating_attack1',
+        'chr_0034_typhoea_floating_attack2',
+        'chr_0034_typhoea_floating_attack3',
+        'chr_0034_typhoea_floating_attack4',
+        'chr_0034_typhoea_floating_attack5',
+      ],
+      commandMappings: {
+        basicAttack: { skillId: 'chr_0034_typhoea_floating_attack1' },
+        comboSkill: { skillId: 'chr_0034_typhoea_combo_skillfloating' },
+      },
+    },
+  ],
+  comboSkillConditions: [
+    {
+      key: 'native-combo:0',
+      skillKey: 'chr_0034_typhoea_combo_skill',
+      event: 'addedBuff',
+      immediately: false,
+      initialValues: null,
+      sequence: sequence(
+        branch(
+          {
+            kind: 'eventBuffIdMatch',
+            buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_energy'],
+          },
+          sequence(
+            branch(
+              {
+                kind: 'buffIdStackCompare',
+                target: 'caster',
+                buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_energy'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 8 },
+              },
+              sequence(
+                branch(
+                  {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'blackboard', key: 'EntityBB_can_trigger_combo', fallback: 0 },
+                    operator: 'equal',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                  sequence(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    },
+    {
+      key: 'native-combo:1',
+      skillKey: 'chr_0034_typhoea_combo_skill',
+      event: 'beforeOutputDamage',
+      immediately: false,
+      initialValues: null,
+      sequence: sequence(
+        branch(
+          { kind: 'not', condition: { kind: 'casterComboPending' } },
+          sequence(
+            branch(
+              {
+                kind: 'contextTargetIdentityMatch',
+                contextKey: 'trigger',
+                other: 'controlledOperator',
+                operator: 'equal',
+              },
+              sequence(
+                branch(
+                  {
+                    kind: 'buffIdStackCompare',
+                    target: 'caster',
+                    buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_energy'],
+                    operator: 'greaterOrEqual',
+                    value: { kind: 'constant', value: 8 },
+                  },
+                  sequence(
+                    branch(
+                      {
+                        kind: 'actionValueCompare',
+                        left: {
+                          kind: 'blackboard',
+                          key: 'EntityBB_can_trigger_combo',
+                          fallback: 0,
+                        },
+                        operator: 'equal',
+                        right: { kind: 'constant', value: 1 },
+                      },
+                      sequence(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    },
+  ],
+  comboSkillPriority: 'default',
+  talents: [
+    {
+      levels: 3,
+      modifiers: [
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack1',
+          blackboardKey: 'atk_scale_enhence',
+          operation: 'assign',
+          value: [1.2, 1.4, 1.6],
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack2',
+          blackboardKey: 'atk_scale_enhence',
+          operation: 'assign',
+          value: [1.2, 1.4, 1.6],
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack3',
+          blackboardKey: 'atk_scale_enhence',
+          operation: 'assign',
+          value: [1.2, 1.4, 1.6],
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack4',
+          blackboardKey: 'atk_scale_enhence',
+          operation: 'assign',
+          value: [1.2, 1.4, 1.6],
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack5',
+          blackboardKey: 'atk_scale_enhence',
+          operation: 'assign',
+          value: [1.2, 1.4, 1.6],
+        },
+      ],
+      initializationSequence: sequence(
+        step('applyBuff', {
+          buffId: 'buff_chr_0034_typhoea_passive_arrowrecover',
+          target: 'caster',
+          inheritSourceSkillCastInfo: false,
+          blackboardAssignments: {
+            arrow_recover_time: { kind: 'constant', value: 3 },
+            energy_enterfight: [1, 2, 4],
+          },
+        }),
+      ),
+    },
+    {
+      levels: 2,
+      initializationSequence: sequence(
+        step('applyBuff', {
+          buffId: 'buff_chr_0034_typhoea_talent_linken_sphere',
+          target: 'caster',
+          inheritSourceSkillCastInfo: false,
+          blackboardAssignments: { damage_resist: [0.15, 0.3], sheild_cd: [30, 18] },
+        }),
+      ),
+    },
+  ],
+  potentials: [
+    {
+      levels: 1,
+      modifiers: [
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack1',
+          blackboardKey: 'atk_scale_base',
+          operation: 'multiply',
+          value: 1.2,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack2',
+          blackboardKey: 'atk_scale_base',
+          operation: 'multiply',
+          value: 1.2,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack3',
+          blackboardKey: 'atk_scale_base',
+          operation: 'multiply',
+          value: 1.2,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack4',
+          blackboardKey: 'atk_scale_base',
+          operation: 'multiply',
+          value: 1.2,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack5',
+          blackboardKey: 'atk_scale_base',
+          operation: 'multiply',
+          value: 1.2,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'battleSkill',
+          skillKey: 'chr_0034_typhoea_normal_skill_floating_start',
+          blackboardKey: 'potential_atkup',
+          operation: 'assign',
+          value: 1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'battleSkill',
+          skillKey: 'chr_0034_typhoea_normal_skill_floating_start',
+          blackboardKey: 'atk_up',
+          operation: 'assign',
+          value: 0.18,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'ultimate',
+          blackboardKey: 'potential_atkup',
+          operation: 'assign',
+          value: 1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'ultimate',
+          blackboardKey: 'atk_up',
+          operation: 'assign',
+          value: 0.18,
+        },
+      ],
+      initializationSequence: sequence(
+        step('applyBuff', {
+          buffId: 'buff_chr_0034_typhoea_potential_decrease_sheildcd',
+          target: 'caster',
+          inheritSourceSkillCastInfo: false,
+          blackboardAssignments: { decrease_cd: { kind: 'constant', value: -3 } },
+        }),
+      ),
+    },
+    {
+      levels: 1,
+      modifiers: [
+        { kind: 'addBuildAttribute', attributes: ['agility'], value: 20 },
+        { kind: 'modifyBasePanelStat', stat: 'artsIntensity', operation: 'flat', value: 16 },
+      ],
+    },
+    {
+      levels: 1,
+      modifiers: [
+        {
+          kind: 'addSkillCooldownFrames',
+          skillGroupKey: 'comboSkill',
+          skillKey: 'chr_0034_typhoea_combo_skill',
+          frames: -60,
+        },
+        {
+          kind: 'addSkillCooldownFrames',
+          skillGroupKey: 'comboSkill',
+          skillKey: 'chr_0034_typhoea_combo_skillfloating',
+          frames: -60,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'comboSkill',
+          skillKey: 'chr_0034_typhoea_combo_skill',
+          blackboardKey: 'persistent_naturalburst_increase',
+          operation: 'add',
+          value: 0.06,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'comboSkill',
+          skillKey: 'chr_0034_typhoea_combo_skillfloating',
+          blackboardKey: 'persistent_naturalburst_increase',
+          operation: 'add',
+          value: 0.06,
+        },
+      ],
+    },
+    {
+      levels: 1,
+      modifiers: [
+        {
+          kind: 'multiplySkillCost',
+          skillGroupKey: 'ultimate',
+          resource: 'ultimateEnergy',
+          multiplier: 0.85,
+        },
+      ],
+    },
+    {
+      levels: 1,
+      modifiers: [
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'ultimate',
+          blackboardKey: 'arrow_num_given',
+          operation: 'add',
+          value: 1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack1',
+          blackboardKey: 'potential_damage_rate',
+          operation: 'assign',
+          value: 1.1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack2',
+          blackboardKey: 'potential_damage_rate',
+          operation: 'assign',
+          value: 1.1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack3',
+          blackboardKey: 'potential_damage_rate',
+          operation: 'assign',
+          value: 1.1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack4',
+          blackboardKey: 'potential_damage_rate',
+          operation: 'assign',
+          value: 1.1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'basicAttack',
+          skillKey: 'chr_0034_typhoea_floating_attack5',
+          blackboardKey: 'potential_damage_rate',
+          operation: 'assign',
+          value: 1.1,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillGroupKey: 'ultimate',
+          blackboardKey: 'potential_damge_up',
+          operation: 'assign',
+          value: 1.2,
+        },
+      ],
+    },
+  ],
+  entityBlackboard: {
+    EntityBB_can_trigger_combo: 1,
+    EntityBB_can_use_floating_skill: 0,
+    EntityBB_consumed_type: 0,
+    EntityBB_floating_attack_index: 0,
+    EntityBB_floating_attack_times: 0,
+    EntityBB_heavyattack_atb_recover: 0,
+    EntityBB_normalskill_hittimes: 0,
+  },
+  passiveSkills: [
+    {
+      key: 'chr_0034_typhoea_passive',
+      enableSequence: sequence(
+        step('applyBuff', {
+          buffId: 'buff_chr_0034_typhoea_passive',
+          target: 'caster',
+          inheritSourceSkillCastInfo: false,
+        }),
+      ),
+    },
+    {
+      key: 'chr_0034_typhoea_passive_increase_attackrange',
+      enableSequence: sequence(
+        step('applyBuff', {
+          buffId: 'buff_chr_0034_typhoea_passive_increase_attackrange',
+          target: 'caster',
+          inheritSourceSkillCastInfo: false,
+        }),
+      ),
+    },
+  ],
+  buffDefinitions: {
+    buff_chr_0034_typhoea_attack_3_1_damagetaken: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 10,
+      durationSeconds: 0.2,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { count: 0 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_attack_3_2_damagetaken: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 10,
+      durationSeconds: 0.2,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { count: 0 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_attack_4_addtionalbattleshape_onenemy: {
+      stackingType: 'refresh',
+      priority: 0,
+      maxStackCount: 999,
+      durationSeconds: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { count: 0 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_attack_5_damagetaken: {
+      stackingType: 'refresh',
+      priority: 0,
+      maxStackCount: 999,
+      durationSeconds: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { count: 0 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_combo_enemy_debuff: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { damage_up: 0.1, slow_down: 0.5 },
+      attributeModifiers: [],
+      damageModifiers: [
+        {
+          enabledSide: 'defender',
+          condition: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['natureBurst'] },
+          processors: [
+            {
+              kind: 'damageScale',
+              side: 'defender',
+              zone: 'normal',
+              addition: { blackboardKey: 'damage_up' },
+            },
+          ],
+        },
+      ],
+      lifecycleSequences: {
+        enable: sequence(
+          step('applyBuff', {
+            buffId: 'buff_common_affixes_slow',
+            target: 'enemy',
+            inheritSourceSkillCastInfo: true,
+            asChildBuff: true,
+            finishByAction: true,
+            blackboardAssignments: {
+              duration: { kind: 'constant', value: 20 },
+              rate: { kind: 'blackboard', key: 'slow_down' },
+            },
+          }),
+        ),
+      },
+    },
+    buff_chr_0034_typhoea_combo_skill_arrow_hittimes: {
+      stackingType: 'enhanceAndRefresh',
+      priority: 0,
+      maxStackCount: 5,
+      durationSeconds: 2,
+      applyTags: ['Skill/Character/chr_0034_typhoea/CanUseFloatingSkill'],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_combo_skill_canusefloatingskill: {
+      stackingType: 'refresh',
+      priority: 0,
+      maxStackCount: 1,
+      durationSeconds: 20,
+      applyTags: ['Skill/Character/chr_0034_typhoea/CanUseFloatingSkill'],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_common_arrowshow: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      triggerIntervalSeconds: 0.1,
+      waitFirstTriggerInterval: false,
+      maxTriggerCount: -1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { damageup: 0.1 },
+      attributeModifiers: [],
+      lifecycleSequences: {
+        trigger: sequence(
+          branch(
+            {
+              kind: 'buffIdStackCompare',
+              target: 'buffOwner',
+              buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+              operator: 'equal',
+              value: { kind: 'constant', value: 0 },
+            },
+            sequence(
+              step('finishBuffsById', {
+                target: 'buffOwner',
+                buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+                reason: 'other',
+              }),
+            ),
+          ),
+        ),
+      },
+    },
+    buff_chr_0034_typhoea_common_func_arrowreload: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 1,
+      durationSeconds: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { bullet_energy: 0, count: 0, energy_to_bullet_ratio: 2 },
+      attributeModifiers: [],
+      scheduledSequences: [
+        scheduled(
+          0,
+          sequence(
+            step('readBuffStackCount', {
+              target: 'buffOwner',
+              outputKey: 'bullet_energy',
+              query: { kind: 'id', buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_energy'] },
+            }),
+            step('calculateActionValue', {
+              key: 'bullet_energy',
+              operation: 'add',
+              left: { kind: 'blackboard', key: 'bullet_energy' },
+              right: { kind: 'constant', value: -1 },
+            }),
+            step('calculateActionValue', {
+              key: 'bullet_energy',
+              operation: 'divide',
+              left: { kind: 'blackboard', key: 'bullet_energy' },
+              right: { kind: 'blackboard', key: 'energy_to_bullet_ratio' },
+            }),
+            step('finishBuffsById', {
+              target: 'buffOwner',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_arrow_energy'],
+              reason: 'other',
+            }),
+            step('applyBuff', {
+              buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_num',
+              target: 'buffOwner',
+              source: 'buffSource',
+              count: { kind: 'blackboard', key: 'bullet_energy' },
+              inheritSourceSkillCastInfo: true,
+            }),
+          ),
+          3,
+        ),
+      ],
+    },
+    buff_chr_0034_typhoea_floatingattack_damagetaken: {
+      stackingType: 'refresh',
+      priority: 0,
+      maxStackCount: 999,
+      durationSeconds: 0.2,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { count: 0 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_floatingmode: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: [
+        'Status/Unjumpable',
+        'Status/DisableDash',
+        'Status/DisableBreakingAttack',
+        'Status/CantSwitchOutCenter',
+        'Status/Ability/Skill/CantSwitchTocCenter',
+        'Status/DisableNormalSkill',
+        'Status/IgnoreEnemyCollision',
+        'Skill/Character/chr_0034_typhoea/FloatingMode',
+        'AI/Status/CanAIForceDontTeleport',
+      ],
+      extendTags: [],
+      blackboard: { atk_up: 0, potential_atkup: 0 },
+      attributeModifiers: [],
+      damageModifiers: [
+        {
+          enabledSide: 'defender',
+          condition: {
+            kind: 'eventDamageFeaturesMatch',
+            match: 'hasAll',
+            features: ['remainArea'],
+          },
+          processors: [{ kind: 'damageScale', side: 'defender', zone: 'product', addition: -1 }],
+        },
+      ],
+      lifecycleSequences: {
+        start: sequence(
+          step('finishBuffsById', {
+            target: 'buffOwner',
+            buffIds: ['buff_chr_0034_typhoea_passive_increase_attackrange'],
+            reason: 'other',
+          }),
+        ),
+        enable: sequence(
+          {
+            kind: 'withActionBlackboardScope',
+            parameters: {
+              scopeKey: 'native-buff-callback:0',
+              lifetime: 'execution',
+              alwaysNext: true,
+              shareParentBlackboard: true,
+              initialValues: {},
+              inheritParent: true,
+            },
+            body: sequence(
+              step('changePlayerActionMode', { modeId: 'floating', lifetime: 'finishByAction' }),
+            ),
+          },
+          {
+            kind: 'withActionBlackboardScope',
+            parameters: {
+              scopeKey: 'native-buff-callback:1',
+              lifetime: 'execution',
+              alwaysNext: true,
+              shareParentBlackboard: true,
+              initialValues: {},
+              inheritParent: true,
+            },
+            body: sequence(step('inheritSkillCastInfoForBasicAttack', {})),
+          },
+          {
+            kind: 'withActionBlackboardScope',
+            parameters: {
+              scopeKey: 'native-buff-callback:2',
+              lifetime: 'execution',
+              alwaysNext: true,
+              shareParentBlackboard: true,
+              initialValues: {},
+              inheritParent: true,
+            },
+            body: sequence(
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  step('applyBuff', {
+                    buffId: 'buff_chr_0034_typhoea_normal_skill_targetfind',
+                    target: 'buffOwner',
+                    source: 'buffSource',
+                    inheritSourceSkillCastInfo: true,
+                    finishByAction: true,
+                  }),
+                ),
+              ),
+            ),
+          },
+          {
+            kind: 'withActionBlackboardScope',
+            parameters: {
+              scopeKey: 'native-buff-callback:3',
+              lifetime: 'execution',
+              alwaysNext: true,
+              shareParentBlackboard: true,
+              initialValues: {},
+              inheritParent: true,
+            },
+            body: sequence(
+              branch(
+                {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'blackboard', key: 'potential_atkup', fallback: 0 },
+                  operator: 'equal',
+                  right: { kind: 'constant', value: 1 },
+                },
+                sequence(
+                  step('applyBuff', {
+                    buffId: 'buff_chr_0034_typhoea_potential_atkup',
+                    target: 'buffOwner',
+                    source: 'buffSource',
+                    inheritSourceSkillCastInfo: true,
+                    finishByAction: true,
+                    copiedBlackboardAssignments: { atk_up: 'atk_up' },
+                  }),
+                ),
+              ),
+            ),
+          },
+        ),
+        finish: sequence(
+          {
+            kind: 'withActionBlackboardScope',
+            parameters: {
+              scopeKey: 'native-buff-callback:0',
+              lifetime: 'execution',
+              alwaysNext: true,
+              shareParentBlackboard: true,
+              initialValues: {},
+              inheritParent: true,
+            },
+            body: sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_passive_increase_attackrange',
+                target: 'buffOwner',
+                source: 'buffSource',
+                inheritSourceSkillCastInfo: true,
+              }),
+              step('finishBuffsById', {
+                target: 'buffOwner',
+                buffIds: ['buff_chr_0034_typhoea_normal_skill_targetfind'],
+                reason: 'other',
+              }),
+            ),
+          },
+          {
+            kind: 'withActionBlackboardScope',
+            parameters: {
+              scopeKey: 'native-buff-callback:1',
+              lifetime: 'execution',
+              alwaysNext: true,
+              shareParentBlackboard: true,
+              initialValues: {},
+              inheritParent: true,
+            },
+            body: sequence(
+              step('findOwnerSpawnedAbilityEntities', {
+                saveToContextKey: 'tar',
+                abilityEntityIds: ['abilityentity_chr_0034_typhoea_ultimateskill_arrowrain'],
+              }),
+              branch(
+                {
+                  kind: 'contextTargetCountCompare',
+                  contextKey: 'tar',
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+                sequence(
+                  forEachContextTarget('tar', sequence(step('finishCurrentAbilityEntity', {}))),
+                ),
+              ),
+            ),
+          },
+          {
+            kind: 'withActionBlackboardScope',
+            parameters: {
+              scopeKey: 'native-buff-callback:2',
+              lifetime: 'execution',
+              alwaysNext: true,
+              shareParentBlackboard: true,
+              initialValues: {},
+              inheritParent: true,
+            },
+            body: sequence(
+              step('finishBuffsById', {
+                target: 'buffOwner',
+                buffIds: ['buff_chr_0034_typhoea_common_arrowshow'],
+                reason: 'other',
+              }),
+            ),
+          },
+        ),
+      },
+      abilityEventResponses: [
+        {
+          event: 'addedBuff',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              { kind: 'eventBuffTagsMatch', match: 'hasAny', buffTags: ['Status/Immobilized'] },
+              sequence(
+                step('finishBuffsById', {
+                  target: 'buffOwner',
+                  buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+                  reason: 'other',
+                }),
+              ),
+            ),
+          ),
+        },
+        {
+          event: 'takeDamage',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              {
+                kind: 'buffIdStackCompare',
+                target: 'buffOwner',
+                buffIds: ['buff_chr_0034_typhoea_talent_linken_sphere_enable'],
+                operator: 'greaterOrEqual',
+                value: { kind: 'constant', value: 1 },
+              },
+              sequence(
+                step('applyBuff', {
+                  buffId: 'buff_chr_0034_typhoea_talent_linken_sphere_superarmour',
+                  target: 'buffOwner',
+                  source: 'buffSource',
+                  inheritSourceSkillCastInfo: true,
+                }),
+                step('triggerCustomAbilityEvent', {
+                  eventName: 'sheild_broken',
+                  eventParam: 0,
+                  target: 'caster',
+                  source: 'caster',
+                }),
+                step('finishBuffsById', {
+                  target: 'buffOwner',
+                  buffIds: ['buff_chr_0034_typhoea_talent_linken_sphere_enable'],
+                  reason: 'other',
+                }),
+              ),
+            ),
+          ),
+        },
+      ],
+      skillSlotReplacements: [
+        {
+          skillGroupKey: 'comboSkill',
+          targetSkillKey: 'chr_0034_typhoea_combo_skillfloating',
+          revertedSkillKey: 'chr_0034_typhoea_combo_skill',
+          inheritOriginSkillCooldownProgress: false,
+        },
+      ],
+    },
+    buff_chr_0034_typhoea_floatingmode_blowoff_ccs: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      durationSeconds: 1,
+      applyTags: [
+        'Status/Unjumpable',
+        'Status/DisableDash',
+        'Status/DisableBreakingAttack',
+        'Status/CantSwitchOutCenter',
+        'Status/Ability/Skill/CantSwitchTocCenter',
+        'Status/DisableNormalSkill',
+      ],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_normal_attack5_atb_recovered: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 999,
+      durationSeconds: 0.2,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { atb: 0, count: 0 },
+      attributeModifiers: [],
+      lifecycleSequences: {
+        start: sequence(
+          step('changeResourceByActionValue', {
+            resource: 'sp',
+            amount: { kind: 'blackboard', key: 'atb' },
+            coefficient: { kind: 'constant', value: 1 },
+            recipient: 'team',
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          }),
+        ),
+      },
+    },
+    buff_chr_0034_typhoea_normal_skill_aimmedenemy_all: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: ['Skill/Character/chr_0034_typhoea/EnemyInArea'],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_normal_skill_arrow_energy: {
+      stackingType: 'enhance',
+      priority: 0,
+      maxStackCount: 8,
+      presentation: {
+        visible: true,
+        showInHeadBarCommon: false,
+        showInHeadBarAttached: false,
+        showInSquadIcon: false,
+        onlyShowForMainCharacter: false,
+        blinkInMainCharHpBar: false,
+        showProgressInHpBar: false,
+        showProgressInNormalSkillButton: false,
+        useWeakProgressInNormalSkillButton: false,
+        showProgressInUltimateSkillButton: false,
+        forceRaiseIconEvent: true,
+        showWarningBackground: false,
+        playStrongInAnimation: false,
+        hasCharHpBarVfxType: false,
+        charHpBarVfxType: 'Fire',
+        iconStyleInSquad: 'NoLifeTime',
+        abnormalColorType: 'Physical',
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'AttentionDebuff' },
+      },
+      applyTags: [],
+      extendTags: [],
+      blackboard: { auto_enhance_rate: 1, count: 0, recover_time: 24 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_1: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 10,
+      addingCooldownSeconds: 0.2,
+      durationSeconds: 3,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { auto_enhance_rate: 1, count: 0, recover_time: 24 },
+      attributeModifiers: [],
+      lifecycleSequences: {
+        start: sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy',
+            target: 'buffOwner',
+            source: 'buffSource',
+            inheritSourceSkillCastInfo: true,
+          }),
+        ),
+      },
+    },
+    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_2: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 10,
+      addingCooldownSeconds: 0.2,
+      durationSeconds: 3,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { auto_enhance_rate: 1, count: 0, recover_time: 24 },
+      attributeModifiers: [],
+      lifecycleSequences: {
+        start: sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy',
+            target: 'buffOwner',
+            source: 'buffSource',
+            inheritSourceSkillCastInfo: true,
+          }),
+        ),
+      },
+    },
+    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_3: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 10,
+      addingCooldownSeconds: 0.2,
+      durationSeconds: 3,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { auto_enhance_rate: 1, count: 0, recover_time: 24 },
+      attributeModifiers: [],
+      lifecycleSequences: {
+        start: sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy',
+            target: 'buffOwner',
+            source: 'buffSource',
+            inheritSourceSkillCastInfo: true,
+          }),
+        ),
+      },
+    },
+    buff_chr_0034_typhoea_normal_skill_arrow_num: {
+      stackingType: 'enhance',
+      priority: 0,
+      maxStackCount: 4,
+      presentation: {
+        visible: true,
+        showInHeadBarCommon: false,
+        showInHeadBarAttached: false,
+        showInSquadIcon: false,
+        onlyShowForMainCharacter: false,
+        blinkInMainCharHpBar: false,
+        showProgressInHpBar: false,
+        showProgressInNormalSkillButton: false,
+        useWeakProgressInNormalSkillButton: false,
+        showProgressInUltimateSkillButton: false,
+        forceRaiseIconEvent: true,
+        showWarningBackground: false,
+        playStrongInAnimation: false,
+        hasCharHpBarVfxType: false,
+        charHpBarVfxType: 'Fire',
+        iconStyleInSquad: 'NoLifeTime',
+        abnormalColorType: 'Physical',
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'AttentionDebuff' },
+      },
+      applyTags: [],
+      extendTags: [],
+      blackboard: { auto_enhance_rate: 1, count: 0, recover_time: 24 },
+      attributeModifiers: [],
+      abilityEventResponses: [
+        {
+          event: 'customAbilityEvent',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              {
+                kind: 'eventCustomAbilityNameMatch',
+                eventName: 'arrowrecover_speedup',
+                outputKey: 'auto_enhance_rate',
+              },
+              sequence(),
+            ),
+          ),
+        },
+      ],
+    },
+    buff_chr_0034_typhoea_normal_skill_hitstop: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      durationSeconds: 2,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+      lifecycleSequences: {
+        enable: sequence(
+          step('startTimeDilation', {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.35 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 50,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0.135,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.333333343,
+                  outWeight: 0.333333343,
+                },
+                {
+                  time: 0.25494957,
+                  value: 0.135,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.333333343,
+                  outWeight: 0.333333343,
+                },
+                {
+                  time: 0.75,
+                  value: 0.135,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.333333343,
+                  outWeight: 0.333333343,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.333333343,
+                  outWeight: 0.333333343,
+                },
+              ],
+            },
+            finishByAction: false,
+            ignoredTargets: [],
+          }),
+        ),
+      },
+    },
+    buff_chr_0034_typhoea_normal_skill_targetfind: {
+      stackingType: 'highPriority',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_normal_start_hittimes: {
+      stackingType: 'enhance',
+      priority: 0,
+      maxStackCount: 4,
+      durationSeconds: 0.5,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_passitive_enemy_listennaturalspellbrust: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 10,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { auto_enhance_rate: 1, count: 0, recover_time: 24 },
+      attributeModifiers: [],
+      abilityEventResponses: [
+        {
+          event: 'addedBuff',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellBurst/NaturalBurst'],
+              },
+              sequence(
+                branch(
+                  {
+                    kind: 'entityTagMatch',
+                    target: 'actionInputTarget',
+                    tagQueryType: 'hasAny',
+                    tags: ['Skill/Character/chr_0034_typhoea'],
+                  },
+                  sequence(
+                    step('applyBuff', {
+                      buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_1',
+                      target: 'buffSource',
+                      source: 'buffSource',
+                      inheritSourceSkillCastInfo: true,
+                    }),
+                  ),
+                  sequence(
+                    step('applyBuff', {
+                      buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_3',
+                      target: 'buffSource',
+                      source: 'buffSource',
+                      inheritSourceSkillCastInfo: true,
+                    }),
+                  ),
+                  { alwaysNext: true },
+                ),
+              ),
+            ),
+          ),
+        },
+      ],
+    },
+    buff_chr_0034_typhoea_passive: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 999,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_passive_arrowrecover: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 999,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {
+        arrow_num: 0,
+        arrow_recover_time: 25,
+        energy_enterfight: 6,
+        max_arrow: 5,
+        truly_exit_fight: 1,
+      },
+      attributeModifiers: [],
+      lifecycleSequences: {
+        start: sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_num',
+            target: 'buffOwner',
+            source: 'buffSource',
+            count: { kind: 'constant', value: 4 },
+            inheritSourceSkillCastInfo: true,
+          }),
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy',
+            target: 'buffOwner',
+            source: 'buffSource',
+            count: { kind: 'blackboard', key: 'energy_enterfight' },
+            inheritSourceSkillCastInfo: true,
+          }),
+          step('modifyActionValue', {
+            key: 'truly_exit_fight',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          }),
+        ),
+        enable: sequence(
+          step('applyBuff', {
+            buffId: 'buff_chr_0034_typhoea_passitive_enemy_listennaturalspellbrust',
+            target: 'enemy',
+            finishByAction: true,
+          }),
+        ),
+      },
+      abilityEventResponses: [
+        {
+          event: 'enterFight',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              {
+                kind: 'actionValueCompare',
+                left: { kind: 'blackboard', key: 'truly_exit_fight', fallback: 0 },
+                operator: 'equal',
+                right: { kind: 'constant', value: 1 },
+              },
+              sequence(
+                step('finishBuffsById', {
+                  target: 'buffOwner',
+                  buffIds: [
+                    'buff_chr_0034_typhoea_normal_skill_arrow_num',
+                    'buff_chr_0034_typhoea_normal_skill_arrow_energy',
+                  ],
+                  reason: 'other',
+                }),
+                step('applyBuff', {
+                  buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy',
+                  target: 'buffOwner',
+                  source: 'buffSource',
+                  count: { kind: 'blackboard', key: 'energy_enterfight' },
+                  inheritSourceSkillCastInfo: true,
+                }),
+                step('readBuffStackCount', {
+                  target: 'buffOwner',
+                  outputKey: 'arrow_num',
+                  query: {
+                    kind: 'id',
+                    buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                  },
+                }),
+                step('applyBuff', {
+                  buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_num',
+                  target: 'buffOwner',
+                  source: 'buffSource',
+                  count: { kind: 'blackboard', key: 'arrow_num' },
+                  inheritSourceSkillCastInfo: true,
+                }),
+                step('finishBuffsById', {
+                  target: 'buffOwner',
+                  buffIds: ['buff_chr_0034_typhoea_passive_arrowrecover_exitfight'],
+                  reason: 'other',
+                }),
+                step('modifyActionValue', {
+                  key: 'truly_exit_fight',
+                  operation: 'assign',
+                  value: { kind: 'constant', value: 0 },
+                }),
+              ),
+            ),
+          ),
+        },
+        {
+          event: 'ownerSwitchToGuard',
+          priority: 0,
+          sequence: sequence(
+            step('finishBuffsById', {
+              target: 'buffOwner',
+              buffIds: ['buff_chr_0034_typhoea_normal_skill_show_arrowui'],
+              reason: 'other',
+            }),
+          ),
+        },
+      ],
+    },
+    buff_chr_0034_typhoea_passive_arrowrecover_exitfight: {
+      stackingType: 'timedGrowingEnhance',
+      priority: 0,
+      maxStackCount: 4,
+      durationSeconds: { blackboardKey: 'arrow_recover_time' },
+      presentation: {
+        visible: true,
+        showInHeadBarCommon: false,
+        showInHeadBarAttached: false,
+        showInSquadIcon: false,
+        onlyShowForMainCharacter: false,
+        blinkInMainCharHpBar: false,
+        showProgressInHpBar: false,
+        showProgressInNormalSkillButton: false,
+        useWeakProgressInNormalSkillButton: false,
+        showProgressInUltimateSkillButton: false,
+        forceRaiseIconEvent: true,
+        showWarningBackground: false,
+        playStrongInAnimation: false,
+        hasCharHpBarVfxType: false,
+        charHpBarVfxType: 'Fire',
+        iconStyleInSquad: 'Default',
+        abnormalColorType: 'Physical',
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'AttentionDebuff' },
+      },
+      applyTags: [],
+      extendTags: [],
+      blackboard: { arrow_recover_time: 3, max_arrow: 5 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_passive_increase_attackrange: {
+      stackingType: 'stack',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { count: 0 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_potential_atkup: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { atk_up: 0.08 },
+      attributeModifiers: [
+        { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
+      ],
+    },
+    buff_chr_0034_typhoea_potential_decrease_sheildcd: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { decrease_cd: -3 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_power_attack_maintarget: {
+      stackingType: 'refresh',
+      priority: 0,
+      maxStackCount: 10,
+      durationSeconds: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { count: 0 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_talent_linken_sphere: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {
+        damage_resist: 0.3,
+        param1: 0,
+        param2: 0,
+        param3: 0,
+        protect_times: 1,
+        sheild_cd: 18,
+      },
+      attributeModifiers: [],
+      lifecycleSequences: {
+        start: sequence(
+          step('calculateActionValue', {
+            key: 'param1',
+            operation: 'multiply',
+            left: { kind: 'blackboard', key: 'damage_resist' },
+            right: { kind: 'constant', value: -1 },
+          }),
+          step('calculateActionValue', {
+            key: 'damage_resist',
+            operation: 'add',
+            left: { kind: 'constant', value: 1 },
+            right: { kind: 'blackboard', key: 'param1' },
+          }),
+        ),
+      },
+      abilityEventResponses: [
+        {
+          event: 'beforeCastSkill',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              {
+                kind: 'eventSkillIdIn',
+                skillIds: [
+                  'chr_0034_typhoea_normal_skill_floating_start',
+                  'chr_0034_typhoea_ultimate_skillfloating',
+                ],
+              },
+              sequence(
+                branch(
+                  {
+                    kind: 'buffIdStackCompare',
+                    target: 'buffOwner',
+                    buffIds: ['buff_chr_0034_typhoea_talent_linken_sphere_cd'],
+                    operator: 'less',
+                    value: { kind: 'constant', value: 1 },
+                  },
+                  sequence(
+                    step('applyBuff', {
+                      buffId: 'buff_chr_0034_typhoea_talent_linken_sphere_enable',
+                      target: 'buffOwner',
+                      source: 'buffSource',
+                      count: { kind: 'blackboard', key: 'protect_times' },
+                      inheritSourceSkillCastInfo: true,
+                      copiedBlackboardAssignments: {
+                        protect_times: 'protect_times',
+                        damage_resist: 'param1',
+                      },
+                    }),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        },
+        {
+          event: 'finishedBuff',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0034_typhoea_floatingmode'] },
+              sequence(
+                step('finishBuffsById', {
+                  target: 'buffOwner',
+                  buffIds: ['buff_chr_0034_typhoea_talent_linken_sphere_enable'],
+                  reason: 'other',
+                }),
+              ),
+            ),
+          ),
+        },
+        {
+          event: 'customAbilityEvent',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              { kind: 'eventCustomAbilityNameMatch', eventName: 'sheild_broken' },
+              sequence(
+                branch(
+                  {
+                    kind: 'buffIdStackCompare',
+                    target: 'buffOwner',
+                    buffIds: ['buff_chr_0034_typhoea_potential_decrease_sheildcd'],
+                    operator: 'greaterOrEqual',
+                    value: { kind: 'constant', value: 1 },
+                  },
+                  sequence(
+                    step('readBuffBlackboard', {
+                      target: 'buffOwner',
+                      query: {
+                        kind: 'id',
+                        buffIds: ['buff_chr_0034_typhoea_potential_decrease_sheildcd'],
+                      },
+                      desiredKey: 'decrease_cd',
+                      outputKey: 'param3',
+                    }),
+                    step('calculateActionValue', {
+                      key: 'param2',
+                      operation: 'add',
+                      left: { kind: 'blackboard', key: 'sheild_cd' },
+                      right: { kind: 'blackboard', key: 'param3' },
+                    }),
+                  ),
+                  sequence(
+                    step('modifyActionValue', {
+                      key: 'param2',
+                      operation: 'assign',
+                      value: { kind: 'blackboard', key: 'sheild_cd' },
+                    }),
+                  ),
+                  { alwaysNext: true },
+                ),
+                step('applyBuff', {
+                  buffId: 'buff_chr_0034_typhoea_talent_linken_sphere_cd',
+                  target: 'buffOwner',
+                  source: 'buffSource',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { sheild_cd: 'param2' },
+                }),
+              ),
+            ),
+          ),
+        },
+      ],
+    },
+    buff_chr_0034_typhoea_talent_linken_sphere_cd: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 1,
+      durationSeconds: { blackboardKey: 'sheild_cd' },
+      presentation: {
+        visible: true,
+        iconId: 'icon_battle_buff_typhoea_sheild_broken',
+        iconPath: '/icons/icon_battle_buff_typhoea_sheild_broken.webp',
+        showInHeadBarCommon: false,
+        showInHeadBarAttached: false,
+        showInSquadIcon: true,
+        onlyShowForMainCharacter: false,
+        blinkInMainCharHpBar: false,
+        showProgressInHpBar: false,
+        showProgressInNormalSkillButton: false,
+        useWeakProgressInNormalSkillButton: false,
+        showProgressInUltimateSkillButton: false,
+        forceRaiseIconEvent: false,
+        showWarningBackground: false,
+        playStrongInAnimation: false,
+        hasCharHpBarVfxType: false,
+        charHpBarVfxType: 'Fire',
+        iconStyleInSquad: 'LifeTime',
+        abnormalColorType: 'Physical',
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'AttentionDebuff' },
+      },
+      applyTags: [],
+      extendTags: [],
+      blackboard: { damage_resist: 0.3, param1: 0, protect_times: 1, sheild_cd: 18 },
+      attributeModifiers: [],
+    },
+    buff_chr_0034_typhoea_talent_linken_sphere_enable: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 5,
+      presentation: {
+        visible: true,
+        iconId: 'icon_battle_buff_typhoea_sheild',
+        iconPath: '/icons/icon_battle_buff_typhoea_sheild.webp',
+        showInHeadBarCommon: false,
+        showInHeadBarAttached: false,
+        showInSquadIcon: true,
+        onlyShowForMainCharacter: false,
+        blinkInMainCharHpBar: false,
+        showProgressInHpBar: false,
+        showProgressInNormalSkillButton: false,
+        useWeakProgressInNormalSkillButton: false,
+        showProgressInUltimateSkillButton: false,
+        forceRaiseIconEvent: false,
+        showWarningBackground: false,
+        playStrongInAnimation: false,
+        hasCharHpBarVfxType: false,
+        charHpBarVfxType: 'Fire',
+        iconStyleInSquad: 'Default',
+        abnormalColorType: 'Physical',
+        orderPriority: { useDirectoryValue: false, value: 0, category: 'AttentionDebuff' },
+      },
+      applyTags: [],
+      extendTags: [],
+      blackboard: { damage_resist: -0.3, protect_times: 1 },
+      attributeModifiers: [],
+      damageModifiers: [
+        {
+          enabledSide: 'defender',
+          processors: [
+            {
+              kind: 'damageScale',
+              side: 'defender',
+              zone: 'product',
+              addition: { blackboardKey: 'damage_resist' },
+            },
+          ],
+        },
+      ],
+    },
+    buff_chr_0034_typhoea_talent_linken_sphere_superarmour: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 5,
+      durationSeconds: 0.1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: { protect_times: 1, sheild_cd: 18 },
+      attributeModifiers: [],
+      lifecycleSequences: {
+        start: sequence(
+          step('startTimeDilation', {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            slot: 'unassigned',
+            priority: 50,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: -0.00245398539,
+                  value: 0.05,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.333333343,
+                  outWeight: 0.333333343,
+                },
+                {
+                  time: 0.8000001,
+                  value: 0.05,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.333333343,
+                  outWeight: 0.333333343,
+                },
+                {
+                  time: 0.9975461,
+                  value: 0.326683253,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.333333343,
+                  outWeight: 0.333333343,
+                },
+              ],
+            },
+            finishByAction: false,
+            ignoredTargets: [],
+          }),
+        ),
+      },
+    },
+    buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 999,
+      triggerIntervalSeconds: 0,
+      waitFirstTriggerInterval: true,
+      maxTriggerCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {
+        arrow_energy_given: 1,
+        arrow_num_given: 2,
+        atb: 10,
+        atk_scale_center: 0.5,
+        atk_scale_main: 1,
+        atk_scale_outer: 0.1,
+        is_floating_mode: 0,
+        poise: 0,
+        prama1: 0,
+        trigger_times: 0,
+      },
+      attributeModifiers: [],
+      abilityEventResponses: [
+        {
+          event: 'beforeOutputDamage',
+          priority: 0,
+          sequence: sequence(
+            branch(
+              {
+                kind: 'eventDamageGameplayTagsMatch',
+                match: 'hasAny',
+                tags: [
+                  'Damage/TyphoeaSkill/FloatingHit_Weak',
+                  'Damage/TyphoeaSkill/FloatingHit_Heavy',
+                ],
+              },
+              sequence(
+                branch(
+                  {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'blackboard', key: 'trigger_times', fallback: 0 },
+                    operator: 'less',
+                    right: { kind: 'constant', value: 5 },
+                  },
+                  sharedActionSequence47,
+                  sequence(
+                    branch(
+                      {
+                        kind: 'all',
+                        conditions: [
+                          {
+                            kind: 'actionValueCompare',
+                            left: { kind: 'blackboard', key: 'trigger_times', fallback: 0 },
+                            operator: 'equal',
+                            right: { kind: 'constant', value: 5 },
+                          },
+                          {
+                            kind: 'buffIdStackCompare',
+                            target: 'buffOwner',
+                            buffIds: [
+                              'buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain_timer',
+                            ],
+                            operator: 'greaterOrEqual',
+                            value: { kind: 'constant', value: 1 },
+                          },
+                        ],
+                      },
+                      sharedActionSequence47,
+                      undefined,
+                      { alwaysNext: true },
+                    ),
+                  ),
+                  { alwaysNext: true },
+                ),
+              ),
+              undefined,
+              { alwaysNext: true },
+            ),
+          ),
+        },
+      ],
+    },
+    buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain_timer: {
+      stackingType: 'unique',
+      priority: 0,
+      maxStackCount: 999,
+      durationSeconds: 0.2,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {
+        arrow_energy_given: 1,
+        arrow_num_given: 2,
+        atb: 10,
+        atk_scale_center: 0.5,
+        atk_scale_main: 1,
+        atk_scale_outer: 0.1,
+        is_floating_mode: 0,
+        poise: 0,
+        prama1: 0,
+        trigger_times: 0,
+      },
+      attributeModifiers: [],
+    },
+  },
+  abilityEntityDefinitions: {
+    abilityentity_chr_0034_typhoea_arrow: {
+      bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
+      lifetime: { kind: 'limited', durationSeconds: 3 },
+      maxStackingCount: 1,
+      childSkill: {
+        skillId: 'chr_0034_typhoea_attack_deadarrow',
+        blackboard: { atb: 0, atk_scale: 0, duration: 0, hit_index: 0 },
+        scheduledSequences: [],
+      },
+    },
+    abilityentity_chr_0034_typhoea_combo_presistdamage: {
+      bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
+      lifetime: { kind: 'limited', durationSeconds: 10 },
+      maxStackingCount: 1,
+      childSkill: {
+        skillId: 'chr_0034_typhoea_combo_persistentdamage',
+        blackboard: {
+          atb: 0,
+          atk_scale: 0,
+          atk_scale_persistent: 0,
+          hit_index: 0,
+          naturalinflect_stack: 0,
+          persistent_naturalburst_increase: 0,
+          persistent_slow: 0,
+          persistent_time: 0,
+          recover_bufftime: 12,
+          usp: 0,
+        },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step('calculateActionValue', {
+                key: 'atk_scale_persistent',
+                operation: 'divide',
+                left: { kind: 'blackboard', key: 'atk_scale_persistent' },
+                right: { kind: 'constant', value: 18 },
+              }),
+            ),
+            3,
+          ),
+          scheduled(
+            0,
+            sequence(
+              repeatEachTick(
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_persistent' },
+                      tags: ['comboSkill'],
+                    },
+                    'abilityentity_chr_0034_typhoea_combo_presistdamage:chr_0034_typhoea_combo_persistentdamage:/childSkill/scheduledSequences/1/sequence/steps/0/body/steps/0',
+                  ),
+                ),
+                {
+                  nativeChanneling: {
+                    executeEachFrame: true,
+                    triggerIntervalSeconds: 0.3333333,
+                    maxCountPerTarget: 18,
+                    targetTriggerIntervalSeconds: 0.33,
+                  },
+                },
+              ),
+            ),
+            180,
+          ),
+          scheduled(
+            0,
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_combo_enemy_debuff',
+                target: 'enemy',
+                finishByAction: true,
+                inheritSourceSkillCastInfo: true,
+                blackboardAssignments: {
+                  damage_up: { kind: 'blackboard', key: 'persistent_naturalburst_increase' },
+                  slow_down: { kind: 'blackboard', key: 'persistent_slow' },
+                },
+              }),
+            ),
+            180,
+          ),
+        ],
+      },
+    },
+    abilityentity_chr_0034_typhoea_ultimateskill_arrowrain: {
+      bornTags: [
+        'SelectCategory/Unmarkable',
+        'Immune/Damage',
+        'Skill/Character/chr_0034_typhoea/ArrowRain_Main',
+      ],
+      lifetime: { kind: 'limited', durationSeconds: 10 },
+      maxStackingCount: 1,
+      childSkill: {
+        skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain',
+        blackboard: {
+          arrow_energy_given: 1,
+          arrow_num_given: 2,
+          atb: 10,
+          atk_scale_center: 0.5,
+          atk_scale_main: 1,
+          atk_scale_outer: 0.1,
+          is_floating_mode: 0,
+          poise: 0,
+          potential_damge_up: 1,
+          prama1: 0,
+        },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              branch(
+                {
+                  kind: 'buffIdStackCompare',
+                  target: 'caster',
+                  buffIds: ['buff_chr_0034_typhoea_floatingmode'],
+                  operator: 'greaterOrEqual',
+                  value: { kind: 'constant', value: 1 },
+                },
+                sequence(
+                  step('modifyActionValue', {
+                    key: 'is_floating_mode',
+                    operation: 'assign',
+                    value: { kind: 'constant', value: 1 },
+                  }),
+                ),
+              ),
+            ),
+            3,
+          ),
+          scheduled(
+            0,
+            sequence(
+              step('calculateActionValue', {
+                key: 'atk_scale_main',
+                operation: 'multiply',
+                left: { kind: 'blackboard', key: 'atk_scale_main' },
+                right: { kind: 'blackboard', key: 'potential_damge_up' },
+              }),
+              step('calculateActionValue', {
+                key: 'atk_scale_center',
+                operation: 'multiply',
+                left: { kind: 'blackboard', key: 'atk_scale_center' },
+                right: { kind: 'blackboard', key: 'potential_damge_up' },
+              }),
+              step('calculateActionValue', {
+                key: 'atk_scale_outer',
+                operation: 'multiply',
+                left: { kind: 'blackboard', key: 'atk_scale_outer' },
+                right: { kind: 'blackboard', key: 'potential_damge_up' },
+              }),
+            ),
+            3,
+          ),
+          scheduled(
+            1,
+            sequence(
+              forEachTarget(
+                'enemy',
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'nature',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_main' },
+                      tags: ['ultimateSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'blackboard', key: 'poise' },
+                    },
+                    'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain:chr_0034_typhoea_ultimate_skill_arrowrain:/childSkill/scheduledSequences/2/sequence/steps/0/body/steps/0',
+                  ),
+                ),
+              ),
+            ),
+            3,
+          ),
+          scheduled(
+            0,
+            sequence(
+              step('applyBuff', {
+                buffId: 'buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain',
+                target: 'caster',
+                inheritSourceSkillCastInfo: true,
+                finishByAction: true,
+                copiedBlackboardAssignments: {
+                  atk_scale_center: 'atk_scale_center',
+                  atk_scale_main: 'atk_scale_main',
+                  atk_scale_outer: 'atk_scale_outer',
+                },
+              }),
+            ),
+            600,
+          ),
+        ],
+      },
+    },
+    abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub: {
+      bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
+      lifetime: { kind: 'limited', durationSeconds: 3 },
+      maxStackingCount: 1,
+      childSkills: {
+        chr_0034_typhoea_ultimate_skill_arrowrain_sub1: {
+          skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub1',
+          blackboard: {
+            arrow_energy_given: 1,
+            arrow_num_given: 2,
+            atb: 10,
+            atk_scale_center: 0.5,
+            atk_scale_main: 1,
+            atk_scale_outer: 0.1,
+            is_floating_mode: 0,
+            poise: 0,
+            prama1: 0,
+            trigger_times: 0,
+          },
+          scheduledSequences: [
+            scheduled(
+              0,
+              sequence(
+                step('calculateActionValue', {
+                  key: 'atk_scale_center',
+                  operation: 'divide',
+                  left: { kind: 'blackboard', key: 'atk_scale_center' },
+                  right: { kind: 'constant', value: 3 },
+                }),
+                step('calculateActionValue', {
+                  key: 'atk_scale_outer',
+                  operation: 'divide',
+                  left: { kind: 'blackboard', key: 'atk_scale_outer' },
+                  right: { kind: 'constant', value: 3 },
+                }),
+              ),
+              2,
+            ),
+            scheduled(
+              6,
+              sequence(
+                repeatEachTick(
+                  sequence(
+                    step(
+                      'dealDamage',
+                      {
+                        damageType: 'nature',
+                        attackScale: { kind: 'blackboard', key: 'atk_scale_outer' },
+                        tags: ['ultimateSkill'],
+                      },
+                      'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub:chr_0034_typhoea_ultimate_skill_arrowrain_sub1|chr_0034_typhoea_ultimate_skill_arrowrain_sub2:/childSkills/chr_0034_typhoea_ultimate_skill_arrowrain_sub1/scheduledSequences/1/sequence/steps/0/body/steps/0',
+                    ),
+                  ),
+                  {
+                    nativeChanneling: {
+                      executeEachFrame: true,
+                      triggerIntervalSeconds: 0.033,
+                      maxCountPerTarget: 3,
+                      targetTriggerIntervalSeconds: 0.1,
+                    },
+                  },
+                ),
+              ),
+              15,
+            ),
+            scheduled(
+              14,
+              sequence(
+                branch(
+                  {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'blackboard', key: 'trigger_times', fallback: 0 },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 5 },
+                  },
+                  sequence(
+                    step('findOwnerSpawnedAbilityEntities', {
+                      saveToContextKey: 'tar',
+                      abilityEntityIds: ['abilityentity_chr_0034_typhoea_ultimateskill_arrowrain'],
+                    }),
+                    forEachContextTarget('tar', sequence(step('finishCurrentAbilityEntity', {}))),
+                  ),
+                ),
+              ),
+              15,
+            ),
+          ],
+        },
+        chr_0034_typhoea_ultimate_skill_arrowrain_sub2: {
+          skillId: 'chr_0034_typhoea_ultimate_skill_arrowrain_sub2',
+          blackboard: {
+            arrow_energy_given: 1,
+            arrow_num_given: 2,
+            atb: 10,
+            atk_scale_1: 0,
+            atk_scale_2: 0,
+            atk_scale_center: 0.5,
+            atk_scale_main: 1,
+            atk_scale_outer: 0.1,
+            is_floating_mode: 0,
+            poise: 0,
+            prama1: 0,
+            trigger_times: 0,
+          },
+          scheduledSequences: [
+            scheduled(
+              0,
+              sequence(
+                step('calculateActionValue', {
+                  key: 'atk_scale_1',
+                  operation: 'multiply',
+                  left: { kind: 'blackboard', key: 'atk_scale_center' },
+                  right: { kind: 'constant', value: 0.6 },
+                }),
+                step('calculateActionValue', {
+                  key: 'atk_scale_2',
+                  operation: 'multiply',
+                  left: { kind: 'blackboard', key: 'atk_scale_center' },
+                  right: { kind: 'constant', value: 0.08 },
+                }),
+                step('calculateActionValue', {
+                  key: 'atk_scale_center',
+                  operation: 'divide',
+                  left: { kind: 'blackboard', key: 'atk_scale_center' },
+                  right: { kind: 'constant', value: 3 },
+                }),
+                step('calculateActionValue', {
+                  key: 'atk_scale_outer',
+                  operation: 'divide',
+                  left: { kind: 'blackboard', key: 'atk_scale_outer' },
+                  right: { kind: 'constant', value: 5 },
+                }),
+              ),
+              2,
+            ),
+            scheduled(
+              6,
+              sequence(
+                repeatEachTick(
+                  sequence(
+                    step(
+                      'dealDamage',
+                      {
+                        damageType: 'nature',
+                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                        tags: ['ultimateSkill'],
+                        features: ['canBreakWeakness'],
+                      },
+                      'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub:chr_0034_typhoea_ultimate_skill_arrowrain_sub1|chr_0034_typhoea_ultimate_skill_arrowrain_sub2:/childSkills/chr_0034_typhoea_ultimate_skill_arrowrain_sub2/scheduledSequences/1/sequence/steps/0/body/steps/0',
+                    ),
+                  ),
+                  {
+                    nativeChanneling: {
+                      executeEachFrame: true,
+                      triggerIntervalSeconds: 0.033,
+                      maxCountPerTarget: 5,
+                      targetTriggerIntervalSeconds: 0.06,
+                    },
+                  },
+                ),
+              ),
+              21,
+            ),
+            scheduled(
+              30,
+              sequence(
+                repeatEachTick(
+                  sequence(
+                    step(
+                      'dealDamage',
+                      {
+                        damageType: 'nature',
+                        attackScale: { kind: 'blackboard', key: 'atk_scale_1' },
+                        tags: ['ultimateSkill'],
+                        features: ['canBreakWeakness'],
+                      },
+                      'abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub:chr_0034_typhoea_ultimate_skill_arrowrain_sub1|chr_0034_typhoea_ultimate_skill_arrowrain_sub2:/childSkills/chr_0034_typhoea_ultimate_skill_arrowrain_sub2/scheduledSequences/2/sequence/steps/0/body/steps/0',
+                    ),
+                  ),
+                  {
+                    nativeChanneling: {
+                      executeEachFrame: true,
+                      triggerIntervalSeconds: 0.033,
+                      maxCountPerTarget: 1,
+                      targetTriggerIntervalSeconds: 0.03333,
+                    },
+                  },
+                ),
+              ),
+              33,
+            ),
+            scheduled(
+              49,
+              sequence(
+                branch(
+                  {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'blackboard', key: 'trigger_times', fallback: 0 },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 5 },
+                  },
+                  sequence(
+                    step('findOwnerSpawnedAbilityEntities', {
+                      saveToContextKey: 'tar',
+                      abilityEntityIds: ['abilityentity_chr_0034_typhoea_ultimateskill_arrowrain'],
+                    }),
+                    forEachContextTarget('tar', sequence(step('finishCurrentAbilityEntity', {}))),
+                  ),
+                ),
+              ),
+              50,
+            ),
+          ],
+        },
+      },
+    },
+  },
+  conversionSupport: { completeness: 'complete', missingCapabilities: [] },
+} as const satisfies OperatorDefinition;
+
+export default typhoeus;

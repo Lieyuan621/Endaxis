@@ -1,0 +1,186 @@
+{
+  "100003": {
+    "name": "环境：过速",
+    "description": "干员连携技冷却时间<color=#cc9900>-{1-cd_scale:0%}</color>，战技伤害<color=#cc9900>-{-dmg_scale:0%}</color>"
+  },
+  "100201": {
+    "name": "改写：刺激",
+    "description": "敌人造成伤害<color=#cc9900>+{dmg_up:0%}</color>/+{@100202@dmg_up:0%}"
+  },
+  "100202": {
+    "name": "改写：刺激",
+    "description": "敌人造成伤害+{@100201@dmg_up:0%}/<color=#cc9900>+{dmg_up:0%}</color>"
+  },
+  "100301": {
+    "name": "队列：失温",
+    "description": "干员每施放<color=#cc9900>{times:0}</color>/{@100302@times:0}次战技，主控干员获得一层<color=#009cad>寒冷附着</color>。每名干员3秒冷却时间"
+  },
+  "100302": {
+    "name": "队列：失温",
+    "description": "干员每施放{@100301@times:0}/<color=#cc9900>{times:0}</color>次战技，主控干员获得一层<color=#009cad>寒冷附着</color>。每名干员3秒冷却时间"
+  },
+  "100401": {
+    "name": "队列：热流失",
+    "description": "干员每施放<color=#cc9900>{times:0}</color>/{@100402@times:0}次连携技，主控干员获得一层<color=#009cad>寒冷附着</color>。每名干员3秒冷却时间"
+  },
+  "100402": {
+    "name": "队列：热流失",
+    "description": "干员每施放{@100401@times:0}/<color=#cc9900>{times:0}</color>次连携技，主控干员获得一层<color=#009cad>寒冷附着</color>。每名干员3秒冷却时间"
+  },
+  "100501": {
+    "name": "队列：折刃",
+    "description": "干员每施放一次终结技，该干员之后的终结技伤害<color=#cc9900>-{-dmg_scale_per_layer:0%}</color>/-{@100502@-dmg_scale_per_layer:0%}"
+  },
+  "100502": {
+    "name": "队列：折刃",
+    "description": "干员每施放一次终结技，该干员之后的终结技伤害-{@100501@-dmg_scale_per_layer:0%}/<color=#cc9900>-{-dmg_scale_per_layer:0%}</color>"
+  },
+  "100601": {
+    "name": "队列：斩首",
+    "description": "主控干员受到伤害<color=#cc9900>+{dmg_scale:0%}</color>/+{@100602@dmg_scale:0%}"
+  },
+  "100602": {
+    "name": "队列：斩首",
+    "description": "主控干员受到伤害+{@100601@dmg_scale:0%}/<color=#cc9900>+{dmg_scale:0%}</color>"
+  },
+  "100803": {
+    "name": "队列：脱力",
+    "description": "干员普通攻击伤害<color=#cc9900>-{-dmg_scale:0%}</color>"
+  },
+  "100901": {
+    "name": "队列：扼制",
+    "description": "干员使敌人的<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>层数增加后，该干员造成的对应类型伤害<color=#cc9900>-{-dmg_scale:0%}</color>/-{@100902@-dmg_scale:0%}，持续10秒"
+  },
+  "100902": {
+    "name": "队列：扼制",
+    "description": "干员使敌人的<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>层数增加后，该干员造成的对应类型伤害-{@100901@-dmg_scale:0%}/<color=#cc9900>-{-dmg_scale:0%}</color>，持续10秒"
+  },
+  "101001": {
+    "name": "改写：屏障",
+    "description": "每个敌人每<color=#cc9900>{duration:0}</color>秒只能被施加一次<color=#a68360>破防</color>或同类型的<color=#1da6e0>法术附着</color>"
+  },
+  "101101": {
+    "name": "改写：愈合",
+    "description": "敌人受到控制效果影响时，每秒回复<color=#cc9900>{hp_ratio:0%}</color>/{@101102@hp_ratio:0%}最大生命值"
+  },
+  "101102": {
+    "name": "改写：愈合",
+    "description": "敌人受到控制效果影响时，每秒回复{@101101@hp_ratio:0%}/<color=#cc9900>{hp_ratio:0%}</color>最大生命值"
+  },
+  "101201": {
+    "name": "环境：分隔",
+    "description": "战斗开始后，禁止切换主控干员"
+  },
+  "101301": {
+    "name": "环境：厌氧",
+    "description": "体力恢复速度<color=#cc9900>-{-ratio:0%}</color>"
+  },
+  "101303": {
+    "name": "环境：禁锢",
+    "description": "禁止闪避"
+  },
+  "101402": {
+    "name": "队列：衰竭",
+    "description": "近战干员受到伤害的<color=#cc9900>{hp_down_ratio_melee:0%}</color>会转为减少生命值上限，远程干员转化率为<color=#cc9900>{hp_down_ratio:0%}</color>"
+  },
+  "101501": {
+    "name": "改写：遗毒",
+    "description": "敌人被击败后会留下有毒物质，干员处于其中时每秒受到<color=#cc9900>{atk_scale:0%}</color>/{@101502@atk_scale:0%}最大生命值伤害"
+  },
+  "101502": {
+    "name": "改写：遗毒",
+    "description": "敌人被击败后会留下有毒物质，干员处于其中时每秒受到{@101501@atk_scale:0%}/<color=#cc9900>{atk_scale:0%}</color>最大生命值伤害"
+  },
+  "101603": {
+    "name": "改写：热量汲取",
+    "description": "敌人对主控干员施加<color=#009cad>寒冷附着</color>时，转为直接施加<color=#009cad>冻结</color>"
+  },
+  "101701": {
+    "name": "环境：融化",
+    "description": "主控干员受到的<color=#009cad>冻结</color>时间增加至<color=#cc9900>{duration:0}</color>秒，施放<color=#f45511>灼热类型</color>技能可以解除<color=#009cad>冻结</color>"
+  },
+  "101801": {
+    "name": "环境：升华",
+    "description": "主控干员受到的<color=#009cad>冻结</color>时间增加至<color=#cc9900>{duration:0}</color>秒，施放<color=#6d9a00>自然类型</color>技能可以解除<color=#009cad>冻结</color>"
+  },
+  "101901": {
+    "name": "环境：电解",
+    "description": "主控干员受到的<color=#009cad>冻结</color>时间增加至<color=#cc9900>{duration:0}</color>秒，施放<color=#cc9900>电磁类型</color>技能可以解除<color=#009cad>冻结</color>"
+  },
+  "102001": {
+    "name": "环境：枯萎",
+    "description": "波次间隔只产生<color=#cc9900>1</color>个治愈团块"
+  },
+  "102002": {
+    "name": "环境：枯萎",
+    "description": "波次间隔不产生治愈团块"
+  },
+  "102101": {
+    "name": "环境：时限",
+    "description": "倒计时<color=#cc9900>-{-time:0}</color>/-{@102102@-time:0}/-{@102103@-time:0}秒"
+  },
+  "102102": {
+    "name": "环境：时限",
+    "description": "倒计时-{@102101@-time:0}/<color=#cc9900>-{-time:0}</color>/-{@102103@-time:0}秒"
+  },
+  "102103": {
+    "name": "环境：时限",
+    "description": "倒计时-{@102101@-time:0}/-{@102102@-time:0}/<color=#cc9900>-{-time:0}</color>秒"
+  },
+  "102201": {
+    "name": "环境：再构成",
+    "description": "最终波次的“刚角天使”与“重刺天使”变为“刚角天使α”与“重刺天使α”"
+  },
+  "102202": {
+    "name": "环境：再构成",
+    "description": "第三、四波次的“刚角天使”与“重刺天使”变为“刚角天使α”与“重刺天使α”"
+  },
+  "102302": {
+    "name": "改写：奔腾",
+    "description": "敌人移动速度<color=#cc9900>+{speedup_scale-1:0%}</color>，0.1秒内受到的伤害不会超过最大生命值的<color=#cc9900>{dmg_scale:0%}</color>"
+  },
+  "102401": {
+    "name": "环境：切削",
+    "description": "主控干员受到的<color=#009cad>冻结</color>时间增加至<color=#cc9900>{duration:0}</color>秒，施放<color=#a68360>物理类型</color>技能可以解除<color=#009cad>冻结</color>"
+  },
+  "102801": {
+    "name": "队列：萎缩",
+    "description": "干员主能力值<color=#cc9900>-{1-attr:0%}</color>/-{@102802@1-attr:0%}/-{@102803@1-attr:0%}"
+  },
+  "102802": {
+    "name": "队列：萎缩",
+    "description": "干员主能力值-{@102801@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>/-{@102803@1-attr:0%}"
+  },
+  "102803": {
+    "name": "队列：萎缩",
+    "description": "干员主能力值-{@102801@1-attr:0%}/-{@102802@1-attr:0%}/<color=#cc9900>-{1-attr:0%}</color>"
+  },
+  "103102": {
+    "name": "改写：裹附",
+    "description": "每个敌人每有一层<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>，受到的对应类型伤害<color=#cc9900>-{-dmg_scale:0%}</color>。该效果会在<color=#a68360>破防</color>或<color=#1da6e0>法术附着</color>结束后延迟0.1秒消失"
+  },
+  "103203": {
+    "name": "环境：震荡",
+    "description": "干员除普通攻击、战技、连携技和终结技以外的伤害<color=#cc9900>+{dmg_up:0%}</color>，战技伤害<color=#cc9900>-{-dmg_scale:0%}</color>"
+  },
+  "103302": {
+    "name": "环境：同步生长",
+    "description": "主控干员每实际回复<color=#cc9900>{chr_heal_ratio:0%}</color>最大生命值或获得最大生命值<color=#cc9900>{chr_shield_ratio:0%}</color>的<color=#1da6e0>护盾</color>时，场上敌人回复<color=#cc9900>{eny_heal_ratio:0%}</color>最大生命值"
+  },
+  "103401": {
+    "name": "队列：重负",
+    "description": "主控干员12秒内未对敌人造成重击时，暂停技力自然恢复"
+  },
+  "900101": {
+    "name": "改写：活性",
+    "description": "敌人生命值<color=#cc9900>+{hp_up-1:0%}</color>/+{@900102@hp_up-1:0%}/+{@900103@hp_up-1:0%}"
+  },
+  "900102": {
+    "name": "改写：活性",
+    "description": "敌人生命值+{@900101@hp_up-1:0%}/<color=#cc9900>+{hp_up-1:0%}</color>/+{@900103@hp_up-1:0%}"
+  },
+  "900103": {
+    "name": "改写：活性",
+    "description": "敌人生命值+{@900101@hp_up-1:0%}/+{@900102@hp_up-1:0%}/<color=#cc9900>+{hp_up-1:0%}</color>"
+  }
+}

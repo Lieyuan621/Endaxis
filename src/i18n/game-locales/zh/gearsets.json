@@ -1,103 +1,98 @@
 {
-  "frontiers": {
+  "suit_agi01": {
+    "setName": "巡行信使",
+    "description": "3件套组效果：装备者敏捷<@ba.vup>+50.0</>。\n当装备者生命值高于80%时，造成的<@ba.pd>物理伤害</><@ba.vup>+20%</>。"
+  },
+  "suit_atb01": {
     "setName": "拓荒",
-    "description": "3件套组效果：装备者连携技冷却缩减<@ba.vup>+15%</>。\n装备者通过技能恢复技力后，全队造成的伤害<@ba.vup>+16%</>，持续15秒，该效果无法叠加。"
+    "description": "3件套组效果：装备者连携技冷却缩减<@ba.vup>+15%</>。\n装备者通过技能恢复技力后，全队造成的伤害<@ba.vup>+16%</>，持续15.0秒，该效果无法叠加。"
   },
-  "grizzled-edge": {
-    "setName": "旧锋",
-    "description": "3件套组效果：装备者攻击力<@ba.vup>+8%</>。\n装备者造成<#ba.crush>猛击</>、<#ba.fracture>碎甲</>时，根据<#ba.consume>消耗</>的最大<#ba.noguard>破防</>层数，使自身<@ba.pd>物理伤害</><@ba.vup>+[6%×<#ba.consume>消耗</>层数]</>，持续20秒。若目标已处于<#ba.physicalvul>物理脆弱</>、<@ba.poise>失衡</>状态或被附着<#ba.originium>源石结晶</>，上述增益效果变为<@ba.vup>1.5</>倍。增益效果无法叠加。"
+  "suit_atk01": {
+    "setName": "阿伯莉遗声",
+    "description": "3件套组效果：装备者所有技能伤害<@ba.vup>+24%</>。\n当装备者施放战技、连携技、终结技时，分别<@ba.vup>+5%</>攻击力，持续15.0秒。三种增益状态独立存在，层数无法叠加。"
   },
-  "type-50-yinglung": {
+  "suit_atk02": {
     "setName": "50式应龙",
     "description": "3件套组效果：装备者攻击力<@ba.vup>+15%</>。\n当小队内任意干员施放战技时，装备者获得一层<@ba.key>应龙之锐</>，使得该干员下一次连携技伤害<@ba.vup>+20%</>，<@ba.key>应龙之锐</>最多叠加3层。"
   },
-  "bonekrusha": {
+  "suit_attri01": {
     "setName": "碾骨",
     "description": "3件套组效果：装备者攻击力<@ba.vup>+15%</>。\n当装备者施放连携技时，获得一层<@ba.key>碾骨重压</>，下一次的战技伤害<@ba.vup>+30%</>，<@ba.key>碾骨重压</>最多可叠加2层。"
   },
-  "tide-surge": {
+  "suit_burst01": {
     "setName": "潮涌",
-    "description": "3件套组效果：装备者所有技能伤害<@ba.vup>+20%</>。\n装备者使敌人达到<@ba.key>2</>层及以上<#ba.spellinflict>法术附着</>后，造成的<@ba.key>法术伤害</><@ba.vup>+35%</>，持续15秒，该效果无法叠加。"
+    "description": "3件套组效果：装备者所有技能伤害<@ba.vup>+20%</>。\n装备者使敌人达到<@ba.key>2.0</>层及以上<#ba.spellinflict>法术附着</>后，造成的<@ba.key>法术伤害</><@ba.vup>+35%</>，持续15.0秒，该效果无法叠加。"
   },
-  "qingbo": {
+  "suit_combo_cd01": {
     "setName": "清波",
-    "description": "3件套组效果：装备者连携技冷却缩减<@ba.vup>+15%</>。\n当装备者施放连携技时，所有技能伤害<@ba.vup>+20%</>，持续15秒。该效果最多叠加2层，每层单独计算持续时间。"
+    "description": "3件套组效果：装备者连携技冷却缩减<@ba.vup>+15%</>。\n当装备者施放连携技时，所有技能伤害<@ba.vup>+20%</>，持续15.0秒。该效果最多叠加2.0层，每层单独计算持续时间。"
   },
-  "mi-security": {
+  "suit_criti01": {
     "setName": "M.I.警用",
-    "description": "3件套组效果：装备者暴击率<@ba.vup>+5%</>。\n当装备者触发暴击后，5秒内<@ba.vup>+5%</>攻击力，该效果最多叠加5层。层数叠满后，额外<@ba.vup>+5%</>暴击率，该效果无法叠加。"
+    "description": "3件套组效果：装备者暴击率<@ba.vup>+5%</>。\n当装备者触发暴击后，5.0秒内<@ba.vup>+5%</>攻击力，该效果最多叠加5层。层数叠满后，额外<@ba.vup>+5%</>暴击率，该效果无法叠加。"
   },
-  "xiranflow": {
+  "suit_crush_fracture": {
+    "setName": "旧锋",
+    "description": "3件套组效果：装备者攻击力<@ba.vup>+8%</>。\n装备者造成<#ba.crush>猛击</>、<#ba.fracture>碎甲</>时，根据<#ba.consume>消耗</>的最大<#ba.noguard>破防</>层数，使自身<@ba.pd>物理伤害</><@ba.vup>+[6%×<#ba.consume>消耗</>层数]</>，持续20.0秒。若目标已处于<#ba.physicalvul>物理脆弱</>、<@ba.poise>失衡</>状态或被附着<#ba.originium>源石结晶</>，上述增益效果变为<@ba.vup>1.5</>倍。增益效果无法叠加。"
+  },
+  "suit_expend_spell01": {
     "setName": "壤流",
-    "description": "3件套组效果：装备者攻击力<@ba.vup>+10%</>。\n装备者每次<#ba.consume>消耗</><#ba.conduct>导电</>或<#ba.corrupt>腐蚀</>后，根据<#ba.statuslevel>异常等级</>获得相同层数的强化状态，每层使<@ba.pulse>电磁伤害</>和<@ba.natur>自然伤害</><@ba.vup>+15%</>，持续25秒。强化状态最多存在3层，每层单独计算持续时间。"
+    "description": "3件套组效果：装备者攻击力<@ba.vup>+10%</>。\n装备者每次<#ba.consume>消耗</><#ba.conduct>导电</>或<#ba.corrupt>腐蚀</>后，根据<#ba.statuslevel>异常等级</>获得相同层数的强化状态，每层使<@ba.pulse>电磁伤害</>和<@ba.natur>自然伤害</><@ba.vup>+15%</>，持续25.0秒。强化状态最多存在3.0层，每层单独计算持续时间。"
   },
-  "hot-work": {
+  "suit_fire_natr01": {
     "setName": "动火用",
-    "description": "3件套组效果：装备者源石技艺强度<@ba.vup>+30</>。\n当装备者施加<#ba.burning>燃烧</>后，<@ba.fire>灼热伤害</>+<@ba.vup>50%</>，持续10秒，该效果无法叠加；当装备者施加<#ba.corrupt>腐蚀</>后，<@ba.natur>自然伤害</>+<@ba.vup>50%</>，持续10秒，该效果无法叠加。"
+    "description": "3件套组效果：装备者源石技艺强度<@ba.vup>+30</>。\n当装备者施加<#ba.burning>燃烧</>后，<@ba.fire>灼热伤害</>+<@ba.vup>50%</>，持续10.0秒，该效果无法叠加；当装备者施加<#ba.corrupt>腐蚀</>后，<@ba.natur>自然伤害</>+<@ba.vup>50%</>，持续10.0秒，该效果无法叠加。"
   },
-  "lynx": {
-    "setName": "生物辅助",
-    "description": "3件套组效果：装备者治疗效率<@ba.vup>+20%</>。\n当装备者治疗我方目标后，使该目标在10秒内受到的所有类型伤害<@ba.vup>-15%</>；如果该目标受到的治疗量溢出，则受到的所有类型伤害<@ba.vup>-30%</>。上述效果无法叠加。"
-  },
-  "swordmancer": {
-    "setName": "点剑",
-    "description": "3件套组效果：装备者失衡效率加成<@ba.vup>+20%</>。\n当装备者造成<#ba.physicalstatus>物理异常</>后，额外造成一次250%攻击力的物理伤害[<@ba.poise>10</>点失衡值]。该效果每15秒最多触发一次。"
-  },
-  "aethertech": {
-    "setName": "轻超域",
-    "description": "3件套组效果：装备者攻击力<@ba.vup>+8%</>。\n装备者施加<#ba.noguard>破防</>后，<@ba.pd>物理伤害</><@ba.vup>+8%</>，持续15秒，最多可叠加4层。若使目标达到4层<#ba.noguard>破防</>，物理伤害额外<@ba.vup>+16%</>，持续10秒，该效果无法叠加。"
-  },
-  "pulser-labs": {
-    "setName": "脉冲式",
-    "description": "3件套组效果：装备者源石技艺强度<@ba.vup>+30</>。\n当装备者施加<#ba.conduct>导电</>后，<@ba.pulse>电磁伤害</><@ba.vup>+50%</>，持续10秒，该效果无法叠加；当装备者施加<#ba.frozen>冻结</>后，<@ba.cryst>寒冷伤害</><@ba.vup>+50%</>，持续10秒，该效果无法叠加。"
-  },
-  "eternal-xiranite": {
-    "setName": "长息",
-    "description": "3件套组效果：装备者生命值<@ba.vup>+1000</>。\n装备者施加<#ba.enhance>增幅</>、<#ba.guard>庇护</>、<#ba.vulnerable>脆弱</>、<#ba.weak>虚弱</>后，使其他队友造成的伤害<@ba.vup>+16%</>，持续15秒。该效果无法叠加。"
-  },
-  "roving-msgr": {
-    "setName": "巡行信使",
-    "description": "3件套组效果：装备者敏捷<@ba.vup>+50</>。\n当装备者生命值高于80%时，造成的<@ba.pd>物理伤害</><@ba.vup>+20%</>。"
-  },
-  "aburreys-legacy": {
-    "setName": "阿伯莉遗声",
-    "description": "3件套组效果：装备者所有技能伤害<@ba.vup>+24%</>。\n当装备者施放战技、连携技、终结技时，分别<@ba.vup>+5%</>攻击力，持续15秒。三种增益状态独立存在，层数无法叠加。"
-  },
-  "armored-msgr": {
-    "setName": "重装信使",
-    "description": "3件套组效果：装备者力量<@ba.vup>+50</>。\n当装备者生命值低于50%时，受到的所有类型伤害<@ba.vup>-30%</>。"
-  },
-  "catastrophe": {
-    "setName": "天灾防护",
-    "description": "3件套组效果：装备者终结技充能效率<@ba.vup>+20%</>。\n装备者施放战技时<#ba.return>返还</><@ba.vup>50</>点技力，此效果每场战斗最多触发一次。"
-  },
-  "mordvolt-resistant": {
-    "setName": "蚀电防护",
-    "description": "3件套组效果：装备者意志<@ba.vup>+50</>。\n当装备者生命值低于50%时，造成的治疗效果<@ba.vup>+30%</>。"
-  },
-  "mordvolt-insulation": {
-    "setName": "蚀电屏蔽",
-    "description": "3件套组效果：装备者智识<@ba.vup>+50</>。\n当装备者生命值高于80%时，造成的<@ba.key>法术伤害</><@ba.vup>+20%</>。"
-  },
-  "aic-heavy": {
-    "setName": "集成重型",
-    "description": "3件套组效果：装备者生命值<@ba.vup>+500</>。\n当装备者击败敌人后，回复<@ba.heal>100</>点生命值。该效果每5秒最多触发一次。"
-  },
-  "aic-light": {
-    "setName": "集成轻型",
-    "description": "3件套组效果：装备者生命值<@ba.vup>+500</>。\n当装备者击败敌人后，攻击力<@ba.vup>+20</>，持续<@ba.vup>5</>秒。"
-  },
-  "no-set-bonuses": {
-    "setName": "无套装加成",
-    "passive": "",
-    "conditional": ""
-  },
-  "aic-fieldwork": {
+  "suit_generaltype": {
     "setName": "集成实训",
     "description": "3件套组效果：装备者造成的所有类型伤害<@ba.vup>+20%</>，受到的所有类型伤害<@ba.vup>-10%</>，终结技充能效率<@ba.vup>+10%</>。"
   },
-  "deep-rampart": {
+  "suit_heal01": {
+    "setName": "生物辅助",
+    "description": "3件套组效果：装备者治疗效率<@ba.vup>+20%</>。\n当装备者治疗我方目标后，使该目标在10.0秒内受到的所有类型伤害<@ba.vup>-15%</>；如果该目标受到的治疗量溢出，则受到的所有类型伤害<@ba.vup>-30%</>。上述效果无法叠加。"
+  },
+  "suit_phy01": {
+    "setName": "点剑",
+    "description": "3件套组效果：装备者失衡效率加成<@ba.vup>+20%</>。\n当装备者造成<#ba.physicalstatus>物理异常</>后，额外造成一次250%攻击力的物理伤害[<@ba.poise>10.0</>点失衡值]。该效果每15.0秒最多触发一次。"
+  },
+  "suit_poise01": {
+    "setName": "轻超域",
+    "description": "3件套组效果：装备者攻击力<@ba.vup>+8%</>。\n装备者施加<#ba.noguard>破防</>后，<@ba.pd>物理伤害</><@ba.vup>+8%</>，持续15.0秒，最多可叠加4层。若使目标达到4层<#ba.noguard>破防</>，<@ba.pd>物理伤害</>额外<@ba.vup>+16%</>，持续10.0秒，该效果无法叠加。"
+  },
+  "suit_pulse_cryst01": {
+    "setName": "脉冲式",
+    "description": "3件套组效果：装备者源石技艺强度<@ba.vup>+30</>。\n当装备者施加<#ba.conduct>导电</>后，<@ba.pulse>电磁伤害</><@ba.vup>+50%</>，持续10.0秒，该效果无法叠加；当装备者施加<#ba.frozen>冻结</>后，<@ba.cryst>寒冷伤害</><@ba.vup>+50%</>，持续10.0秒，该效果无法叠加。"
+  },
+  "suit_spellburst": {
     "setName": "险关",
-    "description": "3件套组效果：装备者法术伤害<@ba.vup>+16%</>。\n当装备者造成<#ba.naturalburst>自然爆发</>、<#ba.crystburst>寒冷爆发</>时，源石技艺强度<@ba.vup>+16</>，持续20秒。该效果最多叠加3层，每层单独计算持续时间，每0.1秒最多触发一次。"
+    "description": "3件套组效果：装备者法术伤害<@ba.vup>+16%</>。\n当装备者造成<#ba.naturalburst>自然爆发</>、<#ba.crystburst>寒冷爆发</>时，源石技艺强度<@ba.vup>+16</>，持续20.0秒。该效果最多叠加3.0层，每层单独计算持续时间，每0.1秒最多触发一次。"
+  },
+  "suit_str01": {
+    "setName": "重装信使",
+    "description": "3件套组效果：装备者力量<@ba.vup>+50.0</>。\n当装备者生命值低于50%时，受到的所有类型伤害<@ba.vup>-30%</>。"
+  },
+  "suit_stragi01": {
+    "setName": "集成重型",
+    "description": "3件套组效果：装备者生命值<@ba.vup>+500.0</>。\n当装备者击败敌人后，回复<@ba.heal>100.0</>点生命值。该效果每5.0秒最多触发一次。"
+  },
+  "suit_usp01": {
+    "setName": "天灾防护",
+    "description": "3件套组效果：装备者终结技充能效率<@ba.vup>+20%</>。\n装备者施放战技时<#ba.return>返还</><@ba.vup>50</>点技力，此效果每场战斗最多触发一次。"
+  },
+  "suit_usp02": {
+    "setName": "长息",
+    "description": "3件套组效果：装备者生命值<@ba.vup>+1000.0</>。\n装备者施加<#ba.enhance>增幅</>、<#ba.guard>庇护</>、<#ba.vulnerable>脆弱</>、<#ba.weak>虚弱</>后，使其他队友造成的伤害<@ba.vup>+16%</>，持续15.0秒。该效果无法叠加。"
+  },
+  "suit_will01": {
+    "setName": "蚀电防护",
+    "description": "3件套组效果：装备者意志<@ba.vup>+50.0</>。\n当装备者生命值低于50%时，造成的治疗效果<@ba.vup>+30%</>。"
+  },
+  "suit_wisd01": {
+    "setName": "蚀电屏蔽",
+    "description": "3件套组效果：装备者智识<@ba.vup>+50.0</>。\n当装备者生命值高于80%时，造成的<@ba.key>法术伤害</><@ba.vup>+20%</>。"
+  },
+  "suit_wisdwill01": {
+    "setName": "集成轻型",
+    "description": "3件套组效果：装备者生命值<@ba.vup>+500.0</>。\n当装备者击败敌人后，攻击力<@ba.vup>+20.0</>，持续<@ba.vup>5.0</>秒。"
   }
 }

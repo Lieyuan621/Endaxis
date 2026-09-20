@@ -1,9 +1,32 @@
 import { readFileSync } from 'node:fs';
-import { createSSRApp, defineComponent, h, type Component } from 'vue';
+import { createSSRApp, h, type Component } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { getEaSelectPopperClass } from './components/EaSelect/selectPopperClass';
+
+// 只替换浮层容器，验证适配器传给组件的参数，不依赖全局注册或浏览器 Teleport。
+vi.mock('element-plus', async importOriginal => {
+  const original = await importOriginal<typeof import('element-plus')>();
+  const { defineComponent, h } = await import('vue');
+  const surface = defineComponent({
+    inheritAttrs: false,
+    setup:
+      (_, { attrs, slots }) =>
+      () =>
+        h(
+          'section',
+          Object.fromEntries(
+            Object.entries(attrs).map(([key, value]) => [
+              'data-' + key.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase()),
+              String(value),
+            ]),
+          ),
+          slots.default?.(),
+        ),
+  });
+  return { ...original, ElDialog: surface, ElDrawer: surface };
+});
 
 const controlsCss = readFileSync(new URL('./styles/controls.css', import.meta.url), 'utf8');
 const tokensCss = readFileSync(new URL('./styles/tokens.css', import.meta.url), 'utf8');
@@ -382,35 +405,6 @@ describe('design-system component contracts', () => {
           ]),
       }),
     );
-    app.component(
-      'ElDrawer',
-      defineComponent({
-        inheritAttrs: false,
-        props: {
-          direction: String,
-          size: [String, Number],
-          withHeader: Boolean,
-          appendToBody: Boolean,
-          lockScroll: Boolean,
-          closeOnClickModal: Boolean,
-        },
-        setup:
-          (props, { slots }) =>
-          () =>
-            h(
-              'section',
-              {
-                'data-direction': props.direction,
-                'data-size': String(props.size),
-                'data-with-header': String(props.withHeader),
-                'data-append-to-body': String(props.appendToBody),
-                'data-lock-scroll': String(props.lockScroll),
-                'data-close-on-click-modal': String(props.closeOnClickModal),
-              },
-              slots.default?.(),
-            ),
-      }),
-    );
 
     const html = await renderToString(app);
     expect(html).toContain('data-direction="btt"');
@@ -435,29 +429,6 @@ describe('design-system component contracts', () => {
           h(dialog, { modelValue: true, title: 'Export', busy: true }, { default: () => 'Body' }),
       }),
     );
-    app.component(
-      'ElDialog',
-      defineComponent({
-        inheritAttrs: false,
-        props: {
-          closeOnClickModal: Boolean,
-          closeOnPressEscape: Boolean,
-          showClose: Boolean,
-        },
-        setup:
-          (props, { slots }) =>
-          () =>
-            h(
-              'section',
-              {
-                'data-close-on-click-modal': String(props.closeOnClickModal),
-                'data-close-on-press-escape': String(props.closeOnPressEscape),
-                'data-show-close': String(props.showClose),
-              },
-              slots.default?.(),
-            ),
-      }),
-    );
 
     const html = await renderToString(app);
     expect(html).toContain('data-close-on-click-modal="false"');
@@ -476,21 +447,12 @@ describe('design-system component contracts', () => {
         render: () => h(dialog, { modelValue: true, title: 'Settings' }),
       }),
     );
-    app.component(
-      'ElDialog',
-      defineComponent({
-        inheritAttrs: false,
-        props: { closeOnClickModal: Boolean },
-        setup: props => () =>
-          h('section', { 'data-close-on-click-modal': String(props.closeOnClickModal) }),
-      }),
-    );
 
     const html = await renderToString(app);
     expect(html).toContain('data-close-on-click-modal="true"');
   });
 
-  test('EaDialog preserves an explicit width during migration', async () => {
+  test('EaDialog preserves an explicit width', async () => {
     const dialog = getComponent('EaDialog');
     expect(dialog).toBeDefined();
     if (!dialog) return;
@@ -498,14 +460,6 @@ describe('design-system component contracts', () => {
     const app = configureElementPlusSsr(
       createSSRApp({
         render: () => h(dialog, { modelValue: true, width: '560px' }),
-      }),
-    );
-    app.component(
-      'ElDialog',
-      defineComponent({
-        inheritAttrs: false,
-        props: { width: [String, Number] },
-        setup: props => () => h('section', { 'data-width': String(props.width) }),
       }),
     );
 

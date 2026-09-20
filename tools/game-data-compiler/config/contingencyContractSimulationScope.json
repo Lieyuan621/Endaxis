@@ -1,0 +1,32 @@
+{
+  "supportedTagIds": [
+    100003, 100301, 100302, 100401, 100402, 100501, 100502, 100803, 100901, 100902, 101001, 101101,
+    101102, 102302, 102801, 102802, 102803, 103102, 103203, 103302, 103401
+  ],
+  "enemyMaxHealthTagIds": [900101, 900102, 900103],
+  "blockedTagReasons": {},
+  "omittedTagReasons": {
+    "100201": "only changes damage dealt by the passive enemy",
+    "100202": "only changes damage dealt by the passive enemy",
+    "100601": "only changes damage received by operators",
+    "100602": "only changes damage received by operators",
+    "101201": "operator switching is forced by the authored timeline",
+    "101301": "stamina and evasion are outside the authored skill timeline",
+    "101303": "stamina and evasion are outside the authored skill timeline",
+    "101402": "depends on operators receiving enemy damage",
+    "101501": "runs after the unique fixed target has been defeated",
+    "101502": "runs after the unique fixed target has been defeated",
+    "101603": "depends on the passive enemy applying an infliction to an operator",
+    "101701": "only changes operator freeze and input behavior",
+    "101801": "only changes operator freeze and input behavior",
+    "101901": "only changes operator freeze and input behavior",
+    "102001": "wave healing pickups do not exist in the fixed-target scenario",
+    "102002": "wave healing pickups do not exist in the fixed-target scenario",
+    "102101": "challenge countdown is not a combat result",
+    "102102": "challenge countdown is not a combat result",
+    "102103": "challenge countdown is not a combat result",
+    "102201": "changes stage wave enemy composition rather than the selected fixed target",
+    "102202": "changes stage wave enemy composition rather than the selected fixed target",
+    "102401": "only changes operator freeze and input behavior"
+  }
+}

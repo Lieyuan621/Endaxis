@@ -1,8 +1,6 @@
 import { i18n } from '@/i18n';
-import battleTermsEn from '../i18n/game-locales/en/terms.json';
-import battleTermsZh from '../i18n/game-locales/zh/terms.json';
-
-type GameLocale = 'en' | 'zh';
+import { normalizeLocale } from '../i18n/elementPlusLocale';
+import { gameLocaleRegistry } from '../i18n/gameLocaleRegistry';
 
 type RichTextTermEntry = {
   name?: string;
@@ -28,11 +26,6 @@ export type ResolvedRichTextTerm = {
   description: string;
   styleId: string;
   icon: string | null;
-};
-
-const battleTermsTables: Record<string, Record<string, RichTextTermEntry>> = {
-  en: battleTermsEn as Record<string, RichTextTermEntry>,
-  zh: battleTermsZh as Record<string, RichTextTermEntry>,
 };
 
 const RICH_TEXT_STYLES: Record<string, ResolvedRichTextStyle> = {
@@ -64,17 +57,15 @@ const RICH_TEXT_STYLES: Record<string, ResolvedRichTextStyle> = {
   'ba.vup': { color: '#9eb7ff', icon: null },
 };
 
-function resolveGameLocale(localeLike?: string | null): GameLocale {
-  const locale = String(localeLike || i18n.global.locale.value || '').toLowerCase();
-  return locale.startsWith('zh') ? 'zh' : 'en';
-}
-
 function getBattleTermsTable(locale?: string | null) {
-  return battleTermsTables[resolveGameLocale(locale)];
+  return gameLocaleRegistry.getFamily(normalizeLocale(locale ?? i18n.global.locale.value), 'terms')
+    .battleTerms as Record<string, RichTextTermEntry>;
 }
 
 export function resolveRichTextImage(path: string) {
-  const normalized = String(path || '').replace(/\\/g, '/').trim();
+  const normalized = String(path || '')
+    .replace(/\\/g, '/')
+    .trim();
   if (normalized.startsWith('/icons/')) return normalized;
   if (normalized.startsWith('icons/')) return `/${normalized}`;
   return null;
@@ -84,10 +75,7 @@ export function getRichTextStyle(id: string): ResolvedRichTextStyle {
   return RICH_TEXT_STYLES[id] ?? { color: null, icon: null };
 }
 
-export function getRichTextTerm(
-  id: string,
-  locale?: string | null,
-): ResolvedRichTextTerm | null {
+export function getRichTextTerm(id: string, locale?: string | null): ResolvedRichTextTerm | null {
   const term = getBattleTermsTable(locale)?.[id];
   if (!term) return null;
   return {

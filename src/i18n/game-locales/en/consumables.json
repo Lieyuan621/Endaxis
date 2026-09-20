@@ -1,0 +1,102 @@
+{
+  "item_agmelee_1_sp_2_slimeml_1_1": {
+    "name": "Superhot Slug Gratin",
+    "description": "Use this to grant DEF +30%. Duration: 300s."
+  },
+  "item_agrange_1_erhound_1_sp_1_1": {
+    "name": "Jakub's Legacy",
+    "description": "Use this to grant ATK +27%. Duration: 300s."
+  },
+  "item_agrange_1_lbshamman_bottled_1": {
+    "name": "Simple Pain Relief Salve",
+    "description": "Use this to grant DMG Reduction +12% against all forms of DMG. Duration: 300s."
+  },
+  "item_agrange_1_moss_2_lbmob_1_1": {
+    "name": "Handmade Weirdrop",
+    "description": "Use this to grant DEF +18%. Duration: 300s."
+  },
+  "item_bottled_insec2_1": {
+    "name": "Kunst Vial",
+    "description": "Use this to grant DMG Dealt +18% for all forms of DMG. Duration: 300s."
+  },
+  "item_bottled_insec2_2": {
+    "name": "Kunst Tube",
+    "description": "Use this to grant DMG Dealt +25% for all forms of DMG. Duration: 300s."
+  },
+  "item_bottled_moss_1_2_1": {
+    "name": "Perplexing Medication",
+    "description": "Use this to grant Ultimate Gain Efficiency +24%. Duration: 300s."
+  },
+  "item_corp3_animal_1": {
+    "name": "Ginseng Meat Stew",
+    "description": "Use this to grant ATK +180 and Critical Rate +11%. Duration: 300s."
+  },
+  "item_corp3_grass1_1": {
+    "name": "Fortifying Infusion",
+    "description": "Use this to grant Critical Rate +9% and All Damage +18%. Duration: 300s."
+  },
+  "item_corp4_animal_1": {
+    "name": "Wuling Fried Rice",
+    "description": "Use this to grant DEF +68%. Duration: 300s."
+  },
+  "item_erhound_1_agmelee_1_moss_1_1": {
+    "name": "Hazefyre Blossom",
+    "description": "Use this to grant DMG Reduction +17% against all forms of DMG. Duration: 300s."
+  },
+  "item_ethillu_1_wgslime_1_wgthorns_1_1": {
+    "name": "Echoing Remedy",
+    "description": "Use this to shorten Combo Skill CD by 26%. Duration: 300s."
+  },
+  "item_firebat_1_agrange_1_1": {
+    "name": "Edible Denstack",
+    "description": "Use this to grant ATK +7%, Critical Rate +3%, and All Damage +7%. Duration: 300s."
+  },
+  "item_hsfly_1_slimeml_1_hsmob_1_1": {
+    "name": "Simmered Xiranite Ball",
+    "description": "Use this to grant Critical Rate +21%. Duration: 300s."
+  },
+  "item_hshog_1_hsmob_1_slimeml_1_1": {
+    "name": "Wuling Flame-Boyance",
+    "description": "Use this to grant DEF +43 and DMG Reduction +17% against all forms of DMG. Duration: 300s."
+  },
+  "item_hsmob_1_dog_1_1": {
+    "name": "Bamboo Sprouts and Meat",
+    "description": "Use this to grant Ultimate Gain Efficiency +21% and Treatment Received Bonus +35%. Duration: 300s."
+  },
+  "item_jzmonk_1_hsmob_1_1": {
+    "name": "Rind-Flavored Sprouts",
+    "description": "Use this to grant Critical Rate +25%, but at the cost of DEF 5%. Duration: 300s."
+  },
+  "item_klbuds_1_hsfly_1_1": {
+    "name": "Ruin-Purger Remedy",
+    "description": "Use this to grant 31% DEF and 17% DMG Reduction against all forms of DMG. Duration: 300s."
+  },
+  "item_klcreatures_1_wgthorns_1_1": {
+    "name": "Stonehold Remedy",
+    "description": "Use this to grant Ultimate Gain Efficiency +49%. Duration: 300s."
+  },
+  "item_lbmob_1_dog_1_moss_1_1": {
+    "name": "Seš'qa Style Fillet",
+    "description": "Use this to grant All Attributes +15. Duration: 300s."
+  },
+  "item_lbshield_1_slimeml_1_dog_1_1": {
+    "name": "Old Man John's Burger",
+    "description": "Use this to grant Physical DMG Dealt +21%. Duration: 300s."
+  },
+  "item_mimicw_1_moss_1_moss_2_1": {
+    "name": "Sod-Turning Meat Soup",
+    "description": "Use this to grant ATK +12%. Duration: 300s."
+  },
+  "item_wgshoal_1_grass_1_grass_2_1": {
+    "name": "Mini Sugar Painting",
+    "description": "Use this to grant ATK +18% and Critical Rate +9%. Duration: 300s."
+  },
+  "item_wgslime_1_wgthorns_1_1": {
+    "name": "Mystery Soda",
+    "description": "Use this to grant DEF +18%, DMG Reduction +11% against all forms of DMG, and Treatment Bonus +12%. Duration: 300s."
+  },
+  "item_wgthorns_1_hshog_1_hsmob_1_1": {
+    "name": "Pan-Fried Double Crisp",
+    "description": "Use this to grant DMG Reduction +29% against all forms of DMG. Duration: 300s."
+  }
+}

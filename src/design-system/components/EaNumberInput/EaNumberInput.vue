@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, useAttrs } from 'vue';
+import { computed, inject, ref, useAttrs } from 'vue';
 import { ElInputNumber } from 'element-plus';
 import { eaFormFieldKey } from '../fieldContext';
 import type { EaControlSize } from '../types';
@@ -41,6 +41,7 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+const inputRef = ref<InstanceType<typeof ElInputNumber>>();
 const field = inject(eaFormFieldKey, undefined);
 const inputId = computed(() => String(attrs.id ?? field?.controlId.value ?? ''));
 const describedBy = computed(() => attrs['aria-describedby'] ?? field?.describedBy.value);
@@ -48,10 +49,19 @@ const isInvalid = computed(() => props.invalid || Boolean(field?.invalid.value))
 const elementSize = computed(() =>
   props.size === 'md' ? 'default' : props.size === 'sm' ? 'small' : 'large',
 );
+
+defineExpose({
+  focus: () => inputRef.value?.focus(),
+  select: () => {
+    const root = inputRef.value?.$el as HTMLElement | undefined;
+    root?.querySelector<HTMLInputElement>('input')?.select();
+  },
+});
 </script>
 
 <template>
   <ElInputNumber
+    ref="inputRef"
     v-bind="attrs"
     :id="inputId || undefined"
     class="ea-number-input"

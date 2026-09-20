@@ -1,1 +1,0 @@
-export { computeScalingBasis } from './scaling';

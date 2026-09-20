@@ -1,0 +1,778 @@
+{
+  "operators": {
+    "akekuri": {
+      "gameId": "AKEKURI",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 1
+      }
+    },
+    "alesh": {
+      "gameId": "ALESH",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "antal": {
+      "gameId": "ANTAL",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "arcane": {
+      "gameId": "ARCANE",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "1": 2
+      }
+    },
+    "arclight": {
+      "gameId": "ARCLIGHT",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "ardelia": {
+      "gameId": "ARDELIA",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 3,
+        "1": 1
+      }
+    },
+    "avywenna": {
+      "gameId": "AVYWENNA",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "camille": {
+      "gameId": "CAMILLE",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "catcher": {
+      "gameId": "CATCHER",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "chen-qianyu": {
+      "gameId": "CHENQIANYU",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "da-pan": {
+      "gameId": "DAPAN",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "ember": {
+      "gameId": "EMBER",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "endministrator": {
+      "gameId": "ENDMINISTRATOR",
+      "potential": 3,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "estella": {
+      "gameId": "ESTELLA",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "fluorite": {
+      "gameId": "FLUORITE",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "gilberta": {
+      "gameId": "GILBERTA",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "laevatain": {
+      "gameId": "LAEVATAIN",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 3,
+        "1": 2
+      }
+    },
+    "last-rite": {
+      "gameId": "LASTRITE",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "lifeng": {
+      "gameId": "LIFENG",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "liino": {
+      "gameId": "LIINO",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "mifu": {
+      "gameId": "MIFU",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "perlica": {
+      "gameId": "PERLICA",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 1
+      }
+    },
+    "pogranichnik": {
+      "gameId": "POGRANICHNK",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "rossi": {
+      "gameId": "ROSSI",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "snowshine": {
+      "gameId": "SNOWSHINE",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "tangtang": {
+      "gameId": "TANGTANG",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "typhoeus": {
+      "gameId": "TYPHOEUS",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 3,
+        "1": 2
+      }
+    },
+    "wulfgard": {
+      "gameId": "WULFGARD",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "xaihi": {
+      "gameId": "XAIHI",
+      "potential": 5,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 1
+      }
+    },
+    "yvonne": {
+      "gameId": "YVONNE",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    },
+    "zhuang-fangyi": {
+      "gameId": "ZHUANGFANGYI",
+      "potential": 0,
+      "skillLevels": {
+        "basicAttack": 12,
+        "battleSkill": 12,
+        "comboSkill": 12,
+        "ultimate": 12
+      },
+      "talentStates": {
+        "0": 2,
+        "1": 2
+      }
+    }
+  },
+  "weapons": {
+    "jiminy-12": 5,
+    "fluorescent-roc": 5,
+    "hypernova-auto": 5,
+    "freedom-to-proselytize": 5,
+    "monaihe": 5,
+    "obj-arts-identifier": 5,
+    "stanza-of-memorials": 5,
+    "wild-wanderer": 5,
+    "chivalric-virtues": 0,
+    "delivery-guaranteed": 0,
+    "detonation-unit": 0,
+    "dreams-of-the-starry-beach": 0,
+    "flickers-in-the-mist": 0,
+    "junction-point": 0,
+    "lone-barge": 0,
+    "oblivion": 0,
+    "opus-etch-figure": 0,
+    "sufferings-end": 0,
+    "type-42-solemn-phalanx": 0,
+    "umbra-of-frigid": 0,
+    "darhoff-7": 5,
+    "industry-01": 5,
+    "quencher": 5,
+    "ancient-canal": 5,
+    "finishing-call": 5,
+    "obj-heavy-burden": 5,
+    "seeker-of-dark-lung": 5,
+    "amaranthine-tassel": 0,
+    "exemplar": 0,
+    "former-finery": 0,
+    "khravengger": 0,
+    "phantom-pain": 0,
+    "sundered-prince": 0,
+    "thunderberge": 0,
+    "peco-5": 5,
+    "howling-guard": 5,
+    "long-road": 5,
+    "obj-velocitous": 5,
+    "opus-the-living": 5,
+    "rational-farewell": 5,
+    "artzy-tyrannical": 0,
+    "brigands-calling": 0,
+    "clannibal": 0,
+    "home-longing": 0,
+    "navigator": 0,
+    "wedge": 0,
+    "opero-77": 5,
+    "aggeloslayer": 5,
+    "pathfinders-beacon": 5,
+    "chimeric-justice": 5,
+    "cohesive-traction": 5,
+    "obj-razorhorn": 5,
+    "beacon-of-duty": 0,
+    "bedazzling-night-debut": 0,
+    "blessing-of-lustrous-carmine": 0,
+    "golden-age": 0,
+    "jet": 0,
+    "mountain-bearer": 0,
+    "valiant": 0,
+    "tarr-11": 5,
+    "prominent-edge": 5,
+    "wave-tide": 5,
+    "aspirant": 5,
+    "finchaser-30": 5,
+    "fortmaker": 5,
+    "obj-edge-of-lightness": 5,
+    "sundering-steel": 5,
+    "twelve-questions": 5,
+    "eminent-repute": 0,
+    "farsight": 0,
+    "forgeborn-scathe": 0,
+    "glorious-memory": 0,
+    "grand-vision": 0,
+    "lupine-scarlet": 0,
+    "never-rest": 0,
+    "rapid-ascent": 0,
+    "thermite-cutter": 0,
+    "umbral-torch": 0,
+    "white-night-nova": 0
+  },
+  "gears": {
+    "aburrey-auditory-chip-t1": 50,
+    "aburrey-auditory-chip": 50,
+    "aburrey-flashlight": 50,
+    "aburrey-gauntlets": 50,
+    "aburrey-heavy-armor-t1": 50,
+    "aburrey-heavy-armor": 50,
+    "aburrey-light-armor-t1": 50,
+    "aburrey-light-armor": 50,
+    "aburrey-sensor-chip-t1": 50,
+    "aburrey-sensor-chip": 50,
+    "aburrey-uv-lamp": 50,
+    "aic-fieldwork-armor": 60,
+    "aic-fieldwork-assault-armor": 60,
+    "aic-fieldwork-assault-gloves": 60,
+    "aic-fieldwork-assault-push-knife": 60,
+    "aic-fieldwork-ember": 60,
+    "aic-fieldwork-flashlight": 60,
+    "aic-fieldwork-gloves": 60,
+    "aic-fieldwork-hands": 60,
+    "aic-fieldwork-machete": 60,
+    "aic-fieldwork-medic-armor": 60,
+    "aic-fieldwork-medic-gloves": 60,
+    "aic-fieldwork-plate": 60,
+    "aic-fieldwork-power-bank": 60,
+    "aic-fieldwork-vest": 60,
+    "aic-fieldwork-wraps": 60,
+    "aic-alloy-plate": 28,
+    "aic-gauntlets": 28,
+    "aic-heavy-armor": 28,
+    "aic-heavy-plate": 28,
+    "aic-ceramic-plate": 28,
+    "aic-light-armor": 28,
+    "aic-light-plate": 28,
+    "aic-tactical-gloves": 28,
+    "armored-msgr-flashlight-t1": 50,
+    "armored-msgr-flashlight": 36,
+    "armored-msgr-gloves-t1": 50,
+    "armored-msgr-gloves-t2": 50,
+    "armored-msgr-gloves": 36,
+    "armored-msgr-gyro-t1": 50,
+    "armored-msgr-gyro": 36,
+    "armored-msgr-jacket-t1": 50,
+    "armored-msgr-jacket": 36,
+    "bonekrusha-figurine-t1": 70,
+    "bonekrusha-figurine-t2": 70,
+    "bonekrusha-figurine": 70,
+    "bonekrusha-gloves": 70,
+    "bonekrusha-heavy-armor-t1": 70,
+    "bonekrusha-heavy-armor-t2": 70,
+    "bonekrusha-heavy-armor": 70,
+    "bonekrusha-mask-t1": 70,
+    "bonekrusha-mask-t2": 70,
+    "bonekrusha-mask": 70,
+    "bonekrusha-poncho-t1": 70,
+    "bonekrusha-poncho": 70,
+    "bonekrusha-wristband-t1": 70,
+    "bonekrusha-wristband": 70,
+    "catastrophe-filter": 50,
+    "catastrophe-gauze-cartridge-t1": 50,
+    "catastrophe-gauze-cartridge": 50,
+    "catastrophe-gloves": 50,
+    "catastrophe-heavy-armor-t1": 50,
+    "catastrophe-heavy-armor": 50,
+    "deep-rampart-armor": 70,
+    "deep-rampart-comms": 70,
+    "deep-rampart-gauntlets": 70,
+    "eternal-xiranite-armor": 70,
+    "eternal-xiranite-auxiliary-arm": 70,
+    "eternal-xiranite-bracing-slab-t1": 70,
+    "eternal-xiranite-bracing-slab": 70,
+    "eternal-xiranite-gloves-t1": 70,
+    "eternal-xiranite-gloves": 70,
+    "eternal-xiranite-hands": 70,
+    "eternal-xiranite-heavy-slab": 70,
+    "eternal-xiranite-light-armor-t1": 70,
+    "eternal-xiranite-light-armor": 70,
+    "eternal-xiranite-power-core-t1": 70,
+    "eternal-xiranite-power-core": 70,
+    "eternal-xiranite-wraps": 70,
+    "frontiers-analyzer": 70,
+    "frontiers-armor-t1": 70,
+    "frontiers-armor-t2": 70,
+    "frontiers-armor-t3": 70,
+    "frontiers-armor": 70,
+    "frontiers-blight-res-gloves": 70,
+    "frontiers-comm-t1": 70,
+    "frontiers-comm": 70,
+    "frontiers-extra-o2-tube-t1": 70,
+    "frontiers-extra-o2-tube": 70,
+    "frontiers-fiber-gloves-t1": 70,
+    "frontiers-fiber-gloves": 70,
+    "frontiers-o2-tube": 70,
+    "frontiers-protection-suit": 70,
+    "grizzled-edge-armor-t1": 70,
+    "grizzled-edge-armor": 70,
+    "grizzled-edge-gauntlets-t1": 70,
+    "grizzled-edge-gauntlets": 70,
+    "grizzled-edge-push-knife-t1": 70,
+    "grizzled-edge-push-knife": 70,
+    "hot-work-exo-rig": 70,
+    "hot-work-exoskeleton": 70,
+    "hot-work-gauntlets-t1": 70,
+    "hot-work-gauntlets": 70,
+    "hot-work-gloves": 70,
+    "hot-work-hands-ppe": 70,
+    "hot-work-insulation-slab": 70,
+    "hot-work-power-bank": 70,
+    "hot-work-power-cartridge": 70,
+    "hot-work-pyrometer": 70,
+    "lynx-aegis-injector": 70,
+    "lynx-connector-t1": 70,
+    "lynx-connector-t2": 70,
+    "lynx-connector": 70,
+    "lynx-cuirass-t1": 70,
+    "lynx-cuirass": 70,
+    "lynx-gauntlets-t1": 70,
+    "lynx-gauntlets": 70,
+    "lynx-gloves": 70,
+    "lynx-heavy-armor": 70,
+    "lynx-slab": 70,
+    "mi-security-armband": 70,
+    "mi-security-armor-t1": 70,
+    "mi-security-armor": 70,
+    "mi-security-gloves-t1": 70,
+    "mi-security-gloves": 70,
+    "mi-security-hands-ppe-t1": 70,
+    "mi-security-hands-ppe": 70,
+    "mi-security-overalls-t1": 70,
+    "mi-security-overalls-t2": 70,
+    "mi-security-overalls": 70,
+    "mi-security-push-knife-t1": 70,
+    "mi-security-push-knife": 70,
+    "mi-security-scope-t1": 70,
+    "mi-security-scope": 70,
+    "mi-security-toolkit": 70,
+    "mordvolt-insulation-battery-t1": 50,
+    "mordvolt-insulation-battery": 36,
+    "mordvolt-insulation-gloves-t1": 50,
+    "mordvolt-insulation-gloves": 36,
+    "mordvolt-insulation-vest-t1": 50,
+    "mordvolt-insulation-vest-t2": 50,
+    "mordvolt-insulation-vest": 36,
+    "mordvolt-insulation-wrench-t1": 36,
+    "mordvolt-insulation-wrench-t2": 50,
+    "mordvolt-insulation-wrench": 36,
+    "mordvolt-resistant-battery-t1": 50,
+    "mordvolt-resistant-battery": 36,
+    "mordvolt-resistant-gloves-t1": 50,
+    "mordvolt-resistant-gloves": 36,
+    "mordvolt-resistant-vest-t1": 50,
+    "mordvolt-resistant-vest": 36,
+    "mordvolt-resistant-wrench-t1": 50,
+    "mordvolt-resistant-wrench": 36,
+    "basic-armor": 10,
+    "basic-gauntlets": 10,
+    "basic-gloves": 10,
+    "basic-ppe": 10,
+    "emergency-comm": 20,
+    "emergency-compression-core": 20,
+    "miner-armor-t1": 50,
+    "miner-armor": 20,
+    "miner-cleansuit": 28,
+    "miner-comm-t1": 50,
+    "miner-comm": 36,
+    "miner-compression-core-t1": 50,
+    "miner-compression-core": 36,
+    "miner-drive-wheel-t1": 50,
+    "miner-drive-wheel": 36,
+    "miner-fists-t1": 50,
+    "miner-fists": 28,
+    "miner-gauntlets-t1": 36,
+    "miner-gauntlets": 20,
+    "miner-gloves-t1": 36,
+    "miner-gloves-t2": 50,
+    "miner-gloves": 20,
+    "miner-overalls-t1": 50,
+    "miner-overalls": 20,
+    "miner-turbine-t1": 50,
+    "miner-turbine": 36,
+    "miner-vest": 28,
+    "miner-wrists": 28,
+    "prototype-heavy-armor-t1": 28,
+    "prototype-heavy-armor": 28,
+    "redeemer-armor": 70,
+    "redeemer-gloves": 70,
+    "redeemer-hands": 70,
+    "redeemer-plates": 70,
+    "redeemer-seal-t1": 70,
+    "redeemer-seal": 70,
+    "redeemer-tag-t1": 70,
+    "redeemer-tag": 70,
+    "rift-trekker-armor-slab": 70,
+    "rift-trekker-gloves": 70,
+    "rift-trekker-hands": 70,
+    "rift-trekker-heavy-armor": 70,
+    "rift-trekker-light-armor": 70,
+    "pulser-labs-calibrator": 70,
+    "pulser-labs-disruptor-suit": 70,
+    "pulser-labs-gloves": 70,
+    "pulser-labs-invasion-core": 70,
+    "pulser-labs-probe": 70,
+    "qingbo-bamboo-cutter": 70,
+    "qingbo-cask": 70,
+    "qingbo-gauntlets": 70,
+    "qingbo-gloves": 70,
+    "qingbo-heavy-armor": 70,
+    "qingbo-light-armor": 70,
+    "qingbo-positioning-kit-t1": 70,
+    "qingbo-positioning-kit": 70,
+    "roving-msgr-fists-t1": 50,
+    "roving-msgr-fists": 36,
+    "roving-msgr-flashlight-t1": 50,
+    "roving-msgr-flashlight-t2": 50,
+    "roving-msgr-flashlight": 36,
+    "roving-msgr-gyro-t1": 50,
+    "roving-msgr-gyro": 36,
+    "roving-msgr-jacket-t1": 50,
+    "roving-msgr-jacket": 36,
+    "swordmancer-dagger": 70,
+    "swordmancer-fiber-armor": 70,
+    "swordmancer-flint": 70,
+    "swordmancer-heavy-armor-t1": 70,
+    "swordmancer-heavy-armor": 70,
+    "swordmancer-light-armor": 70,
+    "swordmancer-micro-filter": 70,
+    "swordmancer-nav-beacon": 70,
+    "swordmancer-tac-gauntlets-t1": 70,
+    "swordmancer-tac-gauntlets": 70,
+    "swordmancer-tac-gloves": 70,
+    "aethertech-light-gloves": 70,
+    "aethertech-stabilizer-t1": 70,
+    "aethertech-watch": 70,
+    "thertech-analysis-band": 70,
+    "thertech-gloves": 70,
+    "thertech-plating": 70,
+    "thertech-stabilizer": 70,
+    "deepsink-gloves": 70,
+    "hanging-river-o2-tube": 70,
+    "tide-fall-light-armor-t1": 70,
+    "tide-fall-light-armor": 70,
+    "tide-surge-gauntlets": 70,
+    "turbid-cutting-torch-t1": 70,
+    "turbid-cutting-torch": 70,
+    "wave-swell-heavy-armor": 70,
+    "type-50-yinglung-gloves-t1": 70,
+    "type-50-yinglung-gloves": 70,
+    "type-50-yinglung-heavy-armor-t1": 70,
+    "type-50-yinglung-heavy-armor-t2": 70,
+    "type-50-yinglung-heavy-armor": 70,
+    "type-50-yinglung-knife-t1": 70,
+    "type-50-yinglung-knife": 70,
+    "type-50-yinglung-light-armor": 70,
+    "type-50-yinglung-radar-t1": 70,
+    "type-50-yinglung-radar-t2": 70,
+    "type-50-yinglung-radar": 70,
+    "xiranflow-baton": 70,
+    "xiranflow-gloves": 70,
+    "xiranflow-light-armor": 70
+  }
+}

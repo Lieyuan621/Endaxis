@@ -1,103 +1,98 @@
 {
-  "frontiers": {
+  "suit_agi01": {
+    "setName": "Roving MSGR",
+    "description": "3-piece set effect: Wearer's Agility <@ba.vup>+50.0</>. \nWhen the wearer's HP is above 80%, <@ba.pd>Physical DMG</> <@ba.vup>+20%</>."
+  },
+  "suit_atb01": {
     "setName": "Frontiers",
-    "description": "3-piece set effect: Wearer's Combo Skill Cooldown Reduction <@ba.vup>+15%</>.\nAfter the wearer's skill recovers SP, the team gains DMG <@ba.vup>+16%</> for 15s. This effect cannot stack."
+    "description": "3-piece set effect: Wearer's Combo Skill Cooldown Reduction <@ba.vup>+15%</>.\nAfter the wearer's skill recovers SP, the team gains DMG <@ba.vup>+16%</> for 15.0s. This effect cannot stack."
   },
-  "grizzled-edge": {
-    "setName": "Grizzled Edge",
-    "description": "3-piece set effect: Wearer's ATK <@ba.vup>+8%</>.\nWhen the wearer applies <#ba.crush>Crush</> or <#ba.fracture>Breach</>, the wearer gains <@ba.pd>Physical DMG Dealt</> <@ba.vup>+[6% × Max number of <#ba.noguard>Vulnerability</> stacks <#ba.consume>consumed</> from one enemy]</> for 20s. If the target already has <#ba.physicalvul>Physical Susceptibility</>, is <@ba.poise>Staggered</>, or has attached <#ba.originium>Originium Crystals</>, increase the aforementioned buff to <@ba.vup>1.5</> times. This buff cannot stack."
+  "suit_atk01": {
+    "setName": "Aburrey's Legacy",
+    "description": "3-piece set effect: Wearer's Skill DMG <@ba.vup>+24%</>. \nWhen the wearer casts a battle skill, combo skill, or ultimate, the wearer gains ATK <@ba.vup>+5%</> for 15.0s. The buff from each of the three skill types is unique and does not stack with itself."
   },
-  "type-50-yinglung": {
+  "suit_atk02": {
     "setName": "Type 50 Yinglung",
     "description": "3-piece set effect: Wearer's ATK <@ba.vup>+15%</>. \nWhen any operator in the team casts a battle skill, the wearer gains 1 stack of <@ba.key>Yinglung's Edge</> that gives DMG <@ba.vup>+20%</> to the wearer's next combo skill. <@ba.key>Yinglung's Edge</> can stack 3 time(s)."
   },
-  "bonekrusha": {
+  "suit_attri01": {
     "setName": "Bonekrusha",
     "description": "3-piece set effect: Wearer's ATK <@ba.vup>+15%</>. \nWhen the wearer casts a combo skill, the wearer gains 1 stack of <@ba.key>Bonekrushing Smash</> that grants the wearer's next battle skill DMG Dealt <@ba.vup>+30%</>. <@ba.key>Bonekrushing Smash</> can stack 2 time(s)."
   },
-  "tide-surge": {
+  "suit_burst01": {
     "setName": "Tide Surge",
-    "description": "3-piece set effect: Wearer's Skill DMG Dealt <@ba.vup>+20%</>.\nAfter the wearer applies <@ba.key>2</> or more stacks of <#ba.spellinflict>Arts Infliction</> on the enemy, the wearer gains <@ba.key>Arts DMG Dealt</> <@ba.vup>+35%</> for 15s. This effect cannot stack."
+    "description": "3-piece set effect: Wearer's Skill DMG Dealt <@ba.vup>+20%</>.\nAfter the wearer applies <@ba.key>2.0</> or more stacks of <#ba.spellinflict>Arts Infliction</> on the enemy, the wearer gains <@ba.key>Arts DMG Dealt</> <@ba.vup>+35%</> for 15.0s. This effect cannot stack."
   },
-  "qingbo": {
+  "suit_combo_cd01": {
     "setName": "Qingbo",
-    "description": "3-piece set effect: Wearer's Combo Skill Cooldown Reduction <@ba.vup>+15%</>.\nWhen the wearer casts a combo skill, the wearer gains Skill DMG Dealt <@ba.vup>+20%</> (for every skill) for 15s. This effect can reach 2 stacks. Duration of each stack is counted separately."
+    "description": "3-piece set effect: Wearer's Combo Skill Cooldown Reduction <@ba.vup>+15%</>.\nWhen the wearer casts a combo skill, the wearer gains Skill DMG Dealt <@ba.vup>+20%</> (for every skill) for 15.0s. This effect can reach 2.0 stacks. Duration of each stack is counted separately."
   },
-  "mi-security": {
+  "suit_criti01": {
     "setName": "MI Security",
-    "description": "3-piece set effect: Wearer's Critical Rate <@ba.vup>+5%</>. \nAfter the wearer scores a critical hit, the wearer gains ATK <@ba.vup>+5%</> for 5s. This effect can reach 5 stacks. At max stacks, grant an additional Critical Rate <@ba.vup>+5%</>. This effect cannot stack."
+    "description": "3-piece set effect: Wearer's Critical Rate <@ba.vup>+5%</>. \nAfter the wearer scores a critical hit, the wearer gains ATK <@ba.vup>+5%</> for 5.0s. This effect can reach 5 stacks. At max stacks, grant an additional Critical Rate <@ba.vup>+5%</>. This effect cannot stack."
   },
-  "xiranflow": {
+  "suit_crush_fracture": {
+    "setName": "Grizzled Edge",
+    "description": "3-piece set effect: Wearer's ATK <@ba.vup>+8%</>.\nWhen the wearer applies <#ba.crush>Crush</> or <#ba.fracture>Breach</>, the wearer gains <@ba.pd>Physical DMG Dealt</> <@ba.vup>+[6% × Max number of <#ba.noguard>Vulnerability</> stacks <#ba.consume>consumed</> from one enemy]</> for 20.0s. If the target already has <#ba.physicalvul>Physical Susceptibility</>, is <@ba.poise>Staggered</>, or has attached <#ba.originium>Originium Crystals</>, increase the aforementioned buff to <@ba.vup>1.5</> times. This buff cannot stack."
+  },
+  "suit_expend_spell01": {
     "setName": "Xiranflow",
-    "description": "3-piece set effect: Wearer's ATK <@ba.vup>+10%</>.\nWhenever the wearer <#ba.consume>consumes</> <#ba.conduct>Electrification</> or <#ba.corrupt>Corrosion</>, the wearer gains a number of buff stacks equal to the <#ba.statuslevel>Status Level</> of the Arts Reaction consumed, with each buff stack giving <@ba.pulse>Electric DMG Dealt</> and <@ba.natur>Nature DMG Dealt</> <@ba.vup>+15%</> for 25s. Max number of buff stacks: 3. Duration of each stack is counted separately."
+    "description": "3-piece set effect: Wearer's ATK <@ba.vup>+10%</>.\nWhenever the wearer <#ba.consume>consumes</> <#ba.conduct>Electrification</> or <#ba.corrupt>Corrosion</>, the wearer gains a number of buff stacks equal to the <#ba.statuslevel>Status Level</> of the Arts Reaction consumed, with each buff stack giving <@ba.pulse>Electric DMG Dealt</> and <@ba.natur>Nature DMG Dealt</> <@ba.vup>+15%</> for 25.0s. Max number of buff stacks: 3.0. Duration of each stack is counted separately."
   },
-  "hot-work": {
+  "suit_fire_natr01": {
     "setName": "Hot Work",
-    "description": "3-piece set effect: Wearer's Arts Intensity <@ba.vup>+30</>. \nAfter the wearer applies <#ba.burning>Combustion</>, the wearer gains <@ba.fire>Heat DMG</> +<@ba.vup>50%</> for 10s. After the wearer applies <#ba.corrupt>Corrosion</>, the wearer gains <@ba.natur>Nature DMG</> +<@ba.vup>50%</> for 10s. The aforementioned effects cannot stack."
+    "description": "3-piece set effect: Wearer's Arts Intensity <@ba.vup>+30</>. \nAfter the wearer applies <#ba.burning>Combustion</>, the wearer gains <@ba.fire>Heat DMG</> +<@ba.vup>50%</> for 10.0s. After the wearer applies <#ba.corrupt>Corrosion</>, the wearer gains <@ba.natur>Nature DMG</> +<@ba.vup>50%</> for 10.0s. The aforementioned effects cannot stack."
   },
-  "lynx": {
-    "setName": "LYNX",
-    "description": "3-piece set effect: Wearer's HP Treatment Efficiency <@ba.vup>+20%</>. \nAfter the wearer gives HP treatment to an allied target, that target also gains <@ba.vup>15%</> DMG Reduction against all types of DMG for 10s. If the said treatment exceeds the target's Max HP, the target gains <@ba.vup>30%</> DMG Reduction against all types of DMG. The aforementioned effects cannot stack."
-  },
-  "swordmancer": {
-    "setName": "Swordmancer",
-    "description": "3-piece set effect: Wearer's Stagger Efficiency Bonus <@ba.vup>+20%</>.\nAfter the wearer applies a <#ba.physicalstatus>Physical Status</>, the wearer also performs 1 hit that deals 250% ATK of Physical DMG and [<@ba.poise>10</> Stagger]. Effect trigger cooldown: 15s."
-  },
-  "aethertech": {
-    "setName": "Æthertech",
-    "description": "3-piece set effect: Wearer's ATK <@ba.vup>+8%</>. \nAfter the wearer applies <#ba.noguard>Vulnerability</>, the wearer gains <@ba.pd>Physical DMG</> <@ba.vup>+8%</> for 15s. This effect can reach 4 stacks. If the target already has 4 stack(s) of <#ba.noguard>Vulnerability</>, the wearer gains an additional Physical DMG <@ba.vup>+16%</> for 10s. This effect cannot stack."
-  },
-  "pulser-labs": {
-    "setName": "Pulser Labs",
-    "description": "3-piece set effect: Wearer's Arts Intensity <@ba.vup>+30</>. \nAfter the wearer applies <#ba.conduct>Electrification</>, the wearer gains <@ba.pulse>Electric DMG</><@ba.vup> +50%</> for 10s. After the wearer applies <#ba.frozen>Solidification</>, the wearer gains <@ba.cryst>Cryo DMG</><@ba.vup> +50%</> for 10s. The aforementioned effects cannot stack."
-  },
-  "eternal-xiranite": {
-    "setName": "Eternal Xiranite",
-    "description": "3-piece set effect: Wearer's HP <@ba.vup>+1000</>.\nAfter the wearer applies <#ba.enhance>Amp</>, <#ba.guard>Protected</>, <#ba.vulnerable>Susceptibility</>, or <#ba.weak>Weakened</>, other teammates gain DMG Dealt <@ba.vup>+16%</> for 15s. This effect cannot stack."
-  },
-  "roving-msgr": {
-    "setName": "Roving MSGR",
-    "description": "3-piece set effect: Wearer's Agility <@ba.vup>+50</>. \nWhen the wearer's HP is above 80%, <@ba.pd>Physical DMG</> <@ba.vup>+20%</>."
-  },
-  "aburreys-legacy": {
-    "setName": "Aburrey's Legacy",
-    "description": "3-piece set effect: Wearer's Skill DMG <@ba.vup>+24%</>. \nWhen the wearer casts a battle skill, combo skill, or ultimate, the wearer gains ATK <@ba.vup>+5%</> for 15s. The buff from each of the three skill types is unique and does not stack with itself."
-  },
-  "armored-msgr": {
-    "setName": "Armored MSGR",
-    "description": "3-piece set effect: Wearer's Strength <@ba.vup>+50</>. \nWhen the wearer's HP is below 50%, the wearer gains <@ba.vup>30%</> DMG Reduction against all types of DMG."
-  },
-  "catastrophe": {
-    "setName": "Catastrophe",
-    "description": "3-piece set effect: Wearer's Ultimate Gain Efficiency <@ba.vup>+20%</>.\nThe wearer casts a battle skill, the action <#ba.return>returns</> <@ba.vup>50</> SP. This effect only triggers 1 time per battle."
-  },
-  "mordvolt-resistant": {
-    "setName": "Mordvolt Resistant",
-    "description": "3-piece set effect: Wearer's Will <@ba.vup>+50</>. \nWhen the wearer's HP is below 50%, Treatment Effect <@ba.vup>+30%</>."
-  },
-  "mordvolt-insulation": {
-    "setName": "Mordvolt Insulation",
-    "description": "3-piece set effect: Wearer's Intellect <@ba.vup>+50</>. \nWhen the wearer's HP is above 80%, <@ba.key>Arts DMG</> <@ba.vup>+20%</>."
-  },
-  "aic-heavy": {
-    "setName": "AIC Heavy",
-    "description": "3-piece set effect: Wearer's HP <@ba.vup>+500</>. \nAfter the wearer defeats an enemy, the wearer restores <@ba.heal>100</> HP. Effect trigger cooldown: 5s."
-  },
-  "aic-light": {
-    "setName": "AIC Light",
-    "description": "3-piece set effect: Wearer's HP <@ba.vup>+500</>. \nAfter the wearer defeats an enemy, the wearer gains ATK <@ba.vup>+20</> for <@ba.vup>5</>s."
-  },
-  "no-set-bonuses": {
-    "setName": "No Set Bonuses",
-    "passive": "",
-    "conditional": ""
-  },
-  "aic-fieldwork": {
+  "suit_generaltype": {
     "setName": "AIC Fieldwork",
     "description": "3-piece set effect: Wearer gains DMG Dealt <@ba.vup>+20%</> for all types of DMG, <@ba.vup>10%</> DMG Reduction against all types of DMG, and Ultimate Gain Efficiency <@ba.vup>+10%</>."
   },
-  "deep-rampart": {
+  "suit_heal01": {
+    "setName": "LYNX",
+    "description": "3-piece set effect: Wearer's HP Treatment Efficiency <@ba.vup>+20%</>. \nAfter the wearer gives HP treatment to an allied target, that target also gains <@ba.vup>15%</> DMG Reduction against all types of DMG for 10.0s. If the said treatment exceeds the target's Max HP, the target gains <@ba.vup>30%</> DMG Reduction against all types of DMG. The aforementioned effects cannot stack."
+  },
+  "suit_phy01": {
+    "setName": "Swordmancer",
+    "description": "3-piece set effect: Wearer's Stagger Efficiency Bonus <@ba.vup>+20%</>.\nAfter the wearer applies a <#ba.physicalstatus>Physical Status</>, the wearer also performs 1 hit that deals 250% ATK of Physical DMG and [<@ba.poise>10.0</> Stagger]. Effect trigger cooldown: 15.0s."
+  },
+  "suit_poise01": {
+    "setName": "Æthertech",
+    "description": "3-piece set effect: Wearer's ATK <@ba.vup>+8%</>.\nAfter the wearer applies <#ba.noguard>Vulnerability</>, the wearer gains <@ba.pd>Physical DMG Dealt</> <@ba.vup>+8%</> for 15.0s. This effect can reach 4 stacks. If the target has 4 stacks of <#ba.noguard>Vulnerability</>, the wearer gains an additional <@ba.pd>Physical DMG Dealt</> <@ba.vup>+16%</> for 10.0s. This effect cannot stack."
+  },
+  "suit_pulse_cryst01": {
+    "setName": "Pulser Labs",
+    "description": "3-piece set effect: Wearer's Arts Intensity <@ba.vup>+30</>. \nAfter the wearer applies <#ba.conduct>Electrification</>, the wearer gains <@ba.pulse>Electric DMG</><@ba.vup> +50%</> for 10.0s. After the wearer applies <#ba.frozen>Solidification</>, the wearer gains <@ba.cryst>Cryo DMG</><@ba.vup> +50%</> for 10.0s. The aforementioned effects cannot stack."
+  },
+  "suit_spellburst": {
     "setName": "Deep Rampart",
-    "description": "3-piece set effect: Wearer's Arts DMG Dealt <@ba.vup>+16%</>.\nWhen the wearer applies <#ba.naturalburst>Nature Burst</> or <#ba.crystburst>Cryo Burst</>, the wearer gains Arts Intensity <@ba.vup>+16</> for 20s. Max stacks for this effect: 3. Duration of each stack is counted separately. Effect only triggers once every 0.1s."
+    "description": "3-piece set effect: Wearer's Arts DMG Dealt <@ba.vup>+16%</>.\nWhen the wearer applies <#ba.naturalburst>Nature Burst</> or <#ba.crystburst>Cryo Burst</>, the wearer gains Arts Intensity <@ba.vup>+16</> for 20.0s. Max stacks for this effect: 3.0. Duration of each stack is counted separately. Effect only triggers once every 0.1s."
+  },
+  "suit_str01": {
+    "setName": "Armored MSGR",
+    "description": "3-piece set effect: Wearer's Strength <@ba.vup>+50.0</>. \nWhen the wearer's HP is below 50%, the wearer gains <@ba.vup>30%</> DMG Reduction against all types of DMG."
+  },
+  "suit_stragi01": {
+    "setName": "AIC Heavy",
+    "description": "3-piece set effect: Wearer's HP <@ba.vup>+500.0</>. \nAfter the wearer defeats an enemy, the wearer restores <@ba.heal>100.0</> HP. Effect trigger cooldown: 5.0s."
+  },
+  "suit_usp01": {
+    "setName": "Catastrophe",
+    "description": "3-piece set effect: Wearer's Ultimate Gain Efficiency <@ba.vup>+20%</>.\nThe wearer casts a battle skill, the action <#ba.return>returns</> <@ba.vup>50</> SP. This effect only triggers 1 time per battle."
+  },
+  "suit_usp02": {
+    "setName": "Eternal Xiranite",
+    "description": "3-piece set effect: Wearer's HP <@ba.vup>+1000.0</>.\nAfter the wearer applies <#ba.enhance>Amp</>, <#ba.guard>Protection</>, <#ba.vulnerable>Susceptibility</>, or <#ba.weak>Weakness</>, other teammates gain DMG Dealt <@ba.vup>+16%</> for 15.0s. This effect cannot stack."
+  },
+  "suit_will01": {
+    "setName": "Mordvolt Resistant",
+    "description": "3-piece set effect: Wearer's Will <@ba.vup>+50.0</>. \nWhen the wearer's HP is below 50%, Treatment Effect <@ba.vup>+30%</>."
+  },
+  "suit_wisd01": {
+    "setName": "Mordvolt Insulation",
+    "description": "3-piece set effect: Wearer's Intellect <@ba.vup>+50.0</>. \nWhen the wearer's HP is above 80%, <@ba.key>Arts DMG</> <@ba.vup>+20%</>."
+  },
+  "suit_wisdwill01": {
+    "setName": "AIC Light",
+    "description": "3-piece set effect: Wearer's HP <@ba.vup>+500.0</>. \nAfter the wearer defeats an enemy, the wearer gains ATK <@ba.vup>+20.0</> for <@ba.vup>5.0</>s."
   }
 }

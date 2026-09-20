@@ -8,3 +8,5 @@ build
 *.log
 coverage
 package-lock.json
+src/data/operators/*.generated.ts
+src/data/equipment/generated-weapons

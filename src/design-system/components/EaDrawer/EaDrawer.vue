@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ElDrawer } from 'element-plus';
 import { useAttrs } from 'vue';
 
 defineOptions({ inheritAttrs: false });

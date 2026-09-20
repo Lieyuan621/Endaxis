@@ -1,0 +1,24 @@
+.next-armory-dialog {
+  max-width: calc(100vw - 24px);
+}
+
+@media (max-width: 760px) {
+  .next-armory-dialog .el-dialog__body {
+    overflow-x: hidden;
+  }
+
+  .next-armory-dialog .footer {
+    flex-wrap: wrap;
+  }
+
+  .next-armory-dialog .header-info {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 440px) {
+  .next-armory-dialog .el-dialog__body {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}

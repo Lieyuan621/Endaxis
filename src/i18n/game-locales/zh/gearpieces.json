@@ -1,5331 +1,1550 @@
 {
-  "frontiers-armor-t1": {
-    "name": "拓荒护甲·壹型",
+  "item_equip_t0_parts_tundra01_body_01": {
+    "name": "简易护甲",
     "slotType": "护甲",
-    "setName": "拓荒",
-    "statNames": ["力量", "敏捷", "战技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
+    "setName": "",
+    "defense": 8.0
   },
-  "frontiers-armor-t3": {
-    "name": "拓荒护甲·叁型",
+  "item_equip_t0_parts_tundra01_body_02": {
+    "name": "简易护服",
     "slotType": "护甲",
-    "setName": "拓荒",
-    "statNames": ["敏捷", "智识", "副能力"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Secondary Attribute": {
-        "values": [10.4, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 56
+    "setName": "",
+    "defense": 8.0
   },
-  "frontiers-armor": {
-    "name": "拓荒护甲",
-    "slotType": "护甲",
-    "setName": "拓荒",
-    "statNames": ["力量", "智识", "终结技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [25.9, 28.5, 31.1, 33.6],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "frontiers-armor-t2": {
-    "name": "拓荒护甲·贰型",
-    "slotType": "护甲",
-    "setName": "拓荒",
-    "statNames": ["敏捷", "智识", "战技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "frontiers-protection-suit": {
-    "name": "拓荒护服",
-    "slotType": "护甲",
-    "setName": "拓荒",
-    "statNames": ["智识", "敏捷", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "frontiers-fiber-gloves": {
-    "name": "拓荒纤维手套",
+  "item_equip_t0_parts_tundra01_hand_01": {
+    "name": "简易手甲",
     "slotType": "护手",
-    "setName": "拓荒",
-    "statNames": ["意志", "力量", "所有技能伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 6.0
   },
-  "frontiers-fiber-gloves-t1": {
-    "name": "拓荒纤维手套·壹型",
+  "item_equip_t0_parts_tundra01_hand_02": {
+    "name": "简易护手",
     "slotType": "护手",
-    "setName": "拓荒",
-    "statNames": ["智识", "敏捷", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 6.0
   },
-  "frontiers-blight-res-gloves": {
-    "name": "拓荒耐蚀手套",
+  "item_equip_t1_parts_tundra01_body_01": {
+    "name": "矿场护甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 16.0
+  },
+  "item_equip_t1_parts_tundra01_body_02": {
+    "name": "矿场防护服",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 16.0
+  },
+  "item_equip_t1_parts_tundra01_body_03": {
+    "name": "测试型重甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 22.400000000000002
+  },
+  "item_equip_t1_parts_tundra01_body_04": {
+    "name": "测试型重甲·壹型",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 22.400000000000002
+  },
+  "item_equip_t1_parts_tundra01_body_05": {
+    "name": "矿场轻甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 22.400000000000002
+  },
+  "item_equip_t1_parts_tundra01_body_06": {
+    "name": "矿场滤尘衣",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 22.400000000000002
+  },
+  "item_equip_t1_parts_tundra01_edc_01": {
+    "name": "应急联络仪",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 6.0
+  },
+  "item_equip_t1_parts_tundra01_edc_02": {
+    "name": "应急压缩核",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 6.0
+  },
+  "item_equip_t1_parts_tundra01_hand_01": {
+    "name": "矿场手甲",
     "slotType": "护手",
-    "setName": "拓荒",
-    "statNames": ["敏捷", "智识", "战技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 12.0
   },
-  "frontiers-extra-o2-tube-t1": {
-    "name": "拓荒增量供氧栓·壹型",
-    "slotType": "配件",
-    "setName": "拓荒",
-    "statNames": ["智识", "敏捷", "副能力"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Secondary Attribute": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-analyzer": {
-    "name": "拓荒分析仪",
-    "slotType": "配件",
-    "setName": "拓荒",
-    "statNames": ["力量", "终结技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [51.7, 56.9, 62.1, 67.3],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-comm-t1": {
-    "name": "拓荒通信器·壹型",
-    "slotType": "配件",
-    "setName": "拓荒",
-    "statNames": ["力量", "智识", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-comm": {
-    "name": "拓荒通信器",
-    "slotType": "配件",
-    "setName": "拓荒",
-    "statNames": ["力量", "敏捷", "连携技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-extra-o2-tube": {
-    "name": "拓荒增量供氧栓",
-    "slotType": "配件",
-    "setName": "拓荒",
-    "statNames": ["敏捷", "智识", "副能力"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Secondary Attribute": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-o2-tube": {
-    "name": "拓荒供氧栓",
-    "slotType": "配件",
-    "setName": "拓荒",
-    "statNames": ["意志", "物理伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "grizzled-edge-armor": {
-    "name": "旧锋装甲",
-    "slotType": "护甲",
-    "setName": "旧锋",
-    "statNames": ["力量", "意志", "物理伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "grizzled-edge-armor-t1": {
-    "name": "旧锋装甲·壹型",
-    "slotType": "护甲",
-    "setName": "旧锋",
-    "statNames": ["敏捷", "力量", "源石技艺强度"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "grizzled-edge-gauntlets": {
-    "name": "旧锋手甲",
+  "item_equip_t1_parts_tundra01_hand_02": {
+    "name": "矿场护腕",
     "slotType": "护手",
-    "setName": "旧锋",
-    "statNames": ["力量", "意志", "源石技艺强度"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 16.8
   },
-  "grizzled-edge-gauntlets-t1": {
-    "name": "旧锋手甲·壹型",
+  "item_equip_t1_parts_tundra01_hand_03": {
+    "name": "矿场手套",
     "slotType": "护手",
-    "setName": "旧锋",
-    "statNames": ["敏捷", "力量", "源石技艺强度"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 12.0
   },
-  "grizzled-edge-push-knife": {
-    "name": "旧锋刺刃",
-    "slotType": "配件",
-    "setName": "旧锋",
-    "statNames": ["力量", "意志", "物理伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "grizzled-edge-push-knife-t1": {
-    "name": "旧锋刺刃·壹型",
-    "slotType": "配件",
-    "setName": "旧锋",
-    "statNames": ["敏捷", "力量", "物理伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-heavy-armor-t1": {
-    "name": "50式应龙重甲·壹型",
-    "slotType": "护甲",
-    "setName": "50式应龙",
-    "statNames": ["敏捷", "力量", "终结技充能效率"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "type-50-yinglung-heavy-armor": {
-    "name": "50式应龙重甲",
-    "slotType": "护甲",
-    "setName": "50式应龙",
-    "statNames": ["力量", "意志", "物理伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "type-50-yinglung-heavy-armor-t2": {
-    "name": "50式应龙重甲·贰型",
-    "slotType": "护甲",
-    "setName": "50式应龙",
-    "statNames": ["敏捷", "智识", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "type-50-yinglung-light-armor": {
-    "name": "50式应龙轻甲",
-    "slotType": "护甲",
-    "setName": "50式应龙",
-    "statNames": ["意志", "力量", "所有技能伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [13.8, 15.2, 16.6, 17.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "type-50-yinglung-gloves": {
-    "name": "50式应龙护手",
+  "item_equip_t1_parts_tundra01_hand_04": {
+    "name": "矿场护手",
     "slotType": "护手",
-    "setName": "50式应龙",
-    "statNames": ["敏捷", "智识", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 16.8
   },
-  "type-50-yinglung-gloves-t1": {
-    "name": "50式应龙护手·壹型",
-    "slotType": "护手",
-    "setName": "50式应龙",
-    "statNames": ["意志", "敏捷", "连携技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "type-50-yinglung-radar-t2": {
-    "name": "50式应龙雷达·贰型",
-    "slotType": "配件",
-    "setName": "50式应龙",
-    "statNames": ["敏捷", "智识", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-radar": {
-    "name": "50式应龙雷达",
-    "slotType": "配件",
-    "setName": "50式应龙",
-    "statNames": ["力量", "意志", "物理伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-radar-t1": {
-    "name": "50式应龙雷达·壹型",
-    "slotType": "配件",
-    "setName": "50式应龙",
-    "statNames": ["敏捷", "力量", "终结技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [51.7, 56.9, 62.1, 67.3],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-knife": {
-    "name": "50式应龙短刃",
-    "slotType": "配件",
-    "setName": "50式应龙",
-    "statNames": ["意志", "敏捷", "连携技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-knife-t1": {
-    "name": "50式应龙短刃·壹型",
-    "slotType": "配件",
-    "setName": "50式应龙",
-    "statNames": ["智识", "力量", "所有技能伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [27.6, 30.4, 33.1, 35.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-heavy-armor": {
-    "name": "碾骨重护甲",
-    "slotType": "护甲",
-    "setName": "碾骨",
-    "statNames": ["敏捷", "智识", "终结技充能效率"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-heavy-armor-t1": {
-    "name": "碾骨重护甲·壹型",
-    "slotType": "护甲",
-    "setName": "碾骨",
-    "statNames": ["敏捷", "力量", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-poncho": {
-    "name": "碾骨披巾",
-    "slotType": "护甲",
-    "setName": "碾骨",
-    "statNames": ["意志", "力量", "连携技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-poncho-t1": {
-    "name": "碾骨披巾·壹型",
-    "slotType": "护甲",
-    "setName": "碾骨",
-    "statNames": ["意志", "敏捷", "终结技充能效率"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-heavy-armor-t2": {
-    "name": "碾骨重护甲·贰型",
-    "slotType": "护甲",
-    "setName": "碾骨",
-    "statNames": ["敏捷", "力量", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-gloves": {
-    "name": "碾骨手套",
-    "slotType": "护手",
-    "setName": "碾骨",
-    "statNames": ["意志", "敏捷", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "bonekrusha-wristband": {
-    "name": "碾骨腕带",
-    "slotType": "护手",
-    "setName": "碾骨",
-    "statNames": ["力量", "敏捷", "灼热和自然伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "bonekrusha-wristband-t1": {
-    "name": "碾骨腕带·壹型",
-    "slotType": "护手",
-    "setName": "碾骨",
-    "statNames": ["敏捷", "力量", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "bonekrusha-mask": {
-    "name": "碾骨面具",
-    "slotType": "配件",
-    "setName": "碾骨",
-    "statNames": ["敏捷", "力量", "对失衡目标伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "DMG Bonus vs. Staggered": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-figurine-t1": {
-    "name": "碾骨小雕像·壹型",
-    "slotType": "配件",
-    "setName": "碾骨",
-    "statNames": ["意志", "智识", "连携技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-figurine": {
-    "name": "碾骨小雕像",
-    "slotType": "配件",
-    "setName": "碾骨",
-    "statNames": ["意志", "敏捷", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-figurine-t2": {
-    "name": "碾骨小雕像·贰型",
-    "slotType": "配件",
-    "setName": "碾骨",
-    "statNames": ["意志", "智识", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-mask-t2": {
-    "name": "碾骨面具·贰型",
-    "slotType": "配件",
-    "setName": "碾骨",
-    "statNames": ["敏捷", "力量", "战技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-mask-t1": {
-    "name": "碾骨面具·壹型",
-    "slotType": "配件",
-    "setName": "碾骨",
-    "statNames": ["敏捷", "力量", "暴击率"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "tide-fall-light-armor": {
-    "name": "落潮轻甲",
-    "slotType": "护甲",
-    "setName": "潮涌",
-    "statNames": ["智识", "力量", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "tide-surge-gauntlets": {
-    "name": "潮涌手甲",
-    "slotType": "护手",
-    "setName": "潮涌",
-    "statNames": ["力量", "意志", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "hanging-river-o2-tube": {
-    "name": "悬河供氧栓",
-    "slotType": "配件",
-    "setName": "潮涌",
-    "statNames": ["力量", "意志", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "turbid-cutting-torch": {
-    "name": "浊流切割炬",
-    "slotType": "配件",
-    "setName": "潮涌",
-    "statNames": ["智识", "力量", "普通攻击伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [27.6, 30.4, 33.1, 35.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "qingbo-heavy-armor": {
-    "name": "清波重甲",
-    "slotType": "护甲",
-    "setName": "清波",
-    "statNames": ["敏捷", "力量", "终结技充能效率"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "qingbo-light-armor": {
-    "name": "清波轻甲",
-    "slotType": "护甲",
-    "setName": "清波",
-    "statNames": ["智识", "意志", "源石技艺强度"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "qingbo-gauntlets": {
-    "name": "清波手甲",
-    "slotType": "护手",
-    "setName": "清波",
-    "statNames": ["敏捷", "力量", "所有技能伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "qingbo-gloves": {
-    "name": "清波护手",
-    "slotType": "护手",
-    "setName": "清波",
-    "statNames": ["智识", "意志", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "qingbo-cask": {
-    "name": "清波水罐",
-    "slotType": "配件",
-    "setName": "清波",
-    "statNames": ["智识", "意志", "源石技艺强度"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "qingbo-positioning-kit": {
-    "name": "清波定位仪",
-    "slotType": "配件",
-    "setName": "清波",
-    "statNames": ["敏捷", "力量", "战技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "qingbo-bamboo-cutter": {
-    "name": "清波竹刃",
-    "slotType": "配件",
-    "setName": "清波",
-    "statNames": ["力量", "敏捷", "灼热和自然伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-overalls": {
-    "name": "M.I.警用罩衣",
-    "slotType": "护甲",
-    "setName": "M.I.警用",
-    "statNames": ["智识", "敏捷", "普通攻击伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [13.8, 15.2, 16.6, 17.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-overalls-t2": {
-    "name": "M.I.警用罩衣·贰型",
-    "slotType": "护甲",
-    "setName": "M.I.警用",
-    "statNames": ["意志", "敏捷", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-armor-t1": {
-    "name": "M.I.警用护甲·壹型",
-    "slotType": "护甲",
-    "setName": "M.I.警用",
-    "statNames": ["敏捷", "智识", "终结技充能效率"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-overalls-t1": {
-    "name": "M.I.警用罩衣·壹型",
-    "slotType": "护甲",
-    "setName": "M.I.警用",
-    "statNames": ["智识", "意志", "暴击率"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [5.2, 5.7, 6.2, 6.7],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-armor": {
-    "name": "M.I.警用护甲",
-    "slotType": "护甲",
-    "setName": "M.I.警用",
-    "statNames": ["敏捷", "力量", "源石技艺强度"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-hands-ppe-t1": {
-    "name": "M.I.警用手环·壹型",
-    "slotType": "护手",
-    "setName": "M.I.警用",
-    "statNames": ["智识", "意志", "暴击率"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [8.6, 9.5, 10.3, 11.2],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "mi-security-gloves-t1": {
-    "name": "M.I.警用手套·壹型",
-    "slotType": "护手",
-    "setName": "M.I.警用",
-    "statNames": ["敏捷", "智识", "终结技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [43.1, 47.4, 51.7, 56.1],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "mi-security-gloves": {
-    "name": "M.I.警用手套",
-    "slotType": "护手",
-    "setName": "M.I.警用",
-    "statNames": ["敏捷", "力量", "战技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "mi-security-hands-ppe": {
-    "name": "M.I.警用手环",
-    "slotType": "护手",
-    "setName": "M.I.警用",
-    "statNames": ["智识", "敏捷", "普通攻击伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "mi-security-toolkit": {
-    "name": "M.I.警用工具组",
-    "slotType": "配件",
-    "setName": "M.I.警用",
-    "statNames": ["智识", "敏捷", "暴击率"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-armband": {
-    "name": "M.I.警用臂环",
-    "slotType": "配件",
-    "setName": "M.I.警用",
-    "statNames": ["力量", "意志", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-scope": {
-    "name": "M.I.警用瞄具",
-    "slotType": "配件",
-    "setName": "M.I.警用",
-    "statNames": ["敏捷", "力量", "战技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-push-knife": {
-    "name": "M.I.警用刺刃",
-    "slotType": "配件",
-    "setName": "M.I.警用",
-    "statNames": ["意志", "智识", "灼热和自然伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-push-knife-t1": {
-    "name": "M.I.警用刺刃·壹型",
-    "slotType": "配件",
-    "setName": "M.I.警用",
-    "statNames": ["意志", "敏捷", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-scope-t1": {
-    "name": "M.I.警用瞄具·壹型",
-    "slotType": "配件",
-    "setName": "M.I.警用",
-    "statNames": ["敏捷", "智识", "暴击率"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "xiranflow-light-armor": {
-    "name": "壤流轻甲",
-    "slotType": "护甲",
-    "setName": "壤流",
-    "statNames": ["意志", "智识", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "xiranflow-gloves": {
-    "name": "壤流护手",
-    "slotType": "护手",
-    "setName": "壤流",
-    "statNames": ["意志", "智识", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "xiranflow-baton": {
-    "name": "壤流短棍",
-    "slotType": "配件",
-    "setName": "壤流",
-    "statNames": ["意志", "智识", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "hot-work-exoskeleton": {
-    "name": "动火用外骨骼",
-    "slotType": "护甲",
-    "setName": "动火用",
-    "statNames": ["力量", "敏捷", "灼热和自然伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "hot-work-exo-rig": {
-    "name": "动火用辅助骨骼",
-    "slotType": "护甲",
-    "setName": "动火用",
-    "statNames": ["智识", "意志", "灼热和自然伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "hot-work-gloves": {
-    "name": "动火用手套",
-    "slotType": "护手",
-    "setName": "动火用",
-    "statNames": ["力量", "意志", "源石技艺强度"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
-  },
-  "hot-work-gauntlets": {
-    "name": "动火用手甲",
-    "slotType": "护手",
-    "setName": "动火用",
-    "statNames": ["智识", "力量", "灼热和自然伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "hot-work-gauntlets-t1": {
-    "name": "动火用手甲·壹型",
-    "slotType": "护手",
-    "setName": "动火用",
-    "statNames": ["意志", "智识", "灼热和自然伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "hot-work-power-bank": {
-    "name": "动火用储能匣",
-    "slotType": "配件",
-    "setName": "动火用",
-    "statNames": ["力量", "敏捷", "源石技艺强度"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "hot-work-pyrometer": {
-    "name": "动火用测温镜",
-    "slotType": "配件",
-    "setName": "动火用",
-    "statNames": ["智识", "战技伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "hot-work-power-cartridge": {
-    "name": "动火用电力匣",
-    "slotType": "配件",
-    "setName": "动火用",
-    "statNames": ["意志", "智识", "源石技艺强度"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "lynx-heavy-armor": {
-    "name": "生物辅助重甲",
-    "slotType": "护甲",
-    "setName": "生物辅助",
-    "statNames": ["力量", "意志", "治疗效率加成"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "lynx-cuirass": {
-    "name": "生物辅助胸甲",
-    "slotType": "护甲",
-    "setName": "生物辅助",
-    "statNames": ["意志", "智识", "治疗效率加成"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "lynx-gloves": {
-    "name": "生物辅助臂甲",
-    "slotType": "护手",
-    "setName": "生物辅助",
-    "statNames": ["力量", "意志", "终结技充能效率"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "lynx-gauntlets": {
-    "name": "生物辅助手甲",
-    "slotType": "护手",
-    "setName": "生物辅助",
-    "statNames": ["意志", "力量", "治疗效率加成"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [17.3, 19, 20.7, 22.4],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "lynx-connector": {
-    "name": "生物辅助接驳器",
-    "slotType": "配件",
-    "setName": "生物辅助",
-    "statNames": ["力量", "意志", "全伤害减免"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [17.1, 18.5, 19.9, 21.2],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "lynx-connector-t2": {
-    "name": "生物辅助接驳器·贰型",
-    "slotType": "配件",
-    "setName": "生物辅助",
-    "statNames": ["力量", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "lynx-slab": {
-    "name": "生物辅助护板",
-    "slotType": "配件",
-    "setName": "生物辅助",
-    "statNames": ["意志", "智识", "主能力"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Main Attribute": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "lynx-aegis-injector": {
-    "name": "生物辅助护盾针",
-    "slotType": "配件",
-    "setName": "生物辅助",
-    "statNames": ["意志", "治疗效率加成"],
-    "stats": {
-      "Will": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "lynx-connector-t1": {
-    "name": "生物辅助接驳器·壹型",
-    "slotType": "配件",
-    "setName": "生物辅助",
-    "statNames": ["力量", "意志", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "swordmancer-heavy-armor": {
-    "name": "点剑重装甲",
-    "slotType": "护甲",
-    "setName": "点剑",
-    "statNames": ["敏捷", "力量", "源石技艺强度"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "swordmancer-heavy-armor-t1": {
-    "name": "点剑重装甲·壹型",
-    "slotType": "护甲",
-    "setName": "点剑",
-    "statNames": ["敏捷", "力量", "物理伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "swordmancer-light-armor": {
-    "name": "点剑轻装甲",
-    "slotType": "护甲",
-    "setName": "点剑",
-    "statNames": ["力量", "意志", "终结技充能效率"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "swordmancer-tac-gloves": {
-    "name": "点剑战术手套",
-    "slotType": "护手",
-    "setName": "点剑",
-    "statNames": ["力量", "意志", "物理伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "swordmancer-tac-gauntlets": {
-    "name": "点剑战术手甲",
-    "slotType": "护手",
-    "setName": "点剑",
-    "statNames": ["敏捷", "力量", "终结技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [43.1, 47.4, 51.7, 56.1],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "swordmancer-tac-gauntlets-t1": {
-    "name": "点剑战术手甲·壹型",
-    "slotType": "护手",
-    "setName": "点剑",
-    "statNames": ["力量", "意志", "源石技艺强度"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
-  },
-  "swordmancer-flint": {
-    "name": "点剑火石",
-    "slotType": "配件",
-    "setName": "点剑",
-    "statNames": ["敏捷", "力量", "物理伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "swordmancer-nav-beacon": {
-    "name": "点剑定位信标",
-    "slotType": "配件",
-    "setName": "点剑",
-    "statNames": ["力量", "源石技艺强度"],
-    "stats": {
-      "Strength": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "swordmancer-dagger": {
-    "name": "点剑短刃",
-    "slotType": "配件",
-    "setName": "点剑",
-    "statNames": ["敏捷", "力量", "终结技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [51.7, 56.9, 62.1, 67.3],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "swordmancer-micro-filter": {
-    "name": "点剑微型滤芯",
-    "slotType": "配件",
-    "setName": "点剑",
-    "statNames": ["力量", "意志", "物理伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "thertech-plating": {
-    "name": "轻超域护板",
-    "slotType": "护甲",
-    "setName": "轻超域",
-    "statNames": ["力量", "意志", "对失衡目标伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "DMG Bonus vs. Staggered": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "thertech-gloves": {
-    "name": "轻超域护手",
-    "slotType": "护手",
-    "setName": "轻超域",
-    "statNames": ["敏捷", "力量", "源石技艺强度"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
-  },
-  "aethertech-light-gloves": {
-    "name": "轻超域轻护手",
-    "slotType": "护手",
-    "setName": "轻超域",
-    "statNames": ["意志", "敏捷", "所有技能伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "aethertech-watch": {
-    "name": "轻超域腕表",
-    "slotType": "配件",
-    "setName": "轻超域",
-    "statNames": ["力量", "敏捷", "战技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "thertech-analysis-band": {
-    "name": "轻超域分析环",
-    "slotType": "配件",
-    "setName": "轻超域",
-    "statNames": ["力量", "意志", "物理伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "thertech-stabilizer": {
-    "name": "轻超域稳定盘",
-    "slotType": "配件",
-    "setName": "轻超域",
-    "statNames": ["敏捷", "力量", "源石技艺强度"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "aethertech-stabilizer-t1": {
-    "name": "轻超域稳定盘·壹型",
-    "slotType": "配件",
-    "setName": "轻超域",
-    "statNames": ["敏捷", "力量", "物理伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "pulser-labs-disruptor-suit": {
-    "name": "脉冲式干扰服",
-    "slotType": "护甲",
-    "setName": "脉冲式",
-    "statNames": ["智识", "意志", "源石技艺强度"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "pulser-labs-gloves": {
-    "name": "脉冲式手套",
-    "slotType": "护手",
-    "setName": "脉冲式",
-    "statNames": ["意志", "智识", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "pulser-labs-calibrator": {
-    "name": "脉冲式校准器",
-    "slotType": "配件",
-    "setName": "脉冲式",
-    "statNames": ["智识", "源石技艺强度"],
-    "stats": {
-      "Intellect": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "pulser-labs-invasion-core": {
-    "name": "脉冲式侵入核",
-    "slotType": "配件",
-    "setName": "脉冲式",
-    "statNames": ["意志", "终结技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [51.7, 56.9, 62.1, 67.3],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "pulser-labs-probe": {
-    "name": "脉冲式探针",
-    "slotType": "配件",
-    "setName": "脉冲式",
-    "statNames": ["智识", "敏捷", "源石技艺强度"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "eternal-xiranite-armor": {
-    "name": "长息装甲",
-    "slotType": "护甲",
-    "setName": "长息",
-    "statNames": ["意志", "智识", "源石技艺强度"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "eternal-xiranite-gloves-t1": {
-    "name": "长息护手·壹型",
-    "slotType": "护手",
-    "setName": "长息",
-    "statNames": ["智识", "意志", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "eternal-xiranite-gloves": {
-    "name": "长息护手",
-    "slotType": "护手",
-    "setName": "长息",
-    "statNames": ["智识", "力量", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "eternal-xiranite-power-core": {
-    "name": "长息蓄电核",
-    "slotType": "配件",
-    "setName": "长息",
-    "statNames": ["智识", "力量", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [24.6, 27.1, 29.6, 32],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "eternal-xiranite-power-core-t1": {
-    "name": "长息蓄电核·壹型",
-    "slotType": "配件",
-    "setName": "长息",
-    "statNames": ["智识", "意志", "治疗效率加成"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "eternal-xiranite-auxiliary-arm": {
-    "name": "长息辅助臂",
-    "slotType": "配件",
-    "setName": "长息",
-    "statNames": ["意志", "智识", "终结技充能效率"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [24.6, 27.1, 29.6, 32],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "roving-msgr-jacket-t1": {
-    "name": "巡行信使夹克·壹型",
-    "slotType": "护甲",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "智识", "生命值"],
-    "stats": {
-      "Agility": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [41],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "roving-msgr-jacket": {
-    "name": "巡行信使夹克",
-    "slotType": "护甲",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "智识", "攻击力"],
-    "stats": {
-      "Agility": {
-        "values": [44],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [29],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [16],
-        "isPercent": false
-      }
-    },
-    "defense": 28
-  },
-  "roving-msgr-fists-t1": {
-    "name": "巡行信使手套·壹型",
-    "slotType": "护手",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "力量", "攻击力"],
-    "stats": {
-      "Agility": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [12.3],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "roving-msgr-fists": {
-    "name": "巡行信使手套",
-    "slotType": "护手",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "力量", "物理伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [33],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [9.7],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "roving-msgr-gyro-t1": {
-    "name": "巡行信使陀螺·壹型",
-    "slotType": "配件",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "智识", "攻击力"],
-    "stats": {
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "roving-msgr-flashlight-t1": {
-    "name": "巡行信使手电·壹型",
-    "slotType": "配件",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "力量", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "roving-msgr-flashlight-t2": {
-    "name": "巡行信使手电·贰型",
-    "slotType": "配件",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "力量", "终结技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [36.8],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "roving-msgr-gyro": {
-    "name": "巡行信使陀螺",
-    "slotType": "配件",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "攻击力"],
-    "stats": {
-      "Agility": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "roving-msgr-flashlight": {
-    "name": "巡行信使手电",
-    "slotType": "配件",
-    "setName": "巡行信使",
-    "statNames": ["敏捷", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [21],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "aburrey-heavy-armor-t1": {
-    "name": "阿伯莉重甲·壹型",
-    "slotType": "护甲",
-    "setName": "阿伯莉遗声",
-    "statNames": ["敏捷", "力量", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "aburrey-heavy-armor": {
-    "name": "阿伯莉重甲",
-    "slotType": "护甲",
-    "setName": "阿伯莉遗声",
-    "statNames": ["力量", "敏捷", "所有技能伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [41],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [9.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "aburrey-light-armor": {
-    "name": "阿伯莉轻甲",
-    "slotType": "护甲",
-    "setName": "阿伯莉遗声",
-    "statNames": ["智识", "力量", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [8.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "aburrey-light-armor-t1": {
-    "name": "阿伯莉轻甲·壹型",
-    "slotType": "护甲",
-    "setName": "阿伯莉遗声",
-    "statNames": ["意志", "敏捷", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "aburrey-gauntlets": {
-    "name": "阿伯莉手甲",
-    "slotType": "护手",
-    "setName": "阿伯莉遗声",
-    "statNames": ["力量", "意志", "对失衡目标伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [30],
-        "isPercent": false
-      },
-      "DMG Bonus vs. Staggered": {
-        "values": [24.5],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "aburrey-uv-lamp": {
-    "name": "阿伯莉紫光灯",
-    "slotType": "配件",
-    "setName": "阿伯莉遗声",
-    "statNames": ["力量", "敏捷", "所有技能伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [19.6],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-auditory-chip": {
-    "name": "阿伯莉侦听芯片",
-    "slotType": "配件",
-    "setName": "阿伯莉遗声",
-    "statNames": ["力量", "意志", "对失衡目标伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [15],
-        "isPercent": false
-      },
-      "DMG Bonus vs. Staggered": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-auditory-chip-t1": {
-    "name": "阿伯莉侦听芯片·壹型",
-    "slotType": "配件",
-    "setName": "阿伯莉遗声",
-    "statNames": ["敏捷", "力量", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-flashlight": {
-    "name": "阿伯莉照明器",
-    "slotType": "配件",
-    "setName": "阿伯莉遗声",
-    "statNames": ["智识", "力量", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [17.5],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-sensor-chip": {
-    "name": "阿伯莉传感芯片",
-    "slotType": "配件",
-    "setName": "阿伯莉遗声",
-    "statNames": ["意志", "敏捷", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-sensor-chip-t1": {
-    "name": "阿伯莉传感芯片·壹型",
-    "slotType": "配件",
-    "setName": "阿伯莉遗声",
-    "statNames": ["意志", "智识", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "armored-msgr-jacket-t1": {
-    "name": "重装信使夹克·壹型",
-    "slotType": "护甲",
-    "setName": "重装信使",
-    "statNames": ["力量", "意志", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [41],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "armored-msgr-jacket": {
-    "name": "重装信使夹克",
-    "slotType": "护甲",
-    "setName": "重装信使",
-    "statNames": ["力量", "敏捷", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [44],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [29],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 28
-  },
-  "armored-msgr-gloves-t1": {
-    "name": "重装信使手套·壹型",
-    "slotType": "护手",
-    "setName": "重装信使",
-    "statNames": ["力量", "敏捷", "攻击力"],
-    "stats": {
-      "Strength": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [12.3],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "armored-msgr-gloves-t2": {
-    "name": "重装信使手套·贰型",
-    "slotType": "护手",
-    "setName": "重装信使",
-    "statNames": ["力量", "敏捷", "连携技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [24.5],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "armored-msgr-gloves": {
-    "name": "重装信使手套",
-    "slotType": "护手",
-    "setName": "重装信使",
-    "statNames": ["力量", "意志", "全伤害减免"],
-    "stats": {
-      "Strength": {
-        "values": [33],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "armored-msgr-gyro-t1": {
-    "name": "重装信使陀螺·壹型",
-    "slotType": "配件",
-    "setName": "重装信使",
-    "statNames": ["力量", "意志", "攻击力"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "armored-msgr-flashlight-t1": {
-    "name": "重装信使手电·壹型",
-    "slotType": "配件",
-    "setName": "重装信使",
-    "statNames": ["力量", "敏捷", "暴击率"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [7.3],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "armored-msgr-flashlight": {
-    "name": "重装信使手电",
-    "slotType": "配件",
-    "setName": "重装信使",
-    "statNames": ["力量", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [21],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [21],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "armored-msgr-gyro": {
-    "name": "重装信使陀螺",
-    "slotType": "配件",
-    "setName": "重装信使",
-    "statNames": ["力量", "攻击力"],
-    "stats": {
-      "Strength": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "catastrophe-heavy-armor": {
-    "name": "天灾防护重甲",
-    "slotType": "护甲",
-    "setName": "天灾防护",
-    "statNames": ["力量", "智识", "终结技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [18.4],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "catastrophe-heavy-armor-t1": {
-    "name": "天灾防护重甲·壹型",
-    "slotType": "护甲",
-    "setName": "天灾防护",
-    "statNames": ["力量", "意志", "终结技充能效率"],
-    "stats": {
-      "Strength": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [8.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "catastrophe-gloves": {
-    "name": "天灾防护手套",
-    "slotType": "护手",
-    "setName": "天灾防护",
-    "statNames": ["意志", "智识", "源石技艺强度"],
-    "stats": {
-      "Will": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [24],
-        "isPercent": false
-      }
-    },
-    "defense": 30
-  },
-  "catastrophe-filter": {
-    "name": "天灾防护滤芯",
-    "slotType": "配件",
-    "setName": "天灾防护",
-    "statNames": ["意志", "智识", "源石技艺强度"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [29],
-        "isPercent": false
-      }
-    },
-    "defense": 15
-  },
-  "catastrophe-gauze-cartridge-t1": {
-    "name": "天灾防护净芯·壹型",
-    "slotType": "配件",
-    "setName": "天灾防护",
-    "statNames": ["力量", "意志", "副能力"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Secondary Attribute": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "catastrophe-gauze-cartridge": {
-    "name": "天灾防护净芯",
-    "slotType": "配件",
-    "setName": "天灾防护",
-    "statNames": ["力量", "智识", "终结技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [36.8],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-resistant-vest-t1": {
-    "name": "蚀电防护背心·壹型",
-    "slotType": "护甲",
-    "setName": "蚀电防护",
-    "statNames": ["意志", "智识", "生命值"],
-    "stats": {
-      "Will": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [41],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "mordvolt-resistant-vest": {
-    "name": "蚀电防护背心",
-    "slotType": "护甲",
-    "setName": "蚀电防护",
-    "statNames": ["意志", "敏捷", "生命值"],
-    "stats": {
-      "Will": {
-        "values": [44],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [29],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 28
-  },
-  "mordvolt-resistant-gloves-t1": {
-    "name": "蚀电防护手套·壹型",
-    "slotType": "护手",
-    "setName": "蚀电防护",
-    "statNames": ["意志", "敏捷", "攻击力"],
-    "stats": {
-      "Will": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [12.3],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "mordvolt-resistant-gloves": {
-    "name": "蚀电防护手套",
-    "slotType": "护手",
-    "setName": "蚀电防护",
-    "statNames": ["意志", "智识", "治疗效率加成"],
-    "stats": {
-      "Will": {
-        "values": [33],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [8.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mordvolt-resistant-battery-t1": {
-    "name": "蚀电防护电池·壹型",
-    "slotType": "配件",
-    "setName": "蚀电防护",
-    "statNames": ["意志", "敏捷", "治疗效率加成"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-resistant-wrench-t1": {
-    "name": "蚀电防护扳手·壹型",
-    "slotType": "配件",
-    "setName": "蚀电防护",
-    "statNames": ["意志", "智识", "攻击力"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-resistant-wrench": {
-    "name": "蚀电防护扳手",
-    "slotType": "配件",
-    "setName": "蚀电防护",
-    "statNames": ["意志", "攻击力"],
-    "stats": {
-      "Will": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "mordvolt-resistant-battery": {
-    "name": "蚀电防护电池",
-    "slotType": "配件",
-    "setName": "蚀电防护",
-    "statNames": ["意志", "治疗效率加成"],
-    "stats": {
-      "Will": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "mordvolt-insulation-vest-t1": {
-    "name": "蚀电屏蔽背心·壹型",
-    "slotType": "护甲",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "敏捷", "普通攻击伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [9.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "mordvolt-insulation-vest-t2": {
-    "name": "蚀电屏蔽背心·贰型",
-    "slotType": "护甲",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "意志", "生命值"],
-    "stats": {
-      "Intellect": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [41],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "mordvolt-insulation-vest": {
-    "name": "蚀电屏蔽背心",
-    "slotType": "护甲",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "力量", "攻击力"],
-    "stats": {
-      "Intellect": {
-        "values": [44],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [29],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [16],
-        "isPercent": false
-      }
-    },
-    "defense": 28
-  },
-  "mordvolt-insulation-gloves-t1": {
-    "name": "蚀电屏蔽手套·壹型",
-    "slotType": "护手",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "力量", "攻击力"],
-    "stats": {
-      "Intellect": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [12.3],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "mordvolt-insulation-gloves": {
-    "name": "蚀电屏蔽手套",
-    "slotType": "护手",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "意志", "法术伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [33],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Arts DMG Dealt Bonus": {
-        "values": [9.2],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mordvolt-insulation-battery-t1": {
-    "name": "蚀电屏蔽电池·壹型",
-    "slotType": "配件",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [29],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [17.5],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-insulation-wrench-t2": {
-    "name": "蚀电屏蔽扳手·贰型",
-    "slotType": "配件",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "敏捷", "攻击力"],
-    "stats": {
-      "Intellect": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-insulation-wrench": {
-    "name": "蚀电屏蔽扳手",
-    "slotType": "配件",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "攻击力"],
-    "stats": {
-      "Intellect": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "mordvolt-insulation-wrench-t1": {
-    "name": "蚀电屏蔽扳手·壹型",
-    "slotType": "配件",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "寒冷和电磁伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [11.7],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "mordvolt-insulation-battery": {
-    "name": "蚀电屏蔽电池",
-    "slotType": "配件",
-    "setName": "蚀电屏蔽",
-    "statNames": ["智识", "暴击率"],
-    "stats": {
-      "Intellect": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [5.3],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "aic-heavy-armor": {
+  "item_equip_t1_suit_stragi01_body_01": {
     "name": "集成化重甲",
     "slotType": "护甲",
     "setName": "集成重型",
-    "statNames": ["力量", "敏捷", "全伤害减免"],
-    "stats": {
-      "Strength": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [3.9],
-        "isPercent": true
-      }
-    },
-    "defense": 22
+    "defense": 22.400000000000002
   },
-  "aic-gauntlets": {
-    "name": "集成化手甲",
-    "slotType": "护手",
-    "setName": "集成重型",
-    "statNames": ["力量", "意志", "全伤害减免"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [6.3],
-        "isPercent": true
-      }
-    },
-    "defense": 16
-  },
-  "aic-heavy-plate": {
+  "item_equip_t1_suit_stragi01_edc_01": {
     "name": "集成化重甲片",
     "slotType": "配件",
     "setName": "集成重型",
-    "statNames": ["力量", "全伤害减免"],
-    "stats": {
-      "Strength": {
-        "values": [16],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [7.5],
-        "isPercent": true
-      }
-    },
-    "defense": 8
+    "defense": 8.4
   },
-  "aic-alloy-plate": {
+  "item_equip_t1_suit_stragi01_edc_02": {
     "name": "集成化合金板",
     "slotType": "配件",
     "setName": "集成重型",
-    "statNames": ["敏捷", "全伤害减免"],
-    "stats": {
-      "Agility": {
-        "values": [16],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [7.5],
-        "isPercent": true
-      }
-    },
-    "defense": 8
+    "defense": 8.4
   },
-  "aic-light-armor": {
+  "item_equip_t1_suit_stragi01_hand_01": {
+    "name": "集成化手甲",
+    "slotType": "护手",
+    "setName": "集成重型",
+    "defense": 16.8
+  },
+  "item_equip_t1_suit_wisdwill01_body_01": {
     "name": "集成化轻甲",
     "slotType": "护甲",
     "setName": "集成轻型",
-    "statNames": ["智识", "意志", "战技伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [8.1],
-        "isPercent": true
-      }
-    },
-    "defense": 22
+    "defense": 22.400000000000002
   },
-  "aic-tactical-gloves": {
-    "name": "集成化战术手套",
-    "slotType": "护手",
-    "setName": "集成轻型",
-    "statNames": ["智识", "敏捷", "连携技伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 16
-  },
-  "aic-light-plate": {
+  "item_equip_t1_suit_wisdwill01_edc_01": {
     "name": "集成化轻甲片",
     "slotType": "配件",
     "setName": "集成轻型",
-    "statNames": ["智识", "连携技伤害加成"],
-    "stats": {
-      "Intellect": {
-        "values": [16],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [16.2],
-        "isPercent": true
-      }
-    },
-    "defense": 8
+    "defense": 8.4
   },
-  "aic-ceramic-plate": {
+  "item_equip_t1_suit_wisdwill01_edc_02": {
     "name": "集成化陶瓷板",
     "slotType": "配件",
     "setName": "集成轻型",
-    "statNames": ["意志", "战技伤害加成"],
-    "stats": {
-      "Will": {
-        "values": [16],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [16.2],
-        "isPercent": true
-      }
-    },
-    "defense": 8
+    "defense": 8.4
   },
-  "redeemer-plates": {
-    "name": "纾难重甲",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "普通攻击伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [115, 126, 138, 149],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [14.4, 15.8, 17.3, 18.7],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "redeemer-armor": {
-    "name": "纾难护甲",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["智识", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [115, 126, 138, 149],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.9, 14.1, 15.4, 16.7],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "miner-armor-t1": {
-    "name": "矿场护甲·壹型",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["力量", "意志", "暴击率"],
-    "stats": {
-      "Strength": {
-        "values": [65],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [3.9],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "miner-overalls-t1": {
-    "name": "矿场防护服·壹型",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["智识", "敏捷", "攻击力"],
-    "stats": {
-      "Intellect": {
-        "values": [65],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [7.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "miner-armor": {
-    "name": "矿场护甲",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["力量", "敏捷", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [27],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [18],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [125],
-        "isPercent": false
-      }
-    },
-    "defense": 16
-  },
-  "miner-overalls": {
-    "name": "矿场防护服",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["智识", "意志", "生命值"],
-    "stats": {
-      "Intellect": {
-        "values": [27],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [18],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [125],
-        "isPercent": false
-      }
-    },
-    "defense": 16
-  },
-  "prototype-heavy-armor": {
-    "name": "测试型重甲",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["力量", "智识", "攻击力"],
-    "stats": {
-      "Strength": {
-        "values": [37],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [25],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [11],
-        "isPercent": false
-      }
-    },
-    "defense": 22
-  },
-  "prototype-heavy-armor-t1": {
-    "name": "测试型重甲·壹型",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "意志", "攻击力"],
-    "stats": {
-      "Agility": {
-        "values": [37],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [25],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [11],
-        "isPercent": false
-      }
-    },
-    "defense": 22
-  },
-  "miner-vest": {
-    "name": "矿场轻甲",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "智识", "生命值"],
-    "stats": {
-      "Agility": {
-        "values": [37],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [25],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [9],
-        "isPercent": true
-      }
-    },
-    "defense": 22
-  },
-  "miner-cleansuit": {
-    "name": "矿场滤尘衣",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["意志", "敏捷", "生命值"],
-    "stats": {
-      "Will": {
-        "values": [37],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [25],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [9],
-        "isPercent": true
-      }
-    },
-    "defense": 22
-  },
-  "basic-armor": {
-    "name": "简易护甲",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["力量", "敏捷", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [10],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [46],
-        "isPercent": false
-      }
-    },
-    "defense": 8
-  },
-  "basic-ppe": {
-    "name": "简易护服",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["智识", "意志", "生命值"],
-    "stats": {
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [10],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [46],
-        "isPercent": false
-      }
-    },
-    "defense": 8
-  },
-  "redeemer-gloves": {
-    "name": "纾难护手",
+  "item_equip_t1_suit_wisdwill01_hand_01": {
+    "name": "集成化战术手套",
     "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "终结技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [86, 94, 103, 111],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [45, 49.5, 54, 58.5],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "集成轻型",
+    "defense": 16.8
   },
-  "redeemer-hands": {
-    "name": "纾难手套",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["力量", "所有技能伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [86, 94, 103, 111],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [24, 26.4, 28.8, 31.2],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "miner-gloves-t2": {
-    "name": "矿场手套·贰型",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["智识", "敏捷", "攻击力"],
-    "stats": {
-      "Intellect": {
-        "values": [49],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [32],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [13],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "miner-fists-t1": {
-    "name": "矿场护手·壹型",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["意志", "智识", "终结技充能效率"],
-    "stats": {
-      "Will": {
-        "values": [49],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [32],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [15.5],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "miner-gauntlets-t1": {
-    "name": "矿场手甲·壹型",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["力量", "智识", "攻击力"],
-    "stats": {
-      "Strength": {
-        "values": [36],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [24],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [9.5],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "miner-gloves-t1": {
-    "name": "矿场手套·壹型",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["智识", "敏捷", "生命值"],
-    "stats": {
-      "Intellect": {
-        "values": [36],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [24],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [19],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "miner-gauntlets": {
-    "name": "矿场手甲",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["力量", "敏捷", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [20],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [13],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [11],
-        "isPercent": true
-      }
-    },
-    "defense": 12
-  },
-  "miner-wrists": {
-    "name": "矿场护腕",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "力量", "生命值"],
-    "stats": {
-      "Agility": {
-        "values": [28],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [18],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [15],
-        "isPercent": true
-      }
-    },
-    "defense": 16
-  },
-  "miner-gloves": {
-    "name": "矿场手套",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["智识", "意志", "生命值"],
-    "stats": {
-      "Intellect": {
-        "values": [20],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [13],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [11],
-        "isPercent": true
-      }
-    },
-    "defense": 12
-  },
-  "miner-fists": {
-    "name": "矿场护手",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["意志", "智识", "生命值"],
-    "stats": {
-      "Will": {
-        "values": [28],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [18],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [15],
-        "isPercent": true
-      }
-    },
-    "defense": 16
-  },
-  "basic-gauntlets": {
-    "name": "简易手甲",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["力量", "敏捷", "生命值"],
-    "stats": {
-      "Strength": {
-        "values": [11],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [7],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [77],
-        "isPercent": false
-      }
-    },
-    "defense": 6
-  },
-  "basic-gloves": {
-    "name": "简易护手",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["智识", "意志", "生命值"],
-    "stats": {
-      "Intellect": {
-        "values": [11],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [7],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [77],
-        "isPercent": false
-      }
-    },
-    "defense": 6
-  },
-  "redeemer-tag": {
-    "name": "纾难识别牌",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["力量", "全伤害减免"],
-    "stats": {
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [17.8, 19.2, 20.6, 21.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "redeemer-tag-t1": {
-    "name": "纾难识别牌·壹型",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [43.2, 47.5, 51.8, 56.2],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "redeemer-seal": {
-    "name": "纾难印章",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["智识", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [25.7, 28.3, 30.9, 33.4],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "redeemer-seal-t1": {
-    "name": "纾难印章·壹型",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["意志", "暴击率"],
-    "stats": {
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [10.8, 11.9, 13, 14],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "miner-compression-core-t1": {
-    "name": "矿场压缩核·壹型",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["智识", "终结技充能效率"],
-    "stats": {
-      "Intellect": {
-        "values": [31],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [18.6],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "miner-turbine-t1": {
-    "name": "矿场增压轮·壹型",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["力量", "全伤害减免"],
-    "stats": {
-      "Strength": {
-        "values": [31],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "miner-drive-wheel-t1": {
-    "name": "矿场传动轮·壹型",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "连携技伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [31],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [31.2],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "miner-comm-t1": {
-    "name": "矿场联络仪·壹型",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["意志", "治疗效率加成"],
-    "stats": {
-      "Will": {
-        "values": [31],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [15.6],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "miner-turbine": {
+  "item_equip_t2_parts_tundra01_edc_01": {
     "name": "矿场增压轮",
     "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["力量", "连携技伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [22.8],
-        "isPercent": true
-      }
-    },
-    "defense": 10
+    "setName": "",
+    "defense": 10.799999999999999
   },
-  "miner-drive-wheel": {
+  "item_equip_t2_parts_tundra01_edc_02": {
     "name": "矿场传动轮",
     "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "暴击率"],
-    "stats": {
-      "Agility": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [5.7],
-        "isPercent": true
-      }
-    },
-    "defense": 10
+    "setName": "",
+    "defense": 10.799999999999999
   },
-  "miner-compression-core": {
+  "item_equip_t2_parts_tundra01_edc_03": {
     "name": "矿场压缩核",
     "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["智识", "暴击率"],
-    "stats": {
-      "Intellect": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [5.7],
-        "isPercent": true
-      }
-    },
-    "defense": 10
+    "setName": "",
+    "defense": 10.799999999999999
   },
-  "miner-comm": {
+  "item_equip_t2_parts_tundra01_edc_04": {
     "name": "矿场联络仪",
     "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["意志", "生命值"],
-    "stats": {
-      "Will": {
-        "values": [22],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [22.8],
-        "isPercent": true
-      }
-    },
-    "defense": 10
+    "setName": "",
+    "defense": 10.799999999999999
   },
-  "emergency-compression-core": {
-    "name": "应急压缩核",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["攻击力"],
-    "stats": {
-      "Attack": {
-        "values": [13.2],
-        "isPercent": true
-      }
-    },
-    "defense": 6
-  },
-  "emergency-comm": {
-    "name": "应急联络仪",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["暴击率"],
-    "stats": {
-      "Critical Rate": {
-        "values": [6.6],
-        "isPercent": true
-      }
-    },
-    "defense": 6
-  },
-  "qingbo-positioning-kit-t1": {
-    "name": "清波定位仪·壹型",
-    "slotType": "配件",
-    "setName": "清波",
-    "statNames": ["敏捷", "力量", "物理伤害加成"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "hot-work-hands-ppe": {
-    "name": "动火用护手",
+  "item_equip_t2_parts_tundra01_hand_01": {
+    "name": "矿场手甲·壹型",
     "slotType": "护手",
-    "setName": "动火用",
-    "statNames": ["智识", "意志", "灼热和自然伤害加成"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Heat and Nature DMG Dealt Bonus",
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
+    "setName": "",
+    "defense": 21.599999999999998
   },
-  "hot-work-insulation-slab": {
-    "name": "动火用隔温板",
+  "item_equip_t2_parts_tundra01_hand_02": {
+    "name": "矿场手套·壹型",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 21.599999999999998
+  },
+  "item_equip_t2_suit_agi01_body_01": {
+    "name": "巡行信使夹克",
+    "slotType": "护甲",
+    "setName": "巡行信使",
+    "defense": 28.8
+  },
+  "item_equip_t2_suit_agi01_edc_01": {
+    "name": "巡行信使陀螺",
     "slotType": "配件",
-    "setName": "动火用",
-    "statNames": ["智识", "意志", "所有技能伤害加成"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "All Skill DMG Dealt Bonus",
-        "values": [27.6, 30.4, 33.1, 35.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
+    "setName": "巡行信使",
+    "defense": 10.799999999999999
   },
-  "aic-fieldwork-armor": {
+  "item_equip_t2_suit_agi01_edc_02": {
+    "name": "巡行信使手电",
+    "slotType": "配件",
+    "setName": "巡行信使",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_agi01_hand_01": {
+    "name": "巡行信使手套",
+    "slotType": "护手",
+    "setName": "巡行信使",
+    "defense": 21.599999999999998
+  },
+  "item_equip_t2_suit_str01_body_01": {
+    "name": "重装信使夹克",
+    "slotType": "护甲",
+    "setName": "重装信使",
+    "defense": 28.8
+  },
+  "item_equip_t2_suit_str01_edc_01": {
+    "name": "重装信使陀螺",
+    "slotType": "配件",
+    "setName": "重装信使",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_str01_edc_02": {
+    "name": "重装信使手电",
+    "slotType": "配件",
+    "setName": "重装信使",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_str01_hand_01": {
+    "name": "重装信使手套",
+    "slotType": "护手",
+    "setName": "重装信使",
+    "defense": 21.599999999999998
+  },
+  "item_equip_t2_suit_will01_body_01": {
+    "name": "蚀电防护背心",
+    "slotType": "护甲",
+    "setName": "蚀电防护",
+    "defense": 28.8
+  },
+  "item_equip_t2_suit_will01_edc_01": {
+    "name": "蚀电防护扳手",
+    "slotType": "配件",
+    "setName": "蚀电防护",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_will01_edc_02": {
+    "name": "蚀电防护电池",
+    "slotType": "配件",
+    "setName": "蚀电防护",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_will01_hand_01": {
+    "name": "蚀电防护手套",
+    "slotType": "护手",
+    "setName": "蚀电防护",
+    "defense": 21.599999999999998
+  },
+  "item_equip_t2_suit_wisd01_body_01": {
+    "name": "蚀电屏蔽背心",
+    "slotType": "护甲",
+    "setName": "蚀电屏蔽",
+    "defense": 28.8
+  },
+  "item_equip_t2_suit_wisd01_edc_01": {
+    "name": "蚀电屏蔽扳手",
+    "slotType": "配件",
+    "setName": "蚀电屏蔽",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_wisd01_edc_02": {
+    "name": "蚀电屏蔽扳手·壹型",
+    "slotType": "配件",
+    "setName": "蚀电屏蔽",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_wisd01_edc_03": {
+    "name": "蚀电屏蔽电池",
+    "slotType": "配件",
+    "setName": "蚀电屏蔽",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_wisd01_hand_01": {
+    "name": "蚀电屏蔽手套",
+    "slotType": "护手",
+    "setName": "蚀电屏蔽",
+    "defense": 21.599999999999998
+  },
+  "item_equip_t3_parts_tundra01_body_01": {
+    "name": "矿场护甲·壹型",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 40.0
+  },
+  "item_equip_t3_parts_tundra01_body_02": {
+    "name": "矿场防护服·壹型",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 40.0
+  },
+  "item_equip_t3_parts_tundra01_edc_01": {
+    "name": "矿场增压轮·壹型",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 15.0
+  },
+  "item_equip_t3_parts_tundra01_edc_02": {
+    "name": "矿场传动轮·壹型",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 15.0
+  },
+  "item_equip_t3_parts_tundra01_edc_03": {
+    "name": "矿场压缩核·壹型",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 15.0
+  },
+  "item_equip_t3_parts_tundra01_edc_04": {
+    "name": "矿场联络仪·壹型",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 15.0
+  },
+  "item_equip_t3_parts_tundra01_hand_01": {
+    "name": "矿场手套·贰型",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 30.0
+  },
+  "item_equip_t3_parts_tundra01_hand_02": {
+    "name": "矿场护手·壹型",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_agi01_body_01": {
+    "name": "巡行信使夹克·壹型",
+    "slotType": "护甲",
+    "setName": "巡行信使",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_agi01_edc_01": {
+    "name": "巡行信使手电·壹型",
+    "slotType": "配件",
+    "setName": "巡行信使",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_agi01_edc_02": {
+    "name": "巡行信使手电·贰型",
+    "slotType": "配件",
+    "setName": "巡行信使",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_agi01_edc_03": {
+    "name": "巡行信使陀螺·壹型",
+    "slotType": "配件",
+    "setName": "巡行信使",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_agi01_hand_01": {
+    "name": "巡行信使手套·壹型",
+    "slotType": "护手",
+    "setName": "巡行信使",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_atk01_body_01": {
+    "name": "阿伯莉重甲",
+    "slotType": "护甲",
+    "setName": "阿伯莉遗声",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_atk01_body_02": {
+    "name": "阿伯莉重甲·壹型",
+    "slotType": "护甲",
+    "setName": "阿伯莉遗声",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_atk01_body_03": {
+    "name": "阿伯莉轻甲",
+    "slotType": "护甲",
+    "setName": "阿伯莉遗声",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_atk01_body_04": {
+    "name": "阿伯莉轻甲·壹型",
+    "slotType": "护甲",
+    "setName": "阿伯莉遗声",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_atk01_edc_01": {
+    "name": "阿伯莉紫光灯",
+    "slotType": "配件",
+    "setName": "阿伯莉遗声",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_02": {
+    "name": "阿伯莉侦听芯片",
+    "slotType": "配件",
+    "setName": "阿伯莉遗声",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_03": {
+    "name": "阿伯莉侦听芯片·壹型",
+    "slotType": "配件",
+    "setName": "阿伯莉遗声",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_04": {
+    "name": "阿伯莉照明器",
+    "slotType": "配件",
+    "setName": "阿伯莉遗声",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_05": {
+    "name": "阿伯莉传感芯片",
+    "slotType": "配件",
+    "setName": "阿伯莉遗声",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_06": {
+    "name": "阿伯莉传感芯片·壹型",
+    "slotType": "配件",
+    "setName": "阿伯莉遗声",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_hand_01": {
+    "name": "阿伯莉手甲",
+    "slotType": "护手",
+    "setName": "阿伯莉遗声",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_str01_body_01": {
+    "name": "重装信使夹克·壹型",
+    "slotType": "护甲",
+    "setName": "重装信使",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_str01_edc_01": {
+    "name": "重装信使陀螺·壹型",
+    "slotType": "配件",
+    "setName": "重装信使",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_str01_edc_02": {
+    "name": "重装信使手电·壹型",
+    "slotType": "配件",
+    "setName": "重装信使",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_str01_hand_01": {
+    "name": "重装信使手套·壹型",
+    "slotType": "护手",
+    "setName": "重装信使",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_str01_hand_02": {
+    "name": "重装信使手套·贰型",
+    "slotType": "护手",
+    "setName": "重装信使",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_usp01_body_01": {
+    "name": "天灾防护重甲",
+    "slotType": "护甲",
+    "setName": "天灾防护",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_usp01_body_02": {
+    "name": "天灾防护重甲·壹型",
+    "slotType": "护甲",
+    "setName": "天灾防护",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_usp01_edc_01": {
+    "name": "天灾防护净芯",
+    "slotType": "配件",
+    "setName": "天灾防护",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_usp01_edc_02": {
+    "name": "天灾防护净芯·壹型",
+    "slotType": "配件",
+    "setName": "天灾防护",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_usp01_edc_03": {
+    "name": "天灾防护滤芯",
+    "slotType": "配件",
+    "setName": "天灾防护",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_usp01_hand_01": {
+    "name": "天灾防护手套",
+    "slotType": "护手",
+    "setName": "天灾防护",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_will01_body_01": {
+    "name": "蚀电防护背心·壹型",
+    "slotType": "护甲",
+    "setName": "蚀电防护",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_will01_edc_01": {
+    "name": "蚀电防护电池·壹型",
+    "slotType": "配件",
+    "setName": "蚀电防护",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_will01_edc_02": {
+    "name": "蚀电防护扳手·壹型",
+    "slotType": "配件",
+    "setName": "蚀电防护",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_will01_hand_01": {
+    "name": "蚀电防护手套·壹型",
+    "slotType": "护手",
+    "setName": "蚀电防护",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_wisd01_body_01": {
+    "name": "蚀电屏蔽背心·壹型",
+    "slotType": "护甲",
+    "setName": "蚀电屏蔽",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_wisd01_body_02": {
+    "name": "蚀电屏蔽背心·贰型",
+    "slotType": "护甲",
+    "setName": "蚀电屏蔽",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_wisd01_edc_01": {
+    "name": "蚀电屏蔽扳手·贰型",
+    "slotType": "配件",
+    "setName": "蚀电屏蔽",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_wisd01_edc_02": {
+    "name": "蚀电屏蔽电池·壹型",
+    "slotType": "配件",
+    "setName": "蚀电屏蔽",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_wisd01_hand_01": {
+    "name": "蚀电屏蔽手套·壹型",
+    "slotType": "护手",
+    "setName": "蚀电屏蔽",
+    "defense": 30.0
+  },
+  "item_equip_t4_parts_wuling00_body_01": {
     "name": "集成实训护甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "法术伤害加成"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Arts DMG Dealt Bonus",
-        "values": [9.3, 10.2, 11.2, 12.1],
-        "isPercent": true
-      }
-    ],
-    "defense": 48
+    "defense": 48.0
   },
-  "aic-fieldwork-vest": {
-    "name": "集成实训胸甲",
-    "slotType": "护甲",
-    "setName": "集成实训",
-    "statNames": ["副能力", "主能力", "副能力"],
-    "stats": [
-      {
-        "name": "Secondary Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Main Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [8.9, 9.7, 10.6, 11.5],
-        "isPercent": true
-      }
-    ],
-    "defense": 48
-  },
-  "aic-fieldwork-plate": {
+  "item_equip_t4_parts_wuling00_body_02": {
     "name": "集成实训钢甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [10.5, 11.6, 12.6, 13.7],
-        "isPercent": true
-      }
-    ],
-    "defense": 48
+    "defense": 48.0
   },
-  "aic-fieldwork-wraps": {
-    "name": "集成实训缠带",
-    "slotType": "护手",
-    "setName": "集成实训",
-    "statNames": ["副能力", "主能力", "副能力"],
-    "stats": [
-      {
-        "name": "Secondary Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Main Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [14.8, 16.2, 17.7, 19.2],
-        "isPercent": true
-      }
-    ],
-    "defense": 36
-  },
-  "aic-fieldwork-gloves": {
-    "name": "集成实训手套",
-    "slotType": "护手",
-    "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "法术伤害加成"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Arts DMG Dealt Bonus",
-        "values": [15.5, 17.1, 18.6, 20.2],
-        "isPercent": true
-      }
-    ],
-    "defense": 36
-  },
-  "aic-fieldwork-hands": {
-    "name": "集成实训护手",
-    "slotType": "护手",
-    "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [17.6, 19.3, 21.1, 22.8],
-        "isPercent": true
-      }
-    ],
-    "defense": 36
-  },
-  "aic-fieldwork-flashlight": {
-    "name": "集成实训照明器",
-    "slotType": "配件",
-    "setName": "集成实训",
-    "statNames": ["副能力", "主能力", "副能力"],
-    "stats": [
-      {
-        "name": "Secondary Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Main Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [17.7, 19.5, 21.2, 23],
-        "isPercent": true
-      }
-    ],
-    "defense": 18
-  },
-  "aic-fieldwork-ember": {
-    "name": "集成实训火种石",
-    "slotType": "配件",
-    "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [21.1, 23.2, 25.3, 27.4],
-        "isPercent": true
-      }
-    ],
-    "defense": 18
-  },
-  "aic-fieldwork-machete": {
-    "name": "集成实训排障刀",
-    "slotType": "配件",
-    "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "法术伤害加成"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Arts DMG Dealt Bonus",
-        "values": [18.6, 20.5, 22.4, 24.2],
-        "isPercent": true
-      }
-    ],
-    "defense": 18
-  },
-  "lynx-cuirass-t1": {
-    "name": "生物辅助胸甲·壹型",
+  "item_equip_t4_parts_wuling00_body_03": {
+    "name": "集成实训胸甲",
     "slotType": "护甲",
-    "setName": "生物辅助",
-    "statNames": ["意志", "敏捷", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Agility",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
+    "setName": "集成实训",
+    "defense": 48.0
   },
-  "lynx-gauntlets-t1": {
-    "name": "生物辅助手甲·壹型",
-    "slotType": "护手",
-    "setName": "生物辅助",
-    "statNames": ["意志", "敏捷", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Agility",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "swordmancer-fiber-armor": {
-    "name": "点剑纤维护甲",
-    "slotType": "护甲",
-    "setName": "点剑",
-    "statNames": ["力量", "意志", "物理伤害加成"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "eternal-xiranite-light-armor": {
-    "name": "长息轻护甲",
-    "slotType": "护甲",
-    "setName": "长息",
-    "statNames": ["意志", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [110, 121, 132, 143],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
-  },
-  "eternal-xiranite-light-armor-t1": {
-    "name": "长息轻护甲·壹型",
-    "slotType": "护甲",
-    "setName": "长息",
-    "statNames": ["智识", "意志", "副能力"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [10.4, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
-  },
-  "eternal-xiranite-wraps": {
-    "name": "长息裹手",
-    "slotType": "护手",
-    "setName": "长息",
-    "statNames": ["意志", "智识", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Intellect",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "eternal-xiranite-hands": {
-    "name": "长息手套",
-    "slotType": "护手",
-    "setName": "长息",
-    "statNames": ["意志", "敏捷", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Agility",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "eternal-xiranite-bracing-slab": {
-    "name": "长息加固板",
-    "slotType": "配件",
-    "setName": "长息",
-    "statNames": ["意志", "副能力"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
-  },
-  "rift-trekker-heavy-armor": {
-    "name": "涉渊重甲",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["力量", "源石技艺强度"],
-    "stats": [
-      {
-        "name": "Strength",
-        "values": [115, 126, 138, 149],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [21, 23, 25, 28],
-        "isPercent": false
-      }
-    ],
-    "defense": 56
-  },
-  "rift-trekker-light-armor": {
-    "name": "涉渊轻甲",
-    "slotType": "护甲",
-    "setName": "无套装加成",
-    "statNames": ["意志", "治疗效率加成"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [115, 126, 138, 149],
-        "isPercent": false
-      },
-      {
-        "name": "Treatment Bonus",
-        "values": [10.8, 11.9, 13, 14],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
-  },
-  "rift-trekker-gloves": {
-    "name": "涉渊护手",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["智识", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [86, 94, 103, 111],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [21.4, 23.6, 25.7, 27.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "rift-trekker-hands": {
-    "name": "涉渊手套",
-    "slotType": "护手",
-    "setName": "无套装加成",
-    "statNames": ["意志", "战技伤害加成"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [86, 94, 103, 111],
-        "isPercent": false
-      },
-      {
-        "name": "Battle Skill DMG Bonus",
-        "values": [36, 39.6, 43.2, 46.8],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "rift-trekker-armor-slab": {
-    "name": "涉渊护甲板",
-    "slotType": "配件",
-    "setName": "无套装加成",
-    "statNames": ["敏捷", "副能力"],
-    "stats": [
-      {
-        "name": "Agility",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [21.6, 23.8, 25.9, 28.1],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
-  },
-  "aic-fieldwork-assault-armor": {
+  "item_equip_t4_parts_wuling00_body_04": {
     "name": "集成实训突袭护甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "源石技艺强度"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [17.7, 19.5, 21.2, 23],
-        "isPercent": false
-      }
-    ],
-    "defense": 48
+    "defense": 48.0
   },
-  "aic-fieldwork-medic-armor": {
+  "item_equip_t4_parts_wuling00_body_05": {
     "name": "集成实训医疗护甲",
     "slotType": "护甲",
     "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "治疗效率加成"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Treatment Bonus",
-        "values": [8.9, 9.7, 10.6, 11.5],
-        "isPercent": true
-      }
-    ],
-    "defense": 48
+    "defense": 48.0
   },
-  "aic-fieldwork-assault-gloves": {
-    "name": "集成实训突袭护手",
-    "slotType": "护手",
+  "item_equip_t4_parts_wuling00_edc_01": {
+    "name": "集成实训排障刀",
+    "slotType": "配件",
     "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "源石技艺强度"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [29.5, 32.5, 35.4, 38.4],
-        "isPercent": false
-      }
-    ],
-    "defense": 36
+    "defense": 18.0
   },
-  "aic-fieldwork-medic-gloves": {
-    "name": "集成实训医疗护手",
-    "slotType": "护手",
+  "item_equip_t4_parts_wuling00_edc_02": {
+    "name": "集成实训火种石",
+    "slotType": "配件",
     "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "治疗效率加成"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Treatment Bonus",
-        "values": [14.8, 16.2, 17.7, 19.2],
-        "isPercent": true
-      }
-    ],
-    "defense": 36
+    "defense": 18.0
   },
-  "aic-fieldwork-assault-push-knife": {
+  "item_equip_t4_parts_wuling00_edc_03": {
+    "name": "集成实训照明器",
+    "slotType": "配件",
+    "setName": "集成实训",
+    "defense": 18.0
+  },
+  "item_equip_t4_parts_wuling00_edc_04": {
     "name": "集成实训突袭刺刃",
     "slotType": "配件",
     "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "源石技艺强度"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [35.4, 38.9, 42.5, 46],
-        "isPercent": false
-      }
-    ],
-    "defense": 18
+    "defense": 18.0
   },
-  "aic-fieldwork-power-bank": {
+  "item_equip_t4_parts_wuling00_edc_05": {
     "name": "集成实训供能栓",
     "slotType": "配件",
     "setName": "集成实训",
-    "statNames": ["主能力", "副能力", "治疗效率加成"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Treatment Bonus",
-        "values": [17.7, 19.5, 21.2, 23],
-        "isPercent": true
-      }
-    ],
-    "defense": 18
+    "defense": 18.0
   },
-  "tide-fall-light-armor-t1": {
+  "item_equip_t4_parts_wuling00_hand_01": {
+    "name": "集成实训手套",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "defense": 36.0
+  },
+  "item_equip_t4_parts_wuling00_hand_02": {
+    "name": "集成实训护手",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "defense": 36.0
+  },
+  "item_equip_t4_parts_wuling00_hand_03": {
+    "name": "集成实训缠带",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "defense": 36.0
+  },
+  "item_equip_t4_parts_wuling00_hand_04": {
+    "name": "集成实训突袭护手",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "defense": 36.0
+  },
+  "item_equip_t4_parts_wuling00_hand_05": {
+    "name": "集成实训医疗护手",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "defense": 36.0
+  },
+  "item_equip_t4_parts_wuling01_body_01": {
+    "name": "纾难重甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 56.0
+  },
+  "item_equip_t4_parts_wuling01_body_02": {
+    "name": "纾难护甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 56.0
+  },
+  "item_equip_t4_parts_wuling01_edc_01": {
+    "name": "纾难识别牌",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling01_edc_02": {
+    "name": "纾难识别牌·壹型",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling01_edc_03": {
+    "name": "纾难印章",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling01_edc_04": {
+    "name": "纾难印章·壹型",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling01_hand_01": {
+    "name": "纾难护手",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 42.0
+  },
+  "item_equip_t4_parts_wuling01_hand_02": {
+    "name": "纾难手套",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 42.0
+  },
+  "item_equip_t4_parts_wuling02_body_01": {
+    "name": "涉渊重甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 56.0
+  },
+  "item_equip_t4_parts_wuling02_body_02": {
+    "name": "涉渊轻甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 56.0
+  },
+  "item_equip_t4_parts_wuling02_edc_01": {
+    "name": "涉渊护甲板",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling02_hand_01": {
+    "name": "涉渊护手",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 42.0
+  },
+  "item_equip_t4_parts_wuling02_hand_02": {
+    "name": "涉渊手套",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atb01_body_01": {
+    "name": "拓荒护甲",
+    "slotType": "护甲",
+    "setName": "拓荒",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_body_02": {
+    "name": "拓荒护甲·壹型",
+    "slotType": "护甲",
+    "setName": "拓荒",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_body_03": {
+    "name": "拓荒护甲·贰型",
+    "slotType": "护甲",
+    "setName": "拓荒",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_body_04": {
+    "name": "拓荒护甲·叁型",
+    "slotType": "护甲",
+    "setName": "拓荒",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_body_05": {
+    "name": "拓荒护服",
+    "slotType": "护甲",
+    "setName": "拓荒",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_edc_01": {
+    "name": "拓荒通信器",
+    "slotType": "配件",
+    "setName": "拓荒",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_02": {
+    "name": "拓荒通信器·壹型",
+    "slotType": "配件",
+    "setName": "拓荒",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_03": {
+    "name": "拓荒分析仪",
+    "slotType": "配件",
+    "setName": "拓荒",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_04": {
+    "name": "拓荒增量供氧栓",
+    "slotType": "配件",
+    "setName": "拓荒",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_05": {
+    "name": "拓荒供氧栓",
+    "slotType": "配件",
+    "setName": "拓荒",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_06": {
+    "name": "拓荒增量供氧栓·壹型",
+    "slotType": "配件",
+    "setName": "拓荒",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_hand_01": {
+    "name": "拓荒耐蚀手套",
+    "slotType": "护手",
+    "setName": "拓荒",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atb01_hand_02": {
+    "name": "拓荒纤维手套",
+    "slotType": "护手",
+    "setName": "拓荒",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atb01_hand_03": {
+    "name": "拓荒纤维手套·壹型",
+    "slotType": "护手",
+    "setName": "拓荒",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atk02_body_01": {
+    "name": "50式应龙重甲",
+    "slotType": "护甲",
+    "setName": "50式应龙",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atk02_body_02": {
+    "name": "50式应龙重甲·壹型",
+    "slotType": "护甲",
+    "setName": "50式应龙",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atk02_body_03": {
+    "name": "50式应龙重甲·贰型",
+    "slotType": "护甲",
+    "setName": "50式应龙",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atk02_body_04": {
+    "name": "50式应龙轻甲",
+    "slotType": "护甲",
+    "setName": "50式应龙",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atk02_edc_01": {
+    "name": "50式应龙雷达",
+    "slotType": "配件",
+    "setName": "50式应龙",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_edc_02": {
+    "name": "50式应龙雷达·壹型",
+    "slotType": "配件",
+    "setName": "50式应龙",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_edc_03": {
+    "name": "50式应龙雷达·贰型",
+    "slotType": "配件",
+    "setName": "50式应龙",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_edc_04": {
+    "name": "50式应龙短刃",
+    "slotType": "配件",
+    "setName": "50式应龙",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_edc_05": {
+    "name": "50式应龙短刃·壹型",
+    "slotType": "配件",
+    "setName": "50式应龙",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_hand_01": {
+    "name": "50式应龙护手",
+    "slotType": "护手",
+    "setName": "50式应龙",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atk02_hand_02": {
+    "name": "50式应龙护手·壹型",
+    "slotType": "护手",
+    "setName": "50式应龙",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_attri01_body_01": {
+    "name": "碾骨重护甲",
+    "slotType": "护甲",
+    "setName": "碾骨",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_body_02": {
+    "name": "碾骨重护甲·壹型",
+    "slotType": "护甲",
+    "setName": "碾骨",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_body_03": {
+    "name": "碾骨披巾",
+    "slotType": "护甲",
+    "setName": "碾骨",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_body_04": {
+    "name": "碾骨披巾·壹型",
+    "slotType": "护甲",
+    "setName": "碾骨",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_body_05": {
+    "name": "碾骨重护甲·贰型",
+    "slotType": "护甲",
+    "setName": "碾骨",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_edc_02": {
+    "name": "碾骨小雕像·贰型",
+    "slotType": "配件",
+    "setName": "碾骨",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_03": {
+    "name": "碾骨小雕像",
+    "slotType": "配件",
+    "setName": "碾骨",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_04": {
+    "name": "碾骨面具",
+    "slotType": "配件",
+    "setName": "碾骨",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_05": {
+    "name": "碾骨面具·壹型",
+    "slotType": "配件",
+    "setName": "碾骨",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_06": {
+    "name": "碾骨小雕像·壹型",
+    "slotType": "配件",
+    "setName": "碾骨",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_07": {
+    "name": "碾骨面具·贰型",
+    "slotType": "配件",
+    "setName": "碾骨",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_hand_01": {
+    "name": "碾骨腕带",
+    "slotType": "护手",
+    "setName": "碾骨",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_attri01_hand_02": {
+    "name": "碾骨腕带·壹型",
+    "slotType": "护手",
+    "setName": "碾骨",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_attri01_hand_03": {
+    "name": "碾骨手套",
+    "slotType": "护手",
+    "setName": "碾骨",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_burst01_body_01": {
+    "name": "落潮轻甲",
+    "slotType": "护甲",
+    "setName": "潮涌",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_burst01_body_02": {
     "name": "落潮轻甲·壹型",
     "slotType": "护甲",
     "setName": "潮涌",
-    "statNames": ["智识", "意志", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
+    "defense": 56.0
   },
-  "wave-swell-heavy-armor": {
+  "item_equip_t4_suit_burst01_body_03": {
     "name": "涌浪重装甲",
     "slotType": "护甲",
     "setName": "潮涌",
-    "statNames": ["力量", "意志", "寒冷和电磁伤害加成"],
-    "stats": [
-      {
-        "name": "Strength",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Cryo and Electric DMG Dealt Bonus",
-        "values": [11.5, 12.7, 13.8, 15],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
+    "defense": 56.0
   },
-  "turbid-cutting-torch-t1": {
+  "item_equip_t4_suit_burst01_edc_01": {
+    "name": "悬河供氧栓",
+    "slotType": "配件",
+    "setName": "潮涌",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_burst01_edc_02": {
+    "name": "浊流切割炬",
+    "slotType": "配件",
+    "setName": "潮涌",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_burst01_edc_03": {
     "name": "浊流切割炬·壹型",
     "slotType": "配件",
     "setName": "潮涌",
-    "statNames": ["智识", "意志", "灼热和自然伤害加成"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "Heat and Nature DMG Dealt Bonus",
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
+    "defense": 21.0
   },
-  "deepsink-gloves": {
+  "item_equip_t4_suit_burst01_hand_01": {
+    "name": "潮涌手甲",
+    "slotType": "护手",
+    "setName": "潮涌",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_burst01_hand_02": {
     "name": "沉水手套",
     "slotType": "护手",
     "setName": "潮涌",
-    "statNames": ["智识", "意志", "所有技能伤害加成"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "All Skill DMG Dealt Bonus",
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
+    "defense": 42.0
   },
-  "deep-rampart-armor": {
+  "item_equip_t4_suit_combo_cd01_body_01": {
+    "name": "清波重甲",
+    "slotType": "护甲",
+    "setName": "清波",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_combo_cd01_body_02": {
+    "name": "清波轻甲",
+    "slotType": "护甲",
+    "setName": "清波",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_combo_cd01_edc_01": {
+    "name": "清波定位仪",
+    "slotType": "配件",
+    "setName": "清波",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_combo_cd01_edc_02": {
+    "name": "清波竹刃",
+    "slotType": "配件",
+    "setName": "清波",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_combo_cd01_edc_03": {
+    "name": "清波水罐",
+    "slotType": "配件",
+    "setName": "清波",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_combo_cd01_edc_04": {
+    "name": "清波定位仪·壹型",
+    "slotType": "配件",
+    "setName": "清波",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_combo_cd01_hand_01": {
+    "name": "清波手甲",
+    "slotType": "护手",
+    "setName": "清波",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_combo_cd01_hand_02": {
+    "name": "清波护手",
+    "slotType": "护手",
+    "setName": "清波",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_criti01_body_01": {
+    "name": "M.I.警用护甲",
+    "slotType": "护甲",
+    "setName": "M.I.警用",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_body_02": {
+    "name": "M.I.警用罩衣",
+    "slotType": "护甲",
+    "setName": "M.I.警用",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_body_03": {
+    "name": "M.I.警用罩衣·壹型",
+    "slotType": "护甲",
+    "setName": "M.I.警用",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_body_04": {
+    "name": "M.I.警用罩衣·贰型",
+    "slotType": "护甲",
+    "setName": "M.I.警用",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_body_06": {
+    "name": "M.I.警用护甲·壹型",
+    "slotType": "护甲",
+    "setName": "M.I.警用",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_edc_01": {
+    "name": "M.I.警用臂环",
+    "slotType": "配件",
+    "setName": "M.I.警用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_02": {
+    "name": "M.I.警用瞄具",
+    "slotType": "配件",
+    "setName": "M.I.警用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_03": {
+    "name": "M.I.警用工具组",
+    "slotType": "配件",
+    "setName": "M.I.警用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_04": {
+    "name": "M.I.警用刺刃",
+    "slotType": "配件",
+    "setName": "M.I.警用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_05": {
+    "name": "M.I.警用刺刃·壹型",
+    "slotType": "配件",
+    "setName": "M.I.警用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_06": {
+    "name": "M.I.警用瞄具·壹型",
+    "slotType": "配件",
+    "setName": "M.I.警用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_hand_01": {
+    "name": "M.I.警用手套",
+    "slotType": "护手",
+    "setName": "M.I.警用",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_criti01_hand_02": {
+    "name": "M.I.警用手环",
+    "slotType": "护手",
+    "setName": "M.I.警用",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_criti01_hand_03": {
+    "name": "M.I.警用手环·壹型",
+    "slotType": "护手",
+    "setName": "M.I.警用",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_criti01_hand_04": {
+    "name": "M.I.警用手套·壹型",
+    "slotType": "护手",
+    "setName": "M.I.警用",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_crush_fracture_body_01": {
+    "name": "旧锋装甲",
+    "slotType": "护甲",
+    "setName": "旧锋",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_crush_fracture_body_02": {
+    "name": "旧锋装甲·壹型",
+    "slotType": "护甲",
+    "setName": "旧锋",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_crush_fracture_edc_01": {
+    "name": "旧锋刺刃",
+    "slotType": "配件",
+    "setName": "旧锋",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_crush_fracture_edc_02": {
+    "name": "旧锋刺刃·壹型",
+    "slotType": "配件",
+    "setName": "旧锋",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_crush_fracture_hand_01": {
+    "name": "旧锋手甲",
+    "slotType": "护手",
+    "setName": "旧锋",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_crush_fracture_hand_02": {
+    "name": "旧锋手甲·壹型",
+    "slotType": "护手",
+    "setName": "旧锋",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_expend_spell01_body_02": {
+    "name": "壤流轻甲",
+    "slotType": "护甲",
+    "setName": "壤流",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_expend_spell01_edc_02": {
+    "name": "壤流短棍",
+    "slotType": "配件",
+    "setName": "壤流",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_expend_spell01_hand_02": {
+    "name": "壤流护手",
+    "slotType": "护手",
+    "setName": "壤流",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_fire_natr01_body_01": {
+    "name": "动火用外骨骼",
+    "slotType": "护甲",
+    "setName": "动火用",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_fire_natr01_body_02": {
+    "name": "动火用辅助骨骼",
+    "slotType": "护甲",
+    "setName": "动火用",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_fire_natr01_edc_01": {
+    "name": "动火用储能匣",
+    "slotType": "配件",
+    "setName": "动火用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_fire_natr01_edc_02": {
+    "name": "动火用测温镜",
+    "slotType": "配件",
+    "setName": "动火用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_fire_natr01_edc_03": {
+    "name": "动火用电力匣",
+    "slotType": "配件",
+    "setName": "动火用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_fire_natr01_edc_04": {
+    "name": "动火用隔温板",
+    "slotType": "配件",
+    "setName": "动火用",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_fire_natr01_hand_01": {
+    "name": "动火用手套",
+    "slotType": "护手",
+    "setName": "动火用",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_fire_natr01_hand_02": {
+    "name": "动火用手甲",
+    "slotType": "护手",
+    "setName": "动火用",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_fire_natr01_hand_03": {
+    "name": "动火用手甲·壹型",
+    "slotType": "护手",
+    "setName": "动火用",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_fire_natr01_hand_04": {
+    "name": "动火用护手",
+    "slotType": "护手",
+    "setName": "动火用",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_heal01_body_01": {
+    "name": "生物辅助重甲",
+    "slotType": "护甲",
+    "setName": "生物辅助",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_heal01_body_02": {
+    "name": "生物辅助胸甲",
+    "slotType": "护甲",
+    "setName": "生物辅助",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_heal01_body_03": {
+    "name": "生物辅助胸甲·壹型",
+    "slotType": "护甲",
+    "setName": "生物辅助",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_heal01_edc_01": {
+    "name": "生物辅助接驳器",
+    "slotType": "配件",
+    "setName": "生物辅助",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_edc_02": {
+    "name": "生物辅助接驳器·贰型",
+    "slotType": "配件",
+    "setName": "生物辅助",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_edc_03": {
+    "name": "生物辅助护板",
+    "slotType": "配件",
+    "setName": "生物辅助",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_edc_04": {
+    "name": "生物辅助护盾针",
+    "slotType": "配件",
+    "setName": "生物辅助",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_edc_05": {
+    "name": "生物辅助接驳器·壹型",
+    "slotType": "配件",
+    "setName": "生物辅助",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_hand_01": {
+    "name": "生物辅助臂甲",
+    "slotType": "护手",
+    "setName": "生物辅助",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_heal01_hand_02": {
+    "name": "生物辅助手甲",
+    "slotType": "护手",
+    "setName": "生物辅助",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_heal01_hand_03": {
+    "name": "生物辅助手甲·壹型",
+    "slotType": "护手",
+    "setName": "生物辅助",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_phy01_body_01": {
+    "name": "点剑轻装甲",
+    "slotType": "护甲",
+    "setName": "点剑",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_phy01_body_02": {
+    "name": "点剑重装甲",
+    "slotType": "护甲",
+    "setName": "点剑",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_phy01_body_03": {
+    "name": "点剑重装甲·壹型",
+    "slotType": "护甲",
+    "setName": "点剑",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_phy01_body_04": {
+    "name": "点剑纤维护甲",
+    "slotType": "护甲",
+    "setName": "点剑",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_phy01_edc_01": {
+    "name": "点剑定位信标",
+    "slotType": "配件",
+    "setName": "点剑",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_phy01_edc_02": {
+    "name": "点剑微型滤芯",
+    "slotType": "配件",
+    "setName": "点剑",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_phy01_edc_03": {
+    "name": "点剑火石",
+    "slotType": "配件",
+    "setName": "点剑",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_phy01_edc_04": {
+    "name": "点剑短刃",
+    "slotType": "配件",
+    "setName": "点剑",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_phy01_hand_01": {
+    "name": "点剑战术手套",
+    "slotType": "护手",
+    "setName": "点剑",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_phy01_hand_02": {
+    "name": "点剑战术手甲",
+    "slotType": "护手",
+    "setName": "点剑",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_phy01_hand_03": {
+    "name": "点剑战术手甲·壹型",
+    "slotType": "护手",
+    "setName": "点剑",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_poise01_body_01": {
+    "name": "轻超域护板",
+    "slotType": "护甲",
+    "setName": "轻超域",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_poise01_edc_01": {
+    "name": "轻超域分析环",
+    "slotType": "配件",
+    "setName": "轻超域",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_poise01_edc_02": {
+    "name": "轻超域稳定盘",
+    "slotType": "配件",
+    "setName": "轻超域",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_poise01_edc_03": {
+    "name": "轻超域稳定盘·壹型",
+    "slotType": "配件",
+    "setName": "轻超域",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_poise01_edc_04": {
+    "name": "轻超域腕表",
+    "slotType": "配件",
+    "setName": "轻超域",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_poise01_hand_01": {
+    "name": "轻超域护手",
+    "slotType": "护手",
+    "setName": "轻超域",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_poise01_hand_02": {
+    "name": "轻超域轻护手",
+    "slotType": "护手",
+    "setName": "轻超域",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_body_01": {
+    "name": "脉冲式干扰服",
+    "slotType": "护甲",
+    "setName": "脉冲式",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_edc_01": {
+    "name": "脉冲式探针",
+    "slotType": "配件",
+    "setName": "脉冲式",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_edc_02": {
+    "name": "脉冲式校准器",
+    "slotType": "配件",
+    "setName": "脉冲式",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_edc_03": {
+    "name": "脉冲式侵入核",
+    "slotType": "配件",
+    "setName": "脉冲式",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_hand_01": {
+    "name": "脉冲式手套",
+    "slotType": "护手",
+    "setName": "脉冲式",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_spellburst_body_01": {
     "name": "险关装甲",
     "slotType": "护甲",
     "setName": "险关",
-    "statNames": ["敏捷", "意志", "源石技艺强度"],
-    "stats": [
-      {
-        "name": "Agility",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": false
-      }
-    ],
-    "defense": 56
+    "defense": 56.0
   },
-  "deep-rampart-gauntlets": {
-    "name": "险关手甲",
-    "slotType": "护手",
-    "setName": "险关",
-    "statNames": ["敏捷", "意志", "源石技艺强度"],
-    "stats": [
-      {
-        "name": "Agility",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": false
-      }
-    ],
-    "defense": 42
-  },
-  "deep-rampart-comms": {
+  "item_equip_t4_suit_spellburst_edc_01": {
     "name": "险关通信器",
     "slotType": "配件",
     "setName": "险关",
-    "statNames": ["敏捷", "意志", "源石技艺强度"],
-    "stats": [
-      {
-        "name": "Agility",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": false
-      }
-    ],
-    "defense": 21
+    "defense": 21.0
   },
-  "eternal-xiranite-bracing-slab-t1": {
+  "item_equip_t4_suit_spellburst_hand_01": {
+    "name": "险关手甲",
+    "slotType": "护手",
+    "setName": "险关",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_usp02_body_01": {
+    "name": "长息装甲",
+    "slotType": "护甲",
+    "setName": "长息",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_usp02_body_03": {
+    "name": "长息轻护甲",
+    "slotType": "护甲",
+    "setName": "长息",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_usp02_body_04": {
+    "name": "长息轻护甲·壹型",
+    "slotType": "护甲",
+    "setName": "长息",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_usp02_edc_01": {
+    "name": "长息蓄电核",
+    "slotType": "配件",
+    "setName": "长息",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_edc_02": {
+    "name": "长息蓄电核·壹型",
+    "slotType": "配件",
+    "setName": "长息",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_edc_03": {
+    "name": "长息辅助臂",
+    "slotType": "配件",
+    "setName": "长息",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_edc_04": {
+    "name": "长息加固板",
+    "slotType": "配件",
+    "setName": "长息",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_edc_05": {
     "name": "长息加固板·壹型",
     "slotType": "配件",
     "setName": "长息",
-    "statNames": ["意志", "敏捷", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Agility",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [24.6, 27.1, 29.6, 32],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
+    "defense": 21.0
   },
-  "eternal-xiranite-heavy-slab": {
+  "item_equip_t4_suit_usp02_edc_06": {
     "name": "长息重护板",
     "slotType": "配件",
     "setName": "长息",
-    "statNames": ["力量", "意志", "终结技充能效率"],
-    "stats": [
-      {
-        "name": "Strength",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [24.6, 27.1, 29.6, 32],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_hand_01": {
+    "name": "长息护手",
+    "slotType": "护手",
+    "setName": "长息",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_usp02_hand_02": {
+    "name": "长息护手·壹型",
+    "slotType": "护手",
+    "setName": "长息",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_usp02_hand_03": {
+    "name": "长息裹手",
+    "slotType": "护手",
+    "setName": "长息",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_usp02_hand_04": {
+    "name": "长息手套",
+    "slotType": "护手",
+    "setName": "长息",
+    "defense": 42.0
   }
 }

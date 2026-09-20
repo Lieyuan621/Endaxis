@@ -1,16 +1,4 @@
 {
-  "ba.arrowenergy": {
-    "name": "Sign",
-    "description": "Typhoeus gains Signs when she consumes the enemy's <@ba.naturalinflict>Nature Infliction</> stacks or when triggering <#ba.naturalburst>Nature Burst</> on enemies. Her combo skill can then convert the Signs into <#ba.arrownum>Hunting Arrows</>.",
-    "styleId": "ba.key",
-    "iconPath": ""
-  },
-  "ba.arrownum": {
-    "name": "Hunting Arrow",
-    "description": "When Typhoeus is in her <@ba.key>Hovering</> state, she can consume Hunting Arrows to empower her shots, dealing higher DMG while also triggering <#ba.naturalburst>Nature Burst</>.",
-    "styleId": "ba.key",
-    "iconPath": ""
-  },
   "ba.absorb": {
     "name": "Absorb",
     "description": "A way to end a Physical or Arts debuff early. <@ba.key>Absorb</> is not the same as <#ba.consume>consume</>.",
@@ -22,6 +10,18 @@
     "description": "Applies <#ba.noguard>Vulnerability</> on an enemy. If the enemy is already <#ba.noguard>Vulnerable</>, then add 1 stack of <#ba.noguard>Vulnerability</>, and deal <@ba.phy>Physical DMG</> and <@ba.poise>Stagger</>.",
     "styleId": "ba.phy",
     "iconPath": "/icons/icon_term_ba_airborne.webp"
+  },
+  "ba.arrowenergy": {
+    "name": "Sign",
+    "description": "Typhoeus gains Signs when she consumes the enemy's <@ba.naturalinflict>Nature Infliction</> stacks or when triggering <#ba.naturalburst>Nature Burst</> on enemies. Her combo skill can then convert the Signs into <#ba.arrownum>Hunting Arrows</>.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
+  "ba.arrownum": {
+    "name": "Hunting Arrow",
+    "description": "When Typhoeus is in her <@ba.key>Hovering</> state, she can consume Hunting Arrows to empower her shots, dealing higher DMG while also triggering <#ba.naturalburst>Nature Burst</>.",
+    "styleId": "ba.key",
+    "iconPath": ""
   },
   "ba.burning": {
     "name": "Arts Reaction: Combustion",
@@ -378,8 +378,8 @@
     "iconPath": "/icons/icon_term_ba_vulnerable.webp"
   },
   "ba.weak": {
-    "name": "Weaken",
-    "description": "Weakened targets temporarily deal reduced DMG. The number represents the degree of reduction. Effects of the same type can stack non-linearly.",
+    "name": "Weakness",
+    "description": "A target with Weakness temporarily deals reduced DMG. The number represents the degree of reduction. Effects of the same type can stack non-linearly.",
     "styleId": "ba.key",
     "iconPath": "/icons/icon_term_ba_weak.webp"
   }

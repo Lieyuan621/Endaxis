@@ -1,0 +1,216 @@
+// ─── Element colors (canonical palette) ─────────────────────────────────────
+
+export const elementColors: Record<string, string> = {
+  heat: '#e85d3a',
+  electric: '#f0b23c',
+  cryo: '#5ec5e5',
+  nature: '#8bc34a',
+  physical: '#d4c5a0',
+};
+
+// ─── Extended color map (elements + action types + reactions + default) ──────
+
+export const ELEMENT_COLORS: Record<string, string> = {
+  // Base elements
+  ...elementColors,
+
+  // Action types
+  comboSkill: '#fdd900',
+  dive: '#5ec5e5',
+  finisher: '#a61d24',
+  battleSkill: '#ffffff',
+  ultimate: '#4a90d9',
+  basicAttack: '#aaaaaa',
+  attack: '#aaaaaa',
+  skill: '#ffffff',
+  link: '#fdd900',
+  execution: '#a61d24',
+  dodge: '#5ec5e5',
+  default: '#8c8c8c',
+
+  // Heat reactions
+  heat_infliction: '#e85d3a',
+  heat_burst: '#f09070',
+  combustion: '#c43a1a',
+
+  // Cryo reactions
+  cryo_infliction: '#5ec5e5',
+  cryo_burst: '#40a9ff',
+  solidification: '#1890ff',
+  shatter: '#bae7ff',
+
+  // Electric reactions
+  electric_infliction: '#f0b23c',
+  electric_burst: '#f5d060',
+  electrification: '#f0c23c',
+
+  // Nature reactions
+  nature_infliction: '#8bc34a',
+  nature_burst: '#73d13d',
+  corrosion: '#6aad38',
+
+  // Physical reactions
+  vulnerability: '#d9d9d9',
+  breach: '#d9d9d9',
+  crush: '#d9d9d9',
+  knockdown: '#d9d9d9',
+  lift: '#d9d9d9',
+};
+
+// ─── Gear quality colors ────────────────────────────────────────────────────
+
+export const qualityColors: Record<string, string> = {
+  green: '#4caf50',
+  blue: '#2196f3',
+  purple: '#ab47bc',
+  gold: '#ffa726',
+};
+
+// ─── Enemy tiers (high → low; used for filters + list sort weight) ───────────
+
+export const ENEMY_TIERS = [
+  { labelKey: 'enemyTier.leader', value: 'leader', color: '#ff4d4f' },
+  { labelKey: 'enemyTier.boss', value: 'boss', color: '#ffd700' },
+  { labelKey: 'enemyTier.elite', value: 'elite', color: '#d8b4fe' },
+  { labelKey: 'enemyTier.advanced', value: 'advanced', color: '#52c41a' },
+  { labelKey: 'enemyTier.normal', value: 'normal', color: '#a0a0a0' },
+] as const;
+
+type EnemyTierValue = (typeof ENEMY_TIERS)[number]['value'];
+
+/** Higher number = higher tier. Derived from ENEMY_TIERS order. */
+export const ENEMY_TIER_WEIGHT: Record<EnemyTierValue, number> = Object.fromEntries(
+  ENEMY_TIERS.map((tier, index) => [tier.value, ENEMY_TIERS.length - index]),
+) as Record<EnemyTierValue, number>;
+
+// ─── Effect / status bar colors ─────────────────────────────────────────────
+// Used by simulation projection for effect status bars on the timeline.
+// Distinct from ELEMENT_COLORS which colors action bars.
+
+export const EFFECT_COLORS: Record<string, string> = {
+  // Inflictions
+  heat_infliction: '#ff4d4f',
+  electric_infliction: '#ffd700',
+  cryo_infliction: '#1890ff',
+  nature_infliction: '#52c41a',
+  // Bursts
+  heat_burst: '#ff4d4f',
+  electric_burst: '#ffd700',
+  cryo_burst: '#00e5ff',
+  nature_burst: '#52c41a',
+  // Reactions
+  combustion: '#f5222d',
+  electrification: '#ffec3d',
+  solidification: '#1890ff',
+  corrosion: '#52c41a',
+  shatter: '#bae7ff',
+  // Physical statuses
+  vulnerability: '#d9d9d9',
+  breach: '#d9d9d9',
+  crush: '#d9d9d9',
+  knockdown: '#d9d9d9',
+  lift: '#d9d9d9',
+};
+
+export const FALLBACK_EFFECT_COLOR = '#8c8c8c';
+
+// ─── Color utilities ────────────────────────────────────────────────────────
+
+/** Convert hex color to rgba string with given alpha. */
+export function hexToRgba(hex: string | undefined | null, alpha: number): string {
+  if (!hex) return `rgba(255,255,255,${alpha})`;
+  let c = hex.substring(1).split('');
+  if (c.length === 3) {
+    const [r = '0', g = '0', b = '0'] = c;
+    c = [r, r, g, g, b, b];
+  }
+  const n = parseInt(c.join(''), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+function parseHexRgb(hex: string): { r: number; g: number; b: number } | null {
+  const s = String(hex || '').trim();
+  if (!s.startsWith('#')) return null;
+  let c = s.slice(1);
+  if (c.length === 3) {
+    c = c
+      .split('')
+      .map(ch => ch + ch)
+      .join('');
+  }
+  if (c.length !== 6) return null;
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  if (![r, g, b].every(v => Number.isFinite(v))) return null;
+  return { r, g, b };
+}
+
+function toHexRgb(r: number, g: number, b: number): string {
+  return `#${[r, g, b]
+    .map(v =>
+      Math.max(0, Math.min(255, Math.round(v)))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+}
+
+/** Lighten a hex color by mixing with white. Amount 0–1. */
+export function lightenColor(hex: string, amount: number): string {
+  const rgb = parseHexRgb(hex);
+  if (!rgb) return hex;
+  const a = Math.max(0, Math.min(1, Number(amount) || 0));
+  return toHexRgb(rgb.r + (255 - rgb.r) * a, rgb.g + (255 - rgb.g) * a, rgb.b + (255 - rgb.b) * a);
+}
+
+/**
+ * Opaque pastel fill for light timeline tracks.
+ * Translucent rgba bleeds into cool-gray chrome and grid lines — use solid tints instead.
+ * @param wash 0–1 how much white to mix (higher = paler)
+ */
+export function solidFillForLightTrack(hex: string, wash = 0.5): string {
+  return lightenColor(hex, wash);
+}
+
+/** Darken a hex color by mixing with black. Amount 0–1. */
+function darkenColor(hex: string, amount: number): string {
+  const rgb = parseHexRgb(hex);
+  if (!rgb) return hex;
+  const a = Math.max(0, Math.min(1, Number(amount) || 0));
+  return toHexRgb(rgb.r * (1 - a), rgb.g * (1 - a), rgb.b * (1 - a));
+}
+
+/** Relative luminance 0–1 (sRGB). */
+function relativeLuminance(hex: string): number {
+  const rgb = parseHexRgb(hex);
+  if (!rgb) return 0;
+  const channel = (v: number) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b);
+}
+
+const adaptColorForLightSurfaceCache = new Map<string, string>();
+
+/**
+ * On light chrome, very pale business colors (physical beige, white skill, link yellow)
+ * wash out. Darken only when luminance is high — keep the curve mild so saturated
+ * brights (e.g. combo/link #fdd900) stay vivid after opaque pastel wash.
+ */
+export function adaptColorForLightSurface(hex: string): string {
+  const key = String(hex || '');
+  const cached = adaptColorForLightSurfaceCache.get(key);
+  if (cached !== undefined) return cached;
+
+  const lum = relativeLuminance(key);
+  let next = key;
+  if (lum >= 0.52) {
+    // Milder than before: link ~0.18 darken (was ~0.31); white capped at 0.28 (was 0.52).
+    const amount = 0.1 + ((lum - 0.52) / 0.48) * 0.18;
+    next = darkenColor(key, Math.min(0.28, amount));
+  }
+  adaptColorForLightSurfaceCache.set(key, next);
+  return next;
+}

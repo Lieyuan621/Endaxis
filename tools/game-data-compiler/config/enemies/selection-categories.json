@@ -1,0 +1,131 @@
+{
+  "source": "Lieyuan621/Endaxis@13b6905c scripts/generate_enemies/enemies.json",
+  "categories": [
+    {
+      "id": "wildlife",
+      "enemyIds": [
+        "eny_0007_mimicw",
+        "eny_0071_sandb",
+        "eny_0072_slimeml",
+        "eny_0073_slimerg",
+        "eny_0082_hsbear",
+        "eny_0083_hstiger",
+        "eny_0092_slbomb",
+        "eny_0093_hshog",
+        "eny_0094_hsfly",
+        "eny_0095_ethillu",
+        "eny_0099_slimeml2",
+        "eny_0100_slimerg2",
+        "eny_0102_hstiger2",
+        "eny_0108_slbomb2",
+        "eny_0109_hshog2",
+        "eny_0112_jzmonk",
+        "eny_0113_jzogre",
+        "eny_0114_jzmking"
+      ]
+    },
+    {
+      "id": "landbreakers",
+      "enemyIds": [
+        "eny_0018_lbtough",
+        "eny_0029_lbmob",
+        "eny_0033_lbhunt",
+        "eny_0046_lbshamman",
+        "eny_0047_firebat",
+        "eny_0048_hvybow",
+        "eny_0049_rogue",
+        "eny_0050_hound",
+        "eny_0051_rodin",
+        "eny_0059_erhound",
+        "eny_0060_lbmad",
+        "eny_0065_lbmob2",
+        "eny_0066_lbhunt2",
+        "eny_0067_hound2",
+        "eny_0068_lbtough2",
+        "eny_0074_lbshield",
+        "eny_0075_lbroshan",
+        "eny_0078_nefarp1",
+        "eny_0079_nefarp2",
+        "eny_0098_sandb2"
+      ]
+    },
+    {
+      "id": "angels",
+      "enemyIds": [
+        "eny_0021_agmelee",
+        "eny_0023_aghornb",
+        "eny_0025_agrange",
+        "eny_0027_agscorp",
+        "eny_0039_agcanno",
+        "eny_0045_agtrinit",
+        "eny_0052_palesent",
+        "eny_0058_agdisk",
+        "eny_0061_palecore",
+        "eny_0062_paletent",
+        "eny_0063_agmelee2",
+        "eny_0064_agrange2",
+        "eny_0069_aghornb2",
+        "eny_0070_agscorp2",
+        "eny_0076_agfly",
+        "eny_0077_agshield",
+        "eny_0087_wgslime",
+        "eny_0088_wgthorns",
+        "eny_0089_wgreflec",
+        "eny_0090_wgabyss",
+        "eny_0091_wgshoal",
+        "eny_0101_agfly2",
+        "eny_0105_wgslime2",
+        "eny_0106_wgthorns2",
+        "eny_0107_wgshoal2"
+      ]
+    },
+    {
+      "id": "cangThieves",
+      "enemyIds": [
+        "eny_0053_hsmob",
+        "eny_0054_hsmino",
+        "eny_0055_hscrane",
+        "eny_0081_ruanyi",
+        "eny_0084_hshunt",
+        "eny_0085_hsrogue",
+        "eny_0096_hsmob2",
+        "eny_0097_hsmino2",
+        "eny_0103_hshunt2",
+        "eny_0104_hsrogue2"
+      ]
+    },
+    {
+      "id": "shadows",
+      "enemyIds": [
+        "eny_0117_klhound",
+        "eny_0118_klhog",
+        "eny_0119_kltiger",
+        "eny_0120_klbear",
+        "eny_0121_klbud",
+        "eny_0122_kltdbud",
+        "eny_0123_klcap",
+        "eny_0124_kltdcap"
+      ]
+    },
+    {
+      "id": "progeny",
+      "enemyIds": [
+        "eny_0125_fdcentur"
+      ]
+    },
+    {
+      "id": "witchcraftConstructs",
+      "enemyIds": [
+        "eny_0127_bigents",
+        "eny_0128_babyents",
+        "eny_0129_slwood"
+      ]
+    }
+  ],
+  "uncategorizedEnemyIds": [
+    "eny_0080_reaper"
+  ],
+  "hiddenEnemyIds": [
+    "eny_0057_dog"
+  ]
+}

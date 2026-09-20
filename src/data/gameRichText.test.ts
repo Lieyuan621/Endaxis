@@ -1,12 +1,19 @@
-import { describe, expect, test } from 'vitest';
-import {
-  getRichTextTerm,
-  parseGameRichText,
-} from './gameRichText';
+import { beforeAll, describe, expect, test } from 'vitest';
+import { ensureLocaleResources } from '../i18n';
+import { getRichTextTerm, parseGameRichText } from './gameRichText';
 
 describe('game rich text', () => {
+  beforeAll(async () => {
+    await Promise.all([
+      ensureLocaleResources('zh-CN', ['terms']),
+      ensureLocaleResources('en', ['terms']),
+    ]);
+  });
+
   test('parses style and term tags without dropping plain text', () => {
-    expect(parseGameRichText('Deal <@ba.fire>Heat DMG</> and apply <#ba.burning>Combustion</>')).toEqual([
+    expect(
+      parseGameRichText('Deal <@ba.fire>Heat DMG</> and apply <#ba.burning>Combustion</>'),
+    ).toEqual([
       { type: 'text', text: 'Deal ' },
       { type: 'style', id: 'ba.fire', children: [{ type: 'text', text: 'Heat DMG' }] },
       { type: 'text', text: ' and apply ' },
@@ -21,8 +28,9 @@ describe('game rich text', () => {
   });
 
   test('resolves localized battle term descriptions', () => {
-    expect(getRichTextTerm('ba.fireburst', 'zh-CN')?.name).toBe('\u6cd5\u672f\u7206\u53d1 - \u707c\u70ed');
+    expect(getRichTextTerm('ba.fireburst', 'zh-CN')?.name).toBe(
+      '\u6cd5\u672f\u7206\u53d1 - \u707c\u70ed',
+    );
     expect(getRichTextTerm('ba.fireburst', 'en')?.name).toBe('Arts Burst: Heat');
   });
-
 });

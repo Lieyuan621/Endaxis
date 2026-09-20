@@ -1,0 +1,12 @@
+{
+  "weapons": {
+    "wpn_claym_0012": {
+      "/icons/buff_wpn_sword_0019.webp": {
+        "sourceName": "icon_battle_buff_atk_up.png",
+        "preferredPathSegment": "/bufficon/"
+      }
+    }
+  },
+  "gears": {},
+  "gearSets": {}
+}

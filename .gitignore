@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.pnpm-store/
 .idea
 dist
 .DS_Store
@@ -28,6 +29,13 @@ deploy.ps1
 *.tsbuildinfo
 __pycache__/
 
+# 生成器审计、原始来源投影和本地证据探针只属于可重建中间产物。
+/tmp/
+*audit.json
+
+# 每台开发机自己的路径、工作树、服务和连接信息。
+/.local/
+
 .eslintcache
 
 # Cypress
@@ -36,3 +44,10 @@ __pycache__/
 
 # Vitest
 __screenshots__/
+
+# Inspector 反射元数据：由开发、构建和类型检查自动恢复，不作为源码审查。
+/src/ui/timeline/definitions/inspector/conditionStructure.generated.ts
+/src/ui/timeline/definitions/inspector/stepStructure.generated.ts
+/src/ui/timeline/definitions/inspector/modifierStructure.generated.ts
+/src/ui/timeline/definitions/inspector/contributionStructure.generated.ts
+/src/ui/timeline/definitions/inspector/eventStructure.generated.ts

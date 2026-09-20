@@ -1,0 +1,339 @@
+<script setup lang="ts">
+import { EaButton, EaCloseButton } from '@/design-system';
+import { computed, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import ElFocusTrap from 'element-plus/es/components/focus-trap/index';
+import { useInteractionSession } from '../../interaction/interactionSessionContext';
+import { useDialogInteractionBoundary } from '../../interaction/useDialogInteractionBoundary';
+import { useKeyboardInputRegion } from '../../keyboard/keyboardShortcutRouter';
+
+type TimelineResetMode = 'currentKeepLoadout' | 'current' | 'all';
+
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean;
+    lockScroll?: boolean;
+    inherited?: boolean;
+  }>(),
+  { lockScroll: true },
+);
+
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean];
+  confirm: [mode: TimelineResetMode];
+}>();
+
+const { t } = useI18n();
+const selectedMode = ref<TimelineResetMode>('currentKeepLoadout');
+const dialogElement = ref<HTMLElement>();
+const cancelButton = computed(
+  () => dialogElement.value?.querySelector<HTMLElement>('[data-reset-cancel]') ?? undefined,
+);
+const session = useInteractionSession();
+const region = useKeyboardInputRegion({
+  label: 'timeline-reset',
+  modal: true,
+  active: () => props.modelValue,
+});
+useDialogInteractionBoundary(session, () => props.modelValue, close, region);
+
+const options = computed(() => [
+  {
+    mode: 'currentKeepLoadout' as const,
+    icon: 'loadout',
+    title: t(props.inherited ? 'reset.currentKeepInheritance' : 'reset.currentKeepLoadout'),
+    description: t(
+      props.inherited
+        ? 'reset.currentKeepInheritanceDescription'
+        : 'reset.currentKeepLoadoutDescription',
+    ),
+  },
+  {
+    mode: 'current' as const,
+    icon: 'current',
+    title: t('reset.current'),
+    description: t('reset.currentDescription'),
+  },
+  {
+    mode: 'all' as const,
+    icon: 'all',
+    title: t('reset.all'),
+    description: t('reset.allDescription'),
+  },
+]);
+
+let previousBodyOverflow = '';
+let bodyScrollLocked = false;
+
+function close() {
+  emit('update:modelValue', false);
+}
+
+function unlockBodyScroll() {
+  if (!bodyScrollLocked || typeof document === 'undefined') return;
+  document.body.style.overflow = previousBodyOverflow;
+  bodyScrollLocked = false;
+}
+
+watch(
+  () => props.modelValue,
+  open => {
+    if (typeof document === 'undefined') return;
+
+    if (open) {
+      selectedMode.value = 'currentKeepLoadout';
+      if (props.lockScroll) {
+        previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        bodyScrollLocked = true;
+      }
+    } else {
+      unlockBodyScroll();
+    }
+  },
+);
+
+onUnmounted(() => {
+  if (typeof document === 'undefined') return;
+  unlockBodyScroll();
+});
+
+function confirm() {
+  const mode = selectedMode.value;
+  close();
+  emit('confirm', mode);
+}
+</script>
+
+<template>
+  <Teleport to="body">
+    <Transition name="timeline-reset-fade">
+      <div v-if="modelValue" class="timeline-reset-overlay">
+        <ElFocusTrap
+          :trapped="modelValue"
+          loop
+          :focus-trap-el="dialogElement"
+          :focus-start-el="cancelButton"
+        >
+          <section
+            ref="dialogElement"
+            tabindex="-1"
+            class="timeline-reset-dialog"
+            role="dialog"
+            aria-modal="true"
+            :aria-label="t('reset.title')"
+          >
+            <header class="timeline-reset-dialog__header">
+              <h2 class="timeline-reset-dialog__title">{{ t('reset.title') }}</h2>
+              <EaCloseButton :label="t('common.close')" @click="close" />
+            </header>
+
+            <div class="timeline-reset-options" role="radiogroup" :aria-label="t('reset.title')">
+              <EaButton
+                v-for="option in options"
+                :key="option.mode"
+                type="button"
+                class="timeline-reset-option"
+                :class="{
+                  'is-danger': option.mode === 'all',
+                }"
+                role="radio"
+                :aria-checked="selectedMode === option.mode"
+                @click="selectedMode = option.mode"
+              >
+                <span class="timeline-reset-option__icon" aria-hidden="true">
+                  <svg v-if="option.icon === 'loadout'" viewBox="0 0 24 24">
+                    <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+                    <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+                    <path d="m16.5 15.5 1.5 1.5 3-3" />
+                  </svg>
+                  <svg v-else-if="option.icon === 'current'" viewBox="0 0 24 24">
+                    <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24">
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 10v7M14 10v7" />
+                  </svg>
+                </span>
+                <span class="timeline-reset-option__copy">
+                  <strong>{{ option.title }}</strong>
+                  <small>{{ option.description }}</small>
+                </span>
+                <span class="timeline-reset-option__radio" aria-hidden="true"></span>
+              </EaButton>
+            </div>
+
+            <footer class="timeline-reset-dialog__footer">
+              <EaButton data-reset-cancel type="button" @click="close">
+                {{ t('common.cancel') }}
+              </EaButton>
+              <EaButton type="button" variant="danger" @click="confirm">
+                {{ t('reset.confirmButton') }}
+              </EaButton>
+            </footer>
+          </section>
+        </ElFocusTrap>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+
+<style scoped>
+.timeline-reset-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3100;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.timeline-reset-dialog {
+  width: min(460px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.14));
+  background: var(--ea-panel-bg, #1c1c1c);
+  color: var(--ea-fg, #eee);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+}
+
+.timeline-reset-dialog__header {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ea-border, rgba(255, 255, 255, 0.12));
+}
+
+.timeline-reset-dialog__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.timeline-reset-option__icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.timeline-reset-options {
+  display: grid;
+  margin: 16px;
+  border: 1px solid var(--ea-border, rgba(255, 255, 255, 0.14));
+  overflow: hidden;
+}
+
+.timeline-reset-option {
+  min-width: 0;
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--ea-border, rgba(255, 255, 255, 0.12));
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.timeline-reset-option:last-child {
+  border-bottom: 0;
+}
+
+.timeline-reset-option__icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(253, 217, 0, 0.42);
+  color: var(--ea-accent, #fdd900);
+}
+
+.timeline-reset-option.is-danger .timeline-reset-option__icon {
+  border-color: rgba(255, 86, 96, 0.42);
+  color: #ff6b74;
+}
+
+.timeline-reset-option__copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.timeline-reset-option__copy strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.timeline-reset-option__copy small {
+  color: var(--ea-text-muted, #9b9b9b);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.timeline-reset-option__radio {
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 3px transparent;
+}
+
+.timeline-reset-option[aria-checked='true'] .timeline-reset-option__radio {
+  border-color: var(--ea-accent, #fdd900);
+  background: var(--ea-accent, #fdd900);
+  box-shadow: inset 0 0 0 3px #1b1b1b;
+}
+
+.timeline-reset-option.is-danger[aria-checked='true'] .timeline-reset-option__radio {
+  border-color: #ff6b74;
+  background: #ff6b74;
+}
+
+.timeline-reset-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.timeline-reset-fade-enter-active,
+.timeline-reset-fade-leave-active {
+  transition: opacity 0.16s ease;
+}
+
+.timeline-reset-fade-enter-from,
+.timeline-reset-fade-leave-to {
+  opacity: 0;
+}
+
+:global(html[data-theme='light'] .timeline-reset-dialog) {
+  --ea-panel-bg: #fff;
+  --ea-fg: #202020;
+  --ea-text-muted: #676767;
+  --ea-border: rgba(0, 0, 0, 0.16);
+}
+
+:global(html[data-theme='light'] .timeline-reset-option__radio) {
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+:global(
+  html[data-theme='light'] .timeline-reset-option[aria-checked='true'] .timeline-reset-option__radio
+) {
+  box-shadow: inset 0 0 0 3px #fff;
+}
+</style>

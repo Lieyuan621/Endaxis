@@ -1,0 +1,533 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`公共条件叶子 IR > 'Buff 高级查询' 锁定已验证的对象级结构 1`] = `
+{
+  "buffCheckType": "Tag",
+  "buffIds": [],
+  "buffTagIds": [
+    -1480463572,
+  ],
+  "comparison": "GE",
+  "countType": "BuffCount",
+  "kind": "buffStack",
+  "limitSkillCastId": false,
+  "sourceType": "CheckBuffStackNumAdvanced",
+  "tagQueryType": "hasAny",
+  "targetGroupKey": "",
+  "targetSource": "Target",
+  "value": {
+    "blackboardKey": null,
+    "levelValues": null,
+    "value": 1,
+  },
+}
+`;
+
+exports[`公共条件叶子 IR > 'OR 组与局部取反' 锁定已验证的对象级结构 1`] = `
+{
+  "groups": [
+    {
+      "conditions": [
+        {
+          "comparison": "GT",
+          "kind": "floatCompare",
+          "left": {
+            "blackboardKey": "enabled",
+            "levelValues": [
+              0,
+              1,
+            ],
+            "value": 0,
+          },
+          "right": {
+            "blackboardKey": null,
+            "levelValues": null,
+            "value": 0.5,
+          },
+          "sourceType": "CompareFloat",
+        },
+        {
+          "damageType": "heat",
+          "kind": "damageType",
+          "sourceType": "CheckDamageType",
+        },
+      ],
+      "negated": [
+        true,
+        false,
+      ],
+    },
+    {
+      "conditions": [
+        {
+          "kind": "skillHasHit",
+          "sourceType": "CheckSkillHasHit",
+        },
+      ],
+      "negated": [
+        false,
+      ],
+    },
+  ],
+  "kind": "any",
+  "sourceType": "OrConditionAction",
+}
+`;
+
+exports[`公共条件叶子 IR > '主控身份' 锁定已验证的对象级结构 1`] = `
+{
+  "kind": "mainOperator",
+  "sourceType": "CheckMainCharacterCondition",
+  "targetGroupKey": "",
+  "targetSource": "Owner",
+}
+`;
+
+exports[`公共条件叶子 IR > '双方向夹角' 锁定已验证的对象级结构 1`] = `
+{
+  "comparison": "LE",
+  "dir1DirectionType": "TargetDirection",
+  "dir1Source": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Owner",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "dir1Target": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Target",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "dir2DirectionType": "SourceForward",
+  "dir2Source": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Owner",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "dir2Target": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Target",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "kind": "twoDirectionAngle",
+  "sourceType": "CheckTwoDirectionAngle",
+  "value": {
+    "blackboardKey": null,
+    "levelValues": null,
+    "value": 45,
+  },
+}
+`;
+
+exports[`公共条件叶子 IR > '定时标记' 锁定已验证的对象级结构 1`] = `
+{
+  "blackboardKey": "",
+  "kind": "timedMarker",
+  "markerId": "damage_cd",
+  "returnTrueIfNotExists": true,
+  "sourceType": "CheckTimedMarkerCondition",
+  "targetGroupKey": "",
+  "targetSource": "Owner",
+  "useBlackboardKey": false,
+}
+`;
+
+exports[`公共条件叶子 IR > '实体 Tag' 锁定已验证的对象级结构 1`] = `
+{
+  "kind": "entityTag",
+  "sourceType": "CheckTagMatch",
+  "tagIds": [
+    -549424863,
+  ],
+  "tagQueryType": "hasAll",
+  "targetGroupKey": "entities",
+  "targetSource": "Context",
+}
+`;
+
+exports[`公共条件叶子 IR > '对象类型' 锁定已验证的对象级结构 1`] = `
+{
+  "kind": "objectTypeMatch",
+  "objectTypeMask": "Character",
+  "sourceType": "CheckObjectTypeMatch",
+  "target": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Target",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+}
+`;
+
+exports[`公共条件叶子 IR > '敌人等级位集' 锁定已验证的对象级结构 1`] = `
+{
+  "kind": "enemyRank",
+  "rankMask": 6,
+  "sourceType": "CheckEnemyRank",
+  "target": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Target",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+}
+`;
+
+exports[`公共条件叶子 IR > '概率' 锁定已验证的对象级结构 1`] = `
+{
+  "kind": "probability",
+  "sourceType": "Probablity",
+  "value": {
+    "blackboardKey": "proc_chance",
+    "levelValues": [
+      0.25,
+      0.5,
+    ],
+    "value": 0,
+  },
+}
+`;
+
+exports[`公共条件叶子 IR > '浮点黑板比较' 锁定已验证的对象级结构 1`] = `
+{
+  "comparison": "GT",
+  "kind": "floatCompare",
+  "left": {
+    "blackboardKey": "talent_enabled",
+    "levelValues": [
+      0,
+      1,
+    ],
+    "value": 0,
+  },
+  "right": {
+    "blackboardKey": null,
+    "levelValues": null,
+    "value": 0.5,
+  },
+  "sourceType": "CompareFloat",
+}
+`;
+
+exports[`公共条件叶子 IR > '生命比例' 锁定已验证的对象级结构 1`] = `
+{
+  "characterTeamSelection": null,
+  "comparison": "LE",
+  "isRatio": true,
+  "kind": "health",
+  "sourceType": "CheckHp",
+  "targetGroupKey": "smart_target",
+  "targetSource": "Context",
+  "value": {
+    "blackboardKey": null,
+    "levelValues": null,
+    "value": 0.5,
+  },
+}
+`;
+
+exports[`公共条件叶子 IR > '目标组数量' 锁定已验证的对象级结构 1`] = `
+{
+  "comparison": "GE",
+  "containsHittableTarget": false,
+  "excludeDeadEntity": true,
+  "kind": "entityCount",
+  "minimumCount": 1,
+  "sourceType": "CheckEntityNum",
+  "storeKey": "target_count",
+  "targetGroupKey": "targets",
+  "targetSource": "Context",
+}
+`;
+
+exports[`公共条件叶子 IR > '目标身份相等' 锁定已验证的对象级结构 1`] = `
+{
+  "first": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Owner",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "kind": "targetIdentity",
+  "second": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Target",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "sourceType": "CheckTargetsEqual",
+}
+`;
+
+exports[`公共条件叶子 IR > '能力实体剩余时长' 锁定已验证的对象级结构 1`] = `
+{
+  "comparison": "LT",
+  "kind": "abilityEntityDuration",
+  "outputKey": "",
+  "saveCurrentDuration": false,
+  "sourceType": "CheckAbilityEntityCurDuration",
+  "target": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Target",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "value": {
+    "blackboardKey": null,
+    "levelValues": null,
+    "value": 3,
+  },
+}
+`;
+
+exports[`公共条件叶子 IR > '距离' 锁定已验证的对象级结构 1`] = `
+{
+  "containsHittableObject": false,
+  "distance": 8,
+  "includeTargetRadius": false,
+  "kind": "distance",
+  "lessThan": true,
+  "source": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Owner",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "sourceType": "CheckDistanceCondition",
+  "target": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Target",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+}
+`;
+
+exports[`公共条件叶子 IR > '霸体值' 锁定已验证的对象级结构 1`] = `
+{
+  "comparison": "GE",
+  "kind": "superArmor",
+  "sourceType": "CheckSuperArmor",
+  "target": {
+    "centerContextKey": "",
+    "centerToGround": false,
+    "centerType": "ActionSource",
+    "distanceValidators": [],
+    "enableAdvancedDirection": false,
+    "finderOwnerPartsQuery": null,
+    "finderShape": null,
+    "finderSpawnedObjectType": null,
+    "finderType": null,
+    "ownerContextKey": "",
+    "postProcessorTypes": [],
+    "priorityFilters": [],
+    "selectorDirection": "SourceForward",
+    "selectorOwner": "ActionOwner",
+    "shuffleTargets": [],
+    "target": "ActionSource",
+    "targetContextKey": "",
+    "targetGroupKey": "",
+    "targetSource": "Target",
+    "validatorTagQueries": [],
+    "validatorTypes": [],
+  },
+  "value": {
+    "blackboardKey": "super_armor_threshold",
+    "levelValues": [
+      10,
+      20,
+    ],
+    "value": 0,
+  },
+}
+`;

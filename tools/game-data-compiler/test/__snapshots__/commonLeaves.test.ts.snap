@@ -1,0 +1,123 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GameplayTag 查询 > 锁定已验证的查询结构：ExceptAll 1`] = `
+{
+  "queryType": "exceptAll",
+  "tagIds": [
+    1001,
+    -2002,
+  ],
+}
+`;
+
+exports[`GameplayTag 查询 > 锁定已验证的查询结构：ExceptAny 1`] = `
+{
+  "queryType": "exceptAny",
+  "tagIds": [
+    1001,
+    -2002,
+  ],
+}
+`;
+
+exports[`GameplayTag 查询 > 锁定已验证的查询结构：HasAll 1`] = `
+{
+  "queryType": "hasAll",
+  "tagIds": [
+    1001,
+    -2002,
+  ],
+}
+`;
+
+exports[`GameplayTag 查询 > 锁定已验证的查询结构：HasAny 1`] = `
+{
+  "queryType": "hasAny",
+  "tagIds": [
+    1001,
+    -2002,
+  ],
+}
+`;
+
+exports[`TargetSettings > 保留 owner-spawned 实体类型和 Tag 验证器 1`] = `
+{
+  "centerContextKey": "",
+  "centerToGround": false,
+  "centerType": "ActionSource",
+  "distanceValidators": [],
+  "enableAdvancedDirection": false,
+  "finderOwnerPartsQuery": null,
+  "finderShape": null,
+  "finderSpawnedObjectType": "AbilityEntity",
+  "finderType": "OwnerSpawnedEntityFinder",
+  "ownerContextKey": "",
+  "postProcessorTypes": [],
+  "priorityFilters": [],
+  "selectorDirection": "SourceForward",
+  "selectorOwner": "ActionOwner",
+  "shuffleTargets": [],
+  "target": "ActionSource",
+  "targetContextKey": "",
+  "targetGroupKey": "",
+  "targetSource": "InstantSearch",
+  "validatorTagQueries": [
+    [
+      "HasAll",
+      [
+        801,
+        802,
+      ],
+    ],
+  ],
+  "validatorTypes": [
+    "TagValidator",
+  ],
+}
+`;
+
+exports[`TargetSettings > 保留普通目标引用，不提前归约模拟目标 1`] = `
+{
+  "centerContextKey": "",
+  "centerToGround": false,
+  "centerType": "ActionSource",
+  "distanceValidators": [],
+  "enableAdvancedDirection": false,
+  "finderOwnerPartsQuery": null,
+  "finderShape": null,
+  "finderSpawnedObjectType": null,
+  "finderType": null,
+  "ownerContextKey": "",
+  "postProcessorTypes": [],
+  "priorityFilters": [],
+  "selectorDirection": "SourceForward",
+  "selectorOwner": "ActionOwner",
+  "shuffleTargets": [],
+  "target": "ActionSource",
+  "targetContextKey": "",
+  "targetGroupKey": "",
+  "targetSource": "Target",
+  "validatorTagQueries": [],
+  "validatorTypes": [],
+}
+`;
+
+exports[`黑板声明和引用 > 区分数值、字符串和动态初值 1`] = `
+[
+  {
+    "isDynamic": false,
+    "key": "identity",
+    "value": "child_skill",
+  },
+  {
+    "isDynamic": false,
+    "key": "ratio",
+    "value": 0.8,
+  },
+  {
+    "isDynamic": true,
+    "key": "runtime",
+    "value": 1,
+  },
+]
+`;

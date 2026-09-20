@@ -1,5331 +1,1550 @@
 {
-  "frontiers-armor-t1": {
-    "name": "Frontiers Armor T1",
+  "item_equip_t0_parts_tundra01_body_01": {
+    "name": "Basic Armor",
     "slotType": "Armor",
-    "setName": "Frontiers",
-    "statNames": ["Strength", "Agility", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
+    "setName": "",
+    "defense": 8.0
   },
-  "frontiers-armor-t3": {
-    "name": "Frontiers Armor T3",
+  "item_equip_t0_parts_tundra01_body_02": {
+    "name": "Basic PPE",
     "slotType": "Armor",
-    "setName": "Frontiers",
-    "statNames": ["Agility", "Intellect", "Secondary Attribute"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Secondary Attribute": {
-        "values": [10.4, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 56
+    "setName": "",
+    "defense": 8.0
   },
-  "frontiers-armor": {
-    "name": "Frontiers Armor",
-    "slotType": "Armor",
-    "setName": "Frontiers",
-    "statNames": ["Strength", "Intellect", "Ultimate DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [25.9, 28.5, 31.1, 33.6],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "frontiers-armor-t2": {
-    "name": "Frontiers Armor T2",
-    "slotType": "Armor",
-    "setName": "Frontiers",
-    "statNames": ["Agility", "Intellect", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "frontiers-protection-suit": {
-    "name": "Frontiers Protection Suit",
-    "slotType": "Armor",
-    "setName": "Frontiers",
-    "statNames": ["Intellect", "Agility", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "frontiers-fiber-gloves": {
-    "name": "Frontiers Fiber Gloves",
+  "item_equip_t0_parts_tundra01_hand_01": {
+    "name": "Basic Gauntlets",
     "slotType": "Gloves",
-    "setName": "Frontiers",
-    "statNames": ["Will", "Strength", "All Skill DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 6.0
   },
-  "frontiers-fiber-gloves-t1": {
-    "name": "Frontiers Fiber Gloves T1",
+  "item_equip_t0_parts_tundra01_hand_02": {
+    "name": "Basic Gloves",
     "slotType": "Gloves",
-    "setName": "Frontiers",
-    "statNames": ["Intellect", "Agility", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 6.0
   },
-  "frontiers-blight-res-gloves": {
-    "name": "Frontiers Blight RES Gloves",
+  "item_equip_t1_parts_tundra01_body_01": {
+    "name": "Miner Armor",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 16.0
+  },
+  "item_equip_t1_parts_tundra01_body_02": {
+    "name": "Miner Overalls",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 16.0
+  },
+  "item_equip_t1_parts_tundra01_body_03": {
+    "name": "Prototype Heavy Armor",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 22.400000000000002
+  },
+  "item_equip_t1_parts_tundra01_body_04": {
+    "name": "Prototype Heavy Armor T1",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 22.400000000000002
+  },
+  "item_equip_t1_parts_tundra01_body_05": {
+    "name": "Miner Vest",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 22.400000000000002
+  },
+  "item_equip_t1_parts_tundra01_body_06": {
+    "name": "Miner Cleansuit",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 22.400000000000002
+  },
+  "item_equip_t1_parts_tundra01_edc_01": {
+    "name": "Emergency Comm",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 6.0
+  },
+  "item_equip_t1_parts_tundra01_edc_02": {
+    "name": "Emergency Compression Core",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 6.0
+  },
+  "item_equip_t1_parts_tundra01_hand_01": {
+    "name": "Miner Gauntlets",
     "slotType": "Gloves",
-    "setName": "Frontiers",
-    "statNames": ["Agility", "Intellect", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 12.0
   },
-  "frontiers-extra-o2-tube-t1": {
-    "name": "Frontiers Extra O2 Tube T1",
-    "slotType": "Kit",
-    "setName": "Frontiers",
-    "statNames": ["Intellect", "Agility", "Secondary Attribute"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Secondary Attribute": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-analyzer": {
-    "name": "Frontiers Analyzer",
-    "slotType": "Kit",
-    "setName": "Frontiers",
-    "statNames": ["Strength", "Ultimate DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [51.7, 56.9, 62.1, 67.3],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-comm-t1": {
-    "name": "Frontiers Comm T1",
-    "slotType": "Kit",
-    "setName": "Frontiers",
-    "statNames": ["Strength", "Intellect", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-comm": {
-    "name": "Frontiers Comm",
-    "slotType": "Kit",
-    "setName": "Frontiers",
-    "statNames": ["Strength", "Agility", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-extra-o2-tube": {
-    "name": "Frontiers Extra O2 Tube",
-    "slotType": "Kit",
-    "setName": "Frontiers",
-    "statNames": ["Agility", "Intellect", "Secondary Attribute"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Secondary Attribute": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "frontiers-o2-tube": {
-    "name": "Frontiers O2 Tube",
-    "slotType": "Kit",
-    "setName": "Frontiers",
-    "statNames": ["Will", "Physical DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "grizzled-edge-armor": {
-    "name": "Grizzled Edge Armor",
-    "slotType": "Armor",
-    "setName": "Grizzled Edge",
-    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "grizzled-edge-armor-t1": {
-    "name": "Grizzled Edge Armor T1",
-    "slotType": "Armor",
-    "setName": "Grizzled Edge",
-    "statNames": ["Agility", "Strength", "Arts Intensity"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "grizzled-edge-gauntlets": {
-    "name": "Grizzled Edge Gauntlets",
+  "item_equip_t1_parts_tundra01_hand_02": {
+    "name": "Miner Wrists",
     "slotType": "Gloves",
-    "setName": "Grizzled Edge",
-    "statNames": ["Strength", "Will", "Arts Intensity"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 16.8
   },
-  "grizzled-edge-gauntlets-t1": {
-    "name": "Grizzled Edge Gauntlets T1",
+  "item_equip_t1_parts_tundra01_hand_03": {
+    "name": "Miner Gloves",
     "slotType": "Gloves",
-    "setName": "Grizzled Edge",
-    "statNames": ["Agility", "Strength", "Arts Intensity"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 12.0
   },
-  "grizzled-edge-push-knife": {
-    "name": "Grizzled Edge Push Knife",
-    "slotType": "Kit",
-    "setName": "Grizzled Edge",
-    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "grizzled-edge-push-knife-t1": {
-    "name": "Grizzled Edge Push Knife T1",
-    "slotType": "Kit",
-    "setName": "Grizzled Edge",
-    "statNames": ["Agility", "Strength", "Physical DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-heavy-armor-t1": {
-    "name": "Type 50 Yinglung Heavy Armor T1",
-    "slotType": "Armor",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Agility", "Strength", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "type-50-yinglung-heavy-armor": {
-    "name": "Type 50 Yinglung Heavy Armor",
-    "slotType": "Armor",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "type-50-yinglung-heavy-armor-t2": {
-    "name": "Type 50 Yinglung Heavy Armor T2",
-    "slotType": "Armor",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Agility", "Intellect", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "type-50-yinglung-light-armor": {
-    "name": "Type 50 Yinglung Light Armor",
-    "slotType": "Armor",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Will", "Strength", "All Skill DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [13.8, 15.2, 16.6, 17.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "type-50-yinglung-gloves": {
-    "name": "Type 50 Yinglung Gloves",
+  "item_equip_t1_parts_tundra01_hand_04": {
+    "name": "Miner Fists",
     "slotType": "Gloves",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Agility", "Intellect", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
+    "setName": "",
+    "defense": 16.8
   },
-  "type-50-yinglung-gloves-t1": {
-    "name": "Type 50 Yinglung Gloves T1",
-    "slotType": "Gloves",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Will", "Agility", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "type-50-yinglung-radar-t2": {
-    "name": "Type 50 Yinglung Radar T2",
-    "slotType": "Kit",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Agility", "Intellect", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-radar": {
-    "name": "Type 50 Yinglung Radar",
-    "slotType": "Kit",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-radar-t1": {
-    "name": "Type 50 Yinglung Radar T1",
-    "slotType": "Kit",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Agility", "Strength", "Ultimate DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [51.7, 56.9, 62.1, 67.3],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-knife": {
-    "name": "Type 50 Yinglung Knife",
-    "slotType": "Kit",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Will", "Agility", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "type-50-yinglung-knife-t1": {
-    "name": "Type 50 Yinglung Knife T1",
-    "slotType": "Kit",
-    "setName": "Type 50 Yinglung",
-    "statNames": ["Intellect", "Strength", "All Skill DMG Dealt Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [27.6, 30.4, 33.1, 35.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-heavy-armor": {
-    "name": "Bonekrusha Heavy Armor",
-    "slotType": "Armor",
-    "setName": "Bonekrusha",
-    "statNames": ["Agility", "Intellect", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-heavy-armor-t1": {
-    "name": "Bonekrusha Heavy Armor T1",
-    "slotType": "Armor",
-    "setName": "Bonekrusha",
-    "statNames": ["Agility", "Strength", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-poncho": {
-    "name": "Bonekrusha Poncho",
-    "slotType": "Armor",
-    "setName": "Bonekrusha",
-    "statNames": ["Will", "Strength", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-poncho-t1": {
-    "name": "Bonekrusha Poncho T1",
-    "slotType": "Armor",
-    "setName": "Bonekrusha",
-    "statNames": ["Will", "Agility", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-heavy-armor-t2": {
-    "name": "Bonekrusha Heavy Armor T2",
-    "slotType": "Armor",
-    "setName": "Bonekrusha",
-    "statNames": ["Agility", "Strength", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "bonekrusha-gloves": {
-    "name": "Bonekrusha Gloves",
-    "slotType": "Gloves",
-    "setName": "Bonekrusha",
-    "statNames": ["Will", "Agility", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "bonekrusha-wristband": {
-    "name": "Bonekrusha Wristband",
-    "slotType": "Gloves",
-    "setName": "Bonekrusha",
-    "statNames": ["Strength", "Agility", "Heat and Nature DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "bonekrusha-wristband-t1": {
-    "name": "Bonekrusha Wristband T1",
-    "slotType": "Gloves",
-    "setName": "Bonekrusha",
-    "statNames": ["Agility", "Strength", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "bonekrusha-mask": {
-    "name": "Bonekrusha Mask",
-    "slotType": "Kit",
-    "setName": "Bonekrusha",
-    "statNames": ["Agility", "Strength", "DMG Bonus vs. Staggered"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "DMG Bonus vs. Staggered": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-figurine-t1": {
-    "name": "Bonekrusha Figurine T1",
-    "slotType": "Kit",
-    "setName": "Bonekrusha",
-    "statNames": ["Will", "Intellect", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-figurine": {
-    "name": "Bonekrusha Figurine",
-    "slotType": "Kit",
-    "setName": "Bonekrusha",
-    "statNames": ["Will", "Agility", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-figurine-t2": {
-    "name": "Bonekrusha Figurine T2",
-    "slotType": "Kit",
-    "setName": "Bonekrusha",
-    "statNames": ["Will", "Intellect", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-mask-t2": {
-    "name": "Bonekrusha Mask T2",
-    "slotType": "Kit",
-    "setName": "Bonekrusha",
-    "statNames": ["Agility", "Strength", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "bonekrusha-mask-t1": {
-    "name": "Bonekrusha Mask T1",
-    "slotType": "Kit",
-    "setName": "Bonekrusha",
-    "statNames": ["Agility", "Strength", "Critical Rate"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "tide-fall-light-armor": {
-    "name": "Tide Fall Light Armor",
-    "slotType": "Armor",
-    "setName": "Tide Surge",
-    "statNames": ["Intellect", "Strength", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "tide-surge-gauntlets": {
-    "name": "Tide Surge Gauntlets",
-    "slotType": "Gloves",
-    "setName": "Tide Surge",
-    "statNames": ["Strength", "Will", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "hanging-river-o2-tube": {
-    "name": "Hanging River O2 Tube",
-    "slotType": "Kit",
-    "setName": "Tide Surge",
-    "statNames": ["Strength", "Will", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "turbid-cutting-torch": {
-    "name": "Turbid Cutting Torch",
-    "slotType": "Kit",
-    "setName": "Tide Surge",
-    "statNames": ["Intellect", "Strength", "Basic Attack DMG Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [27.6, 30.4, 33.1, 35.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "qingbo-heavy-armor": {
-    "name": "Qingbo Heavy Armor",
-    "slotType": "Armor",
-    "setName": "Qingbo",
-    "statNames": ["Agility", "Strength", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "qingbo-light-armor": {
-    "name": "Qingbo Light Armor",
-    "slotType": "Armor",
-    "setName": "Qingbo",
-    "statNames": ["Intellect", "Will", "Arts Intensity"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "qingbo-gauntlets": {
-    "name": "Qingbo Gauntlets",
-    "slotType": "Gloves",
-    "setName": "Qingbo",
-    "statNames": ["Agility", "Strength", "All Skill DMG Dealt Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "qingbo-gloves": {
-    "name": "Qingbo Gloves",
-    "slotType": "Gloves",
-    "setName": "Qingbo",
-    "statNames": ["Intellect", "Will", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "qingbo-cask": {
-    "name": "Qingbo Cask",
-    "slotType": "Kit",
-    "setName": "Qingbo",
-    "statNames": ["Intellect", "Will", "Arts Intensity"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "qingbo-positioning-kit": {
-    "name": "Qingbo Positioning Kit",
-    "slotType": "Kit",
-    "setName": "Qingbo",
-    "statNames": ["Agility", "Strength", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "qingbo-bamboo-cutter": {
-    "name": "Qingbo Bamboo Cutter",
-    "slotType": "Kit",
-    "setName": "Qingbo",
-    "statNames": ["Strength", "Agility", "Heat and Nature DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-overalls": {
-    "name": "MI Security Overalls",
-    "slotType": "Armor",
-    "setName": "MI Security",
-    "statNames": ["Intellect", "Agility", "Basic Attack DMG Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [13.8, 15.2, 16.6, 17.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-overalls-t2": {
-    "name": "MI Security Overalls T2",
-    "slotType": "Armor",
-    "setName": "MI Security",
-    "statNames": ["Will", "Agility", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-armor-t1": {
-    "name": "MI Security Armor T1",
-    "slotType": "Armor",
-    "setName": "MI Security",
-    "statNames": ["Agility", "Intellect", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-overalls-t1": {
-    "name": "MI Security Overalls T1",
-    "slotType": "Armor",
-    "setName": "MI Security",
-    "statNames": ["Intellect", "Will", "Critical Rate"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [5.2, 5.7, 6.2, 6.7],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-armor": {
-    "name": "MI Security Armor",
-    "slotType": "Armor",
-    "setName": "MI Security",
-    "statNames": ["Agility", "Strength", "Arts Intensity"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "mi-security-hands-ppe-t1": {
-    "name": "MI Security Hands PPE T1",
-    "slotType": "Gloves",
-    "setName": "MI Security",
-    "statNames": ["Intellect", "Will", "Critical Rate"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [8.6, 9.5, 10.3, 11.2],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "mi-security-gloves-t1": {
-    "name": "MI Security Gloves T1",
-    "slotType": "Gloves",
-    "setName": "MI Security",
-    "statNames": ["Agility", "Intellect", "Ultimate DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [43.1, 47.4, 51.7, 56.1],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "mi-security-gloves": {
-    "name": "MI Security Gloves",
-    "slotType": "Gloves",
-    "setName": "MI Security",
-    "statNames": ["Agility", "Strength", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "mi-security-hands-ppe": {
-    "name": "MI Security Hands PPE",
-    "slotType": "Gloves",
-    "setName": "MI Security",
-    "statNames": ["Intellect", "Agility", "Basic Attack DMG Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "mi-security-toolkit": {
-    "name": "MI Security Toolkit",
-    "slotType": "Kit",
-    "setName": "MI Security",
-    "statNames": ["Intellect", "Agility", "Critical Rate"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-armband": {
-    "name": "MI Security Armband",
-    "slotType": "Kit",
-    "setName": "MI Security",
-    "statNames": ["Strength", "Will", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-scope": {
-    "name": "MI Security Scope",
-    "slotType": "Kit",
-    "setName": "MI Security",
-    "statNames": ["Agility", "Strength", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-push-knife": {
-    "name": "MI Security Push Knife",
-    "slotType": "Kit",
-    "setName": "MI Security",
-    "statNames": ["Will", "Intellect", "Heat and Nature DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-push-knife-t1": {
-    "name": "MI Security Push Knife T1",
-    "slotType": "Kit",
-    "setName": "MI Security",
-    "statNames": ["Will", "Agility", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mi-security-scope-t1": {
-    "name": "MI Security Scope T1",
-    "slotType": "Kit",
-    "setName": "MI Security",
-    "statNames": ["Agility", "Intellect", "Critical Rate"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "xiranflow-light-armor": {
-    "name": "Xiranflow Light Armor",
-    "slotType": "Armor",
-    "setName": "Xiranflow",
-    "statNames": ["Will", "Intellect", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "xiranflow-gloves": {
-    "name": "Xiranflow Gloves",
-    "slotType": "Gloves",
-    "setName": "Xiranflow",
-    "statNames": ["Will", "Intellect", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "xiranflow-baton": {
-    "name": "Xiranflow Baton",
-    "slotType": "Kit",
-    "setName": "Xiranflow",
-    "statNames": ["Will", "Intellect", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "hot-work-exoskeleton": {
-    "name": "Hot Work Exoskeleton",
-    "slotType": "Armor",
-    "setName": "Hot Work",
-    "statNames": ["Strength", "Agility", "Heat and Nature DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "hot-work-exo-rig": {
-    "name": "Hot Work Exo-Rig",
-    "slotType": "Armor",
-    "setName": "Hot Work",
-    "statNames": ["Intellect", "Will", "Heat and Nature DMG Dealt Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "hot-work-gloves": {
-    "name": "Hot Work Gloves",
-    "slotType": "Gloves",
-    "setName": "Hot Work",
-    "statNames": ["Strength", "Will", "Arts Intensity"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
-  },
-  "hot-work-gauntlets": {
-    "name": "Hot Work Gauntlets",
-    "slotType": "Gloves",
-    "setName": "Hot Work",
-    "statNames": ["Intellect", "Strength", "Heat and Nature DMG Dealt Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "hot-work-gauntlets-t1": {
-    "name": "Hot Work Gauntlets T1",
-    "slotType": "Gloves",
-    "setName": "Hot Work",
-    "statNames": ["Will", "Intellect", "Heat and Nature DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Heat and Nature DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "hot-work-power-bank": {
-    "name": "Hot Work Power Bank",
-    "slotType": "Kit",
-    "setName": "Hot Work",
-    "statNames": ["Strength", "Agility", "Arts Intensity"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "hot-work-pyrometer": {
-    "name": "Hot Work Pyrometer",
-    "slotType": "Kit",
-    "setName": "Hot Work",
-    "statNames": ["Intellect", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "hot-work-power-cartridge": {
-    "name": "Hot Work Power Cartridge",
-    "slotType": "Kit",
-    "setName": "Hot Work",
-    "statNames": ["Will", "Intellect", "Arts Intensity"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "lynx-heavy-armor": {
-    "name": "LYNX Heavy Armor",
-    "slotType": "Armor",
-    "setName": "LYNX",
-    "statNames": ["Strength", "Will", "Treatment Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "lynx-cuirass": {
-    "name": "LYNX Cuirass",
-    "slotType": "Armor",
-    "setName": "LYNX",
-    "statNames": ["Will", "Intellect", "Treatment Bonus"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [10.3, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "lynx-gloves": {
-    "name": "LYNX Gloves",
-    "slotType": "Gloves",
-    "setName": "LYNX",
-    "statNames": ["Strength", "Will", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "lynx-gauntlets": {
-    "name": "LYNX Gauntlets",
-    "slotType": "Gloves",
-    "setName": "LYNX",
-    "statNames": ["Will", "Strength", "Treatment Bonus"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [17.3, 19, 20.7, 22.4],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "lynx-connector": {
-    "name": "LYNX Connector",
-    "slotType": "Kit",
-    "setName": "LYNX",
-    "statNames": ["Strength", "Will", "Final DMG Reduction"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [17.1, 18.5, 19.9, 21.2],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "lynx-connector-t2": {
-    "name": "LYNX Connector T2",
-    "slotType": "Kit",
-    "setName": "LYNX",
-    "statNames": ["Strength", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "lynx-slab": {
-    "name": "LYNX Slab",
-    "slotType": "Kit",
-    "setName": "LYNX",
-    "statNames": ["Will", "Intellect", "Main Attribute"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Main Attribute": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "lynx-aegis-injector": {
-    "name": "LYNX Aegis Injector",
-    "slotType": "Kit",
-    "setName": "LYNX",
-    "statNames": ["Will", "Treatment Bonus"],
-    "stats": {
-      "Will": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "lynx-connector-t1": {
-    "name": "LYNX Connector T1",
-    "slotType": "Kit",
-    "setName": "LYNX",
-    "statNames": ["Strength", "Will", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "swordmancer-heavy-armor": {
-    "name": "Swordmancer Heavy Armor",
-    "slotType": "Armor",
-    "setName": "Swordmancer",
-    "statNames": ["Agility", "Strength", "Arts Intensity"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "swordmancer-heavy-armor-t1": {
-    "name": "Swordmancer Heavy Armor T1",
-    "slotType": "Armor",
-    "setName": "Swordmancer",
-    "statNames": ["Agility", "Strength", "Physical DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "swordmancer-light-armor": {
-    "name": "Swordmancer Light Armor",
-    "slotType": "Armor",
-    "setName": "Swordmancer",
-    "statNames": ["Strength", "Will", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "swordmancer-tac-gloves": {
-    "name": "Swordmancer TAC Gloves",
-    "slotType": "Gloves",
-    "setName": "Swordmancer",
-    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "swordmancer-tac-gauntlets": {
-    "name": "Swordmancer TAC Gauntlets",
-    "slotType": "Gloves",
-    "setName": "Swordmancer",
-    "statNames": ["Agility", "Strength", "Ultimate DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [43.1, 47.4, 51.7, 56.1],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "swordmancer-tac-gauntlets-t1": {
-    "name": "Swordmancer TAC Gauntlets T1",
-    "slotType": "Gloves",
-    "setName": "Swordmancer",
-    "statNames": ["Strength", "Will", "Arts Intensity"],
-    "stats": {
-      "Strength": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
-  },
-  "swordmancer-flint": {
-    "name": "Swordmancer Flint",
-    "slotType": "Kit",
-    "setName": "Swordmancer",
-    "statNames": ["Agility", "Strength", "Physical DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "swordmancer-nav-beacon": {
-    "name": "Swordmancer NAV Beacon",
-    "slotType": "Kit",
-    "setName": "Swordmancer",
-    "statNames": ["Strength", "Arts Intensity"],
-    "stats": {
-      "Strength": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "swordmancer-dagger": {
-    "name": "Swordmancer Dagger",
-    "slotType": "Kit",
-    "setName": "Swordmancer",
-    "statNames": ["Agility", "Strength", "Ultimate DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [51.7, 56.9, 62.1, 67.3],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "swordmancer-micro-filter": {
-    "name": "Swordmancer Micro Filter",
-    "slotType": "Kit",
-    "setName": "Swordmancer",
-    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "thertech-plating": {
-    "name": "Æthertech Plating",
-    "slotType": "Armor",
-    "setName": "Æthertech",
-    "statNames": ["Strength", "Will", "DMG Bonus vs. Staggered"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "DMG Bonus vs. Staggered": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "thertech-gloves": {
-    "name": "Æthertech Gloves",
-    "slotType": "Gloves",
-    "setName": "Æthertech",
-    "statNames": ["Agility", "Strength", "Arts Intensity"],
-    "stats": {
-      "Agility": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [34, 37, 41, 44],
-        "isPercent": false
-      }
-    },
-    "defense": 42
-  },
-  "aethertech-light-gloves": {
-    "name": "Æthertech Light Gloves",
-    "slotType": "Gloves",
-    "setName": "Æthertech",
-    "statNames": ["Will", "Agility", "All Skill DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "aethertech-watch": {
-    "name": "Æthertech Watch",
-    "slotType": "Kit",
-    "setName": "Æthertech",
-    "statNames": ["Strength", "Agility", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "thertech-analysis-band": {
-    "name": "Æthertech Analysis Band",
-    "slotType": "Kit",
-    "setName": "Æthertech",
-    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "thertech-stabilizer": {
-    "name": "Æthertech Stabilizer",
-    "slotType": "Kit",
-    "setName": "Æthertech",
-    "statNames": ["Agility", "Strength", "Arts Intensity"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "aethertech-stabilizer-t1": {
-    "name": "Æthertech Stabilizer T1",
-    "slotType": "Kit",
-    "setName": "Æthertech",
-    "statNames": ["Agility", "Strength", "Physical DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "pulser-labs-disruptor-suit": {
-    "name": "Pulser Labs Disruptor Suit",
-    "slotType": "Armor",
-    "setName": "Pulser Labs",
-    "statNames": ["Intellect", "Will", "Arts Intensity"],
-    "stats": {
-      "Intellect": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "pulser-labs-gloves": {
-    "name": "Pulser Labs Gloves",
-    "slotType": "Gloves",
-    "setName": "Pulser Labs",
-    "statNames": ["Will", "Intellect", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Will": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "pulser-labs-calibrator": {
-    "name": "Pulser Labs Calibrator",
-    "slotType": "Kit",
-    "setName": "Pulser Labs",
-    "statNames": ["Intellect", "Arts Intensity"],
-    "stats": {
-      "Intellect": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "pulser-labs-invasion-core": {
-    "name": "Pulser Labs Invasion Core",
-    "slotType": "Kit",
-    "setName": "Pulser Labs",
-    "statNames": ["Will", "Ultimate DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [51.7, 56.9, 62.1, 67.3],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "pulser-labs-probe": {
-    "name": "Pulser Labs Probe",
-    "slotType": "Kit",
-    "setName": "Pulser Labs",
-    "statNames": ["Intellect", "Agility", "Arts Intensity"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      }
-    },
-    "defense": 21
-  },
-  "eternal-xiranite-armor": {
-    "name": "Eternal Xiranite Armor",
-    "slotType": "Armor",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Will", "Intellect", "Arts Intensity"],
-    "stats": {
-      "Will": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [20, 22, 24, 26],
-        "isPercent": false
-      }
-    },
-    "defense": 56
-  },
-  "eternal-xiranite-gloves-t1": {
-    "name": "Eternal Xiranite Gloves T1",
-    "slotType": "Gloves",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Intellect", "Will", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "eternal-xiranite-gloves": {
-    "name": "Eternal Xiranite Gloves",
-    "slotType": "Gloves",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Intellect", "Strength", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "eternal-xiranite-power-core": {
-    "name": "Eternal Xiranite Power Core",
-    "slotType": "Kit",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Intellect", "Strength", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [24.6, 27.1, 29.6, 32],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "eternal-xiranite-power-core-t1": {
-    "name": "Eternal Xiranite Power Core T1",
-    "slotType": "Kit",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Intellect", "Will", "Treatment Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "eternal-xiranite-auxiliary-arm": {
-    "name": "Eternal Xiranite Auxiliary Arm",
-    "slotType": "Kit",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Will", "Intellect", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Will": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [24.6, 27.1, 29.6, 32],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "roving-msgr-jacket-t1": {
-    "name": "Roving MSGR Jacket T1",
-    "slotType": "Armor",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Intellect", "HP"],
-    "stats": {
-      "Agility": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [41],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "roving-msgr-jacket": {
-    "name": "Roving MSGR Jacket",
-    "slotType": "Armor",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Intellect", "Attack"],
-    "stats": {
-      "Agility": {
-        "values": [44],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [29],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [16],
-        "isPercent": false
-      }
-    },
-    "defense": 28
-  },
-  "roving-msgr-fists-t1": {
-    "name": "Roving MSGR Fists T1",
-    "slotType": "Gloves",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Strength", "Attack"],
-    "stats": {
-      "Agility": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [12.3],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "roving-msgr-fists": {
-    "name": "Roving MSGR Fists",
-    "slotType": "Gloves",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Strength", "Physical DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [33],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [9.7],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "roving-msgr-gyro-t1": {
-    "name": "Roving MSGR Gyro T1",
-    "slotType": "Kit",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Intellect", "Attack"],
-    "stats": {
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "roving-msgr-flashlight-t1": {
-    "name": "Roving MSGR Flashlight T1",
-    "slotType": "Kit",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Strength", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "roving-msgr-flashlight-t2": {
-    "name": "Roving MSGR Flashlight T2",
-    "slotType": "Kit",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Strength", "Ultimate DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [36.8],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "roving-msgr-gyro": {
-    "name": "Roving MSGR Gyro",
-    "slotType": "Kit",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Attack"],
-    "stats": {
-      "Agility": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "roving-msgr-flashlight": {
-    "name": "Roving MSGR Flashlight",
-    "slotType": "Kit",
-    "setName": "Roving MSGR",
-    "statNames": ["Agility", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [21],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "aburrey-heavy-armor-t1": {
-    "name": "Aburrey Heavy Armor T1",
-    "slotType": "Armor",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Agility", "Strength", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "aburrey-heavy-armor": {
-    "name": "Aburrey Heavy Armor",
-    "slotType": "Armor",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Strength", "Agility", "All Skill DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [41],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [9.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "aburrey-light-armor": {
-    "name": "Aburrey Light Armor",
-    "slotType": "Armor",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Intellect", "Strength", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [8.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "aburrey-light-armor-t1": {
-    "name": "Aburrey Light Armor T1",
-    "slotType": "Armor",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Will", "Agility", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "aburrey-gauntlets": {
-    "name": "Aburrey Gauntlets",
-    "slotType": "Gloves",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Strength", "Will", "DMG Bonus vs. Staggered"],
-    "stats": {
-      "Strength": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [30],
-        "isPercent": false
-      },
-      "DMG Bonus vs. Staggered": {
-        "values": [24.5],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "aburrey-uv-lamp": {
-    "name": "Aburrey UV Lamp",
-    "slotType": "Kit",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Strength", "Agility", "All Skill DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [19.6],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-auditory-chip": {
-    "name": "Aburrey Auditory Chip",
-    "slotType": "Kit",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Strength", "Will", "DMG Bonus vs. Staggered"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [15],
-        "isPercent": false
-      },
-      "DMG Bonus vs. Staggered": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-auditory-chip-t1": {
-    "name": "Aburrey Auditory Chip T1",
-    "slotType": "Kit",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Agility", "Strength", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-flashlight": {
-    "name": "Aburrey Flashlight",
-    "slotType": "Kit",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Intellect", "Strength", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [17.5],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-sensor-chip": {
-    "name": "Aburrey Sensor Chip",
-    "slotType": "Kit",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Will", "Agility", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "aburrey-sensor-chip-t1": {
-    "name": "Aburrey Sensor Chip T1",
-    "slotType": "Kit",
-    "setName": "Aburrey's Legacy",
-    "statNames": ["Will", "Intellect", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [29.4],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "armored-msgr-jacket-t1": {
-    "name": "Armored MSGR Jacket T1",
-    "slotType": "Armor",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "Will", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [41],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "armored-msgr-jacket": {
-    "name": "Armored MSGR Jacket",
-    "slotType": "Armor",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "Agility", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [44],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [29],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 28
-  },
-  "armored-msgr-gloves-t1": {
-    "name": "Armored MSGR Gloves T1",
-    "slotType": "Gloves",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "Agility", "Attack"],
-    "stats": {
-      "Strength": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [12.3],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "armored-msgr-gloves-t2": {
-    "name": "Armored MSGR Gloves T2",
-    "slotType": "Gloves",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "Agility", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [24.5],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "armored-msgr-gloves": {
-    "name": "Armored MSGR Gloves",
-    "slotType": "Gloves",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "Will", "Final DMG Reduction"],
-    "stats": {
-      "Strength": {
-        "values": [33],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "armored-msgr-gyro-t1": {
-    "name": "Armored MSGR Gyro T1",
-    "slotType": "Kit",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "Will", "Attack"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "armored-msgr-flashlight-t1": {
-    "name": "Armored MSGR Flashlight T1",
-    "slotType": "Kit",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "Agility", "Critical Rate"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [7.3],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "armored-msgr-flashlight": {
-    "name": "Armored MSGR Flashlight",
-    "slotType": "Kit",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [21],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [21],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "armored-msgr-gyro": {
-    "name": "Armored MSGR Gyro",
-    "slotType": "Kit",
-    "setName": "Armored MSGR",
-    "statNames": ["Strength", "Attack"],
-    "stats": {
-      "Strength": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "catastrophe-heavy-armor": {
-    "name": "Catastrophe Heavy Armor",
-    "slotType": "Armor",
-    "setName": "Catastrophe",
-    "statNames": ["Strength", "Intellect", "Ultimate DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [18.4],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "catastrophe-heavy-armor-t1": {
-    "name": "Catastrophe Heavy Armor T1",
-    "slotType": "Armor",
-    "setName": "Catastrophe",
-    "statNames": ["Strength", "Will", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Strength": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [8.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "catastrophe-gloves": {
-    "name": "Catastrophe Gloves",
-    "slotType": "Gloves",
-    "setName": "Catastrophe",
-    "statNames": ["Will", "Intellect", "Arts Intensity"],
-    "stats": {
-      "Will": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [24],
-        "isPercent": false
-      }
-    },
-    "defense": 30
-  },
-  "catastrophe-filter": {
-    "name": "Catastrophe Filter",
-    "slotType": "Kit",
-    "setName": "Catastrophe",
-    "statNames": ["Will", "Intellect", "Arts Intensity"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Arts Intensity": {
-        "values": [29],
-        "isPercent": false
-      }
-    },
-    "defense": 15
-  },
-  "catastrophe-gauze-cartridge-t1": {
-    "name": "Catastrophe Gauze Cartridge T1",
-    "slotType": "Kit",
-    "setName": "Catastrophe",
-    "statNames": ["Strength", "Will", "Secondary Attribute"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Secondary Attribute": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "catastrophe-gauze-cartridge": {
-    "name": "Catastrophe Gauze Cartridge",
-    "slotType": "Kit",
-    "setName": "Catastrophe",
-    "statNames": ["Strength", "Intellect", "Ultimate DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [36.8],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-resistant-vest-t1": {
-    "name": "Mordvolt Resistant Vest T1",
-    "slotType": "Armor",
-    "setName": "Mordvolt Resistant",
-    "statNames": ["Will", "Intellect", "HP"],
-    "stats": {
-      "Will": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [41],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "mordvolt-resistant-vest": {
-    "name": "Mordvolt Resistant Vest",
-    "slotType": "Armor",
-    "setName": "Mordvolt Resistant",
-    "statNames": ["Will", "Agility", "HP"],
-    "stats": {
-      "Will": {
-        "values": [44],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [29],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 28
-  },
-  "mordvolt-resistant-gloves-t1": {
-    "name": "Mordvolt Resistant Gloves T1",
-    "slotType": "Gloves",
-    "setName": "Mordvolt Resistant",
-    "statNames": ["Will", "Agility", "Attack"],
-    "stats": {
-      "Will": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [12.3],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "mordvolt-resistant-gloves": {
-    "name": "Mordvolt Resistant Gloves",
-    "slotType": "Gloves",
-    "setName": "Mordvolt Resistant",
-    "statNames": ["Will", "Intellect", "Treatment Bonus"],
-    "stats": {
-      "Will": {
-        "values": [33],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [8.8],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mordvolt-resistant-battery-t1": {
-    "name": "Mordvolt Resistant Battery T1",
-    "slotType": "Kit",
-    "setName": "Mordvolt Resistant",
-    "statNames": ["Will", "Agility", "Treatment Bonus"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-resistant-wrench-t1": {
-    "name": "Mordvolt Resistant Wrench T1",
-    "slotType": "Kit",
-    "setName": "Mordvolt Resistant",
-    "statNames": ["Will", "Intellect", "Attack"],
-    "stats": {
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-resistant-wrench": {
-    "name": "Mordvolt Resistant Wrench",
-    "slotType": "Kit",
-    "setName": "Mordvolt Resistant",
-    "statNames": ["Will", "Attack"],
-    "stats": {
-      "Will": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "mordvolt-resistant-battery": {
-    "name": "Mordvolt Resistant Battery",
-    "slotType": "Kit",
-    "setName": "Mordvolt Resistant",
-    "statNames": ["Will", "Treatment Bonus"],
-    "stats": {
-      "Will": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "mordvolt-insulation-vest-t1": {
-    "name": "Mordvolt Insulation Vest T1",
-    "slotType": "Armor",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Agility", "Basic Attack DMG Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [41],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [9.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "mordvolt-insulation-vest-t2": {
-    "name": "Mordvolt Insulation Vest T2",
-    "slotType": "Armor",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Will", "HP"],
-    "stats": {
-      "Intellect": {
-        "values": [61],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [41],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "mordvolt-insulation-vest": {
-    "name": "Mordvolt Insulation Vest",
-    "slotType": "Armor",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Strength", "Attack"],
-    "stats": {
-      "Intellect": {
-        "values": [44],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [29],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [16],
-        "isPercent": false
-      }
-    },
-    "defense": 28
-  },
-  "mordvolt-insulation-gloves-t1": {
-    "name": "Mordvolt Insulation Gloves T1",
-    "slotType": "Gloves",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Strength", "Attack"],
-    "stats": {
-      "Intellect": {
-        "values": [46],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [12.3],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "mordvolt-insulation-gloves": {
-    "name": "Mordvolt Insulation Gloves",
-    "slotType": "Gloves",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Will", "Arts DMG Dealt Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [33],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Arts DMG Dealt Bonus": {
-        "values": [9.2],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "mordvolt-insulation-battery-t1": {
-    "name": "Mordvolt Insulation Battery T1",
-    "slotType": "Kit",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [29],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [17.5],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-insulation-wrench-t2": {
-    "name": "Mordvolt Insulation Wrench T2",
-    "slotType": "Kit",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Agility", "Attack"],
-    "stats": {
-      "Intellect": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [14.7],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "mordvolt-insulation-wrench": {
-    "name": "Mordvolt Insulation Wrench",
-    "slotType": "Kit",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Attack"],
-    "stats": {
-      "Intellect": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [10.5],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "mordvolt-insulation-wrench-t1": {
-    "name": "Mordvolt Insulation Wrench T1",
-    "slotType": "Kit",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Cryo and Electric DMG Dealt Bonus": {
-        "values": [11.7],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "mordvolt-insulation-battery": {
-    "name": "Mordvolt Insulation Battery",
-    "slotType": "Kit",
-    "setName": "Mordvolt Insulation",
-    "statNames": ["Intellect", "Critical Rate"],
-    "stats": {
-      "Intellect": {
-        "values": [21],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [5.3],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "aic-heavy-armor": {
+  "item_equip_t1_suit_stragi01_body_01": {
     "name": "AIC Heavy Armor",
     "slotType": "Armor",
     "setName": "AIC Heavy",
-    "statNames": ["Strength", "Agility", "Final DMG Reduction"],
-    "stats": {
-      "Strength": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [3.9],
-        "isPercent": true
-      }
-    },
-    "defense": 22
+    "defense": 22.400000000000002
   },
-  "aic-gauntlets": {
+  "item_equip_t1_suit_stragi01_edc_01": {
+    "name": "AIC Heavy Plate",
+    "slotType": "Accessory",
+    "setName": "AIC Heavy",
+    "defense": 8.4
+  },
+  "item_equip_t1_suit_stragi01_edc_02": {
+    "name": "AIC Alloy Plate",
+    "slotType": "Accessory",
+    "setName": "AIC Heavy",
+    "defense": 8.4
+  },
+  "item_equip_t1_suit_stragi01_hand_01": {
     "name": "AIC Gauntlets",
     "slotType": "Gloves",
     "setName": "AIC Heavy",
-    "statNames": ["Strength", "Will", "Final DMG Reduction"],
-    "stats": {
-      "Strength": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [6.3],
-        "isPercent": true
-      }
-    },
-    "defense": 16
+    "defense": 16.8
   },
-  "aic-heavy-plate": {
-    "name": "AIC Heavy Plate",
-    "slotType": "Kit",
-    "setName": "AIC Heavy",
-    "statNames": ["Strength", "Final DMG Reduction"],
-    "stats": {
-      "Strength": {
-        "values": [16],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [7.5],
-        "isPercent": true
-      }
-    },
-    "defense": 8
-  },
-  "aic-alloy-plate": {
-    "name": "AIC Alloy Plate",
-    "slotType": "Kit",
-    "setName": "AIC Heavy",
-    "statNames": ["Agility", "Final DMG Reduction"],
-    "stats": {
-      "Agility": {
-        "values": [16],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [7.5],
-        "isPercent": true
-      }
-    },
-    "defense": 8
-  },
-  "aic-light-armor": {
+  "item_equip_t1_suit_wisdwill01_body_01": {
     "name": "AIC Light Armor",
     "slotType": "Armor",
     "setName": "AIC Light",
-    "statNames": ["Intellect", "Will", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [30],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [8.1],
-        "isPercent": true
-      }
-    },
-    "defense": 22
+    "defense": 22.400000000000002
   },
-  "aic-tactical-gloves": {
+  "item_equip_t1_suit_wisdwill01_edc_01": {
+    "name": "AIC Light Plate",
+    "slotType": "Accessory",
+    "setName": "AIC Light",
+    "defense": 8.4
+  },
+  "item_equip_t1_suit_wisdwill01_edc_02": {
+    "name": "AIC Ceramic Plate",
+    "slotType": "Accessory",
+    "setName": "AIC Light",
+    "defense": 8.4
+  },
+  "item_equip_t1_suit_wisdwill01_hand_01": {
     "name": "AIC Tactical Gloves",
     "slotType": "Gloves",
     "setName": "AIC Light",
-    "statNames": ["Intellect", "Agility", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [23],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 16
+    "defense": 16.8
   },
-  "aic-light-plate": {
-    "name": "AIC Light Plate",
-    "slotType": "Kit",
-    "setName": "AIC Light",
-    "statNames": ["Intellect", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Intellect": {
-        "values": [16],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [16.2],
-        "isPercent": true
-      }
-    },
-    "defense": 8
+  "item_equip_t2_parts_tundra01_edc_01": {
+    "name": "Miner Turbine",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 10.799999999999999
   },
-  "aic-ceramic-plate": {
-    "name": "AIC Ceramic Plate",
-    "slotType": "Kit",
-    "setName": "AIC Light",
-    "statNames": ["Will", "Battle Skill DMG Bonus"],
-    "stats": {
-      "Will": {
-        "values": [16],
-        "isPercent": false
-      },
-      "Battle Skill DMG Bonus": {
-        "values": [16.2],
-        "isPercent": true
-      }
-    },
-    "defense": 8
+  "item_equip_t2_parts_tundra01_edc_02": {
+    "name": "Miner Drive Wheel",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 10.799999999999999
   },
-  "redeemer-plates": {
-    "name": "Redeemer Plates",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Basic Attack DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [115, 126, 138, 149],
-        "isPercent": false
-      },
-      "Basic Attack DMG Bonus": {
-        "values": [14.4, 15.8, 17.3, 18.7],
-        "isPercent": true
-      }
-    },
-    "defense": 56
+  "item_equip_t2_parts_tundra01_edc_03": {
+    "name": "Miner Compression Core",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 10.799999999999999
   },
-  "redeemer-armor": {
-    "name": "Redeemer Armor",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [115, 126, 138, 149],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [12.9, 14.1, 15.4, 16.7],
-        "isPercent": true
-      }
-    },
-    "defense": 56
+  "item_equip_t2_parts_tundra01_edc_04": {
+    "name": "Miner Comm",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 10.799999999999999
   },
-  "miner-armor-t1": {
-    "name": "Miner Armor T1",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Will", "Critical Rate"],
-    "stats": {
-      "Strength": {
-        "values": [65],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [43],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [3.9],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "miner-overalls-t1": {
-    "name": "Miner Overalls T1",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Agility", "Attack"],
-    "stats": {
-      "Intellect": {
-        "values": [65],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [43],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [7.8],
-        "isPercent": true
-      }
-    },
-    "defense": 40
-  },
-  "miner-armor": {
-    "name": "Miner Armor",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Agility", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [27],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [18],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [125],
-        "isPercent": false
-      }
-    },
-    "defense": 16
-  },
-  "miner-overalls": {
-    "name": "Miner Overalls",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Will", "HP"],
-    "stats": {
-      "Intellect": {
-        "values": [27],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [18],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [125],
-        "isPercent": false
-      }
-    },
-    "defense": 16
-  },
-  "prototype-heavy-armor": {
-    "name": "Prototype Heavy Armor",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Intellect", "Attack"],
-    "stats": {
-      "Strength": {
-        "values": [37],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [25],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [11],
-        "isPercent": false
-      }
-    },
-    "defense": 22
-  },
-  "prototype-heavy-armor-t1": {
-    "name": "Prototype Heavy Armor T1",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Will", "Attack"],
-    "stats": {
-      "Agility": {
-        "values": [37],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [25],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [11],
-        "isPercent": false
-      }
-    },
-    "defense": 22
-  },
-  "miner-vest": {
-    "name": "Miner Vest",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Intellect", "HP"],
-    "stats": {
-      "Agility": {
-        "values": [37],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [25],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [9],
-        "isPercent": true
-      }
-    },
-    "defense": 22
-  },
-  "miner-cleansuit": {
-    "name": "Miner Cleansuit",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Will", "Agility", "HP"],
-    "stats": {
-      "Will": {
-        "values": [37],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [25],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [9],
-        "isPercent": true
-      }
-    },
-    "defense": 22
-  },
-  "basic-armor": {
-    "name": "Basic Armor",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Agility", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [10],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [46],
-        "isPercent": false
-      }
-    },
-    "defense": 8
-  },
-  "basic-ppe": {
-    "name": "Basic PPE",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Will", "HP"],
-    "stats": {
-      "Intellect": {
-        "values": [15],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [10],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [46],
-        "isPercent": false
-      }
-    },
-    "defense": 8
-  },
-  "redeemer-gloves": {
-    "name": "Redeemer Gloves",
-    "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Ultimate DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [86, 94, 103, 111],
-        "isPercent": false
-      },
-      "Ultimate DMG Bonus": {
-        "values": [45, 49.5, 54, 58.5],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "redeemer-hands": {
-    "name": "Redeemer Hands",
-    "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "All Skill DMG Dealt Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [86, 94, 103, 111],
-        "isPercent": false
-      },
-      "All Skill DMG Dealt Bonus": {
-        "values": [24, 26.4, 28.8, 31.2],
-        "isPercent": true
-      }
-    },
-    "defense": 42
-  },
-  "miner-gloves-t2": {
-    "name": "Miner Gloves T2",
-    "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Agility", "Attack"],
-    "stats": {
-      "Intellect": {
-        "values": [49],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [32],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [13],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "miner-fists-t1": {
-    "name": "Miner Fists T1",
-    "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Will", "Intellect", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Will": {
-        "values": [49],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [32],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [15.5],
-        "isPercent": true
-      }
-    },
-    "defense": 30
-  },
-  "miner-gauntlets-t1": {
+  "item_equip_t2_parts_tundra01_hand_01": {
     "name": "Miner Gauntlets T1",
     "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Intellect", "Attack"],
-    "stats": {
-      "Strength": {
-        "values": [36],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [24],
-        "isPercent": false
-      },
-      "Attack": {
-        "values": [9.5],
-        "isPercent": true
-      }
-    },
-    "defense": 21
+    "setName": "",
+    "defense": 21.599999999999998
   },
-  "miner-gloves-t1": {
+  "item_equip_t2_parts_tundra01_hand_02": {
     "name": "Miner Gloves T1",
     "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Agility", "HP"],
-    "stats": {
-      "Intellect": {
-        "values": [36],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [24],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [19],
-        "isPercent": true
-      }
-    },
-    "defense": 21
+    "setName": "",
+    "defense": 21.599999999999998
   },
-  "miner-gauntlets": {
-    "name": "Miner Gauntlets",
+  "item_equip_t2_suit_agi01_body_01": {
+    "name": "Roving MSGR Jacket",
+    "slotType": "Armor",
+    "setName": "Roving MSGR",
+    "defense": 28.8
+  },
+  "item_equip_t2_suit_agi01_edc_01": {
+    "name": "Roving MSGR Gyro",
+    "slotType": "Accessory",
+    "setName": "Roving MSGR",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_agi01_edc_02": {
+    "name": "Roving MSGR Flashlight",
+    "slotType": "Accessory",
+    "setName": "Roving MSGR",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_agi01_hand_01": {
+    "name": "Roving MSGR Fists",
     "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Agility", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [20],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [13],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [11],
-        "isPercent": true
-      }
-    },
-    "defense": 12
+    "setName": "Roving MSGR",
+    "defense": 21.599999999999998
   },
-  "miner-wrists": {
-    "name": "Miner Wrists",
+  "item_equip_t2_suit_str01_body_01": {
+    "name": "Armored MSGR Jacket",
+    "slotType": "Armor",
+    "setName": "Armored MSGR",
+    "defense": 28.8
+  },
+  "item_equip_t2_suit_str01_edc_01": {
+    "name": "Armored MSGR Gyro",
+    "slotType": "Accessory",
+    "setName": "Armored MSGR",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_str01_edc_02": {
+    "name": "Armored MSGR Flashlight",
+    "slotType": "Accessory",
+    "setName": "Armored MSGR",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_str01_hand_01": {
+    "name": "Armored MSGR Gloves",
     "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Strength", "HP"],
-    "stats": {
-      "Agility": {
-        "values": [28],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [18],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [15],
-        "isPercent": true
-      }
-    },
-    "defense": 16
+    "setName": "Armored MSGR",
+    "defense": 21.599999999999998
   },
-  "miner-gloves": {
-    "name": "Miner Gloves",
+  "item_equip_t2_suit_will01_body_01": {
+    "name": "Mordvolt Resistant Vest",
+    "slotType": "Armor",
+    "setName": "Mordvolt Resistant",
+    "defense": 28.8
+  },
+  "item_equip_t2_suit_will01_edc_01": {
+    "name": "Mordvolt Resistant Wrench",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Resistant",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_will01_edc_02": {
+    "name": "Mordvolt Resistant Battery",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Resistant",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_will01_hand_01": {
+    "name": "Mordvolt Resistant Gloves",
     "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Will", "HP"],
-    "stats": {
-      "Intellect": {
-        "values": [20],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [13],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [11],
-        "isPercent": true
-      }
-    },
-    "defense": 12
+    "setName": "Mordvolt Resistant",
+    "defense": 21.599999999999998
   },
-  "miner-fists": {
-    "name": "Miner Fists",
+  "item_equip_t2_suit_wisd01_body_01": {
+    "name": "Mordvolt Insulation Vest",
+    "slotType": "Armor",
+    "setName": "Mordvolt Insulation",
+    "defense": 28.8
+  },
+  "item_equip_t2_suit_wisd01_edc_01": {
+    "name": "Mordvolt Insulation Wrench",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Insulation",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_wisd01_edc_02": {
+    "name": "Mordvolt Insulation Wrench T1",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Insulation",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_wisd01_edc_03": {
+    "name": "Mordvolt Insulation Battery",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Insulation",
+    "defense": 10.799999999999999
+  },
+  "item_equip_t2_suit_wisd01_hand_01": {
+    "name": "Mordvolt Insulation Gloves",
     "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Will", "Intellect", "HP"],
-    "stats": {
-      "Will": {
-        "values": [28],
-        "isPercent": false
-      },
-      "Intellect": {
-        "values": [18],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [15],
-        "isPercent": true
-      }
-    },
-    "defense": 16
+    "setName": "Mordvolt Insulation",
+    "defense": 21.599999999999998
   },
-  "basic-gauntlets": {
-    "name": "Basic Gauntlets",
-    "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Agility", "HP"],
-    "stats": {
-      "Strength": {
-        "values": [11],
-        "isPercent": false
-      },
-      "Agility": {
-        "values": [7],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [77],
-        "isPercent": false
-      }
-    },
-    "defense": 6
+  "item_equip_t3_parts_tundra01_body_01": {
+    "name": "Miner Armor T1",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 40.0
   },
-  "basic-gloves": {
-    "name": "Basic Gloves",
-    "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Will", "HP"],
-    "stats": {
-      "Intellect": {
-        "values": [11],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [7],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [77],
-        "isPercent": false
-      }
-    },
-    "defense": 6
+  "item_equip_t3_parts_tundra01_body_02": {
+    "name": "Miner Overalls T1",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 40.0
   },
-  "redeemer-tag": {
-    "name": "Redeemer Tag",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Final DMG Reduction"],
-    "stats": {
-      "Strength": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [17.8, 19.2, 20.6, 21.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "redeemer-tag-t1": {
-    "name": "Redeemer Tag T1",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [43.2, 47.5, 51.8, 56.2],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "redeemer-seal": {
-    "name": "Redeemer Seal",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [25.7, 28.3, 30.9, 33.4],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "redeemer-seal-t1": {
-    "name": "Redeemer Seal T1",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Will", "Critical Rate"],
-    "stats": {
-      "Will": {
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [10.8, 11.9, 13, 14],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "miner-compression-core-t1": {
-    "name": "Miner Compression Core T1",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Ultimate Gain Efficiency"],
-    "stats": {
-      "Intellect": {
-        "values": [31],
-        "isPercent": false
-      },
-      "Ultimate Gain Efficiency": {
-        "values": [18.6],
-        "isPercent": true
-      }
-    },
-    "defense": 15
-  },
-  "miner-turbine-t1": {
+  "item_equip_t3_parts_tundra01_edc_01": {
     "name": "Miner Turbine T1",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Final DMG Reduction"],
-    "stats": {
-      "Strength": {
-        "values": [31],
-        "isPercent": false
-      },
-      "Final DMG Reduction": {
-        "values": [13.5],
-        "isPercent": true
-      }
-    },
-    "defense": 15
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 15.0
   },
-  "miner-drive-wheel-t1": {
+  "item_equip_t3_parts_tundra01_edc_02": {
     "name": "Miner Drive Wheel T1",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [31],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [31.2],
-        "isPercent": true
-      }
-    },
-    "defense": 15
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 15.0
   },
-  "miner-comm-t1": {
+  "item_equip_t3_parts_tundra01_edc_03": {
+    "name": "Miner Compression Core T1",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 15.0
+  },
+  "item_equip_t3_parts_tundra01_edc_04": {
     "name": "Miner Comm T1",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Will", "Treatment Bonus"],
-    "stats": {
-      "Will": {
-        "values": [31],
-        "isPercent": false
-      },
-      "Treatment Bonus": {
-        "values": [15.6],
-        "isPercent": true
-      }
-    },
-    "defense": 15
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 15.0
   },
-  "miner-turbine": {
-    "name": "Miner Turbine",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Combo Skill DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Combo Skill DMG Bonus": {
-        "values": [22.8],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "miner-drive-wheel": {
-    "name": "Miner Drive Wheel",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Critical Rate"],
-    "stats": {
-      "Agility": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [5.7],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "miner-compression-core": {
-    "name": "Miner Compression Core",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Critical Rate"],
-    "stats": {
-      "Intellect": {
-        "values": [22],
-        "isPercent": false
-      },
-      "Critical Rate": {
-        "values": [5.7],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "miner-comm": {
-    "name": "Miner Comm",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Will", "HP"],
-    "stats": {
-      "Will": {
-        "values": [22],
-        "isPercent": false
-      },
-      "HP": {
-        "values": [22.8],
-        "isPercent": true
-      }
-    },
-    "defense": 10
-  },
-  "emergency-compression-core": {
-    "name": "Emergency Compression Core",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Attack"],
-    "stats": {
-      "Attack": {
-        "values": [13.2],
-        "isPercent": true
-      }
-    },
-    "defense": 6
-  },
-  "emergency-comm": {
-    "name": "Emergency Comm",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Critical Rate"],
-    "stats": {
-      "Critical Rate": {
-        "values": [6.6],
-        "isPercent": true
-      }
-    },
-    "defense": 6
-  },
-  "qingbo-positioning-kit-t1": {
-    "name": "Qingbo Positioning Kit T1",
-    "slotType": "Kit",
-    "setName": "Qingbo",
-    "statNames": ["Agility", "Strength", "Physical DMG Bonus"],
-    "stats": {
-      "Agility": {
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      "Strength": {
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    },
-    "defense": 21
-  },
-  "hot-work-hands-ppe": {
-    "name": "Hot Work Hands PPE",
+  "item_equip_t3_parts_tundra01_hand_01": {
+    "name": "Miner Gloves T2",
     "slotType": "Gloves",
-    "setName": "Hot Work",
-    "statNames": ["Intellect", "Will", "Heat and Nature DMG Dealt Bonus"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Heat and Nature DMG Dealt Bonus",
-        "values": [19.2, 21.1, 23, 24.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
+    "setName": "",
+    "defense": 30.0
   },
-  "hot-work-insulation-slab": {
-    "name": "Hot Work Insulation Slab",
-    "slotType": "Kit",
-    "setName": "Hot Work",
-    "statNames": ["Intellect", "Will", "All Skill DMG Dealt Bonus"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "All Skill DMG Dealt Bonus",
-        "values": [27.6, 30.4, 33.1, 35.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
+  "item_equip_t3_parts_tundra01_hand_02": {
+    "name": "Miner Fists T1",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 30.0
   },
-  "aic-fieldwork-armor": {
+  "item_equip_t3_suit_agi01_body_01": {
+    "name": "Roving MSGR Jacket T1",
+    "slotType": "Armor",
+    "setName": "Roving MSGR",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_agi01_edc_01": {
+    "name": "Roving MSGR Flashlight T1",
+    "slotType": "Accessory",
+    "setName": "Roving MSGR",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_agi01_edc_02": {
+    "name": "Roving MSGR Flashlight T2",
+    "slotType": "Accessory",
+    "setName": "Roving MSGR",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_agi01_edc_03": {
+    "name": "Roving MSGR Gyro T1",
+    "slotType": "Accessory",
+    "setName": "Roving MSGR",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_agi01_hand_01": {
+    "name": "Roving MSGR Fists T1",
+    "slotType": "Gloves",
+    "setName": "Roving MSGR",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_atk01_body_01": {
+    "name": "Aburrey Heavy Armor",
+    "slotType": "Armor",
+    "setName": "Aburrey's Legacy",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_atk01_body_02": {
+    "name": "Aburrey Heavy Armor T1",
+    "slotType": "Armor",
+    "setName": "Aburrey's Legacy",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_atk01_body_03": {
+    "name": "Aburrey Light Armor",
+    "slotType": "Armor",
+    "setName": "Aburrey's Legacy",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_atk01_body_04": {
+    "name": "Aburrey Light Armor T1",
+    "slotType": "Armor",
+    "setName": "Aburrey's Legacy",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_atk01_edc_01": {
+    "name": "Aburrey UV Lamp",
+    "slotType": "Accessory",
+    "setName": "Aburrey's Legacy",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_02": {
+    "name": "Aburrey Auditory Chip",
+    "slotType": "Accessory",
+    "setName": "Aburrey's Legacy",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_03": {
+    "name": "Aburrey Auditory Chip T1",
+    "slotType": "Accessory",
+    "setName": "Aburrey's Legacy",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_04": {
+    "name": "Aburrey Flashlight",
+    "slotType": "Accessory",
+    "setName": "Aburrey's Legacy",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_05": {
+    "name": "Aburrey Sensor Chip",
+    "slotType": "Accessory",
+    "setName": "Aburrey's Legacy",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_edc_06": {
+    "name": "Aburrey Sensor Chip T1",
+    "slotType": "Accessory",
+    "setName": "Aburrey's Legacy",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_atk01_hand_01": {
+    "name": "Aburrey Gauntlets",
+    "slotType": "Gloves",
+    "setName": "Aburrey's Legacy",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_str01_body_01": {
+    "name": "Armored MSGR Jacket T1",
+    "slotType": "Armor",
+    "setName": "Armored MSGR",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_str01_edc_01": {
+    "name": "Armored MSGR Gyro T1",
+    "slotType": "Accessory",
+    "setName": "Armored MSGR",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_str01_edc_02": {
+    "name": "Armored MSGR Flashlight T1",
+    "slotType": "Accessory",
+    "setName": "Armored MSGR",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_str01_hand_01": {
+    "name": "Armored MSGR Gloves T1",
+    "slotType": "Gloves",
+    "setName": "Armored MSGR",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_str01_hand_02": {
+    "name": "Armored MSGR Gloves T2",
+    "slotType": "Gloves",
+    "setName": "Armored MSGR",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_usp01_body_01": {
+    "name": "Catastrophe Heavy Armor",
+    "slotType": "Armor",
+    "setName": "Catastrophe",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_usp01_body_02": {
+    "name": "Catastrophe Heavy Armor T1",
+    "slotType": "Armor",
+    "setName": "Catastrophe",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_usp01_edc_01": {
+    "name": "Catastrophe Gauze Cartridge",
+    "slotType": "Accessory",
+    "setName": "Catastrophe",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_usp01_edc_02": {
+    "name": "Catastrophe Gauze Cartridge T1",
+    "slotType": "Accessory",
+    "setName": "Catastrophe",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_usp01_edc_03": {
+    "name": "Catastrophe Filter",
+    "slotType": "Accessory",
+    "setName": "Catastrophe",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_usp01_hand_01": {
+    "name": "Catastrophe Gloves",
+    "slotType": "Gloves",
+    "setName": "Catastrophe",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_will01_body_01": {
+    "name": "Mordvolt Resistant Vest T1",
+    "slotType": "Armor",
+    "setName": "Mordvolt Resistant",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_will01_edc_01": {
+    "name": "Mordvolt Resistant Battery T1",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Resistant",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_will01_edc_02": {
+    "name": "Mordvolt Resistant Wrench T1",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Resistant",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_will01_hand_01": {
+    "name": "Mordvolt Resistant Gloves T1",
+    "slotType": "Gloves",
+    "setName": "Mordvolt Resistant",
+    "defense": 30.0
+  },
+  "item_equip_t3_suit_wisd01_body_01": {
+    "name": "Mordvolt Insulation Vest T1",
+    "slotType": "Armor",
+    "setName": "Mordvolt Insulation",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_wisd01_body_02": {
+    "name": "Mordvolt Insulation Vest T2",
+    "slotType": "Armor",
+    "setName": "Mordvolt Insulation",
+    "defense": 40.0
+  },
+  "item_equip_t3_suit_wisd01_edc_01": {
+    "name": "Mordvolt Insulation Wrench T2",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Insulation",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_wisd01_edc_02": {
+    "name": "Mordvolt Insulation Battery T1",
+    "slotType": "Accessory",
+    "setName": "Mordvolt Insulation",
+    "defense": 15.0
+  },
+  "item_equip_t3_suit_wisd01_hand_01": {
+    "name": "Mordvolt Insulation Gloves T1",
+    "slotType": "Gloves",
+    "setName": "Mordvolt Insulation",
+    "defense": 30.0
+  },
+  "item_equip_t4_parts_wuling00_body_01": {
     "name": "AIC Fieldwork Armor",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Arts DMG Dealt Bonus"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Arts DMG Dealt Bonus",
-        "values": [9.3, 10.2, 11.2, 12.1],
-        "isPercent": true
-      }
-    ],
-    "defense": 48
+    "defense": 48.0
   },
-  "aic-fieldwork-vest": {
-    "name": "AIC Fieldwork Vest",
-    "slotType": "Armor",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Secondary Attribute", "Main Attribute", "Secondary Attribute"],
-    "stats": [
-      {
-        "name": "Secondary Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Main Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [8.9, 9.7, 10.6, 11.5],
-        "isPercent": true
-      }
-    ],
-    "defense": 48
-  },
-  "aic-fieldwork-plate": {
+  "item_equip_t4_parts_wuling00_body_02": {
     "name": "AIC Fieldwork Plate",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [10.5, 11.6, 12.6, 13.7],
-        "isPercent": true
-      }
-    ],
-    "defense": 48
+    "defense": 48.0
   },
-  "aic-fieldwork-wraps": {
-    "name": "AIC Fieldwork Wraps",
-    "slotType": "Gloves",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Secondary Attribute", "Main Attribute", "Secondary Attribute"],
-    "stats": [
-      {
-        "name": "Secondary Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Main Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [14.8, 16.2, 17.7, 19.2],
-        "isPercent": true
-      }
-    ],
-    "defense": 36
-  },
-  "aic-fieldwork-gloves": {
-    "name": "AIC Fieldwork Gloves",
-    "slotType": "Gloves",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Arts DMG Dealt Bonus"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Arts DMG Dealt Bonus",
-        "values": [15.5, 17.1, 18.6, 20.2],
-        "isPercent": true
-      }
-    ],
-    "defense": 36
-  },
-  "aic-fieldwork-hands": {
-    "name": "AIC Fieldwork Hands",
-    "slotType": "Gloves",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [17.6, 19.3, 21.1, 22.8],
-        "isPercent": true
-      }
-    ],
-    "defense": 36
-  },
-  "aic-fieldwork-flashlight": {
-    "name": "AIC Fieldwork Flashlight",
-    "slotType": "Kit",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Secondary Attribute", "Main Attribute", "Secondary Attribute"],
-    "stats": [
-      {
-        "name": "Secondary Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Main Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [17.7, 19.5, 21.2, 23],
-        "isPercent": true
-      }
-    ],
-    "defense": 18
-  },
-  "aic-fieldwork-ember": {
-    "name": "AIC Fieldwork Ember",
-    "slotType": "Kit",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [21.1, 23.2, 25.3, 27.4],
-        "isPercent": true
-      }
-    ],
-    "defense": 18
-  },
-  "aic-fieldwork-machete": {
-    "name": "AIC Fieldwork Machete",
-    "slotType": "Kit",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Arts DMG Dealt Bonus"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Arts DMG Dealt Bonus",
-        "values": [18.6, 20.5, 22.4, 24.2],
-        "isPercent": true
-      }
-    ],
-    "defense": 18
-  },
-  "lynx-cuirass-t1": {
-    "name": "LYNX Cuirass T1",
+  "item_equip_t4_parts_wuling00_body_03": {
+    "name": "AIC Fieldwork Vest",
     "slotType": "Armor",
-    "setName": "LYNX",
-    "statNames": ["Will", "Agility", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Agility",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
+    "setName": "AIC Fieldwork",
+    "defense": 48.0
   },
-  "lynx-gauntlets-t1": {
-    "name": "LYNX Gauntlets T1",
-    "slotType": "Gloves",
-    "setName": "LYNX",
-    "statNames": ["Will", "Agility", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Agility",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "swordmancer-fiber-armor": {
-    "name": "Swordmancer Fiber Armor",
-    "slotType": "Armor",
-    "setName": "Swordmancer",
-    "statNames": ["Strength", "Will", "Physical DMG Bonus"],
-    "stats": {
-      "Strength": {
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      "Will": {
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      "Physical DMG Bonus": {
-        "values": [11.5, 12.7, 13.8, 14.9],
-        "isPercent": true
-      }
-    },
-    "defense": 56
-  },
-  "eternal-xiranite-light-armor": {
-    "name": "Eternal Xiranite Light Armor",
-    "slotType": "Armor",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Will", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [110, 121, 132, 143],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
-  },
-  "eternal-xiranite-light-armor-t1": {
-    "name": "Eternal Xiranite Light Armor T1",
-    "slotType": "Armor",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Intellect", "Will", "Secondary Attribute"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [10.4, 11.4, 12.4, 13.5],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
-  },
-  "eternal-xiranite-wraps": {
-    "name": "Eternal Xiranite Wraps",
-    "slotType": "Gloves",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Will", "Intellect", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Intellect",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "eternal-xiranite-hands": {
-    "name": "Eternal Xiranite Hands",
-    "slotType": "Gloves",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Will", "Agility", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Agility",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [20.5, 22.6, 24.6, 26.7],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "eternal-xiranite-bracing-slab": {
-    "name": "Eternal Xiranite Bracing Slab",
-    "slotType": "Kit",
-    "setName": "Eternal Xiranite",
-    "statNames": ["Will", "Secondary Attribute"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [41, 45, 49, 53],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
-  },
-  "rift-trekker-heavy-armor": {
-    "name": "Rift Trekker Heavy Armor",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Strength", "Arts Intensity"],
-    "stats": [
-      {
-        "name": "Strength",
-        "values": [115, 126, 138, 149],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [21, 23, 25, 28],
-        "isPercent": false
-      }
-    ],
-    "defense": 56
-  },
-  "rift-trekker-light-armor": {
-    "name": "Rift Trekker Light Armor",
-    "slotType": "Armor",
-    "setName": "No Set Bonuses",
-    "statNames": ["Will", "Treatment Bonus"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [115, 126, 138, 149],
-        "isPercent": false
-      },
-      {
-        "name": "Treatment Bonus",
-        "values": [10.8, 11.9, 13, 14],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
-  },
-  "rift-trekker-gloves": {
-    "name": "Rift Trekker Gloves",
-    "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Intellect", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [86, 94, 103, 111],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [21.4, 23.6, 25.7, 27.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "rift-trekker-hands": {
-    "name": "Rift Trekker Hands",
-    "slotType": "Gloves",
-    "setName": "No Set Bonuses",
-    "statNames": ["Will", "Battle Skill DMG Bonus"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [86, 94, 103, 111],
-        "isPercent": false
-      },
-      {
-        "name": "Battle Skill DMG Bonus",
-        "values": [36, 39.6, 43.2, 46.8],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
-  },
-  "rift-trekker-armor-slab": {
-    "name": "Rift Trekker Armor Slab",
-    "slotType": "Kit",
-    "setName": "No Set Bonuses",
-    "statNames": ["Agility", "Secondary Attribute"],
-    "stats": [
-      {
-        "name": "Agility",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [21.6, 23.8, 25.9, 28.1],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
-  },
-  "aic-fieldwork-assault-armor": {
+  "item_equip_t4_parts_wuling00_body_04": {
     "name": "AIC Fieldwork Assault Armor",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Arts Intensity"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [17.7, 19.5, 21.2, 23],
-        "isPercent": false
-      }
-    ],
-    "defense": 48
+    "defense": 48.0
   },
-  "aic-fieldwork-medic-armor": {
+  "item_equip_t4_parts_wuling00_body_05": {
     "name": "AIC Fieldwork Medic Armor",
     "slotType": "Armor",
     "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Treatment Bonus"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [74, 81, 88, 96],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [49, 53, 58, 63],
-        "isPercent": false
-      },
-      {
-        "name": "Treatment Bonus",
-        "values": [8.9, 9.7, 10.6, 11.5],
-        "isPercent": true
-      }
-    ],
-    "defense": 48
+    "defense": 48.0
   },
-  "aic-fieldwork-assault-gloves": {
+  "item_equip_t4_parts_wuling00_edc_01": {
+    "name": "AIC Fieldwork Machete",
+    "slotType": "Accessory",
+    "setName": "AIC Fieldwork",
+    "defense": 18.0
+  },
+  "item_equip_t4_parts_wuling00_edc_02": {
+    "name": "AIC Fieldwork Ember",
+    "slotType": "Accessory",
+    "setName": "AIC Fieldwork",
+    "defense": 18.0
+  },
+  "item_equip_t4_parts_wuling00_edc_03": {
+    "name": "AIC Fieldwork Flashlight",
+    "slotType": "Accessory",
+    "setName": "AIC Fieldwork",
+    "defense": 18.0
+  },
+  "item_equip_t4_parts_wuling00_edc_04": {
+    "name": "AIC Fieldwork Assault Push Knife",
+    "slotType": "Accessory",
+    "setName": "AIC Fieldwork",
+    "defense": 18.0
+  },
+  "item_equip_t4_parts_wuling00_edc_05": {
+    "name": "AIC Fieldwork Power Bank",
+    "slotType": "Accessory",
+    "setName": "AIC Fieldwork",
+    "defense": 18.0
+  },
+  "item_equip_t4_parts_wuling00_hand_01": {
+    "name": "AIC Fieldwork Gloves",
+    "slotType": "Gloves",
+    "setName": "AIC Fieldwork",
+    "defense": 36.0
+  },
+  "item_equip_t4_parts_wuling00_hand_02": {
+    "name": "AIC Fieldwork Hands",
+    "slotType": "Gloves",
+    "setName": "AIC Fieldwork",
+    "defense": 36.0
+  },
+  "item_equip_t4_parts_wuling00_hand_03": {
+    "name": "AIC Fieldwork Wraps",
+    "slotType": "Gloves",
+    "setName": "AIC Fieldwork",
+    "defense": 36.0
+  },
+  "item_equip_t4_parts_wuling00_hand_04": {
     "name": "AIC Fieldwork Assault Gloves",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Arts Intensity"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [29.5, 32.5, 35.4, 38.4],
-        "isPercent": false
-      }
-    ],
-    "defense": 36
+    "defense": 36.0
   },
-  "aic-fieldwork-medic-gloves": {
+  "item_equip_t4_parts_wuling00_hand_05": {
     "name": "AIC Fieldwork Medic Gloves",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Treatment Bonus"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [55, 60, 66, 71],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [37, 40, 44, 48],
-        "isPercent": false
-      },
-      {
-        "name": "Treatment Bonus",
-        "values": [14.8, 16.2, 17.7, 19.2],
-        "isPercent": true
-      }
-    ],
-    "defense": 36
+    "defense": 36.0
   },
-  "aic-fieldwork-assault-push-knife": {
-    "name": "AIC Fieldwork Assault Push Knife",
-    "slotType": "Kit",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Arts Intensity"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [35.4, 38.9, 42.5, 46],
-        "isPercent": false
-      }
-    ],
-    "defense": 18
+  "item_equip_t4_parts_wuling01_body_01": {
+    "name": "Redeemer Plates",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 56.0
   },
-  "aic-fieldwork-power-bank": {
-    "name": "AIC Fieldwork Power Bank",
-    "slotType": "Kit",
-    "setName": "AIC Fieldwork",
-    "statNames": ["Main Attribute", "Secondary Attribute", "Treatment Bonus"],
-    "stats": [
-      {
-        "name": "Main Attribute",
-        "values": [27, 29, 32, 35],
-        "isPercent": false
-      },
-      {
-        "name": "Secondary Attribute",
-        "values": [18, 19, 21, 23],
-        "isPercent": false
-      },
-      {
-        "name": "Treatment Bonus",
-        "values": [17.7, 19.5, 21.2, 23],
-        "isPercent": true
-      }
-    ],
-    "defense": 18
+  "item_equip_t4_parts_wuling01_body_02": {
+    "name": "Redeemer Armor",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 56.0
   },
-  "tide-fall-light-armor-t1": {
+  "item_equip_t4_parts_wuling01_edc_01": {
+    "name": "Redeemer Tag",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling01_edc_02": {
+    "name": "Redeemer Tag T1",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling01_edc_03": {
+    "name": "Redeemer Seal",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling01_edc_04": {
+    "name": "Redeemer Seal T1",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling01_hand_01": {
+    "name": "Redeemer Gloves",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 42.0
+  },
+  "item_equip_t4_parts_wuling01_hand_02": {
+    "name": "Redeemer Hands",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 42.0
+  },
+  "item_equip_t4_parts_wuling02_body_01": {
+    "name": "Rift Trekker Heavy Armor",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 56.0
+  },
+  "item_equip_t4_parts_wuling02_body_02": {
+    "name": "Rift Trekker Light Armor",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 56.0
+  },
+  "item_equip_t4_parts_wuling02_edc_01": {
+    "name": "Rift Trekker Armor Slab",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 21.0
+  },
+  "item_equip_t4_parts_wuling02_hand_01": {
+    "name": "Rift Trekker Gloves",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 42.0
+  },
+  "item_equip_t4_parts_wuling02_hand_02": {
+    "name": "Rift Trekker Hands",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atb01_body_01": {
+    "name": "Frontiers Armor",
+    "slotType": "Armor",
+    "setName": "Frontiers",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_body_02": {
+    "name": "Frontiers Armor T1",
+    "slotType": "Armor",
+    "setName": "Frontiers",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_body_03": {
+    "name": "Frontiers Armor T2",
+    "slotType": "Armor",
+    "setName": "Frontiers",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_body_04": {
+    "name": "Frontiers Armor T3",
+    "slotType": "Armor",
+    "setName": "Frontiers",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_body_05": {
+    "name": "Frontiers Protection Suit",
+    "slotType": "Armor",
+    "setName": "Frontiers",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atb01_edc_01": {
+    "name": "Frontiers Comm",
+    "slotType": "Accessory",
+    "setName": "Frontiers",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_02": {
+    "name": "Frontiers Comm T1",
+    "slotType": "Accessory",
+    "setName": "Frontiers",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_03": {
+    "name": "Frontiers Analyzer",
+    "slotType": "Accessory",
+    "setName": "Frontiers",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_04": {
+    "name": "Frontiers Extra O2 Tube",
+    "slotType": "Accessory",
+    "setName": "Frontiers",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_05": {
+    "name": "Frontiers O2 Tube",
+    "slotType": "Accessory",
+    "setName": "Frontiers",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_edc_06": {
+    "name": "Frontiers Extra O2 Tube T1",
+    "slotType": "Accessory",
+    "setName": "Frontiers",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atb01_hand_01": {
+    "name": "Frontiers Blight RES Gloves",
+    "slotType": "Gloves",
+    "setName": "Frontiers",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atb01_hand_02": {
+    "name": "Frontiers Fiber Gloves",
+    "slotType": "Gloves",
+    "setName": "Frontiers",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atb01_hand_03": {
+    "name": "Frontiers Fiber Gloves T1",
+    "slotType": "Gloves",
+    "setName": "Frontiers",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atk02_body_01": {
+    "name": "Type 50 Yinglung Heavy Armor",
+    "slotType": "Armor",
+    "setName": "Type 50 Yinglung",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atk02_body_02": {
+    "name": "Type 50 Yinglung Heavy Armor T1",
+    "slotType": "Armor",
+    "setName": "Type 50 Yinglung",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atk02_body_03": {
+    "name": "Type 50 Yinglung Heavy Armor T2",
+    "slotType": "Armor",
+    "setName": "Type 50 Yinglung",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atk02_body_04": {
+    "name": "Type 50 Yinglung Light Armor",
+    "slotType": "Armor",
+    "setName": "Type 50 Yinglung",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_atk02_edc_01": {
+    "name": "Type 50 Yinglung Radar",
+    "slotType": "Accessory",
+    "setName": "Type 50 Yinglung",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_edc_02": {
+    "name": "Type 50 Yinglung Radar T1",
+    "slotType": "Accessory",
+    "setName": "Type 50 Yinglung",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_edc_03": {
+    "name": "Type 50 Yinglung Radar T2",
+    "slotType": "Accessory",
+    "setName": "Type 50 Yinglung",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_edc_04": {
+    "name": "Type 50 Yinglung Knife",
+    "slotType": "Accessory",
+    "setName": "Type 50 Yinglung",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_edc_05": {
+    "name": "Type 50 Yinglung Knife T1",
+    "slotType": "Accessory",
+    "setName": "Type 50 Yinglung",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_atk02_hand_01": {
+    "name": "Type 50 Yinglung Gloves",
+    "slotType": "Gloves",
+    "setName": "Type 50 Yinglung",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_atk02_hand_02": {
+    "name": "Type 50 Yinglung Gloves T1",
+    "slotType": "Gloves",
+    "setName": "Type 50 Yinglung",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_attri01_body_01": {
+    "name": "Bonekrusha Heavy Armor",
+    "slotType": "Armor",
+    "setName": "Bonekrusha",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_body_02": {
+    "name": "Bonekrusha Heavy Armor T1",
+    "slotType": "Armor",
+    "setName": "Bonekrusha",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_body_03": {
+    "name": "Bonekrusha Poncho",
+    "slotType": "Armor",
+    "setName": "Bonekrusha",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_body_04": {
+    "name": "Bonekrusha Poncho T1",
+    "slotType": "Armor",
+    "setName": "Bonekrusha",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_body_05": {
+    "name": "Bonekrusha Heavy Armor T2",
+    "slotType": "Armor",
+    "setName": "Bonekrusha",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_attri01_edc_02": {
+    "name": "Bonekrusha Figurine T2",
+    "slotType": "Accessory",
+    "setName": "Bonekrusha",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_03": {
+    "name": "Bonekrusha Figurine",
+    "slotType": "Accessory",
+    "setName": "Bonekrusha",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_04": {
+    "name": "Bonekrusha Mask",
+    "slotType": "Accessory",
+    "setName": "Bonekrusha",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_05": {
+    "name": "Bonekrusha Mask T1",
+    "slotType": "Accessory",
+    "setName": "Bonekrusha",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_06": {
+    "name": "Bonekrusha Figurine T1",
+    "slotType": "Accessory",
+    "setName": "Bonekrusha",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_edc_07": {
+    "name": "Bonekrusha Mask T2",
+    "slotType": "Accessory",
+    "setName": "Bonekrusha",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_attri01_hand_01": {
+    "name": "Bonekrusha Wristband",
+    "slotType": "Gloves",
+    "setName": "Bonekrusha",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_attri01_hand_02": {
+    "name": "Bonekrusha Wristband T1",
+    "slotType": "Gloves",
+    "setName": "Bonekrusha",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_attri01_hand_03": {
+    "name": "Bonekrusha Gloves",
+    "slotType": "Gloves",
+    "setName": "Bonekrusha",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_burst01_body_01": {
+    "name": "Tide Fall Light Armor",
+    "slotType": "Armor",
+    "setName": "Tide Surge",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_burst01_body_02": {
     "name": "Tide Fall Light Armor T1",
     "slotType": "Armor",
     "setName": "Tide Surge",
-    "statNames": ["Intellect", "Will", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [12.3, 13.6, 14.8, 16],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
+    "defense": 56.0
   },
-  "wave-swell-heavy-armor": {
+  "item_equip_t4_suit_burst01_body_03": {
     "name": "Wave Swell Heavy Armor",
     "slotType": "Armor",
     "setName": "Tide Surge",
-    "statNames": ["Strength", "Will", "Cryo and Electric DMG Dealt Bonus"],
-    "stats": [
-      {
-        "name": "Strength",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Cryo and Electric DMG Dealt Bonus",
-        "values": [11.5, 12.7, 13.8, 15],
-        "isPercent": true
-      }
-    ],
-    "defense": 56
+    "defense": 56.0
   },
-  "turbid-cutting-torch-t1": {
-    "name": "Turbid Cutting Torch T1",
-    "slotType": "Kit",
+  "item_equip_t4_suit_burst01_edc_01": {
+    "name": "Hanging River O2 Tube",
+    "slotType": "Accessory",
     "setName": "Tide Surge",
-    "statNames": ["Intellect", "Will", "Heat and Nature DMG Dealt Bonus"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "Heat and Nature DMG Dealt Bonus",
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
+    "defense": 21.0
   },
-  "deepsink-gloves": {
+  "item_equip_t4_suit_burst01_edc_02": {
+    "name": "Turbid Cutting Torch",
+    "slotType": "Accessory",
+    "setName": "Tide Surge",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_burst01_edc_03": {
+    "name": "Turbid Cutting Torch T1",
+    "slotType": "Accessory",
+    "setName": "Tide Surge",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_burst01_hand_01": {
+    "name": "Tide Surge Gauntlets",
+    "slotType": "Gloves",
+    "setName": "Tide Surge",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_burst01_hand_02": {
     "name": "Deepsink Gloves",
     "slotType": "Gloves",
     "setName": "Tide Surge",
-    "statNames": ["Intellect", "Will", "All Skill DMG Dealt Bonus"],
-    "stats": [
-      {
-        "name": "Intellect",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "All Skill DMG Dealt Bonus",
-        "values": [23, 25.3, 27.6, 29.9],
-        "isPercent": true
-      }
-    ],
-    "defense": 42
+    "defense": 42.0
   },
-  "deep-rampart-armor": {
+  "item_equip_t4_suit_combo_cd01_body_01": {
+    "name": "Qingbo Heavy Armor",
+    "slotType": "Armor",
+    "setName": "Qingbo",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_combo_cd01_body_02": {
+    "name": "Qingbo Light Armor",
+    "slotType": "Armor",
+    "setName": "Qingbo",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_combo_cd01_edc_01": {
+    "name": "Qingbo Positioning Kit",
+    "slotType": "Accessory",
+    "setName": "Qingbo",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_combo_cd01_edc_02": {
+    "name": "Qingbo Bamboo Cutter",
+    "slotType": "Accessory",
+    "setName": "Qingbo",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_combo_cd01_edc_03": {
+    "name": "Qingbo Cask",
+    "slotType": "Accessory",
+    "setName": "Qingbo",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_combo_cd01_edc_04": {
+    "name": "Qingbo Positioning Kit T1",
+    "slotType": "Accessory",
+    "setName": "Qingbo",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_combo_cd01_hand_01": {
+    "name": "Qingbo Gauntlets",
+    "slotType": "Gloves",
+    "setName": "Qingbo",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_combo_cd01_hand_02": {
+    "name": "Qingbo Gloves",
+    "slotType": "Gloves",
+    "setName": "Qingbo",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_criti01_body_01": {
+    "name": "MI Security Armor",
+    "slotType": "Armor",
+    "setName": "MI Security",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_body_02": {
+    "name": "MI Security Overalls",
+    "slotType": "Armor",
+    "setName": "MI Security",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_body_03": {
+    "name": "MI Security Overalls T1",
+    "slotType": "Armor",
+    "setName": "MI Security",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_body_04": {
+    "name": "MI Security Overalls T2",
+    "slotType": "Armor",
+    "setName": "MI Security",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_body_06": {
+    "name": "MI Security Armor T1",
+    "slotType": "Armor",
+    "setName": "MI Security",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_criti01_edc_01": {
+    "name": "MI Security Armband",
+    "slotType": "Accessory",
+    "setName": "MI Security",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_02": {
+    "name": "MI Security Scope",
+    "slotType": "Accessory",
+    "setName": "MI Security",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_03": {
+    "name": "MI Security Toolkit",
+    "slotType": "Accessory",
+    "setName": "MI Security",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_04": {
+    "name": "MI Security Push Knife",
+    "slotType": "Accessory",
+    "setName": "MI Security",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_05": {
+    "name": "MI Security Push Knife T1",
+    "slotType": "Accessory",
+    "setName": "MI Security",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_edc_06": {
+    "name": "MI Security Scope T1",
+    "slotType": "Accessory",
+    "setName": "MI Security",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_criti01_hand_01": {
+    "name": "MI Security Gloves",
+    "slotType": "Gloves",
+    "setName": "MI Security",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_criti01_hand_02": {
+    "name": "MI Security Hands PPE",
+    "slotType": "Gloves",
+    "setName": "MI Security",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_criti01_hand_03": {
+    "name": "MI Security Hands PPE T1",
+    "slotType": "Gloves",
+    "setName": "MI Security",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_criti01_hand_04": {
+    "name": "MI Security Gloves T1",
+    "slotType": "Gloves",
+    "setName": "MI Security",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_crush_fracture_body_01": {
+    "name": "Grizzled Edge Armor",
+    "slotType": "Armor",
+    "setName": "Grizzled Edge",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_crush_fracture_body_02": {
+    "name": "Grizzled Edge Armor T1",
+    "slotType": "Armor",
+    "setName": "Grizzled Edge",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_crush_fracture_edc_01": {
+    "name": "Grizzled Edge Push Knife",
+    "slotType": "Accessory",
+    "setName": "Grizzled Edge",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_crush_fracture_edc_02": {
+    "name": "Grizzled Edge Push Knife T1",
+    "slotType": "Accessory",
+    "setName": "Grizzled Edge",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_crush_fracture_hand_01": {
+    "name": "Grizzled Edge Gauntlets",
+    "slotType": "Gloves",
+    "setName": "Grizzled Edge",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_crush_fracture_hand_02": {
+    "name": "Grizzled Edge Gauntlets T1",
+    "slotType": "Gloves",
+    "setName": "Grizzled Edge",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_expend_spell01_body_02": {
+    "name": "Xiranflow Light Armor",
+    "slotType": "Armor",
+    "setName": "Xiranflow",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_expend_spell01_edc_02": {
+    "name": "Xiranflow Baton",
+    "slotType": "Accessory",
+    "setName": "Xiranflow",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_expend_spell01_hand_02": {
+    "name": "Xiranflow Gloves",
+    "slotType": "Gloves",
+    "setName": "Xiranflow",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_fire_natr01_body_01": {
+    "name": "Hot Work Exoskeleton",
+    "slotType": "Armor",
+    "setName": "Hot Work",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_fire_natr01_body_02": {
+    "name": "Hot Work Exo-Rig",
+    "slotType": "Armor",
+    "setName": "Hot Work",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_fire_natr01_edc_01": {
+    "name": "Hot Work Power Bank",
+    "slotType": "Accessory",
+    "setName": "Hot Work",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_fire_natr01_edc_02": {
+    "name": "Hot Work Pyrometer",
+    "slotType": "Accessory",
+    "setName": "Hot Work",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_fire_natr01_edc_03": {
+    "name": "Hot Work Power Cartridge",
+    "slotType": "Accessory",
+    "setName": "Hot Work",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_fire_natr01_edc_04": {
+    "name": "Hot Work Insulation Slab",
+    "slotType": "Accessory",
+    "setName": "Hot Work",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_fire_natr01_hand_01": {
+    "name": "Hot Work Gloves",
+    "slotType": "Gloves",
+    "setName": "Hot Work",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_fire_natr01_hand_02": {
+    "name": "Hot Work Gauntlets",
+    "slotType": "Gloves",
+    "setName": "Hot Work",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_fire_natr01_hand_03": {
+    "name": "Hot Work Gauntlets T1",
+    "slotType": "Gloves",
+    "setName": "Hot Work",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_fire_natr01_hand_04": {
+    "name": "Hot Work Hands PPE",
+    "slotType": "Gloves",
+    "setName": "Hot Work",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_heal01_body_01": {
+    "name": "LYNX Heavy Armor",
+    "slotType": "Armor",
+    "setName": "LYNX",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_heal01_body_02": {
+    "name": "LYNX Cuirass",
+    "slotType": "Armor",
+    "setName": "LYNX",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_heal01_body_03": {
+    "name": "LYNX Cuirass T1",
+    "slotType": "Armor",
+    "setName": "LYNX",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_heal01_edc_01": {
+    "name": "LYNX Connector",
+    "slotType": "Accessory",
+    "setName": "LYNX",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_edc_02": {
+    "name": "LYNX Connector T2",
+    "slotType": "Accessory",
+    "setName": "LYNX",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_edc_03": {
+    "name": "LYNX Slab",
+    "slotType": "Accessory",
+    "setName": "LYNX",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_edc_04": {
+    "name": "LYNX Aegis Injector",
+    "slotType": "Accessory",
+    "setName": "LYNX",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_edc_05": {
+    "name": "LYNX Connector T1",
+    "slotType": "Accessory",
+    "setName": "LYNX",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_heal01_hand_01": {
+    "name": "LYNX Gloves",
+    "slotType": "Gloves",
+    "setName": "LYNX",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_heal01_hand_02": {
+    "name": "LYNX Gauntlets",
+    "slotType": "Gloves",
+    "setName": "LYNX",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_heal01_hand_03": {
+    "name": "LYNX Gauntlets T1",
+    "slotType": "Gloves",
+    "setName": "LYNX",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_phy01_body_01": {
+    "name": "Swordmancer Light Armor",
+    "slotType": "Armor",
+    "setName": "Swordmancer",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_phy01_body_02": {
+    "name": "Swordmancer Heavy Armor",
+    "slotType": "Armor",
+    "setName": "Swordmancer",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_phy01_body_03": {
+    "name": "Swordmancer Heavy Armor T1",
+    "slotType": "Armor",
+    "setName": "Swordmancer",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_phy01_body_04": {
+    "name": "Swordmancer Fiber Armor",
+    "slotType": "Armor",
+    "setName": "Swordmancer",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_phy01_edc_01": {
+    "name": "Swordmancer NAV Beacon",
+    "slotType": "Accessory",
+    "setName": "Swordmancer",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_phy01_edc_02": {
+    "name": "Swordmancer Micro Filter",
+    "slotType": "Accessory",
+    "setName": "Swordmancer",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_phy01_edc_03": {
+    "name": "Swordmancer Flint",
+    "slotType": "Accessory",
+    "setName": "Swordmancer",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_phy01_edc_04": {
+    "name": "Swordmancer Dagger",
+    "slotType": "Accessory",
+    "setName": "Swordmancer",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_phy01_hand_01": {
+    "name": "Swordmancer TAC Gloves",
+    "slotType": "Gloves",
+    "setName": "Swordmancer",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_phy01_hand_02": {
+    "name": "Swordmancer TAC Gauntlets",
+    "slotType": "Gloves",
+    "setName": "Swordmancer",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_phy01_hand_03": {
+    "name": "Swordmancer TAC Gauntlets T1",
+    "slotType": "Gloves",
+    "setName": "Swordmancer",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_poise01_body_01": {
+    "name": "Æthertech Plating",
+    "slotType": "Armor",
+    "setName": "Æthertech",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_poise01_edc_01": {
+    "name": "Æthertech Analysis Band",
+    "slotType": "Accessory",
+    "setName": "Æthertech",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_poise01_edc_02": {
+    "name": "Æthertech Stabilizer",
+    "slotType": "Accessory",
+    "setName": "Æthertech",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_poise01_edc_03": {
+    "name": "Æthertech Stabilizer T1",
+    "slotType": "Accessory",
+    "setName": "Æthertech",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_poise01_edc_04": {
+    "name": "Æthertech Watch",
+    "slotType": "Accessory",
+    "setName": "Æthertech",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_poise01_hand_01": {
+    "name": "Æthertech Gloves",
+    "slotType": "Gloves",
+    "setName": "Æthertech",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_poise01_hand_02": {
+    "name": "Æthertech Light Gloves",
+    "slotType": "Gloves",
+    "setName": "Æthertech",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_body_01": {
+    "name": "Pulser Labs Disruptor Suit",
+    "slotType": "Armor",
+    "setName": "Pulser Labs",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_edc_01": {
+    "name": "Pulser Labs Probe",
+    "slotType": "Accessory",
+    "setName": "Pulser Labs",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_edc_02": {
+    "name": "Pulser Labs Calibrator",
+    "slotType": "Accessory",
+    "setName": "Pulser Labs",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_edc_03": {
+    "name": "Pulser Labs Invasion Core",
+    "slotType": "Accessory",
+    "setName": "Pulser Labs",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_pulse_cryst01_hand_01": {
+    "name": "Pulser Labs Gloves",
+    "slotType": "Gloves",
+    "setName": "Pulser Labs",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_spellburst_body_01": {
     "name": "Deep Rampart Armor",
     "slotType": "Armor",
     "setName": "Deep Rampart",
-    "statNames": ["Agility", "Will", "Arts Intensity"],
-    "stats": [
-      {
-        "name": "Agility",
-        "values": [87, 95, 104, 113],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [58, 63, 69, 75],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [20.7, 22.8, 24.8, 26.9],
-        "isPercent": false
-      }
-    ],
-    "defense": 56
+    "defense": 56.0
   },
-  "deep-rampart-gauntlets": {
+  "item_equip_t4_suit_spellburst_edc_01": {
+    "name": "Deep Rampart Comms",
+    "slotType": "Accessory",
+    "setName": "Deep Rampart",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_spellburst_hand_01": {
     "name": "Deep Rampart Gauntlets",
     "slotType": "Gloves",
     "setName": "Deep Rampart",
-    "statNames": ["Agility", "Will", "Arts Intensity"],
-    "stats": [
-      {
-        "name": "Agility",
-        "values": [65, 71, 78, 84],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [43, 47, 51, 55],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [34.5, 38, 41.4, 44.9],
-        "isPercent": false
-      }
-    ],
-    "defense": 42
+    "defense": 42.0
   },
-  "deep-rampart-comms": {
-    "name": "Deep Rampart Comms",
-    "slotType": "Kit",
-    "setName": "Deep Rampart",
-    "statNames": ["Agility", "Will", "Arts Intensity"],
-    "stats": [
-      {
-        "name": "Agility",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "Arts Intensity",
-        "values": [41.4, 45.5, 49.7, 53.8],
-        "isPercent": false
-      }
-    ],
-    "defense": 21
+  "item_equip_t4_suit_usp02_body_01": {
+    "name": "Eternal Xiranite Armor",
+    "slotType": "Armor",
+    "setName": "Eternal Xiranite",
+    "defense": 56.0
   },
-  "eternal-xiranite-bracing-slab-t1": {
+  "item_equip_t4_suit_usp02_body_03": {
+    "name": "Eternal Xiranite Light Armor",
+    "slotType": "Armor",
+    "setName": "Eternal Xiranite",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_usp02_body_04": {
+    "name": "Eternal Xiranite Light Armor T1",
+    "slotType": "Armor",
+    "setName": "Eternal Xiranite",
+    "defense": 56.0
+  },
+  "item_equip_t4_suit_usp02_edc_01": {
+    "name": "Eternal Xiranite Power Core",
+    "slotType": "Accessory",
+    "setName": "Eternal Xiranite",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_edc_02": {
+    "name": "Eternal Xiranite Power Core T1",
+    "slotType": "Accessory",
+    "setName": "Eternal Xiranite",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_edc_03": {
+    "name": "Eternal Xiranite Auxiliary Arm",
+    "slotType": "Accessory",
+    "setName": "Eternal Xiranite",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_edc_04": {
+    "name": "Eternal Xiranite Bracing Slab",
+    "slotType": "Accessory",
+    "setName": "Eternal Xiranite",
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_edc_05": {
     "name": "Eternal Xiranite Bracing Slab T1",
-    "slotType": "Kit",
+    "slotType": "Accessory",
     "setName": "Eternal Xiranite",
-    "statNames": ["Will", "Agility", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Will",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Agility",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [24.6, 27.1, 29.6, 32],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
+    "defense": 21.0
   },
-  "eternal-xiranite-heavy-slab": {
+  "item_equip_t4_suit_usp02_edc_06": {
     "name": "Eternal Xiranite Heavy Slab",
-    "slotType": "Kit",
+    "slotType": "Accessory",
     "setName": "Eternal Xiranite",
-    "statNames": ["Strength", "Will", "Ultimate Gain Efficiency"],
-    "stats": [
-      {
-        "name": "Strength",
-        "values": [32, 35, 38, 41],
-        "isPercent": false
-      },
-      {
-        "name": "Will",
-        "values": [21, 23, 25, 27],
-        "isPercent": false
-      },
-      {
-        "name": "Ultimate Gain Efficiency",
-        "values": [24.6, 27.1, 29.6, 32],
-        "isPercent": true
-      }
-    ],
-    "defense": 21
+    "defense": 21.0
+  },
+  "item_equip_t4_suit_usp02_hand_01": {
+    "name": "Eternal Xiranite Gloves",
+    "slotType": "Gloves",
+    "setName": "Eternal Xiranite",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_usp02_hand_02": {
+    "name": "Eternal Xiranite Gloves T1",
+    "slotType": "Gloves",
+    "setName": "Eternal Xiranite",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_usp02_hand_03": {
+    "name": "Eternal Xiranite Wraps",
+    "slotType": "Gloves",
+    "setName": "Eternal Xiranite",
+    "defense": 42.0
+  },
+  "item_equip_t4_suit_usp02_hand_04": {
+    "name": "Eternal Xiranite Hands",
+    "slotType": "Gloves",
+    "setName": "Eternal Xiranite",
+    "defense": 42.0
   }
 }

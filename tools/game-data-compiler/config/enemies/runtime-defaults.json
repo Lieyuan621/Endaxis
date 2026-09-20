@@ -1,0 +1,4 @@
+{
+  "knotBreakDurationSeconds": 2,
+  "evidence": "legacy Endaxis compatibility; native poise-knot Buff timing is not yet reduced to one proven scalar"
+}
