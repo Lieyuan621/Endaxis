@@ -9,6 +9,7 @@ import {
   mifu,
   perlica,
   rossi,
+  typhoeus,
   zhuangFangyi,
 } from '../../data/operators';
 import { placeSkillGroup } from './interaction/placeSkillGroup';
@@ -219,7 +220,7 @@ describe('projectTimelineEditor', () => {
     expect(basicEntries[1]).toMatchObject({
       variantKey: 'enhancedBasicAttack',
       level: 11,
-      enhanced: true,
+      nameQualifier: 'enhanced',
     });
     expect(basicEntries[1]!.skills).toHaveLength(4);
     const battleEntries = projected.tracks[0]!.skillLibrary.filter(
@@ -340,7 +341,6 @@ describe('projectTimelineEditor', () => {
       placementSkillKey: 'chr_0033_camille_normal_skill_2',
       skillType: 'comboSkill',
       level: 5,
-      enhanced: false,
       groupPlacementSkillKeys: ['chr_0033_camille_normal_skill_2'],
     });
     expect(track.skillCasts[0]?.skillType).toBe('comboSkill');
@@ -378,26 +378,24 @@ describe('projectTimelineEditor', () => {
     ).toBe(false);
     expect(
       zhuangEntries.find(entry => entry.skillGroupKey === 'enhancedBasicAttack'),
-    ).toMatchObject({ enhanced: true });
+    ).toMatchObject({ nameQualifier: 'enhanced' });
     expect(
       zhuangEntries.find(entry => entry.placementSkillKey === 'chr_0030_zhuangfy_normal_skill_ult'),
-    ).toMatchObject({ enhanced: true });
+    ).toMatchObject({ nameQualifier: 'enhanced' });
     expect(
       zhuangEntries.find(entry => entry.placementSkillKey === 'chr_0030_zhuangfy_combo_skill_ult'),
-    ).toMatchObject({ enhanced: true });
+    ).toMatchObject({ nameQualifier: 'enhanced' });
 
     expect(
       project(arcane).find(
         entry => entry.placementSkillKey === 'chr_0032_lizhiyan_ultimate_skill2',
       ),
     ).toMatchObject({
-      enhanced: false,
       skillType: 'ultimate',
     });
     expect(
       project(liino).find(entry => entry.placementSkillKey === 'chr_0035_liino_normal_skill_end'),
     ).toMatchObject({
-      enhanced: false,
       skillType: 'battleSkill',
     });
     expect(project(liino).filter(entry => entry.skillGroupKey === 'battleSkill')).toEqual([
@@ -413,6 +411,11 @@ describe('projectTimelineEditor', () => {
     expect(project(camille).filter(entry => entry.skillGroupKey === 'comboSkill')).toEqual([
       expect.objectContaining({ groupPlacementSkillKeys: ['chr_0033_camille_combo_skill'] }),
     ]);
+    expect(
+      project(typhoeus).find(
+        entry => entry.placementSkillKey === 'chr_0034_typhoea_combo_skillfloating',
+      ),
+    ).toMatchObject({ nameQualifier: 'floating', skillType: 'comboSkill' });
     expect(project(camille).filter(entry => entry.skillGroupKey === 'battleSkill')).toEqual([
       expect.objectContaining({ groupPlacementSkillKeys: ['chr_0033_camille_normal_skill'] }),
       expect.objectContaining({
@@ -423,7 +426,6 @@ describe('projectTimelineEditor', () => {
     ]);
     expect(project(rossi).filter(entry => entry.skillGroupKey === 'comboSkill')).toEqual([
       expect.objectContaining({
-        enhanced: false,
         groupPlacementSkillKeys: ['chr_0028_wulfa_combo_2_skill', 'chr_0028_wulfa_combo_3_skill'],
         skills: [
           expect.objectContaining({ timelineBlockFrames: 66 }),

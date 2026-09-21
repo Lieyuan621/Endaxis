@@ -2594,7 +2594,8 @@ export const zhuangFangyi: OperatorDefinition = {
       levelSource: 'battleSkill',
       skills: zhuangFangyiChr_0030_zhuangfy_normal_skill,
       replacementSkills: [zhuangFangyiChr_0030_zhuangfy_normal_skill_ult],
-      replacementSkillPlacements: { chr_0030_zhuangfy_normal_skill_ult: 'enhanced' },
+      replacementSkillPlacements: { chr_0030_zhuangfy_normal_skill_ult: 'standard' },
+      replacementSkillNameQualifiers: { chr_0030_zhuangfy_normal_skill_ult: 'enhanced' },
     },
     {
       key: 'comboSkill',
@@ -2602,7 +2603,8 @@ export const zhuangFangyi: OperatorDefinition = {
       levelSource: 'comboSkill',
       skills: zhuangFangyiChr_0030_zhuangfy_combo_skill,
       replacementSkills: [zhuangFangyiChr_0030_zhuangfy_combo_skill_ult],
-      replacementSkillPlacements: { chr_0030_zhuangfy_combo_skill_ult: 'enhanced' },
+      replacementSkillPlacements: { chr_0030_zhuangfy_combo_skill_ult: 'standard' },
+      replacementSkillNameQualifiers: { chr_0030_zhuangfy_combo_skill_ult: 'enhanced' },
     },
     {
       key: 'ultimate',
@@ -2616,7 +2618,7 @@ export const zhuangFangyi: OperatorDefinition = {
       key: 'enhancedBasicAttack',
       skillType: 'basicAttack',
       levelSource: 'ultimate',
-      libraryPresentation: 'enhanced',
+      libraryNameQualifier: 'enhanced',
       skills: [
         zhuangFangyiChr_0030_zhuangfy_attack1_ult,
         zhuangFangyiChr_0030_zhuangfy_attack2_ult,

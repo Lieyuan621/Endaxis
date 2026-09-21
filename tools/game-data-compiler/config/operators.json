@@ -1568,7 +1568,8 @@
           "skillType": "battleSkill",
           "levelSource": "battleSkill",
           "nativeGroupType": 1,
-          "replacementPlacements": { "chr_0030_zhuangfy_normal_skill_ult": "enhanced" },
+          "replacementPlacements": { "chr_0030_zhuangfy_normal_skill_ult": "standard" },
+          "replacementNameQualifiers": { "chr_0030_zhuangfy_normal_skill_ult": "enhanced" },
           "skillKeys": ["chr_0030_zhuangfy_normal_skill", "chr_0030_zhuangfy_normal_skill_ult"]
         },
         {
@@ -1576,7 +1577,8 @@
           "skillType": "comboSkill",
           "levelSource": "comboSkill",
           "nativeGroupType": 3,
-          "replacementPlacements": { "chr_0030_zhuangfy_combo_skill_ult": "enhanced" },
+          "replacementPlacements": { "chr_0030_zhuangfy_combo_skill_ult": "standard" },
+          "replacementNameQualifiers": { "chr_0030_zhuangfy_combo_skill_ult": "enhanced" },
           "skillKeys": ["chr_0030_zhuangfy_combo_skill", "chr_0030_zhuangfy_combo_skill_ult"]
         },
         {
@@ -1592,7 +1594,7 @@
           "skillType": "basicAttack",
           "levelSource": "ultimate",
           "nativeGroupType": 2,
-          "libraryPresentation": "enhanced",
+          "libraryNameQualifier": "enhanced",
           "skillKeys": [
             "chr_0030_zhuangfy_attack1_ult",
             "chr_0030_zhuangfy_attack2_ult",
@@ -3096,7 +3098,7 @@
               "key": "enhancedBasicAttack",
               "levelSource": "ultimate",
               "nativeGroupType": 2,
-              "libraryPresentation": "enhanced",
+              "libraryNameQualifier": "enhanced",
               "skillKeys": [
                 "chr_0016_laevat_ult_attack1",
                 "chr_0016_laevat_ult_attack2",
@@ -3125,7 +3127,10 @@
           "skillType": "battleSkill",
           "levelSource": "battleSkill",
           "nativeGroupType": 1,
-          "replacementPlacements": { "chr_0016_laevat_normal_skill_during_ult": "enhanced" },
+          "replacementPlacements": { "chr_0016_laevat_normal_skill_during_ult": "standard" },
+          "replacementNameQualifiers": {
+            "chr_0016_laevat_normal_skill_during_ult": "enhanced"
+          },
           "skillKeys": ["chr_0016_laevat_normal_skill", "chr_0016_laevat_normal_skill_during_ult"]
         },
         {
@@ -3254,7 +3259,7 @@
               "key": "enhancedBasicAttack",
               "levelSource": "ultimate",
               "nativeGroupType": 2,
-              "libraryPresentation": "enhanced",
+              "libraryNameQualifier": "enhanced",
               "skillKeys": [
                 "chr_0017_yvonne_ult_attack1_1",
                 "chr_0017_yvonne_ult_attack2_1",
@@ -3810,7 +3815,7 @@
               "key": "enhancedBasicAttack",
               "levelSource": "battleSkill",
               "nativeGroupType": 1,
-              "libraryPresentation": "enhanced",
+              "libraryNameQualifier": "floating",
               "skillKeys": [
                 "chr_0034_typhoea_floating_attack1",
                 "chr_0034_typhoea_floating_attack2",
@@ -3855,7 +3860,8 @@
           "skillType": "comboSkill",
           "levelSource": "comboSkill",
           "nativeGroupType": 3,
-          "replacementPlacements": { "chr_0034_typhoea_combo_skillfloating": "enhanced" },
+          "replacementPlacements": { "chr_0034_typhoea_combo_skillfloating": "standard" },
+          "replacementNameQualifiers": { "chr_0034_typhoea_combo_skillfloating": "floating" },
           "skillKeys": ["chr_0034_typhoea_combo_skill", "chr_0034_typhoea_combo_skillfloating"]
         },
         {

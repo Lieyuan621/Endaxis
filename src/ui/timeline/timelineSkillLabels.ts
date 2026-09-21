@@ -11,13 +11,17 @@ export function skillLibraryNameEntry(
   entry: TimelineSkillLibraryEntryViewModel,
   entries: readonly TimelineSkillLibraryEntryViewModel[],
 ): TimelineSkillLibraryEntryViewModel {
-  if (!entry.enhanced && entry.variantKey === undefined && entry.placementSkillKey === undefined) {
+  if (
+    entry.nameQualifier === undefined &&
+    entry.variantKey === undefined &&
+    entry.placementSkillKey === undefined
+  ) {
     return entry;
   }
   const baseEntries = entries.filter(
     candidate =>
       candidate.skillType === entry.skillType &&
-      !candidate.enhanced &&
+      candidate.nameQualifier === undefined &&
       candidate.variantKey === undefined &&
       candidate.placementSkillKey === undefined,
   );
@@ -70,7 +74,7 @@ export function timelineSkillSegmentLabel(
   return null;
 }
 
-/** 时间轴块用星号标出定义明确声明的强化技能。 */
+/** 时间轴块用星号标出名称明确声明为强化的技能；其他修饰词不改变块标签。 */
 export function timelineSkillBlockLabel(
   entry: TimelineSkillLibraryEntryViewModel,
   skillKey: string,
@@ -78,7 +82,7 @@ export function timelineSkillBlockLabel(
   fallbackLabel: string,
 ): string {
   const label = timelineSkillSegmentLabel(entry, skillKey, labels) ?? fallbackLabel;
-  return entry.enhanced ? `${label}*` : label;
+  return entry.nameQualifier === 'enhanced' ? `${label}*` : label;
 }
 
 /** 路由实际触发的技能即使没有放在轴上，也按技能块规则命名；重名时不猜所属技能组。 */

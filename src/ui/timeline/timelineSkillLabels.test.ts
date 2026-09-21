@@ -18,14 +18,14 @@ const labels: TimelineSkillSegmentLabels = {
 function skillLibraryEntry(
   skillType: TimelineSkillLibraryEntryViewModel['skillType'],
   skillKeys: readonly string[],
-  enhanced = false,
+  nameQualifier?: TimelineSkillLibraryEntryViewModel['nameQualifier'],
 ): TimelineSkillLibraryEntryViewModel {
   return {
     entryKey: 'test:fixture',
     skillGroupKey: 'test',
     skillType,
     level: 1,
-    enhanced,
+    ...(nameQualifier === undefined ? {} : { nameQualifier }),
     groupPlacementSkillKeys: skillKeys,
     skills: skillKeys.map(skillKey => ({
       skillKey,
@@ -43,7 +43,7 @@ describe('skill sequence labels', () => {
       skillGroupKey: 'basicAttack',
     };
     const enhanced = {
-      ...skillLibraryEntry('basicAttack', ['enhanced'], true),
+      ...skillLibraryEntry('basicAttack', ['enhanced'], 'enhanced'),
       entryKey: 'enhanced',
       skillGroupKey: 'enhancedBasicAttack',
     };
@@ -105,7 +105,7 @@ describe('skill sequence labels', () => {
   it('marks enhanced timeline blocks with an asterisk', () => {
     expect(
       timelineSkillBlockLabel(
-        skillLibraryEntry('battleSkill', ['enhanced-skill'], true),
+        skillLibraryEntry('battleSkill', ['enhanced-skill'], 'enhanced'),
         'enhanced-skill',
         labels,
         '战技',
@@ -113,7 +113,7 @@ describe('skill sequence labels', () => {
     ).toBe('战技*');
     expect(
       timelineSkillBlockLabel(
-        skillLibraryEntry('comboSkill', ['enhanced-combo'], true),
+        skillLibraryEntry('comboSkill', ['enhanced-combo'], 'enhanced'),
         'enhanced-combo',
         labels,
         '连携',
@@ -121,7 +121,7 @@ describe('skill sequence labels', () => {
     ).toBe('连携*');
     expect(
       timelineSkillBlockLabel(
-        skillLibraryEntry('basicAttack', ['attack-1', 'heavy-attack'], true),
+        skillLibraryEntry('basicAttack', ['attack-1', 'heavy-attack'], 'enhanced'),
         'attack-1',
         labels,
         '普攻',
@@ -129,7 +129,7 @@ describe('skill sequence labels', () => {
     ).toBe('A1*');
     expect(
       timelineSkillBlockLabel(
-        skillLibraryEntry('basicAttack', ['attack-1', 'heavy-attack'], true),
+        skillLibraryEntry('basicAttack', ['attack-1', 'heavy-attack'], 'enhanced'),
         'heavy-attack',
         labels,
         '普攻',
@@ -141,7 +141,7 @@ describe('skill sequence labels', () => {
     const enhanced = skillLibraryEntry(
       'basicAttack',
       ['attack-1', 'attack-2', 'heavy-attack'],
-      true,
+      'enhanced',
     );
     expect(timelineSkillBlockLabelForKey([enhanced], 'attack-2', labels, () => '普攻')).toBe('A2*');
     expect(

@@ -117,6 +117,7 @@ export {
   type SkillActionProgramDefinition,
   type SkillGroupDefinition,
   type SkillGroupVariantDefinition,
+  type SkillLibraryNameQualifier,
   type RoutedSkillReplacementDefinition,
   type SkillPresentationVariantDefinition,
 } from '../../../packages/game-data-contract/src/skills.ts';

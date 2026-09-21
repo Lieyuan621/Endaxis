@@ -30,6 +30,7 @@ const replacementKeys = computed(() =>
     new Set([
       ...candidates.value.filter(item => item.origin !== 'base').map(item => item.skill.key),
       ...Object.keys(props.group.replacementSkillPlacements ?? {}),
+      ...Object.keys(props.group.replacementSkillNameQualifiers ?? {}),
     ]),
   ),
 );
@@ -71,10 +72,20 @@ function replacement(key: string, event: Event) {
   const value = (event.target as HTMLSelectElement).value;
   const placements = { ...props.group.replacementSkillPlacements };
   if (!value) delete placements[key];
-  else placements[key] = value as 'standard' | 'enhanced' | 'internal';
+  else placements[key] = value as 'standard' | 'internal';
   emit('update', {
     ...props.group,
     replacementSkillPlacements: Object.keys(placements).length ? placements : undefined,
+  });
+}
+function replacementNameQualifier(key: string, event: Event) {
+  const value = (event.target as HTMLSelectElement).value;
+  const qualifiers = { ...props.group.replacementSkillNameQualifiers };
+  if (value !== 'enhanced' && value !== 'floating') delete qualifiers[key];
+  else qualifiers[key] = value;
+  emit('update', {
+    ...props.group,
+    replacementSkillNameQualifiers: Object.keys(qualifiers).length ? qualifiers : undefined,
   });
 }
 </script>
@@ -139,8 +150,8 @@ function replacement(key: string, event: Event) {
     </template>
     <template v-if="replacementKeys.length">
       <h4>替换技能放置方式</h4>
-      <label v-for="key in replacementKeys" :key="key"
-        ><span
+      <div v-for="key in replacementKeys" :key="key" class="replacement-row">
+        <span
           >{{ key
           }}<small v-if="!candidates.some(item => item.origin !== 'base' && item.skill.key === key)"
             >未找到对应替换技能；可选“未指定”移除此配置</small
@@ -151,18 +162,27 @@ function replacement(key: string, event: Event) {
         >
           <option value="">未指定（普通展示）</option>
           <option value="standard">普通</option>
+          <option value="internal">内部技能（不可直接放置）</option></select
+        ><select
+          aria-label="技能名称修饰"
+          :value="group.replacementSkillNameQualifiers?.[key] ?? ''"
+          @change="replacementNameQualifier(key, $event)"
+        >
+          <option value="">名称无修饰</option>
           <option value="enhanced">强化</option>
-          <option value="internal">内部技能（不可直接放置）</option>
-        </select></label
-      >
-      <p>已纳入基础连段的技能不重复生成独立卡片。内部技能不接受直接放置，但不阻止编辑其定义。</p>
+          <option value="floating">浮空</option>
+        </select>
+      </div>
+      <p>
+        已纳入基础连段的技能不重复生成独立卡片。内部技能不接受直接放置。名称修饰只改变显示文本，不参与技能身份和换槽。
+      </p>
     </template>
     <h4>技能库条目预览</h4>
     <p v-if="preview.error" role="status">
       当前配置无法生成技能库条目：{{ preview.error }}。草稿仍可继续编辑。
     </p>
     <div v-for="entry in preview.entries" :key="entry.entryKey" class="preview-row">
-      <span>{{ entry.enhanced ? '强化' : '普通' }}</span
+      <span>{{ entry.nameQualifier ?? '普通' }}</span
       ><span>{{ entry.skills.map(x => x.key).join(' → ') || '空条目' }}</span>
     </div>
     <SearchableOptionPicker
@@ -206,6 +226,14 @@ p {
 label {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr);
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.replacement-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.7fr) minmax(120px, 0.7fr);
   gap: 12px;
   align-items: center;
   font-size: 12px;

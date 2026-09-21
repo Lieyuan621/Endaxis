@@ -6,14 +6,14 @@ import { orderTimelineSkillLibrary } from './skillLibraryOrder';
 function entry(
   key: string,
   skillType: SkillType,
-  enhanced = false,
+  nameQualifier?: TimelineSkillLibraryEntryViewModel['nameQualifier'],
 ): TimelineSkillLibraryEntryViewModel {
   return {
     entryKey: key,
     skillGroupKey: key,
     skillType,
     level: 1,
-    enhanced,
+    ...(nameQualifier === undefined ? {} : { nameQualifier }),
     groupPlacementSkillKeys: [key],
     skills: [
       {
@@ -29,15 +29,15 @@ describe('skill library presentation order', () => {
   it('orders semantic actions without changing identity or same-slot declaration order', () => {
     const source = [
       entry('ultimate', 'ultimate'),
-      entry('combo-enhanced', 'comboSkill', true),
+      entry('combo-enhanced', 'comboSkill', 'enhanced'),
       entry('basic-2', 'basicAttack'),
       entry('finisher', 'finisher'),
-      entry('battle-enhanced', 'battleSkill', true),
+      entry('battle-enhanced', 'battleSkill', 'enhanced'),
       entry('plunge', 'plungingAttack'),
       entry('combo', 'comboSkill'),
       entry('basic-1', 'basicAttack'),
       entry('battle', 'battleSkill'),
-      entry('basic-enhanced', 'basicAttack', true),
+      entry('basic-enhanced', 'basicAttack', 'enhanced'),
     ];
 
     expect(orderTimelineSkillLibrary(source).map(value => value.entryKey)).toEqual([
@@ -46,10 +46,10 @@ describe('skill library presentation order', () => {
       'basic-enhanced',
       'plunge',
       'finisher',
-      'battle',
       'battle-enhanced',
-      'combo',
+      'battle',
       'combo-enhanced',
+      'combo',
       'ultimate',
     ]);
   });

@@ -5,6 +5,7 @@
 import type {
   SkillDefinition,
   SkillGroupDefinition,
+  SkillLibraryNameQualifier,
   SkillLevelSource,
   SkillType,
 } from '../../core/game-data/operatorDefinition';
@@ -16,7 +17,8 @@ export interface SkillGroupLibraryPlacement {
   readonly levelSource: SkillLevelSource;
   readonly skillType: SkillType;
   readonly skills: readonly SkillDefinition[];
-  readonly enhanced: boolean;
+  /** 只修饰技能名称，不参与放置身份或运行时解析。 */
+  readonly nameQualifier?: SkillLibraryNameQualifier;
 }
 
 /** 局部边界在技能更新后到达；默认块体覆盖至下一次输入，零宽内部技能仍保持零宽。 */
@@ -107,7 +109,9 @@ export function listSkillGroupLibraryPlacements(
       levelSource: resolveEntryLevelSource(group, baseSkills, group.levelSource),
       skillType: group.skillType,
       skills: baseSkills,
-      enhanced: group.libraryPresentation === 'enhanced',
+      ...(group.libraryNameQualifier === undefined
+        ? {}
+        : { nameQualifier: group.libraryNameQualifier }),
     },
     ...(group.variants ?? []).map(variant => {
       const skills = asSkills(variant.skills);
@@ -117,7 +121,9 @@ export function listSkillGroupLibraryPlacements(
         levelSource: resolveEntryLevelSource(group, skills, variant.levelSource),
         skillType: group.skillType,
         skills,
-        enhanced: variant.libraryPresentation === 'enhanced',
+        ...(variant.libraryNameQualifier === undefined
+          ? {}
+          : { nameQualifier: variant.libraryNameQualifier }),
       };
     }),
     ...(group.replacementSkills ?? [])
@@ -131,7 +137,9 @@ export function listSkillGroupLibraryPlacements(
         levelSource: resolveEntryLevelSource(group, [skill], group.levelSource),
         skillType: skill.skillType ?? group.skillType,
         skills: [skill],
-        enhanced: replacementPlacements[skill.key] === 'enhanced',
+        ...(group.replacementSkillNameQualifiers?.[skill.key] === undefined
+          ? {}
+          : { nameQualifier: group.replacementSkillNameQualifiers[skill.key] }),
       })),
     ...(group.routedReplacementSkills ?? [])
       .filter(
@@ -145,7 +153,9 @@ export function listSkillGroupLibraryPlacements(
         levelSource: resolveEntryLevelSource(group, [replacement.skill], replacement.levelSource),
         skillType: replacement.skill.skillType ?? replacement.skillType,
         skills: [replacement.skill],
-        enhanced: replacementPlacements[replacement.skill.key] === 'enhanced',
+        ...(group.replacementSkillNameQualifiers?.[replacement.skill.key] === undefined
+          ? {}
+          : { nameQualifier: group.replacementSkillNameQualifiers[replacement.skill.key] }),
       })),
   ];
 }

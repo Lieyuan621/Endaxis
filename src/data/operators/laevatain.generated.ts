@@ -2381,7 +2381,7 @@ export const laevatain: OperatorDefinition = {
         {
           key: 'enhancedBasicAttack',
           levelSource: 'ultimate',
-          libraryPresentation: 'enhanced',
+          libraryNameQualifier: 'enhanced',
           skills: [
             laevatainChr_0016_laevat_ult_attack1,
             laevatainChr_0016_laevat_ult_attack2,
@@ -2409,7 +2409,8 @@ export const laevatain: OperatorDefinition = {
       levelSource: 'battleSkill',
       skills: laevatainChr_0016_laevat_normal_skill,
       replacementSkills: [laevatainChr_0016_laevat_normal_skill_during_ult],
-      replacementSkillPlacements: { chr_0016_laevat_normal_skill_during_ult: 'enhanced' },
+      replacementSkillPlacements: { chr_0016_laevat_normal_skill_during_ult: 'standard' },
+      replacementSkillNameQualifiers: { chr_0016_laevat_normal_skill_during_ult: 'enhanced' },
     },
     {
       key: 'ultimate',

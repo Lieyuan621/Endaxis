@@ -6,6 +6,7 @@ import type {
   SkillGroupDefinition,
   SkillGroupPlacementPolicy,
   SkillGroupVariantDefinition,
+  SkillLibraryNameQualifier,
 } from '../../../../../packages/game-data-contract/src/skills.ts';
 import {
   requireArray,
@@ -48,10 +49,10 @@ const VARIANT_FIELDS = new Set([
   'levelSource',
   'nativeGroupType',
   'skillKeys',
-  'libraryPresentation',
+  'libraryNameQualifier',
 ]);
-const LIBRARY_PRESENTATIONS = ['enhanced'] as const;
-const REPLACEMENT_PLACEMENTS = ['sequence', 'standard', 'enhanced', 'internal'] as const;
+const LIBRARY_NAME_QUALIFIERS = ['enhanced', 'floating'] as const;
+const REPLACEMENT_PLACEMENTS = ['sequence', 'standard', 'internal'] as const;
 
 export interface NativeOperatorSkillGroupSource {
   readonly sourcePath: string;
@@ -68,7 +69,7 @@ export type OperatorSkillIdentitySource = Readonly<Pick<SkillGroupDefinition, 'k
 export type OperatorSkillGroupVariantSource = Readonly<
   Pick<
     SkillGroupVariantDefinition,
-    'key' | 'levelSource' | 'libraryPresentation' | 'placementPolicy'
+    'key' | 'levelSource' | 'libraryNameQualifier' | 'placementPolicy'
   >
 > & {
   readonly nativeGroupType: number;
@@ -80,8 +81,9 @@ export type OperatorSkillGroupSource = Readonly<
 > & {
   readonly nativeGroupType: number;
   readonly skillKeys: readonly string[];
-  readonly libraryPresentation?: 'enhanced';
+  readonly libraryNameQualifier?: SkillLibraryNameQualifier;
   readonly replacementPlacements: Readonly<Record<string, (typeof REPLACEMENT_PLACEMENTS)[number]>>;
+  readonly replacementNameQualifiers: Readonly<Record<string, SkillLibraryNameQualifier>>;
   readonly variants: readonly OperatorSkillGroupVariantSource[];
 };
 
@@ -172,8 +174,10 @@ export function parseOperatorSkillGroupSources(
     const expectedFields = new Set(GROUP_REQUIRED_FIELDS);
     if (group.placementPolicy !== undefined) expectedFields.add('placementPolicy');
     if (group.variants !== undefined) expectedFields.add('variants');
-    if (group.libraryPresentation !== undefined) expectedFields.add('libraryPresentation');
+    if (group.libraryNameQualifier !== undefined) expectedFields.add('libraryNameQualifier');
     if (group.replacementPlacements !== undefined) expectedFields.add('replacementPlacements');
+    if (group.replacementNameQualifiers !== undefined)
+      expectedFields.add('replacementNameQualifiers');
     requireExactFields(group, expectedFields, groupPath);
     const variants =
       group.variants === undefined
@@ -197,10 +201,10 @@ export function parseOperatorSkillGroupSources(
                 `${variantPath}.nativeGroupType`,
               ),
               skillKeys: distinctStrings(variant.skillKeys, `${variantPath}.skillKeys`),
-              libraryPresentation: requireGroupIdentity(
-                variant.libraryPresentation,
-                LIBRARY_PRESENTATIONS,
-                `${variantPath}.libraryPresentation`,
+              libraryNameQualifier: requireGroupIdentity(
+                variant.libraryNameQualifier,
+                LIBRARY_NAME_QUALIFIERS,
+                `${variantPath}.libraryNameQualifier`,
               ),
             };
           });
@@ -221,6 +225,23 @@ export function parseOperatorSkillGroupSources(
         ),
       ]),
     );
+    const replacementNameQualifiers = Object.fromEntries(
+      Object.entries(
+        group.replacementNameQualifiers === undefined
+          ? {}
+          : requireRecord(
+              group.replacementNameQualifiers,
+              `${groupPath}.replacementNameQualifiers`,
+            ),
+      ).map(([skillKey, qualifier]) => [
+        requireNonEmptyString(skillKey, `${groupPath}.replacementNameQualifiers key`),
+        requireGroupIdentity(
+          qualifier,
+          LIBRARY_NAME_QUALIFIERS,
+          `${groupPath}.replacementNameQualifiers.${skillKey}`,
+        ),
+      ]),
+    );
     return {
       key: requireNonEmptyString(group.key, `${groupPath}.key`),
       ...readPlacementPolicy(group, groupPath),
@@ -235,16 +256,17 @@ export function parseOperatorSkillGroupSources(
         `${groupPath}.nativeGroupType`,
       ),
       skillKeys: distinctStrings(group.skillKeys, `${groupPath}.skillKeys`),
-      ...(group.libraryPresentation === undefined
+      ...(group.libraryNameQualifier === undefined
         ? {}
         : {
-            libraryPresentation: requireGroupIdentity(
-              group.libraryPresentation,
-              LIBRARY_PRESENTATIONS,
-              `${groupPath}.libraryPresentation`,
+            libraryNameQualifier: requireGroupIdentity(
+              group.libraryNameQualifier,
+              LIBRARY_NAME_QUALIFIERS,
+              `${groupPath}.libraryNameQualifier`,
             ),
           }),
       replacementPlacements,
+      replacementNameQualifiers,
       variants,
     };
   });

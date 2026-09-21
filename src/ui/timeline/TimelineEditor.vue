@@ -3511,7 +3511,9 @@ function skillLibraryTypeLabel(entry: TimelineSkillLibraryEntryViewModel): strin
     if (displayName !== null) return displayName;
   }
   const type = skillTypeLabel(entry.skillType);
-  return entry.enhanced ? t('skillType.enhanced', { type }) : type;
+  return entry.nameQualifier === undefined
+    ? type
+    : t(`skillType.nameQualifier.${entry.nameQualifier}`, { type });
 }
 
 function battleReceiptEventLabel(event: string): string {

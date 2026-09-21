@@ -61,7 +61,8 @@ it('previews a base/replacement chain using production placement rules without m
     ...source,
     placementSequenceSkillKeys: [first.key, 'next'],
     replacementSkills: [{ ...first, key: 'next' }],
-    replacementSkillPlacements: { next: 'enhanced' },
+    replacementSkillPlacements: { next: 'standard' },
+    replacementSkillNameQualifiers: { next: 'enhanced' },
   };
   const before = JSON.stringify(group);
   const html = await render(group);

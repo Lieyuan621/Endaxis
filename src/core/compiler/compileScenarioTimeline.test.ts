@@ -315,7 +315,7 @@ describe('compileScenarioTimeline', () => {
           key: 'enhancedBasicAttack',
           skillType: 'basicAttack' as const,
           levelSource: 'ultimate' as const,
-          libraryPresentation: 'enhanced' as const,
+          libraryNameQualifier: 'enhanced' as const,
           skills: [{ ...baseSkill, key: 'enhancedBasicAttack1' }],
         },
       ],

@@ -4545,7 +4545,7 @@ export const yvonne: OperatorDefinition = {
             maxSegments: 24,
             fallback: 'sequence',
           },
-          libraryPresentation: 'enhanced',
+          libraryNameQualifier: 'enhanced',
           skills: [
             yvonneChr_0017_yvonne_ult_attack1_1,
             yvonneChr_0017_yvonne_ult_attack2_1,

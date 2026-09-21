@@ -753,9 +753,25 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     const unknownReplacementPlacements = declaredReplacementKeys.filter(
       key => !runtimeReplacementKeysInGroup.includes(key),
     );
+    const unknownReplacementNameQualifiers = Object.keys(group.replacementNameQualifiers).filter(
+      key => !runtimeReplacementKeysInGroup.includes(key),
+    );
+    const hiddenReplacementNameQualifiers = Object.keys(group.replacementNameQualifiers).filter(
+      key => group.replacementPlacements[key] !== 'standard',
+    );
     if (missingReplacementPlacements.length > 0 || unknownReplacementPlacements.length > 0) {
       throw new Error(
         `skill group '${group.key}' replacement placement mismatch: missing ${JSON.stringify(missingReplacementPlacements)}, unknown ${JSON.stringify(unknownReplacementPlacements)}`,
+      );
+    }
+    if (unknownReplacementNameQualifiers.length > 0) {
+      throw new Error(
+        `skill group '${group.key}' replacement name qualifier mismatch: unknown ${JSON.stringify(unknownReplacementNameQualifiers)}`,
+      );
+    }
+    if (hiddenReplacementNameQualifiers.length > 0) {
+      throw new Error(
+        `skill group '${group.key}' replacement name qualifier requires standard placement: ${JSON.stringify(hiddenReplacementNameQualifiers)}`,
       );
     }
     const sequenceReplacementKeys = new Set(
@@ -774,9 +790,9 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       skillType: group.skillType,
       levelSource: group.levelSource,
       ...(group.placementPolicy === undefined ? {} : { placementPolicy: group.placementPolicy }),
-      ...(group.libraryPresentation === undefined
+      ...(group.libraryNameQualifier === undefined
         ? {}
-        : { libraryPresentation: group.libraryPresentation }),
+        : { libraryNameQualifier: group.libraryNameQualifier }),
       skills:
         visibleSkillKeys.length === 1
           ? definitions.get(visibleSkillKeys[0]!)!
@@ -798,6 +814,9 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
                 return placement === 'sequence' ? [] : [[key, placement] as const];
               }),
             ),
+            ...(Object.keys(group.replacementNameQualifiers).length === 0
+              ? {}
+              : { replacementSkillNameQualifiers: group.replacementNameQualifiers }),
           }),
       ...(routedSkillEntries.length === 0
         ? {}
@@ -819,9 +838,9 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
               ...(variant.placementPolicy === undefined
                 ? {}
                 : { placementPolicy: variant.placementPolicy }),
-              ...(variant.libraryPresentation === undefined
+              ...(variant.libraryNameQualifier === undefined
                 ? {}
-                : { libraryPresentation: variant.libraryPresentation }),
+                : { libraryNameQualifier: variant.libraryNameQualifier }),
               skills:
                 variant.skillKeys.length === 1
                   ? definitions.get(variant.skillKeys[0]!)!
@@ -966,9 +985,7 @@ export function selectSingleSkillTimelineBlockFrames(
   groups: readonly {
     readonly skillType: SkillType;
     readonly skillKeys: readonly string[];
-    readonly replacementPlacements: Readonly<
-      Record<string, 'sequence' | 'standard' | 'enhanced' | 'internal'>
-    >;
+    readonly replacementPlacements: Readonly<Record<string, 'sequence' | 'standard' | 'internal'>>;
   }[],
   runtimeReplacementSkillKeys: ReadonlySet<string>,
 ): void {

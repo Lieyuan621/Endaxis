@@ -2214,7 +2214,10 @@
     "skill": "战技",
     "link": "连携",
     "ultimate": "终结技",
-    "enhanced": "强化{type}",
+    "nameQualifier": {
+      "enhanced": "强化{type}",
+      "floating": "浮空{type}"
+    },
     "enhancedAttack": "强化普攻",
     "enhancedSkill": "强化战技",
     "enhancedLink": "强化连携",

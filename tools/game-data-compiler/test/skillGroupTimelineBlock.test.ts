@@ -282,7 +282,7 @@ describe('单技能入口的预览宽度', () => {
         {
           skillType: 'comboSkill',
           skillKeys: ['native.base', 'native.floating'],
-          replacementPlacements: { 'native.floating': 'enhanced' },
+          replacementPlacements: { 'native.floating': 'standard' },
         },
       ],
       new Set(['native.floating']),

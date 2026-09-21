@@ -2,7 +2,11 @@
  * 将新版存档和只读干员定义投影为时间轴 UI 的稳定读取模型。
  * 这里不保存编辑状态、不翻译文本，也不调用战斗模拟；组件只能把身份交给 i18n 和命令层处理。
  */
-import type { OperatorDefinition, SkillType } from '../../core/game-data/operatorDefinition';
+import type {
+  OperatorDefinition,
+  SkillLibraryNameQualifier,
+  SkillType,
+} from '../../core/game-data/operatorDefinition';
 import type {
   DefinitionActionSource,
   ScenarioDocument,
@@ -37,8 +41,8 @@ export interface TimelineSkillLibraryEntryViewModel {
   readonly variantKey?: string;
   readonly skillType: SkillType;
   readonly level: number;
-  /** 来源定义明确声明为强化展示；不能从 variant/replacement 结构或技能键推断。 */
-  readonly enhanced: boolean;
+  /** 来源定义明确声明的名称修饰词；不能从 variant/replacement 结构或技能键推断。 */
+  readonly nameQualifier?: SkillLibraryNameQualifier;
   /** 独立强化技能卡片拖动整卡时显式放置的技能；顺序链省略。 */
   readonly placementSkillKey?: string;
   /** 拖动整张卡片时按顺序放置的技能。 */
@@ -170,7 +174,7 @@ function projectTrack(
             ...(entry.variantKey === undefined ? {} : { variantKey: entry.variantKey }),
             skillType: entry.skillType,
             level: operatorInstance.skillLevels[entry.levelSource] ?? 1,
-            enhanced: entry.enhanced,
+            ...(entry.nameQualifier === undefined ? {} : { nameQualifier: entry.nameQualifier }),
             ...(entry.placementSkillKey === undefined
               ? {}
               : { placementSkillKey: entry.placementSkillKey }),

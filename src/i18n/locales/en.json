@@ -2232,7 +2232,10 @@
     "skill": "Skill",
     "link": "Combo",
     "ultimate": "Ultimate",
-    "enhanced": "Enhanced {type}",
+    "nameQualifier": {
+      "enhanced": "Enhanced {type}",
+      "floating": "Airborne {type}"
+    },
     "enhancedAttack": "Enhanced Basic Attack",
     "enhancedSkill": "Enhanced Skill",
     "enhancedLink": "Enhanced Combo",

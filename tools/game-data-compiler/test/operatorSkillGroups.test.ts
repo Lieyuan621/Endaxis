@@ -36,7 +36,7 @@ describe('干员技能等级组', () => {
           key: 'alternate',
           levelSource: 'ultimate',
           nativeGroupType: 2,
-          libraryPresentation: 'enhanced',
+          libraryNameQualifier: 'enhanced',
           skillKeys: ['basicAttack1', 'basicAttack2'],
           placementPolicy,
         },
@@ -78,7 +78,7 @@ describe('干员技能等级组', () => {
         levelSource: 'finisher',
         nativeGroupType: 2,
         skillKeys: ['basicAttack1'],
-        libraryPresentation: 'enhanced',
+        libraryNameQualifier: 'enhanced',
       },
     ];
     expect(() => parseOperatorSkillGroupSources(groups, 'fixture.skillGroups')).toThrow(
@@ -90,18 +90,20 @@ describe('干员技能等级组', () => {
     const groups = operatorGroups();
     groups[3]!.replacementPlacements = {
       next: 'sequence',
-      enhanced: 'enhanced',
+      enhanced: 'standard',
       alternate: 'standard',
       exit: 'internal',
     };
+    groups[3]!.replacementNameQualifiers = { enhanced: 'enhanced' };
     expect(parseOperatorSkillGroupSources(groups, 'fixture.skillGroups')[3]).toMatchObject({
       key: 'battleSkill',
       replacementPlacements: {
         next: 'sequence',
-        enhanced: 'enhanced',
+        enhanced: 'standard',
         alternate: 'standard',
         exit: 'internal',
       },
+      replacementNameQualifiers: { enhanced: 'enhanced' },
     });
 
     groups[3]!.replacementPlacements = { bad: 'guessed' };
@@ -144,7 +146,7 @@ describe('干员技能等级组', () => {
               levelSource: 'ultimate',
               nativeGroupType: 2,
               skillKeys: ['enhanced'],
-              libraryPresentation: 'enhanced',
+              libraryNameQualifier: 'enhanced',
             },
           ],
         },

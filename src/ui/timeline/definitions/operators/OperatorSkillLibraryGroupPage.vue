@@ -52,7 +52,7 @@ const origins = {
   routedReplacement: '跨组执行体',
 };
 const levels = { basicAttack: '普攻', battleSkill: '战技', comboSkill: '连携', ultimate: '终结技' };
-function updateVariant(index: number, field: 'key' | 'libraryPresentation', value: string) {
+function updateVariant(index: number, field: 'key' | 'libraryNameQualifier', value: string) {
   emit('update', {
     ...props.group,
     variants: props.group.variants?.map((variant, i) =>
@@ -60,7 +60,11 @@ function updateVariant(index: number, field: 'key' | 'libraryPresentation', valu
         ? {
             ...variant,
             [field]:
-              field === 'libraryPresentation' ? (value === 'enhanced' ? value : undefined) : value,
+              field === 'libraryNameQualifier'
+                ? value === 'enhanced' || value === 'floating'
+                  ? value
+                  : undefined
+                : value,
           }
         : variant,
     ),
@@ -87,18 +91,22 @@ function updateVariant(index: number, field: 'key' | 'libraryPresentation', valu
           @change="emit('update', { ...group, key: ($event.target as HTMLInputElement).value })"
       /></label>
       <label
-        >基础放置项强调<select
-          :value="group.libraryPresentation ?? ''"
+        >基础放置项名称修饰<select
+          :value="group.libraryNameQualifier ?? ''"
           @change="
             emit('update', {
               ...group,
-              libraryPresentation:
-                ($event.target as HTMLSelectElement).value === 'enhanced' ? 'enhanced' : undefined,
+              libraryNameQualifier:
+                ($event.target as HTMLSelectElement).value === 'enhanced' ||
+                ($event.target as HTMLSelectElement).value === 'floating'
+                  ? (($event.target as HTMLSelectElement).value as 'enhanced' | 'floating')
+                  : undefined,
             })
           "
         >
           <option value="">普通</option>
           <option value="enhanced">强化</option>
+          <option value="floating">浮空</option>
         </select></label
       >
     </div>
@@ -180,18 +188,19 @@ function updateVariant(index: number, field: 'key' | 'libraryPresentation', valu
             @change="updateVariant(variantIndex, 'key', ($event.target as HTMLInputElement).value)"
         /></label>
         <label
-          >展示强调<select
-            :value="variant.libraryPresentation ?? ''"
+          >名称修饰<select
+            :value="variant.libraryNameQualifier ?? ''"
             @change="
               updateVariant(
                 variantIndex,
-                'libraryPresentation',
+                'libraryNameQualifier',
                 ($event.target as HTMLSelectElement).value,
               )
             "
           >
             <option value="">普通</option>
             <option value="enhanced">强化</option>
+            <option value="floating">浮空</option>
           </select></label
         >
       </div>

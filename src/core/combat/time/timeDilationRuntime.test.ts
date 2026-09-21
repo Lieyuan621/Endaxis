@@ -275,6 +275,18 @@ describe('TimeDilationRuntime', () => {
 
     expect(runtime.currentGlobalScale).toBe(0);
     expect(runtime.getOperatorScale('caster')).toBe(1);
+    expect(runtime.getAbilityTickDeltas('caster', 1 / 30)).toEqual({
+      defaultDeltaSeconds: 1 / 30,
+      globalScaledDeltaSeconds: 0,
+      selfScaledDeltaSeconds: 1 / 30,
+      skillCooldownDeltaSeconds: 1 / 30,
+    });
+    expect(runtime.getAbilityTickDeltas('other', 1 / 30)).toEqual({
+      defaultDeltaSeconds: 1 / 30,
+      globalScaledDeltaSeconds: 0,
+      selfScaledDeltaSeconds: 0,
+      skillCooldownDeltaSeconds: 1 / 30,
+    });
 
     runtime.stop(id);
     expect(runtime.currentGlobalScale).toBe(1);
