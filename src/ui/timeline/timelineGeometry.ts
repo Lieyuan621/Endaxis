@@ -17,6 +17,27 @@ export function frameToTimelinePx(
   return COLLAPSED_PREP_WIDTH_PX + (frame - prepEndFrame) * pxPerFrame;
 }
 
+/**
+ * 展示用折叠投影：把准备阶段等比压缩到 18px，战斗阶段仍保持原缩放比。
+ *
+ * 资源监视区需要展示被折叠的历史趋势；编辑时间轴仍使用
+ * `frameToTimelinePx`，以便隐藏历史内容并阻止向其中写入新操作。
+ */
+export function frameToCondensedTimelinePx(
+  frame: number,
+  prepFrames: number,
+  pxPerFrame: number,
+  prepExpanded = true,
+  prepEndFrame = 0,
+): number {
+  const prepLength = prepFrames + prepEndFrame;
+  if (prepExpanded || prepLength <= 0) return (frame + prepFrames) * pxPerFrame;
+  if (frame <= prepEndFrame) {
+    return ((frame + prepFrames) / prepLength) * COLLAPSED_PREP_WIDTH_PX;
+  }
+  return COLLAPSED_PREP_WIDTH_PX + (frame - prepEndFrame) * pxPerFrame;
+}
+
 export function timelinePxToExactFrame(
   px: number,
   prepFrames: number,

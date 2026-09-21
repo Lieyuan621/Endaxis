@@ -1,12 +1,30 @@
 /** 顶栏 50px 内容加 1px 下边框。 */
 export const WORKBENCH_HEADER_HEIGHT = 51;
+export const WORKBENCH_ACTIVITY_BAR_WIDTH = 48;
+export const WORKBENCH_PANEL_MAX_WIDTH = 480;
+export const WORKBENCH_LEFT_PANEL_MIN_WIDTH = 200;
+export const WORKBENCH_RIGHT_PANEL_MIN_WIDTH = 260;
+export const WORKBENCH_TIMELINE_MIN_WIDTH = 540;
 export const WORKBENCH_BOTTOM_RESIZER_HEIGHT = 1;
-export const WORKBENCH_TIMELINE_MIN_HEIGHT = 600;
+/** 与 main 分支的工作台契约一致，保留足够的底部监视区可用高度。 */
+export const WORKBENCH_TIMELINE_MIN_HEIGHT = 520;
 export const WORKBENCH_BOTTOM_DEFAULT_HEIGHT = 240;
 
 export interface WorkbenchBottomHeightBounds {
   readonly minimum: number;
   readonly maximum: number;
+}
+
+export function resolveWorkbenchSidePanelMaximumWidth(
+  workbenchWidth: number,
+  minimumWidth: number,
+): number {
+  if (!(workbenchWidth > 0)) return WORKBENCH_PANEL_MAX_WIDTH;
+  const availableWidth = workbenchWidth - WORKBENCH_TIMELINE_MIN_WIDTH;
+  return Math.min(
+    WORKBENCH_PANEL_MAX_WIDTH,
+    Math.max(minimumWidth, Math.floor(availableWidth / 2)),
+  );
 }
 
 /**

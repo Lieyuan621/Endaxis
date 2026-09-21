@@ -7,17 +7,29 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { EaButton, EaActivityRailButton } from '@/design-system';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import {
+  resolveWorkbenchSidePanelMaximumWidth,
   resolveWorkbenchBottomHeight,
   resolveWorkbenchBottomHeightBounds,
+  WORKBENCH_ACTIVITY_BAR_WIDTH,
   WORKBENCH_BOTTOM_DEFAULT_HEIGHT,
   WORKBENCH_BOTTOM_RESIZER_HEIGHT,
   WORKBENCH_HEADER_HEIGHT,
+  WORKBENCH_LEFT_PANEL_MIN_WIDTH,
+  WORKBENCH_PANEL_MAX_WIDTH,
+  WORKBENCH_RIGHT_PANEL_MIN_WIDTH,
   WORKBENCH_TIMELINE_MIN_HEIGHT,
+  WORKBENCH_TIMELINE_MIN_WIDTH,
 } from '../workbenchLayoutGeometry';
+import {
+  parseWorkbenchLayoutState,
+  serializeWorkbenchLayoutState,
+  type WorkbenchBottomTool,
+  type WorkbenchRightTool,
+} from '../workbenchLayoutState';
 
 const WORKBENCH_LAYOUT_STORAGE_KEY = 'endaxis:timeline-workbench-layout:v1';
-const DEFAULT_LEFT_WIDTH = 200;
-const DEFAULT_RIGHT_WIDTH = 260;
+const DEFAULT_LEFT_WIDTH = WORKBENCH_LEFT_PANEL_MIN_WIDTH;
+const DEFAULT_RIGHT_WIDTH = WORKBENCH_RIGHT_PANEL_MIN_WIDTH;
 const DEFAULT_BOTTOM_HEIGHT = WORKBENCH_BOTTOM_DEFAULT_HEIGHT;
 const interactionSession = useInteractionSession();
 
@@ -43,15 +55,17 @@ const leftWidth = ref(DEFAULT_LEFT_WIDTH);
 const rightWidth = ref(DEFAULT_RIGHT_WIDTH);
 const bottomHeight = ref(DEFAULT_BOTTOM_HEIGHT);
 const bottomExpandAllToken = ref(0);
-const bottomTool = ref<'global' | 'contract' | 'enemy'>('enemy');
-const rightTool = ref<'inspector' | 'performance' | 'battleLog'>('inspector');
+const bottomTool = ref<WorkbenchBottomTool>('enemy');
+const rightTool = ref<WorkbenchRightTool>('inspector');
 const resizing = ref<'left' | 'right' | 'bottom' | null>(null);
 const workbenchRef = ref<HTMLElement | null>(null);
+const workbenchWidth = ref(0);
 const workbenchHeight = ref(0);
 let stopResize: (() => void) | null = null;
 let workbenchResizeObserver: ResizeObserver | null = null;
 
-function updateWorkbenchHeight(): void {
+function updateWorkbenchSize(): void {
+  workbenchWidth.value = workbenchRef.value?.clientWidth ?? 0;
   workbenchHeight.value = workbenchRef.value?.clientHeight ?? 0;
 }
 
@@ -65,7 +79,7 @@ const effectiveBottomHeight = computed(() => {
 });
 
 const layoutStyle = computed(() => ({
-  gridTemplateColumns: `48px ${leftCollapsed.value ? 0 : leftWidth.value}px ${leftCollapsed.value ? 0 : 1}px minmax(540px, 1fr) ${rightCollapsed.value ? 0 : 1}px ${rightCollapsed.value ? 0 : rightWidth.value}px 48px`,
+  gridTemplateColumns: `${WORKBENCH_ACTIVITY_BAR_WIDTH}px ${leftCollapsed.value ? 0 : leftWidth.value}px ${leftCollapsed.value ? 0 : 1}px minmax(${WORKBENCH_TIMELINE_MIN_WIDTH}px, 1fr) ${rightCollapsed.value ? 0 : 1}px ${rightCollapsed.value ? 0 : rightWidth.value}px ${WORKBENCH_ACTIVITY_BAR_WIDTH}px`,
   gridTemplateRows: `${WORKBENCH_HEADER_HEIGHT}px minmax(${WORKBENCH_TIMELINE_MIN_HEIGHT}px, 1fr) ${bottomCollapsed.value ? 0 : WORKBENCH_BOTTOM_RESIZER_HEIGHT}px ${effectiveBottomHeight.value}px`,
 }));
 const leftStackStyle = computed(() => ({
@@ -86,43 +100,45 @@ function restoreLayout(): void {
     return;
   }
   if (stored === null || typeof stored !== 'object') return;
-  const value = stored as Record<string, unknown>;
-  if (typeof value.leftCollapsed === 'boolean') leftCollapsed.value = value.leftCollapsed;
-  if (typeof value.rightCollapsed === 'boolean') rightCollapsed.value = value.rightCollapsed;
-  if (typeof value.bottomCollapsed === 'boolean') bottomCollapsed.value = value.bottomCollapsed;
-  if (typeof value.leftWidth === 'number') leftWidth.value = clamp(value.leftWidth, 200, 480);
-  if (typeof value.rightWidth === 'number') rightWidth.value = clamp(value.rightWidth, 260, 480);
-  if (typeof value.bottomHeight === 'number') bottomHeight.value = Math.max(0, value.bottomHeight);
-  if (
-    value.bottomTool === 'global' ||
-    value.bottomTool === 'contract' ||
-    value.bottomTool === 'enemy'
-  ) {
-    bottomTool.value = value.bottomTool;
+  const value = parseWorkbenchLayoutState(stored);
+  if (value.leftCollapsed !== undefined) leftCollapsed.value = value.leftCollapsed;
+  if (value.rightCollapsed !== undefined) rightCollapsed.value = value.rightCollapsed;
+  if (value.bottomCollapsed !== undefined) bottomCollapsed.value = value.bottomCollapsed;
+  if (value.leftWidth !== undefined) {
+    leftWidth.value = clamp(
+      value.leftWidth,
+      WORKBENCH_LEFT_PANEL_MIN_WIDTH,
+      WORKBENCH_PANEL_MAX_WIDTH,
+    );
   }
-  if (
-    value.rightTool === 'inspector' ||
-    value.rightTool === 'performance' ||
-    value.rightTool === 'battleLog'
-  ) {
-    rightTool.value = value.rightTool;
+  if (value.rightWidth !== undefined) {
+    rightWidth.value = clamp(
+      value.rightWidth,
+      WORKBENCH_RIGHT_PANEL_MIN_WIDTH,
+      WORKBENCH_PANEL_MAX_WIDTH,
+    );
   }
+  if (value.bottomHeight !== undefined) bottomHeight.value = Math.max(0, value.bottomHeight);
+  if (value.bottomTool !== undefined) bottomTool.value = value.bottomTool;
+  if (value.rightTool !== undefined) rightTool.value = value.rightTool;
 }
 
 function persistLayout(): void {
   try {
     window.localStorage.setItem(
       WORKBENCH_LAYOUT_STORAGE_KEY,
-      JSON.stringify({
-        leftCollapsed: leftCollapsed.value,
-        rightCollapsed: rightCollapsed.value,
-        bottomCollapsed: bottomCollapsed.value,
-        leftWidth: Math.round(leftWidth.value),
-        rightWidth: Math.round(rightWidth.value),
-        bottomHeight: Math.round(bottomHeight.value),
-        bottomTool: bottomTool.value,
-        rightTool: rightTool.value,
-      }),
+      JSON.stringify(
+        serializeWorkbenchLayoutState({
+          leftCollapsed: leftCollapsed.value,
+          rightCollapsed: rightCollapsed.value,
+          bottomCollapsed: bottomCollapsed.value,
+          leftWidth: leftWidth.value,
+          rightWidth: rightWidth.value,
+          bottomHeight: bottomHeight.value,
+          bottomTool: bottomTool.value,
+          rightTool: rightTool.value,
+        }),
+      ),
     );
   } catch {
     // Storage may be disabled; the workbench remains fully usable for this session.
@@ -182,9 +198,23 @@ function beginResize(target: NonNullable<typeof resizing.value>, event: PointerE
   const onMove = (moveEvent: PointerEvent) => {
     if (moveEvent.pointerId !== event.pointerId || !lease.isCurrent()) return;
     if (target === 'left') {
-      leftWidth.value = clamp(initialLeft + moveEvent.clientX - startX, 200, 480);
+      leftWidth.value = clamp(
+        initialLeft + moveEvent.clientX - startX,
+        WORKBENCH_LEFT_PANEL_MIN_WIDTH,
+        resolveWorkbenchSidePanelMaximumWidth(
+          workbenchRef.value?.clientWidth ?? workbenchWidth.value,
+          WORKBENCH_LEFT_PANEL_MIN_WIDTH,
+        ),
+      );
     } else if (target === 'right') {
-      rightWidth.value = clamp(initialRight - moveEvent.clientX + startX, 260, 480);
+      rightWidth.value = clamp(
+        initialRight - moveEvent.clientX + startX,
+        WORKBENCH_RIGHT_PANEL_MIN_WIDTH,
+        resolveWorkbenchSidePanelMaximumWidth(
+          workbenchRef.value?.clientWidth ?? workbenchWidth.value,
+          WORKBENCH_RIGHT_PANEL_MIN_WIDTH,
+        ),
+      );
     } else {
       const bounds = resolveWorkbenchBottomHeightBounds(
         workbenchRef.value?.clientHeight ?? 0,
@@ -221,9 +251,9 @@ onBeforeUnmount(() => {
 
 onMounted(() => {
   restoreLayout();
-  updateWorkbenchHeight();
+  updateWorkbenchSize();
   if (typeof ResizeObserver !== 'undefined' && workbenchRef.value !== null) {
-    workbenchResizeObserver = new ResizeObserver(updateWorkbenchHeight);
+    workbenchResizeObserver = new ResizeObserver(updateWorkbenchSize);
     workbenchResizeObserver.observe(workbenchRef.value);
   }
 });
@@ -255,7 +285,7 @@ watch(
     :style="layoutStyle"
   >
     <aside class="activity-bar">
-      <div class="activity-group">
+      <div class="activity-group activity-group--top">
         <EaActivityRailButton
           class="activity-button activity-button--library"
           side="left"
@@ -306,6 +336,7 @@ watch(
     <div
       v-show="!leftCollapsed"
       class="resizer resizer--left"
+      :class="{ 'is-active': resizing === 'left' }"
       @pointerdown="beginResize('left', $event)"
       @dblclick="resetPanelSize('left')"
     ></div>
@@ -346,6 +377,7 @@ watch(
     <div
       v-show="!rightCollapsed"
       class="resizer resizer--right"
+      :class="{ 'is-active': resizing === 'right' }"
       @pointerdown="beginResize('right', $event)"
       @dblclick="resetPanelSize('right')"
     ></div>
@@ -354,7 +386,7 @@ watch(
     </aside>
 
     <aside class="activity-bar activity-bar--right">
-      <div class="activity-group">
+      <div class="activity-group activity-group--top">
         <EaActivityRailButton
           class="activity-button activity-button--inspector"
           side="right"
@@ -435,7 +467,7 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 0 12px;
+  padding: var(--ea-space-2) 0 var(--ea-space-3);
   border-right: 1px solid var(--ea-border-soft);
   background: var(--ea-activity-bg);
 }
@@ -451,13 +483,16 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding-top: 2px;
+  gap: var(--ea-space-1);
+}
+
+.activity-group--top {
+  padding-top: var(--ea-space-1);
 }
 
 .activity-group--bottom {
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: var(--ea-space-3);
 }
 
 .activity-performance-icon {
@@ -479,6 +514,18 @@ watch(
   min-height: 0;
   overflow: hidden;
   background: var(--ea-workbench-panel);
+  border-color: var(--ea-border);
+}
+
+:global(html[data-theme='light'] .workbench-panel) {
+  box-shadow: inset 0 0 0 1px var(--ea-border-soft);
+}
+
+:global(html[data-theme='light'] .left-panel),
+:global(html[data-theme='light'] .right-panel) {
+  box-shadow:
+    inset 0 0 0 1px var(--ea-border-soft),
+    0 0 0 1px var(--ea-border);
 }
 
 .left-panel {
@@ -557,8 +604,7 @@ watch(
   transition: opacity 0.12s ease;
 }
 
-.bottom-resizer:hover::before,
-.bottom-resizer[aria-pressed='true']::before {
+.bottom-resizer.is-active::before {
   opacity: 1;
 }
 
@@ -594,7 +640,6 @@ watch(
   height: 16px;
 }
 
-.bottom-panel-collapse:hover,
 .bottom-panel-collapse:focus-visible {
   color: var(--ea-fg);
 }
@@ -623,6 +668,15 @@ watch(
   touch-action: none;
 }
 
+.resizer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: var(--ea-active-fill);
+  transition: opacity 0.12s ease;
+}
+
 .resizer::after {
   content: '';
   position: absolute;
@@ -633,8 +687,8 @@ watch(
   transform: translateX(-50%);
 }
 
-.resizer:hover {
-  background: var(--ea-active-fill);
+.resizer.is-active::before {
+  opacity: 1;
 }
 
 .resizer--left {
@@ -643,5 +697,16 @@ watch(
 
 .resizer--right {
   grid-column: 5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bottom-resizer:hover::before,
+  .resizer:hover::before {
+    opacity: 1;
+  }
+
+  .bottom-panel-collapse:hover {
+    color: var(--ea-fg);
+  }
 }
 </style>

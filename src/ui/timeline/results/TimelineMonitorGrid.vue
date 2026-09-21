@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** 旧版 ResourceMonitor 三段共用的时间背景层。 */
 import { computed } from 'vue';
-import { frameToTimelinePx } from '../timelineGeometry';
+import { frameToCondensedTimelinePx } from '../timelineGeometry';
 
 const props = defineProps<{
   width: number;
@@ -20,7 +20,7 @@ const GRID_LINE_FRAME_STEP = 150;
 function pointX(frame: number): number {
   return (
     props.trackHeaderWidth +
-    frameToTimelinePx(
+    frameToCondensedTimelinePx(
       frame,
       props.prepFrames,
       props.pxPerFrame,
@@ -53,7 +53,7 @@ const zeroX = computed(() => pointX(0));
     aria-hidden="true"
   >
     <rect
-      v-if="prepExpanded && prepFrames > 0"
+      v-if="prepFrames > 0"
       :x="prepStartX"
       y="0"
       :width="Math.max(0, zeroX - prepStartX)"
@@ -70,7 +70,7 @@ const zeroX = computed(() => pointX(0));
       class="monitor-grid__line"
     />
     <line
-      v-if="prepExpanded && prepFrames > 0"
+      v-if="prepFrames > 0"
       :x1="zeroX"
       y1="0"
       :x2="zeroX"
