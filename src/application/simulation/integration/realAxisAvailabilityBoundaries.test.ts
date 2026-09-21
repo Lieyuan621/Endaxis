@@ -105,13 +105,13 @@ it.each([
   },
 );
 
-it.each([150, 151])('原生寒冷附着打开汤汤窗口：经过 %i 帧后的消费边界', async offset => {
+it.each([151, 152])('原生寒冷附着打开汤汤窗口：经过 %i 帧后的消费边界', async offset => {
   const scenario = createEmptyScenario('window-boundary', '真实附着与窗口时钟');
   scenario.tracks[0] = track('xaihi', 'chr_0011_seraph_combo_skill', 'comboSkill', 1);
   scenario.tracks[1] = track('tangtang', 'chr_0027_tangtang_combo_skill', 'comboSkill', 1);
   scenario.tracks[1].skillCasts = [];
   const service = createEditorSimulationService();
-  const initial = await service.simulate(scenario, 100);
+  const initial = await service.simulate(scenario, 300);
   const opened = initial.receiptEntries.find(
     e => e.event === 'ComboWindowOpened' && e.sourceId === 'tangtang',
   );
@@ -122,9 +122,9 @@ it.each([150, 151])('原生寒冷附着打开汤汤窗口：经过 %i 帧后的�
   const run = await service.simulate(scenario, frame + 100);
   const relevant = run.receiptEntries.filter(e => e.sourceId === 'tangtang');
   expect(run.comboWindowDiagnostics.filter(d => d.sourceId === 'tangtang')).toHaveLength(
-    offset === 150 ? 0 : 1,
+    offset === 151 ? 0 : 1,
   );
-  if (offset === 150) {
+  if (offset === 151) {
     expect(relevant.find(e => e.event === 'ComboWindowConsumed')?.frame).toBe(frame);
   } else {
     expect(relevant.find(e => e.event === 'ComboWindowExpired')?.frame).toBe(frame);

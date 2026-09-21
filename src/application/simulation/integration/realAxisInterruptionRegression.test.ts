@@ -332,7 +332,7 @@ it('诀直接创建腐蚀时，天赋与潜能只延长一次寿命', async () =
   }
 });
 
-it('动火用原生十秒增伤不被另一干员的终结技膨胀延长', async () => {
+it('动火用十秒增伤按全局时钟推进，被另一干员的终结技膨胀延长', async () => {
   const scenario = createEmptyScenario('hot-work-clock', '套装默认时钟');
   const operator = track('arcane', [['ultimate', 'ultimate', 1]]);
   operator.gears = {
@@ -364,9 +364,7 @@ it('动火用原生十秒增伤不被另一干员的终结技膨胀延长', asyn
         e.frame < end!.frame,
     ),
   ).toBe(true);
-  // 创建帧是否已经 tick 影响一帧，不能把此差异当作冻结时长。
-  expect(end!.frame - start!.frame).toBeGreaterThanOrEqual(299);
-  expect(end!.frame - start!.frame).toBeLessThanOrEqual(300);
+  expect(end!.frame - start!.frame).toBeGreaterThan(300);
 });
 
 it('艾尔黛拉终结后续命中读取中途施加的赛希增幅，不冻结施法时增益', async () => {
@@ -443,7 +441,7 @@ it.each([true, false])('赛希连携天赋要求命中前已有寒冷（预附�
 it.each([
   ['ardelia', 'buff_common_natural_natural_corrupt_do', 7],
   ['xaihi', 'buff_chr_0011_seraph_talent_1_crystup', 5],
-] as const)('%s敌方增益使用原生默认时钟，不随另一干员终结技顺延', async (slug, buffId, seconds) => {
+] as const)('%s敌方增益使用全局时钟，随另一干员终结技顺延', async (slug, buffId, seconds) => {
   async function simulate(ultimateFrame?: number) {
     const scenario = createEmptyScenario('enemy-buff-clock', '敌方Buff时钟');
     scenario.tracks[0] = track(slug, [['comboSkill', 'comboSkill', 1]]);
@@ -486,10 +484,9 @@ it.each([
     ),
   ).toBe(true);
   expect(slowed.start).toBe(normal.start);
-  expect(slowed.end).toBe(normal.end);
-  // 创建发生在本帧Buff tick之前/之后会有一帧边界，不允许把全屏膨胀时长加到寿命上。
+  expect(slowed.end).toBeGreaterThan(normal.end);
+  // 来源技能本身也可能产生全局膨胀；这里只验证额外终结技继续延长寿命。
   expect(normal.end - normal.start).toBeGreaterThanOrEqual(seconds * 30 - 1);
-  expect(normal.end - normal.start).toBeLessThanOrEqual(seconds * 30);
 });
 
 it.each([true, false])('赫拉芬格连携增益要求目标已有寒冷附着（附着=%s）', async withCryo => {
@@ -613,7 +610,7 @@ it.each([true, false])('潮涌只由持有者输出的二层附着触发（本�
   } else expect(buffs).toEqual([]);
 });
 
-it('赫拉芬格战技附着增益使用15秒默认时钟，不被全屏终结技顺延', async () => {
+it('赫拉芬格战技附着增益使用全局时钟，被全屏终结技顺延', async () => {
   async function simulate(withUltimate: boolean) {
     const scenario = createEmptyScenario('khravengger-clock', '武器增益默认时钟');
     const owner = track('last-rite', [
@@ -660,7 +657,8 @@ it('赫拉芬格战技附着增益使用15秒默认时钟，不被全屏终结�
         e.frame < normal.end,
     ),
   ).toBe(true);
-  expect([slowed.start, slowed.end]).toEqual([normal.start, normal.end]);
+  expect(slowed.start).toBe(normal.start);
+  expect(slowed.end).toBeGreaterThan(normal.end);
   expect(normal.end - normal.start).toBeGreaterThanOrEqual(449);
   expect(normal.end - normal.start).toBeLessThanOrEqual(450);
 });
@@ -811,7 +809,7 @@ it('秘仪在本地58帧命中，队友即时连携的全局膨胀仍可延后�
   expect(frames[1]).toBeGreaterThan(frames[0]!);
 });
 
-it('低温症的15秒寿命不被队友终结技全屏膨胀延长', async () => {
+it('低温症的15秒寿命按全局时钟推进，被队友终结技全屏膨胀延长', async () => {
   const spans: number[][] = [];
   for (const withUltimate of [false, true]) {
     const scenario = createEmptyScenario('last-rite-talent-clock', '低温症默认时钟');
@@ -841,12 +839,13 @@ it('低温症的15秒寿命不被队友终结技全屏膨胀延长', async () =>
       e => e.event === 'BuffFinished' && e.data?.instanceId === start!.data?.instanceId,
     );
     expect(end?.data?.reason).toBe('lifetime');
-    expect(end!.frame - start!.frame).toBe(450);
+    if (!withUltimate) expect(end!.frame - start!.frame).toBe(450);
     expect(start!.frame).toBeLessThan(850);
     expect(end!.frame).toBeGreaterThan(850);
     spans.push([start!.frame, end!.frame]);
   }
-  expect(spans[1]).toEqual(spans[0]);
+  expect(spans[1]![0]).toBe(spans[0]![0]);
+  expect(spans[1]![1]).toBeGreaterThan(spans[0]![1]!);
 });
 
 it('诀秘仪命中时，负时长的筹谋增幅仍然生效', async () => {

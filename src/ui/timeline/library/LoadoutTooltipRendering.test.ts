@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createSSRApp, h, type Component } from 'vue';
 import { renderToString } from '@vue/server-renderer';
+import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { i18n, setLocale } from '../../../i18n/index';
 import { gameDataRepository } from '../../../data/gameDataRepository';
 import {
@@ -20,6 +21,8 @@ async function renderComponent(component: Component, props: Record<string, unkno
     render: () => h(component, props),
   });
   app.use(i18n);
+  app.provide(ID_INJECTION_KEY, { prefix: 1024, current: 0 });
+  app.provide(ZINDEX_INJECTION_KEY, { current: 0 });
   return renderToString(app);
 }
 
