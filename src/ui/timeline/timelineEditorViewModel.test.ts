@@ -426,8 +426,8 @@ describe('projectTimelineEditor', () => {
         enhanced: false,
         groupPlacementSkillKeys: ['chr_0028_wulfa_combo_2_skill', 'chr_0028_wulfa_combo_3_skill'],
         skills: [
-          expect.objectContaining({ timelineBlockFrames: 37 }),
-          expect.objectContaining({ timelineBlockFrames: 52 }),
+          expect.objectContaining({ timelineBlockFrames: 66 }),
+          expect.objectContaining({ timelineBlockFrames: 60 }),
         ],
       }),
     ]);

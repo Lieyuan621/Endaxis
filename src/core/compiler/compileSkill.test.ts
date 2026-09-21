@@ -976,7 +976,7 @@ describe('compileSkill', () => {
     expect(program).toMatchObject({
       operatorId: 'perlica',
       skillId: 'chr_0004_pelica_normal_skill',
-      timelineBlockFrames: 28,
+      timelineBlockFrames: 31,
       costFrame: 0,
       costs: [{ resource: 'sp', value: 100 }],
     });

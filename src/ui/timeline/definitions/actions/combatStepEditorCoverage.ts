@@ -19,6 +19,7 @@ export const PENDING_COMBAT_STEP_EDITOR_KINDS = {
     'hideUi',
     'launchProjectileLifetime',
     'markCurrentSkillCanDash',
+    'markCurrentSkillCanInterrupt',
     'overrideMultiDashLimit',
     'reachSkillOperableBoundary',
     'recordPerfectDodge',

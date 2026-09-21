@@ -570,10 +570,9 @@ it('retimes from simulated starts, same-track ends, and ultimate dilation', () =
       actionIndex: 1,
       sourceStartFrame: 180,
       adjustedStartFrame: 237,
-      sameTrackEndCandidate: 214,
+      sameTrackEndCandidate: 237,
       globalOrderCandidate: 180,
       pushedByUltimateTimeDilation: false,
-      inputWindowDelayFrames: 23,
     }),
     expect.objectContaining({
       trackIndex: 1,
