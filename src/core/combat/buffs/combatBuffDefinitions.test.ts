@@ -78,9 +78,10 @@ describe('compileCombatBuffDefinitions', () => {
     expect(index.getAttachmentElement(definition)).toBe('heat');
     expect(index.getBurst('heat').id).toBe('burst.heat');
     expect(index.getCompoundStatus('heat', 'cryo').id).toBe('status.heat.cryo');
-    expect(emitStarted).not.toHaveBeenCalled();
+    expect(emitStarted).toHaveBeenCalledExactlyOnceWith({ element: 'heat', layers: 1 }, first);
 
     container.add(definition, 'operator');
+    expect(emitStarted).toHaveBeenCalledTimes(2);
     expect(emitStarted).toHaveBeenCalledWith(
       { element: 'heat', layers: 2 },
       expect.objectContaining({ definition }),

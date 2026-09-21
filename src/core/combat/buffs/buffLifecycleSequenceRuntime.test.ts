@@ -2200,11 +2200,15 @@ describe('attachBuffLifecycleSequences', () => {
     );
     const container = new CombatBuffContainer<never>('enemy', new CombatAttributeSet<never>());
     const buff = container.add(definition, 'creator')!;
-    expect(reached).toEqual([]);
+    expect(reached).toEqual([
+      ['creator', 'creator', 1, 'creator'],
+      ['creator', 'creator', 1, 'creator'],
+    ]);
     container.add(definition, 'teammate-a');
     container.add(definition, 'teammate-b');
     expect(reached).toEqual([
-      ['teammate-a', 'teammate-a', 2, 'creator'],
+      ['creator', 'creator', 1, 'creator'],
+      ['creator', 'creator', 1, 'creator'],
       ['teammate-a', 'teammate-a', 2, 'creator'],
       ['teammate-b', 'teammate-b', 2, 'creator'],
     ]);

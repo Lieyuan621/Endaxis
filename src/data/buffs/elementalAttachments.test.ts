@@ -114,7 +114,10 @@ describe('elementalAttachments', () => {
     }
 
     expect(emitStarted.mock.calls.map(([payload]) => payload)).toEqual(
-      INFLICTION_ELEMENTS.map(element => ({ element, layers: 2 })),
+      INFLICTION_ELEMENTS.flatMap(element => [
+        { element, layers: 1 },
+        { element, layers: 2 },
+      ]),
     );
 
     expect(index.getCompoundStatus('nature', 'electric').id).toBe(

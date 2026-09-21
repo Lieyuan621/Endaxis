@@ -337,9 +337,11 @@ it.each([
     },
   };
   const buff = target.container.add(definition, 'operator', { skillCastInfo: original })!;
+  const initialAfterCount = stackingType === 'timedGrowingEnhance' ? 0 : 1;
+  expect(afterCount).toBe(initialAfterCount);
   const seen: AbilityEventPayloadMap['buffEnhanceChanged'][] = [];
   environment.eventsFor('enemy').registerCallback('buffEnhanceChanged', event => {
-    expect(afterCount).toBe(seen.length + 1);
+    expect(afterCount).toBe(initialAfterCount + seen.length + 1);
     expect(event.payload.buff).toBe(buff);
     expect(event.payload.layerCount).toBe(1);
     expect(event.payload.reason).toBe('lifetime');
@@ -377,7 +379,7 @@ it.each([
     entries
       .filter(entry => entry.event === 'BuffEnhanceAttempted')
       .map(entry => entry.data?.layers),
-  ).toEqual([2, 2]);
+  ).toEqual(stackingType === 'timedGrowingEnhance' ? [2, 2] : [1, 2, 2]);
 });
 
 it('标准环境公共事件载荷复用权威映射，不被过程通知的 unknown 放宽', () => {
@@ -647,7 +649,7 @@ it('发布链的连携准入不因完整事件收窄而放开增强/普通结束
   const buff = target.container.add(definition, 'operator')!;
   target.container.add(definition, 'operator');
   buff.finish('other', null);
-  expect(notifications).toEqual(['enhance', 'finish', 'enhance']);
+  expect(notifications).toEqual(['enhance', 'enhance', 'finish', 'enhance']);
   expect(
     combo.mock.calls.some(([event]) =>
       ['buffEnhanceChanged', 'finishedBuff'].includes(event.event),

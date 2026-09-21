@@ -244,7 +244,7 @@ describe('ElementalInflictionBuffAdapter', () => {
     });
   });
 
-  it('publishes attachment-start data only after an existing attachment is enhanced', () => {
+  it('publishes attachment-start data on initial application and subsequent enhancement', () => {
     const attributes = new CombatAttributeSet<Attribute>();
     const target = new CombatBuffContainer('enemy', attributes);
     const events: string[] = [];
@@ -256,9 +256,9 @@ describe('ElementalInflictionBuffAdapter', () => {
     };
 
     target.add(definition, 'operator');
-    expect(events).toEqual([]);
+    expect(events).toEqual(['electric:1:enemy']);
     target.add(definition, 'operator');
-    expect(events).toEqual(['electric:2:enemy']);
+    expect(events).toEqual(['electric:1:enemy', 'electric:2:enemy']);
   });
 
   it('publishes every successful elemental Buff application with native tags', () => {
