@@ -62,7 +62,7 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
     globalConfig: { modifiers: [] },
     editor: {
       trackHeightWeights: [1, 1, 1, 1],
-      prepExpanded: true,
+      prepExpanded: false,
     },
   };
 }

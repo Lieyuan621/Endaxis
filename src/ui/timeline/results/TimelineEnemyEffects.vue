@@ -25,7 +25,7 @@ import {
   getIconAssetPath,
   getSpellBurstIconPath,
 } from '../../gameAssetPaths';
-import { frameToTimelinePx } from '../timelineGeometry';
+import { frameToCondensedTimelinePx } from '../timelineGeometry';
 import TimelineMonitorGrid from './TimelineMonitorGrid.vue';
 import { summarizeLastHitBuffs } from './lastHitBuffSummary';
 import { layoutEnemyStatusRows } from './enemyStatusRows';
@@ -133,7 +133,7 @@ function spellBurstTitle(burstType: string | undefined): string {
 function pointX(frame: number): number {
   return (
     props.trackHeaderWidth +
-    frameToTimelinePx(
+    frameToCondensedTimelinePx(
       frame,
       props.prepFrames,
       props.pxPerFrame,
@@ -395,14 +395,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
         </strong>
       </span>
     </EnemyCombatHudSnapshot>
-    <div
-      class="enemy-timed-effects"
-      :style="{
-        clipPath: prepExpanded
-          ? undefined
-          : `inset(0 0 0 ${Math.max(trackHeaderWidth, pointX(prepEndFrame ?? 0))}px)`,
-      }"
-    >
+    <div class="enemy-timed-effects">
       <EaButton
         variant="ghost"
         size="sm"

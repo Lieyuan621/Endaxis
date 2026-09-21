@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   COLLAPSED_PREP_WIDTH_PX,
+  frameToCondensedTimelinePx,
   frameToTimelinePx,
   resolveTimelineCursorGuidePosition,
   timelinePxToExactFrame,
@@ -41,6 +42,20 @@ describe('timeline geometry', () => {
     expect(timelinePxToExactFrame(COLLAPSED_PREP_WIDTH_PX / 2, 150, 2, false)).toBe(-4.5);
     expect(timelinePxToFrame(COLLAPSED_PREP_WIDTH_PX + 60, 150, 2, false)).toBe(30);
     expect(timelineTotalWidth(150, 900, 2, false)).toBe(COLLAPSED_PREP_WIDTH_PX + 1800);
+  });
+
+  it('condenses preparation history for read-only monitor displays', () => {
+    expect(frameToCondensedTimelinePx(-150, 150, 2, false)).toBe(0);
+    expect(frameToCondensedTimelinePx(-75, 150, 2, false)).toBe(9);
+    expect(frameToCondensedTimelinePx(0, 150, 2, false)).toBe(COLLAPSED_PREP_WIDTH_PX);
+    expect(frameToCondensedTimelinePx(30, 150, 2, false)).toBe(COLLAPSED_PREP_WIDTH_PX + 60);
+  });
+
+  it('condenses inherited history up to its configured boundary', () => {
+    expect(frameToCondensedTimelinePx(-150, 150, 2, false, 600)).toBe(0);
+    expect(frameToCondensedTimelinePx(225, 150, 2, false, 600)).toBe(9);
+    expect(frameToCondensedTimelinePx(600, 150, 2, false, 600)).toBe(18);
+    expect(frameToCondensedTimelinePx(630, 150, 2, false, 600)).toBe(78);
   });
 
   it('round-trips integer frame positions', () => {

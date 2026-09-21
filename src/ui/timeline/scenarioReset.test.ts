@@ -25,6 +25,7 @@ describe('scenario reset', () => {
     expect(reset.scenarios[0]!.tracks[0]!.id).toBe('track');
     expect(reset.scenarios[0]!.tracks[0]!.initialState.ultimateEnergy).toBe(0);
     expect(reset.scenarios[0]!.battle.cycleBoundaries).toEqual([]);
+    expect(reset.scenarios[0]!.editor.prepExpanded).toBe(false);
     expect(reset.scenarios[1]).toBe(dependent);
     expect(reset.scenarios[1]!.inheritance).toEqual({ sourceScenarioId: current.id, frame: 30 });
     expect(current.battle.cycleBoundaries).toHaveLength(1);

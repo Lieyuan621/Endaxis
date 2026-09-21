@@ -891,6 +891,14 @@ onMounted(() => {
   }
 });
 const scenario = shallowRef(scenarioSession.snapshot.scenario);
+/** 折叠准备区只保留展开入口；此时不能把新的时间轴输入写进不可见历史。 */
+const minimumEditableInputFrame = computed(() =>
+  scenario.value.inheritance?.frame !== undefined
+    ? scenario.value.inheritance.frame
+    : scenario.value.editor.prepExpanded
+      ? -scenario.value.battle.prepFrames
+      : 0,
+);
 const timelinePrepPreviewFrames = ref<number | null>(null);
 const displayedTimelinePrepFrames = computed(
   () => timelinePrepPreviewFrames.value ?? scenario.value.battle.prepFrames,
@@ -2081,9 +2089,7 @@ const { castMoveGesture, beginCastMove, cancelCastMove, discardCastMove, consume
   useTimelineCastMove({
     prepEndFrame: computed(() => scenario.value.inheritance?.frame ?? 0),
     isInputReadOnly: isHistoricalSkillInput,
-    minimumInputFrame: computed(
-      () => scenario.value.inheritance?.frame ?? -scenario.value.battle.prepFrames,
-    ),
+    minimumInputFrame: minimumEditableInputFrame,
     scenario,
     actionSelection,
     interactionSession,
@@ -2437,7 +2443,7 @@ function alignSelectedCastToTarget(event: PointerEvent, targetCastId: string): b
     targetDurationFrames: target.durationFrames,
     sourceDurationFrames: source.durationFrames,
     snapFrames: snapFrames.value,
-    minimumFrame: -scenario.value.battle.prepFrames,
+    minimumFrame: minimumEditableInputFrame.value,
     maximumFrame: scenario.value.battle.durationFrames,
   });
   const changed = commitScenario('alignSkillCast', current =>
@@ -2508,12 +2514,15 @@ function castActualDurationPending(castId: string, definitionDurationFrames: num
 }
 
 function timelinePointerActualFrame(pointerPx: number): number {
-  return timelinePxToFrame(
-    pointerPx,
-    scenario.value.battle.prepFrames,
-    pxPerFrame.value,
-    scenario.value.editor.prepExpanded,
-    scenario.value.inheritance?.frame ?? 0,
+  return Math.max(
+    minimumEditableInputFrame.value,
+    timelinePxToFrame(
+      pointerPx,
+      scenario.value.battle.prepFrames,
+      pxPerFrame.value,
+      scenario.value.editor.prepExpanded,
+      scenario.value.inheritance?.frame ?? 0,
+    ),
   );
 }
 function formatGuideNumber(value: number | null): string {
@@ -4021,7 +4030,7 @@ function setSelectedConsumableFrame(value: number | undefined): void {
   if (!Number.isInteger(value)) return;
   updateSelectedConsumableUse({
     frame: Math.max(
-      -scenario.value.battle.prepFrames,
+      minimumEditableInputFrame.value,
       Math.min(scenario.value.battle.durationFrames, value!),
     ),
   });
@@ -4146,7 +4155,7 @@ function pointerMarkerFrame(clientX: number, grabOffsetPx = 0, minimumFrame = 0)
     prepEndFrame: scenario.value.inheritance?.frame ?? 0,
     snapFrames: snapFrames.value,
     maximumFrame: scenario.value.battle.durationFrames,
-    minimumFrame,
+    minimumFrame: Math.max(minimumFrame, minimumEditableInputFrame.value),
     prepExpanded: scenario.value.editor.prepExpanded,
   });
 }
@@ -4860,7 +4869,7 @@ function placePendingLibrarySkill(event: PointerEvent, trackIndex: TrackIndex): 
     ),
     snapFrames.value,
     scenario.value.battle.durationFrames,
-    -scenario.value.battle.prepFrames,
+    minimumEditableInputFrame.value,
   );
   cursorFrame.value = frame;
   cancelLibraryPlacement();
@@ -4881,6 +4890,7 @@ async function placeGroup(
   trackIndex = selectedTrack.value,
   variantKey?: string,
 ): Promise<void> {
+  startFrame = Math.max(minimumEditableInputFrame.value, startFrame);
   const operatorSlug = viewModel.value.tracks[trackIndex]?.operatorSlug ?? null;
   const operator =
     operatorSlug === null ? null : editorGameDataRepository.getOperator(operatorSlug);
@@ -5157,6 +5167,7 @@ function dropTimelinePayload(
     prepExpanded: scenario.value.editor.prepExpanded,
     snapFrames: snapFrames.value,
     maximumFrame: scenario.value.battle.durationFrames,
+    minimumFrame: minimumEditableInputFrame.value,
   });
   cursorFrame.value = frame;
   void placeGroup(payload.skillGroupKey, payload.skillKey, frame, trackIndex, payload.variantKey);
@@ -5453,10 +5464,7 @@ async function compactSelectedSkills(): Promise<void> {
 function pasteClipboardAtTimelinePosition(): void {
   const clipboard = timelineClipboard.value;
   if (clipboard === null) return;
-  const minimumFrame =
-    clipboard.dodgeMarker === undefined
-      ? -scenario.value.battle.prepFrames
-      : (scenario.value.inheritance?.frame ?? -scenario.value.battle.prepFrames);
+  const minimumFrame = minimumEditableInputFrame.value;
   const pasteFrame =
     timelinePointerClientX.value === null
       ? snapTimelineFrame(
@@ -5537,7 +5545,7 @@ function nudgeSelectedActions(deltaFrames: -1 | 1): boolean {
         trackIndex as TrackIndex,
         anchorSkillCastId,
         Math.max(
-          -scenario.value.battle.prepFrames,
+          minimumEditableInputFrame.value,
           resolvedSkillCastStartFrames.value.get(anchor.id)! + deltaFrames * snapFrames.value,
         ),
         resolvedSkillCastStartFrames.value,
@@ -8195,9 +8203,20 @@ button:disabled {
   pointer-events: auto;
 }
 
-.prep-collapsed-entry button:hover,
-.prep-expanded-collapse button:hover {
-  color: var(--ea-gold);
+.prep-collapsed-entry button {
+  color: var(--ea-fg);
+}
+
+.prep-collapsed-entry button:focus-visible,
+.prep-expanded-collapse button:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ea-gold) 35%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .prep-collapsed-entry button:hover,
+  .prep-expanded-collapse button:hover {
+    color: var(--ea-gold);
+  }
 }
 .prep-collapsed-entry svg,
 .prep-expanded-collapse svg {
@@ -8869,6 +8888,8 @@ button:disabled {
 .prep-zone {
   position: absolute;
   inset: 0 auto 0 0;
+  box-sizing: border-box;
+  border-right: 1px solid var(--ea-border);
   background: var(--ea-prep-fill);
   z-index: 0;
   pointer-events: none;

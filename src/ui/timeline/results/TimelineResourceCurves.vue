@@ -13,7 +13,7 @@ import type { SharedSpCurve } from '../../../core/projection/resourceCurves';
 import type { EnemyHealthCurve } from '../../../core/projection/enemyHealthCurves';
 import type { PoiseCurve } from '../../../core/projection/poiseCurves';
 import type { PoiseBrokenSegment, PoiseKnotSegment } from '../../../core/projection/poiseCurves';
-import { frameToTimelinePx } from '../timelineGeometry';
+import { frameToCondensedTimelinePx } from '../timelineGeometry';
 import TimelineMonitorGrid from './TimelineMonitorGrid.vue';
 
 const props = defineProps<{
@@ -139,7 +139,7 @@ const hasCurves = computed(() => visibleRows.value.length > 0);
 function pointX(frame: number): number {
   return (
     props.trackHeaderWidth +
-    frameToTimelinePx(
+    frameToCondensedTimelinePx(
       frame,
       props.prepFrames,
       props.pxPerFrame,
@@ -360,11 +360,6 @@ const spWarnings = computed(() => {
           scrollLeft,
         ]"
         class="curve-chart"
-        :style="{
-          clipPath: prepExpanded
-            ? undefined
-            : `inset(0 0 0 ${Math.max(trackHeaderWidth, pointX(prepEndFrame ?? 0))}px)`,
-        }"
         :width="width"
         height="100%"
         :viewBox="`0 0 ${width} ${rowHeight(row)}`"
