@@ -279,12 +279,14 @@ describe('TimeDilationRuntime', () => {
       defaultDeltaSeconds: 1 / 30,
       globalScaledDeltaSeconds: 0,
       selfScaledDeltaSeconds: 1 / 30,
+      globalAndSelfScaledDeltaSeconds: 0,
       skillCooldownDeltaSeconds: 1 / 30,
     });
     expect(runtime.getAbilityTickDeltas('other', 1 / 30)).toEqual({
       defaultDeltaSeconds: 1 / 30,
       globalScaledDeltaSeconds: 0,
       selfScaledDeltaSeconds: 0,
+      globalAndSelfScaledDeltaSeconds: 0,
       skillCooldownDeltaSeconds: 1 / 30,
     });
 
@@ -314,6 +316,7 @@ describe('TimeDilationRuntime', () => {
       defaultDeltaSeconds: 1 / 30,
       globalScaledDeltaSeconds: 1 / 60,
       selfScaledDeltaSeconds: (1 / 30) * 0.4,
+      globalAndSelfScaledDeltaSeconds: (1 / 60) * 0.4,
       skillCooldownDeltaSeconds: 1 / 60,
     });
     expect(runtime.getAbilityTickDeltas('other', 1 / 30).defaultDeltaSeconds).toBe(1 / 30);

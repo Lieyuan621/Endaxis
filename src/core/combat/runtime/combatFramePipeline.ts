@@ -9,8 +9,8 @@ export interface CombatFramePipeline {
   readonly timeDilation: TimeDilationRuntime | null;
   readonly control: FrameRuntime;
   readonly enemyControl?: { advance(deltaSeconds: number): void } | null;
-  readonly resources: FrameRuntime;
-  readonly globalBuffs: FrameRuntime;
+  readonly resources: FrameRuntime & { advance?(deltaSeconds: number): void };
+  readonly globalBuffs: FrameRuntime & { advance?(deltaSeconds: number): void };
   readonly abilityEntities: FrameRuntime;
   readonly projectiles: Pick<
     ProjectileLifecycleRuntime,
@@ -20,7 +20,7 @@ export interface CombatFramePipeline {
   readonly enemyVitals?: (FrameRuntime & { advance?(deltaSeconds: number): void }) | null;
   readonly enemyStatuses?: FrameRuntime;
   readonly operatorStatuses: readonly FrameRuntime[];
-  readonly comboWindows: FrameRuntime;
+  readonly comboWindows: FrameRuntime & { advance?(deltaSeconds: number): void };
   /** PlayerController 的连续闪避窗口，每帧只推进一次。 */
   readonly playerMultiDash: FrameRuntime;
   readonly operatorCenters: readonly FrameRuntime[];
@@ -41,9 +41,13 @@ export function bindCombatFramePipeline(
       advanceFrame: () =>
         enemyControl.advance(COMBAT_FRAME_INTERVAL * (timeDilation?.getEntityScale('enemy') ?? 1)),
     });
-  simulation.add(systems.resources);
+  const advanceGlobal = (runtime: FrameRuntime & { advance?(deltaSeconds: number): void }) => {
+    if (runtime.advance === undefined) runtime.advanceFrame();
+    else runtime.advance(COMBAT_FRAME_INTERVAL * (timeDilation?.currentGlobalScale ?? 1));
+  };
+  simulation.add({ advanceFrame: () => advanceGlobal(systems.resources) });
   // 父 Buff、实体与投射物寿命先于输入和技能动作推进。
-  simulation.add(systems.globalBuffs);
+  simulation.add({ advanceFrame: () => advanceGlobal(systems.globalBuffs) });
   simulation.add(systems.abilityEntities);
   simulation.add(projectiles);
   simulation.add({ advanceFrame: () => projectiles.beginAbilityFrame() });
@@ -69,7 +73,7 @@ export function bindCombatFramePipeline(
   simulation.add({ advanceFrame: () => enemyBuffs.recycleFinishedBuffs?.() });
   for (const status of systems.operatorStatuses) simulation.add(status);
   // 本帧归零的连携窗口不能再被同帧输入消费。
-  simulation.add(systems.comboWindows);
+  simulation.add({ advanceFrame: () => advanceGlobal(systems.comboWindows) });
   simulation.add(systems.playerMultiDash);
   for (const center of systems.operatorCenters) simulation.add(center);
   if (systems.bindInputPhases) simulation.addInputPhase('skillInputs');

@@ -294,6 +294,8 @@ export interface TimeDilationState {
   readonly ignoreGlobalTimeScaleEntityIds: Set<string>;
   nextInstanceId: number;
   globalScaledTime: number;
+  /** 已绑定计时消费者的实体累计时间；随切面复制，不能从全局时间反推。 */
+  readonly entityScaledTimes: Map<string, number>;
 }
 
 export function createTimeDilationState(): TimeDilationState {
@@ -303,6 +305,7 @@ export function createTimeDilationState(): TimeDilationState {
     ignoreGlobalTimeScaleEntityIds: new Set(),
     nextInstanceId: 0,
     globalScaledTime: 0,
+    entityScaledTimes: new Map(),
   };
 }
 

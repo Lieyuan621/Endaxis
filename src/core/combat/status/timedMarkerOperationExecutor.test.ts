@@ -8,6 +8,7 @@ import { TimedMarkerContainer } from './timedMarkers';
 import { LogicalAbilityEntityRuntime } from '../abilities/logicalAbilityEntityRuntime';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { StateStepper } from '../runtime/stateStepper';
+import { TimeDilationRuntime } from '../time/timeDilationRuntime';
 
 const delegate: CombatOperationExecutor = {
   execute: () => false,
@@ -15,6 +16,58 @@ const delegate: CombatOperationExecutor = {
 };
 
 describe('TimedMarkerOperationExecutor', () => {
+  it('普通标记跟随全局时间，显式缩放标记跟随目标实体，恢复后保留两路进度', () => {
+    const dilation = new TimeDilationRuntime({});
+    dilation.startGlobal({
+      durationSeconds: 2,
+      slot: 'ultimate',
+      priority: 1,
+      constantScale: 0,
+      ignoredOperatorIds: ['caster'],
+    });
+    const markers = new TimedMarkerContainer('caster', dilation.getEntityClock('caster'));
+    const executor = new TimedMarkerOperationExecutor({
+      resolveTarget: () => markers,
+      globalScaledClock: dilation,
+      delegate,
+    });
+    for (const scaled of [false, true]) {
+      executor.execute(
+        {
+          kind: 'createTimedMarker',
+          parameters: {
+            target: 'caster',
+            markerId: scaled ? 'entity' : 'ordinary',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            autoFinishByAction: false,
+            ...(scaled ? { timeDomain: 'globalScaled' as const } : {}),
+          },
+        },
+        { blackboard: new ActionBlackboard() },
+      );
+    }
+    dilation.advanceFrame();
+    const copy = new StateStepper(
+      { dilation: dilation.runtimeState, markers: markers.runtimeState },
+      () => undefined,
+    ).read();
+    const restored = new TimeDilationRuntime(
+      {},
+      {},
+      { state: copy.dilation, programs: dilation.programs },
+    );
+    const restoredMarkers = new TimedMarkerContainer(
+      'caster',
+      restored.getEntityClock('caster'),
+      {},
+      copy.markers,
+      { globalScaled: restored },
+    );
+    for (let i = 0; i < 3; i++) restored.advanceFrame();
+    expect(restoredMarkers.has('ordinary')).toBe(true);
+    expect(restoredMarkers.has('entity')).toBe(false);
+    expect(markers.has('entity')).toBe(true);
+  });
   it.each(['buffOwner', 'buffSource'] as const)(
     'uses the explicit %s identity instead of the event or caster',
     target => {

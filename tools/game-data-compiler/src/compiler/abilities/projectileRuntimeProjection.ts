@@ -323,6 +323,8 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
       // 原生可以因墙/地提前结束，但 Endaxis 固定木桩场景没有环境碰撞几何，
       // 因而只保留仍必然到达的 duration 上界回调。这是产品空间模型，不是原生不可达证明。
       if (launch.syncTimeScale) {
+        // 原生发射时读取来源 AbilitySystem 的不缩放时钟，后续倍率通知却复制来源组的自身倍率。
+        // 还需独立同步忽略全局开关；当前未保存这些订阅状态，不能直接借用来源实体时钟。
         throw new Error(
           `${sourcePath}: duration-finish projectile with synced source time is unsupported`,
         );

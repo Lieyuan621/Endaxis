@@ -85,6 +85,7 @@ export function bindRestoredCombatRuntimeOperators(
       state: options.preparation.operators.get(operatorId)!,
       skills: options.preparation.skills.get(operatorId)!,
       clock: options.foundation.shared.clock,
+      entityClock: options.foundation.shared.timeDilation?.getEntityClock(operatorId),
       globalScaledClock: options.foundation.shared.timeDilation ?? options.foundation.shared.clock,
       receipt: options.foundation.shared.receipt,
       resolveAttachedBuff: resolveBuff,

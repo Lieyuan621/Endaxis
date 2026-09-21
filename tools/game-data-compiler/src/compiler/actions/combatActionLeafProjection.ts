@@ -1814,7 +1814,7 @@ export function compileActionNode(
                       : { blackboardKey: action.marker.blackboardKey },
                   durationSeconds: actionValueOperand(action.duration),
                   autoFinishByAction: action.autoFinishByAction,
-                  // 原生 false 使用不受实体时间膨胀影响的共享战斗时钟。
+                  // 原生 false 使用全局缩放时间，不乘实体自身倍率。
                   timeDomain: action.useTimeDilationDeltaTime ? 'self' : 'global',
                 },
               },

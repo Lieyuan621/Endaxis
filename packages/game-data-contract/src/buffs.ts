@@ -314,7 +314,12 @@ export interface BuffSustainedProtectionDefinition {
   readonly impactResistance: BuffDuration;
 }
 
-/** Buff 生命周期可选择的原生时间域；缺省使用 TimeManager 默认时钟。 */
+/**
+ * Buff 生命周期的原生开关组合。
+ * default：全局缩放时间；global：实体最终时间，允许实体忽略全局缩放；
+ * self：全局与实体自身倍率相乘，不采用忽略全局缩放开关。
+ * 后两项分别对应 useTimeDilationDt 开启后 onlyUseSelfTimeDilation 的关闭和开启。
+ */
 export type BuffTimeClock = 'default' | 'global' | 'self';
 
 /** Buff 实例在头像、状态栏和技能按钮上的显示规则。 */
@@ -646,7 +651,7 @@ export type BuffDefinitionProperties = {
   readonly presentation?: CombatBuffPresentation;
   /** 跟随本体同时出现和消失的额外显示图标；它们没有独立战斗效果和生命周期。 */
   readonly childPresentations?: readonly CombatBuffChildPresentation[];
-  /** 计算持续时间和触发间隔所用的时钟；不填时使用普通战斗时间。 */
+  /** 计算持续时间和触发间隔所用的时钟；不填时随全局时间缩放。 */
   readonly timeClock?: BuffTimeClock;
   /** Buff 的分类标签；启用时同时挂到所属实体，并用于按标签查找、计数和结束 Buff。 */
   readonly applyTags?: readonly GameplayTag[];

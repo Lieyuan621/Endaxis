@@ -45,7 +45,7 @@ export function bindRestoredCombatAbilityEntityDirectory(
       COMBAT_FRAME_INTERVAL *
       (shared.timeDilation?.getEntityScale(logicalAbilityEntityRuntimeId(entity.instanceId)) ?? 1),
     timedMarkerClocks: {
-      global: shared.clock,
+      global: shared.timeDilation ?? shared.clock,
       globalScaled: shared.timeDilation ?? shared.clock,
     },
     hooks: {

@@ -20,7 +20,7 @@ it('separates placement presentation from actual per-skill levels and exposes al
   const html = await renderToString(
     createSSRApp({ render: () => h(Page, { group, first: true, last: false }) }),
   );
-  expect(html).toContain('基础放置项强调');
+  expect(html).toContain('基础放置项名称修饰');
   expect(html).toContain('variant-skill');
   expect(html).toContain('replacement-test');
   expect(html).not.toContain('分组决定');

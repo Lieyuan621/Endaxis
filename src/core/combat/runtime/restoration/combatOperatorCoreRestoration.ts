@@ -33,6 +33,8 @@ export interface RestoreCombatOperatorCoreOptions {
   readonly timedMarkerHooks?: TimedMarkerContainerHooks;
   /** 恢复标记创建时使用的全局缩放时钟，不能临时改用未缩放时间。 */
   readonly globalScaledClock?: TimedMarkerClock;
+  /** useTimeDilationDt 开启的标记采用所属实体时间。 */
+  readonly entityClock?: TimedMarkerClock;
   readonly createSkillDependencies: (
     binding: PreparedCombatSkillRestoreBinding,
     context: {
@@ -109,10 +111,13 @@ export function bindRestoredCombatOperatorCore(
   }
   const timedMarkers = new TimedMarkerContainer(
     ownerId,
-    options.clock,
+    options.entityClock ?? options.clock,
     options.timedMarkerHooks,
     options.state.timedMarkers,
-    { global: options.clock, globalScaled: options.globalScaledClock ?? options.clock },
+    {
+      global: options.globalScaledClock ?? options.clock,
+      globalScaled: options.globalScaledClock ?? options.clock,
+    },
   );
   const cooldowns = bindRestoredCombatSkillCooldowns(options.operator, options.state.cooldowns);
   const context = { blackboard, statuses, timedMarkers };

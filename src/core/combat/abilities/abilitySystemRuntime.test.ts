@@ -475,6 +475,7 @@ describe('AbilitySystemRuntime', () => {
         defaultDeltaSeconds: 1,
         globalScaledDeltaSeconds: 0.5,
         selfScaledDeltaSeconds: 0.1,
+        globalAndSelfScaledDeltaSeconds: 0.05,
         skillCooldownDeltaSeconds: 0.2,
       }),
     });

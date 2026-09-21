@@ -307,10 +307,15 @@ export class GlobalBuffRuntime {
   }
 
   advanceFrame(): void {
+    this.advance(COMBAT_FRAME_INTERVAL);
+  }
+
+  /** 全局 Buff 由 BattleManager 按全局缩放时间推进，不能借用施法者时钟。 */
+  advance(deltaSeconds: number): void {
     for (const group of this.runtimeState.groups.values()) {
       for (const instance of group) {
         if (instance.finished || instance.remainingDuration === null) continue;
-        instance.remainingDuration -= COMBAT_FRAME_INTERVAL;
+        instance.remainingDuration -= deltaSeconds;
         if (instance.remainingDuration <= 1e-8) this.#requireInstance(instance).finish('other');
       }
     }

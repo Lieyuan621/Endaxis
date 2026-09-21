@@ -102,7 +102,10 @@ export class CombatSharedRuntime {
                   programs: restored!.timeDilationPrograms!,
                 },
           );
-    this.globalCooldowns = new GlobalCooldowns(this.clock, state?.globalCooldowns);
+    this.globalCooldowns = new GlobalCooldowns(
+      this.timeDilation ?? this.clock,
+      state?.globalCooldowns,
+    );
     this.abilityEntityInstanceIds = new AbilityEntityInstanceIdAllocator(
       state?.identities.abilityEntities,
     );

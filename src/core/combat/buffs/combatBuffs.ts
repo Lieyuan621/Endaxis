@@ -167,9 +167,12 @@ export interface BuffSharedSpGainModifierDefinition {
 
 /** 一帧内供 Buff 实例选择的三路时间增量。 */
 export interface BuffTickDeltas {
-  readonly defaultDeltaSeconds: number;
-  readonly globalScaledDeltaSeconds: number;
-  readonly selfScaledDeltaSeconds: number;
+  /** BuffContainer.OnTick 的第一路：全局缩放时间，不是 AbilitySystem 的默认冷却时间。 */
+  readonly globalDeltaSeconds: number;
+  /** 原生 allScaledDeltaTime：所属实体最终时间，包含忽略全局缩放的处理。 */
+  readonly entityDeltaSeconds: number;
+  /** 原生 selfScaledDeltaTime：全局倍率 × 自身倍率，不采用忽略全局缩放开关。 */
+  readonly globalAndSelfDeltaSeconds: number;
 }
 
 /**
@@ -2106,11 +2109,11 @@ function compareShields<Key extends string>(
 function resolveBuffTickDelta(clock: BuffTimeClock, deltas: BuffTickDeltas): number {
   switch (clock) {
     case 'default':
-      return deltas.defaultDeltaSeconds;
+      return deltas.globalDeltaSeconds;
     case 'global':
-      return deltas.globalScaledDeltaSeconds;
+      return deltas.entityDeltaSeconds;
     case 'self':
-      return deltas.selfScaledDeltaSeconds;
+      return deltas.globalAndSelfDeltaSeconds;
   }
 }
 

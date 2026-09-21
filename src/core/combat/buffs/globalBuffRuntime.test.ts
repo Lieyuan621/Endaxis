@@ -235,7 +235,11 @@ describe('GlobalBuffRuntime', () => {
 
     expect(recoveryModifiers.resolve(10)).toBe(5);
     expect(gainModifiers.resolve('skill', 'gain').totalEfficiency).toBe(1.2);
-    runtime.advanceFrame();
+    runtime.advance(0);
+    expect(recoveryModifiers.resolve(10)).toBe(5);
+    runtime.advance(1 / 60);
+    expect(recoveryModifiers.resolve(10)).toBe(5);
+    runtime.advance(1 / 60);
     expect(recoveryModifiers.resolve(10)).toBe(10);
     expect(gainModifiers.resolve('skill', 'gain').totalEfficiency).toBe(1);
     expect(member.finished).toEqual(['other']);

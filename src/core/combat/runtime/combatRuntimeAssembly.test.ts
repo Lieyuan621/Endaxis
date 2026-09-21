@@ -3257,16 +3257,22 @@ describe('CombatRuntimeAssembly', () => {
 
     assembly.advanceFrame();
 
-    expect(enemyBuffs.getCountById('default-clock')).toBe(0);
+    expect(enemyBuffs.getCountById('default-clock')).toBe(1);
     expect(enemyBuffs.getCountById('global-clock')).toBe(1);
     expect(enemyBuffs.getCountById('self-clock')).toBe(1);
-    expect(Object.fromEntries(triggerCounts)).toEqual({ default: 2, global: 1, self: 0 });
+    expect(Object.fromEntries(triggerCounts)).toEqual({ default: 1, global: 0, self: 0 });
 
     assembly.advanceFrame();
 
-    expect(enemyBuffs.getCountById('global-clock')).toBe(0);
+    expect(enemyBuffs.getCountById('default-clock')).toBe(0);
+    expect(enemyBuffs.getCountById('global-clock')).toBe(1);
     expect(enemyBuffs.getCountById('self-clock')).toBe(1);
-    expect(Object.fromEntries(triggerCounts)).toEqual({ default: 2, global: 2, self: 1 });
+    expect(Object.fromEntries(triggerCounts)).toEqual({ default: 2, global: 1, self: 1 });
+
+    assembly.advanceFrames(2);
+    expect(enemyBuffs.getCountById('global-clock')).toBe(0);
+    expect(enemyBuffs.getCountById('self-clock')).toBe(0);
+    expect(Object.fromEntries(triggerCounts)).toEqual({ default: 2, global: 2, self: 2 });
   });
 
   it('installs equipment event handlers and executes their resource sequence', () => {

@@ -391,9 +391,13 @@ export class BuffDefinitionOperationTarget<Key extends string>
     this.#advancedObserver?.();
   }
 
-  /** AbilitySystem 提供四路时钟后，由各 Buff 定义自行选择其生命周期时间域。 */
+  /** Buff 容器的默认时间是全局缩放时间，与技能冷却的默认时间不同。 */
   advanceWithDeltas(deltas: AbilityTickDeltas): void {
-    this.container.tick(deltas);
+    this.container.tick({
+      globalDeltaSeconds: deltas.globalScaledDeltaSeconds,
+      entityDeltaSeconds: deltas.selfScaledDeltaSeconds,
+      globalAndSelfDeltaSeconds: deltas.globalAndSelfScaledDeltaSeconds,
+    });
     this.#advancedObserver?.();
   }
 

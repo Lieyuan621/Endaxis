@@ -50,11 +50,13 @@ export class TimeDilationPrograms {
 /** 普通动作使用原生数值槽位；终结技使用独立语义槽位，避免伪造尚未恢复的原生标签。 */
 export type TimeDilationSlot = string;
 
-/** AbilitySystem 一帧内按不同原生用途消费的四路时间增量。 */
+/** AbilitySystem 一帧内按不同原生用途消费的时间增量。 */
 export interface AbilityTickDeltas {
   readonly defaultDeltaSeconds: number;
   readonly globalScaledDeltaSeconds: number;
   readonly selfScaledDeltaSeconds: number;
+  /** 始终乘全局和实体自身倍率，不采用实体的忽略全局缩放开关。 */
+  readonly globalAndSelfScaledDeltaSeconds: number;
   readonly skillCooldownDeltaSeconds: number;
 }
 
@@ -63,6 +65,7 @@ export function uniformAbilityTickDeltas(deltaSeconds: number): AbilityTickDelta
     defaultDeltaSeconds: deltaSeconds,
     globalScaledDeltaSeconds: deltaSeconds,
     selfScaledDeltaSeconds: deltaSeconds,
+    globalAndSelfScaledDeltaSeconds: deltaSeconds,
     skillCooldownDeltaSeconds: deltaSeconds,
   };
 }
@@ -148,9 +151,20 @@ export class TimeDilationRuntime implements FrameRuntime {
     return this.#selectActiveGlobal()?.currentScale ?? 1;
   }
 
-  /** TimedMarker useTimeDilationDt 对应的 allScaledDeltaTime 累计时钟。 */
+  /** 普通定时标记使用的全局缩放累计时间。 */
   get time(): number {
     return this.runtimeState.globalScaledTime;
+  }
+
+  /** 实体累计时间独立保存；忽略全局缩放的实体不能借用全局时钟。 */
+  getEntityClock(entityId: string): { readonly time: number } {
+    const times = this.runtimeState.entityScaledTimes;
+    if (!times.has(entityId)) times.set(entityId, 0);
+    return {
+      get time() {
+        return times.get(entityId)!;
+      },
+    };
   }
 
   get activeGlobalInfluencesSkillCooldown(): boolean {
@@ -273,15 +287,7 @@ export class TimeDilationRuntime implements FrameRuntime {
   }
 
   getEntityScale(entityId: string): number {
-    const localScale = this.runtimeState.entityInstances
-      .filter(instance => instance.entityId === entityId)
-      .reduce((scale, instance) => scale * instance.currentScale, 1);
-    const ignoresGlobal =
-      this.runtimeState.ignoreGlobalTimeScaleEntityIds.has(entityId) ||
-      this.runtimeState.globalInstances.some(
-        instance => instance.active && instance.ignoredOperatorIds.has(entityId),
-      );
-    return Math.max(0, localScale * (ignoresGlobal ? 1 : this.currentGlobalScale));
+    return entityTimeScale(this.runtimeState, entityId);
   }
 
   setIgnoreGlobalTimeScale(entityId: string, ignore: boolean): void {
@@ -295,7 +301,7 @@ export class TimeDilationRuntime implements FrameRuntime {
     return this.getEntityScale(operatorId);
   }
 
-  /** 按原生 AbilitySystem.PreLateTick 分支生成本实体使用的四路时钟。 */
+  /** 按原生 AbilitySystem.PreLateTick 分支生成本实体使用的时钟。 */
   getAbilityTickDeltas(operatorId: string, rawDeltaSeconds: number): AbilityTickDeltas {
     if (!Number.isFinite(rawDeltaSeconds) || rawDeltaSeconds < 0) {
       throw new RangeError('raw delta seconds must be a non-negative finite number');
@@ -308,6 +314,8 @@ export class TimeDilationRuntime implements FrameRuntime {
       defaultDeltaSeconds,
       globalScaledDeltaSeconds,
       selfScaledDeltaSeconds: rawDeltaSeconds * this.getOperatorScale(operatorId),
+      globalAndSelfScaledDeltaSeconds:
+        globalScaledDeltaSeconds * localTimeScale(this.runtimeState, operatorId),
       skillCooldownDeltaSeconds: this.activeGlobalInfluencesSkillCooldown
         ? globalScaledDeltaSeconds
         : defaultDeltaSeconds,
@@ -315,7 +323,7 @@ export class TimeDilationRuntime implements FrameRuntime {
   }
 
   advanceFrame(): void {
-    return advanceTimeDilation(this.runtimeState, this.programs.values, this.#observer);
+    advanceTimeDilation(this.runtimeState, this.programs.values, this.#observer);
   }
 
   #tryAddGlobal(candidate: GlobalTimeDilationInstance): boolean {
@@ -451,6 +459,30 @@ export function advanceTimeDilation(
   // 本运行时先于 AbilitySystem 推进；使用更新后的当前倍率，与本帧其余 Ability tick 一致。
   state.globalScaledTime +=
     COMBAT_FRAME_INTERVAL * (selectActiveGlobalTimeDilation(state)?.currentScale ?? 1);
+  for (const [entityId, time] of state.entityScaledTimes) {
+    state.entityScaledTimes.set(
+      entityId,
+      time + COMBAT_FRAME_INTERVAL * entityTimeScale(state, entityId),
+    );
+  }
+}
+
+function localTimeScale(state: TimeDilationState, entityId: string): number {
+  return state.entityInstances
+    .filter(instance => instance.entityId === entityId)
+    .reduce((scale, instance) => scale * instance.currentScale, 1);
+}
+
+function entityTimeScale(state: TimeDilationState, entityId: string): number {
+  const ignoresGlobal =
+    state.ignoreGlobalTimeScaleEntityIds.has(entityId) ||
+    state.globalInstances.some(
+      instance => instance.active && instance.ignoredOperatorIds.has(entityId),
+    );
+  const globalScale = ignoresGlobal
+    ? 1
+    : (selectActiveGlobalTimeDilation(state)?.currentScale ?? 1);
+  return Math.max(0, localTimeScale(state, entityId) * globalScale);
 }
 
 function selectActiveGlobalTimeDilation(

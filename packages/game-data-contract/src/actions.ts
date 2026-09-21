@@ -973,7 +973,7 @@ export interface CombatStepParameters {
     durationSeconds: ActionValueOperand;
     /** 是否随当前动作结束。 */
     autoFinishByAction: boolean;
-    /** 原生 useTimeDilationDt=true 时使用全局 allScaledDeltaTime；缺省使用普通帧时钟。 */
+    /** 对应原生 useTimeDilationDt：设置后使用目标实体最终时间；缺省使用全局缩放时间。 */
     timeDomain?: 'globalScaled';
   };
   /** 在当前能力实体上创建定时标记；每个标记显式选择共享战斗或实体自身时钟。 */

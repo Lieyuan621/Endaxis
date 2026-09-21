@@ -50,5 +50,11 @@ describe('CombatResourceRuntime', () => {
         },
       },
     ]);
+
+    const runtime = new CombatResourceRuntime(resources, clock, receipt);
+    runtime.advance(0);
+    expect(resources.sp).toBe(100);
+    runtime.advance(1 / 60);
+    expect(resources.sp).toBe(100.5);
   });
 });

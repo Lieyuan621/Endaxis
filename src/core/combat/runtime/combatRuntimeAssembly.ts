@@ -935,10 +935,10 @@ export class CombatRuntimeAssembly {
       this.#enemyBuffRuntime = foundation.enemyBuffTarget as EnemyBuffRuntime;
       this.#enemyTimedMarkers = new TimedMarkerContainer(
         'enemy',
-        this.clock,
+        this.timeDilation?.getEntityClock('enemy') ?? this.clock,
         undefined,
         preparation.graph.enemy.timedMarkers,
-        { global: this.clock, globalScaled: this.timeDilation ?? this.clock },
+        { global: this.timeDilation ?? this.clock, globalScaled: this.timeDilation ?? this.clock },
       );
 
       for (const [operatorId, program] of preparation.programs) {
@@ -1417,7 +1417,10 @@ export class CombatRuntimeAssembly {
     this.projectileLifetimes = new ProjectileLifecycleRuntime(() =>
       this.#abilityEntityInstanceIds.allocate(),
     );
-    this.#enemyTimedMarkers = new TimedMarkerContainer('enemy', this.clock);
+    this.#enemyTimedMarkers = new TimedMarkerContainer(
+      'enemy',
+      this.timeDilation?.getEntityClock('enemy') ?? this.clock,
+    );
     this.globalBuffs = new GlobalBuffRuntime(
       () => this.#requirePartyBuffTargets(),
       (sourceOperatorId, buffId) => {
@@ -1450,7 +1453,7 @@ export class CombatRuntimeAssembly {
     this.abilityEntities = new LogicalAbilityEntityRuntime({
       allocateInstanceId: () => this.#abilityEntityInstanceIds.allocate(),
       timedMarkerClocks: {
-        global: this.clock,
+        global: this.timeDilation ?? this.clock,
         globalScaled: this.timeDilation ?? this.clock,
       },
       resolveDeltaSeconds: entity =>
@@ -1464,6 +1467,7 @@ export class CombatRuntimeAssembly {
             this.timeDilation === null
               ? {
                   defaultDeltaSeconds: COMBAT_FRAME_INTERVAL,
+                  globalAndSelfScaledDeltaSeconds: COMBAT_FRAME_INTERVAL,
                   globalScaledDeltaSeconds: COMBAT_FRAME_INTERVAL,
                   selfScaledDeltaSeconds: COMBAT_FRAME_INTERVAL,
                   skillCooldownDeltaSeconds: COMBAT_FRAME_INTERVAL,
@@ -1511,7 +1515,10 @@ export class CombatRuntimeAssembly {
       }
       this.#operatorTimedMarkers.set(
         operator.operatorId,
-        new TimedMarkerContainer(operator.operatorId, this.clock),
+        new TimedMarkerContainer(
+          operator.operatorId,
+          this.timeDilation?.getEntityClock(operator.operatorId) ?? this.clock,
+        ),
       );
       const statusRuntime =
         operator.statusContainer === undefined
@@ -4038,7 +4045,7 @@ export class CombatRuntimeAssembly {
             : this.#requireTimedMarkerContainer(operatorId),
         resolveAbilityEntityTarget: target => this.abilityEntities.timedMarkers(target),
         resolveEventTarget: targetId => this.#resolveTimedMarkerContainerById(targetId),
-        globalClock: this.clock,
+        globalClock: this.timeDilation ?? this.clock,
         globalScaledClock: this.timeDilation ?? this.clock,
         delegate: statusOperations,
       },
@@ -4361,7 +4368,7 @@ export class CombatRuntimeAssembly {
             : this.#requireTimedMarkerContainer(operatorId),
         resolveAbilityEntityTarget: target => this.abilityEntities.timedMarkers(target),
         resolveEventTarget: targetId => this.#resolveTimedMarkerContainerById(targetId),
-        globalClock: this.clock,
+        globalClock: this.timeDilation ?? this.clock,
         globalScaledClock: this.timeDilation ?? this.clock,
         delegate: statusOperations,
       },

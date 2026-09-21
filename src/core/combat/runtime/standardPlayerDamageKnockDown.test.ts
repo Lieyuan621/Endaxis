@@ -281,7 +281,7 @@ describe('标准战斗环境的普通倒地显式装配', () => {
     expect(s.elapsed).not.toHaveBeenCalled();
   });
 
-  it('全局冻屏暂停倒地计时，但默认 Buff 仍可到期', () => {
+  it('全局冻屏同时暂停倒地控制计时与默认 Buff 寿命', () => {
     const s = setup();
     s.start();
     s.assembly.timeDilation!.startGlobal({
@@ -294,7 +294,7 @@ describe('标准战斗环境的普通倒地显式装配', () => {
     expect(s.control.remaining).toBe(1.5);
     expect(
       s.environment.runtimeOptions.enemyBuffRuntime.getCountByIds(['buff_physical_knockdown']),
-    ).toBe(0);
+    ).toBe(1);
     expect(
       s.environment.runtimeOptions.enemyBuffRuntime.matchesEntityTags([DOWN_TAG], 'hasAll'),
     ).toBe(true);

@@ -5,7 +5,11 @@
  * Endaxis 当前只有一个敌人，因此只记录候选顺序，不实现多目标挑选策略的数值差异。
  */
 import type { CombatReceiptSink } from '../receipt/combatReceipt';
-import { COMBAT_FRAMES_PER_SECOND, type CombatClock } from '../time/combatClock';
+import {
+  COMBAT_FRAME_INTERVAL,
+  COMBAT_FRAMES_PER_SECOND,
+  type CombatClock,
+} from '../time/combatClock';
 import type { FrameRuntime } from '../runtime/combatSimulation';
 import {
   type ComboCastParameters,
@@ -241,11 +245,17 @@ export class ComboWindowRuntime implements FrameRuntime {
   }
 
   advanceFrame(): void {
+    this.advance(COMBAT_FRAME_INTERVAL);
+  }
+
+  /** BattleManager 的候选剩余时间随全局缩放；显式暂停仍优先。 */
+  advance(deltaSeconds: number): void {
     if (this.runtimeState.globallyPaused) return;
     const previous = this.#perfectOperators();
     for (const record of [...this.runtimeState.records.values()]) {
       if (this.runtimeState.pausedOperators.has(record.operatorId)) continue;
-      for (const candidate of record.candidates) candidate.remainingFrames -= 1;
+      for (const candidate of record.candidates)
+        candidate.remainingFrames -= deltaSeconds * COMBAT_FRAMES_PER_SECOND;
       // 原生只在 remainTime < 0 时移除；恰好归零的候选在本帧仍然存在。
       const expired = record.candidates.filter(candidate => candidate.remainingFrames < 0);
       if (expired.length === 0) continue;

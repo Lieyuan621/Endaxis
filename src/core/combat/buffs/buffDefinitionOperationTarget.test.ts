@@ -4,10 +4,35 @@ import { CombatBuffContainer, type CombatBuffDefinition } from './combatBuffs';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import type { CombatBuffDefinitionEntry } from './combatBuffDefinitions';
 import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
+import { TimeDilationRuntime } from '../time/timeDilationRuntime';
 
 type Attribute = 'cost';
 
 describe('BuffDefinitionOperationTarget', () => {
+  it('终结技暂停普通 Buff，只有采用实体时间的 Buff 可随施法者继续推进', () => {
+    const dilation = new TimeDilationRuntime({});
+    dilation.startGlobal({
+      durationSeconds: 2,
+      slot: 'test',
+      priority: 1,
+      constantScale: 0,
+      ignoredOperatorIds: ['caster'],
+    });
+    const container = new CombatBuffContainer('caster', new CombatAttributeSet<string>());
+    const target = new BuffDefinitionOperationTarget(container, {
+      get: id => ({
+        id,
+        stackingType: 'unlimited',
+        durationSeconds: 10,
+        timeClock: id as 'default' | 'global' | 'self',
+      }),
+    });
+    const buffs = ['default', 'global', 'self'].map(buffId =>
+      target.applyScoped({ buffId, sourceId: 'caster', blackboardValues: {} })!,
+    );
+    target.advanceWithDeltas(dilation.getAbilityTickDeltas('caster', 1));
+    expect(buffs.map(buff => buff.remainingDuration)).toEqual([10, 9, 10]);
+  });
   it('records births before nested Start and publishes the actual instance, without recreating refreshed Buffs', () => {
     const order: string[] = [];
     const born = vi.fn((buff: { instanceId: number }) => order.push(`born:${buff.instanceId}`));

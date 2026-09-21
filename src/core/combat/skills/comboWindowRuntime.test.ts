@@ -12,6 +12,19 @@ function advance(clock: CombatClock, runtime: ComboWindowRuntime, frames: number
 }
 
 describe('ComboWindowRuntime', () => {
+  it('全局慢速期间按缩放时间消耗连携窗口，零倍率不消耗', () => {
+    const clock = new CombatClock();
+    const runtime = new ComboWindowRuntime(clock, new CombatReceiptCollector());
+    runtime.open('operator', 'combo');
+    for (let i = 0; i < COMBO_WINDOW_DURATION_FRAMES; i++) runtime.advance(0);
+    expect(runtime.consume('operator', 'combo').consumed).toBe(true);
+    runtime.open('operator', 'combo');
+    for (let i = 0; i < COMBO_WINDOW_DURATION_FRAMES; i++) runtime.advance(1 / 60);
+    expect(runtime.consume('operator', 'combo').consumed).toBe(true);
+    runtime.open('operator', 'combo');
+    for (let i = 0; i < COMBO_WINDOW_DURATION_FRAMES * 2 + 1; i++) runtime.advance(1 / 60);
+    expect(runtime.consume('operator', 'combo').consumed).toBe(false);
+  });
   it('projects the actual perfect interval through pauses and consumption', () => {
     const clock = new CombatClock();
     const receipt = new CombatReceiptCollector();

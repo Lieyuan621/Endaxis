@@ -21,6 +21,24 @@ const resources = {
   ],
 } as const;
 
+it('全局定时标记在终结技全局暂停期间保留，恢复时间推进后才到期', () => {
+  const shared = new CombatSharedRuntime({
+    resources,
+    operatorOrder: ['operator'],
+    timeDilation: { config: {} },
+  });
+  const id = shared.timeDilation!.startUltimate(1, 0, ['operator']);
+  shared.globalCooldowns.set('operator', 'marker', 0.1);
+  for (let i = 0; i < 10; i++) {
+    shared.clock.advanceFrame();
+    shared.timeDilation!.advanceFrame();
+  }
+  expect(shared.globalCooldowns.has('operator', 'marker')).toBe(true);
+  shared.timeDilation!.stop(id);
+  for (let i = 0; i < 4; i++) shared.timeDilation!.advanceFrame();
+  expect(shared.globalCooldowns.has('operator', 'marker')).toBe(false);
+});
+
 it('binds every shared runtime to one copied graph without replaying business events', () => {
   const original = new CombatSharedRuntime({
     resources,

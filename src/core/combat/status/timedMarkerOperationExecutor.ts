@@ -77,13 +77,15 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     const markerClock =
       step.kind === 'createAbilityEntityTimedMarker' && step.parameters.timeDomain === 'global'
         ? this.#requireGlobalClock()
-        : step.kind === 'createTimedMarker' && step.parameters.timeDomain === 'globalScaled'
-          ? this.#requireGlobalScaledClock()
+        : step.kind === 'createTimedMarker' && step.parameters.timeDomain !== 'globalScaled'
+          ? (this.dependencies.globalScaledClock ?? target.clock)
           : undefined;
     const markerClockDomain =
       step.kind === 'createAbilityEntityTimedMarker' && step.parameters.timeDomain === 'global'
         ? 'global'
-        : step.kind === 'createTimedMarker' && step.parameters.timeDomain === 'globalScaled'
+        : step.kind === 'createTimedMarker' &&
+            step.parameters.timeDomain !== 'globalScaled' &&
+            this.dependencies.globalScaledClock !== undefined
           ? 'globalScaled'
           : 'default';
     const handle = target.add(
@@ -213,13 +215,6 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
       throw new Error('global-clock ability entity timed marker runtime is not configured');
     }
     return this.dependencies.globalClock;
-  }
-
-  #requireGlobalScaledClock(): TimedMarkerClock {
-    if (this.dependencies.globalScaledClock === undefined) {
-      throw new Error('global-scaled timed marker clock is not configured');
-    }
-    return this.dependencies.globalScaledClock;
   }
 }
 

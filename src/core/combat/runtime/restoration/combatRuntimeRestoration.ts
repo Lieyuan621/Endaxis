@@ -90,11 +90,11 @@ export function restoreCombatRuntime(options: RestoreCombatRuntimeOptions): Rest
   });
   const enemyTimedMarkers = new TimedMarkerContainer(
     'enemy',
-    foundation.shared.clock,
+    foundation.shared.timeDilation?.getEntityClock('enemy') ?? foundation.shared.clock,
     options.enemyTimedMarkerHooks,
     options.graph.enemy.timedMarkers,
     {
-      global: foundation.shared.clock,
+      global: foundation.shared.timeDilation ?? foundation.shared.clock,
       globalScaled: foundation.shared.timeDilation ?? foundation.shared.clock,
     },
   );

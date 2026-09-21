@@ -2655,9 +2655,9 @@ describe('CombatBuffContainer', () => {
     const selfBuff = add('buff.self', 'self');
 
     container.tick({
-      defaultDeltaSeconds: 1,
-      globalScaledDeltaSeconds: 0.5,
-      selfScaledDeltaSeconds: 0.25,
+      globalDeltaSeconds: 1,
+      entityDeltaSeconds: 0.5,
+      globalAndSelfDeltaSeconds: 0.25,
     });
 
     expect(defaultBuff.passedTime).toBe(1);
