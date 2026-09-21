@@ -17,3 +17,14 @@ describe('default team SP', () => {
     expect(project.scenarios[0]!.battle.resourceRules.initialSp).toBe(200);
   });
 });
+
+describe('default preparation area', () => {
+  it('starts new scenarios collapsed', () => {
+    expect(createEmptyScenario('test', 'Test').editor.prepExpanded).toBe(false);
+  });
+
+  it('starts the initial project scenario collapsed', () => {
+    const project = createEmptyProject({ createdWith: 'test' });
+    expect(project.scenarios[0]!.editor.prepExpanded).toBe(false);
+  });
+});

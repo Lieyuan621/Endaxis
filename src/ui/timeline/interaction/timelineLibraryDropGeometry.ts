@@ -9,6 +9,8 @@ export interface TimelineLibraryDropGeometryInput {
   readonly prepFrames: number;
   readonly snapFrames: number;
   readonly maximumFrame: number;
+  /** 当前视图允许写入的最早帧；折叠准备区时由调用方传正式战斗起点。 */
+  readonly minimumFrame?: number;
   readonly prepExpanded?: boolean;
   readonly prepEndFrame?: number;
 }
@@ -44,5 +46,8 @@ export function resolveTimelineLibraryDropFrame(input: TimelineLibraryDropGeomet
       input.prepEndFrame,
     ),
   );
-  return snapTimelineFrame(actualFrame, input.snapFrames, input.maximumFrame, -input.prepFrames);
+  const minimumFrame =
+    input.minimumFrame ??
+    (input.prepExpanded === false ? (input.prepEndFrame ?? 0) : -input.prepFrames);
+  return snapTimelineFrame(actualFrame, input.snapFrames, input.maximumFrame, minimumFrame);
 }

@@ -25,9 +25,13 @@ describe('timeline library drop geometry', () => {
     expect(dropFrame({ clientX: 90 })).toBe(-20);
   });
 
-  it('inverts the cropped preparatory projection when collapsed', () => {
+  it('projects battle time but blocks drops into the collapsed preparation area', () => {
     expect(dropFrame({ clientX: 188, prepExpanded: false })).toBe(30);
-    expect(dropFrame({ clientX: 119, prepExpanded: false })).toBe(-4);
+    expect(dropFrame({ clientX: 119, prepExpanded: false })).toBe(0);
+  });
+
+  it('honors the editable boundary supplied by inherited or collapsed scenarios', () => {
+    expect(dropFrame({ clientX: 130, minimumFrame: 12 })).toBe(12);
   });
 
   it('is invariant across zoom levels for the same visible frame', () => {

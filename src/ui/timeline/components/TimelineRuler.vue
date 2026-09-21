@@ -400,6 +400,8 @@ function seek(event: MouseEvent): void {
 .prep-zone {
   position: absolute;
   inset: 0 auto 0 0;
+  box-sizing: border-box;
+  border-right: 1px solid var(--ea-border);
   background: var(--ea-prep-fill);
 }
 
