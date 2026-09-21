@@ -231,6 +231,7 @@ export interface CombatVitalsState {
   hasPoiseBrokenTag: boolean;
   readonly maxHealth: number;
   readonly maxPoise: number;
+  readonly poiseKnotThresholds: readonly number[];
   readonly poiseRecoveryTime: number;
   readonly poiseRecoveryTimeMultiplier: number;
   readonly poiseBrokenEndTime: number;

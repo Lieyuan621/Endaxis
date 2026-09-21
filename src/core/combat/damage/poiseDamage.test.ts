@@ -19,6 +19,64 @@ function createTarget(overrides: Partial<ConstructorParameters<typeof CombatVita
 }
 
 describe('poise damage', () => {
+  it('emits one knot event across multiple thresholds and re-arms after recovery and restore', () => {
+    let target = createTarget({ poiseKnotThresholds: [0.25, 0.5, 0.75] });
+    const events: string[] = [];
+    const receipt = new CombatReceiptCollector();
+    const hit = (value: number) =>
+      executePoiseDamage({
+        sourceId: 'operator',
+        targetId: 'enemy',
+        target,
+        calculationValue: value,
+        outputMultiplier: 1,
+        takenMultiplier: 1,
+        clock: new CombatClock(),
+        receipt,
+        emitSourceEvent: () => {},
+        emitTargetEvent: event => events.push(event),
+      });
+    hit(50);
+    expect(events.filter(event => event === 'poiseKnotBreak')).toHaveLength(1);
+    expect(receipt.entries.find(entry => entry.event === 'PoiseKnotBroken')?.data).toEqual({
+      previousKnotCount: 0,
+      currentKnotCount: 2,
+    });
+    const saved = structuredClone(target.runtimeState);
+    hit(1);
+    expect(events.filter(event => event === 'poiseKnotBreak')).toHaveLength(1);
+    target = CombatVitals.bindRuntimeState(saved);
+    hit(-30);
+    expect(target.brokenPoiseKnotCount).toBe(0);
+    hit(30);
+    expect(events.filter(event => event === 'poiseKnotBreak')).toHaveLength(2);
+    hit(50);
+    expect(events.slice(-3)).toEqual(['poiseKnotBreak', 'takePoiseDamage', 'poiseZero']);
+    target.tick(1);
+    expect(target.brokenPoiseKnotCount).toBe(0);
+    hit(25);
+    expect(events.filter(event => event === 'poiseKnotBreak')).toHaveLength(4);
+  });
+
+  it('does not break knots on immune damage', () => {
+    const target = createTarget({ poiseKnotThresholds: [0.5], poiseImmune: true });
+    const events: string[] = [];
+    executePoiseDamage({
+      sourceId: 'operator',
+      targetId: 'enemy',
+      target,
+      calculationValue: 60,
+      outputMultiplier: 1,
+      takenMultiplier: 1,
+      clock: new CombatClock(),
+      receipt: new CombatReceiptCollector(),
+      emitSourceEvent: () => {},
+      emitTargetEvent: event => events.push(event),
+    });
+    expect(events).not.toContain('poiseKnotBreak');
+    expect(target.brokenPoiseKnotCount).toBe(0);
+  });
+
   it('multiplies the recovered calculation, output, and taken values', () => {
     expect(
       calculatePoiseDamage({

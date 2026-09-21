@@ -21,6 +21,7 @@ export interface CombatVitalsSnapshot {
   readonly health: number;
   readonly maxHealth: number;
   readonly maxPoise: number;
+  readonly poiseKnotThresholds?: readonly number[];
   readonly poise: number;
   readonly poiseRecoveryTime: number;
   readonly poiseRecoveryTimeMultiplier: number;
@@ -82,6 +83,13 @@ export class CombatVitals {
   }
   get maxPoise(): number {
     return this.runtimeState.maxPoise;
+  }
+  /** 当前损失比例已达到的节点数；恢复和切面恢复直接由同一账本得出。 */
+  get brokenPoiseKnotCount(): number {
+    if (!this.hasPoise) return 0;
+    const lostRatio = 1 - this.poise / this.maxPoise;
+    return this.runtimeState.poiseKnotThresholds.filter(threshold => lostRatio >= threshold - 1e-5)
+      .length;
   }
   get hasPoise(): boolean {
     return hasVitalsPoise(this.runtimeState);
@@ -158,6 +166,7 @@ function createCombatVitalsState(snapshot: CombatVitalsSnapshot): CombatVitalsSt
     poiseImmune: snapshot.poiseImmune,
     maxHealth: snapshot.maxHealth,
     maxPoise: snapshot.maxPoise,
+    poiseKnotThresholds: [...(snapshot.poiseKnotThresholds ?? [])],
     poiseRecoveryTime: snapshot.poiseRecoveryTime,
     poiseRecoveryTimeMultiplier: snapshot.poiseRecoveryTimeMultiplier,
     poiseBrokenEndTime: snapshot.poiseBrokenEndTime,

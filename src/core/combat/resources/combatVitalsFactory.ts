@@ -14,6 +14,7 @@ export function createEnemyCombatVitals(enemy: CombatEnemyProgram): CombatVitals
     maxHealth: enemy.health,
     // 原生 hasPoise 只取决于失衡上限；中间节点不会把失衡拆成多条独立账本。
     maxPoise: enemy.stagger.maximum,
+    poiseKnotThresholds: enemy.stagger.knotThresholds,
     poise: enemy.stagger.maximum,
     poiseRecoveryTime: enemy.stagger.brokenDurationFrames * COMBAT_FRAME_INTERVAL,
     poiseRecoveryTimeMultiplier: 1,

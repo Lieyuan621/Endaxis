@@ -11,6 +11,7 @@ export const POISE_DAMAGE_EVENTS = [
   'beforeTakePoiseDamage',
   'takePoiseDamage',
   'poiseZero',
+  'poiseKnotBreak',
 ] as const;
 /** 失衡伤害计算中向来源方和目标方发布的事件。 */
 export type PoiseDamageEvent = (typeof POISE_DAMAGE_EVENTS)[number];
@@ -87,7 +88,21 @@ export function executePoiseDamage(input: ExecutePoiseDamageInput): PoiseDamageE
   modifier.cancelled = cancelledByImmunity;
   let brokePoise = false;
   if (!modifier.cancelled && input.target.hasPoise) {
+    const previousKnotCount = input.target.brokenPoiseKnotCount;
     modifier.actualDelta = input.target.applyPoiseDelta(modifier.finalDelta);
+    const currentKnotCount = input.target.brokenPoiseKnotCount;
+    if (currentKnotCount > previousKnotCount) {
+      // 原生先遍历阈值更新索引，再统一通知一次；跨多个节点不能重复开窗。
+      input.receipt.record({
+        frame: input.clock.frame,
+        time: input.clock.time,
+        event: 'PoiseKnotBroken',
+        sourceId: input.sourceId,
+        targetId: input.targetId,
+        data: { previousKnotCount, currentKnotCount },
+      });
+      input.emitTargetEvent('poiseKnotBreak', modifier);
+    }
     if (modifier.finalDelta < 0) input.emitTargetEvent('takePoiseDamage', modifier);
     brokePoise = input.target.beginPoiseBreakIfZero();
     if (brokePoise) {

@@ -2088,6 +2088,7 @@ export class StandardPlayerDamageEnvironment {
                 case 'takeDamage':
                 case 'outputDamage':
                 case 'poiseZero':
+                case 'poiseKnotBreak':
                 case 'buffConsumed':
                 case 'buffAbsorbed':
                 case 'weaknessSet':
