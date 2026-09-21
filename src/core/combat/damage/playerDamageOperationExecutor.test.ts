@@ -327,7 +327,13 @@ describe('PlayerDamageOperationExecutor', () => {
   function runCriticalPolicy(
     randomMode: 'expected' | 'sampled',
     override?: boolean,
-  ): { readonly damage: number; readonly isCritical: boolean; readonly samples: number } {
+    canCritical = true,
+  ): {
+    readonly damage: number;
+    readonly isCritical: boolean;
+    readonly triggersCriticalEffects: boolean;
+    readonly samples: number;
+  } {
     const targetVitals = new CombatVitals({
       health: 2000,
       maxHealth: 2000,
@@ -340,6 +346,7 @@ describe('PlayerDamageOperationExecutor', () => {
     });
     const receipt = new CombatReceiptCollector();
     let samples = 0;
+    let triggersCriticalEffects = false;
     const executor = new PlayerDamageOperationExecutor({
       sourceOperatorId: 'operator',
       castId: 'cast:1',
@@ -355,6 +362,7 @@ describe('PlayerDamageOperationExecutor', () => {
         },
       },
       randomMode,
+      canCritical,
       ...(override === undefined ? {} : { resolveCriticalOverride: () => override }),
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -366,7 +374,10 @@ describe('PlayerDamageOperationExecutor', () => {
       clearInstantAttributeModifiers: () => undefined,
       emitPreparationEvent: () => undefined,
       resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
-      emitHealthSourceEvent: () => undefined,
+      emitHealthSourceEvent: (event, payload) => {
+        if (event === 'outputDamage')
+          triggersCriticalEffects = payload.triggersCriticalEffects === true;
+      },
       emitHealthTargetEvent: () => undefined,
       emitPoiseSourceEvent: () => undefined,
       emitPoiseTargetEvent: () => undefined,
@@ -377,29 +388,49 @@ describe('PlayerDamageOperationExecutor', () => {
     return {
       damage: Number(damage.data?.value),
       isCritical: damage.data?.isCritical === true,
+      triggersCriticalEffects,
       samples,
     };
   }
 
-  it('separates expected damage from sampled damage without changing critical event results', () => {
-    expect(runCriticalPolicy('expected')).toEqual({ damage: 500, isCritical: true, samples: 1 });
-    expect(runCriticalPolicy('sampled')).toEqual({ damage: 600, isCritical: true, samples: 1 });
+  it('期望模式写入数学期望但不伪造实际暴击，也不推进随机流', () => {
+    expect(runCriticalPolicy('expected')).toEqual({
+      damage: 500,
+      isCritical: false,
+      triggersCriticalEffects: true,
+      samples: 0,
+    });
+    expect(runCriticalPolicy('sampled')).toEqual({
+      damage: 600,
+      isCritical: true,
+      triggersCriticalEffects: true,
+      samples: 1,
+    });
+    expect(runCriticalPolicy('expected', undefined, false)).toEqual({
+      damage: 400,
+      isCritical: false,
+      triggersCriticalEffects: false,
+      samples: 0,
+    });
   });
 
   it('lets an explicit hit result override sampling in either direction', () => {
     expect(runCriticalPolicy('sampled', false)).toEqual({
       damage: 400,
       isCritical: false,
+      triggersCriticalEffects: false,
       samples: 0,
     });
     expect(runCriticalPolicy('sampled', true)).toEqual({
       damage: 600,
       isCritical: true,
+      triggersCriticalEffects: true,
       samples: 0,
     });
     expect(runCriticalPolicy('expected', true)).toEqual({
       damage: 600,
       isCritical: true,
+      triggersCriticalEffects: true,
       samples: 0,
     });
   });

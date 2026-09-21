@@ -848,9 +848,11 @@ function bindBattleWithoutProjectiles(
 function createEnvironment(
   enemy: CombatEnemyProgram = testEnemy,
   criticalSample = 1,
+  randomMode?: 'expected' | 'sampled',
 ): StandardPlayerDamageEnvironment {
   return new StandardPlayerDamageEnvironment({
     criticalSamples: { nextCriticalSample: () => criticalSample },
+    ...(randomMode === undefined ? {} : { randomMode }),
     resolveNonRandomRuntimeSnapshot: () => ({
       runtimeExtensionMultiplier: 1,
       appliesIgniteDamageMultiplier: false,
@@ -1535,7 +1537,7 @@ it('装备末端满血治疗仍按 output、receive 顺序发布事件，且不�
   expect(events).toEqual(['outputHeal', 'receiveHeal']);
 });
 
-it('publishes critical events with the damage action target context only for a critical result', () => {
+it('按随机模式的暴击后效策略发布事件，并保留伤害动作的目标上下文', () => {
   const reached: string[] = [];
   const nonCritical = createEnvironment(testEnemy, 1);
   nonCritical
@@ -1573,7 +1575,22 @@ it('publishes critical events with the damage action target context only for a c
     true,
   );
 
-  expect(reached).toEqual(['critical', 'critical-output']);
+  const expected = createEnvironment(testEnemy, 1, 'expected');
+  expected.eventsFor('enemy').registerAction('takeCriticalDamage', 0, event => {
+    expect(event.payload.result.isCritical).toBe(false);
+    expect(event.payload.triggersCriticalEffects).toBe(true);
+    reached.push('expected');
+  });
+  expected.eventsFor('operator').registerAction('outputCriticalDamage', 0, event => {
+    expect(event.payload.result.isCritical).toBe(false);
+    expect(event.payload.triggersCriticalEffects).toBe(true);
+    reached.push('expected-output');
+  });
+  expect(expected.runtimeOptions.createOperationExecutor(createContext()).execute(damageStep)).toBe(
+    true,
+  );
+
+  expect(reached).toEqual(['critical', 'critical-output', 'expected', 'expected-output']);
 });
 
 function createInflictionEnvironment(): StandardPlayerDamageEnvironment {

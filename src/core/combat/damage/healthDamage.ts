@@ -41,6 +41,8 @@ export interface HealthDamageEventPayload {
   readonly gameplayTags?: readonly GameplayTag[];
   readonly features: readonly DamageFeature[];
   readonly result: PlayerActiveDamageResult;
+  /** 本次伤害是否派发暴击后续事件；期望模式可为 true，而显示结果仍不是一次实际暴击。 */
+  readonly triggersCriticalEffects?: boolean;
 }
 
 /** 旧版伤害详情能够直接显示、且已经由本次公式确定的冻结值。 */
@@ -122,6 +124,8 @@ export interface ExecuteHealthDamageInput {
   readonly gameplayTags?: readonly GameplayTag[];
   readonly features?: readonly DamageFeature[];
   readonly result: PlayerActiveDamageResult;
+  /** 缺省沿用实际暴击结果；期望模式由伤害执行器显式给出确定性的后续效果策略。 */
+  readonly triggersCriticalEffects?: boolean;
   /** 伤害详情使用的公式冻结值；只记录已参与本次结算的标量，不在投影层重算规则。 */
   readonly detail?: HealthDamageReceiptDetail;
   readonly appliedDamageModifiers?: readonly import('./damageScale').AppliedDamageModifier[];
@@ -157,6 +161,7 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
     gameplayTags: input.gameplayTags ?? [],
     features: input.features ?? [],
     result: input.result,
+    triggersCriticalEffects: input.triggersCriticalEffects ?? input.result.isCritical,
   };
   // TakeDamageContext 不含施法身份；只为原生 OutputDamageContext 分支附加来源。
   const sourceBeforePayload = {

@@ -84,7 +84,9 @@ export interface PlayerDamageOperationDependencies {
   readonly receipt: CombatReceiptSink;
   readonly captureAttributeSnapshots: (step: DamageStep) => PlayerDamageAttributeSnapshots;
   readonly criticalSamples: CriticalSampleSource;
-  /** 期望模式把每次直接伤害写成期望值；随机事件仍由均匀序列给出可执行的离散结果。 */
+  /** false 表示原生动作明确禁止暴击；暴击率为零不能代替这项许可。 */
+  readonly canCritical?: boolean;
+  /** 期望模式把伤害写成数学期望，并确定触发允许暴击的后续效果，不推进随机流。 */
   readonly randomMode?: SimulationRandomMode;
   readonly attackDetail?: AttackReceiptSnapshot;
   /** 场景显式指定的命中覆盖；返回 undefined 才取样，且不污染公式中的原始暴击率。 */
@@ -312,7 +314,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       const finalAttackValue = context.resolveFinalAttackValue();
       const runtimeSnapshot = this.dependencies.resolveNonRandomRuntimeSnapshot(step);
       const criticalOverride = this.dependencies.resolveCriticalOverride?.(step);
-      const formulaInput = resolvePlayerActiveDamageInput(
+      const canCritical = this.dependencies.canCritical !== false;
+      const resolvedFormulaInput = resolvePlayerActiveDamageInput(
         {
           step,
           finalAttackValue,
@@ -328,7 +331,10 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
               runtimeSnapshot.appliesPhysicalInflictionDamageMultiplier ||
               (step.parameters.features ?? []).includes('physicalInfliction'),
             criticalSample:
-              criticalOverride === undefined && context.attackerAttributes.criticalRate > 0.00001
+              this.dependencies.randomMode !== 'expected' &&
+              criticalOverride === undefined &&
+              canCritical &&
+              context.attackerAttributes.criticalRate > 0.00001
                 ? this.dependencies.criticalSamples.nextCriticalSample({
                     expectedSequenceId: this.dependencies.sourceOperatorId,
                     ...(this.dependencies.castId === undefined
@@ -340,6 +346,9 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         },
         recordAttribute,
       );
+      const formulaInput = canCritical
+        ? resolvedFormulaInput
+        : { ...resolvedFormulaInput, criticalRate: 0, criticalSample: 0 };
       const damageResult = calculatePlayerActiveDamage(
         criticalOverride === undefined
           ? formulaInput
@@ -354,13 +363,23 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         nonCriticalDamage * (1 + context.attackerAttributes.criticalDamageIncrease);
       const criticalExpectationMultiplier =
         1 +
-        Math.min(Math.max(context.attackerAttributes.criticalRate, 0), 1) *
+        Math.min(Math.max(formulaInput.criticalRate, 0), 1) *
           context.attackerAttributes.criticalDamageIncrease;
       const expectedDamage = nonCriticalDamage * criticalExpectationMultiplier;
       const appliedDamageResult =
         this.dependencies.randomMode === 'expected' && criticalOverride === undefined
-          ? { ...damageResult, value: expectedDamage }
+          ? {
+              ...damageResult,
+              value: expectedDamage,
+              isCritical: false,
+              criticalMultiplier: criticalExpectationMultiplier,
+            }
           : damageResult;
+      const triggersCriticalEffects =
+        criticalOverride === true ||
+        (criticalOverride !== false &&
+          canCritical &&
+          (this.dependencies.randomMode === 'expected' || damageResult.isCritical));
       const standardCalculation =
         step.kind === 'dealDamage' &&
         (step.parameters.calculation === undefined || step.parameters.calculation === 'standard');
@@ -422,6 +441,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         gameplayTags: step.kind === 'dealDamage' ? (step.parameters.gameplayTags ?? []) : [],
         features: step.parameters.features ?? [],
         result: appliedDamageResult,
+        triggersCriticalEffects,
         detail: {
           ...operationContext?.executingBuff,
           ...(this.dependencies.sourceActionId === undefined

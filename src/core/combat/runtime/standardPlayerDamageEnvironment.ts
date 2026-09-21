@@ -1598,6 +1598,7 @@ export class StandardPlayerDamageEnvironment {
     const damage = new PlayerDamageOperationExecutor({
       ...dependencies,
       sourceActionId: payload.sourceActionId,
+      canCritical: payload.canCritical,
       receipt: {
         record: entry => {
           if (entry.event === 'DamageApplied') {
@@ -2110,5 +2111,6 @@ export class StandardPlayerDamageEnvironment {
 function isCriticalDamagePayload(
   payload: AbilityEventPayloadMap['takeDamage'],
 ): payload is AbilityEventPayloadMap['takeCriticalDamage'] {
-  return 'result' in payload && payload.result?.isCritical === true;
+  if ('external' in payload) return false;
+  return (payload.triggersCriticalEffects ?? payload.result.isCritical) === true;
 }

@@ -1119,7 +1119,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('当前技能可中断标记只属于客户端施法互斥门禁', () => {
+  it('当前技能可中断标记进入技能施放的输入互斥与可操作边界', () => {
     const action = parseKnownNativeActionLeafSource(
       {
         ...META,
@@ -1130,7 +1130,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(action).toEqual({ family: 'inputControl', action: { kind: 'markCanInterrupt' } });
     expect(compileBuffLeafNode(node(action), new Set(), new Map(), ACTIVE_SKILL_CONTEXT)).toEqual({
-      steps: [],
+      steps: [{ kind: 'markCurrentSkillCanInterrupt', parameters: {} }],
       state: new Map(),
     });
   });
