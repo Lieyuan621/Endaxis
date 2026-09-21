@@ -7,6 +7,7 @@
 | 排轴、看结果、保存或导出             | [使用说明](guide.md)                                                            |
 | 第一次启动或参与开发                 | [参与开发](../CONTRIBUTING.md)、[开发指南](development/README.md)               |
 | 了解整体数据流和代码目录             | [架构概览](architecture/README.md)                                              |
+| 查看尚未实现的功能与设计边界         | [待办](TODO.md)                                                                |
 | 修改方案、撤销、拖动或定义编辑       | [编辑器](architecture/editor.md)                                                |
 | 修改技能、事件、闪避、时钟或随机行为 | [战斗模拟](architecture/combat.md)                                              |
 | 修改保存、恢复和分支试算             | [战斗切面](architecture/checkpoints.md)                                         |

@@ -2364,6 +2364,10 @@ class BuffStackingGroup<Key extends string> {
     const buff = this.allocate(definition, sourceId, options);
     this.#state.currentStackCount = 1;
     this.#state.maxStackCount = maxStackCount;
+    // 原生首次增强类施加也执行 after；定时增长不属于该分支。
+    if (this.stackingType !== 'timedGrowingEnhance') {
+      buff.executeAfterEnhance(sourceId, options?.skillCastInfo ?? null);
+    }
     return buff;
   }
 

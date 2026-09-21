@@ -465,7 +465,9 @@ it.each([false, true])('增强内部动作先看新层数旧属性，再刷新�
   expect(attributes.get('attack')).toBe(110);
   if (timed) container.tick(1);
   else container.add(definition, 'source');
-  expect(observations).toEqual(timed ? ['changed:2:110'] : ['changed:2:110', 'after:2:120']);
+  expect(observations).toEqual(
+    timed ? ['changed:2:110'] : ['after:1:110', 'changed:2:110', 'after:2:120'],
+  );
   expect(attributes.get('attack')).toBe(120);
 });
 
@@ -1386,6 +1388,7 @@ describe('CombatBuffContainer', () => {
     expect(order).toEqual([
       'start',
       'enable',
+      'after:1',
       'before:1',
       'changed:2',
       'after:2',
@@ -1398,7 +1401,7 @@ describe('CombatBuffContainer', () => {
     expect(replacement).not.toBe(first);
     expect(replacement.enhanceCount).toBe(1);
     expect(container.buffs).toHaveLength(2);
-    expect(order.slice(-3)).toEqual(['finish', 'start', 'enable']);
+    expect(order.slice(-4)).toEqual(['finish', 'start', 'enable', 'after:1']);
   });
 
   it('locks a dynamic Enhance limit from the first instance blackboard', () => {
@@ -1431,7 +1434,7 @@ describe('CombatBuffContainer', () => {
 
     expect(first.enhanceCount).toBe(2);
     expect(first.blackboard.getNumber('limit')).toBe(2);
-    expect(order).toEqual(['before', 'changed', 'after', 'before', 'after']);
+    expect(order).toEqual(['after', 'before', 'changed', 'after', 'before', 'after']);
 
     first.finish('other');
     const replacement = requireAddedBuff(
@@ -1867,6 +1870,38 @@ describe('CombatBuffContainer', () => {
     },
   );
 
+  it.each(['enhance', 'enhanceAndRefresh', 'enhanceAndOverwriteDuration'] as const)(
+    '%s runs its first after hook after enable but before container publication',
+    stackingType => {
+      const container = new CombatBuffContainer('operator', new CombatAttributeSet<Attribute>());
+      const order: string[] = [];
+      const buff = requireAddedBuff(
+        container.add(
+          {
+            id: 'first-enhance',
+            stackingType,
+            maxStackCount: 2,
+            actions: {
+              start: () => order.push('start'),
+              enable: () => order.push('enable'),
+              beforeEnhance: () => order.push('before'),
+              enhanceChanged: () => order.push('changed'),
+              afterEnhance: (buff, source) => {
+                order.push('after');
+                expect(buff.enhanceCount).toBe(1);
+                expect(source).toBe('source');
+                expect(container.buffs).not.toContain(buff);
+              },
+            },
+          },
+          'source',
+        ),
+      );
+      expect(order).toEqual(['start', 'enable', 'after']);
+      expect(container.buffs).toContain(buff);
+    },
+  );
+
   it('enhances one instance, refreshes its lifetime, and still runs callbacks at the cap', () => {
     const attributes = new CombatAttributeSet<Attribute>();
     const container = new CombatBuffContainer('operator', attributes);
@@ -1887,7 +1922,7 @@ describe('CombatBuffContainer', () => {
     const second = requireAddedBuff(container.add(definition, 'operator'));
     expect(second).toBe(first);
     expect(first.enhanceCount).toBe(2);
-    expect(order).toEqual(['before:1', 'changed:2', 'after:2']);
+    expect(order).toEqual(['after:1', 'before:1', 'changed:2', 'after:2']);
 
     container.tick(3);
     const capped = requireAddedBuff(
@@ -1896,7 +1931,7 @@ describe('CombatBuffContainer', () => {
     expect(capped).toBe(first);
     expect(first.enhanceCount).toBe(2);
     expect(first.remainingDuration).toBe(12);
-    expect(order).toEqual(['before:1', 'changed:2', 'after:2', 'before:2', 'after:2']);
+    expect(order).toEqual(['after:1', 'before:1', 'changed:2', 'after:2', 'before:2', 'after:2']);
   });
 
   it('enhances before overwriting duration and keeps the existing instance inputs', () => {
@@ -1944,6 +1979,7 @@ describe('CombatBuffContainer', () => {
     expect(order).toEqual([
       'start',
       'enable',
+      'after:first-source:1:10',
       'before:second-source:1:6',
       'changed:second-source:2:6',
       'after:second-source:2:3',
@@ -2002,6 +2038,8 @@ describe('CombatBuffContainer', () => {
         },
       };
       const existing = requireAddedBuff(container.add(definition, 'first-source'));
+      expect(order).toEqual(['after']);
+      order.length = 0;
 
       expect(() =>
         container.add(definition, 'invalid-source', {
