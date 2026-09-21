@@ -169,7 +169,7 @@ export function parseAllowNextSkillActionSource(
   };
 }
 
-/** 标记当前原生技能可被后续输入中断；Endaxis 时间轴不执行客户端施法互斥门禁。 */
+/** 标记执行该动作的技能可被后续输入中断。 */
 export function parseMarkCanInterruptActionSource(
   value: unknown,
   path: string,

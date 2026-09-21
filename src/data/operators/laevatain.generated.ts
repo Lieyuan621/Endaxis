@@ -1596,7 +1596,7 @@ export const laevatainChr_0016_laevat_normal_skill_during_ult: SkillDefinition =
   withSkillBlackboard(
     {
       key: 'chr_0016_laevat_normal_skill_during_ult',
-      timelineBlockFrames: 33,
+      timelineBlockFrames: 116,
       naturalDurationFrames: 271,
       exclusiveFrame: 115,
       offsetRecordFrame: 0,
@@ -2048,7 +2048,7 @@ export const laevatainChr_0016_laevat_ultimate_skill: SkillDefinition = withSkil
 export const laevatainChr_0016_laevat_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0016_laevat_combo_skill',
-    timelineBlockFrames: 41,
+    timelineBlockFrames: 58,
     naturalDurationFrames: 180,
     exclusiveFrame: 57,
     offsetRecordFrame: 0,

@@ -817,6 +817,7 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = withSkill
         ),
         2,
       ),
+      scheduled(51, sequence(step('markCurrentSkillCanInterrupt', {})), 52),
       scheduled(187, sequence(step('jumpTimeline', { destinationFrame: 429 })), 188),
       scheduled(
         300,
@@ -944,7 +945,7 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = withSkill
 export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0026_lastrite_ultimate_skill',
-    timelineBlockFrames: 140,
+    timelineBlockFrames: 171,
     naturalDurationFrames: 360,
     exclusiveFrame: 170,
     offsetRecordFrame: 0,
@@ -1145,7 +1146,7 @@ export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = withSki
 export const lastRiteChr_0026_lastrite_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0026_lastrite_combo_skill',
-    timelineBlockFrames: 65,
+    timelineBlockFrames: 91,
     naturalDurationFrames: 216,
     exclusiveFrame: 90,
     offsetRecordFrame: 0,

@@ -173,7 +173,6 @@ function formatDurationFrames(frames: number): string {
       <span class="ultimate-side-bar ultimate-side-bar--left" aria-hidden="true"></span>
       <span class="ultimate-side-bar ultimate-side-bar--right" aria-hidden="true"></span>
     </template>
-    <span v-if="durationPending" class="duration-pending-tail" aria-hidden="true"></span>
     <span
       v-for="hit in hits ?? []"
       :key="`${hit.hitId}:${hit.executionFrame ?? 'preview'}`"
@@ -375,23 +374,6 @@ function formatDurationFrames(frames: number): string {
 
 .timeline-action-block.is-duration-pending {
   border-right-style: dashed;
-}
-
-.duration-pending-tail {
-  position: absolute;
-  z-index: 1;
-  top: -1.5px;
-  bottom: -1.5px;
-  left: 100%;
-  width: 18px;
-  border-left: 1px dashed color-mix(in srgb, var(--action-accent) 70%, transparent);
-  background: repeating-linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--action-accent) 28%, transparent) 0 3px,
-    transparent 3px 7px
-  );
-  mask-image: linear-gradient(90deg, #000 0%, transparent 100%);
-  pointer-events: none;
 }
 
 .timeline-action-block.is-disabled {

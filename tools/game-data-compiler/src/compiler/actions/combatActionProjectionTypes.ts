@@ -332,6 +332,7 @@ export type CompiledBuffStepSource =
   | Step<'finishTimeline'>
   | Step<'reachSkillOperableBoundary'>
   | Step<'markCurrentSkillCanDash'>
+  | Step<'markCurrentSkillCanInterrupt'>
   | Step<'storeCurrentTimelineFrame'>
   | Step<'storeEventSpGainAmount'>
   | Step<

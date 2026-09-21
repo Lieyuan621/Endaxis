@@ -670,7 +670,7 @@ export const perlicaChr_0004_pelica_plunging_attack_end: SkillDefinition = withS
 export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0004_pelica_normal_skill',
-    timelineBlockFrames: 28,
+    timelineBlockFrames: 31,
     naturalDurationFrames: 155,
     exclusiveFrame: 30,
     offsetRecordFrame: 0,
@@ -722,7 +722,7 @@ export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = withSkillBla
 export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0004_pelica_combo_skill',
-    timelineBlockFrames: 25,
+    timelineBlockFrames: 46,
     naturalDurationFrames: 115,
     exclusiveFrame: 45,
     offsetRecordFrame: 0,
@@ -827,7 +827,7 @@ export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = withSkillBlac
 export const perlicaChr_0004_pelica_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0004_pelica_ultimate_skill',
-    timelineBlockFrames: 63,
+    timelineBlockFrames: 86,
     naturalDurationFrames: 114,
     exclusiveFrame: 85,
     offsetRecordFrame: 0,

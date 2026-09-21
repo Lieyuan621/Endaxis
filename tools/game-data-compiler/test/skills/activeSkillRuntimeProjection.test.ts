@@ -49,9 +49,12 @@ describe('HideUI active source projection', () => {
     });
   });
 
-  it('把原生 MarkCanDash 投影成当前施放的可闪避状态步骤', () => {
+  it.each([
+    ['MarkCanDash', 'markCurrentSkillCanDash'],
+    ['MarkCanInterrupt', 'markCurrentSkillCanInterrupt'],
+  ])('把原生 %s 保留为当前施放的状态步骤', (nativeKind, kind) => {
     const result = compileActiveSkillRuntimeProjectionSource({
-      value: activeWithActions([meta('MarkCanDash', {})]),
+      value: activeWithActions([meta(nativeKind, {})]),
       sourcePath: 'active.mark-can-dash',
       patch: null,
       context: ACTIVE_CONTEXT,
@@ -61,7 +64,7 @@ describe('HideUI active source projection', () => {
       {
         startFrame: 5,
         endFrame: 8,
-        sequence: { steps: [{ kind: 'markCurrentSkillCanDash', parameters: {} }] },
+        sequence: { steps: [{ kind, parameters: {} }] },
       },
     ]);
   });

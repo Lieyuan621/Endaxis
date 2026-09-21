@@ -732,7 +732,7 @@ export const gilbertaChr_0013_aglina_plunging_attack_end: SkillDefinition = with
 export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0013_aglina_normal_skill',
-    timelineBlockFrames: 123,
+    timelineBlockFrames: 136,
     naturalDurationFrames: 203,
     exclusiveFrame: 135,
     offsetRecordFrame: 0,
@@ -968,7 +968,7 @@ export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = withSkillBl
 export const gilbertaChr_0013_aglina_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0013_aglina_ultimate_skill',
-    timelineBlockFrames: 64,
+    timelineBlockFrames: 86,
     naturalDurationFrames: 116,
     exclusiveFrame: 85,
     offsetRecordFrame: 0,
@@ -1106,7 +1106,7 @@ export const gilbertaChr_0013_aglina_ultimate_skill: SkillDefinition = withSkill
 export const gilbertaChr_0013_aglina_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0013_aglina_combo_skill',
-    timelineBlockFrames: 53,
+    timelineBlockFrames: 73,
     naturalDurationFrames: 130,
     exclusiveFrame: 72,
     offsetRecordFrame: 0,

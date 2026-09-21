@@ -1112,7 +1112,7 @@ export const arcaneChr_0032_lizhiyan_plunging_attack_end: SkillDefinition = with
 export const arcaneChr_0032_lizhiyan_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0032_lizhiyan_normal_skill',
-    timelineBlockFrames: 24,
+    timelineBlockFrames: 33,
     naturalDurationFrames: 225,
     exclusiveFrame: 32,
     offsetRecordFrame: 0,
@@ -1174,7 +1174,7 @@ export const arcaneChr_0032_lizhiyan_normal_skill: SkillDefinition = withSkillBl
 export const arcaneChr_0032_lizhiyan_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0032_lizhiyan_combo_skill',
-    timelineBlockFrames: 16,
+    timelineBlockFrames: 24,
     naturalDurationFrames: 122,
     exclusiveFrame: 23,
     offsetRecordFrame: 0,
@@ -1513,7 +1513,7 @@ export const arcaneChr_0032_lizhiyan_combo_skill: SkillDefinition = withSkillBla
 export const arcaneChr_0032_lizhiyan_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0032_lizhiyan_ultimate_skill',
-    timelineBlockFrames: 48,
+    timelineBlockFrames: 73,
     naturalDurationFrames: 308,
     exclusiveFrame: 72,
     offsetRecordFrame: 0,
@@ -1989,7 +1989,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill: SkillDefinition = withSkill
 export const arcaneChr_0032_lizhiyan_ultimate_skill2: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0032_lizhiyan_ultimate_skill2',
-    timelineBlockFrames: 60,
+    timelineBlockFrames: 76,
     naturalDurationFrames: 287,
     exclusiveFrame: 75,
     offsetRecordFrame: 0,

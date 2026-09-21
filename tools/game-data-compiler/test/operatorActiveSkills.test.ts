@@ -6,6 +6,22 @@ import { OPERATOR_ACTIVE_SKILL_TYPES } from '../src/domains/operator/activeSkill
 import { SKILL_TYPES } from '../../../packages/game-data-contract/src/primitives.ts';
 
 describe('Operator 主动技能入口', () => {
+  it('块宽参照适用于普攻，且必须引用同干员的另一个技能', () => {
+    const start = { ...entry('basicAttack', 'start.json'), timelineBlockFollowUpSkillId: 'stop' };
+    const stop = entry('battleSkill', 'stop.json');
+    expect(
+      parseOperatorActiveSkillEntries([start, stop], 'skills')[0]?.timelineBlockFollowUpSkillId,
+    ).toBe('stop');
+    expect(() => parseOperatorActiveSkillEntries([start], 'skills')).toThrow(
+      'timelineBlockFollowUpSkillId',
+    );
+    expect(() =>
+      parseOperatorActiveSkillEntries(
+        [{ ...start, timelineBlockFollowUpSkillId: 'start' }, stop],
+        'skills',
+      ),
+    ).toThrow('timelineBlockFollowUpSkillId');
+  });
   it('省略旧编译器选择仍按同一原始动作图生成技能', () => {
     const identity = entry('basicAttack', 'native_attack.json');
     const files = { 'native_attack.json': activeSkillFixture('native_attack') };

@@ -23,6 +23,32 @@ function skill(
 }
 
 describe('基础攻击技能块窗口', () => {
+  it('显式显示参照覆盖默认连段宽度，即便参照窗口更晚', () => {
+    const definitions = new Map([
+      [
+        'attack',
+        {
+          ...skill('attack', [
+            { startFrame: 10, endFrame: 30, skillIds: ['next'], direct: true },
+            { startFrame: 25, endFrame: 30, skillIds: ['battle'], direct: true },
+          ]),
+          timelineBlockFrames: 10,
+          timelineBlockFollowUpSkillId: 'battle',
+        },
+      ],
+      ['next', skill('next', [])],
+      ['battle', skill('battle', [])],
+    ]);
+    selectSingleSkillTimelineBlockFrames(
+      definitions,
+      [
+        { skillType: 'basicAttack', skillKeys: ['attack', 'next'], replacementPlacements: {} },
+        { skillType: 'battleSkill', skillKeys: ['battle'], replacementPlacements: {} },
+      ],
+      new Set(),
+    );
+    expect(definitions.get('attack')?.timelineBlockFrames).toBe(25);
+  });
   it('按有序下一段筛选窗口，不被跳段和条件快捷退出压成 0 帧', () => {
     const definitions = new Map([
       [
@@ -123,7 +149,7 @@ describe('基础攻击技能块窗口', () => {
 });
 
 describe('单技能入口的预览宽度', () => {
-  it('序列后续段也使用自己的直接输入窗口，不沿用整个动作的独占时长', () => {
+  it('连携序列和战技的提前窗口不再缩短非普攻块宽', () => {
     const definitions = new Map([
       [
         'native.first',
@@ -160,8 +186,8 @@ describe('单技能入口的预览宽度', () => {
       new Set(['native.second']),
     );
 
-    expect(definitions.get('native.first')?.timelineBlockFrames).toBe(37);
-    expect(definitions.get('native.second')?.timelineBlockFrames).toBe(52);
+    expect(definitions.get('native.first')?.timelineBlockFrames).toBe(66);
+    expect(definitions.get('native.second')?.timelineBlockFrames).toBe(260);
   });
 
   it('使用可操作的直接接续，不把内部回调或条件分支当成玩家输入', () => {
@@ -195,9 +221,40 @@ describe('单技能入口的预览宽度', () => {
       new Set(['native.internal', 'native.stop']),
     );
 
-    expect(definitions.get('native.stance')?.timelineBlockFrames).toBe(50);
+    expect(definitions.get('native.stance')?.timelineBlockFrames).toBe(1800);
     expect(definitions.get('native.stance')?.exclusiveFrame).toBe(1799);
     expect(definitions.get('native.internal')?.timelineBlockFrames).toBe(0);
+    definitions.set('native.stance', {
+      ...definitions.get('native.stance')!,
+      timelineBlockFollowUpSkillId: 'native.stop',
+    });
+    const groups = [
+      {
+        skillType: 'battleSkill' as const,
+        skillKeys: ['native.stance', 'native.internal', 'native.stop'],
+        replacementPlacements: {
+          'native.internal': 'internal' as const,
+          'native.stop': 'standard' as const,
+        },
+      },
+    ];
+    selectSingleSkillTimelineBlockFrames(
+      definitions,
+      groups,
+      new Set(['native.internal', 'native.stop']),
+    );
+    expect(definitions.get('native.stance')?.timelineBlockFrames).toBe(50);
+    definitions.set('native.stance', {
+      ...definitions.get('native.stance')!,
+      timelineBlockFollowUpSkillId: 'native.internal',
+    });
+    expect(() =>
+      selectSingleSkillTimelineBlockFrames(
+        definitions,
+        groups,
+        new Set(['native.internal', 'native.stop']),
+      ),
+    ).toThrow('routable native continuation');
   });
 
   it('没有可路由窗口时，独立可放置技能使用原生无条件结束点', () => {

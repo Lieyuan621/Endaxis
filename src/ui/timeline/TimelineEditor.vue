@@ -57,6 +57,10 @@ import {
 import SkillLibraryCard from './library/SkillLibraryCard.vue';
 import {
   createLibraryDragGhost,
+  suppressNativeLibraryDragImage,
+  attachLibraryDragGhostHint,
+  LIBRARY_PLACE_CANCEL_HINT_DELAY_MS,
+  positionLibraryDragGhost,
   getDefaultLibraryDragOffsets,
   removeLibraryDragGhost,
 } from '../interaction/libraryDragGhost';
@@ -342,6 +346,7 @@ import { useTimelineCastMove } from './interaction/useTimelineCastMove';
 import { resolveTimelineLibraryDropFrame } from './interaction/timelineLibraryDropGeometry';
 import {
   resolveTimelineCastAlignmentFrame,
+  resolveTimelineCastAlignmentSpan,
   type TimelineCastAlignmentMode,
 } from './interaction/timelineCastAlignment';
 import { useTimelineZoom } from './interaction/useTimelineZoom';
@@ -728,7 +733,7 @@ function registerTrackDropRegion(trackIndex: TrackIndex, element: unknown): void
 let libraryPlacementLease: InteractionLease | null = null;
 let trackOrderLease: InteractionLease | null = null;
 const selectedLibrarySkill = ref<{ entryKey: string; skillKey?: string } | null>(null);
-const placementPointer = ref<{ x: number; y: number } | null>(null);
+let lastPlacementPointer: { x: number; y: number } | null = null;
 const alignmentGuide = ref<{
   readonly targetCastId: string;
   readonly left: number;
@@ -1436,17 +1441,61 @@ const placementLibraryEntry = computed(() => {
     null
   );
 });
-const placementLabel = computed(() => {
-  const entry = placementLibraryEntry.value;
-  const placement = libraryPlacement.value;
-  if (entry === null || placement === null) return '';
-  if (placement.skillKey !== undefined) {
-    return (
-      skillLibrarySegmentLabel(entry, placement.skillKey, skillSegmentLabels()) ??
-      skillName(placement.skillKey, selectedTrackModel.value.operatorSlug)
+function librarySkillPreview(entry: TimelineSkillLibraryEntryViewModel, skillKey?: string) {
+  const placedSkillKey = skillKey ?? entry.placementSkillKey;
+  const segment = entry.skills.find(skill => skill.skillKey === placedSkillKey);
+  return {
+    name:
+      placedSkillKey === undefined
+        ? skillLibraryTypeLabel(entry)
+        : (timelineSkillSegmentLabel(entry, placedSkillKey, skillSegmentLabels()) ??
+          skillLibraryTypeLabel(entry)),
+    duration:
+      segment === undefined
+        ? skillDurationSeconds(entry)
+        : skillPlacementDisplayFrames(segment.timelineBlockFrames) / PROJECT_FPS,
+    color: skillAccentColor(entry.skillType, selectedTrackModel.value.operatorSlug),
+    scale: pxPerFrame.value * PROJECT_FPS,
+  };
+}
+
+watch(
+  () => {
+    const entry = placementLibraryEntry.value;
+    const placement = libraryPlacement.value;
+    if (entry === null || placement === null) return null;
+    return librarySkillPreview(entry, placement.skillKey);
+  },
+  (preview, _previous, onCleanup) => {
+    if (preview === null) return;
+    createLibraryDragGhost(preview, preview.scale, () => preview.color);
+    if (lastPlacementPointer !== null)
+      positionLibraryDragGhost(lastPlacementPointer.x, lastPlacementPointer.y);
+    const timer = window.setTimeout(
+      () => attachLibraryDragGhostHint(t('timeline.shortcut.placeCancelHint')),
+      LIBRARY_PLACE_CANCEL_HINT_DELAY_MS,
     );
-  }
-  return skillLibraryEntryName(entry);
+    onCleanup(() => {
+      window.clearTimeout(timer);
+      removeLibraryDragGhost();
+    });
+  },
+  // 与原生拖拽共用 ghost；取消放置时先清理，再允许新拖拽创建自己的预览。
+  { flush: 'sync' },
+);
+
+function updateLibraryPlacementPointer(event: PointerEvent): void {
+  lastPlacementPointer = { x: event.clientX, y: event.clientY };
+  if (libraryPlacement.value !== null) positionLibraryDragGhost(event.clientX, event.clientY);
+}
+
+onMounted(() => {
+  window.addEventListener('pointermove', updateLibraryPlacementPointer);
+  window.addEventListener('contextmenu', cancelPlacementFromContextMenu, true);
+});
+onScopeDispose(() => {
+  window.removeEventListener('pointermove', updateLibraryPlacementPointer);
+  window.removeEventListener('contextmenu', cancelPlacementFromContextMenu, true);
 });
 watch(selectedTrack, () => {
   selectedLibrarySkill.value = null;
@@ -1460,7 +1509,6 @@ watch(selectedTrack, () => {
   );
   if (replacement === undefined) {
     cancelLibraryPlacement();
-    placementPointer.value = null;
     return;
   }
   libraryPlacement.value = {
@@ -2330,15 +2378,45 @@ function updateAlignmentGuide(event: PointerEvent, targetCastId: string): void {
   const blockRect = block.getBoundingClientRect();
   const surfaceRect = surface.getBoundingClientRect();
   const useLeftEdge = mode === 'snapBefore' || mode === 'alignStart';
+  const source = castAlignmentSpan(sourceCastId);
+  const target = castAlignmentSpan(targetCastId);
+  if (source === undefined || target === undefined || source.anchorId === target.anchorId) {
+    alignmentGuide.value = null;
+    return;
+  }
   alignmentGuide.value = {
     targetCastId,
-    left: (useLeftEdge ? blockRect.left : blockRect.right) - surfaceRect.left,
+    left:
+      TIMELINE_TRACK_HEADER_WIDTH +
+      timelineFramePx(useLeftEdge ? target.startFrame : target.startFrame + target.durationFrames),
     top: blockRect.top - surfaceRect.top,
     height: blockRect.height,
     mode,
     label: presentation.label,
     color: presentation.color,
   };
+}
+
+function castAlignmentSpan(castId: string) {
+  for (const track of viewModel.value.tracks) {
+    const span = resolveTimelineCastAlignmentSpan(
+      castId,
+      track.skillCasts.map(cast => ({
+        id: cast.id,
+        startFrame: castActualStartFrame(cast.id, cast.startFrame),
+        endFrame:
+          visibleSkillEndFrames.value.get(cast.id) ??
+          castActualStartFrame(cast.id, cast.startFrame) +
+            castActualDurationFrame(cast.id, cast.durationFrames),
+        locked: cast.locked || isHistoricalSkillInput(cast.id),
+      })),
+      skillCastGroupsByTrack.value[track.trackIndex]!.map(group =>
+        group.casts.map(cast => cast.id),
+      ),
+    );
+    if (span !== undefined) return { ...span, trackIndex: track.trackIndex };
+  }
+  return undefined;
 }
 
 function alignSelectedCastToTarget(event: PointerEvent, targetCastId: string): boolean {
@@ -2349,29 +2427,10 @@ function alignSelectedCastToTarget(event: PointerEvent, targetCastId: string): b
   const block = event.currentTarget as HTMLElement;
   const mode = alignmentMode(event, block);
   if (isHistoricalSkillInput(sourceCastId)) return true;
-  let source:
-    | { trackIndex: TrackIndex; startFrame: number; durationFrames: number; locked: boolean }
-    | undefined;
-  let target: { startFrame: number; durationFrames: number } | undefined;
-  for (const track of viewModel.value.tracks) {
-    for (const cast of track.skillCasts) {
-      if (cast.id === sourceCastId) {
-        source = {
-          trackIndex: track.trackIndex,
-          startFrame: castActualStartFrame(cast.id, cast.startFrame),
-          durationFrames: castActualDurationFrame(cast.id, cast.durationFrames),
-          locked: cast.locked,
-        };
-      }
-      if (cast.id === targetCastId) {
-        target = {
-          startFrame: castActualStartFrame(cast.id, cast.startFrame),
-          durationFrames: castActualDurationFrame(cast.id, cast.durationFrames),
-        };
-      }
-    }
-  }
+  const source = castAlignmentSpan(sourceCastId);
+  const target = castAlignmentSpan(targetCastId);
   if (source === undefined || target === undefined || source.locked) return true;
+  if (source.anchorId === target.anchorId) return true;
   const frame = resolveTimelineCastAlignmentFrame({
     mode,
     targetStartFrame: target.startFrame,
@@ -2385,7 +2444,7 @@ function alignSelectedCastToTarget(event: PointerEvent, targetCastId: string): b
     moveSkillCast(
       current,
       source.trackIndex,
-      sourceCastId,
+      source.anchorId,
       frame,
       displayedSkillCastStartFrames.value,
     ),
@@ -2423,7 +2482,10 @@ const visibleSkillEndFrames = computed(() => {
         id: cast.id,
         startFrame: castActualStartFrame(cast.id, cast.startFrame),
         durationFrames: Math.min(
-          castActualDurationFrame(cast.id, cast.durationFrames),
+          skillCastActualDurationFrames.value.get(cast.id) ??
+            (interruptions.has(cast.id)
+              ? Infinity
+              : skillPlacementDisplayFrames(cast.durationFrames)),
           Math.max(
             0,
             (interruptions.get(cast.id) ?? Infinity) -
@@ -3881,9 +3943,15 @@ const { isPanning, beginViewportPan } = useTimelineViewportPan({
   interactionSession,
 });
 
+function captureLibraryPlacementPointerDown(event: PointerEvent): void {
+  if (libraryPlacement.value !== null) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+}
+
 function handleTimelineLanePointerDown(event: PointerEvent): void {
-  const trackIndex = Number((event.currentTarget as HTMLElement).dataset.trackIndex) as TrackIndex;
-  if (placePendingLibrarySkill(event, trackIndex)) return;
   if (beginViewportPan(event)) return;
   if (boxSelectEnabled.value) {
     beginMarqueeGesture(event, false);
@@ -4696,7 +4764,6 @@ function updateCursorGuide(event: MouseEvent): void {
   if (surface === null) {
     timelinePointerClientX.value = null;
     cursorGuide.value = null;
-    placementPointer.value = null;
     return;
   }
   const surfaceRect = surface.getBoundingClientRect();
@@ -4705,8 +4772,6 @@ function updateCursorGuide(event: MouseEvent): void {
     event.clientY >= surfaceRect.top + TIMELINE_RULER_HEIGHT
       ? event.clientX
       : null;
-  placementPointer.value =
-    libraryPlacement.value === null ? null : { x: event.clientX, y: event.clientY };
   if (!showCursorGuide.value) {
     cursorGuide.value = null;
     return;
@@ -4732,7 +4797,6 @@ function updateCursorGuide(event: MouseEvent): void {
 function hideCursorGuide(): void {
   timelinePointerClientX.value = null;
   cursorGuide.value = null;
-  placementPointer.value = null;
 }
 
 function beginLibraryPlacement(entry: TimelineSkillLibraryEntryViewModel, skillKey?: string): void {
@@ -4761,7 +4825,6 @@ function cancelLibraryPlacement(): boolean {
   const cancelledPending = skillPlacementTransaction.cancel();
   if (libraryPlacement.value === null) return cancelledPending;
   libraryPlacement.value = null;
-  placementPointer.value = null;
   return true;
 }
 
@@ -4788,7 +4851,11 @@ function placePendingLibrarySkill(event: PointerEvent, trackIndex: TrackIndex): 
   }
   const lane = event.currentTarget as HTMLElement;
   const frame = snapTimelineFrame(
-    timelinePointerActualFrame(event.clientX - lane.getBoundingClientRect().left),
+    timelinePointerActualFrame(
+      event.clientX -
+        getDefaultLibraryDragOffsets().dragOffsetX -
+        lane.getBoundingClientRect().left,
+    ),
     snapFrames.value,
     scenario.value.battle.durationFrames,
     -scenario.value.battle.prepFrames,
@@ -4946,6 +5013,7 @@ function resolveLibraryDropRegion(event: DragEvent): HTMLElement | null {
 // before the browser sends its next dragover at the new target.
 function guardLibrarySkillDragOver(event: DragEvent): void {
   if (dragPayload.value?.kind !== 'librarySkill') return;
+  positionLibraryDragGhost(event.clientX, event.clientY);
   event.preventDefault();
   event.stopPropagation();
   if (event.dataTransfer !== null) {
@@ -4994,30 +5062,13 @@ function beginSkillDrag(
     ...(placedSkillKey === undefined ? {} : { skillKey: placedSkillKey }),
     dragOffsetX: offsets.dragOffsetX,
   };
-  const draggedSkill =
-    placedSkillKey === undefined
-      ? undefined
-      : entry.skills.find(skill => skill.skillKey === placedSkillKey);
-  const durationSeconds =
-    draggedSkill === undefined
-      ? skillDurationSeconds(entry)
-      : Math.round(
-          (skillPlacementDisplayFrames(draggedSkill.timelineBlockFrames) / PROJECT_FPS) * 1000,
-        ) / 1000;
-  const label =
-    placedSkillKey === undefined
-      ? skillLibraryTypeLabel(entry)
-      : (timelineSkillSegmentLabel(entry, placedSkillKey, skillSegmentLabels()) ??
-        skillLibraryTypeLabel(entry));
-  const ghost = createLibraryDragGhost(
-    { name: label, duration: durationSeconds },
-    pxPerFrame.value * PROJECT_FPS,
-    () => skillAccentColor(entry.skillType, selectedTrackModel.value.operatorSlug),
-  );
+  const preview = librarySkillPreview(entry, placedSkillKey);
+  createLibraryDragGhost(preview, preview.scale, () => preview.color);
+  positionLibraryDragGhost(event.clientX, event.clientY);
   if (event.dataTransfer !== null) {
     event.dataTransfer.effectAllowed = 'copy';
     event.dataTransfer.setData('text/plain', placedSkillKey ?? entry.skillGroupKey);
-    event.dataTransfer.setDragImage(ghost, offsets.dragOffsetX, offsets.dragOffsetY);
+    suppressNativeLibraryDragImage(event.dataTransfer);
   }
 }
 
@@ -5138,7 +5189,6 @@ function resetTransientScenarioUi(): void {
   cursorGuide.value = null;
   hoveredCastId.value = null;
   alignmentGuide.value = null;
-  placementPointer.value = null;
   contextMenuTarget.value = null;
   markerContextTarget.value = null;
   cancelLibraryPlacement();
@@ -6504,7 +6554,9 @@ function setPanelDialogVisible(visible: boolean): void {
                   '--timeline-action-top': `${trackEffectLayout(track.trackIndex, track.operatorInstanceId).actionTop}px`,
                   '--timeline-action-guide-top': `${trackEffectLayout(track.trackIndex, track.operatorInstanceId).actionTop - 2}px`,
                 }"
+                @pointerdown.capture="captureLibraryPlacementPointerDown"
                 @pointerdown="handleTimelineLanePointerDown"
+                @pointerup.capture="placePendingLibrarySkill($event, track.trackIndex)"
                 @click="handleTimelineLaneClick"
                 @contextmenu="openMarkerContextMenu($event, track.trackIndex)"
                 @dragover="allowTimelinePayloadDrop"
@@ -6925,14 +6977,6 @@ function setPanelDialogVisible(visible: boolean): void {
           :style="{ height: `${timelineVerticalScrollbarHeight + timelineVerticalScrollRange}px` }"
         ></div>
       </div>
-    </div>
-    <div
-      v-if="libraryPlacement !== null && placementPointer !== null"
-      class="library-placement-ghost"
-      :style="{ left: `${placementPointer.x + 12}px`, top: `${placementPointer.y + 18}px` }"
-    >
-      <strong>{{ placementLabel }}</strong>
-      <span>{{ t('timeline.shortcut.placeCancelHint') }}</span>
     </div>
     <div v-if="marqueeStyle" class="timeline-marquee" :style="marqueeStyle"></div>
 
@@ -8051,27 +8095,6 @@ button:disabled {
 
 .timeline-surface.is-library-placing .track-lane {
   cursor: copy;
-}
-
-.library-placement-ghost {
-  position: fixed;
-  z-index: 10001;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 130px;
-  padding: 7px 9px;
-  border: 1px solid var(--ea-gold);
-  background: rgb(20 20 22 / 94%);
-  box-shadow: 0 5px 16px rgb(0 0 0 / 55%);
-  color: var(--ea-fg);
-  font-size: 11px;
-  pointer-events: none;
-}
-
-.library-placement-ghost span {
-  color: var(--ea-fg-muted);
-  font-size: 9px;
 }
 
 .corner-placeholder {

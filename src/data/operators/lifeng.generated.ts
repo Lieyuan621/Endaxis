@@ -670,7 +670,7 @@ export const lifengChr_0015_lifeng_plunging_attack_end: SkillDefinition = withSk
 export const lifengChr_0015_lifeng_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0015_lifeng_normal_skill',
-    timelineBlockFrames: 67,
+    timelineBlockFrames: 71,
     naturalDurationFrames: 216,
     exclusiveFrame: 70,
     offsetRecordFrame: 0,
@@ -807,7 +807,7 @@ export const lifengChr_0015_lifeng_normal_skill: SkillDefinition = withSkillBlac
 export const lifengChr_0015_lifeng_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0015_lifeng_ultimate_skill',
-    timelineBlockFrames: 66,
+    timelineBlockFrames: 76,
     naturalDurationFrames: 190,
     exclusiveFrame: 75,
     offsetRecordFrame: 0,
@@ -918,7 +918,7 @@ export const lifengChr_0015_lifeng_ultimate_skill: SkillDefinition = withSkillBl
 export const lifengChr_0015_lifeng_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0015_lifeng_combo_skill',
-    timelineBlockFrames: 50,
+    timelineBlockFrames: 65,
     naturalDurationFrames: 168,
     exclusiveFrame: 64,
     offsetRecordFrame: 0,

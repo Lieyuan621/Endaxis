@@ -860,7 +860,7 @@ export const akekuriChr_0019_karin_ultimate_skill: SkillDefinition = withSkillBl
 export const akekuriChr_0019_karin_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0019_karin_combo_skill',
-    timelineBlockFrames: 38,
+    timelineBlockFrames: 56,
     naturalDurationFrames: 136,
     exclusiveFrame: 55,
     offsetRecordFrame: 0,

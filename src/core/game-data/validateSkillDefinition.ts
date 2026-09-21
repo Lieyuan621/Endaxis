@@ -79,6 +79,9 @@ export function validateSkillDefinition(
   if (record.nativeSkillType !== undefined)
     requireEnum(record, 'nativeSkillType', NATIVE_SKILL_TYPES_SET, path, out);
   requireNonNegativeInteger(record, 'timelineBlockFrames', path, out);
+  if (record.timelineBlockFollowUpSkillId !== undefined) {
+    requireString(record, 'timelineBlockFollowUpSkillId', path, out);
+  }
   if (record.timelineContinuationSkillId !== undefined) {
     requireString(record, 'timelineContinuationSkillId', path, out);
   }

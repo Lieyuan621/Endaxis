@@ -755,7 +755,7 @@ export const avywennaChr_0012_avywen_plunging_attack_end: SkillDefinition = with
 export const avywennaChr_0012_avywen_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0012_avywen_normal_skill',
-    timelineBlockFrames: 34,
+    timelineBlockFrames: 39,
     naturalDurationFrames: 306,
     exclusiveFrame: 38,
     offsetRecordFrame: 0,
@@ -1182,7 +1182,7 @@ export const avywennaChr_0012_avywen_normal_skill: SkillDefinition = withSkillBl
 export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0012_avywen_combo_skill',
-    timelineBlockFrames: 21,
+    timelineBlockFrames: 41,
     naturalDurationFrames: 254,
     exclusiveFrame: 40,
     offsetRecordFrame: 0,
@@ -1322,7 +1322,7 @@ export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = withSkillBla
 export const avywennaChr_0012_avywen_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0012_avywen_ultimate_skill',
-    timelineBlockFrames: 57,
+    timelineBlockFrames: 66,
     naturalDurationFrames: 273,
     exclusiveFrame: 65,
     offsetRecordFrame: 0,

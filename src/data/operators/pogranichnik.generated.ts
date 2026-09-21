@@ -1104,7 +1104,7 @@ export const pogranichnikChr_0029_pograni_plunging_attack_end: SkillDefinition =
 export const pogranichnikChr_0029_pograni_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0029_pograni_normal_skill',
-    timelineBlockFrames: 45,
+    timelineBlockFrames: 48,
     naturalDurationFrames: 218,
     exclusiveFrame: 55,
     offsetRecordFrame: 0,
@@ -1545,7 +1545,7 @@ export const pogranichnikChr_0029_pograni_normal_skill: SkillDefinition = withSk
 export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0029_pograni_combo_skill',
-    timelineBlockFrames: 66,
+    timelineBlockFrames: 72,
     naturalDurationFrames: 728,
     exclusiveFrame: 649,
     offsetRecordFrame: 0,
@@ -1792,13 +1792,16 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
         ),
         601,
       ),
+      scheduled(80, sequence(step('markCurrentSkillCanInterrupt', {})), 83),
       scheduled(191, sequence(step('finishTimeline', {})), 194),
+      scheduled(280, sequence(step('markCurrentSkillCanInterrupt', {})), 283),
       scheduled(391, sequence(step('finishTimeline', {})), 394),
+      scheduled(450, sequence(step('markCurrentSkillCanInterrupt', {})), 453),
       scheduled(545, sequence(step('finishTimeline', {})), 548),
       scheduled(
         23,
         instantiateActionSequence(sharedActionSequence1, [
-          'chr_0029_pograni_combo_skill:/scheduledSequences/9/sequence/steps/2',
+          'chr_0029_pograni_combo_skill:/scheduledSequences/12/sequence/steps/2',
         ]),
         26,
       ),
@@ -1828,7 +1831,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
               features: ['canBreakWeakness'],
               stagger: { kind: 'blackboard', key: 'poise1' },
             },
-            'chr_0029_pograni_combo_skill:/scheduledSequences/10/sequence/steps/2',
+            'chr_0029_pograni_combo_skill:/scheduledSequences/13/sequence/steps/2',
           ),
           step('startTimeDilation', {
             scope: 'entity',
@@ -1868,7 +1871,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
               features: ['canBreakWeakness'],
               stagger: { kind: 'blackboard', key: 'poise4' },
             },
-            'chr_0029_pograni_combo_skill:/scheduledSequences/11/sequence/steps/2',
+            'chr_0029_pograni_combo_skill:/scheduledSequences/14/sequence/steps/2',
           ),
           step('startTimeDilation', {
             scope: 'entity',
@@ -1925,7 +1928,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
       scheduled(
         223,
         instantiateActionSequence(sharedActionSequence1, [
-          'chr_0029_pograni_combo_skill:/scheduledSequences/12/sequence/steps/2',
+          'chr_0029_pograni_combo_skill:/scheduledSequences/15/sequence/steps/2',
         ]),
         226,
       ),
@@ -1955,7 +1958,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
               features: ['canBreakWeakness'],
               stagger: { kind: 'blackboard', key: 'poise1' },
             },
-            'chr_0029_pograni_combo_skill:/scheduledSequences/13/sequence/steps/2',
+            'chr_0029_pograni_combo_skill:/scheduledSequences/16/sequence/steps/2',
           ),
           step('startTimeDilation', {
             scope: 'entity',
@@ -1995,7 +1998,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
               features: ['canBreakWeakness'],
               stagger: { kind: 'blackboard', key: 'poise3' },
             },
-            'chr_0029_pograni_combo_skill:/scheduledSequences/14/sequence/steps/2',
+            'chr_0029_pograni_combo_skill:/scheduledSequences/17/sequence/steps/2',
           ),
           step('startTimeDilation', {
             scope: 'entity',
@@ -2052,7 +2055,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
       scheduled(
         423,
         instantiateActionSequence(sharedActionSequence1, [
-          'chr_0029_pograni_combo_skill:/scheduledSequences/15/sequence/steps/2',
+          'chr_0029_pograni_combo_skill:/scheduledSequences/18/sequence/steps/2',
         ]),
         426,
       ),
@@ -2082,7 +2085,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
               features: ['canBreakWeakness'],
               stagger: { kind: 'blackboard', key: 'poise1' },
             },
-            'chr_0029_pograni_combo_skill:/scheduledSequences/16/sequence/steps/2',
+            'chr_0029_pograni_combo_skill:/scheduledSequences/19/sequence/steps/2',
           ),
           step('startTimeDilation', {
             scope: 'entity',
@@ -2099,7 +2102,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = withSki
       scheduled(
         623,
         instantiateActionSequence(sharedActionSequence1, [
-          'chr_0029_pograni_combo_skill:/scheduledSequences/17/sequence/steps/2',
+          'chr_0029_pograni_combo_skill:/scheduledSequences/20/sequence/steps/2',
         ]),
         626,
       ),

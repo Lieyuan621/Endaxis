@@ -982,7 +982,7 @@ export const aleshChr_0024_deepfin_normal_skill: SkillDefinition = withSkillBlac
 export const aleshChr_0024_deepfin_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0024_deepfin_combo_skill',
-    timelineBlockFrames: 39,
+    timelineBlockFrames: 131,
     naturalDurationFrames: 213,
     exclusiveFrame: 130,
     offsetRecordFrame: 0,

@@ -553,6 +553,7 @@ export function analyzeStepUsage(
     case 'applyStatus':
     case 'consumeStatus':
     case 'finishTimeline':
+    case 'markCurrentSkillCanInterrupt':
     case 'launchProjectileLifetime':
     case 'setContextFlag':
     case 'openComboWindow':

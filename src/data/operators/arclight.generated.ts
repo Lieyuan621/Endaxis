@@ -595,7 +595,7 @@ export const arclightChr_0007_ikut_plunging_attack_end: SkillDefinition = withSk
 export const arclightChr_0007_ikut_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0007_ikut_normal_skill',
-    timelineBlockFrames: 36,
+    timelineBlockFrames: 34,
     naturalDurationFrames: 214,
     exclusiveFrame: 164,
     offsetRecordFrame: 0,
@@ -894,6 +894,7 @@ export const arclightChr_0007_ikut_normal_skill: SkillDefinition = withSkillBlac
         ),
         137,
       ),
+      scheduled(34, sequence(step('markCurrentSkillCanInterrupt', {})), 35),
       scheduled(
         0,
         sequence(
@@ -958,7 +959,7 @@ export const arclightChr_0007_ikut_normal_skill: SkillDefinition = withSkillBlac
 export const arclightChr_0007_ikut_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0007_ikut_ultimate_skill',
-    timelineBlockFrames: 77,
+    timelineBlockFrames: 86,
     naturalDurationFrames: 141,
     exclusiveFrame: 85,
     offsetRecordFrame: 0,
@@ -1077,7 +1078,7 @@ export const arclightChr_0007_ikut_ultimate_skill: SkillDefinition = withSkillBl
 export const arclightChr_0007_ikut_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0007_ikut_combo_skill',
-    timelineBlockFrames: 27,
+    timelineBlockFrames: 38,
     naturalDurationFrames: 86,
     exclusiveFrame: 37,
     offsetRecordFrame: 0,

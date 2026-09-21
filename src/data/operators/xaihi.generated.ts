@@ -767,7 +767,7 @@ export const xaihiChr_0011_seraph_normal_skill: SkillDefinition = withSkillBlack
 export const xaihiChr_0011_seraph_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0011_seraph_combo_skill',
-    timelineBlockFrames: 25,
+    timelineBlockFrames: 43,
     naturalDurationFrames: 122,
     exclusiveFrame: 42,
     offsetRecordFrame: 0,
@@ -874,7 +874,7 @@ export const xaihiChr_0011_seraph_combo_skill: SkillDefinition = withSkillBlackb
 export const xaihiChr_0011_seraph_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0011_seraph_ultimate_skill',
-    timelineBlockFrames: 67,
+    timelineBlockFrames: 81,
     naturalDurationFrames: 183,
     exclusiveFrame: 80,
     offsetRecordFrame: 0,

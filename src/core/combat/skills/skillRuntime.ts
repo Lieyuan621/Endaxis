@@ -182,6 +182,7 @@ export interface CombatOperationContext {
   readonly reachSkillOperableBoundary?: (skillIds: readonly string[]) => void;
   /** 原生 MarkCanDash 只标记当前技能的本次施放。 */
   readonly markCurrentSkillCanDash?: () => void;
+  readonly markCurrentSkillCanInterrupt?: () => void;
   /** 仅由技能时间轴宿主提供；返回原生 StoreCurSkillExecuteFrame 使用的整数局部帧。 */
   readonly getCurrentTimelineFrame?: () => number;
   /** 已发射投射物的 duration-finish 注册端口；注册项不归当前技能寿命所有。 */
@@ -354,6 +355,9 @@ export class SkillRuntime {
       markCurrentSkillCanDash: () => {
         this.runtimeState.markedCanDash = true;
       },
+      markCurrentSkillCanInterrupt: () => {
+        this.runtimeState.markedCanInterrupt = true;
+      },
       getCurrentTimelineFrame: () => roundToEven(this.#execution.passedFrames),
       ...(dependencies.scheduleProjectileFinishCallback === undefined
         ? {}
@@ -401,6 +405,7 @@ export class SkillRuntime {
     this.runtimeState = restored?.state ?? {
       castId,
       markedCanDash: false,
+      markedCanInterrupt: false,
       execution: this.#execution,
       blackboard: this.#blackboard.runtimeState,
       initialBlackboard: this.#initialBlackboard,
@@ -474,6 +479,10 @@ export class SkillRuntime {
     return this.#program.timelineContinuationSkillId !== undefined;
   }
 
+  get timelineBlockFollowUpSkillId(): string | undefined {
+    return this.#program.timelineBlockFollowUpSkillId;
+  }
+
   get reachedOperableBoundaryFrame(): number | undefined {
     return this.#execution.reachedOperableBoundaryFrame;
   }
@@ -511,13 +520,16 @@ export class SkillRuntime {
     return this.#execution.castStartFrame === this.#dependencies.clock.frame;
   }
 
-  /** 原生 canInterrupt 的时间分支；当前全量 SkillData 未出现 MarkCanInterruptAction。 */
+  /** 原生 canInterrupt：保护时间已过，或本次施放执行了 MarkCanInterrupt。 */
   get canInterrupt(): boolean {
     if (this.#program.exclusiveFrame === undefined) {
       throw new Error(`skill '${this.#program.skillId}' requires native exclusiveFrame data`);
     }
     // 原生按秒比较 passedTime > exclusiveFrame / 30 + 0.00001。
-    return this.#execution.passedFrames > this.#program.exclusiveFrame + 0.0003;
+    return (
+      this.runtimeState.markedCanInterrupt ||
+      this.#execution.passedFrames > this.#program.exclusiveFrame + 0.0003
+    );
   }
 
   /** 原生 Skill.canDash：先复用 canInterrupt，再读取本次施放的 MarkCanDash 标记。 */
@@ -748,6 +760,7 @@ export class SkillRuntime {
     }
 
     this.runtimeState.markedCanDash = false;
+    this.runtimeState.markedCanInterrupt = false;
     this.#timeline = this.#createTimeline();
     this.#blackboard.restore(this.#initialBlackboard);
     this.#targetContext.clear();

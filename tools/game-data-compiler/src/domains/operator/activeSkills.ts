@@ -19,7 +19,11 @@ import {
 } from '../../source/primitives.ts';
 
 const ENTRY_REQUIRED_FIELDS = new Set(['skillType', 'levelSource', 'source']);
-const ENTRY_OPTIONAL_FIELDS = ['compile', 'enhancementStateBuffId'] as const;
+const ENTRY_OPTIONAL_FIELDS = [
+  'compile',
+  'enhancementStateBuffId',
+  'timelineBlockFollowUpSkillId',
+] as const;
 
 /** 主动技能支持列表和遍历顺序；类型身份归契约，不能把排序差异误当成新枚举。 */
 export const OPERATOR_ACTIVE_SKILL_TYPES = [
@@ -39,6 +43,7 @@ export type OperatorActiveSkillEntrySource = Readonly<
   readonly sourceFile: string;
   readonly projectionConfig: SourceRecord | null;
   readonly enhancementStateBuffId?: string;
+  readonly timelineBlockFollowUpSkillId?: string;
 };
 
 export interface CompiledOperatorActiveSkillEntrySource extends OperatorActiveSkillEntrySource {
@@ -89,6 +94,14 @@ export function parseOperatorActiveSkillEntries(
       skillType,
       levelSource: levelSource satisfies SkillLevelSource,
       sourceFile,
+      ...(row.timelineBlockFollowUpSkillId === undefined
+        ? {}
+        : {
+            timelineBlockFollowUpSkillId: requireNonEmptyString(
+              row.timelineBlockFollowUpSkillId,
+              `${path}.timelineBlockFollowUpSkillId`,
+            ),
+          }),
       projectionConfig:
         row.compile === undefined ? null : requireRecord(row.compile, `${path}.compile`),
       ...(row.enhancementStateBuffId === undefined
@@ -103,6 +116,17 @@ export function parseOperatorActiveSkillEntries(
   });
   requireUnique(entries, entry => entry.key, `${sourcePath}.key`);
   requireUnique(entries, entry => entry.sourceFile, `${sourcePath}.source`);
+  for (const entry of entries) {
+    if (entry.timelineBlockFollowUpSkillId === undefined) continue;
+    if (
+      entry.timelineBlockFollowUpSkillId === entry.key ||
+      !entries.some(target => target.key === entry.timelineBlockFollowUpSkillId)
+    ) {
+      throw new Error(
+        `${entry.sourcePath}.timelineBlockFollowUpSkillId: expected another declared skill`,
+      );
+    }
+  }
   return entries;
 }
 

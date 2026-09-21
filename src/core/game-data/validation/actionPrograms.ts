@@ -1901,6 +1901,7 @@ function validateCombatStep(
     case 'finishTimeline':
       break;
     case 'markCurrentSkillCanDash':
+    case 'markCurrentSkillCanInterrupt':
       break;
     case 'reachSkillOperableBoundary':
       if (!Array.isArray(parameters.skillIds) || parameters.skillIds.length === 0) {

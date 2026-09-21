@@ -309,6 +309,7 @@ export interface ResolvedCombatStepParameters {
   finishTimeline: CombatStepParameters['finishTimeline'];
   reachSkillOperableBoundary: CombatStepParameters['reachSkillOperableBoundary'];
   markCurrentSkillCanDash: CombatStepParameters['markCurrentSkillCanDash'];
+  markCurrentSkillCanInterrupt: CombatStepParameters['markCurrentSkillCanInterrupt'];
   conditional: CombatStepParameters['conditional'];
   switch: CombatStepParameters['switch'];
   once: CombatStepParameters['once'];
@@ -467,6 +468,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   finishTimeline: 'sequence',
   reachSkillOperableBoundary: 'sequence',
   markCurrentSkillCanDash: 'sequence',
+  markCurrentSkillCanInterrupt: 'sequence',
   conditional: 'sequence',
   switch: 'sequence',
   once: 'sequence',
@@ -575,6 +577,7 @@ export interface CompiledSkillExecutionProgram extends CompiledSkillActionProgra
   readonly timelineBlockFrames?: number;
   /** 有序连段下一技能身份；也标记程序已保留 AllowNext 动作，但不预选正式边界目标。 */
   readonly timelineContinuationSkillId?: string;
+  readonly timelineBlockFollowUpSkillId?: string;
   /** 原生技能实例的自然结束周期；与块宽、可中断边界彼此独立。 */
   readonly naturalDurationFrames?: number;
   readonly exclusiveFrame?: number;

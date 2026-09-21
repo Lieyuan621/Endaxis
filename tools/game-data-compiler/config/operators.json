@@ -3748,7 +3748,8 @@
         {
           "skillType": "battleSkill",
           "levelSource": "battleSkill",
-          "source": "chr_0035_liino_normal_skill.json"
+          "source": "chr_0035_liino_normal_skill.json",
+          "timelineBlockFollowUpSkillId": "chr_0035_liino_normal_skill_end"
         },
         {
           "skillType": "battleSkill",
@@ -3758,12 +3759,14 @@
         {
           "skillType": "battleSkill",
           "levelSource": "battleSkill",
-          "source": "chr_0035_liino_normal_skill_combo.json"
+          "source": "chr_0035_liino_normal_skill_combo.json",
+          "timelineBlockFollowUpSkillId": "chr_0035_liino_normal_skill_end"
         },
         {
           "skillType": "ultimate",
           "levelSource": "ultimate",
-          "source": "chr_0035_liino_ultimate_skill.json"
+          "source": "chr_0035_liino_ultimate_skill.json",
+          "timelineBlockFollowUpSkillId": "chr_0035_liino_normal_skill_end"
         }
       ],
       "runtimeTemplate": {

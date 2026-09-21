@@ -457,7 +457,7 @@ export const snowshineChr_0014_aurora_plunging_attack_end: SkillDefinition = wit
 export const snowshineChr_0014_aurora_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0014_aurora_normal_skill',
-    timelineBlockFrames: 106,
+    timelineBlockFrames: 67,
     naturalDurationFrames: 208,
     exclusiveFrame: 145,
     offsetRecordFrame: 0,
@@ -504,6 +504,7 @@ export const snowshineChr_0014_aurora_normal_skill: SkillDefinition = withSkillB
         ),
         5,
       ),
+      scheduled(67, sequence(step('markCurrentSkillCanInterrupt', {})), 70),
       scheduled(
         107,
         sequence(
@@ -646,7 +647,7 @@ export const snowshineChr_0014_aurora_normal_skill: SkillDefinition = withSkillB
                   features: ['canBreakWeakness'],
                   stagger: { kind: 'blackboard', key: 'poise' },
                 },
-                'chr_0014_aurora_normal_skill:/scheduledSequences/8/sequence/steps/0/body/steps/2',
+                'chr_0014_aurora_normal_skill:/scheduledSequences/9/sequence/steps/0/body/steps/2',
               ),
               step('startTimeDilation', {
                 scope: 'entity',
@@ -748,7 +749,7 @@ export const snowshineChr_0014_aurora_normal_skill: SkillDefinition = withSkillB
 export const snowshineChr_0014_aurora_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0014_aurora_combo_skill',
-    timelineBlockFrames: 15,
+    timelineBlockFrames: 46,
     naturalDurationFrames: 123,
     exclusiveFrame: 45,
     offsetRecordFrame: 0,
@@ -921,7 +922,7 @@ export const snowshineChr_0014_aurora_combo_skill: SkillDefinition = withSkillBl
 export const snowshineChr_0014_aurora_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0014_aurora_ultimate_skill',
-    timelineBlockFrames: 71,
+    timelineBlockFrames: 91,
     naturalDurationFrames: 142,
     exclusiveFrame: 90,
     offsetRecordFrame: 0,

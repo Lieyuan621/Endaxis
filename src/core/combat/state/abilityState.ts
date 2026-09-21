@@ -293,6 +293,8 @@ export interface SkillRuntimeState {
   readonly castId: string | null;
   /** 当前这次施放是否已经执行原生 MarkCanDash；新一次施放会清零。 */
   markedCanDash: boolean;
+  /** 本次施放已执行 MarkCanInterrupt；新一次施放清零。 */
+  markedCanInterrupt: boolean;
   readonly execution: SkillExecutionState;
   readonly blackboard: ActionBlackboardState;
   readonly initialBlackboard: Readonly<Record<string, ActionBlackboardValue>>;

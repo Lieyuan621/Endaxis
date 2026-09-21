@@ -195,15 +195,18 @@ export function planOperatorDefinition(
       compileSkillSlotReplacement,
       compileSkillTypeMutation,
     });
-    return entry.enhancementStateBuffId === undefined
-      ? planned
-      : {
-          ...planned,
-          definition: {
-            ...planned.definition,
-            enhancementStateBuffId: entry.enhancementStateBuffId,
-          },
-        };
+    return {
+      ...planned,
+      definition: {
+        ...planned.definition,
+        ...(entry.enhancementStateBuffId === undefined
+          ? {}
+          : { enhancementStateBuffId: entry.enhancementStateBuffId }),
+        ...(entry.timelineBlockFollowUpSkillId === undefined
+          ? {}
+          : { timelineBlockFollowUpSkillId: entry.timelineBlockFollowUpSkillId }),
+      },
+    };
   });
   const routedSkills = planRoutedSkills(
     row,

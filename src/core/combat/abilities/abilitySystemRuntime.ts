@@ -41,6 +41,7 @@ export interface AbilitySkillRuntime extends FrameRuntime {
   readonly nativeSkillType?: NativeSkillType;
   /** 场景技能块在宿主局部时钟中的可操作宽度；非场景测试运行时可省略。 */
   readonly timelineBlockFrames?: number;
+  readonly timelineBlockFollowUpSkillId?: string;
   /** 原生普攻连段身份提交点。 */
   readonly offsetRecordFrame?: number;
   /** 正式块宽由技能实际执行和 canInterrupt 决定，静态宽度只供预览。 */
@@ -1313,7 +1314,20 @@ export class AbilitySystemRuntime implements FrameRuntime {
     ) {
       return;
     }
-    if (skill !== this.#currentSkill || skill.state !== 'casting') return;
+    if (skill !== this.#currentSkill) return;
+    const usesBasicAttackBoundary =
+      skill.skillType === 'battleSkill' ||
+      skill.skillType === 'comboSkill' ||
+      skill.skillType === 'ultimate';
+    if (skill.state !== 'casting') {
+      if (
+        (!usesBasicAttackBoundary && skill.timelineBlockFollowUpSkillId === undefined) ||
+        skill.state !== 'ended'
+      )
+        return;
+      // 参照操作没有可用路由时，技能实际结束仍是显示边界。
+      skill.markOperableBoundaryReached?.();
+    }
     if (skill.reachedOperableBoundaryFrame === undefined) {
       // 动作在 Timeline Tick 内写入候选，Skill.advance 返回时 passedFrames 可能已经推进；
       // 这里恰好消费一次，不能拿更新后的局部帧反查或把窗口留给未来路由。
@@ -1331,12 +1345,32 @@ export class AbilitySystemRuntime implements FrameRuntime {
             );
       const candidateSkillIds =
         candidate?.skillIds ?? skill.operableBoundaryCandidateSkillIds ?? [];
-      const routableDirectWindows = directWindows.filter(window =>
-        this.#hasRoutableAllowedNextSkill(window.skillIds),
-      );
-      const candidateReachedNow = this.#hasRoutableAllowedNextSkill(candidateSkillIds);
+      const canEndBlock = (skillIds: readonly string[]) =>
+        skill.timelineBlockFollowUpSkillId === undefined
+          ? this.#hasRoutableAllowedNextSkill(skillIds, usesBasicAttackBoundary)
+          : skillIds.includes(skill.timelineBlockFollowUpSkillId) &&
+            this.#hasRoutableAllowedNextSkill([skill.timelineBlockFollowUpSkillId]);
+      const routableDirectWindows = directWindows.filter(window => canEndBlock(window.skillIds));
+      const candidateReachedNow = canEndBlock(candidateSkillIds);
       const candidatesReachedNow = routableDirectWindows.length > 0 || candidateReachedNow;
       if (!candidatesReachedNow && skill.canInterrupt !== true) return;
+      if (
+        !candidatesReachedNow &&
+        skill.timelineBlockFollowUpSkillId !== undefined &&
+        !this.#hasRoutableAllowedNextSkill([skill.timelineBlockFollowUpSkillId])
+      )
+        return;
+      if (
+        usesBasicAttackBoundary &&
+        skill.timelineBlockFollowUpSkillId === undefined &&
+        !candidatesReachedNow &&
+        !this.#skills.some(
+          next =>
+            next.skillType === 'basicAttack' &&
+            this.resolvePlayerInputSkill(next.skillId, 'basicAttack').status === 'matched',
+        )
+      )
+        return;
       const allowedFrame = Math.min(
         ...(routableDirectWindows.length === 0 ? [] : [frame]),
         ...(!candidateReachedNow || candidate === undefined ? [] : [candidate.frame]),
@@ -1357,7 +1391,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
   }
 
   /** 只检查此刻玩家操作能够解析出的技能身份；费用、冷却和未来输入不参与当前块宽。 */
-  #hasRoutableAllowedNextSkill(skillIds: readonly string[]): boolean {
+  #hasRoutableAllowedNextSkill(skillIds: readonly string[], basicAttackOnly = false): boolean {
     if (skillIds.length === 0 || this.#playerActionRoutes === undefined) return false;
     const allowedSkillKeys = new Set(
       skillIds.flatMap(skillId => {
@@ -1372,7 +1406,15 @@ export class AbilitySystemRuntime implements FrameRuntime {
       >[PlayerSkillInput],
     ][]) {
       if (route === undefined) continue;
+      if (basicAttackOnly && input !== 'basicAttack') continue;
       for (const skillKey of allowedSkillKeys) {
+        if (
+          basicAttackOnly &&
+          !this.#skills.some(
+            skill => skill.skillId === skillKey && skill.skillType === 'basicAttack',
+          )
+        )
+          continue;
         if (this.resolvePlayerInputSkill(skillKey, input).status === 'matched') return true;
       }
     }

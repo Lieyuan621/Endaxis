@@ -15,6 +15,14 @@ export interface LibraryDragGhostSkill {
 
 type SkillThemeColorResolver = (skill: LibraryDragGhostSkill) => string;
 
+/** 原生拖拽只传递输入；可见预览与快捷键一样由页面绘制，避免浏览器再叠半透明截图。 */
+export function suppressNativeLibraryDragImage(transfer: DataTransfer): void {
+  const image = document.createElement('canvas');
+  image.width = 1;
+  image.height = 1;
+  transfer.setDragImage(image, 0, 0);
+}
+
 export function createLibraryDragGhost(
   skill: LibraryDragGhostSkill,
   timeBlockWidth: number,

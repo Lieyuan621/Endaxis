@@ -63,6 +63,43 @@ function createChain(operator: OperatorDefinition) {
 }
 
 describe('generated basic attack chain input timing', () => {
+  it('陈千语连携块尾可接 A1，战技提前窗口不缩短块宽', async () => {
+    const scenario = createChain(operators.chenQianyu);
+    const track = scenario.tracks[0]!;
+    track.skillCasts = [
+      {
+        id: 'chen:combo',
+        source: {
+          kind: 'operatorSkill',
+          skillGroupKey: 'comboSkill',
+          skillKey: 'chr_0005_chen_combo_skill',
+        },
+        placement: { startFrame: 1 },
+      },
+    ];
+    const first = await service.simulate(scenario, 100);
+    const width = projectSkillCastActualDurationFrames(first.receiptEntries).get('chen:combo')!;
+    expect(width).toBeGreaterThanOrEqual(41);
+    track.skillCasts.push({
+      id: 'chen:a1',
+      source: {
+        kind: 'operatorSkill',
+        skillGroupKey: 'basicAttack',
+        skillKey: 'chr_0005_chen_attack1',
+      },
+      placement: { startFrame: 1 + width },
+    });
+    const next = await service.simulate(scenario, 100);
+    expect(
+      next.receiptEntries.filter(
+        entry =>
+          entry.event === 'SkillInputCannotInterruptCurrentSkill' &&
+          entry.data?.castId === 'chen:a1',
+      ),
+    ).toEqual([]);
+    expect(projectSkillCastActualStartFrames(next.receiptEntries).get('chen:a1')).toBe(1 + width);
+  });
+
   it('提弗洛斯强化普攻按各段第一次原生输入窗口紧凑放置', async () => {
     const scenario = createChain(operators.typhoeus);
     scenario.battle.durationFrames = 240;

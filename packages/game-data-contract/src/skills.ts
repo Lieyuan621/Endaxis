@@ -310,6 +310,8 @@ export interface SkillDefinition extends SkillActionProgramDefinition {
    * 预选未来输入。
    */
   timelineContinuationSkillId?: string;
+  /** 块宽的接续参照技能；覆盖默认接续目标，仅影响显示，不执行该技能。 */
+  timelineBlockFollowUpSkillId?: string;
   /**
    * 原生 `SkillData.durationFrame` 的运行时自然结束周期，已按原生 getter 钳制为至少 1 帧。
    * 它不决定技能块宽度，也不能用 `exclusiveFrame` 或最后一个可见战斗动作代替。

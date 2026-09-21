@@ -1235,6 +1235,7 @@ export const rossiChr_0028_wulfa_attack4: SkillDefinition = withSkillBlackboard(
         ),
         215,
       ),
+      scheduled(50, sequence(step('markCurrentSkillCanInterrupt', {})), 188),
       scheduled(188, sequence(step('finishTimeline', {})), 189),
       scheduled(
         36,
@@ -1616,7 +1617,7 @@ export const rossiChr_0028_wulfa_plunging_attack_end: SkillDefinition = withSkil
 export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0028_wulfa_normal_skill',
-    timelineBlockFrames: 38,
+    timelineBlockFrames: 49,
     naturalDurationFrames: 475,
     exclusiveFrame: 272,
     offsetRecordFrame: 0,
@@ -2659,6 +2660,7 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = withSkillBlackb
         ),
         40,
       ),
+      scheduled(49, sequence(step('markCurrentSkillCanInterrupt', {})), 214),
       scheduled(214, sequence(step('finishTimeline', {})), 215),
       scheduled(
         37,
@@ -2732,7 +2734,7 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = withSkillBlackb
 export const rossiChr_0028_wulfa_combo_2_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0028_wulfa_combo_2_skill',
-    timelineBlockFrames: 37,
+    timelineBlockFrames: 66,
     naturalDurationFrames: 198,
     exclusiveFrame: 65,
     offsetRecordFrame: 0,
@@ -3168,7 +3170,7 @@ export const rossiChr_0028_wulfa_combo_2_skill: SkillDefinition = withSkillBlack
 export const rossiChr_0028_wulfa_combo_3_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0028_wulfa_combo_3_skill',
-    timelineBlockFrames: 52,
+    timelineBlockFrames: 60,
     naturalDurationFrames: 409,
     exclusiveFrame: 259,
     offsetRecordFrame: 0,
@@ -4319,6 +4321,7 @@ export const rossiChr_0028_wulfa_combo_3_skill: SkillDefinition = withSkillBlack
         ),
         215,
       ),
+      scheduled(60, sequence(step('markCurrentSkillCanInterrupt', {})), 211),
       scheduled(211, sequence(step('finishTimeline', {})), 212),
       scheduled(
         0,

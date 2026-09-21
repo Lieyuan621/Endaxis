@@ -1123,7 +1123,7 @@ export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = withSkillB
 export const estellaChr_0021_whiten_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0021_whiten_combo_skill',
-    timelineBlockFrames: 20,
+    timelineBlockFrames: 34,
     naturalDurationFrames: 154,
     exclusiveFrame: 33,
     offsetRecordFrame: 0,

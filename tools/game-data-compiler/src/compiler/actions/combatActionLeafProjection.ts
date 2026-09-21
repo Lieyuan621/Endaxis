@@ -2021,6 +2021,9 @@ export function compileActionNode(
     if (action.kind === 'markCanDash') {
       return [{ kind: 'markCurrentSkillCanDash', parameters: {} }];
     }
+    if (action.kind === 'markCanInterrupt') {
+      return [{ kind: 'markCurrentSkillCanInterrupt', parameters: {} }];
+    }
     if (action.kind === 'overrideMultiDashLimit') {
       if (
         !isPlainTargetReference(action.target, 'Owner', '') ||

@@ -712,7 +712,7 @@ export const daPanChr_0018_dapan_plunging_attack_end: SkillDefinition = withSkil
 export const daPanChr_0018_dapan_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0018_dapan_normal_skill',
-    timelineBlockFrames: 65,
+    timelineBlockFrames: 66,
     naturalDurationFrames: 210,
     exclusiveFrame: 65,
     offsetRecordFrame: 0,
@@ -956,7 +956,7 @@ export const daPanChr_0018_dapan_normal_skill: SkillDefinition = withSkillBlackb
 export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0018_dapan_ultimate_skill',
-    timelineBlockFrames: 86,
+    timelineBlockFrames: 101,
     naturalDurationFrames: 235,
     exclusiveFrame: 100,
     offsetRecordFrame: 0,
@@ -1272,7 +1272,7 @@ export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = withSkillBlac
 export const daPanChr_0018_dapan_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0018_dapan_combo_skill',
-    timelineBlockFrames: 24,
+    timelineBlockFrames: 53,
     naturalDurationFrames: 146,
     exclusiveFrame: 52,
     offsetRecordFrame: 0,

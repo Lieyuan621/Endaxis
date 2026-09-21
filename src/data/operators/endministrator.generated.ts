@@ -1030,7 +1030,7 @@ export const endministratorChr_0003_endminf_plunging_attack_end: SkillDefinition
 export const endministratorChr_0003_endminf_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0003_endminf_normal_skill',
-    timelineBlockFrames: 24,
+    timelineBlockFrames: 29,
     naturalDurationFrames: 151,
     exclusiveFrame: 28,
     offsetRecordFrame: 0,
@@ -1757,7 +1757,7 @@ export const endministratorChr_0003_endminf_ultimate_skill: SkillDefinition = wi
 export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0003_endminf_combo_skill',
-    timelineBlockFrames: 23,
+    timelineBlockFrames: 31,
     naturalDurationFrames: 164,
     exclusiveFrame: 30,
     offsetRecordFrame: 0,

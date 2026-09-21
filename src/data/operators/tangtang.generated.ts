@@ -1039,7 +1039,7 @@ export const tangtangChr_0027_tangtang_plunging_attack_end: SkillDefinition = wi
 export const tangtangChr_0027_tangtang_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0027_tangtang_normal_skill',
-    timelineBlockFrames: 50,
+    timelineBlockFrames: 51,
     naturalDurationFrames: 136,
     exclusiveFrame: 50,
     offsetRecordFrame: 0,
@@ -1523,7 +1523,7 @@ export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = withSki
 export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0027_tangtang_combo_skill',
-    timelineBlockFrames: 31,
+    timelineBlockFrames: 42,
     naturalDurationFrames: 200,
     exclusiveFrame: 41,
     offsetRecordFrame: 0,

@@ -18,6 +18,13 @@ import {
 import { pruneUnusedSkillValues } from '../../src/compiler/optimization/skillValueOptimization.ts';
 
 describe('黑板用途的读取对象', () => {
+  it('可中断标记有运行时作用，但不读写黑板，也不阻止无用值裁剪', () => {
+    const usage = analyzeStepUsage({ kind: 'markCurrentSkillCanInterrupt', parameters: {} });
+    expect(usage.observable).toBe(true);
+    expect(usage.unknownAccess).toBe(false);
+    expect(usage.reads.size).toBe(0);
+    expect(usage.writes.size).toBe(0);
+  });
   it.each([
     {
       condition: {

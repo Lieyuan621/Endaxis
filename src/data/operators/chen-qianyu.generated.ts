@@ -822,7 +822,7 @@ export const chenQianyuChr_0005_chen_plunging_attack_end: SkillDefinition = with
 export const chenQianyuChr_0005_chen_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0005_chen_normal_skill',
-    timelineBlockFrames: 25,
+    timelineBlockFrames: 33,
     naturalDurationFrames: 136,
     exclusiveFrame: 32,
     offsetRecordFrame: 0,
@@ -1109,7 +1109,7 @@ export const chenQianyuChr_0005_chen_normal_skill: SkillDefinition = withSkillBl
 export const chenQianyuChr_0005_chen_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0005_chen_combo_skill',
-    timelineBlockFrames: 23,
+    timelineBlockFrames: 41,
     naturalDurationFrames: 168,
     exclusiveFrame: 40,
     offsetRecordFrame: 0,
@@ -1321,7 +1321,7 @@ export const chenQianyuChr_0005_chen_combo_skill: SkillDefinition = withSkillBla
 export const chenQianyuChr_0005_chen_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0005_chen_ultimate_skill',
-    timelineBlockFrames: 112,
+    timelineBlockFrames: 131,
     naturalDurationFrames: 264,
     exclusiveFrame: 130,
     offsetRecordFrame: 0,

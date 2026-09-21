@@ -1261,6 +1261,8 @@ export interface CombatStepParameters {
   };
   /** 把当前技能的本次施放标为可由 Dash 输入打断。 */
   markCurrentSkillCanDash: Record<string, never>;
+  /** 标记执行该动作的技能施放可中断，对应原生 MarkCanInterrupt。 */
+  markCurrentSkillCanInterrupt: Record<string, never>;
   /** 按条件选择真假分支。 */
   conditional: {
     /** 决定执行哪个分支的条件。 */
@@ -1517,6 +1519,7 @@ export const COMBAT_STEP_KINDS = [
   'finishTimeline',
   'reachSkillOperableBoundary',
   'markCurrentSkillCanDash',
+  'markCurrentSkillCanInterrupt',
   'conditional',
   'switch',
   'once',

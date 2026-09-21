@@ -25,6 +25,7 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
     | 'key'
     | 'timelineBlockFrames'
     | 'timelineContinuationSkillId'
+    | 'timelineBlockFollowUpSkillId'
     | 'naturalDurationFrames'
     | 'cooldownFrames'
     | 'enhancementStateBuffId'

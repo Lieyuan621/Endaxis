@@ -781,6 +781,105 @@ describe('AbilitySystemRuntime', () => {
     expect(reached).toEqual([{ castId: 'cast:current', durationFrames: 5, reachedAtFrame: 1 }]);
   });
 
+  it.each(
+    (['battleSkill', 'comboSkill', 'ultimate'] as const).flatMap(skillType =>
+      [undefined, 'battle'].map(followUp => ({ skillType, followUp })),
+    ),
+  )(
+    '$skillType follows the configured display target ($followUp), or defaults to basic attack',
+    ({ skillType, followUp }) => {
+      let frame = 0;
+      let boundary: number | undefined;
+      const reached: unknown[] = [];
+      const current = Object.assign(new FixtureRuntime('current', [], skillType, 'cast', 23), {
+        usesRuntimeOperableBoundary: true,
+        timelineBlockFollowUpSkillId: followUp,
+        inputWindows: {
+          allowedNextSkills: [
+            { startFrame: followUp === undefined ? 23 : 35, endFrame: 40, skillIds: ['battle'] },
+            { startFrame: followUp === undefined ? 35 : 23, endFrame: 40, skillIds: ['enhanced'] },
+          ],
+          commandMappings: [
+            {
+              startFrame: 0,
+              endFrame: 40,
+              input: 'basicAttack' as const,
+              targetSkillId: 'enhanced',
+            },
+          ],
+        },
+        markOperableBoundaryReached(value = frame) {
+          boundary ??= value;
+        },
+      });
+      Object.defineProperties(current, {
+        currentTimelineFrame: { get: () => frame },
+        passedFrames: { get: () => frame },
+        canInterrupt: { get: () => frame > 40 },
+        reachedOperableBoundaryFrame: { get: () => boundary },
+      });
+      const ability = new AbilitySystemRuntime({
+        skills: [
+          current,
+          new FixtureRuntime('battle', []),
+          new FixtureRuntime('a1', [], 'basicAttack'),
+          new FixtureRuntime('enhanced', [], 'basicAttack'),
+        ],
+        playerActionRoutes: {
+          basicAttack: {
+            kind: 'basicAttack',
+            skillKeys: ['a1', 'enhanced'],
+            defaultSkillKey: 'a1',
+          },
+          battleSkill: { kind: 'skillSlot', skillSlotKey: 'battle' },
+        },
+        skillSlotGroups: [
+          { skillGroupKey: 'battle', baseSkillKey: 'battle', replacementSkillKeys: [] },
+        ],
+        resolveActualFrame: () => frame,
+        onSkillOperableBoundaryReached: fact => reached.push(fact),
+      });
+      ability.tryStartSkill('current', 'cast');
+      frame = 23;
+      ability.advanceFrame();
+      expect(reached).toEqual([]);
+      frame = 35;
+      ability.advanceFrame();
+      expect(reached).toEqual([{ castId: 'cast', durationFrames: 35, reachedAtFrame: 35 }]);
+    },
+  );
+
+  it('ends the block at skill completion when no basic attack route exists', () => {
+    let frame = 0;
+    let boundary: number | undefined;
+    const reached: unknown[] = [];
+    const current = Object.assign(new FixtureRuntime('current', [], 'comboSkill', 'cast', 23), {
+      usesRuntimeOperableBoundary: true,
+      canInterrupt: true,
+      inputWindows: {},
+      markOperableBoundaryReached(value = frame) {
+        boundary ??= value;
+      },
+    });
+    Object.defineProperties(current, {
+      currentTimelineFrame: { get: () => frame },
+      reachedOperableBoundaryFrame: { get: () => boundary },
+    });
+    const ability = new AbilitySystemRuntime({
+      skills: [current],
+      resolveActualFrame: () => frame,
+      onSkillOperableBoundaryReached: fact => reached.push(fact),
+    });
+    ability.tryStartSkill('current', 'cast');
+    frame = 41;
+    ability.advanceFrame();
+    expect(reached).toEqual([]);
+    frame = 60;
+    current.state = 'ended';
+    ability.advanceFrame();
+    expect(reached).toEqual([{ castId: 'cast', durationFrames: 60, reachedAtFrame: 60 }]);
+  });
+
   it('snapshots the active slot variant at release start and applies changes to later releases', () => {
     const events: string[] = [];
     const base = new FixtureRuntime('ultimate', events, 'ultimate');

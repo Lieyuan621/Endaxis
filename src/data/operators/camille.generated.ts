@@ -1414,7 +1414,7 @@ export const camilleChr_0033_camille_plunging_attack_end: SkillDefinition = with
 export const camilleChr_0033_camille_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0033_camille_normal_skill',
-    timelineBlockFrames: 18,
+    timelineBlockFrames: 27,
     naturalDurationFrames: 192,
     exclusiveFrame: 26,
     offsetRecordFrame: 0,
@@ -1723,7 +1723,7 @@ export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = withSkill
 export const camilleChr_0033_camille_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0033_camille_combo_skill',
-    timelineBlockFrames: 51,
+    timelineBlockFrames: 64,
     naturalDurationFrames: 191,
     exclusiveFrame: 63,
     offsetRecordFrame: 0,
@@ -2233,7 +2233,7 @@ export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = withSkillB
 export const camilleChr_0033_camille_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0033_camille_ultimate_skill',
-    timelineBlockFrames: 125,
+    timelineBlockFrames: 134,
     naturalDurationFrames: 236,
     exclusiveFrame: 133,
     offsetRecordFrame: 0,

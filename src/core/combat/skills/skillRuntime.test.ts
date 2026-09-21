@@ -1172,36 +1172,44 @@ describe('SkillRuntime', () => {
     expect(fixture.runtime.runtimeState.execution.attachedBuffs.size).toBe(0);
   });
 
-  it('MarkCanDash 只打开当前施放的闪避窗口并进入切面数据', () => {
-    const fixture = createBattleSkillRuntime(300, undefined, undefined, {
-      key: 'mark-can-dash',
-      timelineBlockFrames: 10,
-      naturalDurationFrames: 20,
-      exclusiveFrame: 100,
-      scheduledSequences: [
-        {
-          startFrame: 1,
-          sequence: {
-            steps: [{ kind: 'markCurrentSkillCanDash', parameters: {} }],
+  it.each(['markCurrentSkillCanDash', 'markCurrentSkillCanInterrupt'] as const)(
+    '%s 标记归属当前施放、进入切面并在重放时重置',
+    kind => {
+      const fixture = createBattleSkillRuntime(300, undefined, undefined, {
+        key: 'mark-can-dash',
+        timelineBlockFrames: 10,
+        naturalDurationFrames: 20,
+        exclusiveFrame: 100,
+        scheduledSequences: [
+          {
+            startFrame: 1,
+            sequence: {
+              steps: [{ kind, parameters: {} }],
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
 
-    fixture.runtime.tryStart();
-    expect(fixture.runtime.canInterrupt).toBe(false);
-    expect(fixture.runtime.canDash).toBe(false);
+      fixture.runtime.tryStart();
+      expect(fixture.runtime.canInterrupt).toBe(false);
+      expect(fixture.runtime.canDash).toBe(false);
 
-    fixture.simulation.advanceFrames(1);
+      fixture.simulation.advanceFrames(1);
 
-    expect(fixture.runtime.canInterrupt).toBe(false);
-    expect(fixture.runtime.canDash).toBe(true);
-    expect(structuredClone(fixture.runtime.runtimeState).markedCanDash).toBe(true);
+      expect(fixture.runtime.canInterrupt).toBe(kind === 'markCurrentSkillCanInterrupt');
+      expect(fixture.runtime.canDash).toBe(true);
+      expect(
+        structuredClone(fixture.runtime.runtimeState)[
+          kind === 'markCurrentSkillCanDash' ? 'markedCanDash' : 'markedCanInterrupt'
+        ],
+      ).toBe(true);
 
-    fixture.runtime.interrupt('dash');
-    fixture.runtime.tryStart();
-    expect(fixture.runtime.canDash).toBe(false);
-  });
+      fixture.runtime.interrupt('dash');
+      fixture.runtime.tryStart();
+      expect(fixture.runtime.canDash).toBe(false);
+      expect(fixture.runtime.canInterrupt).toBe(false);
+    },
+  );
 
   it('chr_0032_lizhiyan 终结技按原生第 48 帧开放闪避', () => {
     const markWindow = arcaneUltimate.scheduledSequences.find(item =>

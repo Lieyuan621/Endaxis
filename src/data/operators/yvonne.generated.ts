@@ -4135,7 +4135,7 @@ export const yvonneChr_0017_yvonne_plunging_attack_end: SkillDefinition = withSk
 export const yvonneChr_0017_yvonne_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0017_yvonne_normal_skill',
-    timelineBlockFrames: 34,
+    timelineBlockFrames: 35,
     naturalDurationFrames: 150,
     exclusiveFrame: 34,
     offsetRecordFrame: 0,
@@ -4395,7 +4395,7 @@ export const yvonneChr_0017_yvonne_ultimate_skill: SkillDefinition = withSkillBl
 export const yvonneChr_0017_yvonne_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0017_yvonne_combo_skill',
-    timelineBlockFrames: 19,
+    timelineBlockFrames: 25,
     naturalDurationFrames: 130,
     exclusiveFrame: 24,
     offsetRecordFrame: 0,

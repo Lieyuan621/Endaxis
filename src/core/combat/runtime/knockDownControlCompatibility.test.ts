@@ -13,6 +13,48 @@ const entry = (fields: Record<string, unknown>) =>
   ({ operatorId: 'fixture', skills: [], ...fields }) as unknown as CombatOperatorProgram;
 
 describe('普通倒地起身消费者门禁', () => {
+  it('干员技能施加到自身的 Buff owner 已知，不把敌人来源误当成持有者', () => {
+    const apply = {
+      kind: 'applyBuff',
+      parameters: { buffId: 'self', target: 'caster', source: 'enemy' },
+    };
+    const buff = { lifecycleSequences: { finish: { condition: reader('buffOwner') } } };
+    expect(
+      inspectKnockDownControlConsumers([
+        entry({ skills: [root] }),
+        entry({ skills: [apply], buffDefinitions: { self: buff } }),
+      ]),
+    ).toEqual([]);
+    for (const target of ['enemy', 'buffOwner', 'currentAbilityEntity']) {
+      expect(
+        inspectKnockDownControlConsumers([
+          entry({
+            skills: [root, apply, { ...apply, parameters: { buffId: 'self', target } }],
+            buffDefinitions: { self: buff },
+          }),
+        ]),
+      ).toHaveLength(1);
+    }
+    expect(
+      inspectKnockDownControlConsumers([
+        entry({
+          skills: [root],
+          abilityEntityDefinitions: { entity: { skills: [apply] } },
+          buffDefinitions: { self: buff },
+        }),
+      ]),
+    ).toHaveLength(1);
+    expect(
+      inspectKnockDownControlConsumers([
+        entry({
+          skills: [root, apply],
+          buffDefinitions: {
+            self: { ...buff, child: { stackingType: 'unique', condition: reader('buffOwner') } },
+          },
+        }),
+      ]),
+    ).toHaveLength(1);
+  });
   it.each([
     'skills',
     'buffDefinitions',

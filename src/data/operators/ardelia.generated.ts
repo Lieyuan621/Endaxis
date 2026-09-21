@@ -1083,6 +1083,7 @@ export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = withSkillBl
     },
     costFrame: 0,
     scheduledSequences: [
+      scheduled(52, sequence(step('markCurrentSkillCanInterrupt', {})), 55),
       scheduled(188, sequence(step('finishTimeline', {})), 189),
       scheduled(
         25,
@@ -1190,14 +1191,14 @@ export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = withSkillBl
       scheduled(
         32,
         instantiateActionSequence(sharedActionSequence3, [
-          'chr_0025_ardelia_normal_skill:/scheduledSequences/5/sequence/steps/2',
+          'chr_0025_ardelia_normal_skill:/scheduledSequences/6/sequence/steps/2',
         ]),
         33,
       ),
       scheduled(
         221,
         instantiateActionSequence(sharedActionSequence3, [
-          'chr_0025_ardelia_normal_skill:/scheduledSequences/6/sequence/steps/2',
+          'chr_0025_ardelia_normal_skill:/scheduledSequences/7/sequence/steps/2',
         ]),
         222,
       ),
@@ -1328,7 +1329,7 @@ export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = withSkillBl
 export const ardeliaChr_0025_ardelia_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0025_ardelia_combo_skill',
-    timelineBlockFrames: 23,
+    timelineBlockFrames: 41,
     naturalDurationFrames: 160,
     exclusiveFrame: 40,
     offsetRecordFrame: 0,
@@ -1528,7 +1529,7 @@ export const ardeliaChr_0025_ardelia_combo_skill: SkillDefinition = withSkillBla
 export const ardeliaChr_0025_ardelia_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0025_ardelia_ultimate_skill',
-    timelineBlockFrames: 209,
+    timelineBlockFrames: 224,
     naturalDurationFrames: 261,
     exclusiveFrame: 223,
     offsetRecordFrame: 0,

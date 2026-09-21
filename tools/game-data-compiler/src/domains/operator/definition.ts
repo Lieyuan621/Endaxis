@@ -960,7 +960,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   };
 }
 
-/** 可放置技能（包括序列后续段）的预览宽度取首个可操作窗口或无条件结束点；原生技能仍按完整时长执行。 */
+/** 显式块宽参照优先；否则非普攻技能按默认接续窗口或结束点生成预览。 */
 export function selectSingleSkillTimelineBlockFrames(
   definitions: Map<string, CompiledOperatorActiveSkillRuntimeDefinitionSource>,
   groups: readonly {
@@ -984,10 +984,31 @@ export function selectSingleSkillTimelineBlockFrames(
         .filter((id): id is string => id !== undefined),
     ),
   );
+  const basicAttackSkillIds = new Set(
+    groups
+      .filter(group => group.skillType === 'basicAttack')
+      .flatMap(group => group.skillKeys.map(key => definitions.get(key)?.key)),
+  );
+  for (const [key, definition] of definitions) {
+    const followUp = definition.timelineBlockFollowUpSkillId;
+    if (
+      followUp !== undefined &&
+      (!routableSkillIds.has(followUp) ||
+        !definition.allowNextSkillTransitions.some(transition =>
+          transition.skillIds.includes(followUp),
+        ))
+    ) {
+      throw new Error(
+        `skill '${key}' timeline block follow-up '${followUp}' requires a routable native continuation window`,
+      );
+    }
+  }
   for (const group of groups) {
-    if (group.skillType === 'basicAttack') continue;
     const visibleKeys = group.skillKeys.filter(key => !runtimeReplacementSkillKeys.has(key));
     const placementKeys = [
+      ...group.skillKeys.filter(
+        key => definitions.get(key)?.timelineBlockFollowUpSkillId !== undefined,
+      ),
       ...(visibleKeys.length === 1 ? visibleKeys : []),
       ...group.skillKeys.filter(
         key =>
@@ -997,26 +1018,47 @@ export function selectSingleSkillTimelineBlockFrames(
     for (const key of placementKeys) {
       const definition = definitions.get(key);
       if (definition === undefined) continue;
+      const followUp = definition.timelineBlockFollowUpSkillId;
+      if (group.skillType === 'basicAttack' && followUp === undefined) continue;
       const firstInputFrame = Math.min(
         ...definition.allowNextSkillTransitions
           .filter(
             transition =>
               transition.direct &&
               transition.startFrame > 0 &&
-              transition.skillIds.some(id => routableSkillIds.has(id)),
+              transition.skillIds.some(
+                id =>
+                  routableSkillIds.has(id) &&
+                  (followUp !== undefined
+                    ? id === followUp
+                    : !['battleSkill', 'comboSkill', 'ultimate'].includes(group.skillType) ||
+                      basicAttackSkillIds.has(id)),
+              ),
           )
           .map(transition => transition.startFrame),
       );
-      const firstFinishFrame = Math.min(
+      const firstUnconditionalBoundaryFrame = Math.min(
         ...definition.scheduledSequences
           .filter(scheduled =>
-            scheduled.sequence.steps.some(step => step.kind === 'finishTimeline'),
+            scheduled.sequence.steps.some(
+              step =>
+                step.kind === 'finishTimeline' || step.kind === 'markCurrentSkillCanInterrupt',
+            ),
           )
           .map(scheduled => scheduled.startFrame),
       );
-      const frame = Math.min(firstInputFrame, firstFinishFrame);
-      if (Number.isFinite(frame) && frame < definition.timelineBlockFrames) {
-        definitions.set(key, { ...definition, timelineBlockFrames: frame });
+      const frame = Math.min(firstInputFrame, firstUnconditionalBoundaryFrame);
+      if (
+        followUp !== undefined ||
+        (Number.isFinite(frame) && frame < definition.timelineBlockFrames)
+      ) {
+        definitions.set(key, {
+          ...definition,
+          timelineBlockFrames: Math.min(
+            frame,
+            followUp === undefined ? definition.timelineBlockFrames : definition.exclusiveFrame + 1,
+          ),
+        });
       }
     }
   }

@@ -522,7 +522,7 @@ export const catcherChr_0020_meurs_plunging_attack_end: SkillDefinition = withSk
 export const catcherChr_0020_meurs_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0020_meurs_normal_skill',
-    timelineBlockFrames: 95,
+    timelineBlockFrames: 129,
     naturalDurationFrames: 373,
     exclusiveFrame: 285,
     offsetRecordFrame: 0,
@@ -582,6 +582,7 @@ export const catcherChr_0020_meurs_normal_skill: SkillDefinition = withSkillBlac
         62,
       ),
       scheduled(45, sequence(step('jumpTimeline', { destinationFrame: 255 })), 46),
+      scheduled(129, sequence(step('markCurrentSkillCanInterrupt', {})), 132),
       scheduled(194, sequence(step('finishTimeline', {})), 195),
       scheduled(
         0,
@@ -687,7 +688,7 @@ export const catcherChr_0020_meurs_normal_skill: SkillDefinition = withSkillBlac
                   features: ['canBreakWeakness'],
                   stagger: { kind: 'blackboard', key: 'poise' },
                 },
-                'chr_0020_meurs_normal_skill:/scheduledSequences/8/sequence/steps/0/body/steps/2',
+                'chr_0020_meurs_normal_skill:/scheduledSequences/9/sequence/steps/0/body/steps/2',
               ),
               step('startTimeDilation', {
                 scope: 'entity',
@@ -775,7 +776,7 @@ export const catcherChr_0020_meurs_normal_skill: SkillDefinition = withSkillBlac
 export const catcherChr_0020_meurs_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0020_meurs_combo_skill',
-    timelineBlockFrames: 24,
+    timelineBlockFrames: 46,
     naturalDurationFrames: 98,
     exclusiveFrame: 45,
     offsetRecordFrame: 0,
@@ -942,7 +943,7 @@ export const catcherChr_0020_meurs_combo_skill: SkillDefinition = withSkillBlack
 export const catcherChr_0020_meurs_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0020_meurs_ultimate_skill',
-    timelineBlockFrames: 103,
+    timelineBlockFrames: 121,
     naturalDurationFrames: 193,
     exclusiveFrame: 120,
     offsetRecordFrame: 0,

@@ -506,7 +506,7 @@ export const emberChr_0009_azrila_plunging_attack_end: SkillDefinition = withSki
 export const emberChr_0009_azrila_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0009_azrila_normal_skill',
-    timelineBlockFrames: 51,
+    timelineBlockFrames: 56,
     naturalDurationFrames: 162,
     exclusiveFrame: 55,
     offsetRecordFrame: 0,
@@ -749,7 +749,7 @@ export const emberChr_0009_azrila_normal_skill: SkillDefinition = withSkillBlack
 export const emberChr_0009_azrila_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0009_azrila_ultimate_skill',
-    timelineBlockFrames: 59,
+    timelineBlockFrames: 91,
     naturalDurationFrames: 262,
     exclusiveFrame: 90,
     offsetRecordFrame: 0,

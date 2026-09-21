@@ -664,7 +664,7 @@ export const wulfgardChr_0006_wolfgd_plunging_attack_end: SkillDefinition = with
 export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0006_wolfgd_normal_skill',
-    timelineBlockFrames: 32,
+    timelineBlockFrames: 48,
     naturalDurationFrames: 272,
     exclusiveFrame: 159,
     offsetRecordFrame: 0,
@@ -1078,6 +1078,7 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = withSkillBl
         ),
         32,
       ),
+      scheduled(48, sequence(step('markCurrentSkillCanInterrupt', {})), 51),
       scheduled(117, sequence(step('jumpTimeline', { destinationFrame: 247 })), 117),
     ],
     smartTarget: 'enemy',
@@ -1108,7 +1109,7 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = withSkillBl
 export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0006_wolfgd_combo_skill',
-    timelineBlockFrames: 30,
+    timelineBlockFrames: 31,
     naturalDurationFrames: 138,
     exclusiveFrame: 30,
     offsetRecordFrame: 0,
@@ -1189,7 +1190,7 @@ export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = withSkillBla
 export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0006_wolfgd_ultimate_skill',
-    timelineBlockFrames: 75,
+    timelineBlockFrames: 81,
     naturalDurationFrames: 168,
     exclusiveFrame: 80,
     offsetRecordFrame: 0,

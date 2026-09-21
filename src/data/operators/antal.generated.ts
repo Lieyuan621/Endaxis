@@ -846,7 +846,7 @@ export const antalChr_0023_antal_normal_skill: SkillDefinition = withSkillBlackb
 export const antalChr_0023_antal_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0023_antal_combo_skill',
-    timelineBlockFrames: 24,
+    timelineBlockFrames: 46,
     naturalDurationFrames: 108,
     exclusiveFrame: 45,
     offsetRecordFrame: 0,

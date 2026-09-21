@@ -1619,6 +1619,7 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = withSkillBlackbo
         ),
         12,
       ),
+      scheduled(25, sequence(step('markCurrentSkillCanInterrupt', {})), 31),
       scheduled(
         0,
         sequence(

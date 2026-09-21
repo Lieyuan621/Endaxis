@@ -968,7 +968,7 @@ export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = withSkill
 export const fluoriteChr_0022_bounda_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0022_bounda_combo_skill',
-    timelineBlockFrames: 17,
+    timelineBlockFrames: 25,
     naturalDurationFrames: 93,
     exclusiveFrame: 24,
     offsetRecordFrame: 0,

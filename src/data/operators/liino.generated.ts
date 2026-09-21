@@ -121,7 +121,7 @@ const sharedActionSequence1: ActionSequenceDefinition = sequence(
 export const liinoChr_0035_liino_combo_skill: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0035_liino_combo_skill',
-    timelineBlockFrames: 68,
+    timelineBlockFrames: 99,
     naturalDurationFrames: 150,
     exclusiveFrame: 98,
     offsetRecordFrame: 0,
@@ -3387,6 +3387,7 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = withSkillBlackb
       scheduled(15, sequence(step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 })), 18),
     ],
     costs: [{ resource: 'sp', value: 25 }],
+    timelineBlockFollowUpSkillId: 'chr_0035_liino_normal_skill_end',
     skillType: 'battleSkill',
     levelSource: 'battleSkill',
     nativeSkillType: 'normalSkill',
@@ -3445,7 +3446,7 @@ export const liinoChr_0035_liino_normal_skill_end: SkillDefinition = withSkillBl
 export const liinoChr_0035_liino_normal_skill_combo: SkillDefinition = withSkillBlackboard(
   {
     key: 'chr_0035_liino_normal_skill_combo',
-    timelineBlockFrames: 1955,
+    timelineBlockFrames: 1723,
     naturalDurationFrames: 2100,
     exclusiveFrame: 1954,
     offsetRecordFrame: 0,
@@ -3823,6 +3824,7 @@ export const liinoChr_0035_liino_normal_skill_combo: SkillDefinition = withSkill
         1961,
       ),
     ],
+    timelineBlockFollowUpSkillId: 'chr_0035_liino_normal_skill_end',
     skillType: 'battleSkill',
     levelSource: 'battleSkill',
     nativeSkillType: 'extraActiveSkill',
@@ -4260,6 +4262,7 @@ export const liinoChr_0035_liino_ultimate_skill: SkillDefinition = withSkillBlac
     ],
     cooldownFrames: 600,
     costs: [{ resource: 'ultimateEnergy', value: 160 }],
+    timelineBlockFollowUpSkillId: 'chr_0035_liino_normal_skill_end',
     skillType: 'ultimate',
     levelSource: 'ultimate',
     nativeSkillType: 'ultimateSkill',

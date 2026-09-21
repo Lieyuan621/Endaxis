@@ -867,9 +867,11 @@ class SkillOperableBoundaryStep extends StatelessCombatStep {
   }
 }
 
-class MarkCurrentSkillCanDashStep extends StatelessCombatStep {
+class MarkCurrentSkillInputStep extends StatelessCombatStep {
   constructor(
-    readonly step: ResolvedCombatStepForKind<'markCurrentSkillCanDash'>,
+    readonly step: ResolvedCombatStepForKind<
+      'markCurrentSkillCanDash' | 'markCurrentSkillCanInterrupt'
+    >,
     readonly runtime: CombatActionSequenceRuntime,
     readonly operationContext: CombatOperationContext,
   ) {
@@ -878,8 +880,8 @@ class MarkCurrentSkillCanDashStep extends StatelessCombatStep {
 
   execute(): void {
     this.runtime.hooks.stepReached?.(this.step);
-    const mark = this.operationContext.markCurrentSkillCanDash;
-    if (mark === undefined) throw new Error('markCurrentSkillCanDash requires a skill host');
+    const mark = this.operationContext[this.step.kind];
+    if (mark === undefined) throw new Error(`${this.step.kind} requires a skill host`);
     mark();
   }
 }
@@ -1085,8 +1087,8 @@ export class CombatActionSequenceRuntime {
       if (step.kind === 'reachSkillOperableBoundary') {
         return new SkillOperableBoundaryStep(step, this, operationContext);
       }
-      if (step.kind === 'markCurrentSkillCanDash') {
-        return new MarkCurrentSkillCanDashStep(step, this, operationContext);
+      if (step.kind === 'markCurrentSkillCanDash' || step.kind === 'markCurrentSkillCanInterrupt') {
+        return new MarkCurrentSkillInputStep(step, this, operationContext);
       }
       if (step.kind === 'once') return new OnceStep(step, this, operationContext);
       if (step.kind === 'withActionBlackboardScope') {
