@@ -608,7 +608,7 @@ function toggleOperatorEffectsVisibility(trackIndex: number): void {
     trackIndex as TrackIndex,
   );
 }
-async function selectTimelineLocale(next: 'zh-CN' | 'en' | 'ru'): Promise<void> {
+async function selectTimelineLocale(next: 'zh-CN' | 'en'): Promise<void> {
   if (locale.value === next) return;
   await setLocale(next, ALL_GAME_TEXT_FAMILIES);
 }
@@ -3060,9 +3060,9 @@ function castHitMarkers(trackIndex: TrackIndex, castId: string): TimelineHitMark
       hitId: hit.hitId,
       executionFrame: hit.frame,
       leftPx: timelineFramePx(hit.frame) - timelineFramePx(publishedStartFrame),
-      critical: hit.label.damage.some(damage => damage.isCritical),
       triggered: hit.triggered,
       triggeredStackIndex: hit.triggeredStackIndex,
+      linkBuffed: hit.linkBuffed,
       forcedCritical: cast.simulationInputs?.criticalOverrides?.[hit.stepKey] === true,
       title: hitMarkerTitle(hit.label),
     }));
@@ -6195,7 +6195,6 @@ function setPanelDialogVisible(visible: boolean): void {
           locales: {
             zhCN: t('locale.zhCNShort'),
             en: t('locale.enShort'),
-            ru: t('locale.ruShort'),
           },
         }"
         @analysis="showDamageAnalysis = true"
@@ -6984,6 +6983,13 @@ function setPanelDialogVisible(visible: boolean): void {
                   :disabled="cast.disabled"
                   :locked="cast.locked"
                   :edited="cast.edited"
+                  :show-decorations="
+                    timelineViewLayers.skillDecorations &&
+                    isOperatorEffectsVisible(track.trackIndex)
+                  "
+                  :locked-text="t('actionItem.lockedTitle')"
+                  :disabled-text="t('actionItem.disabledTitle')"
+                  :edited-text="t('actionItem.editedTitle')"
                   :color="cast.color ?? skillAccentColor(cast.skillType, track.operatorSlug)"
                   :connection-tool-enabled="connectionToolEnabled"
                   :connection-dragging="connectionDrag !== null"

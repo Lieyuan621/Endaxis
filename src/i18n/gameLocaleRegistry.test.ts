@@ -41,23 +41,6 @@ describe('GameLocaleRegistry', () => {
     expect(registry.getFamily('zh-CN', 'operators')).toEqual({ id: 'operators:zh' });
   });
 
-  it('shares the effective English resource between en and ru', async () => {
-    let loadCalls = 0;
-    const loadFamily = async <Family extends GameTextFamily>(
-      _locale: SupportedLocale,
-      _family: Family,
-    ): Promise<GameTextFamilyTables[Family]> => {
-      loadCalls += 1;
-      return table('operators:en') as GameTextFamilyTables[Family];
-    };
-    const registry = new GameLocaleRegistry(loadFamily);
-
-    await registry.ensureFamily('ru', 'operators');
-
-    expect(registry.getFamily('en', 'operators')).toEqual({ id: 'operators:en' });
-    expect(loadCalls).toBe(1);
-  });
-
   it('does not commit a failed gears load and permits a complete retry', async () => {
     const gears: GameTextFamilyTables['gears'] = {
       gearpieces: table('gearpieces'),
@@ -73,7 +56,7 @@ describe('GameLocaleRegistry', () => {
     expect(() => registry.getFamily('en', 'gears')).toThrow(GameTextResourceNotLoadedError);
 
     await expect(registry.ensureFamily('en', 'gears')).resolves.toBe(gears);
-    expect(registry.getFamily('ru', 'gears')).toBe(gears);
+    expect(registry.getFamily('en', 'gears')).toBe(gears);
     expect(loadFamily).toHaveBeenCalledTimes(2);
   });
 });

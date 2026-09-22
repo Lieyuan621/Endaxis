@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { createI18n } from 'vue-i18n';
 import zh from '../../i18n/locales/zh-CN.json';
 import en from '../../i18n/locales/en.json';
-import ru from '../../i18n/locales/ru.json';
 import { formatSkillBlockWarnings } from './skillBlockWarnings';
 import type { TimelineSkillDiagnosticReason } from './useScenarioSimulation';
 
-const i18n = createI18n({ legacy: false, locale: 'zh', messages: { zh, en, ru } });
+const i18n = createI18n({ legacy: false, locale: 'zh', messages: { zh, en } });
 function format(reasons: TimelineSkillDiagnosticReason[], definitionUnavailable = false) {
   return formatSkillBlockWarnings({
     reasons,
@@ -50,7 +49,7 @@ describe('技能块告警文案', () => {
     expect(format([])).toBe('');
   });
 
-  it.each(['zh', 'en', 'ru'] as const)('所有诊断在 %s 下均有文案', locale => {
+  it.each(['zh', 'en'] as const)('所有诊断在 %s 下均有文案', locale => {
     i18n.global.locale.value = locale;
     const reasons: TimelineSkillDiagnosticReason[] = [
       'resourceUnavailable',
@@ -77,9 +76,6 @@ describe('技能块告警文案', () => {
       expect(text).not.toContain('timeline.skillWarnings');
     }
     expect(Object.keys(en.timeline.skillWarnings).sort()).toEqual(
-      Object.keys(zh.timeline.skillWarnings).sort(),
-    );
-    expect(Object.keys(ru.timeline.skillWarnings).sort()).toEqual(
       Object.keys(zh.timeline.skillWarnings).sort(),
     );
     i18n.global.locale.value = 'zh';

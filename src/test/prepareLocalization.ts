@@ -8,9 +8,6 @@ import { SUPPORTED_LOCALES } from '../i18n/elementPlusLocale';
 for (const locale of SUPPORTED_LOCALES) {
   const prepared = await ensureLocaleResources(locale, ALL_GAME_TEXT_FAMILIES);
   i18n.global.setLocaleMessage(prepared.locale, prepared.uiMessages);
-  if (prepared.fallbackMessages !== undefined) {
-    i18n.global.setLocaleMessage('zh-CN', prepared.fallbackMessages);
-  }
 }
 
 i18n.global.locale.value = 'zh-CN';

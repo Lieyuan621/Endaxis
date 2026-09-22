@@ -34,7 +34,7 @@ describe('contingency contract Buff presentation', () => {
     expect(presentation).toBeDefined();
     expect(localizedContingencyContractTagName(presentation!.tag, 'zh-CN')).toBe('改写：刺激 Ⅱ');
     expect(localizedContingencyContractTagName(presentation!.tag, 'en')).toBe('Edit: Thrill Ⅱ');
-    expect(localizedContingencyContractTagName(presentation!.tag, 'ru')).toBe('Edit: Thrill Ⅱ');
+    expect(localizedContingencyContractTagName(presentation!.tag, 'fr')).toBe('Edit: Thrill Ⅱ');
   });
 
   it('does not relabel disabled, missing, or non-contract mechanic sources', () => {

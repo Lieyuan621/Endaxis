@@ -19,7 +19,7 @@ export function layoutEnemyDamageHits(
       row: rows.attachmentRow,
       standalone: false,
     })),
-    ...groupEnemyBuffDamageHits(entries).map(group => {
+    ...groupEnemyBuffDamageHits(entries, buffs).map(group => {
       const segment = findBuffDamageSegment(group[0]!, buffs);
       const row = segment === undefined ? undefined : rows.lanes.get(segment);
       // 没有可见持续条的伤害仍有独立入口，不受 Buff 图标和头顶栏开关影响。

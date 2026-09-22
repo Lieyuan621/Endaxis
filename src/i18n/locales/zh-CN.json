@@ -394,8 +394,6 @@
   "locale": {
     "en": "English",
     "enShort": "EN",
-    "ru": "Русский",
-    "ruShort": "RU",
     "zhCN": "简体中文",
     "zhCNShort": "中"
   },
@@ -2930,6 +2928,7 @@
     "damageHitTooltip": "伤害: {damage}",
     "lockedTitle": "位置已锁定",
     "disabledTitle": "已禁用：不参与计算",
+    "editedTitle": "使用了自定义技能定义",
     "requisiteTitle": {
       "comboWindow": "不在连携窗口内",
       "comboOrder": "连携技释放顺序错误，需先释放{operator}的连携技",

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileScript, compileStyle, compileTemplate, parse } from '@vue/compiler-sfc';
 import source from './TimelineResourceCurves.vue?raw';
 import sectionsSource from './TimelineEnemyStatusSections.vue?raw';
-import { monitorSectionBodyMinimums } from './monitorSectionMinimums';
+import { monitorSectionBodyMinimums, resolveMonitorSectionLayout } from './monitorSectionMinimums';
 
 describe('TimelineResourceCurves compilation', () => {
   it('uses the theme gold and legacy SP title typography', () => {
@@ -26,7 +26,14 @@ describe('TimelineResourceCurves compilation', () => {
     expect(source).toContain('background: rgba(255, 156, 110, 0.32)');
     expect(monitorSectionBodyMinimums().poise).toBe(26);
     expect(sectionsSource).toContain('monitorSectionBodyMinimums()');
-    expect(sectionsSource).toContain('minimumBodyHeight[key] + MONITOR_SECTION_TOPBAR_HEIGHT');
+    expect(sectionsSource).toContain('resolveMonitorSectionLayout(rootHeight.value');
+    expect(
+      resolveMonitorSectionLayout(
+        240,
+        { affliction: false, poise: false, sp: false },
+        { affliction: 2, poise: 1, sp: 3 },
+      ).rects.poise,
+    ).toEqual({ bodyHeight: 33, stripHeight: 0, shellHeight: 47 });
   });
   it('renders receipt intervals using measured poise height and shared timeline coordinates', () => {
     expect(source).toContain('new ResizeObserver(update)');

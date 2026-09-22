@@ -8,10 +8,9 @@ import { EDITABLE_COMBAT_STEP_KINDS } from './skillDefinitionEditorViewModel';
 import { STEP_TYPE_GROUPS } from '../actions/stepTypePickerCatalog';
 import zhCN from '../../../../i18n/locales/zh-CN.json';
 import en from '../../../../i18n/locales/en.json';
-import ru from '../../../../i18n/locales/ru.json';
 
 it('所有伤害标签和特征都具备本地化领域名称', () => {
-  for (const locale of [zhCN, en, ru]) {
+  for (const locale of [zhCN, en]) {
     const messages = locale.timeline.skillEditing;
     for (const tag of DAMAGE_TAGS) expect(messages.damageTagNames).toHaveProperty(tag);
     for (const feature of DAMAGE_FEATURES) {
@@ -27,7 +26,7 @@ it('步骤选单完整覆盖可编辑步骤且不重复', () => {
 });
 
 it('步骤展开和折叠的翻译齐全', () => {
-  for (const locale of [zhCN, en, ru]) {
+  for (const locale of [zhCN, en]) {
     const messages = locale.timeline.skillEditing as Record<string, unknown>;
     expect(messages).toHaveProperty('collapseStep');
     expect(messages).toHaveProperty('expandStep');
@@ -35,7 +34,7 @@ it('步骤展开和折叠的翻译齐全', () => {
 });
 
 it('Buff 生命周期的翻译齐全', () => {
-  for (const locale of [zhCN, en, ru]) {
+  for (const locale of [zhCN, en]) {
     const messages = locale.timeline.skillEditing as Record<string, unknown>;
     expect(messages).toHaveProperty('buffLifecycle');
     expect(messages).toHaveProperty('enableBuffLifecycle');
@@ -43,7 +42,7 @@ it('Buff 生命周期的翻译齐全', () => {
   }
 });
 
-it('高价值步骤编辑器使用的翻译在三种语言中齐全', () => {
+it('高价值步骤编辑器使用的翻译在两种语言中齐全', () => {
   const keys = [
     'operandConstant',
     'operandBlackboard',
@@ -86,7 +85,7 @@ it('高价值步骤编辑器使用的翻译在三种语言中齐全', () => {
     'valueTypes',
     'booleanValues',
   ];
-  for (const locale of [zhCN, en, ru]) {
+  for (const locale of [zhCN, en]) {
     const messages = locale.timeline.skillEditing as Record<string, unknown>;
     for (const key of keys) expect(messages).toHaveProperty(key);
     const stepHelp = messages.stepHelp as Record<string, unknown>;

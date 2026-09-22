@@ -56,6 +56,22 @@ it('leaves ability-entity-owned Buff damage to the source skill timeline', () =>
   expect(groupEnemyBuffDamageHits([delegated])).toEqual([]);
 });
 
+it('returns invisible skill-followup Buff damage to the source skill timeline', () => {
+  const followup: CombatReceiptEntry = {
+    ...hit(),
+    producedBy: { kind: 'buff', ownerId: 'enemy', instanceId: 2 },
+    data: {
+      ...hit().data,
+      castId: 'cast:combo',
+      hitId: 'hit:followup',
+      stepKey: 'buff:followup/damage',
+      skillType: 'comboSkill',
+    },
+  };
+  expect(projectEnemyEffectViz([followup], 30).damageHits).toBeUndefined();
+  expect(groupEnemyBuffDamageHits([followup])).toEqual([]);
+});
+
 it('keeps hidden airborne damage and its icon without requiring a headbar row', () => {
   const start = {
     ...applied,

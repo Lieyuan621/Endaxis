@@ -305,6 +305,30 @@ function inflictionEntry(sequence: number, frame: number): CombatReceiptEntry {
 }
 
 describe('projectHitEffectsByCast', () => {
+  it('marks only the hit that actually received the common combo damage Buff', () => {
+    const ownDamage: CombatReceiptEntry = {
+      ...damageEntry(1, 60),
+      appliedDamageModifiers: [
+        {
+          kind: 'damageScale',
+          buffId: 'buff_common_affixes_skillimbue_atk',
+          sourceId: 'track:0',
+          side: 'attacker',
+          zone: 'combo',
+          addition: 0.3,
+        },
+      ],
+    };
+    const otherDamage = damageEntry(2, 60, 'step:damage', 'cast:2');
+
+    expect(
+      projectTimelineHitOccurrences([ownDamage, otherDamage]).get('cast:1')?.[0],
+    ).toMatchObject({ linkBuffed: true });
+    expect(
+      projectTimelineHitOccurrences([ownDamage, otherDamage]).get('cast:2')?.[0],
+    ).toMatchObject({ linkBuffed: false });
+  });
+
   it('renders repeated executions separately and selects only the clicked frame', () => {
     const entries = [
       damageEntry(1, 60),

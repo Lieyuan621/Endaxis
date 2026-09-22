@@ -2,6 +2,14 @@ import type { BuffTimelineSegment } from '../../../core/projection/buffTimelineV
 import type { EnemyEffectMarker } from '../../../core/projection/enemyEffectViz';
 import { isPhysicalStatusRowBuff } from './physicalStatusDisplay';
 
+const physicalIconPriority: Readonly<Record<string, number>> = {
+  buff_physical_do_fracture: 500,
+  buff_physical_airborne: 400,
+  buff_physical_knockdown: 300,
+  buff_physical_crushed: 200,
+  buff_physical_no_guard: 100,
+};
+
 /** 原生明确排除头顶两栏的内部效果不画敌方持续条；无路由元数据的自定义段仍保留。 */
 export function isEnemyTimelineBuffVisible(buff: BuffTimelineSegment): boolean {
   return !(buff.showInHeadBarCommon === false && buff.showInHeadBarAttached === false);
@@ -60,12 +68,26 @@ export function layoutEnemyStatusRows<T extends BuffTimelineSegment>(
     return { row, slot };
   });
   const iconSlots = new Map<T, number>();
-  const physicalSlots = new Map<string, number>();
+  const hiddenIcons = new Set<T>();
+  const physicalGroups = new Map<string, T[]>();
   for (const buff of groups[0]!) {
     const key = `${buff.targetId}:${buff.startFrame}`;
-    const slot = physicalSlots.get(key) ?? 0;
-    iconSlots.set(buff, slot);
-    physicalSlots.set(key, slot + 1);
+    const values = physicalGroups.get(key) ?? [];
+    values.push(buff);
+    physicalGroups.set(key, values);
   }
-  return { lanes, iconSlots, markerPositions, attachmentRow, rowCount: offset };
+  // main 会把同帧物理异常归一成一个代表图标，并隐藏同帧持续段的重复图标。
+  // v3 的回执投影仍保留全部真实 Buff 段，只在展示层选出相同的代表图标；
+  // 这样不会丢失伤害归属和详情数据，也不会把多个图标横向挤到时间轴末端之外。
+  for (const values of physicalGroups.values()) {
+    const representative = [...values].sort(
+      (left, right) =>
+        (physicalIconPriority[right.buffId] ?? 0) - (physicalIconPriority[left.buffId] ?? 0),
+    )[0]!;
+    for (const buff of values) {
+      iconSlots.set(buff, 0);
+      if (buff !== representative) hiddenIcons.add(buff);
+    }
+  }
+  return { lanes, iconSlots, hiddenIcons, markerPositions, attachmentRow, rowCount: offset };
 }

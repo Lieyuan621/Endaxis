@@ -50,20 +50,3 @@ html,
 .hidden {
   display: none !important;
 }
-
-body.is-lib-dragging .action-item-wrapper {
-  opacity: 0.5 !important;
-  filter: grayscale(0.5);
-  pointer-events: none !important;
-  transition: opacity var(--ea-control-transition);
-}
-
-.action-item-wrapper.is-moving {
-  z-index: 999 !important;
-  border-color: var(--ea-gold) !important;
-  opacity: 0.9 !important;
-  box-shadow: 0 0 15px color-mix(in srgb, var(--ea-gold) 50%, transparent) !important;
-  cursor: grabbing !important;
-  transform: scale(1);
-  transition: none !important;
-}

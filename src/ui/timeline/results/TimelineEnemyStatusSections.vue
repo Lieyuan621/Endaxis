@@ -7,9 +7,9 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { EaButton } from '../../../design-system/index';
 import { useInteractionSession } from '../../interaction/interactionSessionContext';
 import {
-  MONITOR_SECTION_TOPBAR_HEIGHT,
   MONITOR_RESIZE_HANDLE_REACH,
   monitorSectionBodyMinimums,
+  resolveMonitorSectionLayout,
   resizeMonitorSectionBodies,
 } from './monitorSectionMinimums';
 
@@ -53,8 +53,14 @@ const sectionWeights = reactive<Record<SectionKey, number>>({
   sp: 3,
 });
 const root = ref<HTMLElement | null>(null);
+const rootHeight = ref(0);
 const activeResizeLowerKey = ref<SectionKey | null>(null);
 let stopResize: (() => void) | null = null;
+let resizeObserver: ResizeObserver | null = null;
+
+const sectionLayout = computed(() =>
+  resolveMonitorSectionLayout(rootHeight.value, collapsed, sectionWeights),
+);
 
 const resizePairs = computed(() => {
   const expanded = sectionKeys.filter(key => !collapsed[key]);
@@ -95,9 +101,6 @@ function beginSectionResize(lowerKey: SectionKey, event: PointerEvent): void {
   if (event.button !== 0) return;
   const pair = resizePairForLower(lowerKey);
   if (pair === null || root.value === null) return;
-  const upper = root.value.querySelector<HTMLElement>(`[data-section-key="${pair.upperKey}"]`);
-  const lower = root.value.querySelector<HTMLElement>(`[data-section-key="${pair.lowerKey}"]`);
-  if (upper === null || lower === null) return;
 
   const lease = interactionSession.tryStart('monitor-section-resize', () => stopResize?.());
   if (lease === null) {
@@ -113,13 +116,10 @@ function beginSectionResize(lowerKey: SectionKey, event: PointerEvent): void {
   const previousUserSelect = document.body.style.userSelect;
   document.body.style.cursor = 'ns-resize';
   document.body.style.userSelect = 'none';
-  const topbarHeight = MONITOR_SECTION_TOPBAR_HEIGHT;
   const bodies: Partial<Record<SectionKey, number>> = {};
   for (const key of sectionKeys) {
     if (collapsed[key]) continue;
-    const element = root.value.querySelector<HTMLElement>(`[data-section-key="${key}"]`);
-    // flex-basis 使用 border-box；clientHeight 会扣掉边框并取整，导致未拖动的第三段也漂移。
-    if (element) bodies[key] = Math.max(0, element.getBoundingClientRect().height - topbarHeight);
+    bodies[key] = sectionLayout.value.rects[key].bodyHeight;
   }
 
   const onMove = (moveEvent: PointerEvent) => {
@@ -181,9 +181,22 @@ onMounted(() => {
   } catch {
     // Storage is optional; default 2:1:3 weights remain usable.
   }
+
+  const updateRootHeight = () => {
+    rootHeight.value = root.value?.clientHeight ?? 0;
+  };
+  updateRootHeight();
+  if (typeof ResizeObserver !== 'undefined' && root.value !== null) {
+    resizeObserver = new ResizeObserver(updateRootHeight);
+    resizeObserver.observe(root.value);
+  }
 });
 
-onBeforeUnmount(() => stopResize?.());
+onBeforeUnmount(() => {
+  stopResize?.();
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+});
 
 watch(
   collapsed,
@@ -224,10 +237,7 @@ watch(
         :class="[`enemy-status-section--${key}`, { 'is-collapsed': collapsed[key] }]"
         :data-section-key="key"
         :style="{
-          '--section-weight': sectionWeights[key],
-          minHeight: !collapsed[key]
-            ? `${minimumBodyHeight[key] + MONITOR_SECTION_TOPBAR_HEIGHT}px`
-            : undefined,
+          height: `${sectionLayout.rects[key].shellHeight}px`,
         }"
       >
         <span v-if="collapsed[key]" class="section-summary">{{ props.labels[key] }}</span>
@@ -256,17 +266,16 @@ watch(
 .enemy-status-sections {
   display: flex;
   flex-direction: column;
-  justify-content: safe flex-end;
   min-width: 1px;
-  overflow: hidden auto;
+  height: 100%;
+  overflow: hidden;
   background: var(--ea-workbench-main, #18181c);
 }
 
 .enemy-status-section {
   position: relative;
-  /* Every expanded section first reserves the legacy 14px topbar; only the
-     remaining body space is distributed by the old 2:1:3 weights. */
-  flex: var(--section-weight) 1 14px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
   min-height: 0;
   min-width: 1px;
   border-bottom: 1px solid var(--ea-border, rgb(255 255 255 / 10%));
@@ -325,14 +334,8 @@ watch(
 }
 
 .enemy-status-section.is-collapsed {
-  flex: 0 0 14px;
-  box-sizing: border-box;
-  height: 14px;
   background: var(--ea-workbench-panel, #252526);
 }
-
-/* Preserve semantic order. Expanded sections absorb available space; only
-   when all three are collapsed does the entire stack align to the bottom. */
 
 .enemy-status-section.is-collapsed .section-toggle {
   width: 24px;

@@ -63,7 +63,7 @@ const props = defineProps<{
     appearance: string;
     appearanceLight: string;
     appearanceDark: string;
-    locales: { zhCN: string; en: string; ru: string };
+    locales: { zhCN: string; en: string };
   };
 }>();
 
@@ -86,7 +86,7 @@ const emit = defineEmits<{
   shortcuts: [];
   toggleViewLayer: [layerId: TimelineViewLayerId];
   toggleOperatorEffects: [trackIndex: number];
-  setLocale: [locale: 'zh-CN' | 'en' | 'ru'];
+  setLocale: [locale: 'zh-CN' | 'en'];
   setAppearance: [appearance: 'light' | 'dark'];
   setRandomMode: [mode: 'expected' | 'sampled'];
   setGlobalRandomSeed: [seed: number];
@@ -152,7 +152,7 @@ function runProjectAction(action: 'open' | 'receive' | 'reset'): void {
   else emit('reset');
 }
 
-const localeIds = ['zh-CN', 'en', 'ru'] as const;
+const localeIds = ['zh-CN', 'en'] as const;
 function localeLabel(id: (typeof localeIds)[number]): string {
   if (id === 'zh-CN') return props.labels.locales.zhCN;
   return props.labels.locales[id];

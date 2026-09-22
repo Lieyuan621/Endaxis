@@ -50,25 +50,16 @@ export const ALL_GAME_TEXT_FAMILIES = [
 export interface PreparedLocaleResources {
   readonly locale: SupportedLocale;
   readonly uiMessages: LocaleTable;
-  readonly fallbackMessages?: LocaleTable;
 }
 
-/**
- * 只准备资源而不改变当前可见语言；页面可以按实际视图缩小资源集合。
- * 俄语 UI 尚未自包含，因此兼容阶段额外准备中文 fallback。
- */
+/** 只准备资源而不改变当前可见语言；页面可以按实际视图缩小资源集合。 */
 export async function ensureLocaleResources(
   locale: unknown,
   gameTextFamilies: readonly GameTextFamily[] = [],
 ): Promise<PreparedLocaleResources> {
   const normalized = normalizeLocale(locale);
-  const [[uiMessages, fallbackMessages]] = await Promise.all([
-    Promise.all([
-      localeResourceLoaders.loadUiLocale(normalized),
-      normalized === 'ru'
-        ? localeResourceLoaders.loadUiLocale('zh-CN')
-        : Promise.resolve(undefined),
-    ]),
+  const [uiMessages] = await Promise.all([
+    localeResourceLoaders.loadUiLocale(normalized),
     Promise.all(
       gameTextFamilies.map(family => gameLocaleRegistry.ensureFamily(normalized, family)),
     ),
@@ -76,7 +67,6 @@ export async function ensureLocaleResources(
   return {
     locale: normalized,
     uiMessages,
-    ...(fallbackMessages === undefined ? {} : { fallbackMessages }),
   };
 }
 
@@ -92,9 +82,6 @@ export async function setLocale(
   if (requestId !== localeRequestId) return normalizeLocale(i18n.global.locale.value);
 
   i18n.global.setLocaleMessage(prepared.locale, prepared.uiMessages);
-  if (prepared.fallbackMessages !== undefined) {
-    i18n.global.setLocaleMessage('zh-CN', prepared.fallbackMessages);
-  }
   const normalized = prepared.locale;
   i18n.global.locale.value = normalized;
 

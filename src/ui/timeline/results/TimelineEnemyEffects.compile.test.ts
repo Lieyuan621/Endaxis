@@ -37,6 +37,14 @@ it('keeps every effect icon above every duration segment without per-item stacki
   expect(rule('.attachment-item')).not.toMatch(/z-index|transform|isolation|opacity|filter/);
 });
 
+it('hides a duplicate physical icon without removing its retained duration segment', () => {
+  const buff = source.slice(source.indexOf('v-for="buff in buffs"'), source.indexOf('</template>'));
+  expect(source).toContain('const hideIcon = statusRows.value.hiddenIcons.has(buff);');
+  expect(source).toContain('left: start + (hideIcon ? iconSize.value : 0)');
+  expect(buff).toContain('v-if="!buff.hideIcon"');
+  expect(buff).toContain('v-else-if="buff.barWidthPx > 0"');
+});
+
 it('compiles the enemy attachment animation and retained duration-bar branch', () => {
   const { descriptor, errors } = parse(source);
   expect(errors).toEqual([]);

@@ -11,6 +11,8 @@ import { EditPen } from '@element-plus/icons-vue';
 import { EaButton } from '../../../design-system/index';
 import type { SkillType } from '../../../core/game-data/operatorDefinition';
 import { PROJECT_FPS } from '../../../core/project/schema';
+import { useAppearance } from '../../appearance/useAppearance';
+import { adaptColorForLightSurface, hexToRgba, solidFillForLightTrack } from '../../gameColors';
 import type { TimelineConnectionPort } from './timelineConnections';
 import {
   projectTimelineHitMarkerLeftPx,
@@ -31,6 +33,10 @@ const props = defineProps<{
   disabled?: boolean;
   locked?: boolean;
   edited?: boolean;
+  showDecorations?: boolean;
+  lockedText?: string;
+  disabledText?: string;
+  editedText?: string;
   moving?: boolean;
   /** 已启动但在当前模拟终点前尚未到达实例局部可操作边界。 */
   durationPending?: boolean;
@@ -73,6 +79,59 @@ const emit = defineEmits<{
 
 const connectionPorts: readonly TimelineConnectionPort[] = ['top', 'right', 'bottom', 'left'];
 const hovered = ref(false);
+const { appearance } = useAppearance();
+const isLightAppearance = computed(() => appearance.value === 'light');
+const decorationsVisible = computed(() => props.showDecorations !== false);
+
+const TYPE_SHORTHAND: Readonly<Partial<Record<SkillType, string>>> = {
+  basicAttack: 'A',
+  plungingAttack: 'D',
+  finisher: 'X',
+  battleSkill: 'C',
+  comboSkill: 'E',
+  ultimate: 'U',
+  dodge: 'D',
+};
+
+const MAIN_ACTION_COLORS = {
+  basicAttack: '#aaaaaa',
+  battleSkill: '#ffffff',
+  comboSkill: '#fdd900',
+  dodge: '#69c0ff',
+  finisher: '#a61d24',
+  ultimate: '#00e5ff',
+  default: '#8c8c8c',
+} as const;
+
+const displayLabel = computed(() => {
+  if (props.pxPerFrame * PROJECT_FPS >= 30) return props.label;
+  return props.skillType === null ? '?' : (TYPE_SHORTHAND[props.skillType] ?? '?');
+});
+
+const defaultAccent = computed(() => {
+  switch (props.skillType) {
+    case 'comboSkill':
+      return MAIN_ACTION_COLORS.comboSkill;
+    case 'finisher':
+      return MAIN_ACTION_COLORS.finisher;
+    case 'plungingAttack':
+    case 'dodge':
+      return MAIN_ACTION_COLORS.dodge;
+    case 'ultimate':
+      return MAIN_ACTION_COLORS.ultimate;
+    case 'basicAttack':
+      return MAIN_ACTION_COLORS.basicAttack;
+    case 'battleSkill':
+      return MAIN_ACTION_COLORS.battleSkill;
+    default:
+      return MAIN_ACTION_COLORS.default;
+  }
+});
+
+const actionAccent = computed(() => props.color || defaultAccent.value);
+const paintedAccent = computed(() =>
+  isLightAppearance.value ? adaptColorForLightSurface(actionAccent.value) : actionAccent.value,
+);
 const showConnectionPorts = computed(() => {
   if (props.connectionDragging) {
     return hovered.value && props.connectionSourceActionId !== props.actionId;
@@ -81,12 +140,58 @@ const showConnectionPorts = computed(() => {
   return hovered.value || props.selected === true;
 });
 
-const blockStyle = computed(() => ({
-  left: `${props.left}px`,
-  width: `${Math.max(2, props.width)}px`,
-  zIndex: `calc(${props.moving ? 20000 : props.selected ? 10000 : 10} + ${props.stackOrder ?? 0})`,
-  ...(props.color ? { '--action-accent': props.color } : {}),
-}));
+const blockStyle = computed<Record<string, string>>(() => {
+  const accent = paintedAccent.value;
+  const light = isLightAppearance.value;
+  const surface = 'var(--ea-workbench-main, #18181c)';
+  const warningOffset = props.warning ? 14 : 0;
+  const disabledOffset = decorationsVisible.value && props.disabled ? 14 : 0;
+  return {
+    left: `${props.left}px`,
+    width: `${Math.max(2, props.width)}px`,
+    zIndex: `calc(${props.moving ? 20000 : props.selected ? 10000 : 10} + ${props.stackOrder ?? 0})`,
+    '--action-accent': accent,
+    '--action-surface': surface,
+    '--action-fill': light
+      ? solidFillForLightTrack(accent, props.skillType === 'basicAttack' ? 0.7 : 0.48)
+      : hexToRgba(accent, 0.15),
+    '--action-ultimate-center': light
+      ? solidFillForLightTrack(accent, 0.32)
+      : hexToRgba(accent, 0.5),
+    '--action-ultimate-middle': light
+      ? solidFillForLightTrack(accent, 0.5)
+      : hexToRgba(accent, 0.2),
+    '--action-ultimate-edge': light ? solidFillForLightTrack(accent, 0.64) : hexToRgba(accent, 0.1),
+    '--action-selected': light ? '#1a1b1e' : '#ffffff',
+    '--action-edge-ring': light ? '0 0 0 1px rgb(26 27 30 / 22%)' : 'none',
+    '--action-backdrop-filter': light ? 'none' : 'blur(4px)',
+    '--action-glow': hexToRgba(accent, light ? 0.18 : 0.5),
+    '--action-attack-border': light ? accent : hexToRgba(accent, 0.4),
+    '--action-perfect-fill': light
+      ? solidFillForLightTrack('#c8a000', 0.55)
+      : 'rgba(255, 236, 122, 0.18)',
+    '--action-perfect-color': light ? 'var(--ea-gold)' : '#fff7cf',
+    '--action-perfect-shadow': light
+      ? '0 0 0 1px rgba(140, 110, 0, 0.55), 0 0 10px rgba(180, 140, 0, 0.22)'
+      : '0 0 0 1px rgba(255, 242, 168, 0.75), 0 0 14px color-mix(in srgb, var(--ea-gold) 55%, transparent)',
+    '--cooldown-accent': light
+      ? adaptColorForLightSurface(
+          props.skillType === 'comboSkill'
+            ? MAIN_ACTION_COLORS.comboSkill
+            : props.skillType === 'ultimate'
+              ? MAIN_ACTION_COLORS.ultimate
+              : '#ff6fae',
+        )
+      : props.skillType === 'comboSkill'
+        ? 'var(--ea-gold)'
+        : props.skillType === 'ultimate'
+          ? MAIN_ACTION_COLORS.ultimate
+          : '#ff6fae',
+    '--enhancement-accent': light ? adaptColorForLightSurface('#b37feb') : '#b37feb',
+    '--disabled-mark-right': `${2 + warningOffset}px`,
+    '--edited-mark-right': `${2 + warningOffset + disabledOffset}px`,
+  };
+});
 
 function beginMove(event: PointerEvent): void {
   if (props.connectionToolEnabled) return;
@@ -139,6 +244,7 @@ function formatDurationFrames(frames: number): string {
   <EaButton
     variant="ghost"
     type="button"
+    :pressed="selected"
     class="timeline-action-block"
     :data-timeline-action-id="actionId"
     :class="{
@@ -159,26 +265,33 @@ function formatDurationFrames(frames: number): string {
     @mouseleave="setHovered(false)"
     :data-selected="selected"
   >
-    <span
-      v-for="(segment, index) in timeDilationSegments ?? []"
-      :key="index"
-      class="time-dilation-segment"
-      :style="{ left: `${segment.left}px`, width: `${segment.width}px` }"
-      aria-hidden="true"
-    >
-      <span class="time-dilation-shimmer"></span>
-    </span>
-    <span class="action-label">{{ label }}</span>
-    <template v-if="skillType === 'ultimate' && !disabled">
-      <span class="ultimate-side-bar ultimate-side-bar--left" aria-hidden="true"></span>
-      <span class="ultimate-side-bar ultimate-side-bar--right" aria-hidden="true"></span>
+    <template v-if="decorationsVisible">
+      <span
+        v-for="(segment, index) in timeDilationSegments ?? []"
+        :key="index"
+        class="time-dilation-segment"
+        :style="{ left: `${segment.left}px`, width: `${segment.width}px` }"
+        aria-hidden="true"
+      >
+        <span class="time-dilation-shimmer"></span>
+      </span>
     </template>
+    <span class="action-label">{{ displayLabel }}</span>
+    <template v-if="decorationsVisible && skillType === 'ultimate' && !disabled">
+      <span class="ultimate-side-bar ultimate-side-bar--left" aria-hidden="true"></span>
+      <span
+        v-if="!durationPending"
+        class="ultimate-side-bar ultimate-side-bar--right"
+        aria-hidden="true"
+      ></span>
+    </template>
+    <span v-if="durationPending" class="duration-pending-mark" aria-hidden="true"></span>
     <span
       v-for="hit in hits ?? []"
       :key="`${hit.hitId}:${hit.executionFrame ?? 'preview'}`"
       class="hit-marker"
       :class="{
-        'is-critical': hit.critical,
+        'is-link-buffed': hit.linkBuffed,
         'is-triggered': hit.triggered,
         'is-forced-crit': hit.forcedCritical,
       }"
@@ -217,12 +330,17 @@ function formatDurationFrames(frames: number): string {
       </span>
     </EaTooltip>
     <EditPen
-      v-if="edited"
+      v-if="decorationsVisible && edited"
       class="edited-mark"
-      :class="{ 'is-shifted': disabled }"
-      aria-label="edited"
+      :aria-label="editedText"
+      :title="editedText"
     />
-    <span v-if="locked" class="status-mark lock-mark" aria-label="locked">
+    <span
+      v-if="decorationsVisible && locked"
+      class="status-mark lock-mark"
+      :aria-label="lockedText"
+      :title="lockedText"
+    >
       <svg
         viewBox="0 0 24 24"
         width="12"
@@ -238,7 +356,12 @@ function formatDurationFrames(frames: number): string {
         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
       </svg>
     </span>
-    <span v-if="disabled" class="status-mark disabled-mark" aria-label="disabled">
+    <span
+      v-if="decorationsVisible && disabled"
+      class="status-mark disabled-mark"
+      :aria-label="disabledText"
+      :title="disabledText"
+    >
       <svg
         viewBox="0 0 24 24"
         width="12"
@@ -255,28 +378,32 @@ function formatDurationFrames(frames: number): string {
       </svg>
     </span>
     <span
+      v-if="decorationsVisible"
       v-for="(bar, index) in cooldownBars ?? []"
       :key="`cooldown:${index}`"
       class="cooldown-timeline-bar"
+      :class="{ 'is-pending': !bar.completed }"
       :style="cooldownBarStyle(index)"
       aria-hidden="true"
     >
       <span class="cooldown-timeline-bar__duration">{{
         formatDurationFrames(bar.durationFrames)
       }}</span>
-      <span class="cooldown-timeline-bar__end"></span>
+      <span v-if="bar.completed" class="cooldown-timeline-bar__end"></span>
     </span>
     <span
+      v-if="decorationsVisible"
       v-for="(bar, index) in enhancementBars ?? []"
       :key="`enhancement:${index}`"
       class="enhancement-timeline-bar"
+      :class="{ 'is-pending': !bar.completed }"
       :style="enhancementBarStyle(index)"
       aria-hidden="true"
     >
       <span class="enhancement-timeline-bar__duration">{{
         formatDurationFrames(bar.durationFrames)
       }}</span>
-      <span class="enhancement-timeline-bar__end"></span>
+      <span v-if="bar.completed" class="enhancement-timeline-bar__end"></span>
     </span>
     <span
       v-for="port in connectionPorts"
@@ -297,7 +424,14 @@ function formatDurationFrames(frames: number): string {
 <style scoped>
 .timeline-action-block {
   --action-accent: #a5a5a8;
+  --action-surface: var(--ea-workbench-main, #18181c);
   --action-fill: color-mix(in srgb, var(--action-accent) 15%, transparent);
+  --ea-control-bg-hover: var(--action-fill);
+  --ea-control-border-hover: var(--action-accent);
+  --ea-control-fg-hover: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
+  --ea-control-pressed-bg-hover: var(--action-fill);
+  --ea-control-pressed-border-hover: var(--action-selected, #fff);
+  --ea-control-pressed-fg-hover: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
   position: absolute;
   /* 与旧版 actions-container 一致：技能块盖住挤入技能区域的 Buff 效果条。 */
   z-index: 10;
@@ -309,10 +443,12 @@ function formatDurationFrames(frames: number): string {
   align-items: center;
   justify-content: center;
   overflow: visible;
-  padding: 0 8px;
+  padding: 0;
   border: 2px dashed var(--action-accent);
   background: var(--action-fill);
   color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
+  box-shadow: var(--action-edge-ring, none);
+  backdrop-filter: var(--action-backdrop-filter, blur(4px));
   font-family: inherit;
   font-size: inherit;
   font-weight: 700;
@@ -321,14 +457,84 @@ function formatDurationFrames(frames: number): string {
   white-space: nowrap;
   cursor: grab;
   user-select: none;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s,
+    filter 0.2s;
 }
 
-.timeline-action-block:hover {
-  filter: brightness(1.18);
+@media (hover: hover) and (pointer: fine) {
+  .timeline-action-block.ea-button:hover:not(:disabled) {
+    border: 2px dashed var(--action-accent);
+    background: var(--action-fill);
+    color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
+    filter: brightness(1.2);
+  }
+
+  .timeline-action-block.ea-button[data-selected='true']:hover:not(:disabled) {
+    border: 2px dashed var(--action-selected, #fff);
+    background: var(--action-fill);
+    color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
+    box-shadow: 0 0 10px color-mix(in srgb, var(--action-accent) 50%, transparent);
+  }
+
+  .timeline-action-block.ea-button:not([data-selected='true']):not(
+      .is-disabled
+    )[data-skill-type='basicAttack']:hover:not(:disabled) {
+    border: 1.5px solid color-mix(in srgb, var(--action-accent) 40%, transparent);
+  }
+
+  .timeline-action-block.ea-button:not(.is-disabled)[data-skill-type='comboSkill']:hover:not(
+      :disabled
+    ),
+  .timeline-action-block.ea-button:not(.is-disabled)[data-skill-type='ultimate']:hover:not(
+      :disabled
+    ) {
+    border: 1.5px solid var(--action-accent);
+  }
+
+  .timeline-action-block.ea-button.is-perfect-combo:hover:not(:disabled) {
+    border-color: #fff2a8;
+    background: var(--action-perfect-fill);
+    color: var(--action-perfect-color);
+    box-shadow: var(--action-perfect-shadow);
+  }
+
+  .timeline-action-block.ea-button:not(.is-disabled)[data-skill-type='ultimate']:hover:not(
+      :disabled
+    ) {
+    background: radial-gradient(
+      circle at center,
+      var(--action-ultimate-center) 0%,
+      var(--action-ultimate-middle) 70%,
+      var(--action-ultimate-edge) 100%
+    );
+  }
+
+  .timeline-action-block.ea-button.is-disabled:hover:not(:disabled) {
+    border: 2px dashed #555;
+    background-color: rgb(40 40 40 / 30%);
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      rgb(0 0 0 / 50%) 5px,
+      rgb(0 0 0 / 50%) 10px
+    );
+    color: #777;
+    filter: brightness(1.08);
+  }
+
+  :global(html[data-theme='light'] .timeline-action-block.ea-button:hover:not(:disabled)) {
+    filter: brightness(1.04);
+  }
 }
 
 .timeline-action-block[data-selected='true'] {
   border: 2px dashed var(--ea-action-selected, #fff);
+  border-color: var(--action-selected, #fff);
+  background: var(--action-fill);
+  color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
   box-shadow: 0 0 10px color-mix(in srgb, var(--action-accent) 50%, transparent);
 }
 
@@ -341,7 +547,7 @@ function formatDurationFrames(frames: number): string {
 .timeline-action-block.is-perfect-combo::after {
   content: '';
   position: absolute;
-  inset: -3px;
+  inset: -2px;
   z-index: 4;
   box-sizing: border-box;
   border: 1px solid rgb(255 242 168 / 90%);
@@ -373,12 +579,24 @@ function formatDurationFrames(frames: number): string {
 }
 
 .timeline-action-block.is-duration-pending {
-  border-right-style: dashed;
+  border-right-color: transparent;
+}
+
+.duration-pending-mark {
+  position: absolute;
+  z-index: 3;
+  top: -2px;
+  right: -1px;
+  bottom: -2px;
+  width: 14px;
+  border-right: 2px dotted var(--action-accent);
+  background: linear-gradient(to right, transparent, var(--action-surface) 80%);
+  pointer-events: none;
 }
 
 .timeline-action-block.is-disabled {
   border: 2px dashed #555;
-  background-color: rgba(40, 40, 40, 0.3);
+  background-color: rgb(40 40 40 / 30%);
   background-image: repeating-linear-gradient(
     45deg,
     transparent,
@@ -444,44 +662,51 @@ function formatDurationFrames(frames: number): string {
   translate: 0 -50%;
 }
 
-.timeline-action-block[data-skill-type='battleSkill'] {
-  --action-accent: #ff5a5f;
-}
-
-.timeline-action-block[data-skill-type='comboSkill'] {
-  --action-accent: #facc15;
-}
-
 .timeline-action-block:not(.is-disabled)[data-skill-type='ultimate'] {
-  --action-accent: #22c55e;
+  padding-right: 6px;
+  padding-left: 6px;
+  border: 1.5px solid var(--action-accent);
+  border-radius: 2px;
   background: radial-gradient(
     circle at center,
-    color-mix(in srgb, var(--action-accent) 50%, transparent) 0%,
-    color-mix(in srgb, var(--action-accent) 20%, transparent) 70%,
-    color-mix(in srgb, var(--action-accent) 10%, transparent) 100%
+    var(--action-ultimate-center) 0%,
+    var(--action-ultimate-middle) 70%,
+    var(--action-ultimate-edge) 100%
   );
-}
-
-.timeline-action-block[data-skill-type='basicAttack'] {
-  --action-accent: #a5a5a8;
+  box-shadow: 0 0 15px var(--action-glow);
 }
 
 .timeline-action-block:not([data-selected='true']):not(
     .is-disabled
   )[data-skill-type='basicAttack'] {
-  border: 1.5px solid color-mix(in srgb, var(--action-accent) 40%, transparent);
+  border: 1.5px solid var(--action-attack-border);
 }
 
-.timeline-action-block:not([data-selected='true']):not(.is-disabled)[data-skill-type='comboSkill'],
-.timeline-action-block:not([data-selected='true']):not(.is-disabled)[data-skill-type='ultimate'] {
+.timeline-action-block:not(.is-disabled)[data-skill-type='comboSkill'] {
   border: 1.5px solid var(--action-accent);
   border-radius: 2px;
+  background: var(--action-fill);
+  box-shadow: var(--action-edge-ring, none);
+}
+
+.timeline-action-block:not(.is-disabled)[data-skill-type='comboSkill'][data-selected='true'] {
+  box-shadow: 0 0 8px var(--action-glow);
+}
+
+.timeline-action-block:not(.is-disabled).is-perfect-combo {
+  border-color: #fff2a8;
+  background: var(--action-perfect-fill);
+  color: var(--action-perfect-color);
+  box-shadow: var(--action-perfect-shadow);
 }
 
 .action-label {
   position: relative;
   z-index: 2;
+  flex: 0 0 auto;
   overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .ultimate-side-bar {
@@ -508,7 +733,7 @@ function formatDurationFrames(frames: number): string {
   position: absolute;
   z-index: 2;
   height: 2px;
-  background: var(--action-accent);
+  background: var(--cooldown-accent, #ff6fae);
   opacity: 0.6;
   pointer-events: none;
 }
@@ -517,7 +742,7 @@ function formatDurationFrames(frames: number): string {
   position: absolute;
   top: 3px;
   left: 0;
-  color: var(--action-accent);
+  color: var(--cooldown-accent, #ff6fae);
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
@@ -528,7 +753,7 @@ function formatDurationFrames(frames: number): string {
   top: -3px;
   width: 1px;
   height: 8px;
-  background: var(--action-accent);
+  background: var(--cooldown-accent, #ff6fae);
 }
 
 .cooldown-timeline-bar__end {
@@ -539,7 +764,7 @@ function formatDurationFrames(frames: number): string {
   position: absolute;
   z-index: 2;
   height: 2px;
-  background: #b37feb;
+  background: var(--enhancement-accent, #b37feb);
   opacity: 0.8;
   pointer-events: none;
 }
@@ -548,7 +773,7 @@ function formatDurationFrames(frames: number): string {
   position: absolute;
   top: 3px;
   left: 0;
-  color: #b37feb;
+  color: var(--enhancement-accent, #b37feb);
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
@@ -559,11 +784,27 @@ function formatDurationFrames(frames: number): string {
   top: -3px;
   width: 1px;
   height: 8px;
-  background: #b37feb;
+  background: var(--enhancement-accent, #b37feb);
 }
 
 .enhancement-timeline-bar__end {
   right: 0;
+}
+
+.cooldown-timeline-bar.is-pending {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--cooldown-accent, #ff6fae) 0 5px,
+    transparent 5px 8px
+  );
+}
+
+.enhancement-timeline-bar.is-pending {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--enhancement-accent, #b37feb) 0 5px,
+    transparent 5px 8px
+  );
 }
 
 .time-dilation-segment {
@@ -615,15 +856,12 @@ function formatDurationFrames(frames: number): string {
 .edited-mark {
   position: absolute;
   top: 3px;
-  right: 4px;
+  right: var(--edited-mark-right, 4px);
   width: 11px;
   height: 11px;
   color: var(--ea-gold);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
-}
-
-.edited-mark.is-shifted {
-  right: 16px;
+  pointer-events: none;
 }
 
 .lock-mark {
@@ -631,7 +869,7 @@ function formatDurationFrames(frames: number): string {
 }
 
 .disabled-mark {
-  right: 2px;
+  right: var(--disabled-mark-right, 2px);
 }
 
 .warning-mark {
@@ -673,19 +911,26 @@ function formatDurationFrames(frames: number): string {
   border-color: #d48806;
 }
 
-.hit-marker:hover {
-  background: var(--ea-gold);
-  border-color: #fff;
-  transform: translate(-50%, var(--hit-offset, 0px)) rotate(45deg) scale(1.65);
-  box-shadow: 0 0 8px var(--ea-gold);
-  z-index: 30;
+.hit-marker.is-link-buffed {
+  border-color: #3a9fd4;
+  background: #64c8ff;
+  box-shadow: 0 0 6px rgb(100 200 255 / 80%);
 }
 
-.hit-marker.is-triggered:hover {
-  transform: translate(-50%, var(--hit-offset, 0px)) rotate(45deg) scale(1.35);
+@media (hover: hover) and (pointer: fine) {
+  .hit-marker:hover {
+    z-index: 30;
+    border-color: #fff;
+    background: var(--ea-gold);
+    box-shadow: 0 0 8px var(--ea-gold);
+    transform: translate(-50%, var(--hit-offset, 0px)) rotate(45deg) scale(1.65);
+  }
+
+  .hit-marker.is-triggered:hover {
+    transform: translate(-50%, var(--hit-offset, 0px)) rotate(45deg) scale(1.35);
+  }
 }
 
-.hit-marker.is-critical,
 .hit-marker.is-forced-crit {
   background-color: #ff6b6b;
   border-color: #ffd166;
@@ -697,13 +942,52 @@ function formatDurationFrames(frames: number): string {
   text-shadow: none;
 }
 
-:global(html[data-theme='light'] .timeline-action-block:hover) {
-  filter: brightness(1.04);
+:global(html[data-theme='light'] .timeline-action-block.is-disabled) {
+  border-color: #9aa0a8;
+  background-color: rgb(26 27 30 / 8%);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgb(26 27 30 / 12%) 5px,
+    rgb(26 27 30 / 12%) 10px
+  );
+  color: #7a7f88;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(
+    html[data-theme='light'] .timeline-action-block.ea-button.is-disabled:hover:not(:disabled)
+  ) {
+    border-color: #9aa0a8;
+    background-color: rgb(26 27 30 / 8%);
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      rgb(26 27 30 / 12%) 5px,
+      rgb(26 27 30 / 12%) 10px
+    );
+    color: #7a7f88;
+  }
+}
+
+:global(html[data-theme='light'] .timeline-action-block.is-perfect-combo::after) {
+  border-color: rgb(140 110 0 / 70%);
+  box-shadow: 0 0 10px rgb(180 140 0 / 22%);
 }
 
 :global(.timeline-warning-tooltip) {
   max-width: min(320px, calc(100vw - 48px));
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+:global(.timeline-warning-tooltip.el-popper.is-dark) {
+  --ea-floating-border: rgb(255 77 79 / 45%);
+}
+
+:global(html[data-theme='light'] .timeline-warning-tooltip.el-popper.is-dark) {
+  --ea-floating-border: color-mix(in srgb, #e11d48 45%, var(--ea-dialog-border, #d8dbe0));
 }
 </style>

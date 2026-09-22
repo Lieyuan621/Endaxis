@@ -5,7 +5,11 @@
  * `ElementalInflictionApplied` / `ElementalReactionApplied` 是战斗语义事实，不是第二份 UI 状态。
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
-import { projectBuffTimelineViz, type BuffTimelineSegment } from './buffTimelineViz';
+import {
+  findBuffTimelineSegmentForDamage,
+  projectBuffTimelineViz,
+  type BuffTimelineSegment,
+} from './buffTimelineViz';
 
 export function isBuffDamageReceipt(entry: CombatReceiptEntry): boolean {
   return (
@@ -13,6 +17,36 @@ export function isBuffDamageReceipt(entry: CombatReceiptEntry): boolean {
     typeof entry.data?.buffId === 'string' &&
     typeof entry.data.buffOwnerId === 'string' &&
     Number.isInteger(entry.data.buffInstanceId)
+  );
+}
+
+/**
+ * 没有独立可视 Buff 身份、但完整继承了技能释放身份的 Buff 伤害属于技能追加命中。
+ * 它应回挂技能块并使用触发命中样式，而不是在敌人状态区制造默认图标。
+ */
+export function isSkillFollowupBuffDamageReceipt(
+  entry: CombatReceiptEntry,
+  visibleBuffSegments: readonly BuffTimelineSegment[],
+): boolean {
+  if (
+    !isBuffDamageReceipt(entry) ||
+    entry.targetId !== entry.data?.buffOwnerId ||
+    (entry.producedBy?.kind !== 'buff' && entry.producedBy?.kind !== 'globalBuff')
+  ) {
+    return false;
+  }
+  const data = entry.data;
+  if (data === undefined) return false;
+  return (
+    typeof data.castId === 'string' &&
+    data.castId.length > 0 &&
+    typeof data.hitId === 'string' &&
+    data.hitId.length > 0 &&
+    typeof data.stepKey === 'string' &&
+    data.stepKey.length > 0 &&
+    typeof data.skillType === 'string' &&
+    data.skillType.length > 0 &&
+    findBuffTimelineSegmentForDamage(entry, visibleBuffSegments) === undefined
   );
 }
 
@@ -105,7 +139,9 @@ export function projectEnemyEffectViz(
   const buffSegments = projectBuffTimelineViz(entries, endFrame);
   for (const entry of entries) {
     const enemyBuffDamage =
-      isBuffDamageReceipt(entry) && entry.targetId === entry.data?.buffOwnerId;
+      isBuffDamageReceipt(entry) &&
+      entry.targetId === entry.data?.buffOwnerId &&
+      !isSkillFollowupBuffDamageReceipt(entry, buffSegments);
     if (
       (entry.event === 'DamageApplied' && typeof entry.data?.spellBurstType === 'string') ||
       enemyBuffDamage

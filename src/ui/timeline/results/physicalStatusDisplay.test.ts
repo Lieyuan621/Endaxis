@@ -89,7 +89,8 @@ it('does not merge unrelated same-frame states or states on another target', () 
   const rows = layoutEnemyStatusRows(segments, [], new Set());
   expect([...rows.lanes.values()]).toEqual([0, 0, 0]);
   expect(rows.rowCount).toBe(3);
-  expect([...rows.iconSlots.values()]).toEqual([0, 1, 0]);
+  expect([...rows.iconSlots.values()]).toEqual([0, 0, 0]);
+  expect([...rows.hiddenIcons].map(segment => segment.instanceId)).toEqual([2]);
 });
 
 it.each([

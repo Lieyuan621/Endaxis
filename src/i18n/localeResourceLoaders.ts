@@ -8,13 +8,7 @@ import { normalizeLocale, type SupportedLocale } from './elementPlusLocale';
 
 export type GameTextLocale = 'zh' | 'en';
 export type GameTextFamily =
-  | 'operators'
-  | 'weapons'
-  | 'gears'
-  | 'enemies'
-  | 'consumables'
-  | 'terms'
-  | 'contingency-contracts';
+  'operators' | 'weapons' | 'gears' | 'enemies' | 'consumables' | 'terms' | 'contingency-contracts';
 export type LocaleTable = Readonly<Record<string, unknown>>;
 
 export interface GearLocaleTables {
@@ -56,7 +50,7 @@ export interface LocaleResourceLoaders {
   ): Promise<GameTextFamilyTables[Family]>;
 }
 
-/** 当前缺少俄语游戏文本，显式沿用既有的英文回退语义。 */
+/** 中文 UI 使用中文游戏文本；其他受支持语言使用英文游戏文本。 */
 export function resolveGameTextLocale(locale: SupportedLocale): GameTextLocale {
   if (locale === 'zh-CN') return 'zh';
   return 'en';

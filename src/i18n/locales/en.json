@@ -394,8 +394,6 @@
   "locale": {
     "en": "English",
     "enShort": "EN",
-    "ru": "Русский",
-    "ruShort": "RU",
     "zhCN": "简体中文",
     "zhCNShort": "中"
   },
@@ -2948,6 +2946,7 @@
     "damageHitTooltip": "Damage: {damage}",
     "lockedTitle": "Locked",
     "disabledTitle": "Disabled",
+    "editedTitle": "Uses a custom skill definition",
     "requisiteTitle": {
       "comboWindow": "Not in combo window",
       "comboOrder": "Wrong combo skill order. Release {operator}'s combo skill first",

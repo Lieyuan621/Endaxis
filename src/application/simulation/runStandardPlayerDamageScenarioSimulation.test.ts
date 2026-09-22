@@ -1521,6 +1521,11 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     expect(
       delayedDamage.filter(entry => String(entry.data?.stepKey).includes('/scheduledSequences/')),
     ).toHaveLength(0);
+    const delayedMarkers = [...projectTimelineHitOccurrences(result.receiptEntries).values()]
+      .flat()
+      .filter(marker => marker.stepKey.includes('buff_chr_0028_wulfa_combo_2_damage'));
+    expect(delayedMarkers).toHaveLength(3);
+    expect(delayedMarkers.every(marker => marker.triggered)).toBe(true);
   });
 
   it('runs Rossi ultimate with its conditional critical-damage Buff', () => {

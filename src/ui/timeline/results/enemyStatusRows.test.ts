@@ -167,6 +167,21 @@ describe('enemy status presentation rows', () => {
     ]);
   });
 
+  it('shows only the main-compatible representative for same-frame physical statuses', () => {
+    const guard = buff('buff_physical_no_guard', { startFrame: 30, layers: 4 });
+    const fracture = buff('buff_physical_do_fracture', {
+      instanceId: 2,
+      startFrame: 30,
+      layers: 4,
+    });
+    const result = layoutEnemyStatusRows([guard, fracture], [], attachmentIds);
+    expect(result.lanes.get(guard)).toBe(0);
+    expect(result.lanes.get(fracture)).toBe(0);
+    expect(result.hiddenIcons.has(guard)).toBe(true);
+    expect(result.hiddenIcons.has(fracture)).toBe(false);
+    expect([...result.iconSlots.values()]).toEqual([0, 0]);
+  });
+
   it('packs concurrent anomalies separately, reuses ended lanes, and places ordinary states after them', () => {
     const a = buff('a', { iconStyleInSquad: 'SpellAbnormal' });
     const b = buff('b', { iconStyleInSquad: 'SpellAbnormal', endFrame: 50 });

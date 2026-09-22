@@ -234,8 +234,9 @@ const attachmentConversions = computed(() =>
 );
 const buffs = computed(() =>
   props.buffs.map((buff, index) => {
-    const left = pointX(buff.startFrame);
+    const start = pointX(buff.startFrame);
     const right = pointX(buff.durationEndFrame ?? buff.endFrame);
+    const hideIcon = statusRows.value.hiddenIcons.has(buff);
     const sourceName = props.sourceName?.(buff);
     const modifierSummary = resolveSimpleBuffModifierDisplayName(
       {
@@ -278,11 +279,12 @@ const buffs = computed(() =>
       ),
       key: `${buff.buffId}:${buff.instanceId}:${buff.startFrame}`,
       icon,
-      left,
+      hideIcon,
+      left: start + (hideIcon ? iconSize.value : 0),
       iconOffset: (statusRows.value.iconSlots.get(buff) ?? 0) * (iconSize.value + 2),
       top:
         SECTION_TOPBAR_HEIGHT + ICON_TOP + (statusRows.value.lanes.get(buff) ?? 0) * rowPitch.value,
-      barWidthPx: Math.max(0, right - left - iconSize.value - 2),
+      barWidthPx: Math.max(0, right - start - iconSize.value - 2),
       color: resolveDurationBarColor(durationBarColor.value, 'enemy', buff),
       title,
       detail: {
@@ -437,6 +439,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
         :title="buff.title"
       >
         <span
+          v-if="!buff.hideIcon"
           class="anomaly-icon-box is-clickable"
           :style="{ transform: `translateX(${buff.iconOffset}px)` }"
           role="button"

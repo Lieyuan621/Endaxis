@@ -17,7 +17,10 @@ import {
 } from '../../../core/projection/buffTimelineViz';
 import type { TimelineHitMarker } from './timelineHitProjection';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
-import { isBuffDamageReceipt } from '../../../core/projection/enemyEffectViz';
+import {
+  isBuffDamageReceipt,
+  isSkillFollowupBuffDamageReceipt,
+} from '../../../core/projection/enemyEffectViz';
 
 /** 一个命中点上发生的伤害（保持日志顺序）。 */
 export interface TimelineHitDamageEffect {
@@ -48,6 +51,21 @@ export interface TimelineHitEffectLabel {
   readonly reactions: readonly TimelineHitReactionEffect[];
 }
 
+const COMBO_BUFF_DAMAGE_MODIFIER_ID = 'buff_common_affixes_skillimbue_atk';
+
+function receivedComboBuff(
+  hit: { readonly sequence: number },
+  entriesBySequence: ReadonlyMap<number, CombatReceiptEntry>,
+): boolean {
+  return (
+    entriesBySequence
+      .get(hit.sequence)
+      ?.appliedDamageModifiers?.some(
+        modifier => modifier.buffId === COMBO_BUFF_DAMAGE_MODIFIER_ID,
+      ) === true
+  );
+}
+
 function excludeStandaloneEffectDamage(
   entries: readonly CombatReceiptEntry[],
 ): readonly CombatReceiptEntry[] {
@@ -55,7 +73,9 @@ function excludeStandaloneEffectDamage(
   const segments = projectBuffTimelineViz(entries, endFrame);
   return entries.filter(
     entry =>
-      !(isBuffDamageReceipt(entry) && entry.targetId === entry.data?.buffOwnerId) &&
+      (!isBuffDamageReceipt(entry) ||
+        entry.targetId !== entry.data?.buffOwnerId ||
+        isSkillFollowupBuffDamageReceipt(entry, segments)) &&
       findBuffTimelineSegmentForDamage(entry, segments) === undefined &&
       !(entry.event === 'DamageApplied' && typeof entry.data?.spellBurstType === 'string'),
   );
@@ -67,6 +87,7 @@ export function projectTimelineHitOccurrences(
   origins = new CombatObjectOrigins(entries),
 ) {
   const receipts = projectTimelineHitReceipts(entries);
+  const entriesBySequence = new Map(entries.map(entry => [entry.sequence, entry]));
   const byCast = new Map<
     string,
     {
@@ -75,6 +96,7 @@ export function projectTimelineHitOccurrences(
       frame: number;
       triggered: boolean;
       triggeredStackIndex: number;
+      linkBuffed: boolean;
       label: TimelineHitEffectLabel;
     }[]
   >();
@@ -82,17 +104,16 @@ export function projectTimelineHitOccurrences(
     if (!hit.castId || !hit.hitId || !hit.stepKey) continue;
     const list = byCast.get(hit.castId) ?? [];
     if (list.some(item => item.hitId === hit.hitId && item.frame === hit.frame)) continue;
-    const triggered = receipts.damages
-      .filter(
-        item => item.castId === hit.castId && item.hitId === hit.hitId && item.frame === hit.frame,
-      )
-      .some(
-        item =>
-          origins.findAncestor(
-            origins.get({ kind: 'receipt', sequence: item.sequence }),
-            node => node.ref.kind === 'buff' || node.ref.kind === 'globalBuff',
-          ).status === 'found',
-      );
+    const occurrenceDamages = receipts.damages.filter(
+      item => item.castId === hit.castId && item.hitId === hit.hitId && item.frame === hit.frame,
+    );
+    const triggered = occurrenceDamages.some(
+      item =>
+        origins.findAncestor(
+          origins.get({ kind: 'receipt', sequence: item.sequence }),
+          node => node.ref.kind === 'buff' || node.ref.kind === 'globalBuff',
+        ).status === 'found',
+    );
     list.push({
       triggered,
       triggeredStackIndex: triggered
@@ -101,13 +122,14 @@ export function projectTimelineHitOccurrences(
       hitId: hit.hitId,
       stepKey: hit.stepKey,
       frame: hit.frame,
+      // main 只在该次命中实际吃到“连击”伤害 Buff 时染蓝；释放连携技本身不等于吃到 Buff。
+      linkBuffed: occurrenceDamages.some(damage => receivedComboBuff(damage, entriesBySequence)),
       label: {
-        damage: receipts.damages
-          .filter(
-            item =>
-              item.castId === hit.castId && item.hitId === hit.hitId && item.frame === hit.frame,
-          )
-          .map(({ value, damageType, isCritical }) => ({ value, damageType, isCritical })),
+        damage: occurrenceDamages.map(({ value, damageType, isCritical }) => ({
+          value,
+          damageType,
+          isCritical,
+        })),
         infliction: receipts.inflictions
           .filter(item => item.castId === hit.castId && item.frame === hit.frame)
           .map(({ element, outcomeKind, currentLayers }) => ({

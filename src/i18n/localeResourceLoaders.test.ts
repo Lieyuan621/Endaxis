@@ -14,7 +14,6 @@ describe('localeResourceLoaders', () => {
   it.each([
     ['zh-CN', 'zh'],
     ['en', 'en'],
-    ['ru', 'en'],
   ] as const)('maps UI locale %s to game locale %s', (locale, expected) => {
     expect(resolveGameTextLocale(locale)).toBe(expected);
   });
@@ -61,11 +60,11 @@ describe('localeResourceLoaders', () => {
     );
     const loaders = createLocaleResourceLoaders({ ui: {}, gameText });
 
-    await expect(loaders.loadGameTextFamily('ru', 'operators')).resolves.toEqual({
+    await expect(loaders.loadGameTextFamily('en', 'operators')).resolves.toEqual({
       id: 'operators',
     });
-    await expect(loaders.loadGameTextFamily('ru', 'weapons')).resolves.toEqual({ id: 'weapons' });
-    await expect(loaders.loadGameTextFamily('ru', 'enemies')).resolves.toEqual({ id: 'enemies' });
+    await expect(loaders.loadGameTextFamily('en', 'weapons')).resolves.toEqual({ id: 'weapons' });
+    await expect(loaders.loadGameTextFamily('en', 'enemies')).resolves.toEqual({ id: 'enemies' });
   });
 
   it('forms terms from battle text and the effective UI locale enum terms', async () => {
@@ -76,7 +75,7 @@ describe('localeResourceLoaders', () => {
       },
     });
 
-    await expect(loaders.loadGameTextFamily('ru', 'terms')).resolves.toEqual({
+    await expect(loaders.loadGameTextFamily('en', 'terms')).resolves.toEqual({
       battleTerms: { id: 'battle-terms' },
       enums: { id: 'enum-terms' },
     });

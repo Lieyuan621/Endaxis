@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   enemyStatusRowSize,
   monitorSectionBodyMinimums,
+  resolveMonitorSectionLayout,
   resizeMonitorSectionBodies,
 } from './monitorSectionMinimums';
 
@@ -55,5 +56,44 @@ describe('legacy enemy status density and dividers', () => {
     expect(result.poise! + result.sp!).toBeCloseTo(30);
     expect(result.poise).toBeCloseTo(10);
     expect(result.sp).toBeCloseTo(20);
+  });
+
+  it('matches main section geometry at the default 240px monitor height', () => {
+    const layout = resolveMonitorSectionLayout(
+      240,
+      { affliction: false, poise: false, sp: false },
+      { affliction: 2, poise: 1, sp: 3 },
+    );
+    expect(layout.bodies).toEqual({ affliction: 66, poise: 33, sp: 99 });
+    expect(layout.rects).toEqual({
+      affliction: { bodyHeight: 66, stripHeight: 0, shellHeight: 80 },
+      poise: { bodyHeight: 33, stripHeight: 0, shellHeight: 47 },
+      sp: { bodyHeight: 99, stripHeight: 0, shellHeight: 113 },
+    });
+  });
+
+  it('reserves collapsed strips before redistributing expanded section bodies', () => {
+    const layout = resolveMonitorSectionLayout(
+      180,
+      { affliction: false, poise: true, sp: false },
+      { affliction: 2, poise: 1, sp: 3 },
+    );
+    expect(layout.bodies).toEqual({ affliction: 55, poise: 0, sp: 83 });
+    expect(layout.rects.poise).toEqual({ bodyHeight: 0, stripHeight: 14, shellHeight: 14 });
+    expect(Object.values(layout.rects).reduce((sum, section) => sum + section.shellHeight, 0)).toBe(
+      180,
+    );
+  });
+
+  it("keeps main's 96px expanded-body floor in the shortest measured viewport", () => {
+    const layout = resolveMonitorSectionLayout(
+      116,
+      { affliction: false, poise: false, sp: false },
+      { affliction: 2, poise: 1, sp: 3 },
+    );
+    expect(layout.bodies).toEqual({ affliction: 35, poise: 20, sp: 41 });
+    expect(Object.values(layout.rects).reduce((sum, section) => sum + section.shellHeight, 0)).toBe(
+      138,
+    );
   });
 });

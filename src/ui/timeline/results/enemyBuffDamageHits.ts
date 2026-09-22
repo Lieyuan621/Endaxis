@@ -1,16 +1,27 @@
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import {
   findBuffTimelineSegmentForDamage,
+  projectBuffTimelineViz,
   type BuffTimelineSegment,
 } from '../../../core/projection/buffTimelineViz';
-import { isBuffDamageReceipt } from '../../../core/projection/enemyEffectViz';
+import {
+  isBuffDamageReceipt,
+  isSkillFollowupBuffDamageReceipt,
+} from '../../../core/projection/enemyEffectViz';
 
-export function groupEnemyBuffDamageHits(entries: readonly CombatReceiptEntry[]) {
+export function groupEnemyBuffDamageHits(
+  entries: readonly CombatReceiptEntry[],
+  visibleBuffSegments: readonly BuffTimelineSegment[] = projectBuffTimelineViz(
+    entries,
+    entries.reduce((maximum, entry) => Math.max(maximum, entry.frame), 0),
+  ),
+) {
   const groups = new Map<string, CombatReceiptEntry[]>();
   for (const entry of entries) {
     if (
       !isBuffDamageReceipt(entry) ||
       entry.targetId !== entry.data!.buffOwnerId ||
+      isSkillFollowupBuffDamageReceipt(entry, visibleBuffSegments) ||
       typeof entry.data?.spellBurstType === 'string'
     )
       continue;
@@ -39,9 +50,10 @@ export function findBuffDamageSegment<T extends BuffTimelineSegment>(
 export function selectEnemyBuffDamageEntries(
   entries: readonly CombatReceiptEntry[],
   sequence: number | null,
+  visibleBuffSegments?: readonly BuffTimelineSegment[],
 ) {
   return (
-    groupEnemyBuffDamageHits(entries).find(group =>
+    groupEnemyBuffDamageHits(entries, visibleBuffSegments).find(group =>
       group.some(entry => entry.sequence === sequence),
     ) ?? []
   );

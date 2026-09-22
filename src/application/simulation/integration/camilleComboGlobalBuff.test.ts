@@ -106,6 +106,16 @@ it('卡米拉天赋连携创建一层公共增益并由下一次洛茜战技按3
 
   const baselineDamage = expectedDamageForCast(withoutTalent.receiptEntries, 'rossi:battle');
   const imbuedDamage = expectedDamageForCast(withTalent.receiptEntries, 'rossi:battle');
+  const imbuedHits = withTalent.receiptEntries.filter(
+    entry => entry.event === 'DamageApplied' && entry.data?.castId === 'rossi:battle',
+  );
+  expect(
+    imbuedHits.some(entry =>
+      entry.appliedDamageModifiers?.some(
+        modifier => modifier.buffId === 'buff_common_affixes_skillimbue_atk',
+      ),
+    ),
+  ).toBe(true);
   expect(baselineDamage).toBeGreaterThan(0);
   expect(imbuedDamage / baselineDamage).toBeCloseTo(1.3, 6);
 });
