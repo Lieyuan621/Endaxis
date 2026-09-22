@@ -29,6 +29,7 @@ interface TimelineCastMoveOptions {
   readonly cursorFrame: Ref<number>;
   readonly trackHeaderWidth: number;
   readonly rulerHeight: number;
+  readonly verticalAutoScrollEnabled?: () => boolean;
   readonly timelineFramePx: (frame: number) => number;
   readonly alignSelectedCastToTarget: (event: PointerEvent, castId: string) => boolean;
   readonly applyActionSelection: (selection: TimelineActionSelection) => void;
@@ -310,7 +311,8 @@ export function useTimelineCastMove(options: TimelineCastMoveOptions) {
       const previousLeft = viewport.scrollLeft;
       const previousTop = viewport.scrollTop;
       viewport.scrollLeft += delta.x;
-      viewport.scrollTop += delta.y;
+      viewport.scrollTop =
+        options.verticalAutoScrollEnabled?.() === false ? 0 : previousTop + delta.y;
       if (viewport.scrollLeft === previousLeft && viewport.scrollTop === previousTop) return;
       updateCastMoveAt(gesture.pointerId, gesture.latestPointerX, gesture.latestPointerY, true);
       castMoveAutoScrollFrame = requestAnimationFrame(tick);

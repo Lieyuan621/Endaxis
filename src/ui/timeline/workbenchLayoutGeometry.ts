@@ -1,5 +1,5 @@
-/** 顶栏 50px 内容加 1px 下边框。 */
-export const WORKBENCH_HEADER_HEIGHT = 51;
+/** 与 main 分支一致：50px 已包含顶栏下边框。 */
+export const WORKBENCH_HEADER_HEIGHT = 50;
 export const WORKBENCH_ACTIVITY_BAR_WIDTH = 48;
 export const WORKBENCH_PANEL_MAX_WIDTH = 480;
 export const WORKBENCH_LEFT_PANEL_MIN_WIDTH = 200;

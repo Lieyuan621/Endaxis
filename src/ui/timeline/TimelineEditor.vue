@@ -480,6 +480,8 @@ const { t, te, locale } = useI18n({ useScope: 'global' });
 const { appearance, setAppearance } = useAppearance();
 const TIMELINE_TRACK_HEADER_WIDTH = 180;
 const TIMELINE_RULER_HEIGHT = 60;
+const TIMELINE_SCROLLBAR_SIZE = 12;
+const TIMELINE_COMPACT_TRACKS_VERTICAL_PADDING = 20;
 const INTERACTIVE_SIMULATION_BUDGET_MS = 1000 / 60;
 const {
   timelineZoomPercent,
@@ -493,6 +495,7 @@ const {
   prepEndFrame: () => scenario.value.inheritance?.frame ?? 0,
   prepExpanded: () => scenario.value.editor.prepExpanded,
   trackHeaderWidth: TIMELINE_TRACK_HEADER_WIDTH,
+  verticalPanEnabled: () => buffLayoutMode.value !== 'compact',
 });
 const CURSOR_GUIDE_STORAGE_KEY = 'endaxis:timeline-cursor-guide:v1';
 const showCursorGuide = ref(window.localStorage.getItem(CURSOR_GUIDE_STORAGE_KEY) === 'true');
@@ -501,6 +504,7 @@ watch(showCursorGuide, visible =>
 );
 const boxSelectEnabled = ref(false);
 const connectionToolEnabled = ref(false);
+const leftPanelCollapsed = ref(false);
 const KEYCAP_MODE_STORAGE_KEY = 'endaxis:timeline-keycap-mode:v1';
 const savedKeycapMode = window.localStorage.getItem(KEYCAP_MODE_STORAGE_KEY);
 const keycapMode = ref<'keyboard' | 'gamepad'>(
@@ -658,13 +662,16 @@ const timelineViewportHeight = ref(0);
 const displayedCompactTrackHeights = computed(() =>
   resolveCompactTrackHeights(
     compactTrackHeights.value,
-    timelineViewportHeight.value - TIMELINE_RULER_HEIGHT,
+    timelineViewportHeight.value -
+      TIMELINE_RULER_HEIGHT -
+      TIMELINE_SCROLLBAR_SIZE -
+      TIMELINE_COMPACT_TRACKS_VERTICAL_PADDING * 2,
   ),
 );
 const timelineVerticalScrollbarWidth = ref(0);
 const timelineVerticalScrollRange = ref(0);
 const timelineVerticalScrollbarHeight = computed(() =>
-  Math.max(0, timelineViewportHeight.value - TIMELINE_RULER_HEIGHT - 12),
+  Math.max(0, timelineViewportHeight.value - TIMELINE_RULER_HEIGHT - TIMELINE_SCROLLBAR_SIZE),
 );
 let timelineResizeObserver: ResizeObserver | null = null;
 const connectionDrag = ref<{
@@ -2101,6 +2108,7 @@ const { castMoveGesture, beginCastMove, cancelCastMove, discardCastMove, consume
     cursorFrame,
     trackHeaderWidth: TIMELINE_TRACK_HEADER_WIDTH,
     rulerHeight: TIMELINE_RULER_HEIGHT,
+    verticalAutoScrollEnabled: () => buffLayoutMode.value !== 'compact',
     timelineFramePx,
     alignSelectedCastToTarget,
     applyActionSelection,
@@ -2267,6 +2275,7 @@ const syncTimelineVerticalScroll = createTimelineVerticalScrollSync();
 function updateTimelineViewportMetrics(): void {
   const viewport = timelineScroll.value;
   if (viewport === null) return;
+  if (buffLayoutMode.value === 'compact' && viewport.scrollTop !== 0) viewport.scrollTop = 0;
   timelineScrollLeft.value = viewport.scrollLeft;
   timelineScrollTop.value = viewport.scrollTop;
   timelineViewportWidth.value = viewport.clientWidth;
@@ -3811,10 +3820,6 @@ function toggleConnectionTool(): boolean {
   return true;
 }
 
-function toggleBuffLayout(): void {
-  buffLayoutMode.value = buffLayoutMode.value === 'compact' ? 'loose' : 'compact';
-}
-
 function deleteTimelineConnection(connectionId: string): void {
   if (selectedConnectionId.value === connectionId) selectedConnectionId.value = null;
   if (connectionContextTarget.value?.id === connectionId) connectionContextTarget.value = null;
@@ -3942,6 +3947,13 @@ function selectTimelinePosition(event: MouseEvent): void {
   selectedConsumableUseId.value = null;
 }
 
+function seekTimeline(frame: number): void {
+  cursorFrame.value = frame;
+  clearTimelineSelection();
+  selectedConnectionId.value = null;
+  selectedConsumableUseId.value = null;
+}
+
 const { marqueeStyle, beginMarqueeGesture, consumeLaneClickSuppression } =
   useTimelineMarqueeGesture({
     interactionSession,
@@ -3952,6 +3964,7 @@ const { marqueeStyle, beginMarqueeGesture, consumeLaneClickSuppression } =
 const { isPanning, beginViewportPan } = useTimelineViewportPan({
   viewport: timelineScroll,
   interactionSession,
+  verticalPanEnabled: () => buffLayoutMode.value !== 'compact',
 });
 
 function captureLibraryPlacementPointerDown(event: PointerEvent): void {
@@ -4204,7 +4217,7 @@ function cancelPlacementFromContextMenu(event: MouseEvent): void {
   if (libraryPlacement.value === null) return;
   event.preventDefault();
   event.stopPropagation();
-  cancelLibraryPlacement();
+  cancelLibraryPlacementWithFeedback();
 }
 
 function openExistingMarkerContextMenu(
@@ -4815,6 +4828,7 @@ function beginLibraryPlacement(entry: TimelineSkillLibraryEntryViewModel, skillK
     libraryPlacementLease = interactionSession.tryStart(
       'library-placement',
       cancelLibraryPlacement,
+      { blocksKeyboard: false },
     );
     if (libraryPlacementLease === null) return;
   }
@@ -4960,11 +4974,21 @@ const LEGACY_SKILL_HOTKEY_TYPES: Readonly<Record<1 | 2 | 3 | 4 | 5 | 6, SkillTyp
 };
 
 function selectTrackByShortcut(trackIndex: TrackIndex): boolean {
+  if (leftPanelCollapsed.value) return false;
   selectTrack(trackIndex);
+  if (viewModel.value.tracks[trackIndex]?.operatorSlug === null) {
+    void openOperatorDialog(trackIndex);
+  }
   return true;
 }
 
 function placeSkillByShortcut(slot: 1 | 2 | 3 | 4 | 5 | 6): boolean {
+  if (leftPanelCollapsed.value) return false;
+  if (selectedTrackModel.value.operatorSlug === null) {
+    ElMessage.warning(t('timeline.shortcut.placeNeedsOperator'));
+    void openOperatorDialog(selectedTrack.value);
+    return true;
+  }
   const skillType = LEGACY_SKILL_HOTKEY_TYPES[slot];
   const entry =
     selectedTrackModel.value.skillLibrary.find(
@@ -4973,8 +4997,12 @@ function placeSkillByShortcut(slot: 1 | 2 | 3 | 4 | 5 | 6): boolean {
         candidate.variantKey === undefined &&
         candidate.placementSkillKey === undefined,
     ) ?? selectedTrackModel.value.skillLibrary.find(candidate => candidate.skillType === skillType);
-  if (entry === undefined) return false;
+  if (entry === undefined) {
+    ElMessage.warning(t('timeline.shortcut.placeSkillMissing'));
+    return true;
+  }
   beginLibraryPlacement(entry);
+  ElMessage.info({ message: t('timeline.shortcut.placeReady'), duration: 1000 });
   return true;
 }
 
@@ -5583,10 +5611,9 @@ function cycleOccupiedTrack(direction: -1 | 1): boolean {
     ElMessage.warning(t('timeline.shortcut.cycleNeedsOperator'));
     return true;
   }
-  if (nextTrackIndex !== selectedTrack.value) {
-    selectedTrack.value = nextTrackIndex;
-    clearTimelineSelection();
-  }
+  // 与 main 一致：只有一个已配置干员时，Tab 回绕到当前轨道也要重新应用选择，
+  // 这样会清理技能块选择并给出明确的轨道选中反馈，而不是看起来毫无反应。
+  selectTrack(nextTrackIndex);
   return true;
 }
 
@@ -5597,7 +5624,109 @@ const hasTimelineContextMenu = computed(
     connectionContextTarget.value !== null,
 );
 
+function restoreEditorHistoryByShortcut(direction: 'undo' | 'redo'): boolean {
+  const restored = restoreEditorHistory(direction);
+  if (restored) {
+    ElMessage.info({ message: t(`timeline.shortcut.${direction}`), duration: 800 });
+  }
+  return restored;
+}
+
+function copySelectedActionsByShortcut(): boolean {
+  const copied = copySelectedActions();
+  if (copied) ElMessage.success({ message: t('timeline.shortcut.copied'), duration: 800 });
+  return copied;
+}
+
+function pasteSelectedActionsByShortcut(): boolean {
+  if (timelineClipboard.value === null) return false;
+  pasteClipboardAtTimelinePosition();
+  ElMessage.success({ message: t('timeline.shortcut.pasted'), duration: 800 });
+  return true;
+}
+
+function deleteSelectionByShortcut(): boolean {
+  const deleted =
+    selectedConnectionId.value === null
+      ? deleteSelectedActions()
+      : (deleteTimelineConnection(selectedConnectionId.value), true);
+  if (deleted) {
+    ElMessage.success({ message: t('timelineGrid.selection.deleted'), duration: 800 });
+  }
+  return deleted;
+}
+
+function toggleCursorGuideByShortcut(): boolean {
+  toggleCursorGuide();
+  ElMessage.info({
+    message: t(
+      showCursorGuide.value
+        ? 'timeline.shortcut.cursorGuideOn'
+        : 'timeline.shortcut.cursorGuideOff',
+    ),
+    duration: 1500,
+  });
+  return true;
+}
+
+function toggleBoxSelectByShortcut(): boolean {
+  toggleBoxSelect();
+  ElMessage.info({
+    message: t(
+      boxSelectEnabled.value ? 'timeline.shortcut.boxSelectOn' : 'timeline.shortcut.boxSelectOff',
+    ),
+    duration: 1500,
+  });
+  return true;
+}
+
+function toggleSnapPrecisionByShortcut(): boolean {
+  toggleSnapPrecision();
+  ElMessage.info({
+    message: t('timeline.shortcut.snapPrecision', {
+      mode: t(
+        snapFrames.value === PRECISE_TIMELINE_SNAP_FRAMES
+          ? 'timeline.shortcut.snapModeFrame'
+          : 'timeline.shortcut.snapMode01',
+      ),
+    }),
+    duration: 1000,
+  });
+  return true;
+}
+
+function toggleConnectionToolByShortcut(): boolean {
+  toggleConnectionTool();
+  ElMessage.info({
+    message: t('timeline.shortcut.connectionTool', {
+      state: t(connectionToolEnabled.value ? 'common.on' : 'common.off'),
+    }),
+    duration: 1000,
+  });
+  return true;
+}
+
+function cancelLibraryPlacementWithFeedback(): boolean {
+  const cancelled = cancelLibraryPlacement();
+  if (cancelled) {
+    ElMessage.info({ message: t('timeline.shortcut.placeCancelled'), duration: 800 });
+  }
+  return cancelled;
+}
+
 useInteractionBarrier(interactionSession, () => hasTimelineContextMenu.value);
+
+useKeyboardShortcutScope({
+  id: 'timeline-library-placement',
+  region: workbenchInputRegion,
+  priority: 1100,
+  active: () => libraryPlacement.value !== null,
+  handle: event => {
+    if (event.key !== 'Escape' || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+      return false;
+    return cancelLibraryPlacementWithFeedback();
+  },
+});
 
 useKeyboardShortcutScope({
   id: 'timeline-overlay',
@@ -5615,37 +5744,28 @@ useKeyboardShortcutScope({
   active: () => !hasTimelineContextMenu.value,
   handleClipboard: event => {
     if (isKeyboardShortcutIsolationTarget(event.target)) return false;
-    if (event.type === 'copy') return copySelectedActions();
-    if (event.type !== 'paste' || timelineClipboard.value === null) return false;
-    pasteClipboardAtTimelinePosition();
-    return true;
+    if (event.type === 'copy') return copySelectedActionsByShortcut();
+    if (event.type !== 'paste') return false;
+    return pasteSelectedActionsByShortcut();
   },
   handle: event => {
     if (isKeyboardShortcutIsolationTarget(event.target)) return false;
     return handleTimelineEditorShortcut(event, {
-      undo: () => restoreEditorHistory('undo'),
-      redo: () => restoreEditorHistory('redo'),
-      copy: copySelectedActions,
-      paste: () => {
-        if (timelineClipboard.value === null) return false;
-        pasteClipboardAtTimelinePosition();
-        return true;
-      },
-      delete: () => {
-        if (selectedConnectionId.value === null) return deleteSelectedActions();
-        deleteTimelineConnection(selectedConnectionId.value);
-        return true;
-      },
+      undo: () => restoreEditorHistoryByShortcut('undo'),
+      redo: () => restoreEditorHistoryByShortcut('redo'),
+      copy: copySelectedActionsByShortcut,
+      paste: pasteSelectedActionsByShortcut,
+      delete: deleteSelectionByShortcut,
       nudgeLeft: () => nudgeSelectedActions(-1),
       nudgeRight: () => nudgeSelectedActions(1),
-      toggleSnapPrecision,
-      toggleCursorGuide,
-      toggleBoxSelect,
-      toggleConnectionTool,
+      toggleSnapPrecision: toggleSnapPrecisionByShortcut,
+      toggleCursorGuide: toggleCursorGuideByShortcut,
+      toggleBoxSelect: toggleBoxSelectByShortcut,
+      toggleConnectionTool: toggleConnectionToolByShortcut,
       cycleTrack: cycleOccupiedTrack,
       selectTrack: selectTrackByShortcut,
       placeSkill: placeSkillByShortcut,
-      cancelPlacement: cancelLibraryPlacement,
+      cancelPlacement: cancelLibraryPlacementWithFeedback,
     });
   },
 });
@@ -5855,6 +5975,7 @@ function setPanelDialogVisible(visible: boolean): void {
   />
   <TimelineWorkbenchShell
     :collapsed-monitor-section-count="collapsedMonitorSectionCount"
+    @left-collapsed-change="leftPanelCollapsed = $event"
     :labels="{
       library: t('timeline.activityBar.library'),
       globalConfig: t('timeline.activityBar.globalConfig'),
@@ -6128,34 +6249,16 @@ function setPanelDialogVisible(visible: boolean): void {
               :configuration-read-only="configurationReadOnly"
               :snap-label="snapFrames === PRECISE_TIMELINE_SNAP_FRAMES ? '1f' : '0.1s'"
               :zoom-percent="timelineZoomPercent"
-              :cursor-guide-enabled="showCursorGuide"
-              :box-select-enabled="boxSelectEnabled"
-              :connection-tool-enabled="connectionToolEnabled"
               :initial-gauge-mode="initialUltimateEnergyPresetMode"
               :initial-gauge-display-value="initialUltimateEnergyDisplayValue"
-              :buff-layout-mode="buffLayoutMode"
               :labels="{
                 initialGauge: t('timelineGrid.toolbar.initialGauge'),
-                cursorGuide: t('timelineGrid.toolbar.cursorGuide'),
-                boxSelect: t('timelineGrid.toolbar.boxSelect'),
                 snapPrecision: t('timelineGrid.toolbar.snapPrecision'),
-                connectionTool: t('timelineGrid.toolbar.connectionTool'),
-                buffLayout: t('timelineGrid.toolbar.buffLayoutMode', {
-                  mode: t(
-                    buffLayoutMode === 'compact'
-                      ? 'timelineGrid.toolbar.buffLayoutCompact'
-                      : 'timelineGrid.toolbar.buffLayoutLoose',
-                  ),
-                }),
                 zoom: 'SCALE',
               }"
               @toggle-snap-precision="toggleSnapPrecision"
               @cycle-initial-gauge="cycleInitialUltimateEnergyPreset"
               @set-unified-initial-gauge="setUnifiedTrackInitialUltimateEnergy"
-              @toggle-cursor-guide="toggleCursorGuide"
-              @toggle-box-select="toggleBoxSelect"
-              @toggle-connection-tool="toggleConnectionTool"
-              @toggle-buff-layout="toggleBuffLayout"
               @update-zoom-percent="updateTimelineZoomPercent"
               @set-zoom-percent="setTimelineZoomPercent"
             />
@@ -6175,7 +6278,7 @@ function setPanelDialogVisible(visible: boolean): void {
             :keycap-mode="keycapMode"
             :visible-left-px="Math.max(0, timelineScrollLeft - TIMELINE_TRACK_HEADER_WIDTH)"
             :visible-width-px="timelineViewportWidth"
-            @seek="cursorFrame = $event"
+            @seek="seekTimeline"
             @prep-info="openInheritanceInfo"
             @resize-history="beginInheritedHistoryResize"
             @set-prep-frames="setTimelinePrepFrames"
@@ -6949,6 +7052,9 @@ function setPanelDialogVisible(visible: boolean): void {
                   buffLayoutMode === 'compact' && track.trackIndex < viewModel.tracks.length - 1
                 "
                 class="track-row-resizer"
+                :class="{
+                  'is-active': compactTrackResizeGesture?.dividerIndex === track.trackIndex,
+                }"
                 :aria-label="t('timelineGrid.toolbar.resizeTrack')"
                 role="separator"
                 aria-orientation="horizontal"
@@ -8798,6 +8904,21 @@ button:disabled {
   box-sizing: border-box;
 }
 
+/* 紧凑模式均分高度时保留 main 的上下边距；松散模式直接与标尺和准备区衔接。 */
+.timeline-scroll.is-compact-buff-layout .track-stack::before,
+.timeline-scroll.is-compact-buff-layout .track-stack::after {
+  content: '';
+  position: sticky;
+  left: 0;
+  z-index: 80;
+  display: block;
+  width: 180px;
+  height: 20px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--ea-border);
+  background: var(--ea-workbench-header);
+}
+
 .track-row {
   position: relative;
   box-sizing: border-box;
@@ -8865,18 +8986,24 @@ button:disabled {
 .track-row-resizer::after {
   content: '';
   position: absolute;
-  top: 4px;
+  top: 50%;
   right: 0;
-  left: 0;
+  left: 180px;
   height: 1px;
-  background: var(--ea-active-fill);
-  opacity: 0;
-  transition: opacity 120ms ease;
+  background: var(--ea-border);
+  transform: translateY(-50%);
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    height 120ms ease;
 }
 
 .track-row-resizer:hover::after,
-.track-row-resizer:focus-visible::after {
-  opacity: 1;
+.track-row-resizer:focus-visible::after,
+.track-row-resizer.is-active::after {
+  height: 2px;
+  background: color-mix(in srgb, var(--ea-gold) 55%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ea-gold) 22%, transparent);
 }
 
 :global(html.is-track-resizing),

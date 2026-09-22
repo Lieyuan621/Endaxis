@@ -47,6 +47,9 @@ const props = defineProps<{
     collapsePanel: string;
   };
 }>();
+const emit = defineEmits<{
+  leftCollapsedChange: [collapsed: boolean];
+}>();
 
 const leftCollapsed = ref(false);
 const rightCollapsed = ref(false);
@@ -271,6 +274,10 @@ watch(
   persistLayout,
   { flush: 'post' },
 );
+watch(leftCollapsed, collapsed => emit('leftCollapsedChange', collapsed), {
+  immediate: true,
+  flush: 'sync',
+});
 </script>
 
 <template>
@@ -329,7 +336,11 @@ watch(
         <slot name="left" :reset-panel="() => resetPanelSize('left')" />
       </div>
       <div v-show="!bottomCollapsed" class="left-bottom-separator"></div>
-      <div v-show="!bottomCollapsed" class="left-bottom">
+      <div
+        v-show="!bottomCollapsed"
+        class="left-bottom"
+        :class="{ 'is-contract': bottomTool === 'contract' }"
+      >
         <slot name="left-bottom" :tool="bottomTool" />
       </div>
     </aside>
@@ -531,6 +542,7 @@ watch(
 .left-panel {
   grid-column: 2;
   grid-row: 1 / -1;
+  z-index: 10;
   display: grid;
 }
 
@@ -539,6 +551,14 @@ watch(
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+.left-bottom {
+  border-top: 1px solid var(--ea-border);
+}
+
+.left-bottom.is-contract {
+  border-top: 0;
 }
 
 .left-bottom-separator {
@@ -551,6 +571,7 @@ watch(
   position: relative;
   grid-column: 4;
   grid-row: 1 / -1;
+  z-index: 1;
   min-width: 0;
   min-height: 0;
   display: grid;
@@ -610,6 +631,7 @@ watch(
 
 .bottom-panel {
   position: relative;
+  z-index: 20;
   grid-row: 4;
   min-width: 0;
   min-height: 0;
@@ -657,6 +679,7 @@ watch(
 .right-panel {
   grid-column: 6;
   grid-row: 1 / -1;
+  z-index: 10;
 }
 
 .resizer {

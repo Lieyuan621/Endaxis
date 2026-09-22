@@ -20,9 +20,8 @@ function tune(field: 'saturation' | 'lightness', event: Event) {
     <div class="header-more-checklist">
       <EaButton
         variant="ghost"
-        size="sm"
         type="button"
-        class="header-more-check-row"
+        class="header-more-check-row header-more-check-row--compact"
         :aria-pressed="prefs.enabled"
         @click="prefs.enabled = !prefs.enabled"
       >
@@ -60,13 +59,12 @@ function tune(field: 'saturation' | 'lightness', event: Event) {
           />
         </div>
       </label>
-      <h4 class="timeline-display-section__title">
+      <h5 class="timeline-display-subsection__title">
         {{ t('timeline.header.durationBarColorSources') }}
-      </h4>
+      </h5>
       <div class="header-more-checklist header-more-checklist--grid">
         <EaButton
           variant="ghost"
-          size="sm"
           v-for="source in DURATION_COLOR_SOURCES"
           :key="source"
           type="button"
@@ -81,13 +79,12 @@ function tune(field: 'saturation' | 'lightness', event: Event) {
           <span>{{ t(`timeline.header.durationBarColorSource.${source}`) }}</span>
         </EaButton>
       </div>
-      <h4 class="timeline-display-section__title">
+      <h5 class="timeline-display-subsection__title">
         {{ t('timeline.header.durationBarColorSurfaces') }}
-      </h4>
+      </h5>
       <div class="header-more-checklist header-more-checklist--grid">
         <EaButton
           variant="ghost"
-          size="sm"
           v-for="surface in DURATION_COLOR_SURFACES"
           :key="surface"
           type="button"
@@ -113,11 +110,16 @@ function tune(field: 'saturation' | 'lightness', event: Event) {
   flex-direction: column;
   gap: 6px;
 }
-.duration-color-section {
-  border-top: 1px solid var(--ea-border-soft);
-  padding-top: 10px;
+.timeline-display-color-controls {
+  padding-top: 2px;
 }
 .timeline-display-section__title {
+  margin: 0;
+  color: var(--ea-fg-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.timeline-display-subsection__title {
   margin: 0;
   color: var(--ea-fg-muted);
   font-size: 10px;
@@ -138,18 +140,23 @@ function tune(field: 'saturation' | 'lightness', event: Event) {
 .timeline-display-tune-row {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 0 6px;
+  gap: 6px;
+  margin: 0;
+  padding: 2px 2px 4px;
+  color: var(--ea-fg-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: default;
 }
 .timeline-display-tune-row__label {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-size: 11px;
-  color: var(--ea-fg-secondary);
+  gap: 8px;
 }
 .timeline-display-tune-row em {
   font-style: normal;
-  color: var(--ea-fg-muted);
+  color: color-mix(in srgb, var(--ea-gold) 85%, transparent);
   font-variant-numeric: tabular-nums;
 }
 </style>

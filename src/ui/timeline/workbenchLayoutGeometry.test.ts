@@ -19,26 +19,26 @@ describe('workbench bottom panel geometry', () => {
   ])('uses the legacy minimum with %i folded sections', (count, minimum) => {
     expect(resolveWorkbenchBottomHeightBounds(1080, 240, count).minimum).toBe(minimum);
     expect(resolveWorkbenchBottomHeight(1080, 1, false, count)).toBe(minimum);
-    expect(resolveWorkbenchBottomHeight(720, 1, false, count)).toBe(Math.min(minimum, 148));
+    expect(resolveWorkbenchBottomHeight(720, 1, false, count)).toBe(Math.min(minimum, 149));
     expect(resolveWorkbenchBottomHeight(1080, 1, true, count)).toBe(0);
   });
   it.each([
     ['unmeasured root', 0, 240, false, 240],
-    ['short 720px root', 720, 240, false, 148],
+    ['short 720px root', 720, 240, false, 149],
     ['exact default capacity', 812, 240, false, 240],
     ['normal desktop root', 1080, 240, false, 240],
     ['expanded panel', 1200, 480, false, 480],
-    ['viewport-limited expansion', 1200, 800, false, 628],
+    ['viewport-limited expansion', 1200, 800, false, 629],
     ['collapsed panel', 1080, 240, true, 0],
   ] as const)('%s resolves to %dpx', (_label, height, requested, collapsed, expected) => {
     expect(resolveWorkbenchBottomHeight(height, requested, collapsed)).toBe(expected);
   });
 
   it('lowers the minimum only when the viewport cannot preserve 520px of timeline', () => {
-    expect(resolveWorkbenchBottomHeightBounds(720, 240)).toEqual({ minimum: 148, maximum: 148 });
+    expect(resolveWorkbenchBottomHeightBounds(720, 240)).toEqual({ minimum: 149, maximum: 149 });
     expect(resolveWorkbenchBottomHeightBounds(1080, 240)).toEqual({
       minimum: 240,
-      maximum: 508,
+      maximum: 509,
     });
   });
 

@@ -2,8 +2,14 @@ import { shallowRef } from 'vue';
 
 export interface InteractionLease {
   readonly owner: string;
+  /** Persistent pointer modes may keep gesture ownership without swallowing editor shortcuts. */
+  readonly blocksKeyboard: boolean;
   readonly isCurrent: () => boolean;
   readonly release: () => void;
+}
+
+export interface InteractionLeaseOptions {
+  readonly blocksKeyboard?: boolean;
 }
 
 /** One workbench, one editing gesture. Labels describe owners; leases identify attempts. */
@@ -23,10 +29,15 @@ export function createInteractionSession() {
     get current() {
       return current.value;
     },
-    tryStart(owner: string, onCancel: () => void): InteractionLease | null {
+    tryStart(
+      owner: string,
+      onCancel: () => void,
+      options: InteractionLeaseOptions = {},
+    ): InteractionLease | null {
       if (current.value !== null || barriers.size > 0) return null;
       const lease: InteractionLease = {
         owner,
+        blocksKeyboard: options.blocksKeyboard ?? true,
         isCurrent: () => current.value === lease,
         release: () => {
           if (current.value !== lease) return;

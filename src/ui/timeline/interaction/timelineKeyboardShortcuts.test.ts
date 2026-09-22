@@ -4,6 +4,7 @@ import { handleTimelineEditorShortcut } from './timelineKeyboardShortcuts';
 function keyboardEvent(key: string, modifiers: Partial<KeyboardEvent> = {}): KeyboardEvent {
   return {
     key,
+    code: '',
     ctrlKey: false,
     metaKey: false,
     shiftKey: false,
@@ -76,6 +77,14 @@ describe('handleTimelineEditorShortcut', () => {
 
     expect(handlers.selectTrack).toHaveBeenCalledWith(3);
     expect(handlers.placeSkill).toHaveBeenCalledWith(6);
+  });
+
+  it('uses the physical digit row for skill placement across keyboard layouts', () => {
+    const handlers = commands();
+
+    handleTimelineEditorShortcut(keyboardEvent('&', { code: 'Digit1' }), handlers);
+
+    expect(handlers.placeSkill).toHaveBeenCalledWith(1);
   });
 
   it('does not claim unsupported modifier combinations', () => {

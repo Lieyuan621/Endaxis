@@ -136,8 +136,8 @@ export function useTimelineLoadoutEditor(options: TimelineLoadoutEditorOptions) 
   }
 
   function selectTrack(trackIndex: TrackIndex): void {
-    options.selectedTrack.value = trackIndex;
     options.clearTimelineSelection();
+    options.selectedTrack.value = trackIndex;
   }
 
   function selectOperator(slug: string): void {

@@ -54,7 +54,7 @@ export function provideInteractionSession(region?: InputRegion): InteractionSess
     id: 'workbench-gesture',
     region,
     priority: 1000,
-    active: () => session.current !== null,
+    active: () => session.current?.blocksKeyboard === true,
     blockLowerScopes: true,
     handle: event => event.key === 'Escape' && session.cancel(),
   });

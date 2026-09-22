@@ -13,6 +13,7 @@ export type TimelineMarkerKind =
   | 'simulationEnd';
 
 export type TimelinePrimarySelection =
+  | { readonly kind: 'none' }
   | { readonly kind: 'track'; readonly trackIndex: TrackIndex }
   | { readonly kind: 'actions' }
   | {
@@ -25,8 +26,8 @@ export type TimelinePrimarySelection =
  * 时间轴唯一的选择状态。
  *
  * `activeTrackIndex` 是技能库和放置上下文，即使点击空白清除 Inspector 选区也不会丢失；
- * `primary` 则是互斥的可视选择身份。动作保留自己的多选集合，但只在 primary=actions 时生效；
- * 清空临时选区后回到活动轨道，让技能库的放置目标仍然可见。
+ * `primary` 则是互斥的可视选择身份。动作保留自己的多选集合，但只在 primary=actions 时生效。
+ * 清空临时选区只清除可视选择，技能库仍保留最后使用的放置轨道。
  */
 export interface TimelineEditorSelection {
   readonly activeTrackIndex: TrackIndex;
@@ -41,10 +42,7 @@ export function createTimelineEditorSelection(
   return {
     activeTrackIndex,
     actions,
-    primary:
-      actions.selectedIds.size > 0
-        ? { kind: 'actions' }
-        : { kind: 'track', trackIndex: activeTrackIndex },
+    primary: actions.selectedIds.size > 0 ? { kind: 'actions' } : { kind: 'none' },
   };
 }
 
@@ -67,10 +65,7 @@ export function selectTimelineActionsIdentity(
   return {
     activeTrackIndex,
     actions,
-    primary:
-      actions.selectedIds.size > 0
-        ? { kind: 'actions' }
-        : { kind: 'track', trackIndex: activeTrackIndex },
+    primary: actions.selectedIds.size > 0 ? { kind: 'actions' } : { kind: 'none' },
   };
 }
 
@@ -92,6 +87,6 @@ export function clearTimelineEditorSelection(
   return {
     activeTrackIndex: selection.activeTrackIndex,
     actions: createEmptyTimelineActionSelection(),
-    primary: { kind: 'track', trackIndex: selection.activeTrackIndex },
+    primary: { kind: 'none' },
   };
 }

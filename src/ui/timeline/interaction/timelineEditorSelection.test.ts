@@ -14,7 +14,7 @@ describe('timeline editor selection', () => {
 
     expect(track.primary).toEqual({ kind: 'track', trackIndex: 2 });
     expect(cleared.activeTrackIndex).toBe(2);
-    expect(cleared.primary).toEqual({ kind: 'track', trackIndex: 2 });
+    expect(cleared.primary).toEqual({ kind: 'none' });
   });
 
   it('makes tracks, action sets and marker kinds mutually exclusive', () => {
@@ -35,7 +35,7 @@ describe('timeline editor selection', () => {
     expect(track.primary).toEqual({ kind: 'track', trackIndex: 3 });
   });
 
-  it('returns to the active track when the last selected action is toggled off', () => {
+  it('clears the visible selection when the last selected action is toggled off', () => {
     const current = createTimelineEditorSelection(1, {
       selectedIds: new Set(['cast:1']),
       primaryId: 'cast:1',
@@ -46,6 +46,6 @@ describe('timeline editor selection', () => {
     });
 
     expect(empty.activeTrackIndex).toBe(1);
-    expect(empty.primary).toEqual({ kind: 'track', trackIndex: 1 });
+    expect(empty.primary).toEqual({ kind: 'none' });
   });
 });

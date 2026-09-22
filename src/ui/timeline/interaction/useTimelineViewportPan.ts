@@ -11,6 +11,7 @@ import { resolveTimelineViewportPan, type TimelineViewportPanOrigin } from './ti
 export interface UseTimelineViewportPanOptions {
   readonly interactionSession: InteractionSession;
   readonly viewport: Ref<HTMLElement | null>;
+  readonly verticalPanEnabled?: () => boolean;
 }
 
 const INTERACTIVE_PAN_EXCLUSION_SELECTOR = [
@@ -60,7 +61,7 @@ export function useTimelineViewportPan(options: UseTimelineViewportPanOptions) {
       if (moveEvent.pointerId !== pointerId) return;
       const position = resolveTimelineViewportPan(origin, moveEvent.clientX, moveEvent.clientY);
       viewport.scrollLeft = position.left;
-      viewport.scrollTop = position.top;
+      viewport.scrollTop = options.verticalPanEnabled?.() === false ? 0 : position.top;
     };
     const finish = (finishEvent: PointerEvent) => {
       if (finishEvent.pointerId === pointerId) stop();

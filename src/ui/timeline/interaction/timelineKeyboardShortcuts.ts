@@ -33,7 +33,9 @@ export function handleTimelineEditorShortcut(
     if (functionKey !== null) {
       return commands.selectTrack((Number(functionKey[1]) - 1) as 0 | 1 | 2 | 3);
     }
-    if (/^[1-6]$/.test(key)) return commands.placeSkill(Number(key) as 1 | 2 | 3 | 4 | 5 | 6);
+    const digitCode = /^Digit([1-6])$/.exec(event.code);
+    const digit = digitCode?.[1] ?? (/^[1-6]$/.test(key) ? key : null);
+    if (digit !== null) return commands.placeSkill(Number(digit) as 1 | 2 | 3 | 4 | 5 | 6);
   }
   if (!event.altKey && !event.metaKey && event.ctrlKey && !event.shiftKey && key === 'g') {
     return commands.toggleCursorGuide();

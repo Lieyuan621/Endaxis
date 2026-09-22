@@ -2,6 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 import { createInteractionSession } from './interactionSession';
 
 describe('workbench interaction ownership', () => {
+  it('blocks keyboard shortcuts by default but permits pointer-only ownership', () => {
+    const session = createInteractionSession();
+    const gesture = session.tryStart('drag', vi.fn())!;
+
+    expect(gesture.blocksKeyboard).toBe(true);
+    gesture.release();
+
+    const placement = session.tryStart('library-placement', vi.fn(), {
+      blocksKeyboard: false,
+    })!;
+    expect(placement.blocksKeyboard).toBe(false);
+  });
+
   it('blocks before cancelling, so a cancellation callback cannot restart a background gesture', () => {
     const session = createInteractionSession();
     const cancelled = vi.fn(() => {

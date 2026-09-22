@@ -15,19 +15,11 @@ const props = defineProps<{
   configurationReadOnly?: boolean;
   snapLabel: string;
   zoomPercent: number;
-  cursorGuideEnabled: boolean;
-  boxSelectEnabled: boolean;
-  connectionToolEnabled: boolean;
   initialGaugeMode: 'empty' | 'full' | 'custom';
   initialGaugeDisplayValue: string;
-  buffLayoutMode: 'compact' | 'loose';
   labels: {
     initialGauge: string;
-    cursorGuide: string;
-    boxSelect: string;
     snapPrecision: string;
-    connectionTool: string;
-    buffLayout: string;
     zoom: string;
   };
 }>();
@@ -36,10 +28,6 @@ const emit = defineEmits<{
   toggleSnapPrecision: [];
   cycleInitialGauge: [];
   setUnifiedInitialGauge: [value: number];
-  toggleCursorGuide: [];
-  toggleBoxSelect: [];
-  toggleConnectionTool: [];
-  toggleBuffLayout: [];
   updateZoomPercent: [percent: number];
   setZoomPercent: [percent: number];
 }>();
@@ -145,23 +133,7 @@ function applyGaugeDraft(): void {
     <div class="zoom-row">
       <div class="zoom-info">
         <span>SCALE</span>
-        <div class="zoom-value">
-          <EaButton
-            variant="ghost"
-            size="sm"
-            icon-only
-            type="button"
-            class="zoom-reset"
-            :disabled="zoomPercent === 100"
-            :aria-label="`${labels.zoom}: 100%`"
-            @click="emit('setZoomPercent', 100)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M20 11a8 8 0 1 1-2.3-5.7M20 4v5h-5" />
-            </svg>
-          </EaButton>
-          <strong>{{ zoomPercent }}%</strong>
-        </div>
+        <strong class="zoom-value">{{ zoomPercent }}%</strong>
       </div>
       <div class="zoom-slider-row">
         <EaButton
@@ -185,6 +157,7 @@ function applyGaugeDraft(): void {
           step="1"
           :aria-label="labels.zoom"
           :aria-valuetext="`${zoomPercent}%`"
+          @dblclick.prevent.stop="emit('setZoomPercent', 100)"
           @input="
             emit(
               'setZoomPercent',
@@ -350,7 +323,7 @@ function applyGaugeDraft(): void {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--ea-fg-secondary, #aaa);
+  color: var(--ea-fg, #f0f0f0);
   font: inherit;
   cursor: pointer;
   transition: color 0.2s;
@@ -369,41 +342,6 @@ function applyGaugeDraft(): void {
 }
 
 .zoom-value {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.zoom-reset.ea-button.ea-button--icon-only {
-  width: 13px;
-  min-width: 13px;
-  height: 13px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #fff;
-}
-
-.zoom-reset svg {
-  width: 12px;
-  height: 12px;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.zoom-reset.ea-button.ea-button--icon-only:hover:not(:disabled) {
-  color: var(--ea-gold);
-}
-
-.zoom-reset.ea-button.ea-button--icon-only:disabled {
-  color: var(--ea-fg-muted, #777);
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.zoom-info strong {
   color: var(--ea-gold);
   font-family: 'Roboto Mono', Consolas, monospace;
   font-size: 9px;
@@ -412,7 +350,7 @@ function applyGaugeDraft(): void {
 }
 
 .zoom-info > span {
-  color: var(--ea-fg-secondary, #aaa);
+  color: #555;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -450,10 +388,6 @@ function applyGaugeDraft(): void {
   border: 1px solid #333;
   box-shadow: 0 0 2px rgb(0 0 0 / 50%);
   transition: transform 0.1s;
-}
-.zoom-slider-row input::-webkit-slider-thumb:hover {
-  transform: scale(1.3);
-  background: #fff;
 }
 .zoom-slider-row input::-moz-range-thumb {
   width: 8px;

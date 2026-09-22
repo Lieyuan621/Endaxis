@@ -58,6 +58,37 @@ describe('timeline viewport zoom session', () => {
     expect(preventDefault).toHaveBeenCalledTimes(3);
   });
 
+  it('keeps compact timelines pinned to the top while still claiming the wheel event', () => {
+    const viewport = {
+      scrollLeft: 100,
+      scrollTop: 2,
+      clientWidth: 1000,
+      clientHeight: 600,
+      getBoundingClientRect: () => ({ left: 20 }),
+    } as HTMLElement;
+    const zoom = useTimelineZoom({
+      viewport: () => viewport,
+      prepFrames: () => 30,
+      prepExpanded: () => true,
+      trackHeaderWidth: 180,
+      verticalPanEnabled: () => false,
+    });
+    const preventDefault = vi.fn();
+
+    zoom.handleTimelineWheel({
+      ctrlKey: false,
+      shiftKey: false,
+      deltaX: 0,
+      deltaY: 40,
+      deltaMode: 0,
+      clientX: 220,
+      preventDefault,
+    });
+
+    expect(viewport.scrollTop).toBe(0);
+    expect(preventDefault).toHaveBeenCalledOnce();
+  });
+
   it('supports initialization without a mounted viewport', async () => {
     const zoom = useTimelineZoom({
       viewport: () => null,

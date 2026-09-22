@@ -15,6 +15,7 @@ export function useTimelineZoom(options: {
   prepEndFrame?(): number;
   prepExpanded(): boolean;
   trackHeaderWidth: number;
+  verticalPanEnabled?(): boolean;
 }) {
   const timelineZoomPercent = ref(100);
   const pxPerFrame = computed(() => timelinePxPerFrame(timelineZoomPercent.value));
@@ -75,6 +76,10 @@ export function useTimelineZoom(options: {
     if (intent.kind === 'verticalPan') {
       const viewport = options.viewport();
       if (viewport !== null) {
+        if (options.verticalPanEnabled?.() === false) {
+          viewport.scrollTop = 0;
+          return;
+        }
         viewport.scrollTop += timelineWheelDeltaPx(
           intent.deltaPx,
           event.deltaMode,
