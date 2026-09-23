@@ -3,10 +3,13 @@ import { compileScript, compileStyle, compileTemplate, parse } from '@vue/compil
 import source from './TimelineEnemyEffects.vue?raw';
 
 it('keeps legacy mouse-down activation and handles both keyboard activation keys', () => {
+  expect(source).not.toContain('<EaButton');
   const hit = source.slice(
-    source.indexOf('v-for="hit in damageHits"'),
+    source.indexOf('<button\n        type="button"\n        v-for="hit in damageHits"'),
     source.indexOf('v-for="marker in markers"'),
   );
+  expect(hit).toContain('<button');
+  expect(hit).toContain('type="button"');
   expect(hit).toContain('@mousedown.stop="emit(\'open-damage-detail\', hit.sequence)"');
   expect(hit).toContain('@keydown.enter.stop.prevent="emit(\'open-damage-detail\', hit.sequence)"');
   expect(hit).toContain('@keydown.space.stop.prevent="emit(\'open-damage-detail\', hit.sequence)"');

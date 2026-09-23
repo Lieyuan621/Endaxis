@@ -29,6 +29,7 @@ import { MechanicAdapterRegistry } from '../../core/mechanics/mechanicCompiler';
 import { projectBuffTimelineViz } from '../../core/projection/buffTimelineViz';
 import { findBuffDamageSegment } from '../../ui/timeline/results/enemyBuffDamageHits';
 import { projectTimelineHitOccurrences } from '../../ui/timeline/results/timelineHitEffects';
+import { projectPhysicalStatusDisplay } from '../../ui/timeline/results/physicalStatusDisplay';
 import { gameDataRepository } from '../../data/gameDataRepository';
 import {
   CONTINGENCY_CONTRACT_MECHANIC_PREFIX,
@@ -510,6 +511,53 @@ function createGeneratedEndministratorIgniteScenario(talent1Level?: 1 | 2) {
     operator: endministratorGeneratedOperator,
     skillGroupKey: 'basicAttack',
     startFrame: 170,
+    ids,
+  }).scenario;
+}
+
+function createGeneratedEndministratorPhysicalScenario() {
+  const scenario = createEmptyScenario(
+    'scenario:endministrator-physical-display',
+    '管理员物理异常显示样本',
+  );
+  scenario.battle.durationFrames = 700;
+  scenario.battle.resourceRules = {
+    ...scenario.battle.resourceRules,
+    initialSp: 240,
+    spRecoveryPerSecond: 0,
+  };
+  scenario.tracks[0] = {
+    id: 'track:endministrator',
+    operator: {
+      operatorSlug: endministratorGeneratedOperator.slug,
+      level: 90,
+      promoted: true,
+      potential: 0,
+      trustLevel: 4,
+      skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+      talentStates: {},
+    },
+    weapon: null,
+    gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+    initialState: { ultimateEnergy: 0 },
+    skillCasts: [],
+  };
+  let nextId = 0;
+  const ids = { allocate: (kind: string) => `${kind}:endministrator-physical:${++nextId}` };
+  const first = placeSkillGroup({
+    scenario,
+    trackIndex: 0,
+    operator: endministratorGeneratedOperator,
+    skillGroupKey: 'battleSkill',
+    startFrame: 1,
+    ids,
+  }).scenario;
+  return placeSkillGroup({
+    scenario: first,
+    trackIndex: 0,
+    operator: endministratorGeneratedOperator,
+    skillGroupKey: 'battleSkill',
+    startFrame: 500,
     ids,
   }).scenario;
 }
@@ -1779,6 +1827,125 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     );
   });
 
+  it('shows four guard stacks on Rossi second-combo airborne after its same-frame bonus', () => {
+    const scenario = createEmptyScenario('scenario:rossi-airborne-four', '洛茜连携击飞四层');
+    scenario.battle.durationFrames = 450;
+    const comboGroup = rossiGeneratedOperator.skillGroups.find(
+      group => group.key === 'comboSkill',
+    )!;
+    const firstStage = Array.isArray(comboGroup.skills) ? comboGroup.skills[0]! : comboGroup.skills;
+    const preparedRossi: OperatorDefinition = {
+      ...rossiGeneratedOperator,
+      skillGroups: rossiGeneratedOperator.skillGroups.map(group =>
+        group !== comboGroup
+          ? group
+          : {
+              ...group,
+              skills: {
+                ...firstStage,
+                scheduledSequences: [
+                  scheduled(
+                    0,
+                    sequence(
+                      ...Array.from({ length: 3 }, () =>
+                        step('applyBuff', {
+                          buffId: 'buff_physical_no_guard',
+                          target: 'enemy',
+                          inheritSourceSkillCastInfo: true,
+                        }),
+                      ),
+                      step('applyBuff', {
+                        buffId: 'buff_common_energy_shard_attached_fire',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                      }),
+                    ),
+                  ),
+                  ...firstStage.scheduledSequences,
+                ],
+              },
+            },
+      ),
+    };
+    scenario.tracks[0] = {
+      id: 'track:rossi',
+      operator: {
+        operatorSlug: preparedRossi.slug,
+        level: 90,
+        promoted: true,
+        potential: 0,
+        trustLevel: 4,
+        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+        talentStates: {},
+      },
+      weapon: null,
+      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+      initialState: { ultimateEnergy: 0 },
+      skillCasts: [],
+    };
+    const first = placeSkillGroup({
+      scenario,
+      trackIndex: 0,
+      operator: preparedRossi,
+      skillGroupKey: 'comboSkill',
+      skillKey: 'chr_0028_wulfa_combo_2_skill',
+      startFrame: 1,
+      ids: { allocate: kind => `${kind}:rossi-airborne-first` },
+    }).scenario;
+    const placed = placeSkillGroup({
+      scenario: first,
+      trackIndex: 0,
+      operator: preparedRossi,
+      skillGroupKey: 'comboSkill',
+      skillKey: 'chr_0028_wulfa_combo_3_skill',
+      startFrame: 65,
+      ids: { allocate: kind => `${kind}:rossi-airborne-second` },
+    }).scenario;
+    const result = runStandardPlayerDamageScenarioSimulation({
+      scenario: placed,
+      endFrame: 400,
+      criticalSamples: new ExplicitCriticalSampleSource(Array(100).fill(1)),
+      resolveNonRandomRuntimeSnapshot: () => ({
+        runtimeExtensionMultiplier: 1,
+        appliesIgniteDamageMultiplier: false,
+        appliesPhysicalInflictionDamageMultiplier: false,
+      }),
+      elementalInflictionDocument: elementalAttachments,
+      options: {
+        ...standardOptions(),
+        index: {
+          getCommonBuffDefinitions: () => commonBuffDefinitions,
+          getOperator: slug => (slug === preparedRossi.slug ? preparedRossi : null),
+          getWeapon: () => null,
+          getGear: () => null,
+          getGearSet: () => null,
+        },
+      },
+    });
+
+    const airborne = result.receiptEntries.find(
+      entry =>
+        entry.event === 'BuffApplied' &&
+        entry.data?.buffId === 'buff_physical_airborne' &&
+        entry.data?.physicalInflictionType === 'airborne',
+    );
+    expect(airborne).toBeDefined();
+    expect(
+      result.receiptEntries.some(
+        entry =>
+          entry.frame === airborne!.frame &&
+          entry.sequence > airborne!.sequence &&
+          entry.data?.buffId === 'buff_physical_no_guard' &&
+          entry.data?.layers === 4,
+      ),
+    ).toBe(true);
+    expect(
+      projectPhysicalStatusDisplay(result.receiptEntries, 400, { enemySuperArmor: 0 }).find(
+        segment => segment.startSequence === airborne!.sequence,
+      ),
+    ).toMatchObject({ buffId: 'buff_physical_airborne', layers: 4 });
+  });
+
   it('pauses Rossi combo timers for the native power-attack action interval', () => {
     const simulate = (withPowerAttack: boolean) => {
       const scenario = createEmptyScenario(
@@ -2255,6 +2422,42 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       }),
     );
     expect(result.finalResources.squad[0]?.ultimateEnergy).toBe(15);
+  });
+
+  it('projects Endministrator physical inputs with Main marker semantics', () => {
+    const result = runStandardPlayerDamageScenarioSimulation({
+      scenario: createGeneratedEndministratorPhysicalScenario(),
+      endFrame: 700,
+      criticalSamples: new ExplicitCriticalSampleSource(Array(40).fill(1)),
+      resolveNonRandomRuntimeSnapshot: () => ({
+        runtimeExtensionMultiplier: 1,
+        appliesIgniteDamageMultiplier: false,
+        appliesPhysicalInflictionDamageMultiplier: false,
+      }),
+      options: {
+        ...standardOptions(),
+        index: {
+          getCommonBuffDefinitions: () => commonBuffDefinitions,
+          getOperator: slug =>
+            slug === endministratorGeneratedOperator.slug ? endministratorGeneratedOperator : null,
+          getWeapon: () => null,
+          getGear: () => null,
+          getGearSet: () => null,
+        },
+      },
+    });
+
+    const physical = projectPhysicalStatusDisplay(result.receiptEntries, 700, {
+      enemySuperArmor: 0,
+    });
+    expect(physical.map(segment => segment.buffId)).toEqual([
+      'buff_physical_no_guard',
+      'buff_physical_crushed',
+    ]);
+    expect(physical.map(segment => segment.layers)).toEqual([1, 1]);
+    expect(physical.map(segment => segment.durationEndFrame)).toEqual(
+      physical.map(segment => segment.startFrame),
+    );
   });
 
   it('applies Endministrator talent 1 attack Buff after igniting frozen', () => {

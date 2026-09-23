@@ -83,6 +83,91 @@ function createPerlicaScenario(): ScenarioDocument {
 }
 
 describe('useScenarioSimulation', () => {
+  it('lets drag previews paint first and coalesces intermediate full simulations', async () => {
+    const scenario = shallowRef(createPerlicaScenario());
+    const run = {
+      availabilityDiagnostics: [],
+      executionDiagnostics: [],
+      comboWindowDiagnostics: [],
+    };
+    const simulatedNames: string[] = [];
+    const fakeService = {
+      simulate: async (current: ScenarioDocument) => {
+        simulatedNames.push(current.name);
+        return run;
+      },
+    } as unknown as ScenarioSimulationService;
+    let dragging = false;
+    const scope = effectScope();
+    const result = scope.run(() =>
+      useScenarioSimulation({
+        scenario,
+        service: fakeService,
+        interactiveDebounceMs: 16,
+        isInteractive: () => dragging,
+      }),
+    )!;
+    try {
+      await waitFor(() => result.published.value !== null);
+      dragging = true;
+      scenario.value = { ...scenario.value, name: 'intermediate' };
+      scenario.value = { ...scenario.value, name: 'latest' };
+      expect(simulatedNames).toHaveLength(1);
+      await waitFor(() => simulatedNames.length === 2);
+      expect(simulatedNames[1]).toBe('latest');
+
+      scenario.value = { ...scenario.value, name: 'release' };
+      dragging = false;
+      await result.simulateNow();
+      expect(simulatedNames).toEqual([simulatedNames[0], 'latest', 'release']);
+    } finally {
+      scope.stop();
+    }
+  });
+
+  it('defers the next drag simulation after an in-flight run completes', async () => {
+    const scenario = shallowRef(createPerlicaScenario());
+    const run = {
+      availabilityDiagnostics: [],
+      executionDiagnostics: [],
+      comboWindowDiagnostics: [],
+    };
+    let resolveFirst!: (value: typeof run) => void;
+    const names: string[] = [];
+    let dragging = false;
+    const fakeService = {
+      simulate: (current: ScenarioDocument) => {
+        names.push(current.name);
+        if (names.length === 1)
+          return new Promise<typeof run>(resolve => {
+            resolveFirst = resolve;
+          });
+        return Promise.resolve(run);
+      },
+    } as unknown as ScenarioSimulationService;
+    const scope = effectScope();
+    scope.run(() =>
+      useScenarioSimulation({
+        scenario,
+        service: fakeService,
+        interactiveDebounceMs: 16,
+        isInteractive: () => dragging,
+      }),
+    );
+    try {
+      dragging = true;
+      scenario.value = { ...scenario.value, name: 'intermediate' };
+      scenario.value = { ...scenario.value, name: 'latest' };
+      resolveFirst(run);
+      await Promise.resolve();
+      expect(names).toHaveLength(1);
+      await waitFor(() => names.length === 2);
+      expect(names[1]).toBe('latest');
+    } finally {
+      scope.stop();
+    }
+  });
+
   it('按回执释放身份定位接续成员诊断，并把停组原因标到尚未执行的后缀', async () => {
     const initial = createPerlicaScenario();
     const source = {

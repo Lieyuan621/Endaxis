@@ -5,7 +5,10 @@ import source from './TimelineActionBlock.vue?raw';
 it('matches main label visibility and exposes selection semantics', () => {
   expect(source).toContain('if (props.pxPerFrame * PROJECT_FPS >= 30) return props.label;');
   expect(source).toContain('TYPE_SHORTHAND[props.skillType]');
-  expect(source).toContain(':pressed="selected"');
+  expect(source).toContain('<button\n    type="button"');
+  expect(source).toContain(':aria-pressed="selected"');
+  expect(source).not.toContain('<EaButton');
+  expect(source).not.toContain('.ea-button');
   expect(source).toContain('flex: 0 0 auto;');
   expect(source).toContain('overflow: visible;');
   expect(source).toContain('text-overflow: clip;');
@@ -13,7 +16,7 @@ it('matches main label visibility and exposes selection semantics', () => {
 
 it('isolates action hover paint and follows the main action paint recipe', () => {
   expect(source).toContain('@media (hover: hover) and (pointer: fine)');
-  expect(source).toContain('.timeline-action-block.ea-button:hover:not(:disabled)');
+  expect(source).toContain('.timeline-action-block:hover:not(:disabled)');
   expect(source).toContain('hexToRgba(accent, 0.15)');
   expect(source).toContain('hexToRgba(accent, 0.5)');
   expect(source).toContain('hexToRgba(accent, 0.2)');
@@ -22,6 +25,17 @@ it('isolates action hover paint and follows the main action paint recipe', () =>
   expect(source).toContain('var(--action-ultimate-edge) 100%');
   expect(source).toContain("? 'var(--ea-gold)'");
   expect(source).toContain("ultimate: '#00e5ff'");
+});
+
+it('masks track curves beneath active action paint without changing other timeline layers', () => {
+  expect(source).toContain('background-color: var(--action-surface);');
+  expect(source).toContain(
+    'background-image: linear-gradient(var(--action-fill), var(--action-fill));',
+  );
+  expect(source).toContain(
+    'background-image: linear-gradient(var(--action-perfect-fill), var(--action-perfect-fill));',
+  );
+  expect(source).not.toContain('background: var(--action-fill);');
 });
 
 it('distinguishes incomplete bars and keeps optional decorations under their view layer', () => {

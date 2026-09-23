@@ -6,7 +6,6 @@ import type { BuffDisplayName } from './buffDisplayName';
  * 坐标与资源曲线同一体系（准备区偏移 + 每帧像素 + 轨道头宽度，跟随时间轴滚动）。
  */
 import { computed, onMounted, onBeforeUnmount, ref, useId } from 'vue';
-import { EaButton } from '../../../design-system/index';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { useDurationBarColor } from './durationBarColorContext';
 import { resolveDurationBarColor } from './durationBarColor';
@@ -377,10 +376,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
       :labels="hudLabels"
     >
       <span v-if="visibleLastHitBuffs.length > 0" class="last-hit-buffs">
-        <EaButton
-          variant="ghost"
-          size="sm"
-          icon-only
+        <button
           v-for="buff in visibleLastHitBuffs"
           :key="buff.buffId"
           type="button"
@@ -391,17 +387,15 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
           <img v-if="buff.icon" :src="buff.icon" class="anomaly-icon" alt="" />
           <span v-else class="buff-fallback">+</span>
           <span class="anomaly-stacks">{{ Math.max(1, buff.layers) }}</span>
-        </EaButton>
+        </button>
         <strong v-if="lastHitBuffOverflow > 0" class="last-hit-buff-more">
           +{{ lastHitBuffOverflow }}
         </strong>
       </span>
     </EnemyCombatHudSnapshot>
     <div class="enemy-timed-effects">
-      <EaButton
-        variant="ghost"
-        size="sm"
-        icon-only
+      <button
+        type="button"
         v-for="hit in damageHits"
         :key="`damage:${hit.sequence}`"
         class="enemy-damage-hit"
@@ -420,7 +414,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
           alt=""
         />
         <span class="enemy-damage-diamond"></span>
-      </EaButton>
+      </button>
       <span
         v-for="marker in markers"
         :key="marker.key"
@@ -518,6 +512,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
 }
 
 .enemy-damage-hit {
+  appearance: none;
   position: absolute;
   z-index: 15;
   width: 12px;
@@ -632,6 +627,7 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
 }
 
 .anomaly-icon-box.last-hit-buff {
+  appearance: none;
   width: 18px;
   height: 18px;
   flex: 0 0 18px;

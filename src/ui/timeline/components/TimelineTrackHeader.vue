@@ -165,9 +165,7 @@ function startReorder(event: DragEvent): void {
         <span class="initial-gauge-max">/{{ track.maxUltimateEnergy ?? '?' }}</span>
       </div>
       <span class="operator-row">
-        <EaButton
-          variant="ghost"
-          icon-only
+        <button
           v-if="track.operatorSlug"
           type="button"
           class="avatar-shell avatar-trigger"
@@ -188,10 +186,8 @@ function startReorder(event: DragEvent): void {
               <path d="M2.5 16A10 10 0 0 0 21 16" />
             </svg>
           </span>
-        </EaButton>
-        <EaButton
-          variant="ghost"
-          icon-only
+        </button>
+        <button
           v-else
           type="button"
           class="avatar-shell avatar-trigger"
@@ -201,7 +197,7 @@ function startReorder(event: DragEvent): void {
           @click.stop="$emit('operator')"
         >
           <span class="empty-avatar" aria-hidden="true"></span>
-        </EaButton>
+        </button>
         <span
           class="operator-name-row"
           :class="{ 'has-support-notice': track.operatorSupport?.completeness === 'partial' }"
@@ -233,10 +229,7 @@ function startReorder(event: DragEvent): void {
         {{ $t('statDetail.button') }}
       </EaButton>
       <span v-if="track.operatorSlug" class="loadout-row">
-        <EaButton
-          variant="ghost"
-          size="sm"
-          icon-only
+        <button
           type="button"
           class="weapon-slot"
           :disabled="readOnly"
@@ -247,11 +240,8 @@ function startReorder(event: DragEvent): void {
         >
           <img v-if="weaponIcon" :src="weaponIcon" alt="" />
           <span v-else class="weapon-placeholder" aria-hidden="true"></span>
-        </EaButton>
-        <EaButton
-          variant="ghost"
-          size="sm"
-          icon-only
+        </button>
+        <button
           v-for="slot in ['armor', 'gloves', 'accessory1', 'accessory2'] as const"
           :key="slot"
           type="button"
@@ -264,7 +254,7 @@ function startReorder(event: DragEvent): void {
         >
           <img v-if="gearIcons[slot]" :src="gearIcons[slot]!" alt="" />
           <span v-else class="gear-placeholder" aria-hidden="true"></span>
-        </EaButton>
+        </button>
       </span>
       <span class="gear-hint-row">
         <span class="set-bonus-hint" :class="{ 'is-hidden': activeGearSetLabel === '' }">
@@ -468,6 +458,7 @@ function startReorder(event: DragEvent): void {
 }
 
 .avatar-trigger {
+  appearance: none;
   width: 44px;
   min-width: 44px;
   height: 44px;
@@ -476,6 +467,12 @@ function startReorder(event: DragEvent): void {
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
+}
+
+.avatar-trigger:disabled,
+.weapon-slot:disabled,
+.gear-slot:disabled {
+  cursor: default;
 }
 
 .avatar,
@@ -535,21 +532,21 @@ function startReorder(event: DragEvent): void {
   stroke-linejoin: round;
 }
 
-.avatar-trigger:hover .avatar-change-hint {
+.avatar-trigger:hover:not(:disabled) .avatar-change-hint {
   opacity: 1;
 }
 
-.avatar-trigger:hover .avatar {
+.avatar-trigger:hover:not(:disabled) .avatar {
   border-color: var(--ea-gold);
 }
 
-.avatar-trigger:hover .empty-avatar {
+.avatar-trigger:hover:not(:disabled) .empty-avatar {
   border-color: var(--ea-gold);
   background: var(--ea-keycap-skill-bg, var(--ea-fill-soft));
 }
 
-.avatar-trigger:hover .empty-avatar::before,
-.avatar-trigger:hover .empty-avatar::after {
+.avatar-trigger:hover:not(:disabled) .empty-avatar::before,
+.avatar-trigger:hover:not(:disabled) .empty-avatar::after {
   background: var(--ea-gold);
 }
 
@@ -663,6 +660,7 @@ function startReorder(event: DragEvent): void {
 
 .weapon-slot,
 .gear-slot {
+  appearance: none;
   display: grid;
   place-items: center;
   box-sizing: border-box;
@@ -681,12 +679,12 @@ function startReorder(event: DragEvent): void {
   border-color: var(--ea-keycap-skill-border);
 }
 
-.weapon-slot:hover {
+.weapon-slot:hover:not(:disabled) {
   border-color: var(--ea-gold);
   background: var(--ea-keycap-skill-bg, var(--ea-fill-soft));
 }
 
-.gear-slot:hover {
+.gear-slot:hover:not(:disabled) {
   border-color: #2dd4bf;
   background: var(--ea-keycap-skill-bg, var(--ea-fill-soft));
 }
@@ -739,13 +737,13 @@ function startReorder(event: DragEvent): void {
   height: 12px;
 }
 
-.weapon-slot:hover .weapon-placeholder::before,
-.weapon-slot:hover .weapon-placeholder::after {
+.weapon-slot:hover:not(:disabled) .weapon-placeholder::before,
+.weapon-slot:hover:not(:disabled) .weapon-placeholder::after {
   background: var(--ea-gold);
 }
 
-.gear-slot:hover .gear-placeholder::before,
-.gear-slot:hover .gear-placeholder::after {
+.gear-slot:hover:not(:disabled) .gear-placeholder::before,
+.gear-slot:hover:not(:disabled) .gear-placeholder::after {
   background: #2dd4bf;
 }
 

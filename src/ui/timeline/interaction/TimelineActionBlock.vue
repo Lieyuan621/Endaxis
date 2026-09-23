@@ -8,7 +8,6 @@ import { EaTooltip } from '@/design-system';
  */
 import { computed, ref } from 'vue';
 import { EditPen } from '@element-plus/icons-vue';
-import { EaButton } from '../../../design-system/index';
 import type { SkillType } from '../../../core/game-data/operatorDefinition';
 import { PROJECT_FPS } from '../../../core/project/schema';
 import { useAppearance } from '../../appearance/useAppearance';
@@ -241,10 +240,9 @@ function formatDurationFrames(frames: number): string {
 </script>
 
 <template>
-  <EaButton
-    variant="ghost"
+  <button
     type="button"
-    :pressed="selected"
+    :aria-pressed="selected"
     class="timeline-action-block"
     :data-timeline-action-id="actionId"
     :class="{
@@ -418,7 +416,7 @@ function formatDurationFrames(frames: number): string {
       :data-connection-port="port"
       @pointerdown.stop.prevent="$emit('connectionPointerDown', $event, port)"
     ></span>
-  </EaButton>
+  </button>
 </template>
 
 <style scoped>
@@ -426,12 +424,6 @@ function formatDurationFrames(frames: number): string {
   --action-accent: #a5a5a8;
   --action-surface: var(--ea-workbench-main, #18181c);
   --action-fill: color-mix(in srgb, var(--action-accent) 15%, transparent);
-  --ea-control-bg-hover: var(--action-fill);
-  --ea-control-border-hover: var(--action-accent);
-  --ea-control-fg-hover: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
-  --ea-control-pressed-bg-hover: var(--action-fill);
-  --ea-control-pressed-border-hover: var(--action-selected, #fff);
-  --ea-control-pressed-fg-hover: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
   position: absolute;
   /* 与旧版 actions-container 一致：技能块盖住挤入技能区域的 Buff 效果条。 */
   z-index: 10;
@@ -439,13 +431,17 @@ function formatDurationFrames(frames: number): string {
   height: 50px;
   min-width: 0;
   box-sizing: border-box;
+  appearance: none;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible;
   padding: 0;
   border: 2px dashed var(--action-accent);
-  background: var(--action-fill);
+  /* 先铺不透明轨道底色，再叠半透明技能色；避免充能曲线和网格透进技能块。 */
+  background-color: var(--action-surface);
+  background-image: linear-gradient(var(--action-fill), var(--action-fill));
   color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
   box-shadow: var(--action-edge-ring, none);
   backdrop-filter: var(--action-backdrop-filter, blur(4px));
@@ -464,46 +460,40 @@ function formatDurationFrames(frames: number): string {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .timeline-action-block.ea-button:hover:not(:disabled) {
+  .timeline-action-block:hover:not(:disabled) {
     border: 2px dashed var(--action-accent);
-    background: var(--action-fill);
+    background-image: linear-gradient(var(--action-fill), var(--action-fill));
     color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
     filter: brightness(1.2);
   }
 
-  .timeline-action-block.ea-button[data-selected='true']:hover:not(:disabled) {
+  .timeline-action-block[data-selected='true']:hover:not(:disabled) {
     border: 2px dashed var(--action-selected, #fff);
-    background: var(--action-fill);
+    background-image: linear-gradient(var(--action-fill), var(--action-fill));
     color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
     box-shadow: 0 0 10px color-mix(in srgb, var(--action-accent) 50%, transparent);
   }
 
-  .timeline-action-block.ea-button:not([data-selected='true']):not(
+  .timeline-action-block:not([data-selected='true']):not(
       .is-disabled
     )[data-skill-type='basicAttack']:hover:not(:disabled) {
     border: 1.5px solid color-mix(in srgb, var(--action-accent) 40%, transparent);
   }
 
-  .timeline-action-block.ea-button:not(.is-disabled)[data-skill-type='comboSkill']:hover:not(
-      :disabled
-    ),
-  .timeline-action-block.ea-button:not(.is-disabled)[data-skill-type='ultimate']:hover:not(
-      :disabled
-    ) {
+  .timeline-action-block:not(.is-disabled)[data-skill-type='comboSkill']:hover:not(:disabled),
+  .timeline-action-block:not(.is-disabled)[data-skill-type='ultimate']:hover:not(:disabled) {
     border: 1.5px solid var(--action-accent);
   }
 
-  .timeline-action-block.ea-button.is-perfect-combo:hover:not(:disabled) {
+  .timeline-action-block.is-perfect-combo:hover:not(:disabled) {
     border-color: #fff2a8;
-    background: var(--action-perfect-fill);
+    background-image: linear-gradient(var(--action-perfect-fill), var(--action-perfect-fill));
     color: var(--action-perfect-color);
     box-shadow: var(--action-perfect-shadow);
   }
 
-  .timeline-action-block.ea-button:not(.is-disabled)[data-skill-type='ultimate']:hover:not(
-      :disabled
-    ) {
-    background: radial-gradient(
+  .timeline-action-block:not(.is-disabled)[data-skill-type='ultimate']:hover:not(:disabled) {
+    background-image: radial-gradient(
       circle at center,
       var(--action-ultimate-center) 0%,
       var(--action-ultimate-middle) 70%,
@@ -511,7 +501,7 @@ function formatDurationFrames(frames: number): string {
     );
   }
 
-  .timeline-action-block.ea-button.is-disabled:hover:not(:disabled) {
+  .timeline-action-block.is-disabled:hover:not(:disabled) {
     border: 2px dashed #555;
     background-color: rgb(40 40 40 / 30%);
     background-image: repeating-linear-gradient(
@@ -525,7 +515,7 @@ function formatDurationFrames(frames: number): string {
     filter: brightness(1.08);
   }
 
-  :global(html[data-theme='light'] .timeline-action-block.ea-button:hover:not(:disabled)) {
+  :global(html[data-theme='light'] .timeline-action-block:hover:not(:disabled)) {
     filter: brightness(1.04);
   }
 }
@@ -533,7 +523,7 @@ function formatDurationFrames(frames: number): string {
 .timeline-action-block[data-selected='true'] {
   border: 2px dashed var(--ea-action-selected, #fff);
   border-color: var(--action-selected, #fff);
-  background: var(--action-fill);
+  background-image: linear-gradient(var(--action-fill), var(--action-fill));
   color: var(--ea-action-fg, rgba(255, 255, 255, 0.9));
   box-shadow: 0 0 10px color-mix(in srgb, var(--action-accent) 50%, transparent);
 }
@@ -667,7 +657,7 @@ function formatDurationFrames(frames: number): string {
   padding-left: 6px;
   border: 1.5px solid var(--action-accent);
   border-radius: 2px;
-  background: radial-gradient(
+  background-image: radial-gradient(
     circle at center,
     var(--action-ultimate-center) 0%,
     var(--action-ultimate-middle) 70%,
@@ -685,7 +675,7 @@ function formatDurationFrames(frames: number): string {
 .timeline-action-block:not(.is-disabled)[data-skill-type='comboSkill'] {
   border: 1.5px solid var(--action-accent);
   border-radius: 2px;
-  background: var(--action-fill);
+  background-image: linear-gradient(var(--action-fill), var(--action-fill));
   box-shadow: var(--action-edge-ring, none);
 }
 
@@ -695,7 +685,7 @@ function formatDurationFrames(frames: number): string {
 
 .timeline-action-block:not(.is-disabled).is-perfect-combo {
   border-color: #fff2a8;
-  background: var(--action-perfect-fill);
+  background-image: linear-gradient(var(--action-perfect-fill), var(--action-perfect-fill));
   color: var(--action-perfect-color);
   box-shadow: var(--action-perfect-shadow);
 }
@@ -956,9 +946,7 @@ function formatDurationFrames(frames: number): string {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  :global(
-    html[data-theme='light'] .timeline-action-block.ea-button.is-disabled:hover:not(:disabled)
-  ) {
+  :global(html[data-theme='light'] .timeline-action-block.is-disabled:hover:not(:disabled)) {
     border-color: #9aa0a8;
     background-color: rgb(26 27 30 / 8%);
     background-image: repeating-linear-gradient(

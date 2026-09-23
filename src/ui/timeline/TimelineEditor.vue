@@ -236,6 +236,10 @@ import {
   projectSkillCastInterruptionFrames,
   projectTimelineTimeDilationBands,
 } from '../../core/projection/timelineDisplayTime';
+import {
+  prepareTimeDilationDragPreview,
+  projectTimeDilationDragPreview,
+} from './interaction/timeDilationDragPreview';
 import { useTimelineLoadoutEditor } from './library/useTimelineLoadoutEditor';
 import { timelineVisibleSkillEnds } from './timelineVisibleSkillEnds';
 import {
@@ -1562,6 +1566,9 @@ const {
 } = useScenarioSimulation({
   scenario,
   service: simulationService,
+  // 拖动时先绘制区间预览；密集落点只保留最后一次完整模拟。
+  isInteractive: () => interactionSession.current?.owner === 'cast-move',
+  interactiveDebounceMs: 16,
 });
 const {
   battleLogSnapshot,
@@ -2200,30 +2207,37 @@ const publishedTimeDilationBands = computed(() => {
   if (simulationRun.value === null) return [];
   return projectTimelineTimeDilationBands(publishedReceiptEntries.value, simulationRun.value.frame);
 });
+const publishedTimeDilationPreviewFacts = computed(() =>
+  prepareTimeDilationDragPreview(
+    publishedReceiptEntries.value,
+    publishedTimeDilationBands.value,
+    simulationRun.value?.frame ?? 0,
+  ),
+);
 const timeDilationBands = computed(() => {
-  const bands = publishedTimeDilationBands.value.filter(
+  const gesture = castMoveGesture.value;
+  const deltas = new Map<string, number>();
+  if (gesture !== null) {
+    for (const castId of gesture.skillCastIds) {
+      const publishedFrame = skillCastActualStartFrames.value.get(castId);
+      const displayedFrame = displayedSkillCastStartFrames.value.get(castId);
+      if (publishedFrame === undefined || displayedFrame === undefined) continue;
+      const delta = displayedFrame - publishedFrame;
+      if (delta !== 0) deltas.set(castId, delta);
+    }
+  }
+  const previewBands =
+    deltas.size === 0
+      ? publishedTimeDilationBands.value
+      : projectTimeDilationDragPreview(
+          publishedTimeDilationBands.value,
+          publishedTimeDilationPreviewFacts.value,
+          deltas,
+        );
+  return previewBands.filter(
     band =>
       band.sourceCastId === undefined || compatibleSkillCastReceiptIds.value.has(band.sourceCastId),
   );
-  const gesture = castMoveGesture.value;
-  if (gesture === null) return bands;
-  return bands.map(band => {
-    if (band.sourceCastId === undefined || !gesture.skillCastIds.includes(band.sourceCastId))
-      return band;
-    const publishedFrame = skillCastActualStartFrames.value.get(band.sourceCastId);
-    const displayedFrame = displayedSkillCastStartFrames.value.get(band.sourceCastId);
-    const deltaFrames =
-      publishedFrame === undefined || displayedFrame === undefined
-        ? 0
-        : displayedFrame - publishedFrame;
-    return deltaFrames === 0
-      ? band
-      : Object.freeze({
-          ...band,
-          startFrame: band.startFrame + deltaFrames,
-          endFrame: band.endFrame + deltaFrames,
-        });
-  });
 });
 const highlightedTimeDilationSourceIds = computed<ReadonlySet<string>>(() => {
   const visibleCastIds = new Set(
@@ -2791,6 +2805,7 @@ const positionedBuffsByTarget = computed(() => {
   const physical = projectPhysicalStatusDisplay(
     publishedReceiptEntries.value,
     simulationRun.value?.frame ?? 0,
+    { enemySuperArmor: scenario.value.enemy.editable.superArmor },
   ).filter(segment => segment.targetId === SINGLE_ENEMY_TARGET_ID);
   if (physical.length && !grouped.has(SINGLE_ENEMY_TARGET_ID))
     grouped.set(SINGLE_ENEMY_TARGET_ID, []);

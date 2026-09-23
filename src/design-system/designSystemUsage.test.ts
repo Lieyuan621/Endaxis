@@ -117,8 +117,27 @@ function legacyEaButtonSelectionBindings() {
 }
 
 describe('design-system usage boundaries', () => {
-  test('actions use EaButton instead of unmanaged native buttons', () => {
-    expect(filesMatching(/<button\b/)).toEqual([]);
+  test('native buttons are limited to dedicated timeline visuals', () => {
+    const dedicatedButtonClasses = new Map<string, Set<string>>([
+      ['../ui/timeline/interaction/TimelineActionBlock.vue', new Set(['timeline-action-block'])],
+      [
+        '../ui/timeline/components/TimelineTrackHeader.vue',
+        new Set(['avatar-shell avatar-trigger', 'weapon-slot', 'gear-slot']),
+      ],
+      [
+        '../ui/timeline/results/TimelineEnemyEffects.vue',
+        new Set(['anomaly-icon-box last-hit-buff', 'enemy-damage-hit']),
+      ],
+    ]);
+    const violations = featureSources.flatMap(([path, source]) =>
+      [...source.matchAll(/<button\b[\s\S]*?>/g)]
+        .filter(match => {
+          const className = match[0].match(/\bclass="([^"]+)"/)?.[1] ?? '';
+          return !dedicatedButtonClasses.get(path)?.has(className);
+        })
+        .map(match => `${path}:${match.index}`),
+    );
+    expect(violations).toEqual([]);
   });
 
   test('legacy ea-btn modifier classes are fully retired', () => {
