@@ -485,7 +485,6 @@ const { appearance, setAppearance } = useAppearance();
 const TIMELINE_TRACK_HEADER_WIDTH = 180;
 const TIMELINE_RULER_HEIGHT = 60;
 const TIMELINE_SCROLLBAR_SIZE = 12;
-const TIMELINE_COMPACT_TRACKS_VERTICAL_PADDING = 20;
 const INTERACTIVE_SIMULATION_BUDGET_MS = 1000 / 60;
 const {
   timelineZoomPercent,
@@ -666,10 +665,7 @@ const timelineViewportHeight = ref(0);
 const displayedCompactTrackHeights = computed(() =>
   resolveCompactTrackHeights(
     compactTrackHeights.value,
-    timelineViewportHeight.value -
-      TIMELINE_RULER_HEIGHT -
-      TIMELINE_SCROLLBAR_SIZE -
-      TIMELINE_COMPACT_TRACKS_VERTICAL_PADDING * 2,
+    timelineViewportHeight.value - TIMELINE_RULER_HEIGHT,
   ),
 );
 const timelineVerticalScrollbarWidth = ref(0);
@@ -8161,14 +8157,13 @@ button:disabled {
 }
 
 .timeline-horizontal-scrollbar {
-  grid-column: 1;
-  grid-row: 1;
-  align-self: end;
-  position: relative;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 180px;
   z-index: 100;
   min-width: 0;
   height: 12px;
-  margin-left: 180px;
   overflow-x: auto;
   overflow-y: hidden;
   opacity: 0.7;
@@ -8925,21 +8920,6 @@ button:disabled {
   box-sizing: border-box;
 }
 
-/* 紧凑模式均分高度时保留 main 的上下边距；松散模式直接与标尺和准备区衔接。 */
-.timeline-scroll.is-compact-buff-layout .track-stack::before,
-.timeline-scroll.is-compact-buff-layout .track-stack::after {
-  content: '';
-  position: sticky;
-  left: 0;
-  z-index: 80;
-  display: block;
-  width: 180px;
-  height: 20px;
-  box-sizing: border-box;
-  border-right: 1px solid var(--ea-border);
-  background: var(--ea-workbench-header);
-}
-
 .track-row {
   position: relative;
   box-sizing: border-box;
@@ -8947,6 +8927,11 @@ button:disabled {
   grid-template-columns: 180px minmax(0, 1fr);
   height: 160px;
   border-bottom: 1px solid var(--ea-border-soft);
+}
+
+.track-row:last-child,
+.track-row:last-child .track-identity {
+  border-bottom: 0;
 }
 
 .track-identity {

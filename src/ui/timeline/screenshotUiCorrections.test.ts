@@ -19,4 +19,16 @@ describe('annotated timeline UI corrections', () => {
     expect(editor).not.toContain("{{ t('timeline.reSimulate') }}");
     expect(editor).toContain('useScenarioSimulation');
   });
+  it('keeps the last track open and overlays the horizontal scrollbar', () => {
+    expect(editor).toMatch(
+      /\.track-row:last-child,\s*\.track-row:last-child \.track-identity\s*\{\s*border-bottom:\s*0;/,
+    );
+    const scrollbarRule = editor.match(/\.timeline-horizontal-scrollbar\s*\{([^}]*)\}/)?.[1];
+    expect(scrollbarRule).toContain('position: absolute;');
+    expect(scrollbarRule).toContain('bottom: 0;');
+    expect(scrollbarRule).toContain('left: 180px;');
+    expect(editor).not.toContain('TIMELINE_COMPACT_TRACKS_VERTICAL_PADDING');
+    expect(editor).not.toContain('.track-stack::before');
+    expect(editor).not.toContain('.track-stack::after');
+  });
 });

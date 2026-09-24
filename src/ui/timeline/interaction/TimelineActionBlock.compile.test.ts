@@ -5,7 +5,7 @@ import source from './TimelineActionBlock.vue?raw';
 it('matches main label visibility and exposes selection semantics', () => {
   expect(source).toContain('if (props.pxPerFrame * PROJECT_FPS >= 30) return props.label;');
   expect(source).toContain('TYPE_SHORTHAND[props.skillType]');
-  expect(source).toContain('<button\n    type="button"');
+  expect(source).toMatch(/<button\s+type="button"/);
   expect(source).toContain(':aria-pressed="selected"');
   expect(source).not.toContain('<EaButton');
   expect(source).not.toContain('.ea-button');

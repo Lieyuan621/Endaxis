@@ -6,6 +6,7 @@
  * 击飞、倒地与碎甲另外保留真实持续段，猛击只保留瞬时标记。
  */
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import type { PhysicalInflictionType } from '../../../core/game-data/operatorDefinition';
 import {
   projectBuffTimelineViz,
   type BuffTimelineSegment,
@@ -14,23 +15,21 @@ import {
 
 const NO_GUARD = 'buff_physical_no_guard';
 
-type PhysicalAction = 'airborne' | 'knockDown' | 'crush' | 'fracture';
-
 /** 时间轴和对象来源图的物理异常入口沿用原生 termicon；Buff 自身的原生 presentation 保持原样。 */
-const actionIcons: Readonly<Record<PhysicalAction, string>> = {
+const actionIcons: Readonly<Record<PhysicalInflictionType, string>> = {
   airborne: '/icons/icon_term_ba_airborne.webp',
   knockDown: '/icons/icon_term_ba_knockdown.webp',
   crush: '/icons/icon_term_ba_crush.webp',
   fracture: '/icons/icon_term_ba_fracture.webp',
 };
-const physicalActions: Readonly<Record<string, PhysicalAction>> = {
+const physicalActions: Readonly<Record<string, PhysicalInflictionType>> = {
   buff_physical_airborne: 'airborne',
   buff_physical_knockdown: 'knockDown',
   buff_physical_crushed: 'crush',
   buff_physical_do_fracture: 'fracture',
 };
-const consumingActions = new Set<PhysicalAction>(['crush', 'fracture']);
-const controlActions = new Set<PhysicalAction>(['airborne', 'knockDown']);
+const consumingActions = new Set<PhysicalInflictionType>(['crush', 'fracture']);
+const controlActions = new Set<PhysicalInflictionType>(['airborne', 'knockDown']);
 const PHYSICAL_CONTROL_SUPER_ARMOR_THRESHOLD = 30;
 
 interface PhysicalStatusDisplayOptions {
@@ -170,7 +169,8 @@ export function projectPhysicalStatusDisplay(
       guardLayersAtFrameEnd.set(frameKey, currentGuardLayers(targetId));
     }
 
-    const inputType = receiptString(entry, 'physicalInflictionType') as PhysicalAction | undefined;
+    const inputType = receiptString(entry, 'physicalInflictionType') as
+      PhysicalInflictionType | undefined;
     if (entry.event !== 'BuffApplied' || inputType === undefined) continue;
 
     const primary = segmentsByStartSequence.get(entry.sequence);

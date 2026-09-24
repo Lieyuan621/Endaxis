@@ -4,8 +4,10 @@ import source from './TimelineEnemyEffects.vue?raw';
 
 it('keeps legacy mouse-down activation and handles both keyboard activation keys', () => {
   expect(source).not.toContain('<EaButton');
+  const hitStart = source.indexOf('v-for="hit in damageHits"');
+  expect(hitStart).toBeGreaterThan(0);
   const hit = source.slice(
-    source.indexOf('<button\n        type="button"\n        v-for="hit in damageHits"'),
+    source.lastIndexOf('<button', hitStart),
     source.indexOf('v-for="marker in markers"'),
   );
   expect(hit).toContain('<button');
