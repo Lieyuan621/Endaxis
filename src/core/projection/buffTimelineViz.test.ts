@@ -4,6 +4,7 @@ import {
   layoutBuffTimelineSegments,
   mergeOverlappingBuffTimelineSegments,
   projectBuffTimelineViz,
+  projectBuffIconTimelineMetadata,
 } from './buffTimelineViz';
 
 function applied(
@@ -55,6 +56,8 @@ describe('projectBuffTimelineViz', () => {
     const entry = applied(0, 0, 'operator:1', 1, 1);
     const hidden = { ...entry, data: { ...entry.data, showInSquadIcon: false } };
     expect(projectBuffTimelineViz([hidden], 30)).toEqual([]);
+    // 隐藏普通状态条不能连带丢掉伤害图标所需的来源身份。
+    expect(projectBuffIconTimelineMetadata([hidden], 30)).toHaveLength(1);
     for (const flag of ['showInHeadBarCommon', 'showInHeadBarAttached', 'showInSquadIcon']) {
       expect(
         projectBuffTimelineViz([{ ...hidden, data: { ...hidden.data, [flag]: true } }], 30),

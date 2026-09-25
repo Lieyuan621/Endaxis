@@ -345,6 +345,30 @@ export function projectBuffTimelineViz(
   entries: readonly CombatReceiptEntry[],
   endFrame: number,
 ): readonly BuffTimelineSegment[] {
+  return projectBuffSegments(entries, endFrame, isVisibleBuff);
+}
+
+/** 伤害图标和物理异常标记需要来源身份，即使原生不在头顶或队伍栏显示。 */
+export function projectBuffIconTimelineMetadata(
+  entries: readonly CombatReceiptEntry[],
+  endFrame: number,
+): readonly BuffTimelineSegment[] {
+  return projectBuffSegments(
+    entries,
+    endFrame,
+    data =>
+      data.visible !== false &&
+      (data.visible === true ||
+        optionalString(data, 'iconPath') !== undefined ||
+        optionalString(data, 'iconId') !== undefined),
+  );
+}
+
+function projectBuffSegments(
+  entries: readonly CombatReceiptEntry[],
+  endFrame: number,
+  include: (data: Readonly<Record<string, CombatReceiptValue>>) => boolean,
+): readonly BuffTimelineSegment[] {
   if (!Number.isInteger(endFrame) || endFrame < 0) {
     throw new RangeError('endFrame must be a non-negative integer');
   }
@@ -402,7 +426,7 @@ export function projectBuffTimelineViz(
       }
       continue;
     }
-    if (!isVisibleBuff(data)) continue;
+    if (!include(data)) continue;
     const modifierFact =
       simpleModifierFact(data) ??
       (sourceFrameKey(entry) === undefined

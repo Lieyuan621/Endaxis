@@ -7,7 +7,7 @@
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
 import {
   findBuffTimelineSegmentForDamage,
-  projectBuffTimelineViz,
+  projectBuffIconTimelineMetadata,
   type BuffTimelineSegment,
 } from './buffTimelineViz';
 
@@ -136,7 +136,7 @@ export function projectEnemyEffectViz(
   const markers: EnemyEffectMarker[] = [];
   const damageHits: CombatReceiptEntry[] = [];
   const attachmentConversions: AttachmentConversion[] = [];
-  const buffSegments = projectBuffTimelineViz(entries, endFrame);
+  const buffSegments = projectBuffIconTimelineMetadata(entries, endFrame);
   for (const entry of entries) {
     const enemyBuffDamage =
       isBuffDamageReceipt(entry) &&

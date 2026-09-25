@@ -8,7 +8,7 @@
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { PhysicalInflictionType } from '../../../core/game-data/operatorDefinition';
 import {
-  projectBuffTimelineViz,
+  projectBuffIconTimelineMetadata,
   type BuffTimelineSegment,
   type DisplayBuffTimelineSegment,
 } from '../../../core/projection/buffTimelineViz';
@@ -114,7 +114,7 @@ export function projectPhysicalStatusDisplay(
     )
     .sort((left, right) => left.sequence - right.sequence);
 
-  const segments = projectBuffTimelineViz(
+  const segments = projectBuffIconTimelineMetadata(
     physicalEntries.map(entry => {
       const iconPath = physicalStatusIconPath(String(entry.data?.buffId));
       return iconPath === undefined || entry.event !== 'BuffApplied'
