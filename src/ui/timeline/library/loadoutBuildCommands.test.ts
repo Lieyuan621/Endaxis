@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { zhuangFangyi } from '../../../data/operators/zhuang-fangyi.generated';
+import { createDefaultOperatorInstance } from '../../../application/editor/loadoutBuildFactory';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument } from '../../../core/project/schema';
 import {
@@ -44,6 +46,28 @@ function equippedScenario(): ScenarioDocument {
 }
 
 describe('loadoutBuildCommands', () => {
+  it('庄方宜降低终结技能量上限时，同一次编辑收紧初始充能，保留原文档用于撤销', () => {
+    const source = equippedScenario();
+    source.tracks[0]!.operator = { ...createDefaultOperatorInstance(zhuangFangyi), potential: 0 };
+    source.tracks[0]!.initialState.ultimateEnergy = 240;
+    const updated = updateTrackOperatorInstance(source, 0, { potential: 4 }, zhuangFangyi);
+    expect(updated.tracks[0]!.initialState.ultimateEnergy).toBe(204);
+    expect(source.tracks[0]!.initialState.ultimateEnergy).toBe(240);
+    expect(
+      updateTrackOperatorInstance(updated, 0, { potential: 0 }, zhuangFangyi).tracks[0]!
+        .initialState.ultimateEnergy,
+    ).toBe(204);
+    source.tracks[0]!.initialState.ultimateEnergy = 100;
+    expect(
+      updateTrackOperatorInstance(source, 0, { potential: 4 }, zhuangFangyi).tracks[0]!.initialState
+        .ultimateEnergy,
+    ).toBe(100);
+    source.tracks[0]!.initialState = { ultimateEnergy: 240, maxUltimateEnergyOverride: 300 };
+    expect(
+      updateTrackOperatorInstance(source, 0, { potential: 4 }, zhuangFangyi).tracks[0]!.initialState
+        .ultimateEnergy,
+    ).toBe(240);
+  });
   it('updates operator inputs without mutating the source document', () => {
     const source = equippedScenario();
     const updated = updateTrackOperatorInstance(source, 0, {

@@ -11,6 +11,7 @@ import type { SkillCastDocument } from '../../../core/project/schema';
 import { projectSkillEnhancementTimelineViz } from '../../../core/projection/skillEnhancementTimelineViz';
 import { projectOperatorPassiveUiTimelineViz } from '../../../core/projection/operatorPassiveUiTimelineViz';
 import { gameDataRepository } from '../../../data/gameDataRepository';
+import { projectPurrchenaGiftResults } from '../../../ui/operators/purrchenaGiftResults';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
 import { skillSettings } from '../../../data/combat/skillSettings';
@@ -88,6 +89,17 @@ describe('registered generated operators', () => {
       }).scenario;
       expect(placed.tracks[0]!.skillCasts.length).toBeGreaterThan(0);
       const result = await createEditorSimulationService().simulate(placed, 600);
+      if (skillGroupKey === 'comboSkill' || skillGroupKey === 'ultimate') {
+        const gifts = projectPurrchenaGiftResults(result.receiptEntries);
+        expect(gifts).toHaveLength(skillGroupKey === 'comboSkill' ? 1 : 3);
+        expect(
+          gifts.every(
+            gift =>
+              gift.operatorId === 'track:purrchena' &&
+              gift.castId === placed.tracks[0]!.skillCasts[0]!.id,
+          ),
+        ).toBe(true);
+      }
       expect(
         result.receiptEntries.some(
           entry => entry.event === 'SkillStarted' && entry.sourceId === 'track:purrchena',

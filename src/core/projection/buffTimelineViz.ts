@@ -329,15 +329,15 @@ function presentationPlacement(
 }
 
 /**
- * 没有原生展示身份的内部机制 Buff 不进入 UI；显式 `visible: false` 同样隐藏。
- * 图标路径优先，iconId 仍保留给资源路径回退。
+ * 普通 Buff 仅展示原生开启头顶或队伍图标的状态。有图标资源不代表应当显示。
+ * 显式 visible: false 仍优先隐藏；干员专属 UI 由独立投影负责。
  */
 function isVisibleBuff(data: Readonly<Record<string, CombatReceiptValue>>): boolean {
   return (
     data.visible !== false &&
-    (data.visible === true ||
-      optionalString(data, 'iconPath') !== undefined ||
-      optionalString(data, 'iconId') !== undefined)
+    (data.showInHeadBarCommon === true ||
+      data.showInHeadBarAttached === true ||
+      data.showInSquadIcon === true)
   );
 }
 

@@ -1928,6 +1928,16 @@
       "layers": "{stacks} layers"
     },
     "passiveUi": {
+      "giftResults": {
+        "combo": "Gift Box",
+        "ultimate": "Big Feline Gift Box",
+        "openedAt": "Opened at",
+        "title": "Giftbox results",
+        "bomb": "Bomb",
+        "handicraft": "Handicraft",
+        "dessert": "Yummy Dessert",
+        "special": "Ambassador's Special"
+      },
       "detailTitle": "Operator-specific status details",
       "appearances": {
         "tangtangDroplets": "Whirlpools",

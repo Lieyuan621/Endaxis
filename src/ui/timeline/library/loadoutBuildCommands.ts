@@ -9,6 +9,8 @@ import type {
   WeaponInstanceDocument,
 } from '../../../core/project/schema';
 import type { TrackGearSlot } from '../interaction/timelineDocumentCommands';
+import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
+import { resolveOperatorMaxUltimateEnergy } from '../../../core/compiler/resolveScenarioResourceRules';
 
 export type OperatorInstanceChanges = Partial<
   Pick<
@@ -38,6 +40,7 @@ export function updateTrackOperatorInstance(
   scenario: ScenarioDocument,
   trackIndex: TrackIndex,
   changes: OperatorInstanceChanges,
+  definition?: OperatorDefinition,
 ): ScenarioDocument {
   const track = requireTrack(scenario, trackIndex);
   const instance = track.operator;
@@ -66,7 +69,17 @@ export function updateTrackOperatorInstance(
     ...(changes.talentStates === undefined ? {} : { talentStates: { ...changes.talentStates } }),
   };
   const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
-  tracks[trackIndex] = { ...track, operator: updated };
+  const maximum =
+    track.initialState.maxUltimateEnergyOverride ??
+    (definition === undefined ? undefined : resolveOperatorMaxUltimateEnergy(definition, updated));
+  tracks[trackIndex] = {
+    ...track,
+    operator: updated,
+    initialState:
+      maximum !== undefined && track.initialState.ultimateEnergy > maximum
+        ? { ...track.initialState, ultimateEnergy: maximum }
+        : track.initialState,
+  };
   return { ...scenario, tracks };
 }
 

@@ -8,12 +8,13 @@ import { ALL_GAME_TEXT_FAMILIES, ensureLocaleResources, i18n } from '../i18n';
 import type { GameTextFamily } from '../i18n/localeResourceLoaders';
 import { loadBrowserProject } from '../data/browserProjectStorage';
 import { openProject } from '../application/openProject';
+import type { EndaxisProjectDocument } from '../core/project/schema';
 import {
   createProjectGameDataRepository,
   type ProjectGameDataRepository,
 } from '../data/projectGameDataRepository';
 
-const timelineRouteProps = (route: { meta: Record<PropertyKey, unknown> }) => {
+export const timelineRouteProps = (route: { meta: Record<PropertyKey, unknown> }) => {
   const gameDataRepository = route.meta.timelineGameDataRepository as
     ProjectGameDataRepository | undefined;
   if (gameDataRepository === undefined) throw new Error('timeline game data was not prepared');
@@ -23,6 +24,12 @@ const timelineRouteProps = (route: { meta: Record<PropertyKey, unknown> }) => {
     browserPersistenceEnabled: route.meta.timelineBrowserPersistenceEnabled === true,
     browserRestoreError: route.meta.timelineBrowserRestoreError,
     browserRestoreRaw: route.meta.timelineBrowserRestoreRaw,
+    // 热更新会重建编辑器而不重新进入路由，必须用最新提交的项目作为重建输入。
+    onProjectChange: (project: EndaxisProjectDocument) => {
+      route.meta.timelineInitialProject = project;
+      delete route.meta.timelineBrowserRestoreError;
+      delete route.meta.timelineBrowserRestoreRaw;
+    },
   };
 };
 

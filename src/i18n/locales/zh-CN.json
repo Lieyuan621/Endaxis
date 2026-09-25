@@ -1910,6 +1910,16 @@
       "layers": "{stacks} 层"
     },
     "passiveUi": {
+      "giftResults": {
+        "combo": "礼物匣子",
+        "ultimate": "大菲林礼盒",
+        "openedAt": "开启时间",
+        "title": "盲盒结果",
+        "bomb": "炸弹",
+        "handicraft": "手工作业",
+        "dessert": "好吃的点心",
+        "special": "代言人的特殊赠礼"
+      },
       "detailTitle": "专属状态详情",
       "appearances": {
         "tangtangDroplets": "涡流",

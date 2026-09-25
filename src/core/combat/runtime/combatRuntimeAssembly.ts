@@ -1,4 +1,5 @@
 import { bindProjectileCallbackLifecycle } from '../abilities/projectileCallbackRuntime';
+import { hasUnmodeledIncomingAttackTrigger } from '../skills/comboConditionCheckability';
 import {
   finishAbilitySkillSlotReplacement,
   replaceAbilitySkillSlot,
@@ -2350,6 +2351,13 @@ export class CombatRuntimeAssembly {
             skillId,
             ...(castId === undefined ? {} : { castId }),
             reason: result.reason,
+            ...(result.reason === 'windowMissing' &&
+            hasUnmodeledIncomingAttackTrigger(
+              this.#operators.get(operatorId)?.comboConditionPrograms ?? [],
+              resolvedSkillId,
+            )
+              ? { triggerNotModeled: true }
+              : {}),
             expectedOperatorId: result.expected?.operatorId ?? null,
             expectedSkillId: result.expected?.nextSkillKey ?? null,
           },

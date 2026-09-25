@@ -19,6 +19,8 @@ export interface ComboWindowDiagnostic {
 function readReason(entry: CombatReceiptEntry): ComboWindowDiagnosticReason | undefined {
   if (entry.event !== 'ComboWindowUnavailableAtStart') return undefined;
   const reason = entry.data?.reason;
+  // 木桩没有主动攻击，未产生受击窗口不能证明玩家放置错误；其他失败仍显示。
+  if (reason === 'windowMissing' && entry.data?.triggerNotModeled === true) return undefined;
   if (
     reason === 'windowMissing' ||
     reason === 'releaseOrderMismatch' ||

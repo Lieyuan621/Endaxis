@@ -91,6 +91,8 @@ import TimelineEnemyStatusSections from './results/TimelineEnemyStatusSections.v
 import TimelineBuffBands from './results/TimelineBuffBands.vue';
 import type { BuffDetailTarget } from './results/buffDetail';
 import TimelineOperatorPassiveUiBands from './results/TimelineOperatorPassiveUiBands.vue';
+import TimelineOperatorSkillOutcomes from './results/TimelineOperatorSkillOutcomes.vue';
+import { projectOperatorSkillOutcomes } from '../operators/skillOutcomeRegistry';
 import {
   projectTimelineTrackEffectLayout,
   resizeTimelineTrackPair,
@@ -805,6 +807,9 @@ const props = defineProps<{
   browserRestoreError?: string;
   browserRestoreRaw?: string;
 }>();
+const emit = defineEmits<{
+  projectChange: [project: EndaxisProjectDocument];
+}>();
 const gameDataRepository = props.gameDataRepository;
 const consumables = gameDataRepository.getConsumables();
 const suppliedProject =
@@ -928,6 +933,7 @@ const unsubscribeScenarioSession = scenarioSession.subscribe(snapshot => {
   }
 });
 const unsubscribeProjectSession = projectSession.subscribe(snapshot => {
+  emit('projectChange', snapshot.project);
   projectRevision.value = snapshot.revision;
   const library = getProjectDefinitionLibrary(snapshot.project);
   if (library === projectDefinitionLibrary.value) return;
@@ -2867,6 +2873,20 @@ function operatorPassiveUiSegmentsForTarget(
   return targetId === null ? [] : (positionedOperatorPassiveUisByTarget.value.get(targetId) ?? []);
 }
 
+const operatorSkillOutcomes = computed(() =>
+  projectOperatorSkillOutcomes(publishedReceiptEntries.value),
+);
+function skillOutcomesForTarget(targetId: string | null) {
+  return operatorSkillOutcomes.value.filter(outcome => outcome.operatorId === targetId);
+}
+function skillOutcomeLane(targetId: string | null): number {
+  return Math.max(
+    0,
+    ...buffSegmentsForTarget(targetId, 'upper').map(segment => segment.lane + 1),
+    ...operatorPassiveUiSegmentsForTarget(targetId).map(segment => segment.lane + 1),
+  );
+}
+
 function trackEffectLayout(trackIndex: TrackIndex, targetId: string | null) {
   const laneCount = (placement: BuffTimelineSegment['placement']): number => {
     if (targetId === null || !isOperatorEffectsVisible(trackIndex)) return 0;
@@ -2877,6 +2897,7 @@ function trackEffectLayout(trackIndex: TrackIndex, targetId: string | null) {
     return placement === 'upper'
       ? Math.max(
           buffLaneCount,
+          ...(skillOutcomesForTarget(targetId).length ? [skillOutcomeLane(targetId) + 1] : []),
           ...operatorPassiveUiSegmentsForTarget(targetId).map(segment => segment.lane + 1),
         )
       : buffLaneCount;
@@ -6735,6 +6756,17 @@ function setPanelDialogVisible(visible: boolean): void {
                     trackEffectLayout(track.trackIndex, track.operatorInstanceId).actionTop
                   "
                   @open-detail="openBuffDetail"
+                />
+                <TimelineOperatorSkillOutcomes
+                  v-if="
+                    timelineViewLayers.upperEffects && isOperatorEffectsVisible(track.trackIndex)
+                  "
+                  :outcomes="skillOutcomesForTarget(track.operatorInstanceId)"
+                  :frame-px="timelineFramePx"
+                  :action-top="
+                    trackEffectLayout(track.trackIndex, track.operatorInstanceId).actionTop
+                  "
+                  :lane="skillOutcomeLane(track.operatorInstanceId)"
                 />
                 <TimelineOperatorPassiveUiBands
                   v-if="

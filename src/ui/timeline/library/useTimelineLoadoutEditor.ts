@@ -251,9 +251,17 @@ export function useTimelineLoadoutEditor(options: TimelineLoadoutEditorOptions) 
   }
 
   function updateOperatorBuild(changes: OperatorInstanceChanges): void {
-    commit('updateTrackOperatorInstance', current =>
-      updateTrackOperatorInstance(current, options.selectedTrack.value, changes),
-    );
+    commit('updateTrackOperatorInstance', current => {
+      const index = options.selectedTrack.value;
+      const instance = current.tracks[index]?.operator;
+      if (instance == null) return current;
+      return updateTrackOperatorInstance(
+        current,
+        index,
+        changes,
+        options.gameData.getOperator(instance.operatorSlug) ?? undefined,
+      );
+    });
   }
 
   function updateGearBuild(slot: TrackGearSlot, artificingLevels: readonly number[]): void {
