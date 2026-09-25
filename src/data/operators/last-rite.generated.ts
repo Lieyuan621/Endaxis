@@ -855,16 +855,35 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = withSkill
             'SkillData.chr_0026_lastrite_normal_skill.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:projectile_chr_0026_lastrite_normal_skill',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0026_lastrite_normal_skill.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:chr_0026_lastrite_normal_skill_projhit',
-                { atk_scale: 0, duration: 0 },
-                true,
-                sequence(),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                source: 'actionOwner',
+                recycleDelaySeconds: 1,
+              },
+              callbacks: [
+                {
+                  event: 'reach',
+                  skill: {
+                    skillId: 'chr_0026_lastrite_normal_skill_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 30,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atk_scale: 0, duration: 0 },
+                    scheduledSequences: [
+                      scheduled(0, sequence(), 10),
+                      scheduled(0, sequence(), 10),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),

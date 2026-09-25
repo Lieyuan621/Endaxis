@@ -15,236 +15,187 @@ import {
   withSkillBlackboard,
 } from './definitionHelpers';
 
+const sharedActionSequence2: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0011_seraph_attack4_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'cryo',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  branch(
+                    { kind: 'casterControlled' },
+                    sequence(
+                      step('changeResourceByActionValue', {
+                        resource: 'sp',
+                        amount: { kind: 'blackboard', key: 'atb' },
+                        coefficient: { kind: 'constant', value: 0.5 },
+                        recipient: 'team',
+                        spGainKind: 'gain',
+                        spGainSource: 'normalAttack',
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            4,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
 const sharedActionSequence1: ActionSequenceDefinition = sequence(
   withActionBlackboardScope(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'cryo',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
-                ),
-              ),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
+    instantiateActionSequence(sharedActionSequence2, ['\u0000endaxis-generated-identity:1']),
     {},
     { lifetime: 'execution' },
   ),
 );
 
-const sharedActionSequence2: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    {},
-    true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'cryo',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
+const sharedActionSequence4: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { onReach: true, finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0011_seraph_combo_skill_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atk_scale: 0,
+          cryst_up: 0,
+          duration: 0,
+          exist_talent_1: 0,
+          poise: 0,
+          potential_3: 0,
+          usp: 0,
+        },
+        scheduledSequences: [
+          scheduled(
+            0,
             sequence(
               branch(
-                { kind: 'casterControlled' },
+                {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'blackboard', key: 'exist_talent_1', fallback: 0 },
+                  operator: 'greaterOrEqual',
+                  right: { kind: 'constant', value: 1 },
+                },
                 sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 0.5 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
+                  branch(
+                    {
+                      kind: 'entityTagMatch',
+                      target: 'enemy',
+                      tagQueryType: 'hasAny',
+                      tags: [
+                        'Skill/Character/Common/SpellInflict/CrystInflict',
+                        'Skill/Character/Common/SpellStatus/Frozen',
+                      ],
+                    },
+                    sequence(
+                      step('applyBuff', {
+                        buffId: 'buff_chr_0011_seraph_talent_1_crystup',
+                        target: 'enemy',
+                        inheritSourceSkillCastInfo: true,
+                        copiedBlackboardAssignments: { cryst_up: 'cryst_up', duration: 'duration' },
+                      }),
+                    ),
+                    undefined,
+                    { alwaysNext: true },
+                  ),
                 ),
+                undefined,
+                { alwaysNext: true },
               ),
             ),
-            undefined,
-            { alwaysNext: true },
+            3,
           ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
-    {},
-    { lifetime: 'execution' },
-  ),
-);
-
-const sharedActionSequence6: ActionSequenceDefinition = sequence(
-  branch(
-    {
-      kind: 'all',
-      conditions: [
-        {
-          kind: 'actionValueCompare',
-          left: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
-        },
-        {
-          kind: 'actionValueCompare',
-          left: { kind: 'blackboard', key: 'EntityBB_bounced', fallback: 0 },
-          operator: 'equal',
-          right: { kind: 'constant', value: 0 },
-        },
-      ],
-    },
-    sequence(
-      step('modifyActionValue', {
-        key: 'EntityBB_bounced',
-        operation: 'assign',
-        value: { kind: 'constant', value: 1 },
-      }),
-      step('mergeContextTargets', { saveToContextKey: 'extra_target', sources: [] }),
-    ),
-    undefined,
-    { alwaysNext: true },
-  ),
-  step('applyElementalInfliction', { element: 'cryo', isExtra: false }),
-  step(
-    'dealDamage',
-    {
-      damageType: 'cryo',
-      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-      tags: ['comboSkill'],
-      features: ['canBreakWeakness'],
-      stagger: { kind: 'blackboard', key: 'poise' },
-    },
-    '\u0000endaxis-generated-identity:0',
-  ),
-  step('startTimeDilation', {
-    scope: 'entity',
-    durationSeconds: { kind: 'constant', value: 0.2 },
-    slot: 'TimeDilation/Layer/Entity/HitStop',
-    priority: 10,
-    curve: { kind: 'named', key: 'char_hard_stop' },
-    finishByAction: false,
-    targets: ['enemy', 'caster'],
-  }),
-  step('changeResourceByActionValue', {
-    resource: 'ultimateEnergy',
-    amount: { kind: 'blackboard', key: 'usp' },
-    coefficient: { kind: 'constant', value: 1 },
-    recipient: 'caster',
-  }),
-);
-
-const sharedActionSequence5: ActionSequenceDefinition = sequence(
-  {
-    kind: 'withActionBlackboardScope',
-    parameters: {
-      scopeKey: 'chr_0011_seraph_combo_skill_projhit:immediate-timeline:0',
-      lifetime: 'execution',
-      alwaysNext: true,
-      shareParentBlackboard: true,
-      initialValues: {},
-      inheritParent: true,
-    },
-    body: sequence(
-      branch(
-        {
-          kind: 'actionValueCompare',
-          left: { kind: 'blackboard', key: 'exist_talent_1', fallback: 0 },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-        sequence(
-          branch(
-            {
-              kind: 'entityTagMatch',
-              target: 'enemy',
-              tagQueryType: 'hasAny',
-              tags: [
-                'Skill/Character/Common/SpellInflict/CrystInflict',
-                'Skill/Character/Common/SpellStatus/Frozen',
-              ],
-            },
+          scheduled(
+            0,
             sequence(
-              step('applyBuff', {
-                buffId: 'buff_chr_0011_seraph_talent_1_crystup',
-                target: 'enemy',
-                inheritSourceSkillCastInfo: true,
-                copiedBlackboardAssignments: { cryst_up: 'cryst_up', duration: 'duration' },
+              step('applyElementalInfliction', { element: 'cryo', isExtra: false }),
+              step(
+                'dealDamage',
+                {
+                  damageType: 'cryo',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['comboSkill'],
+                  features: ['canBreakWeakness'],
+                  stagger: { kind: 'blackboard', key: 'poise' },
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              step('startTimeDilation', {
+                scope: 'entity',
+                durationSeconds: { kind: 'constant', value: 0.2 },
+                slot: 'TimeDilation/Layer/Entity/HitStop',
+                priority: 10,
+                curve: { kind: 'named', key: 'char_hard_stop' },
+                finishByAction: false,
+                targets: ['enemy', 'caster'],
+              }),
+              step('changeResourceByActionValue', {
+                resource: 'ultimateEnergy',
+                amount: { kind: 'blackboard', key: 'usp' },
+                coefficient: { kind: 'constant', value: 1 },
+                recipient: 'caster',
               }),
             ),
-            undefined,
-            { alwaysNext: true },
+            3,
           ),
-        ),
-        undefined,
-        { alwaysNext: true },
-      ),
-    ),
-  },
-  {
-    kind: 'withActionBlackboardScope',
-    parameters: {
-      scopeKey: 'chr_0011_seraph_combo_skill_projhit:immediate-timeline:1',
-      lifetime: 'execution',
-      alwaysNext: true,
-      shareParentBlackboard: true,
-      initialValues: {},
-      inheritParent: true,
+        ],
+      },
     },
-    body: instantiateActionSequence(sharedActionSequence6, ['\u0000endaxis-generated-identity:0']),
-  },
-);
-
-const sharedActionSequence4: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    { atk_scale: 0, cryst_up: 0, duration: 0, exist_talent_1: 0, poise: 0, potential_3: 0, usp: 0 },
-    true,
-    instantiateActionSequence(sharedActionSequence5, ['\u0000endaxis-generated-identity:1']),
-    undefined,
-    { lifetime: 'execution', alwaysNext: true },
-  ),
-);
+  ],
+});
 
 const sharedActionSequence3: ActionSequenceDefinition = sequence(
   forEachContextTarget(
@@ -266,10 +217,7 @@ const sharedActionSequence3: ActionSequenceDefinition = sequence(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    instantiateActionSequence(sharedActionSequence4, [
-      '\u0000endaxis-generated-identity:1',
-      '\u0000endaxis-generated-identity:2',
-    ]),
+    instantiateActionSequence(sharedActionSequence4, ['\u0000endaxis-generated-identity:1']),
     {},
     { lifetime: 'execution' },
   ),
@@ -297,11 +245,77 @@ export const xaihiChr_0011_seraph_attack1: SkillDefinition = withSkillBlackboard
     scheduledSequences: [
       scheduled(
         10,
-        instantiateActionSequence(sharedActionSequence1, [
-          'SkillData.chr_0011_seraph_attack1.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0011_seraph_normal_attack',
-          'SkillData.chr_0011_seraph_attack1.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0011_seraph_attack1_projhit',
-          'chr_0011_seraph_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-        ]),
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0011_seraph_attack1.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0011_seraph_normal_attack',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0011_seraph_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'cryo',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0011_seraph_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 1 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
         10,
       ),
       scheduled(
@@ -344,11 +358,77 @@ export const xaihiChr_0011_seraph_attack2: SkillDefinition = withSkillBlackboard
     scheduledSequences: [
       scheduled(
         7,
-        instantiateActionSequence(sharedActionSequence1, [
-          'SkillData.chr_0011_seraph_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:projectile_chr_0011_seraph_normal_attack2',
-          'SkillData.chr_0011_seraph_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:chr_0011_seraph_attack2_projhit',
-          'chr_0011_seraph_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-        ]),
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0011_seraph_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:projectile_chr_0011_seraph_normal_attack2',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0011_seraph_attack2_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'cryo',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0011_seraph_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 1 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
         7,
       ),
       scheduled(
@@ -391,11 +471,77 @@ export const xaihiChr_0011_seraph_attack3: SkillDefinition = withSkillBlackboard
     scheduledSequences: [
       scheduled(
         8,
-        instantiateActionSequence(sharedActionSequence1, [
-          'SkillData.chr_0011_seraph_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0011_seraph_normal_attack3_true',
-          'SkillData.chr_0011_seraph_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0011_seraph_attack3_projhit',
-          'chr_0011_seraph_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-        ]),
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0011_seraph_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0011_seraph_normal_attack3_true',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0011_seraph_attack3_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'cryo',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0011_seraph_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 1 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
         8,
       ),
       scheduled(
@@ -438,19 +584,17 @@ export const xaihiChr_0011_seraph_attack4: SkillDefinition = withSkillBlackboard
     scheduledSequences: [
       scheduled(
         12,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0011_seraph_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0011_seraph_normal_attack3',
-          'SkillData.chr_0011_seraph_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0011_seraph_attack4_projhit',
-          'chr_0011_seraph_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0011_seraph_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         12,
       ),
       scheduled(
         7,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0011_seraph_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0011_seraph_normal_attack3_02',
-          'SkillData.chr_0011_seraph_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0011_seraph_attack4_projhit',
-          'chr_0011_seraph_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0011_seraph_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         7,
       ),
@@ -810,13 +954,11 @@ export const xaihiChr_0011_seraph_combo_skill: SkillDefinition = withSkillBlackb
             },
             instantiateActionSequence(sharedActionSequence3, [
               'SkillData.chr_0011_seraph_combo_skill.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0011_seraph_combo_skill',
-              'SkillData.chr_0011_seraph_combo_skill.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0011_seraph_combo_skill_projhit',
-              'chr_0011_seraph_combo_skill:/scheduledSequences/1/sequence/steps/1/whenTrue/steps/2/body/steps/0/body/steps/1/body/steps/2',
+              'chr_0011_seraph_combo_skill:/scheduledSequences/1/sequence/steps/1/whenTrue/steps/2/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/1',
             ]),
             instantiateActionSequence(sharedActionSequence3, [
               'SkillData.chr_0011_seraph_combo_skill.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0011_seraph_combo_skill',
-              'SkillData.chr_0011_seraph_combo_skill.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0011_seraph_combo_skill_projhit',
-              'chr_0011_seraph_combo_skill:/scheduledSequences/1/sequence/steps/1/whenFalse/steps/2/body/steps/0/body/steps/1/body/steps/2',
+              'chr_0011_seraph_combo_skill:/scheduledSequences/1/sequence/steps/1/whenFalse/steps/2/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/1',
             ]),
             { alwaysNext: true },
           ),
@@ -1740,6 +1882,14 @@ export const xaihi: OperatorDefinition = {
       maxStackingCount: 1,
       childSkill: {
         skillId: 'chr_0011_seraph_normal_skill_abentity_onfield',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 900,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atk_scale: 0.1,
           atk_up: 0,

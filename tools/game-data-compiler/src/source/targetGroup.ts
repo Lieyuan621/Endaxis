@@ -18,6 +18,7 @@ import {
   parseSpawnedEntitySelectorIdentitySource,
   parseTargetReferenceSource,
   type ShapeFinderSource,
+  type ColliderShapeSource,
   type TargetReferenceSource,
 } from './target.ts';
 import { parseTagQuerySource, type TagQuerySource } from './tagQuery.ts';
@@ -48,6 +49,7 @@ export interface TargetGroupInputSource {
   readonly finderAutoSetTargetFaction?: boolean | null;
   readonly finderTargetFactionType?: string | number | null;
   readonly finderShape: ShapeFinderSource | null;
+  readonly finderProjectileShape?: ColliderShapeSource;
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   readonly finderPointBlackboardKeys?: readonly string[];
   readonly finderRandomPointCount?: {
@@ -92,6 +94,7 @@ export interface TargetGroupWriteSource {
   readonly finderAutoSetTargetFaction?: boolean | null;
   readonly finderTargetFactionType?: string | number | null;
   readonly finderShape: ShapeFinderSource | null;
+  readonly finderProjectileShape?: ColliderShapeSource;
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   readonly finderPointBlackboardKeys?: readonly string[];
   readonly finderRandomPointCount?: {
@@ -375,6 +378,9 @@ function parseTargetPostProcessorAction(
     finderTargetObjectType: null,
     finderCheckAlive: null,
     finderShape: target.finderShape,
+    ...(target.finderProjectileShape
+      ? { finderProjectileShape: target.finderProjectileShape }
+      : {}),
     finderOwnerPartsQuery: target.finderOwnerPartsQuery,
     ...(target.finderPointBlackboardKeys === undefined
       ? {}
@@ -472,6 +478,9 @@ function parseConvertToTargetContextAction(
     finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction,
     finderTargetFactionType: summary.finderTargetFactionType,
     finderShape: summary.finderShape,
+    ...(summary.finderProjectileShape
+      ? { finderProjectileShape: summary.finderProjectileShape }
+      : {}),
     finderOwnerPartsQuery: summary.finderOwnerPartsQuery,
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
@@ -523,6 +532,9 @@ function parseConvertToTargetContextAction(
     finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction,
     finderTargetFactionType: summary.finderTargetFactionType,
     finderShape: summary.finderShape,
+    ...(summary.finderProjectileShape
+      ? { finderProjectileShape: summary.finderProjectileShape }
+      : {}),
     finderOwnerPartsQuery: summary.finderOwnerPartsQuery,
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
@@ -596,6 +608,9 @@ function parseFindTargetAction(
     finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction,
     finderTargetFactionType: summary.finderTargetFactionType,
     finderShape: summary.finderShape,
+    ...(summary.finderProjectileShape
+      ? { finderProjectileShape: summary.finderProjectileShape }
+      : {}),
     finderOwnerPartsQuery: summary.finderOwnerPartsQuery,
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
@@ -680,6 +695,9 @@ function parseMergeTargetAction(
       finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction,
       finderTargetFactionType: summary.finderTargetFactionType,
       finderShape: summary.finderShape,
+      ...(summary.finderProjectileShape
+        ? { finderProjectileShape: summary.finderProjectileShape }
+        : {}),
       finderOwnerPartsQuery: summary.finderOwnerPartsQuery,
       validatorTypes: summary.validatorTypes,
       postProcessorTypes: summary.postProcessorTypes,
@@ -719,6 +737,9 @@ function parsePickTargetAction(
     finderTargetObjectType: null,
     finderCheckAlive: null,
     finderShape: target.finderShape,
+    ...(target.finderProjectileShape
+      ? { finderProjectileShape: target.finderProjectileShape }
+      : {}),
     finderOwnerPartsQuery: target.finderOwnerPartsQuery,
     validatorTypes: target.validatorTypes,
     postProcessorTypes: target.postProcessorTypes,

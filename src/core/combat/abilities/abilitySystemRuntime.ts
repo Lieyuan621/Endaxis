@@ -68,6 +68,8 @@ export interface AbilitySkillRuntime extends FrameRuntime {
   readonly skillCastInfo?: CombatSkillCastInfo;
   /** 当前或已预分配的本次释放编号；不读取 Buff/事件的普通来源。 */
   readonly processingSkillCastId?: number;
+  /** 实体自动施放读取已有冷却账本；玩家轴上的强制执行不由此拒绝。 */
+  readonly cooldown?: { readonly ready: boolean };
   canStart(): boolean;
   /** 本次启动前合并进动作黑板的运行时参数，例如连携候选携带的黑板。 */
   prepareStartBlackboard?(values: Readonly<Record<string, number>>): void;
@@ -77,6 +79,7 @@ export interface AbilitySkillRuntime extends FrameRuntime {
   /** Prepare synchronous cast input only; queuing belongs to requestPostSkillCast. */
   prepareCastInput?(input: {
     readonly skipApplyCost: boolean;
+    readonly inputTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef | null;
     readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
     readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
   }): void;
@@ -907,6 +910,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
     castId: string | undefined,
     input: {
       readonly skipApplyCost: boolean;
+      readonly inputTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef | null;
       readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
       readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
     },
@@ -989,24 +993,29 @@ export class AbilitySystemRuntime implements FrameRuntime {
   }
 
   /**
-   * ProjectileComponent._CastSkill: interrupt this host first, then look up and cast
-   * the explicit callback ID. This is neither a player slot input nor a post request.
-   * Native evidence: launch-projectile-skill-routing, 032508D0 / 04D4ABF0 / 03250AB0.
+   * 实体按明确技能 ID 立即施放，不经过玩家槽位或延迟请求。
+   * 投射物的 _CastSkill 会在查找技能前打断当前技能，普通能力实体没有这一步。
+   * 来源可省略：不继承时由 SkillRuntime 分配本次施放身份。
    */
-  tryStartProjectileCallbackSkill(
+  tryStartEntitySkill(
     skillId: string,
-    inheritedSkillCastInfo: CombatSkillCastInfo,
+    inheritedSkillCastInfo: CombatSkillCastInfo | undefined,
+    inputTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef,
+    interruptCurrentSkill = false,
+    prepareStart?: () => CombatSkillCastInfo,
   ): boolean {
     const current = this.#currentSkill?.state === 'casting' ? this.#currentSkill : null;
-    current?.interrupt('default');
+    if (interruptCurrentSkill) current?.interrupt('default');
     const skill = this.#skillsById.get(abilitySkillKey({ skillId }));
-    if (skill === undefined || !skill.canStart()) return false;
+    if (skill === undefined || !skill.canStart() || skill.cooldown?.ready === false) return false;
     if (skill.prepareCastInput === undefined)
-      throw new Error(`skill '${skillId}' cannot receive inherited callback cast information`);
+      throw new Error(`skill '${skillId}' cannot receive entity cast input`);
+    const castInfo = prepareStart?.() ?? inheritedSkillCastInfo;
     // This preparation port stores cast input; it does not enqueue a deferred request.
     skill.prepareCastInput({
       skipApplyCost: false,
-      inheritedSkillCastInfo: Object.freeze({ ...inheritedSkillCastInfo }),
+      ...(castInfo === undefined ? {} : { inheritedSkillCastInfo: Object.freeze({ ...castInfo }) }),
+      inputTarget,
     });
     return this.#startAvailableSkill(skill, false);
   }

@@ -12,6 +12,9 @@ import {
 } from '../sourceFixtures.ts';
 import { compileAbilityEntityTemplateCatalogSource } from '../../src/compiler/abilities/abilityEntityCatalog.ts';
 import { gameplayTagIdFromPath } from '../../src/source/nativeGameplayTags.ts';
+import { parseKnownSkillActionGraphSource } from '../../src/source/skillActionGraph.ts';
+import { collectUnconsumedSkillLocalKeys } from '../../src/compiler/skills/skillPresentationTargets.ts';
+import { compileEventCondition } from '../../src/compiler/conditions/combatConditionProjection.ts';
 
 const ACTIVE_CONTEXT = {
   gameplayTagRegistry: fixtureGameplayTagRegistry,
@@ -22,6 +25,189 @@ const ACTIVE_CONTEXT = {
 } as const;
 
 describe('HideUI active source projection', () => {
+  it.each([true, false])(
+    '主控到敌人 Context 的距离仅在目标确定存在时消去集合读取：%s',
+    guaranteed => {
+      const parsed = parseKnownNativeActionSequenceSource(
+        {
+          actionData: [
+            meta('CheckDistanceCondition', {
+              source: targetFixture('MainCharacter'),
+              target: targetFixture('Context', undefined, 'selected'),
+              distance: 15,
+              lessThan: true,
+              includeTargetRadius: true,
+              containsHittableObj: false,
+            }),
+          ],
+          onlyExecuteWhenSourceIsMainChar: false,
+          onlyExecuteWhenSourceIsGuard: false,
+        },
+        'distance',
+        {},
+      );
+      const result = compileEventCondition(
+        parsed.actions[0]!,
+        {
+          ...ACTIVE_CONTEXT,
+          singleEnemyTargetGroupKeys: new Set(['selected']),
+          staticEnemyTargetGroupKeys: new Set(guaranteed ? ['selected'] : []),
+        },
+        new Map(),
+      );
+      const distance = {
+        kind: 'actionValueCompare',
+        left: { kind: 'constant', value: 0 },
+        operator: 'lessOrEqual',
+        right: { kind: 'constant', value: 15 },
+      };
+      expect(result).toEqual(
+        guaranteed
+          ? distance
+          : {
+              kind: 'all',
+              conditions: [
+                {
+                  kind: 'contextTargetCountCompare',
+                  contextKey: 'selected',
+                  operator: 'greater',
+                  value: 0,
+                },
+                distance,
+              ],
+            },
+      );
+    },
+  );
+
+  it('只裁剪没有消费者的技能局部常量，不裁剪实体值或后续读取的值', () => {
+    const assignment = (key: string) =>
+      meta('ModifyDynamicBlackboard', {
+        key,
+        operation: 'Assign',
+        directValue: true,
+        value: scalarFixture(1),
+        calculationTarget: targetFixture('Owner'),
+        calculateType: 'Count',
+      });
+    const value = activeWithActions([
+      assignment('unused_local'),
+      assignment('used_local'),
+      assignment('EntityBB_shared'),
+      { ...assignment('EntityBB_shared'), value: scalarFixture(0, 'used_local') },
+    ]);
+    value.blackboard = ['unused_local', 'used_local', 'EntityBB_shared'].map(key => ({
+      key,
+      valueDouble: 0,
+      valueStr: '',
+      isDynamic: true,
+    }));
+    const graph = parseKnownSkillActionGraphSource(value, 'local.assignment', {});
+    expect([...collectUnconsumedSkillLocalKeys(graph, value)]).toEqual(['unused_local']);
+    expect([
+      ...collectUnconsumedSkillLocalKeys(graph, {
+        ...value,
+        externalConsumer: { key: 'unused_local' },
+      }),
+    ]).toEqual([]);
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value,
+      sourcePath: 'local.assignment',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
+    expect(JSON.stringify(result.scheduledSequences)).not.toContain('unused_local');
+    expect(JSON.stringify(result.scheduledSequences)).toContain('used_local');
+    expect(JSON.stringify(result.scheduledSequences)).toContain('EntityBB_shared');
+  });
+
+  it('目标角度是纯读取，只在两分支战斗结果相同时消去判断', () => {
+    const wrapper = (actionData: unknown[]) => ({
+      actionData,
+      onlyExecuteWhenSourceIsMainChar: false,
+      onlyExecuteWhenSourceIsGuard: false,
+    });
+    const gain = (factor: number) =>
+      meta('GainBreakingAttackAtb', {
+        source: targetFixture('Source'),
+        target: targetFixture('Target'),
+        factor: scalarFixture(factor),
+      });
+    const branch = meta('IfElseAction', {
+      conditionAction: wrapper([
+        meta('Conditions.CheckTargetAngle', {
+          origin: targetFixture('Target'),
+          target: targetFixture('Owner'),
+          angleType: 'TargetForward',
+          angle: scalarFixture(180),
+        }),
+      ]),
+      succeedActions: wrapper([
+        meta('ModifyDynamicBlackboard', {
+          key: 'unused_angle',
+          operation: 'Assign',
+          directValue: true,
+          value: scalarFixture(1),
+          calculationTarget: targetFixture('Owner'),
+          calculateType: 'Count',
+        }),
+        gain(1),
+      ]),
+      failActions: wrapper([
+        meta('ModifyDynamicBlackboard', {
+          key: 'unused_angle',
+          operation: 'Assign',
+          directValue: true,
+          value: scalarFixture(0),
+          calculationTarget: targetFixture('Owner'),
+          calculateType: 'Count',
+        }),
+        gain(1),
+      ]),
+      alwaysNext: true,
+    });
+    const value = activeWithActions([branch]);
+    value.blackboard = [{ key: 'unused_angle', valueDouble: 0, valueStr: '', isDynamic: true }];
+    const compile = () =>
+      compileActiveSkillRuntimeProjectionSource({
+        value,
+        sourcePath: 'active.angle',
+        patch: null,
+        context: ACTIVE_CONTEXT,
+      });
+    expect(compile().scheduledSequences[0]!.sequence.steps).toEqual([
+      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+    ]);
+    branch.failActions = wrapper([gain(0.75)]);
+    expect(compile).toThrow('targetAngle');
+  });
+
+  it('周期执行动作保留子序列生命周期，不编译成即时 TickInterval', () => {
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value: activeWithActions([
+        meta('ExecuteIntervalAction', {
+          executeEachFrame: false,
+          executeInterval: scalarFixture(0.5),
+          actionOnExecuting: {
+            actionData: [meta('MarkCanDash', {})],
+            onlyExecuteWhenSourceIsMainChar: false,
+            onlyExecuteWhenSourceIsGuard: false,
+          },
+        }),
+      ]),
+      sourcePath: 'active.interval',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
+    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+      {
+        kind: 'repeatEachTick',
+        parameters: { nativeExecuteInterval: { executeEachFrame: false, intervalSeconds: 0.5 } },
+        body: { steps: [{ kind: 'markCurrentSkillCanDash', parameters: {} }] },
+      },
+    ]);
+  });
+
   it('保留原生 offsetRecordFrame 作为普攻连段身份提交点', () => {
     const value = activeWithActions([]);
     value.offsetRecordFrame = 17;
@@ -602,6 +788,70 @@ describe('主动技能正式时间轴投影', () => {
     );
   });
 
+  it.each(['none', 'combatRead', 'eventRead', 'projectile', 'abilityEntity', 'buffInheritance'])(
+    '条件内计算角度和取绝对值只在没有外部消费者时裁剪：%s',
+    consumer => {
+      const leaf = (family: string, action: unknown) => ({
+        metadata: { enabled: true },
+        body: { kind: 'leaf', value: { family, action } },
+      });
+      const branch = (condition: unknown[], whenTrue: unknown[]) => ({
+        metadata: { enabled: true },
+        body: {
+          kind: 'ifElse',
+          alwaysNext: true,
+          condition: { actions: condition },
+          whenTrue: { actions: whenTrue },
+          whenFalse: { actions: [] },
+        },
+      });
+      const sequence = {
+        actions: [
+          branch(
+            [
+              leaf('presentationCalculation', {
+                kind: 'saveTwoDirectionAngle',
+                outputKey: 'angle',
+              }),
+              branch(
+                [leaf('condition', { kind: 'floatCompare', key: 'angle' })],
+                [
+                  leaf('blackboardMutation', {
+                    key: 'angle',
+                    directValue: true,
+                    operation: 'Multiply',
+                    value: { blackboardKey: null, value: -1 },
+                  }),
+                ],
+              ),
+              leaf('condition', { kind: 'floatCompare', key: 'angle' }),
+            ],
+            [leaf('spatial', { kind: 'selfRotate' })],
+          ),
+        ],
+      };
+      const external = {
+        actions:
+          consumer === 'none'
+            ? []
+            : [
+                consumer === 'combatRead'
+                  ? leaf('damage', { multiplier: { blackboardKey: 'angle' } })
+                  : consumer === 'eventRead'
+                    ? leaf('eventListener', { callback: { blackboardKey: 'angle' } })
+                    : leaf(consumer, {}),
+              ],
+      };
+      expect(
+        collectCombatInvisiblePresentationAssignmentKeys([sequence, external] as never),
+      ).toEqual(new Set(consumer === 'none' ? ['angle'] : []));
+      // 外部证明只解除传出边界，不得覆盖当前图里明确存在的战斗或事件读取。
+      expect(
+        collectCombatInvisiblePresentationAssignmentKeys([sequence, external] as never, () => true),
+      ).toEqual(new Set(['combatRead', 'eventRead'].includes(consumer) ? [] : ['angle']));
+    },
+  );
+
   it('保留送入角色被动 HUD 的黑板累计值', () => {
     const sequence = {
       actions: [
@@ -731,6 +981,27 @@ describe('主动技能正式时间轴投影', () => {
       requiresCurrentSkillNotInterruptible: true,
       condition: { kind: 'casterControlled' },
     });
+  });
+
+  it.each([0, 5, 7, 107])('JumpTo 目标 %s 的方向留给运行时判断', destinationFrame => {
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value: activeWithActions([
+        meta('JumpToAction', {
+          destFrame: destinationFrame,
+          conditionAction: {
+            actionData: [],
+            onlyExecuteWhenSourceIsMainChar: false,
+            onlyExecuteWhenSourceIsGuard: false,
+          },
+        }),
+      ]),
+      sourcePath: 'jump.direction',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
+    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+      { kind: 'jumpTimeline', parameters: { destinationFrame } },
+    ]);
   });
 
   it('保留 JumpTo 条件序列中只反转下一项的 NotNextCheckAction', () => {
@@ -950,6 +1221,23 @@ describe('主动技能正式时间轴投影', () => {
       forceSyncInit: true,
       dieOnEnd: false,
     });
+  it('能力实体可能复制整个黑板时，保留技能局部赋值', () => {
+    const value = activeWithActions([
+      meta('ModifyDynamicBlackboard', {
+        key: 'entity_input',
+        operation: 'Assign',
+        directValue: true,
+        value: scalarFixture(7),
+        calculationTarget: targetFixture('Owner'),
+        calculateType: 'Count',
+      }),
+      spawnAbilityEntity('spawned'),
+    ]);
+    value.blackboard = [{ key: 'entity_input', valueDouble: 0, valueStr: '', isDynamic: true }];
+    const graph = parseKnownSkillActionGraphSource(value, 'local.export', {});
+    expect([...collectUnconsumedSkillLocalKeys(graph, value)]).toEqual([]);
+  });
+
   const emptyAngleBranch = () =>
     meta('IfElseAction', {
       conditionAction: seq([
@@ -1152,6 +1440,50 @@ describe('主动技能正式时间轴投影', () => {
       ).toThrow('unsupported native action priority');
     },
   );
+
+  it('收到 Buff 后的 CastSkill 使用事件输入目标，不固定成木桩', () => {
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value: activeWithActions([
+        meta('EventListenerAction', {
+          abilityActionMap: [
+            {
+              abilityEvent: 'OnAddedBuff',
+              actions: [
+                seq([
+                  meta('CastSkill', {
+                    caster: targetFixture('Owner'),
+                    target: targetFixture('Target'),
+                    skillId: { value: 'counter', useBlackboardKey: false, blackboardKey: '' },
+                    skipApplyCost: false,
+                    inheritSourceSkillCastId: false,
+                    interruptCurSkillOnlyWhenTargetCastable: true,
+                  }),
+                ]),
+              ],
+            },
+          ],
+        }),
+      ]),
+      sourcePath: 'event.cast',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
+    const listener = result.scheduledSequences[0]!.sequence.steps[0]!;
+    expect(listener.kind).toBe('listenForCombatEvents');
+    if (listener.kind !== 'listenForCombatEvents') throw new Error('expected listener');
+    expect(listener.parameters.responses[0]!.sequence.steps).toEqual([
+      {
+        kind: 'castSkillDuringAction',
+        parameters: {
+          skillId: 'counter',
+          target: 'actionInputTarget',
+          skipApplyCost: false,
+          inheritSourceSkillCastInfo: false,
+          interruptCurrentSkillOnlyWhenTargetCastable: true,
+        },
+      },
+    ]);
+  });
 
   it('把受击监听的持续伤害与残留区域排除掩码保留为事件特征条件', () => {
     const listener = meta('EventListenerAction', {
@@ -1618,6 +1950,37 @@ describe('主动技能正式时间轴投影', () => {
     );
   });
 
+  it('Both hit-stop 对已证明的实体目标组保留查询身份，不替换成木桩', () => {
+    const result = compileCombatActionSequenceSource(
+      parseKnownNativeActionSequenceSource(
+        seq([
+          meta('HitStopAction', {
+            affectType: 'Both',
+            curveKey: 'char_hard_stop',
+            useDirectCurve: false,
+            directCurve: [],
+            duration: 0.15,
+            timeDilationPriority: { tagId: -2059842104 },
+            attacker: targetFixture('Source'),
+            target: { ...targetFixture('Context'), targetGroupKey: 'projectiles' },
+          }),
+        ]),
+        'active',
+        {},
+      ),
+      { ...ACTIVE_CONTEXT, staticAbilityEntityTargetGroupKeys: new Set(['projectiles']) },
+      new Set(),
+      { resolveTimeDilationPriority: () => 10 },
+    );
+    expect(result.steps[0]).toMatchObject({
+      kind: 'startTimeDilation',
+      parameters: {
+        targets: ['caster'],
+        abilityEntityTargets: [{ kind: 'context', contextKey: 'projectiles' }],
+      },
+    });
+  });
+
   it('Both hit-stop 保留为施法者与木桩的实体时间膨胀', () => {
     const result = compileActiveSkillRuntimeProjectionSource({
       value: activeWithActions([
@@ -1649,6 +2012,110 @@ describe('主动技能正式时间轴投影', () => {
           curve: { kind: 'named', key: 'char_hard_stop' },
           finishByAction: false,
           targets: ['enemy', 'caster'],
+        },
+      },
+    ]);
+  });
+
+  it('DoOnce 内的命中停顿只启动一次，不丢弃实体时间膨胀', () => {
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value: activeWithActions([
+        meta('DoOnceAction', {
+          sequenceActionData: {
+            onlyExecuteWhenSourceIsMainChar: false,
+            onlyExecuteWhenSourceIsGuard: false,
+            actionData: [
+              meta('HitStopAction', {
+                affectType: 'Both',
+                curveKey: 'char_hard_stop',
+                useDirectCurve: false,
+                directCurve: [],
+                duration: 0.08,
+                timeDilationPriority: { tagId: -2059842104 },
+                attacker: targetFixture('Source'),
+                target: targetFixture('Target'),
+              }),
+            ],
+          },
+        }),
+      ]),
+      sourcePath: 'active',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+      extensions: { resolveTimeDilationPriority: () => 10 },
+    });
+    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+      {
+        kind: 'once',
+        body: {
+          steps: [
+            {
+              kind: 'startTimeDilation',
+              parameters: {
+                finishByAction: false,
+                targets: ['enemy', 'caster'],
+                durationSeconds: { kind: 'constant', value: 0.08 },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it('DoOnce 可以按局部值选择一次命中停顿，不能因 Switch 包装而拒绝', () => {
+    const body = seq([
+      meta('HitStopAction', {
+        affectType: 'Both',
+        curveKey: 'char_hard_stop',
+        useDirectCurve: false,
+        directCurve: [],
+        duration: 0.4,
+        timeDilationPriority: { tagId: -2059842104 },
+        attacker: targetFixture('Source'),
+        target: targetFixture('Target'),
+      }),
+    ]);
+    const value = activeWithActions([
+      meta('DoOnceAction', {
+        sequenceActionData: seq([
+          meta('SwitchAction', {
+            choice: scalarFixture(0, 'block_count'),
+            alwaysNext: true,
+            options: [{ value: scalarFixture(1), actionData: body }],
+          }),
+        ]),
+      }),
+    ]);
+    value.blackboard = [{ key: 'block_count', valueDouble: 1, valueStr: '', isDynamic: true }];
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value,
+      sourcePath: 'once.switch',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+      extensions: { resolveTimeDilationPriority: () => 10 },
+    });
+    expect(result.scheduledSequences[0]!.sequence.steps).toMatchObject([
+      {
+        kind: 'once',
+        body: {
+          steps: [
+            {
+              kind: 'switch',
+              options: [
+                {
+                  sequence: {
+                    steps: [
+                      {
+                        kind: 'startTimeDilation',
+                        parameters: { durationSeconds: { kind: 'constant', value: 0.4 } },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
         },
       },
     ]);
@@ -1851,45 +2318,51 @@ describe('主动技能正式时间轴投影', () => {
     ]);
   });
 
-  it('命名全局时间膨胀可只忽略施法者而不虚构能力实体忽略组', () => {
-    const result = compileActiveSkillRuntimeProjectionSource({
-      value: activeWithActions([
-        meta('TimeDilationAction', {
-          layer: 'Global',
-          slot: { tagId: 0 },
-          timeDilationPriority: { tagId: -593023102 },
-          duration: scalarFixture(0.5),
-          useCurveKey: true,
-          curveKey: 'ComboSkill',
-          timeScaleCurve: [],
-          finishByAction: false,
-          ignoreTargets: [targetFixture('Owner')],
-          effectTargets: [],
-          useTimeScaleForSkillCdTick: false,
-          influenceSkillCdTime: scalarFixture(0),
-        }),
-      ]),
-      sourcePath: 'active.caster-only-time-dilation',
-      patch: null,
-      context: ACTIVE_CONTEXT,
-      extensions: { resolveTimeDilationPriority: () => 20 },
-    });
+  it.each(['caster', 'currentAbilityEntity'] as const)(
+    '命名全局时间膨胀只忽略当前 Owner：%s',
+    owner => {
+      const result = compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([
+          meta('TimeDilationAction', {
+            layer: 'Global',
+            slot: { tagId: 0 },
+            timeDilationPriority: { tagId: -593023102 },
+            duration: scalarFixture(0.5),
+            useCurveKey: true,
+            curveKey: 'ComboSkill',
+            timeScaleCurve: [],
+            finishByAction: false,
+            ignoreTargets: [targetFixture('Owner')],
+            effectTargets: [],
+            useTimeScaleForSkillCdTick: false,
+            influenceSkillCdTime: scalarFixture(0),
+          }),
+        ]),
+        sourcePath: 'active.caster-only-time-dilation',
+        patch: null,
+        context: { ...ACTIVE_CONTEXT, actionOwnerTarget: owner },
+        extensions: { resolveTimeDilationPriority: () => 20 },
+      });
 
-    expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
-      {
-        kind: 'startTimeDilation',
-        parameters: {
-          scope: 'global',
-          durationSeconds: { kind: 'constant', value: 0.5 },
-          slot: 'unassigned',
-          priority: 20,
-          curve: { kind: 'named', key: 'ComboSkill' },
-          finishByAction: false,
-          ignoredTargets: ['caster'],
+      expect(result.scheduledSequences[0]!.sequence.steps).toEqual([
+        {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.5 },
+            slot: 'unassigned',
+            priority: 20,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: owner === 'caster' ? ['caster'] : [],
+            ...(owner === 'currentAbilityEntity'
+              ? { ignoredAbilityEntityTargets: [{ kind: 'current' }] }
+              : {}),
+          },
         },
-      },
-    ]);
-  });
+      ]);
+    },
+  );
 
   it('内联全局时间膨胀按 useCurveKey 选择器忽略命名残值并接受施法者 Owner', () => {
     const result = compileActiveSkillRuntimeProjectionSource({
@@ -2355,7 +2828,7 @@ describe('主动技能正式时间轴投影', () => {
     ]);
   });
 
-  it('只省略空 onEnd 的动画；动画结束战斗子图继续严格拒绝', () => {
+  it('省略纯动画结束链；嵌套动画中的战斗子图继续严格拒绝', () => {
     const animation = meta('PlayAnimationAction', {
       animName: 'Skill',
       blendDuration: 0,
@@ -2382,6 +2855,29 @@ describe('主动技能正式时间轴投影', () => {
         context: ACTIVE_CONTEXT,
       }).scheduledSequences,
     ).toEqual([]);
+    const nestedAnimation = structuredClone(animation);
+    const animationChain = {
+      ...animation,
+      onEndAction: {
+        actionData: [nestedAnimation],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+    };
+    const compileChain = () =>
+      compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([animationChain]),
+        sourcePath: 'animation.chain',
+        patch: null,
+        context: ACTIVE_CONTEXT,
+      });
+    expect(compileChain().scheduledSequences).toEqual([]);
+    nestedAnimation.onEndAction = {
+      actionData: [meta('FinishOwnerAction', { target: targetFixture('Owner') })],
+      onlyExecuteWhenSourceIsMainChar: false,
+      onlyExecuteWhenSourceIsGuard: false,
+    };
+    expect(compileChain).toThrow('animation end combat actions are unsupported');
     animation.onEndAction = {
       ...(animation.onEndAction as object),
       actionData: [

@@ -1645,6 +1645,14 @@ export const arclight: OperatorDefinition = {
       deathReleaseDelaySeconds: 0.100000001490116,
       childSkill: {
         skillId: 'chr_0007_ikut_ultimate_skill_abentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 150,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atk_scale1: 0.2,
           atk_scale2: 0,

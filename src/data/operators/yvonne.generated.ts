@@ -17,101 +17,59 @@ import {
   withSkillBlackboard,
 } from './definitionHelpers';
 
-const sharedActionSequence1: ActionSequenceDefinition = sequence(
+const sharedActionSequence5: ActionSequenceDefinition = sequence(
   withActionBlackboardScope(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'cryo',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
+    sequence({
+      kind: 'launchProjectile',
+      parameters: {
+        finish: 'firstTickReach',
+        recycleDelaySeconds: 0.0333333350718021,
+        hit: { finishOnHit: true },
+      },
+      callbacks: [
+        {
+          event: 'hit',
+          skill: {
+            skillId: 'chr_0017_yvonne_ult_attack2_projhit',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 1,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
             },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              branch(
-                { kind: 'casterControlled' },
+            blackboard: { atk_scale: 0 },
+            scheduledSequences: [
+              scheduled(
+                0,
                 sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      tags: ['normalAttack'],
+                    },
+                    '\u0000endaxis-generated-identity:1',
+                  ),
+                  branch(
+                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
+                    sequence(),
+                    undefined,
+                    { alwaysNext: true },
+                  ),
                 ),
+                3,
               ),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
-    {},
-    { lifetime: 'execution' },
-  ),
-);
-
-const sharedActionSequence2: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    {},
-    true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'cryo',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 0.5 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
-                ),
-              ),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
+            ],
+          },
+        },
+      ],
+    }),
     {},
     { lifetime: 'execution' },
   ),
@@ -122,52 +80,124 @@ const sharedActionSequence3: ActionSequenceDefinition = sequence(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'cryo',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
+    sequence({
+      kind: 'launchProjectile',
+      parameters: {
+        finish: 'firstTickReach',
+        recycleDelaySeconds: 0.0333333350718021,
+        hit: { finishOnHit: true },
+      },
+      callbacks: [
+        {
+          event: 'hit',
+          skill: {
+            skillId: 'chr_0017_yvonne_ult_attack1_projhit',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 1,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
             },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              branch(
-                { kind: 'casterControlled' },
+            blackboard: { atk_scale: 0 },
+            scheduledSequences: [
+              scheduled(
+                0,
                 sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 0.3333333 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      tags: ['normalAttack'],
+                    },
+                    '\u0000endaxis-generated-identity:1',
+                  ),
+                  branch(
+                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
+                    sequence(),
+                    undefined,
+                    { alwaysNext: true },
+                  ),
                 ),
+                3,
               ),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
+              scheduled(0, sequence(), 3),
+            ],
+          },
+        },
+      ],
+    }),
     {},
     { lifetime: 'execution' },
   ),
 );
 
-const sharedActionSequence6: ActionSequenceDefinition = sequence(
+const sharedActionSequence2: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0017_yvonne_attack3_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'cryo',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  branch(
+                    { kind: 'casterControlled' },
+                    sequence(
+                      step('changeResourceByActionValue', {
+                        resource: 'sp',
+                        amount: { kind: 'blackboard', key: 'atb' },
+                        coefficient: { kind: 'constant', value: 0.3333333 },
+                        recipient: 'team',
+                        spGainKind: 'gain',
+                        spGainSource: 'normalAttack',
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence8: ActionSequenceDefinition = sequence(
   branch(
     {
       kind: 'buffIdStackCompare',
@@ -219,90 +249,18 @@ const sharedActionSequence6: ActionSequenceDefinition = sequence(
   ),
 );
 
-const sharedActionSequence4: ActionSequenceDefinition = sequence(
-  branch(
-    {
-      kind: 'healthCompare',
-      target: 'enemy',
-      valueType: 'ratio',
-      operator: 'greater',
-      value: { kind: 'constant', value: 0 },
-    },
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:0',
-        {},
-        true,
-        sequence(
-          withActionBlackboardScope(
-            '\u0000endaxis-generated-identity:1',
-            { atk_scale: 0 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'cryo',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalAttack'],
-                },
-                '\u0000endaxis-generated-identity:2',
-              ),
-              branch(
-                { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                sequence(),
-                undefined,
-                { alwaysNext: true },
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        {},
-        { lifetime: 'execution' },
-      ),
-    ),
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:3',
-        {},
-        true,
-        sequence(
-          withActionBlackboardScope(
-            '\u0000endaxis-generated-identity:4',
-            { atk_scale: 0 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'cryo',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalAttack'],
-                },
-                '\u0000endaxis-generated-identity:5',
-              ),
-              branch(
-                { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                sequence(),
-                undefined,
-                { alwaysNext: true },
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        {},
-        { lifetime: 'execution' },
-      ),
-    ),
-    { alwaysNext: true },
+const sharedActionSequence1: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence2, ['\u0000endaxis-generated-identity:1']),
+    {},
+    { lifetime: 'execution' },
   ),
 );
 
-const sharedActionSequence5: ActionSequenceDefinition = sequence(
+const sharedActionSequence7: ActionSequenceDefinition = sequence(
   branch(
     {
       kind: 'all',
@@ -346,7 +304,49 @@ const sharedActionSequence5: ActionSequenceDefinition = sequence(
         inheritToNextSkillIds: ['chr_0017_yvonne_ult_attack3_2'],
       }),
     ),
-    sharedActionSequence6,
+    sharedActionSequence8,
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence4: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'healthCompare',
+      target: 'enemy',
+      valueType: 'ratio',
+      operator: 'greater',
+      value: { kind: 'constant', value: 0 },
+    },
+    instantiateActionSequence(sharedActionSequence5, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+    ]),
+    instantiateActionSequence(sharedActionSequence5, [
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+    ]),
+    { alwaysNext: true },
+  ),
+);
+
+const sharedActionSequence6: ActionSequenceDefinition = sequence(
+  branch(
+    {
+      kind: 'healthCompare',
+      target: 'enemy',
+      valueType: 'ratio',
+      operator: 'greater',
+      value: { kind: 'constant', value: 0 },
+    },
+    instantiateActionSequence(sharedActionSequence3, [
+      '\u0000endaxis-generated-identity:0',
+      '\u0000endaxis-generated-identity:1',
+    ]),
+    instantiateActionSequence(sharedActionSequence3, [
+      '\u0000endaxis-generated-identity:2',
+      '\u0000endaxis-generated-identity:3',
+    ]),
     { alwaysNext: true },
   ),
 );
@@ -376,11 +376,77 @@ export const yvonneChr_0017_yvonne_attack1: SkillDefinition = withSkillBlackboar
     scheduledSequences: [
       scheduled(
         11,
-        instantiateActionSequence(sharedActionSequence1, [
-          'SkillData.chr_0017_yvonne_attack1.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack1',
-          'SkillData.chr_0017_yvonne_attack1.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0017_yvonne_attack1_projhit',
-          'chr_0017_yvonne_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-        ]),
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0017_yvonne_attack1.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack1',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0017_yvonne_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'cryo',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0017_yvonne_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 1 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
         11,
       ),
       scheduled(
@@ -427,20 +493,152 @@ export const yvonneChr_0017_yvonne_attack2: SkillDefinition = withSkillBlackboar
     scheduledSequences: [
       scheduled(
         11,
-        instantiateActionSequence(sharedActionSequence2, [
-          'SkillData.chr_0017_yvonne_attack2.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack1',
-          'SkillData.chr_0017_yvonne_attack2.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0017_yvonne_attack2_projhit',
-          'chr_0017_yvonne_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-        ]),
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0017_yvonne_attack2.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack1',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0017_yvonne_attack2_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'cryo',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0017_yvonne_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 0.5 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
         11,
       ),
       scheduled(
         14,
-        instantiateActionSequence(sharedActionSequence2, [
-          'SkillData.chr_0017_yvonne_attack2.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack2_robot',
-          'SkillData.chr_0017_yvonne_attack2.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0017_yvonne_attack2_robot_projhit',
-          'chr_0017_yvonne_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-        ]),
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0017_yvonne_attack2.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack2_robot',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0017_yvonne_attack2_robot_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'cryo',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0017_yvonne_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 0.5 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
         14,
       ),
       scheduled(
@@ -491,28 +689,25 @@ export const yvonneChr_0017_yvonne_attack3: SkillDefinition = withSkillBlackboar
     scheduledSequences: [
       scheduled(
         6,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0017_yvonne_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack3',
-          'SkillData.chr_0017_yvonne_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0017_yvonne_attack3_projhit',
-          'chr_0017_yvonne_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         6,
       ),
       scheduled(
         9,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0017_yvonne_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack3_2',
-          'SkillData.chr_0017_yvonne_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0017_yvonne_attack3_projhit',
-          'chr_0017_yvonne_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         9,
       ),
       scheduled(
         12,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0017_yvonne_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack3_3',
-          'SkillData.chr_0017_yvonne_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0017_yvonne_attack3_projhit',
-          'chr_0017_yvonne_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         12,
       ),
@@ -562,11 +757,78 @@ export const yvonneChr_0017_yvonne_attack4: SkillDefinition = withSkillBlackboar
     scheduledSequences: [
       scheduled(
         11,
-        instantiateActionSequence(sharedActionSequence1, [
-          'SkillData.chr_0017_yvonne_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack4',
-          'SkillData.chr_0017_yvonne_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0017_yvonne_attack4_projhit',
-          'chr_0017_yvonne_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-        ]),
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0017_yvonne_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_attack4',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0017_yvonne_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'cryo',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0017_yvonne_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 1 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                      scheduled(0, sequence(), 3),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
         11,
       ),
       scheduled(
@@ -870,119 +1132,26 @@ export const yvonneChr_0017_yvonne_ult_attack1_1: SkillDefinition = withSkillBla
       ),
       scheduled(
         9,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack1_1:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack1_1:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         9,
       ),
       scheduled(
         15,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack1_1:/scheduledSequences/6/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack1_1:/scheduledSequences/6/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         15,
       ),
       scheduled(
         21,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack1_1:/scheduledSequences/7/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack1_1.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack1_1:/scheduledSequences/7/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         21,
       ),
       scheduled(
@@ -1342,23 +1511,19 @@ export const yvonneChr_0017_yvonne_ult_attack2_1: SkillDefinition = withSkillBla
         11,
         instantiateActionSequence(sharedActionSequence4, [
           'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[27]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-          'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[27]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/11/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/11/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[27]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0017_yvonne_ult_attack2',
-          'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[27]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:chr_0017_yvonne_ult_attack2_projhit',
-          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/11/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/11/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         11,
       ),
       scheduled(
         14,
-        instantiateActionSequence(sharedActionSequence4, [
+        instantiateActionSequence(sharedActionSequence6, [
           'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[28]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[28]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/12/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/12/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[28]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[28]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/12/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/12/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         14,
       ),
@@ -1366,23 +1531,19 @@ export const yvonneChr_0017_yvonne_ult_attack2_1: SkillDefinition = withSkillBla
         17,
         instantiateActionSequence(sharedActionSequence4, [
           'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[29]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-          'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[29]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/13/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/13/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[29]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0017_yvonne_ult_attack2',
-          'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[29]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:chr_0017_yvonne_ult_attack2_projhit',
-          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/13/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/13/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         17,
       ),
       scheduled(
         21,
-        instantiateActionSequence(sharedActionSequence4, [
+        instantiateActionSequence(sharedActionSequence6, [
           'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[30]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[30]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/14/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/14/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[30]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_1.actionGroupData.timelineActions[30]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/14/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_1:/scheduledSequences/14/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         21,
       ),
@@ -1634,49 +1795,41 @@ export const yvonneChr_0017_yvonne_ult_attack2_2: SkillDefinition = withSkillBla
       ),
       scheduled(
         1,
-        instantiateActionSequence(sharedActionSequence4, [
+        instantiateActionSequence(sharedActionSequence6, [
           'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[23]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[23]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/7/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/7/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[23]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[23]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/7/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/7/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         1,
       ),
       scheduled(
         4,
-        instantiateActionSequence(sharedActionSequence4, [
+        instantiateActionSequence(sharedActionSequence6, [
           'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[24]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[24]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/8/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/8/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[24]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[24]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/8/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/8/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         4,
       ),
       scheduled(
         7,
-        instantiateActionSequence(sharedActionSequence4, [
+        instantiateActionSequence(sharedActionSequence6, [
           'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[25]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[25]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/9/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/9/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[25]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[25]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/9/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/9/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         7,
       ),
       scheduled(
         11,
-        instantiateActionSequence(sharedActionSequence4, [
+        instantiateActionSequence(sharedActionSequence6, [
           'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[26]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[26]._sequenceActionData.actionData[0].succeedActions.actionData[0].succeedActions.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/10/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/10/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[26]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0017_yvonne_ult_attack1',
-          'SkillData.chr_0017_yvonne_ult_attack2_2.actionGroupData.timelineActions[26]._sequenceActionData.actionData[0].succeedActions.actionData[0].failActions.actionData[1]:chr_0017_yvonne_ult_attack1_projhit',
-          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/10/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/0',
+          'chr_0017_yvonne_ult_attack2_2:/scheduledSequences/10/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         11,
       ),
@@ -2162,314 +2315,66 @@ export const yvonneChr_0017_yvonne_ult_attack3_1: SkillDefinition = withSkillBla
       ),
       scheduled(
         13,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[39]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[39]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/16/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[39]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/16/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         13,
       ),
       scheduled(
         15,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[40]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[40]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/17/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[40]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
+          'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/17/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         15,
       ),
       scheduled(
         17,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[41]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[41]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/18/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[41]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/18/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         17,
       ),
       scheduled(
         19,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[42]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[42]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/19/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[42]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
+          'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/19/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         19,
       ),
       scheduled(
         21,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[43]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[43]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/20/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[43]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/20/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         21,
       ),
       scheduled(
         23,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[44]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[44]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/21/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[44]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
+          'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/21/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         23,
       ),
       scheduled(
         25,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[45]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[45]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/22/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[45]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/22/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         25,
       ),
       scheduled(
         27,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[46]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[46]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/23/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0017_yvonne_ult_attack3_1.actionGroupData.timelineActions[46]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
+          'chr_0017_yvonne_ult_attack3_1:/scheduledSequences/23/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         27,
       ),
       scheduled(
@@ -2549,7 +2454,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1: SkillDefinition = withSkillBla
         ),
         12,
       ),
-      scheduled(12, sharedActionSequence5, 32),
+      scheduled(12, sharedActionSequence7, 32),
       scheduled(
         28,
         sequence(
@@ -2696,314 +2601,66 @@ export const yvonneChr_0017_yvonne_ult_attack3_2: SkillDefinition = withSkillBla
       ),
       scheduled(
         1,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[28]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[28]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/8/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[28]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/8/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         1,
       ),
       scheduled(
         3,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/9/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[29]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
+          'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/9/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         3,
       ),
       scheduled(
         5,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[30]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[30]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/10/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[30]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/10/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         5,
       ),
       scheduled(
         7,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/11/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[31]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
+          'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/11/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         7,
       ),
       scheduled(
         9,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[32]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[32]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/12/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[32]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/12/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         9,
       ),
       scheduled(
         11,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/13/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[33]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
+          'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/13/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         11,
       ),
       scheduled(
         13,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[34]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[34]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack1_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/14/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[34]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack1',
+          'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/14/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         13,
       ),
       scheduled(
         15,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[0]:chr_0017_yvonne_ult_attack2_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/15/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'probability', probability: { kind: 'constant', value: 0.125 } },
-                    sequence(),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0017_yvonne_ult_attack3_2.actionGroupData.timelineActions[35]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_ult_attack2',
+          'chr_0017_yvonne_ult_attack3_2:/scheduledSequences/15/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         15,
       ),
       scheduled(
@@ -3334,7 +2991,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2: SkillDefinition = withSkillBla
         ),
         24,
       ),
-      scheduled(0, sharedActionSequence5, 18),
+      scheduled(0, sharedActionSequence7, 18),
     ],
     timelineContinuationSkillId: 'chr_0017_yvonne_ult_attack_end',
     skillType: 'basicAttack',
@@ -3797,33 +3454,55 @@ export const yvonneChr_0017_yvonne_power_attack: SkillDefinition = withSkillBlac
             'SkillData.chr_0017_yvonne_power_attack.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0017_yvonne_power_attack',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0017_yvonne_power_attack.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0017_yvonne_power_attack_projhit',
-                { atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.1,
-                      tags: ['normalAttack', 'powerAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { onReach: true, finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0017_yvonne_power_attack_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0017_yvonne_power_attack:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  step('applyBuff', {
-                    buffId: 'buff_chr_0017_yvonne_power_attack',
-                    target: 'enemy',
-                    inheritSourceSkillCastInfo: true,
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'cryo',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              calculation: 'breakingAttack',
+                              calculationMultiplier: 0.1,
+                              tags: ['normalAttack', 'powerAttack'],
+                            },
+                            'chr_0017_yvonne_power_attack:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          step('applyBuff', {
+                            buffId: 'buff_chr_0017_yvonne_power_attack',
+                            target: 'enemy',
+                            inheritSourceSkillCastInfo: true,
+                          }),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -5191,642 +4870,734 @@ export const yvonne: OperatorDefinition = {
                 'BuffData.buff_chr_0017_yvonne_normal_skill_projectile.buffEventAction[1].actions[0].actionData[1]:projectile_chr_0017_yvonne_normal_skill',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'BuffData.buff_chr_0017_yvonne_normal_skill_projectile.buffEventAction[1].actions[0].actionData[1]:chr_0017_yvonne_normal_skill_projhit',
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: {
+                    finish: 5,
+                    source: 'actionOwner',
+                    recycleDelaySeconds: 0.0333333350718021,
+                    hit: { finishOnHit: true },
+                  },
+                  callbacks: [
                     {
-                      atb_return: 10,
-                      atk_scale: 0,
-                      atk_scale_final: 0,
-                      atk_scale_layer: 0,
-                      atk_scale2: 2,
-                      count: 0,
-                      crit_up: 0.7,
-                      has_potential2: 0,
-                      max_count: 0,
-                      poise: 30,
-                      usp_base: 20,
-                      usp_final: 0,
-                      usp_layer: 10,
-                    },
-                    true,
-                    sequence(
-                      branch(
-                        {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'blackboard', key: 'has_potential2', fallback: 0 },
-                          operator: 'greaterOrEqual',
-                          right: { kind: 'constant', value: 1 },
+                      event: 'hit',
+                      skill: {
+                        skillId: 'chr_0017_yvonne_normal_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 1,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        sequence(
-                          forEachTarget(
-                            'enemy',
+                        blackboard: {
+                          atb_return: 10,
+                          atk_scale: 0,
+                          atk_scale_final: 0,
+                          atk_scale_layer: 0,
+                          atk_scale2: 2,
+                          count: 0,
+                          crit_up: 0.7,
+                          has_potential2: 0,
+                          max_count: 0,
+                          poise: 30,
+                          usp_base: 20,
+                          usp_final: 0,
+                          usp_layer: 10,
+                        },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
                             sequence(
                               branch(
                                 {
-                                  kind: 'buffStackCompare',
-                                  target: 'enemy',
-                                  tagQueryType: 'hasAny',
-                                  buffTags: [
-                                    'Skill/Character/Common/SpellInflict/CrystInflict',
-                                    'Skill/Character/Common/SpellInflict/NaturalInflict',
-                                  ],
+                                  kind: 'actionValueCompare',
+                                  left: { kind: 'blackboard', key: 'has_potential2', fallback: 0 },
                                   operator: 'greaterOrEqual',
-                                  value: { kind: 'constant', value: 1 },
+                                  right: { kind: 'constant', value: 1 },
                                 },
                                 sequence(
+                                  forEachTarget(
+                                    'enemy',
+                                    sequence(
+                                      branch(
+                                        {
+                                          kind: 'buffStackCompare',
+                                          target: 'enemy',
+                                          tagQueryType: 'hasAny',
+                                          buffTags: [
+                                            'Skill/Character/Common/SpellInflict/CrystInflict',
+                                            'Skill/Character/Common/SpellInflict/NaturalInflict',
+                                          ],
+                                          operator: 'greaterOrEqual',
+                                          value: { kind: 'constant', value: 1 },
+                                        },
+                                        sequence(
+                                          branch(
+                                            {
+                                              kind: 'buffStackCompare',
+                                              target: 'enemy',
+                                              tagQueryType: 'hasAny',
+                                              buffTags: [
+                                                'Skill/Character/Common/SpellInflict/CrystInflict',
+                                              ],
+                                              operator: 'greaterOrEqual',
+                                              value: { kind: 'constant', value: 1 },
+                                            },
+                                            sequence(
+                                              step('readBuffStackCount', {
+                                                target: 'enemy',
+                                                outputKey: 'count',
+                                                query: {
+                                                  kind: 'tag',
+                                                  tagQueryType: 'hasAny',
+                                                  buffTags: [
+                                                    'Skill/Character/Common/SpellInflict/CrystInflict',
+                                                  ],
+                                                },
+                                              }),
+                                              branch(
+                                                {
+                                                  kind: 'buffStackCompare',
+                                                  target: 'enemy',
+                                                  tagQueryType: 'hasAny',
+                                                  buffTags: [
+                                                    'Skill/Character/Common/SpellInflict/CrystInflict',
+                                                  ],
+                                                  operator: 'greaterOrEqual',
+                                                  value: { kind: 'blackboard', key: 'count' },
+                                                },
+                                                sequence(
+                                                  step('finishBuffsByTag', {
+                                                    target: 'enemy',
+                                                    tagQueryType: 'hasAny',
+                                                    buffTags: [
+                                                      'Skill/Character/Common/SpellInflict/CrystInflict',
+                                                    ],
+                                                    reason: 'early',
+                                                    count: { kind: 'blackboard', key: 'count' },
+                                                  }),
+                                                  step('applyBuff', {
+                                                    buffId:
+                                                      'buff_common_cryst_cryst_frozen_triggered',
+                                                    target: 'enemy',
+                                                    inheritSourceSkillCastInfo: true,
+                                                    blackboardAssignments: {
+                                                      consumed_type: { kind: 'constant', value: 2 },
+                                                      consumed_layer: {
+                                                        kind: 'blackboard',
+                                                        key: 'count',
+                                                      },
+                                                      count: { kind: 'blackboard', key: 'count' },
+                                                    },
+                                                  }),
+                                                ),
+                                              ),
+                                              step('calculateActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'multiply',
+                                                left: {
+                                                  kind: 'blackboard',
+                                                  key: 'atk_scale_layer',
+                                                },
+                                                right: { kind: 'blackboard', key: 'count' },
+                                              }),
+                                              step('modifyActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'add',
+                                                value: { kind: 'blackboard', key: 'atk_scale' },
+                                              }),
+                                              step('modifyActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'add',
+                                                value: { kind: 'blackboard', key: 'atk_scale2' },
+                                              }),
+                                              step('changeResourceByActionValue', {
+                                                resource: 'sp',
+                                                amount: { kind: 'blackboard', key: 'atb_return' },
+                                                coefficient: { kind: 'constant', value: 1 },
+                                                recipient: 'team',
+                                                spGainKind: 'refund',
+                                                spGainSource: 'skill',
+                                              }),
+                                              step(
+                                                'dealDamage',
+                                                {
+                                                  damageType: 'cryo',
+                                                  attackScale: {
+                                                    kind: 'blackboard',
+                                                    key: 'atk_scale_final',
+                                                  },
+                                                  tags: ['normalSkill'],
+                                                  features: ['canBreakWeakness'],
+                                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                                },
+                                                'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/whenTrue/steps/6',
+                                              ),
+                                              branch(
+                                                {
+                                                  kind: 'actionValueCompare',
+                                                  left: {
+                                                    kind: 'blackboard',
+                                                    key: 'count',
+                                                    fallback: 0,
+                                                  },
+                                                  operator: 'greater',
+                                                  right: {
+                                                    kind: 'blackboard',
+                                                    key: 'max_count',
+                                                    fallback: 0,
+                                                  },
+                                                },
+                                                sequence(
+                                                  step('modifyActionValue', {
+                                                    key: 'max_count',
+                                                    operation: 'assign',
+                                                    value: { kind: 'blackboard', key: 'count' },
+                                                  }),
+                                                ),
+                                              ),
+                                            ),
+                                            sequence(
+                                              step('readBuffStackCount', {
+                                                target: 'enemy',
+                                                outputKey: 'count',
+                                                query: {
+                                                  kind: 'tag',
+                                                  tagQueryType: 'hasAny',
+                                                  buffTags: [
+                                                    'Skill/Character/Common/SpellInflict/NaturalInflict',
+                                                  ],
+                                                },
+                                              }),
+                                              branch(
+                                                {
+                                                  kind: 'buffStackCompare',
+                                                  target: 'enemy',
+                                                  tagQueryType: 'hasAny',
+                                                  buffTags: [
+                                                    'Skill/Character/Common/SpellInflict/NaturalInflict',
+                                                  ],
+                                                  operator: 'greaterOrEqual',
+                                                  value: { kind: 'blackboard', key: 'count' },
+                                                },
+                                                sequence(
+                                                  step('finishBuffsByTag', {
+                                                    target: 'enemy',
+                                                    tagQueryType: 'hasAny',
+                                                    buffTags: [
+                                                      'Skill/Character/Common/SpellInflict/NaturalInflict',
+                                                    ],
+                                                    reason: 'early',
+                                                    count: { kind: 'blackboard', key: 'count' },
+                                                  }),
+                                                  step('applyBuff', {
+                                                    buffId:
+                                                      'buff_common_cryst_cryst_frozen_triggered',
+                                                    target: 'enemy',
+                                                    inheritSourceSkillCastInfo: true,
+                                                    blackboardAssignments: {
+                                                      consumed_type: { kind: 'constant', value: 3 },
+                                                      consumed_layer: {
+                                                        kind: 'blackboard',
+                                                        key: 'count',
+                                                      },
+                                                      count: { kind: 'blackboard', key: 'count' },
+                                                    },
+                                                  }),
+                                                ),
+                                              ),
+                                              step('calculateActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'multiply',
+                                                left: {
+                                                  kind: 'blackboard',
+                                                  key: 'atk_scale_layer',
+                                                },
+                                                right: { kind: 'blackboard', key: 'count' },
+                                              }),
+                                              step('modifyActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'add',
+                                                value: { kind: 'blackboard', key: 'atk_scale' },
+                                              }),
+                                              step('modifyActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'add',
+                                                value: { kind: 'blackboard', key: 'atk_scale2' },
+                                              }),
+                                              step('changeResourceByActionValue', {
+                                                resource: 'sp',
+                                                amount: { kind: 'blackboard', key: 'atb_return' },
+                                                coefficient: { kind: 'constant', value: 1 },
+                                                recipient: 'team',
+                                                spGainKind: 'refund',
+                                                spGainSource: 'skill',
+                                              }),
+                                              step(
+                                                'dealDamage',
+                                                {
+                                                  damageType: 'cryo',
+                                                  attackScale: {
+                                                    kind: 'blackboard',
+                                                    key: 'atk_scale_final',
+                                                  },
+                                                  tags: ['normalSkill'],
+                                                  features: ['canBreakWeakness'],
+                                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                                },
+                                                'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/whenFalse/steps/6',
+                                              ),
+                                              branch(
+                                                {
+                                                  kind: 'actionValueCompare',
+                                                  left: {
+                                                    kind: 'blackboard',
+                                                    key: 'count',
+                                                    fallback: 0,
+                                                  },
+                                                  operator: 'greater',
+                                                  right: {
+                                                    kind: 'blackboard',
+                                                    key: 'max_count',
+                                                    fallback: 0,
+                                                  },
+                                                },
+                                                sequence(
+                                                  step('modifyActionValue', {
+                                                    key: 'max_count',
+                                                    operation: 'assign',
+                                                    value: { kind: 'blackboard', key: 'count' },
+                                                  }),
+                                                ),
+                                              ),
+                                            ),
+                                            { alwaysNext: true },
+                                          ),
+                                        ),
+                                        sequence(
+                                          step('modifyActionValue', {
+                                            key: 'atk_scale_final',
+                                            operation: 'assign',
+                                            value: { kind: 'blackboard', key: 'atk_scale' },
+                                          }),
+                                          step('changeResourceByActionValue', {
+                                            resource: 'sp',
+                                            amount: { kind: 'blackboard', key: 'atb_return' },
+                                            coefficient: { kind: 'constant', value: 1 },
+                                            recipient: 'team',
+                                            spGainKind: 'refund',
+                                            spGainSource: 'skill',
+                                          }),
+                                          step(
+                                            'dealDamage',
+                                            {
+                                              damageType: 'cryo',
+                                              attackScale: {
+                                                kind: 'blackboard',
+                                                key: 'atk_scale_final',
+                                              },
+                                              tags: ['normalSkill'],
+                                              features: ['canBreakWeakness'],
+                                              stagger: { kind: 'blackboard', key: 'poise' },
+                                            },
+                                            'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/2',
+                                          ),
+                                          branch(
+                                            {
+                                              kind: 'actionValueCompare',
+                                              left: {
+                                                kind: 'blackboard',
+                                                key: 'count',
+                                                fallback: 0,
+                                              },
+                                              operator: 'greater',
+                                              right: {
+                                                kind: 'blackboard',
+                                                key: 'max_count',
+                                                fallback: 0,
+                                              },
+                                            },
+                                            sequence(
+                                              step('modifyActionValue', {
+                                                key: 'max_count',
+                                                operation: 'assign',
+                                                value: { kind: 'blackboard', key: 'count' },
+                                              }),
+                                            ),
+                                          ),
+                                        ),
+                                        { alwaysNext: true },
+                                      ),
+                                    ),
+                                  ),
+                                  step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
                                   branch(
                                     {
-                                      kind: 'buffStackCompare',
-                                      target: 'enemy',
-                                      tagQueryType: 'hasAny',
-                                      buffTags: [
-                                        'Skill/Character/Common/SpellInflict/CrystInflict',
-                                      ],
-                                      operator: 'greaterOrEqual',
-                                      value: { kind: 'constant', value: 1 },
+                                      kind: 'actionValueCompare',
+                                      left: { kind: 'blackboard', key: 'max_count', fallback: 0 },
+                                      operator: 'greater',
+                                      right: { kind: 'constant', value: 0 },
                                     },
                                     sequence(
-                                      step('readBuffStackCount', {
-                                        target: 'enemy',
-                                        outputKey: 'count',
-                                        query: {
-                                          kind: 'tag',
-                                          tagQueryType: 'hasAny',
-                                          buffTags: [
-                                            'Skill/Character/Common/SpellInflict/CrystInflict',
-                                          ],
-                                        },
-                                      }),
-                                      branch(
-                                        {
-                                          kind: 'buffStackCompare',
-                                          target: 'enemy',
-                                          tagQueryType: 'hasAny',
-                                          buffTags: [
-                                            'Skill/Character/Common/SpellInflict/CrystInflict',
-                                          ],
-                                          operator: 'greaterOrEqual',
-                                          value: { kind: 'blackboard', key: 'count' },
-                                        },
-                                        sequence(
-                                          step('finishBuffsByTag', {
-                                            target: 'enemy',
-                                            tagQueryType: 'hasAny',
-                                            buffTags: [
-                                              'Skill/Character/Common/SpellInflict/CrystInflict',
-                                            ],
-                                            reason: 'early',
-                                            count: { kind: 'blackboard', key: 'count' },
-                                          }),
-                                          step('applyBuff', {
-                                            buffId: 'buff_common_cryst_cryst_frozen_triggered',
-                                            target: 'enemy',
-                                            inheritSourceSkillCastInfo: true,
-                                            blackboardAssignments: {
-                                              consumed_type: { kind: 'constant', value: 2 },
-                                              consumed_layer: { kind: 'blackboard', key: 'count' },
-                                              count: { kind: 'blackboard', key: 'count' },
-                                            },
-                                          }),
-                                        ),
-                                      ),
                                       step('calculateActionValue', {
-                                        key: 'atk_scale_final',
+                                        key: 'usp_final',
                                         operation: 'multiply',
-                                        left: { kind: 'blackboard', key: 'atk_scale_layer' },
-                                        right: { kind: 'blackboard', key: 'count' },
+                                        left: { kind: 'blackboard', key: 'usp_layer' },
+                                        right: { kind: 'blackboard', key: 'max_count' },
                                       }),
                                       step('modifyActionValue', {
-                                        key: 'atk_scale_final',
+                                        key: 'usp_final',
                                         operation: 'add',
-                                        value: { kind: 'blackboard', key: 'atk_scale' },
-                                      }),
-                                      step('modifyActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'add',
-                                        value: { kind: 'blackboard', key: 'atk_scale2' },
+                                        value: { kind: 'blackboard', key: 'usp_base' },
                                       }),
                                       step('changeResourceByActionValue', {
-                                        resource: 'sp',
-                                        amount: { kind: 'blackboard', key: 'atb_return' },
+                                        resource: 'ultimateEnergy',
+                                        amount: { kind: 'blackboard', key: 'usp_final' },
                                         coefficient: { kind: 'constant', value: 1 },
-                                        recipient: 'team',
-                                        spGainKind: 'refund',
-                                        spGainSource: 'skill',
+                                        recipient: 'caster',
                                       }),
-                                      step(
-                                        'dealDamage',
-                                        {
-                                          damageType: 'cryo',
-                                          attackScale: {
-                                            kind: 'blackboard',
-                                            key: 'atk_scale_final',
-                                          },
-                                          tags: ['normalSkill'],
-                                          features: ['canBreakWeakness'],
-                                          stagger: { kind: 'blackboard', key: 'poise' },
-                                        },
-                                        'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/whenTrue/steps/6',
-                                      ),
-                                      branch(
-                                        {
-                                          kind: 'actionValueCompare',
-                                          left: { kind: 'blackboard', key: 'count', fallback: 0 },
-                                          operator: 'greater',
-                                          right: {
-                                            kind: 'blackboard',
-                                            key: 'max_count',
-                                            fallback: 0,
-                                          },
-                                        },
-                                        sequence(
-                                          step('modifyActionValue', {
-                                            key: 'max_count',
-                                            operation: 'assign',
-                                            value: { kind: 'blackboard', key: 'count' },
-                                          }),
-                                        ),
-                                      ),
                                     ),
-                                    sequence(
-                                      step('readBuffStackCount', {
-                                        target: 'enemy',
-                                        outputKey: 'count',
-                                        query: {
-                                          kind: 'tag',
-                                          tagQueryType: 'hasAny',
-                                          buffTags: [
-                                            'Skill/Character/Common/SpellInflict/NaturalInflict',
-                                          ],
-                                        },
-                                      }),
-                                      branch(
-                                        {
-                                          kind: 'buffStackCompare',
-                                          target: 'enemy',
-                                          tagQueryType: 'hasAny',
-                                          buffTags: [
-                                            'Skill/Character/Common/SpellInflict/NaturalInflict',
-                                          ],
-                                          operator: 'greaterOrEqual',
-                                          value: { kind: 'blackboard', key: 'count' },
-                                        },
-                                        sequence(
-                                          step('finishBuffsByTag', {
-                                            target: 'enemy',
-                                            tagQueryType: 'hasAny',
-                                            buffTags: [
-                                              'Skill/Character/Common/SpellInflict/NaturalInflict',
-                                            ],
-                                            reason: 'early',
-                                            count: { kind: 'blackboard', key: 'count' },
-                                          }),
-                                          step('applyBuff', {
-                                            buffId: 'buff_common_cryst_cryst_frozen_triggered',
-                                            target: 'enemy',
-                                            inheritSourceSkillCastInfo: true,
-                                            blackboardAssignments: {
-                                              consumed_type: { kind: 'constant', value: 3 },
-                                              consumed_layer: { kind: 'blackboard', key: 'count' },
-                                              count: { kind: 'blackboard', key: 'count' },
-                                            },
-                                          }),
-                                        ),
-                                      ),
-                                      step('calculateActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'multiply',
-                                        left: { kind: 'blackboard', key: 'atk_scale_layer' },
-                                        right: { kind: 'blackboard', key: 'count' },
-                                      }),
-                                      step('modifyActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'add',
-                                        value: { kind: 'blackboard', key: 'atk_scale' },
-                                      }),
-                                      step('modifyActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'add',
-                                        value: { kind: 'blackboard', key: 'atk_scale2' },
-                                      }),
-                                      step('changeResourceByActionValue', {
-                                        resource: 'sp',
-                                        amount: { kind: 'blackboard', key: 'atb_return' },
-                                        coefficient: { kind: 'constant', value: 1 },
-                                        recipient: 'team',
-                                        spGainKind: 'refund',
-                                        spGainSource: 'skill',
-                                      }),
-                                      step(
-                                        'dealDamage',
-                                        {
-                                          damageType: 'cryo',
-                                          attackScale: {
-                                            kind: 'blackboard',
-                                            key: 'atk_scale_final',
-                                          },
-                                          tags: ['normalSkill'],
-                                          features: ['canBreakWeakness'],
-                                          stagger: { kind: 'blackboard', key: 'poise' },
-                                        },
-                                        'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/whenTrue/steps/0/whenFalse/steps/6',
-                                      ),
-                                      branch(
-                                        {
-                                          kind: 'actionValueCompare',
-                                          left: { kind: 'blackboard', key: 'count', fallback: 0 },
-                                          operator: 'greater',
-                                          right: {
-                                            kind: 'blackboard',
-                                            key: 'max_count',
-                                            fallback: 0,
-                                          },
-                                        },
-                                        sequence(
-                                          step('modifyActionValue', {
-                                            key: 'max_count',
-                                            operation: 'assign',
-                                            value: { kind: 'blackboard', key: 'count' },
-                                          }),
-                                        ),
-                                      ),
-                                    ),
+                                    undefined,
                                     { alwaysNext: true },
                                   ),
                                 ),
                                 sequence(
-                                  step('modifyActionValue', {
-                                    key: 'atk_scale_final',
-                                    operation: 'assign',
-                                    value: { kind: 'blackboard', key: 'atk_scale' },
-                                  }),
-                                  step('changeResourceByActionValue', {
-                                    resource: 'sp',
-                                    amount: { kind: 'blackboard', key: 'atb_return' },
-                                    coefficient: { kind: 'constant', value: 1 },
-                                    recipient: 'team',
-                                    spGainKind: 'refund',
-                                    spGainSource: 'skill',
-                                  }),
-                                  step(
-                                    'dealDamage',
-                                    {
-                                      damageType: 'cryo',
-                                      attackScale: { kind: 'blackboard', key: 'atk_scale_final' },
-                                      tags: ['normalSkill'],
-                                      features: ['canBreakWeakness'],
-                                      stagger: { kind: 'blackboard', key: 'poise' },
-                                    },
-                                    'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenTrue/steps/0/body/steps/0/whenFalse/steps/2',
+                                  forEachTarget(
+                                    'enemy',
+                                    sequence(
+                                      branch(
+                                        {
+                                          kind: 'buffStackCompare',
+                                          target: 'enemy',
+                                          tagQueryType: 'hasAny',
+                                          buffTags: [
+                                            'Skill/Character/Common/SpellInflict/CrystInflict',
+                                            'Skill/Character/Common/SpellInflict/NaturalInflict',
+                                          ],
+                                          operator: 'greaterOrEqual',
+                                          value: { kind: 'constant', value: 1 },
+                                        },
+                                        sequence(
+                                          branch(
+                                            {
+                                              kind: 'buffStackCompare',
+                                              target: 'enemy',
+                                              tagQueryType: 'hasAny',
+                                              buffTags: [
+                                                'Skill/Character/Common/SpellInflict/CrystInflict',
+                                              ],
+                                              operator: 'greaterOrEqual',
+                                              value: { kind: 'constant', value: 1 },
+                                            },
+                                            sequence(
+                                              step('readBuffStackCount', {
+                                                target: 'enemy',
+                                                outputKey: 'count',
+                                                query: {
+                                                  kind: 'tag',
+                                                  tagQueryType: 'hasAny',
+                                                  buffTags: [
+                                                    'Skill/Character/Common/SpellInflict/CrystInflict',
+                                                  ],
+                                                },
+                                              }),
+                                              branch(
+                                                {
+                                                  kind: 'buffStackCompare',
+                                                  target: 'enemy',
+                                                  tagQueryType: 'hasAny',
+                                                  buffTags: [
+                                                    'Skill/Character/Common/SpellInflict/CrystInflict',
+                                                  ],
+                                                  operator: 'greaterOrEqual',
+                                                  value: { kind: 'blackboard', key: 'count' },
+                                                },
+                                                sequence(
+                                                  step('finishBuffsByTag', {
+                                                    target: 'enemy',
+                                                    tagQueryType: 'hasAny',
+                                                    buffTags: [
+                                                      'Skill/Character/Common/SpellInflict/CrystInflict',
+                                                    ],
+                                                    reason: 'early',
+                                                    count: { kind: 'blackboard', key: 'count' },
+                                                  }),
+                                                  step('applyBuff', {
+                                                    buffId:
+                                                      'buff_common_cryst_cryst_frozen_triggered',
+                                                    target: 'enemy',
+                                                    inheritSourceSkillCastInfo: true,
+                                                    blackboardAssignments: {
+                                                      consumed_type: { kind: 'constant', value: 2 },
+                                                      consumed_layer: {
+                                                        kind: 'blackboard',
+                                                        key: 'count',
+                                                      },
+                                                      count: { kind: 'blackboard', key: 'count' },
+                                                    },
+                                                  }),
+                                                ),
+                                              ),
+                                              step('calculateActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'multiply',
+                                                left: {
+                                                  kind: 'blackboard',
+                                                  key: 'atk_scale_layer',
+                                                },
+                                                right: { kind: 'blackboard', key: 'count' },
+                                              }),
+                                              step('modifyActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'add',
+                                                value: { kind: 'blackboard', key: 'atk_scale' },
+                                              }),
+                                              step('modifyActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'add',
+                                                value: { kind: 'blackboard', key: 'atk_scale2' },
+                                              }),
+                                              step(
+                                                'dealDamage',
+                                                {
+                                                  damageType: 'cryo',
+                                                  attackScale: {
+                                                    kind: 'blackboard',
+                                                    key: 'atk_scale_final',
+                                                  },
+                                                  tags: ['normalSkill'],
+                                                  features: ['canBreakWeakness'],
+                                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                                },
+                                                'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/whenTrue/steps/5',
+                                              ),
+                                              branch(
+                                                {
+                                                  kind: 'actionValueCompare',
+                                                  left: {
+                                                    kind: 'blackboard',
+                                                    key: 'count',
+                                                    fallback: 0,
+                                                  },
+                                                  operator: 'greater',
+                                                  right: {
+                                                    kind: 'blackboard',
+                                                    key: 'max_count',
+                                                    fallback: 0,
+                                                  },
+                                                },
+                                                sequence(
+                                                  step('modifyActionValue', {
+                                                    key: 'max_count',
+                                                    operation: 'assign',
+                                                    value: { kind: 'blackboard', key: 'count' },
+                                                  }),
+                                                ),
+                                              ),
+                                            ),
+                                            sequence(
+                                              step('readBuffStackCount', {
+                                                target: 'enemy',
+                                                outputKey: 'count',
+                                                query: {
+                                                  kind: 'tag',
+                                                  tagQueryType: 'hasAny',
+                                                  buffTags: [
+                                                    'Skill/Character/Common/SpellInflict/NaturalInflict',
+                                                  ],
+                                                },
+                                              }),
+                                              branch(
+                                                {
+                                                  kind: 'buffStackCompare',
+                                                  target: 'enemy',
+                                                  tagQueryType: 'hasAny',
+                                                  buffTags: [
+                                                    'Skill/Character/Common/SpellInflict/NaturalInflict',
+                                                  ],
+                                                  operator: 'greaterOrEqual',
+                                                  value: { kind: 'blackboard', key: 'count' },
+                                                },
+                                                sequence(
+                                                  step('finishBuffsByTag', {
+                                                    target: 'enemy',
+                                                    tagQueryType: 'hasAny',
+                                                    buffTags: [
+                                                      'Skill/Character/Common/SpellInflict/NaturalInflict',
+                                                    ],
+                                                    reason: 'early',
+                                                    count: { kind: 'blackboard', key: 'count' },
+                                                  }),
+                                                  step('applyBuff', {
+                                                    buffId:
+                                                      'buff_common_cryst_cryst_frozen_triggered',
+                                                    target: 'enemy',
+                                                    inheritSourceSkillCastInfo: true,
+                                                    blackboardAssignments: {
+                                                      consumed_type: { kind: 'constant', value: 3 },
+                                                      consumed_layer: {
+                                                        kind: 'blackboard',
+                                                        key: 'count',
+                                                      },
+                                                      count: { kind: 'blackboard', key: 'count' },
+                                                    },
+                                                  }),
+                                                ),
+                                              ),
+                                              step('calculateActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'multiply',
+                                                left: {
+                                                  kind: 'blackboard',
+                                                  key: 'atk_scale_layer',
+                                                },
+                                                right: { kind: 'blackboard', key: 'count' },
+                                              }),
+                                              step('modifyActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'add',
+                                                value: { kind: 'blackboard', key: 'atk_scale' },
+                                              }),
+                                              step('modifyActionValue', {
+                                                key: 'atk_scale_final',
+                                                operation: 'add',
+                                                value: { kind: 'blackboard', key: 'atk_scale2' },
+                                              }),
+                                              step(
+                                                'dealDamage',
+                                                {
+                                                  damageType: 'cryo',
+                                                  attackScale: {
+                                                    kind: 'blackboard',
+                                                    key: 'atk_scale_final',
+                                                  },
+                                                  tags: ['normalSkill'],
+                                                  features: ['canBreakWeakness'],
+                                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                                },
+                                                'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/whenFalse/steps/5',
+                                              ),
+                                              branch(
+                                                {
+                                                  kind: 'actionValueCompare',
+                                                  left: {
+                                                    kind: 'blackboard',
+                                                    key: 'count',
+                                                    fallback: 0,
+                                                  },
+                                                  operator: 'greater',
+                                                  right: {
+                                                    kind: 'blackboard',
+                                                    key: 'max_count',
+                                                    fallback: 0,
+                                                  },
+                                                },
+                                                sequence(
+                                                  step('modifyActionValue', {
+                                                    key: 'max_count',
+                                                    operation: 'assign',
+                                                    value: { kind: 'blackboard', key: 'count' },
+                                                  }),
+                                                ),
+                                              ),
+                                            ),
+                                            { alwaysNext: true },
+                                          ),
+                                        ),
+                                        sequence(
+                                          step('modifyActionValue', {
+                                            key: 'atk_scale_final',
+                                            operation: 'assign',
+                                            value: { kind: 'blackboard', key: 'atk_scale' },
+                                          }),
+                                          step(
+                                            'dealDamage',
+                                            {
+                                              damageType: 'cryo',
+                                              attackScale: {
+                                                kind: 'blackboard',
+                                                key: 'atk_scale_final',
+                                              },
+                                              tags: ['normalSkill'],
+                                              features: ['canBreakWeakness'],
+                                              stagger: { kind: 'blackboard', key: 'poise' },
+                                            },
+                                            'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/1',
+                                          ),
+                                          branch(
+                                            {
+                                              kind: 'actionValueCompare',
+                                              left: {
+                                                kind: 'blackboard',
+                                                key: 'count',
+                                                fallback: 0,
+                                              },
+                                              operator: 'greater',
+                                              right: {
+                                                kind: 'blackboard',
+                                                key: 'max_count',
+                                                fallback: 0,
+                                              },
+                                            },
+                                            sequence(
+                                              step('modifyActionValue', {
+                                                key: 'max_count',
+                                                operation: 'assign',
+                                                value: { kind: 'blackboard', key: 'count' },
+                                              }),
+                                            ),
+                                          ),
+                                        ),
+                                        { alwaysNext: true },
+                                      ),
+                                    ),
                                   ),
+                                  step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
                                   branch(
                                     {
                                       kind: 'actionValueCompare',
-                                      left: { kind: 'blackboard', key: 'count', fallback: 0 },
+                                      left: { kind: 'blackboard', key: 'max_count', fallback: 0 },
                                       operator: 'greater',
-                                      right: { kind: 'blackboard', key: 'max_count', fallback: 0 },
+                                      right: { kind: 'constant', value: 0 },
                                     },
                                     sequence(
+                                      step('calculateActionValue', {
+                                        key: 'usp_final',
+                                        operation: 'multiply',
+                                        left: { kind: 'blackboard', key: 'usp_layer' },
+                                        right: { kind: 'blackboard', key: 'max_count' },
+                                      }),
                                       step('modifyActionValue', {
-                                        key: 'max_count',
-                                        operation: 'assign',
-                                        value: { kind: 'blackboard', key: 'count' },
+                                        key: 'usp_final',
+                                        operation: 'add',
+                                        value: { kind: 'blackboard', key: 'usp_base' },
+                                      }),
+                                      step('changeResourceByActionValue', {
+                                        resource: 'ultimateEnergy',
+                                        amount: { kind: 'blackboard', key: 'usp_final' },
+                                        coefficient: { kind: 'constant', value: 1 },
+                                        recipient: 'caster',
                                       }),
                                     ),
+                                    undefined,
+                                    { alwaysNext: true },
                                   ),
                                 ),
                                 { alwaysNext: true },
                               ),
                             ),
+                            3,
                           ),
-                          step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
-                          branch(
-                            {
-                              kind: 'actionValueCompare',
-                              left: { kind: 'blackboard', key: 'max_count', fallback: 0 },
-                              operator: 'greater',
-                              right: { kind: 'constant', value: 0 },
-                            },
-                            sequence(
-                              step('calculateActionValue', {
-                                key: 'usp_final',
-                                operation: 'multiply',
-                                left: { kind: 'blackboard', key: 'usp_layer' },
-                                right: { kind: 'blackboard', key: 'max_count' },
-                              }),
-                              step('modifyActionValue', {
-                                key: 'usp_final',
-                                operation: 'add',
-                                value: { kind: 'blackboard', key: 'usp_base' },
-                              }),
-                              step('changeResourceByActionValue', {
-                                resource: 'ultimateEnergy',
-                                amount: { kind: 'blackboard', key: 'usp_final' },
-                                coefficient: { kind: 'constant', value: 1 },
-                                recipient: 'caster',
-                              }),
-                            ),
-                            undefined,
-                            { alwaysNext: true },
-                          ),
-                        ),
-                        sequence(
-                          forEachTarget(
-                            'enemy',
-                            sequence(
-                              branch(
-                                {
-                                  kind: 'buffStackCompare',
-                                  target: 'enemy',
-                                  tagQueryType: 'hasAny',
-                                  buffTags: [
-                                    'Skill/Character/Common/SpellInflict/CrystInflict',
-                                    'Skill/Character/Common/SpellInflict/NaturalInflict',
-                                  ],
-                                  operator: 'greaterOrEqual',
-                                  value: { kind: 'constant', value: 1 },
-                                },
-                                sequence(
-                                  branch(
-                                    {
-                                      kind: 'buffStackCompare',
-                                      target: 'enemy',
-                                      tagQueryType: 'hasAny',
-                                      buffTags: [
-                                        'Skill/Character/Common/SpellInflict/CrystInflict',
-                                      ],
-                                      operator: 'greaterOrEqual',
-                                      value: { kind: 'constant', value: 1 },
-                                    },
-                                    sequence(
-                                      step('readBuffStackCount', {
-                                        target: 'enemy',
-                                        outputKey: 'count',
-                                        query: {
-                                          kind: 'tag',
-                                          tagQueryType: 'hasAny',
-                                          buffTags: [
-                                            'Skill/Character/Common/SpellInflict/CrystInflict',
-                                          ],
-                                        },
-                                      }),
-                                      branch(
-                                        {
-                                          kind: 'buffStackCompare',
-                                          target: 'enemy',
-                                          tagQueryType: 'hasAny',
-                                          buffTags: [
-                                            'Skill/Character/Common/SpellInflict/CrystInflict',
-                                          ],
-                                          operator: 'greaterOrEqual',
-                                          value: { kind: 'blackboard', key: 'count' },
-                                        },
-                                        sequence(
-                                          step('finishBuffsByTag', {
-                                            target: 'enemy',
-                                            tagQueryType: 'hasAny',
-                                            buffTags: [
-                                              'Skill/Character/Common/SpellInflict/CrystInflict',
-                                            ],
-                                            reason: 'early',
-                                            count: { kind: 'blackboard', key: 'count' },
-                                          }),
-                                          step('applyBuff', {
-                                            buffId: 'buff_common_cryst_cryst_frozen_triggered',
-                                            target: 'enemy',
-                                            inheritSourceSkillCastInfo: true,
-                                            blackboardAssignments: {
-                                              consumed_type: { kind: 'constant', value: 2 },
-                                              consumed_layer: { kind: 'blackboard', key: 'count' },
-                                              count: { kind: 'blackboard', key: 'count' },
-                                            },
-                                          }),
-                                        ),
-                                      ),
-                                      step('calculateActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'multiply',
-                                        left: { kind: 'blackboard', key: 'atk_scale_layer' },
-                                        right: { kind: 'blackboard', key: 'count' },
-                                      }),
-                                      step('modifyActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'add',
-                                        value: { kind: 'blackboard', key: 'atk_scale' },
-                                      }),
-                                      step('modifyActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'add',
-                                        value: { kind: 'blackboard', key: 'atk_scale2' },
-                                      }),
-                                      step(
-                                        'dealDamage',
-                                        {
-                                          damageType: 'cryo',
-                                          attackScale: {
-                                            kind: 'blackboard',
-                                            key: 'atk_scale_final',
-                                          },
-                                          tags: ['normalSkill'],
-                                          features: ['canBreakWeakness'],
-                                          stagger: { kind: 'blackboard', key: 'poise' },
-                                        },
-                                        'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/whenTrue/steps/5',
-                                      ),
-                                      branch(
-                                        {
-                                          kind: 'actionValueCompare',
-                                          left: { kind: 'blackboard', key: 'count', fallback: 0 },
-                                          operator: 'greater',
-                                          right: {
-                                            kind: 'blackboard',
-                                            key: 'max_count',
-                                            fallback: 0,
-                                          },
-                                        },
-                                        sequence(
-                                          step('modifyActionValue', {
-                                            key: 'max_count',
-                                            operation: 'assign',
-                                            value: { kind: 'blackboard', key: 'count' },
-                                          }),
-                                        ),
-                                      ),
-                                    ),
-                                    sequence(
-                                      step('readBuffStackCount', {
-                                        target: 'enemy',
-                                        outputKey: 'count',
-                                        query: {
-                                          kind: 'tag',
-                                          tagQueryType: 'hasAny',
-                                          buffTags: [
-                                            'Skill/Character/Common/SpellInflict/NaturalInflict',
-                                          ],
-                                        },
-                                      }),
-                                      branch(
-                                        {
-                                          kind: 'buffStackCompare',
-                                          target: 'enemy',
-                                          tagQueryType: 'hasAny',
-                                          buffTags: [
-                                            'Skill/Character/Common/SpellInflict/NaturalInflict',
-                                          ],
-                                          operator: 'greaterOrEqual',
-                                          value: { kind: 'blackboard', key: 'count' },
-                                        },
-                                        sequence(
-                                          step('finishBuffsByTag', {
-                                            target: 'enemy',
-                                            tagQueryType: 'hasAny',
-                                            buffTags: [
-                                              'Skill/Character/Common/SpellInflict/NaturalInflict',
-                                            ],
-                                            reason: 'early',
-                                            count: { kind: 'blackboard', key: 'count' },
-                                          }),
-                                          step('applyBuff', {
-                                            buffId: 'buff_common_cryst_cryst_frozen_triggered',
-                                            target: 'enemy',
-                                            inheritSourceSkillCastInfo: true,
-                                            blackboardAssignments: {
-                                              consumed_type: { kind: 'constant', value: 3 },
-                                              consumed_layer: { kind: 'blackboard', key: 'count' },
-                                              count: { kind: 'blackboard', key: 'count' },
-                                            },
-                                          }),
-                                        ),
-                                      ),
-                                      step('calculateActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'multiply',
-                                        left: { kind: 'blackboard', key: 'atk_scale_layer' },
-                                        right: { kind: 'blackboard', key: 'count' },
-                                      }),
-                                      step('modifyActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'add',
-                                        value: { kind: 'blackboard', key: 'atk_scale' },
-                                      }),
-                                      step('modifyActionValue', {
-                                        key: 'atk_scale_final',
-                                        operation: 'add',
-                                        value: { kind: 'blackboard', key: 'atk_scale2' },
-                                      }),
-                                      step(
-                                        'dealDamage',
-                                        {
-                                          damageType: 'cryo',
-                                          attackScale: {
-                                            kind: 'blackboard',
-                                            key: 'atk_scale_final',
-                                          },
-                                          tags: ['normalSkill'],
-                                          features: ['canBreakWeakness'],
-                                          stagger: { kind: 'blackboard', key: 'poise' },
-                                        },
-                                        'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/whenTrue/steps/0/whenFalse/steps/5',
-                                      ),
-                                      branch(
-                                        {
-                                          kind: 'actionValueCompare',
-                                          left: { kind: 'blackboard', key: 'count', fallback: 0 },
-                                          operator: 'greater',
-                                          right: {
-                                            kind: 'blackboard',
-                                            key: 'max_count',
-                                            fallback: 0,
-                                          },
-                                        },
-                                        sequence(
-                                          step('modifyActionValue', {
-                                            key: 'max_count',
-                                            operation: 'assign',
-                                            value: { kind: 'blackboard', key: 'count' },
-                                          }),
-                                        ),
-                                      ),
-                                    ),
-                                    { alwaysNext: true },
-                                  ),
-                                ),
-                                sequence(
-                                  step('modifyActionValue', {
-                                    key: 'atk_scale_final',
-                                    operation: 'assign',
-                                    value: { kind: 'blackboard', key: 'atk_scale' },
-                                  }),
-                                  step(
-                                    'dealDamage',
-                                    {
-                                      damageType: 'cryo',
-                                      attackScale: { kind: 'blackboard', key: 'atk_scale_final' },
-                                      tags: ['normalSkill'],
-                                      features: ['canBreakWeakness'],
-                                      stagger: { kind: 'blackboard', key: 'poise' },
-                                    },
-                                    'buff_chr_0017_yvonne_normal_skill_projectile:/lifecycleSequences/finish/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0/whenFalse/steps/0/body/steps/0/whenFalse/steps/1',
-                                  ),
-                                  branch(
-                                    {
-                                      kind: 'actionValueCompare',
-                                      left: { kind: 'blackboard', key: 'count', fallback: 0 },
-                                      operator: 'greater',
-                                      right: { kind: 'blackboard', key: 'max_count', fallback: 0 },
-                                    },
-                                    sequence(
-                                      step('modifyActionValue', {
-                                        key: 'max_count',
-                                        operation: 'assign',
-                                        value: { kind: 'blackboard', key: 'count' },
-                                      }),
-                                    ),
-                                  ),
-                                ),
-                                { alwaysNext: true },
-                              ),
-                            ),
-                          ),
-                          step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
-                          branch(
-                            {
-                              kind: 'actionValueCompare',
-                              left: { kind: 'blackboard', key: 'max_count', fallback: 0 },
-                              operator: 'greater',
-                              right: { kind: 'constant', value: 0 },
-                            },
-                            sequence(
-                              step('calculateActionValue', {
-                                key: 'usp_final',
-                                operation: 'multiply',
-                                left: { kind: 'blackboard', key: 'usp_layer' },
-                                right: { kind: 'blackboard', key: 'max_count' },
-                              }),
-                              step('modifyActionValue', {
-                                key: 'usp_final',
-                                operation: 'add',
-                                value: { kind: 'blackboard', key: 'usp_base' },
-                              }),
-                              step('changeResourceByActionValue', {
-                                resource: 'ultimateEnergy',
-                                amount: { kind: 'blackboard', key: 'usp_final' },
-                                coefficient: { kind: 'constant', value: 1 },
-                                recipient: 'caster',
-                              }),
-                            ),
-                            undefined,
-                            { alwaysNext: true },
-                          ),
-                        ),
-                        { alwaysNext: true },
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                          scheduled(0, sequence(), 60),
+                          scheduled(0, sequence(), 60),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -6648,6 +6419,14 @@ export const yvonne: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 50 },
       childSkill: {
         skillId: 'chr_0017_yvonne_combo_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 3000,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atk_scale_boom: 0,
           atk_scale_tick: 0,
@@ -6704,6 +6483,14 @@ export const yvonne: OperatorDefinition = {
       maxStackingCount: 1,
       childSkill: {
         skillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 3000,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale_boom: 0, atk_scale_tick: 0, duration: 0, radius: 0 },
         scheduledSequences: [],
       },
@@ -6720,6 +6507,14 @@ export const yvonne: OperatorDefinition = {
       maxStackingCount: 1,
       childSkill: {
         skillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 3000,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale_boom: 0, atk_scale_tick: 0, duration: 0, radius: 0 },
         scheduledSequences: [],
       },
@@ -6736,6 +6531,14 @@ export const yvonne: OperatorDefinition = {
       maxStackingCount: 1,
       childSkill: {
         skillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 3000,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale_boom: 0, atk_scale_tick: 0, duration: 0, radius: 0 },
         scheduledSequences: [],
       },

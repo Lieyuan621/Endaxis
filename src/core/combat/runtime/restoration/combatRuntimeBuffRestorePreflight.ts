@@ -93,6 +93,8 @@ function collectRequiredActionSequenceReferences(
       }
     } else if (data.kind === 'blackboardScope') {
       collectRequiredActionSequenceReferences(data.scope.body?.sequence ?? null, references);
+    } else if (data.kind === 'repeat') {
+      collectRequiredActionSequenceReferences(data.repetition.body, references);
     } else if (data.kind === 'listener') {
       for (const response of data.listener.responses) {
         collectRequiredActionSequenceReferences(response.sequence, references);
@@ -196,7 +198,9 @@ export function prepareCombatBuffRestore(graph: CombatStateGraph): PreparedComba
     }
   }
   for (const projectile of graph.instances.projectiles.instances.values()) {
-    for (const [key, reference] of projectile.callback?.host?.skill.execution.attachedBuffs ?? []) {
+    for (const [key, reference] of projectile.callbacks.flatMap(callback => [
+      ...(callback.host?.skill.execution.attachedBuffs ?? []),
+    ])) {
       validateAttachedReference(reference, containers, key);
     }
   }
@@ -227,7 +231,7 @@ export function prepareCombatBuffRestore(graph: CombatStateGraph): PreparedComba
   }
   for (const entity of graph.instances.abilityEntities.instances.values()) {
     for (const child of entity.childSkills) {
-      collectTimelineReferences(child.timeline, actionReferences);
+      collectTimelineReferences(child.host.skill.timeline, actionReferences);
     }
     for (const passive of entity.passiveAbilities.values()) {
       collectRequiredActionSequenceReferences(passive.enableSequence, actionReferences);
@@ -249,7 +253,9 @@ export function prepareCombatBuffRestore(graph: CombatStateGraph): PreparedComba
     }
   }
   for (const projectile of graph.instances.projectiles.instances.values()) {
-    collectTimelineReferences(projectile.callback?.host?.skill.timeline ?? null, actionReferences);
+    projectile.callbacks.forEach(callback =>
+      collectTimelineReferences(callback.host?.skill.timeline ?? null, actionReferences),
+    );
   }
   for (const reference of actionReferences) {
     requireReference(reference, instanceKeys, 'action-owned Buff');

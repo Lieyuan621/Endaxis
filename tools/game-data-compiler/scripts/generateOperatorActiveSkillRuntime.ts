@@ -8,9 +8,14 @@ import { fileURLToPath } from 'node:url';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import { collectNativeActionNodes } from '../src/source/controlFlow.ts';
 import { collectBuffRuntimeClosure } from '../src/compiler/buffs/buffReferenceClosure.ts';
+import { inspectExternalBlackboardUsage } from '../src/compiler/references/externalBlackboardUsage.ts';
+import { ExternalBuffReferenceProof } from '../src/compiler/references/externalBuffReferenceProof.ts';
+import type { BlackboardReceiverSource } from '../src/compiler/references/externalBlackboardUsage.ts';
+import { parseAbilityEntityBlackboardReceiverSource } from '../src/source/abilityEntity.ts';
 import type { DeclaredBlackboardValueSource } from '../src/source/blackboard.ts';
 import {
   parseProjectileRuntimeSource,
+  parseProjectileBlackboardReceiverSource,
   type ProjectileRuntimeSource,
 } from '../src/source/projectileRuntime.ts';
 import { parseSkillPatchSource } from '../src/source/skillPatch.ts';
@@ -513,39 +518,141 @@ export function planOperatorActiveSkillRuntime(
     },
     visualOnlyIds,
   });
-  const definition = compileOperatorActiveSkillRuntimeDefinitionSource({
-    key: args.key,
-    skillType: args.skillType,
-    value: source,
-    sourcePath: sourceIdentity,
-    patch,
-    context: {
-      gameplayTagRegistry: registry,
-      actionOwnerTarget: 'caster',
-      actionSourceTarget: 'caster',
-      actionTargetTarget: 'enemy',
-      fixedHittableTargetCount: 0,
-      abilityEntityQueries: { catalog: abilityCatalog, gameplayTagRegistry: registry },
-      comboQteTriggerBlackboardKeys,
-    },
-    extensions: {
-      compileProjectileLaunch: projectile,
-      resolveTimeDilationPriority,
-      ...(globalBuffCatalog === undefined
-        ? {}
-        : createGlobalBuffProjectionExtensions(globalBuffCatalog)),
-      ...(skillSettingCatalog === undefined
-        ? {}
-        : createSkillSettingProjectionExtensions(skillSettingCatalog)),
-      ...(args.compileSkillSlotReplacement === undefined
-        ? {}
-        : { compileSkillSlotReplacement: args.compileSkillSlotReplacement }),
-      ...(args.compileSkillTypeMutation === undefined
-        ? {}
-        : { compileSkillTypeMutation: args.compileSkillTypeMutation }),
-    },
-    visualOnlyIds,
-  });
+  // 按需建立一次接收资源闭包，而不是每个键重复扫描或预先加载全部游戏数据。
+  let externalBlackboardUsage: ReturnType<typeof inspectExternalBlackboardUsage> | undefined;
+  const externalBuffProof = new ExternalBuffReferenceProof();
+  const rememberExternalReceiver = (receiver: BlackboardReceiverSource | undefined) => {
+    if (receiver !== undefined) externalBuffProof.addExternalReferences(receiver.references);
+    return receiver;
+  };
+  const externalRoots = [
+    ...collectSkillRootBuffReferences(source, sourceIdentity),
+    ...collectSkillActionReferences(graph),
+  ];
+  externalBuffProof.addExternalReferences(externalRoots);
+  const isBlackboardKeyUnusedByExternalResources = (key: string): boolean => {
+    externalBlackboardUsage ??= inspectExternalBlackboardUsage(
+      externalRoots,
+      reference => {
+        if (reference.kind === 'abilityEntity') {
+          const file = path.resolve(args.sourceRoot, 'AbilityEntityData', `${reference.id}.json`);
+          return fs.existsSync(file)
+            ? rememberExternalReceiver(
+                parseAbilityEntityBlackboardReceiverSource(readJson(file), file),
+              )
+            : undefined;
+        }
+        if (reference.kind === 'projectile') {
+          const file = path.resolve(args.sourceRoot, 'ProjectileData', `${reference.id}.json`);
+          return fs.existsSync(file)
+            ? rememberExternalReceiver(
+                parseProjectileBlackboardReceiverSource(readJson(file), file),
+              )
+            : undefined;
+        }
+        if (reference.kind === 'globalBuff') {
+          const template = globalBuffCatalog?.byId.get(reference.id!);
+          return template === undefined
+            ? undefined
+            : rememberExternalReceiver({
+                value: template,
+                references: template.children.map(child => ({
+                  kind: 'buff' as const,
+                  id: child.buffId,
+                  usage: 'globalBuffChild',
+                  state: 'active' as const,
+                  blackboardKey: null,
+                  sourcePath: reference.sourcePath,
+                })),
+              });
+        }
+        // 目前模板的组件解码仍可能不完整，不能把它们当成没有额外读取的终点。
+        if (reference.kind !== 'skill' && reference.kind !== 'buff') return undefined;
+        const file =
+          reference.kind === 'skill'
+            ? path.resolve(args.sourceRoot, 'SkillData', `${reference.id}.json`)
+            : path.resolve(args.buffDataRoot, `${reference.id}.json`);
+        if (!fs.existsSync(file)) return undefined;
+        const value = readJson(file);
+        if (reference.kind === 'buff') {
+          return { value, references: externalBuffProof.addBuff(reference.id!, value, file) };
+        }
+        const receiverPatch =
+          reference.id! in patchTable
+            ? parseSkillPatchSource(patchTable[reference.id!], reference.id!)
+            : null;
+        const receiverPrepared = prepareSkillDefinitionInputSource(value, file, receiverPatch);
+        const receiver = parseKnownSkillActionGraphSource(
+          value,
+          file,
+          receiverPrepared.blackboard.values,
+        );
+        return rememberExternalReceiver({
+          value,
+          references: [
+            ...collectSkillRootBuffReferences(value, file),
+            ...collectSkillActionReferences(receiver),
+          ],
+        });
+      },
+      reference => externalBuffProof.resolve(reference),
+    );
+    return (
+      externalBlackboardUsage.unresolved.length === 0 &&
+      !externalBlackboardUsage.mentionedKeys.has(key)
+    );
+  };
+  let definition: ReturnType<typeof compileOperatorActiveSkillRuntimeDefinitionSource>;
+  try {
+    definition = compileOperatorActiveSkillRuntimeDefinitionSource({
+      key: args.key,
+      skillType: args.skillType,
+      value: source,
+      sourcePath: sourceIdentity,
+      patch,
+      context: {
+        gameplayTagRegistry: registry,
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+        fixedHittableTargetCount: 0,
+        abilityEntityQueries: { catalog: abilityCatalog, gameplayTagRegistry: registry },
+        comboQteTriggerBlackboardKeys,
+        isBlackboardKeyUnusedByExternalResources,
+      },
+      extensions: {
+        compileProjectileLaunch: projectile,
+        resolveTimeDilationPriority,
+        ...(globalBuffCatalog === undefined
+          ? {}
+          : createGlobalBuffProjectionExtensions(globalBuffCatalog)),
+        ...(skillSettingCatalog === undefined
+          ? {}
+          : createSkillSettingProjectionExtensions(skillSettingCatalog)),
+        ...(args.compileSkillSlotReplacement === undefined
+          ? {}
+          : { compileSkillSlotReplacement: args.compileSkillSlotReplacement }),
+        ...(args.compileSkillTypeMutation === undefined
+          ? {}
+          : { compileSkillTypeMutation: args.compileSkillTypeMutation }),
+      },
+      visualOnlyIds,
+    });
+  } catch (error) {
+    if (error instanceof Error && externalBlackboardUsage?.unresolved.length) {
+      const receivers = externalBlackboardUsage.unresolved
+        .map(
+          reference =>
+            `${reference.kind}:${reference.id ?? '(dynamic)'} at ${reference.sourcePath}`,
+        )
+        .join('\n');
+      throw new Error(
+        `${error.message}\nBlackboard receiver analysis is incomplete:\n${receivers}`,
+        { cause: error },
+      );
+    }
+    throw error;
+  }
   const runtimeBuffIds = new Set(collectCompiledBuffIds(definition));
   for (const id of args.supplementalBuffIds)
     if (!runtimeBuffIds.has(id))

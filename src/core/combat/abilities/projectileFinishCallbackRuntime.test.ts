@@ -1,3 +1,4 @@
+import { bindProjectileCallbackLifecycle } from './projectileCallbackRuntime';
 import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { describe, expect, it } from 'vitest';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
@@ -77,35 +78,40 @@ function delayedProbe(): ResolvedActionSequence {
         body: {
           steps: [
             {
-              kind: 'scheduleProjectileFinishCallback',
-              parameters: { delaySeconds: 3, recycleDelaySeconds: 0 },
-              callback: {
-                skillId: 'callback',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: zeroCastResource,
-                initialBlackboard: {},
-                timelineActions: [
-                  {
-                    startFrame: 0,
-                    endFrame: 0,
-                    sequence: {
-                      steps: [
-                        {
-                          kind: 'withActionBlackboardScope',
-                          parameters: {
-                            scopeKey: 'callback',
-                            lifetime: 'execution',
-                            initialValues: { local: 2 },
-                            inheritParent: true,
-                          },
-                          body: { steps: [probe] },
+              kind: 'launchProjectile',
+              parameters: { finish: 3, recycleDelaySeconds: 0 },
+              callbacks: [
+                {
+                  event: 'finish',
+                  skill: {
+                    skillId: 'callback',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: zeroCastResource,
+                    initialBlackboard: {},
+                    timelineActions: [
+                      {
+                        startFrame: 0,
+                        endFrame: 0,
+                        sequence: {
+                          steps: [
+                            {
+                              kind: 'withActionBlackboardScope',
+                              parameters: {
+                                scopeKey: 'callback',
+                                lifetime: 'execution',
+                                initialValues: { local: 2 },
+                                inheritParent: true,
+                              },
+                              body: { steps: [probe] },
+                            },
+                          ],
                         },
-                      ],
-                    },
+                      },
+                    ],
                   },
-                ],
-              },
+                },
+              ],
             },
           ],
         },
@@ -128,25 +134,17 @@ describe('projectile callback action lifecycle', () => {
           nonReturnedSpCost: 0,
         },
         createCallbackSkillHost: createTestHost,
-        scheduleProjectileFinishCallback: (
-          delay,
-          recycle,
-          finish,
-          beforeReset,
-          _source,
-          _advance,
-          _owner,
-          callback,
-          callbackProgram,
-        ) =>
+        launchProjectile: request =>
           projectiles.launch({
-            finishDelaySeconds: delay,
-            recycleDelaySeconds: recycle,
-            resolveTickDeltaSeconds: () => 1,
-            finish,
-            beforeReset,
-            ...(callback === undefined ? {} : { callback }),
-            ...(callbackProgram === undefined ? {} : { callbackProgram }),
+            finishDelaySeconds: request.finish,
+            recycleDelaySeconds: request.recycleDelaySeconds,
+            callbacks: request.callbacks.map(c => c.runtime.runtimeState),
+            callbackPrograms: request.callbacks.map(c => c.program),
+            firstTickHit: request.hit,
+            ...bindProjectileCallbackLifecycle(
+              request.callbacks.map(c => c.runtime),
+              () => 1,
+            ),
           }),
       },
       undefined,
@@ -154,7 +152,7 @@ describe('projectile callback action lifecycle', () => {
       'source',
     );
     runtime.createSequence(delayedProbe()).executeInstant({});
-    const data = [...projectiles.runtimeState.instances.values()][0]!.callback!;
+    const data = [...projectiles.runtimeState.instances.values()][0]!.callbacks[0]!;
     expect(data.skillId).toBe('callback');
     expect(projectiles.callbackPrograms.resolve(data.programId!).skillId).toBe('callback');
     expect(data.skillCastInfo?.skillCastId).toBe(42);
@@ -165,7 +163,7 @@ describe('projectile callback action lifecycle', () => {
     projectiles.advanceFrame();
     projectiles.advanceFrame();
     expect(data.host).not.toBeNull();
-    expect([...saved.instances.values()][0]!.callback!.host).toBeNull();
+    expect([...saved.instances.values()][0]!.callbacks[0]!.host).toBeNull();
   });
 
   it('uses the same synchronous out-of-duration jump cleanup as an ordinary skill', () => {
@@ -275,7 +273,7 @@ describe('projectile callback action lifecycle', () => {
           expect(context!.blackboard.getNumber('seed')).toBe(7);
           expect(context!.skillCastInfo?.skillCastId).toBe(42);
           expect(context!.actionOwnerId).toBe('ability-entity:1');
-          expect(context!.actionSourceId).toBe('ability-entity:1');
+          expect(context!.actionSourceId).toBe('source');
           expect(context!.actionOwnerAbilityEntity).toEqual({
             kind: 'abilityEntity',
             instanceId: 1,
@@ -307,14 +305,17 @@ describe('projectile callback action lifecycle', () => {
           nonReturnedSpCost: 0,
         },
         createCallbackSkillHost: createTestHost,
-        scheduleProjectileFinishCallback: (delay, recycle, finish, beforeReset, _info, advance) => {
+        launchProjectile: request => {
           const projectile = scheduler.launch({
-            finishDelaySeconds: delay,
-            recycleDelaySeconds: recycle,
-            resolveTickDeltaSeconds: () => componentDelta,
-            finish,
-            beforeReset,
-            abilityRuntime: { advanceFrame: () => advance!(COMBAT_FRAME_INTERVAL) },
+            finishDelaySeconds: request.finish,
+            recycleDelaySeconds: request.recycleDelaySeconds,
+            callbacks: request.callbacks.map(c => c.runtime.runtimeState),
+            callbackPrograms: request.callbacks.map(c => c.program),
+            firstTickHit: request.hit,
+            ...bindProjectileCallbackLifecycle(
+              request.callbacks.map(c => c.runtime),
+              () => componentDelta,
+            ),
           });
           projectile.onReset(() => trace.push(`${frame}:reset`));
           return projectile;
@@ -329,43 +330,48 @@ describe('projectile callback action lifecycle', () => {
         {
           steps: [
             {
-              kind: 'scheduleProjectileFinishCallback',
-              parameters: { delaySeconds: 1, recycleDelaySeconds: 100 },
-              callback: {
-                skillId: 'callback',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 3,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+              kind: 'launchProjectile',
+              parameters: { finish: 1, recycleDelaySeconds: 100 },
+              callbacks: [
+                {
+                  event: 'finish',
+                  skill: {
+                    skillId: 'callback',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 3,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { value: 1 },
+                    scheduledSequences: [
+                      {
+                        startFrame: 0,
+                        endFrame: 1,
+                        sequence: {
+                          steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'write' } }],
+                        },
+                      },
+                      {
+                        startFrame: 0,
+                        endFrame: 3,
+                        sequence: {
+                          steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'long' } }],
+                        },
+                      },
+                      {
+                        startFrame: 2,
+                        endFrame: 4,
+                        sequence: {
+                          steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'read' } }],
+                        },
+                      },
+                    ],
+                  },
                 },
-                blackboard: { value: 1 },
-                scheduledSequences: [
-                  {
-                    startFrame: 0,
-                    endFrame: 1,
-                    sequence: {
-                      steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'write' } }],
-                    },
-                  },
-                  {
-                    startFrame: 0,
-                    endFrame: 3,
-                    sequence: {
-                      steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'long' } }],
-                    },
-                  },
-                  {
-                    startFrame: 2,
-                    endFrame: 4,
-                    sequence: {
-                      steps: [{ ...probe, parameters: { ...probe.parameters, flag: 'read' } }],
-                    },
-                  },
-                ],
-              },
+              ],
             },
           ],
         },
@@ -381,7 +387,9 @@ describe('projectile callback action lifecycle', () => {
       scheduler.beginAbilityFrame();
       scheduler.advanceAbilityFrame();
     };
-    for (let i = 0; i < 4; i++) tick();
+    tick();
+    componentDelta = COMBAT_FRAME_INTERVAL;
+    for (let i = 0; i < 3; i++) tick();
     expect(trace).toEqual([
       '1:start:write:1',
       '1:start:long:2',
@@ -414,18 +422,17 @@ describe('projectile callback action lifecycle', () => {
       {
         blackboard: new ActionBlackboard(),
         createCallbackSkillHost: createTestHost,
-        scheduleProjectileFinishCallback: (
-          delaySeconds,
-          recycleDelaySeconds,
-          execute,
-          beforeReset,
-        ) => {
+        launchProjectile: request => {
           const instance = scheduler.launch({
-            finishDelaySeconds: delaySeconds,
-            recycleDelaySeconds,
-            resolveTickDeltaSeconds: () => 1,
-            finish: execute,
-            beforeReset,
+            finishDelaySeconds: request.finish,
+            recycleDelaySeconds: request.recycleDelaySeconds,
+            callbacks: request.callbacks.map(c => c.runtime.runtimeState),
+            callbackPrograms: request.callbacks.map(c => c.program),
+            firstTickHit: request.hit,
+            ...bindProjectileCallbackLifecycle(
+              request.callbacks.map(c => c.runtime),
+              () => 1,
+            ),
           });
           instance.onReset(() => trace.push('reset'));
           return instance;
@@ -438,16 +445,21 @@ describe('projectile callback action lifecycle', () => {
     const parent = runtime.createSequence({
       steps: [
         {
-          kind: 'scheduleProjectileFinishCallback',
-          parameters: { delaySeconds: 1, recycleDelaySeconds: 1 },
-          callback: {
-            skillId: 'callback',
-            nativeSkillType: 'normalSkill',
-            naturalDurationFrames: 1,
-            castResource: zeroCastResource,
-            initialBlackboard: {},
-            timelineActions: [{ startFrame: 0, endFrame: 0, sequence: { steps: [probe] } }],
-          },
+          kind: 'launchProjectile',
+          parameters: { finish: 1, recycleDelaySeconds: 1 },
+          callbacks: [
+            {
+              event: 'finish',
+              skill: {
+                skillId: 'callback',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: zeroCastResource,
+                initialBlackboard: {},
+                timelineActions: [{ startFrame: 0, endFrame: 0, sequence: { steps: [probe] } }],
+              },
+            },
+          ],
         },
       ],
     });
@@ -483,18 +495,17 @@ describe('projectile callback action lifecycle', () => {
       {
         blackboard,
         createCallbackSkillHost: createTestHost,
-        scheduleProjectileFinishCallback: (
-          delaySeconds,
-          recycleDelaySeconds,
-          execute,
-          beforeReset,
-        ) => {
+        launchProjectile: request => {
           return scheduler.launch({
-            finishDelaySeconds: delaySeconds,
-            recycleDelaySeconds,
-            resolveTickDeltaSeconds: () => COMBAT_FRAME_INTERVAL,
-            finish: execute,
-            beforeReset,
+            finishDelaySeconds: request.finish,
+            recycleDelaySeconds: request.recycleDelaySeconds,
+            callbacks: request.callbacks.map(c => c.runtime.runtimeState),
+            callbackPrograms: request.callbacks.map(c => c.program),
+            firstTickHit: request.hit,
+            ...bindProjectileCallbackLifecycle(
+              request.callbacks.map(c => c.runtime),
+              () => COMBAT_FRAME_INTERVAL,
+            ),
           });
         },
       },
@@ -558,18 +569,17 @@ describe('projectile callback action lifecycle', () => {
         blackboard,
         canExecuteAction: () => sourceEnabled,
         createCallbackSkillHost: createTestHost,
-        scheduleProjectileFinishCallback: (
-          delaySeconds,
-          recycleDelaySeconds,
-          execute,
-          beforeReset,
-        ) => {
+        launchProjectile: request => {
           return scheduler.launch({
-            finishDelaySeconds: delaySeconds,
-            recycleDelaySeconds,
-            resolveTickDeltaSeconds: () => COMBAT_FRAME_INTERVAL,
-            finish: execute,
-            beforeReset,
+            finishDelaySeconds: request.finish,
+            recycleDelaySeconds: request.recycleDelaySeconds,
+            callbacks: request.callbacks.map(c => c.runtime.runtimeState),
+            callbackPrograms: request.callbacks.map(c => c.program),
+            firstTickHit: request.hit,
+            ...bindProjectileCallbackLifecycle(
+              request.callbacks.map(c => c.runtime),
+              () => COMBAT_FRAME_INTERVAL,
+            ),
           });
         },
       },

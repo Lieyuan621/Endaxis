@@ -21,6 +21,40 @@ function runtime() {
 }
 
 describe('TimeDilationOperationExecutor', () => {
+  it('实体自身顿帧作用于动作宿主，不依赖当前循环目标或技能输入目标', () => {
+    const timeDilation = runtime();
+    const executor = new TimeDilationOperationExecutor({
+      runtime: timeDilation,
+      delegate,
+      sourceId: 'operator',
+      sourceActionId: 'skill',
+      resolveTargetIds: target => [target],
+      resolveContextAbilityEntityId: id => logicalAbilityEntityRuntimeId(id),
+    });
+    executor.execute(
+      {
+        kind: 'startTimeDilation',
+        parameters: {
+          scope: 'entity',
+          durationSeconds: { kind: 'constant', value: 1 },
+          slot: 'Test/TimeSlot1',
+          priority: PRIORITY,
+          curve: { kind: 'named', key: 'constant-half' },
+          finishByAction: false,
+          targets: [],
+          abilityEntityTargets: [{ kind: 'current' }],
+        },
+      },
+      {
+        blackboard: new ActionBlackboard(),
+        actionOwnerAbilityEntity: { kind: 'abilityEntity', instanceId: 4 },
+        currentTarget: { kind: 'abilityEntity', instanceId: 7 },
+      },
+    );
+    expect(timeDilation.getOperatorScale(logicalAbilityEntityRuntimeId(4))).toBe(0.5);
+    expect(timeDilation.getOperatorScale(logicalAbilityEntityRuntimeId(7))).toBe(1);
+  });
+
   it('starts a named global curve and lets the caster ignore it', () => {
     const timeDilation = runtime();
     const executor = new TimeDilationOperationExecutor({

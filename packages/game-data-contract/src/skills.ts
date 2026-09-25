@@ -59,21 +59,18 @@ export interface SkillCastResourceDefinition {
 }
 
 /** 投射物结束时启动的回调技能；它的动作寿命不受投射物对象回收时间影响。 */
-export interface ProjectileCallbackSkillDefinition extends Readonly<SkillActionProgramDefinition> {
-  /** 投射物回调技能的原生 ID。 */
-  readonly skillId: string;
-  /** 回调实例实际使用的原生技能类型。 */
-  readonly nativeSkillType: NativeSkillType;
-  /** 回调技能在没有提前结束时的自然持续帧数。 */
-  readonly naturalDurationFrames: number;
-  /** 回调技能自己的扣费和冷却设置。 */
-  readonly castResource: SkillCastResourceDefinition;
-}
+export interface ProjectileCallbackSkillDefinition extends AbilityEntityChildSkillDefinition {}
 
-/** 由一个逻辑能力实体独占、按该实体局部时钟执行的无施法子技能。 */
+/** 能力实体拥有的完整技能；施放、费用、冷却与普通技能共用规则。 */
 export interface AbilityEntityChildSkillDefinition extends Readonly<SkillActionProgramDefinition> {
   /** 子技能的原生 ID。 */
   readonly skillId: string;
+  /** 实体注册表确定的原生技能类型。 */
+  readonly nativeSkillType: NativeSkillType;
+  /** 没有提前结束时的自然持续帧数。 */
+  readonly naturalDurationFrames: number;
+  /** 该技能自己的扣费和冷却设置。 */
+  readonly castResource: SkillCastResourceDefinition;
 }
 
 /** 随能力实体 AbilitySystem 启用，并在该实体结束时销毁的原生被动技能。 */

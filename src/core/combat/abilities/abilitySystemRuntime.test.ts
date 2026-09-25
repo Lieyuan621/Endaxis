@@ -210,7 +210,9 @@ describe('AbilitySystemRuntime', () => {
       skills: [new FixtureRuntime('first', []), new FixtureRuntime('second', [])],
     });
     ability.tryStartSkill('first');
-    ability.requestPostSkillCast({ skillId: 'second' });
+    const inputTarget = { kind: 'operator' as const, operatorId: 'attacker' };
+    ability.requestPostSkillCast({ skillId: 'second', inputTarget });
+    inputTarget.operatorId = 'changed-after-request';
     const session = new StateStepper(ability.runtimeState, (step, replace: boolean) => {
       if (replace) storePostSkillCastRequest(step.state, { skillId: 'first' });
       const request = takePostSkillCastRequest(step.state);
@@ -222,7 +224,10 @@ describe('AbilitySystemRuntime', () => {
     expect(session.step(true)?.skillId).toBe('first');
     expect(session.read().postSkillCastRequest?.skipApplyCost).toBe(true);
     session.restore(saved);
-    expect(session.step(false)?.skillId).toBe('second');
+    expect(session.step(false)).toMatchObject({
+      skillId: 'second',
+      inputTarget: { kind: 'operator', operatorId: 'attacker' },
+    });
     expect(ability.runtimeState.postSkillCastRequest).toMatchObject({ skillId: 'second' });
     expect(ability.runtimeState.postSkillCastRequest?.skipApplyCost).toBeUndefined();
     expect(ability.currentSkillId).toBe('first');
@@ -299,9 +304,11 @@ describe('AbilitySystemRuntime', () => {
         nonReturnedSpCost: 10,
       };
       expect(
-        ability.tryStartProjectileCallbackSkill(
+        ability.tryStartEntitySkill(
           mode === 'missing' ? 'missing' : 'callback',
           source,
+          undefined,
+          true,
         ),
       ).toBe(mode === 'available');
       expect(events).toEqual([
@@ -320,6 +327,21 @@ describe('AbilitySystemRuntime', () => {
       }
     },
   );
+
+  it('实体施放不要求继承来源，查找失败也不提前打断当前技能', () => {
+    const events: string[] = [];
+    const prepare = vi.fn();
+    const skill = Object.assign(new FixtureRuntime('entity-skill', events), {
+      prepareCastInput: prepare,
+    });
+    const ability = new AbilitySystemRuntime({ skills: [skill] });
+    expect(ability.tryStartEntitySkill('entity-skill', undefined)).toBe(true);
+    expect(prepare).toHaveBeenCalledWith({ skipApplyCost: false, inputTarget: undefined });
+    events.length = 0;
+    expect(ability.tryStartEntitySkill('missing', undefined)).toBe(false);
+    expect(events).toEqual([]);
+    expect(skill.state).toBe('casting');
+  });
 
   it('projectile callbacks cast the explicit ID and reuse ordinary synchronous processing hooks', () => {
     const events: string[] = [];
@@ -341,7 +363,7 @@ describe('AbilitySystemRuntime', () => {
     ability.changeSkillSlot('slot', 'replacement');
     ability.prepareBeforeSkillCastStart('base', undefined, beforeCastPayload, false);
     expect(
-      ability.tryStartProjectileCallbackSkill('base', {
+      ability.tryStartEntitySkill('base', {
         skillCastId: 42,
         originSkillId: 'source',
         originSkillType: 'comboSkill',

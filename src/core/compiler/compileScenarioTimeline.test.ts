@@ -609,6 +609,14 @@ describe('compileScenarioTimeline', () => {
                     lifetime: { kind: 'limited', durationSeconds: 1 },
                     childSkill: {
                       skillId: 'child',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 30,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+                      },
                       scheduledSequences: [
                         {
                           startFrame: 3,

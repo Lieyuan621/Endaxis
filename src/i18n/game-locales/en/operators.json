@@ -1853,6 +1853,67 @@
       }
     }
   },
+  "purrchena": {
+    "name": "Purrchena",
+    "talents": [
+      {
+        "name": "Your sorry came LATE!",
+        "description": "Battle skill <@ba.key>I'M NOT SLEEPING!</> improved: After successfully blocking an enemy attack for the first time, the skill gives <@ba.vup>6</> additional Ultimate Energy. Chance for <@ba.key>Ambassador's Special</> of the next ultimate <@ba.key>NAUGHTY IS BANNED!</> is increased by <@ba.vup>10%</>. This effect can reach <@ba.vup>3</> stacks."
+      },
+      {
+        "name": "Your sorry came LATE!",
+        "description": "Battle skill <@ba.key>I'M NOT SLEEPING!</> improved: After successfully blocking an enemy attack for the first time, the skill gives <@ba.vup>10</> additional Ultimate Energy. Chance for <@ba.key>Ambassador's Special</> of the next ultimate <@ba.key>NAUGHTY IS BANNED!</> is increased by <@ba.vup>10%</>. This effect can reach <@ba.vup>3</> stacks."
+      },
+      {
+        "name": "Ambassador's Duty",
+        "description": "When deployed in battle, all Max HP operators in the team take <@ba.vup>50%</> less DMG from the next hit taken.\nFor each operator, this effect can only trigger once every <@ba.vup>180</>s."
+      },
+      {
+        "name": "Ambassador's Duty",
+        "description": "When deployed in battle, all Max HP operators in the team take <@ba.vup>50%</> less DMG from the next hit taken.\nFor each operator, this effect can only trigger once every <@ba.vup>90</>s."
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Warm Like the Sun",
+        "description": "Ultimate <@ba.key>NAUGHTY IS BANNED!</> improved: Base chance for <@ba.key>Ambassador's Special</> is increased to <@ba.vup>1.5</> times the original."
+      },
+      {
+        "name": "\"Super Energetic\"",
+        "description": "DEF <@ba.vup>+20</>, Will <@ba.vup>+20</>."
+      },
+      {
+        "name": "Useful \"Prezzies\"",
+        "description": "Combo skill <@ba.key>CAKE OR \"PREZZIE\"</> improved: \n<@ba.key>Bomb</>: DMG Multiplier increased to <@ba.vup>1.2</> times the original. \n<@ba.key>Handicraft</>: Effect radius <@ba.vup>+20%</>. \n<@ba.key>Yummy Dessert</>: HP Treatment increased to <@ba.vup>1.2</> times the original."
+      },
+      {
+        "name": "After the Feast",
+        "description": "Ultimate <@ba.key>NAUGHTY IS BANNED!</> improved: Ultimate Energy cost <@ba.vup>-15%</>."
+      },
+      {
+        "name": "Hot Like a BBQ Fire",
+        "description": "Ultimate <@ba.key>NAUGHTY IS BANNED!</> improved:\n<@ba.key>Ambassador's Special</> DMG Multiplier is increased to <@ba.vup>1.2</> times the original.\n<@ba.key>Ambassador's Special</>: <#ba.spellvul>Arts Susceptibility</> is increased to <@ba.vup>1.2</> times the original."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "DESSERT! HAVE SOME!",
+        "description": "BASIC ATTACK: \nAn attack with up to 3 sequences that deals <@ba.pd>Physical DMG</>. As the controlled operator, <#ba.lastcombo>Final Strike</> also deals <@ba.poise>21</> Stagger. \n\nDIVE ATTACK: \nBasic attack performed in mid-air becomes a dive attack that deals <@ba.pd>Physical DMG</> to nearby enemies. \n\nFINISHER: \nBasic attack performed near a Staggered enemy becomes a finisher that deals massive <@ba.pd>Physical DMG</> and recovers some SP."
+      },
+      "battleSkill": {
+        "name": "I'M NOT SLEEPING!",
+        "description": "Purrchena raises up her shield to block an attack and immediately <#ba.return>returns</> some SP. While Purrchena's shield is up, she grants <#ba.guard>Protection</> to herself and nearby operators. During the battle skill, the first successful block extends the shield up duration and <#ba.return>returns</> additional SP. After casting, Purrchena's battle skill is temporarily changed to <@ba.key>LEAVE MY FRIENDS ALONE!</>.\n<@ba.key>LEAVE MY FRIENDS ALONE!</>: Purrchena headbutts a target in front of her to deal <@ba.natur>Nature DMG</> and apply <#ba.naturalinflict>Nature Infliction</>.\n<@ba.info>Protection granted during shield-raising is reduced after every blocked attack.</>"
+      },
+      "comboSkill": {
+        "name": "CAKE OR \"PREZZIE\"",
+        "description": "COMBO TRIGGER: When the controlled operator is attacked.\nThrows a <@ba.key>Giftbox</> at the controlled operator. The <@ba.key>Giftbox</> opens after a short delay, granting <@ba.heal>HP Treatment</> to nearby operators, randomly revealing one of the following items, and triggering the effects of the revealed item:\n<@ba.key>Bomb</>: Deals <@ba.pd>Physical DMG</> and additional Stagger to enemies in the area of effect (AOE).\n<@ba.key>Handicraft</>: Continuously pulls in nearby enemies and deals <@ba.pd>Physical DMG</>.\n<@ba.key>Yummy Dessert</>: Grants <@ba.heal>HP Treatment</> to the controlled operator.\nThe attribute of Will increases the amount of HP treatment."
+      },
+      "ultimate": {
+        "name": "NAUGHTY IS BANNED!",
+        "description": "Purrchena opens 3 <@ba.key>Big Feline's Prezzies</>. Each <@ba.key>Big Feline's Prezzie</> randomly reveals a <@ba.key>Bomb</> or a piece of <@ba.key>Handicraft</>.\nThere is a chance that the Prezzie reveals <@ba.key>Ambassador's Special</> that applies <#ba.spellvul>Arts Susceptibility</> and deals <@ba.pd>Physical DMG</> as well as additional Stagger to enemies."
+      }
+    }
+  },
   "endministrator": {
     "name": "Endministrator",
     "talents": [

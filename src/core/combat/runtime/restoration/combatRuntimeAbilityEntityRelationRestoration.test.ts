@@ -16,9 +16,20 @@ import {
   resolveRestoredAbilityEntityDefinition,
 } from './combatRuntimeAbilityEntityRelationRestoration';
 import { LogicalAbilityEntityRuntime } from '../../abilities/logicalAbilityEntityRuntime';
+import { CombatClock } from '../../time/combatClock';
+import { CombatReceiptCollector } from '../../receipt/combatReceipt';
+import { createCallbackSkillHostFactory } from '../../abilities/callbackSkillHost';
 
 const childProgram = {
   skillId: 'pulse',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 30,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
   initialBlackboard: {},
   timelineActions: [
     {
@@ -75,6 +86,13 @@ it('不继承施法来源的实体仍恢复创建时的定义，不选同名的�
 });
 
 it('统一恢复能力实体子技能和直属子 Buff，且不重放子技能开始', () => {
+  const clock = new CombatClock();
+  const createCallbackSkillHost = createCallbackSkillHostFactory({
+    clock,
+    receipt: new CombatReceiptCollector(),
+    definitionOperatorId: 'operator',
+    allocateSkillCastId: () => 1,
+  });
   const programs = new AbilityEntityChildSkillPrograms();
   const binding = programs.register(childProgram);
   const original = new LogicalAbilityEntityRuntime({});
@@ -88,6 +106,7 @@ it('统一恢复能力实体子技能和直属子 Buff，且不重放子技能�
     },
   });
   const originalChild = new AbilityEntityChildSkillRuntime(childProgram, {
+    createCallbackSkillHost,
     entity,
     entityBlackboard: original.entityBlackboard(entity),
     operations: { execute: () => true, evaluate: () => true },
@@ -145,11 +164,13 @@ it('统一恢复能力实体子技能和直属子 Buff，且不重放子技能�
       throw new Error('fixture has no passive subscriptions');
     },
     createChildSkillBindings: () => ({
+      createCallbackSkillHost,
       operations: { execute, evaluate: () => true },
     }),
   });
 
   expect(execute).not.toHaveBeenCalled();
+  clock.advanceFrame();
   restoredRuntime.advanceFrame();
   expect(execute).toHaveBeenCalledOnce();
   restoredRuntime.finish(entity);

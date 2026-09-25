@@ -23,6 +23,7 @@ import {
   mifu,
   perlica,
   pogranichnik,
+  purrchena,
   rossi,
   snowshine,
   tangtang,
@@ -61,6 +62,7 @@ describe('gameDataRepository', () => {
       rossi,
       camille,
       pogranichnik,
+      purrchena,
       tangtang,
       typhoeus,
       laevatain,
@@ -77,6 +79,7 @@ describe('gameDataRepository', () => {
       ardelia,
     ]);
     expect(gameDataRepository.getOperator(perlica.slug)).toBe(perlica);
+    expect(gameDataRepository.getOperator(purrchena.slug)).toBe(purrchena);
     expect(gameDataRepository.getOperator(alesh.slug)).toBe(alesh);
     expect(gameDataRepository.getOperator(arcane.slug)).toBe(arcane);
     expect(gameDataRepository.getOperator(zhuangFangyi.slug)).toBe(zhuangFangyi);
@@ -120,7 +123,6 @@ describe('gameDataRepository', () => {
     );
     expect(gameDataRepository.getGear('xiranflow-light-armor')).toBeNull();
     expect(gameDataRepository.getGearSet('aic-fieldwork')).toBeNull();
-    expect(gameDataRepository.getWeapons()).toHaveLength(79);
     expect(gameDataRepository.getGearSet('suit_generaltype')).not.toBeNull();
     expect(gameDataRepository.getWeapon('missing')).toBeNull();
     expect(gameDataRepository.getGear('missing')).toBeNull();

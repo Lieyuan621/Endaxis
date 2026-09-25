@@ -7,9 +7,103 @@ import {
   readFactionTarget,
   readHitBoxObjectType,
 } from '../src/source/targetEnums.ts';
-import { targetFixture } from './sourceFixtures.ts';
+import {
+  targetFixture,
+  ownerSpawnedAbilityEntityFindTargetActionFixture,
+} from './sourceFixtures.ts';
+import { parseTargetGroupActionSource } from '../src/source/targetGroup.ts';
+import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
+import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
 
 describe('公共目标来源编码', () => {
+  it('投射物查询保留自己的几何和身份，不冒充敌方 ShapeFinder', () => {
+    const shape = {
+      _shape: 'Sphere',
+      _rotationOffset: { x: 0, y: 0, z: 0 },
+      _useExtentKey: false,
+      _extent: { x: 0, y: 0, z: 0 },
+      _extentXKey: '',
+      _extentYKey: '',
+      _extentZKey: '',
+      _useCenterKey: false,
+      _center: { x: 0, y: 0, z: 0 },
+      _centerXKey: '',
+      _centerYKey: '',
+      _centerZKey: '',
+      _heightKey: '',
+      _height: 0,
+      _radiusKey: 'range',
+      _radius: 10,
+    };
+    const raw = {
+      ...targetFixture('InstantSearch'),
+      selectorData: {
+        finderData: {
+          $type: 'Beyond.Gameplay.Core.Selector+ProjectileFinder+Data, Gameplay.Beyond',
+          shapeData: shape,
+        },
+        validatorData: [],
+        postProcessorData: [],
+      },
+    };
+    const parsed = parseTargetReferenceSource(raw, 'projectile');
+    expect(parsed.finderType).toBe('ProjectileFinder');
+    expect(parsed.finderShape).toBeNull();
+    expect(parsed.finderFactionTarget).toBeUndefined();
+    expect(parsed.finderProjectileShape).toMatchObject({
+      shape: 'Sphere',
+      radius: 10,
+      radiusKey: 'range',
+    });
+    const query = {
+      ...ownerSpawnedAbilityEntityFindTargetActionFixture(),
+      selectorData: raw.selectorData,
+    };
+    expect(parseTargetGroupActionSource(query, 'query')?.finderProjectileShape).toEqual(
+      parsed.finderProjectileShape,
+    );
+    const sequence = parseKnownNativeActionSequenceSource(
+      {
+        actionData: [query],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+      'query',
+      {},
+    );
+    // 读取原始资源不代表已经实现投射物集合；不能把它编译成敌人或空集合。
+    expect(() =>
+      compileCombatActionSequenceSource(sequence, {
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      }),
+    ).toThrow();
+    expect(() =>
+      parseTargetReferenceSource(
+        {
+          ...raw,
+          selectorData: {
+            ...raw.selectorData,
+            finderData: { ...raw.selectorData.finderData, factionTarget: 'Anti' },
+          },
+        },
+        'projectile',
+      ),
+    ).toThrow('finderData');
+    expect(() =>
+      parseTargetReferenceSource(
+        {
+          ...raw,
+          selectorData: {
+            ...raw.selectorData,
+            finderData: { ...raw.selectorData.finderData, shapeData: { ...shape, _radius: '10' } },
+          },
+        },
+        'projectile',
+      ),
+    ).toThrow('_radius');
+  });
   it('不把通用实体类型或未命名组合掩码冒充 HitBoxFinder 枚举', () => {
     for (const value of [0, 3, 5, 7, 'Character', 'Enemy']) {
       expect(() => readHitBoxObjectType(value, 'finder.targetObjectType')).toThrow(

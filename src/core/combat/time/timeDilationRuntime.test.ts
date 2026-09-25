@@ -14,6 +14,58 @@ function createRuntime() {
 }
 
 describe('TimeDilationRuntime', () => {
+  it('来源订阅保留初始 additionalScale，收到最终倍率变化后才继承自身倍率', () => {
+    const runtime = createRuntime();
+    runtime.startGlobal({ durationSeconds: 10, slot: 'global', priority: LOW, constantScale: 0.2 });
+    runtime.startEntity({
+      entityId: 'source',
+      durationSeconds: 10,
+      slot: 'local',
+      priority: LOW,
+      curve: () => 0.5,
+    });
+    runtime.inheritEntityScale('projectile', 'source');
+    expect(runtime.getEntityScale('projectile')).toBeCloseTo(0.2);
+    runtime.startEntity({
+      entityId: 'source',
+      durationSeconds: 10,
+      slot: 'local',
+      priority: LOW,
+      curve: () => 0.4,
+    });
+    expect(runtime.getEntityScale('projectile')).toBeCloseTo(0.08);
+    runtime.releaseInheritedEntityScale('projectile');
+    expect(runtime.getEntityScale('projectile')).toBeCloseTo(0.2);
+    expect(runtime.runtimeState.entityScaleInheritance.size).toBe(0);
+  });
+
+  it('全局暂停中来源自身倍率改变不产生数值通知，切面恢复也不刷新继承值', () => {
+    const runtime = createRuntime();
+    runtime.startGlobal({ durationSeconds: 10, slot: 'global', priority: LOW, constantScale: 0 });
+    runtime.inheritEntityScale('projectile', 'source', 0.75);
+    runtime.startEntity({
+      entityId: 'source',
+      durationSeconds: 10,
+      slot: 'local',
+      priority: LOW,
+      curve: () => 0.4,
+    });
+    expect(runtime.runtimeState.entityScaleInheritance.get('projectile')!.inheritedScale).toBe(
+      0.75,
+    );
+    const restored = new TimeDilationRuntime(
+      {},
+      {},
+      { state: structuredClone(runtime.runtimeState), programs: runtime.programs },
+    );
+    expect(restored.runtimeState.entityScaleInheritance.get('projectile')!.inheritedScale).toBe(
+      0.75,
+    );
+    restored.setIgnoreGlobalTimeScale('source', true);
+    expect(restored.getEntityScale('projectile')).toBeCloseTo(0.4);
+    expect(runtime.getEntityScale('projectile')).toBe(0);
+  });
+
   it('曲线留在程序中，保存的膨胀状态可以独立继续推进和到期', () => {
     const curve = (progress: number) => 0.5 + progress * 0.5;
     const runtime = new TimeDilationRuntime({

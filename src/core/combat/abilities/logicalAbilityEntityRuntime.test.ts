@@ -17,6 +17,26 @@ function createRuntime() {
 }
 
 describe('LogicalAbilityEntityRuntime', () => {
+  it('同一实体重复请求同一技能时复用宿主，每帧只推进一次', () => {
+    const runtime = createRuntime();
+    const entity = runtime.spawn({
+      abilityEntityId: 'test',
+      ownerId: 'owner',
+      source: { kind: 'enemy' },
+      definition: { lifetime: { kind: 'infinite' } },
+    });
+    const child = { skillId: 'child', start: vi.fn(), advance: vi.fn(), finish: vi.fn() };
+    const createChild = vi.fn(() => child);
+    runtime.startChildSkill(entity, 'child', createChild);
+    runtime.startChildSkill(entity, 'child', createChild);
+    expect(createChild).toHaveBeenCalledOnce();
+    expect(child.start).toHaveBeenCalledTimes(2);
+    runtime.advanceFrame();
+    expect(child.advance).toHaveBeenCalledOnce();
+    runtime.finish(entity);
+    expect(child.finish).toHaveBeenCalledOnce();
+  });
+
   it('每帧时间倍率和 Buff 阶段不复制完整实体黑板', () => {
     const runtime = new LogicalAbilityEntityRuntime({
       resolveDeltaSeconds: () => 0.1,

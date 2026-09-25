@@ -52,6 +52,12 @@ export type PoiseTimerTransition = 'poiseRecovered' | 'poiseBrokenTagEnded';
 /** 现有宿主接口；动作宿主保存生命下限编号，恢复后可在当前分支按编号移除。 */
 export class CombatVitals {
   readonly runtimeState: CombatVitalsState;
+  private healthChanged?: () => void;
+
+  /** 装配当前分支的事件出口；恢复只绑定，不重放生命变化。 */
+  bindHealthChangeObserver(observer: () => void): void {
+    this.healthChanged = observer;
+  }
 
   /** 为恢复后的生命与失衡数据建立对象接口，不重置计时器或生命下限登记。 */
   static bindRuntimeState(state: CombatVitalsState): CombatVitals {
@@ -115,10 +121,14 @@ export class CombatVitals {
     this.runtimeState.stopPoiseRecovery = value;
   }
   takeDamage(value: number): HealthDamageResult {
-    return takeVitalsDamage(this.runtimeState, value);
+    const result = takeVitalsDamage(this.runtimeState, value);
+    if (result.currentHealth !== result.previousHealth) this.healthChanged?.();
+    return result;
   }
   heal(value: number): HealthHealResult {
-    return healVitals(this.runtimeState, value);
+    const result = healVitals(this.runtimeState, value);
+    if (result.currentHealth !== result.previousHealth) this.healthChanged?.();
+    return result;
   }
   applyPoiseDelta(delta: number): number {
     return applyVitalsPoiseDelta(this.runtimeState, delta);

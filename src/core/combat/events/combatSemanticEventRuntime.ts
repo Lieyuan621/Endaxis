@@ -430,6 +430,7 @@ function eventSubscription(trigger: CombatEventTrigger | UpgradeEvent):
         | 'afterOutputPhysicalInfliction'
         | 'outputDamage'
         | 'outputBuff'
+        | 'beforeAddedBuff'
         | 'addedBuff'
         | 'buffConsumed'
         | 'outputHeal'

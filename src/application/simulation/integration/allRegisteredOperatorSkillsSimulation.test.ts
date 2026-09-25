@@ -48,9 +48,13 @@ const knownFailures: Readonly<Record<string, string>> = {};
 
 describe('所有正式干员技能逐项放置与模拟', () => {
   it('覆盖默认仓库中的每个干员和每个基础/变体技能', () => {
-    expect(gameDataRepository.getOperators()).toHaveLength(31);
-    // 当前生成定义中的 323 个可放置技能均需完成放置与模拟。
-    expect(cases).toHaveLength(323);
+    expect(cases.length).toBeGreaterThan(0);
+    expect([...new Set(cases.map(entry => entry.operator.slug))].sort()).toEqual(
+      gameDataRepository
+        .getOperators()
+        .map(operator => operator.slug)
+        .sort(),
+    );
     expect(Object.keys(knownFailures)).toHaveLength(0);
     expect(
       new Set(

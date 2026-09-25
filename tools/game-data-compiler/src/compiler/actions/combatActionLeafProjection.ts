@@ -225,6 +225,8 @@ export function compileActionNode(
       // 后者只记录一次已成功的极限闪避。动作分支仍严格校验原生字段。
       'dashEnergyRecovery',
       'battleDetailRecord',
+      // 标记的身份由 Owner/Source 解析，与受击事件的对端对象无关。
+      'globalCooldown',
     ].includes(node.body.value.family)
   )
     throw new Error(
@@ -448,9 +450,19 @@ export function compileActionNode(
       action.target.targetSource === 'Owner' &&
       action.target.targetGroupKey === '' &&
       (context.fixedBuffOwnerTarget === 'caster' || context.actionOwnerTarget === 'caster');
+    const targetIsActionInput =
+      action.target.targetSource === 'Target' &&
+      (context.actionTargetTarget === 'eventSource' ||
+        context.actionTargetTarget === 'eventTarget' ||
+        context.actionTargetTarget === 'actionInputTarget');
+    const targetIsContext =
+      action.target.targetSource === 'Context' &&
+      action.target.targetGroupKey.length > 0 &&
+      action.target.validatorTypes.length === 0 &&
+      action.target.postProcessorTypes.length === 0;
     if (
       !casterIsFixedCaster ||
-      (!targetIsStaticEnemy && !targetIsFixedCaster) ||
+      (!targetIsStaticEnemy && !targetIsFixedCaster && !targetIsActionInput && !targetIsContext) ||
       (action.skillId.blackboardKey === null && action.skillId.value.length === 0) ||
       (action.skillId.blackboardKey !== null && action.skillId.blackboardKey.length === 0)
     ) {
@@ -464,7 +476,17 @@ export function compileActionNode(
             action.skillId.blackboardKey === null
               ? action.skillId.value
               : { blackboardKey: action.skillId.blackboardKey },
-          target: targetIsFixedCaster ? 'caster' : 'enemy',
+          ...(targetIsContext && !targetIsStaticEnemy
+            ? { targetContextKey: action.target.targetGroupKey }
+            : {}),
+          target:
+            targetIsContext && !targetIsStaticEnemy
+              ? 'context'
+              : targetIsActionInput
+                ? 'actionInputTarget'
+                : targetIsFixedCaster
+                  ? 'caster'
+                  : 'enemy',
           skipApplyCost: action.skipApplyCost,
           inheritSourceSkillCastInfo: action.inheritSourceSkillCastId,
           ...(action.interruptCurrentSkillOnlyWhenTargetCastable
@@ -675,6 +697,18 @@ export function compileActionNode(
       ];
     });
     const activeBuffs = aura.buffs.filter(entry => !visualOnlyIds.has(entry.buffId));
+    const ownerCleanupIds = (aura.exitOwnerCleanupBuffIds ?? []).filter(
+      id => !visualOnlyIds.has(id),
+    );
+    const cleanupTarget = context.actionOwnerTarget;
+    if (
+      ownerCleanupIds.length > 0 &&
+      cleanupTarget !== 'caster' &&
+      cleanupTarget !== 'buffOwner' &&
+      cleanupTarget !== 'currentAbilityEntity'
+    ) {
+      throw new Error(`${node.sourcePath}: Aura exit cleanup requires a supported action owner`);
+    }
     const enterCleanupSteps =
       (aura.enterCleanupBuffIds ?? []).length === 0
         ? []
@@ -708,6 +742,14 @@ export function compileActionNode(
             target: aura.target,
             ...(auraBuffSource === undefined ? {} : { source: auraBuffSource }),
             finishByAction: true,
+            ...(index === 0 && ownerCleanupIds.length > 0
+              ? {
+                  onActionEndFinishBuffs: {
+                    target: cleanupTarget as 'caster' | 'buffOwner' | 'currentAbilityEntity',
+                    buffIds: ownerCleanupIds,
+                  },
+                }
+              : {}),
             ...(iconDurationSource === undefined ? {} : { iconDurationSource }),
             ...(index === 0 && exitBuffs.length > 0 ? { onActionEndBuffs: exitBuffs } : {}),
             ...(aura.inheritSourceSkillCastInfo ? { inheritSourceSkillCastInfo: true } : {}),
@@ -829,13 +871,11 @@ export function compileActionNode(
     if (
       action.kind === 'buffFinishByQuery' &&
       action.settings.checkType === 'Environment' &&
-      action.settings.buffIds.length === 0 &&
-      action.settings.tagQuery.tagIds.length === 0 &&
       action.owner.targetSource === 'Owner' &&
       context.actionOwnerTarget === 'buffOwner' &&
       action.finishAll
     ) {
-      // Environment 精确指向当前正在执行动作的 Buff 实例，不是“全部 Buff”查询。
+      // Environment 精确指向当前 Buff；Id/Tag 分支的残留配置不参与此查询。
       return [
         {
           kind: 'finishCurrentBuff',
@@ -1148,8 +1188,11 @@ export function compileActionNode(
                   context.actionOwnerTarget === 'buffOwner')
               ? context.actionOwnerTarget
               : action.target.targetSource === 'Target' &&
-                  context.actionTargetTarget === 'currentOperator'
-                ? ('currentTarget' as const)
+                  (context.actionTargetTarget === 'currentOperator' ||
+                    context.actionTargetTarget === 'actionInputTarget')
+                ? context.actionTargetTarget === 'actionInputTarget'
+                  ? ('actionInputTarget' as const)
+                  : ('currentTarget' as const)
                 : action.target.targetSource === 'MainCharacter' &&
                     action.target.finderType === null &&
                     action.target.validatorTypes.length === 0 &&
@@ -1434,13 +1477,15 @@ export function compileActionNode(
   if (node.body.value.family === 'buffDurationMutation') {
     const action = node.body.value.action;
     const operation = ACTION_VALUE_OPERATIONS[action.operation];
+    const target =
+      action.target.targetSource === 'Target' &&
+      (context.actionTargetTarget === 'eventSource' || context.actionTargetTarget === 'eventTarget')
+        ? context.actionTargetTarget
+        : undefined;
     if (
-      action.target.targetSource !== 'Owner' ||
+      (action.target.targetSource !== 'Owner' && target === undefined) ||
       action.target.targetGroupKey !== '' ||
       action.settings.checkType !== 'Environment' ||
-      action.settings.buffIds.length !== 0 ||
-      action.settings.tagQuery.queryType !== 'hasAny' ||
-      action.settings.tagQuery.tagIds.length !== 0 ||
       action.isFinishedEarly ||
       (operation !== 'assign' && operation !== 'add' && operation !== 'multiply')
     ) {
@@ -1449,7 +1494,11 @@ export function compileActionNode(
     return [
       {
         kind: 'setCurrentBuffRemainingDuration',
-        parameters: { operation, value: actionValueOperand(action.value) },
+        parameters: {
+          operation,
+          value: actionValueOperand(action.value),
+          ...(target === undefined ? {} : { target }),
+        },
       },
     ];
   }
@@ -1468,6 +1517,7 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'blackboardMutation') {
     const action = node.body.value.action;
+    if (context.unconsumedSkillLocalKeys?.has(action.key)) return [];
     if (context.combatInvisiblePresentationBlackboardKeys?.has(action.key)) return [];
     if (!action.directValue)
       throw new Error(`${node.sourcePath}: indirect blackboard mutation is unsupported`);

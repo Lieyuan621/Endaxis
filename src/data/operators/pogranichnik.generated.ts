@@ -3332,6 +3332,14 @@ export const pogranichnik: OperatorDefinition = {
       childSkills: {
         chr_0029_pograni_ultimate_skill_abilityentity: {
           skillId: 'chr_0029_pograni_ultimate_skill_abilityentity',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 300,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: {
             atb_final: 0,
             atb_trigger: 4,
@@ -3378,6 +3386,14 @@ export const pogranichnik: OperatorDefinition = {
         },
         chr_0029_pograni_ultimate_skill_abilityentity_attack2: {
           skillId: 'chr_0029_pograni_ultimate_skill_abilityentity_attack2',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 400,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: {
             atb_trigger: 10,
             atk_scale_trigger: 1,
@@ -3467,7 +3483,7 @@ export const pogranichnik: OperatorDefinition = {
                     attackScale: { kind: 'blackboard', key: 'atk_scale_trigger' },
                     tags: ['ultimateSkill'],
                   },
-                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_attack2/scheduledSequences/5/sequence/steps/1',
+                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish1|chr_0029_pograni_ultimate_skill_abilityentity_finish2|chr_0029_pograni_ultimate_skill_abilityentity_finish3|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_attack2/scheduledSequences/5/sequence/steps/1',
                 ),
                 step('startTimeDilation', {
                   scope: 'entity',
@@ -3500,7 +3516,7 @@ export const pogranichnik: OperatorDefinition = {
                     attackScale: { kind: 'blackboard', key: 'atk_scale_trigger' },
                     tags: ['ultimateSkill'],
                   },
-                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_attack2/scheduledSequences/6/sequence/steps/1',
+                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish1|chr_0029_pograni_ultimate_skill_abilityentity_finish2|chr_0029_pograni_ultimate_skill_abilityentity_finish3|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_attack2/scheduledSequences/6/sequence/steps/1',
                 ),
                 step('startTimeDilation', {
                   scope: 'entity',
@@ -3533,7 +3549,7 @@ export const pogranichnik: OperatorDefinition = {
                     attackScale: { kind: 'blackboard', key: 'atk_scale_trigger' },
                     tags: ['ultimateSkill'],
                   },
-                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_attack2/scheduledSequences/7/sequence/steps/1',
+                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish1|chr_0029_pograni_ultimate_skill_abilityentity_finish2|chr_0029_pograni_ultimate_skill_abilityentity_finish3|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_attack2/scheduledSequences/7/sequence/steps/1',
                 ),
                 step('startTimeDilation', {
                   scope: 'entity',
@@ -3566,7 +3582,7 @@ export const pogranichnik: OperatorDefinition = {
                     attackScale: { kind: 'blackboard', key: 'atk_scale_trigger' },
                     tags: ['ultimateSkill'],
                   },
-                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_attack2/scheduledSequences/8/sequence/steps/1',
+                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish1|chr_0029_pograni_ultimate_skill_abilityentity_finish2|chr_0029_pograni_ultimate_skill_abilityentity_finish3|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_attack2/scheduledSequences/8/sequence/steps/1',
                 ),
                 step('startTimeDilation', {
                   scope: 'entity',
@@ -3771,8 +3787,179 @@ export const pogranichnik: OperatorDefinition = {
             ),
           ],
         },
+        chr_0029_pograni_ultimate_skill_abilityentity_finish1: {
+          skillId: 'chr_0029_pograni_ultimate_skill_abilityentity_finish1',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 65,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atb: 10,
+            atk_scale: 1,
+            minAngle: 0,
+            number: 0,
+            owner_mainchar_alpha: 0,
+            owner_mainchar_distance: 0,
+            radius: 5,
+          },
+          scheduledSequences: [
+            scheduled(36, sequence(step('finishActionOwnerAbilityEntity', {})), 46),
+            scheduled(
+              9,
+              sequence(
+                step(
+                  'dealDamage',
+                  {
+                    damageType: 'physical',
+                    attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                    tags: ['ultimateSkill'],
+                  },
+                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish1|chr_0029_pograni_ultimate_skill_abilityentity_finish2|chr_0029_pograni_ultimate_skill_abilityentity_finish3|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_finish1/scheduledSequences/1/sequence/steps/0',
+                ),
+                step('changeResourceByActionValue', {
+                  resource: 'sp',
+                  amount: { kind: 'blackboard', key: 'atb' },
+                  coefficient: { kind: 'constant', value: 1 },
+                  recipient: 'team',
+                  spGainKind: 'gain',
+                  spGainSource: 'skill',
+                }),
+                step('startTimeDilation', {
+                  scope: 'entity',
+                  durationSeconds: { kind: 'constant', value: 0.12 },
+                  slot: 'TimeDilation/Layer/Entity/HitStop',
+                  priority: 10,
+                  curve: { kind: 'named', key: 'char_normal_attack' },
+                  finishByAction: false,
+                  targets: ['enemy', 'caster'],
+                }),
+              ),
+              13,
+            ),
+            scheduled(
+              0,
+              sequence(
+                step('startTimeDilation', {
+                  scope: 'global',
+                  durationSeconds: { kind: 'constant', value: 0.467 },
+                  slot: 'unassigned',
+                  priority: 30,
+                  curve: { kind: 'named', key: 'ComboSkill' },
+                  finishByAction: false,
+                  ignoredTargets: [],
+                  ignoredAbilityEntityTargets: [{ kind: 'current' }],
+                }),
+              ),
+              14,
+            ),
+          ],
+        },
+        chr_0029_pograni_ultimate_skill_abilityentity_finish2: {
+          skillId: 'chr_0029_pograni_ultimate_skill_abilityentity_finish2',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 65,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atb: 10,
+            atk_scale: 1,
+            minAngle: 0,
+            number: 0,
+            owner_mainchar_alpha: 0,
+            owner_mainchar_distance: 0,
+            radius: 5,
+          },
+          scheduledSequences: [
+            scheduled(36, sequence(step('finishActionOwnerAbilityEntity', {})), 46),
+            scheduled(
+              9,
+              sequence(
+                step(
+                  'dealDamage',
+                  {
+                    damageType: 'physical',
+                    attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                    tags: ['ultimateSkill'],
+                  },
+                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish1|chr_0029_pograni_ultimate_skill_abilityentity_finish2|chr_0029_pograni_ultimate_skill_abilityentity_finish3|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_finish2/scheduledSequences/1/sequence/steps/0',
+                ),
+                step('changeResourceByActionValue', {
+                  resource: 'sp',
+                  amount: { kind: 'blackboard', key: 'atb' },
+                  coefficient: { kind: 'constant', value: 1 },
+                  recipient: 'team',
+                  spGainKind: 'gain',
+                  spGainSource: 'skill',
+                }),
+              ),
+              13,
+            ),
+          ],
+        },
+        chr_0029_pograni_ultimate_skill_abilityentity_finish3: {
+          skillId: 'chr_0029_pograni_ultimate_skill_abilityentity_finish3',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 65,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atb: 10,
+            atk_scale: 1,
+            minAngle: 0,
+            number: 0,
+            owner_mainchar_alpha: 0,
+            owner_mainchar_distance: 0,
+            radius: 5,
+          },
+          scheduledSequences: [
+            scheduled(36, sequence(step('finishActionOwnerAbilityEntity', {})), 46),
+            scheduled(
+              9,
+              sequence(
+                step(
+                  'dealDamage',
+                  {
+                    damageType: 'physical',
+                    attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                    tags: ['ultimateSkill'],
+                  },
+                  'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish1|chr_0029_pograni_ultimate_skill_abilityentity_finish2|chr_0029_pograni_ultimate_skill_abilityentity_finish3|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_finish3/scheduledSequences/1/sequence/steps/0',
+                ),
+                step('changeResourceByActionValue', {
+                  resource: 'sp',
+                  amount: { kind: 'blackboard', key: 'atb' },
+                  coefficient: { kind: 'constant', value: 1 },
+                  recipient: 'team',
+                  spGainKind: 'gain',
+                  spGainSource: 'skill',
+                }),
+              ),
+              13,
+            ),
+          ],
+        },
         chr_0029_pograni_ultimate_skill_abilityentity_finish4: {
           skillId: 'chr_0029_pograni_ultimate_skill_abilityentity_finish4',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 81,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: {
             atb_final: 50,
             atk_scale_final: 1,
@@ -3832,7 +4019,7 @@ export const pogranichnik: OperatorDefinition = {
                         features: ['canBreakWeakness'],
                         stagger: { kind: 'blackboard', key: 'poise_final' },
                       },
-                      'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_finish4/scheduledSequences/2/sequence/steps/0/whenTrue/steps/2',
+                      'abilityentity_chr_0029_pograni_ultimate_skill:chr_0029_pograni_ultimate_skill_abilityentity|chr_0029_pograni_ultimate_skill_abilityentity_attack2|chr_0029_pograni_ultimate_skill_abilityentity_finish1|chr_0029_pograni_ultimate_skill_abilityentity_finish2|chr_0029_pograni_ultimate_skill_abilityentity_finish3|chr_0029_pograni_ultimate_skill_abilityentity_finish4:/childSkills/chr_0029_pograni_ultimate_skill_abilityentity_finish4/scheduledSequences/2/sequence/steps/0/whenTrue/steps/2',
                     ),
                   ),
                   undefined,

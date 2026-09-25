@@ -52,6 +52,19 @@ it('环境数据端口引用实际生命账本，保存后原分支受伤不改�
   expect(saved.enemyVitals.health).toBe(before);
 });
 
+it('生命变化事件在写入生命后送给对应实体，零伤害不触发', () => {
+  const environment = createEnvironment();
+  const observed: number[] = [];
+  environment.eventsFor('enemy').registerAction('hpChanged', 0, event => {
+    expect(event.payload).toEqual({ sourceId: 'enemy', targetId: 'enemy' });
+    observed.push(environment.enemyVitals.health);
+  });
+  const before = environment.enemyVitals.health;
+  environment.enemyVitals.takeDamage(10);
+  environment.enemyVitals.takeDamage(0);
+  expect(observed).toEqual([before - 10]);
+});
+
 it('恢复环境直接绑定账本和事件目录，不重新登记监听或改写原分支', () => {
   const original = createEnvironment();
   const received = vi.fn();
@@ -835,7 +848,7 @@ function bindBattleWithoutProjectiles(
     resources: context.resources,
     receipt: context.receipt,
     resolveProjectileRuntimeDependencies: () => ({
-      scheduleProjectileFinishCallback: () => {
+      launchProjectile: () => {
         throw new Error('fixture does not support projectile launches');
       },
       createCallbackSkillHost: () => {

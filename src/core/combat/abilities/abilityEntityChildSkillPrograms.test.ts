@@ -3,7 +3,19 @@ import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/comb
 import { AbilityEntityChildSkillPrograms } from './abilityEntityChildSkillPrograms';
 
 function program(skillId: string): CompiledAbilityEntityChildSkillProgram {
-  return { skillId, initialBlackboard: {}, timelineActions: [] };
+  return {
+    nativeSkillType: 'normalSkill' as const,
+    naturalDurationFrames: 30,
+    castResource: {
+      costFrame: 0,
+      cooldownSeconds: 0,
+      maxChargeTime: 1,
+      cost: { resource: 'ultimateEnergy' as const, value: 0, availabilityThreshold: 0 },
+    },
+    skillId,
+    initialBlackboard: {},
+    timelineActions: [],
+  };
 }
 
 describe('AbilityEntityChildSkillPrograms', () => {

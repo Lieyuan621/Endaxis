@@ -306,6 +306,8 @@ import {
   type ReceiveMoveInputActionSource,
   type SelfRotateActionSource,
   type TeleportActionSource,
+  parseEnableMoveColliderActionSource,
+  type EnableMoveColliderActionSource,
 } from './spatialActions.ts';
 import {
   parseRefrainUltimateEnergyRecoveryActionSource,
@@ -462,6 +464,7 @@ export type KnownNativeActionLeafSource =
       readonly action:
         | AdditionalBattleShapeActionSource
         | DynamicBattleShapeActionSource
+        | EnableMoveColliderActionSource
         | SelfRotateActionSource
         | TeleportActionSource
         | ReceiveMoveInputActionSource
@@ -851,6 +854,11 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'environment',
         action: parseBreakInteractiveActionSource(value, path, inheritedBlackboard),
       };
+    case 'InverseSpellInfliction':
+      return {
+        family: 'elementalInfliction',
+        action: { ...parseElementalInflictionActionSource(value, path), inverseReaction: true },
+      };
     case 'SpellInfliction':
       return {
         family: 'elementalInfliction',
@@ -910,6 +918,8 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'spatial',
         action: parseSelfRotateActionSource(value, path),
       };
+    case 'EnableMoveColliderAction':
+      return { family: 'spatial', action: parseEnableMoveColliderActionSource(value, path) };
     case 'CreateAdditionalBattleShape':
       return {
         family: 'spatial',
@@ -1496,6 +1506,7 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'buffQuery',
         action: parseStoreBuffCountActionSource(value, path),
       };
+    case 'GetTargetBuffBBAction':
     case 'GetTargetBuffBBAdvanced':
       return {
         family: 'buffBlackboardRead',

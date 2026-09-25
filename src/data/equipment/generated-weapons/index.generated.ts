@@ -76,7 +76,8 @@ import generatedWeapon74 from './sword/wpn_sword_0019.generated';
 import generatedWeapon75 from './sword/wpn_sword_0020.generated';
 import generatedWeapon76 from './sword/wpn_sword_0021.generated';
 import generatedWeapon77 from './sword/wpn_sword_0022.generated';
-import generatedWeapon78 from './sword/wpn_sword_0026.generated';
+import generatedWeapon78 from './sword/wpn_sword_0023.generated';
+import generatedWeapon79 from './sword/wpn_sword_0026.generated';
 
 import type { WeaponDefinition } from '../../../core/game-data/equipmentDefinition';
 
@@ -160,4 +161,5 @@ export const generatedWeaponDefinitions = [
   generatedWeapon76,
   generatedWeapon77,
   generatedWeapon78,
+  generatedWeapon79,
 ] as const satisfies readonly WeaponDefinition[];

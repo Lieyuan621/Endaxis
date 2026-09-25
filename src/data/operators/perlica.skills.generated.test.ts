@@ -21,7 +21,7 @@ const basicAttacks = [
 ];
 
 describe('佩丽卡生成 DSL', () => {
-  it('保留四段普攻的命中帧和末段语义', () => {
+  it('保留四段普攻的伤害动作发起帧和末段语义', () => {
     expect(basicAttacks.map(skill => skill.key)).toEqual([
       'chr_0004_pelica_attack1',
       'chr_0004_pelica_attack2',
@@ -39,13 +39,11 @@ describe('佩丽卡生成 DSL', () => {
     ).toEqual([[8], [9, 12], [16, 19, 22], [27]]);
 
     const finalSteps = collectSteps(perlicaBasicAttack4.scheduledSequences[0]!.sequence);
-    expect(finalSteps.map(step => step.kind)).toEqual([
-      'withActionBlackboardScope',
-      'withActionBlackboardScope',
-      'dealDamage',
-      'conditional',
-      'changeResourceByActionValue',
-    ]);
+    expect(
+      finalSteps
+        .filter(step => ['dealDamage', 'changeResourceByActionValue'].includes(step.kind))
+        .map(step => step.kind),
+    ).toEqual(['dealDamage', 'changeResourceByActionValue']);
     expect(finalSteps.find(step => step.kind === 'dealDamage')).toMatchObject({
       kind: 'dealDamage',
       parameters: {

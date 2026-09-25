@@ -1371,8 +1371,8 @@ export function parseLockCameraAimActionSource(
 }
 
 /**
- * 无渲染后端只可省略没有 onEnd 子动作的动画。onEnd 可能承载战斗逻辑，因此非空时严格拒绝，
- * 不能因为根动作是表现动作就连带删除子图。
+ * 动画结束后的纯动画链可省略；条件和 Buff 需保留，其他战斗回调仍严格拒绝。
+ * 递归检查子动画，不能因为根动作是表现动作就连带删除战斗逻辑。
  */
 export function parsePlayAnimationActionSource(
   value: unknown,
@@ -1430,6 +1430,14 @@ export function parsePlayAnimationActionSource(
     const actionPath = `${path}.onEndAction.actionData[${index}]`;
     const child = requireRecord(raw, actionPath);
     const name = nativeActionName(requireNonEmptyString(child.$type, `${actionPath}.$type`));
+    if (name === 'PlayAnimationAction') {
+      const nested = parsePlayAnimationActionSource(child, actionPath, inheritedBlackboard);
+      if (nested.onEnd !== undefined)
+        throw new Error(
+          `${actionPath}.onEndAction: nested animation end combat actions are unsupported`,
+        );
+      return;
+    }
     if (name === 'CreateBuffAction' || name === 'CreateBuffAttachingSkill') {
       buffApplications.push(
         parseBuffApplicationActionSource(child, actionPath, inheritedBlackboard),
@@ -1454,7 +1462,9 @@ export function parsePlayAnimationActionSource(
       action.executeOnNormalEndOnly,
       `${path}.executeOnNormalEndOnly`,
     ),
-    ...(enabledOnEndActions.length === 0 ? {} : { onEnd: { conditions, buffApplications } }),
+    ...(conditions.length === 0 && buffApplications.length === 0
+      ? {}
+      : { onEnd: { conditions, buffApplications } }),
   };
 }
 

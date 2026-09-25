@@ -41,7 +41,7 @@ describe('operator definition helpers', () => {
   it('只接受不需要额外必填结构的步骤，并保留具体节点类型', () => {
     expectTypeOf<Parameters<typeof step>[0]>()
       .exclude<
-        | 'scheduleProjectileFinishCallback'
+        | 'launchProjectile'
         | 'conditional'
         | 'switch'
         | 'once'

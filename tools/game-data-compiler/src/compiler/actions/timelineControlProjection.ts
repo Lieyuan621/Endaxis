@@ -17,14 +17,10 @@ export function projectTimelineJump(
 ): CompiledBuffStepSource | null {
   if (node.body.kind !== 'timelineJump') return null;
   const { destinationFrame, condition } = node.body;
-  // 只开放已有原生证据的向前跳转，跨目标帧后不得再尝试反向跳转。
-  if (
-    !context.timelineRange ||
-    !Number.isInteger(destinationFrame) ||
-    destinationFrame <= context.timelineRange.startFrame ||
-    destinationFrame < context.timelineRange.endFrame
-  )
-    throw new Error(`${node.sourcePath}: timeline jump requires a proven forward timeline range`);
+  // 方向由执行时的 Skill.JumpTo 判断：过去的目标帧会被忽略，并非非法数据。
+  // 事件回调可能在登记区间内任何时刻发生，不能用区间端点替代当前技能进度。
+  if (!context.timelineRange || !Number.isInteger(destinationFrame))
+    throw new Error(`${node.sourcePath}: timeline jump requires a timeline host and integer frame`);
   if (condition.onlyExecuteWhenSourceIsMainCharacter || condition.onlyExecuteWhenSourceIsGuard)
     throw new Error(`${node.sourcePath}: timeline jump condition root filters are unsupported`);
   const conditions: CompiledBuffConditionSource[] = [];

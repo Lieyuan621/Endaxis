@@ -531,7 +531,11 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
           step.parameters.sourceContextKey !== undefined
             ? this.#resolveContextSource(step.parameters.sourceContextKey, context)
             : step.parameters.source !== undefined || requiresSourceAttributeValue
-              ? this.#resolveApplicationSource(step.parameters.source ?? 'caster', context)
+              ? this.#resolveApplicationSource(
+                  step.parameters.source ?? 'caster',
+                  context,
+                  definition === undefined || requiresSourceAttributeValue === true,
+                )
               : undefined;
         let iconDurationSourceTargetId: string | undefined;
         if (step.parameters.iconDurationSource?.kind === 'actionOwnerAbilityEntity') {
@@ -723,6 +727,11 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       ) {
         throw new Error('setCurrentBuffRemainingDuration requires a Buff operation context');
       }
+      if (
+        step.parameters.target !== undefined &&
+        this.#resolveSingleTarget(step.parameters.target, context).ownerId !== context.buffOwnerId
+      )
+        return true;
       const current = context.getCurrentBuffRemainingDuration();
       if (current === null) return true;
       const operand = resolveActionValueOperand(step.parameters.value, context.blackboard);
@@ -1060,16 +1069,20 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   #resolveApplicationSource(
     source: NonNullable<ResolvedCombatStepParameters['applyBuff']['source']>,
     context?: CombatOperationContext,
-  ): BuffOperationTarget {
+    needsAttributes = true,
+  ): Pick<BuffOperationTarget, 'ownerId' | 'getAttributeValue'> {
     if (source === 'buffSource' || source === 'buffOwner') {
       const id = source === 'buffSource' ? context?.buffSourceId : context?.buffOwnerId;
       if (id === undefined)
         throw new Error(`${source} Buff source requires a Buff lifecycle context`);
+      // 继承来源身份不要求来源仍有活动的 Buff 容器（例如已结束的投射物）。
+      if (!needsAttributes) return { ownerId: id };
       const resolve = this.dependencies.resolveEventTarget;
       if (resolve === undefined) throw new Error(`${source} Buff source is not configured`);
       return resolve(id);
     }
     if (source === 'eventSource') {
+      if (!needsAttributes) return { ownerId: this.#requireEventSourceId(context) };
       const resolve = this.dependencies.resolveEventTarget;
       if (resolve === undefined) {
         throw new Error('eventSource Buff source is not configured');
@@ -1157,6 +1170,18 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       }
       actionBuffs.references.length = 0;
       actionBuffs.active = false;
+      if (step.parameters.onActionEndFinishBuffs !== undefined) {
+        this.execute(
+          {
+            kind: 'finishBuffsById',
+            parameters: {
+              ...step.parameters.onActionEndFinishBuffs,
+              reason: 'other',
+            },
+          },
+          context,
+        );
+      }
       for (const exit of step.parameters.onActionEndBuffs ?? []) {
         this.execute(
           {

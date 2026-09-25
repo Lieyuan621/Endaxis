@@ -511,8 +511,10 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     preliminaryAbilityEntityDefinitions,
   );
   const entityVisualOnlyBuffIds = new Set(
-    [...collectCombatInvisibleBuffClosureIds([...preliminaryEntityBuffIds], input.loadBuff)].filter(
-      id => !entityBuffIdentityReads.has(id),
+    collectCombatInvisibleBuffClosureIds(
+      [...preliminaryEntityBuffIds],
+      input.loadBuff,
+      entityBuffIdentityReads,
     ),
   );
   const compiledAbilityEntityDefinitions = Object.fromEntries(

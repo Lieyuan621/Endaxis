@@ -56,6 +56,9 @@ export function compileAbilityEntityDefinitionSource(
         : []
       : [...skillIds].filter(skillId => skillId.length > 0);
   const childSkills = ids.map(skillId => {
+    const nativeSkillType = template.activeSkillTypes?.[skillId];
+    if (nativeSkillType === undefined)
+      throw new Error(`${template.gameId}: missing native skill registration for ${skillId}`);
     const childExtensions = typeof extensions === 'function' ? extensions(skillId) : extensions;
     const childSkill = compileAbilityEntityChildSkillSource(
       loadSkill(skillId),
@@ -65,6 +68,7 @@ export function compileAbilityEntityDefinitionSource(
       childExtensions,
       abilityEntityQueries,
       nativeMissingBlackboardZeroKeys?.(skillId),
+      nativeSkillType,
     );
     if (childSkill.skillId !== skillId)
       throw new Error(`${template.gameId}: child skill identity mismatch`);

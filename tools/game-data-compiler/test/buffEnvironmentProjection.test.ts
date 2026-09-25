@@ -78,6 +78,53 @@ function createTarget() {
 }
 
 describe('公共 Buff 环境读取：来源到正式执行器', () => {
+  it('普通版按 ID 读取，找不到时保留原黑板值并返回失败', () => {
+    const projected = project([
+      {
+        ...meta,
+        $type: 'Beyond.Gameplay.Core.GetTargetBuffBBAction+Data, Gameplay.Beyond',
+        targetSettings: targetFixture('Owner'),
+        buffId: 'buff.last-type',
+        desiredKey: 'combotype',
+        blackboardKey: 'lastType',
+      },
+    ]);
+    expect(projected.steps).toEqual([
+      {
+        kind: 'readBuffBlackboard',
+        parameters: {
+          target: 'buffOwner',
+          query: { kind: 'id', buffIds: ['buff.last-type'] },
+          desiredKey: 'combotype',
+          outputKey: 'lastType',
+        },
+      },
+    ]);
+    const owner = createTarget();
+    const blackboard = new ActionBlackboard({ lastType: 7 });
+    const operations = new BuffOperationExecutor({
+      sourceId: 'caster',
+      resolveTarget: () => owner,
+      resolveEventTarget: () => owner,
+      delegate: { execute: () => true, evaluate: () => true },
+    });
+    const runtime = new CombatActionSequenceRuntime(operations, {
+      blackboard,
+      buffOwnerId: 'enemy',
+    });
+    const sequence = runtime.createSequence(compileActionSequence(projected, 1));
+    sequence.reset({});
+    expect(sequence.tryExecute({})).toBe(false);
+    expect(blackboard.getNumber('lastType')).toBe(7);
+    owner.add(
+      { id: 'buff.last-type', stackingType: 'unlimited', blackboard: { combotype: 2 } },
+      'caster',
+    );
+    sequence.reset({});
+    expect(sequence.tryExecute({})).toBe(true);
+    expect(blackboard.getNumber('lastType')).toBe(2);
+  });
+
   it('从已证明为唯一敌人的命名 Context 读取 Buff 黑板', () => {
     const parsed = parseKnownNativeActionLeafSource(
       {

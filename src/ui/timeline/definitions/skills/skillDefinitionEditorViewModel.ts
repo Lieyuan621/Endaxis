@@ -7,6 +7,7 @@
  * 取消编辑或恢复模板则直接丢弃草稿或删除整个 `customDefinition`。
  */
 import type {
+  AbilityEntityChildSkillDefinition,
   ActionValueOperand,
   CombatStepDefinition,
   CombatStepKind,
@@ -19,6 +20,23 @@ import type {
   SkillDefinition,
 } from '../../../../core/game-data/operatorDefinition';
 import { diffSkillDefinition } from '../../../../core/game-data/diffSkillDefinition';
+
+export function createAbilityEntityChildSkillDraft(
+  skillId: string,
+): AbilityEntityChildSkillDefinition {
+  return {
+    skillId,
+    nativeSkillType: 'normalSkill',
+    naturalDurationFrames: 1,
+    castResource: {
+      costFrame: 0,
+      cooldownSeconds: 0,
+      maxChargeTime: 1,
+      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+    },
+    scheduledSequences: [],
+  };
+}
 
 export function createCombatEventResponseDraft(
   existingKeys: readonly string[] = [],
@@ -422,7 +440,7 @@ export const EDITABLE_COMBAT_STEP_KINDS = [
   'finishTimeline',
   'withActionBlackboardScope',
   'repeatByActionValue',
-  'scheduleProjectileFinishCallback',
+  'launchProjectile',
   'startTimeDilation',
   'startUltimateTimeDilation',
   'setIgnoreGlobalTimeScale',
@@ -620,7 +638,7 @@ export function createSkillEditorStep(
       return {
         kind,
         parameters: {
-          childSkill: { skillId: 'custom-child-skill', scheduledSequences: [] },
+          childSkill: createAbilityEntityChildSkillDraft('custom-child-skill'),
         },
       };
     case 'createSpatialPointTargets':
@@ -651,23 +669,28 @@ export function createSkillEditorStep(
         parameters: { count: { kind: 'constant', value: 1 } },
         body: { steps: [] },
       };
-    case 'scheduleProjectileFinishCallback':
+    case 'launchProjectile':
       return {
         kind,
-        parameters: { delaySeconds: 1, recycleDelaySeconds: 0 },
-        callback: {
-          skillId: 'callback',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 1,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        parameters: { finish: 1 },
+        callbacks: [
+          {
+            event: 'finish',
+            skill: {
+              skillId: 'callback',
+              nativeSkillType: 'normalSkill',
+              naturalDurationFrames: 1,
+              castResource: {
+                costFrame: 0,
+                cooldownSeconds: 0,
+                maxChargeTime: 1,
+                cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+              },
+              blackboard: {},
+              scheduledSequences: [{ startFrame: 0, endFrame: 1, sequence: { steps: [] } }],
+            },
           },
-          blackboard: {},
-          scheduledSequences: [{ startFrame: 0, endFrame: 1, sequence: { steps: [] } }],
-        },
+        ],
       };
     case 'startTimeDilation':
       return {

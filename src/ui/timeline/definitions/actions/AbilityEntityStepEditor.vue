@@ -20,7 +20,10 @@ import {
   type LevelValues,
   type ScheduledSequenceDefinition,
 } from '../../../../core/game-data/operatorDefinition';
-import type { EditableCombatStepKind } from '../skills/skillDefinitionEditorViewModel';
+import {
+  createAbilityEntityChildSkillDraft,
+  type EditableCombatStepKind,
+} from '../skills/skillDefinitionEditorViewModel';
 import ActionValueOperandEditor from './ActionValueOperandEditor.vue';
 import EditorFieldLabel from '../inspector/EditorFieldLabel.vue';
 import SkillBlackboardEditor from '../skills/SkillBlackboardEditor.vue';
@@ -241,7 +244,7 @@ function setChildSkill(childSkill: AbilityEntityChildSkillDefinition | undefined
 function toggleChildSkill(event: Event): void {
   setChildSkill(
     (event.target as HTMLInputElement).checked
-      ? { skillId: 'custom-ability-entity-child', scheduledSequences: [] }
+      ? createAbilityEntityChildSkillDraft('custom-ability-entity-child')
       : undefined,
   );
 }

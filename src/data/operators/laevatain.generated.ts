@@ -287,26 +287,48 @@ export const laevatainChr_0016_laevat_attack4: SkillDefinition = withSkillBlackb
             'SkillData.chr_0016_laevat_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0016_laevat_attack_5',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0016_laevat_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0016_laevat_attack_5_projhit',
-                { atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0016_laevat_attack_5_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0016_laevat_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0, duration: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0016_laevat_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        1,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -320,26 +342,48 @@ export const laevatainChr_0016_laevat_attack4: SkillDefinition = withSkillBlackb
             'SkillData.chr_0016_laevat_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0016_laevat_attack_4_2',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0016_laevat_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0016_laevat_attack_5_projhit',
-                { atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0016_laevat_attack_5_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0016_laevat_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0, duration: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0016_laevat_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        1,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1076,23 +1120,6 @@ export const laevatainChr_0016_laevat_ult_attack4: SkillDefinition = withSkillBl
                   staggerOnlyWhenCasterControlled: true,
                 },
                 'chr_0016_laevat_ult_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0',
-              ),
-              branch(
-                {
-                  kind: 'actionValueCompare',
-                  left: { kind: 'blackboard', key: 'hit', fallback: 0 },
-                  operator: 'equal',
-                  right: { kind: 'constant', value: 0 },
-                },
-                sequence(
-                  step('modifyActionValue', {
-                    key: 'hit',
-                    operation: 'assign',
-                    value: { kind: 'constant', value: 1 },
-                  }),
-                ),
-                undefined,
-                { alwaysNext: true },
               ),
               branch(
                 { kind: 'casterControlled' },
@@ -2084,12 +2111,11 @@ export const laevatainChr_0016_laevat_combo_skill: SkillDefinition = withSkillBl
           ),
           forEachContextTarget(
             'tar',
-            sequence(
-              step('launchProjectileLifetime', {
-                finish: 'firstTickReach',
-                recycleDelaySeconds: 0.0333333350718021,
-              }),
-            ),
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+              callbacks: [],
+            }),
           ),
           step('applyBuff', {
             buffId: 'buff_chr_0016_laevat_combo_skill_hit_self',
@@ -2713,10 +2739,11 @@ export const laevatain: OperatorDefinition = {
                 reason: 'early',
                 count: { kind: 'constant', value: 1 },
               }),
-              step('launchProjectileLifetime', {
-                finish: 'firstTickReach',
-                recycleDelaySeconds: 5,
-              }),
+              {
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickReach', recycleDelaySeconds: 5 },
+                callbacks: [],
+              },
             ),
           ),
         ),
@@ -3314,10 +3341,14 @@ export const laevatain: OperatorDefinition = {
                                               source: 'buffSource',
                                               inheritSourceSkillCastInfo: true,
                                             }),
-                                            step('launchProjectileLifetime', {
-                                              finish: 'firstTickReach',
-                                              recycleDelaySeconds: 5,
-                                            }),
+                                            {
+                                              kind: 'launchProjectile',
+                                              parameters: {
+                                                finish: 'firstTickReach',
+                                                recycleDelaySeconds: 5,
+                                              },
+                                              callbacks: [],
+                                            },
                                           ),
                                         ),
                                       ),
@@ -3349,10 +3380,14 @@ export const laevatain: OperatorDefinition = {
                                               source: 'buffSource',
                                               inheritSourceSkillCastInfo: true,
                                             }),
-                                            step('launchProjectileLifetime', {
-                                              finish: 'firstTickReach',
-                                              recycleDelaySeconds: 5,
-                                            }),
+                                            {
+                                              kind: 'launchProjectile',
+                                              parameters: {
+                                                finish: 'firstTickReach',
+                                                recycleDelaySeconds: 5,
+                                              },
+                                              callbacks: [],
+                                            },
                                             branch(
                                               {
                                                 kind: 'buffIdStackCompare',
@@ -3410,10 +3445,14 @@ export const laevatain: OperatorDefinition = {
                                               source: 'buffSource',
                                               inheritSourceSkillCastInfo: true,
                                             }),
-                                            step('launchProjectileLifetime', {
-                                              finish: 'firstTickReach',
-                                              recycleDelaySeconds: 5,
-                                            }),
+                                            {
+                                              kind: 'launchProjectile',
+                                              parameters: {
+                                                finish: 'firstTickReach',
+                                                recycleDelaySeconds: 5,
+                                              },
+                                              callbacks: [],
+                                            },
                                             branch(
                                               {
                                                 kind: 'buffIdStackCompare',
@@ -3497,10 +3536,14 @@ export const laevatain: OperatorDefinition = {
                                               source: 'buffSource',
                                               inheritSourceSkillCastInfo: true,
                                             }),
-                                            step('launchProjectileLifetime', {
-                                              finish: 'firstTickReach',
-                                              recycleDelaySeconds: 5,
-                                            }),
+                                            {
+                                              kind: 'launchProjectile',
+                                              parameters: {
+                                                finish: 'firstTickReach',
+                                                recycleDelaySeconds: 5,
+                                              },
+                                              callbacks: [],
+                                            },
                                             branch(
                                               {
                                                 kind: 'buffIdStackCompare',
@@ -3944,6 +3987,14 @@ export const laevatain: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       childSkill: {
         skillId: 'chr_0016_laevat_normal_skill_abilityentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 100,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale: 3, atk_scale_2: 0, atk_scale_3: 0, hit_count: 0, poise: 0 },
         scheduledSequences: [
           scheduled(

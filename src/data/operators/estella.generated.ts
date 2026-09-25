@@ -712,85 +712,112 @@ export const estellaChr_0021_whiten_normal_skill: SkillDefinition = withSkillBla
             'SkillData.chr_0021_whiten_normal_skill.actionGroupData.timelineActions[8]._sequenceActionData.actionData[1].succeedActions.actionData[1]:projectile_chr_0021_whiten_normal_skill',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0021_whiten_normal_skill.actionGroupData.timelineActions[8]._sequenceActionData.actionData[1].succeedActions.actionData[1]:chr_0021_whiten_normal_skill_projhit',
-                { atk_scale: 0, dmg_up: 0, poise: 30, up_atk_scale: 0 },
-                true,
-                sequence(
-                  step('applyElementalInfliction', { element: 'cryo', isExtra: false }),
-                  forEachTarget(
-                    'enemy',
-                    sequence(
-                      branch(
-                        {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'blackboard', key: 'EntityBB_first_hit', fallback: 0 },
-                          operator: 'equal',
-                          right: { kind: 'constant', value: 0 },
-                        },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 5,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0021_whiten_normal_skill_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 150,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atk_scale: 0, dmg_up: 0, poise: 30, up_atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(0, sequence(), 3),
+                      scheduled(
+                        0,
                         sequence(
-                          step('modifyActionValue', {
-                            key: 'EntityBB_first_hit',
-                            operation: 'add',
-                            value: { kind: 'constant', value: 1 },
-                          }),
-                          step('modifyActionValue', {
-                            key: 'up_atk_scale',
-                            operation: 'assign',
-                            value: { kind: 'blackboard', key: 'atk_scale' },
-                          }),
-                          step(
-                            'dealDamage',
-                            {
-                              damageType: 'cryo',
-                              attackScale: { kind: 'blackboard', key: 'up_atk_scale' },
-                              tags: ['normalSkill'],
-                              features: ['canBreakWeakness'],
-                              instantDamageScaleModifiers: [
+                          step('applyElementalInfliction', { element: 'cryo', isExtra: false }),
+                          forEachTarget(
+                            'enemy',
+                            sequence(
+                              branch(
                                 {
-                                  side: 'attacker',
-                                  zone: 'normal',
-                                  addition: { kind: 'blackboard', key: 'dmg_up' },
+                                  kind: 'actionValueCompare',
+                                  left: {
+                                    kind: 'blackboard',
+                                    key: 'EntityBB_first_hit',
+                                    fallback: 0,
+                                  },
+                                  operator: 'equal',
+                                  right: { kind: 'constant', value: 0 },
                                 },
-                              ],
-                              stagger: { kind: 'blackboard', key: 'poise' },
-                            },
-                            'chr_0021_whiten_normal_skill:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/1/body/steps/0/whenTrue/steps/2',
+                                sequence(
+                                  step('modifyActionValue', {
+                                    key: 'EntityBB_first_hit',
+                                    operation: 'add',
+                                    value: { kind: 'constant', value: 1 },
+                                  }),
+                                  step('modifyActionValue', {
+                                    key: 'up_atk_scale',
+                                    operation: 'assign',
+                                    value: { kind: 'blackboard', key: 'atk_scale' },
+                                  }),
+                                  step(
+                                    'dealDamage',
+                                    {
+                                      damageType: 'cryo',
+                                      attackScale: { kind: 'blackboard', key: 'up_atk_scale' },
+                                      tags: ['normalSkill'],
+                                      features: ['canBreakWeakness'],
+                                      instantDamageScaleModifiers: [
+                                        {
+                                          side: 'attacker',
+                                          zone: 'normal',
+                                          addition: { kind: 'blackboard', key: 'dmg_up' },
+                                        },
+                                      ],
+                                      stagger: { kind: 'blackboard', key: 'poise' },
+                                    },
+                                    'chr_0021_whiten_normal_skill:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/1/body/steps/0/whenTrue/steps/2',
+                                  ),
+                                  step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
+                                  step('startTimeDilation', {
+                                    scope: 'entity',
+                                    durationSeconds: { kind: 'constant', value: 0.05 },
+                                    slot: 'TimeDilation/Layer/Entity/HitStop',
+                                    priority: 10,
+                                    curve: { kind: 'named', key: 'char_hard_stop' },
+                                    finishByAction: false,
+                                    targets: ['enemy', 'caster'],
+                                  }),
+                                ),
+                                sequence(
+                                  step(
+                                    'dealDamage',
+                                    {
+                                      damageType: 'cryo',
+                                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                      tags: ['normalSkill'],
+                                      features: ['canBreakWeakness'],
+                                      stagger: { kind: 'blackboard', key: 'poise' },
+                                    },
+                                    'chr_0021_whiten_normal_skill:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/1/body/steps/0/whenFalse/steps/0',
+                                  ),
+                                ),
+                                { alwaysNext: true },
+                              ),
+                            ),
                           ),
-                          step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
-                          step('startTimeDilation', {
-                            scope: 'entity',
-                            durationSeconds: { kind: 'constant', value: 0.05 },
-                            slot: 'TimeDilation/Layer/Entity/HitStop',
-                            priority: 10,
-                            curve: { kind: 'named', key: 'char_hard_stop' },
-                            finishByAction: false,
-                            targets: ['enemy', 'caster'],
-                          }),
                         ),
-                        sequence(
-                          step(
-                            'dealDamage',
-                            {
-                              damageType: 'cryo',
-                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                              tags: ['normalSkill'],
-                              features: ['canBreakWeakness'],
-                              stagger: { kind: 'blackboard', key: 'poise' },
-                            },
-                            'chr_0021_whiten_normal_skill:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/1/body/steps/0/whenFalse/steps/0',
-                          ),
-                        ),
-                        { alwaysNext: true },
+                        0,
                       ),
-                    ),
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             { EntityBB_first_hit: 0 },
             { lifetime: 'execution' },
           ),

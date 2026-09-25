@@ -5,6 +5,7 @@
  * 操作链；命中前的回调仍保持未创建，命中后的回调宿主从保存技能帧继续。
  */
 import type { CallbackSkillHostFactory } from '../../abilities/callbackSkillHost';
+import { logicalAbilityEntityRuntimeId } from '../../../game-data/logicalAbilityEntity';
 import type { ProjectileCallbackPrograms } from '../../abilities/projectileCallbackPrograms';
 import {
   bindProjectileCallbackLifecycle,
@@ -26,7 +27,7 @@ import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePrep
 export interface ProjectileCallbackRestoreBindings {
   readonly operations: CombatOperationExecutor;
   readonly createCallbackSkillHost: CallbackSkillHostFactory;
-  readonly scheduleProjectileFinishCallback: ProjectileRuntimeDependencies['scheduleProjectileFinishCallback'];
+  readonly launchProjectile: ProjectileRuntimeDependencies['launchProjectile'];
 }
 
 export function createRestoredCombatProjectileDirectory(options: {
@@ -35,11 +36,12 @@ export function createRestoredCombatProjectileDirectory(options: {
   readonly callbackPrograms: ProjectileCallbackPrograms;
 }): ProjectileLifecycleRuntime {
   for (const [instanceId, state] of options.preparation.graph.instances.projectiles.instances) {
-    const callback = state.callback;
-    if (callback !== null && !options.preparation.programs.has(callback.definitionOperatorId)) {
-      throw new Error(
-        `restored projectile '${instanceId}' definition operator '${callback.definitionOperatorId}' does not exist`,
-      );
+    for (const callback of state.callbacks) {
+      if (!options.preparation.programs.has(callback.definitionOperatorId)) {
+        throw new Error(
+          `restored projectile '${instanceId}' definition operator '${callback.definitionOperatorId}' does not exist`,
+        );
+      }
     }
   }
   return new ProjectileLifecycleRuntime(
@@ -64,38 +66,44 @@ export function bindRestoredCombatProjectileRelations(options: {
   if (options.projectiles.runtimeState.instances.size === 0) return;
   const resolveAttachedBuff = (reference: BuffReference): BuffApplicationHandle | undefined =>
     options.entities.targets.get(reference.ownerId)?.resolveHandle?.(reference);
-  const resolveTickDeltaSeconds = () =>
-    COMBAT_FRAME_INTERVAL * (options.foundation.shared.timeDilation?.currentGlobalScale ?? 1);
-
   options.projectiles.bindRestoredRelations({
     resolveHost: instanceId => {
-      const state = options.projectiles.runtimeState.instances.get(instanceId)?.callback;
-      if (state === undefined) {
-        throw new Error(`restored projectile '${instanceId}' has no callback host data`);
-      }
-      // launchProjectileLifetime 只登记对象寿命；与发射路径一样不建立回调技能宿主。
-      if (state === null) {
-        return { resolveTickDeltaSeconds, finish: () => {}, beforeReset: () => {} };
-      }
-      const bindings = options.createCallbackBindings({
-        instanceId,
-        definitionOperatorId: state.definitionOperatorId,
-        state,
-      });
-      return bindProjectileCallbackLifecycle(
-        restoreProjectileCallback(
-          state,
+      const resolveTickDeltaSeconds = () =>
+        COMBAT_FRAME_INTERVAL *
+        (options.foundation.shared.timeDilation?.getEntityScale(
+          logicalAbilityEntityRuntimeId(instanceId),
+        ) ?? 1);
+      const state = options.projectiles.runtimeState.instances.get(instanceId);
+      if (state === undefined) throw new Error(`restored projectile '${instanceId}' is missing`);
+      const callbacks = state.callbacks.map(callback => {
+        const bindings = options.createCallbackBindings({
+          instanceId,
+          definitionOperatorId: callback.definitionOperatorId,
+          state: callback,
+        });
+        return restoreProjectileCallback(
+          callback,
           instanceId,
           options.projectiles.callbackPrograms,
           bindings.operations,
-          {
-            createCallbackSkillHost: bindings.createCallbackSkillHost,
-            scheduleProjectileFinishCallback: bindings.scheduleProjectileFinishCallback,
-          },
+          bindings,
           resolveAttachedBuff,
-        ),
-        resolveTickDeltaSeconds,
-      );
+          state.source?.kind === 'operator'
+            ? state.source.operatorId
+            : state.source?.kind === 'enemy'
+              ? 'enemy'
+              : state.source?.kind === 'abilityEntity'
+                ? logicalAbilityEntityRuntimeId(state.source.instanceId)
+                : undefined,
+        );
+      });
+      return {
+        ...bindProjectileCallbackLifecycle(callbacks, resolveTickDeltaSeconds),
+        released: () =>
+          options.foundation.shared.timeDilation?.releaseInheritedEntityScale(
+            logicalAbilityEntityRuntimeId(instanceId),
+          ),
+      };
     },
   });
 }

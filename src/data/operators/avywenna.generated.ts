@@ -1,9 +1,5 @@
 /** 由 tools/game-data-compiler 整名生成；不要手工编辑。 */
-import type {
-  ActionSequenceDefinition,
-  OperatorDefinition,
-  SkillDefinition,
-} from '../../core/game-data/operatorDefinition';
+import type { OperatorDefinition, SkillDefinition } from '../../core/game-data/operatorDefinition';
 import {
   branch,
   forEachContextTarget,
@@ -14,102 +10,6 @@ import {
   withActionBlackboardScope,
   withSkillBlackboard,
 } from './definitionHelpers';
-
-const sharedActionSequence1: ActionSequenceDefinition = sequence(
-  {
-    kind: 'withActionBlackboardScope',
-    parameters: {
-      scopeKey: 'chr_0012_avywen_combo_skill_lance_back_reach:immediate-timeline:0',
-      lifetime: 'execution',
-      alwaysNext: true,
-      shareParentBlackboard: true,
-      initialValues: {},
-      inheritParent: true,
-    },
-    body: sequence(
-      step('startTimeDilation', {
-        scope: 'global',
-        durationSeconds: { kind: 'constant', value: 0.2 },
-        slot: 'TimeDilation/Layer/Entity/HitStop',
-        priority: 10,
-        curve: {
-          kind: 'inline',
-          keys: [
-            {
-              time: 0,
-              value: 0.2,
-              inTangent: 0.04379496,
-              outTangent: 0.04379496,
-              weightedMode: 0,
-              inWeight: 0,
-              outWeight: 0,
-            },
-            {
-              time: 0.8847446,
-              value: 0.2387474,
-              inTangent: 0.04379496,
-              outTangent: 6.604918,
-              weightedMode: 0,
-              inWeight: 0,
-              outWeight: 0,
-            },
-            {
-              time: 1,
-              value: 1,
-              inTangent: 6.604918,
-              outTangent: 6.604918,
-              weightedMode: 0,
-              inWeight: 0,
-              outWeight: 0,
-            },
-          ],
-        },
-        finishByAction: false,
-        ignoredTargets: ['controlled'],
-      }),
-    ),
-  },
-  {
-    kind: 'withActionBlackboardScope',
-    parameters: {
-      scopeKey: 'chr_0012_avywen_combo_skill_lance_back_reach:immediate-timeline:1',
-      lifetime: 'execution',
-      alwaysNext: true,
-      shareParentBlackboard: true,
-      initialValues: {},
-      inheritParent: true,
-    },
-    body: sequence(
-      branch(
-        {
-          kind: 'actionValueCompare',
-          left: { kind: 'blackboard', key: 'EntityBB_talent0', fallback: 0 },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-        sequence(
-          branch(
-            {
-              kind: 'buffIdStackCompare',
-              target: 'caster',
-              buffIds: ['buff_chr_0012_avywen_talent_0'],
-              operator: 'greaterOrEqual',
-              value: { kind: 'constant', value: 1 },
-            },
-            sequence(
-              step('changeResourceByActionValue', {
-                resource: 'ultimateEnergy',
-                amount: { kind: 'blackboard', key: 'EntityBB_talent0' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'caster',
-              }),
-            ),
-          ),
-        ),
-      ),
-    ),
-  },
-);
 
 export const avywennaChr_0012_avywen_attack1: SkillDefinition = withSkillBlackboard(
   {
@@ -906,95 +806,224 @@ export const avywennaChr_0012_avywen_normal_skill: SkillDefinition = withSkillBl
                     'SkillData.chr_0012_avywen_normal_skill.actionGroupData.timelineActions[9]._sequenceActionData.actionData[3].action.actionData[3]:projectile_chr_0012_avywen_combo_skill_lance_back',
                     {},
                     true,
-                    sequence(
-                      withActionBlackboardScope(
-                        'SkillData.chr_0012_avywen_normal_skill.actionGroupData.timelineActions[9]._sequenceActionData.actionData[3].action.actionData[3]:chr_0012_avywen_combo_skill_lance_back',
+                    sequence({
+                      kind: 'launchProjectile',
+                      parameters: {
+                        finish: 'firstTickReach',
+                        recycleDelaySeconds: 0.5,
+                        hit: { finishOnHit: false },
+                      },
+                      callbacks: [
                         {
-                          atk_scale_lance: 3,
-                          poise_lance: 0,
-                          potential_5_rate: 0,
-                          radius: 4,
-                          talent0_usp: 0,
-                        },
-                        true,
-                        sequence(
-                          step('modifyActionValue', {
-                            key: 'EntityBB_talent0',
-                            operation: 'assign',
-                            value: { kind: 'blackboard', key: 'talent0_usp' },
-                          }),
-                          branch(
-                            {
-                              kind: 'all',
-                              conditions: [
-                                {
-                                  kind: 'actionValueCompare',
-                                  left: {
-                                    kind: 'blackboard',
-                                    key: 'potential_5_rate',
-                                    fallback: 0,
-                                  },
-                                  operator: 'greater',
-                                  right: { kind: 'constant', value: 0 },
-                                },
-                                {
-                                  kind: 'buffStackCompare',
-                                  target: 'enemy',
-                                  tagQueryType: 'hasAny',
-                                  buffTags: [
-                                    'Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse',
-                                  ],
-                                  operator: 'greaterOrEqual',
-                                  value: { kind: 'constant', value: 1 },
-                                },
-                              ],
+                          event: 'hit',
+                          skill: {
+                            skillId: 'chr_0012_avywen_combo_skill_lance_back',
+                            nativeSkillType: 'normalSkill',
+                            naturalDurationFrames: 1,
+                            castResource: {
+                              costFrame: 0,
+                              cooldownSeconds: 0,
+                              maxChargeTime: 1,
+                              cost: {
+                                resource: 'ultimateEnergy',
+                                value: 0,
+                                availabilityThreshold: 0,
+                              },
                             },
-                            sequence(
-                              step('modifyActionValue', {
-                                key: 'atk_scale_lance',
-                                operation: 'multiply',
-                                value: { kind: 'blackboard', key: 'potential_5_rate' },
-                              }),
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale_lance' },
-                                  tags: ['normalSkill'],
-                                  features: ['canBreakWeakness'],
-                                  stagger: { kind: 'blackboard', key: 'poise_lance' },
-                                },
-                                'chr_0012_avywen_normal_skill:/scheduledSequences/5/sequence/steps/1/whenTrue/steps/1/body/steps/0/whenTrue/steps/1/body/steps/0/body/steps/0/whenTrue/steps/1/whenTrue/steps/1',
+                            blackboard: {
+                              atk_scale_lance: 3,
+                              poise_lance: 0,
+                              potential_5_rate: 0,
+                              radius: 4,
+                              talent0_usp: 0,
+                            },
+                            scheduledSequences: [
+                              scheduled(
+                                0,
+                                sequence(
+                                  step('modifyActionValue', {
+                                    key: 'EntityBB_talent0',
+                                    operation: 'assign',
+                                    value: { kind: 'blackboard', key: 'talent0_usp' },
+                                  }),
+                                  branch(
+                                    {
+                                      kind: 'all',
+                                      conditions: [
+                                        {
+                                          kind: 'actionValueCompare',
+                                          left: {
+                                            kind: 'blackboard',
+                                            key: 'potential_5_rate',
+                                            fallback: 0,
+                                          },
+                                          operator: 'greater',
+                                          right: { kind: 'constant', value: 0 },
+                                        },
+                                        {
+                                          kind: 'buffStackCompare',
+                                          target: 'enemy',
+                                          tagQueryType: 'hasAny',
+                                          buffTags: [
+                                            'Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse',
+                                          ],
+                                          operator: 'greaterOrEqual',
+                                          value: { kind: 'constant', value: 1 },
+                                        },
+                                      ],
+                                    },
+                                    sequence(
+                                      step('modifyActionValue', {
+                                        key: 'atk_scale_lance',
+                                        operation: 'multiply',
+                                        value: { kind: 'blackboard', key: 'potential_5_rate' },
+                                      }),
+                                      step(
+                                        'dealDamage',
+                                        {
+                                          damageType: 'electric',
+                                          attackScale: {
+                                            kind: 'blackboard',
+                                            key: 'atk_scale_lance',
+                                          },
+                                          tags: ['normalSkill'],
+                                          features: ['canBreakWeakness'],
+                                          stagger: { kind: 'blackboard', key: 'poise_lance' },
+                                        },
+                                        'chr_0012_avywen_normal_skill:/scheduledSequences/5/sequence/steps/1/whenTrue/steps/1/body/steps/0/whenTrue/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenTrue/steps/1/whenTrue/steps/1',
+                                      ),
+                                    ),
+                                    sequence(
+                                      step(
+                                        'dealDamage',
+                                        {
+                                          damageType: 'electric',
+                                          attackScale: {
+                                            kind: 'blackboard',
+                                            key: 'atk_scale_lance',
+                                          },
+                                          tags: ['normalSkill'],
+                                          features: ['canBreakWeakness'],
+                                          stagger: { kind: 'blackboard', key: 'poise_lance' },
+                                        },
+                                        'chr_0012_avywen_normal_skill:/scheduledSequences/5/sequence/steps/1/whenTrue/steps/1/body/steps/0/whenTrue/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenTrue/steps/1/whenFalse/steps/0',
+                                      ),
+                                    ),
+                                    { alwaysNext: true },
+                                  ),
+                                ),
+                                1,
                               ),
-                            ),
-                            sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale_lance' },
-                                  tags: ['normalSkill'],
-                                  features: ['canBreakWeakness'],
-                                  stagger: { kind: 'blackboard', key: 'poise_lance' },
-                                },
-                                'chr_0012_avywen_normal_skill:/scheduledSequences/5/sequence/steps/1/whenTrue/steps/1/body/steps/0/whenTrue/steps/1/body/steps/0/body/steps/0/whenTrue/steps/1/whenFalse/steps/0',
+                            ],
+                          },
+                        },
+                        {
+                          event: 'reach',
+                          skill: {
+                            skillId: 'chr_0012_avywen_combo_skill_lance_back_reach',
+                            nativeSkillType: 'normalSkill',
+                            naturalDurationFrames: 15,
+                            castResource: {
+                              costFrame: 0,
+                              cooldownSeconds: 0,
+                              maxChargeTime: 1,
+                              cost: {
+                                resource: 'ultimateEnergy',
+                                value: 0,
+                                availabilityThreshold: 0,
+                              },
+                            },
+                            blackboard: { atk_scale: 3, radius: 4 },
+                            scheduledSequences: [
+                              scheduled(0, sequence(), 15),
+                              scheduled(
+                                0,
+                                sequence(
+                                  step('startTimeDilation', {
+                                    scope: 'global',
+                                    durationSeconds: { kind: 'constant', value: 0.2 },
+                                    slot: 'TimeDilation/Layer/Entity/HitStop',
+                                    priority: 10,
+                                    curve: {
+                                      kind: 'inline',
+                                      keys: [
+                                        {
+                                          time: 0,
+                                          value: 0.2,
+                                          inTangent: 0.04379496,
+                                          outTangent: 0.04379496,
+                                          weightedMode: 0,
+                                          inWeight: 0,
+                                          outWeight: 0,
+                                        },
+                                        {
+                                          time: 0.8847446,
+                                          value: 0.2387474,
+                                          inTangent: 0.04379496,
+                                          outTangent: 6.604918,
+                                          weightedMode: 0,
+                                          inWeight: 0,
+                                          outWeight: 0,
+                                        },
+                                        {
+                                          time: 1,
+                                          value: 1,
+                                          inTangent: 6.604918,
+                                          outTangent: 6.604918,
+                                          weightedMode: 0,
+                                          inWeight: 0,
+                                          outWeight: 0,
+                                        },
+                                      ],
+                                    },
+                                    finishByAction: false,
+                                    ignoredTargets: ['controlled'],
+                                  }),
+                                ),
+                                9,
                               ),
-                            ),
-                            { alwaysNext: true },
-                          ),
-                        ),
-                        undefined,
-                        { lifetime: 'execution', alwaysNext: true },
-                      ),
-                      withActionBlackboardScope(
-                        'SkillData.chr_0012_avywen_normal_skill.actionGroupData.timelineActions[9]._sequenceActionData.actionData[3].action.actionData[3]:chr_0012_avywen_combo_skill_lance_back_reach',
-                        { atk_scale: 3, radius: 4 },
-                        true,
-                        sharedActionSequence1,
-                        undefined,
-                        { lifetime: 'execution', alwaysNext: true },
-                      ),
-                    ),
+                              scheduled(
+                                0,
+                                sequence(
+                                  branch(
+                                    {
+                                      kind: 'actionValueCompare',
+                                      left: {
+                                        kind: 'blackboard',
+                                        key: 'EntityBB_talent0',
+                                        fallback: 0,
+                                      },
+                                      operator: 'greater',
+                                      right: { kind: 'constant', value: 0 },
+                                    },
+                                    sequence(
+                                      branch(
+                                        {
+                                          kind: 'buffIdStackCompare',
+                                          target: 'caster',
+                                          buffIds: ['buff_chr_0012_avywen_talent_0'],
+                                          operator: 'greaterOrEqual',
+                                          value: { kind: 'constant', value: 1 },
+                                        },
+                                        sequence(
+                                          step('changeResourceByActionValue', {
+                                            resource: 'ultimateEnergy',
+                                            amount: { kind: 'blackboard', key: 'EntityBB_talent0' },
+                                            coefficient: { kind: 'constant', value: 1 },
+                                            recipient: 'caster',
+                                          }),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                3,
+                              ),
+                            ],
+                          },
+                        },
+                      ],
+                    }),
                     { EntityBB_talent0: 0 },
                     { lifetime: 'execution' },
                   ),
@@ -1037,119 +1066,248 @@ export const avywennaChr_0012_avywen_normal_skill: SkillDefinition = withSkillBl
                     'SkillData.chr_0012_avywen_normal_skill.actionGroupData.timelineActions[10]._sequenceActionData.actionData[3].action.actionData[3]:projectile_chr_0012_avywen_ultimate_skill_lance_back',
                     {},
                     true,
-                    sequence(
-                      withActionBlackboardScope(
-                        'SkillData.chr_0012_avywen_normal_skill.actionGroupData.timelineActions[10]._sequenceActionData.actionData[3].action.actionData[3]:chr_0012_avywen_ultimate_skill_lance_back',
+                    sequence({
+                      kind: 'launchProjectile',
+                      parameters: {
+                        finish: 'firstTickReach',
+                        recycleDelaySeconds: 0.5,
+                        hit: { finishOnHit: false },
+                      },
+                      callbacks: [
                         {
-                          atk_scale_lance_ult: 3,
-                          poise_lance: 0,
-                          poise_lance_ult: 0,
-                          potential_5_rate: 0,
-                          radius: 4,
-                          talent0_usp: 0,
-                        },
-                        true,
-                        sequence(
-                          step('applyBuff', {
-                            buffId: 'buff_chr_0012_avywen_lance_pulse_check',
-                            target: 'enemy',
-                            inheritSourceSkillCastInfo: true,
-                          }),
-                          step('modifyActionValue', {
-                            key: 'EntityBB_talent0',
-                            operation: 'assign',
-                            value: { kind: 'blackboard', key: 'talent0_usp' },
-                          }),
-                          branch(
-                            {
-                              kind: 'all',
-                              conditions: [
-                                {
-                                  kind: 'actionValueCompare',
-                                  left: {
-                                    kind: 'blackboard',
-                                    key: 'potential_5_rate',
-                                    fallback: 0,
-                                  },
-                                  operator: 'greater',
-                                  right: { kind: 'constant', value: 0 },
-                                },
-                                {
-                                  kind: 'buffStackCompare',
-                                  target: 'enemy',
-                                  tagQueryType: 'hasAny',
-                                  buffTags: [
-                                    'Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse',
-                                  ],
-                                  operator: 'greaterOrEqual',
-                                  value: { kind: 'constant', value: 1 },
-                                },
-                              ],
+                          event: 'hit',
+                          skill: {
+                            skillId: 'chr_0012_avywen_ultimate_skill_lance_back',
+                            nativeSkillType: 'normalSkill',
+                            naturalDurationFrames: 1,
+                            castResource: {
+                              costFrame: 0,
+                              cooldownSeconds: 0,
+                              maxChargeTime: 1,
+                              cost: {
+                                resource: 'ultimateEnergy',
+                                value: 0,
+                                availabilityThreshold: 0,
+                              },
                             },
-                            sequence(
-                              step('modifyActionValue', {
-                                key: 'atk_scale_lance_ult',
-                                operation: 'multiply',
-                                value: { kind: 'blackboard', key: 'potential_5_rate' },
-                              }),
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale_lance_ult' },
-                                  tags: ['normalSkill'],
-                                  features: ['canBreakWeakness'],
-                                  stagger: { kind: 'blackboard', key: 'poise_lance_ult' },
-                                },
-                                'chr_0012_avywen_normal_skill:/scheduledSequences/6/sequence/steps/1/whenTrue/steps/1/body/steps/0/whenTrue/steps/1/body/steps/0/body/steps/0/whenTrue/steps/2/whenTrue/steps/1',
+                            blackboard: {
+                              atk_scale_lance_ult: 3,
+                              poise_lance: 0,
+                              poise_lance_ult: 0,
+                              potential_5_rate: 0,
+                              radius: 4,
+                              talent0_usp: 0,
+                            },
+                            scheduledSequences: [
+                              scheduled(
+                                0,
+                                sequence(
+                                  step('applyBuff', {
+                                    buffId: 'buff_chr_0012_avywen_lance_pulse_check',
+                                    target: 'enemy',
+                                    inheritSourceSkillCastInfo: true,
+                                  }),
+                                  step('modifyActionValue', {
+                                    key: 'EntityBB_talent0',
+                                    operation: 'assign',
+                                    value: { kind: 'blackboard', key: 'talent0_usp' },
+                                  }),
+                                  branch(
+                                    {
+                                      kind: 'all',
+                                      conditions: [
+                                        {
+                                          kind: 'actionValueCompare',
+                                          left: {
+                                            kind: 'blackboard',
+                                            key: 'potential_5_rate',
+                                            fallback: 0,
+                                          },
+                                          operator: 'greater',
+                                          right: { kind: 'constant', value: 0 },
+                                        },
+                                        {
+                                          kind: 'buffStackCompare',
+                                          target: 'enemy',
+                                          tagQueryType: 'hasAny',
+                                          buffTags: [
+                                            'Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse',
+                                          ],
+                                          operator: 'greaterOrEqual',
+                                          value: { kind: 'constant', value: 1 },
+                                        },
+                                      ],
+                                    },
+                                    sequence(
+                                      step('modifyActionValue', {
+                                        key: 'atk_scale_lance_ult',
+                                        operation: 'multiply',
+                                        value: { kind: 'blackboard', key: 'potential_5_rate' },
+                                      }),
+                                      step(
+                                        'dealDamage',
+                                        {
+                                          damageType: 'electric',
+                                          attackScale: {
+                                            kind: 'blackboard',
+                                            key: 'atk_scale_lance_ult',
+                                          },
+                                          tags: ['normalSkill'],
+                                          features: ['canBreakWeakness'],
+                                          stagger: { kind: 'blackboard', key: 'poise_lance_ult' },
+                                        },
+                                        'chr_0012_avywen_normal_skill:/scheduledSequences/6/sequence/steps/1/whenTrue/steps/1/body/steps/0/whenTrue/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenTrue/steps/2/whenTrue/steps/1',
+                                      ),
+                                      step('startTimeDilation', {
+                                        scope: 'entity',
+                                        durationSeconds: { kind: 'constant', value: 0.4 },
+                                        slot: 'TimeDilation/Layer/Entity/HitStop',
+                                        priority: 10,
+                                        curve: { kind: 'named', key: 'interrupt_weakness' },
+                                        finishByAction: false,
+                                        targets: ['enemy', 'caster'],
+                                      }),
+                                    ),
+                                    sequence(
+                                      step(
+                                        'dealDamage',
+                                        {
+                                          damageType: 'electric',
+                                          attackScale: {
+                                            kind: 'blackboard',
+                                            key: 'atk_scale_lance_ult',
+                                          },
+                                          tags: ['normalSkill'],
+                                          features: ['canBreakWeakness'],
+                                          stagger: { kind: 'blackboard', key: 'poise_lance_ult' },
+                                        },
+                                        'chr_0012_avywen_normal_skill:/scheduledSequences/6/sequence/steps/1/whenTrue/steps/1/body/steps/0/whenTrue/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenTrue/steps/2/whenFalse/steps/0',
+                                      ),
+                                      step('startTimeDilation', {
+                                        scope: 'entity',
+                                        durationSeconds: { kind: 'constant', value: 0.4 },
+                                        slot: 'TimeDilation/Layer/Entity/HitStop',
+                                        priority: 10,
+                                        curve: { kind: 'named', key: 'interrupt_weakness' },
+                                        finishByAction: false,
+                                        targets: ['enemy', 'caster'],
+                                      }),
+                                    ),
+                                    { alwaysNext: true },
+                                  ),
+                                ),
+                                3,
                               ),
-                              step('startTimeDilation', {
-                                scope: 'entity',
-                                durationSeconds: { kind: 'constant', value: 0.4 },
-                                slot: 'TimeDilation/Layer/Entity/HitStop',
-                                priority: 10,
-                                curve: { kind: 'named', key: 'interrupt_weakness' },
-                                finishByAction: false,
-                                targets: ['enemy', 'caster'],
-                              }),
-                            ),
-                            sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale_lance_ult' },
-                                  tags: ['normalSkill'],
-                                  features: ['canBreakWeakness'],
-                                  stagger: { kind: 'blackboard', key: 'poise_lance_ult' },
-                                },
-                                'chr_0012_avywen_normal_skill:/scheduledSequences/6/sequence/steps/1/whenTrue/steps/1/body/steps/0/whenTrue/steps/1/body/steps/0/body/steps/0/whenTrue/steps/2/whenFalse/steps/0',
+                            ],
+                          },
+                        },
+                        {
+                          event: 'reach',
+                          skill: {
+                            skillId: 'chr_0012_avywen_combo_skill_lance_back_reach',
+                            nativeSkillType: 'normalSkill',
+                            naturalDurationFrames: 15,
+                            castResource: {
+                              costFrame: 0,
+                              cooldownSeconds: 0,
+                              maxChargeTime: 1,
+                              cost: {
+                                resource: 'ultimateEnergy',
+                                value: 0,
+                                availabilityThreshold: 0,
+                              },
+                            },
+                            blackboard: { atk_scale: 3, radius: 4 },
+                            scheduledSequences: [
+                              scheduled(0, sequence(), 15),
+                              scheduled(
+                                0,
+                                sequence(
+                                  step('startTimeDilation', {
+                                    scope: 'global',
+                                    durationSeconds: { kind: 'constant', value: 0.2 },
+                                    slot: 'TimeDilation/Layer/Entity/HitStop',
+                                    priority: 10,
+                                    curve: {
+                                      kind: 'inline',
+                                      keys: [
+                                        {
+                                          time: 0,
+                                          value: 0.2,
+                                          inTangent: 0.04379496,
+                                          outTangent: 0.04379496,
+                                          weightedMode: 0,
+                                          inWeight: 0,
+                                          outWeight: 0,
+                                        },
+                                        {
+                                          time: 0.8847446,
+                                          value: 0.2387474,
+                                          inTangent: 0.04379496,
+                                          outTangent: 6.604918,
+                                          weightedMode: 0,
+                                          inWeight: 0,
+                                          outWeight: 0,
+                                        },
+                                        {
+                                          time: 1,
+                                          value: 1,
+                                          inTangent: 6.604918,
+                                          outTangent: 6.604918,
+                                          weightedMode: 0,
+                                          inWeight: 0,
+                                          outWeight: 0,
+                                        },
+                                      ],
+                                    },
+                                    finishByAction: false,
+                                    ignoredTargets: ['controlled'],
+                                  }),
+                                ),
+                                9,
                               ),
-                              step('startTimeDilation', {
-                                scope: 'entity',
-                                durationSeconds: { kind: 'constant', value: 0.4 },
-                                slot: 'TimeDilation/Layer/Entity/HitStop',
-                                priority: 10,
-                                curve: { kind: 'named', key: 'interrupt_weakness' },
-                                finishByAction: false,
-                                targets: ['enemy', 'caster'],
-                              }),
-                            ),
-                            { alwaysNext: true },
-                          ),
-                        ),
-                        undefined,
-                        { lifetime: 'execution', alwaysNext: true },
-                      ),
-                      withActionBlackboardScope(
-                        'SkillData.chr_0012_avywen_normal_skill.actionGroupData.timelineActions[10]._sequenceActionData.actionData[3].action.actionData[3]:chr_0012_avywen_combo_skill_lance_back_reach',
-                        { atk_scale: 3, radius: 4 },
-                        true,
-                        sharedActionSequence1,
-                        undefined,
-                        { lifetime: 'execution', alwaysNext: true },
-                      ),
-                    ),
+                              scheduled(
+                                0,
+                                sequence(
+                                  branch(
+                                    {
+                                      kind: 'actionValueCompare',
+                                      left: {
+                                        kind: 'blackboard',
+                                        key: 'EntityBB_talent0',
+                                        fallback: 0,
+                                      },
+                                      operator: 'greater',
+                                      right: { kind: 'constant', value: 0 },
+                                    },
+                                    sequence(
+                                      branch(
+                                        {
+                                          kind: 'buffIdStackCompare',
+                                          target: 'caster',
+                                          buffIds: ['buff_chr_0012_avywen_talent_0'],
+                                          operator: 'greaterOrEqual',
+                                          value: { kind: 'constant', value: 1 },
+                                        },
+                                        sequence(
+                                          step('changeResourceByActionValue', {
+                                            resource: 'ultimateEnergy',
+                                            amount: { kind: 'blackboard', key: 'EntityBB_talent0' },
+                                            coefficient: { kind: 'constant', value: 1 },
+                                            recipient: 'caster',
+                                          }),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                3,
+                              ),
+                            ],
+                          },
+                        },
+                      ],
+                    }),
                     { EntityBB_talent0: 0 },
                     { lifetime: 'execution' },
                   ),
@@ -1217,23 +1375,47 @@ export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = withSkillBla
             'SkillData.chr_0012_avywen_combo_skill.actionGroupData.timelineActions[6]._sequenceActionData.actionData[4]:projectile_chr_0012_avywen_combo_skill_lance_out',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0012_avywen_combo_skill.actionGroupData.timelineActions[6]._sequenceActionData.actionData[4]:chr_0012_avywen_combo_skill_lance_gene',
-                { atk_scale_lance_back: 1, potential_2: 0, radius: 4, talent_atb_gain: 0 },
-                true,
-                sequence(
-                  step('spawnAbilityEntity', {
-                    abilityEntityId: 'abilityentity_chr_0012_avywen_combo_skill_lance',
-                    childSkillId: 'chr_0012_avywen_combo_skill_lance',
-                    inheritActionBlackboard: true,
-                    dieWhenSourceDies: false,
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 30 },
+              callbacks: [
+                {
+                  event: 'block',
+                  skill: {
+                    skillId: 'chr_0012_avywen_combo_skill_lance_gene',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 900,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: {
+                      atk_scale_lance_back: 1,
+                      potential_2: 0,
+                      radius: 4,
+                      talent_atb_gain: 0,
+                    },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step('spawnAbilityEntity', {
+                            abilityEntityId: 'abilityentity_chr_0012_avywen_combo_skill_lance',
+                            childSkillId: 'chr_0012_avywen_combo_skill_lance',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                          }),
+                        ),
+                        3,
+                      ),
+                      scheduled(0, sequence(), 10),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1381,28 +1563,46 @@ export const avywennaChr_0012_avywen_ultimate_skill: SkillDefinition = withSkill
             'SkillData.chr_0012_avywen_ultimate_skill.actionGroupData.timelineActions[7]._sequenceActionData.actionData[1]:projectile_chr_0012_avywen_ultimate_skill_lance_out',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0012_avywen_ultimate_skill.actionGroupData.timelineActions[7]._sequenceActionData.actionData[1]:chr_0012_avywen_ultimate_skill_lance_gene',
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 30 },
+              callbacks: [
                 {
-                  atk_scale_ulti_lance_back: 0,
-                  potential_2: 0,
-                  radius: 4,
-                  talent_atb_gain_ulti: 0,
+                  event: 'block',
+                  skill: {
+                    skillId: 'chr_0012_avywen_ultimate_skill_lance_gene',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 900,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: {
+                      atk_scale_ulti_lance_back: 0,
+                      potential_2: 0,
+                      radius: 4,
+                      talent_atb_gain_ulti: 0,
+                    },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step('spawnAbilityEntity', {
+                            abilityEntityId: 'abilityentity_chr_0012_avywen_ultimate_skill_lance',
+                            childSkillId: 'chr_0012_avywen_ultimate_skill_lance',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                          }),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
                 },
-                true,
-                sequence(
-                  step('spawnAbilityEntity', {
-                    abilityEntityId: 'abilityentity_chr_0012_avywen_ultimate_skill_lance',
-                    childSkillId: 'chr_0012_avywen_ultimate_skill_lance',
-                    inheritActionBlackboard: true,
-                    dieWhenSourceDies: false,
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1877,6 +2077,14 @@ export const avywenna: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 62 },
       childSkill: {
         skillId: 'chr_0012_avywen_combo_skill_lance',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1559,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale_lance: 1, poise_lance: 0, potential_2: 0, talent_atb_gain: 0 },
         scheduledSequences: [
           scheduled(
@@ -1935,6 +2143,14 @@ export const avywenna: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 62 },
       childSkill: {
         skillId: 'chr_0012_avywen_ultimate_skill_lance',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1560,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atk_scale_lance_ult: 1,
           poise_lance_ult: 0,

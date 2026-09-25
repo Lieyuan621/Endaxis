@@ -94,35 +94,6 @@ export interface CombatActionSequenceRuntimeHooks {
   ) => void;
 }
 
-/** 无战斗回调的发射保留对象寿命；不创建虚构的技能或资源账户。 */
-class ProjectileLifetimeStep extends StatelessCombatStep {
-  constructor(
-    readonly step: ResolvedCombatStepForKind<'launchProjectileLifetime'>,
-    readonly runtime: CombatActionSequenceRuntime,
-    readonly operationContext: CombatOperationContext,
-  ) {
-    super();
-  }
-
-  execute(): void {
-    const context = this.operationContext;
-    const launch = context.scheduleProjectileFinishCallback;
-    if (launch === undefined) throw new Error('projectile lifetime requires a launch scheduler');
-    launch(
-      this.step.parameters.finish,
-      this.step.parameters.recycleDelaySeconds ?? 0,
-      () => {},
-      () => {},
-      context.skillCastInfo,
-      undefined,
-      context.actionSourceId ?? context.buffSourceId ?? this.runtime.ownerOperatorId,
-      undefined,
-      undefined,
-      operationProducer(context),
-    );
-  }
-}
-
 class OperationStep extends StatelessCombatStep {
   #registrationState: import('../state/actionState').ActionRegistrationState | null = null;
   #buffReferencesState: import('../state/actionState').ActionBuffReferencesState | null = null;
@@ -363,9 +334,14 @@ class ActionBlackboardScopeStep extends CombatStep {
 
 class RepeatEachTickStep extends CombatStep {
   #state = createRepeatedActionState();
+  #body: ActionSequence | null = null;
   override bindExecutionData(data: ActionStepData | null): void {
     if (data?.kind !== 'repeat') throw new Error('expected repeated action data');
     this.#state = data.repetition;
+    this.#body =
+      data.repetition.body === null
+        ? null
+        : this.runtime.createSequence(this.step.body, this.operationContext, data.repetition.body);
   }
   override get executionData() {
     return { kind: 'repeat' as const, repetition: this.#state };
@@ -389,11 +365,27 @@ class RepeatEachTickStep extends CombatStep {
     );
   }
 
-  override reset(): void {
+  override reset(context: CombatExecutionContext): void {
+    this.#body?.reset(context);
     resetRepeatedAction(this.#state);
   }
 
+  override end(context: CombatExecutionContext): void {
+    this.#body?.end(context);
+  }
+
   #executeBody(context: CombatExecutionContext): void {
+    if (this.step.parameters.nativeExecuteInterval !== undefined) {
+      if (this.#body === null) {
+        this.#body = this.runtime.createSequence(this.step.body, this.operationContext);
+        this.#state.body = this.#body.runtimeState;
+      } else {
+        this.#body.end(context);
+      }
+      this.#body.reset(context);
+      this.#body.tryExecute(context);
+      return;
+    }
     const sequence = this.runtime.createSequence(this.step.body, this.operationContext);
     sequence.reset(context);
     const result = sequence.executeInstant(context);
@@ -545,9 +537,9 @@ class RepeatByActionValueStep extends StatelessCombatStep {
   }
 }
 
-class ProjectileFinishCallbackStep extends StatelessCombatStep {
+class ProjectileLaunchStep extends StatelessCombatStep {
   constructor(
-    readonly step: ResolvedCombatStepForKind<'scheduleProjectileFinishCallback'>,
+    readonly step: ResolvedCombatStepForKind<'launchProjectile'>,
     readonly runtime: CombatActionSequenceRuntime,
     readonly operationContext: CombatOperationContext,
   ) {
@@ -559,66 +551,81 @@ class ProjectileFinishCallbackStep extends StatelessCombatStep {
   }
 
   override tryExecute(): boolean {
-    const schedule = this.operationContext.scheduleProjectileFinishCallback;
-    if (schedule === undefined) {
-      throw new Error('projectile finish callback requires a detached runtime scheduler');
-    }
     const parent = this.operationContext;
-    const detachedContext: CombatOperationContext = {
-      blackboard: parent.blackboard.detachedSnapshot(),
-      damageCalculationSnapshots: new DamageCalculationSnapshots(),
-      targetContext: new RuntimeTargetContext(),
-      ...(parent.skillCastInfo === undefined
-        ? {}
-        : { skillCastInfo: Object.freeze({ ...parent.skillCastInfo }) }),
-      ...(parent.actionOwnerId === undefined ? {} : { actionOwnerId: parent.actionOwnerId }),
-      ...(parent.actionSourceId === undefined ? {} : { actionSourceId: parent.actionSourceId }),
-      scheduleProjectileFinishCallback: schedule,
-      createCallbackSkillHost: parent.createCallbackSkillHost,
-    };
-    const createHost = parent.createCallbackSkillHost;
-    if (createHost === undefined)
-      throw new Error('projectile callback requires a skill host factory');
-    const definitionOperatorId = this.runtime.ownerOperatorId;
-    if (definitionOperatorId === undefined) {
-      throw new Error('projectile callback requires an owning combat operator');
-    }
-    const callbackState: import('../state/instanceState').ProjectileCallbackState = {
-      programId: null,
-      definitionOperatorId,
-      skillId: this.step.callback.skillId,
-      blackboard: detachedContext.blackboard.runtimeState,
-      skillCastInfo: detachedContext.skillCastInfo ?? null,
-      host: null,
-    };
-    let callbackEntity: AbilityEntityTargetRef | undefined;
-    const callback = new ProjectileCallbackRuntime(callbackState, () => {
-      if (callbackEntity === undefined)
-        throw new Error('projectile callback started before its host identity was assigned');
-      return createHost(
-        this.step.callback,
-        {
-          ...detachedContext,
-          actionOwnerId: `ability-entity:${callbackEntity.instanceId}`,
-          actionSourceId: `ability-entity:${callbackEntity.instanceId}`,
-          actionOwnerAbilityEntity: callbackEntity,
-        },
-        this.runtime.operations,
-      );
+    const launch = parent.launchProjectile;
+    if (launch === undefined) throw new Error('projectile launch requires a runtime');
+    const sourceId =
+      this.step.parameters.source === 'actionOwner'
+        ? (parent.actionOwnerId ?? parent.buffOwnerId ?? this.runtime.ownerOperatorId)
+        : (parent.actionSourceId ?? parent.buffSourceId ?? this.runtime.ownerOperatorId);
+    let entity: AbilityEntityTargetRef | undefined;
+    const callbacks = this.step.callbacks.map(({ event, skill }) => {
+      const createHost = parent.createCallbackSkillHost;
+      const definitionOperatorId = this.runtime.ownerOperatorId;
+      if (createHost === undefined || definitionOperatorId === undefined)
+        throw new Error('projectile callback requires a skill host and definition operator');
+      const context: CombatOperationContext = {
+        blackboard: parent.blackboard.detachedSnapshot(),
+        damageCalculationSnapshots: new DamageCalculationSnapshots(),
+        targetContext: new RuntimeTargetContext(),
+        skillCastInfo:
+          parent.skillCastInfo === undefined
+            ? undefined
+            : Object.freeze({ ...parent.skillCastInfo }),
+        launchProjectile: launch,
+        createCallbackSkillHost: createHost,
+      };
+      const state: import('../state/instanceState').ProjectileCallbackState = {
+        event,
+        programId: null,
+        definitionOperatorId,
+        skillId: skill.skillId,
+        blackboard: context.blackboard.runtimeState,
+        skillCastInfo: context.skillCastInfo ?? null,
+        host: null,
+        ...(event === 'hit' && this.step.parameters.hit?.hitTagFilter !== undefined
+          ? { hitTagFilter: this.step.parameters.hit.hitTagFilter }
+          : {}),
+      };
+      return {
+        program: skill,
+        runtime: new ProjectileCallbackRuntime(
+          state,
+          () => {
+            if (entity === undefined) throw new Error('projectile callback started before launch');
+            return createHost(
+              skill,
+              {
+                ...context,
+                actionInputTarget: state.inputTarget,
+                actionOwnerId: `ability-entity:${entity.instanceId}`,
+                actionSourceId: sourceId,
+                actionOwnerAbilityEntity: entity,
+              },
+              this.runtime.operations,
+            );
+          },
+          () =>
+            state.hitTagFilter === undefined ||
+            this.runtime.operations.evaluate(
+              { kind: 'entityTagMatch', target: 'enemy', ...state.hitTagFilter },
+              context,
+            ),
+        ),
+      };
     });
-    const projectile = schedule(
-      this.step.parameters.delaySeconds,
-      this.step.parameters.recycleDelaySeconds,
-      () => callback.reach(),
-      () => callback.beforeReset(),
-      detachedContext.skillCastInfo,
-      delta => callback.advance(delta),
-      parent.actionSourceId ?? parent.buffSourceId ?? this.runtime.ownerOperatorId,
-      callbackState,
-      this.step.callback,
-      operationProducer(parent),
-    );
-    callbackEntity = projectile.target;
+    entity = launch({
+      syncTimeScale: this.step.parameters.syncTimeScale,
+      finish: this.step.parameters.finish,
+      recycleDelaySeconds: this.step.parameters.recycleDelaySeconds ?? 0,
+      callbacks,
+      skillCastInfo: parent.skillCastInfo,
+      sourceId,
+      producedBy: operationProducer(parent),
+      hit: this.step.parameters.hit,
+      hitTarget:
+        this.step.parameters.hit?.target === 'currentTarget' ? parent.currentTarget : undefined,
+    }).target;
     return true;
   }
 }
@@ -920,7 +927,7 @@ class CombatEventListenerStep extends CombatStep {
 
   #install(restoring: boolean): void {
     const semanticEvents = this.runtime.semanticEvents;
-    const ownerOperatorId = this.runtime.ownerOperatorId;
+    const ownerOperatorId = this.operationContext.actionOwnerId ?? this.runtime.ownerOperatorId;
     if (semanticEvents === undefined || ownerOperatorId === undefined) {
       throw new Error('combat event listener requires a semantic event runtime and owner');
     }
@@ -1057,8 +1064,8 @@ export class CombatActionSequenceRuntime {
     operationContext: CombatOperationContext,
   ): CombatStep[] {
     return sequence.steps.flatMap<CombatStep>(step => {
-      if (step.kind === 'launchProjectileLifetime') {
-        return new ProjectileLifetimeStep(step, this, operationContext);
+      if (step.kind === 'launchProjectile') {
+        return new ProjectileLaunchStep(step, this, operationContext);
       }
       if (isCombatOperationStep(step)) {
         return new OperationStep(step, this, operationContext);
@@ -1099,9 +1106,6 @@ export class CombatActionSequenceRuntime {
       }
       if (step.kind === 'repeatByActionValue') {
         return new RepeatByActionValueStep(step, this, operationContext);
-      }
-      if (step.kind === 'scheduleProjectileFinishCallback') {
-        return new ProjectileFinishCallbackStep(step, this, operationContext);
       }
       if (step.kind === 'forEachContextTarget') {
         return new ForEachContextTargetStep(step, this, operationContext);

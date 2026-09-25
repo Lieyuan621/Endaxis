@@ -21,10 +21,7 @@ import type { ActionBlackboard } from '../../actions/actionBlackboard';
 import type { CombatOperationPrograms } from '../../actions/combatOperationPrograms';
 import { buffReferenceKey } from '../../buffs/buffReference';
 import type { BuffApplicationHandle } from '../../buffs/combatBuffs';
-import type {
-  CombatOperationExecutor,
-  ScheduleProjectileFinishCallback,
-} from '../../skills/skillRuntime';
+import type { CombatOperationExecutor, LaunchProjectile } from '../../skills/skillRuntime';
 import type {
   AbilityEntityChildSkillState,
   PassiveAbilityEventState,
@@ -42,7 +39,7 @@ import type { RestoredCombatRuntimeFoundation } from './combatRuntimeRestoreFoun
 
 export interface AbilityEntityChildSkillRestoreBindings {
   readonly operations: CombatOperationExecutor;
-  readonly scheduleProjectileFinishCallback?: ScheduleProjectileFinishCallback;
+  readonly launchProjectile?: LaunchProjectile;
   readonly createCallbackSkillHost?: CallbackSkillHostFactory;
 }
 
@@ -156,24 +153,25 @@ export function bindRestoredCombatRuntimeAbilityEntityRelations(
             entity: target,
             entityBlackboard,
             operations: runtimeBindings.operations,
+            source: owner.source,
+            skillHostGroup: options.entities.runtime.childSkillHosts(target),
             ownerOperatorId: owner.ownerId,
             semanticEvents: options.foundation.semanticEvents,
             ...(owner.skillCastInfo == null ? {} : { inheritedSkillCastInfo: owner.skillCastInfo }),
             addAbilityChildBuff: child => options.entities.runtime.addChildBuff(target, child),
             programId: binding.id,
             damageSnapshotProgram: binding.damageSnapshots,
-            operationState: state.operations,
-            ...(runtimeBindings.scheduleProjectileFinishCallback === undefined
+            operationState: state.host.skill.operations,
+            ...(runtimeBindings.launchProjectile === undefined
               ? {}
               : {
-                  scheduleProjectileFinishCallback:
-                    runtimeBindings.scheduleProjectileFinishCallback,
+                  launchProjectile: runtimeBindings.launchProjectile,
                 }),
             ...(runtimeBindings.createCallbackSkillHost === undefined
               ? {}
               : { createCallbackSkillHost: runtimeBindings.createCallbackSkillHost }),
           },
-          { state },
+          { state, resolveAttachedBuff: reference => childBuffs.get(buffReferenceKey(reference)) },
         );
       },
       resolveChildBuff: reference => {

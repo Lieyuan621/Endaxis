@@ -116,6 +116,8 @@ function resolveStep(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'findCharacterTeamTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'findUnfinishedProjectileTargets':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'createSpatialPointTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'findOwnerSpawnedAbilityEntities':
@@ -175,76 +177,60 @@ function resolveStep(
         parameters: step.parameters,
         body: resolveActionSequence(step.body, skillLevel, `${path}.body`, abilityEntities),
       };
-    case 'launchProjectileLifetime':
-      if (step.parameters.finish !== 'firstTickReach') {
-        const timing = step.parameters.finish;
-        if (
-          !Number.isSafeInteger(timing.reachAfterTicks) ||
+    case 'launchProjectile': {
+      const timing = step.parameters.finish;
+      if (typeof timing === 'number') {
+        if (!Number.isFinite(timing) || timing <= 0)
+          throw new RangeError(`${path}: invalid projectile duration`);
+      } else if (
+        timing !== 'firstTickReach' &&
+        timing !== 'firstTickBlock' &&
+        (!Number.isSafeInteger(timing.reachAfterTicks) ||
           timing.reachAfterTicks < 1 ||
           !Number.isFinite(timing.maxDurationSeconds) ||
-          timing.maxDurationSeconds <= 0
-        )
-          throw new Error(`${path}: invalid projectile reach timing`);
-      }
-      if (
-        step.parameters.recycleDelaySeconds !== undefined &&
-        (!Number.isFinite(step.parameters.recycleDelaySeconds) ||
-          step.parameters.recycleDelaySeconds < 0)
-      )
-        throw new RangeError(
-          `${path}.parameters.recycleDelaySeconds must be non-negative and finite`,
-        );
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'scheduleProjectileFinishCallback':
-      if (!Number.isFinite(step.parameters.delaySeconds) || step.parameters.delaySeconds <= 0) {
-        throw new RangeError(`${path}.parameters.delaySeconds must be a positive finite number`);
-      }
-      if (
-        !Number.isFinite(step.parameters.recycleDelaySeconds) ||
-        step.parameters.recycleDelaySeconds < 0
+          timing.maxDurationSeconds <= 0)
       ) {
-        throw new RangeError(
-          `${path}.parameters.recycleDelaySeconds must be a non-negative finite number`,
-        );
+        throw new RangeError(`${path}: invalid projectile reach timing`);
       }
-      if (
-        !Number.isInteger(step.callback.naturalDurationFrames) ||
-        step.callback.naturalDurationFrames < 1
-      )
-        throw new RangeError(`${path}.callback.naturalDurationFrames must be a positive integer`);
+      const recycle = step.parameters.recycleDelaySeconds ?? 0;
+      if (!Number.isFinite(recycle) || recycle < 0)
+        throw new RangeError(`${path}: invalid projectile recycle delay`);
       return {
         ...keyed,
-        kind: step.kind,
-        parameters: step.parameters,
-        callback: {
-          ...compileAbilityEntityChildSkill(
-            step.callback,
-            skillLevel,
-            `${path}.callback`,
-            abilityEntities,
-          ),
-          naturalDurationFrames: step.callback.naturalDurationFrames,
-          nativeSkillType: step.callback.nativeSkillType,
-          castResource: {
-            costFrame: step.callback.castResource.costFrame,
-            cooldownSeconds: step.callback.castResource.cooldownSeconds,
-            maxChargeTime: step.callback.castResource.maxChargeTime,
-            cost: {
-              resource: step.callback.castResource.cost.resource,
-              value: resolveLevelValue(
-                step.callback.castResource.cost.value,
-                skillLevel,
-                `${path}.callback.castResource.cost.value`,
-              ),
-              availabilityThreshold: resolveLevelValue(
-                step.callback.castResource.cost.availabilityThreshold,
-                skillLevel,
-                `${path}.callback.castResource.cost.availabilityThreshold`,
-              ),
+        ...step,
+        callbacks: step.callbacks.map(({ event, skill }, index) => {
+          const callbackPath = `${path}.callbacks[${index}].skill`;
+          if (!Number.isInteger(skill.naturalDurationFrames) || skill.naturalDurationFrames < 1)
+            throw new RangeError(
+              `${callbackPath}.naturalDurationFrames must be a positive integer`,
+            );
+          return {
+            event,
+            skill: {
+              ...compileAbilityEntityChildSkill(skill, skillLevel, callbackPath, abilityEntities),
+              naturalDurationFrames: skill.naturalDurationFrames,
+              nativeSkillType: skill.nativeSkillType,
+              castResource: {
+                ...skill.castResource,
+                cost: {
+                  resource: skill.castResource.cost.resource,
+                  value: resolveLevelValue(
+                    skill.castResource.cost.value,
+                    skillLevel,
+                    `${callbackPath}.castResource.cost.value`,
+                  ),
+                  availabilityThreshold: resolveLevelValue(
+                    skill.castResource.cost.availabilityThreshold,
+                    skillLevel,
+                    `${callbackPath}.castResource.cost.availabilityThreshold`,
+                  ),
+                },
+              },
             },
-          },
-        },
+          };
+        }),
       };
+    }
     case 'spawnAbilityEntity': {
       const { definition: inlineDefinition, ...parameters } = step.parameters;
       if (inlineDefinition === undefined) {
@@ -1254,8 +1240,28 @@ function compileAbilityEntityChildSkill(
   path: string,
   abilityEntities?: AbilityEntityCompileContext,
 ): CompiledAbilityEntityChildSkillProgram {
+  if (!Number.isInteger(childSkill.naturalDurationFrames) || childSkill.naturalDurationFrames < 1)
+    throw new RangeError(`${path}.naturalDurationFrames must be a positive integer`);
   return {
     skillId: childSkill.skillId,
+    nativeSkillType: childSkill.nativeSkillType,
+    naturalDurationFrames: childSkill.naturalDurationFrames,
+    castResource: {
+      ...childSkill.castResource,
+      cost: {
+        resource: childSkill.castResource.cost.resource,
+        value: resolveLevelValue(
+          childSkill.castResource.cost.value,
+          skillLevel,
+          `${path}.castResource.cost.value`,
+        ),
+        availabilityThreshold: resolveLevelValue(
+          childSkill.castResource.cost.availabilityThreshold,
+          skillLevel,
+          `${path}.castResource.cost.availabilityThreshold`,
+        ),
+      },
+    },
     initialBlackboard: compileSkillBlackboard(
       childSkill.blackboard,
       skillLevel,

@@ -1,6 +1,7 @@
 import type { CombatCondition } from '../../game-data/operatorDefinition';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import { abilityEventTargetId } from '../events/combatAbilityEvent';
+import { abilityEventSourceId, abilityEventTargetId } from '../events/combatAbilityEvent';
+import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
 import type { CombatObjectType } from '../../../../packages/game-data-contract/src/primitives';
 import { matchesCombatObjectType, resolveCombatObjectType } from './combatObjectType';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
@@ -27,9 +28,16 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     readonly findAbilitySystemSource?: (ownerId: string) => RuntimeTargetRef,
     /** 共用实体句柄不代表共用原生类型；正式装配从实例目录查询。 */
     readonly resolveAbilityEntityObjectType?: (instanceId: number) => CombatObjectType,
+    readonly listUnfinishedProjectiles?: () => readonly RuntimeTargetRef[],
   ) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'findUnfinishedProjectileTargets') {
+      if (context?.targetContext === undefined || this.listUnfinishedProjectiles === undefined)
+        throw new Error('projectile query requires a target context and projectile directory');
+      context.targetContext.set(step.parameters.saveToContextKey, this.listUnfinishedProjectiles());
+      return true;
+    }
     if (step.kind === 'findCharacterTeamTargets') {
       this.#findCharacterTeamTargets(step, context);
       return true;
@@ -201,11 +209,27 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
   }
 
   #resolveTarget(
-    target: 'caster' | 'enemy' | 'eventTarget' | 'buffSource' | 'currentTarget',
+    target: 'caster' | 'enemy' | 'eventTarget' | 'eventSource' | 'buffSource' | 'currentTarget',
     context: CombatOperationContext,
   ): RuntimeTargetRef {
     if (target === 'caster') return { kind: 'operator', operatorId: this.operatorId };
     if (target === 'enemy') return { kind: 'enemy' };
+    if (target === 'eventSource') {
+      const event = context.event;
+      const sourceId =
+        event === undefined
+          ? undefined
+          : 'payload' in event
+            ? abilityEventSourceId(event)
+            : 'sourceId' in event
+              ? event.sourceId
+              : 'sourceOperatorId' in event
+                ? event.sourceOperatorId
+                : undefined;
+      if (typeof sourceId !== 'string')
+        throw new Error('eventSource requires a combat event with source identity');
+      return runtimeTargetFromEntityId(sourceId);
+    }
     if (target === 'buffSource') {
       if (context.buffSourceId === undefined) {
         throw new Error('buffSource requires a Buff lifecycle context');

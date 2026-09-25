@@ -14,53 +14,77 @@ import {
   withSkillBlackboard,
 } from './definitionHelpers';
 
+const sharedActionSequence2: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0022_bounda_attack4_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'nature',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack', 'normalAttackLastCombo'],
+                  stagger: { kind: 'blackboard', key: 'attack_poise' },
+                  staggerOnlyWhenCasterControlled: true,
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  branch(
+                    { kind: 'casterControlled' },
+                    sequence(
+                      step('changeResourceByActionValue', {
+                        resource: 'sp',
+                        amount: { kind: 'blackboard', key: 'atb' },
+                        coefficient: { kind: 'constant', value: 1 },
+                        recipient: 'team',
+                        spGainKind: 'gain',
+                        spGainSource: 'normalAttack',
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
 const sharedActionSequence1: ActionSequenceDefinition = sequence(
   withActionBlackboardScope(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0, attack_poise: 20 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'nature',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack', 'normalAttackLastCombo'],
-              stagger: { kind: 'blackboard', key: 'attack_poise' },
-              staggerOnlyWhenCasterControlled: true,
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
-                ),
-              ),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
+    instantiateActionSequence(sharedActionSequence2, ['\u0000endaxis-generated-identity:1']),
     {},
     { lifetime: 'execution' },
   ),
@@ -93,26 +117,48 @@ export const fluoriteChr_0022_bounda_attack1: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0022_bounda_attack1.actionGroupData.timelineActions[5]._sequenceActionData.actionData[1]:projectile_chr_0022_bounda_attack1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0022_bounda_attack1.actionGroupData.timelineActions[5]._sequenceActionData.actionData[1]:chr_0022_bounda_attack1_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0022_bounda_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0022_bounda_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0022_bounda_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -160,26 +206,48 @@ export const fluoriteChr_0022_bounda_attack2: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0022_bounda_attack2.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:projectile_chr_0022_bounda_attack1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0022_bounda_attack2.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:chr_0022_bounda_attack2_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0022_bounda_attack2_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0022_bounda_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0022_bounda_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -240,46 +308,68 @@ export const fluoriteChr_0022_bounda_attack3: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0022_bounda_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0022_bounda_attack1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0022_bounda_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:chr_0022_bounda_attack3_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0022_bounda_attack3_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0022_bounda_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      branch(
-                        { kind: 'casterControlled' },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          step('changeResourceByActionValue', {
-                            resource: 'sp',
-                            amount: { kind: 'blackboard', key: 'atb' },
-                            coefficient: { kind: 'constant', value: 0.3333333 },
-                            recipient: 'team',
-                            spGainKind: 'gain',
-                            spGainSource: 'normalAttack',
-                          }),
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0022_bounda_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 0.3333333 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
                         ),
+                        3,
                       ),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -329,8 +419,7 @@ export const fluoriteChr_0022_bounda_attack4: SkillDefinition = withSkillBlackbo
         29,
         instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0022_bounda_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0022_bounda_attack4',
-          'SkillData.chr_0022_bounda_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:chr_0022_bounda_attack4_projhit',
-          'chr_0022_bounda_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0022_bounda_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         30,
       ),
@@ -391,8 +480,7 @@ export const fluoriteChr_0022_bounda_attack4_1: SkillDefinition = withSkillBlack
         26,
         instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0022_bounda_attack4_1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0022_bounda_attack4',
-          'SkillData.chr_0022_bounda_attack4_1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:chr_0022_bounda_attack4_projhit',
-          'chr_0022_bounda_attack4_1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0022_bounda_attack4_1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         27,
       ),
@@ -614,41 +702,64 @@ export const fluoriteChr_0022_bounda_normal_skill: SkillDefinition = withSkillBl
             'SkillData.chr_0022_bounda_normal_skill.actionGroupData.timelineActions[7]._sequenceActionData.actionData[2]:projectile_chr_0022_bounda_normal_skill',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0022_bounda_normal_skill.actionGroupData.timelineActions[7]._sequenceActionData.actionData[2]:chr_0022_bounda_normal_skill_projhit',
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 3,
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
                 {
-                  atk_scale: 0,
-                  boom_up: 0,
-                  duration: 0,
-                  duration_potential: 0,
-                  move_speed_scalar: 0,
-                  poise: 30,
-                  potential_lv: 0,
-                },
-                true,
-                sequence(
-                  step('spawnAbilityEntity', {
-                    abilityEntityId: 'abilityentity_chr_0022_bounda_normal_skill',
-                    childSkillId: 'chr_0022_bounda_normal_skill_abilityrange',
-                    inheritActionBlackboard: true,
-                    dieWhenSourceDies: false,
-                    target: 'enemy',
-                  }),
-                  step('applyBuff', {
-                    buffId: 'buff_common_affixes_slow',
-                    target: 'enemy',
-                    inheritSourceSkillCastInfo: true,
-                    blackboardAssignments: {
-                      duration: { kind: 'constant', value: 3.1 },
-                      rate: { kind: 'blackboard', key: 'move_speed_scalar' },
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0022_bounda_normal_skill_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: {
+                      atk_scale: 0,
+                      boom_up: 0,
+                      duration: 0,
+                      duration_potential: 0,
+                      move_speed_scalar: 0,
+                      poise: 30,
+                      potential_lv: 0,
+                    },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step('spawnAbilityEntity', {
+                            abilityEntityId: 'abilityentity_chr_0022_bounda_normal_skill',
+                            childSkillId: 'chr_0022_bounda_normal_skill_abilityrange',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                            target: 'enemy',
+                          }),
+                          step('applyBuff', {
+                            buffId: 'buff_common_affixes_slow',
+                            target: 'enemy',
+                            inheritSourceSkillCastInfo: true,
+                            blackboardAssignments: {
+                              duration: { kind: 'constant', value: 3.1 },
+                              rate: { kind: 'blackboard', key: 'move_speed_scalar' },
+                            },
+                          }),
+                        ),
+                        3,
+                      ),
+                      scheduled(0, sequence(), 3),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -768,33 +879,55 @@ export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = withSkill
             'SkillData.chr_0022_bounda_ultimate_skill.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:projectile_chr_0022_bounda_ultimate_skill_1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0022_bounda_ultimate_skill.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:chr_0022_bounda_ultimate_skill_1_projhit',
-                { atb: 0, atk_scale1: 0, poise: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale1' },
-                      tags: ['ultimateSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0022_bounda_ultimate_skill_1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0022_bounda_ultimate_skill:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  step('applyBuff', {
-                    buffId: 'buff_chr_0022_bounda_ultimate_skill',
-                    target: 'enemy',
-                    inheritSourceSkillCastInfo: true,
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale1: 0, poise: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale1' },
+                              tags: ['ultimateSkill'],
+                              features: ['canBreakWeakness'],
+                              stagger: { kind: 'blackboard', key: 'poise' },
+                            },
+                            'chr_0022_bounda_ultimate_skill:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          step('applyBuff', {
+                            buffId: 'buff_chr_0022_bounda_ultimate_skill',
+                            target: 'enemy',
+                            inheritSourceSkillCastInfo: true,
+                          }),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -808,32 +941,54 @@ export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = withSkill
             'SkillData.chr_0022_bounda_ultimate_skill.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:projectile_chr_0022_bounda_ultimate_skill_1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0022_bounda_ultimate_skill.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:chr_0022_bounda_ultimate_skill_2_projhit',
-                { atb: 0, atk_scale2: 0, atk_scale3: 0, poise: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale2' },
-                      tags: ['ultimateSkill'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0022_bounda_ultimate_skill_2_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0022_bounda_ultimate_skill:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  step('applyBuff', {
-                    buffId: 'buff_chr_0022_bounda_ultimate_skill',
-                    target: 'enemy',
-                    inheritSourceSkillCastInfo: true,
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale2: 0, atk_scale3: 0, poise: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale2' },
+                              tags: ['ultimateSkill'],
+                              stagger: { kind: 'blackboard', key: 'poise' },
+                            },
+                            'chr_0022_bounda_ultimate_skill:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          step('applyBuff', {
+                            buffId: 'buff_chr_0022_bounda_ultimate_skill',
+                            target: 'enemy',
+                            inheritSourceSkillCastInfo: true,
+                          }),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -847,32 +1002,54 @@ export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = withSkill
             'SkillData.chr_0022_bounda_ultimate_skill.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:projectile_chr_0022_bounda_ultimate_skill_1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0022_bounda_ultimate_skill.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:chr_0022_bounda_ultimate_skill_3_projhit',
-                { atb: 0, atk_scale3: 0, poise: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale3' },
-                      tags: ['ultimateSkill'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0022_bounda_ultimate_skill_3_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0022_bounda_ultimate_skill:/scheduledSequences/6/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  step('applyBuff', {
-                    buffId: 'buff_chr_0022_bounda_ultimate_skill',
-                    target: 'enemy',
-                    inheritSourceSkillCastInfo: true,
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale3: 0, poise: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale3' },
+                              tags: ['ultimateSkill'],
+                              stagger: { kind: 'blackboard', key: 'poise' },
+                            },
+                            'chr_0022_bounda_ultimate_skill:/scheduledSequences/6/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          step('applyBuff', {
+                            buffId: 'buff_chr_0022_bounda_ultimate_skill',
+                            target: 'enemy',
+                            inheritSourceSkillCastInfo: true,
+                          }),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -886,63 +1063,91 @@ export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = withSkill
             'SkillData.chr_0022_bounda_ultimate_skill.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:projectile_chr_0022_bounda_ultimate_skill_1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0022_bounda_ultimate_skill.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:chr_0022_bounda_ultimate_skill_4_projhit',
-                { atb: 0, atk_scale4: 0, poise: 0 },
-                true,
-                sequence(
-                  branch(
-                    {
-                      kind: 'buffStackCompare',
-                      target: 'enemy',
-                      tagQueryType: 'hasAny',
-                      buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-                      operator: 'greaterOrEqual',
-                      value: { kind: 'constant', value: 2 },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0022_bounda_ultimate_skill_4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    sequence(
-                      step('applyElementalInfliction', { element: 'nature', isExtra: false }),
-                    ),
-                    sequence(
-                      branch(
-                        {
-                          kind: 'buffStackCompare',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-                          operator: 'greaterOrEqual',
-                          value: { kind: 'constant', value: 2 },
-                        },
+                    blackboard: { atb: 0, atk_scale4: 0, poise: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          step('applyElementalInfliction', { element: 'cryo', isExtra: false }),
+                          branch(
+                            {
+                              kind: 'buffStackCompare',
+                              target: 'enemy',
+                              tagQueryType: 'hasAny',
+                              buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+                              operator: 'greaterOrEqual',
+                              value: { kind: 'constant', value: 2 },
+                            },
+                            sequence(
+                              step('applyElementalInfliction', {
+                                element: 'nature',
+                                isExtra: false,
+                              }),
+                            ),
+                            sequence(
+                              branch(
+                                {
+                                  kind: 'buffStackCompare',
+                                  target: 'enemy',
+                                  tagQueryType: 'hasAny',
+                                  buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+                                  operator: 'greaterOrEqual',
+                                  value: { kind: 'constant', value: 2 },
+                                },
+                                sequence(
+                                  step('applyElementalInfliction', {
+                                    element: 'cryo',
+                                    isExtra: false,
+                                  }),
+                                ),
+                                undefined,
+                                { alwaysNext: true },
+                              ),
+                            ),
+                            { alwaysNext: true },
+                          ),
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale4' },
+                              tags: ['ultimateSkill'],
+                              stagger: { kind: 'blackboard', key: 'poise' },
+                            },
+                            'chr_0022_bounda_ultimate_skill:/scheduledSequences/7/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1',
+                          ),
+                          step('applyBuff', {
+                            buffId: 'buff_chr_0022_bounda_ultimate_skill',
+                            target: 'enemy',
+                            inheritSourceSkillCastInfo: true,
+                          }),
                         ),
-                        undefined,
-                        { alwaysNext: true },
+                        3,
                       ),
-                    ),
-                    { alwaysNext: true },
-                  ),
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale4' },
-                      tags: ['ultimateSkill'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                    },
-                    'chr_0022_bounda_ultimate_skill:/scheduledSequences/7/sequence/steps/0/body/steps/0/body/steps/1',
-                  ),
-                  step('applyBuff', {
-                    buffId: 'buff_chr_0022_bounda_ultimate_skill',
-                    target: 'enemy',
-                    inheritSourceSkillCastInfo: true,
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1726,6 +1931,14 @@ export const fluorite: OperatorDefinition = {
       maxStackingCount: 1,
       childSkill: {
         skillId: 'chr_0022_bounda_normal_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 210,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atk_scale: 1,
           boom_up: 0,

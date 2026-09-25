@@ -6,6 +6,7 @@ export const abilityEventLabelsZh = {
   ownerSwitchToCenter: '持有者切入主控',
   ownerSwitchToGuard: '持有者切为支援',
   ownerHpZero: '持有者生命归零',
+  hpChanged: '生命值变化',
   abilityEntitySpawned: '能力实体生成',
   abilityEntityFinished: '能力实体结束',
   projectileLaunched: '投射物发射',

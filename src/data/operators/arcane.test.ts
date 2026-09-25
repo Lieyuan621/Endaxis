@@ -50,8 +50,12 @@ describe('next generated Arcane definition', () => {
       kind: 'spawnAbilityEntity',
       parameters: { abilityEntityId: 'abilityentity_chr_0032_lizhiyan_normal_skill' },
     });
-    const child =
-      arcane.abilityEntityDefinitions?.['abilityentity_chr_0032_lizhiyan_normal_skill']?.childSkill;
+    if (spawn?.kind !== 'spawnAbilityEntity') throw new Error('missing battle-skill entity');
+    const entity = arcane.abilityEntityDefinitions?.[spawn.parameters.abilityEntityId];
+    const child = spawn.parameters.childSkillId
+      ? entity?.childSkills?.[spawn.parameters.childSkillId]
+      : entity?.childSkill;
+    expect(child).toBeDefined();
     const childSteps = child?.scheduledSequences.flatMap(item => collectSteps(item.sequence)) ?? [];
     expect(childSteps).toEqual(
       expect.arrayContaining([

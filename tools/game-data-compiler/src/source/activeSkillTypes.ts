@@ -26,16 +26,29 @@ function parseNativeSkillType(value: unknown, path: string): NativeSkillType {
   return result;
 }
 
+/** Unity 技能注册既有纯 ID，也有 SkillData/.../<id>.json 资源路径。 */
+function skillId(value: unknown, path: string, allowEmpty = false): string {
+  const reference = allowEmpty ? requireString(value, path) : requireNonEmptyString(value, path);
+  if (!reference.includes('/') && !reference.includes('\\')) return reference;
+  const normalized = reference.replaceAll('\\', '/');
+  if (!/^(?:GameData\/)?SkillData\//.test(normalized))
+    throw new Error(`${path}: invalid native skill resource reference ${reference}`);
+  return requireNonEmptyString(
+    normalized.slice(normalized.lastIndexOf('/') + 1).replace(/\.json$/, ''),
+    path,
+  );
+}
+
 /** Native AbilitySystem active-list initialization, independent of player input or inherited cast origin. */
 export function parseActiveSkillTypesSource(value: unknown, path: string) {
   const bundle = requireRecord(value, path);
   const skillIds = requireArray(bundle.allActiveSkillId, path + '.allActiveSkillId').map(
-    (id, index) => requireNonEmptyString(id, path + '.allActiveSkillId[' + index + ']'),
+    (id, index) => skillId(id, path + '.allActiveSkillId[' + index + ']'),
   );
-  const normal = requireString(bundle.normalSkillId, path + '.normalSkillId');
-  const ultimate = requireString(bundle.ultimateSkillId, path + '.ultimateSkillId');
-  const combo = requireString(bundle.comboSkillId, path + '.comboSkillId');
-  const dodge = requireString(bundle.dodgeSkillId, path + '.dodgeSkillId');
+  const normal = skillId(bundle.normalSkillId, path + '.normalSkillId', true);
+  const ultimate = skillId(bundle.ultimateSkillId, path + '.ultimateSkillId', true);
+  const combo = skillId(bundle.comboSkillId, path + '.comboSkillId', true);
+  const dodge = skillId(bundle.dodgeSkillId, path + '.dodgeSkillId', true);
   const dictionary = requireRecord(
     bundle.activeSkillTypeOverrides,
     path + '.activeSkillTypeOverrides',
@@ -46,7 +59,7 @@ export function parseActiveSkillTypesSource(value: unknown, path: string) {
     throw new Error(path + ': override keys and values length differ');
   const overrides = new Map<string, NativeSkillType>();
   for (const [index, key] of keys.entries()) {
-    const id = requireNonEmptyString(key, path + '.activeSkillTypeOverrides.keys[' + index + ']');
+    const id = skillId(key, path + '.activeSkillTypeOverrides.keys[' + index + ']');
     if (overrides.has(id)) throw new Error(path + ': duplicate skill override');
     overrides.set(
       id,

@@ -93,7 +93,10 @@ export interface CompiledSkillActionProgram {
   readonly timelineActions: readonly CompiledTimelineAction[];
 }
 
-export interface CompiledProjectileCallbackSkillProgram extends CompiledSkillActionProgram {
+export interface CompiledProjectileCallbackSkillProgram extends CompiledAbilityEntityChildSkillProgram {}
+
+/** 按引用等级编译的实体技能，包括施放设置与动作程序。 */
+export interface CompiledAbilityEntityChildSkillProgram extends CompiledSkillActionProgram {
   readonly skillId: string;
   readonly nativeSkillType: import('../game-data/operatorDefinition').NativeSkillType;
   readonly naturalDurationFrames: number;
@@ -103,11 +106,6 @@ export interface CompiledProjectileCallbackSkillProgram extends CompiledSkillAct
     readonly maxChargeTime: number;
     readonly cost: CompiledSkillCost & { readonly availabilityThreshold: number };
   };
-}
-
-/** 等级已经展开、由单个能力实体实例按局部时钟执行的子技能。 */
-export interface CompiledAbilityEntityChildSkillProgram extends CompiledSkillActionProgram {
-  readonly skillId: string;
 }
 
 /** 已按引用技能等级展开、可供逻辑能力实体运行时创建实例的蓝图。 */
@@ -126,6 +124,7 @@ export interface ResolvedAbilityEntityDefinition {
 export interface ResolvedCombatStepParameters {
   mergeContextTargets: CombatStepParameters['mergeContextTargets'];
   findCharacterTeamTargets: CombatStepParameters['findCharacterTeamTargets'];
+  findUnfinishedProjectileTargets: CombatStepParameters['findUnfinishedProjectileTargets'];
   createSpatialPointTargets: CombatStepParameters['createSpatialPointTargets'];
   findOwnerSpawnedAbilityEntities: CombatStepParameters['findOwnerSpawnedAbilityEntities'];
   pickContextTarget: CombatStepParameters['pickContextTarget'];
@@ -314,8 +313,7 @@ export interface ResolvedCombatStepParameters {
   switch: CombatStepParameters['switch'];
   once: CombatStepParameters['once'];
   repeatEachTick: CombatStepParameters['repeatEachTick'];
-  scheduleProjectileFinishCallback: CombatStepParameters['scheduleProjectileFinishCallback'];
-  launchProjectileLifetime: CombatStepParameters['launchProjectileLifetime'];
+  launchProjectile: CombatStepParameters['launchProjectile'];
   setContextFlag: CombatStepParameters['setContextFlag'];
   openComboWindow: CombatStepParameters['openComboWindow'];
   showComboRingQte: CombatStepParameters['showComboRingQte'];
@@ -374,8 +372,13 @@ type ResolvedCombatStepNode<K extends CombatStepKind> = {
           ? { readonly body: ResolvedActionSequence }
           : K extends 'repeatByActionValue'
             ? { readonly body: ResolvedActionSequence }
-            : K extends 'scheduleProjectileFinishCallback'
-              ? { readonly callback: CompiledProjectileCallbackSkillProgram }
+            : K extends 'launchProjectile'
+              ? {
+                  readonly callbacks: readonly {
+                    readonly event: 'hit' | 'block' | 'reach' | 'finish';
+                    readonly skill: CompiledProjectileCallbackSkillProgram;
+                  }[];
+                }
               : K extends 'forEachContextTarget'
                 ? { readonly body: ResolvedActionSequence }
                 : {});
@@ -392,6 +395,7 @@ export type ResolvedCombatStep = ResolvedCombatStepForKind<CombatStepKind>;
 export const COMBAT_STEP_EXECUTION_ROUTES = {
   mergeContextTargets: 'operation',
   findCharacterTeamTargets: 'operation',
+  findUnfinishedProjectileTargets: 'operation',
   createSpatialPointTargets: 'operation',
   findOwnerSpawnedAbilityEntities: 'operation',
   pickContextTarget: 'operation',
@@ -475,8 +479,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   withActionBlackboardScope: 'sequence',
   repeatEachTick: 'sequence',
   repeatByActionValue: 'sequence',
-  scheduleProjectileFinishCallback: 'sequence',
-  launchProjectileLifetime: 'sequence',
+  launchProjectile: 'sequence',
   setContextFlag: 'operation',
   openComboWindow: 'operation',
   showComboRingQte: 'operation',

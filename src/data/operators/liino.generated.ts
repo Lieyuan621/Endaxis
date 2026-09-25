@@ -16,6 +16,115 @@ import {
   withSkillBlackboard,
 } from './definitionHelpers';
 
+const sharedActionSequence5: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    'chr_0035_liino_normal_skill_projhit_start_vfx.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx',
+    {},
+    true,
+    sequence({
+      kind: 'launchProjectile',
+      parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+      callbacks: [
+        {
+          event: 'block',
+          skill: {
+            skillId: 'chr_0035_liino_normal_skill_projhit_02',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 4,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+            },
+            blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+            scheduledSequences: [
+              scheduled(0, sequence(), 4),
+              scheduled(
+                0,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'electric',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      tags: ['normalSkill'],
+                      stagger: { kind: 'blackboard', key: 'poise' },
+                    },
+                    '\u0000endaxis-generated-identity:0',
+                  ),
+                ),
+                4,
+              ),
+              scheduled(0, sequence(), 4),
+            ],
+          },
+        },
+      ],
+    }),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence4: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    'chr_0035_liino_normal_skill_projhit_start_vfx.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx',
+    {},
+    true,
+    sequence({
+      kind: 'launchProjectile',
+      parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+      callbacks: [
+        {
+          event: 'block',
+          skill: {
+            skillId: 'chr_0035_liino_normal_skill_projhit_02',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 4,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+            },
+            blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+            scheduledSequences: [
+              scheduled(0, sequence(), 4),
+              scheduled(
+                0,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'electric',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      tags: ['normalSkill'],
+                      stagger: { kind: 'blackboard', key: 'poise' },
+                    },
+                    '\u0000endaxis-generated-identity:0',
+                  ),
+                ),
+                4,
+              ),
+              scheduled(0, sequence(), 4),
+            ],
+          },
+        },
+      ],
+    }),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence3: ActionSequenceDefinition = sequence(
+  forEachContextTarget(
+    'smart_target',
+    instantiateActionSequence(sharedActionSequence4, ['\u0000endaxis-generated-identity:0']),
+  ),
+);
+
 const sharedActionSequence2: ActionSequenceDefinition = sequence(
   branch(
     {
@@ -40,83 +149,43 @@ const sharedActionSequence2: ActionSequenceDefinition = sequence(
       operator: 'greaterOrEqual',
       value: 1,
     },
-    sequence(
-      withActionBlackboardScope(
-        'chr_0035_liino_normal_skill_projhit_start_vfx.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx',
-        {},
-        true,
-        sequence(
-          withActionBlackboardScope(
-            'chr_0035_liino_normal_skill_projhit_start_vfx.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0035_liino_normal_skill_projhit_02',
-            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'electric',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalSkill'],
-                  stagger: { kind: 'blackboard', key: 'poise' },
-                },
-                '\u0000endaxis-generated-identity:0',
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        {},
-        { lifetime: 'execution' },
-      ),
-    ),
-    sequence(
-      withActionBlackboardScope(
-        'chr_0035_liino_normal_skill_projhit_start_vfx.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx',
-        {},
-        true,
-        sequence(
-          withActionBlackboardScope(
-            'chr_0035_liino_normal_skill_projhit_start_vfx.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0035_liino_normal_skill_projhit_02',
-            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'electric',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['normalSkill'],
-                  stagger: { kind: 'blackboard', key: 'poise' },
-                },
-                '\u0000endaxis-generated-identity:1',
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        {},
-        { lifetime: 'execution' },
-      ),
-    ),
+    instantiateActionSequence(sharedActionSequence3, ['\u0000endaxis-generated-identity:0']),
+    instantiateActionSequence(sharedActionSequence5, ['\u0000endaxis-generated-identity:1']),
     { alwaysNext: true },
   ),
 );
 
-const sharedActionSequence1: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
-    true,
-    instantiateActionSequence(sharedActionSequence2, [
-      '\u0000endaxis-generated-identity:1',
-      '\u0000endaxis-generated-identity:2',
-    ]),
-    undefined,
-    { lifetime: 'execution', alwaysNext: true },
-  ),
-);
+const sharedActionSequence1: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+  callbacks: [
+    {
+      event: 'reach',
+      skill: {
+        skillId: 'chr_0035_liino_normal_skill_projhit_start_vfx',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            instantiateActionSequence(sharedActionSequence2, [
+              '\u0000endaxis-generated-identity:0',
+              '\u0000endaxis-generated-identity:1',
+            ]),
+            0,
+          ),
+        ],
+      },
+    },
+  ],
+});
 
 export const liinoChr_0035_liino_combo_skill: SkillDefinition = withSkillBlackboard(
   {
@@ -761,26 +830,48 @@ export const liinoChr_0035_liino_attack3: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack3_l_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:chr_0035_liino_attack3_projhit',
-                { atk_scale_2: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack3_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_2: 0.1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -794,26 +885,48 @@ export const liinoChr_0035_liino_attack3: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[16]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack3_l_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[16]._sequenceActionData.actionData[0]:chr_0035_liino_attack3_projhit',
-                { atk_scale_2: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack3_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_2: 0.1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -827,26 +940,48 @@ export const liinoChr_0035_liino_attack3: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[17]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack3_l_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[17]._sequenceActionData.actionData[0]:chr_0035_liino_attack3_projhit',
-                { atk_scale_2: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack3_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack3:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_2: 0.1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack3:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -860,26 +995,48 @@ export const liinoChr_0035_liino_attack3: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[18]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack3_l_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[18]._sequenceActionData.actionData[0]:chr_0035_liino_attack3_projhit',
-                { atk_scale_2: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack3_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack3:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_2: 0.1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack3:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -893,37 +1050,99 @@ export const liinoChr_0035_liino_attack3: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[19]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack3_l_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack3.actionGroupData.timelineActions[19]._sequenceActionData.actionData[0]:chr_0035_liino_attack3_projhit',
-                { atk_scale_2: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack3_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack3:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_2: 0.1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack3:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
         ),
         20,
       ),
-      scheduled(12, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 12),
-      scheduled(14, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 14),
-      scheduled(16, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 16),
-      scheduled(18, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 18),
-      scheduled(20, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 20),
+      scheduled(
+        12,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        12,
+      ),
+      scheduled(
+        14,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        14,
+      ),
+      scheduled(
+        16,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        16,
+      ),
+      scheduled(
+        18,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        18,
+      ),
+      scheduled(
+        20,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        20,
+      ),
       scheduled(
         0,
         sequence(
@@ -1147,26 +1366,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_l',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1180,26 +1421,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_l',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1213,26 +1476,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_l',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1246,26 +1531,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_l',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1279,26 +1586,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_l',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1312,26 +1641,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_r',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1345,26 +1696,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_r',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/6/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/6/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1378,26 +1751,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_r',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/7/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/7/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1411,26 +1806,48 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_r',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/8/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/8/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1444,42 +1861,144 @@ export const liinoChr_0035_liino_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_attack4_r',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_attack4.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:chr_0035_liino_attack4_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_attack4:/scheduledSequences/9/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0035_liino_attack4:/scheduledSequences/9/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
         ),
         16,
       ),
-      scheduled(5, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 5),
-      scheduled(7, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 7),
-      scheduled(10, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 10),
-      scheduled(13, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 13),
-      scheduled(16, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 16),
-      scheduled(5, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 5),
-      scheduled(7, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 7),
-      scheduled(10, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 10),
-      scheduled(13, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 13),
-      scheduled(16, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 16),
+      scheduled(
+        5,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        5,
+      ),
+      scheduled(
+        7,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        7,
+      ),
+      scheduled(
+        10,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        10,
+      ),
+      scheduled(
+        13,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        13,
+      ),
+      scheduled(
+        16,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        16,
+      ),
+      scheduled(
+        5,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        5,
+      ),
+      scheduled(
+        7,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        7,
+      ),
+      scheduled(
+        10,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        10,
+      ),
+      scheduled(
+        13,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        13,
+      ),
+      scheduled(
+        16,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        16,
+      ),
       scheduled(
         0,
         sequence(
@@ -2313,27 +2832,79 @@ export const liinoChr_0035_liino_plunging_attack_end: SkillDefinition = withSkil
             'SkillData.chr_0035_liino_plunging_attack_end.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_plunging_attack',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_plunging_attack_end.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0]:chr_0035_liino_plunging_attack_projhit',
-                { atk_scale: 0.1, poise: 5 },
-                true,
-                sequence(),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+              callbacks: [
+                {
+                  event: 'reach',
+                  skill: {
+                    skillId: 'chr_0035_liino_plunging_attack_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atk_scale: 0.1, poise: 5 },
+                    scheduledSequences: [scheduled(0, sequence(), 0)],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
         ),
         2,
       ),
-      scheduled(5, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 5),
-      scheduled(8, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 8),
-      scheduled(3, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 3),
-      scheduled(6, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 6),
-      scheduled(9, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 9),
+      scheduled(
+        5,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        5,
+      ),
+      scheduled(
+        8,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        8,
+      ),
+      scheduled(
+        3,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        3,
+      ),
+      scheduled(
+        6,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        6,
+      ),
+      scheduled(
+        9,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        9,
+      ),
       scheduled(
         0,
         sequence(
@@ -2550,109 +3121,192 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = withSkillBlackb
             'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_normal_attack_03',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0]:chr_0035_liino_normal_skill_projhit_start',
-                { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
-                true,
-                sequence(
-                  branch(
-                    {
-                      kind: 'buffIdStackCompare',
-                      target: 'enemy',
-                      buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
-                      operator: 'greaterOrEqual',
-                      value: { kind: 'constant', value: 1 },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+              callbacks: [
+                {
+                  event: 'reach',
+                  skill: {
+                    skillId: 'chr_0035_liino_normal_skill_projhit_start',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    sequence(
-                      step('mergeContextTargets', {
-                        saveToContextKey: 'smart_target',
-                        sources: [{ kind: 'target', target: 'enemy' }],
-                      }),
-                    ),
-                    sequence(
-                      step('mergeContextTargets', {
-                        saveToContextKey: 'smart_target',
-                        sources: [],
-                      }),
-                    ),
-                  ),
-                  branch(
-                    {
-                      kind: 'contextTargetCountCompare',
-                      contextKey: 'smart_target',
-                      operator: 'greaterOrEqual',
-                      value: 1,
-                    },
-                    sequence(
-                      withActionBlackboardScope(
-                        'chr_0035_liino_normal_skill_projhit_start.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack',
-                        {},
-                        true,
+                    blackboard: { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          withActionBlackboardScope(
-                            'chr_0035_liino_normal_skill_projhit_start.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0035_liino_normal_skill_projhit',
-                            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-                            true,
+                          branch(
+                            {
+                              kind: 'buffIdStackCompare',
+                              target: 'enemy',
+                              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+                              operator: 'greaterOrEqual',
+                              value: { kind: 'constant', value: 1 },
+                            },
                             sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                                  tags: ['normalSkill'],
-                                  features: ['canBreakWeakness'],
-                                  stagger: { kind: 'blackboard', key: 'poise' },
-                                },
-                                'chr_0035_liino_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0',
+                              step('mergeContextTargets', {
+                                saveToContextKey: 'smart_target',
+                                sources: [{ kind: 'target', target: 'enemy' }],
+                              }),
+                            ),
+                            sequence(
+                              step('mergeContextTargets', {
+                                saveToContextKey: 'smart_target',
+                                sources: [],
+                              }),
+                            ),
+                          ),
+                          branch(
+                            {
+                              kind: 'contextTargetCountCompare',
+                              contextKey: 'smart_target',
+                              operator: 'greaterOrEqual',
+                              value: 1,
+                            },
+                            sequence(
+                              forEachContextTarget(
+                                'smart_target',
+                                sequence(
+                                  withActionBlackboardScope(
+                                    'chr_0035_liino_normal_skill_projhit_start.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack',
+                                    {},
+                                    true,
+                                    sequence({
+                                      kind: 'launchProjectile',
+                                      parameters: {
+                                        finish: 'firstTickBlock',
+                                        recycleDelaySeconds: 0.133333340287209,
+                                      },
+                                      callbacks: [
+                                        {
+                                          event: 'block',
+                                          skill: {
+                                            skillId: 'chr_0035_liino_normal_skill_projhit',
+                                            nativeSkillType: 'normalSkill',
+                                            naturalDurationFrames: 4,
+                                            castResource: {
+                                              costFrame: 0,
+                                              cooldownSeconds: 0,
+                                              maxChargeTime: 1,
+                                              cost: {
+                                                resource: 'ultimateEnergy',
+                                                value: 0,
+                                                availabilityThreshold: 0,
+                                              },
+                                            },
+                                            blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+                                            scheduledSequences: [
+                                              scheduled(0, sequence(), 4),
+                                              scheduled(
+                                                0,
+                                                sequence(
+                                                  step(
+                                                    'dealDamage',
+                                                    {
+                                                      damageType: 'electric',
+                                                      attackScale: {
+                                                        kind: 'blackboard',
+                                                        key: 'atk_scale',
+                                                      },
+                                                      tags: ['normalSkill'],
+                                                      features: ['canBreakWeakness'],
+                                                      stagger: { kind: 'blackboard', key: 'poise' },
+                                                    },
+                                                    'chr_0035_liino_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                                                  ),
+                                                ),
+                                                4,
+                                              ),
+                                              scheduled(0, sequence(), 4),
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    }),
+                                    {},
+                                    { lifetime: 'execution' },
+                                  ),
+                                ),
                               ),
                             ),
-                            undefined,
-                            { lifetime: 'execution', alwaysNext: true },
-                          ),
-                        ),
-                        {},
-                        { lifetime: 'execution' },
-                      ),
-                    ),
-                    sequence(
-                      withActionBlackboardScope(
-                        'chr_0035_liino_normal_skill_projhit_start.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack',
-                        {},
-                        true,
-                        sequence(
-                          withActionBlackboardScope(
-                            'chr_0035_liino_normal_skill_projhit_start.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0035_liino_normal_skill_projhit',
-                            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-                            true,
                             sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                                  tags: ['normalSkill'],
-                                  features: ['canBreakWeakness'],
-                                  stagger: { kind: 'blackboard', key: 'poise' },
-                                },
-                                'chr_0035_liino_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/1/whenFalse/steps/0/body/steps/0/body/steps/0',
+                              withActionBlackboardScope(
+                                'chr_0035_liino_normal_skill_projhit_start.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack',
+                                {},
+                                true,
+                                sequence({
+                                  kind: 'launchProjectile',
+                                  parameters: {
+                                    finish: 'firstTickBlock',
+                                    recycleDelaySeconds: 0.133333340287209,
+                                  },
+                                  callbacks: [
+                                    {
+                                      event: 'block',
+                                      skill: {
+                                        skillId: 'chr_0035_liino_normal_skill_projhit',
+                                        nativeSkillType: 'normalSkill',
+                                        naturalDurationFrames: 4,
+                                        castResource: {
+                                          costFrame: 0,
+                                          cooldownSeconds: 0,
+                                          maxChargeTime: 1,
+                                          cost: {
+                                            resource: 'ultimateEnergy',
+                                            value: 0,
+                                            availabilityThreshold: 0,
+                                          },
+                                        },
+                                        blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+                                        scheduledSequences: [
+                                          scheduled(0, sequence(), 4),
+                                          scheduled(
+                                            0,
+                                            sequence(
+                                              step(
+                                                'dealDamage',
+                                                {
+                                                  damageType: 'electric',
+                                                  attackScale: {
+                                                    kind: 'blackboard',
+                                                    key: 'atk_scale',
+                                                  },
+                                                  tags: ['normalSkill'],
+                                                  features: ['canBreakWeakness'],
+                                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                                },
+                                                'chr_0035_liino_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                                              ),
+                                            ),
+                                            4,
+                                          ),
+                                          scheduled(0, sequence(), 4),
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                }),
+                                {},
+                                { lifetime: 'execution' },
                               ),
                             ),
-                            undefined,
-                            { lifetime: 'execution', alwaysNext: true },
+                            { alwaysNext: true },
                           ),
                         ),
-                        {},
-                        { lifetime: 'execution' },
+                        0,
                       ),
-                    ),
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -2661,9 +3315,8 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = withSkillBlackb
             {},
             true,
             instantiateActionSequence(sharedActionSequence1, [
-              'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[10]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_start_vfx',
-              'chr_0035_liino_normal_skill:/scheduledSequences/3/sequence/steps/1/body/steps/0/body/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0',
-              'chr_0035_liino_normal_skill:/scheduledSequences/3/sequence/steps/1/body/steps/0/body/steps/1/whenFalse/steps/0/body/steps/0/body/steps/0',
+              'chr_0035_liino_normal_skill:/scheduledSequences/3/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+              'chr_0035_liino_normal_skill:/scheduledSequences/3/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
             ]),
             {},
             { lifetime: 'execution' },
@@ -2678,107 +3331,190 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = withSkillBlackb
             'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_normal_attack_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0]:chr_0035_liino_normal_skill_projhit_start_vfx03',
-                { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
-                true,
-                sequence(
-                  branch(
-                    {
-                      kind: 'buffIdStackCompare',
-                      target: 'enemy',
-                      buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
-                      operator: 'greaterOrEqual',
-                      value: { kind: 'constant', value: 1 },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+              callbacks: [
+                {
+                  event: 'reach',
+                  skill: {
+                    skillId: 'chr_0035_liino_normal_skill_projhit_start_vfx03',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    sequence(
-                      step('mergeContextTargets', {
-                        saveToContextKey: 'smart_target',
-                        sources: [{ kind: 'target', target: 'enemy' }],
-                      }),
-                    ),
-                    sequence(
-                      step('mergeContextTargets', {
-                        saveToContextKey: 'smart_target',
-                        sources: [],
-                      }),
-                    ),
-                  ),
-                  branch(
-                    {
-                      kind: 'contextTargetCountCompare',
-                      contextKey: 'smart_target',
-                      operator: 'greaterOrEqual',
-                      value: 1,
-                    },
-                    sequence(
-                      withActionBlackboardScope(
-                        'chr_0035_liino_normal_skill_projhit_start_vfx03.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx_03',
-                        {},
-                        true,
+                    blackboard: { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          withActionBlackboardScope(
-                            'chr_0035_liino_normal_skill_projhit_start_vfx03.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0035_liino_normal_skill_projhit_02',
-                            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-                            true,
+                          branch(
+                            {
+                              kind: 'buffIdStackCompare',
+                              target: 'enemy',
+                              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+                              operator: 'greaterOrEqual',
+                              value: { kind: 'constant', value: 1 },
+                            },
                             sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                                  tags: ['normalSkill'],
-                                  stagger: { kind: 'blackboard', key: 'poise' },
-                                },
-                                'chr_0035_liino_normal_skill:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0',
+                              step('mergeContextTargets', {
+                                saveToContextKey: 'smart_target',
+                                sources: [{ kind: 'target', target: 'enemy' }],
+                              }),
+                            ),
+                            sequence(
+                              step('mergeContextTargets', {
+                                saveToContextKey: 'smart_target',
+                                sources: [],
+                              }),
+                            ),
+                          ),
+                          branch(
+                            {
+                              kind: 'contextTargetCountCompare',
+                              contextKey: 'smart_target',
+                              operator: 'greaterOrEqual',
+                              value: 1,
+                            },
+                            sequence(
+                              forEachContextTarget(
+                                'smart_target',
+                                sequence(
+                                  withActionBlackboardScope(
+                                    'chr_0035_liino_normal_skill_projhit_start_vfx03.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx_03',
+                                    {},
+                                    true,
+                                    sequence({
+                                      kind: 'launchProjectile',
+                                      parameters: {
+                                        finish: 'firstTickBlock',
+                                        recycleDelaySeconds: 0.133333340287209,
+                                      },
+                                      callbacks: [
+                                        {
+                                          event: 'block',
+                                          skill: {
+                                            skillId: 'chr_0035_liino_normal_skill_projhit_02',
+                                            nativeSkillType: 'normalSkill',
+                                            naturalDurationFrames: 4,
+                                            castResource: {
+                                              costFrame: 0,
+                                              cooldownSeconds: 0,
+                                              maxChargeTime: 1,
+                                              cost: {
+                                                resource: 'ultimateEnergy',
+                                                value: 0,
+                                                availabilityThreshold: 0,
+                                              },
+                                            },
+                                            blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+                                            scheduledSequences: [
+                                              scheduled(0, sequence(), 4),
+                                              scheduled(
+                                                0,
+                                                sequence(
+                                                  step(
+                                                    'dealDamage',
+                                                    {
+                                                      damageType: 'electric',
+                                                      attackScale: {
+                                                        kind: 'blackboard',
+                                                        key: 'atk_scale',
+                                                      },
+                                                      tags: ['normalSkill'],
+                                                      stagger: { kind: 'blackboard', key: 'poise' },
+                                                    },
+                                                    'chr_0035_liino_normal_skill:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                                                  ),
+                                                ),
+                                                4,
+                                              ),
+                                              scheduled(0, sequence(), 4),
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    }),
+                                    {},
+                                    { lifetime: 'execution' },
+                                  ),
+                                ),
                               ),
                             ),
-                            undefined,
-                            { lifetime: 'execution', alwaysNext: true },
-                          ),
-                        ),
-                        {},
-                        { lifetime: 'execution' },
-                      ),
-                    ),
-                    sequence(
-                      withActionBlackboardScope(
-                        'chr_0035_liino_normal_skill_projhit_start_vfx03.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx_03',
-                        {},
-                        true,
-                        sequence(
-                          withActionBlackboardScope(
-                            'chr_0035_liino_normal_skill_projhit_start_vfx03.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0035_liino_normal_skill_projhit_02',
-                            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-                            true,
                             sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                                  tags: ['normalSkill'],
-                                  stagger: { kind: 'blackboard', key: 'poise' },
-                                },
-                                'chr_0035_liino_normal_skill:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/1/whenFalse/steps/0/body/steps/0/body/steps/0',
+                              withActionBlackboardScope(
+                                'chr_0035_liino_normal_skill_projhit_start_vfx03.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx_03',
+                                {},
+                                true,
+                                sequence({
+                                  kind: 'launchProjectile',
+                                  parameters: {
+                                    finish: 'firstTickBlock',
+                                    recycleDelaySeconds: 0.133333340287209,
+                                  },
+                                  callbacks: [
+                                    {
+                                      event: 'block',
+                                      skill: {
+                                        skillId: 'chr_0035_liino_normal_skill_projhit_02',
+                                        nativeSkillType: 'normalSkill',
+                                        naturalDurationFrames: 4,
+                                        castResource: {
+                                          costFrame: 0,
+                                          cooldownSeconds: 0,
+                                          maxChargeTime: 1,
+                                          cost: {
+                                            resource: 'ultimateEnergy',
+                                            value: 0,
+                                            availabilityThreshold: 0,
+                                          },
+                                        },
+                                        blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+                                        scheduledSequences: [
+                                          scheduled(0, sequence(), 4),
+                                          scheduled(
+                                            0,
+                                            sequence(
+                                              step(
+                                                'dealDamage',
+                                                {
+                                                  damageType: 'electric',
+                                                  attackScale: {
+                                                    kind: 'blackboard',
+                                                    key: 'atk_scale',
+                                                  },
+                                                  tags: ['normalSkill'],
+                                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                                },
+                                                'chr_0035_liino_normal_skill:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                                              ),
+                                            ),
+                                            4,
+                                          ),
+                                          scheduled(0, sequence(), 4),
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                }),
+                                {},
+                                { lifetime: 'execution' },
                               ),
                             ),
-                            undefined,
-                            { lifetime: 'execution', alwaysNext: true },
+                            { alwaysNext: true },
                           ),
                         ),
-                        {},
-                        { lifetime: 'execution' },
+                        0,
                       ),
-                    ),
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -2786,107 +3522,190 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = withSkillBlackb
             'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[11]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[11]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_start_vfx04',
-                { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
-                true,
-                sequence(
-                  branch(
-                    {
-                      kind: 'buffIdStackCompare',
-                      target: 'enemy',
-                      buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
-                      operator: 'greaterOrEqual',
-                      value: { kind: 'constant', value: 1 },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+              callbacks: [
+                {
+                  event: 'reach',
+                  skill: {
+                    skillId: 'chr_0035_liino_normal_skill_projhit_start_vfx04',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    sequence(
-                      step('mergeContextTargets', {
-                        saveToContextKey: 'smart_target',
-                        sources: [{ kind: 'target', target: 'enemy' }],
-                      }),
-                    ),
-                    sequence(
-                      step('mergeContextTargets', {
-                        saveToContextKey: 'smart_target',
-                        sources: [],
-                      }),
-                    ),
-                  ),
-                  branch(
-                    {
-                      kind: 'contextTargetCountCompare',
-                      contextKey: 'smart_target',
-                      operator: 'greaterOrEqual',
-                      value: 1,
-                    },
-                    sequence(
-                      withActionBlackboardScope(
-                        'chr_0035_liino_normal_skill_projhit_start_vfx04.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx_04',
-                        {},
-                        true,
+                    blackboard: { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          withActionBlackboardScope(
-                            'chr_0035_liino_normal_skill_projhit_start_vfx04.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0035_liino_normal_skill_projhit_02',
-                            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-                            true,
+                          branch(
+                            {
+                              kind: 'buffIdStackCompare',
+                              target: 'enemy',
+                              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+                              operator: 'greaterOrEqual',
+                              value: { kind: 'constant', value: 1 },
+                            },
                             sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                                  tags: ['normalSkill'],
-                                  stagger: { kind: 'blackboard', key: 'poise' },
-                                },
-                                'chr_0035_liino_normal_skill:/scheduledSequences/4/sequence/steps/1/body/steps/0/body/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0',
+                              step('mergeContextTargets', {
+                                saveToContextKey: 'smart_target',
+                                sources: [{ kind: 'target', target: 'enemy' }],
+                              }),
+                            ),
+                            sequence(
+                              step('mergeContextTargets', {
+                                saveToContextKey: 'smart_target',
+                                sources: [],
+                              }),
+                            ),
+                          ),
+                          branch(
+                            {
+                              kind: 'contextTargetCountCompare',
+                              contextKey: 'smart_target',
+                              operator: 'greaterOrEqual',
+                              value: 1,
+                            },
+                            sequence(
+                              forEachContextTarget(
+                                'smart_target',
+                                sequence(
+                                  withActionBlackboardScope(
+                                    'chr_0035_liino_normal_skill_projhit_start_vfx04.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx_04',
+                                    {},
+                                    true,
+                                    sequence({
+                                      kind: 'launchProjectile',
+                                      parameters: {
+                                        finish: 'firstTickBlock',
+                                        recycleDelaySeconds: 0.133333340287209,
+                                      },
+                                      callbacks: [
+                                        {
+                                          event: 'block',
+                                          skill: {
+                                            skillId: 'chr_0035_liino_normal_skill_projhit_02',
+                                            nativeSkillType: 'normalSkill',
+                                            naturalDurationFrames: 4,
+                                            castResource: {
+                                              costFrame: 0,
+                                              cooldownSeconds: 0,
+                                              maxChargeTime: 1,
+                                              cost: {
+                                                resource: 'ultimateEnergy',
+                                                value: 0,
+                                                availabilityThreshold: 0,
+                                              },
+                                            },
+                                            blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+                                            scheduledSequences: [
+                                              scheduled(0, sequence(), 4),
+                                              scheduled(
+                                                0,
+                                                sequence(
+                                                  step(
+                                                    'dealDamage',
+                                                    {
+                                                      damageType: 'electric',
+                                                      attackScale: {
+                                                        kind: 'blackboard',
+                                                        key: 'atk_scale',
+                                                      },
+                                                      tags: ['normalSkill'],
+                                                      stagger: { kind: 'blackboard', key: 'poise' },
+                                                    },
+                                                    'chr_0035_liino_normal_skill:/scheduledSequences/4/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                                                  ),
+                                                ),
+                                                4,
+                                              ),
+                                              scheduled(0, sequence(), 4),
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    }),
+                                    {},
+                                    { lifetime: 'execution' },
+                                  ),
+                                ),
                               ),
                             ),
-                            undefined,
-                            { lifetime: 'execution', alwaysNext: true },
-                          ),
-                        ),
-                        {},
-                        { lifetime: 'execution' },
-                      ),
-                    ),
-                    sequence(
-                      withActionBlackboardScope(
-                        'chr_0035_liino_normal_skill_projhit_start_vfx04.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx_04',
-                        {},
-                        true,
-                        sequence(
-                          withActionBlackboardScope(
-                            'chr_0035_liino_normal_skill_projhit_start_vfx04.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0035_liino_normal_skill_projhit_02',
-                            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-                            true,
                             sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                                  tags: ['normalSkill'],
-                                  stagger: { kind: 'blackboard', key: 'poise' },
-                                },
-                                'chr_0035_liino_normal_skill:/scheduledSequences/4/sequence/steps/1/body/steps/0/body/steps/1/whenFalse/steps/0/body/steps/0/body/steps/0',
+                              withActionBlackboardScope(
+                                'chr_0035_liino_normal_skill_projhit_start_vfx04.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx_04',
+                                {},
+                                true,
+                                sequence({
+                                  kind: 'launchProjectile',
+                                  parameters: {
+                                    finish: 'firstTickBlock',
+                                    recycleDelaySeconds: 0.133333340287209,
+                                  },
+                                  callbacks: [
+                                    {
+                                      event: 'block',
+                                      skill: {
+                                        skillId: 'chr_0035_liino_normal_skill_projhit_02',
+                                        nativeSkillType: 'normalSkill',
+                                        naturalDurationFrames: 4,
+                                        castResource: {
+                                          costFrame: 0,
+                                          cooldownSeconds: 0,
+                                          maxChargeTime: 1,
+                                          cost: {
+                                            resource: 'ultimateEnergy',
+                                            value: 0,
+                                            availabilityThreshold: 0,
+                                          },
+                                        },
+                                        blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+                                        scheduledSequences: [
+                                          scheduled(0, sequence(), 4),
+                                          scheduled(
+                                            0,
+                                            sequence(
+                                              step(
+                                                'dealDamage',
+                                                {
+                                                  damageType: 'electric',
+                                                  attackScale: {
+                                                    kind: 'blackboard',
+                                                    key: 'atk_scale',
+                                                  },
+                                                  tags: ['normalSkill'],
+                                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                                },
+                                                'chr_0035_liino_normal_skill:/scheduledSequences/4/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                                              ),
+                                            ),
+                                            4,
+                                          ),
+                                          scheduled(0, sequence(), 4),
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                }),
+                                {},
+                                { lifetime: 'execution' },
                               ),
                             ),
-                            undefined,
-                            { lifetime: 'execution', alwaysNext: true },
+                            { alwaysNext: true },
                           ),
                         ),
-                        {},
-                        { lifetime: 'execution' },
+                        0,
                       ),
-                    ),
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -2900,107 +3719,190 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = withSkillBlackb
             'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:projectile_chr_0035_liino_normal_attack_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:chr_0035_liino_normal_skill_projhit_start_vfx02',
-                { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
-                true,
-                sequence(
-                  branch(
-                    {
-                      kind: 'buffIdStackCompare',
-                      target: 'enemy',
-                      buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
-                      operator: 'greaterOrEqual',
-                      value: { kind: 'constant', value: 1 },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+              callbacks: [
+                {
+                  event: 'reach',
+                  skill: {
+                    skillId: 'chr_0035_liino_normal_skill_projhit_start_vfx02',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    sequence(
-                      step('mergeContextTargets', {
-                        saveToContextKey: 'smart_target',
-                        sources: [{ kind: 'target', target: 'enemy' }],
-                      }),
-                    ),
-                    sequence(
-                      step('mergeContextTargets', {
-                        saveToContextKey: 'smart_target',
-                        sources: [],
-                      }),
-                    ),
-                  ),
-                  branch(
-                    {
-                      kind: 'contextTargetCountCompare',
-                      contextKey: 'smart_target',
-                      operator: 'greaterOrEqual',
-                      value: 1,
-                    },
-                    sequence(
-                      withActionBlackboardScope(
-                        'chr_0035_liino_normal_skill_projhit_start_vfx02.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx',
-                        {},
-                        true,
+                    blackboard: { atk_scale: 0.1, hit_cnt: 0, poise: 5 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          withActionBlackboardScope(
-                            'chr_0035_liino_normal_skill_projhit_start_vfx02.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0035_liino_normal_skill_projhit_02',
-                            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-                            true,
+                          branch(
+                            {
+                              kind: 'buffIdStackCompare',
+                              target: 'enemy',
+                              buffIds: ['buff_chr_0035_liino_normalskill_spelllnfliction_check'],
+                              operator: 'greaterOrEqual',
+                              value: { kind: 'constant', value: 1 },
+                            },
                             sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                                  tags: ['normalSkill'],
-                                  stagger: { kind: 'blackboard', key: 'poise' },
-                                },
-                                'chr_0035_liino_normal_skill:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0',
+                              step('mergeContextTargets', {
+                                saveToContextKey: 'smart_target',
+                                sources: [{ kind: 'target', target: 'enemy' }],
+                              }),
+                            ),
+                            sequence(
+                              step('mergeContextTargets', {
+                                saveToContextKey: 'smart_target',
+                                sources: [],
+                              }),
+                            ),
+                          ),
+                          branch(
+                            {
+                              kind: 'contextTargetCountCompare',
+                              contextKey: 'smart_target',
+                              operator: 'greaterOrEqual',
+                              value: 1,
+                            },
+                            sequence(
+                              forEachContextTarget(
+                                'smart_target',
+                                sequence(
+                                  withActionBlackboardScope(
+                                    'chr_0035_liino_normal_skill_projhit_start_vfx02.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx',
+                                    {},
+                                    true,
+                                    sequence({
+                                      kind: 'launchProjectile',
+                                      parameters: {
+                                        finish: 'firstTickBlock',
+                                        recycleDelaySeconds: 0.133333340287209,
+                                      },
+                                      callbacks: [
+                                        {
+                                          event: 'block',
+                                          skill: {
+                                            skillId: 'chr_0035_liino_normal_skill_projhit_02',
+                                            nativeSkillType: 'normalSkill',
+                                            naturalDurationFrames: 4,
+                                            castResource: {
+                                              costFrame: 0,
+                                              cooldownSeconds: 0,
+                                              maxChargeTime: 1,
+                                              cost: {
+                                                resource: 'ultimateEnergy',
+                                                value: 0,
+                                                availabilityThreshold: 0,
+                                              },
+                                            },
+                                            blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+                                            scheduledSequences: [
+                                              scheduled(0, sequence(), 4),
+                                              scheduled(
+                                                0,
+                                                sequence(
+                                                  step(
+                                                    'dealDamage',
+                                                    {
+                                                      damageType: 'electric',
+                                                      attackScale: {
+                                                        kind: 'blackboard',
+                                                        key: 'atk_scale',
+                                                      },
+                                                      tags: ['normalSkill'],
+                                                      stagger: { kind: 'blackboard', key: 'poise' },
+                                                    },
+                                                    'chr_0035_liino_normal_skill:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                                                  ),
+                                                ),
+                                                4,
+                                              ),
+                                              scheduled(0, sequence(), 4),
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    }),
+                                    {},
+                                    { lifetime: 'execution' },
+                                  ),
+                                ),
                               ),
                             ),
-                            undefined,
-                            { lifetime: 'execution', alwaysNext: true },
-                          ),
-                        ),
-                        {},
-                        { lifetime: 'execution' },
-                      ),
-                    ),
-                    sequence(
-                      withActionBlackboardScope(
-                        'chr_0035_liino_normal_skill_projhit_start_vfx02.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx',
-                        {},
-                        true,
-                        sequence(
-                          withActionBlackboardScope(
-                            'chr_0035_liino_normal_skill_projhit_start_vfx02.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:chr_0035_liino_normal_skill_projhit_02',
-                            { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
-                            true,
                             sequence(
-                              step(
-                                'dealDamage',
-                                {
-                                  damageType: 'electric',
-                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                                  tags: ['normalSkill'],
-                                  stagger: { kind: 'blackboard', key: 'poise' },
-                                },
-                                'chr_0035_liino_normal_skill:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/1/whenFalse/steps/0/body/steps/0/body/steps/0',
+                              withActionBlackboardScope(
+                                'chr_0035_liino_normal_skill_projhit_start_vfx02.actionGroupData.timelineActions[0]._sequenceActionData.actionData[1].failActions.actionData[0]:projectile_chr_0035_liino_normal_attack_vfx',
+                                {},
+                                true,
+                                sequence({
+                                  kind: 'launchProjectile',
+                                  parameters: {
+                                    finish: 'firstTickBlock',
+                                    recycleDelaySeconds: 0.133333340287209,
+                                  },
+                                  callbacks: [
+                                    {
+                                      event: 'block',
+                                      skill: {
+                                        skillId: 'chr_0035_liino_normal_skill_projhit_02',
+                                        nativeSkillType: 'normalSkill',
+                                        naturalDurationFrames: 4,
+                                        castResource: {
+                                          costFrame: 0,
+                                          cooldownSeconds: 0,
+                                          maxChargeTime: 1,
+                                          cost: {
+                                            resource: 'ultimateEnergy',
+                                            value: 0,
+                                            availabilityThreshold: 0,
+                                          },
+                                        },
+                                        blackboard: { atk_scale: 0.1, hit_cnt: 1, poise: 2 },
+                                        scheduledSequences: [
+                                          scheduled(0, sequence(), 4),
+                                          scheduled(
+                                            0,
+                                            sequence(
+                                              step(
+                                                'dealDamage',
+                                                {
+                                                  damageType: 'electric',
+                                                  attackScale: {
+                                                    kind: 'blackboard',
+                                                    key: 'atk_scale',
+                                                  },
+                                                  tags: ['normalSkill'],
+                                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                                },
+                                                'chr_0035_liino_normal_skill:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                                              ),
+                                            ),
+                                            4,
+                                          ),
+                                          scheduled(0, sequence(), 4),
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                }),
+                                {},
+                                { lifetime: 'execution' },
                               ),
                             ),
-                            undefined,
-                            { lifetime: 'execution', alwaysNext: true },
+                            { alwaysNext: true },
                           ),
                         ),
-                        {},
-                        { lifetime: 'execution' },
+                        0,
                       ),
-                    ),
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -3009,9 +3911,8 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = withSkillBlackb
             {},
             true,
             instantiateActionSequence(sharedActionSequence1, [
-              'SkillData.chr_0035_liino_normal_skill.actionGroupData.timelineActions[12]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_start_vfx',
-              'chr_0035_liino_normal_skill:/scheduledSequences/5/sequence/steps/1/body/steps/0/body/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0',
-              'chr_0035_liino_normal_skill:/scheduledSequences/5/sequence/steps/1/body/steps/0/body/steps/1/whenFalse/steps/0/body/steps/0/body/steps/0',
+              'chr_0035_liino_normal_skill:/scheduledSequences/5/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenTrue/steps/0/body/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+              'chr_0035_liino_normal_skill:/scheduledSequences/5/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
             ]),
             {},
             { lifetime: 'execution' },
@@ -3991,42 +4892,64 @@ export const liinoChr_0035_liino_ultimate_skill: SkillDefinition = withSkillBlac
             'SkillData.chr_0035_liino_ultimate_skill.actionGroupData.timelineActions[11]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_ultskill_soundwave_02',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0035_liino_ultimate_skill.actionGroupData.timelineActions[11]._sequenceActionData.actionData[1]:chr_0035_liino_ultimate_skill_soundwave_02_projhit',
-                { atk_scale_4: 0.1, poise: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_4' },
-                      tags: ['ultimateSkill'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 0.4,
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_ultimate_skill_soundwave_02_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0035_liino_ultimate_skill:/scheduledSequences/7/sequence/steps/1/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    {
-                      kind: 'buffIdStackCompare',
-                      target: 'caster',
-                      buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
-                      operator: 'greaterOrEqual',
-                      value: { kind: 'constant', value: 1 },
-                    },
-                    sequence(
-                      step('applyBuff', {
-                        buffId: 'buff_physical_no_guard',
-                        target: 'enemy',
-                        inheritSourceSkillCastInfo: true,
-                      }),
-                    ),
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_4: 0.1, poise: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_4' },
+                              tags: ['ultimateSkill'],
+                            },
+                            'chr_0035_liino_ultimate_skill:/scheduledSequences/7/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            {
+                              kind: 'buffIdStackCompare',
+                              target: 'caster',
+                              buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
+                              operator: 'greaterOrEqual',
+                              value: { kind: 'constant', value: 1 },
+                            },
+                            sequence(
+                              step('applyBuff', {
+                                buffId: 'buff_physical_no_guard',
+                                target: 'enemy',
+                                inheritSourceSkillCastInfo: true,
+                              }),
+                            ),
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -5176,26 +6099,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[2]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_l',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[2]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5209,26 +6151,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_l_vfx02',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[3]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5242,26 +6203,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[4]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_r',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[4]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5275,26 +6255,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[5]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_r_vfx02',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[5]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5308,26 +6307,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[6]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_l_vfx01',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[6]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5341,26 +6359,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[7]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_r_vfx01',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitl.timelineActions[7]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitl:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5393,26 +6430,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[2]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_l',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[2]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5426,26 +6482,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_l',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[3]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5459,26 +6534,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[4]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_r',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[4]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5492,26 +6586,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[5]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_r',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[5]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5525,26 +6638,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[6]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_l',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[6]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5558,26 +6690,45 @@ export const liino: OperatorDefinition = {
               'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[7]._sequenceActionData.actionData[1]:projectile_chr_0035_liino_normal_attack_r',
               {},
               true,
-              sequence(
-                withActionBlackboardScope(
-                  'BuffData.buff_chr_0035_liino_normalskill_music_animation_hitr.timelineActions[7]._sequenceActionData.actionData[1]:chr_0035_liino_normal_skill_projhit_hit',
-                  { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
-                  true,
-                  sequence(
-                    step(
-                      'dealDamage',
-                      {
-                        damageType: 'electric',
-                        attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                        tags: ['normalSkill'],
+              sequence({
+                kind: 'launchProjectile',
+                parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.133333340287209 },
+                callbacks: [
+                  {
+                    event: 'block',
+                    skill: {
+                      skillId: 'chr_0035_liino_normal_skill_projhit_hit',
+                      nativeSkillType: 'normalSkill',
+                      naturalDurationFrames: 4,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                       },
-                      'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                    ),
-                  ),
-                  undefined,
-                  { lifetime: 'execution', alwaysNext: true },
-                ),
-              ),
+                      blackboard: { atk_scale_2: 0, hit_cnt: 1, poise: 0 },
+                      scheduledSequences: [
+                        scheduled(0, sequence(), 4),
+                        scheduled(
+                          0,
+                          sequence(
+                            step(
+                              'dealDamage',
+                              {
+                                damageType: 'electric',
+                                attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                tags: ['normalSkill'],
+                              },
+                              'buff_chr_0035_liino_normalskill_music_animation_hitr:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                            ),
+                          ),
+                          4,
+                        ),
+                      ],
+                    },
+                  },
+                ],
+              }),
               {},
               { lifetime: 'execution' },
             ),
@@ -5645,54 +6796,66 @@ export const liino: OperatorDefinition = {
               inheritParent: true,
             },
             body: sequence(
-              step('findCharacterTeamTargets', {
-                saveToContextKey:
-                  'BuffData.buff_chr_0035_liino_normalskill_music_damage.buffEventAction[0].actions[0].actionData[3]:projectile-good-characters',
-                selection: { kind: 'allOperators' },
-              }),
-              forEachContextTarget(
-                'BuffData.buff_chr_0035_liino_normalskill_music_damage.buffEventAction[0].actions[0].actionData[3]:projectile-good-characters',
-                sequence(
-                  withActionBlackboardScope(
-                    'BuffData.buff_chr_0035_liino_normalskill_music_damage.buffEventAction[0].actions[0].actionData[3]:projectile_chr_0035_liino_normal_attack_soundwave',
-                    {},
-                    true,
-                    sequence(
-                      withActionBlackboardScope(
-                        'BuffData.buff_chr_0035_liino_normalskill_music_damage.buffEventAction[0].actions[0].actionData[3]:chr_0035_liino_normal_skill_soundwave_projhit',
-                        {
+              withActionBlackboardScope(
+                'BuffData.buff_chr_0035_liino_normalskill_music_damage.buffEventAction[0].actions[0].actionData[3]:projectile_chr_0035_liino_normal_attack_soundwave',
+                {},
+                true,
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: {
+                    finish: 0.45,
+                    recycleDelaySeconds: 0.0333333350718021,
+                    hit: { target: 'allOperators', finishOnHit: false },
+                  },
+                  callbacks: [
+                    {
+                      event: 'hit',
+                      skill: {
+                        skillId: 'chr_0035_liino_normal_skill_soundwave_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 1,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: {
                           atk_scale: 0.1,
                           final_heal_value: 0,
                           heal_rate: 0,
                           heal_value: 0,
                           poise: 0,
                         },
-                        true,
-                        sequence(
-                          step('storeSourceAttributeValue', {
-                            attribute: { kind: 'specific', key: 'agility' },
-                            stage: 'finalNonConverted',
-                            useFloor: false,
-                            divisor: { kind: 'constant', value: 1 },
-                            multiplier: { kind: 'blackboard', key: 'heal_value' },
-                            base: { kind: 'blackboard', key: 'heal_rate' },
-                            targetKey: 'final_heal_value',
-                          }),
-                          step('heal', {
-                            target: 'currentTarget',
-                            alwaysNext: true,
-                            tags: ['Skill/Character/Common/Heal/NormalSkillHeal'],
-                            amount: { kind: 'blackboard', key: 'final_heal_value' },
-                          }),
-                        ),
-                        undefined,
-                        { lifetime: 'execution', alwaysNext: true },
-                      ),
-                    ),
-                    {},
-                    { lifetime: 'execution' },
-                  ),
-                ),
+                        scheduledSequences: [
+                          scheduled(
+                            0,
+                            sequence(
+                              step('storeSourceAttributeValue', {
+                                attribute: { kind: 'specific', key: 'agility' },
+                                stage: 'finalNonConverted',
+                                useFloor: false,
+                                divisor: { kind: 'constant', value: 1 },
+                                multiplier: { kind: 'blackboard', key: 'heal_value' },
+                                base: { kind: 'blackboard', key: 'heal_rate' },
+                                targetKey: 'final_heal_value',
+                              }),
+                              step('heal', {
+                                target: 'actionInputTarget',
+                                alwaysNext: true,
+                                tags: ['Skill/Character/Common/Heal/NormalSkillHeal'],
+                                amount: { kind: 'blackboard', key: 'final_heal_value' },
+                              }),
+                            ),
+                            0,
+                          ),
+                        ],
+                      },
+                    },
+                  ],
+                }),
+                {},
+                { lifetime: 'execution' },
               ),
             ),
           },
@@ -5720,39 +6883,65 @@ export const liino: OperatorDefinition = {
                     'BuffData.buff_chr_0035_liino_normalskill_music_damage.buffEventAction[0].actions[1].actionData[1]:projectile_chr_0035_liino_normal_attack_soundwave_chrdung',
                     {},
                     true,
-                    sequence(
-                      withActionBlackboardScope(
-                        'BuffData.buff_chr_0035_liino_normalskill_music_damage.buffEventAction[0].actions[1].actionData[1]:chr_0035_liino_normal_skill_soundwave_projhit',
+                    sequence({
+                      kind: 'launchProjectile',
+                      parameters: {
+                        finish: 0.45,
+                        recycleDelaySeconds: 0.0333333350718021,
+                        hit: { finishOnHit: false },
+                      },
+                      callbacks: [
                         {
-                          atk_scale: 0.1,
-                          final_heal_value: 0,
-                          heal_rate: 0,
-                          heal_value: 0,
-                          poise: 0,
-                        },
-                        true,
-                        sequence(
-                          branch(
-                            {
-                              kind: 'buffIdStackCompare',
-                              target: 'caster',
-                              buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
-                              operator: 'greaterOrEqual',
-                              value: { kind: 'constant', value: 1 },
+                          event: 'hit',
+                          skill: {
+                            skillId: 'chr_0035_liino_normal_skill_soundwave_projhit',
+                            nativeSkillType: 'normalSkill',
+                            naturalDurationFrames: 1,
+                            castResource: {
+                              costFrame: 0,
+                              cooldownSeconds: 0,
+                              maxChargeTime: 1,
+                              cost: {
+                                resource: 'ultimateEnergy',
+                                value: 0,
+                                availabilityThreshold: 0,
+                              },
                             },
-                            sequence(
-                              step('applyBuff', {
-                                buffId: 'buff_physical_no_guard',
-                                target: 'enemy',
-                                inheritSourceSkillCastInfo: true,
-                              }),
-                            ),
-                          ),
-                        ),
-                        undefined,
-                        { lifetime: 'execution', alwaysNext: true },
-                      ),
-                    ),
+                            blackboard: {
+                              atk_scale: 0.1,
+                              final_heal_value: 0,
+                              heal_rate: 0,
+                              heal_value: 0,
+                              poise: 0,
+                            },
+                            scheduledSequences: [
+                              scheduled(
+                                0,
+                                sequence(
+                                  branch(
+                                    {
+                                      kind: 'buffIdStackCompare',
+                                      target: 'caster',
+                                      buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
+                                      operator: 'greaterOrEqual',
+                                      value: { kind: 'constant', value: 1 },
+                                    },
+                                    sequence(
+                                      step('applyBuff', {
+                                        buffId: 'buff_physical_no_guard',
+                                        target: 'enemy',
+                                        inheritSourceSkillCastInfo: true,
+                                      }),
+                                    ),
+                                  ),
+                                ),
+                                0,
+                              ),
+                            ],
+                          },
+                        },
+                      ],
+                    }),
                     {},
                     { lifetime: 'execution' },
                   ),
@@ -6508,115 +7697,149 @@ export const liino: OperatorDefinition = {
             'BuffData.buff_chr_0035_liino_ultskill_music_damage.buffEventAction[0].actions[0].actionData[0]:projectile_chr_0035_liino_ultskill_soundwave',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'BuffData.buff_chr_0035_liino_ultskill_music_damage.buffEventAction[0].actions[0].actionData[0]:chr_0035_liino_ultimate_skill_soundwave_projhit',
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 0.4,
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
                 {
-                  atk_scale_3: 0.1,
-                  final_heal_value: 0,
-                  poise: 5,
-                  ultheal_rate: 0,
-                  ultheal_value: 0,
-                },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_3' },
-                      tags: ['ultimateSkill'],
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_ultimate_skill_soundwave_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'buff_chr_0035_liino_ultskill_music_damage:/lifecycleSequences/trigger/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    {
-                      kind: 'buffIdStackCompare',
-                      target: 'caster',
-                      buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
-                      operator: 'greaterOrEqual',
-                      value: { kind: 'constant', value: 1 },
-                    },
-                    sequence(
-                      step('applyBuff', {
-                        buffId: 'buff_physical_no_guard',
-                        target: 'enemy',
-                        inheritSourceSkillCastInfo: true,
-                      }),
-                    ),
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-          step('findCharacterTeamTargets', {
-            saveToContextKey:
-              'BuffData.buff_chr_0035_liino_ultskill_music_damage.buffEventAction[0].actions[0].actionData[1]:projectile-good-characters',
-            selection: { kind: 'allOperators' },
-          }),
-          forEachContextTarget(
-            'BuffData.buff_chr_0035_liino_ultskill_music_damage.buffEventAction[0].actions[0].actionData[1]:projectile-good-characters',
-            sequence(
-              withActionBlackboardScope(
-                'BuffData.buff_chr_0035_liino_ultskill_music_damage.buffEventAction[0].actions[0].actionData[1]:projectile_chr_0035_liino_ultskill_soundwave_heal',
-                {},
-                true,
-                sequence(
-                  withActionBlackboardScope(
-                    'BuffData.buff_chr_0035_liino_ultskill_music_damage.buffEventAction[0].actions[0].actionData[1]:chr_0035_liino_ultimate_skill_soundwave_projhit',
-                    {
+                    blackboard: {
                       atk_scale_3: 0.1,
                       final_heal_value: 0,
                       poise: 5,
                       ultheal_rate: 0,
                       ultheal_value: 0,
                     },
-                    true,
-                    sequence(
-                      step('storeSourceAttributeValue', {
-                        attribute: { kind: 'specific', key: 'agility' },
-                        stage: 'finalNonConverted',
-                        useFloor: false,
-                        divisor: { kind: 'constant', value: 1 },
-                        multiplier: { kind: 'blackboard', key: 'ultheal_value' },
-                        base: { kind: 'blackboard', key: 'ultheal_rate' },
-                        targetKey: 'final_heal_value',
-                      }),
-                      step('heal', {
-                        target: 'currentTarget',
-                        alwaysNext: true,
-                        tags: ['Skill/Character/Common/Heal/UltimateSkillHeal'],
-                        amount: { kind: 'blackboard', key: 'final_heal_value' },
-                      }),
-                      branch(
-                        {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
-                          operator: 'greaterOrEqual',
-                          value: { kind: 'constant', value: 1 },
-                        },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          step('applyBuff', {
-                            buffId: 'buff_physical_no_guard',
-                            target: 'currentTarget',
-                            inheritSourceSkillCastInfo: true,
-                          }),
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_3' },
+                              tags: ['ultimateSkill'],
+                            },
+                            'buff_chr_0035_liino_ultskill_music_damage:/lifecycleSequences/trigger/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            {
+                              kind: 'buffIdStackCompare',
+                              target: 'caster',
+                              buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
+                              operator: 'greaterOrEqual',
+                              value: { kind: 'constant', value: 1 },
+                            },
+                            sequence(
+                              step('applyBuff', {
+                                buffId: 'buff_physical_no_guard',
+                                target: 'enemy',
+                                inheritSourceSkillCastInfo: true,
+                              }),
+                            ),
+                          ),
                         ),
+                        0,
                       ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
-                {},
-                { lifetime: 'execution' },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+          withActionBlackboardScope(
+            'BuffData.buff_chr_0035_liino_ultskill_music_damage.buffEventAction[0].actions[0].actionData[1]:projectile_chr_0035_liino_ultskill_soundwave_heal',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 0.4,
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { target: 'allOperators', finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0035_liino_ultimate_skill_soundwave_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: {
+                      atk_scale_3: 0.1,
+                      final_heal_value: 0,
+                      poise: 5,
+                      ultheal_rate: 0,
+                      ultheal_value: 0,
+                    },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step('storeSourceAttributeValue', {
+                            attribute: { kind: 'specific', key: 'agility' },
+                            stage: 'finalNonConverted',
+                            useFloor: false,
+                            divisor: { kind: 'constant', value: 1 },
+                            multiplier: { kind: 'blackboard', key: 'ultheal_value' },
+                            base: { kind: 'blackboard', key: 'ultheal_rate' },
+                            targetKey: 'final_heal_value',
+                          }),
+                          step('heal', {
+                            target: 'actionInputTarget',
+                            alwaysNext: true,
+                            tags: ['Skill/Character/Common/Heal/UltimateSkillHeal'],
+                            amount: { kind: 'blackboard', key: 'final_heal_value' },
+                          }),
+                          branch(
+                            {
+                              kind: 'buffIdStackCompare',
+                              target: 'caster',
+                              buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
+                              operator: 'greaterOrEqual',
+                              value: { kind: 'constant', value: 1 },
+                            },
+                            sequence(
+                              step('applyBuff', {
+                                buffId: 'buff_physical_no_guard',
+                                target: 'actionInputTarget',
+                                inheritSourceSkillCastInfo: true,
+                              }),
+                            ),
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
           ),
         ),
       },
@@ -6869,6 +8092,14 @@ export const liino: OperatorDefinition = {
       maxStackingCount: 1,
       childSkill: {
         skillId: 'chr_0035_liino_ultimate_skill_projhit_abilityentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 41,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale: 0, atk_scale_2: 0, poise: 0 },
         scheduledSequences: [
           scheduled(
@@ -6878,27 +8109,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_03',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -6906,27 +8157,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_03',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/0/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/0/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -6940,27 +8211,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_03',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -6968,27 +8259,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_03',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/1/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/1/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7002,27 +8313,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_03',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7030,27 +8361,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_03',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/2/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/2/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7064,27 +8415,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit_l',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit_l',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7092,27 +8463,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit_r',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit_r',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/3/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/3/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7126,27 +8517,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit_l',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit_l',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7154,27 +8565,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit_r',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit_r',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/4/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/4/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7188,27 +8619,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7216,27 +8667,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/5/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/5/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7250,27 +8721,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_03',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/6/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/6/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7278,27 +8769,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_03',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/6/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/6/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7312,74 +8823,93 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_bomb',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit_damage_02',
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.133333340287209 },
+                  callbacks: [
                     {
-                      atk_scale_2: 0.1,
-                      count: 1,
-                      duration_spellvulnerable: 0,
-                      hit_cnt: 1,
-                      poise: 10,
-                      rate_spellvulnerable: 0,
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit_damage_02',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 4,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: {
+                          atk_scale_2: 0.1,
+                          count: 1,
+                          duration_spellvulnerable: 0,
+                          hit_cnt: 1,
+                          poise: 10,
+                          rate_spellvulnerable: 0,
+                        },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 4),
+                          scheduled(
+                            0,
+                            sequence(
+                              branch(
+                                {
+                                  kind: 'buffStackCompare',
+                                  target: 'enemy',
+                                  tagQueryType: 'hasAny',
+                                  buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+                                  operator: 'greaterOrEqual',
+                                  value: { kind: 'constant', value: 0 },
+                                },
+                                sequence(
+                                  step('finishBuffsByTag', {
+                                    target: 'enemy',
+                                    tagQueryType: 'hasAny',
+                                    buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+                                    reason: 'early',
+                                    count: { kind: 'constant', value: 0 },
+                                  }),
+                                  step('applyBuff', {
+                                    buffId: 'buff_common_pulse_pulse_conduct_triggered',
+                                    target: 'enemy',
+                                    inheritSourceSkillCastInfo: true,
+                                    blackboardAssignments: {
+                                      consumed_type: { kind: 'constant', value: 1 },
+                                      consumed_layer: { kind: 'constant', value: 0 },
+                                      count: { kind: 'blackboard', key: 'count' },
+                                    },
+                                  }),
+                                ),
+                              ),
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                  features: ['canBreakWeakness'],
+                                  stagger: { kind: 'blackboard', key: 'poise' },
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/7/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/1',
+                              ),
+                              step('startTimeDilation', {
+                                scope: 'entity',
+                                durationSeconds: { kind: 'constant', value: 0.25 },
+                                slot: 'TimeDilation/Layer/Entity/HitStop',
+                                priority: 10,
+                                curve: { kind: 'named', key: 'char_hard_stop' },
+                                finishByAction: false,
+                                targets: ['enemy', 'caster'],
+                              }),
+                            ),
+                            4,
+                          ),
+                        ],
+                      },
                     },
-                    true,
-                    sequence(
-                      branch(
-                        {
-                          kind: 'buffStackCompare',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-                          operator: 'greaterOrEqual',
-                          value: { kind: 'constant', value: 0 },
-                        },
-                        sequence(
-                          step('finishBuffsByTag', {
-                            target: 'enemy',
-                            tagQueryType: 'hasAny',
-                            buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-                            reason: 'early',
-                            count: { kind: 'constant', value: 0 },
-                          }),
-                          step('applyBuff', {
-                            buffId: 'buff_common_pulse_pulse_conduct_triggered',
-                            target: 'enemy',
-                            inheritSourceSkillCastInfo: true,
-                            blackboardAssignments: {
-                              consumed_type: { kind: 'constant', value: 1 },
-                              consumed_layer: { kind: 'constant', value: 0 },
-                              count: { kind: 'blackboard', key: 'count' },
-                            },
-                          }),
-                        ),
-                      ),
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
-                          features: ['canBreakWeakness'],
-                          stagger: { kind: 'blackboard', key: 'poise' },
-                        },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/7/sequence/steps/0/body/steps/0/body/steps/1',
-                      ),
-                      step('startTimeDilation', {
-                        scope: 'entity',
-                        durationSeconds: { kind: 'constant', value: 0.25 },
-                        slot: 'TimeDilation/Layer/Entity/HitStop',
-                        priority: 10,
-                        curve: { kind: 'named', key: 'char_hard_stop' },
-                        finishByAction: false,
-                        targets: ['enemy', 'caster'],
-                      }),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7393,27 +8923,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_01',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/8/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/8/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7421,27 +8971,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_01',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/8/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/8/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7455,27 +9025,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/9/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/9/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7483,27 +9073,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/9/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/9/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7517,27 +9127,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0].succeedActions.actionData[0]:projectile_chr_0035_liino_ultskill_l_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0].succeedActions.actionData[0]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/10/sequence/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/10/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -7545,27 +9175,47 @@ export const liino: OperatorDefinition = {
                 'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0].succeedActions.actionData[1]:projectile_chr_0035_liino_ultskill_r_02',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0035_liino_ultimate_skill_projhit_abilityentity.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0].succeedActions.actionData[1]:chr_0035_liino_ultimate_skill_projhit',
-                    { atk_scale: 0.1, poise: 5 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'electric',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          takeAttackSnapshot: true,
-                          tags: ['ultimateSkill'],
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.100000001490116 },
+                  callbacks: [
+                    {
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0035_liino_ultimate_skill_projhit',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 3,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/10/sequence/steps/1/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0.1, poise: 5 },
+                        scheduledSequences: [
+                          scheduled(0, sequence(), 3),
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'electric',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  takeAttackSnapshot: true,
+                                  tags: ['ultimateSkill'],
+                                },
+                                'abilityentity_chr_0035_liino_ult_skill_projhit:chr_0035_liino_ultimate_skill_projhit_abilityentity:/childSkill/scheduledSequences/10/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/1/sequence/steps/0',
+                              ),
+                            ),
+                            3,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),

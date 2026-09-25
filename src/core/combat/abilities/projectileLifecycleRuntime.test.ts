@@ -4,6 +4,289 @@ import { AbilityEntityInstanceIdAllocator } from './abilityEntityInstanceIdAlloc
 import { LogicalAbilityEntityRuntime } from './logicalAbilityEntityRuntime';
 
 describe('ProjectileLifecycleRuntime', () => {
+  it('落地近似沿统一寿命结束，落地前后恢复均不丢失或重复回调', () => {
+    const events: string[] = [];
+    const host = {
+      resolveTickDeltaSeconds: () => 1 / 30,
+      block: () => events.push('block'),
+      reach: () => events.push('reach'),
+      finish: () => events.push('finish'),
+      beforeReset: () => events.push('reset'),
+    };
+    const original = new ProjectileLifecycleRuntime();
+    original.launch({ ...host, finishDelaySeconds: 'firstTickBlock', recycleDelaySeconds: 0 });
+    expect(events).toEqual([]);
+    const restored = new ProjectileLifecycleRuntime(() => 2, {
+      state: structuredClone(original.runtimeState),
+      resolveHost: () => host,
+    });
+    restored.advanceFrame();
+    expect(events).toEqual(['block', 'finish']);
+    expect(original.getUnfinishedTargets()).toHaveLength(1);
+    expect(restored.getUnfinishedTargets()).toHaveLength(0);
+    const afterLanding = new ProjectileLifecycleRuntime(() => 2, {
+      state: structuredClone(restored.runtimeState),
+      resolveHost: () => host,
+    });
+    afterLanding.advanceFrame();
+    afterLanding.advanceFrame();
+    expect(events).toEqual(['block', 'finish', 'reset']);
+  });
+
+  it('到达不结束的投射物恢复后不重复到达，并等待原寿命到期', () => {
+    const original = new ProjectileLifecycleRuntime();
+    const reach = vi.fn();
+    const hit = vi.fn(() => true);
+    const finish = vi.fn();
+    const host = {
+      resolveTickDeltaSeconds: () => 0.25,
+      reach,
+      hit,
+      finish,
+      beforeReset: () => {},
+    };
+    original.launch({
+      ...host,
+      finishDelaySeconds: { reachAfterTicks: 1, maxDurationSeconds: 1, finishOnReach: false },
+      firstTickHit: { onReach: true, finishOnHit: false },
+      recycleDelaySeconds: 0,
+    });
+    original.advanceFrame();
+    expect(reach).toHaveBeenCalledOnce();
+    expect(hit).toHaveBeenCalledOnce();
+    expect(finish).not.toHaveBeenCalled();
+    expect(original.getUnfinishedTargets()).toHaveLength(1);
+    const restored = new ProjectileLifecycleRuntime(() => 2, {
+      state: structuredClone(original.runtimeState),
+      resolveHost: () => host,
+    });
+    restored.advanceFrame();
+    restored.advanceFrame();
+    expect(finish).not.toHaveBeenCalled();
+    restored.advanceFrame();
+    expect(finish).toHaveBeenCalledOnce();
+    expect(reach).toHaveBeenCalledOnce();
+    expect(hit).toHaveBeenCalledOnce();
+    expect(restored.getUnfinishedTargets()).toHaveLength(0);
+  });
+  it('到达命中等待最后一段移动，并在 reset 引用通知后解绑来源', () => {
+    const runtime = new ProjectileLifecycleRuntime();
+    const events: string[] = [];
+    const projectile = runtime.launch({
+      finishDelaySeconds: { reachAfterTicks: 2, maxDurationSeconds: 10 },
+      recycleDelaySeconds: 0,
+      firstTickHit: { finishOnHit: true, onReach: true },
+      resolveTickDeltaSeconds: () => 0.1,
+      hit: () => {
+        events.push('hit');
+        return true;
+      },
+      reach: () => events.push('reach'),
+      finish: () => events.push('finish'),
+      beforeReset: () => events.push('beforeReset'),
+      released: () => events.push('released'),
+    });
+    projectile.onReset(() => events.push('reset'));
+    runtime.advanceFrame();
+    expect(events).toEqual([]);
+    runtime.advanceFrame();
+    expect(events).toEqual(['hit', 'reach', 'finish']);
+    runtime.advanceFrame();
+    runtime.advanceFrame();
+    expect(events).toEqual(['hit', 'reach', 'finish', 'beforeReset', 'reset', 'released']);
+  });
+  it('过滤失败后保存恢复仍能重试，首次成功后不再命中', () => {
+    const original = new ProjectileLifecycleRuntime();
+    original.launch({
+      finishDelaySeconds: 1,
+      recycleDelaySeconds: 0,
+      firstTickHit: { finishOnHit: false, retryRejectedHit: true },
+      resolveTickDeltaSeconds: () => 0.1,
+      hit: () => false,
+      finish: () => {},
+      beforeReset: () => {},
+    });
+    original.advanceFrame();
+    const hit = vi.fn(() => true);
+    const restored = new ProjectileLifecycleRuntime(() => 2, {
+      state: structuredClone(original.runtimeState),
+      resolveHost: () => ({
+        resolveTickDeltaSeconds: () => 0.1,
+        hit,
+        finish: () => {},
+        beforeReset: () => {},
+      }),
+    });
+    restored.advanceFrame();
+    restored.advanceFrame();
+    expect(hit).toHaveBeenCalledOnce();
+    expect(restored.getUnfinishedTargets()).toHaveLength(1);
+  });
+  it('首 Tick 命中先于到达，命中本身不结束持续投射物', () => {
+    const runtime = new ProjectileLifecycleRuntime();
+    const events: string[] = [];
+    const projectile = runtime.launch({
+      finishDelaySeconds: 1,
+      recycleDelaySeconds: 0,
+      firstTickHit: { finishOnHit: false },
+      resolveTickDeltaSeconds: () => 0.25,
+      hit: () => {
+        expect(runtime.getUnfinishedTargets()).toEqual([projectile.target]);
+        events.push('hit');
+        return true;
+      },
+      finish: () => events.push('finish'),
+      beforeReset: () => {},
+    });
+    runtime.advanceFrame();
+    expect(events).toEqual(['hit']);
+    expect(runtime.getUnfinishedTargets()).toEqual([projectile.target]);
+    for (let tick = 0; tick < 3; tick++) runtime.advanceFrame();
+    expect(events).toEqual(['hit', 'finish']);
+  });
+
+  it.each([false, true])('命中过滤结果 %s：仅实际命中才按命中次数上限结束', accepted => {
+    const runtime = new ProjectileLifecycleRuntime();
+    const events: string[] = [];
+    runtime.launch({
+      finishDelaySeconds: 'firstTickReach',
+      recycleDelaySeconds: 1,
+      firstTickHit: { finishOnHit: true },
+      resolveTickDeltaSeconds: () => 0.1,
+      hit: () => {
+        events.push('collision');
+        return accepted;
+      },
+      reach: () => events.push('reach'),
+      finish: () => events.push('finish'),
+      beforeReset: () => {},
+    });
+    runtime.advanceFrame();
+    expect(events).toEqual(accepted ? ['collision', 'finish'] : ['collision', 'reach', 'finish']);
+  });
+
+  it.each([0, 1])('首 Tick 命中前后保存并恢复，不漏掉也不重放：已推进 %s 帧', ticks => {
+    const original = new ProjectileLifecycleRuntime();
+    original.launch({
+      finishDelaySeconds: 10,
+      recycleDelaySeconds: 1,
+      firstTickHit: { finishOnHit: false },
+      resolveTickDeltaSeconds: () => 0.1,
+      hit: () => true,
+      finish: () => {},
+      beforeReset: () => {},
+    });
+    for (let index = 0; index < ticks; index++) original.advanceFrame();
+    const hit = vi.fn(() => true);
+    const restored = new ProjectileLifecycleRuntime(() => 2, {
+      state: structuredClone(original.runtimeState),
+      resolveHost: () => ({
+        resolveTickDeltaSeconds: () => 0.1,
+        hit,
+        finish: () => {},
+        beforeReset: () => {},
+      }),
+    });
+    restored.advanceFrame();
+    restored.advanceFrame();
+    expect(hit).toHaveBeenCalledTimes(ticks === 0 ? 1 : 0);
+  });
+
+  it.each(['firstTickReach', { reachAfterTicks: 2, maxDurationSeconds: 5 }] as const)(
+    '到达回调能查到自身，结束回调不能：%j',
+    finishDelaySeconds => {
+      const runtime = new ProjectileLifecycleRuntime();
+      const seen: string[] = [];
+      const projectile = runtime.launch({
+        finishDelaySeconds,
+        recycleDelaySeconds: 1,
+        resolveTickDeltaSeconds: () => 0.1,
+        reach: () => {
+          expect(runtime.getUnfinishedTargets()).toEqual([projectile.target]);
+          seen.push('reach');
+        },
+        finish: () => {
+          expect(runtime.getUnfinishedTargets()).toEqual([]);
+          seen.push('finish');
+        },
+        beforeReset: () => {},
+      });
+      runtime.advanceFrame();
+      if (typeof finishDelaySeconds === 'object') runtime.advanceFrame();
+      expect(seen).toEqual(['reach', 'finish']);
+    },
+  );
+
+  it('持续时间先耗尽时只结束，不伪造到达事件', () => {
+    const runtime = new ProjectileLifecycleRuntime();
+    const reach = vi.fn();
+    const finish = vi.fn();
+    runtime.launch({
+      finishDelaySeconds: { reachAfterTicks: 10, maxDurationSeconds: 0.1 },
+      recycleDelaySeconds: 1,
+      resolveTickDeltaSeconds: () => 0.1,
+      reach,
+      finish,
+      beforeReset: () => {},
+    });
+    runtime.advanceFrame();
+    expect(reach).not.toHaveBeenCalled();
+    expect(finish).toHaveBeenCalledOnce();
+  });
+
+  it.each([1, 2])('到达前后第 %s Tick 保存，恢复不丢失也不重放到达回调', ticks => {
+    const original = new ProjectileLifecycleRuntime();
+    original.launch({
+      finishDelaySeconds: { reachAfterTicks: 2, maxDurationSeconds: 5 },
+      recycleDelaySeconds: 1,
+      resolveTickDeltaSeconds: () => 0.1,
+      reach: () => {},
+      finish: () => {},
+      beforeReset: () => {},
+    });
+    for (let index = 0; index < ticks; index++) original.advanceFrame();
+    const reach = vi.fn();
+    const finish = vi.fn();
+    const restored = new ProjectileLifecycleRuntime(() => 2, {
+      state: structuredClone(original.runtimeState),
+      resolveHost: () => ({
+        resolveTickDeltaSeconds: () => 0.1,
+        reach,
+        finish,
+        beforeReset: () => {},
+      }),
+    });
+    expect(reach).not.toHaveBeenCalled();
+    restored.advanceFrame();
+    expect(reach).toHaveBeenCalledTimes(ticks === 1 ? 1 : 0);
+    expect(finish).toHaveBeenCalledTimes(ticks === 1 ? 1 : 0);
+  });
+
+  it('查找排除已结束未回收对象，保留旧引用，并在恢复后得到相同候选', () => {
+    const runtime = new ProjectileLifecycleRuntime();
+    const foundDuringFinish: unknown[] = [];
+    const launch = (finishDelaySeconds: number) =>
+      runtime.launch({
+        finishDelaySeconds,
+        recycleDelaySeconds: 1,
+        resolveTickDeltaSeconds: () => 0.5,
+        finish: () => foundDuringFinish.push(runtime.getUnfinishedTargets()),
+        beforeReset: () => {},
+      });
+    const first = launch(0.5);
+    const second = launch(2);
+    expect(runtime.getUnfinishedTargets()).toEqual([first.target, second.target]);
+    runtime.advanceFrame();
+    expect(foundDuringFinish).toEqual([[second.target]]);
+    expect(runtime.isActive(first.target)).toBe(true);
+    expect(runtime.getUnfinishedTargets()).toEqual([second.target]);
+
+    const restored = new ProjectileLifecycleRuntime(() => 3, {
+      state: structuredClone(runtime.runtimeState),
+    });
+    expect(restored.getUnfinishedTargets()).toEqual([second.target]);
+  });
+
   it.each([1, 2, 3])('从寿命阶段 %s 恢复，不重放回调且旧注销不影响新分支', ticks => {
     const oldCalls: string[] = [];
     const original = new ProjectileLifecycleRuntime(() => 10);

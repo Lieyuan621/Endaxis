@@ -55,6 +55,7 @@ export type ElementalInflictionOperation =
   | { readonly kind: 'consumeAttachment'; readonly attachment: ExistingElementalAttachment }
   | {
       readonly kind: 'createCompoundStatus';
+      readonly inverseReaction?: boolean;
       readonly consumedElement: InflictionElement;
       readonly incomingElement: InflictionElement;
       readonly consumedLayers: number;
@@ -64,6 +65,7 @@ export type ElementalInflictionOperation =
 export function resolveElementalInfliction(
   incomingElement: InflictionElement,
   existingAttachment: ExistingElementalAttachment | null,
+  inverseReaction = false,
 ): readonly ElementalInflictionOperation[] {
   if (existingAttachment === null) {
     return [{ kind: 'addAttachment', element: incomingElement }];
@@ -78,6 +80,7 @@ export function resolveElementalInfliction(
     { kind: 'consumeAttachment', attachment: existingAttachment },
     {
       kind: 'createCompoundStatus',
+      ...(inverseReaction ? { inverseReaction: true } : {}),
       consumedElement: existingAttachment.element,
       incomingElement,
       consumedLayers: existingAttachment.layers,

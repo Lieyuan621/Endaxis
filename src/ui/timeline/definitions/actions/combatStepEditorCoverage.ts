@@ -17,7 +17,7 @@ export const PENDING_COMBAT_STEP_EDITOR_KINDS = {
   // 已有原生区间执行，但尚无专用 Inspector；不能伪装为已可编辑或木桩无效果。
   'runtime-structure': [
     'hideUi',
-    'launchProjectileLifetime',
+    'findUnfinishedProjectileTargets',
     'markCurrentSkillCanDash',
     'markCurrentSkillCanInterrupt',
     'overrideMultiDashLimit',

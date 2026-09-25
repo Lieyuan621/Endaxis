@@ -25,6 +25,7 @@ import type {
 } from '../../../../core/game-data/operatorDefinition';
 import {
   createCombatEventResponseDraft,
+  createAbilityEntityChildSkillDraft,
   createSkillEditorStep,
   duplicateSkillEditorDetachedStep,
   type EditableCombatStepKind,
@@ -254,7 +255,7 @@ async function beginAdd(
       index += 1;
       skillId = `custom-ability-entity-child-${index}`;
     }
-    childSkills[skillId] = { skillId, scheduledSequences: [] };
+    childSkills[skillId] = createAbilityEntityChildSkillDraft(skillId);
     emitStructureUpdate(replaceStructureValueAtPath(props.definition, 'childSkills', childSkills));
     await selectPath(structureRecordEntryPath('childSkills', skillId));
   } else if (node.canAddChild === 'sequence') {

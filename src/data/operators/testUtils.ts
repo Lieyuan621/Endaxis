@@ -22,9 +22,15 @@ export function getSkill(operator: OperatorDefinition, key: string): SkillDefini
   return skill;
 }
 
+/** 收集结构中的动作，包括投射物回调；返回顺序不代表运行时执行时间。 */
 export function collectSteps(sequence: ActionSequenceDefinition): CombatStepDefinition[] {
   return sequence.steps.flatMap(step => [
     step,
+    ...(step.kind === 'launchProjectile'
+      ? step.callbacks.flatMap(callback =>
+          callback.skill.scheduledSequences.flatMap(item => collectSteps(item.sequence)),
+        )
+      : []),
     ...(step.kind === 'conditional' ? collectSteps(step.whenTrue) : []),
     ...(step.kind === 'switch'
       ? step.options.flatMap(option => collectSteps(option.sequence))

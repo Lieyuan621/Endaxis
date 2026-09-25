@@ -1090,24 +1090,41 @@ describe('CombatRuntimeAssembly', () => {
     ]);
   });
 
-  it('嵌套投射物的正式来源查询保留一层实体关系，发射事件归实际发射者', () => {
+  it.each(
+    (['finish', 'reach', 'hit'] as const).flatMap(event =>
+      (['actionSource', 'actionOwner'] as const).map(source => ({ event, source })),
+    ),
+  )('嵌套投射物 $event 回调按 $source 选择来源与发射事件身份', ({ event, source }) => {
     const emitAbilityEvent = vi.fn();
-    const callbackStep = (steps: readonly ResolvedCombatStep[]): ResolvedCombatStep => ({
-      kind: 'scheduleProjectileFinishCallback',
-      parameters: { delaySeconds: 0.01, recycleDelaySeconds: 10 },
-      callback: {
-        skillId: 'callback',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 3,
-        initialBlackboard: {},
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        timelineActions: [{ startFrame: 0, endFrame: 0, sequence: { steps } }],
+    const callbackStep = (
+      steps: readonly ResolvedCombatStep[],
+      source: 'actionSource' | 'actionOwner' = 'actionSource',
+    ): ResolvedCombatStep => ({
+      kind: 'launchProjectile',
+      parameters: {
+        source,
+        finish: event === 'reach' ? 'firstTickReach' : event === 'hit' ? 10 : 0.01,
+        recycleDelaySeconds: 10,
+        ...(event === 'hit' ? { hit: { finishOnHit: true } } : {}),
       },
+      callbacks: [
+        {
+          event,
+          skill: {
+            skillId: 'callback',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 3,
+            initialBlackboard: {},
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+            },
+            timelineActions: [{ startFrame: 0, endFrame: 0, sequence: { steps } }],
+          },
+        },
+      ],
     });
     const sourceProbe = (
       objectType: import('../../../../packages/game-data-contract/src/primitives').CombatObjectType,
@@ -1158,10 +1175,16 @@ describe('CombatRuntimeAssembly', () => {
                 steps: [
                   callbackStep([
                     ...sourceProbe('character', 'source-is-operator'),
-                    callbackStep([
-                      ...sourceProbe('projectile', 'source-is-projectile'),
-                      ...sourceProbe('abilityEntity', 'incorrect-ability-entity-match'),
-                    ]),
+                    callbackStep(
+                      [
+                        ...sourceProbe(
+                          source === 'actionOwner' ? 'projectile' : 'character',
+                          'nested-source',
+                        ),
+                        ...sourceProbe('abilityEntity', 'incorrect-ability-entity-match'),
+                      ],
+                      source,
+                    ),
                   ]),
                 ],
               },
@@ -1173,12 +1196,16 @@ describe('CombatRuntimeAssembly', () => {
     expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
     assembly.advanceFrames(2);
     const launches = emitAbilityEvent.mock.calls.filter(call => call[1] === 'projectileLaunched');
-    expect(launches.map(call => call[0])).toEqual(['operator', 'ability-entity:1']);
+    expect(launches.map(call => call[0])).toEqual([
+      'operator',
+      source === 'actionOwner' ? 'ability-entity:1' : 'operator',
+    ]);
     expect(
       emitAbilityEvent.mock.calls
         .filter(call => call[1] === 'customAbilityEvent')
         .map(call => call[2].eventName),
-    ).toEqual(['source-is-operator', 'source-is-projectile']);
+    ).toEqual(['source-is-operator', 'nested-source']);
+    expect(assembly.projectileLifetimes.getUnfinishedTargets()).toEqual([]);
   });
   it('显式延迟 Skill ID 的来源身份与 BeforeCast 不被当前技能槽改写', () => {
     const emitAbilityEvent = vi.fn();
@@ -1226,9 +1253,14 @@ describe('CombatRuntimeAssembly', () => {
       skillId: 'followup',
       resolveSkillSlot: false,
       inheritedSkillCastInfo: inherited,
+      inputTarget: { kind: 'operator', operatorId: 'operator' },
     });
     assembly.advanceFrame();
     const before = emitAbilityEvent.mock.calls.filter(call => call[1] === 'beforeCastSkill');
+    expect(
+      assembly.stateGraph.operators.get('operator')!.skills.get('followup\u0000')!.execution
+        .inputTarget,
+    ).toEqual({ kind: 'operator', operatorId: 'operator' });
     expect(before).toHaveLength(1);
     expect(before[0]![2]).toMatchObject({
       skillId: 'followup',
@@ -1259,25 +1291,32 @@ describe('CombatRuntimeAssembly', () => {
               sequence: {
                 steps: [
                   {
-                    kind: 'scheduleProjectileFinishCallback',
-                    parameters: { delaySeconds: 0.1, recycleDelaySeconds: 0 },
-                    callback: {
-                      skillId: 'callback',
-                      nativeSkillType: 'normalSkill',
-                      naturalDurationFrames: 1,
-                      castResource: {
-                        costFrame: 0,
-                        cooldownSeconds: 0,
-                        maxChargeTime: 1,
-                        cost: {
-                          resource: 'ultimateEnergy',
-                          value: 0,
-                          availabilityThreshold: 0,
+                    kind: 'launchProjectile',
+                    parameters: { finish: 0.1, recycleDelaySeconds: 0 },
+                    callbacks: [
+                      {
+                        event: 'finish',
+                        skill: {
+                          skillId: 'callback',
+                          nativeSkillType: 'normalSkill',
+                          naturalDurationFrames: 1,
+                          castResource: {
+                            costFrame: 0,
+                            cooldownSeconds: 0,
+                            maxChargeTime: 1,
+                            cost: {
+                              resource: 'ultimateEnergy',
+                              value: 0,
+                              availabilityThreshold: 0,
+                            },
+                          },
+                          initialBlackboard: {},
+                          timelineActions: [
+                            { startFrame: 0, endFrame: 0, sequence: { steps: [] } },
+                          ],
                         },
                       },
-                      initialBlackboard: {},
-                      timelineActions: [{ startFrame: 0, endFrame: 0, sequence: { steps: [] } }],
-                    },
+                    ],
                   },
                 ],
               },
@@ -1360,8 +1399,9 @@ describe('CombatRuntimeAssembly', () => {
                   sequence: {
                     steps: [
                       {
-                        kind: 'launchProjectileLifetime',
+                        kind: 'launchProjectile',
                         parameters: { finish: 'firstTickReach', recycleDelaySeconds },
+                        callbacks: [],
                       },
                       { kind: 'finishTimeline', parameters: {} },
                     ],
@@ -2156,6 +2196,18 @@ describe('CombatRuntimeAssembly', () => {
                   definition: {
                     lifetime: { kind: 'limited', durationSeconds: 5 },
                     childSkill: {
+                      nativeSkillType: 'normalSkill' as const,
+                      naturalDurationFrames: 30,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: {
+                          resource: 'ultimateEnergy' as const,
+                          value: 0,
+                          availabilityThreshold: 0,
+                        },
+                      },
                       skillId: 'fixture_child',
                       initialBlackboard: {},
                       timelineActions: [],
@@ -2338,6 +2390,18 @@ describe('CombatRuntimeAssembly', () => {
                   definition: {
                     lifetime: { kind: 'limited', durationSeconds: 10 },
                     childSkill: {
+                      nativeSkillType: 'normalSkill' as const,
+                      naturalDurationFrames: 30,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: {
+                          resource: 'ultimateEnergy' as const,
+                          value: 0,
+                          availabilityThreshold: 0,
+                        },
+                      },
                       skillId: 'fixture_child',
                       initialBlackboard: {},
                       timelineActions: [
@@ -2416,6 +2480,18 @@ describe('CombatRuntimeAssembly', () => {
                   definition: {
                     lifetime: { kind: 'limited', durationSeconds: 10 },
                     childSkill: {
+                      nativeSkillType: 'normalSkill' as const,
+                      naturalDurationFrames: 30,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: {
+                          resource: 'ultimateEnergy' as const,
+                          value: 0,
+                          availabilityThreshold: 0,
+                        },
+                      },
                       skillId: 'projectile-child',
                       initialBlackboard: {},
                       timelineActions: [
@@ -2424,8 +2500,9 @@ describe('CombatRuntimeAssembly', () => {
                           sequence: {
                             steps: [
                               {
-                                kind: 'launchProjectileLifetime',
+                                kind: 'launchProjectile',
                                 parameters: { finish: 'firstTickReach' },
+                                callbacks: [],
                               },
                             ],
                           },
@@ -2502,6 +2579,18 @@ describe('CombatRuntimeAssembly', () => {
                   definition: {
                     lifetime: { kind: 'limited', durationSeconds: 10 },
                     childSkill: {
+                      nativeSkillType: 'normalSkill' as const,
+                      naturalDurationFrames: 30,
+                      castResource: {
+                        costFrame: 0,
+                        cooldownSeconds: 0,
+                        maxChargeTime: 1,
+                        cost: {
+                          resource: 'ultimateEnergy' as const,
+                          value: 0,
+                          availabilityThreshold: 0,
+                        },
+                      },
                       skillId: 'buff-child',
                       initialBlackboard: {},
                       timelineActions: [

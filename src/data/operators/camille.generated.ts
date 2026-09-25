@@ -18,6 +18,60 @@ import {
 } from './definitionHelpers';
 
 const sharedActionSequence1: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    sequence({
+      kind: 'launchProjectile',
+      parameters: {
+        finish: { reachAfterTicks: 2, maxDurationSeconds: 5, finishOnReach: false },
+        recycleDelaySeconds: 0.100000001490116,
+        hit: { onReach: true, finishOnHit: true },
+      },
+      callbacks: [
+        {
+          event: 'hit',
+          skill: {
+            skillId: 'chr_0033_camille_power_attack_projhit',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 3,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+            },
+            blackboard: { atb: 0, atk_scale: 0.1 },
+            scheduledSequences: [
+              scheduled(
+                0,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'heat',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      calculation: 'breakingAttack',
+                      calculationMultiplier: 0.05,
+                      tags: ['normalAttack', 'powerAttack'],
+                    },
+                    '\u0000endaxis-generated-identity:1',
+                  ),
+                ),
+                3,
+              ),
+            ],
+          },
+        },
+      ],
+    }),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence2: ActionSequenceDefinition = sequence(
   repeatEachTick(
     sequence(
       once(
@@ -72,7 +126,7 @@ const sharedActionSequence1: ActionSequenceDefinition = sequence(
   ),
 );
 
-const sharedActionSequence3: ActionSequenceDefinition = sequence(
+const sharedActionSequence4: ActionSequenceDefinition = sequence(
   branch(
     {
       kind: 'actionValueCompare',
@@ -233,9 +287,9 @@ const sharedActionSequence3: ActionSequenceDefinition = sequence(
   ),
 );
 
-const sharedActionSequence2: ActionSequenceDefinition = sequence(
+const sharedActionSequence3: ActionSequenceDefinition = sequence(
   repeatEachTick(
-    instantiateActionSequence(sharedActionSequence3, [
+    instantiateActionSequence(sharedActionSequence4, [
       '\u0000endaxis-generated-identity:0',
       '\u0000endaxis-generated-identity:1',
       '\u0000endaxis-generated-identity:2',
@@ -601,175 +655,150 @@ export const camilleChr_0033_camille_attack4: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0033_camille_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_attack4',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0033_camille_attack4_projhit',
-                { atk_scale_2: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: { reachAfterTicks: 1, maxDurationSeconds: 0.5, finishOnReach: false },
+                recycleDelaySeconds: 1,
+                hit: { onReach: true, finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0033_camille_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 30,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0033_camille_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_2: 0.1 },
+                    scheduledSequences: [
+                      scheduled(0, sequence(), 1),
+                      scheduled(2, sequence(), 3),
+                      scheduled(4, sequence(), 5),
+                      scheduled(6, sequence(), 7),
+                      scheduled(8, sequence(), 9),
+                      scheduled(10, sequence(), 11),
+                      scheduled(12, sequence(), 13),
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0033_camille_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/7/sequence/steps/0',
+                          ),
+                        ),
+                        1,
+                      ),
+                      scheduled(
+                        2,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0033_camille_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/8/sequence/steps/0',
+                          ),
+                        ),
+                        3,
+                      ),
+                      scheduled(
+                        4,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0033_camille_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/9/sequence/steps/0',
+                          ),
+                        ),
+                        5,
+                      ),
+                      scheduled(
+                        6,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0033_camille_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/10/sequence/steps/0',
+                          ),
+                        ),
+                        7,
+                      ),
+                      scheduled(
+                        8,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0033_camille_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/11/sequence/steps/0',
+                          ),
+                        ),
+                        9,
+                      ),
+                      scheduled(
+                        10,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0033_camille_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/12/sequence/steps/0',
+                          ),
+                        ),
+                        11,
+                      ),
+                      scheduled(
+                        12,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0033_camille_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/13/sequence/steps/0',
+                          ),
+                        ),
+                        13,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
         ),
         21,
-      ),
-      scheduled(
-        22,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0033_camille_attack4_projhit:delayed:2:0',
-            { atk_scale_2: 0.1 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'heat',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                  tags: ['normalAttack'],
-                },
-                'chr_0033_camille_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0',
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        23,
-      ),
-      scheduled(
-        24,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0033_camille_attack4_projhit:delayed:4:1',
-            { atk_scale_2: 0.1 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'heat',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                  tags: ['normalAttack'],
-                },
-                'chr_0033_camille_attack4:/scheduledSequences/2/sequence/steps/0/body/steps/0',
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        25,
-      ),
-      scheduled(
-        26,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0033_camille_attack4_projhit:delayed:6:2',
-            { atk_scale_2: 0.1 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'heat',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                  tags: ['normalAttack'],
-                },
-                'chr_0033_camille_attack4:/scheduledSequences/3/sequence/steps/0/body/steps/0',
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        27,
-      ),
-      scheduled(
-        28,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0033_camille_attack4_projhit:delayed:8:3',
-            { atk_scale_2: 0.1 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'heat',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                  tags: ['normalAttack'],
-                },
-                'chr_0033_camille_attack4:/scheduledSequences/4/sequence/steps/0/body/steps/0',
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        29,
-      ),
-      scheduled(
-        30,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0033_camille_attack4_projhit:delayed:10:4',
-            { atk_scale_2: 0.1 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'heat',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                  tags: ['normalAttack'],
-                },
-                'chr_0033_camille_attack4:/scheduledSequences/5/sequence/steps/0/body/steps/0',
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        31,
-      ),
-      scheduled(
-        32,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_attack4.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0033_camille_attack4_projhit:delayed:12:5',
-            { atk_scale_2: 0.1 },
-            true,
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'heat',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_2' },
-                  tags: ['normalAttack'],
-                },
-                'chr_0033_camille_attack4:/scheduledSequences/6/sequence/steps/0/body/steps/0',
-              ),
-            ),
-            undefined,
-            { lifetime: 'execution', alwaysNext: true },
-          ),
-        ),
-        33,
       ),
       scheduled(
         11,
@@ -781,7 +810,7 @@ export const camilleChr_0033_camille_attack4: SkillDefinition = withSkillBlackbo
               attackScale: { kind: 'blackboard', key: 'atk_scale_1' },
               tags: ['normalAttack'],
             },
-            'chr_0033_camille_attack4:/scheduledSequences/7/sequence/steps/0',
+            'chr_0033_camille_attack4:/scheduledSequences/1/sequence/steps/0',
           ),
           branch(
             { kind: 'casterControlled' },
@@ -1006,28 +1035,51 @@ export const camilleChr_0033_camille_power_attack: SkillDefinition = withSkillBl
             'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[10]._sequenceActionData.actionData[0]:chr_0033_camille_power_attack_projhit_witheff',
-                { atb: 0, atk_scale: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.05,
-                      tags: ['normalAttack', 'powerAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: { reachAfterTicks: 2, maxDurationSeconds: 5, finishOnReach: false },
+                recycleDelaySeconds: 0.100000001490116,
+                hit: { onReach: true, finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0033_camille_power_attack_projhit_witheff',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 3,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0033_camille_power_attack:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0.1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              calculation: 'breakingAttack',
+                              calculationMultiplier: 0.05,
+                              tags: ['normalAttack', 'powerAttack'],
+                            },
+                            'chr_0033_camille_power_attack:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        3,
+                      ),
+                      scheduled(0, sequence(), 89),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1036,212 +1088,50 @@ export const camilleChr_0033_camille_power_attack: SkillDefinition = withSkillBl
       ),
       scheduled(
         4,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_R_blue',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0]:chr_0033_camille_power_attack_projhit',
-                { atb: 0, atk_scale: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.05,
-                      tags: ['normalAttack', 'powerAttack'],
-                    },
-                    'chr_0033_camille_power_attack:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[11]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_R_blue',
+          'chr_0033_camille_power_attack:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         5,
       ),
       scheduled(
         6,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_R_red',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:chr_0033_camille_power_attack_projhit',
-                { atb: 0, atk_scale: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.05,
-                      tags: ['normalAttack', 'powerAttack'],
-                    },
-                    'chr_0033_camille_power_attack:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_R_red',
+          'chr_0033_camille_power_attack:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         7,
       ),
       scheduled(
         8,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_R_blue',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:chr_0033_camille_power_attack_projhit',
-                { atb: 0, atk_scale: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.05,
-                      tags: ['normalAttack', 'powerAttack'],
-                    },
-                    'chr_0033_camille_power_attack:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_R_blue',
+          'chr_0033_camille_power_attack:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         9,
       ),
       scheduled(
         3,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_L_red',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:chr_0033_camille_power_attack_projhit',
-                { atb: 0, atk_scale: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.05,
-                      tags: ['normalAttack', 'powerAttack'],
-                    },
-                    'chr_0033_camille_power_attack:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_L_red',
+          'chr_0033_camille_power_attack:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         4,
       ),
       scheduled(
         5,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_L_blue',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:chr_0033_camille_power_attack_projhit',
-                { atb: 0, atk_scale: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.05,
-                      tags: ['normalAttack', 'powerAttack'],
-                    },
-                    'chr_0033_camille_power_attack:/scheduledSequences/6/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_L_blue',
+          'chr_0033_camille_power_attack:/scheduledSequences/6/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         6,
       ),
       scheduled(
         7,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[16]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_L_red',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[16]._sequenceActionData.actionData[0]:chr_0033_camille_power_attack_projhit',
-                { atb: 0, atk_scale: 0.1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.05,
-                      tags: ['normalAttack', 'powerAttack'],
-                    },
-                    'chr_0033_camille_power_attack:/scheduledSequences/7/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0033_camille_power_attack.actionGroupData.timelineActions[16]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_power_attack_L_red',
+          'chr_0033_camille_power_attack:/scheduledSequences/7/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         8,
       ),
       scheduled(
@@ -1442,65 +1332,90 @@ export const camilleChr_0033_camille_normal_skill: SkillDefinition = withSkillBl
             'SkillData.chr_0033_camille_normal_skill.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0033_camille_normal_skill',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0033_camille_normal_skill.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0033_camille_normal_skill_projhit',
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: { reachAfterTicks: 1, maxDurationSeconds: 5, finishOnReach: false },
+                recycleDelaySeconds: 2.96666669845581,
+                hit: { onReach: true, finishOnHit: true },
+              },
+              callbacks: [
                 {
-                  atk_scale: 0.1,
-                  bat_atk_scale: 0.1,
-                  bat_duration: 30,
-                  poise: 10,
-                  vulnerable_scale: 0,
-                  weak_scale: 0.1,
-                },
-                true,
-                sequence(
-                  step('spawnAbilityEntity', {
-                    abilityEntityId: 'abilityentity_chr_0033_camille_normal_skill',
-                    childSkillId: 'chr_0033_camille_normal_skill_abilityrange_first',
-                    inheritActionBlackboard: true,
-                    dieWhenSourceDies: false,
-                    target: 'enemy',
-                    saveToContextKey: 'Camille_Bat',
-                    blackboardAssignments: {
-                      EntityBB_bat_duration: { kind: 'blackboard', key: 'bat_duration' },
-                      EntityBB_bat_atk_scale: { kind: 'blackboard', key: 'bat_atk_scale' },
-                      EntityBB_atk_scale: { kind: 'blackboard', key: 'atk_scale' },
-                      EntityBB_poise: { kind: 'blackboard', key: 'poise' },
-                      EntityBB_weak_scale: { kind: 'blackboard', key: 'weak_scale' },
-                      EntityBB_vulnerable_scale: { kind: 'blackboard', key: 'vulnerable_scale' },
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0033_camille_normal_skill_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 89,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                  }),
-                  step('modifyActionValue', {
-                    key: 'EntityBB_bat_spawned',
-                    operation: 'assign',
-                    value: { kind: 'constant', value: 1 },
-                  }),
-                  forEachContextTarget(
-                    'Camille_Bat',
-                    sequence(
-                      step('applyBuff', {
-                        buffId: 'buff_chr_0033_camille_normal_skill_bateffect',
-                        target: 'currentAbilityEntity',
-                        inheritSourceSkillCastInfo: true,
-                      }),
-                    ),
-                  ),
-                  step('startTimeDilation', {
-                    scope: 'entity',
-                    durationSeconds: { kind: 'constant', value: 0.15 },
-                    slot: 'TimeDilation/Layer/Entity/HitStop',
-                    priority: 10,
-                    curve: { kind: 'named', key: 'common' },
-                    finishByAction: false,
-                    targets: ['enemy', 'caster'],
-                  }),
-                  step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: {
+                      atk_scale: 0.1,
+                      bat_atk_scale: 0.1,
+                      bat_duration: 30,
+                      poise: 10,
+                      vulnerable_scale: 0,
+                      weak_scale: 0.1,
+                    },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step('spawnAbilityEntity', {
+                            abilityEntityId: 'abilityentity_chr_0033_camille_normal_skill',
+                            childSkillId: 'chr_0033_camille_normal_skill_abilityrange_first',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                            target: 'enemy',
+                            saveToContextKey: 'Camille_Bat',
+                            blackboardAssignments: {
+                              EntityBB_bat_duration: { kind: 'blackboard', key: 'bat_duration' },
+                              EntityBB_bat_atk_scale: { kind: 'blackboard', key: 'bat_atk_scale' },
+                              EntityBB_atk_scale: { kind: 'blackboard', key: 'atk_scale' },
+                              EntityBB_poise: { kind: 'blackboard', key: 'poise' },
+                              EntityBB_weak_scale: { kind: 'blackboard', key: 'weak_scale' },
+                              EntityBB_vulnerable_scale: {
+                                kind: 'blackboard',
+                                key: 'vulnerable_scale',
+                              },
+                            },
+                          }),
+                          step('modifyActionValue', {
+                            key: 'EntityBB_bat_spawned',
+                            operation: 'assign',
+                            value: { kind: 'constant', value: 1 },
+                          }),
+                          forEachContextTarget(
+                            'Camille_Bat',
+                            sequence(
+                              step('applyBuff', {
+                                buffId: 'buff_chr_0033_camille_normal_skill_bateffect',
+                                target: 'currentAbilityEntity',
+                                inheritSourceSkillCastInfo: true,
+                              }),
+                            ),
+                          ),
+                          step('startTimeDilation', {
+                            scope: 'entity',
+                            durationSeconds: { kind: 'constant', value: 0.15 },
+                            slot: 'TimeDilation/Layer/Entity/HitStop',
+                            priority: 10,
+                            curve: { kind: 'named', key: 'common' },
+                            finishByAction: false,
+                            targets: ['enemy', 'caster'],
+                          }),
+                          step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
+                        ),
+                        1,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1633,7 +1548,7 @@ export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = withSkill
       ),
       scheduled(
         33,
-        instantiateActionSequence(sharedActionSequence1, [
+        instantiateActionSequence(sharedActionSequence2, [
           'SkillData.chr_0033_camille_combo_skill_2.actionGroupData.timelineActions[40]._sequenceActionData.actionData[0].actionOnTick.actionData[1]',
           'chr_0033_camille_combo_skill_2:/scheduledSequences/4/sequence/steps/0/body/steps/1',
         ]),
@@ -1685,7 +1600,7 @@ export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = withSkill
       ),
       scheduled(
         70,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0033_camille_combo_skill_2.actionGroupData.timelineActions[42]._sequenceActionData.actionData[0].actionOnTick.actionData[1].succeedActions.actionData[0]',
           'SkillData.chr_0033_camille_combo_skill_2.actionGroupData.timelineActions[42]._sequenceActionData.actionData[0].actionOnTick.actionData[3]',
           'chr_0033_camille_combo_skill_2:/scheduledSequences/6/sequence/steps/0/body/steps/3',
@@ -2145,7 +2060,7 @@ export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = withSkillB
       ),
       scheduled(
         33,
-        instantiateActionSequence(sharedActionSequence1, [
+        instantiateActionSequence(sharedActionSequence2, [
           'SkillData.chr_0033_camille_combo_skill_2.actionGroupData.timelineActions[40]._sequenceActionData.actionData[0].actionOnTick.actionData[1]',
           'chr_0033_camille_combo_skill_2:/scheduledSequences/4/sequence/steps/0/body/steps/1',
         ]),
@@ -2197,7 +2112,7 @@ export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = withSkillB
       ),
       scheduled(
         70,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0033_camille_combo_skill_2.actionGroupData.timelineActions[42]._sequenceActionData.actionData[0].actionOnTick.actionData[1].succeedActions.actionData[0]',
           'SkillData.chr_0033_camille_combo_skill_2.actionGroupData.timelineActions[42]._sequenceActionData.actionData[0].actionOnTick.actionData[3]',
           'chr_0033_camille_combo_skill_2:/scheduledSequences/6/sequence/steps/0/body/steps/3',
@@ -3377,6 +3292,14 @@ export const camille: OperatorDefinition = {
       childSkills: {
         chr_0033_camille_normal_skill_abilityrange_first: {
           skillId: 'chr_0033_camille_normal_skill_abilityrange_first',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 2000,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: { atk_scale: 0.1, obtain_count: 0, poise: 10, weak_scale: 0.2 },
           scheduledSequences: [
             scheduled(
@@ -3459,6 +3382,14 @@ export const camille: OperatorDefinition = {
         },
         chr_0033_camille_normal_skill_abilityrange: {
           skillId: 'chr_0033_camille_normal_skill_abilityrange',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 2000,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: { atk_scale: 0.1, obtain_count: 0, poise: 10, weak_scale: 0.2 },
           scheduledSequences: [
             scheduled(

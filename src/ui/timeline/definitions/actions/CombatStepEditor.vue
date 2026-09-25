@@ -191,7 +191,7 @@ function forward(step: CombatStepDefinition, propertyPath?: InspectorPropertyPat
           step.kind === 'finishTimeline' ||
           step.kind === 'withActionBlackboardScope' ||
           step.kind === 'repeatByActionValue' ||
-          step.kind === 'scheduleProjectileFinishCallback'
+          step.kind === 'launchProjectile'
         "
       >
         <StructuredControlStepEditor :step="step" :skill-level="skillLevel" @update="forward" />

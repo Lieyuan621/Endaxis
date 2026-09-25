@@ -5619,4 +5619,4 @@ export const contingencyContractOmittedTagReasons = Object.freeze({
   '102202': 'changes stage wave enemy composition rather than the selected fixed target',
   '102401': 'only changes operator freeze and input behavior',
 }) as Readonly<Record<number, string>>;
-export const contingencyContractDefinitionRevision = '1.5.3@10024360-6';
+export const contingencyContractDefinitionRevision = '1.5.3@10506507-7';

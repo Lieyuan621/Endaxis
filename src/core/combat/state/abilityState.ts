@@ -25,6 +25,7 @@ import {
   type CombatOperationHostState,
 } from './actionState';
 import { type PeriodicTimerState } from './environmentState';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 
 export interface DamageCalculationSnapshot {
   readonly attackModifiers?: readonly AppliedDamageModifier[];
@@ -249,6 +250,9 @@ export interface SkillExecutionState {
   preparedProducer: CombatObjectRef | undefined;
   inheritedSkillCastInfo: CombatSkillCastInfo | undefined;
   preparedSkipApplyCost: boolean;
+  /** 下一次施放的目标与本次施放的目标分开保存，避免准备输入改变当前技能。 */
+  preparedInputTarget: RuntimeTargetRef | null | undefined;
+  inputTarget: RuntimeTargetRef | null | undefined;
   preparedForceTimelinePayment: boolean;
   forceTimelinePayment: boolean;
   preparationCast: boolean;
@@ -277,6 +281,8 @@ export function createSkillExecutionState(): SkillExecutionState {
     preparedProducer: undefined,
     inheritedSkillCastInfo: undefined,
     preparedSkipApplyCost: false,
+    preparedInputTarget: undefined,
+    inputTarget: undefined,
     preparedForceTimelinePayment: false,
     forceTimelinePayment: false,
     preparationCast: false,
@@ -315,15 +321,7 @@ export interface CallbackSkillHostState {
 export interface AbilityEntityChildSkillState {
   readonly programId: number;
   readonly skillId: string;
-  passedFrames: number;
-  started: boolean;
-  finished: boolean;
-  readonly blackboard: ActionBlackboardState;
-  readonly targets: RuntimeTargetContextState;
-  readonly scopes: ActionScopeState;
-  readonly timeline: TimelineRuntimeState;
-  readonly damageSnapshots: DamageCalculationSnapshotState;
-  readonly operations: CombatOperationHostState;
+  readonly host: CallbackSkillHostState;
 }
 
 /** 一条常驻连携条件的数据。 */

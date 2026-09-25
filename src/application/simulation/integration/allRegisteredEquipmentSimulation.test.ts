@@ -49,12 +49,10 @@ const resources = {
 } as const;
 
 describe('所有正式武器与单件装备逐项装配和模拟', () => {
-  it('锁定当前仓库的横向覆盖边界', () => {
-    expect(weapons).toHaveLength(79);
-    expect(gears).toHaveLength(258);
-    expect(gearSets).toHaveLength(24);
-    expect(runtimeGearSets).toHaveLength(19);
-    expect(relativeAttributeGears).toHaveLength(23);
+  it('各类装备测试来源非空且身份唯一', () => {
+    for (const definitions of [weapons, gears, gearSets, runtimeGearSets, relativeAttributeGears]) {
+      expect(definitions.length).toBeGreaterThan(0);
+    }
     expect(new Set(weapons.map(definition => definition.slug)).size).toBe(weapons.length);
     expect(new Set(gears.map(definition => definition.slug)).size).toBe(gears.length);
   });

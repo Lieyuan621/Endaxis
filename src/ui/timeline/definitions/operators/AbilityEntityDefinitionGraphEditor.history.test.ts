@@ -3,13 +3,14 @@ import { expect, it, vi } from 'vitest';
 import Graph from './AbilityEntityDefinitionGraphEditor.vue';
 import type { AbilityEntityDefinition } from '../../../../core/game-data/operatorDefinition';
 import { resolveStructureValue, structureRecordEntryPath } from '../skillStructureEditorCommands';
+import { createAbilityEntityChildSkillDraft } from '../skills/skillDefinitionEditorViewModel';
 
 it('keeps all entity Inspector changes in the same undo/redo transaction history', async () => {
   vi.stubGlobal('document', { addEventListener() {}, removeEventListener() {} });
   const initial = (): AbilityEntityDefinition => ({
     lifetime: { kind: 'limited', durationSeconds: 10 },
     childSkill: {
-      skillId: 'child',
+      ...createAbilityEntityChildSkillDraft('child'),
       scheduledSequences: [
         {
           startFrame: 0,
@@ -109,8 +110,8 @@ it('keeps all entity Inspector changes in the same undo/redo transaction history
     definition.value = {
       lifetime: { kind: 'infinite' },
       childSkills: {
-        first: { skillId: 'first', scheduledSequences: [] },
-        second: { skillId: 'second', scheduledSequences: [] },
+        first: createAbilityEntityChildSkillDraft('first'),
+        second: createAbilityEntityChildSkillDraft('second'),
       },
     };
     await nextTick();
@@ -134,7 +135,7 @@ it('keeps all entity Inspector changes in the same undo/redo transaction history
     definition.value = {
       lifetime: { kind: 'infinite' },
       childSkill: {
-        skillId: 'child',
+        ...createAbilityEntityChildSkillDraft('child'),
         scheduledSequences: [
           {
             startFrame: 0,

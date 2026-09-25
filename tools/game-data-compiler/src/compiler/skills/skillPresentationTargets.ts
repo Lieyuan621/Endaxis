@@ -450,6 +450,76 @@ function collectNodesIncludingEventResponses(
 }
 
 /**
+ * 只删除没有读取、也不会随整块黑板传出的技能局部常量赋值。
+ * Buff 黑板可被外部查询，不能使用这项证明；EntityBB_ 也不属于技能局部数据。
+ * 采用已核对的动作集合：实体/投射物生成及新动作默认阻止裁剪，不能猜测其传值方式。
+ */
+export function collectUnconsumedSkillLocalKeys(
+  graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
+  skillRoot: Readonly<Record<string, unknown>>,
+): ReadonlySet<string> {
+  const nodes = [
+    ...graph.actionGroup.timelineActions.map(timeline => timeline.sequence),
+    ...graph.actionGroup.passiveEvents.flatMap(event => event.actions),
+  ].flatMap(collectNodesIncludingEventResponses);
+  const closedFamilies = new Set<KnownNativeActionLeafSource['family']>([
+    'presentation',
+    'spatial',
+    'inputControl',
+    'timelineControl',
+    'targetGroup',
+    'condition',
+    'blackboardMutation',
+    'eventListener',
+    'resource',
+    'finisherSpGain',
+    // Buff 只接收 assignItems；CastSkill 只传施法身份，不复制调用方动作黑板。
+    'buffApplication',
+    'buffFinish',
+    'skillCast',
+    // 这些动作的数值读取都显式携带键名，不把技能局部黑板整体传出。
+    'damage',
+    'timeDilation',
+    'interrupt',
+    'stumpControl',
+    // 只转交 Buff 的清理归属，不传递技能局部黑板。
+    'buffInheritance',
+  ]);
+  if (nodes.some(node => node.body.kind === 'leaf' && !closedFamilies.has(node.body.value.family)))
+    return new Set();
+  const localKeys = new Set(
+    graph.declaredBlackboard
+      .filter(entry => entry.isDynamic && !entry.key.startsWith('EntityBB_'))
+      .map(entry => entry.key),
+  );
+  const writes = new Map<string, number>();
+  for (const node of nodes) {
+    if (node.body.kind !== 'leaf' || node.body.value.family !== 'blackboardMutation') continue;
+    const action = node.body.value.action;
+    if (
+      localKeys.has(action.key) &&
+      action.directValue &&
+      action.operation === 'Assign' &&
+      action.value.blackboardKey === null
+    ) {
+      writes.set(action.key, (writes.get(action.key) ?? 0) + 1);
+    }
+  }
+  // 图切片不含施法条件/根 Buff 等数据，因此这些根字段也必须排除读取。
+  const { actionGroupData, blackboard: _declarations, ...otherFields } = skillRoot;
+  return new Set(
+    [...writes]
+      .filter(
+        ([key, count]) =>
+          countExactString(graph.actionGroup, key) === count &&
+          countExactString(actionGroupData, key) === count &&
+          countExactString(otherFields, key) === 0,
+      )
+      .map(([key]) => key),
+  );
+}
+
+/**
  * 在完整 SkillData 范围验证目标查询仅服务于表现，不局限于单个调度序列。
  * 只允许无过滤的来源/固定点查询；任一战斗消费者都会保留查询并交给严格投影报错。
  */

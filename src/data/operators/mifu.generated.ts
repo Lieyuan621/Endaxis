@@ -1878,23 +1878,6 @@ export const mifuChr_0031_mifu_normalskill_2: SkillDefinition = withSkillBlackbo
                   buffTags: ['Skill/Character/Common/NoGuard'],
                 },
               }),
-              branch(
-                {
-                  kind: 'actionValueCompare',
-                  left: { kind: 'blackboard', key: 'stack', fallback: 0 },
-                  operator: 'greater',
-                  right: { kind: 'blackboard', key: 'maxstack', fallback: 0 },
-                },
-                sequence(
-                  step('modifyActionValue', {
-                    key: 'maxstack',
-                    operation: 'assign',
-                    value: { kind: 'blackboard', key: 'stack' },
-                  }),
-                ),
-                undefined,
-                { alwaysNext: true },
-              ),
             ),
           ),
           step('applyPhysicalInfliction', {
@@ -2324,7 +2307,6 @@ export const mifuChr_0031_mifu_normalskill_2: SkillDefinition = withSkillBlackbo
   {
     atk_scale: [0.27, 0.3, 0.32, 0.35, 0.38, 0.41, 0.43, 0.46, 0.49, 0.52, 0.56, 0.61],
     atk_scale2: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.68, 0.73, 0.79],
-    maxstack: 0,
     poise: 5,
     potential: 0,
     stack: 4,

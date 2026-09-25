@@ -1,5 +1,9 @@
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
-import type { AbilityEntityChildSkillDefinition } from '../../../../../packages/game-data-contract/src/index.ts';
+import type {
+  AbilityEntityChildSkillDefinition,
+  NativeSkillType,
+} from '../../../../../packages/game-data-contract/src/index.ts';
+import { projectSkillCastResourceDefinitionSource } from '../../source/skillCost.ts';
 import { requireArray, requireRecord } from '../../source/primitives.ts';
 import { parseSkillCastResourceMetadataSource } from '../../source/activeSkill.ts';
 import { compileActiveSkillRuntimeProjectionSource } from '../skills/activeSkillRuntimeProjection.ts';
@@ -20,20 +24,14 @@ export function compileAbilityEntityChildSkillSource(
   extensions?: CombatActionProjectionExtensionsSource,
   abilityEntityQueries?: CombatActionProjectionContextSource['abilityEntityQueries'],
   nativeMissingBlackboardZeroKeys: ReadonlySet<string> = new Set(),
+  nativeSkillType: NativeSkillType = 'normalSkill',
 ): AbilityEntityChildSkillDefinition {
   const root = requireRecord(value, sourcePath);
   const cast = parseSkillCastResourceMetadataSource(value, sourcePath);
   const cost = cast.costData;
-  // 当前实体局部程序没有费用/冷却端口，只接入已证明不需要这些端口的无消耗子技能。
-  // startCdFrame 只决定原生扣费/冷却确认时点；在费用与冷却均为零、实体生成后仅施放一次的
-  // 子技能上没有可观察结果，因此仍严格读取但不要求它等于零。
-  if (
-    cast.cooldownTime !== 0 ||
-    cast.maxChargeTime !== 1 ||
-    cost.costValue !== 0 ||
-    cost.atbValueThreshold !== 0
-  )
-    throw new Error(`${sourcePath}: child skill costs, cooldown or charges are not projected`);
+  // 冷却与确认时点由普通技能宿主执行；实体尚无资源池和多充能模型。
+  if (cast.maxChargeTime !== 1 || cost.costValue !== 0 || cost.atbValueThreshold !== 0)
+    throw new Error(`${sourcePath}: child skill costs or multiple charges are not projected`);
   if (
     requireArray(root.buffs, `${sourcePath}.buffs`).length ||
     requireArray(root.toggleBuffs, `${sourcePath}.toggleBuffs`).length
@@ -67,6 +65,9 @@ export function compileAbilityEntityChildSkillSource(
   }
   const definition = {
     skillId: runtime.skillId,
+    nativeSkillType,
+    naturalDurationFrames: Math.max(1, runtime.durationFrame),
+    castResource: projectSkillCastResourceDefinitionSource(cast, `${sourcePath}.castData`),
     blackboard: {
       ...runtime.blackboard,
       ...Object.fromEntries([...nativeMissingBlackboardZeroKeys].map(key => [key, 0] as const)),

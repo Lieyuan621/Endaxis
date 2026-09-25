@@ -29,6 +29,7 @@ import {
 import type { GameplayTag } from '../tags/gameplayTags';
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
 import { AbilityEntityInstanceIdAllocator } from './abilityEntityInstanceIdAllocator';
+import { EntitySkillHostGroup } from './callbackSkillHost';
 import {
   advanceAbilityEntityLifetime,
   advanceAbilityEntityRelease,
@@ -58,6 +59,7 @@ export interface LogicalAbilityEntitySpawnRequest {
 }
 
 export interface LogicalAbilityEntityChildRuntime {
+  readonly skillId?: string;
   start(): void;
   advance(deltaSeconds: number): void;
   finish(): void;
@@ -103,6 +105,7 @@ export interface LogicalAbilityEntityRuntimeHooks {
 }
 
 interface LogicalAbilityEntityInstance {
+  readonly skillHosts: EntitySkillHostGroup;
   readonly state: LogicalAbilityEntityState;
   readonly identity: LogicalAbilityEntityIdentity;
   readonly blackboard: ActionBlackboard;
@@ -316,6 +319,7 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
         this.#timedMarkerClocks,
       ),
       childRuntimes: [],
+      skillHosts: new EntitySkillHostGroup(),
       childBuffs: [],
       resetCallbacks: new Map(),
     };
@@ -348,9 +352,16 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     if (skillId.length === 0) throw new Error('AbilityEntity child skill id must not be empty');
     const instance = this.#requireInstance(entity);
     this.#hooks.childSkillRequested?.(this.#snapshot(instance), skillId);
-    const runtime = createRuntime(entity, instance.blackboard);
-    instance.childRuntimes.push(runtime);
+    let runtime = instance.childRuntimes.find(child => child.skillId === skillId);
+    if (runtime === undefined) {
+      runtime = createRuntime(entity, instance.blackboard);
+      instance.childRuntimes.push(runtime);
+    }
     runtime.start();
+  }
+
+  childSkillHosts(entity: RuntimeTargetRef): EntitySkillHostGroup {
+    return this.#requireInstance(entity).skillHosts;
   }
 
   /** 原生 asChildBuff：子 Buff 的寿命归当前能力实体所有。 */
@@ -548,7 +559,8 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       this.#hooks.tickBuffs?.(instance.identity);
       if (!this.#instances.has(instance.state.instanceId) || instance.state.pendingRelease)
         continue;
-      for (const runtime of instance.childRuntimes) runtime.advance(delta);
+      if (instance.skillHosts.hasSkills) instance.skillHosts.advance(delta);
+      else for (const runtime of instance.childRuntimes) runtime.advance(delta);
       if (this.#instances.has(instance.state.instanceId) && !instance.state.pendingRelease)
         this.#hooks.recycleBuffs?.(instance.identity);
     }
@@ -590,6 +602,7 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
         this.#timedMarkerClocks,
       ),
       childRuntimes: [],
+      skillHosts: new EntitySkillHostGroup(),
       childBuffs: [],
       resetCallbacks: new Map(),
     };

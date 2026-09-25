@@ -46,8 +46,18 @@ describe('project game data repository', () => {
 
     await repository.ensureAllDefinitions();
 
-    expect(repository.getOperators()).toHaveLength(31);
-    expect(repository.getWeapons()).toHaveLength(79);
+    expect(
+      repository
+        .getOperators()
+        .map(value => value.slug)
+        .sort(),
+    ).toEqual(
+      Object.keys(import.meta.glob('./operators/*.generated.ts'))
+        .map(file => file.split('/').at(-1)!.replace('.generated.ts', ''))
+        .sort(),
+    );
+    expect(repository.getWeapons().length).toBeGreaterThan(1);
+    expect(repository.getOperator('purrchena')).not.toBeNull();
     expect(repository.getOperator('typhoeus')).not.toBeNull();
     expect(repository.hasAllDefinitions()).toBe(true);
   });

@@ -105,7 +105,10 @@ function nodes(source: BuffRuntimeSource) {
   ].flatMap(sequence => collectNativeActionNodes(sequence));
 }
 
-function resolveKeywordChildCandidates(
+/** 已知引用存在，但当前创建来路不足以证明它的全部候选。 */
+export class UnprovenBuffReferenceError extends Error {}
+
+export function resolveKeywordChildCandidates(
   id: string,
   ref: DefinitionReferenceSource,
   roots: readonly string[],
@@ -115,7 +118,7 @@ function resolveKeywordChildCandidates(
   rootBlackboards: ReadonlyMap<string, Readonly<Record<string, number | string>>>,
 ): readonly string[] {
   const fail = (): never => {
-    throw new Error(
+    throw new UnprovenBuffReferenceError(
       `${ref.sourcePath}: dynamic Buff references cannot form a static Buff closure without a proven keyword default-child contract`,
     );
   };
@@ -184,8 +187,9 @@ function resolveKeywordChildCandidates(
       candidates.add(declared.value);
       continue;
     }
-    if (action.childBuffId.blackboardKey !== null || !action.childBuffId.value) return fail();
-    candidates.add(action.childBuffId.value);
+    if (action.childBuffId.blackboardKey !== null) return fail();
+    // _DoApplyKeywordBuff 只写入非空覆盖；启用覆盖但字符串为空时仍使用声明默认值。
+    candidates.add(action.childBuffId.value || declared.value);
   }
   return [...candidates];
 }

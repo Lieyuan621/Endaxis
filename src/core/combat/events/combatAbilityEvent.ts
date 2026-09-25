@@ -66,6 +66,7 @@ export type LifecycleAbilityEvent = CombatAbilityEvent<
   | 'ownerSwitchToCenter'
   | 'ownerSwitchToGuard'
   | 'ownerHpZero'
+  | 'hpChanged'
   | 'abilityEntitySpawned'
   | 'abilityEntityFinished'
 > & { readonly kind?: never };
@@ -79,6 +80,7 @@ export function lifecycleAbilityEvent(
     case 'ownerSwitchToCenter':
     case 'ownerSwitchToGuard':
     case 'ownerHpZero':
+    case 'hpChanged':
     case 'abilityEntitySpawned':
     case 'abilityEntityFinished': {
       return event;
@@ -296,6 +298,7 @@ export interface AbilityEventPayloadMap {
   ownerSwitchToCenter: AbilityOriginPayload;
   ownerSwitchToGuard: AbilityOriginPayload;
   ownerHpZero: AbilityOriginPayload;
+  hpChanged: AbilityOriginPayload;
   abilityEntitySpawned: AbilityEntitySpawnedPayload;
   abilityEntityFinished: AbilityOriginPayload;
   // 准备阶段传递可变伤害包，结算阶段传递结算结果；不能裁成相似的只读字段集合。

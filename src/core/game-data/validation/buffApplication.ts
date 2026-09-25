@@ -192,6 +192,7 @@ export function validateBuffApplication(
               if (
                 response.event !== 'enterFight' &&
                 response.event !== 'ownerHpZero' &&
+                response.event !== 'hpChanged' &&
                 response.event !== 'beforeTakeDamage' &&
                 response.event !== 'beforeCalculateDamage' &&
                 response.event !== 'beforeTakePhysicalInfliction' &&
@@ -519,6 +520,21 @@ export function validateBuffApplication(
   }
   if (parameters.finishByAction !== undefined) {
     requireBoolean(parameters, 'finishByAction', `${path}.parameters`, out);
+  }
+  if (parameters.onActionEndFinishBuffs !== undefined) {
+    const cleanupPath = `${path}.parameters.onActionEndFinishBuffs`;
+    const cleanup = asRecord(parameters.onActionEndFinishBuffs, cleanupPath, out);
+    if (parameters.finishByAction !== true) push(out, cleanupPath, 'requires finishByAction');
+    if (cleanup !== null) {
+      requireEnum(cleanup, 'target', BUFF_APPLICATION_TARGETS_SET, cleanupPath, out);
+      if (
+        !Array.isArray(cleanup.buffIds) ||
+        cleanup.buffIds.length === 0 ||
+        cleanup.buffIds.some(id => typeof id !== 'string' || id.length === 0)
+      ) {
+        push(out, `${cleanupPath}.buffIds`, 'expected non-empty Buff IDs');
+      }
+    }
   }
   if (parameters.onActionEndBuffs !== undefined) {
     const exitPath = `${path}.parameters.onActionEndBuffs`;

@@ -15,6 +15,25 @@ import {
 import { parseScalarSource, type ScalarSource } from './scalar.ts';
 import { parseBlackboardDataPairs, type DeclaredBlackboardValueSource } from './blackboard.ts';
 import { parseActiveSkillTypesSource } from './activeSkillTypes.ts';
+import { parseAbilitySystemReferences } from './abilitySystemReferences.ts';
+
+/**
+ * 完整 AbilitySystem 的黑板接收者。ProjectileComponent 尚未解码的末段只有特效/声音配置，
+ * 不提供技能或 Buff 入口；它的战斗数值字段仍由原始 value 参与键读取检查。
+ * 非空模式和 RID 条件尚未在这里追踪，不能宣称该资源的引用已经闭合。
+ */
+export function parseProjectileBlackboardReceiverSource(value: unknown, path: string) {
+  const root = requireRecord(value, path);
+  const boundary = root.abilitySystemBoundary;
+  if (
+    boundary === undefined ||
+    requireRecord(boundary, path + '.abilitySystemBoundary').decodeStatus !== 'complete' ||
+    requireRecord(boundary, path + '.abilitySystemBoundary').remainingLength !== 0
+  )
+    return undefined;
+  const result = parseAbilitySystemReferences(root.abilitySystem, path + '.abilitySystem');
+  return result.complete ? { value, references: result.references } : undefined;
+}
 
 export interface ProjectileRuntimeSource {
   /** Missing means the source exporter did not preserve the owning AbilitySystem bundle. */
@@ -28,6 +47,8 @@ export interface ProjectileRuntimeSource {
   readonly finishDistance: ScalarSource;
   readonly finishOnReach: boolean;
   readonly finishOnBlock?: boolean;
+  /** 原生普通更新中，将 Reach 延后到碰撞之后；不能仅由“第几帧”推断顺序。 */
+  readonly useHitBlockReachOrder: boolean;
   readonly hitOnReach: boolean;
   readonly allowHitSameTarget: boolean;
   readonly maxHitCount: number;
@@ -55,6 +76,8 @@ export interface ProjectileRuntimeSource {
     readonly value: -1 | 0 | 1;
     readonly name: 'Custom' | 'Nothing' | 'WallAndGround';
   } | null;
+  /** 自定义阻挡层的原生 Unity 掩码，仅在 blockLayerDef=Custom 时使用。 */
+  readonly blockLayerMask?: number;
   readonly targetFilter: {
     readonly checkAlive: boolean;
     readonly autoSetTargetFaction: boolean;
@@ -140,6 +163,10 @@ export function parseProjectileRuntimeSource(
   const moveModeTypes = parseProjectileMoveModeTypes(root.tail, `${path}.tail`);
   return {
     projectileId: requireNonEmptyString(root.id, `${path}.id`),
+    useHitBlockReachOrder: requireBoolean(
+      root.useHitBlockReachOrder,
+      `${path}.useHitBlockReachOrder`,
+    ),
     ...(root.abilitySystem === undefined
       ? {}
       : {
@@ -241,6 +268,14 @@ export function parseProjectileRuntimeSource(
                 : null,
           },
     blockLayerDef: parseProjectileBlockLayer(blockLayerDef, `${path}.blockLayerDef`),
+    ...(root.blockLayer === undefined
+      ? {}
+      : {
+          blockLayerMask: requireInteger(
+            requireRecord(root.blockLayer, `${path}.blockLayer`).value,
+            `${path}.blockLayer.value`,
+          ),
+        }),
     targetFilter: {
       checkAlive: requireBoolean(targetFilter.checkAlive, `${path}.targetFilter.checkAlive`),
       autoSetTargetFaction: requireBoolean(

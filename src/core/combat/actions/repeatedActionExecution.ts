@@ -12,7 +12,8 @@ export function executeRepeatedAction(
   parameters: RepeatedActionParameters,
   executeBody: () => void,
 ): void {
-  state.skipInitialTick = parameters.nativeTickInterval === undefined;
+  state.skipInitialTick =
+    parameters.nativeTickInterval === undefined && parameters.nativeExecuteInterval === undefined;
   state.timerSeconds = 0;
   state.scanCount = 0;
   state.targetTriggerCount = 0;
@@ -32,12 +33,13 @@ export function tickRepeatedAction(
     state.skipInitialTick = false;
     return;
   }
-  const tickInterval = parameters.nativeTickInterval;
+  const tickInterval = parameters.nativeTickInterval ?? parameters.nativeExecuteInterval;
   if (tickInterval !== undefined) {
     state.timerSeconds = Math.fround(state.timerSeconds + Math.fround(deltaTime));
     const executeEachFrame =
       tickInterval.executeEachFrame ||
-      Math.fround(tickInterval.intervalSeconds) < Math.fround(0.0329900011);
+      (parameters.nativeTickInterval !== undefined &&
+        Math.fround(tickInterval.intervalSeconds) < Math.fround(0.0329900011));
     if (
       executeEachFrame ||
       state.timerSeconds >= Math.fround(state.scanCount * tickInterval.intervalSeconds)
@@ -73,7 +75,10 @@ function scanRepeatedAction(
   parameters: RepeatedActionParameters,
   executeBody: () => void,
 ): void {
-  if (parameters.nativeTickInterval !== undefined) {
+  if (
+    parameters.nativeTickInterval !== undefined ||
+    parameters.nativeExecuteInterval !== undefined
+  ) {
     state.scanCount += 1;
     executeBody();
     return;

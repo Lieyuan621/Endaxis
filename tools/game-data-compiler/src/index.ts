@@ -683,17 +683,13 @@ export { parseUnityComboSkillConditionsSource } from './source/unityComboSkillCo
 export { parseObjectTypeMask } from './source/objectType.ts';
 export { compileSkillSmartTargetSource } from './compiler/conditions/comboSmartTarget.ts';
 export {
-  compileSynchronousProjectileCallbackScopesSource,
+  compileProjectileLaunchScopeSource,
   type CompiledActionBlackboardScopeSource,
   type ProjectileCallbackInvocationSource,
 } from './compiler/abilities/projectileCallbackScopes.ts';
 export {
   createZeroDistanceProjectileProjectionExtensionSource,
-  compileImmediateProjectileCallbackSkillSource,
-  compileZeroDistanceProjectileLaunchFromSources,
-  compileZeroDistanceFirstTickProjectileSource,
   type ZeroDistanceProjectileProjectionCatalogSource,
-  type ZeroDistanceProjectileCallbackSource,
 } from './compiler/abilities/projectileRuntimeProjection.ts';
 export {
   parseProjectileRuntimeSource,

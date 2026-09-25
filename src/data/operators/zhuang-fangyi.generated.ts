@@ -55,63 +55,6 @@ const sharedActionSequence7: ActionSequenceDefinition = sequence(
   ),
 );
 
-const sharedActionSequence1: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    {},
-    true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atk_scale_sword: 0.3 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'electric',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_sword' },
-              tags: ['normalAttack'],
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
-    {},
-    { lifetime: 'execution' },
-  ),
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:3',
-    {},
-    true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:4',
-        { atk_scale_sword: 0.3 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'electric',
-              attackScale: { kind: 'blackboard', key: 'atk_scale_sword' },
-              tags: ['normalAttack'],
-            },
-            '\u0000endaxis-generated-identity:5',
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
-    {},
-    { lifetime: 'execution' },
-  ),
-);
-
 const sharedActionSequence9: ActionSequenceDefinition = sequence(
   step('readBuffStackCount', {
     target: 'enemy',
@@ -230,6 +173,107 @@ const sharedActionSequence8: ActionSequenceDefinition = sequence(
   ),
 );
 
+const sharedActionSequence1: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    sequence({
+      kind: 'launchProjectile',
+      parameters: {
+        finish: 2,
+        recycleDelaySeconds: 0.100000001490116,
+        hit: { finishOnHit: false },
+      },
+      callbacks: [
+        {
+          event: 'hit',
+          skill: {
+            skillId: 'chr_0030_zhuangfy_attack3_sword_projhit',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 3,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+            },
+            blackboard: { atk_scale_sword: 0.3 },
+            scheduledSequences: [
+              scheduled(
+                0,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'electric',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_sword' },
+                      tags: ['normalAttack'],
+                    },
+                    '\u0000endaxis-generated-identity:1',
+                  ),
+                ),
+                1,
+              ),
+            ],
+          },
+        },
+      ],
+    }),
+    {},
+    { lifetime: 'execution' },
+  ),
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:2',
+    {},
+    true,
+    sequence({
+      kind: 'launchProjectile',
+      parameters: {
+        finish: 2,
+        recycleDelaySeconds: 0.100000001490116,
+        hit: { finishOnHit: false },
+      },
+      callbacks: [
+        {
+          event: 'hit',
+          skill: {
+            skillId: 'chr_0030_zhuangfy_attack3_sword_projhit',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 3,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+            },
+            blackboard: { atk_scale_sword: 0.3 },
+            scheduledSequences: [
+              scheduled(
+                0,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'electric',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale_sword' },
+                      tags: ['normalAttack'],
+                    },
+                    '\u0000endaxis-generated-identity:3',
+                  ),
+                ),
+                1,
+              ),
+            ],
+          },
+        },
+      ],
+    }),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
 const sharedActionSequence5: ActionSequenceDefinition = sequence(
   branch(
     {
@@ -264,23 +308,38 @@ const sharedActionSequence4: ActionSequenceDefinition = sequence(
   ),
 );
 
-const sharedActionSequence3: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    { remain_sword_limit: 0, sword_duration: 0, swordsForLimit: 0 },
-    true,
-    sharedActionSequence4,
-    undefined,
-    { lifetime: 'execution', alwaysNext: true },
-  ),
-);
+const sharedActionSequence3: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: { reachAfterTicks: 1, maxDurationSeconds: 2, finishOnReach: false },
+    recycleDelaySeconds: 0.0333333350718021,
+  },
+  callbacks: [
+    {
+      event: 'reach',
+      skill: {
+        skillId: 'chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { remain_sword_limit: 0, sword_duration: 0, swordsForLimit: 0 },
+        scheduledSequences: [scheduled(0, sharedActionSequence4, 1)],
+      },
+    },
+  ],
+});
 
 const sharedActionSequence2: ActionSequenceDefinition = sequence(
   withActionBlackboardScope(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    instantiateActionSequence(sharedActionSequence3, ['\u0000endaxis-generated-identity:1']),
+    sharedActionSequence3,
     {},
     { lifetime: 'execution' },
   ),
@@ -315,26 +374,48 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1: SkillDefinition = withSkillB
             'SkillData.chr_0030_zhuangfy_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0030_zhuangfy_attack1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0030_zhuangfy_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0030_zhuangfy_attack1_projhit',
-                { atk_scale: 1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0030_zhuangfy_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0030_zhuangfy_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0030_zhuangfy_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        1,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -348,26 +429,48 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1: SkillDefinition = withSkillB
             'SkillData.chr_0030_zhuangfy_attack1.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0030_zhuangfy_attack1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0030_zhuangfy_attack1.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0030_zhuangfy_attack1_projhit',
-                { atk_scale: 1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0030_zhuangfy_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0030_zhuangfy_attack1:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale: 1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0030_zhuangfy_attack1:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        1,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -457,26 +560,48 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2: SkillDefinition = withSkillB
             'SkillData.chr_0030_zhuangfy_attack2.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0030_zhuangfy_attack_sword_1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0030_zhuangfy_attack2.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0030_zhuangfy_attack2_sword_projhit',
-                { atk_scale_sword: 1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_sword' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 2,
+                recycleDelaySeconds: 0.100000001490116,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0030_zhuangfy_attack2_sword_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 3,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0030_zhuangfy_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_sword: 1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_sword' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0030_zhuangfy_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        1,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -484,26 +609,48 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2: SkillDefinition = withSkillB
             'SkillData.chr_0030_zhuangfy_attack2.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:projectile_chr_0030_zhuangfy_attack_sword_2',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0030_zhuangfy_attack2.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:chr_0030_zhuangfy_attack2_sword_projhit',
-                { atk_scale_sword: 1 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_sword' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 2,
+                recycleDelaySeconds: 0.100000001490116,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0030_zhuangfy_attack2_sword_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 3,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0030_zhuangfy_attack2:/scheduledSequences/1/sequence/steps/1/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atk_scale_sword: 1 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale_sword' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0030_zhuangfy_attack2:/scheduledSequences/1/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                        ),
+                        1,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -601,11 +748,9 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3: SkillDefinition = withSkillB
         14,
         instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0030_zhuangfy_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0030_zhuangfy_attack_sword_1',
-          'SkillData.chr_0030_zhuangfy_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0030_zhuangfy_attack3_sword_projhit',
-          'chr_0030_zhuangfy_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0030_zhuangfy_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0030_zhuangfy_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:projectile_chr_0030_zhuangfy_attack_sword_2',
-          'SkillData.chr_0030_zhuangfy_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:chr_0030_zhuangfy_attack3_sword_projhit',
-          'chr_0030_zhuangfy_attack3:/scheduledSequences/1/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0030_zhuangfy_attack3:/scheduledSequences/1/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         15,
       ),
@@ -613,11 +758,9 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3: SkillDefinition = withSkillB
         16,
         instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0030_zhuangfy_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0030_zhuangfy_attack_sword_2',
-          'SkillData.chr_0030_zhuangfy_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0030_zhuangfy_attack3_sword_projhit',
-          'chr_0030_zhuangfy_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0030_zhuangfy_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
           'SkillData.chr_0030_zhuangfy_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[1]:projectile_chr_0030_zhuangfy_attack_sword_1',
-          'SkillData.chr_0030_zhuangfy_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[1]:chr_0030_zhuangfy_attack3_sword_projhit',
-          'chr_0030_zhuangfy_attack3:/scheduledSequences/2/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0030_zhuangfy_attack3:/scheduledSequences/2/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         17,
       ),
@@ -1126,7 +1269,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill: SkillDefinition = withS
                 { kind: 'blackboard', key: 'sword_gene_num' },
                 instantiateActionSequence(sharedActionSequence2, [
                   'SkillData.chr_0030_zhuangfy_normal_skill.actionGroupData.timelineActions[13]._sequenceActionData.actionData[1].succeedActions.actionData[1].succeedActions.actionData[8]:projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
-                  'SkillData.chr_0030_zhuangfy_normal_skill.actionGroupData.timelineActions[13]._sequenceActionData.actionData[1].succeedActions.actionData[1].succeedActions.actionData[8]:chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
                 ]),
               ),
             ),
@@ -1175,7 +1317,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill: SkillDefinition = withS
                 { kind: 'blackboard', key: 'sword_gene_num' },
                 instantiateActionSequence(sharedActionSequence2, [
                   'SkillData.chr_0030_zhuangfy_normal_skill.actionGroupData.timelineActions[13]._sequenceActionData.actionData[1].succeedActions.actionData[1].failActions.actionData[3]:projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
-                  'SkillData.chr_0030_zhuangfy_normal_skill.actionGroupData.timelineActions[13]._sequenceActionData.actionData[1].succeedActions.actionData[1].failActions.actionData[3]:chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
                 ]),
               ),
             ),
@@ -1500,7 +1641,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ult: SkillDefinition = w
                     { kind: 'blackboard', key: '__endaxis_target_group_count:swordPos' },
                     instantiateActionSequence(sharedActionSequence2, [
                       'SkillData.chr_0030_zhuangfy_normal_skill_ult.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[1]:projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
-                      'SkillData.chr_0030_zhuangfy_normal_skill_ult.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1].succeedActions.actionData[0].succeedActions.actionData[1]:chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
                     ]),
                   ),
                 ),
@@ -1523,7 +1663,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ult: SkillDefinition = w
                     { kind: 'blackboard', key: '__endaxis_target_group_count:swordPos' },
                     instantiateActionSequence(sharedActionSequence2, [
                       'SkillData.chr_0030_zhuangfy_normal_skill_ult.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1].succeedActions.actionData[0].failActions.actionData[1]:projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
-                      'SkillData.chr_0030_zhuangfy_normal_skill_ult.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1].succeedActions.actionData[0].failActions.actionData[1]:chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
                     ]),
                   ),
                 ),
@@ -1624,7 +1763,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ult: SkillDefinition = w
                     { kind: 'blackboard', key: '__endaxis_target_group_count:swordPos' },
                     instantiateActionSequence(sharedActionSequence2, [
                       'SkillData.chr_0030_zhuangfy_normal_skill_ult.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1].failActions.actionData[0].succeedActions.actionData[8]:projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
-                      'SkillData.chr_0030_zhuangfy_normal_skill_ult.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1].failActions.actionData[0].succeedActions.actionData[8]:chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
                     ]),
                   ),
                 ),
@@ -1678,7 +1816,6 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ult: SkillDefinition = w
                     { kind: 'blackboard', key: '__endaxis_target_group_count:swordPos' },
                     instantiateActionSequence(sharedActionSequence2, [
                       'SkillData.chr_0030_zhuangfy_normal_skill_ult.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1].failActions.actionData[0].failActions.actionData[3]:projectile_chr_0030_zhuangfy_normal_skill_gene_sword',
-                      'SkillData.chr_0030_zhuangfy_normal_skill_ult.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].succeedActions.actionData[1].failActions.actionData[0].failActions.actionData[3]:chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
                     ]),
                   ),
                 ),
@@ -1994,40 +2131,65 @@ export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ult: SkillDefinition = wi
             'SkillData.chr_0030_zhuangfy_combo_skill_ult.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:projectile_chr_0030_zhuangfy_combo_skill_ring',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0030_zhuangfy_combo_skill_ult.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:chr_0030_zhuangfy_combo_skill_ring_projhit',
-                { atk_scale: 1.43, poise: 0, swordNum: 0 },
-                true,
-                sequence(
-                  forEachTarget(
-                    'enemy',
-                    sequence(
-                      branch(
-                        {
-                          kind: 'not',
-                          condition: {
-                            kind: 'timedMarkerPresent',
-                            target: 'enemy',
-                            markerId: 'zhuangfy_combo_ult_tar',
-                          },
-                        },
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 0.5,
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: false },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0030_zhuangfy_combo_skill_ring_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atk_scale: 1.43, poise: 0, swordNum: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          step('applyBuff', {
-                            buffId: 'buff_chr_0030_zhuangfy_combo_skill_ring_hit',
-                            target: 'enemy',
-                            inheritSourceSkillCastInfo: true,
-                            copiedBlackboardAssignments: { atk_scale: 'atk_scale', poise: 'poise' },
-                          }),
+                          forEachTarget(
+                            'enemy',
+                            sequence(
+                              branch(
+                                {
+                                  kind: 'not',
+                                  condition: {
+                                    kind: 'timedMarkerPresent',
+                                    target: 'enemy',
+                                    markerId: 'zhuangfy_combo_ult_tar',
+                                  },
+                                },
+                                sequence(
+                                  step('applyBuff', {
+                                    buffId: 'buff_chr_0030_zhuangfy_combo_skill_ring_hit',
+                                    target: 'enemy',
+                                    inheritSourceSkillCastInfo: true,
+                                    copiedBlackboardAssignments: {
+                                      atk_scale: 'atk_scale',
+                                      poise: 'poise',
+                                    },
+                                  }),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
+                        1,
                       ),
-                    ),
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -3109,16 +3271,6 @@ export const zhuangFangyi: OperatorDefinition = {
         ),
       ],
     },
-    buff_chr_0030_zhuangfy_dash_hide: {
-      stackingType: 'stack',
-      priority: 0,
-      maxStackCount: 1,
-      durationSeconds: 0.2,
-      applyTags: [],
-      extendTags: [],
-      blackboard: {},
-      attributeModifiers: [],
-    },
     buff_chr_0030_zhuangfy_normal_skill_trigger_sword: {
       stackingType: 'stack',
       priority: 0,
@@ -3778,6 +3930,14 @@ export const zhuangFangyi: OperatorDefinition = {
       maxStackingCount: 1,
       childSkill: {
         skillId: 'chr_0030_zhuangfy_attack2_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 30,
+        castResource: {
+          costFrame: 9,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale: 0.2, thunderPosIndex: 0 },
         scheduledSequences: [
           scheduled(
@@ -3867,6 +4027,14 @@ export const zhuangFangyi: OperatorDefinition = {
       maxStackingCount: 1,
       childSkill: {
         skillId: 'chr_0030_zhuangfy_attack5_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 30,
+        castResource: {
+          costFrame: 9,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atb: 20, atk_scale: 0.2, effectZ: 2, hasGainAtb: 0, poise: 15 },
         scheduledSequences: [
           scheduled(897, sequence(step('finishActionOwnerAbilityEntity', {})), 900),
@@ -4022,10 +4190,19 @@ export const zhuangFangyi: OperatorDefinition = {
     },
     abilityentity_chr_0030_zhuangfy_attack_ult: {
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
+      blackboard: { EntityBB_hitedMark: '#' },
       lifetime: { kind: 'limited', durationSeconds: 1.5 },
       childSkills: {
         chr_0030_zhuangfy_attack1_ult_1_abilityrange: {
           skillId: 'chr_0030_zhuangfy_attack1_ult_1_abilityrange',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 21,
+          castResource: {
+            costFrame: 9,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: { atk_scale: 0.2, randomRotate: 0, thunderPosIndex: 0 },
           scheduledSequences: [
             scheduled(
@@ -4071,6 +4248,14 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         chr_0030_zhuangfy_attack1_ult_2_abilityrange: {
           skillId: 'chr_0030_zhuangfy_attack1_ult_2_abilityrange',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 21,
+          castResource: {
+            costFrame: 9,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: { atk_scale: 0.2, randomRotate: 0, thunderPosIndex: 0 },
           scheduledSequences: [
             scheduled(
@@ -4116,6 +4301,14 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         chr_0030_zhuangfy_attack1_ult_3_abilityrange: {
           skillId: 'chr_0030_zhuangfy_attack1_ult_3_abilityrange',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 21,
+          castResource: {
+            costFrame: 9,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: { atk_scale: 0.2, randomRotate: 0, thunderPosIndex: 0 },
           scheduledSequences: [
             scheduled(
@@ -4161,6 +4354,14 @@ export const zhuangFangyi: OperatorDefinition = {
         },
         chr_0030_zhuangfy_attack1_ult_4_abilityrange: {
           skillId: 'chr_0030_zhuangfy_attack1_ult_4_abilityrange',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 21,
+          castResource: {
+            costFrame: 9,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: { atk_scale: 0.2, randomRotate: 0, thunderPosIndex: 0 },
           scheduledSequences: [
             scheduled(
@@ -4211,6 +4412,14 @@ export const zhuangFangyi: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 2 },
       childSkill: {
         skillId: 'chr_0030_zhuangfy_attack3_ult_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 75,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atb: 0, atk_scale: 0.2, poise: 0, randomRotate: 0, thunderPosIndex: 0 },
         scheduledSequences: [
           scheduled(
@@ -4273,6 +4482,7 @@ export const zhuangFangyi: OperatorDefinition = {
         'Immune/Damage',
         'Skill/Character/chr_0030_zhuangfy/ActivedSword',
       ],
+      blackboard: { EntityBB_swordDuration: 0, EntityBB_swordLimit: 0 },
       lifetime: {
         kind: 'limited',
         durationSeconds: { blackboardKey: 'EntityBB_swordDuration', fallback: 0 },
@@ -4280,15 +4490,32 @@ export const zhuangFangyi: OperatorDefinition = {
       maxStackingCount: { blackboardKey: 'EntityBB_swordLimit', fallback: 5 },
       childSkill: {
         skillId: 'chr_0030_zhuangfy_normal_skill_sword',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 3000,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale: 0.2, potential_n: 0, randomRotate: 0, randomVFX: 0 },
         scheduledSequences: [],
       },
     },
     abilityentity_chr_0030_zhuangfy_normal_skill_ult: {
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
+      blackboard: { EntityBB_SwordNum: 0 },
       lifetime: { kind: 'limited', durationSeconds: 3 },
       childSkill: {
         skillId: 'chr_0030_zhuangfy_normal_skill_ult_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 104,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atk_scale: 0,
           atk_scale_final: 0,

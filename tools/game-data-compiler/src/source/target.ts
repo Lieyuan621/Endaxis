@@ -65,6 +65,7 @@ export interface TargetReferenceSource {
   readonly finderAutoSetTargetFaction?: boolean | null;
   readonly finderTargetFactionType?: string | number | null;
   readonly finderShape: ShapeFinderSource | null;
+  readonly finderProjectileShape?: ColliderShapeSource;
   /** OwnerPartsFinder 对 owner 的部件 Tag 做查询；来源层不解释部件选择结果。 */
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   /** PointFinder 中实际启用的坐标/旋转黑板输入；只保存空间数据流，不解释坐标。 */
@@ -88,6 +89,7 @@ export interface SelectorSummarySource {
   readonly finderAutoSetTargetFaction: boolean | null;
   readonly finderTargetFactionType: string | number | null;
   readonly finderShape: ShapeFinderSource | null;
+  readonly finderProjectileShape?: ColliderShapeSource;
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   readonly finderPointBlackboardKeys: readonly string[];
   /** RandomPointFinder 生成的目标点数量；几何在来源层验证，数量留给零空间投影。 */
@@ -128,12 +130,21 @@ export interface SpawnedEntitySelectorIdentitySource {
   readonly tagQueries: Array<readonly [string, readonly number[]]>;
 }
 
-export interface ShapeFinderSource {
+export interface ShapeFinderSource extends ColliderShapeSource {
   readonly checkAlive: boolean;
   readonly autoSetTargetFaction: boolean;
   readonly containsUnmarkable: boolean;
   readonly factionTarget: string;
   readonly targetFactionType: string | number;
+  readonly limitHeight: boolean;
+  readonly maxHeight: number;
+  readonly limitAngle: boolean;
+  readonly angleKey: string;
+  readonly angle: number;
+}
+
+/** 原生 ColliderShapeData 的几何参数；不包含候选对象的阵营或类型。 */
+export interface ColliderShapeSource {
   readonly shape: string;
   readonly rotationOffset: readonly [number, number, number];
   readonly useExtentKey: boolean;
@@ -146,11 +157,6 @@ export interface ShapeFinderSource {
   readonly heightKey: string;
   readonly radius: number;
   readonly radiusKey: string;
-  readonly limitHeight: boolean;
-  readonly maxHeight: number;
-  readonly limitAngle: boolean;
-  readonly angleKey: string;
-  readonly angle: number;
 }
 
 const TARGET_FIELDS = new Set([
@@ -182,6 +188,7 @@ const KNOWN_FINDERS = new Set([
   'OwnerSpawnedEntityFinder',
   'OwnerPartsFinder',
   'PointFinder',
+  'ProjectileFinder',
   'RandomPointFinder',
   'ShapeFinder',
   'SmartTargetFinder',
@@ -253,6 +260,9 @@ export function parseTargetReferenceSource(value: unknown, path: string): Target
       ? {}
       : { finderTargetFactionType: summary.finderTargetFactionType }),
     finderShape: summary.finderShape,
+    ...(summary.finderProjectileShape
+      ? { finderProjectileShape: summary.finderProjectileShape }
+      : {}),
     finderOwnerPartsQuery: summary.finderOwnerPartsQuery,
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
@@ -286,6 +296,7 @@ export function parseSelectorSummarySource(
   let finderAutoSetTargetFaction: boolean | null = null;
   let finderTargetFactionType: string | number | null = null;
   let finderShape: ShapeFinderSource | null = null;
+  let finderProjectileShape: ColliderShapeSource | undefined;
   let finderOwnerPartsQuery: TagQuerySource | null = null;
   let finderPointBlackboardKeys: string[] = [];
   let finderRandomPointCount: SelectorSummarySource['finderRandomPointCount'] = null;
@@ -332,6 +343,12 @@ export function parseSelectorSummarySource(
       finderTargetFactionType = finder.targetFactionType;
     } else if (finderType === 'ShapeFinder' || finderType === 'InteractiveShapeFinder') {
       finderShape = parseShapeFinderSource(finder, `${path}.finderData`);
+    } else if (finderType === 'ProjectileFinder') {
+      requireExactFields(finder, new Set(['$type', 'shapeData']), `${path}.finderData`);
+      finderProjectileShape = parseColliderShapeSource(
+        finder.shapeData,
+        `${path}.finderData.shapeData`,
+      );
     } else if (finderType === 'OwnerPartsFinder') {
       requireExactFields(finder, new Set(['$type', 'partQuery']), `${path}.finderData`);
       finderOwnerPartsQuery = parseTagQuerySource(finder.partQuery, `${path}.finderData.partQuery`);
@@ -471,6 +488,7 @@ export function parseSelectorSummarySource(
     finderAutoSetTargetFaction,
     finderTargetFactionType,
     finderShape,
+    ...(finderProjectileShape ? { finderProjectileShape } : {}),
     finderOwnerPartsQuery,
     finderPointBlackboardKeys,
     finderRandomPointCount,
@@ -578,8 +596,32 @@ function parseShapeFinderSource(finder: Record<string, unknown>, path: string): 
     ]),
     path,
   );
-  const shapePath = `${path}.shapeData`;
-  const shape = requireRecord(finder.shapeData, shapePath);
+  const targetFactionType = finder.targetFactionType;
+  if (interactive)
+    requireBoolean(finder.checkIntUnSelectableTag, `${path}.checkIntUnSelectableTag`);
+  if (typeof targetFactionType !== 'string' && typeof targetFactionType !== 'number') {
+    throw new Error(`${path}.targetFactionType: expected enum name or number`);
+  }
+  return {
+    checkAlive: requireBoolean(finder.checkAlive, `${path}.checkAlive`),
+    autoSetTargetFaction: requireBoolean(
+      finder.autoSetTargetFaction,
+      `${path}.autoSetTargetFaction`,
+    ),
+    containsUnmarkable: requireBoolean(finder.containsUnMarkable, `${path}.containsUnMarkable`),
+    factionTarget: readFactionTarget(finder.factionTarget, `${path}.factionTarget`),
+    targetFactionType,
+    ...parseColliderShapeSource(finder.shapeData, `${path}.shapeData`),
+    limitHeight: requireBoolean(finder.limitHeight, `${path}.limitHeight`),
+    maxHeight: requireNumber(finder.maxHeight, `${path}.maxHeight`),
+    limitAngle: requireBoolean(finder.limitAngle, `${path}.limitAngle`),
+    angleKey: requireString(finder.angleKey, `${path}.angleKey`),
+    angle: requireNumber(finder.angle, `${path}.angle`),
+  };
+}
+
+function parseColliderShapeSource(value: unknown, shapePath: string): ColliderShapeSource {
+  const shape = requireRecord(value, shapePath);
   requireExactFields(
     shape,
     new Set([
@@ -602,21 +644,7 @@ function parseShapeFinderSource(finder: Record<string, unknown>, path: string): 
     ]),
     shapePath,
   );
-  const targetFactionType = finder.targetFactionType;
-  if (interactive)
-    requireBoolean(finder.checkIntUnSelectableTag, `${path}.checkIntUnSelectableTag`);
-  if (typeof targetFactionType !== 'string' && typeof targetFactionType !== 'number') {
-    throw new Error(`${path}.targetFactionType: expected enum name or number`);
-  }
   return {
-    checkAlive: requireBoolean(finder.checkAlive, `${path}.checkAlive`),
-    autoSetTargetFaction: requireBoolean(
-      finder.autoSetTargetFaction,
-      `${path}.autoSetTargetFaction`,
-    ),
-    containsUnmarkable: requireBoolean(finder.containsUnMarkable, `${path}.containsUnMarkable`),
-    factionTarget: readFactionTarget(finder.factionTarget, `${path}.factionTarget`),
-    targetFactionType,
     shape: requireNonEmptyString(shape._shape, `${shapePath}._shape`),
     rotationOffset: parseVector3(shape._rotationOffset, `${shapePath}._rotationOffset`),
     useExtentKey: requireBoolean(shape._useExtentKey, `${shapePath}._useExtentKey`),
@@ -637,11 +665,6 @@ function parseShapeFinderSource(finder: Record<string, unknown>, path: string): 
     heightKey: requireString(shape._heightKey, `${shapePath}._heightKey`),
     radius: requireNumber(shape._radius, `${shapePath}._radius`),
     radiusKey: requireString(shape._radiusKey, `${shapePath}._radiusKey`),
-    limitHeight: requireBoolean(finder.limitHeight, `${path}.limitHeight`),
-    maxHeight: requireNumber(finder.maxHeight, `${path}.maxHeight`),
-    limitAngle: requireBoolean(finder.limitAngle, `${path}.limitAngle`),
-    angleKey: requireString(finder.angleKey, `${path}.angleKey`),
-    angle: requireNumber(finder.angle, `${path}.angle`),
   };
 }
 

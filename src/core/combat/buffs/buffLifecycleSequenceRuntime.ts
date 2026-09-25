@@ -507,7 +507,10 @@ export function attachBuffLifecycleSequences<Key extends string>(
     // 伤害修正条件会在 Buff 外壳构造时先索取宿主，此时恢复动作尚未正式重绑。
     // 已有数据必须直接绑定，不能用空宿主覆盖其中的 Enable/SkillAffix 进度。
     restoredHost ??= buff.runtimeState.actionHost ?? undefined;
+    const actionOwner = runtimeTargetFromEntityId(buff.owner.ownerId);
     const context: CombatOperationContext = {
+      actionOwnerId: buff.owner.ownerId,
+      ...(actionOwner.kind === 'abilityEntity' ? { actionOwnerAbilityEntity: actionOwner } : {}),
       blackboard: buff.blackboard,
       canExecuteAction: () => buff.isEnabled && !buff.isFinished,
       damageCalculationSnapshots: new DamageCalculationSnapshots(
@@ -581,7 +584,7 @@ export function attachBuffLifecycleSequences<Key extends string>(
       context,
       {},
       undefined,
-      undefined,
+      buff.definitionOwnerId,
       restoredHost?.scopes,
     );
     runtimes.set(buff, runtime);

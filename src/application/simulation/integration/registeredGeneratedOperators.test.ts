@@ -54,6 +54,7 @@ import {
 } from '../../../ui/timeline/results/timelineHitEffects';
 import { runStandardPlayerDamageScenarioSimulation } from '../runStandardPlayerDamageScenarioSimulation';
 import { createEditorSimulationService } from '../testSupport/editorSimulationService';
+import { createDefaultOperatorInstance } from '../../editor/loadoutBuildFactory';
 
 /** 每次放置独立计数；对照场景可复用相同前缀，但同一次多段放置不能共享释放身份。 */
 function numberedPlacementIds(prefix: string) {
@@ -62,6 +63,62 @@ function numberedPlacementIds(prefix: string) {
 }
 
 describe('registered generated operators', () => {
+  it.each(['basicAttack', 'battleSkill', 'comboSkill', 'ultimate'])(
+    '新注册的 purrchena %s 可经页面模拟入口完整执行',
+    async skillGroupKey => {
+      const operator = gameDataRepository.getOperator('purrchena');
+      if (!operator) throw new Error('purrchena is not registered');
+      const scenario = createEmptyScenario('scenario:purrchena', '新干员正式入口');
+      scenario.battle.durationFrames = 600;
+      scenario.tracks[0] = {
+        id: 'track:purrchena',
+        operator: createDefaultOperatorInstance(operator),
+        weapon: null,
+        gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+        initialState: { ultimateEnergy: 0 },
+        skillCasts: [],
+      };
+      const placed = placeSkillGroup({
+        scenario,
+        trackIndex: 0,
+        operator,
+        skillGroupKey,
+        startFrame: 1,
+        ids: numberedPlacementIds('purrchena'),
+      }).scenario;
+      expect(placed.tracks[0]!.skillCasts.length).toBeGreaterThan(0);
+      const result = await createEditorSimulationService().simulate(placed, 600);
+      expect(
+        result.receiptEntries.some(
+          entry => entry.event === 'SkillStarted' && entry.sourceId === 'track:purrchena',
+        ),
+      ).toBe(true);
+      if (skillGroupKey === 'battleSkill') {
+        const firstCast = placed.tracks[0]!.skillCasts[0]!;
+        expect(
+          result.receiptEntries.filter(
+            entry =>
+              entry.event === 'SkillOperableBoundaryReached' && entry.data?.castId === firstCast.id,
+          ),
+        ).toHaveLength(1);
+        // 战技先进入格挡姿态；没有敌方攻击时不凭空触发反击伤害。
+        expect(
+          result.receiptEntries.some(
+            entry =>
+              entry.event === 'BuffApplied' &&
+              entry.data?.buffId === 'buff_chr_0038_purrche_aura_block',
+          ),
+        ).toBe(true);
+      } else {
+        expect(
+          result.receiptEntries.some(
+            entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:purrchena',
+          ),
+        ).toBe(true);
+      }
+    },
+  );
+
   it('使命必达通过连携绑定编号识别击飞，并在十五秒后结束增伤', async () => {
     const scenario = createEmptyScenario('scenario:delivery-affix', '使命必达连携监听回归');
     scenario.battle.durationFrames = 700;
@@ -722,7 +779,8 @@ describe('registered generated operators', () => {
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'AbilityEntitySpawned',
-        frame: 46,
+        // 第46帧发射后，由下一次投射物 Tick 落地生成枪。
+        frame: 47,
         sourceId: 'track:avywenna:ultimate',
         data: expect.objectContaining({
           abilityEntityId: 'abilityentity_chr_0012_avywen_ultimate_skill_lance',
@@ -810,7 +868,8 @@ describe('registered generated operators', () => {
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'DamageApplied',
-        frame: 47,
+        // 回收弹体在第47帧发射，下一次投射物 Tick 命中。
+        frame: 48,
         sourceId: 'track:avywenna:return',
         targetId: 'enemy',
       }),
@@ -1663,7 +1722,14 @@ describe('registered generated operators', () => {
     );
 
     expect(hits).toHaveLength(4);
-    expect(hits.map(entry => entry.frame)).toEqual([60, 64, 68, 73]);
+    const launches = result.receiptEntries.filter(
+      entry =>
+        entry.event === 'ProjectileLaunched' &&
+        entry.data?.castId === 'skillCast:fluorite:ultimate',
+    );
+    expect(launches.map(entry => entry.frame)).toEqual([60, 64, 68, 73]);
+    // Battle 阶段发射后，下帧 Default 阶段才执行投射物首次碰撞。
+    expect(hits.map(entry => entry.frame)).toEqual(launches.map(entry => entry.frame + 1));
     expect(hits.every(entry => Number(entry.data?.value) > 0)).toBe(true);
     expect(fluorite.conversionSupport).toEqual({
       completeness: 'complete',
@@ -2111,7 +2177,7 @@ describe('registered generated operators', () => {
 
     expect(
       result.receiptEntries
-        .filter(entry => entry.event === 'SkillStarted')
+        .filter(entry => entry.event === 'SkillStarted' && entry.sourceId === 'track:zhuang-fangyi')
         .map(entry => entry.data?.skillId),
     ).toEqual(['chr_0030_zhuangfy_ultimate_skill', 'chr_0030_zhuangfy_normal_skill_ult']);
     expect(result.receiptEntries).toContainEqual(

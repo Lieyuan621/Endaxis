@@ -265,7 +265,8 @@ export interface CombatSkillCastInfo {
   /** 最初发起本次施法链的技能；当前直接释放时就是正在执行的技能。 */
   readonly originSkillId: string;
   /** 最初发起本次施法链的技能类型，供 Buff 来源条件稳定读取。 */
-  readonly originSkillType: import('../../game-data/operatorDefinition').SkillType;
+  /** 玩家技能库分类；没有继承玩家施法来源的实体技能不填写。 */
+  readonly originSkillType?: import('../../game-data/operatorDefinition').SkillType;
   /** 时间轴上的技能块身份；单元测试或非时间轴技能可以缺失。 */
   readonly originCastId?: string;
   /** 本次施法在当前时刻已经实际扣除且未返还的技力。 */
@@ -338,6 +339,8 @@ export interface SkillSimulationInputs {
 /** 原生单槽延迟施放目前已进入模拟器的稳定字段。 */
 export interface PostSkillCastRequest {
   readonly skillId: string;
+  /** 请求产生时确定的目标身份；null 是原生空句柄，不能在消费时重新读取当前事件或主目标。 */
+  readonly inputTarget?: RuntimeTargetRef | null;
   readonly castId?: string;
   /** 提交这次延迟施放的执行宿主；技能开始时用于连接来源回执。 */
   readonly producedBy?: CombatObjectRef;

@@ -148,6 +148,24 @@ describe('空间失败回调自叶向根消去', () => {
     );
   });
 
+  it('调试日志中的目标设置不把空间输出变成战斗依赖', () => {
+    expect(
+      compile([
+        selectPoint,
+        {
+          ...meta,
+          $type: 'Beyond.Gameplay.Core.DebugPrintAction+Data, Gameplay.Beyond',
+          logType: 'TargetSetting',
+          target: targetFixture('Context', undefined, 'pos'),
+          color: { r: 1, g: 0, b: 0, a: 1 },
+          bbKey: '',
+          identifier: 'selected-point',
+        },
+        teleport(),
+      ]),
+    ).toEqual({ steps: [] });
+  });
+
   it('非空回调中的有效写入不能被持有动作的 spatial 分类吞掉', () => {
     expect(() => compile([teleport(sequence([calculation]))])).toThrow(
       'combat-visible targetPointInvalid callback',

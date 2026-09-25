@@ -7,12 +7,15 @@ import type { CombatSkillCastInfo } from '../state/foundationState';
 import type { CombatOperationContext, CombatOperationExecutor } from './skillRuntime';
 import { operationProducer } from '../receipt/combatObjectIdentity';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 
 type CastStep = ResolvedCombatStepForKind<'castSkillDuringAction'>;
 
 export interface SkillCastOperationExecutorDependencies {
+  readonly casterId: string;
   readonly request: (request: {
     readonly nativeSkillId: string;
+    readonly inputTarget: RuntimeTargetRef | null;
     readonly skipApplyCost: boolean;
     readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
     readonly interruptCurrentSkillOnlyWhenTargetCastable?: boolean;
@@ -43,9 +46,24 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
   }
 
   #request(step: CastStep, context: CombatOperationContext | undefined): void {
-    if (step.parameters.target !== 'enemy' && step.parameters.target !== 'caster') {
-      throw new Error(`unsupported deferred skill cast target '${step.parameters.target}'`);
+    let contextTarget: RuntimeTargetRef | null = null;
+    if (step.parameters.target === 'context') {
+      const key = step.parameters.targetContextKey;
+      if (!key || context?.targetContext === undefined)
+        throw new Error('deferred skill cast requires its named target context');
+      const targets = context.targetContext.get(key);
+      if (targets.length > 1)
+        throw new Error('deferred skill cast does not yet support a multi-entity input target');
+      contextTarget = targets[0] ?? null;
     }
+    const inputTarget =
+      step.parameters.target === 'context'
+        ? contextTarget
+        : step.parameters.target === 'actionInputTarget'
+          ? (context?.actionInputTarget ?? null)
+          : step.parameters.target === 'enemy'
+            ? { kind: 'enemy' as const }
+            : { kind: 'operator' as const, operatorId: this.dependencies.casterId };
     const inherited = step.parameters.inheritSourceSkillCastInfo
       ? context?.skillCastInfo
       : undefined;
@@ -55,6 +73,7 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
     const nativeSkillId = resolveNativeSkillId(step.parameters.skillId, context);
     this.dependencies.request({
       nativeSkillId,
+      inputTarget: inputTarget === null ? null : { ...inputTarget },
       skipApplyCost: step.parameters.skipApplyCost,
       producedBy: operationProducer(context),
       ...(step.parameters.interruptCurrentSkillOnlyWhenTargetCastable

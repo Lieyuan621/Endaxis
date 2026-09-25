@@ -62,8 +62,12 @@ export class HealOperationExecutor implements CombatOperationExecutor {
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
     if (step.kind !== 'heal') return this.dependencies.delegate.execute(step, context);
     const target =
-      step.parameters.target === 'currentTarget'
-        ? this.#resolveCurrentTarget(context)
+      step.parameters.target === 'currentTarget' || step.parameters.target === 'actionInputTarget'
+        ? this.#resolveCurrentTarget(
+            step.parameters.target === 'actionInputTarget' && context !== undefined
+              ? { ...context, currentTarget: context.actionInputTarget }
+              : context,
+          )
         : step.parameters.target === 'contextTarget'
           ? this.#resolveContextTarget(step, context)
           : this.dependencies.resolveTarget(

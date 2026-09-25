@@ -474,6 +474,8 @@ export const HEAL_TARGETS = [
   'contextTarget',
   /** `forEachContextTarget` 正在迭代的对象。 */
   'currentTarget',
+  /** 本次技能施放输入中保存的目标。 */
+  'actionInputTarget',
 ] as const;
 
 /** 当前原生治疗样本能够严格归约的队伍目标身份。 */

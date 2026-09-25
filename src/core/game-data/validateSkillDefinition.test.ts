@@ -1361,7 +1361,18 @@ describe('validateSkillDefinition', () => {
                 abilityEntityId: 'fixture',
                 definition: {
                   lifetime: { kind: 'limited', durationSeconds: 5 },
-                  childSkill: { skillId: 'child', scheduledSequences: [] },
+                  childSkill: {
+                    skillId: 'child',
+                    scheduledSequences: [],
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+                    },
+                  },
                 },
                 dieWhenSourceDies: false,
               },
@@ -1389,6 +1400,28 @@ describe('validateSkillDefinition', () => {
         }),
       ]),
     );
+  });
+
+  it.each(['projectiles', undefined, 12])('投射物查询必须提供目标组名称：%s', saveToContextKey => {
+    const skill = baseSkill();
+    skill.scheduledSequences = [
+      {
+        startFrame: 0,
+        sequence: {
+          steps: [{ kind: 'findUnfinishedProjectileTargets', parameters: { saveToContextKey } }],
+        },
+      },
+    ];
+    const errors = validateSkillDefinition(skill);
+    if (saveToContextKey === 'projectiles') expect(errors).toEqual([]);
+    else
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: '$.scheduledSequences[0].sequence.steps[0].parameters.saveToContextKey',
+          }),
+        ]),
+      );
   });
 
   it.each(['actionSource', 'actionOwner', 'recursiveSource'])(

@@ -260,7 +260,8 @@ export interface CombatStepParameters {
           /** 加入一个按身份解析的单体目标。 */
           readonly kind: 'target';
           /** 要加入的对象身份。 */
-          readonly target: 'caster' | 'enemy' | 'eventTarget' | 'buffSource' | 'currentTarget';
+          readonly target:
+            'caster' | 'enemy' | 'eventTarget' | 'eventSource' | 'buffSource' | 'currentTarget';
         }
       | {
           /** 加入一个已有动作目标组。 */
@@ -276,6 +277,11 @@ export interface CombatStepParameters {
           readonly owner: 'actionSource' | 'actionOwner';
         }
     )[];
+  };
+  /** 查询未结束的投射物。生成器必须先证明空间范围在固定木桩模型中覆盖这些候选。 */
+  findUnfinishedProjectileTargets: {
+    /** 保存本次查询的实例身份；后续消费者不重新查询。 */
+    saveToContextKey: string;
   };
   /** 查询当前队伍并把当时的实例身份快照覆盖写入 Context；后续消费者不得重新选人。 */
   findCharacterTeamTargets: {
@@ -421,6 +427,8 @@ export interface CombatStepParameters {
   };
   /** 为目标增加一层元素附着并触发相应事件。 */
   applyElementalInfliction: {
+    /** 只交换复合状态的选表顺序，不改变实际消耗的附着与事件元素。 */
+    inverseReaction?: boolean;
     /** 要施加的元素。 */
     element: InflictionElement;
     /** 是否作为额外附着传播到事件上下文。 */
@@ -448,8 +456,10 @@ export interface CombatStepParameters {
   castSkillDuringAction: {
     /** 原生表内 Skill ID；可以直接给定，也可以从当前动作黑板读取。装配层必须映射到同干员的稳定技能键。 */
     skillId: ActionStringOperand;
-    /** 目标技能作用于施法者还是敌人。 */
-    target: 'caster' | 'enemy';
+    /** 延迟请求的目标；actionInputTarget 读取当前动作输入，事件回调中由事件绑定。 */
+    target: 'caster' | 'enemy' | 'actionInputTarget' | 'context';
+    /** target=context 时读取保存的目标组；当前技能输入支持空组或单个实体。 */
+    targetContextKey?: string;
     /** 是否跳过目标技能自己的资源消耗。 */
     skipApplyCost: boolean;
     /** 是否把当前施法身份传给目标技能。 */
@@ -672,6 +682,11 @@ export interface CombatStepParameters {
     isExtra?: boolean;
     /** 原生区域/动作生命周期结束时，只结束本步骤实际创建的 Buff 实例。 */
     finishByAction?: boolean;
+    /** 动作结束时，在回收自身创建的 Buff 后，按 ID 清理指定目标的全部匹配 Buff。 */
+    onActionEndFinishBuffs?: {
+      target: BuffApplicationTarget;
+      buffIds: readonly string[];
+    };
     /**
      * 原生 Aura 离开边沿：先结束本步骤创建的区域 Buff，再在同一批目标上创建有限余效。
      * 只随 finishByAction=true 使用；余效是独立实例，不再归原 Aura 动作托管。
@@ -812,6 +827,8 @@ export interface CombatStepParameters {
   };
   /** 直接修改当前生命周期环境中有限时长 Buff 的剩余秒数。 */
   setCurrentBuffRemainingDuration: {
+    /** 指定时只修改该对象拥有的当前 Buff；省略时使用当前 Buff 自身的拥有者。 */
+    target?: BuffSingleTarget;
     /** 对当前剩余时间执行赋值、加算或乘算。 */
     operation: 'assign' | 'add' | 'multiply';
     /** 参与运算的秒数或倍率。 */
@@ -1318,6 +1335,11 @@ export interface CombatStepParameters {
       targetTriggerIntervalSeconds: number;
     };
     /** 1.4.4 TickIntervalAction：首次即时执行，之后按单精度累计周期推进。 */
+    /** ExecuteInterval：立即执行一次，保留子序列到下次执行或宿主结束，不向子序列传递 Tick。 */
+    nativeExecuteInterval?: {
+      executeEachFrame: boolean;
+      intervalSeconds: number;
+    };
     nativeTickInterval?: {
       /** 是否每个模拟帧执行。 */
       executeEachFrame: boolean;
@@ -1330,29 +1352,36 @@ export interface CombatStepParameters {
     /** 同步执行子序列的次数。 */
     count: ActionValueOperand;
   };
-  /** 无启用回调、已证明同点到达的发射；仍保留发射与 reset 引用，不创建技能。 */
-  launchProjectileLifetime: {
-    /** 投射物到达目标或超时的结束规则。 */
+  /** 发射一个独立投射物；所有事件回调共享这一个对象的寿命和实体黑板。 */
+  launchProjectile: {
+    /** 投射物归属动作来源（默认）或动作宿主；Buff 的二者可能不同。 */
+    source?: 'actionSource' | 'actionOwner';
+    /** 订阅发射来源的时间倍率和忽略全局缩放开关，直到投射物回收。 */
+    syncTimeScale?: boolean;
+    /** 正数表示超时秒数；到达规则只用于生成器已证明的零距离移动。 */
     finish:
+      | number
       | 'firstTickReach'
+      /** 零空间落地近似：首个投射物 Tick 执行阻挡回调并结束飞行。 */
+      | 'firstTickBlock'
       | {
-          /** 经过多少次更新后视为到达。 */
           reachAfterTicks: number;
-          /** 即使未到达也会结束的最长秒数。 */
           maxDurationSeconds: number;
+          /** false 表示到达只触发回调，仍等待命中上限或寿命到期才结束。 */
+          finishOnReach?: boolean;
         };
-    /** 结束后延迟回收对象的秒数。 */
+    /** 结束后的回收等待，取所有启用回调的最大技能时长。 */
     recycleDelaySeconds?: number;
-  };
-  /**
-   * 原生 ProjectileComponent 的正数 finishDuration 到期回调。
-   * 注册发生在发射动作实际执行时，且回调寿命独立于发射技能；不得用于普通技能延迟动作。
-   */
-  scheduleProjectileFinishCallback: {
-    /** 发射后等待多少秒触发结束回调。 */
-    delaySeconds: number;
-    /** 原生所有启用回调的 SkillData.duration 最大值；与结束倒计时相互独立。 */
-    recycleDelaySeconds: number;
+    /** 已证明的首 Tick 碰撞；省略表示没有碰撞回调。 */
+    hit?: {
+      /** 到达时直接命中发射目标，不执行碰撞阵营过滤。 */
+      onReach?: boolean;
+      /** 发射时锁定的到达目标；省略时为敌人。 */
+      target?: 'controlledOperator' | 'allOperators' | 'currentTarget';
+      finishOnHit: boolean;
+      hitTagFilter?: { tagQueryType: GameplayTagQueryType; tags: readonly GameplayTag[] };
+      retryRejectedHit?: boolean;
+    };
   };
   /** 在动作环境中设置一个标志。 */
   setContextFlag: {
@@ -1443,6 +1472,7 @@ export interface CombatStepParameters {
 export const COMBAT_STEP_KINDS = [
   'mergeContextTargets',
   'findCharacterTeamTargets',
+  'findUnfinishedProjectileTargets',
   'createSpatialPointTargets',
   'findOwnerSpawnedAbilityEntities',
   'pickContextTarget',
@@ -1526,8 +1556,7 @@ export const COMBAT_STEP_KINDS = [
   'withActionBlackboardScope',
   'repeatEachTick',
   'repeatByActionValue',
-  'scheduleProjectileFinishCallback',
-  'launchProjectileLifetime',
+  'launchProjectile',
   'setContextFlag',
   'openComboWindow',
   'showComboRingQte',
@@ -1584,10 +1613,13 @@ type CombatStepNode<K extends CombatStepKind> = {
                 /** 每次循环执行的序列。 */
                 body: ActionSequenceDefinition;
               }
-            : K extends 'scheduleProjectileFinishCallback'
+            : K extends 'launchProjectile'
               ? {
-                  /** 到时启动的投射物回调技能。 */
-                  callback: ProjectileCallbackSkillDefinition;
+                  /** 每项都是完整的原生回调技能，不并入发射技能的时间轴。 */
+                  callbacks: readonly {
+                    event: 'hit' | 'block' | 'reach' | 'finish';
+                    skill: ProjectileCallbackSkillDefinition;
+                  }[];
                 }
               : K extends 'forEachContextTarget'
                 ? {
@@ -1650,6 +1682,7 @@ export interface CombatEventResponseDefinition {
  */
 /** 已迁入直接原生订阅的身份；能力机制由公共分发器实现，此处只维护迁移准入。 */
 export const DIRECT_COMBAT_EVENT_TRIGGER_EVENTS = [
+  'beforeAddedBuff',
   'addedBuff',
   'outputBuff',
 ] as const satisfies readonly AbilityEvent[];

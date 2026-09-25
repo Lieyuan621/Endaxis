@@ -180,6 +180,7 @@ function inspectSequence(
     switch (step.kind) {
       case 'mergeContextTargets':
       case 'findCharacterTeamTargets':
+      case 'findUnfinishedProjectileTargets':
       case 'createSpatialPointTargets':
       case 'findOwnerSpawnedAbilityEntities':
       case 'readAbilityEntityRemainingDuration':
@@ -410,7 +411,6 @@ function inspectSequence(
       case 'startTimeDilation':
       case 'startUltimateTimeDilation':
       case 'hideUi':
-      case 'launchProjectileLifetime':
       case 'setIgnoreGlobalTimeScale':
         return;
       case 'listenForCombatEvents':
@@ -479,16 +479,18 @@ function inspectSequence(
       case 'markCurrentSkillCanDash':
       case 'markCurrentSkillCanInterrupt':
         return;
-      case 'scheduleProjectileFinishCallback':
-        step.callback.timelineActions.forEach((action, index) =>
-          inspectSequence(
-            action.sequence,
-            `${stepPath}.callback.timelineActions[${index}].sequence`,
-            collect,
-            flags,
-            source,
-          ),
-        );
+      case 'launchProjectile':
+        step.callbacks
+          .flatMap(callback => callback.skill.timelineActions)
+          .forEach((action, index) =>
+            inspectSequence(
+              action.sequence,
+              `${stepPath}.callback.timelineActions[${index}].sequence`,
+              collect,
+              flags,
+              source,
+            ),
+          );
         return;
       case 'changeResource':
       case 'changeResourceByActionValue': {

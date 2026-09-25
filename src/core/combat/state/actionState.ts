@@ -43,6 +43,8 @@ export function createBranchActionState(): BranchActionState {
 
 /** 重复动作的计时和触发次数。 */
 export interface RepeatedActionState {
+  /** ExecuteInterval 当前保留的子序列；切面只保存数据，恢复后重新绑定执行器。 */
+  body: ActionSequenceState | null;
   skipInitialTick: boolean;
   timerSeconds: number;
   scanCount: number;
@@ -52,6 +54,7 @@ export interface RepeatedActionState {
 
 export function createRepeatedActionState(): RepeatedActionState {
   return {
+    body: null,
     skipInitialTick: false,
     timerSeconds: 0,
     scanCount: 0,

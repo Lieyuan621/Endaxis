@@ -222,6 +222,7 @@ export class TimeDilationRuntime implements FrameRuntime {
       return instance.id;
     }
     this.#tickGlobal(instance, 0);
+    refreshInheritedEntityScales(this.runtimeState);
     this.#observer.started?.('global', snapshotInstance(instance));
     return instance.id;
   }
@@ -264,6 +265,7 @@ export class TimeDilationRuntime implements FrameRuntime {
       return instance.id;
     }
     this.#tickEntity(instance, 0, this.currentGlobalScale);
+    refreshInheritedEntityScales(this.runtimeState);
     this.#observer.started?.('entity', snapshotInstance(instance), instance.entityId);
     return instance.id;
   }
@@ -274,6 +276,7 @@ export class TimeDilationRuntime implements FrameRuntime {
     );
     if (entityIndex >= 0) {
       const [instance] = this.runtimeState.entityInstances.splice(entityIndex, 1);
+      refreshInheritedEntityScales(this.runtimeState);
       this.#observer.ended?.('entity', snapshotInstance(instance!), 'stopped', instance!.entityId);
       return;
     }
@@ -282,6 +285,7 @@ export class TimeDilationRuntime implements FrameRuntime {
     );
     if (globalIndex >= 0) {
       const [instance] = this.runtimeState.globalInstances.splice(globalIndex, 1);
+      refreshInheritedEntityScales(this.runtimeState);
       this.#observer.ended?.('global', snapshotInstance(instance!), 'stopped');
     }
   }
@@ -290,10 +294,44 @@ export class TimeDilationRuntime implements FrameRuntime {
     return entityTimeScale(this.runtimeState, entityId);
   }
 
+  /** 发射时初值来自来源 AbilitySystem 的 additionalScale；注册本身不刷新成来源自身倍率。 */
+  inheritEntityScale(entityId: string, sourceId: string, additionalScale = 1): void {
+    validateScale(additionalScale);
+    if (
+      !entityId ||
+      !sourceId ||
+      entityId === sourceId ||
+      this.runtimeState.entityScaleInheritance.has(entityId)
+    )
+      throw new Error('invalid or duplicate entity time-scale inheritance');
+    // 来源必须先于新投射物存在，登记顺序就是通知传播的先后顺序。
+    let ancestor: string | undefined = sourceId;
+    while (ancestor !== undefined) {
+      if (ancestor === entityId) throw new Error('cyclic entity time-scale inheritance');
+      ancestor = this.runtimeState.entityScaleInheritance.get(ancestor)?.sourceId;
+    }
+    const ignoresGlobal = entityIgnoresGlobalTimeScale(this.runtimeState, sourceId);
+    this.runtimeState.entityScaleInheritance.set(entityId, {
+      sourceId,
+      inheritedScale: additionalScale,
+      sourceFinalScale: this.getEntityScale(sourceId),
+      sourceIgnoresGlobal: ignoresGlobal,
+    });
+    this.setIgnoreGlobalTimeScale(entityId, ignoresGlobal);
+  }
+
+  /** RootComponent 回收时清除自身倍率和来源订阅。 */
+  releaseInheritedEntityScale(entityId: string): void {
+    if (!this.runtimeState.entityScaleInheritance.delete(entityId)) return;
+    this.runtimeState.ignoreGlobalTimeScaleEntityIds.delete(entityId);
+    refreshInheritedEntityScales(this.runtimeState);
+  }
+
   setIgnoreGlobalTimeScale(entityId: string, ignore: boolean): void {
     if (entityId.length === 0) throw new Error('entity id must not be empty');
     if (ignore) this.runtimeState.ignoreGlobalTimeScaleEntityIds.add(entityId);
     else this.runtimeState.ignoreGlobalTimeScaleEntityIds.delete(entityId);
+    refreshInheritedEntityScales(this.runtimeState);
   }
 
   /** AbilitySystem 的兼容入口；干员也是具有稳定运行时身份的实体。 */
@@ -442,8 +480,10 @@ export function advanceTimeDilation(
     const instance = state.entityInstances[index]!;
     if (isValid(instance)) {
       tickEntityTimeDilation(curves, instance, COMBAT_FRAME_INTERVAL, globalScale);
+      refreshInheritedEntityScales(state);
     } else {
       const [removed] = state.entityInstances.splice(index, 1);
+      refreshInheritedEntityScales(state);
       observer.ended?.('entity', snapshotInstance(removed!), 'natural', removed!.entityId);
     }
   }
@@ -451,8 +491,10 @@ export function advanceTimeDilation(
     const instance = state.globalInstances[index]!;
     if (isValid(instance)) {
       tickGlobalTimeDilation(curves, instance, COMBAT_FRAME_INTERVAL);
+      refreshInheritedEntityScales(state);
     } else {
       const [removed] = state.globalInstances.splice(index, 1);
+      refreshInheritedEntityScales(state);
       observer.ended?.('global', snapshotInstance(removed!), 'natural');
     }
   }
@@ -470,16 +512,45 @@ export function advanceTimeDilation(
 function localTimeScale(state: TimeDilationState, entityId: string): number {
   return state.entityInstances
     .filter(instance => instance.entityId === entityId)
-    .reduce((scale, instance) => scale * instance.currentScale, 1);
+    .reduce(
+      (scale, instance) => scale * instance.currentScale,
+      state.entityScaleInheritance.get(entityId)?.inheritedScale ?? 1,
+    );
 }
 
-function entityTimeScale(state: TimeDilationState, entityId: string): number {
-  const ignoresGlobal =
+function entityIgnoresGlobalTimeScale(state: TimeDilationState, entityId: string): boolean {
+  return (
     state.ignoreGlobalTimeScaleEntityIds.has(entityId) ||
     state.globalInstances.some(
       instance => instance.active && instance.ignoredOperatorIds.has(entityId),
-    );
-  const globalScale = ignoresGlobal
+    )
+  );
+}
+
+/** 每次倍率修改后同步通知，不能延迟到投射物 Tick 再轮询来源的当前倍率。 */
+function refreshInheritedEntityScales(state: TimeDilationState): void {
+  for (const [entityId, binding] of state.entityScaleInheritance) {
+    const ignoresGlobal = entityIgnoresGlobalTimeScale(state, binding.sourceId);
+    if (ignoresGlobal !== binding.sourceIgnoresGlobal) {
+      binding.sourceIgnoresGlobal = ignoresGlobal;
+      if (ignoresGlobal) state.ignoreGlobalTimeScaleEntityIds.add(entityId);
+      else state.ignoreGlobalTimeScaleEntityIds.delete(entityId);
+    }
+    const scale = entityTimeScale(state, binding.sourceId);
+    const difference = Math.abs(scale - binding.sourceFinalScale);
+    if (
+      difference <=
+      Math.max(1e-6 * Math.max(Math.abs(scale), Math.abs(binding.sourceFinalScale)), 1.121039e-44)
+    )
+      continue;
+    binding.sourceFinalScale = scale;
+    // 原生数值通知读取来源 selfScale，不使用通知的 finalScale。
+    binding.inheritedScale = localTimeScale(state, binding.sourceId);
+  }
+}
+
+function entityTimeScale(state: TimeDilationState, entityId: string): number {
+  const globalScale = entityIgnoresGlobalTimeScale(state, entityId)
     ? 1
     : (selectActiveGlobalTimeDilation(state)?.currentScale ?? 1);
   return Math.max(0, localTimeScale(state, entityId) * globalScale);

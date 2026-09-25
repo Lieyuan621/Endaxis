@@ -32,16 +32,8 @@ export interface ProjectileCallbackInvocationSource {
   readonly sequence: CompiledBuffSequenceSource;
 }
 
-/**
- * 将已证明可同步执行的一次发射包装成独立宿主和回调 direct 板，不推导命中次数/回调顺序。
- * 同投射物共享实体板，
- * 回调 direct 各自以静态初值再合入发射快照。不同发射不复用，即使处于同一 ForEach 静态路径。
- *
- * 调用方必须提供有来源的模板初值，以及场景层已证明的同步事件顺序。这里只接受每个技能
- * 首次调用，且静态默认值已足够描述其创建基线；独立 SkillPatch/extra、重复回调的动态恢复、
- * 延迟回调、实体赋值仍由后续完整宿主投影闭合，不能冒充支持。
- */
-export function compileSynchronousProjectileCallbackScopesSource(input: {
+/** 在发射时求值实体赋值和来源快照；回调只提供依赖信息，不在这里执行。 */
+export function compileProjectileLaunchScopeSource(input: {
   readonly sourcePath: string;
   readonly launch: ProjectileLaunchActionSource;
   readonly template: {
@@ -49,17 +41,12 @@ export function compileSynchronousProjectileCallbackScopesSource(input: {
     readonly entityBlackboard: readonly DeclaredBlackboardValueSource[];
   } | null;
   readonly invocations: readonly ProjectileCallbackInvocationSource[];
+  readonly body: CompiledBuffSequenceSource;
   /** 仅限调用方已由完整 ProjectileData 证明不需要实体黑板的特殊回调。 */
   readonly allowMissingEntityBlackboardEvidence?: boolean;
 }): CompiledActionBlackboardScopeSource {
   const { sourcePath, launch, template, invocations } = input;
-  const projectedInvocations = invocations.map((invocation, invocationIndex) => ({
-    ...invocation,
-    sequence: omitDeadSingleEnemyBounceBookkeeping(
-      invocation.sequence,
-      invocations.slice(invocationIndex + 1).map(candidate => candidate.sequence),
-    ),
-  }));
+  const projectedInvocations = invocations;
   const callbackEntityBlackboardKeys = new Set(
     projectedInvocations.flatMap(invocation => [
       ...invocation.declaredBlackboard
@@ -95,28 +82,15 @@ export function compileSynchronousProjectileCallbackScopesSource(input: {
     routes.set(callback.event, callback.skillId);
   }
   const skills = new Set<string>();
-  const steps: CompiledBuffStepSource[] = projectedInvocations.map(invocation => {
+  for (const invocation of projectedInvocations) {
     if (routes.get(invocation.event) !== invocation.skillId)
       throw new Error(
-        `${sourcePath}: callback ${invocation.event} does not match the enabled native route`,
+        `${sourcePath}: callback ${invocation.event} does not match the native route`,
       );
     if (skills.has(invocation.skillId))
-      throw new Error(
-        `${sourcePath}: repeated callback skill requires dynamic restoration semantics`,
-      );
+      throw new Error(`${sourcePath}: repeated callback skill requires restart semantics`);
     skills.add(invocation.skillId);
-    return {
-      kind: 'withActionBlackboardScope',
-      parameters: {
-        scopeKey: `${sourcePath}:${invocation.skillId}`,
-        lifetime: 'execution',
-        alwaysNext: true,
-        initialValues: numericInitialValues(invocation.declaredBlackboard, sourcePath),
-        inheritParent: true,
-      },
-      body: invocation.sequence,
-    } satisfies CompiledActionBlackboardScopeSource;
-  });
+  }
   return {
     kind: 'withActionBlackboardScope',
     parameters: {
@@ -124,18 +98,14 @@ export function compileSynchronousProjectileCallbackScopesSource(input: {
       lifetime: 'execution',
       initialValues: {},
       inheritParent: launch.assignBlackboard,
-      ...(template === null
-        ? {}
-        : {
-            entityInitialValues: Object.fromEntries(
-              Object.entries(templateInitialValues!).filter(([key]) =>
-                callbackEntityBlackboardKeys.has(key),
-              ),
-            ),
-            ...(Object.keys(entityAssignments).length === 0 ? {} : { entityAssignments }),
-          }),
+      entityInitialValues: Object.fromEntries(
+        Object.entries(templateInitialValues ?? {}).filter(([key]) =>
+          callbackEntityBlackboardKeys.has(key),
+        ),
+      ),
+      ...(Object.keys(entityAssignments).length === 0 ? {} : { entityAssignments }),
     },
-    body: { steps },
+    body: input.body,
   };
 }
 
@@ -182,7 +152,7 @@ function collectEntityBlackboardReads(value: unknown): string[] {
  * 整个分支在 Next 的单敌人模型中不可观察。先从叶子确认消费者已消失，再删除条件，避免要求
  * 一个本来只服务多敌人弹射的 EntityBB 初值。
  */
-function omitDeadSingleEnemyBounceBookkeeping(
+export function omitDeadSingleEnemyBounceBookkeeping(
   sequence: CompiledBuffSequenceSource,
   laterCallbacks: readonly CompiledBuffSequenceSource[],
 ): CompiledBuffSequenceSource {

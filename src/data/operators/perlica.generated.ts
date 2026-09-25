@@ -1,13 +1,156 @@
 /** 由 tools/game-data-compiler 整名生成；不要手工编辑。 */
-import type { OperatorDefinition, SkillDefinition } from '../../core/game-data/operatorDefinition';
+import type {
+  ActionSequenceDefinition,
+  OperatorDefinition,
+  SkillDefinition,
+} from '../../core/game-data/operatorDefinition';
 import {
   branch,
+  instantiateActionSequence,
   scheduled,
   sequence,
   step,
   withActionBlackboardScope,
   withSkillBlackboard,
 } from './definitionHelpers';
+
+const sharedActionSequence4: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0004_pelica_attack3_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {},
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'electric',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  step('changeResourceByActionValue', {
+                    resource: 'sp',
+                    amount: { kind: 'blackboard', key: 'atb' },
+                    coefficient: { kind: 'constant', value: 1 },
+                    recipient: 'team',
+                    spGainKind: 'gain',
+                    spGainSource: 'normalAttack',
+                  }),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence2: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.100000001490116,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0004_pelica_attack2_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 3,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'electric',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  step('changeResourceByActionValue', {
+                    resource: 'sp',
+                    amount: { kind: 'blackboard', key: 'atb' },
+                    coefficient: { kind: 'constant', value: 0.3333333 },
+                    recipient: 'team',
+                    spGainKind: 'gain',
+                    spGainSource: 'normalAttack',
+                  }),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence3: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence4, ['\u0000endaxis-generated-identity:1']),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence1: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence2, ['\u0000endaxis-generated-identity:1']),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
 
 export const perlicaChr_0004_pelica_attack1: SkillDefinition = withSkillBlackboard(
   {
@@ -36,41 +179,63 @@ export const perlicaChr_0004_pelica_attack1: SkillDefinition = withSkillBlackboa
             'SkillData.chr_0004_pelica_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0004_pelica_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0004_pelica_attack1_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0004_pelica_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0004_pelica_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0004_pelica_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              step('changeResourceByActionValue', {
+                                resource: 'sp',
+                                amount: { kind: 'blackboard', key: 'atb' },
+                                coefficient: { kind: 'constant', value: 1 },
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                                spGainSource: 'normalAttack',
+                              }),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -113,98 +278,18 @@ export const perlicaChr_0004_pelica_attack2: SkillDefinition = withSkillBlackboa
     scheduledSequences: [
       scheduled(
         9,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0004_pelica_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0004_pelica_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0]:chr_0004_pelica_attack2_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0004_pelica_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.3333333 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0004_pelica_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack2',
+          'chr_0004_pelica_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         9,
       ),
       scheduled(
         12,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0004_pelica_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0004_pelica_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:chr_0004_pelica_attack2_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0004_pelica_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.3333333 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0004_pelica_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack2',
+          'chr_0004_pelica_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         12,
       ),
       scheduled(
@@ -247,146 +332,26 @@ export const perlicaChr_0004_pelica_attack3: SkillDefinition = withSkillBlackboa
     scheduledSequences: [
       scheduled(
         16,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack3',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0004_pelica_attack3_projhit',
-                {},
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0004_pelica_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack3',
+          'chr_0004_pelica_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         16,
       ),
       scheduled(
         19,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack3',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0004_pelica_attack3_projhit',
-                {},
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0004_pelica_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack3',
+          'chr_0004_pelica_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         19,
       ),
       scheduled(
         22,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack3',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0004_pelica_attack3_projhit',
-                {},
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0004_pelica_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0004_pelica_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack3',
+          'chr_0004_pelica_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         22,
       ),
       scheduled(
@@ -434,43 +399,65 @@ export const perlicaChr_0004_pelica_attack4: SkillDefinition = withSkillBlackboa
             'SkillData.chr_0004_pelica_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_normal_attack4',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0004_pelica_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0004_pelica_attack4_projhit',
-                {},
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack', 'normalAttackLastCombo'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                      staggerOnlyWhenCasterControlled: true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0004_pelica_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0004_pelica_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: {},
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack', 'normalAttackLastCombo'],
+                              stagger: { kind: 'blackboard', key: 'poise' },
+                              staggerOnlyWhenCasterControlled: true,
+                            },
+                            'chr_0004_pelica_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              step('changeResourceByActionValue', {
+                                resource: 'sp',
+                                amount: { kind: 'blackboard', key: 'atb' },
+                                coefficient: { kind: 'constant', value: 1 },
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                                spGainSource: 'normalAttack',
+                              }),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -640,22 +627,26 @@ export const perlicaChr_0004_pelica_plunging_attack_end: SkillDefinition = withS
       scheduled(
         1,
         sequence(
-          step('launchProjectileLifetime', {
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-          }),
-          step('launchProjectileLifetime', {
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-          }),
-          step('launchProjectileLifetime', {
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-          }),
-          step('launchProjectileLifetime', {
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-          }),
+          {
+            kind: 'launchProjectile',
+            parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+            callbacks: [],
+          },
+          {
+            kind: 'launchProjectile',
+            parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+            callbacks: [],
+          },
+          {
+            kind: 'launchProjectile',
+            parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+            callbacks: [],
+          },
+          {
+            kind: 'launchProjectile',
+            parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+            callbacks: [],
+          },
         ),
         1,
       ),
@@ -740,52 +731,74 @@ export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = withSkillBlac
             'SkillData.chr_0004_pelica_combo_skill.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0004_pelica_combo_skill',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0004_pelica_combo_skill.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0004_pelica_combo_skill_projhit',
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { onReach: true, finishOnHit: true },
+              },
+              callbacks: [
                 {
-                  atb: 0,
-                  atk_scale: 1,
-                  duration: 5,
-                  extra_scaling: 1,
-                  level: 1,
-                  poise: 0,
-                  talent2: 0,
-                  usp: 0,
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0004_pelica_combo_skill_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: {
+                      atb: 0,
+                      atk_scale: 1,
+                      duration: 5,
+                      extra_scaling: 1,
+                      level: 1,
+                      poise: 0,
+                      talent2: 0,
+                      usp: 0,
+                    },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step('applyBuff', {
+                            buffId: 'buff_common_pulse_pulse_conduct_triggered',
+                            target: 'enemy',
+                            inheritSourceSkillCastInfo: true,
+                            copiedBlackboardAssignments: {
+                              duration: 'duration',
+                              extra_scaling: 'extra_scaling',
+                            },
+                          }),
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['comboSkill'],
+                              features: ['canBreakWeakness'],
+                              stagger: { kind: 'blackboard', key: 'poise' },
+                            },
+                            'chr_0004_pelica_combo_skill:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1',
+                          ),
+                          step('changeResourceByActionValue', {
+                            resource: 'ultimateEnergy',
+                            amount: { kind: 'blackboard', key: 'usp' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            recipient: 'caster',
+                          }),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
                 },
-                true,
-                sequence(
-                  step('applyBuff', {
-                    buffId: 'buff_common_pulse_pulse_conduct_triggered',
-                    target: 'enemy',
-                    inheritSourceSkillCastInfo: true,
-                    copiedBlackboardAssignments: {
-                      duration: 'duration',
-                      extra_scaling: 'extra_scaling',
-                    },
-                  }),
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['comboSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                    },
-                    'chr_0004_pelica_combo_skill:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/1',
-                  ),
-                  step('changeResourceByActionValue', {
-                    resource: 'ultimateEnergy',
-                    amount: { kind: 'blackboard', key: 'usp' },
-                    coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'caster',
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1266,6 +1279,14 @@ export const perlica: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 50 },
       childSkill: {
         skillId: 'chr_0004_pelica_ultimate_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 120,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {},
         scheduledSequences: [
           scheduled(54, sequence(step('finishActionOwnerAbilityEntity', {})), 54),

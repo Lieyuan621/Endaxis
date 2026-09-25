@@ -43,6 +43,7 @@ export function canOmitUnusedNativeCondition(
   return [
     'mainOperator',
     'twoDirectionAngle',
+    'targetAngle',
     'distance',
     'floatCompare',
     'comboCameraAlphaSetting',
@@ -274,6 +275,8 @@ function compileConditionLeaf(
       condition.target.targetSource === 'Owner' && context.actionOwnerTarget === 'caster';
     const sourceIsKnownOwner =
       condition.source.targetSource === 'Owner' && condition.source.targetGroupKey === '';
+    const sourceIsMainCharacter =
+      condition.source.targetSource === 'MainCharacter' && condition.source.targetGroupKey === '';
     const sourceIsKnownCaster =
       ((condition.source.targetSource === 'Owner' && context.actionOwnerTarget === 'caster') ||
         (condition.source.targetSource === 'Source' && context.actionSourceTarget === 'caster')) &&
@@ -291,7 +294,10 @@ function compileConditionLeaf(
       condition.target.targetGroupKey !== '' &&
       targetGroups.get(condition.target.targetGroupKey) === 'abilityEntity';
     if (
-      (sourceIsKnownOwner || sourceIsKnownCaster || sourceIsFixedCasterBuffSource) &&
+      (sourceIsKnownOwner ||
+        sourceIsKnownCaster ||
+        sourceIsFixedCasterBuffSource ||
+        sourceIsMainCharacter) &&
       targetIsStaticEnemyContext &&
       !condition.containsHittableObject
     ) {
@@ -427,7 +433,8 @@ function compileConditionLeaf(
       };
     }
     if (
-      condition.source.targetSource === 'Owner' &&
+      (condition.source.targetSource === 'Owner' ||
+        condition.source.targetSource === 'MainCharacter') &&
       condition.target.targetSource === 'Context' &&
       condition.target.targetGroupKey !== '' &&
       context.singleEnemyTargetGroupKeys?.has(condition.target.targetGroupKey) === true &&
@@ -457,21 +464,33 @@ function compileConditionLeaf(
         ],
       };
     }
-    const targetIsCurrentAbilityEntity =
-      condition.target.targetSource === 'Target' ||
+    const targetIsKnownInstance =
+      (condition.target.targetSource === 'Target' &&
+        ['currentAbilityEntity', 'enemy', 'caster'].includes(context.actionTargetTarget)) ||
       (condition.target.targetSource === 'Context' &&
         condition.target.targetGroupKey !== '' &&
         targetGroups.get(condition.target.targetGroupKey) === 'abilityEntity');
     if (
-      context.actionTargetTarget !== 'currentAbilityEntity' ||
       (context.actionOwnerTarget !== 'caster' && context.fixedBuffOwnerTarget !== 'caster') ||
       condition.source.targetSource !== 'Owner' ||
-      !targetIsCurrentAbilityEntity ||
+      !targetIsKnownInstance ||
       condition.includeTargetRadius ||
       condition.containsHittableObject
     )
-      throw new Error(`${sourcePath}: unsupported zero-distance condition endpoints/options`);
-    // ForEach guarantees a concrete entity; an absent target must not become distance zero.
+      throw new Error(
+        `${sourcePath}: unsupported zero-distance condition endpoints/options ` +
+          JSON.stringify({
+            source: condition.source.targetSource,
+            target: condition.target.targetSource,
+            targetGroup: condition.target.targetGroupKey,
+            targetKind: targetGroups.get(condition.target.targetGroupKey),
+            owner: context.actionOwnerTarget,
+            inputTarget: context.actionTargetTarget,
+            includeTargetRadius: condition.includeTargetRadius,
+            containsHittableObject: condition.containsHittableObject,
+          }),
+      );
+    // 固定技能目标或 ForEach 已保证实例存在；不能把空目标组当成距离为零。
     // 原生 lessThan=true 的比较是 <=，不是 <。
     return {
       kind: 'actionValueCompare',
@@ -1093,7 +1112,8 @@ function compileConditionLeaf(
       };
     }
     if (
-      context.actionTargetTarget === 'currentOperator' &&
+      (context.actionTargetTarget === 'currentOperator' ||
+        (context.actionTargetTarget === 'actionInputTarget' && context.actionInputIsOperator)) &&
       condition.target.targetSource === 'Target'
     ) {
       const types = projectObjectTypeSelection(

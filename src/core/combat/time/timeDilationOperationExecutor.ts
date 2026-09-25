@@ -169,14 +169,14 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
     const result: string[] = [];
     for (const query of queries) {
       if (query.kind === 'current') {
-        if (context.currentTarget?.kind !== 'abilityEntity') {
-          throw new Error('current ability-entity query requires an AbilityEntity target');
+        if (context.actionOwnerAbilityEntity === undefined) {
+          throw new Error('current ability-entity query requires an AbilityEntity action owner');
         }
         const resolve = this.dependencies.resolveContextAbilityEntityId;
         if (resolve === undefined) {
           throw new Error('current ability-entity target requires a stable entity resolver');
         }
-        const entityId = resolve(context.currentTarget.instanceId);
+        const entityId = resolve(context.actionOwnerAbilityEntity.instanceId);
         if (entityId !== null) result.push(entityId);
         continue;
       }

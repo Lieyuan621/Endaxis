@@ -810,7 +810,8 @@ describe('ScenarioSimulationService', () => {
     const opened = run.receiptEntries.find(entry => entry.event === 'ComboWindowOpened');
     const consumed = run.receiptEntries.find(entry => entry.event === 'ComboWindowConsumed');
 
-    expect(opened).toMatchObject({ frame: 28, sourceId: 'track:1' });
+    // 第28帧发射；Default 投射物 Tick 在下一帧命中后才触发末段普攻事件。
+    expect(opened).toMatchObject({ frame: 29, sourceId: 'track:1' });
     expect(consumed).toMatchObject({ frame: 30, sourceId: 'track:1' });
     expect(opened!.sequence).toBeLessThan(consumed!.sequence);
     expect(run.comboWindowDiagnostics).toEqual([]);

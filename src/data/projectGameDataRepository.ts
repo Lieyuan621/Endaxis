@@ -46,6 +46,7 @@ const OPERATOR_SLUG_ORDER = [
   'rossi',
   'camille',
   'pogranichnik',
+  'purrchena',
   'tangtang',
   'typhoeus',
   'laevatain',

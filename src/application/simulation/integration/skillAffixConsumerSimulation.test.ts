@@ -92,11 +92,25 @@ it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=
       entry.data?.castId === 'skillCast:yvonne:affix',
   );
   expect(ends).toHaveLength(1);
-  // 正式定义将投射物 Buff 绑定到动作区间：打断会同步执行其 finish 伤害。
-  // 监听器必须活过这次伤害，随后才随施法引用归零结束；后续普攻不能复活它。
-  expect(damage[0]!.sequence).toBeLessThan(ends[0]!.sequence);
+  const launches = entries.filter(
+    entry =>
+      entry.event === 'ProjectileLaunched' && entry.data?.castId === 'skillCast:yvonne:affix',
+  );
+  expect(launches).toHaveLength(1);
+  // 原生 projectileSource=Owner：该 Buff 来源是敌人，发射者仍是伊冯。
+  expect(launches[0]!.sourceId).toBe('track:yvonne');
+  expect(launches[0]!.frame).toBe(interrupted ? 10 : 18);
+  // Buff finish 在 Battle 阶段发射；下一帧 Default 阶段才推进投射物并命中。
+  // SkillAffix 同时持有施法和投射物 reset 引用，不能在施法结束时提前关闭。
+  expect(damage[0]!.frame).toBe(launches[0]!.frame + 1);
+  expect(damage[0]!.sequence).toBeLessThan(finished!.sequence);
   expect(ends[0]!.sequence).toBeLessThan(finished!.sequence);
-  expect(finished!.frame).toBe(ends[0]!.frame);
-  expect(damage[0]!.frame).toBe(interrupted ? 10 : 18);
+  if (interrupted) {
+    expect(ends[0]!.sequence).toBeLessThan(damage[0]!.sequence);
+    expect(finished!.frame).toBeGreaterThan(damage[0]!.frame);
+  } else {
+    expect(damage[0]!.sequence).toBeLessThan(ends[0]!.sequence);
+    expect(finished!.frame).toBe(ends[0]!.frame);
+  }
   expect(ends[0]!.frame).toBe(interrupted ? 10 : 151);
 });

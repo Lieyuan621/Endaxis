@@ -22,7 +22,7 @@ type Step = CombatStepForKind<
   | 'finishTimeline'
   | 'withActionBlackboardScope'
   | 'repeatByActionValue'
-  | 'scheduleProjectileFinishCallback'
+  | 'launchProjectile'
 >;
 const props = defineProps<{ step: Step; skillLevel: number }>();
 const emit = defineEmits<{ update: [step: CombatStepDefinition] }>();
@@ -145,49 +145,33 @@ function setShareParent(event: Event): void {
       /></label>
       <p>在左侧循环节点上添加动作，直接选择其下的动作编辑；每轮创建新的子步骤实例。</p>
     </template>
-    <template v-else-if="step.kind === 'scheduleProjectileFinishCallback'">
-      <label
-        ><span>回调自身原生 SkillType</span>
-        <select
-          :value="step.callback.nativeSkillType"
-          @change="
-            emit('update', {
-              ...step,
-              callback: {
-                ...step.callback,
-                nativeSkillType: ($event.target as HTMLSelectElement).value as NativeSkillType,
-              },
-            })
-          "
-        >
-          <option v-for="type in NATIVE_SKILL_TYPES" :key="type" :value="type">{{ type }}</option>
-        </select>
-      </label>
-      <p>这是回调技能自身的类型，不是继承的伤害来源技能类型。</p>
-      <label
-        ><span>投射物结束延迟（秒）</span
-        ><input
+    <template v-else-if="step.kind === 'launchProjectile'">
+      <p>一次发射对应一个投射物；在各事件回调下编辑完整技能。</p>
+      <label v-if="typeof step.parameters.finish === 'number'"
+        ><span>最长存活时间（秒）</span>
+        <input
           type="number"
-          min="0"
+          min="0.01"
           step="0.01"
-          :value="step.parameters.delaySeconds"
+          :value="step.parameters.finish"
           @input="
             emit('update', {
               ...step,
               parameters: {
                 ...step.parameters,
-                delaySeconds: Math.max(0, Number(($event.target as HTMLInputElement).value)),
+                finish: Math.max(0.01, Number(($event.target as HTMLInputElement).value)),
               },
             })
           "
-      /></label>
+        />
+      </label>
       <label
-        ><span>结束后回收等待（秒）</span
-        ><input
+        ><span>结束后回收等待（秒）</span>
+        <input
           type="number"
           min="0"
           step="0.01"
-          :value="step.parameters.recycleDelaySeconds"
+          :value="step.parameters.recycleDelaySeconds ?? 0"
           @input="
             emit('update', {
               ...step,
@@ -197,28 +181,33 @@ function setShareParent(event: Event): void {
               },
             })
           "
-      /></label>
-      <label
-        ><span>回调技能自然时长（帧）</span
-        ><input
-          type="number"
-          min="1"
-          step="1"
-          :value="step.callback.naturalDurationFrames"
-          @input="
+        />
+      </label>
+      <label v-for="(callback, index) in step.callbacks" :key="index">
+        <span>{{ callback.event }} · {{ callback.skill.skillId }} 原生技能类型</span>
+        <select
+          :value="callback.skill.nativeSkillType"
+          @change="
             emit('update', {
               ...step,
-              callback: {
-                ...step.callback,
-                naturalDurationFrames: Math.max(
-                  1,
-                  Math.round(Number(($event.target as HTMLInputElement).value)),
-                ),
-              },
+              callbacks: step.callbacks.map((item, i) =>
+                i === index
+                  ? {
+                      ...item,
+                      skill: {
+                        ...item.skill,
+                        nativeSkillType: ($event.target as HTMLSelectElement)
+                          .value as NativeSkillType,
+                      },
+                    }
+                  : item,
+              ),
             })
           "
-      /></label>
-      <p>回调技能内按独立时间轴编辑动作；自然时长和对象回收等待互相独立。</p>
+        >
+          <option v-for="type in NATIVE_SKILL_TYPES" :key="type" :value="type">{{ type }}</option>
+        </select>
+      </label>
     </template>
     <template v-else>
       <label

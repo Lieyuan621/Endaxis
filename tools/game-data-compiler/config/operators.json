@@ -3,6 +3,157 @@
   "simulationNoEffectBuffIds": [],
   "operators": [
     {
+      "slug": "purrchena",
+      "exportName": "purrchenaGeneratedSource",
+      "gameId": "PURRCHENA",
+      "charId": "chr_0038_purrche",
+      "talents": [{ "index": 0 }, { "index": 1 }],
+      "potentials": [{}, {}, {}, {}, {}],
+      "skillGroups": [
+        {
+          "key": "basicAttack",
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "nativeGroupType": 0,
+          "skillKeys": [
+            "chr_0038_purrche_attack1",
+            "chr_0038_purrche_attack2",
+            "chr_0038_purrche_attack3"
+          ]
+        },
+        {
+          "key": "finisher",
+          "skillType": "finisher",
+          "levelSource": "basicAttack",
+          "nativeGroupType": 0,
+          "skillKeys": ["chr_0038_purrche_power_attack"]
+        },
+        {
+          "key": "plungingAttack",
+          "skillType": "plungingAttack",
+          "levelSource": "basicAttack",
+          "nativeGroupType": 0,
+          "skillKeys": ["chr_0038_purrche_plunging_attack_end"]
+        },
+        {
+          "key": "battleSkill",
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "nativeGroupType": 1,
+          "skillKeys": [
+            "chr_0038_purrche_normal_skill",
+            "chr_0038_purrche_normal_skill_counter",
+            "chr_0038_purrche_normal_skill_block_1",
+            "chr_0038_purrche_normal_skill_block_2",
+            "chr_0038_purrche_normal_skill_loop_1",
+            "chr_0038_purrche_normal_skill_loop_2"
+          ],
+          "replacementPlacements": {
+            "chr_0038_purrche_normal_skill_block_1": "internal",
+            "chr_0038_purrche_normal_skill_block_2": "internal",
+            "chr_0038_purrche_normal_skill_loop_1": "internal",
+            "chr_0038_purrche_normal_skill_loop_2": "internal",
+            "chr_0038_purrche_normal_skill_counter": "sequence"
+          }
+        },
+        {
+          "key": "comboSkill",
+          "skillType": "comboSkill",
+          "levelSource": "comboSkill",
+          "nativeGroupType": 3,
+          "skillKeys": ["chr_0038_purrche_combo_skill"]
+        },
+        {
+          "key": "ultimate",
+          "skillType": "ultimate",
+          "levelSource": "ultimate",
+          "nativeGroupType": 2,
+          "skillKeys": ["chr_0038_purrche_ultimate_skill"]
+        }
+      ],
+      "skills": [
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0038_purrche_attack1.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0038_purrche_attack2.json"
+        },
+        {
+          "skillType": "basicAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0038_purrche_attack3.json"
+        },
+        {
+          "skillType": "finisher",
+          "levelSource": "basicAttack",
+          "source": "chr_0038_purrche_power_attack.json"
+        },
+        {
+          "skillType": "plungingAttack",
+          "levelSource": "basicAttack",
+          "source": "chr_0038_purrche_plunging_attack_end.json"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0038_purrche_normal_skill.json",
+          "timelineBlockFollowUpSkillId": "chr_0038_purrche_normal_skill_counter"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0038_purrche_normal_skill_counter.json"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0038_purrche_normal_skill_block_1.json"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0038_purrche_normal_skill_block_2.json"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0038_purrche_normal_skill_loop_1.json"
+        },
+        {
+          "skillType": "battleSkill",
+          "levelSource": "battleSkill",
+          "source": "chr_0038_purrche_normal_skill_loop_2.json"
+        },
+        {
+          "skillType": "comboSkill",
+          "levelSource": "comboSkill",
+          "source": "chr_0038_purrche_combo_skill.json"
+        },
+        {
+          "skillType": "ultimate",
+          "levelSource": "ultimate",
+          "source": "chr_0038_purrche_ultimate_skill.json"
+        }
+      ],
+      "runtimeReplacementSkillKeys": [
+        "chr_0038_purrche_normal_skill_block_1",
+        "chr_0038_purrche_normal_skill_block_2",
+        "chr_0038_purrche_normal_skill_loop_1",
+        "chr_0038_purrche_normal_skill_loop_2",
+        "chr_0038_purrche_normal_skill_counter"
+      ],
+      "runtimeTemplate": {
+        "sourceFile": "CharacterData/chr_0038_purrche.runtime-template.json",
+        "sourceSha256": "97f9dd9761f661fef485e68e36c0a6f7f0202e60d3434656c9e963b091c95a0a",
+        "sourceCharacterId": "chr_0038_purrche",
+        "comboSkillGroupKey": "comboSkill"
+      }
+    },
+    {
       "slug": "perlica",
       "exportName": "perlicaGeneratedSource",
       "gameId": "PERLICA",

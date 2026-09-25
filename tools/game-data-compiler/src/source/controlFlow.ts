@@ -95,6 +95,8 @@ export interface NativeActionBodySourceMap<TLeaf> {
   };
   readonly tickInterval: {
     readonly kind: 'tickInterval';
+    /** TickInterval 即时收尾；ExecuteInterval 保留子动作，下一轮开始前再结束、重置。 */
+    readonly bodyLifetime: 'instant' | 'untilNextExecution';
     readonly executeEachFrame: boolean;
     readonly intervalSeconds: number;
     readonly useIntervalBlackboardKey: boolean;
@@ -295,6 +297,32 @@ function parseNativeActionNodeSource<TLeaf>(
     body = parseTimelineJumpBody(action, path, inheritedBlackboard, parseLeaf);
   } else if (nativeName === 'TickIntervalAction') {
     body = parseTickIntervalBody(action, path, inheritedBlackboard, parseLeaf);
+  } else if (nativeName === 'ExecuteIntervalAction') {
+    requireExactFields(
+      action,
+      new Set([...ACTION_META_FIELDS, 'executeEachFrame', 'executeInterval', 'actionOnExecuting']),
+      path,
+    );
+    const interval = parseStrictBlackboardScalar(
+      action.executeInterval,
+      `${path}.executeInterval`,
+      inheritedBlackboard,
+      false,
+    );
+    body = {
+      kind: 'tickInterval',
+      bodyLifetime: 'untilNextExecution',
+      executeEachFrame: requireBoolean(action.executeEachFrame, `${path}.executeEachFrame`),
+      intervalSeconds: interval.value,
+      useIntervalBlackboardKey: interval.blackboardKey !== null,
+      intervalBlackboardKey: interval.blackboardKey ?? '',
+      actionOnTick: parseNativeSequenceSource(
+        action.actionOnExecuting,
+        `${path}.actionOnExecuting`,
+        inheritedBlackboard,
+        parseLeaf,
+      ),
+    };
   } else if (nativeName === 'TickIntervalActionV2') {
     body = parseTickIntervalV2Body(action, path, inheritedBlackboard, parseLeaf);
   } else if (nativeName === 'TogglableAction') {
@@ -586,6 +614,7 @@ function parseTickIntervalBody<TLeaf>(
   }
   return {
     kind: 'tickInterval',
+    bodyLifetime: 'instant',
     executeEachFrame: requireBoolean(action.executeEachFrame, `${path}.executeEachFrame`),
     intervalSeconds: requireNumber(action.tickInterval, `${path}.tickInterval`),
     useIntervalBlackboardKey,

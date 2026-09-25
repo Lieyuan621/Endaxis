@@ -33,3 +33,4 @@ export { catcher } from './catcher.generated';
 export { ardelia } from './ardelia.generated';
 export { liino } from './liino.generated';
 export { default as typhoeus } from './typhoeus.generated';
+export { purrchena } from './purrchena.generated';

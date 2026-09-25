@@ -877,43 +877,48 @@ describe('standardPlayerDamageCompatibility', () => {
         operator({
           steps: [
             {
-              kind: 'scheduleProjectileFinishCallback',
-              parameters: { delaySeconds: 0.1, recycleDelaySeconds: 0 },
-              callback: {
-                skillId: 'callback',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: {
-                    resource: 'ultimateEnergy',
-                    value: 0,
-                    availabilityThreshold: 0,
+              kind: 'launchProjectile',
+              parameters: { finish: 0.1, recycleDelaySeconds: 0 },
+              callbacks: [
+                {
+                  event: 'finish',
+                  skill: {
+                    skillId: 'callback',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: {
+                        resource: 'ultimateEnergy',
+                        value: 0,
+                        availabilityThreshold: 0,
+                      },
+                    },
+                    initialBlackboard: {},
+                    timelineActions: [
+                      {
+                        startFrame: 0,
+                        endFrame: 0,
+                        sequence: {
+                          steps: [
+                            {
+                              kind: 'changeResource',
+                              parameters: {
+                                resource: 'sp',
+                                amount: 1,
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
                   },
                 },
-                initialBlackboard: {},
-                timelineActions: [
-                  {
-                    startFrame: 0,
-                    endFrame: 0,
-                    sequence: {
-                      steps: [
-                        {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'sp',
-                            amount: 1,
-                            recipient: 'team',
-                            spGainKind: 'gain',
-                          },
-                        },
-                      ],
-                    },
-                  },
-                ],
-              },
+              ],
             },
           ],
         }),

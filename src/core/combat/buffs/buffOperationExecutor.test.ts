@@ -116,7 +116,10 @@ describe('BuffOperationExecutor', () => {
     const executor = new BuffOperationExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
-      resolveEventTarget: () => source,
+      resolveEventTarget: () => {
+        if (!shield) throw new Error('来源已经回收，不能索取活动 Buff 容器');
+        return source;
+      },
       resolveBuffDefinition: () => (lookup === 'catalog' ? definition : undefined),
       delegate,
     });
@@ -1035,6 +1038,62 @@ describe('BuffOperationExecutor', () => {
 
     executor.end(step, { blackboard: new ActionBlackboard(), actionBuffReferencesState });
     expect(finished).toEqual(['other']);
+  });
+
+  it('Aura 结束先回收创建的实例，再清理指定 Owner，而不是对离场目标查同名 Buff', () => {
+    const calls: string[] = [];
+    const target = {
+      ownerId: 'enemy',
+      applyScoped: () => ({
+        isRecycled: false,
+        reference: createTestBuffReference(),
+        finish: () => {
+          calls.push('instance');
+          return true;
+        },
+      }),
+      finishByIds: () => {
+        calls.push('target');
+        return 0;
+      },
+      getCountByIds: () => 0,
+      holdByIds: () => ({ release: () => undefined }),
+      getCountByTags: () => 0,
+      matchesEntityTags: () => false,
+      findFirstByIds: () => undefined,
+      findFirstByTags: () => undefined,
+      finishByTags: () => 0,
+    };
+    const owner = {
+      ...target,
+      ownerId: 'operator',
+      finishByIds: () => {
+        calls.push('owner');
+        return 0;
+      },
+    };
+    const executor = new BuffOperationExecutor({
+      sourceId: 'operator',
+      resolveTarget: recipient => (recipient === 'caster' ? owner : target),
+      delegate,
+    });
+    const step = {
+      kind: 'applyBuff' as const,
+      parameters: {
+        buffId: 'aura',
+        target: 'enemy' as const,
+        finishByAction: true,
+        onActionEndFinishBuffs: { target: 'caster' as const, buffIds: ['aura'] },
+      },
+    };
+    const context = {
+      blackboard: new ActionBlackboard(),
+      actionBuffReferencesState: { active: false, references: [] },
+    };
+    executor.execute(step, context);
+    expect(calls).toEqual([]);
+    executor.end(step, context);
+    expect(calls).toEqual(['instance', 'owner']);
   });
 
   it('transfers the same action-duration Buff handle only to an allowed next native skill', () => {

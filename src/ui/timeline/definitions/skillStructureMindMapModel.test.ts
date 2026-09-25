@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createAbilityEntityChildSkillDraft } from './skills/skillDefinitionEditorViewModel';
 import type {
   AbilityEntityDefinition,
   SkillDefinition,
@@ -98,11 +99,11 @@ describe('skillStructureMindMapModel', () => {
       lifetime: { kind: 'limited', durationSeconds: 50 },
       childSkills: {
         chr_0032_first: {
-          skillId: 'chr_0032_first',
+          ...createAbilityEntityChildSkillDraft('chr_0032_first'),
           scheduledSequences: [],
         },
         'chr_0032.second': {
-          skillId: 'chr_0032.second',
+          ...createAbilityEntityChildSkillDraft('chr_0032.second'),
           blackboard: { scale: 1 },
           scheduledSequences: [
             {
@@ -206,7 +207,7 @@ describe('skillStructureMindMapModel', () => {
                       kind: 'startCurrentAbilityEntityChildSkill',
                       parameters: {
                         childSkill: {
-                          skillId: 'child.test',
+                          ...createAbilityEntityChildSkillDraft('child.test'),
                           scheduledSequences: [
                             {
                               startFrame: 0,
@@ -217,31 +218,36 @@ describe('skillStructureMindMapModel', () => {
                       },
                     },
                     {
-                      kind: 'scheduleProjectileFinishCallback',
-                      parameters: { delaySeconds: 1, recycleDelaySeconds: 0 },
-                      callback: {
-                        skillId: 'callback',
-                        nativeSkillType: 'normalSkill',
-                        naturalDurationFrames: 1,
-                        castResource: {
-                          costFrame: 0,
-                          cooldownSeconds: 0,
-                          maxChargeTime: 1,
-                          cost: {
-                            resource: 'ultimateEnergy',
-                            value: 0,
-                            availabilityThreshold: 0,
+                      kind: 'launchProjectile',
+                      parameters: { finish: 1, recycleDelaySeconds: 0 },
+                      callbacks: [
+                        {
+                          event: 'finish',
+                          skill: {
+                            skillId: 'callback',
+                            nativeSkillType: 'normalSkill',
+                            naturalDurationFrames: 1,
+                            castResource: {
+                              costFrame: 0,
+                              cooldownSeconds: 0,
+                              maxChargeTime: 1,
+                              cost: {
+                                resource: 'ultimateEnergy',
+                                value: 0,
+                                availabilityThreshold: 0,
+                              },
+                            },
+                            blackboard: {},
+                            scheduledSequences: [
+                              {
+                                startFrame: 0,
+                                endFrame: 0,
+                                sequence: { steps: [{ kind: 'finishTimeline', parameters: {} }] },
+                              },
+                            ],
                           },
                         },
-                        blackboard: {},
-                        scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 0,
-                            sequence: { steps: [{ kind: 'finishTimeline', parameters: {} }] },
-                          },
-                        ],
-                      },
+                      ],
                     },
                   ],
                 },
@@ -256,7 +262,7 @@ describe('skillStructureMindMapModel', () => {
     const callbackBody = nodes.find(
       node =>
         node.sourcePath ===
-        'scheduledSequences[0].sequence.steps[0].body.steps[1].callback.scheduledSequences',
+        'scheduledSequences[0].sequence.steps[0].body.steps[1].callbacks[0].skill.scheduledSequences',
     );
     expect(childSkill).toMatchObject({
       relationToParent: 'port',
@@ -556,7 +562,7 @@ describe('skillStructureMindMapModel', () => {
     const entity = buildAbilityEntityStructureMindMap('entity.test', {
       lifetime: { kind: 'limited', durationSeconds: 10 },
       childSkill: {
-        skillId: 'entity-child',
+        ...createAbilityEntityChildSkillDraft('entity-child'),
         scheduledSequences: [
           {
             startFrame: 3,

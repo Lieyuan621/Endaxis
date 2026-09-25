@@ -17,7 +17,7 @@ export const STEP_TYPE_GROUPS: readonly StepTypeGroup[] = [
     kinds: [
       'readAbilityEntityRemainingDuration',
       'setAbilityEntityRemainingDuration',
-      'scheduleProjectileFinishCallback',
+      'launchProjectile',
       'startTimeDilation',
       'startUltimateTimeDilation',
       'setIgnoreGlobalTimeScale',

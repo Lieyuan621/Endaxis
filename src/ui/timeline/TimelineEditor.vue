@@ -114,7 +114,10 @@ import {
   ActiveScenarioEditorSession,
   ProjectEditorSession,
 } from '../../application/editor/projectEditorSession';
-import { AdaptiveTimelineSimulationService } from '../../application/simulation/adaptiveTimelineSimulationService';
+import {
+  AdaptiveTimelineSimulationService,
+  INTERACTIVE_SIMULATION_BUDGET_MS,
+} from '../../application/simulation/adaptiveTimelineSimulationService';
 import { createEditorSimulationService } from '../../application/simulation/editorSimulationService';
 import { WorkerScenarioSimulationService } from '../../application/simulation/workerScenarioSimulationService';
 import { useProjectDefinitionWorkspaces } from './definitions/useProjectDefinitionWorkspaces';
@@ -485,7 +488,6 @@ const { appearance, setAppearance } = useAppearance();
 const TIMELINE_TRACK_HEADER_WIDTH = 180;
 const TIMELINE_RULER_HEIGHT = 60;
 const TIMELINE_SCROLLBAR_SIZE = 12;
-const INTERACTIVE_SIMULATION_BUDGET_MS = 1000 / 60;
 const {
   timelineZoomPercent,
   pxPerFrame,
@@ -1562,9 +1564,6 @@ const {
 } = useScenarioSimulation({
   scenario,
   service: simulationService,
-  // 拖动时先绘制区间预览；密集落点只保留最后一次完整模拟。
-  isInteractive: () => interactionSession.current?.owner === 'cast-move',
-  interactiveDebounceMs: 16,
 });
 const {
   battleLogSnapshot,

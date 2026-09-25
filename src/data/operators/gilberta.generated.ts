@@ -15,36 +15,47 @@ import {
   withSkillBlackboard,
 } from './definitionHelpers';
 
-const sharedActionSequence1: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    {},
-    true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        {},
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'nature',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
+const sharedActionSequence2: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0013_aglina_attack2_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
             sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'nature',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
               branch(
                 { kind: 'casterControlled' },
                 sequence(
                   step('changeResourceByActionValue', {
                     resource: 'sp',
                     amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 0.3333333 },
+                    coefficient: { kind: 'constant', value: 0.5 },
                     recipient: 'team',
                     spGainKind: 'gain',
                     spGainSource: 'normalAttack',
@@ -52,62 +63,167 @@ const sharedActionSequence1: ActionSequenceDefinition = sequence(
                 ),
               ),
             ),
-            undefined,
-            { alwaysNext: true },
+            3,
           ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence4: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0013_aglina_attack3_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {},
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'nature',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  branch(
+                    { kind: 'casterControlled' },
+                    sequence(
+                      step('changeResourceByActionValue', {
+                        resource: 'sp',
+                        amount: { kind: 'blackboard', key: 'atb' },
+                        coefficient: { kind: 'constant', value: 0.3333333 },
+                        recipient: 'team',
+                        spGainKind: 'gain',
+                        spGainSource: 'normalAttack',
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence1: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence2, ['\u0000endaxis-generated-identity:1']),
     {},
     { lifetime: 'execution' },
   ),
 );
 
-const sharedActionSequence2: ActionSequenceDefinition = sequence(
+const sharedActionSequence6: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0013_aglina_attack4_projhit_2',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'nature',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                  stagger: { kind: 'blackboard', key: 'poise' },
+                  staggerMultiplier: { kind: 'constant', value: 0.33 },
+                  staggerOnlyWhenCasterControlled: true,
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  step('changeResourceByActionValue', {
+                    resource: 'sp',
+                    amount: { kind: 'blackboard', key: 'atb' },
+                    coefficient: { kind: 'constant', value: 0.3334 },
+                    recipient: 'team',
+                    spGainKind: 'gain',
+                    spGainSource: 'normalAttack',
+                  }),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+          scheduled(0, sequence(), 3),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence3: ActionSequenceDefinition = sequence(
   withActionBlackboardScope(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0, poise: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'nature',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-              stagger: { kind: 'blackboard', key: 'poise' },
-              staggerMultiplier: { kind: 'constant', value: 0.33 },
-              staggerOnlyWhenCasterControlled: true,
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 0.3334 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
+    instantiateActionSequence(sharedActionSequence4, ['\u0000endaxis-generated-identity:1']),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence5: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence6, ['\u0000endaxis-generated-identity:1']),
     {},
     { lifetime: 'execution' },
   ),
@@ -140,46 +256,68 @@ export const gilbertaChr_0013_aglina_attack1: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0013_aglina_attack1.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0013_aglina_normal_attack1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0013_aglina_attack1.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:chr_0013_aglina_attack1_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0013_aglina_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0013_aglina_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      branch(
-                        { kind: 'casterControlled' },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          step('changeResourceByActionValue', {
-                            resource: 'sp',
-                            amount: { kind: 'blackboard', key: 'atb' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
-                            spGainKind: 'gain',
-                            spGainSource: 'normalAttack',
-                          }),
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0013_aglina_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 1 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
                         ),
+                        3,
                       ),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -226,94 +364,18 @@ export const gilbertaChr_0013_aglina_attack2: SkillDefinition = withSkillBlackbo
     scheduledSequences: [
       scheduled(
         4,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0013_aglina_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0013_aglina_normal_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0013_aglina_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:chr_0013_aglina_attack2_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0013_aglina_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.5 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0013_aglina_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0013_aglina_normal_attack2',
+          'chr_0013_aglina_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         4,
       ),
       scheduled(
         8,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0013_aglina_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:projectile_chr_0013_aglina_normal_attack2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0013_aglina_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:chr_0013_aglina_attack2_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0013_aglina_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.5 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0013_aglina_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:projectile_chr_0013_aglina_normal_attack2',
+          'chr_0013_aglina_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         8,
       ),
       scheduled(
@@ -356,28 +418,25 @@ export const gilbertaChr_0013_aglina_attack3: SkillDefinition = withSkillBlackbo
     scheduledSequences: [
       scheduled(
         7,
-        instantiateActionSequence(sharedActionSequence1, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0013_aglina_attack3.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0]:projectile_chr_0013_aglina_normal_attack3',
-          'SkillData.chr_0013_aglina_attack3.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0]:chr_0013_aglina_attack3_projhit',
-          'chr_0013_aglina_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0013_aglina_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         8,
       ),
       scheduled(
         10,
-        instantiateActionSequence(sharedActionSequence1, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0013_aglina_attack3.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:projectile_chr_0013_aglina_normal_attack3',
-          'SkillData.chr_0013_aglina_attack3.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0]:chr_0013_aglina_attack3_projhit',
-          'chr_0013_aglina_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0013_aglina_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         11,
       ),
       scheduled(
         14,
-        instantiateActionSequence(sharedActionSequence1, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0013_aglina_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0013_aglina_normal_attack3',
-          'SkillData.chr_0013_aglina_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0013_aglina_attack3_projhit',
-          'chr_0013_aglina_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0013_aglina_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         15,
       ),
@@ -426,44 +485,67 @@ export const gilbertaChr_0013_aglina_attack4: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0013_aglina_attack4.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0013_aglina_normal_attack4',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0013_aglina_attack4.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:chr_0013_aglina_attack4_projhit',
-                { atb: 0, atk_scale: 0, poise: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack', 'normalAttackLastCombo'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                      staggerMultiplier: { kind: 'constant', value: 0.34 },
-                      staggerOnlyWhenCasterControlled: true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0013_aglina_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0013_aglina_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.3334 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack', 'normalAttackLastCombo'],
+                              stagger: { kind: 'blackboard', key: 'poise' },
+                              staggerMultiplier: { kind: 'constant', value: 0.34 },
+                              staggerOnlyWhenCasterControlled: true,
+                            },
+                            'chr_0013_aglina_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              step('changeResourceByActionValue', {
+                                resource: 'sp',
+                                amount: { kind: 'blackboard', key: 'atb' },
+                                coefficient: { kind: 'constant', value: 0.3334 },
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                                spGainSource: 'normalAttack',
+                              }),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                      scheduled(0, sequence(), 3),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -472,19 +554,17 @@ export const gilbertaChr_0013_aglina_attack4: SkillDefinition = withSkillBlackbo
       ),
       scheduled(
         25,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence5, [
           'SkillData.chr_0013_aglina_attack4.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:projectile_chr_0013_aglina_normal_attack4_2',
-          'SkillData.chr_0013_aglina_attack4.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:chr_0013_aglina_attack4_projhit_2',
-          'chr_0013_aglina_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0013_aglina_attack4:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         25,
       ),
       scheduled(
         27,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence5, [
           'SkillData.chr_0013_aglina_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0013_aglina_normal_attack4_1',
-          'SkillData.chr_0013_aglina_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:chr_0013_aglina_attack4_projhit_2',
-          'chr_0013_aglina_attack4:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0013_aglina_attack4:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         27,
       ),
@@ -2103,6 +2183,14 @@ export const gilberta: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 6 },
       childSkill: {
         skillId: 'chr_0013_aglina_normal_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 93,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           duration: 0,
           hasrecovered: 0,
@@ -2152,6 +2240,14 @@ export const gilberta: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 6 },
       childSkill: {
         skillId: 'chr_0013_aglina_ultimate_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 180,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           BuffStack: 0,
           duration: 0,

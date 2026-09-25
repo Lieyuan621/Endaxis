@@ -12,6 +12,16 @@ import type {
 import type { SkillDefinition } from '../game-data/operatorDefinition';
 import type { SkillActionProgramDefinition } from '../../../packages/game-data-contract/src/skills';
 import { perlica } from '../../data/operators/perlica.generated';
+const childSkillRuntime = {
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 30,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+  },
+} as const;
 import {
   compileOperatorBuffDefinitions,
   compileOperatorBuffResources,
@@ -97,7 +107,7 @@ describe('compileSkill', () => {
         steps: [
           {
             kind: 'startCurrentAbilityEntityChildSkill',
-            parameters: { childSkill: { ...actions, skillId: 'child' } },
+            parameters: { childSkill: { ...actions, ...childSkillRuntime, skillId: 'child' } },
           },
         ],
       },
@@ -335,6 +345,7 @@ describe('compileSkill', () => {
         entity: {
           lifetime: { kind: 'limited', durationSeconds: 1 },
           childSkill: {
+            ...childSkillRuntime,
             skillId: 'entity-child',
             scheduledSequences: [
               {
@@ -462,6 +473,7 @@ describe('compileSkill', () => {
                   definition: {
                     lifetime: { kind: 'infinite' },
                     childSkill: {
+                      ...childSkillRuntime,
                       skillId: 'entity-child',
                       blackboard: { coefficient: [1, 2] },
                       scheduledSequences: [
@@ -503,6 +515,7 @@ describe('compileSkill', () => {
       parameters: {
         definition: {
           childSkill: {
+            ...childSkillRuntime,
             skillId: 'entity-child',
             initialBlackboard: { coefficient: 2 },
             timelineActions: [
@@ -545,6 +558,7 @@ describe('compileSkill', () => {
           childSkill: {
             skillId: 'entity-child',
             blackboard: { coefficient: [1, 2] },
+            ...childSkillRuntime,
             scheduledSequences: [
               {
                 startFrame: 3,

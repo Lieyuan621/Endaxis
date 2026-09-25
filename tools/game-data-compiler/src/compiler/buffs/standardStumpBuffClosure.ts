@@ -128,39 +128,62 @@ export function compileStandardStumpBuffClosure(
       ),
     ),
   );
-  const conditionObservedBuffIds = new Set(
-    [...sources.values()].flatMap(source =>
-      buffActionNodes(source).flatMap(node =>
-        node.metadata.enabled && node.body.kind === 'leaf' && node.body.value.family === 'condition'
-          ? collectConditionBuffIds(node.body.value.action)
-          : node.metadata.enabled &&
-              node.body.kind === 'leaf' &&
-              node.body.value.family === 'buffQuery'
-            ? collectConditionBuffIds(node.body.value.action)
-            : [],
-      ),
+  const conditionReadsByBuff = new Map(
+    [...sources].map(
+      ([id, source]) =>
+        [
+          id,
+          buffActionNodes(source).flatMap(node =>
+            node.metadata.enabled &&
+            node.body.kind === 'leaf' &&
+            node.body.value.family === 'condition'
+              ? collectConditionBuffIds(node.body.value.action)
+              : node.metadata.enabled &&
+                  node.body.kind === 'leaf' &&
+                  node.body.value.family === 'buffQuery'
+                ? collectConditionBuffIds(node.body.value.action)
+                : [],
+          ),
+        ] as const,
     ),
   );
   const skillSettingCatalog =
     skillSettingCatalogValue === undefined
       ? undefined
       : parseSkillSettingCatalogSource(skillSettingCatalogValue);
-  const omittedBuffIds = new Set(
-    [
-      ...collectCombatInvisibleBuffClosureIds([...sources.keys()], id => {
-        const value = typeof buffData === 'function' ? buffData(id) : buffData[id];
-        if (value === undefined) throw new Error(`BuffData.${id}: missing definition`);
-        return value;
-      }),
-    ].filter(
-      id =>
-        !preserveBuffIds.has(id) &&
-        !conditionObservedBuffIds.has(id) &&
-        !keywordOverrideChildIds.has(id) &&
-        !keywordEnhancementTriggerIds.has(id) &&
-        (!rootBuffIdSet.has(id) || isPresentationOnlyBuffStackEffect(sources.get(id)!)),
-    ),
-  );
+  const observedBuffIds = new Set([
+    ...preserveBuffIds,
+    ...keywordOverrideChildIds,
+    ...keywordEnhancementTriggerIds,
+  ]);
+  let omittedBuffIds: Set<string>;
+  // 先裁纯表现链，再保留仍会执行的条件所读取的身份。被裁掉的表现监听器
+  // 不能反过来保活整条表现链；有效监听新增的身份则需继续向创建者传播。
+  for (;;) {
+    omittedBuffIds = new Set(
+      [
+        ...collectCombatInvisibleBuffClosureIds(
+          [...sources.keys()],
+          id => {
+            const value = typeof buffData === 'function' ? buffData(id) : buffData[id];
+            if (value === undefined) throw new Error(`BuffData.${id}: missing definition`);
+            return value;
+          },
+          observedBuffIds,
+        ),
+      ].filter(
+        id =>
+          !preserveBuffIds.has(id) &&
+          !keywordOverrideChildIds.has(id) &&
+          !keywordEnhancementTriggerIds.has(id) &&
+          (!rootBuffIdSet.has(id) || isPresentationOnlyBuffStackEffect(sources.get(id)!)),
+      ),
+    );
+    const previousSize = observedBuffIds.size;
+    for (const [id, reads] of conditionReadsByBuff)
+      if (!omittedBuffIds.has(id)) for (const read of reads) observedBuffIds.add(read);
+    if (observedBuffIds.size === previousSize) break;
+  }
   const diagnostics: StandardStumpBuffClosureDiagnostic[] = [];
   for (const id of omittedBuffIds) {
     diagnostics.push({

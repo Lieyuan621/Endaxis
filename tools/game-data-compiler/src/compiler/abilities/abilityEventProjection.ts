@@ -9,6 +9,7 @@ import type { AbilityEvent } from '../../../../../packages/game-data-contract/sr
  */
 const NATIVE_ABILITY_EVENT_NAMES = {
   OnOwnerHpZero: 'ownerHpZero',
+  OnHpChange: 'hpChanged',
   OnCustomAbilityEvent: 'customAbilityEvent',
   OnEnterFight: 'enterFight',
   OnOwnerSwitchToCenter: 'ownerSwitchToCenter',
@@ -108,6 +109,7 @@ const NATIVE_ABILITY_EVENT_IDS = {
   262: 'OnAbilityEntityFinished',
   301: 'OnBeforeCalculateDamage',
   302: 'OnBeforeOutputDamage',
+  303: 'OnHpChange',
   401: 'OnBeforeOutputPhysicalInfliction',
   402: 'OnAfterOutputPhysicalInfliction',
 } as const satisfies Readonly<Record<number, keyof typeof NATIVE_ABILITY_EVENT_NAMES>>;

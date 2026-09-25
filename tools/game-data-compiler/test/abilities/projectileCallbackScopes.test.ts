@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compileSynchronousProjectileCallbackScopesSource } from '../../src/compiler/abilities/projectileCallbackScopes.ts';
+import { compileProjectileLaunchScopeSource } from '../../src/compiler/abilities/projectileCallbackScopes.ts';
 import type { ProjectileLaunchActionSource } from '../../src/source/referenceActions.ts';
 
 const launch = {
@@ -13,7 +13,8 @@ const launch = {
 
 describe('synchronous projectile callback scope', () => {
   it('accepts an enabled but empty entity assignment list with an evidenced empty template board', () => {
-    const result = compileSynchronousProjectileCallbackScopesSource({
+    const result = compileProjectileLaunchScopeSource({
+      body: { steps: [] },
       sourcePath: 'skill.LaunchProjectile',
       launch,
       template: {
@@ -31,11 +32,12 @@ describe('synchronous projectile callback scope', () => {
     });
 
     expect(result.parameters.entityInitialValues).toEqual({});
-    expect(result.body.steps).toHaveLength(1);
+    expect(result.body.steps).toHaveLength(0);
   });
 
   it('omits projectile entity assignments that no callback blackboard consumes', () => {
-    const result = compileSynchronousProjectileCallbackScopesSource({
+    const result = compileProjectileLaunchScopeSource({
+      body: { steps: [] },
       sourcePath: 'skill.LaunchProjectile',
       launch: {
         ...launch,
@@ -60,7 +62,8 @@ describe('synchronous projectile callback scope', () => {
   });
 
   it('retains projectile entity assignments consumed by a callback blackboard', () => {
-    const result = compileSynchronousProjectileCallbackScopesSource({
+    const result = compileProjectileLaunchScopeSource({
+      body: { steps: [] },
       sourcePath: 'skill.LaunchProjectile',
       launch: {
         ...launch,
@@ -90,125 +93,9 @@ describe('synchronous projectile callback scope', () => {
     });
   });
 
-  it('removes single-enemy bounce bookkeeping after its empty target consumer is omitted', () => {
-    const result = compileSynchronousProjectileCallbackScopesSource({
-      sourcePath: 'skill.LaunchProjectile',
-      launch,
-      template: {
-        projectileId: launch.projectileId,
-        entityBlackboard: [],
-      },
-      invocations: [
-        {
-          event: 'hit',
-          skillId: 'projectile_hit',
-          declaredBlackboard: [],
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'blackboard', key: 'EntityBB_bounced' },
-                    operator: 'equal',
-                    right: { kind: 'constant', value: 0 },
-                  },
-                  alwaysNext: true,
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'modifyActionValue',
-                      parameters: {
-                        key: 'EntityBB_bounced',
-                        operation: 'assign',
-                        value: { kind: 'constant', value: 1 },
-                      },
-                    },
-                    {
-                      kind: 'mergeContextTargets',
-                      parameters: { saveToContextKey: 'extra_target', sources: [] },
-                    },
-                  ],
-                },
-              },
-              {
-                kind: 'dealDamage',
-                parameters: {
-                  damageType: 'electric',
-                  attackScale: { kind: 'constant', value: 1 },
-                  tags: [],
-                  features: [],
-                  stagger: { kind: 'constant', value: 0 },
-                },
-              },
-            ],
-          },
-        },
-      ],
-    });
-
-    const callbackScope = result.body.steps[0];
-    expect(callbackScope).toMatchObject({
-      kind: 'withActionBlackboardScope',
-      body: { steps: [{ kind: 'dealDamage' }] },
-    });
-  });
-
-  it('does not require missing entity-board evidence for bookkeeping removed by the fixed stump model', () => {
-    const result = compileSynchronousProjectileCallbackScopesSource({
-      sourcePath: 'skill.LaunchProjectile',
-      launch,
-      template: null,
-      allowMissingEntityBlackboardEvidence: true,
-      invocations: [
-        {
-          event: 'hit',
-          skillId: 'projectile_hit',
-          declaredBlackboard: [],
-          sequence: {
-            steps: [
-              {
-                kind: 'conditional',
-                parameters: {
-                  condition: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'blackboard', key: 'EntityBB_bounced' },
-                    operator: 'equal',
-                    right: { kind: 'constant', value: 0 },
-                  },
-                  alwaysNext: true,
-                },
-                whenTrue: {
-                  steps: [
-                    {
-                      kind: 'modifyActionValue',
-                      parameters: {
-                        key: 'EntityBB_bounced',
-                        operation: 'assign',
-                        value: { kind: 'constant', value: 1 },
-                      },
-                    },
-                    {
-                      kind: 'mergeContextTargets',
-                      parameters: { saveToContextKey: 'extra_target', sources: [] },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-      ],
-    });
-
-    expect(result.parameters.entityInitialValues).toBeUndefined();
-    expect(result.body.steps[0]).toMatchObject({ body: { steps: [] } });
-  });
-
   it('does not treat a pure EntityBB assignment as a read requiring template defaults', () => {
-    const result = compileSynchronousProjectileCallbackScopesSource({
+    const result = compileProjectileLaunchScopeSource({
+      body: { steps: [] },
       sourcePath: 'skill.LaunchProjectile',
       launch,
       template: null,
@@ -234,6 +121,6 @@ describe('synchronous projectile callback scope', () => {
       ],
     });
 
-    expect(result.parameters.entityInitialValues).toBeUndefined();
+    expect(result.parameters.entityInitialValues).toEqual({});
   });
 });

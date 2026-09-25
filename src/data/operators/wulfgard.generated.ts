@@ -1,7 +1,12 @@
 /** 由 tools/game-data-compiler 整名生成；不要手工编辑。 */
-import type { OperatorDefinition, SkillDefinition } from '../../core/game-data/operatorDefinition';
+import type {
+  ActionSequenceDefinition,
+  OperatorDefinition,
+  SkillDefinition,
+} from '../../core/game-data/operatorDefinition';
 import {
   branch,
+  instantiateActionSequence,
   repeatEachTick,
   scheduled,
   sequence,
@@ -9,6 +14,199 @@ import {
   withActionBlackboardScope,
   withSkillBlackboard,
 } from './definitionHelpers';
+
+const sharedActionSequence2: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0006_wolfgd_attack2_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0, duration: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'heat',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  step('changeResourceByActionValue', {
+                    resource: 'sp',
+                    amount: { kind: 'blackboard', key: 'atb' },
+                    coefficient: { kind: 'constant', value: 0.5 },
+                    recipient: 'team',
+                    spGainKind: 'gain',
+                    spGainSource: 'normalAttack',
+                  }),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            0,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence4: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0006_wolfgd_attack3_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0, duration: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'heat',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  step('changeResourceByActionValue', {
+                    resource: 'sp',
+                    amount: { kind: 'blackboard', key: 'atb' },
+                    coefficient: { kind: 'constant', value: 0.3333333 },
+                    recipient: 'team',
+                    spGainKind: 'gain',
+                    spGainSource: 'normalAttack',
+                  }),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            0,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence5: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    sequence({
+      kind: 'launchProjectile',
+      parameters: {
+        finish: 'firstTickReach',
+        recycleDelaySeconds: 0.0333333350718021,
+        hit: { onReach: true, finishOnHit: true },
+      },
+      callbacks: [
+        {
+          event: 'hit',
+          skill: {
+            skillId: 'chr_0006_wolfgd_normal_skill_projhit',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 1,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+            },
+            blackboard: { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
+            scheduledSequences: [
+              scheduled(
+                0,
+                sequence(
+                  step(
+                    'dealDamage',
+                    {
+                      damageType: 'heat',
+                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'blackboard', key: 'poise_first_bullet' },
+                    },
+                    '\u0000endaxis-generated-identity:1',
+                  ),
+                ),
+                0,
+              ),
+              scheduled(0, sequence(), 3),
+            ],
+          },
+        },
+      ],
+    }),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence1: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence2, ['\u0000endaxis-generated-identity:1']),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence3: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence4, ['\u0000endaxis-generated-identity:1']),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
 
 export const wulfgardChr_0006_wolfgd_attack1: SkillDefinition = withSkillBlackboard(
   {
@@ -37,41 +235,63 @@ export const wulfgardChr_0006_wolfgd_attack1: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0006_wolfgd_attack1.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_attack1.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:chr_0006_wolfgd_attack1_projhit01',
-                { atb: 0, atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0006_wolfgd_attack1_projhit01',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0006_wolfgd_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.5 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0, duration: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0006_wolfgd_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              step('changeResourceByActionValue', {
+                                resource: 'sp',
+                                amount: { kind: 'blackboard', key: 'atb' },
+                                coefficient: { kind: 'constant', value: 0.5 },
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                                spGainSource: 'normalAttack',
+                              }),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -85,41 +305,63 @@ export const wulfgardChr_0006_wolfgd_attack1: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0006_wolfgd_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:chr_0006_wolfgd_attack1_projhit',
-                { atb: 0, atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0006_wolfgd_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0006_wolfgd_attack1:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.5 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0, duration: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0006_wolfgd_attack1:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              step('changeResourceByActionValue', {
+                                resource: 'sp',
+                                amount: { kind: 'blackboard', key: 'atb' },
+                                coefficient: { kind: 'constant', value: 0.5 },
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                                spGainSource: 'normalAttack',
+                              }),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -166,98 +408,18 @@ export const wulfgardChr_0006_wolfgd_attack2: SkillDefinition = withSkillBlackbo
     scheduledSequences: [
       scheduled(
         10,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0006_wolfgd_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:chr_0006_wolfgd_attack2_projhit',
-                { atb: 0, atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0006_wolfgd_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.5 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0006_wolfgd_attack2.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_2',
+          'chr_0006_wolfgd_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         10,
       ),
       scheduled(
         16,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0006_wolfgd_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_2',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:chr_0006_wolfgd_attack2_projhit',
-                { atb: 0, atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0006_wolfgd_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.5 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence1, [
+          'SkillData.chr_0006_wolfgd_attack2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_2',
+          'chr_0006_wolfgd_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         16,
       ),
       scheduled(
@@ -300,146 +462,26 @@ export const wulfgardChr_0006_wolfgd_attack3: SkillDefinition = withSkillBlackbo
     scheduledSequences: [
       scheduled(
         12,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_3',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:chr_0006_wolfgd_attack3_projhit',
-                { atb: 0, atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0006_wolfgd_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.3333333 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_3',
+          'chr_0006_wolfgd_attack3:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         12,
       ),
       scheduled(
         18,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_3',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:chr_0006_wolfgd_attack3_projhit',
-                { atb: 0, atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0006_wolfgd_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.3333333 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[2]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_3',
+          'chr_0006_wolfgd_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         18,
       ),
       scheduled(
         24,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_3',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:chr_0006_wolfgd_attack3_projhit',
-                { atb: 0, atk_scale: 0, duration: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0006_wolfgd_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 0.3333333 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence3, [
+          'SkillData.chr_0006_wolfgd_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_3',
+          'chr_0006_wolfgd_attack3:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         24,
       ),
       scheduled(
@@ -476,43 +518,65 @@ export const wulfgardChr_0006_wolfgd_attack4: SkillDefinition = withSkillBlackbo
             'SkillData.chr_0006_wolfgd_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_attack_4',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_attack4.actionGroupData.timelineActions[4]._sequenceActionData.actionData[1]:chr_0006_wolfgd_attack4_projhit',
-                { atb: 0, atk_scale: 0, duration: 0, poise: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack', 'normalAttackLastCombo'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                      staggerOnlyWhenCasterControlled: true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0006_wolfgd_attack4_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0006_wolfgd_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0, duration: 0, poise: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'heat',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack', 'normalAttackLastCombo'],
+                              stagger: { kind: 'blackboard', key: 'poise' },
+                              staggerOnlyWhenCasterControlled: true,
+                            },
+                            'chr_0006_wolfgd_attack4:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              step('changeResourceByActionValue', {
+                                resource: 'sp',
+                                amount: { kind: 'blackboard', key: 'atb' },
+                                coefficient: { kind: 'constant', value: 1 },
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                                spGainSource: 'normalAttack',
+                              }),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        0,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -678,72 +742,18 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = withSkillBl
     scheduledSequences: [
       scheduled(
         6,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[3]._sequenceActionData.actionData[2]:projectile_chr_0006_wolfgd_normal_skill',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[3]._sequenceActionData.actionData[2]:chr_0006_wolfgd_normal_skill_projhit',
-                { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'blackboard', key: 'poise_first_bullet' },
-                    },
-                    'chr_0006_wolfgd_normal_skill:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[3]._sequenceActionData.actionData[2]:projectile_chr_0006_wolfgd_normal_skill',
+          'chr_0006_wolfgd_normal_skill:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         9,
       ),
       scheduled(
         16,
-        sequence(
-          withActionBlackboardScope(
-            'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2]:projectile_chr_0006_wolfgd_normal_skill',
-            {},
-            true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2]:chr_0006_wolfgd_normal_skill_projhit',
-                { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'heat',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'blackboard', key: 'poise_first_bullet' },
-                    },
-                    'chr_0006_wolfgd_normal_skill:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
-            {},
-            { lifetime: 'execution' },
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2]:projectile_chr_0006_wolfgd_normal_skill',
+          'chr_0006_wolfgd_normal_skill:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+        ]),
         20,
       ),
       scheduled(
@@ -761,28 +771,51 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = withSkillBl
                 'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[5]._sequenceActionData.actionData[2].succeedActions.actionData[0]:projectile_chr_0006_wolfgd_normal_skill',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[5]._sequenceActionData.actionData[2].succeedActions.actionData[0]:chr_0006_wolfgd_normal_skill_projhit_1',
-                    { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
-                    true,
-                    sequence(
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'heat',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          tags: ['normalSkill'],
-                          features: ['canBreakWeakness'],
-                          stagger: { kind: 'blackboard', key: 'poise_first_bullet' },
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: {
+                    finish: 'firstTickReach',
+                    recycleDelaySeconds: 0.0333333350718021,
+                    hit: { onReach: true, finishOnHit: true },
+                  },
+                  callbacks: [
+                    {
+                      event: 'hit',
+                      skill: {
+                        skillId: 'chr_0006_wolfgd_normal_skill_projhit_1',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 1,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'chr_0006_wolfgd_normal_skill:/scheduledSequences/2/sequence/steps/0/whenTrue/steps/0/body/steps/0/body/steps/0',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
+                        scheduledSequences: [
+                          scheduled(
+                            0,
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'heat',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  tags: ['normalSkill'],
+                                  features: ['canBreakWeakness'],
+                                  stagger: { kind: 'blackboard', key: 'poise_first_bullet' },
+                                },
+                                'chr_0006_wolfgd_normal_skill:/scheduledSequences/2/sequence/steps/0/whenTrue/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                              ),
+                            ),
+                            0,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -792,29 +825,52 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = withSkillBl
                 'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[5]._sequenceActionData.actionData[2].failActions.actionData[0]:projectile_chr_0006_wolfgd_normal_skill',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[5]._sequenceActionData.actionData[2].failActions.actionData[0]:chr_0006_wolfgd_normal_skill_projhit_FireSpellInfiction',
-                    { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
-                    true,
-                    sequence(
-                      step('applyElementalInfliction', { element: 'heat', isExtra: false }),
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'heat',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                          tags: ['normalSkill'],
-                          features: ['canBreakWeakness'],
-                          stagger: { kind: 'blackboard', key: 'poise_first_bullet' },
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: {
+                    finish: 'firstTickReach',
+                    recycleDelaySeconds: 0.0333333350718021,
+                    hit: { onReach: true, finishOnHit: true },
+                  },
+                  callbacks: [
+                    {
+                      event: 'hit',
+                      skill: {
+                        skillId: 'chr_0006_wolfgd_normal_skill_projhit_FireSpellInfiction',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 1,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        'chr_0006_wolfgd_normal_skill:/scheduledSequences/2/sequence/steps/0/whenFalse/steps/0/body/steps/0/body/steps/1',
-                      ),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                        blackboard: { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
+                        scheduledSequences: [
+                          scheduled(
+                            0,
+                            sequence(
+                              step('applyElementalInfliction', { element: 'heat', isExtra: false }),
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'heat',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  tags: ['normalSkill'],
+                                  features: ['canBreakWeakness'],
+                                  stagger: { kind: 'blackboard', key: 'poise_first_bullet' },
+                                },
+                                'chr_0006_wolfgd_normal_skill:/scheduledSequences/2/sequence/steps/0/whenFalse/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/1',
+                              ),
+                            ),
+                            0,
+                          ),
+                          scheduled(0, sequence(), 3),
+                        ],
+                      },
+                    },
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -832,140 +888,163 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = withSkillBl
             'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[7]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_normal_skill_plus',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_normal_skill.actionGroupData.timelineActions[7]._sequenceActionData.actionData[1]:chr_0006_wolfgd_normal_skill_plus_projhit',
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { onReach: true, finishOnHit: true },
+              },
+              callbacks: [
                 {
-                  atk_scale_plus: 0,
-                  atk_scale_plus_fail: 0,
-                  duration: 0,
-                  poise_extra_bullet: 0,
-                  poise_extra_bullet_fail: 0,
-                  potential_2: 0,
-                  potential_skillpower: 0,
-                  returnskillpower: 0,
-                  talent2: 0,
-                },
-                true,
-                sequence(
-                  branch(
-                    {
-                      kind: 'entityTagMatch',
-                      target: 'enemy',
-                      tagQueryType: 'hasAny',
-                      tags: [
-                        'Skill/Character/Common/SpellStatus/Burning',
-                        'Skill/Character/Common/SpellStatus/Conduct',
-                      ],
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0006_wolfgd_normal_skill_plus_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    sequence(
-                      branch(
-                        {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'blackboard', key: 'talent2', fallback: 0 },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0 },
-                        },
+                    blackboard: {
+                      atk_scale_plus: 0,
+                      atk_scale_plus_fail: 0,
+                      duration: 0,
+                      poise_extra_bullet: 0,
+                      poise_extra_bullet_fail: 0,
+                      potential_2: 0,
+                      potential_skillpower: 0,
+                      returnskillpower: 0,
+                      talent2: 0,
+                    },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
                           branch(
                             {
-                              kind: 'actionValueCompare',
-                              left: { kind: 'blackboard', key: 'potential_2', fallback: 0 },
-                              operator: 'greater',
-                              right: { kind: 'constant', value: 0 },
+                              kind: 'entityTagMatch',
+                              target: 'enemy',
+                              tagQueryType: 'hasAny',
+                              tags: [
+                                'Skill/Character/Common/SpellStatus/Burning',
+                                'Skill/Character/Common/SpellStatus/Conduct',
+                              ],
                             },
                             sequence(
-                              step('modifyActionValue', {
-                                key: 'returnskillpower',
-                                operation: 'add',
-                                value: { kind: 'blackboard', key: 'potential_skillpower' },
-                              }),
+                              branch(
+                                {
+                                  kind: 'actionValueCompare',
+                                  left: { kind: 'blackboard', key: 'talent2', fallback: 0 },
+                                  operator: 'greater',
+                                  right: { kind: 'constant', value: 0 },
+                                },
+                                sequence(
+                                  branch(
+                                    {
+                                      kind: 'actionValueCompare',
+                                      left: { kind: 'blackboard', key: 'potential_2', fallback: 0 },
+                                      operator: 'greater',
+                                      right: { kind: 'constant', value: 0 },
+                                    },
+                                    sequence(
+                                      step('modifyActionValue', {
+                                        key: 'returnskillpower',
+                                        operation: 'add',
+                                        value: { kind: 'blackboard', key: 'potential_skillpower' },
+                                      }),
+                                    ),
+                                    undefined,
+                                    { alwaysNext: true },
+                                  ),
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'returnskillpower' },
+                                    coefficient: { kind: 'constant', value: 1 },
+                                    recipient: 'team',
+                                    spGainKind: 'refund',
+                                    spGainSource: 'skill',
+                                  }),
+                                ),
+                                undefined,
+                                { alwaysNext: true },
+                              ),
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'heat',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale_plus' },
+                                  tags: ['normalSkill'],
+                                  features: ['canBreakWeakness'],
+                                  stagger: { kind: 'blackboard', key: 'poise_extra_bullet' },
+                                },
+                                'chr_0006_wolfgd_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenTrue/steps/1',
+                              ),
                             ),
-                            undefined,
+                            sequence(
+                              step('applyElementalInfliction', { element: 'heat', isExtra: false }),
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'heat',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale_plus_fail' },
+                                  tags: ['normalSkill'],
+                                  features: ['canBreakWeakness'],
+                                  stagger: { kind: 'blackboard', key: 'poise_extra_bullet_fail' },
+                                },
+                                'chr_0006_wolfgd_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenFalse/steps/1',
+                              ),
+                            ),
                             { alwaysNext: true },
                           ),
-                          step('changeResourceByActionValue', {
-                            resource: 'sp',
-                            amount: { kind: 'blackboard', key: 'returnskillpower' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
-                            spGainKind: 'refund',
-                            spGainSource: 'skill',
-                          }),
+                          branch(
+                            {
+                              kind: 'entityTagMatch',
+                              target: 'enemy',
+                              tagQueryType: 'hasAny',
+                              tags: ['Skill/Character/Common/SpellStatus/Burning'],
+                            },
+                            sequence(
+                              step('finishBuffsByTag', {
+                                target: 'enemy',
+                                tagQueryType: 'hasAny',
+                                buffTags: ['Skill/Character/Common/SpellStatus/Burning'],
+                                reason: 'early',
+                              }),
+                            ),
+                            sequence(
+                              branch(
+                                {
+                                  kind: 'entityTagMatch',
+                                  target: 'enemy',
+                                  tagQueryType: 'hasAny',
+                                  tags: ['Skill/Character/Common/SpellStatus/Conduct'],
+                                },
+                                sequence(
+                                  step('finishBuffsByTag', {
+                                    target: 'enemy',
+                                    tagQueryType: 'hasAny',
+                                    buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+                                    reason: 'early',
+                                  }),
+                                ),
+                                undefined,
+                                { alwaysNext: true },
+                              ),
+                            ),
+                            { alwaysNext: true },
+                          ),
                         ),
-                        undefined,
-                        { alwaysNext: true },
+                        0,
                       ),
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'heat',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale_plus' },
-                          tags: ['normalSkill'],
-                          features: ['canBreakWeakness'],
-                          stagger: { kind: 'blackboard', key: 'poise_extra_bullet' },
-                        },
-                        'chr_0006_wolfgd_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0/whenTrue/steps/1',
-                      ),
-                    ),
-                    sequence(
-                      step('applyElementalInfliction', { element: 'heat', isExtra: false }),
-                      step(
-                        'dealDamage',
-                        {
-                          damageType: 'heat',
-                          attackScale: { kind: 'blackboard', key: 'atk_scale_plus_fail' },
-                          tags: ['normalSkill'],
-                          features: ['canBreakWeakness'],
-                          stagger: { kind: 'blackboard', key: 'poise_extra_bullet_fail' },
-                        },
-                        'chr_0006_wolfgd_normal_skill:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0/whenFalse/steps/1',
-                      ),
-                    ),
-                    { alwaysNext: true },
-                  ),
-                  branch(
-                    {
-                      kind: 'entityTagMatch',
-                      target: 'enemy',
-                      tagQueryType: 'hasAny',
-                      tags: ['Skill/Character/Common/SpellStatus/Burning'],
-                    },
-                    sequence(
-                      step('finishBuffsByTag', {
-                        target: 'enemy',
-                        tagQueryType: 'hasAny',
-                        buffTags: ['Skill/Character/Common/SpellStatus/Burning'],
-                        reason: 'early',
-                      }),
-                    ),
-                    sequence(
-                      branch(
-                        {
-                          kind: 'entityTagMatch',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          tags: ['Skill/Character/Common/SpellStatus/Conduct'],
-                        },
-                        sequence(
-                          step('finishBuffsByTag', {
-                            target: 'enemy',
-                            tagQueryType: 'hasAny',
-                            buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-                            reason: 'early',
-                          }),
-                        ),
-                        undefined,
-                        { alwaysNext: true },
-                      ),
-                    ),
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                      scheduled(0, sequence(), 3),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1127,23 +1206,47 @@ export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = withSkillBla
             'SkillData.chr_0006_wolfgd_combo_skill.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:projectile_chr_0006_wolfgd_combo_skill',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0006_wolfgd_combo_skill.actionGroupData.timelineActions[1]._sequenceActionData.actionData[1]:chr_0006_wolfgd_combo_skill_projhit',
-                { atk_scale: 0, duration: 0, poise: 0, usp: 0 },
-                true,
-                sequence(
-                  step('spawnAbilityEntity', {
-                    abilityEntityId: 'abilityentity_chr_0006_wolfgd_combo_skill',
-                    childSkillId: 'chr_0006_wolfgd_combo_skill_abilityrange',
-                    inheritActionBlackboard: true,
-                    dieWhenSourceDies: false,
-                  }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { onReach: true, finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0006_wolfgd_combo_skill_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atk_scale: 0, duration: 0, poise: 0, usp: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step('spawnAbilityEntity', {
+                            abilityEntityId: 'abilityentity_chr_0006_wolfgd_combo_skill',
+                            childSkillId: 'chr_0006_wolfgd_combo_skill_abilityrange',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                          }),
+                        ),
+                        0,
+                      ),
+                      scheduled(0, sequence(), 3),
+                      scheduled(0, sequence(), 10),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1245,12 +1348,60 @@ export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = withSkill
         ),
         3,
       ),
-      scheduled(45, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 47),
-      scheduled(50, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 52),
-      scheduled(56, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 58),
-      scheduled(61, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 63),
-      scheduled(45, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 47),
-      scheduled(63, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 65),
+      scheduled(
+        45,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        47,
+      ),
+      scheduled(
+        50,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        52,
+      ),
+      scheduled(
+        56,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        58,
+      ),
+      scheduled(
+        61,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        63,
+      ),
+      scheduled(
+        45,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        47,
+      ),
+      scheduled(
+        63,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        65,
+      ),
       scheduled(
         46,
         sequence(
@@ -1709,6 +1860,14 @@ export const wulfgard: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 1.5 },
       childSkill: {
         skillId: 'chr_0006_wolfgd_combo_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 45,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atk_scale: 5,
           duration: 0,

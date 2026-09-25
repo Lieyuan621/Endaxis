@@ -1,3 +1,4 @@
+import { bindProjectileCallbackLifecycle } from '../abilities/projectileCallbackRuntime';
 import {
   finishAbilitySkillSlotReplacement,
   replaceAbilitySkillSlot,
@@ -684,7 +685,7 @@ export class CombatRuntimeAssembly {
   readonly combatOperationPrograms: CombatOperationPrograms;
   /** 普通技能恢复时按固定身份复用已编译程序和伤害快照槽位。 */
   readonly combatSkillPrograms: CombatSkillPrograms;
-  /** syncTimeScale=false 的投射物 duration-finish 使用全局战斗时间，且不归技能寿命所有。 */
+  /** 投射物按自身实体时钟推进；来源同步关系保存在时间状态中，寿命不归来源技能所有。 */
   readonly #abilityEntityInstanceIds: AbilityEntityInstanceIdAllocator;
   readonly projectileLifetimes: ProjectileLifecycleRuntime;
   /** 战斗级父实例与队员子 Buff 镜像的唯一目录。 */
@@ -1264,7 +1265,10 @@ export class CombatRuntimeAssembly {
               resolveVitals: options.resolveVitals,
               resolveOperatorVitals: options.resolveOperatorVitals,
               getNonReturnedSpCost: () => origin?.nonReturnedSpCost ?? 0,
-              operationHost: { state: state.operations, programs: this.combatOperationPrograms },
+              operationHost: {
+                state: state.host.skill.operations,
+                programs: this.combatOperationPrograms,
+              },
             }),
             ...this.#projectileRuntimeDependencies(ownerId),
           };
@@ -2797,39 +2801,57 @@ export class CombatRuntimeAssembly {
         emitEvent: (ownerId, event, payload) =>
           this.#options.emitAbilityEvent?.(ownerId, event, payload),
       }),
-      scheduleProjectileFinishCallback: (
-        delaySeconds,
-        recycleDelaySeconds,
-        execute,
-        beforeReset,
-        skillCastInfo,
-        advanceCallback,
-        sourceId = operatorId,
-        callbackState,
-        callbackProgram,
-        producedBy,
-      ) => {
+      launchProjectile: request => {
+        const { skillCastInfo, producedBy } = request;
+        const sourceId = request.sourceId ?? operatorId;
+        if (request.hit?.target === 'currentTarget' && request.hitTarget === undefined)
+          throw new Error('projectile current target is missing');
+        const hitTarget: RuntimeTargetRef =
+          request.hitTarget ??
+          (request.hit?.target === 'controlledOperator'
+            ? {
+                kind: 'operator',
+                operatorId: this.#operatorOrder.find(id =>
+                  this.#operatorControl.runtimeState.get(id),
+                )!,
+              }
+            : { kind: 'enemy' });
+        if (hitTarget.kind === 'operator' && hitTarget.operatorId === undefined)
+          throw new Error('projectile target requires a controlled operator');
+        for (const callback of request.callbacks)
+          if (callback.runtime.runtimeState.event === 'hit') {
+            callback.runtime.runtimeState.inputTarget = hitTarget;
+            if (request.hit?.target === 'allOperators')
+              callback.runtime.runtimeState.inputTargets = this.#operatorOrder.map(operatorId => ({
+                kind: 'operator' as const,
+                operatorId,
+              }));
+          }
         const entity = this.projectileLifetimes.launch({
-          ...(callbackState === undefined ? {} : { callback: callbackState }),
-          ...(callbackProgram === undefined ? {} : { callbackProgram }),
+          callbacks: request.callbacks.map(callback => callback.runtime.runtimeState),
+          callbackPrograms: request.callbacks.map(callback => callback.program),
           source: this.#resolveRuntimeTarget(sourceId),
-          finishDelaySeconds: delaySeconds,
-          recycleDelaySeconds,
-          resolveTickDeltaSeconds: () =>
-            COMBAT_FRAME_INTERVAL * (this.timeDilation?.currentGlobalScale ?? 1),
-          finish: execute,
-          beforeReset,
-          ...(advanceCallback === undefined
-            ? {}
-            : {
-                abilityRuntime: {
-                  advanceFrame: () =>
-                    advanceCallback(
-                      COMBAT_FRAME_INTERVAL * (this.timeDilation?.currentGlobalScale ?? 1),
-                    ),
-                },
-              }),
+          finishDelaySeconds: request.finish,
+          recycleDelaySeconds: request.recycleDelaySeconds,
+          firstTickHit: request.hit,
+          released: () =>
+            this.timeDilation?.releaseInheritedEntityScale(
+              logicalAbilityEntityRuntimeId(entity.instanceId),
+            ),
+          ...bindProjectileCallbackLifecycle(
+            request.callbacks.map(callback => callback.runtime),
+            () =>
+              COMBAT_FRAME_INTERVAL *
+              (this.timeDilation?.getEntityScale(
+                logicalAbilityEntityRuntimeId(entity.instanceId),
+              ) ?? 1),
+          ),
         });
+        if (request.syncTimeScale)
+          this.timeDilation?.inheritEntityScale(
+            logicalAbilityEntityRuntimeId(entity.instanceId),
+            sourceId,
+          );
         this.receipt.record({
           frame: this.clock.frame,
           time: this.clock.time,
@@ -3138,6 +3160,7 @@ export class CombatRuntimeAssembly {
           request.castId,
           {
             skipApplyCost: request.skipApplyCost ?? false,
+            ...(request.inputTarget === undefined ? {} : { inputTarget: request.inputTarget }),
             ...(request.producedBy === undefined ? {} : { producedBy: request.producedBy }),
             ...(request.inheritedSkillCastInfo === undefined
               ? {}
@@ -3603,10 +3626,11 @@ export class CombatRuntimeAssembly {
     const match = /^ability-entity:([1-9]\d*)$/.exec(entityId);
     if (match !== null) {
       const target = { kind: 'abilityEntity' as const, instanceId: Number(match[1]) };
-      if (this.abilityEntities.isActive(target) || this.projectileLifetimes.isActive(target))
-        return target;
+      // Buff 等持久对象可在来源实体回收后继续发布带来源身份的事件。
+      // 此处只解析身份；存活条件与实际操作仍由各自的实体查询执行。
+      if (target.instanceId < this.#abilityEntityInstanceIds.runtimeState.next) return target;
     }
-    throw new Error(`combo condition references unknown or inactive entity '${entityId}'`);
+    throw new Error(`combo condition references unknown entity '${entityId}'`);
   }
 
   #changeSkillSlot(
@@ -3850,6 +3874,7 @@ export class CombatRuntimeAssembly {
       delegate: cooldownDelegate,
     });
     return new SkillCastOperationExecutor({
+      casterId: operatorId,
       request: request => this.requestPostNativeSkillCast(operatorId, request),
       delegate: baseDelegate,
     });
@@ -3956,6 +3981,7 @@ export class CombatRuntimeAssembly {
       },
       id => this.#findAbilitySystemSource(id),
       id => this.#resolveAbilityEntityObjectType(id),
+      () => this.projectileLifetimes.getUnfinishedTargets(),
     );
     const abilityEntityOperations = new AbilityEntityOperationExecutor(
       operatorId,
@@ -4285,6 +4311,7 @@ export class CombatRuntimeAssembly {
       },
       id => this.#findAbilitySystemSource(id),
       id => this.#resolveAbilityEntityObjectType(id),
+      () => this.projectileLifetimes.getUnfinishedTargets(),
     );
     const abilityEntityOperations = new AbilityEntityOperationExecutor(
       operatorId,
@@ -4654,7 +4681,7 @@ export class CombatRuntimeAssembly {
         },
         resolveContextAbilityEntityId: instanceId => {
           const target = { kind: 'abilityEntity' as const, instanceId };
-          return this.abilityEntities.isActive(target)
+          return this.abilityEntities.isActive(target) || this.projectileLifetimes.isActive(target)
             ? logicalAbilityEntityRuntimeId(instanceId)
             : null;
         },

@@ -31,9 +31,6 @@ export interface UseScenarioSimulationOptions {
   readonly service: Pick<ScenarioSimulationService, 'simulate' | 'subscribePerformance'>;
   /** 可选的启动延迟；实时编辑默认立即开始。 */
   readonly debounceMs?: number;
-  /** 拖动等短暂交互可先让轻量预览绘制，再合并密集的完整模拟请求。 */
-  readonly interactiveDebounceMs?: number;
-  readonly isInteractive?: () => boolean;
 }
 
 /** 一次成功模拟的完整发布单元；后台计算完成前不会改变。 */
@@ -96,10 +93,6 @@ export function useScenarioSimulation(
       );
     }) ?? (() => undefined);
 
-  function currentDebounceMs(): number {
-    return options.isInteractive?.() ? (options.interactiveDebounceMs ?? debounceMs) : debounceMs;
-  }
-
   async function runSimulation(): Promise<boolean> {
     if (pendingTimer !== null) {
       clearTimeout(pendingTimer);
@@ -149,17 +142,9 @@ export function useScenarioSimulation(
       if (activeRunCount === 0 && rerunRequested) {
         rerunRequested = false;
         const resolvers = queuedResolvers.splice(0);
-        // 拖动中的后续落点也先让浏览器绘制，避免上一轮计算刚结束就同步堵住下一帧。
-        if (resolvers.length === 0 && options.isInteractive?.() && currentDebounceMs() > 0) {
-          pendingTimer = setTimeout(() => {
-            pendingTimer = null;
-            void runSimulation();
-          }, currentDebounceMs());
-        } else {
-          void runSimulation().then(published => {
-            for (const resolve of resolvers) resolve(published);
-          });
-        }
+        void runSimulation().then(published => {
+          for (const resolve of resolvers) resolve(published);
+        });
       }
     }
   }
@@ -185,7 +170,7 @@ export function useScenarioSimulation(
     }
     // 覆盖仍在防抖等待中的旧请求。
     latestRunId += 1;
-    const delayMs = currentDebounceMs();
+    const delayMs = debounceMs;
     if (delayMs === 0) {
       void runSimulation();
       return;

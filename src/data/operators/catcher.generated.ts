@@ -1625,6 +1625,14 @@ export const catcher: OperatorDefinition = {
       deathReleaseDelaySeconds: 0.100000001490116,
       childSkill: {
         skillId: 'chr_0020_meurs_talent_shockwave',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 60,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atb: 0, atk_scale_shockwave: 0.42, env_dmg: 20, spawn_count: 0, talent_1: 0 },
         scheduledSequences: [
           scheduled(

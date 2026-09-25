@@ -153,7 +153,10 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         throw new Error('originSkillTypeIn requires an event source skill cast identity');
       }
       if (skillCastInfo === null) return false;
-      return condition.skillTypes.includes(skillCastInfo.originSkillType);
+      return (
+        skillCastInfo.originSkillType !== undefined &&
+        condition.skillTypes.includes(skillCastInfo.originSkillType)
+      );
     }
     if (context?.event === undefined) {
       throw new Error(`${condition.kind} requires a combat event context`);

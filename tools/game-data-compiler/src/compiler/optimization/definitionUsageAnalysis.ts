@@ -554,7 +554,6 @@ export function analyzeStepUsage(
     case 'consumeStatus':
     case 'finishTimeline':
     case 'markCurrentSkillCanInterrupt':
-    case 'launchProjectileLifetime':
     case 'setContextFlag':
     case 'openComboWindow':
     case 'changeSkillSlot':
@@ -570,14 +569,14 @@ export function analyzeStepUsage(
             ...effect(),
             reads: new Set([step.parameters.skillId.blackboardKey]),
           };
-    case 'scheduleProjectileFinishCallback':
+    case 'launchProjectile':
       // 回调保存父 direct 快照，并用它覆盖自身初值。汇总全部延时入口的读写，不能因回调
       // 声明了同名默认值就减键；嵌套的实体传值或其他未知访问会继续向父板上传。
       return mergeDefinitionValueUsage([
         effect(),
-        ...step.callback.scheduledSequences.map(item =>
-          analyzeSequenceUsage(item.sequence, context),
-        ),
+        ...step.callbacks
+          .flatMap(callback => callback.skill.scheduledSequences)
+          .map(item => analyzeSequenceUsage(item.sequence, context)),
       ]);
     default:
       // 外部未经检查的对象或新增类型都不能静默变成“没有读取”。

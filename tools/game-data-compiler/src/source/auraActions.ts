@@ -40,6 +40,8 @@ export interface GlobalPartyAuraActionSource {
   readonly buffs: readonly GlobalPartyAuraBuffInputSource[];
   /** 离开 Aura 时按同一批目标创建的有限余效 Buff。 */
   readonly exitBuffs: readonly GlobalPartyAuraBuffInputSource[];
+  /** 原生退出动作另外清理 Owner 身上的同名 Buff，不等同于移除离场目标的实例。 */
+  readonly exitOwnerCleanupBuffIds?: readonly string[];
   /** 进入范围时先清理的余效 Buff；用于避免范围内 Buff 与离场余效重叠。 */
   readonly enterCleanupBuffIds?: readonly string[];
   /** RangedAura 形状读取的黑板键；固定木桩中不参与成员判定，但来源事实不能丢。 */
@@ -196,10 +198,12 @@ export function parseGlobalPartyAuraActionSource(
   );
   parseEmptySequence(action.actionInAura, `${path}.actionInAura`);
   const buffs = parseAuraBuffInputs(action.buffInput, `${path}.buffInput`);
+  const exitOwnerCleanupBuffIds: string[] = [];
   const exitBuffs = parseAuraExitAction(
     action.actionWhenExitAura,
     `${path}.actionWhenExitAura`,
     buffs.map(entry => entry.buffId),
+    exitOwnerCleanupBuffIds,
   );
   return {
     kind: 'globalPartyAura',
@@ -210,6 +214,7 @@ export function parseGlobalPartyAuraActionSource(
     inheritSourceSkillCastInfo,
     buffs,
     exitBuffs,
+    ...(exitOwnerCleanupBuffIds.length === 0 ? {} : { exitOwnerCleanupBuffIds }),
     ...(spatialBlackboardKeys.length === 0 ? {} : { spatialBlackboardKeys }),
   };
 }
@@ -279,10 +284,12 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
     );
     const enterCleanupBuffIds = parseAuraEnterCleanup(action.actionInAura, `${path}.actionInAura`);
     const buffs = rangedBuffs;
+    const exitOwnerCleanupBuffIds: string[] = [];
     const exitBuffs = parseAuraExitAction(
       action.actionWhenExitAura,
       `${path}.actionWhenExitAura`,
       buffs.map(entry => entry.buffId),
+      exitOwnerCleanupBuffIds,
     );
     return {
       kind: 'globalPartyAura',
@@ -293,6 +300,7 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
       inheritSourceSkillCastInfo,
       buffs,
       exitBuffs,
+      ...(exitOwnerCleanupBuffIds.length === 0 ? {} : { exitOwnerCleanupBuffIds }),
       ...(enterCleanupBuffIds.length === 0 ? {} : { enterCleanupBuffIds }),
       ...(spatialBlackboardKeys.length === 0 ? {} : { spatialBlackboardKeys }),
       ...(overrideBuffIconDuration ? { iconDurationOverride: iconDuration } : {}),
@@ -473,6 +481,7 @@ function parseAuraExitAction(
   value: unknown,
   path: string,
   buffIds: readonly string[],
+  ownerCleanupBuffIds: string[] = [],
 ): GlobalPartyAuraBuffInputSource[] {
   const sequence = requireRecord(value, path);
   requireExactFields(
@@ -547,7 +556,12 @@ function parseAuraExitAction(
       throw new Error(`${actionPath}: unsupported Aura exit cleanup`);
     }
     cleanedBuffIds.push(...cleanup.settings.buffIds);
-    requirePlainAuraTarget(cleanup.owner, 'Target', `${actionPath}.buffOwner`);
+    if (cleanup.owner.targetSource === 'Owner') {
+      requirePlainAuraTarget(cleanup.owner, 'Owner', `${actionPath}.buffOwner`);
+      ownerCleanupBuffIds.push(...cleanup.settings.buffIds);
+    } else {
+      requirePlainAuraTarget(cleanup.owner, 'Target', `${actionPath}.buffOwner`);
+    }
     requirePlainAuraTarget(cleanup.buffSource, 'Source', `${actionPath}.buffSource`);
     requirePlainAuraTarget(cleanup.finishSource, 'Source', `${actionPath}.finishSource`);
   }
@@ -561,7 +575,7 @@ function parseAuraExitAction(
 
 function requirePlainAuraTarget(
   target: TargetReferenceSource,
-  targetSource: 'Source' | 'Target',
+  targetSource: 'Source' | 'Target' | 'Owner',
   path: string,
 ): void {
   if (

@@ -131,8 +131,8 @@ describe('技能顶层结构默认值', () => {
 
   it('投射物结束回调拒绝负延迟并严格校验其独立时间轴', () => {
     const template = templateDefinition();
-    const step = createSkillEditorStep(template, 'scheduleProjectileFinishCallback');
-    if (step.kind !== 'scheduleProjectileFinishCallback') throw new Error('expected callback');
+    const step = createSkillEditorStep(template, 'launchProjectile');
+    if (step.kind !== 'launchProjectile') throw new Error('expected callback');
     const draft = {
       ...template,
       scheduledSequences: [
@@ -142,21 +142,29 @@ describe('技能顶层结构默认值', () => {
             steps: [
               {
                 ...step,
-                parameters: { delaySeconds: -1, recycleDelaySeconds: 0 },
-                callback: {
-                  ...step.callback,
-                  scheduledSequences: [
-                    {
-                      startFrame: 0,
-                      endFrame: 1,
-                      sequence: {
-                        steps: [
-                          { kind: 'jumpTimeline' as const, parameters: { destinationFrame: -1 } },
-                        ],
-                      },
+                parameters: { finish: -1, recycleDelaySeconds: 0 },
+                callbacks: [
+                  {
+                    event: 'finish',
+                    skill: {
+                      ...step.callbacks[0]!.skill,
+                      scheduledSequences: [
+                        {
+                          startFrame: 0,
+                          endFrame: 1,
+                          sequence: {
+                            steps: [
+                              {
+                                kind: 'jumpTimeline' as const,
+                                parameters: { destinationFrame: -1 },
+                              },
+                            ],
+                          },
+                        },
+                      ],
                     },
-                  ],
-                },
+                  },
+                ],
               },
             ],
           },
@@ -165,23 +173,23 @@ describe('技能顶层结构默认值', () => {
     };
     expect(validateSkillDefinition(draft).map(issue => issue.path)).toEqual(
       expect.arrayContaining([
-        '$.scheduledSequences[0].sequence.steps[0].parameters.delaySeconds',
-        '$.scheduledSequences[0].sequence.steps[0].callback.scheduledSequences[0].sequence.steps[0].parameters.destinationFrame',
+        '$.scheduledSequences[0].sequence.steps[0].parameters.finish',
+        '$.scheduledSequences[0].sequence.steps[0].callbacks[0].skill.scheduledSequences[0].sequence.steps[0].parameters.destinationFrame',
       ]),
     );
   });
 
   it('回调必须声明自身原生类型，不从外层技能补全', () => {
     const template = templateDefinition();
-    const step = createSkillEditorStep(template, 'scheduleProjectileFinishCallback');
-    if (step.kind !== 'scheduleProjectileFinishCallback') throw new Error('expected callback');
-    Reflect.deleteProperty(step.callback, 'nativeSkillType');
+    const step = createSkillEditorStep(template, 'launchProjectile');
+    if (step.kind !== 'launchProjectile') throw new Error('expected callback');
+    Reflect.deleteProperty(step.callbacks[0]!.skill, 'nativeSkillType');
     const issues = validateSkillDefinition({
       ...template,
       scheduledSequences: [{ startFrame: 0, sequence: { steps: [step] } }],
     });
     expect(issues.map(issue => issue.path)).toContain(
-      '$.scheduledSequences[0].sequence.steps[0].callback.nativeSkillType',
+      '$.scheduledSequences[0].sequence.steps[0].callbacks[0].skill.nativeSkillType',
     );
   });
 

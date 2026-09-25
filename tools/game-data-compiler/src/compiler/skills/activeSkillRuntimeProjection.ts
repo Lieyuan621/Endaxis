@@ -18,6 +18,7 @@ import type {
 } from '../combatProjectionCommon.ts';
 import {
   isDynamicSingleEnemySmartTargetGroup,
+  isPartyHitBoxTargetGroup,
   isDynamicSingleEnemyTagTargetGroup,
   isStaticSingleEnemyTargetGroup,
   isCurrentTargetRestrictedSingleEnemyTargetGroup,
@@ -32,6 +33,7 @@ import {
   collectPresentationOnlyBlackboardKeys,
   collectPresentationOnlyTargetGroups,
   collectUnconsumedTargetGroups,
+  collectUnconsumedSkillLocalKeys,
   collectCombatInvisibleRandomBlackboardKeys,
   collectCombatInvisiblePhysicsCastPaths,
   collectPresentationSelectionTimelineIndexes,
@@ -732,6 +734,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   const combatInvisiblePresentationBlackboardKeys =
     collectCombatInvisiblePresentationAssignmentKeys(
       graph.actionGroup.timelineActions.map(timeline => timeline.sequence),
+      input.context.isBlackboardKeyUnusedByExternalResources,
     );
   const combatInvisibleRandomBlackboardKeys = collectCombatInvisibleRandomBlackboardKeys(graph);
   const combatInvisiblePhysicsCastPaths = collectCombatInvisiblePhysicsCastPaths(graph);
@@ -1165,7 +1168,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   // 静态查询可证明单次写入的结果，却不一定支配另一时间段的读取（例如只在非主控分支写入）。
   // 数量条件仍需在运行时读取的组必须保留写入，不能留下一个从未创建的 Context 名称。
   const materializedTargetGroupKeys = new Set(
-    graph.actionGroup.timelineActions.flatMap((timeline, timelineIndex) =>
+    graph.actionGroup.timelineActions.flatMap(timeline =>
       collectNativeActionNodes(timeline.sequence).flatMap(node => {
         if (
           !node.metadata.enabled ||
@@ -1178,10 +1181,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
           condition.targetSource === 'Context' &&
           !condition.containsHittableTarget &&
           !condition.excludeDeadEntity &&
-          !staticEnemyTargetGroupKeys.has(condition.targetGroupKey) &&
-          !guaranteedSingletonZeroSpaceTargetGroupKeysByTimeline[timelineIndex]!.has(
-            condition.targetGroupKey,
-          )
+          !staticEnemyTargetGroupKeys.has(condition.targetGroupKey)
           ? [condition.targetGroupKey]
           : [];
       }),
@@ -1200,6 +1200,10 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     staticAbilityEntityTargetGroupKeys,
     presentationOnlyTargetGroupKeys: collectPresentationOnlyTargetGroups(graph),
     unconsumedTargetGroupKeys: collectUnconsumedTargetGroups(graph),
+    unconsumedSkillLocalKeys: collectUnconsumedSkillLocalKeys(
+      graph,
+      input.value as Record<string, unknown>,
+    ),
     combatInvisibleRandomBlackboardKeys,
     combatInvisiblePresentationBlackboardKeys,
     combatInvisiblePhysicsCastPaths,
@@ -1219,21 +1223,18 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
       activeMainCharacterSequence,
       input.context.comboQteTriggerBlackboardKeys,
     );
-    if (isPresentationOnlyActionSequence(executableSequence, presentationOnlyBlackboardKeys))
+    const writesRuntimeTargetGroup = collectNativeActionNodes(executableSequence).some(
+      node =>
+        node.metadata.enabled &&
+        node.body.kind === 'leaf' &&
+        node.body.value.family === 'targetGroup' &&
+        materializedTargetGroupKeys.has(node.body.value.action.targetGroupKey),
+    );
+    if (
+      !writesRuntimeTargetGroup &&
+      isPresentationOnlyActionSequence(executableSequence, presentationOnlyBlackboardKeys)
+    )
       continue;
-    const enabledTopLevel = executableSequence.actions.filter(action => action.metadata.enabled);
-    const rootProjectilesCanScheduleCallbacks =
-      enabledTopLevel.some(
-        action => action.body.kind === 'leaf' && action.body.value.family === 'projectile',
-      ) &&
-      enabledTopLevel.every(
-        action =>
-          action.body.kind === 'leaf' &&
-          action.body.value.family !== 'condition' &&
-          action.body.value.family !== 'eventListener' &&
-          action.body.value.family !== 'animationEventListener',
-      );
-    const relativeProjectileCallbacks: CompiledActiveSkillTimelineSequenceSource[] = [];
     // Context 跨 SkillActionGroup 的时间线共享。同名键允许在后续帧改写成另一种实体，
     // 因此不能提升为技能级静态类型；但当前时间线仍可继承按 (startFrame, source order)
     // 严格发生在它之前的最后一批写入。相同调度点的条件分支只有所有写入类型一致时
@@ -1276,12 +1277,21 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     );
     const timelineEnemyKeys = new Set(staticEnemyTargetGroupKeys);
     const timelineAbilityEntityKeys = new Set(staticAbilityEntityTargetGroupKeys);
+    const timelineOperatorKeys = new Set(input.context.operatorTargetGroupKeys);
     const timelineZeroSpaceKeys = new Set(staticZeroSpaceTargetGroupKeys);
     const timelineSingletonZeroSpaceKeys = new Set(
       guaranteedSingletonZeroSpaceTargetGroupKeysByTimeline[timelineIndex],
     );
     for (const [key, items] of latestWritesByKey) {
       const writes = items.map(item => item.write);
+      if (
+        writes.length > 0 &&
+        writes.every(
+          write =>
+            isPartyHitBoxTargetGroup(write, context) || isStaticControlledOperatorWrite(write),
+        )
+      )
+        timelineOperatorKeys.add(key);
       if (writes.length > 0 && writes.every(isStaticActiveSkillEnemyTargetGroup)) {
         timelineEnemyKeys.add(key);
         timelineZeroSpaceKeys.add(key);
@@ -1317,23 +1327,13 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
       staticZeroSpaceTargetGroupKeys: timelineZeroSpaceKeys,
       guaranteedSingletonZeroSpaceTargetGroupKeys: timelineSingletonZeroSpaceKeys,
       staticAbilityEntityTargetGroupKeys: timelineAbilityEntityKeys,
+      operatorTargetGroupKeys: timelineOperatorKeys,
     };
     const sequence = compileCombatActionSequenceSource(
       executableSequence,
       {
         ...timelineContext,
         timelineRange: { startFrame: timeline.startFrame, endFrame: timeline.endFrame },
-        ...(rootProjectilesCanScheduleCallbacks
-          ? {
-              scheduleRelativeProjectileCallback: scheduled => {
-                relativeProjectileCallbacks.push({
-                  startFrame: timeline.startFrame + scheduled.startFrame,
-                  endFrame: timeline.startFrame + scheduled.endFrame,
-                  sequence: scheduled.sequence,
-                });
-              },
-            }
-          : {}),
       },
       visualOnlyIds,
       { ...extensions, allowRootTimelineFinish: true },
@@ -1345,7 +1345,6 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
         sequence,
       });
     }
-    scheduledSequences.push(...relativeProjectileCallbacks);
   }
   assertPresentationCalculationIsolation(
     graph.actionGroup.timelineActions.map(item => item.sequence),

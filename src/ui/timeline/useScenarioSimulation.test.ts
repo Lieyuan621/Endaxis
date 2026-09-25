@@ -83,49 +83,38 @@ function createPerlicaScenario(): ScenarioDocument {
 }
 
 describe('useScenarioSimulation', () => {
-  it('lets drag previews paint first and coalesces intermediate full simulations', async () => {
+  it('publishes immediate results without waiting for a timer', async () => {
     const scenario = shallowRef(createPerlicaScenario());
-    const run = {
-      availabilityDiagnostics: [],
-      executionDiagnostics: [],
-      comboWindowDiagnostics: [],
-    };
-    const simulatedNames: string[] = [];
+    const names: string[] = [];
     const fakeService = {
       simulate: async (current: ScenarioDocument) => {
-        simulatedNames.push(current.name);
-        return run;
+        names.push(current.name);
+        return {};
       },
     } as unknown as ScenarioSimulationService;
-    let dragging = false;
     const scope = effectScope();
     const result = scope.run(() =>
       useScenarioSimulation({
         scenario,
         service: fakeService,
-        interactiveDebounceMs: 16,
-        isInteractive: () => dragging,
       }),
     )!;
     try {
-      await waitFor(() => result.published.value !== null);
-      dragging = true;
-      scenario.value = { ...scenario.value, name: 'intermediate' };
-      scenario.value = { ...scenario.value, name: 'latest' };
-      expect(simulatedNames).toHaveLength(1);
-      await waitFor(() => simulatedNames.length === 2);
-      expect(simulatedNames[1]).toBe('latest');
-
-      scenario.value = { ...scenario.value, name: 'release' };
-      dragging = false;
-      await result.simulateNow();
-      expect(simulatedNames).toEqual([simulatedNames[0], 'latest', 'release']);
+      await Promise.resolve();
+      scenario.value = { ...scenario.value, name: 'first move' };
+      expect(names.at(-1)).toBe('first move');
+      // 同一事件循环内密集到达的位置也不能在上一轮完成后重新进入定时器。
+      scenario.value = { ...scenario.value, name: 'latest move' };
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(result.published.value?.scenario).toBe(scenario.value);
+      expect(names.at(-1)).toBe('latest move');
     } finally {
       scope.stop();
     }
   });
 
-  it('defers the next drag simulation after an in-flight run completes', async () => {
+  it('starts only the latest queued position immediately after an in-flight run completes', async () => {
     const scenario = shallowRef(createPerlicaScenario());
     const run = {
       availabilityDiagnostics: [],
@@ -134,7 +123,6 @@ describe('useScenarioSimulation', () => {
     };
     let resolveFirst!: (value: typeof run) => void;
     const names: string[] = [];
-    let dragging = false;
     const fakeService = {
       simulate: (current: ScenarioDocument) => {
         names.push(current.name);
@@ -150,18 +138,15 @@ describe('useScenarioSimulation', () => {
       useScenarioSimulation({
         scenario,
         service: fakeService,
-        interactiveDebounceMs: 16,
-        isInteractive: () => dragging,
       }),
     );
     try {
-      dragging = true;
       scenario.value = { ...scenario.value, name: 'intermediate' };
       scenario.value = { ...scenario.value, name: 'latest' };
+      expect(names).toHaveLength(1);
       resolveFirst(run);
       await Promise.resolve();
-      expect(names).toHaveLength(1);
-      await waitFor(() => names.length === 2);
+      expect(names).toHaveLength(2);
       expect(names[1]).toBe('latest');
     } finally {
       scope.stop();

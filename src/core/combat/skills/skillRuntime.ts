@@ -4,6 +4,7 @@ import type {
   ProjectileFinishTiming,
   ProjectileLifetimeReference,
 } from '../abilities/projectileLifecycleRuntime';
+import type { CombatStepParameters } from '../../game-data/operatorDefinition';
 import {
   DamageCalculationSnapshots,
   type DamageCalculationSnapshotProgram,
@@ -25,22 +26,24 @@ import {
   tickSkillExecution,
 } from './skillExecution';
 
-/** A detached projectile owns both its callback execution and eventual cleanup. */
-export type ScheduleProjectileFinishCallback = (
-  delaySeconds: ProjectileFinishTiming,
-  recycleDelaySeconds: number,
-  execute: () => void,
-  beforeReset: () => void,
-  skillCastInfo?: CombatSkillCastInfo,
-  advanceCallback?: (deltaSeconds: number) => void,
-  sourceId?: string,
-  callbackState?: import('../state/instanceState').ProjectileCallbackState,
-  callbackProgram?: import('../../compiler/combatProgram').CompiledProjectileCallbackSkillProgram,
-  producedBy?: import('../receipt/combatReceipt').CombatObjectRef,
-) => ProjectileLifetimeReference;
+/** 发射动作只提交一次请求；回调技能及其宿主都归该投射物持有。 */
+export type LaunchProjectile = (request: {
+  readonly syncTimeScale?: boolean;
+  readonly finish: ProjectileFinishTiming;
+  readonly recycleDelaySeconds: number;
+  readonly callbacks: readonly {
+    readonly runtime: import('../abilities/projectileCallbackRuntime').ProjectileCallbackRuntime;
+    readonly program: import('../../compiler/combatProgram').CompiledProjectileCallbackSkillProgram;
+  }[];
+  readonly skillCastInfo?: CombatSkillCastInfo;
+  readonly sourceId?: string;
+  readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+  readonly hit?: CombatStepParameters['launchProjectile']['hit'];
+  readonly hitTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef;
+}) => ProjectileLifetimeReference;
 
 export interface ProjectileRuntimeDependencies {
-  readonly scheduleProjectileFinishCallback: ScheduleProjectileFinishCallback;
+  readonly launchProjectile: LaunchProjectile;
   readonly createCallbackSkillHost: CallbackSkillHostFactory;
 }
 /**
@@ -108,7 +111,7 @@ export interface CombatOperationContext {
   readonly damageCalculationSnapshots?: DamageCalculationSnapshots;
   /** 只有读取或写入原生 Context 目标组的步骤才要求存在。 */
   readonly targetContext?: RuntimeTargetContext;
-  /** 连携条件的原生 InputTarget；承受附着事件中它是施加者，不是物理事件 targetId。 */
+  /** 原生 InputTarget；技能保存施放目标，事件响应临时绑定事件目标，二者不能混用。 */
   readonly actionInputTarget?: RuntimeTargetRef;
   /** 只在 forEachContextTarget 的 body 内存在。 */
   readonly currentTarget?: RuntimeTargetRef;
@@ -186,7 +189,7 @@ export interface CombatOperationContext {
   /** 仅由技能时间轴宿主提供；返回原生 StoreCurSkillExecuteFrame 使用的整数局部帧。 */
   readonly getCurrentTimelineFrame?: () => number;
   /** 已发射投射物的 duration-finish 注册端口；注册项不归当前技能寿命所有。 */
-  readonly scheduleProjectileFinishCallback?: ScheduleProjectileFinishCallback;
+  readonly launchProjectile?: LaunchProjectile;
   readonly createCallbackSkillHost?: CallbackSkillHostFactory;
 }
 
@@ -222,6 +225,9 @@ export interface SkillRuntimeHostIdentity {
 }
 
 type SkillRuntimeDependencies = {
+  /** 实体子技能的初始动作目标及直属 Buff 寿命归属。 */
+  readonly currentTarget?: RuntimeTargetRef;
+  readonly addAbilityChildBuff?: (child: BuffApplicationHandle) => void;
   /** 显式施放实例身份；null 或缺失表示固定技能定义。 */
   readonly castId?: string | null;
   readonly clock: CombatClock;
@@ -244,7 +250,7 @@ type SkillRuntimeDependencies = {
   readonly emitSkillEnd?: (payload: AbilitySkillPayload) => void;
   /** 原生费用实际应用成功后、同帧时间轴动作前同步发布 OnAfterSkillApplyCost。 */
   readonly emitAfterSkillApplyCost?: (payload: AbilitySkillPayload) => void;
-  readonly scheduleProjectileFinishCallback?: ScheduleProjectileFinishCallback;
+  readonly launchProjectile?: LaunchProjectile;
   readonly createCallbackSkillHost?: CallbackSkillHostFactory;
   readonly hostIdentity?: SkillRuntimeHostIdentity;
   readonly damageSnapshotProgram?: DamageCalculationSnapshotProgram;
@@ -334,12 +340,17 @@ export class SkillRuntime {
     this.#advancesCooldown = dependencies.advancesCooldown ?? true;
     const runtime = this;
     this.#operationContext = {
+      currentTarget: dependencies.currentTarget,
+      addAbilityChildBuff: dependencies.addAbilityChildBuff,
       blackboard: this.#blackboard,
       damageCalculationSnapshots: new DamageCalculationSnapshots(
         restored?.damageSnapshotProgram ?? dependencies.damageSnapshotProgram,
         restored?.state.damageSnapshots,
       ),
       targetContext: this.#targetContext,
+      get actionInputTarget() {
+        return runtime.#execution.inputTarget ?? undefined;
+      },
       actionOwnerId: this.#hostIdentity.actionOwnerId,
       actionSourceId: this.#hostIdentity.actionSourceId,
       executionActionId: castId ?? this.#program.skillId,
@@ -359,11 +370,17 @@ export class SkillRuntime {
         this.runtimeState.markedCanInterrupt = true;
       },
       getCurrentTimelineFrame: () => roundToEven(this.#execution.passedFrames),
-      ...(dependencies.scheduleProjectileFinishCallback === undefined
+      ...(dependencies.launchProjectile === undefined
         ? {}
-        : { scheduleProjectileFinishCallback: dependencies.scheduleProjectileFinishCallback }),
+        : { launchProjectile: dependencies.launchProjectile }),
       get skillCastInfo() {
-        return runtime.skillCastInfo;
+        // Reset 在施放正式开始前执行，只能读取本次准备的来源，不能读取上一轮施放。
+        if (
+          runtime.#execution.state !== 'casting' &&
+          runtime.#execution.preparedSkillCastInfo !== undefined
+        )
+          return runtime.#execution.preparedSkillCastInfo;
+        return runtime.#execution.skillCastId === 0 ? undefined : runtime.skillCastInfo;
       },
       attachBuffToCurrentSkill: buff =>
         runtime.attachBuffToCast(runtime.#execution.skillCastId, buff),
@@ -561,15 +578,10 @@ export class SkillRuntime {
     if (this.#execution.skillCastId === 0)
       throw new Error(`skill '${this.#program.skillId}' has not started`);
     const origin = this.#execution.inheritedSkillCastInfo;
-    if (origin === undefined && this.#program.skillType === undefined) {
-      throw new Error(
-        `native-only skill '${this.#program.skillId}' requires inherited SkillCastInfo`,
-      );
-    }
     return {
       skillCastId: this.#execution.skillCastId,
       originSkillId: origin?.originSkillId ?? this.#program.skillId,
-      originSkillType: origin?.originSkillType ?? this.#program.skillType!,
+      originSkillType: origin?.originSkillType ?? this.#program.skillType,
       ...(origin?.originCastId !== undefined
         ? { originCastId: origin.originCastId }
         : this.castId === undefined
@@ -619,6 +631,7 @@ export class SkillRuntime {
 
   prepareCastInput(input: {
     readonly skipApplyCost: boolean;
+    readonly inputTarget?: RuntimeTargetRef | null;
     readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
     readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
   }): void {
@@ -634,6 +647,8 @@ export class SkillRuntime {
       this.#execution.preparedSkillCastId = inherited.skillCastId;
     }
     this.#execution.preparedSkipApplyCost = input.skipApplyCost;
+    this.#execution.preparedInputTarget =
+      input.inputTarget == null ? input.inputTarget : { ...input.inputTarget };
     this.#execution.preparedProducer = input.producedBy;
   }
 
@@ -767,6 +782,8 @@ export class SkillRuntime {
     this.#blackboard.assign(this.#execution.preparedStartBlackboard);
     this.#execution.preparedStartBlackboard = {};
     this.runtimeState.timeline = this.#timeline.runtimeState;
+    // Reset 也可能读取动作输入；旧技能已结束，此处才切换到新请求的目标。
+    this.#execution.inputTarget = this.#execution.preparedInputTarget;
     this.#sequenceRuntime.reset();
     this.#operationContext.damageCalculationSnapshots!.clear();
     this.#timeline.reset(this.#context);

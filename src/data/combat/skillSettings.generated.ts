@@ -4,7 +4,7 @@ import type { SkillSettingResources } from '../../../packages/game-data-contract
 
 export const generatedSkillSettings = {
   schemaVersion: 1,
-  revision: '1.5.3@10024360-6',
+  revision: '1.5.3@10506507-7',
   data: [
     {
       key: '异常初始伤害倍率',

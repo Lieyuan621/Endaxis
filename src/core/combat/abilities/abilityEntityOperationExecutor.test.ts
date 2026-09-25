@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
@@ -14,7 +14,38 @@ import { AbilityEntityOperationExecutor } from './abilityEntityOperationExecutor
 import { LogicalAbilityEntityRuntime } from './logicalAbilityEntityRuntime';
 import { RuntimeTargetContext } from './runtimeTargetContext';
 
+import { CombatClock } from '../time/combatClock';
+import { CombatReceiptCollector } from '../receipt/combatReceipt';
+import { createCallbackSkillHostFactory, type CallbackSkillHostFactory } from './callbackSkillHost';
+
+const childMetadata = {
+  nativeSkillType: 'normalSkill' as const,
+  naturalDurationFrames: 30,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy' as const, value: 0, availabilityThreshold: 0 },
+  },
+};
+
 describe('AbilityEntityOperationExecutor', () => {
+  let clock: CombatClock;
+  let createCallbackSkillHost: CallbackSkillHostFactory;
+  beforeEach(() => {
+    clock = new CombatClock();
+    let nextCastId = 1;
+    createCallbackSkillHost = createCallbackSkillHostFactory({
+      clock,
+      receipt: new CombatReceiptCollector(),
+      definitionOperatorId: 'owner',
+      allocateSkillCastId: () => nextCastId++,
+    });
+  });
+  function advance(entities: LogicalAbilityEntityRuntime): void {
+    clock.advanceFrame();
+    entities.advanceFrame();
+  }
   it('两个实体共用子技能程序，结束一个实例只清理它自己的动作创建物', () => {
     const entities = new LogicalAbilityEntityRuntime({});
     const programs = new AbilityEntityChildSkillPrograms();
@@ -24,7 +55,7 @@ describe('AbilityEntityOperationExecutor', () => {
         'owner',
         entities,
         { execute: () => false, evaluate: () => false },
-        { resolveOperations: makeOperations, programs },
+        { createCallbackSkillHost, resolveOperations: makeOperations, programs },
         undefined,
         { state: state.abilityEntities, programs: operationPrograms },
       );
@@ -37,6 +68,7 @@ describe('AbilityEntityOperationExecutor', () => {
         definition: {
           lifetime: { kind: 'limited', durationSeconds: 10 },
           childSkill: {
+            ...childMetadata,
             skillId: 'child',
             initialBlackboard: {},
             timelineActions: [
@@ -70,7 +102,7 @@ describe('AbilityEntityOperationExecutor', () => {
     const first = parents[0]!.childSkills[0]!;
     const second = parents[1]!.childSkills[0]!;
     expect(first.programId).toBe(second.programId);
-    expect(first.operations).not.toBe(second.operations);
+    expect(first.host.skill.operations).not.toBe(second.host.skill.operations);
     const owned = () =>
       [...entities.runtimeState.instances.values()].filter(
         entity => entity.abilityEntityId === 'owned' && entity.isAlive,
@@ -88,6 +120,7 @@ describe('AbilityEntityOperationExecutor', () => {
     const definition = {
       lifetime: { kind: 'limited' as const, durationSeconds: 10 },
       childSkill: {
+        ...childMetadata,
         skillId: 'restored-child',
         initialBlackboard: {},
         timelineActions: [
@@ -126,7 +159,7 @@ describe('AbilityEntityOperationExecutor', () => {
       'owner',
       originalEntities,
       { execute: originalExecute, evaluate: () => false },
-      { resolveOperations: () => originalExecutor, programs },
+      { createCallbackSkillHost, resolveOperations: () => originalExecutor, programs },
       id => (id === 'entity' ? definition : undefined),
     );
     originalExecutor.execute(
@@ -136,7 +169,7 @@ describe('AbilityEntityOperationExecutor', () => {
       },
       { blackboard: new ActionBlackboard() },
     );
-    originalEntities.advanceFrame();
+    advance(originalEntities);
     const saved = structuredClone(originalEntities.runtimeState);
     expect([...saved.instances.values()][0]!.childSkills[0]!.skillId).toBe('restored-child');
 
@@ -150,7 +183,7 @@ describe('AbilityEntityOperationExecutor', () => {
       'owner',
       restoredEntities,
       { execute: restoredExecute, evaluate: () => false },
-      { resolveOperations: () => restoredExecutor, programs },
+      { createCallbackSkillHost, resolveOperations: () => restoredExecutor, programs },
       id => (id === 'entity' ? definition : undefined),
     );
     restoredEntities.bindRestoredRelations({
@@ -159,7 +192,7 @@ describe('AbilityEntityOperationExecutor', () => {
     });
     expect(restoredExecute).not.toHaveBeenCalled();
     expect([...saved.instances.values()][0]!.childSkills).toHaveLength(1);
-    restoredEntities.advanceFrame();
+    advance(restoredEntities);
     expect(restoredExecute).toHaveBeenCalledOnce();
     expect(restoredExecute.mock.calls[0]![0]).toMatchObject({
       parameters: { flag: 'second' },
@@ -198,6 +231,7 @@ describe('AbilityEntityOperationExecutor', () => {
       entities,
       { execute: () => false, evaluate: () => false },
       {
+        createCallbackSkillHost,
         resolveOperations: () => ({ execute: () => false, evaluate: () => false }),
         installPassiveSkills: () => {
           throw new Error('passive install failed');
@@ -891,7 +925,7 @@ describe('AbilityEntityOperationExecutor', () => {
     ).toBe(true);
     expect(entities.activeCount).toBe(1);
     expect(entities.snapshot(entity).isAlive).toBe(false);
-    entities.advanceFrame();
+    advance(entities);
     expect(entities.activeCount).toBe(0);
     expect(
       executor.execute(
@@ -910,6 +944,7 @@ describe('AbilityEntityOperationExecutor', () => {
     );
     const rootOperations = { execute, evaluate: () => false };
     const executor = new AbilityEntityOperationExecutor('fixture', entities, rootOperations, {
+      createCallbackSkillHost,
       resolveOperations: () => rootOperations,
     });
 
@@ -921,6 +956,7 @@ describe('AbilityEntityOperationExecutor', () => {
           definition: {
             lifetime: { kind: 'limited', durationSeconds: 10 },
             childSkill: {
+              ...childMetadata,
               skillId: 'child-skill',
               initialBlackboard: { local: 3 },
               timelineActions: [
@@ -953,24 +989,24 @@ describe('AbilityEntityOperationExecutor', () => {
 
     const owner = [...entities.runtimeState.instances.values()][0]!;
     const childState = owner.childSkills[0]!;
-    expect(childState.started).toBe(true);
-    expect(childState.blackboard.entity).toBe(owner.blackboard);
+    expect(childState.host.skill.execution.state).toBe('casting');
+    expect(childState.host.skill.blackboard.entity).toBe(owner.blackboard);
     const saved = structuredClone(owner);
 
-    entities.advanceFrame();
-    entities.advanceFrame();
-    entities.advanceFrame();
+    advance(entities);
+    advance(entities);
+    advance(entities);
     expect(execute).not.toHaveBeenCalled();
-    entities.advanceFrame();
+    advance(entities);
 
     expect(execute).toHaveBeenCalledTimes(1);
     const operationContext = execute.mock.calls[0]?.[1];
     expect(operationContext?.blackboard.getNumber('local')).toBe(3);
     expect(operationContext?.blackboard.getNumber('inherited')).toBe(7);
     expect(operationContext?.blackboard.getNumber('inheritedParent')).toBe(11);
-    expect(childState.passedFrames).toBeGreaterThan(0);
-    expect(saved.childSkills[0]!.passedFrames).toBe(0);
-    expect(saved.childSkills[0]!.blackboard.entity).toBe(saved.blackboard);
+    expect(childState.host.skill.execution.passedFrames).toBeGreaterThan(0);
+    expect(saved.childSkills[0]!.host.skill.execution.passedFrames).toBe(0);
+    expect(saved.childSkills[0]!.host.skill.blackboard.entity).toBe(saved.blackboard);
   });
 
   it('selects the named child skill bound by the spawn action', () => {
@@ -978,9 +1014,11 @@ describe('AbilityEntityOperationExecutor', () => {
     const execute = vi.fn(() => true);
     const rootOperations = { execute, evaluate: () => false };
     const executor = new AbilityEntityOperationExecutor('fixture', entities, rootOperations, {
+      createCallbackSkillHost,
       resolveOperations: () => rootOperations,
     });
     const child = (skillId: string, flag: string) => ({
+      ...childMetadata,
       skillId,
       initialBlackboard: {},
       timelineActions: [
@@ -1037,6 +1075,7 @@ describe('AbilityEntityOperationExecutor', () => {
     const delegate = { execute, evaluate: () => true };
     let executor!: AbilityEntityOperationExecutor;
     executor = new AbilityEntityOperationExecutor('fixture', entities, delegate, {
+      createCallbackSkillHost,
       resolveOperations: () => executor,
     });
 
@@ -1048,6 +1087,7 @@ describe('AbilityEntityOperationExecutor', () => {
           definition: {
             lifetime: { kind: 'limited', durationSeconds: 10 },
             childSkill: {
+              ...childMetadata,
               skillId: 'jump-child',
               initialBlackboard: {},
               timelineActions: [
@@ -1090,11 +1130,11 @@ describe('AbilityEntityOperationExecutor', () => {
       { blackboard: new ActionBlackboard() },
     );
 
-    entities.advanceFrame();
-    entities.advanceFrame();
+    advance(entities);
+    advance(entities);
     expect(execute).not.toHaveBeenCalled();
 
-    entities.advanceFrame();
+    advance(entities);
     expect(execute).toHaveBeenCalledTimes(1);
     expect(execute).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1115,6 +1155,7 @@ describe('AbilityEntityOperationExecutor', () => {
     const delegate = { execute, evaluate: () => true };
     let executor!: AbilityEntityOperationExecutor;
     executor = new AbilityEntityOperationExecutor('fixture', entities, delegate, {
+      createCallbackSkillHost,
       resolveOperations: () => executor,
     });
 
@@ -1126,6 +1167,7 @@ describe('AbilityEntityOperationExecutor', () => {
           definition: {
             lifetime: { kind: 'limited', durationSeconds: 10 },
             childSkill: {
+              ...childMetadata,
               skillId: 'finish-child',
               initialBlackboard: {},
               timelineActions: [
@@ -1153,8 +1195,8 @@ describe('AbilityEntityOperationExecutor', () => {
       { blackboard: new ActionBlackboard() },
     );
 
-    entities.advanceFrame();
-    entities.advanceFrame();
+    advance(entities);
+    advance(entities);
     expect(execute).not.toHaveBeenCalled();
   });
 
@@ -1163,6 +1205,7 @@ describe('AbilityEntityOperationExecutor', () => {
     const delegate = { execute: () => false, evaluate: () => false };
     let executor!: AbilityEntityOperationExecutor;
     executor = new AbilityEntityOperationExecutor('fixture', entities, delegate, {
+      createCallbackSkillHost,
       resolveOperations: () => executor,
     });
 
@@ -1174,6 +1217,7 @@ describe('AbilityEntityOperationExecutor', () => {
           definition: {
             lifetime: { kind: 'limited', durationSeconds: 10 },
             childSkill: {
+              ...childMetadata,
               skillId: 'self-finishing-skill',
               initialBlackboard: {},
               timelineActions: [
@@ -1195,10 +1239,10 @@ describe('AbilityEntityOperationExecutor', () => {
     );
 
     expect(entities.activeCount).toBe(1);
-    entities.advanceFrame();
+    advance(entities);
     expect(entities.activeCount).toBe(1);
     expect(entities.snapshot(entities.findAll()[0]!).isAlive).toBe(false);
-    entities.advanceFrame();
+    advance(entities);
     expect(entities.activeCount).toBe(0);
   });
 
@@ -1216,7 +1260,7 @@ describe('AbilityEntityOperationExecutor', () => {
       'arcane',
       entities,
       { execute, evaluate: () => false },
-      { resolveOperations: () => executor },
+      { createCallbackSkillHost, resolveOperations: () => executor },
     );
 
     expect(
@@ -1225,6 +1269,7 @@ describe('AbilityEntityOperationExecutor', () => {
           kind: 'startCurrentAbilityEntityChildSkill',
           parameters: {
             childSkill: {
+              ...childMetadata,
               skillId: 'seal-end',
               initialBlackboard: {},
               timelineActions: [
@@ -1248,7 +1293,7 @@ describe('AbilityEntityOperationExecutor', () => {
     ).toBe(true);
     expect(execute).not.toHaveBeenCalled();
 
-    entities.advanceFrame();
+    advance(entities);
 
     expect(execute).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'setContextFlag' }),
@@ -1278,7 +1323,7 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(entities.notifySourceDied(source)).toBe(0);
     expect(executor.execute(step, context)).toBe(true);
     expect(entities.snapshot(entity).isAlive).toBe(false);
-    entities.advanceFrame();
+    advance(entities);
     expect(entities.activeCount).toBe(0);
   });
 });

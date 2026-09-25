@@ -19,6 +19,7 @@ import {
   readRootMotionDirectionType,
   readRotateDirectionType,
   readSelfRotateType,
+  readMountPoint,
 } from './spatialEnums.ts';
 
 function parseIgnoredCollisionLayer(value: unknown, path: string): void {
@@ -42,6 +43,35 @@ export interface DynamicBattleShapeActionSource {
   readonly shapeType: string | number;
   readonly durationSeconds: number;
   readonly intervalSeconds: number;
+}
+
+export interface EnableMoveColliderActionSource {
+  readonly kind: 'enableMoveCollider';
+  readonly mountPoint: string;
+}
+
+/** 原生动作启用挂点下非 trigger 的 Unity Collider，结束时关闭；不修改伤害或资源。 */
+export function parseEnableMoveColliderActionSource(
+  value: unknown,
+  path: string,
+): EnableMoveColliderActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      '$type',
+      'isEnable',
+      'priorityLevel',
+      'priorityOffset',
+      'serverActionIndex',
+      'mountPoint',
+    ]),
+    path,
+  );
+  return {
+    kind: 'enableMoveCollider',
+    mountPoint: readMountPoint(action.mountPoint, `${path}.mountPoint`),
+  };
 }
 
 /** 闪避等状态按固定间隔刷新角色自身的战斗碰撞形状。 */

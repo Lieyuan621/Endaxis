@@ -22,13 +22,14 @@ describe('generated Buff identity closure', () => {
         .filter(id => !definitions.has(id))
         .map(id => `${operator.slug}: ${id}`),
     );
-    // Both are listeners for an enemy-authored signal, not player Buff creation.
+    // These are listeners for an enemy-authored signal, not player Buff creation.
     // Same-batch SkillData: eny_0018_lbtough_skill07{,_endinggame},
     // eny_0058_agdisk_skill08 create this ID. The stationary-target model does
     // not execute those enemy skills. Keep the exact pairs visible: do not
     // exempt all enemy IDs or accidentally hide a new player-signal omission.
     expect(missing.sort()).toEqual([
       'catcher: buff_eny_0018_lbtough_pre_catch',
+      'purrchena: buff_eny_0018_lbtough_pre_catch',
       'snowshine: buff_eny_0018_lbtough_pre_catch',
     ]);
   });

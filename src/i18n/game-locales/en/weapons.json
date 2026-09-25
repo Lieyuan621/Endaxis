@@ -2008,6 +2008,34 @@
       ]
     }
   },
+  "wpn_sword_0023": {
+    "name": "Dessert Moment",
+    "skill1": {
+      "name": "Strength [M]",
+      "description": "Strength <@ba.vup>+{0}</>",
+      "values": [16, 28, 41, 54, 67, 80, 92, 105, 124]
+    },
+    "skill2": {
+      "name": "Treatment Efficiency [M]",
+      "description": "Treatment Efficiency <@ba.vup>+{0}%</>.",
+      "values": [4.8, 8.6, 12.4, 16.2, 20, 23.8, 27.6, 31.4, 37.1]
+    },
+    "skill3": {
+      "name": "Medicant: Sweetness and Dreams",
+      "description": "Max HP <@ba.vup>+{0}%</>.\nWhen the wielder's combo skill grants HP treatment, the operator receiving this HP treatment gains Arts Intensity <@ba.vup>+{1}</> and Arts DMG Dealt <@ba.vup>+{2}%</> for 20s.\n<@ba.info>Effects of the same name cannot stack.</>",
+      "values": [
+        [10, 5, 3.5],
+        [12, 6, 4.2],
+        [14, 7, 4.9],
+        [16, 8, 5.6],
+        [18, 9, 6.3],
+        [20, 10, 7],
+        [22, 11, 7.7],
+        [24, 12, 8.4],
+        [28, 14, 9.8]
+      ]
+    }
+  },
   "wpn_sword_0026": {
     "name": "Farsight",
     "skill1": {

@@ -46,6 +46,23 @@ function createAdapter() {
 }
 
 describe('ElementalInflictionBuffAdapter', () => {
+  it('反向附着只交换反应选表顺序，消耗元素和层数保持原值', () => {
+    const { target, adapter } = createAdapter();
+    adapter.apply({ kind: 'addAttachment', element: 'cryo' });
+    for (const operation of resolveElementalInfliction(
+      'nature',
+      adapter.getExistingAttachment(),
+      true,
+    ))
+      adapter.apply(operation);
+    const status = target.findFirst(buff => buff.definition.id === 'status.nature.cryo');
+    expect(status?.blackboard.snapshot()).toMatchObject({
+      consumed_type: 2,
+      consumed_layer: 1,
+      count: 1,
+    });
+    expect(target.findFirst(buff => buff.definition.id === 'attachment.cryo')).toBeUndefined();
+  });
   it('附着消费走公共实例结束入口，消费来源不是原始施加者，通知发生在结束之后', () => {
     const { target } = createAdapter();
     const producer = new ElementalInflictionBuffAdapter(target, 'producer', index);

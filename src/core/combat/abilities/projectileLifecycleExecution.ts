@@ -6,14 +6,19 @@ import type { CombatStepParameters } from '../../game-data/operatorDefinition';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { ProjectileLifecycleState } from '../state/instanceState';
 
-export type ProjectileFinishTiming =
-  number | CombatStepParameters['launchProjectileLifetime']['finish'];
+export type ProjectileFinishTiming = CombatStepParameters['launchProjectile']['finish'];
 
 export interface ProjectileLaunchData {
-  readonly callback?: import('../state/instanceState').ProjectileCallbackState;
+  readonly callbacks?: readonly import('../state/instanceState').ProjectileCallbackState[];
   readonly source?: RuntimeTargetRef;
   readonly finishDelaySeconds: ProjectileFinishTiming;
   readonly recycleDelaySeconds: number;
+  /** 仅用于编译器已证明的单目标至多一次命中；命中过滤由 hit 端口执行。 */
+  readonly firstTickHit?: {
+    readonly finishOnHit: boolean;
+    readonly retryRejectedHit?: boolean;
+    readonly onReach?: boolean;
+  };
 }
 
 /** 创建的是过去发射行为产生的待处理对象，必须随状态保存。编号由整场实体分配器提供。 */
@@ -23,6 +28,9 @@ export function launchProjectile(
   request: ProjectileLaunchData,
 ): void {
   const finishOnFirstTick = request.finishDelaySeconds === 'firstTickReach';
+  const blockOnFirstTick = request.finishDelaySeconds === 'firstTickBlock';
+  if (request.firstTickHit?.retryRejectedHit && typeof request.finishDelaySeconds !== 'number')
+    throw new Error('retrying projectile hits requires a duration-only lifetime');
   const segmented =
     typeof request.finishDelaySeconds === 'object' ? request.finishDelaySeconds : null;
   if (
@@ -35,7 +43,11 @@ export function launchProjectile(
       (typeof request.finishDelaySeconds === 'number' ? request.finishDelaySeconds : 0),
   );
   const recycleDelay = Math.fround(request.recycleDelaySeconds);
-  if (!finishOnFirstTick && (!Number.isFinite(finishDelay) || finishDelay <= 0))
+  if (
+    !finishOnFirstTick &&
+    !blockOnFirstTick &&
+    (!Number.isFinite(finishDelay) || finishDelay <= 0)
+  )
     throw new RangeError('projectile finish delay must be positive and finite');
   if (!Number.isFinite(recycleDelay) || request.recycleDelaySeconds < 0)
     throw new RangeError('projectile recycle delay must be non-negative and finite');
@@ -44,12 +56,16 @@ export function launchProjectile(
   if (state.instances.has(instanceId))
     throw new Error(`duplicate projectile AbilityEntity instance id '${instanceId}'`);
   state.instances.set(instanceId, {
-    callback: request.callback ?? null,
+    callbacks: request.callbacks ?? [],
     instanceId,
     ...(request.source === undefined ? {} : { source: { ...request.source } }),
     phase: 'active',
     remainingSeconds: finishDelay,
-    remainingReachTicks: segmented?.reachAfterTicks ?? null,
+    remainingReachTicks: finishOnFirstTick ? 1 : (segmented?.reachAfterTicks ?? null),
+    ...(blockOnFirstTick ? { pendingBlock: true } : {}),
+    finishOnReach: segmented?.finishOnReach ?? true,
+    firstTickHit:
+      request.firstTickHit === undefined ? null : { pending: true, ...request.firstTickHit },
     recycleDelaySeconds: recycleDelay,
     resetListeners: new Map(),
   });
@@ -79,6 +95,11 @@ export function unregisterProjectileReset(
 /** 端口只在推进过程中使用，不保存在状态中。相互触发的事件仍然同步执行。 */
 export interface ProjectileLifecycleHost {
   resolveTickDeltaSeconds(instanceId: number): number | null;
+  /** 到达回调发生在结束标记之前；持续时间耗尽不会触发到达。 */
+  reach?(instanceId: number): void;
+  block?(instanceId: number): void;
+  /** 返回是否实际命中；被过滤的碰撞不能触发命中次数上限导致的结束。 */
+  hit?(instanceId: number): boolean;
   finish(instanceId: number): void;
   beforeReset(instanceId: number): void;
   resolveResetHandler(handlerId: number): () => void;
@@ -111,14 +132,51 @@ export function advanceProjectileLifetimes(
       }
       continue;
     }
+    // 首个移动 Tick 先碰撞再移动/到达。命中回调执行时对象还未结束，查找应能看见它。
+    if (
+      instance.phase === 'active' &&
+      instance.firstTickHit?.pending &&
+      !instance.firstTickHit.onReach
+    ) {
+      instance.firstTickHit.pending = false;
+      if (host.hit === undefined) throw new Error('projectile first-tick hit requires a hit port');
+      const hit = host.hit(instance.instanceId);
+      if (!hit && instance.firstTickHit.retryRejectedHit) instance.firstTickHit.pending = true;
+      if (hit && instance.firstTickHit.finishOnHit) {
+        instance.phase = 'finished';
+        instance.remainingReachTicks = null;
+        instance.remainingSeconds = instance.recycleDelaySeconds;
+        host.finish(instance.instanceId);
+        continue;
+      }
+    }
+    if (instance.phase === 'active' && instance.pendingBlock) {
+      instance.pendingBlock = false;
+      host.block?.(instance.instanceId);
+      instance.phase = 'finished';
+      instance.remainingReachTicks = null;
+      instance.remainingSeconds = instance.recycleDelaySeconds;
+      host.finish(instance.instanceId);
+      continue;
+    }
     // 原生 Update 使用 remaining <= 0，不能套用 isReady 的 epsilon。
     instance.remainingSeconds = Math.max(0, Math.fround(instance.remainingSeconds - nativeDelta));
     if (instance.phase === 'active' && instance.remainingReachTicks !== null)
       instance.remainingReachTicks--;
     if (instance.remainingSeconds > 0 && instance.remainingReachTicks !== 0) continue;
     if (instance.phase === 'active') {
-      instance.phase = 'finished';
+      const reached = instance.remainingReachTicks === 0;
       instance.remainingReachTicks = null;
+      let finishedByHit = false;
+      if (reached && instance.firstTickHit?.pending && instance.firstTickHit.onReach) {
+        instance.firstTickHit.pending = false;
+        if (host.hit === undefined) throw new Error('projectile reach hit requires a hit port');
+        finishedByHit = host.hit(instance.instanceId) && instance.firstTickHit.finishOnHit;
+      }
+      if (reached) host.reach?.(instance.instanceId);
+      if (reached && !instance.finishOnReach && !finishedByHit && instance.remainingSeconds > 0)
+        continue;
+      instance.phase = 'finished';
       instance.remainingSeconds = instance.recycleDelaySeconds;
       host.finish(instance.instanceId);
     } else {

@@ -693,7 +693,7 @@ describe('assembly 原生常驻连携条件', () => {
     expect(f.pending[0]?.assignPairs).toEqual(initialValues);
   });
 
-  it('活动能力实体保持自己的输入身份，到期后不把失效句柄当成来源干员', () => {
+  it('能力实体到期后仍保留引用身份，不替换为来源干员', () => {
     const f = setup();
     const assembly = new CombatRuntimeAssembly(f.options);
     const target = assembly.abilityEntities.spawn({
@@ -706,9 +706,9 @@ describe('assembly 原生常驻连携条件', () => {
     f.emit(`ability-entity:${target.instanceId}`);
     expect(f.pending[0]?.inputTarget).toEqual(target);
     assembly.abilityEntities.finish(target);
-    expect(() => f.emit(`ability-entity:${target.instanceId}`)).toThrow(
-      'unknown or inactive entity',
-    );
+    f.emit(`ability-entity:${target.instanceId}`);
+    expect(f.pending).toHaveLength(2);
+    expect(f.pending[1]?.inputTarget).toEqual(target);
   });
 
   it('真实单充能账本：startCdFrame 前放行，等于和之后拒绝，就绪再放行', () => {
@@ -853,11 +853,11 @@ describe('assembly 原生常驻连携条件', () => {
     expect(f.pending).toEqual([]);
   });
 
-  it('只解析已装配角色、敌人和活动能力实体；未知 ID 不假装成角色', () => {
+  it('只解析已装配角色、敌人和已分配能力实体；未知 ID 不假装成角色', () => {
     const f = setup();
     new CombatRuntimeAssembly(f.options);
-    expect(() => f.emit('missing')).toThrow("unknown or inactive entity 'missing'");
-    expect(() => f.emit('ability-entity:42')).toThrow('unknown or inactive entity');
+    expect(() => f.emit('missing')).toThrow("unknown entity 'missing'");
+    expect(() => f.emit('ability-entity:42')).toThrow('unknown entity');
     f.emit();
     expect(f.pending[0]).toMatchObject({
       inputTarget: { kind: 'operator', operatorId: 'owner' },

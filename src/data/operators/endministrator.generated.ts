@@ -741,6 +741,16 @@ export const endministratorChr_0003_endminf_attack5: SkillDefinition = withSkill
     costFrame: 12,
     scheduledSequences: [
       scheduled(
+        16,
+        sequence(
+          step('mergeContextTargets', {
+            saveToContextKey: 'tar',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          }),
+        ),
+        19,
+      ),
+      scheduled(
         18,
         sequence(
           step(
@@ -752,7 +762,7 @@ export const endministratorChr_0003_endminf_attack5: SkillDefinition = withSkill
               stagger: { kind: 'blackboard', key: 'poise' },
               staggerOnlyWhenCasterControlled: true,
             },
-            'chr_0003_endminf_attack5:/scheduledSequences/0/sequence/steps/0',
+            'chr_0003_endminf_attack5:/scheduledSequences/1/sequence/steps/0',
           ),
           branch(
             { kind: 'casterControlled' },
@@ -774,6 +784,16 @@ export const endministratorChr_0003_endminf_attack5: SkillDefinition = withSkill
             undefined,
             { alwaysNext: true },
           ),
+        ),
+        19,
+      ),
+      scheduled(
+        18,
+        sequence(
+          step('mergeContextTargets', {
+            saveToContextKey: 'tar',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          }),
         ),
         19,
       ),

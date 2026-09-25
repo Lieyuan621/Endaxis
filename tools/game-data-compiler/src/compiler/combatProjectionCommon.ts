@@ -3,7 +3,6 @@ import type { ProjectileLaunchActionSource } from '../source/referenceActions.ts
 import type { ScalarSource } from '../source/scalar.ts';
 import type { CompiledBuffNumberSource } from './buffs/buffProjectionTypes.ts';
 import type { CompiledBuffStepSource } from './actions/combatActionProjectionTypes.ts';
-import type { CompiledBuffSequenceSource } from './actions/combatActionProjectionTypes.ts';
 import type { GameplayTagRegistry } from '../source/nativeGameplayTags.ts';
 import type { CompiledAbilityEntityTemplateCatalogSource } from './abilities/abilityEntityCatalog.ts';
 import type { GlobalBuffActionSource } from '../source/globalBuffActions.ts';
@@ -34,6 +33,32 @@ export type ProjectedTargetGroup =
   | 'enemy'
   | 'empty'
   | 'spatialPoint';
+
+/** 我方能力实体的无筛选友方命中盒，在全范围模型中取队伍成员。 */
+export function isPartyHitBoxTargetGroup(
+  write: TargetGroupActionSource,
+  context: CombatActionProjectionContextSource,
+): boolean {
+  return (
+    write.producerType === 'FindTargetAction' &&
+    write.finderType === 'HitBoxFinder' &&
+    write.finderAutoSetTargetFaction === true &&
+    write.finderFactionTarget === 'Ally' &&
+    write.finderTargetObjectType === 'Normal' &&
+    write.finderCheckAlive === true &&
+    context.actionSourceTarget === 'caster' &&
+    context.actionOwnerTarget === 'currentAbilityEntity' &&
+    write.center === 'ActionOwner' &&
+    write.centerContextKey === '' &&
+    write.selectorOwner === 'ActionOwner' &&
+    write.selectorOwnerContextKey === '' &&
+    write.validatorTypes.length === 0 &&
+    write.postProcessorTypes.length === 0 &&
+    write.priorityFilters.length === 0 &&
+    write.shuffleTargets.length === 0 &&
+    write.distanceValidators.length === 0
+  );
+}
 
 export function isPlainOwnerTarget(target: TargetReferenceSource): boolean {
   return (
@@ -78,6 +103,8 @@ export interface CombatActionProjectionContextSource {
   /** 接收侧 Buff 事件保留监听器创建者；其他路径沿用已审计的宿主投影。 */
   readonly actionSourceTarget: 'caster' | 'buffSource';
   /** 主动命中可显式绑定 enemy；不伪造 Buff 事件。接收侧 Target 是事件施加者。 */
+  /** 调用方已证明施法输入来自友方角色；不改变输入目标的运行时绑定方式。 */
+  readonly actionInputIsOperator?: boolean;
   readonly actionTargetTarget:
     | 'caster'
     | 'actionInputTarget'
@@ -108,6 +135,8 @@ export interface CombatActionProjectionContextSource {
   readonly fixedBuffSourceTarget?: 'caster' | 'enemy' | 'currentAbilityEntity';
   /** 已由同一主动技能动作图证明会命中唯一木桩的命名目标组。 */
   readonly staticEnemyTargetGroupKeys?: ReadonlySet<string>;
+  /** 当前时间线之前的写入仅产生干员；数量和具体成员仍从运行时 Context 读取。 */
+  readonly operatorTargetGroupKeys?: ReadonlySet<string>;
   /** 事件宿主可证明的命名 Context 身份；例如连携检查中的 trigger 就是事件发布者。 */
   readonly contextTargetGroupTargets?: ReadonlyMap<
     string,
@@ -141,6 +170,10 @@ export interface CombatActionProjectionContextSource {
   readonly combatInvisibleRandomBlackboardKeys?: ReadonlySet<string>;
   /** 只在表现分支间传递的确定性动作黑板键；写入与消费可一并省略。 */
   readonly combatInvisiblePresentationBlackboardKeys?: ReadonlySet<string>;
+  /** 接收黑板的完整资源闭包已经检查；仅允许省略所有接收者都未使用的局部键。 */
+  readonly isBlackboardKeyUnusedByExternalResources?: (key: string) => boolean;
+  /** 完整技能已证明没有读取或整板传出的局部常量赋值；不能用于 Buff 或实体板。 */
+  readonly unconsumedSkillLocalKeys?: ReadonlySet<string>;
   /** 完整 SkillData 数据流证明不会留下战斗可见输出的 PhysicsCast 源路径。 */
   readonly combatInvisiblePhysicsCastPaths?: ReadonlySet<string>;
   /** 完整主动技能图中是否存在启用且非纯表现的动画事件监听器；未提供时不得假定倍率无战斗影响。 */
@@ -160,15 +193,6 @@ export interface CombatActionProjectionContextSource {
    * 定义没有 affix 写入，且当前回调保留普通来源编号，不能把普通来源冒充非零 affix。
    */
   readonly actionEnvironmentSkillCastInfoIsSourceCast?: boolean;
-  /**
-   * 主动技能宿主为无条件顶层发射动作提供的相对调度出口。投射物扩展只能把不依赖
-   * 回调 direct blackboard 的延迟动作提升到这里；条件、事件响应与嵌套控制流不得安装该出口。
-   */
-  readonly scheduleRelativeProjectileCallback?: (scheduled: {
-    readonly startFrame: number;
-    readonly endFrame: number;
-    readonly sequence: CompiledBuffSequenceSource;
-  }) => void;
 }
 
 /** 领域宿主可显式补入公共动作叶子的已审计投影；未提供时仍严格失败。 */

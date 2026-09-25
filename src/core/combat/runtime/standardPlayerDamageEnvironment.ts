@@ -337,8 +337,11 @@ export class StandardPlayerDamageEnvironment {
     this.#reactions = new ElementalReactionContainer(restored?.reactions);
     this.#buffProgress = new BuffProgressRecorder(restored?.buffProgress);
     for (const [operatorId, state] of restored?.operatorVitals ?? []) {
-      this.#operatorVitals.set(operatorId, CombatVitals.bindRuntimeState(state));
+      const vitals = CombatVitals.bindRuntimeState(state);
+      this.#bindHealthChangeEvent(operatorId, vitals);
+      this.#operatorVitals.set(operatorId, vitals);
     }
+    this.#bindHealthChangeEvent('enemy', options.enemyVitals);
     const restoredEnemyBuffs = options.restoredBuffStates?.enemy;
     const enemyAttributes = new CombatAttributeSet<string>(restoredEnemyBuffs?.attributes);
     const enemyBlackboard =
@@ -1070,8 +1073,18 @@ export class StandardPlayerDamageEnvironment {
       poiseImmune: false,
     });
     this.#operatorVitals.set(operatorId, vitals);
+    this.#bindHealthChangeEvent(operatorId, vitals);
     this.runtimeState.operatorVitals.set(operatorId, vitals.runtimeState);
     return vitals;
+  }
+
+  #bindHealthChangeEvent(ownerId: string, vitals: CombatVitals): void {
+    vitals.bindHealthChangeObserver(() =>
+      this.#publish(ownerId, {
+        event: 'hpChanged',
+        payload: { sourceId: ownerId, targetId: ownerId },
+      }),
+    );
   }
 
   #requireOperatorVitals(operatorId: string): CombatVitals {

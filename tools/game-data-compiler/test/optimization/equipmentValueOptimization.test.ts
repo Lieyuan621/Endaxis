@@ -205,33 +205,38 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
 
   it('投射物回调中仍有未解析实体传出时，即使包在隔离子作用域里也整板保留', () => {
     const callback: CombatStepDefinition = {
-      kind: 'scheduleProjectileFinishCallback',
-      parameters: { delaySeconds: 1, recycleDelaySeconds: 1 },
-      callback: {
-        skillId: 'callback_fixture',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 0,
-        blackboard: {},
-        scheduledSequences: [
-          {
-            startFrame: 0,
-            sequence: sequence({
-              kind: 'spawnAbilityEntity',
-              parameters: {
-                abilityEntityId: 'unresolved',
-                dieWhenSourceDies: false,
-                inheritActionBlackboard: true,
+      kind: 'launchProjectile',
+      parameters: { finish: 1, recycleDelaySeconds: 1 },
+      callbacks: [
+        {
+          event: 'finish',
+          skill: {
+            skillId: 'callback_fixture',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 0,
+            blackboard: {},
+            scheduledSequences: [
+              {
+                startFrame: 0,
+                sequence: sequence({
+                  kind: 'spawnAbilityEntity',
+                  parameters: {
+                    abilityEntityId: 'unresolved',
+                    dieWhenSourceDies: false,
+                    inheritActionBlackboard: true,
+                  },
+                }),
               },
-            }),
+            ],
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+            },
           },
-        ],
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
         },
-      },
+      ],
     };
     for (const step of [
       callback,

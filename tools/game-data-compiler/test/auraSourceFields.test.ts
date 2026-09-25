@@ -89,6 +89,43 @@ const defaults = {
 };
 
 describe('Aura 新版默认影响过滤', () => {
+  it('退出时清理 Owner 的配置不冒充 Target 清理', () => {
+    const exit = {
+      $type: 'Beyond.Gameplay.Core.FinishBuffAdvanced+Data, Gameplay.Beyond',
+      isEnable: true,
+      priorityLevel: 'Default',
+      priorityOffset: 0,
+      serverActionIndex: 0,
+      buffOwner: targetFixture('Owner'),
+      buffSettings: {
+        checkType: 'Id',
+        buffIdList: ['buff_fixture'],
+        tagQuery: { queryType: 'HasAny', tags: [] },
+      },
+      finishAll: true,
+      finishLayerCnt: scalarFixture(1),
+      limitSource: false,
+      buffSource: targetFixture('Source'),
+      finishSource: targetFixture('Source'),
+      isFinishedEarly: false,
+      isAbsorbed: false,
+    };
+    const parse = (target: string) =>
+      parseGlobalPartyAuraActionSource(
+        {
+          ...base,
+          actionWhenExitAura: {
+            ...emptySequence,
+            actionData: [{ ...exit, buffOwner: targetFixture(target) }],
+          },
+        },
+        'aura',
+      );
+    expect(parse('Owner').exitOwnerCleanupBuffIds).toEqual(['buff_fixture']);
+    expect(parse('Target').exitOwnerCleanupBuffIds).toBeUndefined();
+    expect(() => parse('Source')).toThrow('expected plain Target');
+  });
+
   it('默认 Source 阵营和关闭几何限制不改变 Buff 与来源身份', () => {
     const old = parseGlobalPartyAuraActionSource(base, 'aura');
     expect(parseGlobalPartyAuraActionSource({ ...base, ...defaults }, 'aura')).toEqual(old);

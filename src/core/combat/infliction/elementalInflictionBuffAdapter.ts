@@ -120,27 +120,30 @@ export class ElementalInflictionBuffAdapter<Key extends string> {
         return { buffId: projected.definition.id, instanceId: projected.instanceId };
       }
       case 'createCompoundStatus':
+        const firstElement = operation.inverseReaction
+          ? operation.incomingElement
+          : operation.consumedElement;
+        const secondElement = operation.inverseReaction
+          ? operation.consumedElement
+          : operation.incomingElement;
         const inputBlackboard = {
           consumed_type: NATIVE_ELEMENT_VALUES[operation.consumedElement],
           consumed_layer: operation.consumedLayers,
           count: operation.consumedLayers,
         };
         const factoryBlackboard = this.resolveCompoundStatusBlackboard?.(
-          operation.consumedElement,
-          operation.incomingElement,
+          firstElement,
+          secondElement,
           inputBlackboard,
         );
-        return this.add(
-          this.index.getCompoundStatus(operation.consumedElement, operation.incomingElement),
-          {
-            ...addOptions,
-            blackboardValues: {
-              ...addOptions?.blackboardValues,
-              ...inputBlackboard,
-              ...factoryBlackboard,
-            },
+        return this.add(this.index.getCompoundStatus(firstElement, secondElement), {
+          ...addOptions,
+          blackboardValues: {
+            ...addOptions?.blackboardValues,
+            ...inputBlackboard,
+            ...factoryBlackboard,
           },
-        );
+        });
     }
   }
 

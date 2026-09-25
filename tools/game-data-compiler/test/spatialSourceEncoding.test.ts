@@ -22,6 +22,22 @@ const direction = {
 };
 const meta = { isEnable: true, priorityLevel: 'Default', priorityOffset: 0, serverActionIndex: 1 };
 
+it('移动碰撞体保留挂点并归为空间动作，未知字段仍报错', () => {
+  const raw = {
+    ...meta,
+    $type: 'Beyond.Gameplay.Core.EnableMoveColliderAction+Data, Gameplay.Beyond',
+    mountPoint: 'Custom6',
+  };
+  expect(parseKnownNativeActionLeafSource(raw, 'collider', {})).toEqual({
+    family: 'spatial',
+    action: { kind: 'enableMoveCollider', mountPoint: 'Custom6' },
+  });
+  expect(() => parseKnownNativeActionLeafSource({ ...raw, damage: 1 }, 'collider', {})).toThrow();
+  expect(parseKnownNativeActionLeafSource({ ...raw, mountPoint: 156 }, 'collider', {})).toEqual(
+    parseKnownNativeActionLeafSource(raw, 'collider', {}),
+  );
+});
+
 describe('方向枚举的精确原生身份', () => {
   it('ActionTargetType 保留新增的全局主控角色成员', () => {
     expect(readActionTarget(5, 'target')).toBe('MainCharacter');

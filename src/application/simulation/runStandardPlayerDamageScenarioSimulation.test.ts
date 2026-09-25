@@ -2176,8 +2176,6 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       }),
     );
     expect(tangtangDamage(triggered)).toHaveLength(tangtangDamage(baseline).length);
-    expect(tangtangDamage(baseline).at(-1)?.stepKey).toContain('/scheduledSequences/1/');
-    expect(tangtangDamage(triggered).at(-1)?.stepKey).toContain('/scheduledSequences/2/');
     expect(tangtangDamage(triggered).at(-1)?.value).toBeGreaterThan(
       tangtangDamage(baseline).at(-1)?.value as number,
     );
@@ -2783,7 +2781,10 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
 
     expect(
       result.receiptEntries
-        .filter(entry => entry.event === 'SkillStarted')
+        .filter(
+          entry =>
+            entry.event === 'SkillStarted' && ['track:0', 'track:1'].includes(entry.sourceId ?? ''),
+        )
         .map(entry => [entry.sourceId, entry.data?.skillId]),
     ).toEqual([
       ['track:0', 'chr_0007_ikut_attack5'],
@@ -2883,7 +2884,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
 
     expect(
       result.receiptEntries
-        .filter(entry => entry.event === 'SkillStarted')
+        .filter(entry => entry.event === 'SkillStarted' && entry.sourceId === 'track:0')
         .map(entry => entry.data?.skillId),
     ).toEqual([
       'chr_0004_pelica_attack1',

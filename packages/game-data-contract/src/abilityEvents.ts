@@ -22,6 +22,7 @@ export const ABILITY_EVENTS = [
   'ownerSwitchToCenter',
   'ownerSwitchToGuard',
   'ownerHpZero',
+  'hpChanged',
   'abilityEntitySpawned',
   'abilityEntityFinished',
   'projectileLaunched',
@@ -86,6 +87,8 @@ export type AbilityEventTriggerEndpoint = AbilityEventActionContextEndpoint | nu
  * 未列出的事件不能用于需要完整动作环境的监听器或连携条件。
  */
 export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
+  /** 生命变化由对象自身发布，不把伤害或治疗来源冒充为事件来源。 */
+  hpChanged: { inputTarget: 'eventSource', triggerTarget: 'eventSource' },
   /** 投射物是输入目标，闪避中的角色是事件来源和触发者。 */
   beforeHitByProjectile: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** 新实体是输入目标，创建它的对象是事件来源和触发者。 */

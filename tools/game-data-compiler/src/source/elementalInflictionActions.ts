@@ -13,6 +13,7 @@ import { parseScalarSource, type BlackboardLevelValues, type ScalarSource } from
 export type ElementalInflictionTypeSource = 'Fire' | 'Pulse' | 'Cryst' | 'Natural';
 
 export interface ElementalInflictionActionSource {
+  readonly inverseReaction?: boolean;
   readonly kind: 'elementalInfliction';
   readonly source: TargetReferenceSource;
   readonly target: TargetReferenceSource;

@@ -1,5 +1,6 @@
 import {
   isDynamicSingleEnemySmartTargetGroup,
+  isPartyHitBoxTargetGroup,
   isDynamicSingleEnemyTagTargetGroup,
   projectGameplayTags,
 } from '../combatProjectionCommon.ts';
@@ -294,7 +295,8 @@ export function compileBuffLeafNode(
     if (
       target.targetSource === 'Context' &&
       target.targetGroupKey !== '' &&
-      context.singleEnemyTargetGroupKeys?.has(target.targetGroupKey) === true &&
+      (context.singleEnemyTargetGroupKeys?.has(target.targetGroupKey) === true ||
+        partyTargetGroups.get(target.targetGroupKey) === 'dynamicEnemy') &&
       context.staticEnemyTargetGroupKeys?.has(target.targetGroupKey) !== true
     ) {
       // 标签筛选后的组可能为空。只在实际迭代体中证明目标是唯一敌人，
@@ -352,15 +354,19 @@ export function compileBuffLeafNode(
       target.targetSource === 'Context' &&
       target.targetGroupKey !== '' &&
       partyTargetGroups.get(target.targetGroupKey) === 'enemy';
+    const targetIsSpatialPoint =
+      target.targetSource === 'Context' &&
+      target.targetGroupKey !== '' &&
+      partyTargetGroups.get(target.targetGroupKey) === 'spatialPoint';
     const compiled = compile(
       node.body.value.action,
       node.sourcePath,
-      targetIsEnemy
+      targetIsEnemy || targetIsSpatialPoint
         ? {
             ...context,
             staticEnemyTargetGroupKeys: new Set([
               ...(context.staticEnemyTargetGroupKeys ?? []),
-              target.targetGroupKey,
+              ...(targetIsEnemy ? [target.targetGroupKey] : []),
             ]),
             staticZeroSpaceTargetGroupKeys: new Set([
               ...(context.staticZeroSpaceTargetGroupKeys ?? []),
@@ -897,6 +903,10 @@ export function compileBuffLeafNode(
           (context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true ||
             context.singleEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true ||
             partyTargetGroups.get(action.target.targetGroupKey) === 'enemy'));
+      const targetIsAbilityEntity =
+        action.target.targetSource === 'Context' &&
+        (partyTargetGroups.get(action.target.targetGroupKey) === 'abilityEntity' ||
+          context.staticAbilityEntityTargetGroupKeys?.has(action.target.targetGroupKey) === true);
       const priority = extensions.resolveTimeDilationPriority?.(
         action.priorityTagId,
         node.sourcePath,
@@ -911,7 +921,7 @@ export function compileBuffLeafNode(
       }
       if (
         (!attackerIsCaster && !attackerIsMainCharacter && !attackerIsCurrentAbilityEntity) ||
-        (action.affectType === 'Both' && !targetIsEnemy) ||
+        (action.affectType === 'Both' && !targetIsEnemy && !targetIsAbilityEntity) ||
         priority === undefined ||
         !Number.isFinite(priority)
       )
@@ -946,20 +956,21 @@ export function compileBuffLeafNode(
                     }
                   : { kind: 'named', key: action.curveKey },
               finishByAction: false,
-              targets:
-                action.affectType === 'Both'
-                  ? attackerIsCaster
-                    ? ['enemy', 'caster']
-                    : attackerIsMainCharacter
-                      ? ['enemy', 'controlled']
-                      : ['enemy']
-                  : attackerIsCaster
-                    ? ['caster']
-                    : attackerIsMainCharacter
-                      ? ['controlled']
-                      : [],
-              ...(attackerIsCurrentAbilityEntity
-                ? { abilityEntityTargets: [{ kind: 'current' as const }] }
+              targets: [
+                ...(action.affectType === 'Both' && targetIsEnemy ? ['enemy' as const] : []),
+                ...(attackerIsCaster ? ['caster' as const] : []),
+                ...(attackerIsMainCharacter ? ['controlled' as const] : []),
+              ],
+              ...(attackerIsCurrentAbilityEntity ||
+              (action.affectType === 'Both' && targetIsAbilityEntity)
+                ? {
+                    abilityEntityTargets: [
+                      ...(attackerIsCurrentAbilityEntity ? [{ kind: 'current' as const }] : []),
+                      ...(action.affectType === 'Both' && targetIsAbilityEntity
+                        ? [{ kind: 'context' as const, contextKey: action.target.targetGroupKey }]
+                        : []),
+                    ],
+                  }
                 : {}),
             },
           },
@@ -1156,16 +1167,13 @@ export function compileBuffLeafNode(
               : null
           : action.effectTargets.length === 1 &&
               target?.targetSource === 'Target' &&
-              target.targetGroupKey === '' &&
               context.actionTargetTarget === 'enemy'
             ? (['enemy'] as const)
             : action.effectTargets.length === 2 &&
                 (target?.targetSource === 'Target' ||
                   (target?.targetSource === 'Owner' && context.fixedBuffOwnerTarget === 'enemy')) &&
-                target.targetGroupKey === '' &&
-                source?.targetSource === 'Source' &&
-                context.actionSourceTarget === 'caster' &&
-                source.targetGroupKey === ''
+                ((source?.targetSource === 'Source' && context.actionSourceTarget === 'caster') ||
+                  (source?.targetSource === 'Owner' && context.actionOwnerTarget === 'caster'))
               ? (['enemy', 'caster'] as const)
               : action.effectTargets.length === 2 &&
                   target?.targetSource === 'Context' &&
@@ -1247,6 +1255,12 @@ export function compileBuffLeafNode(
       ignored.targetGroupKey === '' &&
       action.effectTargets.length === 0 &&
       (context.actionOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'caster');
+    const namedCurrentEntityOnlyGlobal =
+      action.useCurveKey &&
+      action.curveKey.length > 0 &&
+      action.ignoreTargets.length === 1 &&
+      ignored?.targetSource === 'Owner' &&
+      context.actionOwnerTarget === 'currentAbilityEntity';
     const namedOwnerSpawnedOnlyGlobal =
       action.useCurveKey &&
       action.curveKey.length > 0 &&
@@ -1292,6 +1306,7 @@ export function compileBuffLeafNode(
     if (
       namedComboGlobal ||
       namedCasterOnlyGlobal ||
+      namedCurrentEntityOnlyGlobal ||
       namedOwnerSpawnedOnlyGlobal ||
       namedTaggedOwnerSpawnedOnlyGlobal
     ) {
@@ -1315,7 +1330,9 @@ export function compileBuffLeafNode(
                 : {
                     ignoredAbilityEntityTargets: [
                       {
-                        kind: 'ownerSpawned' as const,
+                        kind: namedCurrentEntityOnlyGlobal
+                          ? ('current' as const)
+                          : ('ownerSpawned' as const),
                         ...(namedTaggedOwnerSpawnedOnlyGlobal
                           ? { abilityEntityIds: taggedOwnerSpawnedQuery!.candidateTemplateIds }
                           : {}),
@@ -1458,7 +1475,10 @@ export function compileBuffLeafNode(
   if (node.body.value.family === 'targetGroup') {
     const queryInputs = context.abilityEntityQueries;
     const write = node.body.value.action;
-    if (context.presentationOnlyTargetGroupKeys?.has(write.targetGroupKey))
+    if (
+      context.presentationOnlyTargetGroupKeys?.has(write.targetGroupKey) &&
+      !context.materializedTargetGroupKeys?.has(write.targetGroupKey)
+    )
       return { steps: [], state: partyTargetGroups };
     // A prior proof that a Context contains the enemy cannot erase a later exclusion write.
     if (
@@ -1506,6 +1526,7 @@ export function compileBuffLeafNode(
     }
     if (
       context.unconsumedTargetGroupKeys?.has(write.targetGroupKey) === true &&
+      !context.materializedTargetGroupKeys?.has(write.targetGroupKey) &&
       write.producerType === 'FindTargetAction' &&
       write.centerContextKey === '' &&
       write.selectorOwnerContextKey === '' &&
@@ -1528,7 +1549,20 @@ export function compileBuffLeafNode(
     ) {
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'enemy');
-      return { steps: [], state: nextGroups };
+      return {
+        steps: context.materializedTargetGroupKeys?.has(write.targetGroupKey)
+          ? [
+              {
+                kind: 'mergeContextTargets',
+                parameters: {
+                  saveToContextKey: write.targetGroupKey,
+                  sources: [{ kind: 'target', target: 'enemy' }],
+                },
+              },
+            ]
+          : [],
+        state: nextGroups,
+      };
     }
     if (context.staticEmptyTargetGroupKeys?.has(write.targetGroupKey)) {
       const nextGroups = new Map(partyTargetGroups);
@@ -1626,6 +1660,8 @@ export function compileBuffLeafNode(
     }
     if (context.actionTargetTarget === 'enemy' && isDynamicSingleEnemySmartTargetGroup(write)) {
       const selection = write.smartTargetSelection!;
+      const nextGroups = new Map(partyTargetGroups);
+      nextGroups.set(write.targetGroupKey, 'dynamicEnemy');
       const mergeEnemy = {
         kind: 'mergeContextTargets' as const,
         parameters: {
@@ -1654,7 +1690,7 @@ export function compileBuffLeafNode(
             whenFalse: { steps: [clearGroup] },
           },
         ],
-        state: partyTargetGroups,
+        state: nextGroups,
       };
     }
     if (
@@ -1841,6 +1877,36 @@ export function compileBuffLeafNode(
                 },
               ],
             },
+          },
+        ],
+        state: nextGroups,
+      };
+    }
+    if (write.producerType === 'FindTargetAction' && write.finderType === 'ProjectileFinder') {
+      const shape = write.finderProjectileShape;
+      if (
+        shape === undefined ||
+        shape.shape !== 'Sphere' ||
+        shape.radiusKey !== '' ||
+        shape.radius <= 0 ||
+        shape.useCenterKey ||
+        shape.center.some(value => value !== 0) ||
+        write.validatorTypes.length !== 0 ||
+        write.postProcessorTypes.length !== 0 ||
+        write.priorityFilters.length !== 0 ||
+        write.shuffleTargets.length !== 0 ||
+        write.distanceValidators.length !== 0 ||
+        write.validatorTagQueries.length !== 0
+      )
+        throw new Error(`${node.sourcePath}: unsupported projectile query shape or filters`);
+      // 所有实体共处零空间。正半径球覆盖全部未结束投射物，仍从当前实例目录实时取值。
+      const nextGroups = new Map(partyTargetGroups);
+      nextGroups.set(write.targetGroupKey, 'abilityEntity');
+      return {
+        steps: [
+          {
+            kind: 'findUnfinishedProjectileTargets',
+            parameters: { saveToContextKey: write.targetGroupKey },
           },
         ],
         state: nextGroups,
@@ -2307,6 +2373,23 @@ export function compileBuffLeafNode(
         state: nextGroups,
       };
     }
+    if (isPartyHitBoxTargetGroup(write, context)) {
+      // 我方实体的友方命中盒查询在全范围战斗模型中返回队伍；保留实际干员身份供治疗迭代。
+      const nextGroups = new Map(partyTargetGroups);
+      nextGroups.set(write.targetGroupKey, 'party');
+      return {
+        steps: [
+          {
+            kind: 'findCharacterTeamTargets',
+            parameters: {
+              saveToContextKey: write.targetGroupKey,
+              selection: { kind: 'allOperators' },
+            },
+          },
+        ],
+        state: nextGroups,
+      };
+    }
     const partyKind =
       write.postProcessorTypes.length === 0
         ? write.validatorTypes.length === 0
@@ -2373,6 +2456,26 @@ export function compileBuffLeafNode(
             selectorOwnerContextKey: write.selectorOwnerContextKey,
           }),
       );
+    if (
+      context.actionTargetTarget === 'eventSource' &&
+      write.producerType === 'ConvertToTargetContext' &&
+      write.conversionOperation === 'None' &&
+      write.inputTargets.length === 1 &&
+      isPlainTargetGroupInput(write.inputTargets[0]!, 'Target')
+    ) {
+      return {
+        steps: [
+          {
+            kind: 'mergeContextTargets',
+            parameters: {
+              saveToContextKey: write.targetGroupKey,
+              sources: [{ kind: 'target', target: 'eventSource' }],
+            },
+          },
+        ],
+        state: partyTargetGroups,
+      };
+    }
     if (context.actionTargetTarget === 'eventSource')
       throw new Error(`${node.sourcePath}: unaudited receiving Buff event target group`);
     const action = node.body.value.action;

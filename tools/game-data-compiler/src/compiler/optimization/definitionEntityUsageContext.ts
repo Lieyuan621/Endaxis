@@ -180,8 +180,10 @@ export function createSharedEntityValueUsageCollector(
         case 'listenForCombatEvents':
           step.parameters.responses.forEach(response => sequence(response.sequence));
           break;
-        case 'scheduleProjectileFinishCallback':
-          step.callback.scheduledSequences.forEach(item => sequence(item.sequence));
+        case 'launchProjectile':
+          step.callbacks
+            .flatMap(callback => callback.skill.scheduledSequences)
+            .forEach(item => sequence(item.sequence));
           break;
       }
     }

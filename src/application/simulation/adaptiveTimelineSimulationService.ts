@@ -18,11 +18,10 @@ type WorkerBackend = Pick<
   'simulate' | 'planSkillChain' | 'subscribePerformance' | 'clearCache' | 'dispose'
 >;
 
-const DEFAULT_FAST_THRESHOLD_MS = 33;
-const PERFORMANCE_WINDOW_SIZE = 3;
+export const INTERACTIVE_SIMULATION_BUDGET_MS = 1000 / 20;
 
 /**
- * 普通编辑始终放到 Worker。拖动开始时，如果最近几次正式模拟都足够快，整段拖动
+ * 普通编辑始终放到 Worker。拖动开始时，如果最近一次完整、非缓存模拟足够快，整段拖动
  * 改在主线程运行同一套模拟器，使场景和完整投影能在约一帧的预算内一起更新。
  */
 export class AdaptiveTimelineSimulationService {
@@ -30,14 +29,14 @@ export class AdaptiveTimelineSimulationService {
   private localUnsubscribe: () => void;
   private readonly workerUnsubscribe: () => void;
   private readonly subscribers = new Set<ScenarioSimulationPerformanceSubscriber>();
-  private readonly recentDurations: number[] = [];
+  private lastCompletedDurationMs: number | undefined;
   private interactiveDepth = 0;
   private interactiveBackend: 'worker' | 'local' = 'worker';
 
   constructor(
     private readonly worker: WorkerBackend,
     private readonly createLocal: () => SimulationBackend,
-    private readonly fastThresholdMs = DEFAULT_FAST_THRESHOLD_MS,
+    private readonly fastThresholdMs = INTERACTIVE_SIMULATION_BUDGET_MS,
   ) {
     if (!Number.isFinite(fastThresholdMs) || fastThresholdMs <= 0)
       throw new RangeError('fastThresholdMs must be positive');
@@ -50,7 +49,8 @@ export class AdaptiveTimelineSimulationService {
     this.interactiveDepth += 1;
     if (this.interactiveDepth !== 1) return;
     this.interactiveBackend =
-      this.recentDurations.length > 0 && Math.max(...this.recentDurations) <= this.fastThresholdMs
+      this.lastCompletedDurationMs !== undefined &&
+      this.lastCompletedDurationMs <= this.fastThresholdMs
         ? 'local'
         : 'worker';
   }
@@ -93,7 +93,7 @@ export class AdaptiveTimelineSimulationService {
     this.localUnsubscribe();
     this.local = this.createLocal();
     this.localUnsubscribe = this.local.subscribePerformance(sample => this.acceptSample(sample));
-    this.recentDurations.length = 0;
+    this.lastCompletedDurationMs = undefined;
     this.interactiveBackend = 'worker';
   }
 
@@ -106,8 +106,7 @@ export class AdaptiveTimelineSimulationService {
 
   private acceptSample(sample: ScenarioSimulationPerformanceSample): void {
     if (sample.outcome === 'completed' && !sample.cacheHit) {
-      this.recentDurations.push(sample.totalMs);
-      if (this.recentDurations.length > PERFORMANCE_WINDOW_SIZE) this.recentDurations.shift();
+      this.lastCompletedDurationMs = sample.totalMs;
     }
     for (const listener of this.subscribers) listener(sample);
   }

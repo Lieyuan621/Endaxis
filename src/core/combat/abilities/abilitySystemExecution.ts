@@ -108,7 +108,13 @@ export function storePostSkillCastRequest(
     request.inheritedSkillCastInfo === undefined
       ? undefined
       : Object.freeze({ ...request.inheritedSkillCastInfo });
-  state.postSkillCastRequest = { ...request, inheritedSkillCastInfo };
+  state.postSkillCastRequest = {
+    ...request,
+    ...(request.inputTarget === undefined
+      ? {}
+      : { inputTarget: request.inputTarget === null ? null : { ...request.inputTarget } }),
+    inheritedSkillCastInfo,
+  };
   return inheritedSkillCastInfo ?? null;
 }
 

@@ -289,6 +289,16 @@ export interface EntityTimeDilationInstance extends MutableTimeDilationInstance 
 
 /** 全局和实体时间膨胀实例及累计时间。 */
 export interface TimeDilationState {
+  /** 投射物保存的来源订阅与已继承倍率；恢复时不能重新读取来源覆盖这份历史值。 */
+  readonly entityScaleInheritance: Map<
+    string,
+    {
+      readonly sourceId: string;
+      inheritedScale: number;
+      sourceFinalScale: number;
+      sourceIgnoresGlobal: boolean;
+    }
+  >;
   readonly globalInstances: GlobalTimeDilationInstance[];
   readonly entityInstances: EntityTimeDilationInstance[];
   readonly ignoreGlobalTimeScaleEntityIds: Set<string>;
@@ -300,6 +310,7 @@ export interface TimeDilationState {
 
 export function createTimeDilationState(): TimeDilationState {
   return {
+    entityScaleInheritance: new Map(),
     globalInstances: [],
     entityInstances: [],
     ignoreGlobalTimeScaleEntityIds: new Set(),

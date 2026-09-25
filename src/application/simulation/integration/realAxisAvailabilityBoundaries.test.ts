@@ -105,7 +105,7 @@ it.each([
   },
 );
 
-it.each([151, 152])('原生寒冷附着打开汤汤窗口：经过 %i 帧后的消费边界', async offset => {
+it.each([-1, 0])('原生寒冷附着打开汤汤窗口：到期前后 %i 帧的消费边界', async offset => {
   const scenario = createEmptyScenario('window-boundary', '真实附着与窗口时钟');
   scenario.tracks[0] = track('xaihi', 'chr_0011_seraph_combo_skill', 'comboSkill', 1);
   scenario.tracks[1] = track('tangtang', 'chr_0027_tangtang_combo_skill', 'comboSkill', 1);
@@ -116,15 +116,22 @@ it.each([151, 152])('原生寒冷附着打开汤汤窗口：经过 %i 帧后的�
     e => e.event === 'ComboWindowOpened' && e.sourceId === 'tangtang',
   );
   expect(opened).toBeDefined();
-  const frame = opened!.frame + offset;
+  const expired = initial.receiptEntries.find(
+    e => e.event === 'ComboWindowExpired' && e.sourceId === 'tangtang',
+  );
+  expect(expired).toBeDefined();
+  // 原生窗口为5秒。投射物在Default阶段触发，后续Battle阶段可在同帧更新窗口。
+  expect(expired!.frame - opened!.frame).toBeGreaterThanOrEqual(150);
+  expect(expired!.frame - opened!.frame).toBeLessThanOrEqual(151);
+  const frame = expired!.frame + offset;
   scenario.tracks[1] = track('tangtang', 'chr_0027_tangtang_combo_skill', 'comboSkill', frame);
   const before = structuredClone(scenario);
   const run = await service.simulate(scenario, frame + 100);
   const relevant = run.receiptEntries.filter(e => e.sourceId === 'tangtang');
   expect(run.comboWindowDiagnostics.filter(d => d.sourceId === 'tangtang')).toHaveLength(
-    offset === 151 ? 0 : 1,
+    offset === -1 ? 0 : 1,
   );
-  if (offset === 151) {
+  if (offset === -1) {
     expect(relevant.find(e => e.event === 'ComboWindowConsumed')?.frame).toBe(frame);
   } else {
     expect(relevant.find(e => e.event === 'ComboWindowExpired')?.frame).toBe(frame);

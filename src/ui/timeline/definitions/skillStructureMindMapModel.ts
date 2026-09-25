@@ -524,16 +524,18 @@ function stepNode(
         ),
       ),
     );
-  } else if (step.kind === 'scheduleProjectileFinishCallback') {
-    children.push({
-      ...inlineAbilityEntityChildSkillNode(
-        step.callback,
-        `${id}:callback`,
-        `${sourcePath}.callback`,
-        editorSection,
-      ),
-      kind: '内联投射物回调技能',
-    });
+  } else if (step.kind === 'launchProjectile') {
+    step.callbacks.forEach((callback, index) =>
+      children.push({
+        ...inlineAbilityEntityChildSkillNode(
+          callback.skill,
+          `${id}:callback:${index}`,
+          `${sourcePath}.callbacks[${index}].skill`,
+          editorSection,
+        ),
+        kind: `投射物回调：${callback.event}`,
+      }),
+    );
   } else if (
     step.kind === 'once' ||
     step.kind === 'withActionBlackboardScope' ||

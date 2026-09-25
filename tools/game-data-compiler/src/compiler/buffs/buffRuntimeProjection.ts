@@ -1356,6 +1356,12 @@ function assertSpatialContextWriteIsolation(
     for (const consumer of leaves) {
       if (consumer === node || consumer.body.kind !== 'leaf') continue;
       if (!leafActionReadsContextKey(consumer.body.value, key)) continue;
+      // DebugPrint 的原生发行版实现直接返回 true，不读取序列化的目标设置。
+      if (
+        consumer.body.value.family === 'presentation' &&
+        consumer.body.value.action.kind === 'debugPrint'
+      )
+        continue;
       if (
         consumer.body.value.family !== 'spatial' &&
         !(
@@ -1412,6 +1418,7 @@ function createBuffSequenceProjection(
       node.body.value.action.events.some(
         event =>
           event.abilityEvent === 'OnAddedBuff' ||
+          event.abilityEvent === 'OnBeforeAddedBuff' ||
           event.abilityEvent === 'OnOutputBuff' ||
           event.abilityEvent === 'OnBeforeTakeDamage' ||
           event.abilityEvent === 'OnSkillEnd',
@@ -1435,6 +1442,9 @@ function createBuffSequenceProjection(
   return {
     initialState: () =>
       new Map<string, BuffProjectionTargetGroup>([
+        ...[...(context.operatorTargetGroupKeys ?? [])].map(
+          key => [key, 'contextOperator'] as const,
+        ),
         ...[...(context.staticAbilityEntityTargetGroupKeys ?? [])].map(
           key => [key, 'abilityEntity'] as const,
         ),
@@ -1806,6 +1816,42 @@ function createBuffSequenceProjection(
     },
     compileForEach: (node, partyTargetGroups) => {
       if (
+        node.body.target.targetSource === 'Context' &&
+        [
+          'party',
+          'partyExceptCaster',
+          'controlledOperator',
+          'contextOperator',
+          'lowestHealthRatioOperatorExceptCaster',
+          'casterAndControlledOperator',
+          'casterAndLowestHealthRatioOperatorExceptCaster',
+        ].includes(partyTargetGroups.get(node.body.target.targetGroupKey) ?? '') &&
+        node.body.target.finderType === null &&
+        node.body.target.validatorTypes.length === 0 &&
+        node.body.target.postProcessorTypes.length === 0 &&
+        !node.body.action.onlyExecuteWhenSourceIsMainCharacter &&
+        !node.body.action.onlyExecuteWhenSourceIsGuard
+      ) {
+        const body = compileActionSequenceProgram(node.body.action, {
+          ...createBuffSequenceProjection(
+            visualOnlyIds,
+            { ...context, actionTargetTarget: 'currentOperator' },
+            extensions,
+          ),
+          initialState: () => partyTargetGroups,
+        });
+        return {
+          steps: [
+            {
+              kind: 'forEachContextTarget',
+              parameters: { contextKey: node.body.target.targetGroupKey },
+              body,
+            },
+          ],
+          state: partyTargetGroups,
+        };
+      }
+      if (
         node.body.target.targetSource === 'InstantSearch' &&
         node.body.target.finderType === 'OwnerSpawnedEntityFinder' &&
         node.body.target.finderSpawnedObjectType === 'AbilityEntity' &&
@@ -2069,17 +2115,27 @@ function createBuffSequenceProjection(
         return { steps: [], state: partyTargetGroups };
       }
       // DoOnceAction 的子序列即时执行，返回 false 也消耗此次机会。
-      // 技能实例内允许同步资源回复、创建公共 GlobalBuff，以及“创建一次 Buff + 静态敌人控制”的直接叶子组合；
+      // 技能实例内允许同步资源回复、创建公共 GlobalBuff、Buff 和静态敌人控制；
       // Buff 自己仍进入独立生命周期，不能把其持续动作偷换成 DoOnce 子序列生命周期。
+      // 命中停顿也是即时启动独立计时，不要求 DoOnce 持续更新；同序列的镜头表现可省略。
+      // 条件和 Switch 只选择这些即时动作，须递归检查所有分支；不开放持续动作或回调。
       if (
         context.timelineRange === undefined ||
-        node.body.action.actions.some(
-          child =>
-            child.metadata.enabled &&
-            (child.body.kind !== 'leaf' ||
-              !['condition', 'resource', 'buffApplication', 'globalBuff', 'interrupt'].includes(
-                child.body.value.family,
-              )),
+        enabledChildren.some(child =>
+          child.body.kind !== 'leaf'
+            ? !['ifElse', 'switch', 'negateNextResult'].includes(child.body.kind)
+            : ![
+                'condition',
+                'resource',
+                'buffApplication',
+                'globalBuff',
+                'interrupt',
+                'presentation',
+              ].includes(child.body.value.family) &&
+              !(
+                child.body.value.family === 'stumpControl' &&
+                child.body.value.action.kind === 'targetHitStop'
+              ),
         )
       )
         return null;
@@ -2103,7 +2159,9 @@ function createBuffSequenceProjection(
           {
             kind: 'repeatEachTick',
             parameters: {
-              nativeTickInterval: {
+              [node.body.bodyLifetime === 'untilNextExecution'
+                ? 'nativeExecuteInterval'
+                : 'nativeTickInterval']: {
                 executeEachFrame: node.body.executeEachFrame,
                 intervalSeconds: node.body.intervalSeconds,
               },
@@ -2138,7 +2196,16 @@ function createBuffSequenceProjection(
         target.finderType === null &&
         target.validatorTypes.length === 0 &&
         target.postProcessorTypes.length === 0;
-      const channelTarget = directTarget ?? (groupedEnemy ? ('enemy' as const) : null);
+      const groupedParty =
+        target.targetSource === 'Context' &&
+        target.targetGroupKey !== '' &&
+        ['party', 'contextOperator'].includes(partyTargetGroups.get(target.targetGroupKey) ?? '') &&
+        target.finderType === null &&
+        target.validatorTypes.length === 0 &&
+        target.postProcessorTypes.length === 0;
+      const channelTarget =
+        directTarget ??
+        (groupedEnemy ? ('enemy' as const) : groupedParty ? ('currentOperator' as const) : null);
       if (channelTarget === null) return null;
       if (!node.body.executeEachFrame && !(node.body.triggerIntervalSeconds > 0)) return null;
       const bodyContext: CombatActionProjectionContextSource = {
@@ -2149,21 +2216,28 @@ function createBuffSequenceProjection(
         ...createBuffSequenceProjection(visualOnlyIds, bodyContext, extensions),
         initialState: () => partyTargetGroups,
       });
-      return {
-        steps: [
-          {
-            kind: 'repeatEachTick',
-            parameters: {
-              nativeChanneling: {
-                executeEachFrame: node.body.executeEachFrame,
-                triggerIntervalSeconds: node.body.triggerIntervalSeconds,
-                maxCountPerTarget: node.body.maxCountPerTarget,
-                targetTriggerIntervalSeconds: node.body.targetTriggerIntervalSeconds,
-              },
-            },
-            body,
+      const repeated = {
+        kind: 'repeatEachTick' as const,
+        parameters: {
+          nativeChanneling: {
+            executeEachFrame: node.body.executeEachFrame,
+            triggerIntervalSeconds: node.body.triggerIntervalSeconds,
+            maxCountPerTarget: node.body.maxCountPerTarget,
+            targetTriggerIntervalSeconds: node.body.targetTriggerIntervalSeconds,
           },
-        ],
+        },
+        body,
+      };
+      return {
+        steps: groupedParty
+          ? [
+              {
+                kind: 'forEachContextTarget',
+                parameters: { contextKey: target.targetGroupKey },
+                body: { steps: [repeated] },
+              },
+            ]
+          : [repeated],
         state: partyTargetGroups,
       };
     },
@@ -2304,9 +2378,24 @@ function collectBuffPresentationRandomKeys(
  */
 export function collectCombatInvisiblePresentationAssignmentKeys(
   sequences: readonly NativeSequenceSource<KnownNativeActionLeafSource>[],
+  isUnusedByExternalResources?: (key: string) => boolean,
 ): ReadonlySet<string> {
   const nodes = sequences.flatMap(sequence => collectNativeActionNodes(sequence));
   const leafNodes = nodes.filter(node => node.body.kind === 'leaf');
+  // 只对已核对读写方式的动作扩展条件程序分析。投射物、能力实体等可以传递
+  // 整份黑板；其他未核对动作也不能凭“没有出现键名”就当作没有读取。
+  const hasUninspectedBlackboardConsumer = leafNodes.some(
+    node =>
+      node.body.kind === 'leaf' &&
+      ![
+        'presentation',
+        'presentationCalculation',
+        'blackboardMutation',
+        'blackboardCalculation',
+        'condition',
+        'spatial',
+      ].includes(node.body.value.family),
+  );
   const candidates = new Set(
     leafNodes.flatMap(node => {
       if (node.body.kind !== 'leaf') return [];
@@ -2337,20 +2426,30 @@ export function collectCombatInvisiblePresentationAssignmentKeys(
         const branchNodes = [node.body.whenTrue, node.body.whenFalse].flatMap(branch =>
           collectNativeActionNodes(branch).filter(child => child.metadata.enabled),
         );
+        const isPresentationProgramNode = (
+          child: NativeActionNodeSource<KnownNativeActionLeafSource>,
+        ): boolean => {
+          if (child.body.kind !== 'leaf')
+            return child.body.kind === 'ifElse' && child.body.alwaysNext;
+          const leaf = child.body.value;
+          if (leaf.family === 'condition') return canOmitUnusedNativeCondition(child);
+          if (isCombatInvisiblePresentationLeaf(child)) return true;
+          if (hasUninspectedBlackboardConsumer && !isUnusedByExternalResources?.(key)) return false;
+          if (leaf.family === 'presentationCalculation') return true;
+          if (leaf.family === 'spatial') return leaf.action.kind === 'selfRotate';
+          return (
+            leaf.family === 'blackboardMutation' &&
+            leaf.action.directValue &&
+            !leaf.action.key.startsWith('EntityBB_') &&
+            candidates.has(leaf.action.key)
+          );
+        };
         return (
+          node.body.alwaysNext &&
           conditionNodes.length > 0 &&
-          conditionNodes.every(
-            child => child.body.kind === 'leaf' && child.body.value.family === 'condition',
-          ) &&
+          conditionNodes.every(isPresentationProgramNode) &&
           branchNodes.length > 0 &&
-          branchNodes.every(
-            child =>
-              (child.body.kind === 'ifElse' && child.body.alwaysNext) ||
-              (child.body.kind === 'leaf' &&
-                (child.body.value.family === 'condition' ||
-                  child.body.value.family === 'presentationCalculation' ||
-                  isCombatInvisiblePresentationLeaf(child))),
-          )
+          branchNodes.every(isPresentationProgramNode)
         );
       });
       const presentationConditionNodes = new Set(
@@ -2521,7 +2620,12 @@ function compileEventListenerNode(
     sourcePath: `${node.sourcePath}.abilityActionMap`,
     mapEvent: (nativeEvent, sourcePath) => {
       const event = projectAbilityEvent(nativeEvent, sourcePath);
-      if (event === 'addedBuff' || event === 'outputBuff' || event === 'beforeTakeDamage')
+      if (
+        event === 'addedBuff' ||
+        event === 'beforeAddedBuff' ||
+        event === 'outputBuff' ||
+        event === 'beforeTakeDamage'
+      )
         return event;
       // 只允许编译后为空的结束回调省略，不能按事件名提前跳过动作检查。
       if (event === 'skillEnd') return event;
@@ -2540,7 +2644,7 @@ function compileEventListenerNode(
                 ? 'enemy'
                 : event === 'outputBuff'
                   ? 'eventTarget'
-                  : event === 'addedBuff'
+                  : event === 'addedBuff' || event === 'beforeAddedBuff'
                     ? 'eventSource'
                     : context.actionTargetTarget,
           },
@@ -2675,7 +2779,8 @@ function isCombatInvisibleIfElse(
     if (leaf.family === 'condition' && leaf.action.kind === 'targetAngle') return true;
     if (
       leaf.family === 'blackboardMutation' &&
-      context.combatInvisiblePresentationBlackboardKeys?.has(leaf.action.key) === true
+      (context.combatInvisiblePresentationBlackboardKeys?.has(leaf.action.key) === true ||
+        context.unconsumedSkillLocalKeys?.has(leaf.action.key) === true)
     )
       return true;
     if (leaf.family === 'spatialMeasurement') {

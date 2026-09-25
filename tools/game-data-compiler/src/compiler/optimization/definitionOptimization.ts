@@ -303,20 +303,25 @@ function optimizeStep(
           : { ...step, parameters: { ...step.parameters, responses } },
       ];
     }
-    case 'scheduleProjectileFinishCallback': {
-      const scheduledSequences = step.callback.scheduledSequences.map((scheduled, index) => {
-        const sequence = child(
-          scheduled.sequence,
-          `callback.scheduledSequences[${index}].sequence`,
-        );
-        return sequence === scheduled.sequence ? scheduled : { ...scheduled, sequence };
+    case 'launchProjectile': {
+      const callbacks = step.callbacks.map((callback, callbackIndex) => {
+        const scheduledSequences = callback.skill.scheduledSequences.map((scheduled, index) => {
+          const sequence = child(
+            scheduled.sequence,
+            `callbacks[${callbackIndex}].skill.scheduledSequences[${index}].sequence`,
+          );
+          return sequence === scheduled.sequence ? scheduled : { ...scheduled, sequence };
+        });
+        return scheduledSequences.every(
+          (scheduled, index) => scheduled === callback.skill.scheduledSequences[index],
+        )
+          ? callback
+          : { ...callback, skill: { ...callback.skill, scheduledSequences } };
       });
       return [
-        scheduledSequences.every(
-          (scheduled, index) => scheduled === step.callback.scheduledSequences[index],
-        )
+        callbacks.every((callback, index) => callback === step.callbacks[index])
           ? step
-          : { ...step, callback: { ...step.callback, scheduledSequences } },
+          : { ...step, callbacks },
       ];
     }
     case 'jumpTimeline': {
@@ -367,8 +372,10 @@ function countSequence(sequence: ActionSequenceDefinition): DefinitionOptimizati
             count.conditions += countCondition(response.condition);
         });
         break;
-      case 'scheduleProjectileFinishCallback':
-        step.callback.scheduledSequences.forEach(scheduled => add(scheduled.sequence));
+      case 'launchProjectile':
+        step.callbacks
+          .flatMap(callback => callback.skill.scheduledSequences)
+          .forEach(scheduled => add(scheduled.sequence));
         break;
       case 'jumpTimeline':
         if (step.parameters.condition !== undefined)

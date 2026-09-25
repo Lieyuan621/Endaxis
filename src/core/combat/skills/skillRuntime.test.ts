@@ -128,6 +128,9 @@ describe('SkillRuntime', () => {
     };
     const first = new SkillRuntime(program, { ...dependencies, castId: 'first' });
     const second = new SkillRuntime(program, { ...dependencies, castId: 'second' });
+    const inputTarget = { kind: 'operator' as const, operatorId: 'attacker' };
+    first.prepareCastInput({ skipApplyCost: false, inputTarget });
+    inputTarget.operatorId = 'changed-after-preparation';
     expect(first.tryStart()).toBe(true);
     expect(second.tryStart()).toBe(true);
     expect(first.skillCastInfo.originCastId).toBe('first');
@@ -150,6 +153,14 @@ describe('SkillRuntime', () => {
     );
     expect(restored.castId).toBe('first');
     expect(restored.skillCastInfo).toEqual(first.skillCastInfo);
+    expect(restored.operationContext.actionInputTarget).toEqual({
+      kind: 'operator',
+      operatorId: 'attacker',
+    });
+    expect(second.operationContext.actionInputTarget).toBeUndefined();
+    restored.interrupt('default');
+    restored.tryStart();
+    expect(restored.operationContext.actionInputTarget).toBeUndefined();
     expect(
       () =>
         new SkillRuntime(
@@ -347,7 +358,7 @@ describe('SkillRuntime', () => {
     const runtime = new SkillRuntime(program, dependencies);
     const ability = new AbilitySystemRuntime({ skills: [runtime] });
     expect(
-      ability.tryStartProjectileCallbackSkill('zero-cost', {
+      ability.tryStartEntitySkill('zero-cost', {
         skillCastId: 77,
         originSkillId: 'source',
         originSkillType: 'comboSkill',
@@ -429,7 +440,7 @@ describe('SkillRuntime', () => {
     const ability = new AbilitySystemRuntime({ skills: [runtime] });
     expect(runtime.timelineBlockFrames).toBeUndefined();
     expect(
-      ability.tryStartProjectileCallbackSkill('non-timeline-callback', {
+      ability.tryStartEntitySkill('non-timeline-callback', {
         skillCastId: 77,
         originSkillId: 'source',
         originSkillType: 'comboSkill',
@@ -482,7 +493,7 @@ describe('SkillRuntime', () => {
 
     const ability = new AbilitySystemRuntime({ skills: [runtime] });
     expect(
-      ability.tryStartProjectileCallbackSkill('entity-callback', {
+      ability.tryStartEntitySkill('entity-callback', {
         skillCastId: 77,
         originSkillId: 'source-combo',
         originSkillType: 'comboSkill',
@@ -576,7 +587,7 @@ describe('SkillRuntime', () => {
       nonReturnedSpCost: 12,
     };
     const ability = new AbilitySystemRuntime({ skills: [callback.runtime] });
-    expect(ability.tryStartProjectileCallbackSkill('callback', source)).toBe(true);
+    expect(ability.tryStartEntitySkill('callback', source, undefined, true)).toBe(true);
     const attached = {
       isRecycled: false,
       reference: createTestBuffReference(),
@@ -598,14 +609,14 @@ describe('SkillRuntime', () => {
       }),
     );
     expect(
-      ability.tryStartProjectileCallbackSkill('callback', { ...source, skillCastId: 88 }),
+      ability.tryStartEntitySkill('callback', { ...source, skillCastId: 88 }, undefined, true),
     ).toBe(true);
     expect(seen).toEqual([1, 2, 1]);
     expect(callback.runtime.skillCastInfo?.skillCastId).toBe(88);
     // Replacing the same callback is a fresh cast on the same Skill object, not
     // the source skill's CastNextSkill transition or reuse of its direct values.
     expect(
-      ability.tryStartProjectileCallbackSkill('callback', { ...source, skillCastId: 89 }),
+      ability.tryStartEntitySkill('callback', { ...source, skillCastId: 89 }, undefined, true),
     ).toBe(true);
     expect(seen).toEqual([1, 2, 1, 1]);
     expect(callback.runtime.skillCastInfo?.skillCastId).toBe(89);

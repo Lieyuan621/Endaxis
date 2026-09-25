@@ -363,6 +363,14 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     lifetime: { kind: 'limited' as const, durationSeconds: 10 },
     childSkill: {
       skillId: 'entity-child',
+      nativeSkillType: 'normalSkill' as const,
+      naturalDurationFrames: 30,
+      castResource: {
+        costFrame: 0,
+        cooldownSeconds: 0,
+        maxChargeTime: 1,
+        cost: { resource: 'sp' as const, value: 0, availabilityThreshold: 0 },
+      },
       initialBlackboard: {},
       timelineActions: [
         {
@@ -405,38 +413,43 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
               },
             },
             {
-              kind: 'scheduleProjectileFinishCallback' as const,
-              parameters: { delaySeconds: 0.05, recycleDelaySeconds: 0.05 },
-              callback: {
-                skillId: 'callback',
-                nativeSkillType: 'normalSkill' as const,
-                naturalDurationFrames: 2,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'sp' as const, value: 0, availabilityThreshold: 0 },
-                },
-                initialBlackboard: {},
-                timelineActions: [
-                  {
-                    startFrame: 0,
-                    sequence: {
-                      steps: [
-                        {
-                          kind: 'dealFixedDamage' as const,
-                          key: 'callback-hit',
-                          parameters: {
-                            damageType: 'physical' as const,
-                            value: 25,
-                            tags: [],
-                          },
-                        },
-                      ],
+              kind: 'launchProjectile' as const,
+              parameters: { finish: 0.05, recycleDelaySeconds: 0.05 },
+              callbacks: [
+                {
+                  event: 'finish' as const,
+                  skill: {
+                    skillId: 'callback',
+                    nativeSkillType: 'normalSkill' as const,
+                    naturalDurationFrames: 2,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'sp' as const, value: 0, availabilityThreshold: 0 },
                     },
+                    initialBlackboard: {},
+                    timelineActions: [
+                      {
+                        startFrame: 0,
+                        sequence: {
+                          steps: [
+                            {
+                              kind: 'dealFixedDamage' as const,
+                              key: 'callback-hit',
+                              parameters: {
+                                damageType: 'physical' as const,
+                                value: 25,
+                                tags: [],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
                   },
-                ],
-              },
+                },
+              ],
             },
             {
               kind: 'spawnAbilityEntity' as const,
@@ -642,7 +655,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
   original.advanceFrame();
   expect(original.stateGraph.operators.get('operator')!.buffs!.instances.size).toBe(2);
   expect(original.stateGraph.instances.projectiles.instances.size).toBe(1);
-  expect(original.stateGraph.instances.projectiles.instances.get(1)!.callback!.host).toBeNull();
+  expect(original.stateGraph.instances.projectiles.instances.get(1)!.callbacks[0]!.host).toBeNull();
   expect(
     original.stateGraph.operators
       .get('operator')!
@@ -688,7 +701,9 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
   expect(restored.stateGraph).toEqual(original.stateGraph);
   original.advanceFrames(5);
   restored.advanceFrames(5);
-  expect(restored.stateGraph.instances.projectiles.instances.get(1)!.callback!.host).not.toBeNull();
+  expect(
+    restored.stateGraph.instances.projectiles.instances.get(1)!.callbacks[0]!.host,
+  ).not.toBeNull();
   expect(
     restored.stateGraph.operators
       .get('operator')!

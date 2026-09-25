@@ -439,7 +439,7 @@ describe('generated basic attack chain input timing', () => {
     ).toBe(true);
     expect(
       result.run.receiptEntries.filter(e => e.event === 'DamageApplied').map(e => e.frame),
-    ).toContain(28);
+    ).toContain(29); // 第28帧发射，下一帧Default阶段处理投射物命中。
   });
   it('compacts selected existing casts in time order as one undoable operation', async () => {
     const scenario = createChain(lifeng);

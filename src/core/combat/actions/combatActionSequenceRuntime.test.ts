@@ -41,6 +41,58 @@ function createFixture(conditionResult = true) {
 }
 
 describe('CombatActionSequenceRuntime', () => {
+  it('ExecuteInterval 保留子动作到下一周期，切面恢复后仍能结束原登记', () => {
+    const bind = () => {
+      const finish = vi.fn();
+      const replace = vi.fn(() => 12);
+      const context = { blackboard: new ActionBlackboard() };
+      const runtime = new CombatActionSequenceRuntime(
+        new SkillSlotOperationExecutor({
+          changeSkillSlot: vi.fn(),
+          replaceSkillSlot: replace,
+          finishSkillSlotReplacement: finish,
+          delegate: { execute: () => true, evaluate: () => true },
+        }),
+        context,
+      );
+      return { runtime, context, finish, replace };
+    };
+    const definition = sequence({
+      kind: 'repeatEachTick',
+      parameters: { nativeExecuteInterval: { executeEachFrame: false, intervalSeconds: 0.5 } },
+      body: sequence({
+        kind: 'changeSkillSlot',
+        parameters: {
+          skillGroupKey: 'battle',
+          targetSkillKey: 'enhanced',
+          lifetime: 'finishByAction',
+        },
+      }),
+    });
+    const original = bind();
+    const action = original.runtime.createSequence(definition);
+    action.reset({});
+    action.execute({});
+    action.tick(0.25, {});
+    expect(original.replace).toHaveBeenCalledTimes(1);
+    expect(original.finish).not.toHaveBeenCalled();
+    const branch = bind();
+    const restored = branch.runtime.createSequence(
+      definition,
+      branch.context,
+      structuredClone(action.runtimeState),
+    );
+    expect(branch.replace).not.toHaveBeenCalled();
+    restored.tick(0.25, {});
+    expect(branch.finish).toHaveBeenCalledExactlyOnceWith('battle', 12);
+    expect(branch.replace).toHaveBeenCalledTimes(1);
+    restored.end({});
+    expect(branch.finish).toHaveBeenCalledTimes(2);
+    expect(original.finish).not.toHaveBeenCalled();
+    action.end({});
+    expect(original.finish).toHaveBeenCalledTimes(1);
+  });
+
   it('技能槽替换动作恢复时不重放替换，结束只调用新分支的登记编号', () => {
     const firstFinish = vi.fn();
     const secondFinish = vi.fn();
@@ -384,8 +436,9 @@ describe('CombatActionSequenceRuntime', () => {
   it('无状态投射物步骤可绑定，序列长度仍必须匹配', () => {
     const { runtime } = createFixture();
     const definition = sequence({
-      kind: 'launchProjectileLifetime',
+      kind: 'launchProjectile',
       parameters: { finish: { reachAfterTicks: 2, maxDurationSeconds: 2 }, recycleDelaySeconds: 0 },
+      callbacks: [],
     });
     const state = structuredClone(runtime.createSequence(definition).runtimeState);
     expect(() => runtime.createSequence(definition, undefined, state)).not.toThrow();
@@ -899,7 +952,11 @@ describe('CombatActionSequenceRuntime', () => {
     expect(calls).toHaveLength(6);
   });
 
-  it.each([0, 2])('投射物寿命发射按实际%s个Context目标执行并传递分段与回收时长', count => {
+  it.each([
+    { count: 0, source: 'actionSource' as const, expectedSource: 'operator' },
+    { count: 2, source: 'actionSource' as const, expectedSource: 'operator' },
+    { count: 2, source: 'actionOwner' as const, expectedSource: 'buff-owner' },
+  ])('投射物按Context目标执行，来源为$source', ({ count, source, expectedSource }) => {
     const targetContext = new RuntimeTargetContext();
     targetContext.set(
       'items',
@@ -923,7 +980,8 @@ describe('CombatActionSequenceRuntime', () => {
         blackboard: new ActionBlackboard(),
         targetContext,
         actionSourceId: 'operator',
-        scheduleProjectileFinishCallback: schedule,
+        buffOwnerId: 'buff-owner',
+        launchProjectile: schedule,
       },
     );
     const finish = { reachAfterTicks: 2, maxDurationSeconds: 2 };
@@ -932,8 +990,9 @@ describe('CombatActionSequenceRuntime', () => {
         kind: 'forEachContextTarget',
         parameters: { contextKey: 'items' },
         body: sequence({
-          kind: 'launchProjectileLifetime',
-          parameters: { finish, recycleDelaySeconds: 1.5 },
+          kind: 'launchProjectile',
+          parameters: { finish, recycleDelaySeconds: 1.5, source },
+          callbacks: [],
         }),
       }),
     );
@@ -944,16 +1003,12 @@ describe('CombatActionSequenceRuntime', () => {
     expect(schedule).toHaveBeenCalledTimes(count);
     if (count > 0)
       expect(schedule).toHaveBeenCalledWith(
-        finish,
-        1.5,
-        expect.any(Function),
-        expect.any(Function),
-        undefined,
-        undefined,
-        'operator',
-        undefined,
-        undefined,
-        undefined,
+        expect.objectContaining({
+          finish,
+          recycleDelaySeconds: 1.5,
+          sourceId: expectedSource,
+          callbacks: [],
+        }),
       );
   });
 

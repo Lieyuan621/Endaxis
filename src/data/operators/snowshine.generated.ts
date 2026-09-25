@@ -803,32 +803,50 @@ export const snowshineChr_0014_aurora_combo_skill: SkillDefinition = withSkillBl
                 'SkillData.chr_0014_aurora_combo_skill.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2].succeedActions.actionData[1]:projectile_chr_0014_aurora_combo_skill_bear_out',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0014_aurora_combo_skill.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2].succeedActions.actionData[1]:chr_0014_aurora_combo_skill_bear_gene',
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 2 },
+                  callbacks: [
                     {
-                      atk_scale: 0.42,
-                      duration: 0,
-                      heal_scale: 0,
-                      heal_scale_loop: 0,
-                      heal_static_value: 0,
-                      heal_static_value_loop: 0,
-                      interval: 0,
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0014_aurora_combo_skill_bear_gene',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 60,
+                        castResource: {
+                          costFrame: 9,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: {
+                          atk_scale: 0.42,
+                          duration: 0,
+                          heal_scale: 0,
+                          heal_scale_loop: 0,
+                          heal_static_value: 0,
+                          heal_static_value_loop: 0,
+                          interval: 0,
+                        },
+                        scheduledSequences: [
+                          scheduled(
+                            0,
+                            sequence(
+                              step('spawnAbilityEntity', {
+                                abilityEntityId: 'abilityentity_chr_0014_aurora_combo_skill',
+                                childSkillId: 'chr_0014_aurora_combo_skill_abilityrange',
+                                inheritActionBlackboard: true,
+                                dieWhenSourceDies: false,
+                                target: 'enemy',
+                              }),
+                            ),
+                            2,
+                          ),
+                        ],
+                      },
                     },
-                    true,
-                    sequence(
-                      step('spawnAbilityEntity', {
-                        abilityEntityId: 'abilityentity_chr_0014_aurora_combo_skill',
-                        childSkillId: 'chr_0014_aurora_combo_skill_abilityrange',
-                        inheritActionBlackboard: true,
-                        dieWhenSourceDies: false,
-                        target: 'enemy',
-                      }),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -842,32 +860,50 @@ export const snowshineChr_0014_aurora_combo_skill: SkillDefinition = withSkillBl
                 'SkillData.chr_0014_aurora_combo_skill.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2].failActions.actionData[2]:projectile_chr_0014_aurora_combo_skill_bear_out',
                 {},
                 true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0014_aurora_combo_skill.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2].failActions.actionData[2]:chr_0014_aurora_combo_skill_bear_gene',
+                sequence({
+                  kind: 'launchProjectile',
+                  parameters: { finish: 'firstTickReach', recycleDelaySeconds: 2 },
+                  callbacks: [
                     {
-                      atk_scale: 0.42,
-                      duration: 0,
-                      heal_scale: 0,
-                      heal_scale_loop: 0,
-                      heal_static_value: 0,
-                      heal_static_value_loop: 0,
-                      interval: 0,
+                      event: 'reach',
+                      skill: {
+                        skillId: 'chr_0014_aurora_combo_skill_bear_gene',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 60,
+                        castResource: {
+                          costFrame: 9,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: {
+                          atk_scale: 0.42,
+                          duration: 0,
+                          heal_scale: 0,
+                          heal_scale_loop: 0,
+                          heal_static_value: 0,
+                          heal_static_value_loop: 0,
+                          interval: 0,
+                        },
+                        scheduledSequences: [
+                          scheduled(
+                            0,
+                            sequence(
+                              step('spawnAbilityEntity', {
+                                abilityEntityId: 'abilityentity_chr_0014_aurora_combo_skill',
+                                childSkillId: 'chr_0014_aurora_combo_skill_abilityrange',
+                                inheritActionBlackboard: true,
+                                dieWhenSourceDies: false,
+                                target: 'enemy',
+                              }),
+                            ),
+                            2,
+                          ),
+                        ],
+                      },
                     },
-                    true,
-                    sequence(
-                      step('spawnAbilityEntity', {
-                        abilityEntityId: 'abilityentity_chr_0014_aurora_combo_skill',
-                        childSkillId: 'chr_0014_aurora_combo_skill_abilityrange',
-                        inheritActionBlackboard: true,
-                        dieWhenSourceDies: false,
-                        target: 'enemy',
-                      }),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
+                  ],
+                }),
                 {},
                 { lifetime: 'execution' },
               ),
@@ -1531,6 +1567,14 @@ export const snowshine: OperatorDefinition = {
       deathReleaseDelaySeconds: 0.100000001490116,
       childSkill: {
         skillId: 'chr_0014_aurora_combo_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 3000,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           duration: 0,
           heal_scale: 1,
@@ -1601,6 +1645,14 @@ export const snowshine: OperatorDefinition = {
       childSkills: {
         chr_0014_aurora_ultimate_skill_abilityrange_potential2: {
           skillId: 'chr_0014_aurora_ultimate_skill_abilityrange_potential2',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 300,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: { atk_scale: 4, atk_scale_loop: 1, extra_duration: 0, frozen_level: 1 },
           scheduledSequences: [
             scheduled(
@@ -1631,6 +1683,14 @@ export const snowshine: OperatorDefinition = {
         },
         chr_0014_aurora_ultimate_skill_abilityrange: {
           skillId: 'chr_0014_aurora_ultimate_skill_abilityrange',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 300,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: { atk_scale: 4, atk_scale_loop: 1, extra_duration: 0, frozen_level: 1 },
           scheduledSequences: [
             scheduled(

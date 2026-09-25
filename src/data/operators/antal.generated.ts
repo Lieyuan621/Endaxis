@@ -14,54 +14,65 @@ import {
   withSkillBlackboard,
 } from './definitionHelpers';
 
-const sharedActionSequence3: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    {},
-    true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'electric',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              calculation: 'breakingAttack',
-              calculationMultiplier: 0.06,
-              tags: ['normalAttack', 'powerAttack'],
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
+const sharedActionSequence1: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0023_antal_attack3_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
             sequence(
-              step('changeResourceByActionValue', {
-                resource: 'sp',
-                amount: { kind: 'blackboard', key: 'atb' },
-                coefficient: { kind: 'constant', value: 1 },
-                recipient: 'team',
-                spGainKind: 'gain',
-                spGainSource: 'normalAttack',
-              }),
+              step(
+                'dealDamage',
+                {
+                  damageType: 'electric',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  step('changeResourceByActionValue', {
+                    resource: 'sp',
+                    amount: { kind: 'blackboard', key: 'atb' },
+                    coefficient: { kind: 'constant', value: 1 },
+                    recipient: 'team',
+                    spGainKind: 'gain',
+                    spGainSource: 'normalAttack',
+                  }),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
             ),
-            undefined,
-            { alwaysNext: true },
+            3,
           ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
-    {},
-    { lifetime: 'execution' },
-  ),
-);
+        ],
+      },
+    },
+  ],
+});
 
-const sharedActionSequence4: ActionSequenceDefinition = sequence(
+const sharedActionSequence6: ActionSequenceDefinition = sequence(
   {
     kind: 'withActionBlackboardScope',
     parameters: {
@@ -116,7 +127,67 @@ const sharedActionSequence4: ActionSequenceDefinition = sequence(
   },
 );
 
-const sharedActionSequence2: ActionSequenceDefinition = sequence(
+const sharedActionSequence5: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 5,
+    hit: { onReach: true, finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0023_antal_power_attack02_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 150,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'electric',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  calculation: 'breakingAttack',
+                  calculationMultiplier: 0.06,
+                  tags: ['normalAttack', 'powerAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  step('changeResourceByActionValue', {
+                    resource: 'sp',
+                    amount: { kind: 'blackboard', key: 'atb' },
+                    coefficient: { kind: 'constant', value: 1 },
+                    recipient: 'team',
+                    spGainKind: 'gain',
+                    spGainSource: 'normalAttack',
+                  }),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence3: ActionSequenceDefinition = sequence(
   branch(
     {
       kind: 'not',
@@ -171,19 +242,52 @@ const sharedActionSequence2: ActionSequenceDefinition = sequence(
   ),
 );
 
-const sharedActionSequence1: ActionSequenceDefinition = sequence(
+const sharedActionSequence4: ActionSequenceDefinition = sequence(
   withActionBlackboardScope(
     '\u0000endaxis-generated-identity:0',
-    { atb: 0, atk_scale: 0, poise: 0 },
+    {},
     true,
-    instantiateActionSequence(sharedActionSequence2, [
-      '\u0000endaxis-generated-identity:1',
-      '\u0000endaxis-generated-identity:2',
-    ]),
-    undefined,
-    { lifetime: 'execution', alwaysNext: true },
+    instantiateActionSequence(sharedActionSequence5, ['\u0000endaxis-generated-identity:1']),
+    {},
+    { lifetime: 'execution' },
   ),
 );
+
+const sharedActionSequence2: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0023_antal_attack4_powerattack_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            instantiateActionSequence(sharedActionSequence3, [
+              '\u0000endaxis-generated-identity:0',
+              '\u0000endaxis-generated-identity:1',
+            ]),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
 
 export const antalChr_0023_antal_attack1: SkillDefinition = withSkillBlackboard(
   {
@@ -212,41 +316,63 @@ export const antalChr_0023_antal_attack1: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0023_antal_attack1.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_normal_attack1',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0023_antal_attack1.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0023_antal_attack1_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0023_antal_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0023_antal_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0023_antal_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              step('changeResourceByActionValue', {
+                                resource: 'sp',
+                                amount: { kind: 'blackboard', key: 'atb' },
+                                coefficient: { kind: 'constant', value: 1 },
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                                spGainSource: 'normalAttack',
+                              }),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -294,41 +420,63 @@ export const antalChr_0023_antal_attack2: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0023_antal_attack2.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_normal_attack2',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0023_antal_attack2.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0023_antal_attack2_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0023_antal_attack2_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0023_antal_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0023_antal_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              step('changeResourceByActionValue', {
+                                resource: 'sp',
+                                amount: { kind: 'blackboard', key: 'atb' },
+                                coefficient: { kind: 'constant', value: 1 },
+                                recipient: 'team',
+                                spGainKind: 'gain',
+                                spGainSource: 'normalAttack',
+                              }),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -385,41 +533,9 @@ export const antalChr_0023_antal_attack3: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0023_antal_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0023_antal_normal_attack3',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0023_antal_attack3.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:chr_0023_antal_attack3_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0023_antal_attack3:/scheduledSequences/0/sequence/steps/1/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+            instantiateActionSequence(sharedActionSequence1, [
+              'chr_0023_antal_attack3:/scheduledSequences/0/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+            ]),
             {},
             { lifetime: 'execution' },
           ),
@@ -433,41 +549,9 @@ export const antalChr_0023_antal_attack3: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0023_antal_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_normal_attack3',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0023_antal_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[0]:chr_0023_antal_attack3_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      tags: ['normalAttack'],
-                    },
-                    'chr_0023_antal_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  branch(
-                    { kind: 'casterControlled' },
-                    sequence(
-                      step('changeResourceByActionValue', {
-                        resource: 'sp',
-                        amount: { kind: 'blackboard', key: 'atb' },
-                        coefficient: { kind: 'constant', value: 1 },
-                        recipient: 'team',
-                        spGainKind: 'gain',
-                        spGainSource: 'normalAttack',
-                      }),
-                    ),
-                    undefined,
-                    { alwaysNext: true },
-                  ),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+            instantiateActionSequence(sharedActionSequence1, [
+              'chr_0023_antal_attack3:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+            ]),
             {},
             { lifetime: 'execution' },
           ),
@@ -520,10 +604,9 @@ export const antalChr_0023_antal_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0023_antal_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:projectile_chr_0023_antal_normal_attack4',
             {},
             true,
-            instantiateActionSequence(sharedActionSequence1, [
-              'SkillData.chr_0023_antal_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[1]:chr_0023_antal_attack4_powerattack_projhit',
-              'chr_0023_antal_attack4:/scheduledSequences/0/sequence/steps/1/body/steps/0/body/steps/0/whenTrue/steps/0',
-              'chr_0023_antal_attack4:/scheduledSequences/0/sequence/steps/1/body/steps/0/body/steps/0/whenFalse/steps/0',
+            instantiateActionSequence(sharedActionSequence2, [
+              'chr_0023_antal_attack4:/scheduledSequences/0/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenTrue/steps/0',
+              'chr_0023_antal_attack4:/scheduledSequences/0/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenFalse/steps/0',
             ]),
             {},
             { lifetime: 'execution' },
@@ -532,10 +615,9 @@ export const antalChr_0023_antal_attack4: SkillDefinition = withSkillBlackboard(
             'SkillData.chr_0023_antal_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[2]:projectile_chr_0023_antal_normal_attack4',
             {},
             true,
-            instantiateActionSequence(sharedActionSequence1, [
-              'SkillData.chr_0023_antal_attack4.actionGroupData.timelineActions[3]._sequenceActionData.actionData[2]:chr_0023_antal_attack4_powerattack_projhit',
-              'chr_0023_antal_attack4:/scheduledSequences/0/sequence/steps/2/body/steps/0/body/steps/0/whenTrue/steps/0',
-              'chr_0023_antal_attack4:/scheduledSequences/0/sequence/steps/2/body/steps/0/body/steps/0/whenFalse/steps/0',
+            instantiateActionSequence(sharedActionSequence2, [
+              'chr_0023_antal_attack4:/scheduledSequences/0/sequence/steps/2/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenTrue/steps/0',
+              'chr_0023_antal_attack4:/scheduledSequences/0/sequence/steps/2/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenFalse/steps/0',
             ]),
             {},
             { lifetime: 'execution' },
@@ -581,46 +663,41 @@ export const antalChr_0023_antal_power_attack: SkillDefinition = withSkillBlackb
     scheduledSequences: [
       scheduled(
         10,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence4, [
           'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_power_attack02',
-          'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[12]._sequenceActionData.actionData[0]:chr_0023_antal_power_attack02_projhit',
-          'chr_0023_antal_power_attack:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0023_antal_power_attack:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         10,
       ),
       scheduled(
         12,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence4, [
           'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_power_attack02',
-          'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[13]._sequenceActionData.actionData[0]:chr_0023_antal_power_attack02_projhit',
-          'chr_0023_antal_power_attack:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0023_antal_power_attack:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         12,
       ),
       scheduled(
         14,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence4, [
           'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_power_attack02',
-          'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[14]._sequenceActionData.actionData[0]:chr_0023_antal_power_attack02_projhit',
-          'chr_0023_antal_power_attack:/scheduledSequences/2/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0023_antal_power_attack:/scheduledSequences/2/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         14,
       ),
       scheduled(
         15,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence4, [
           'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_power_attack02',
-          'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[15]._sequenceActionData.actionData[0]:chr_0023_antal_power_attack02_projhit',
-          'chr_0023_antal_power_attack:/scheduledSequences/3/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0023_antal_power_attack:/scheduledSequences/3/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         15,
       ),
       scheduled(
         16,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence4, [
           'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[16]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_power_attack02',
-          'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[16]._sequenceActionData.actionData[0]:chr_0023_antal_power_attack02_projhit',
-          'chr_0023_antal_power_attack:/scheduledSequences/4/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0023_antal_power_attack:/scheduledSequences/4/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         16,
       ),
@@ -631,49 +708,72 @@ export const antalChr_0023_antal_power_attack: SkillDefinition = withSkillBlackb
             'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[18]._sequenceActionData.actionData[0]:projectile_chr_0023_antal_power_attack',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0023_antal_power_attack.actionGroupData.timelineActions[18]._sequenceActionData.actionData[0]:chr_0023_antal_power_attack_projhit',
-                { atb: 0, atk_scale: 0 },
-                true,
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'electric',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                      calculation: 'breakingAttack',
-                      calculationMultiplier: 0.7,
-                      tags: ['normalAttack', 'powerAttack'],
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: { reachAfterTicks: 1, maxDurationSeconds: 1, finishOnReach: false },
+                syncTimeScale: true,
+                recycleDelaySeconds: 5,
+                hit: { onReach: true, finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0023_antal_power_attack_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 150,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    'chr_0023_antal_power_attack:/scheduledSequences/5/sequence/steps/0/body/steps/0/body/steps/0',
-                  ),
-                  step('gainFinisherSp', { factor: 1, recipient: 'team' }),
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'electric',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              calculation: 'breakingAttack',
+                              calculationMultiplier: 0.7,
+                              tags: ['normalAttack', 'powerAttack'],
+                            },
+                            'chr_0023_antal_power_attack:/scheduledSequences/5/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          step('gainFinisherSp', { factor: 1, recipient: 'team' }),
+                        ),
+                        3,
+                      ),
+                      scheduled(
+                        1,
+                        sequence(
+                          step('startTimeDilation', {
+                            scope: 'entity',
+                            durationSeconds: { kind: 'constant', value: 0.3667 },
+                            slot: 'TimeDilation/Layer/Entity/HitStop',
+                            priority: 10,
+                            curve: { kind: 'named', key: 'char_normal_attack' },
+                            finishByAction: false,
+                            targets: ['enemy', 'caster'],
+                          }),
+                        ),
+                        2,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
         ),
         25,
-      ),
-      scheduled(
-        26,
-        sequence(
-          step('startTimeDilation', {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.3667 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          }),
-        ),
-        27,
       ),
       scheduled(
         0,
@@ -955,7 +1055,7 @@ export const antalChr_0023_antal_combo_skill: SkillDefinition = withSkillBlackbo
                                   inheritSourceSkillCastInfo: true,
                                 }),
                               ),
-                              afterEnhance: sharedActionSequence4,
+                              afterEnhance: sharedActionSequence6,
                             },
                           },
                           fractureBuffId: 'buff_physical_fracture',
@@ -1079,7 +1179,7 @@ export const antalChr_0023_antal_combo_skill: SkillDefinition = withSkillBlackbo
                                   inheritSourceSkillCastInfo: true,
                                 }),
                               ),
-                              afterEnhance: sharedActionSequence4,
+                              afterEnhance: sharedActionSequence6,
                             },
                           },
                           airborneBuffId: 'buff_physical_airborne',
@@ -1329,7 +1429,7 @@ export const antalChr_0023_antal_combo_skill: SkillDefinition = withSkillBlackbo
                                   inheritSourceSkillCastInfo: true,
                                 }),
                               ),
-                              afterEnhance: sharedActionSequence4,
+                              afterEnhance: sharedActionSequence6,
                             },
                           },
                           crushedBuffId: 'buff_physical_crushed',

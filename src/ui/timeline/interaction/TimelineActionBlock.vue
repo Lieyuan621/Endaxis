@@ -37,7 +37,11 @@ const props = defineProps<{
   disabledText?: string;
   editedText?: string;
   moving?: boolean;
-  /** 已启动但在当前模拟终点前尚未到达实例局部可操作边界。 */
+  /**
+   * 技能已经开始，但模拟结果还不能确定技能块的结束时间。
+   * 此时块宽暂用技能定义中的时长，右侧显示虚线，表示这不是已算出的终点。
+   * 例如模拟只算到第 10 秒，而技能块应在第 12 秒结束。
+   */
   durationPending?: boolean;
   color?: string | null;
   connectionToolEnabled?: boolean;

@@ -4069,6 +4069,39 @@ export const arcane: OperatorDefinition = {
         ),
       },
     },
+    buff_chr_0032_lizhiyan_normal_skill_aura: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 1,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+      abilityEventResponses: [
+        {
+          event: 'beforeTakeInfliction',
+          priority: 0,
+          sequence: sequence(
+            step('applyBuff', {
+              buffId: 'buff_chr_0032_lizhiyan_normal_skill_listener',
+              target: 'buffSource',
+              source: 'buffOwner',
+              inheritSourceSkillCastInfo: true,
+            }),
+          ),
+        },
+      ],
+    },
+    buff_chr_0032_lizhiyan_normal_skill_listener: {
+      stackingType: 'unlimited',
+      priority: 0,
+      maxStackCount: 1,
+      durationSeconds: 0.5,
+      applyTags: [],
+      extendTags: [],
+      blackboard: {},
+      attributeModifiers: [],
+    },
     buff_chr_0032_lizhiyan_passive: {
       stackingType: 'unique',
       priority: 0,
@@ -5304,10 +5337,19 @@ export const arcane: OperatorDefinition = {
         'SelectCategory/UnSkillAutoSelectable',
         'Skill/Character/chr_0032_lizhiyan/combo_bunshin',
       ],
+      blackboard: { EntityBB_wisd_greater_will: 1 },
       lifetime: { kind: 'limited', durationSeconds: 50 },
       childSkills: {
         chr_032_lizhiyan_combo_skill_abilityentity_seal: {
           skillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 190,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: {
             atb_final: 50,
             atk_scale_final: 1,
@@ -5322,6 +5364,14 @@ export const arcane: OperatorDefinition = {
         },
         chr_0032_lizhiyan_combo_skill_abilityentity_end: {
           skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_end',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 45,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: {
             atb_final: 50,
             atb_return_wisd: 0,
@@ -5446,7 +5496,7 @@ export const arcane: OperatorDefinition = {
                         features: ['canBreakWeakness'],
                         stagger: { kind: 'blackboard', key: 'poise_boom' },
                       },
-                      'abilityentity_chr_0032_lizhiyan_combo_skill:chr_032_lizhiyan_combo_skill_abilityentity_seal|chr_0032_lizhiyan_combo_skill_abilityentity_end|chr_0032_lizhiyan_combo_skill_abilityentity_seal_again:/childSkills/chr_0032_lizhiyan_combo_skill_abilityentity_end/scheduledSequences/5/sequence/steps/0/whenTrue/steps/0',
+                      'abilityentity_chr_0032_lizhiyan_combo_skill:chr_032_lizhiyan_combo_skill_abilityentity_seal|chr_0032_lizhiyan_combo_skill_abilityentity_end|chr_0032_lizhiyan_combo_skill_abilityentity_seal_again|chr_0032_lizhiyan_combo_skill_abilityentity_seal_finisher:/childSkills/chr_0032_lizhiyan_combo_skill_abilityentity_end/scheduledSequences/5/sequence/steps/0/whenTrue/steps/0',
                     ),
                     step('createTimedMarker', {
                       target: 'caster',
@@ -5556,6 +5606,14 @@ export const arcane: OperatorDefinition = {
         },
         chr_0032_lizhiyan_combo_skill_abilityentity_seal_again: {
           skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_seal_again',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 243,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
           blackboard: {
             atb_final: 50,
             atb_return_wisd: 10,
@@ -5793,6 +5851,37 @@ export const arcane: OperatorDefinition = {
             ),
           ],
         },
+        chr_0032_lizhiyan_combo_skill_abilityentity_seal_finisher: {
+          skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_seal_finisher',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 19,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atb_final: 50,
+            atk_scale_calc: 0,
+            atk_scale_final: 6,
+            atk_scale_wisd_ratio: 0,
+            duration_calc: 0,
+            duration_extra: 0,
+            duration_vul: 6,
+            isWisd: 1,
+            minAngle: 0,
+            number: 0,
+            owner_mainchar_alpha: 0,
+            owner_mainchar_distance: 0,
+            poise_final: 5,
+            radius: 5,
+            rate: 0.3,
+          },
+          scheduledSequences: [
+            scheduled(18, sequence(step('finishActionOwnerAbilityEntity', {})), 19),
+          ],
+        },
       },
     },
     abilityentity_chr_0032_lizhiyan_normal_skill: {
@@ -5802,149 +5891,273 @@ export const arcane: OperatorDefinition = {
         'SelectCategory/UnSkillManualSelectable',
         'SelectCategory/UnSkillAutoSelectable',
       ],
+      blackboard: { EntityBB_wisd_greater_will: 1 },
       lifetime: { kind: 'limited', durationSeconds: 6 },
-      childSkill: {
-        skillId: 'chr_0032_lizhiyan_normal_skill_abilityrange2',
-        blackboard: {
-          atb_return_dynamic: 20,
-          atk_scale: 0,
-          atk_scale_final: 0,
-          atk_scale_will: 1,
-          atk_scale_wisd: 1,
-          atk_scale_wisd_ratio: 1.5,
-          duration: 6,
-          effect_count: 0,
-          has_returned: 0,
-          isJumped: 0,
-          max_effect_count: 3,
-          poise: 0,
-          radius: 5,
-        },
-        scheduledSequences: [
-          scheduled(
-            0,
-            sequence(
-              step('modifyActionValue', {
-                key: 'radius',
-                operation: 'add',
-                value: { kind: 'constant', value: 0.67 },
-              }),
+      childSkills: {
+        chr_0032_lizhiyan_normal_skill_abilityrange2: {
+          skillId: 'chr_0032_lizhiyan_normal_skill_abilityrange2',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 240,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atb_return_dynamic: 20,
+            atk_scale: 0,
+            atk_scale_final: 0,
+            atk_scale_will: 1,
+            atk_scale_wisd: 1,
+            atk_scale_wisd_ratio: 1.5,
+            duration: 6,
+            effect_count: 0,
+            has_returned: 0,
+            isJumped: 0,
+            max_effect_count: 3,
+            poise: 0,
+            radius: 5,
+          },
+          scheduledSequences: [
+            scheduled(
+              0,
+              sequence(
+                step('modifyActionValue', {
+                  key: 'radius',
+                  operation: 'add',
+                  value: { kind: 'constant', value: 0.67 },
+                }),
+              ),
+              3,
             ),
-            3,
-          ),
-          scheduled(
-            20,
-            sequence(
-              forEachTarget(
-                'enemy',
-                sequence(
-                  branch(
-                    {
-                      kind: 'actionValueCompare',
-                      left: { kind: 'blackboard', key: 'effect_count', fallback: 0 },
-                      operator: 'less',
-                      right: { kind: 'blackboard', key: 'max_effect_count', fallback: 0 },
-                    },
-                    sequence(
-                      step('calculateActionValue', {
-                        key: 'effect_count',
-                        operation: 'add',
-                        left: { kind: 'blackboard', key: 'effect_count' },
-                        right: { kind: 'constant', value: 1 },
-                      }),
+            scheduled(
+              20,
+              sequence(
+                forEachTarget(
+                  'enemy',
+                  sequence(
+                    branch(
+                      {
+                        kind: 'actionValueCompare',
+                        left: { kind: 'blackboard', key: 'effect_count', fallback: 0 },
+                        operator: 'less',
+                        right: { kind: 'blackboard', key: 'max_effect_count', fallback: 0 },
+                      },
+                      sequence(
+                        step('calculateActionValue', {
+                          key: 'effect_count',
+                          operation: 'add',
+                          left: { kind: 'blackboard', key: 'effect_count' },
+                          right: { kind: 'constant', value: 1 },
+                        }),
+                      ),
+                      undefined,
+                      { alwaysNext: true },
                     ),
-                    undefined,
-                    { alwaysNext: true },
                   ),
                 ),
+                step('applyElementalInfliction', { element: 'nature', isExtra: false }),
+                branch(
+                  {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                  sequence(
+                    step(
+                      'dealDamage',
+                      {
+                        damageType: 'nature',
+                        attackScale: { kind: 'blackboard', key: 'atk_scale_wisd' },
+                        tags: ['normalSkill'],
+                        features: ['canBreakWeakness'],
+                        stagger: { kind: 'blackboard', key: 'poise' },
+                      },
+                      'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange2/scheduledSequences/1/sequence/steps/2/whenTrue/steps/0',
+                    ),
+                  ),
+                  sequence(
+                    step(
+                      'dealDamage',
+                      {
+                        damageType: 'nature',
+                        attackScale: { kind: 'blackboard', key: 'atk_scale_will' },
+                        tags: ['normalSkill'],
+                        features: ['canBreakWeakness'],
+                        stagger: { kind: 'blackboard', key: 'poise' },
+                      },
+                      'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange2/scheduledSequences/1/sequence/steps/2/whenFalse/steps/0',
+                    ),
+                  ),
+                  { alwaysNext: true },
+                ),
+                step('startTimeDilation', {
+                  scope: 'entity',
+                  durationSeconds: { kind: 'constant', value: 0.4 },
+                  slot: 'TimeDilation/Layer/Entity/HitStop',
+                  priority: 10,
+                  curve: {
+                    kind: 'inline',
+                    keys: [
+                      {
+                        time: 0,
+                        value: 1,
+                        inTangent: -14.14286,
+                        outTangent: -14.14286,
+                        weightedMode: 0,
+                        inWeight: 0,
+                        outWeight: 0,
+                      },
+                      {
+                        time: 0.07,
+                        value: 0.01,
+                        inTangent: 0,
+                        outTangent: 0,
+                        weightedMode: 0,
+                        inWeight: 0,
+                        outWeight: 0,
+                      },
+                      {
+                        time: 1,
+                        value: 0.1,
+                        inTangent: 0,
+                        outTangent: 0,
+                        weightedMode: 0,
+                        inWeight: 0,
+                        outWeight: 0,
+                      },
+                    ],
+                  },
+                  finishByAction: false,
+                  targets: ['enemy'],
+                  abilityEntityTargets: [{ kind: 'current' }],
+                }),
               ),
-              step('applyElementalInfliction', { element: 'nature', isExtra: false }),
-              branch(
-                {
-                  kind: 'actionValueCompare',
-                  left: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
-                  operator: 'greaterOrEqual',
-                  right: { kind: 'constant', value: 1 },
-                },
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_wisd' },
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                    },
-                    'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2:/childSkill/scheduledSequences/1/sequence/steps/2/whenTrue/steps/0',
-                  ),
-                ),
-                sequence(
-                  step(
-                    'dealDamage',
-                    {
-                      damageType: 'nature',
-                      attackScale: { kind: 'blackboard', key: 'atk_scale_will' },
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'blackboard', key: 'poise' },
-                    },
-                    'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2:/childSkill/scheduledSequences/1/sequence/steps/2/whenFalse/steps/0',
-                  ),
-                ),
-                { alwaysNext: true },
+              22,
+            ),
+            scheduled(
+              20,
+              sequence(step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 })),
+              23,
+            ),
+            scheduled(22, sequence(step('finishActionOwnerAbilityEntity', {})), 25),
+          ],
+        },
+        chr_0032_lizhiyan_normal_skill_abilityrange: {
+          skillId: 'chr_0032_lizhiyan_normal_skill_abilityrange',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 240,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: { atk_scale: 0, duration: 6, isJumped: 0, poise: 0, radius: 5 },
+          scheduledSequences: [
+            scheduled(
+              21,
+              sequence(
+                step('applyBuff', {
+                  buffId: 'buff_chr_0032_lizhiyan_normal_skill_aura',
+                  target: 'enemy',
+                  source: 'currentAbilityEntity',
+                  finishByAction: true,
+                }),
               ),
-              step('startTimeDilation', {
-                scope: 'entity',
-                durationSeconds: { kind: 'constant', value: 0.4 },
-                slot: 'TimeDilation/Layer/Entity/HitStop',
-                priority: 10,
-                curve: {
-                  kind: 'inline',
-                  keys: [
+              180,
+            ),
+            scheduled(
+              21,
+              sequence(
+                step('listenForCombatEvents', {
+                  responses: [
                     {
-                      time: 0,
-                      value: 1,
-                      inTangent: -14.14286,
-                      outTangent: -14.14286,
-                      weightedMode: 0,
-                      inWeight: 0,
-                      outWeight: 0,
-                    },
-                    {
-                      time: 0.07,
-                      value: 0.01,
-                      inTangent: 0,
-                      outTangent: 0,
-                      weightedMode: 0,
-                      inWeight: 0,
-                      outWeight: 0,
-                    },
-                    {
-                      time: 1,
-                      value: 0.1,
-                      inTangent: 0,
-                      outTangent: 0,
-                      weightedMode: 0,
-                      inWeight: 0,
-                      outWeight: 0,
+                      key: 'SkillData.chr_0032_lizhiyan_normal_skill_abilityrange.actionGroupData.timelineActions[1]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                      event: { kind: 'abilityEvent', event: 'beforeAddedBuff' },
+                      phase: 'dataAction',
+                      priority: 0,
+                      sequence: sequence(
+                        branch(
+                          {
+                            kind: 'eventBuffIdMatch',
+                            buffIds: ['buff_chr_0032_lizhiyan_normal_skill_listener'],
+                          },
+                          sequence(
+                            step('modifyActionValue', {
+                              key: 'isJumped',
+                              operation: 'assign',
+                              value: { kind: 'constant', value: 1 },
+                            }),
+                            step('jumpTimeline', { destinationFrame: 180 }),
+                          ),
+                        ),
+                      ),
                     },
                   ],
-                },
-                finishByAction: false,
-                targets: ['enemy'],
-                abilityEntityTargets: [{ kind: 'current' }],
-              }),
+                }),
+              ),
+              180,
             ),
-            22,
-          ),
-          scheduled(
-            20,
-            sequence(step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 })),
-            23,
-          ),
-          scheduled(22, sequence(step('finishActionOwnerAbilityEntity', {})), 25),
-        ],
+            scheduled(187, sequence(step('finishActionOwnerAbilityEntity', {})), 190),
+            scheduled(
+              20,
+              sequence(
+                forEachTarget('enemy', sequence()),
+                step(
+                  'dealDamage',
+                  {
+                    damageType: 'nature',
+                    attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                    tags: ['normalSkill'],
+                    stagger: { kind: 'blackboard', key: 'poise' },
+                  },
+                  'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange/scheduledSequences/3/sequence/steps/1',
+                ),
+                step('applyElementalInfliction', {
+                  element: 'nature',
+                  isExtra: false,
+                  inverseReaction: true,
+                }),
+              ),
+              23,
+            ),
+            scheduled(
+              186,
+              sequence(
+                forEachTarget('enemy', sequence()),
+                step(
+                  'dealDamage',
+                  {
+                    damageType: 'nature',
+                    attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                    tags: ['normalSkill'],
+                    stagger: { kind: 'blackboard', key: 'poise' },
+                  },
+                  'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange/scheduledSequences/4/sequence/steps/1',
+                ),
+                branch(
+                  {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'blackboard', key: 'isJumped', fallback: 0 },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                  sequence(
+                    step('applyElementalInfliction', {
+                      element: 'nature',
+                      isExtra: false,
+                      inverseReaction: true,
+                    }),
+                  ),
+                ),
+              ),
+              189,
+            ),
+          ],
+        },
       },
     },
     abilityentity_chr_0032_lizhiyan_ultimate_skill: {
@@ -5958,6 +6171,14 @@ export const arcane: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 30 },
       childSkill: {
         skillId: 'chr_0032_lizhiyan_ultimate_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1800,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atk_scale_laser: 0.5,
           atk_scale_laser_will: 0.2,
@@ -6026,7 +6247,48 @@ export const arcane: OperatorDefinition = {
         'SelectCategory/UnSkillAutoSelectable',
         'Skill/Character/chr_0032_lizhiyan/ultimate_place',
       ],
+      blackboard: { EntityBB_index: 0 },
       lifetime: { kind: 'limited', durationSeconds: 30 },
+    },
+    abilityentity_chr_0032_lizhiyan_combo_skill_death: {
+      bornTags: [
+        'Immune/Damage',
+        'SelectCategory/Unmarkable',
+        'SelectCategory/UnSkillManualSelectable',
+        'SelectCategory/UnSkillAutoSelectable',
+      ],
+      lifetime: { kind: 'limited', durationSeconds: 6 },
+      childSkill: {
+        skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_death_move',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 200,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atb_final: 50,
+          atk_scale_final: 1,
+          minAngle: 0,
+          number: 0,
+          owner_mainchar_alpha: 0,
+          owner_mainchar_distance: 0,
+          poise_final: 0,
+          radius: 5,
+        },
+        scheduledSequences: [],
+      },
+    },
+    abilityentity_chr_0032_lizhiyan_combo_skill_place: {
+      bornTags: [
+        'Immune/Damage',
+        'SelectCategory/Unmarkable',
+        'SelectCategory/UnSkillManualSelectable',
+        'SelectCategory/UnSkillAutoSelectable',
+      ],
+      lifetime: { kind: 'limited', durationSeconds: 6 },
     },
     abilityentity_chr_0032_lizhiyan_ultimate_skill_death: {
       bornTags: [
@@ -6057,6 +6319,14 @@ export const arcane: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 2 },
       childSkill: {
         skillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 90,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atk_scale_laser: 1, duration: 0, radius: 5.67 },
         scheduledSequences: [
           scheduled(
@@ -6145,38 +6415,6 @@ export const arcane: OperatorDefinition = {
           ),
         ],
       },
-    },
-    abilityentity_chr_0032_lizhiyan_combo_skill_death: {
-      bornTags: [
-        'Immune/Damage',
-        'SelectCategory/Unmarkable',
-        'SelectCategory/UnSkillManualSelectable',
-        'SelectCategory/UnSkillAutoSelectable',
-      ],
-      lifetime: { kind: 'limited', durationSeconds: 6 },
-      childSkill: {
-        skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_death_move',
-        blackboard: {
-          atb_final: 50,
-          atk_scale_final: 1,
-          minAngle: 0,
-          number: 0,
-          owner_mainchar_alpha: 0,
-          owner_mainchar_distance: 0,
-          poise_final: 0,
-          radius: 5,
-        },
-        scheduledSequences: [],
-      },
-    },
-    abilityentity_chr_0032_lizhiyan_combo_skill_place: {
-      bornTags: [
-        'Immune/Damage',
-        'SelectCategory/Unmarkable',
-        'SelectCategory/UnSkillManualSelectable',
-        'SelectCategory/UnSkillAutoSelectable',
-      ],
-      lifetime: { kind: 'limited', durationSeconds: 6 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

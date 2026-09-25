@@ -12,6 +12,8 @@ export function beginSkillCast(
   allocateCastId: () => number,
 ): void {
   state.passedFrames = 0;
+  state.inputTarget = state.preparedInputTarget;
+  state.preparedInputTarget = undefined;
   state.castStartFrame = frame;
   state.appliedCost = state.preparedSkipApplyCost;
   state.attemptedCost = state.preparedSkipApplyCost;

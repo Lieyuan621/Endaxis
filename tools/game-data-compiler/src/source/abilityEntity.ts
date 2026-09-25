@@ -18,6 +18,13 @@ import {
 export type { IntegerScalarSource } from './scalar.ts';
 import { gameplayTagId } from './nativeGameplayTags.ts';
 import { parseBlackboardDataPairs, type DeclaredBlackboardValueSource } from './blackboard.ts';
+import { parseActiveSkillTypesSource } from './activeSkillTypes.ts';
+import type { NativeSkillType } from '../../../../packages/game-data-contract/src/index.ts';
+import {
+  parseAbilitySystemReferences,
+  parseSkillBundleReferences,
+} from './abilitySystemReferences.ts';
+import type { DefinitionReferenceSource } from './referenceGraph.ts';
 
 const ABILITY_ENTITY_TEMPLATE_FIELDS = new Set([
   'gameId',
@@ -39,12 +46,79 @@ const ABILITY_ENTITY_TEMPLATE_FIELDS = new Set([
   'rootRid',
 ]);
 
-const ABILITY_ENTITY_TEMPLATE_OPTIONAL_FIELDS = new Set(['skillDataBundle', 'entityBlackboard']);
+const ABILITY_ENTITY_TEMPLATE_OPTIONAL_FIELDS = new Set([
+  'skillDataBundle',
+  'entityBlackboard',
+  'nativeData',
+  'skillRegistration',
+]);
 
 export interface AbilityEntitySkillDataBundleSource {
   readonly allActiveSkillIds: readonly string[];
   readonly allPassiveSkillIds: readonly string[];
   readonly enabledPassiveSkillIds: readonly string[];
+}
+
+/** 已解出的技能仍需检查；逻辑前缀不包含完整组件，不能作为完整黑板接收者。 */
+export function parseAbilityEntityBlackboardReceiverSource(value: unknown, sourcePath: string) {
+  const template = parseNativeAbilityEntityTemplateSource(value, sourcePath);
+  const result: { value: unknown; complete: boolean; references: DefinitionReferenceSource[] } = {
+    value,
+    complete: false,
+    references: (
+      ['allActiveSkillIds', 'allPassiveSkillIds', 'enabledPassiveSkillIds'] as const
+    ).flatMap(field =>
+      (template.skillDataBundle?.[field] ?? []).map((id, index) => ({
+        kind: 'skill' as const,
+        id,
+        usage: 'blackboardReceiver',
+        state: 'active' as const,
+        blackboardKey: null,
+        sourcePath: `${sourcePath}.skillDataBundle.${field}[${index}]`,
+      })),
+    ),
+  };
+  const root = requireRecord(value, sourcePath);
+  if (root.nativeData === undefined) return result;
+  const nativePath = `${sourcePath}.nativeData`;
+  const native = requireRecord(root.nativeData, nativePath);
+  if (native.decodeStatus === 'partial') return result;
+  if (native.decodeStatus !== 'complete') throw new Error(`${nativePath}: invalid decodeStatus`);
+  if (native.id !== template.gameId) throw new Error(`${nativePath}: template ID mismatch`);
+  const data = requireRecord(native.template, `${nativePath}.template`);
+  if (data.id !== template.gameId) throw new Error(`${nativePath}.template: template ID mismatch`);
+  const bundle = parseSkillBundleReferences(
+    data.skillDataBundle,
+    `${nativePath}.template.skillDataBundle`,
+  );
+  result.references.push(...bundle.references);
+  result.complete = bundle.complete;
+  const components = requireRecord(native.components, `${nativePath}.components`);
+  for (const rid of requireArray(data.componentList, `${nativePath}.template.componentList`)) {
+    const key = requireNonEmptyString(rid, `${nativePath}.template.componentList`);
+    if (!(key in components)) throw new Error(`${nativePath}: missing component ${key}`);
+  }
+  for (const [rid, raw] of Object.entries(components)) {
+    const path = `${nativePath}.components.${rid}`;
+    const component = requireRecord(raw, path);
+    requireRecord(component.data, `${path}.data`);
+    if (component.type === 'Beyond.Gameplay.Core.AbilitySystemData') {
+      const ability = parseAbilitySystemReferences(component.data, `${path}.data`);
+      result.references.push(...ability.references);
+      result.complete &&= ability.complete;
+    } else if (
+      ![
+        'Beyond.Gameplay.Core.AbilityEntityRootComponentData',
+        'Beyond.Gameplay.Core.RotatorComponentData',
+        'Beyond.Gameplay.Core.CharacterMovementComponentData',
+        'Beyond.Gameplay.Core.AbilityEntityControllerData',
+        'Beyond.Gameplay.AbilityEntityTemplateData/EaseFollowMovementData',
+      ].includes(requireString(component.type, `${path}.type`))
+    ) {
+      result.complete = false;
+    }
+  }
+  return result;
 }
 
 /**
@@ -71,6 +145,8 @@ export interface NativeAbilityEntityTemplateSource {
   readonly rootRid: number;
   readonly skillDataBundle?: AbilityEntitySkillDataBundleSource;
   readonly entityBlackboard?: readonly DeclaredBlackboardValueSource[];
+  /** 实体技能包登记的类型；不能用 SkillData 的用途标签或来源技能类型代替。 */
+  readonly activeSkillTypes?: Readonly<Record<string, NativeSkillType>>;
 }
 export function parseNativeAbilityEntityTemplateSource(
   value: unknown,
@@ -89,7 +165,9 @@ export function parseNativeAbilityEntityTemplateSource(
   // BaseTemplateData.name 是可重复的模板标签，GameDataWithId.id 才是稳定资产身份。
   // 不以 name 覆盖 gameId，也不把此标签当作应用层显示名称。
   if ('name' in root) requireString(root.name, `${sourcePath}.name`);
+  const activeSkillTypes = parseEntityActiveSkillTypes(root, sourcePath);
   return {
+    ...(activeSkillTypes === undefined ? {} : { activeSkillTypes }),
     gameId: requireNonEmptyString(root.gameId, `${sourcePath}.gameId`),
     factionNativeValue: requireInteger(root.factionNativeValue, `${sourcePath}.factionNativeValue`),
     bornTagIds: requireArray(root.bornTagIds, `${sourcePath}.bornTagIds`).map((tag, index) => {
@@ -158,6 +236,43 @@ export function parseNativeAbilityEntityTemplateSource(
         }
       : {}),
   };
+}
+
+function parseEntityActiveSkillTypes(
+  root: Record<string, unknown>,
+  sourcePath: string,
+): Readonly<Record<string, NativeSkillType>> | undefined {
+  if (root.skillRegistration !== undefined)
+    return parseActiveSkillTypesSource(root.skillRegistration, `${sourcePath}.skillRegistration`)
+      .initialNativeSkillTypeById;
+  if (root.nativeData === undefined) return undefined;
+  const nativePath = `${sourcePath}.nativeData`;
+  const native = requireRecord(root.nativeData, nativePath);
+  if (native.decodeStatus === 'partial') return undefined;
+  if (native.decodeStatus !== 'complete') throw new Error(`${nativePath}: invalid decodeStatus`);
+  const template = requireRecord(native.template, `${nativePath}.template`);
+  if (native.id !== root.gameId || template.id !== root.gameId)
+    throw new Error(`${nativePath}: template ID mismatch`);
+  const result: Record<string, NativeSkillType> = {};
+  const register = (bundle: unknown, path: string) => {
+    const parsed = parseActiveSkillTypesSource(bundle, path);
+    for (const [id, type] of Object.entries(parsed.initialNativeSkillTypeById)) {
+      if (result[id] !== undefined && result[id] !== type)
+        throw new Error(`${path}: conflicting native type for skill ${id}`);
+      result[id] = type;
+    }
+  };
+  register(template.skillDataBundle, `${nativePath}.template.skillDataBundle`);
+  const components = requireRecord(native.components, `${nativePath}.components`);
+  for (const rid of requireArray(template.componentList, `${nativePath}.template.componentList`)) {
+    const key = requireNonEmptyString(rid, `${nativePath}.template.componentList`);
+    if (!(key in components)) throw new Error(`${nativePath}: missing component ${key}`);
+    const component = requireRecord(components[key], `${nativePath}.components.${key}`);
+    if (component.type !== 'Beyond.Gameplay.Core.AbilitySystemData') continue;
+    const data = requireRecord(component.data, `${nativePath}.components.${key}.data`);
+    register(data.skillDataBundle, `${nativePath}.components.${key}.data.skillDataBundle`);
+  }
+  return result;
 }
 
 function parseSkillDataBundle(

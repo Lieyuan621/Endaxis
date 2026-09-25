@@ -155,6 +155,16 @@ export interface LogicalAbilityEntityDirectoryState {
 
 /** 发射时确定的投射物回调输入，以及命中后创建的技能宿主数据。 */
 export interface ProjectileCallbackState {
+  /** 发射时保存的命中输入目标，不能在回调执行时重新选择主控。 */
+  inputTarget?: RuntimeTargetRef;
+  /** 同一投射物依次命中的友方目标；回调复用同一技能宿主及其冷却。 */
+  inputTargets?: readonly RuntimeTargetRef[];
+  /** 启动本程序的原生事件；恢复沿用该字段，不根据是否已有宿主猜测。 */
+  readonly event: 'hit' | 'block' | 'reach' | 'finish';
+  /** 本次发射的碰撞标签条件；只保存纯数据，恢复时重新绑定当前分支的判断逻辑。 */
+  readonly hitTagFilter?: NonNullable<
+    import('../../game-data/operatorDefinition').CombatStepParameters['launchProjectile']['hit']
+  >['hitTagFilter'];
   programId: number | null;
   readonly definitionOperatorId: string;
   readonly skillId: string;
@@ -164,12 +174,22 @@ export interface ProjectileCallbackState {
 }
 
 export interface ProjectileLifetimeState {
-  readonly callback: ProjectileCallbackState | null;
+  readonly callbacks: readonly ProjectileCallbackState[];
   readonly instanceId: number;
   readonly source?: RuntimeTargetRef;
   phase: 'active' | 'finished' | 'marked' | 'reset';
   remainingSeconds: number;
   remainingReachTicks: number | null;
+  /** 已发射但尚未执行的零空间落地，恢复时不得丢失或重复执行。 */
+  pendingBlock?: boolean;
+  readonly finishOnReach: boolean;
+  /** 从首 Tick 开始的单目标碰撞；pending 表示仍待成功命中，拒绝后是否重试由数据明确指定。 */
+  firstTickHit: {
+    readonly onReach?: boolean;
+    pending: boolean;
+    readonly finishOnHit: boolean;
+    readonly retryRejectedHit?: boolean;
+  } | null;
   readonly recycleDelaySeconds: number;
   readonly resetListeners: Map<number, number>;
 }

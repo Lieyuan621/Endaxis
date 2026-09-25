@@ -38,6 +38,16 @@ import { pruneUnusedSkillValues } from '../../src/compiler/optimization/skillVal
 import { optimizeOperatorDefinitionPrograms } from '../../src/compiler/optimization/definitionProgramOptimization.ts';
 
 const sequence = (...steps: CombatStepDefinition[]): ActionSequenceDefinition => ({ steps });
+const childSkillRuntime = {
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 10,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+  },
+} as const;
 const board = (key: string) => ({ kind: 'blackboard' as const, key });
 const spend = (key: string): CombatStepDefinition => ({
   kind: 'changeResourceByActionValue',
@@ -59,24 +69,27 @@ const spawn = (
     ...(definition === undefined ? {} : { definition }),
   },
 });
-const callback = (
-  body: ActionSequenceDefinition,
-): CombatStepForKind<'scheduleProjectileFinishCallback'> => ({
-  kind: 'scheduleProjectileFinishCallback',
-  parameters: { delaySeconds: 1, recycleDelaySeconds: 1 },
-  callback: {
-    skillId: 'callback_fixture',
-    nativeSkillType: 'normalSkill',
-    naturalDurationFrames: 10,
-    blackboard: { value: 1 },
-    scheduledSequences: [{ startFrame: 0, sequence: body }],
-    castResource: {
-      costFrame: 0,
-      cooldownSeconds: 0,
-      maxChargeTime: 1,
-      cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+const callback = (body: ActionSequenceDefinition): CombatStepForKind<'launchProjectile'> => ({
+  kind: 'launchProjectile',
+  parameters: { finish: 1, recycleDelaySeconds: 1 },
+  callbacks: [
+    {
+      event: 'finish',
+      skill: {
+        skillId: 'callback_fixture',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 10,
+        blackboard: { value: 1 },
+        scheduledSequences: [{ startFrame: 0, sequence: body }],
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+        },
+      },
     },
-  },
+  ],
 });
 const skill = (
   body: ActionSequenceDefinition,
@@ -139,6 +152,7 @@ describe('实体用途分阶段收集', () => {
           lifetime: { kind: 'infinite' },
           childSkill: {
             skillId: 'shared',
+            ...childSkillRuntime,
             scheduledSequences: [{ startFrame: 0, sequence: queryEntityValue('commonEntity') }],
           },
         },
@@ -271,12 +285,19 @@ function executeEntitySkill(value: SkillDefinition) {
     evaluate: () => true,
   });
   const entities = new LogicalAbilityEntityRuntime({});
+  let nextCastId = 1;
   const operations: AbilityEntityOperationExecutor = new AbilityEntityOperationExecutor(
     'fixture',
     entities,
     actionOperations,
     {
       resolveOperations: () => operations,
+      createCallbackSkillHost: createCallbackSkillHostFactory({
+        clock: new CombatClock(),
+        receipt: { record: () => {} },
+        definitionOperatorId: 'fixture',
+        allocateSkillCastId: () => nextCastId++,
+      }),
     },
   );
   const blackboard = new ActionBlackboard(
@@ -331,8 +352,8 @@ describe('跨技能黑板用途', () => {
             originSkillType: 'battleSkill',
             nonReturnedSpCost: 0,
           },
-          scheduleProjectileFinishCallback: (_delay, _recycle, execute) => {
-            finish = execute;
+          launchProjectile: request => {
+            finish = () => request.callbacks.forEach(callback => callback.runtime.start());
             return {
               instanceId: 1,
               target: { kind: 'abilityEntity', instanceId: 1 },
@@ -368,6 +389,7 @@ describe('跨技能黑板用途', () => {
       childSkills: {
         first: {
           skillId: 'first',
+          ...childSkillRuntime,
           blackboard: { value: 1 },
           scheduledSequences: [
             { startFrame: 0, sequence: sequence(assign('value', 7), spend('value')) },
@@ -375,6 +397,7 @@ describe('跨技能黑板用途', () => {
         },
         later: {
           skillId: 'later',
+          ...childSkillRuntime,
           scheduledSequences: [{ startFrame: 0, sequence: sequence(spend('later')) }],
         },
       },
@@ -415,6 +438,7 @@ describe('跨技能黑板用途', () => {
       lifetime: { kind: 'infinite' },
       childSkill: {
         skillId: 'leaf',
+        ...childSkillRuntime,
         scheduledSequences: [{ startFrame: 0, sequence: sequence(spend('required')) }],
       },
     };
@@ -422,6 +446,7 @@ describe('跨技能黑板用途', () => {
       lifetime: { kind: 'infinite' },
       childSkill: {
         skillId: 'middle',
+        ...childSkillRuntime,
         scheduledSequences: [
           { startFrame: 0, sequence: sequence(callback(sequence(spawn('leaf', leaf)))) },
         ],
@@ -443,6 +468,7 @@ describe('跨技能黑板用途', () => {
       lifetime: { kind: 'infinite' },
       childSkill: {
         skillId: 'loop',
+        ...childSkillRuntime,
         scheduledSequences: [{ startFrame: 0, sequence: sequence(spawn('loop')) }],
       },
     };
@@ -456,6 +482,7 @@ describe('跨技能黑板用途', () => {
             ...cycle,
             childSkill: {
               skillId: 'later',
+              ...childSkillRuntime,
               scheduledSequences: [{ startFrame: 0, sequence: sequence(spawn('unregistered')) }],
             },
           },
@@ -479,6 +506,7 @@ describe('跨技能黑板用途', () => {
       lifetime: { kind: 'infinite' },
       childSkill: {
         skillId: 'child',
+        ...childSkillRuntime,
         scheduledSequences: [{ startFrame: 0, sequence: sequence(spend('received')) }],
       },
     });
@@ -753,6 +781,7 @@ describe('跨技能黑板用途', () => {
         lifetime: { kind: 'infinite' },
         childSkill: {
           skillId: 'child',
+          ...childSkillRuntime,
           scheduledSequences: [{ startFrame: 0, sequence: sequence(spend('value')) }],
         },
       },

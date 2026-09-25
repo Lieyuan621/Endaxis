@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createAbilityEntityChildSkillDraft } from '../skills/skillDefinitionEditorViewModel';
 import type { OperatorDefinition } from '../../../../core/game-data/operatorDefinition';
 import liino from '../../../../data/operators/liino.generated';
 import { commonBuffDefinitions } from '../../../../data/buffs/generated/commonBuffDefinitions.generated';
@@ -208,7 +209,7 @@ function definition(): OperatorDefinition {
       'entity-a': {
         lifetime: { kind: 'infinite' },
         childSkill: {
-          skillId: 'child',
+          ...createAbilityEntityChildSkillDraft('child'),
           scheduledSequences: [
             {
               startFrame: 0,

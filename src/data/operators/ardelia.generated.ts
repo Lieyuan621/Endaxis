@@ -18,117 +18,208 @@ import {
   withSkillBlackboard,
 } from './definitionHelpers';
 
+const sharedActionSequence6: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    sequence({
+      kind: 'launchProjectile',
+      parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.0333333350718021 },
+      callbacks: [
+        {
+          event: 'block',
+          skill: {
+            skillId: 'chr_0025_ardelia_normal_skill_gene_sheep',
+            nativeSkillType: 'normalSkill',
+            naturalDurationFrames: 1,
+            castResource: {
+              costFrame: 0,
+              cooldownSeconds: 0,
+              maxChargeTime: 1,
+              cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+            },
+            blackboard: { atb: 0, atk_scale: 0, heal_scale: 0, heal_value: 0, potential2: 0 },
+            scheduledSequences: [
+              scheduled(
+                0,
+                sequence(
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0025_ardelia_remain_loop',
+                    childSkillId: 'chr_0025_ardelia_remain_loop_sheep',
+                    inheritActionBlackboard: true,
+                    dieWhenSourceDies: false,
+                  }),
+                ),
+                3,
+              ),
+              scheduled(0, sequence(), 10),
+              scheduled(0, sequence(), 2),
+            ],
+          },
+        },
+      ],
+    }),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence2: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0025_ardelia_attack1_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'nature',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  branch(
+                    { kind: 'casterControlled' },
+                    sequence(
+                      step('changeResourceByActionValue', {
+                        resource: 'sp',
+                        amount: { kind: 'blackboard', key: 'atb' },
+                        coefficient: { kind: 'constant', value: 1 },
+                        recipient: 'team',
+                        spGainKind: 'gain',
+                        spGainSource: 'normalAttack',
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence4: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: {
+    finish: 'firstTickReach',
+    recycleDelaySeconds: 0.0333333350718021,
+    hit: { finishOnHit: true },
+  },
+  callbacks: [
+    {
+      event: 'hit',
+      skill: {
+        skillId: 'chr_0025_ardelia_attack3_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atb: 0, atk_scale: 0 },
+        scheduledSequences: [
+          scheduled(
+            0,
+            sequence(
+              step(
+                'dealDamage',
+                {
+                  damageType: 'nature',
+                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                  tags: ['normalAttack'],
+                },
+                '\u0000endaxis-generated-identity:0',
+              ),
+              branch(
+                { kind: 'probability', probability: { kind: 'constant', value: 0.3 } },
+                sequence(),
+                undefined,
+                { alwaysNext: true },
+              ),
+              branch(
+                { kind: 'casterControlled' },
+                sequence(
+                  branch(
+                    { kind: 'casterControlled' },
+                    sequence(
+                      step('changeResourceByActionValue', {
+                        resource: 'sp',
+                        amount: { kind: 'blackboard', key: 'atb' },
+                        coefficient: { kind: 'constant', value: 1 },
+                        recipient: 'team',
+                        spGainKind: 'gain',
+                        spGainSource: 'normalAttack',
+                      }),
+                    ),
+                  ),
+                ),
+                undefined,
+                { alwaysNext: true },
+              ),
+            ),
+            3,
+          ),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence5: ActionSequenceDefinition = sequence(
+  step('createSpatialPointTargets', {
+    saveToContextKey: 'SheepPoint',
+    count: { kind: 'blackboard', key: 'sheep_num' },
+  }),
+  repeatByActionValue(
+    { kind: 'blackboard', key: 'sheep_num' },
+    instantiateActionSequence(sharedActionSequence6, ['\u0000endaxis-generated-identity:0']),
+  ),
+);
+
 const sharedActionSequence1: ActionSequenceDefinition = sequence(
   withActionBlackboardScope(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'nature',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
-                ),
-              ),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
+    instantiateActionSequence(sharedActionSequence2, ['\u0000endaxis-generated-identity:1']),
     {},
     { lifetime: 'execution' },
   ),
 );
 
-const sharedActionSequence2: ActionSequenceDefinition = sequence(
-  step('createSpatialPointTargets', {
-    saveToContextKey: 'firePoint',
-    count: { kind: 'constant', value: 1 },
-  }),
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    {},
-    true,
-    sequence(
-      withActionBlackboardScope(
-        '\u0000endaxis-generated-identity:1',
-        { atb: 0, atk_scale: 0 },
-        true,
-        sequence(
-          step(
-            'dealDamage',
-            {
-              damageType: 'nature',
-              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-              tags: ['normalAttack'],
-            },
-            '\u0000endaxis-generated-identity:2',
-          ),
-          branch(
-            { kind: 'probability', probability: { kind: 'constant', value: 0.3 } },
-            sequence(),
-            undefined,
-            { alwaysNext: true },
-          ),
-          branch(
-            { kind: 'casterControlled' },
-            sequence(
-              branch(
-                { kind: 'casterControlled' },
-                sequence(
-                  step('changeResourceByActionValue', {
-                    resource: 'sp',
-                    amount: { kind: 'blackboard', key: 'atb' },
-                    coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
-                    spGainKind: 'gain',
-                    spGainSource: 'normalAttack',
-                  }),
-                ),
-              ),
-            ),
-            undefined,
-            { alwaysNext: true },
-          ),
-        ),
-        undefined,
-        { lifetime: 'execution', alwaysNext: true },
-      ),
-    ),
-    {},
-    { lifetime: 'execution' },
-  ),
-);
-
-const sharedActionSequence3: ActionSequenceDefinition = sequence(
+const sharedActionSequence7: ActionSequenceDefinition = sequence(
   step('finishBuffsById', {
     target: 'caster',
     buffIds: ['buff_chr_0025_ardelia_normal_skill_kill_sheep'],
@@ -183,7 +274,7 @@ const sharedActionSequence3: ActionSequenceDefinition = sequence(
   step('gainSquadUltimateEnergyFromSkillCost', { coefficient: 1 }),
 );
 
-const sharedActionSequence9: ActionSequenceDefinition = sequence(
+const sharedActionSequence12: ActionSequenceDefinition = sequence(
   step('mergeContextTargets', {
     saveToContextKey: 'healTar',
     sources: [{ kind: 'target', target: 'currentTarget' }],
@@ -237,136 +328,145 @@ const sharedActionSequence9: ActionSequenceDefinition = sequence(
   step('finishActionOwnerAbilityEntity', {}),
 );
 
-const sharedActionSequence8: ActionSequenceDefinition = sequence(
-  {
-    kind: 'withActionBlackboardScope',
-    parameters: {
-      scopeKey: 'chr_0025_ardelia_ultimate_skill_sheep_projhit:immediate-timeline:0',
-      lifetime: 'execution',
-      alwaysNext: true,
-      shareParentBlackboard: true,
-      initialValues: {},
-      inheritParent: true,
-    },
-    body: sequence(
-      branch(
-        { kind: 'probability', probability: { kind: 'blackboard', key: 'effect_prob' } },
-        sequence(
-          step('spawnAbilityEntity', {
-            abilityEntityId: 'abilityentity_chr_0025_ardelia_remain_loop',
-            childSkillId: 'chr_0025_ardelia_remain_loop_sheep',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          }),
-        ),
-      ),
-    ),
-  },
-  {
-    kind: 'withActionBlackboardScope',
-    parameters: {
-      scopeKey: 'chr_0025_ardelia_ultimate_skill_sheep_projhit:immediate-timeline:1',
-      lifetime: 'execution',
-      alwaysNext: true,
-      shareParentBlackboard: true,
-      initialValues: {},
-      inheritParent: true,
-    },
-    body: sequence(
-      forEachTarget(
-        'enemy',
-        sequence(
-          branch(
-            {
-              kind: 'not',
-              condition: {
-                kind: 'timedMarkerPresent',
-                target: 'enemy',
-                markerId: 'ArdeliaUltMark',
-              },
-            },
-            sequence(
-              step(
-                'dealDamage',
-                {
-                  damageType: 'nature',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                  tags: ['ultimateSkill'],
-                  features: ['canBreakWeakness'],
-                  stagger: { kind: 'blackboard', key: 'poise' },
-                },
-                '\u0000endaxis-generated-identity:0',
-              ),
-              step('createTimedMarker', {
-                target: 'enemy',
-                markerId: 'ArdeliaUltMark',
-                durationSeconds: { kind: 'blackboard', key: 'interval' },
-                autoFinishByAction: false,
-              }),
-            ),
-          ),
-        ),
-      ),
-    ),
-  },
-);
-
-const sharedActionSequence7: ActionSequenceDefinition = sequence(
-  withActionBlackboardScope(
-    '\u0000endaxis-generated-identity:0',
-    {
-      atk_scale: 0,
-      effect_prob: 0,
-      heal_scale: 0,
-      heal_value: 0,
-      interval: 0,
-      poise: 0,
-      potential3_rate: 0,
-      random_phy: 0,
-      random_spe: 0,
-    },
-    true,
-    instantiateActionSequence(sharedActionSequence8, ['\u0000endaxis-generated-identity:1']),
-    undefined,
-    { lifetime: 'execution', alwaysNext: true },
-  ),
-);
-
-const sharedActionSequence6: ActionSequenceDefinition = sequence(
+const sharedActionSequence3: ActionSequenceDefinition = sequence(
+  step('createSpatialPointTargets', {
+    saveToContextKey: 'firePoint',
+    count: { kind: 'constant', value: 1 },
+  }),
   withActionBlackboardScope(
     '\u0000endaxis-generated-identity:0',
     {},
     true,
-    instantiateActionSequence(sharedActionSequence7, [
-      '\u0000endaxis-generated-identity:1',
-      '\u0000endaxis-generated-identity:2',
-    ]),
+    instantiateActionSequence(sharedActionSequence4, ['\u0000endaxis-generated-identity:1']),
     {},
     { lifetime: 'execution' },
   ),
 );
 
-const sharedActionSequence5: ActionSequenceDefinition = sequence(
+const sharedActionSequence11: ActionSequenceDefinition = sequence({
+  kind: 'launchProjectile',
+  parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.0333333350718021 },
+  callbacks: [
+    {
+      event: 'block',
+      skill: {
+        skillId: 'chr_0025_ardelia_ultimate_skill_sheep_projhit',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atk_scale: 0,
+          effect_prob: 0,
+          heal_scale: 0,
+          heal_value: 0,
+          interval: 0,
+          poise: 0,
+          potential3_rate: 0,
+          random_phy: 0,
+          random_spe: 0,
+        },
+        scheduledSequences: [
+          scheduled(0, sequence(), 1),
+          scheduled(
+            0,
+            sequence(
+              branch(
+                { kind: 'probability', probability: { kind: 'blackboard', key: 'effect_prob' } },
+                sequence(
+                  step('spawnAbilityEntity', {
+                    abilityEntityId: 'abilityentity_chr_0025_ardelia_remain_loop',
+                    childSkillId: 'chr_0025_ardelia_remain_loop_sheep',
+                    inheritActionBlackboard: true,
+                    dieWhenSourceDies: false,
+                  }),
+                ),
+              ),
+            ),
+            1,
+          ),
+          scheduled(
+            0,
+            sequence(
+              forEachTarget(
+                'enemy',
+                sequence(
+                  branch(
+                    {
+                      kind: 'not',
+                      condition: {
+                        kind: 'timedMarkerPresent',
+                        target: 'enemy',
+                        markerId: 'ArdeliaUltMark',
+                      },
+                    },
+                    sequence(
+                      step(
+                        'dealDamage',
+                        {
+                          damageType: 'nature',
+                          attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                          tags: ['ultimateSkill'],
+                          features: ['canBreakWeakness'],
+                          stagger: { kind: 'blackboard', key: 'poise' },
+                        },
+                        '\u0000endaxis-generated-identity:0',
+                      ),
+                      step('createTimedMarker', {
+                        target: 'enemy',
+                        markerId: 'ArdeliaUltMark',
+                        durationSeconds: { kind: 'blackboard', key: 'interval' },
+                        autoFinishByAction: false,
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            1,
+          ),
+          scheduled(0, sequence(), 3),
+          scheduled(0, sequence(), 10),
+        ],
+      },
+    },
+  ],
+});
+
+const sharedActionSequence10: ActionSequenceDefinition = sequence(
+  withActionBlackboardScope(
+    '\u0000endaxis-generated-identity:0',
+    {},
+    true,
+    instantiateActionSequence(sharedActionSequence11, ['\u0000endaxis-generated-identity:1']),
+    {},
+    { lifetime: 'execution' },
+  ),
+);
+
+const sharedActionSequence9: ActionSequenceDefinition = sequence(
   step('createSpatialPointTargets', {
     saveToContextKey: 'ranPos',
     count: { kind: 'constant', value: 1 },
   }),
   repeatByActionValue(
     { kind: 'constant', value: 1 },
-    instantiateActionSequence(sharedActionSequence6, [
+    instantiateActionSequence(sharedActionSequence10, [
       '\u0000endaxis-generated-identity:0',
       '\u0000endaxis-generated-identity:1',
-      '\u0000endaxis-generated-identity:2',
     ]),
   ),
 );
 
-const sharedActionSequence4: ActionSequenceDefinition = sequence(
+const sharedActionSequence8: ActionSequenceDefinition = sequence(
   repeatEachTick(
-    instantiateActionSequence(sharedActionSequence5, [
+    instantiateActionSequence(sharedActionSequence9, [
       '\u0000endaxis-generated-identity:0',
       '\u0000endaxis-generated-identity:1',
-      '\u0000endaxis-generated-identity:2',
     ]),
     {
       nativeChanneling: {
@@ -401,11 +501,77 @@ export const ardeliaChr_0025_ardelia_attack1: SkillDefinition = withSkillBlackbo
     scheduledSequences: [
       scheduled(
         6,
-        instantiateActionSequence(sharedActionSequence1, [
-          'SkillData.chr_0025_ardelia_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0025_ardelia_normal_attack1',
-          'SkillData.chr_0025_ardelia_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:chr_0025_ardelia_attack1_projhit',
-          'chr_0025_ardelia_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
-        ]),
+        sequence(
+          withActionBlackboardScope(
+            'SkillData.chr_0025_ardelia_attack1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0]:projectile_chr_0025_ardelia_normal_attack1',
+            {},
+            true,
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 5,
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { finishOnHit: true },
+              },
+              callbacks: [
+                {
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0025_ardelia_attack1_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                    },
+                    blackboard: { atb: 0, atk_scale: 0 },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
+                        sequence(
+                          step(
+                            'dealDamage',
+                            {
+                              damageType: 'nature',
+                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                              tags: ['normalAttack'],
+                            },
+                            'chr_0025_ardelia_attack1:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
+                          ),
+                          branch(
+                            { kind: 'casterControlled' },
+                            sequence(
+                              branch(
+                                { kind: 'casterControlled' },
+                                sequence(
+                                  step('changeResourceByActionValue', {
+                                    resource: 'sp',
+                                    amount: { kind: 'blackboard', key: 'atb' },
+                                    coefficient: { kind: 'constant', value: 1 },
+                                    recipient: 'team',
+                                    spGainKind: 'gain',
+                                    spGainSource: 'normalAttack',
+                                  }),
+                                ),
+                              ),
+                            ),
+                            undefined,
+                            { alwaysNext: true },
+                          ),
+                        ),
+                        3,
+                      ),
+                    ],
+                  },
+                },
+              ],
+            }),
+            {},
+            { lifetime: 'execution' },
+          ),
+        ),
         7,
       ),
       scheduled(
@@ -446,8 +612,7 @@ export const ardeliaChr_0025_ardelia_attack2: SkillDefinition = withSkillBlackbo
         8,
         instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0025_ardelia_attack2.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:projectile_chr_0025_ardelia_normal_attack2_1',
-          'SkillData.chr_0025_ardelia_attack2.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]:chr_0025_ardelia_attack1_projhit',
-          'chr_0025_ardelia_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack2:/scheduledSequences/0/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         9,
       ),
@@ -455,8 +620,7 @@ export const ardeliaChr_0025_ardelia_attack2: SkillDefinition = withSkillBlackbo
         10,
         instantiateActionSequence(sharedActionSequence1, [
           'SkillData.chr_0025_ardelia_attack2.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:projectile_chr_0025_ardelia_normal_attack2',
-          'SkillData.chr_0025_ardelia_attack2.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0]:chr_0025_ardelia_attack1_projhit',
-          'chr_0025_ardelia_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack2:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         11,
       ),
@@ -500,136 +664,121 @@ export const ardeliaChr_0025_ardelia_attack3: SkillDefinition = withSkillBlackbo
     scheduledSequences: [
       scheduled(
         11,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[4]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/0/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/0/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         12,
       ),
       scheduled(
         13,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[5]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/1/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/1/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         14,
       ),
       scheduled(
         15,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[6]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[6]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/2/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/2/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         16,
       ),
       scheduled(
         17,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[7]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[7]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/3/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/3/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         18,
       ),
       scheduled(
         19,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[8]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[8]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/4/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/4/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         20,
       ),
       scheduled(
         21,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[9]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[9]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/5/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/5/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         22,
       ),
       scheduled(
         23,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[10]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[10]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/6/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/6/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         24,
       ),
       scheduled(
         25,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[11]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[11]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/7/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/7/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         26,
       ),
       scheduled(
         27,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[12]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[12]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/8/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/8/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         28,
       ),
       scheduled(
         29,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[13]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[13]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/9/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/9/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         30,
       ),
       scheduled(
         31,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[14]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[14]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/10/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/10/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         32,
       ),
       scheduled(
         33,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[15]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[15]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/11/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/11/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         34,
       ),
       scheduled(
         35,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[16]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[16]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/12/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/12/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         36,
       ),
       scheduled(
         37,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[17]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[17]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/13/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/13/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         38,
       ),
       scheduled(
         39,
-        instantiateActionSequence(sharedActionSequence2, [
+        instantiateActionSequence(sharedActionSequence3, [
           'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[18]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_attack3',
-          'SkillData.chr_0025_ardelia_attack3.actionGroupData.timelineActions[18]._sequenceActionData.actionData[2]:chr_0025_ardelia_attack3_projhit',
-          'chr_0025_ardelia_attack3:/scheduledSequences/14/sequence/steps/1/body/steps/0/body/steps/0',
+          'chr_0025_ardelia_attack3:/scheduledSequences/14/sequence/steps/1/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0',
         ]),
         40,
       ),
@@ -802,7 +951,15 @@ export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = withSkillBl
     },
     costFrame: 4,
     scheduledSequences: [
-      scheduled(10, sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), 11),
+      scheduled(
+        10,
+        sequence({
+          kind: 'launchProjectile',
+          parameters: { finish: 'firstTickReach' },
+          callbacks: [],
+        }),
+        11,
+      ),
       scheduled(
         18,
         sequence(
@@ -865,9 +1022,9 @@ export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = withSkillBl
         sequence(
           repeatEachTick(
             sequence(
-              step('launchProjectileLifetime', { finish: 'firstTickReach' }),
-              step('launchProjectileLifetime', { finish: 'firstTickReach' }),
-              step('launchProjectileLifetime', { finish: 'firstTickReach' }),
+              { kind: 'launchProjectile', parameters: { finish: 'firstTickReach' }, callbacks: [] },
+              { kind: 'launchProjectile', parameters: { finish: 'firstTickReach' }, callbacks: [] },
+              { kind: 'launchProjectile', parameters: { finish: 'firstTickReach' }, callbacks: [] },
             ),
             {
               nativeChanneling: {
@@ -886,8 +1043,8 @@ export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = withSkillBl
         sequence(
           repeatEachTick(
             sequence(
-              step('launchProjectileLifetime', { finish: 'firstTickReach' }),
-              step('launchProjectileLifetime', { finish: 'firstTickReach' }),
+              { kind: 'launchProjectile', parameters: { finish: 'firstTickReach' }, callbacks: [] },
+              { kind: 'launchProjectile', parameters: { finish: 'firstTickReach' }, callbacks: [] },
             ),
             {
               nativeChanneling: {
@@ -904,14 +1061,21 @@ export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = withSkillBl
       scheduled(
         41,
         sequence(
-          repeatEachTick(sequence(step('launchProjectileLifetime', { finish: 'firstTickReach' })), {
-            nativeChanneling: {
-              executeEachFrame: false,
-              triggerIntervalSeconds: 0.1,
-              maxCountPerTarget: -1,
-              targetTriggerIntervalSeconds: 0,
+          repeatEachTick(
+            sequence({
+              kind: 'launchProjectile',
+              parameters: { finish: 'firstTickReach' },
+              callbacks: [],
+            }),
+            {
+              nativeChanneling: {
+                executeEachFrame: false,
+                triggerIntervalSeconds: 0.1,
+                maxCountPerTarget: -1,
+                targetTriggerIntervalSeconds: 0,
+              },
             },
-          }),
+          ),
         ),
         51,
       ),
@@ -1112,92 +1276,28 @@ export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = withSkillBl
       ),
       scheduled(
         32,
-        sequence(
-          step('createSpatialPointTargets', {
-            saveToContextKey: 'SheepPoint',
-            count: { kind: 'blackboard', key: 'sheep_num' },
-          }),
-          repeatByActionValue(
-            { kind: 'blackboard', key: 'sheep_num' },
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0025_ardelia_normal_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_skill',
-                {},
-                true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0025_ardelia_normal_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[2]:chr_0025_ardelia_normal_skill_gene_sheep',
-                    { atb: 0, atk_scale: 0, heal_scale: 0, heal_value: 0, potential2: 0 },
-                    true,
-                    sequence(
-                      step('spawnAbilityEntity', {
-                        abilityEntityId: 'abilityentity_chr_0025_ardelia_remain_loop',
-                        childSkillId: 'chr_0025_ardelia_remain_loop_sheep',
-                        inheritActionBlackboard: true,
-                        dieWhenSourceDies: false,
-                      }),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
-                {},
-                { lifetime: 'execution' },
-              ),
-            ),
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0025_ardelia_normal_skill.actionGroupData.timelineActions[19]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_skill',
+        ]),
         35,
       ),
       scheduled(
         221,
-        sequence(
-          step('createSpatialPointTargets', {
-            saveToContextKey: 'SheepPoint',
-            count: { kind: 'blackboard', key: 'sheep_num' },
-          }),
-          repeatByActionValue(
-            { kind: 'blackboard', key: 'sheep_num' },
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0025_ardelia_normal_skill.actionGroupData.timelineActions[20]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_skill',
-                {},
-                true,
-                sequence(
-                  withActionBlackboardScope(
-                    'SkillData.chr_0025_ardelia_normal_skill.actionGroupData.timelineActions[20]._sequenceActionData.actionData[2]:chr_0025_ardelia_normal_skill_gene_sheep',
-                    { atb: 0, atk_scale: 0, heal_scale: 0, heal_value: 0, potential2: 0 },
-                    true,
-                    sequence(
-                      step('spawnAbilityEntity', {
-                        abilityEntityId: 'abilityentity_chr_0025_ardelia_remain_loop',
-                        childSkillId: 'chr_0025_ardelia_remain_loop_sheep',
-                        inheritActionBlackboard: true,
-                        dieWhenSourceDies: false,
-                      }),
-                    ),
-                    undefined,
-                    { lifetime: 'execution', alwaysNext: true },
-                  ),
-                ),
-                {},
-                { lifetime: 'execution' },
-              ),
-            ),
-          ),
-        ),
+        instantiateActionSequence(sharedActionSequence5, [
+          'SkillData.chr_0025_ardelia_normal_skill.actionGroupData.timelineActions[20]._sequenceActionData.actionData[2]:projectile_chr_0025_ardelia_normal_skill',
+        ]),
         224,
       ),
       scheduled(
         32,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence7, [
           'chr_0025_ardelia_normal_skill:/scheduledSequences/6/sequence/steps/2',
         ]),
         33,
       ),
       scheduled(
         221,
-        instantiateActionSequence(sharedActionSequence3, [
+        instantiateActionSequence(sharedActionSequence7, [
           'chr_0025_ardelia_normal_skill:/scheduledSequences/7/sequence/steps/2',
         ]),
         222,
@@ -1359,113 +1459,115 @@ export const ardeliaChr_0025_ardelia_combo_skill: SkillDefinition = withSkillBla
             'SkillData.chr_0025_ardelia_combo_skill.actionGroupData.timelineActions[6]._sequenceActionData.actionData[1].succeedActions.actionData[0]:projectile_chr_0025_ardelia_combo_skill',
             {},
             true,
-            sequence(
-              withActionBlackboardScope(
-                'SkillData.chr_0025_ardelia_combo_skill.actionGroupData.timelineActions[6]._sequenceActionData.actionData[1].succeedActions.actionData[0]:chr_0025_ardelia_combo_skill_projhit',
+            sequence({
+              kind: 'launchProjectile',
+              parameters: {
+                finish: 'firstTickReach',
+                recycleDelaySeconds: 0.0333333350718021,
+                hit: { onReach: true, finishOnHit: true },
+              },
+              callbacks: [
                 {
-                  atk_scale: 0,
-                  atk_scale_boom: 0,
-                  duration_corrupt: 0,
-                  potential3: 0,
-                  potential5_dmg_rate: 0,
-                  potential5_duration: 0,
-                  usp: 0,
-                },
-                true,
-                sequence(
-                  {
-                    kind: 'withActionBlackboardScope',
-                    parameters: {
-                      scopeKey: 'chr_0025_ardelia_combo_skill_projhit:immediate-timeline:0',
-                      lifetime: 'execution',
-                      alwaysNext: true,
-                      shareParentBlackboard: true,
-                      initialValues: {},
-                      inheritParent: true,
+                  event: 'hit',
+                  skill: {
+                    skillId: 'chr_0025_ardelia_combo_skill_projhit',
+                    nativeSkillType: 'normalSkill',
+                    naturalDurationFrames: 1,
+                    castResource: {
+                      costFrame: 0,
+                      cooldownSeconds: 0,
+                      maxChargeTime: 1,
+                      cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                     },
-                    body: sequence(
-                      branch(
-                        {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'blackboard', key: 'potential5_dmg_rate', fallback: 0 },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0 },
-                        },
+                    blackboard: {
+                      atk_scale: 0,
+                      atk_scale_boom: 0,
+                      duration_corrupt: 0,
+                      potential3: 0,
+                      potential5_dmg_rate: 0,
+                      potential5_duration: 0,
+                      usp: 0,
+                    },
+                    scheduledSequences: [
+                      scheduled(
+                        0,
                         sequence(
-                          step('modifyActionValue', {
-                            key: 'atk_scale',
-                            operation: 'multiply',
-                            value: { kind: 'blackboard', key: 'potential5_dmg_rate' },
-                          }),
-                          step('modifyActionValue', {
-                            key: 'atk_scale_boom',
-                            operation: 'multiply',
-                            value: { kind: 'blackboard', key: 'potential5_dmg_rate' },
-                          }),
-                          step(
-                            'dealDamage',
+                          branch(
                             {
-                              damageType: 'nature',
-                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                              tags: ['comboSkill'],
-                              features: ['canBreakWeakness'],
+                              kind: 'actionValueCompare',
+                              left: { kind: 'blackboard', key: 'potential5_dmg_rate', fallback: 0 },
+                              operator: 'greater',
+                              right: { kind: 'constant', value: 0 },
                             },
-                            'chr_0025_ardelia_combo_skill:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0/body/steps/0/whenTrue/steps/2',
+                            sequence(
+                              step('modifyActionValue', {
+                                key: 'atk_scale',
+                                operation: 'multiply',
+                                value: { kind: 'blackboard', key: 'potential5_dmg_rate' },
+                              }),
+                              step('modifyActionValue', {
+                                key: 'atk_scale_boom',
+                                operation: 'multiply',
+                                value: { kind: 'blackboard', key: 'potential5_dmg_rate' },
+                              }),
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'nature',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  tags: ['comboSkill'],
+                                  features: ['canBreakWeakness'],
+                                },
+                                'chr_0025_ardelia_combo_skill:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenTrue/steps/2',
+                              ),
+                              step('changeResourceByActionValue', {
+                                resource: 'ultimateEnergy',
+                                amount: { kind: 'blackboard', key: 'usp' },
+                                coefficient: { kind: 'constant', value: 1 },
+                                recipient: 'caster',
+                              }),
+                            ),
+                            sequence(
+                              step(
+                                'dealDamage',
+                                {
+                                  damageType: 'nature',
+                                  attackScale: { kind: 'blackboard', key: 'atk_scale' },
+                                  tags: ['comboSkill'],
+                                  features: ['canBreakWeakness'],
+                                },
+                                'chr_0025_ardelia_combo_skill:/scheduledSequences/1/sequence/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/0/sequence/steps/0/whenFalse/steps/0',
+                              ),
+                              step('changeResourceByActionValue', {
+                                resource: 'ultimateEnergy',
+                                amount: { kind: 'blackboard', key: 'usp' },
+                                coefficient: { kind: 'constant', value: 1 },
+                                recipient: 'caster',
+                              }),
+                            ),
+                            { alwaysNext: true },
                           ),
-                          step('changeResourceByActionValue', {
-                            resource: 'ultimateEnergy',
-                            amount: { kind: 'blackboard', key: 'usp' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'caster',
-                          }),
                         ),
-                        sequence(
-                          step(
-                            'dealDamage',
-                            {
-                              damageType: 'nature',
-                              attackScale: { kind: 'blackboard', key: 'atk_scale' },
-                              tags: ['comboSkill'],
-                              features: ['canBreakWeakness'],
-                            },
-                            'chr_0025_ardelia_combo_skill:/scheduledSequences/1/sequence/steps/0/body/steps/0/body/steps/0/body/steps/0/whenFalse/steps/0',
-                          ),
-                          step('changeResourceByActionValue', {
-                            resource: 'ultimateEnergy',
-                            amount: { kind: 'blackboard', key: 'usp' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'caster',
-                          }),
-                        ),
-                        { alwaysNext: true },
+                        3,
                       ),
-                    ),
+                      scheduled(
+                        0,
+                        sequence(
+                          step('spawnAbilityEntity', {
+                            abilityEntityId: 'abilityentity_chr_0025_ardelia_combo_skill_bomb',
+                            childSkillId: 'chr_0025_ardelia_combo_skill_bomb',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                            target: 'enemy',
+                          }),
+                        ),
+                        3,
+                      ),
+                    ],
                   },
-                  {
-                    kind: 'withActionBlackboardScope',
-                    parameters: {
-                      scopeKey: 'chr_0025_ardelia_combo_skill_projhit:immediate-timeline:1',
-                      lifetime: 'execution',
-                      alwaysNext: true,
-                      shareParentBlackboard: true,
-                      initialValues: {},
-                      inheritParent: true,
-                    },
-                    body: sequence(
-                      step('spawnAbilityEntity', {
-                        abilityEntityId: 'abilityentity_chr_0025_ardelia_combo_skill_bomb',
-                        childSkillId: 'chr_0025_ardelia_combo_skill_bomb',
-                        inheritActionBlackboard: true,
-                        dieWhenSourceDies: false,
-                        target: 'enemy',
-                      }),
-                    ),
-                  },
-                ),
-                undefined,
-                { lifetime: 'execution', alwaysNext: true },
-              ),
-            ),
+                },
+              ],
+            }),
             {},
             { lifetime: 'execution' },
           ),
@@ -1586,19 +1688,17 @@ export const ardeliaChr_0025_ardelia_ultimate_skill: SkillDefinition = withSkill
       ),
       scheduled(
         81,
-        instantiateActionSequence(sharedActionSequence4, [
+        instantiateActionSequence(sharedActionSequence8, [
           'SkillData.chr_0025_ardelia_ultimate_skill.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].actionOnTick.actionData[1]:projectile_chr_0025_ardelia_ultimate_skill',
-          'SkillData.chr_0025_ardelia_ultimate_skill.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].actionOnTick.actionData[1]:chr_0025_ardelia_ultimate_skill_sheep_projhit',
-          'chr_0025_ardelia_ultimate_skill:/scheduledSequences/3/sequence/steps/0/body/steps/1/body/steps/0/body/steps/0/body/steps/1/body/steps/0/body/steps/0/whenTrue/steps/0',
+          'chr_0025_ardelia_ultimate_skill:/scheduledSequences/3/sequence/steps/0/body/steps/1/body/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/2/sequence/steps/0/body/steps/0/whenTrue/steps/0',
         ]),
         201,
       ),
       scheduled(
         81,
-        instantiateActionSequence(sharedActionSequence4, [
+        instantiateActionSequence(sharedActionSequence8, [
           'SkillData.chr_0025_ardelia_ultimate_skill.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].actionOnTick.actionData[1]:projectile_chr_0025_ardelia_ultimate_skill',
-          'SkillData.chr_0025_ardelia_ultimate_skill.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].actionOnTick.actionData[1]:chr_0025_ardelia_ultimate_skill_sheep_projhit',
-          'chr_0025_ardelia_ultimate_skill:/scheduledSequences/4/sequence/steps/0/body/steps/1/body/steps/0/body/steps/0/body/steps/1/body/steps/0/body/steps/0/whenTrue/steps/0',
+          'chr_0025_ardelia_ultimate_skill:/scheduledSequences/4/sequence/steps/0/body/steps/1/body/steps/0/body/steps/0/callbacks/0/skill/scheduledSequences/2/sequence/steps/0/body/steps/0/whenTrue/steps/0',
         ]),
         201,
       ),
@@ -2105,6 +2205,14 @@ export const ardelia: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       childSkill: {
         skillId: 'chr_0025_ardelia_attack4_sheep',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 90,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atb: 0, atk_scale: 0, poise: 0 },
         scheduledSequences: [
           scheduled(
@@ -2159,6 +2267,14 @@ export const ardelia: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       childSkill: {
         skillId: 'chr_0025_ardelia_attack4_end_sheep',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 120,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atb: 0, atk_scale: 0 },
         scheduledSequences: [
           scheduled(109, sequence(step('finishActionOwnerAbilityEntity', {})), 112),
@@ -2176,6 +2292,14 @@ export const ardelia: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       childSkill: {
         skillId: 'chr_0025_ardelia_attack4_sheep',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 90,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atb: 0, atk_scale: 0, poise: 0 },
         scheduledSequences: [
           scheduled(
@@ -2230,6 +2354,14 @@ export const ardelia: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       childSkill: {
         skillId: 'chr_0025_ardelia_normal_skill_sheep',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 90,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atb: 0, atk_scale: 0 },
         scheduledSequences: [
           scheduled(31, sequence(step('finishActionOwnerAbilityEntity', {})), 34),
@@ -2247,6 +2379,14 @@ export const ardelia: OperatorDefinition = {
       maxStackingCount: 10,
       childSkill: {
         skillId: 'chr_0025_ardelia_remain_loop_sheep',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 300,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: {
           atb: 0,
           heal_scale: 1,
@@ -2301,7 +2441,7 @@ export const ardelia: OperatorDefinition = {
                               operator: 'greaterOrEqual',
                               value: { kind: 'constant', value: 0.99 },
                             },
-                            sharedActionSequence9,
+                            sharedActionSequence12,
                             sequence(
                               branch(
                                 {
@@ -2357,11 +2497,11 @@ export const ardelia: OperatorDefinition = {
                             { alwaysNext: true },
                           ),
                         ),
-                        sharedActionSequence9,
+                        sharedActionSequence12,
                         { alwaysNext: true },
                       ),
                     ),
-                    sharedActionSequence9,
+                    sharedActionSequence12,
                     { alwaysNext: true },
                   ),
                 ),
@@ -2384,6 +2524,14 @@ export const ardelia: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       childSkill: {
         skillId: 'chr_0025_ardelia_combo_skill_sheep',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 90,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
         blackboard: { atb: 0, atk_scale: 0 },
         scheduledSequences: [
           scheduled(66, sequence(step('finishActionOwnerAbilityEntity', {})), 69),
@@ -2398,55 +2546,116 @@ export const ardelia: OperatorDefinition = {
         'SelectCategory/UnSkillAutoSelectable',
       ],
       lifetime: { kind: 'limited', durationSeconds: 3 },
-      childSkill: {
-        skillId: 'chr_0025_ardelia_combo_skill_bomb',
-        blackboard: {
-          atb: 0,
-          atk_scale_boom: 0,
-          duration_corrupt: 0,
-          duration_corrupt_final: 0,
-          poise: 0,
-          potential5_dmg_rate: 0,
-          potential5_duration: 0,
-        },
-        scheduledSequences: [
-          scheduled(
-            52,
-            sequence(
-              step('calculateActionValue', {
-                key: 'duration_corrupt_final',
-                operation: 'add',
-                left: { kind: 'blackboard', key: 'duration_corrupt' },
-                right: { kind: 'blackboard', key: 'potential5_duration' },
-              }),
-              step('applyBuff', {
-                buffId: 'buff_common_natural_natural_corrupt_triggered',
-                target: 'enemy',
-                inheritSourceSkillCastInfo: true,
-                copiedBlackboardAssignments: { duration: 'duration_corrupt_final' },
-              }),
-              step(
-                'dealDamage',
-                {
-                  damageType: 'nature',
-                  attackScale: { kind: 'blackboard', key: 'atk_scale_boom' },
-                  tags: ['comboSkill'],
-                  features: ['canBreakWeakness'],
-                  stagger: { kind: 'blackboard', key: 'poise' },
-                },
-                'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb:/childSkill/scheduledSequences/0/sequence/steps/2',
+      childSkills: {
+        chr_0025_ardelia_combo_skill_bomb: {
+          skillId: 'chr_0025_ardelia_combo_skill_bomb',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 120,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atb: 0,
+            atk_scale_boom: 0,
+            duration_corrupt: 0,
+            duration_corrupt_final: 0,
+            poise: 0,
+            potential5_dmg_rate: 0,
+            potential5_duration: 0,
+          },
+          scheduledSequences: [
+            scheduled(
+              52,
+              sequence(
+                step('calculateActionValue', {
+                  key: 'duration_corrupt_final',
+                  operation: 'add',
+                  left: { kind: 'blackboard', key: 'duration_corrupt' },
+                  right: { kind: 'blackboard', key: 'potential5_duration' },
+                }),
+                step('applyBuff', {
+                  buffId: 'buff_common_natural_natural_corrupt_triggered',
+                  target: 'enemy',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { duration: 'duration_corrupt_final' },
+                }),
+                step(
+                  'dealDamage',
+                  {
+                    damageType: 'nature',
+                    attackScale: { kind: 'blackboard', key: 'atk_scale_boom' },
+                    tags: ['comboSkill'],
+                    features: ['canBreakWeakness'],
+                    stagger: { kind: 'blackboard', key: 'poise' },
+                  },
+                  'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb/scheduledSequences/0/sequence/steps/2',
+                ),
+                step('mergeContextTargets', { saveToContextKey: 'tar', sources: [] }),
+                step('modifyActionValue', {
+                  key: 'atk_scale_boom',
+                  operation: 'multiply',
+                  value: { kind: 'constant', value: 0.5 },
+                }),
               ),
-              step('mergeContextTargets', { saveToContextKey: 'tar', sources: [] }),
-              step('modifyActionValue', {
-                key: 'atk_scale_boom',
-                operation: 'multiply',
-                value: { kind: 'constant', value: 0.5 },
-              }),
+              55,
             ),
-            55,
-          ),
-          scheduled(119, sequence(step('finishActionOwnerAbilityEntity', {})), 120),
-        ],
+            scheduled(119, sequence(step('finishActionOwnerAbilityEntity', {})), 120),
+          ],
+        },
+        chr_0025_ardelia_combo_skill_bomb_potential3: {
+          skillId: 'chr_0025_ardelia_combo_skill_bomb_potential3',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 120,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atb: 0,
+            atk_scale_boom: 0,
+            duration_corrupt: 0,
+            duration_corrupt_final: 0,
+            poise: 0,
+            potential5_duration: 0,
+          },
+          scheduledSequences: [
+            scheduled(
+              52,
+              sequence(
+                step('calculateActionValue', {
+                  key: 'duration_corrupt_final',
+                  operation: 'add',
+                  left: { kind: 'blackboard', key: 'duration_corrupt' },
+                  right: { kind: 'blackboard', key: 'potential5_duration' },
+                }),
+                step('applyBuff', {
+                  buffId: 'buff_common_natural_natural_corrupt_triggered',
+                  target: 'enemy',
+                  inheritSourceSkillCastInfo: true,
+                  copiedBlackboardAssignments: { duration: 'duration_corrupt_final' },
+                }),
+                step(
+                  'dealDamage',
+                  {
+                    damageType: 'nature',
+                    attackScale: { kind: 'blackboard', key: 'atk_scale_boom' },
+                    tags: ['comboSkill'],
+                    features: ['canBreakWeakness'],
+                    stagger: { kind: 'blackboard', key: 'poise' },
+                  },
+                  'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb_potential3/scheduledSequences/0/sequence/steps/2',
+                ),
+              ),
+              55,
+            ),
+            scheduled(119, sequence(step('finishActionOwnerAbilityEntity', {})), 120),
+          ],
+        },
       },
     },
   },

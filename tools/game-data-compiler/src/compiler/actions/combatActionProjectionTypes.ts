@@ -138,7 +138,7 @@ type GlobalTimeDilation = Omit<
 > & {
   readonly curve: TimeScaleCurveDefinition;
   readonly ignoredTargets: readonly ('controlled' | 'caster')[];
-  readonly ignoredAbilityEntityTargets?: readonly [{ readonly kind: 'ownerSpawned' }];
+  readonly ignoredAbilityEntityTargets?: readonly AbilityEntityTargetQuery[];
 };
 type EntityTimeDilation = Omit<
   Extract<Parameters<'startTimeDilation'>, { scope: 'entity' }>,
@@ -233,7 +233,13 @@ type HealParameters = (
       readonly contextKey: string;
     }
   | {
-      readonly target: 'enemy' | 'caster' | 'buffOwner' | 'controlledOperator' | 'currentTarget';
+      readonly target:
+        | 'enemy'
+        | 'caster'
+        | 'buffOwner'
+        | 'controlledOperator'
+        | 'currentTarget'
+        | 'actionInputTarget';
       readonly contextKey?: never;
     }
 ) & {
@@ -257,10 +263,10 @@ type HealParameters = (
   );
 
 export type CompiledBuffStepSource =
-  | Step<'launchProjectileLifetime'>
   | Step<'applyKnockDown'>
   | Step<'applyPhysicalInfliction'>
   | Step<'findCharacterTeamTargets'>
+  | Step<'findUnfinishedProjectileTargets'>
   | Step<'createSpatialPointTargets'>
   | Step<'pickContextTarget'>
   | Step<'igniteBuffs'>
@@ -350,19 +356,22 @@ export type CompiledBuffStepSource =
   | (Step<'forEachContextTarget'> & { readonly body: CompiledBuffSequenceSource })
   | (Step<'repeatEachTick'> & { readonly body: CompiledBuffSequenceSource })
   | (Step<'repeatByActionValue'> & { readonly body: CompiledBuffSequenceSource })
-  | (Step<'scheduleProjectileFinishCallback'> & {
-      readonly callback: {
-        readonly skillId: string;
-        readonly nativeSkillType: import('../../../../../packages/game-data-contract/src/index.ts').NativeSkillType;
-        readonly naturalDurationFrames: number;
-        readonly castResource: import('../../../../../packages/game-data-contract/src/index.ts').SkillCastResourceDefinition;
-        readonly blackboard: Readonly<Record<string, number>>;
-        readonly scheduledSequences: readonly {
-          readonly startFrame: number;
-          readonly endFrame: number;
-          readonly sequence: CompiledBuffSequenceSource;
-        }[];
-      };
+  | (Step<'launchProjectile'> & {
+      readonly callbacks: readonly {
+        readonly event: 'hit' | 'block' | 'reach' | 'finish';
+        readonly skill: {
+          readonly skillId: string;
+          readonly nativeSkillType: import('../../../../../packages/game-data-contract/src/index.ts').NativeSkillType;
+          readonly naturalDurationFrames: number;
+          readonly castResource: import('../../../../../packages/game-data-contract/src/index.ts').SkillCastResourceDefinition;
+          readonly blackboard: Readonly<Record<string, number>>;
+          readonly scheduledSequences: readonly {
+            readonly startFrame: number;
+            readonly endFrame: number;
+            readonly sequence: CompiledBuffSequenceSource;
+          }[];
+        };
+      }[];
     })
   | (Step<'once'> & { readonly body: CompiledBuffSequenceSource })
   | (Step<'switch'> & {

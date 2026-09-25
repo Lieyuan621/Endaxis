@@ -24,6 +24,22 @@ function createVitals(overrides: Partial<ConstructorParameters<typeof CombatVita
 }
 
 describe('CombatVitals', () => {
+  it('生命写入后同步通知，满血治疗不通知，切面恢复不重放通知', () => {
+    const vitals = createVitals();
+    const changes: number[] = [];
+    vitals.bindHealthChangeObserver(() => changes.push(vitals.health));
+    vitals.heal(50);
+    vitals.takeDamage(100);
+    vitals.heal(20);
+    expect(changes).toEqual([900, 920]);
+    const restored = CombatVitals.bindRuntimeState(structuredClone(vitals.runtimeState));
+    const restoredChanges: number[] = [];
+    restored.bindHealthChangeObserver(() => restoredChanges.push(restored.health));
+    expect(restoredChanges).toEqual([]);
+    restored.takeDamage(20);
+    expect(restoredChanges).toEqual([900]);
+    expect(vitals.health).toBe(920);
+  });
   it('restores a running poise timer and the owning health floor handle together', () => {
     const vitals = createVitals({ poise: 0 });
     vitals.beginPoiseBreakIfZero();

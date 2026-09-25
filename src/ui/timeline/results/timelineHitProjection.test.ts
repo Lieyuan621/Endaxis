@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createAbilityEntityChildSkillDraft } from '../definitions/skills/skillDefinitionEditorViewModel';
 import type {
   CombatStepDefinition,
   SkillDefinition,
@@ -137,7 +138,7 @@ describe('projectCastHitMarkers', () => {
           definition: {
             lifetime: { kind: 'limited', durationSeconds: 1 },
             childSkill: {
-              skillId: 'child',
+              ...createAbilityEntityChildSkillDraft('child'),
               scheduledSequences: [
                 {
                   startFrame: 7,
@@ -176,7 +177,7 @@ describe('projectCastHitMarkers', () => {
         'ability:test': {
           lifetime: { kind: 'infinite' },
           childSkill: {
-            skillId: 'child',
+            ...createAbilityEntityChildSkillDraft('child'),
             scheduledSequences: [
               { startFrame: 7, sequence: { steps: [damageStep('child-hit', 'child-hit')] } },
             ],
@@ -208,13 +209,13 @@ describe('projectCastHitMarkers', () => {
         lifetime: { kind: 'infinite' },
         childSkills: {
           'child:first': {
-            skillId: 'child:first',
+            ...createAbilityEntityChildSkillDraft('child:first'),
             scheduledSequences: [
               { startFrame: 3, sequence: { steps: [damageStep('first-hit', 'first-hit')] } },
             ],
           },
           'child:second': {
-            skillId: 'child:second',
+            ...createAbilityEntityChildSkillDraft('child:second'),
             scheduledSequences: [
               { startFrame: 7, sequence: { steps: [damageStep('second-hit', 'second-hit')] } },
             ],

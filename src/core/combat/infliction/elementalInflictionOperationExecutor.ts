@@ -117,7 +117,11 @@ export class ElementalInflictionOperationExecutor implements CombatOperationExec
     this.dependencies.emitSourceEvent('beforeOutputInfliction', payload);
     this.dependencies.emitTargetEvent('beforeTakeInfliction', payload);
     const existing = this.dependencies.getExistingAttachment();
-    const operations = resolveElementalInfliction(step.parameters.element, existing);
+    const operations = resolveElementalInfliction(
+      step.parameters.element,
+      existing,
+      step.parameters.inverseReaction,
+    );
     const producedBy = operationProducer(context, {
       ownerId: this.dependencies.sourceOperatorId,
       actionId: this.dependencies.castId ?? this.dependencies.skillId,

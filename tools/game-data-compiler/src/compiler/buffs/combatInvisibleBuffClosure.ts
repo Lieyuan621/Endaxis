@@ -32,6 +32,7 @@ interface BuffPresentationClosureNode {
 export function collectCombatInvisibleBuffClosureIds(
   rootIds: readonly string[],
   loadBuff: (id: string) => unknown,
+  observedBuffIds: ReadonlySet<string> = new Set(),
 ): ReadonlySet<string> {
   const nodes = new Map<string, BuffPresentationClosureNode>();
   const queue = [...new Set(rootIds)];
@@ -44,7 +45,9 @@ export function collectCombatInvisibleBuffClosureIds(
   }
 
   const invisible = new Set(
-    [...nodes].filter(([, node]) => node.locallyInvisible).map(([id]) => id),
+    [...nodes]
+      .filter(([id, node]) => node.locallyInvisible && !observedBuffIds.has(id))
+      .map(([id]) => id),
   );
   let changed: boolean;
   do {

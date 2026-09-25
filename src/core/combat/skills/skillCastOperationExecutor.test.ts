@@ -2,11 +2,68 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { SkillCastOperationExecutor } from './skillCastOperationExecutor';
+import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 
 describe('SkillCastOperationExecutor', () => {
+  it('延迟请求复制命名目标组中的实体，空组保留空输入，不改用主目标', () => {
+    const request = vi.fn();
+    const executor = new SkillCastOperationExecutor({
+      casterId: 'operator',
+      request,
+      delegate: { execute: () => false, evaluate: () => false },
+    });
+    const targetContext = new RuntimeTargetContext();
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    const step = {
+      kind: 'castSkillDuringAction',
+      parameters: {
+        skillId: 'counter',
+        target: 'context',
+        targetContextKey: 'attacker',
+        skipApplyCost: false,
+        inheritSourceSkillCastInfo: false,
+      },
+    } satisfies ResolvedCombatOperationStep;
+    targetContext.setSingle('attacker', { kind: 'operator', operatorId: 'attacker' });
+    executor.execute(step, context);
+    targetContext.set('attacker', []);
+    expect(request.mock.calls[0]![0].inputTarget).toEqual({
+      kind: 'operator',
+      operatorId: 'attacker',
+    });
+    executor.execute(step, context);
+    expect(request.mock.calls[1]![0].inputTarget).toBeNull();
+  });
+  it('复制事件输入目标，不随回调结束或调用方修改而变化', () => {
+    const request = vi.fn();
+    const executor = new SkillCastOperationExecutor({
+      casterId: 'operator',
+      request,
+      delegate: { execute: () => false, evaluate: () => false },
+    });
+    const target = { kind: 'operator' as const, operatorId: 'attacker' };
+    const step = {
+      kind: 'castSkillDuringAction' as const,
+      parameters: {
+        skillId: 'counter',
+        target: 'actionInputTarget' as const,
+        skipApplyCost: false,
+        inheritSourceSkillCastInfo: false,
+      },
+    };
+    executor.execute(step, { blackboard: new ActionBlackboard(), actionInputTarget: target });
+    target.operatorId = 'later-event';
+    expect(request.mock.calls[0]?.[0].inputTarget).toEqual({
+      kind: 'operator',
+      operatorId: 'attacker',
+    });
+    executor.execute(step, { blackboard: new ActionBlackboard() });
+    expect(request.mock.calls[1]?.[0].inputTarget).toBeNull();
+  });
   it('queues the native skill and preserves inherited cast identity', () => {
     const request = vi.fn();
     const executor = new SkillCastOperationExecutor({
+      casterId: 'operator',
       request,
       delegate: {
         execute: () => false,
@@ -35,6 +92,7 @@ describe('SkillCastOperationExecutor', () => {
     );
     expect(request).toHaveBeenCalledWith({
       nativeSkillId: 'chr_0035_liino_normal_skill_combo',
+      inputTarget: { kind: 'enemy' },
       skipApplyCost: true,
       interruptCurrentSkillOnlyWhenTargetCastable: true,
       inheritedSkillCastInfo: skillCastInfo,
@@ -43,6 +101,7 @@ describe('SkillCastOperationExecutor', () => {
 
   it('requires a source cast context only when inheritance is enabled', () => {
     const executor = new SkillCastOperationExecutor({
+      casterId: 'operator',
       request: vi.fn(),
       delegate: { execute: () => false, evaluate: () => false },
     });
@@ -62,9 +121,10 @@ describe('SkillCastOperationExecutor', () => {
     ).toThrow('requires source SkillCastInfo');
   });
 
-  it('accepts a deferred self cast without inventing a separate target payload', () => {
+  it('保存延迟施法的自身目标身份', () => {
     const request = vi.fn();
     const executor = new SkillCastOperationExecutor({
+      casterId: 'operator',
       request,
       delegate: { execute: () => false, evaluate: () => false },
     });
@@ -85,6 +145,7 @@ describe('SkillCastOperationExecutor', () => {
     ).toBe(true);
     expect(request).toHaveBeenCalledWith({
       nativeSkillId: 'chr_0028_zhuangfangyi_ultimate_skill_end',
+      inputTarget: { kind: 'operator', operatorId: 'operator' },
       skipApplyCost: true,
       inheritedSkillCastInfo: undefined,
     });
@@ -93,6 +154,7 @@ describe('SkillCastOperationExecutor', () => {
   it('resolves the native skill id from the action blackboard', () => {
     const request = vi.fn();
     const executor = new SkillCastOperationExecutor({
+      casterId: 'operator',
       request,
       delegate: { execute: () => false, evaluate: () => false },
     });
@@ -113,6 +175,7 @@ describe('SkillCastOperationExecutor', () => {
 
     expect(request).toHaveBeenCalledWith({
       nativeSkillId: 'chr_test_dodge_skill',
+      inputTarget: { kind: 'enemy' },
       skipApplyCost: true,
       inheritedSkillCastInfo: undefined,
     });
@@ -120,6 +183,7 @@ describe('SkillCastOperationExecutor', () => {
 
   it('rejects a missing blackboard skill id', () => {
     const executor = new SkillCastOperationExecutor({
+      casterId: 'operator',
       request: vi.fn(),
       delegate: { execute: () => false, evaluate: () => false },
     });

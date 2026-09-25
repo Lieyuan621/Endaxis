@@ -13,7 +13,11 @@ import { ActionBlackboard } from '../actions/actionBlackboard';
 import type { ProjectileCallbackState } from '../state/instanceState';
 import type { CompiledProjectileCallbackSkillProgram } from '../../compiler/combatProgram';
 
-it.each([1, 3, 5])('第 %s 帧保存后，投射物到回收的状态与回执逐帧一致', saveFrame => {
+it.each(
+  [0, 1, 3, 5].flatMap(saveFrame =>
+    (['finish', 'block'] as const).map(event => ({ saveFrame, event })),
+  ),
+)('$event 第 $saveFrame 帧保存后，投射物到回收的状态与回执逐帧一致', ({ saveFrame, event }) => {
   const program: CompiledProjectileCallbackSkillProgram = {
     skillId: 'callback',
     nativeSkillType: 'normalSkill',
@@ -45,6 +49,7 @@ it.each([1, 3, 5])('第 %s 帧保存后，投射物到回收的状态与回执�
   const original = new ProjectileLifecycleRuntime(() => 1);
   const programs: ProjectileCallbackPrograms = original.callbackPrograms;
   const data: ProjectileCallbackState = {
+    event,
     programId: programs.register(program),
     definitionOperatorId: 'owner',
     skillId: program.skillId,
@@ -73,27 +78,30 @@ it.each([1, 3, 5])('第 %s 帧保存后，投射物到回收的状态与回执�
       },
     });
     return bindProjectileCallbackLifecycle(
-      restoreProjectileCallback(
-        state,
-        1,
-        programs,
-        { execute, evaluate: () => true },
-        {
-          createCallbackSkillHost: create,
-          scheduleProjectileFinishCallback: () => {
-            throw new Error('no nested launch');
+      [
+        restoreProjectileCallback(
+          state,
+          1,
+          programs,
+          { execute, evaluate: () => true },
+          {
+            createCallbackSkillHost: create,
+            launchProjectile: () => {
+              throw new Error('no nested launch');
+            },
           },
-        },
-        () => undefined,
-      ),
+          () => undefined,
+        ),
+      ],
       () => COMBAT_FRAME_INTERVAL,
     );
   };
   const oldExecute = vi.fn(() => true);
   original.launch({
-    callback: data,
-    callbackProgram: program,
-    finishDelaySeconds: { reachAfterTicks: 2, maxDurationSeconds: 1 },
+    callbacks: [data],
+    callbackPrograms: [program],
+    finishDelaySeconds:
+      event === 'block' ? 'firstTickBlock' : { reachAfterTicks: 2, maxDurationSeconds: 1 },
     recycleDelaySeconds: 0.1,
     ...bind(data, clock, receipt, oldExecute),
   });
@@ -116,7 +124,7 @@ it.each([1, 3, 5])('第 %s 帧保存后，投射物到回收的状态与回执�
     state: saved.projectiles,
     callbackPrograms: programs,
     resolveHost: id =>
-      bind(saved.projectiles.instances.get(id)!.callback!, nextClock, nextReceipt, nextExecute),
+      bind(saved.projectiles.instances.get(id)!.callbacks[0]!, nextClock, nextReceipt, nextExecute),
     resolveResetHandler: () => {
       throw new Error('no reset listener');
     },

@@ -28,6 +28,7 @@ import { type AbilityEvent, type AbilityEventResponse } from './abilityEvents.ts
 export const BUFF_ABILITY_EVENTS = [
   'enterFight',
   'ownerHpZero',
+  'hpChanged',
   'abilityEntitySpawned',
   'abilityEntityFinished',
   'beforeTakeDamage',

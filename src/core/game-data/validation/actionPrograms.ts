@@ -342,6 +342,7 @@ function validateAbilityEntityChildSkill(
   const child = asRecord(value, path, out);
   if (child === null) return;
   requireString(child, 'skillId', path, out);
+  validateEntitySkillCastMetadata(child, path, out);
   if (child.blackboard !== undefined) {
     const blackboard = asRecord(child.blackboard, `${path}.blackboard`, out);
     if (blackboard !== null) {
@@ -358,6 +359,33 @@ function validateAbilityEntityChildSkill(
       validateScheduledSequence(sequence, `${path}.scheduledSequences[${index}]`, out, true),
     );
   }
+}
+
+function validateEntitySkillCastMetadata(
+  skill: Record<string, unknown>,
+  path: string,
+  out: SkillDefinitionValidationIssue[],
+): void {
+  requireEnum(skill, 'nativeSkillType', NATIVE_SKILL_TYPES_SET, path, out);
+  const duration = requireFiniteNumber(skill, 'naturalDurationFrames', path, out);
+  if (duration !== null && (!Number.isInteger(duration) || duration < 1))
+    push(out, `${path}.naturalDurationFrames`, 'expected a positive integer');
+  const castPath = `${path}.castResource`;
+  const cast = asRecord(skill.castResource, castPath, out);
+  if (cast === null) return;
+  requireNonNegativeInteger(cast, 'costFrame', castPath, out);
+  const cooldown = requireFiniteNumber(cast, 'cooldownSeconds', castPath, out);
+  if (cooldown !== null && cooldown < 0)
+    push(out, `${castPath}.cooldownSeconds`, 'expected non-negative cooldown');
+  const charges = requireInteger(cast, 'maxChargeTime', castPath, out);
+  if (charges !== null && charges < 1)
+    push(out, `${castPath}.maxChargeTime`, 'expected a positive integer');
+  const costPath = `${castPath}.cost`;
+  const cost = asRecord(cast.cost, costPath, out);
+  if (cost === null) return;
+  requireEnum(cost, 'resource', COMBAT_RESOURCES_SET, costPath, out);
+  validateLevelValues(cost.value, `${costPath}.value`, out);
+  validateLevelValues(cost.availabilityThreshold, `${costPath}.availabilityThreshold`, out);
 }
 
 function validateAbilityEntityPassiveSkill(
@@ -588,7 +616,14 @@ function validateCombatStep(
             const target = requireString(sourceRecord, 'target', sourcePath, out);
             if (
               target !== null &&
-              !['caster', 'enemy', 'eventTarget', 'buffSource', 'currentTarget'].includes(target)
+              ![
+                'caster',
+                'enemy',
+                'eventTarget',
+                'eventSource',
+                'buffSource',
+                'currentTarget',
+              ].includes(target)
             ) {
               push(out, `${sourcePath}.target`, 'unknown target source');
             }
@@ -597,6 +632,9 @@ function validateCombatStep(
           }
         });
       }
+      break;
+    case 'findUnfinishedProjectileTargets':
+      requireString(parameters, 'saveToContextKey', `${path}.parameters`, out);
       break;
     case 'findCharacterTeamTargets': {
       requireString(parameters, 'saveToContextKey', `${path}.parameters`, out);
@@ -859,6 +897,8 @@ function validateCombatStep(
       break;
     }
     case 'applyElementalInfliction':
+      if (parameters.inverseReaction !== undefined)
+        requireBoolean(parameters, 'inverseReaction', `${path}.parameters`, out);
       requireEnum(parameters, 'element', INFLICTION_ELEMENTS_SET, `${path}.parameters`, out);
       requireBoolean(parameters, 'isExtra', `${path}.parameters`, out);
       if (
@@ -1422,6 +1462,8 @@ function validateCombatStep(
       requireString(parameters, 'outputKey', `${path}.parameters`, out);
       break;
     case 'setCurrentBuffRemainingDuration':
+      if (parameters.target !== undefined)
+        requireEnum(parameters, 'target', BUFF_SINGLE_TARGETS_SET, `${path}.parameters`, out);
       requireEnum(
         parameters,
         'operation',
@@ -2035,10 +2077,13 @@ function validateCombatStep(
     }
     case 'repeatEachTick': {
       if (
-        parameters.nativeChanneling !== undefined &&
-        parameters.nativeTickInterval !== undefined
+        [
+          parameters.nativeChanneling,
+          parameters.nativeTickInterval,
+          parameters.nativeExecuteInterval,
+        ].filter(value => value !== undefined).length > 1
       ) {
-        push(out, `${path}.parameters`, 'nativeChanneling and nativeTickInterval are exclusive');
+        push(out, `${path}.parameters`, 'native repeat modes are exclusive');
       }
       if (parameters.nativeChanneling !== undefined) {
         const channelingPath = `${path}.parameters.nativeChanneling`;
@@ -2070,9 +2115,10 @@ function validateCombatStep(
           requireFiniteNumber(channeling, 'targetTriggerIntervalSeconds', channelingPath, out);
         }
       }
-      if (parameters.nativeTickInterval !== undefined) {
-        const tickPath = `${path}.parameters.nativeTickInterval`;
-        const tick = asRecord(parameters.nativeTickInterval, tickPath, out);
+      for (const key of ['nativeTickInterval', 'nativeExecuteInterval'] as const) {
+        if (parameters[key] === undefined) continue;
+        const tickPath = `${path}.parameters.${key}`;
+        const tick = asRecord(parameters[key], tickPath, out);
         if (tick !== null) {
           requireBoolean(tick, 'executeEachFrame', tickPath, out);
           const interval = requireFiniteNumber(tick, 'intervalSeconds', tickPath, out);
@@ -2086,36 +2132,30 @@ function validateCombatStep(
     case 'repeatByActionValue':
       validateActionValueOperand(parameters.count, `${path}.parameters.count`, out);
       break;
-    case 'launchProjectileLifetime':
-      if (parameters.finish !== 'firstTickReach') {
-        if (
-          typeof parameters.finish !== 'object' ||
-          parameters.finish === null ||
-          Array.isArray(parameters.finish)
-        ) {
-          push(out, `${path}.parameters.finish`, 'expected firstTickReach or reach timing');
-        } else {
-          const timing = parameters.finish as Record<string, unknown>;
-          const ticks = requireFiniteNumber(
-            timing,
-            'reachAfterTicks',
-            `${path}.parameters.finish`,
-            out,
-          );
-          const duration = requireFiniteNumber(
-            timing,
-            'maxDurationSeconds',
-            `${path}.parameters.finish`,
-            out,
-          );
+    case 'launchProjectile': {
+      if (
+        parameters.source !== undefined &&
+        parameters.source !== 'actionSource' &&
+        parameters.source !== 'actionOwner'
+      )
+        push(out, `${path}.parameters.source`, 'expected actionSource or actionOwner');
+      if (parameters.syncTimeScale !== undefined)
+        requireBoolean(parameters, 'syncTimeScale', `${path}.parameters`, out);
+      const finishPath = `${path}.parameters.finish`;
+      if (typeof parameters.finish === 'number') {
+        if (!Number.isFinite(parameters.finish) || parameters.finish <= 0)
+          push(out, finishPath, 'expected a positive finite number');
+      } else if (parameters.finish !== 'firstTickReach' && parameters.finish !== 'firstTickBlock') {
+        const timing = asRecord(parameters.finish, finishPath, out);
+        if (timing !== null) {
+          const ticks = requireFiniteNumber(timing, 'reachAfterTicks', finishPath, out);
+          const duration = requireFiniteNumber(timing, 'maxDurationSeconds', finishPath, out);
+          if (timing.finishOnReach !== undefined)
+            requireBoolean(timing, 'finishOnReach', finishPath, out);
           if (ticks !== null && (!Number.isSafeInteger(ticks) || ticks < 1))
-            push(
-              out,
-              `${path}.parameters.finish.reachAfterTicks`,
-              'expected a positive safe integer',
-            );
+            push(out, `${finishPath}.reachAfterTicks`, 'expected a positive safe integer');
           if (duration !== null && duration <= 0)
-            push(out, `${path}.parameters.finish.maxDurationSeconds`, 'expected a positive number');
+            push(out, `${finishPath}.maxDurationSeconds`, 'expected a positive number');
         }
       }
       if (parameters.recycleDelaySeconds !== undefined) {
@@ -2128,20 +2168,34 @@ function validateCombatStep(
         if (delay !== null && delay < 0)
           push(out, `${path}.parameters.recycleDelaySeconds`, 'expected a non-negative number');
       }
-      break;
-    case 'scheduleProjectileFinishCallback': {
-      const delay = requireFiniteNumber(parameters, 'delaySeconds', `${path}.parameters`, out);
-      if (delay !== null && delay <= 0) {
-        push(out, `${path}.parameters.delaySeconds`, 'expected a positive number');
-      }
-      const recycleDelay = requireFiniteNumber(
-        parameters,
-        'recycleDelaySeconds',
-        `${path}.parameters`,
-        out,
-      );
-      if (recycleDelay !== null && recycleDelay < 0) {
-        push(out, `${path}.parameters.recycleDelaySeconds`, 'expected a non-negative number');
+      if (parameters.hit !== undefined) {
+        const hitPath = `${path}.parameters.hit`;
+        const hit = asRecord(parameters.hit, hitPath, out);
+        if (hit !== null) {
+          requireBoolean(hit, 'finishOnHit', hitPath, out);
+          if (hit.onReach !== undefined) requireBoolean(hit, 'onReach', hitPath, out);
+          if (
+            hit.target !== undefined &&
+            hit.target !== 'controlledOperator' &&
+            hit.target !== 'allOperators' &&
+            hit.target !== 'currentTarget'
+          )
+            push(
+              out,
+              `${hitPath}.target`,
+              'expected controlledOperator, allOperators or currentTarget',
+            );
+          if (hit.retryRejectedHit !== undefined)
+            requireBoolean(hit, 'retryRejectedHit', hitPath, out);
+          if (hit.hitTagFilter !== undefined) {
+            const filterPath = `${hitPath}.hitTagFilter`;
+            const filter = asRecord(hit.hitTagFilter, filterPath, out);
+            if (filter !== null) {
+              requireEnum(filter, 'tagQueryType', TAG_QUERY_TYPES_SET, filterPath, out);
+              validateGameplayTags(filter.tags, `${filterPath}.tags`, out, true);
+            }
+          }
+        }
       }
       break;
     }
@@ -2195,8 +2249,16 @@ function validateCombatStep(
       break;
     case 'castSkillDuringAction':
       validateActionStringOperand(parameters.skillId, `${path}.parameters.skillId`, out);
-      requireEnum(parameters, 'target', new Set(['caster', 'enemy']), `${path}.parameters`, out);
+      requireEnum(
+        parameters,
+        'target',
+        new Set(['caster', 'enemy', 'actionInputTarget', 'context']),
+        `${path}.parameters`,
+        out,
+      );
       requireBoolean(parameters, 'skipApplyCost', `${path}.parameters`, out);
+      if (parameters.target === 'context')
+        requireString(parameters, 'targetContextKey', `${path}.parameters`, out);
       requireBoolean(parameters, 'inheritSourceSkillCastInfo', `${path}.parameters`, out);
       break;
     case 'changeSkillSlot':
@@ -2345,34 +2407,20 @@ export function validateActionSequence(
           currentTargetAvailable,
         );
       });
-    } else if (stepKind === 'scheduleProjectileFinishCallback') {
-      const callbackPath = `${path}.steps[${index}].callback`;
-      validateAbilityEntityChildSkill(recordStep.callback, callbackPath, out);
-      const callback = asRecord(recordStep.callback, callbackPath, out);
-      if (callback !== null) {
-        requireEnum(callback, 'nativeSkillType', NATIVE_SKILL_TYPES_SET, callbackPath, out);
-        const duration = requireFiniteNumber(callback, 'naturalDurationFrames', callbackPath, out);
-        if (duration !== null && (!Number.isInteger(duration) || duration < 1))
-          push(out, `${callbackPath}.naturalDurationFrames`, 'expected a positive integer');
-        const castPath = `${callbackPath}.castResource`;
-        const cast = asRecord(callback.castResource, castPath, out);
-        if (cast !== null) {
-          requireNonNegativeInteger(cast, 'costFrame', castPath, out);
-          requireFiniteNumber(cast, 'cooldownSeconds', castPath, out);
-          requireInteger(cast, 'maxChargeTime', castPath, out);
-          const costPath = `${castPath}.cost`;
-          const cost = asRecord(cast.cost, costPath, out);
-          if (cost !== null) {
-            requireEnum(cost, 'resource', COMBAT_RESOURCES_SET, costPath, out);
-            validateLevelValues(cost.value, `${costPath}.value`, out);
-            validateLevelValues(
-              cost.availabilityThreshold,
-              `${costPath}.availabilityThreshold`,
-              out,
-            );
-          }
-        }
+    } else if (stepKind === 'launchProjectile') {
+      if (!Array.isArray(recordStep.callbacks)) {
+        push(out, `${path}.steps[${index}].callbacks`, 'expected an array');
+        return;
       }
+      recordStep.callbacks.forEach((value, callbackIndex) => {
+        const entryPath = `${path}.steps[${index}].callbacks[${callbackIndex}]`;
+        const entry = asRecord(value, entryPath, out);
+        if (entry === null) return;
+        if (!['hit', 'block', 'reach', 'finish'].includes(String(entry.event)))
+          push(out, `${entryPath}.event`, 'expected hit, reach or finish');
+        const callbackPath = `${entryPath}.skill`;
+        validateAbilityEntityChildSkill(entry.skill, callbackPath, out);
+      });
     } else if (
       stepKind === 'once' ||
       stepKind === 'withActionBlackboardScope' ||
@@ -2394,16 +2442,17 @@ export function validateActionSequence(
 function containsCombatEventListener(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) return false;
   const record = value as Record<string, unknown>;
-  if (record.kind === 'scheduleProjectileFinishCallback') {
-    const callback = record.callback as Record<string, unknown> | undefined;
+  if (record.kind === 'launchProjectile') {
     return (
-      Array.isArray(callback?.scheduledSequences) &&
-      callback.scheduledSequences.some(
-        item =>
-          typeof item === 'object' &&
-          item !== null &&
-          containsCombatEventListener((item as Record<string, unknown>).sequence),
-      )
+      Array.isArray(record.callbacks) &&
+      record.callbacks.some(entry => {
+        const skill = (entry as { skill?: { scheduledSequences?: { sequence: unknown }[] } })
+          ?.skill;
+        return (
+          skill?.scheduledSequences?.some(item => containsCombatEventListener(item.sequence)) ??
+          false
+        );
+      })
     );
   }
   if (record.kind === 'listenForCombatEvents') return true;

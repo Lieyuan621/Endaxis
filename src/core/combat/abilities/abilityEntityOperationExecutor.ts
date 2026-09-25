@@ -11,7 +11,7 @@ import type { LogicalAbilityEntityRuntime } from './logicalAbilityEntityRuntime'
 import type {
   CombatOperationContext,
   CombatOperationExecutor,
-  ScheduleProjectileFinishCallback,
+  LaunchProjectile,
 } from '../skills/skillRuntime';
 import { AbilityEntityChildSkillRuntime } from './abilityEntityChildSkillRuntime';
 import type { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
@@ -36,7 +36,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
   readonly #childRuntimeDependencies?: {
     readonly resolveOperations: (state: CombatOperationHostState) => CombatOperationExecutor;
     readonly semanticEvents?: CombatSemanticEventRuntime;
-    readonly scheduleProjectileFinishCallback?: ScheduleProjectileFinishCallback;
+    readonly launchProjectile?: LaunchProjectile;
     readonly createCallbackSkillHost?: CallbackSkillHostFactory;
     readonly installPassiveSkills?: (
       entity: RuntimeTargetRef,
@@ -57,7 +57,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     childRuntimeDependencies?: {
       readonly resolveOperations: (state: CombatOperationHostState) => CombatOperationExecutor;
       readonly semanticEvents?: CombatSemanticEventRuntime;
-      readonly scheduleProjectileFinishCallback?: ScheduleProjectileFinishCallback;
+      readonly launchProjectile?: LaunchProjectile;
       readonly createCallbackSkillHost?: CallbackSkillHostFactory;
       readonly installPassiveSkills?: (
         entity: RuntimeTargetRef,
@@ -553,22 +553,24 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         ? this.#childSkillPrograms.register(program)
         : this.#childSkillPrograms.resolve(restored.state.programId);
     const instanceProgram = binding.program;
-    const operationState = restored?.state.operations ?? createCombatOperationHostState();
+    const operationState =
+      restored?.state.host.skill.operations ?? createCombatOperationHostState();
     const runtime = new AbilityEntityChildSkillRuntime(
       instanceProgram,
       {
         entity,
         entityBlackboard,
         operations: this.#childRuntimeDependencies.resolveOperations(operationState),
+        source: this.#entities.snapshot(entity).source,
+        skillHostGroup: this.#entities.childSkillHosts(entity),
         ownerOperatorId: this.#operatorId,
         ...(this.#childRuntimeDependencies.semanticEvents === undefined
           ? {}
           : { semanticEvents: this.#childRuntimeDependencies.semanticEvents }),
-        ...(this.#childRuntimeDependencies.scheduleProjectileFinishCallback === undefined
+        ...(this.#childRuntimeDependencies.launchProjectile === undefined
           ? {}
           : {
-              scheduleProjectileFinishCallback:
-                this.#childRuntimeDependencies.scheduleProjectileFinishCallback,
+              launchProjectile: this.#childRuntimeDependencies.launchProjectile,
             }),
         ...(this.#childRuntimeDependencies.createCallbackSkillHost === undefined
           ? {}

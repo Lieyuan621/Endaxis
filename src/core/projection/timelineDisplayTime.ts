@@ -74,8 +74,9 @@ export function projectSkillCastActualStartFrames(
 }
 
 /**
- * 把技能局部可操作边界配对为实际宽度。没有到达边界的释放不返回猜测值，
- * UI 继续使用定义宽度作为未完成模拟的保底展示。
+ * 根据技能开始回执和决定技能块结束时间的 SkillOperableBoundaryReached 回执计算块宽。
+ * 若模拟只记录了开始、尚未记录到块的结束，则不返回该技能的时长；
+ * UI 暂用技能定义中的时长，并将右侧画成虚线，表示实际结束时间尚未算出。
  */
 export function projectSkillCastActualDurationFrames(
   entries: readonly CombatReceiptEntry[],

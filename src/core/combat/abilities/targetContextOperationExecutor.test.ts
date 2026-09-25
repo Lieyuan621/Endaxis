@@ -3,6 +3,7 @@ import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatVitals } from '../resources/combatVitals';
 import { RuntimeTargetContext } from './runtimeTargetContext';
 import { TargetContextOperationExecutor } from './targetContextOperationExecutor';
+import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
 
 const terminal = {
   execute: () => false,
@@ -23,6 +24,62 @@ function vitals(health: number): CombatVitals {
 }
 
 describe('TargetContextOperationExecutor', () => {
+  it('事件来源写入 Context 时保留实体身份，不替换成宿主或敌人', () => {
+    const executor = new TargetContextOperationExecutor('caster', terminal);
+    const targetContext = new RuntimeTargetContext();
+    executor.execute(
+      {
+        kind: 'mergeContextTargets',
+        parameters: {
+          saveToContextKey: 'attacker',
+          sources: [{ kind: 'target', target: 'eventSource' }],
+        },
+      },
+      {
+        blackboard: new ActionBlackboard(),
+        targetContext,
+        event: { event: 'hpChanged', payload: { sourceId: 'ability-entity:7', targetId: 'enemy' } },
+      },
+    );
+    expect(targetContext.get('attacker')).toEqual([{ kind: 'abilityEntity', instanceId: 7 }]);
+  });
+
+  it('投射物查询保存当时的候选，后续发射不混入旧结果，重新查询覆盖旧组', () => {
+    const projectiles = new ProjectileLifecycleRuntime();
+    const launch = () =>
+      projectiles.launch({
+        finishDelaySeconds: 1,
+        recycleDelaySeconds: 1,
+        resolveTickDeltaSeconds: () => 1,
+        finish: () => {},
+        beforeReset: () => {},
+      });
+    const first = launch();
+    const executor = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      () => projectiles.getUnfinishedTargets(),
+    );
+    const targetContext = new RuntimeTargetContext();
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    const query = {
+      kind: 'findUnfinishedProjectileTargets' as const,
+      parameters: { saveToContextKey: 'projectiles' },
+    };
+    expect(executor.execute(query, context)).toBe(true);
+    launch();
+    expect(targetContext.get('projectiles')).toEqual([first.target]);
+    projectiles.advanceFrame();
+    expect(targetContext.get('projectiles')).toEqual([first.target]);
+    executor.execute(query, context);
+    expect(targetContext.get('projectiles')).toEqual([]);
+    expect(projectiles.isActive(first.target)).toBe(true);
+  });
+
   it('技能动作 Owner 优先于外层 Buff Owner 查询一层来源', () => {
     const query = vi.fn(() => ({ kind: 'operator' as const, operatorId: 'launcher' }));
     const executor = new TargetContextOperationExecutor(

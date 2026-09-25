@@ -198,6 +198,9 @@ export function parseBuffBlackboardReadActionSource(
   path: string,
 ): BuffBlackboardReadActionSource {
   const action = requireRecord(value, path);
+  const byId =
+    nativeActionName(requireNonEmptyString(action.$type, `${path}.$type`)) ===
+    'GetTargetBuffBBAction';
   requireExactFields(
     action,
     new Set([
@@ -207,7 +210,7 @@ export function parseBuffBlackboardReadActionSource(
       'priorityOffset',
       'serverActionIndex',
       'targetSettings',
-      'buffSettings',
+      byId ? 'buffId' : 'buffSettings',
       'desiredKey',
       'blackboardKey',
     ]),
@@ -216,7 +219,13 @@ export function parseBuffBlackboardReadActionSource(
   return {
     kind: 'buffBlackboardRead',
     target: parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`),
-    settings: parseBuffFindSettingsSource(action.buffSettings, `${path}.buffSettings`),
+    settings: byId
+      ? {
+          checkType: 'Id',
+          buffIds: [requireNonEmptyString(action.buffId, `${path}.buffId`)],
+          tagQuery: { queryType: 'hasAny', tagIds: [] },
+        }
+      : parseBuffFindSettingsSource(action.buffSettings, `${path}.buffSettings`),
     desiredKey: requireNonEmptyString(action.desiredKey, `${path}.desiredKey`),
     outputKey: requireNonEmptyString(action.blackboardKey, `${path}.blackboardKey`),
   };

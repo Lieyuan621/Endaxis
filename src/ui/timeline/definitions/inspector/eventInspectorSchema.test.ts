@@ -20,7 +20,11 @@ import { inspectorEditorRegistryKey, extendInspectorEditors } from './inspectorE
 it('原生事件检查器提供契约候选并原位修改事件身份', () => {
   const value = createCombatEventTriggerDraft('abilityEvent');
   const field = eventInspectorFields(value).find(field => field.key === 'event');
-  expect([...(field?.options ?? [])].sort()).toEqual(['addedBuff', 'outputBuff']);
+  expect([...(field?.options ?? [])].sort()).toEqual([
+    'addedBuff',
+    'beforeAddedBuff',
+    'outputBuff',
+  ]);
   expect(field?.write(value, 'outputBuff')).toEqual({ kind: 'abilityEvent', event: 'outputBuff' });
 });
 
